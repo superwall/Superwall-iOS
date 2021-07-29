@@ -49,7 +49,8 @@ internal class WebPaywallViewController: UIViewController {
         ])
         DispatchQueue.main.async { [self]
 //            let url = URL(string: "https://app.fitnessai.com/signup/?paywall=true&user_id=1234")!
-            let url = URL(string: "http://192.168.1.96:8080?a=" + String(Int.random(in: 1...1000)))!
+//            let url = URL(string: "http://192.168.1.96:8080?a=" + String(Int.random(in: 1...1000)))!
+            let url = URL(string: "https://paywalrus-example-paywall.netlify.app")!
             self.webview.load(URLRequest(url: url))
         }   
     }
