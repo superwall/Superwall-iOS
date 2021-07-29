@@ -45,6 +45,7 @@ public class Paywall {
     
     // MARK: Paywall Presentation
     public func presentPaywall(on viewController: UIViewController, completion: ((PaywallPresentationResult) -> Void)? = nil) {
-        viewController.present(WebPaywallViewController(), animated: true, completion: nil)
+        let paywallVC = WebPaywallViewController(viewController: viewController, completion: completion)
+        paywallVC?.presentPaywall()
     };
 }
