@@ -168,7 +168,7 @@ public class Paywall {
         
     }
 
-    // restore callbacls
+    // restore callbacks
     private func _restoreDidSucceed() {
         // TODO: ANALYTICS
         _dismiss()

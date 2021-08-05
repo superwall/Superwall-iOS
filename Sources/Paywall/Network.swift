@@ -18,7 +18,8 @@ internal class Network {
     
     public init(
         urlSession: URLSession = URLSession(configuration: .ephemeral),
-        baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
+//        baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
+        baseURL: URL = URL(string: "https://3000-red-bovid-i7j374cl.ws-us14.gitpod.io/api/v1/")!,
         analyticsBaseURL: URL = URL(string: "https://collector.paywalrus.com/v1/")!) {
         
         self.urlSession = (urlSession)
@@ -64,7 +65,9 @@ extension Network {
                     Logger.shareThatToDebug(string: "Unable to authenticate, please make sure your ShareThatToClientId is correct.")
                     return completion(.failure(Error.notAuthenticated))
                 }
-                let response = try JSONDecoder().decode(ResponseType.self, from: unWrappedData)
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let response = try decoder.decode(ResponseType.self, from: unWrappedData)
                 completion(.success(response))
             } catch let error {
                 Logger.shareThatToDebug(string: "Unable to decode response to type \(ResponseType.self)")
@@ -80,9 +83,22 @@ struct Substitution: Decodable {
     var value: String
 }
 
+public enum PaywallPresentationStyle: String, Decodable {
+    case sheet
+    case modal
+    case fullscreen
+}
+
 struct PaywallResponse: Decodable {
     var url: String
     var substitutions: [Substitution]
+    var presentationStyle: PaywallPresentationStyle = .sheet
+    var backgroundColorHex: String = "#FFFFFF"
+    
+    var paywallBackgroundColor: UIColor {
+        return UIColor(hexString: backgroundColorHex)
+    }
+    
 }
 
 struct PaywallRequest: Codable {
@@ -97,7 +113,10 @@ extension Network {
         var request = URLRequest(url: requestURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
+        
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        
         // Bail if we can't encode
         do {
             request.httpBody = try JSONEncoder().encode(paywallRequest)

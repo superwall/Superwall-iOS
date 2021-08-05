@@ -38,7 +38,7 @@ public struct InitiatePurchaseParameters: Codable {
 
 
 public enum PaywallEvent: Decodable {
-    case ping
+    case onReady
     case close
     case restore
     case openURL(url: URL)
@@ -49,20 +49,20 @@ public enum PaywallEvent: Decodable {
 extension PaywallEvent {
 
     private enum EventNames: String, Decodable {
-        case ping = "ping"
-        case close = "close"
-        case restore = "restore"
-        case openURL = "open_url"
-        case openDeepLink = "open_deep_link"
-        case initiatePurchase = "initiate_purchase"
+        case onReady = "ping"
+        case close
+        case restore
+        case openURL
+        case openDeepLink
+        case initiatePurchase
     }
     
     // Everyone write to eventName, other may use the remaining keys
     private enum CodingKeys: String, CodingKey {
-        case eventName = "event_name"
-        case purchase = "purchase"
-        case url = "url"
-        case link = "link"
+        case eventName
+        case purchase
+        case url
+        case link
     }
 
     enum PaywallEventError: Error {
@@ -76,8 +76,8 @@ extension PaywallEvent {
             case .close:
                 self = .close
                 return
-            case .ping:
-                self = .ping
+            case .onReady:
+                self = .onReady
                 return
             case .initiatePurchase:
                 if let purchase = try? values.decode(InitiatePurchaseParameters.self, forKey: .purchase){

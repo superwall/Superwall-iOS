@@ -49,12 +49,12 @@ final public class ShimmeringView: UIView {
 
     /// The time interval between shimmers in seconds.
     /// Defaults to 0.4.
-    public var shimmerPauseDuration: CFTimeInterval = 0.4 {
+    public var shimmerPauseDuration: CFTimeInterval = 0.25 {
         didSet  { shimmerLayer?.shimmerPauseDuration = shimmerPauseDuration }
     }
 
     /// The opacity of the content during a shimmer. Defaults to 0.5.
-    public var shimmerAnimationOpacity: CGFloat = 0.5 {
+    public var shimmerAnimationOpacity: CGFloat = 0.25 {
         didSet { shimmerLayer?.shimmerAnimationOpacity = shimmerAnimationOpacity }
     }
 
@@ -69,12 +69,12 @@ final public class ShimmeringView: UIView {
     }
 
     /// The duration of the fade used when the shimmer begins. Defaults to 0.1.
-    public var shimmerBeginFadeDuration: CFTimeInterval = 0.1 {
+    public var shimmerBeginFadeDuration: CFTimeInterval = 0.2 {
         didSet { shimmerLayer?.shimmerBeginFadeDuration = shimmerBeginFadeDuration }
     }
 
     /// The duration of the fade used when the shimmer ends. Defaults to 0.3.
-    public var shimmerEndFadeDuration: CFTimeInterval = 0.3 {
+    public var shimmerEndFadeDuration: CFTimeInterval = 0.2 {
         didSet { shimmerLayer?.shimmerEndFadeDuration = shimmerEndFadeDuration }
     }
 

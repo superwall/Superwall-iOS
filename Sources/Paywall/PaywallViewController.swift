@@ -14,9 +14,11 @@ internal class PaywallViewController: UIViewController {
     // Don't touch my private parts.
     
     private var _paywallResponse: PaywallResponse
-//    private var _complete = false
-    
     public var completion: ((PaywallPresentationResult) -> Void)?
+    
+    var presentationStyle: PaywallPresentationStyle {
+        return _paywallResponse.presentationStyle
+    }
     
     init?(paywallResponse: PaywallResponse, completion: ((PaywallPresentationResult) -> Void)? = nil) {
         self._paywallResponse =  paywallResponse
@@ -25,18 +27,20 @@ internal class PaywallViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
         
         DispatchQueue.main.async { [weak self] in
-            
             guard let self = self else { return }
-            
             let url = URL(string: self._paywallResponse.url)
-            
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: {
             self.webview.load(URLRequest(url: url!))
             self.webview.alpha = 0.0
-//            })
-            
-            
-            self.view.backgroundColor = UIColor(hexString: "#181A1F")
+            self.view.backgroundColor = paywallResponse.paywallBackgroundColor
+        }
+        
+        switch presentationStyle {
+        case .sheet:
+            break
+        case .modal:
+            modalPresentationStyle = .formSheet
+        case .fullscreen:
+            modalPresentationStyle = .overFullScreen
         }
     }
     
@@ -47,6 +51,7 @@ internal class PaywallViewController: UIViewController {
         config.allowsInlineMediaPlayback = true
         config.allowsAirPlayForMediaPlayback = true
         config.allowsPictureInPictureMediaPlayback = true
+        
         config.userContentController.add(self, name: "paywallMessageHandler")
         
         let wv = WKWebView(frame: CGRect(), configuration: config)
@@ -71,17 +76,13 @@ internal class PaywallViewController: UIViewController {
     
     var contentPlaceholderImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "paywall_placeholder", in: Bundle.module, compatibleWith: nil)!)
-        
-
-        
         imageView.contentMode = .scaleAspectFit
         imageView.tintColor = .red
         imageView.backgroundColor = .clear
         imageView.clipsToBounds = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.isHidden = false
-        imageView.alpha = 0.2
-             
+        imageView.alpha = 1.0 - 0.618
         return imageView
      
     }()
@@ -101,26 +102,21 @@ internal class PaywallViewController: UIViewController {
         shimmerView.isShimmering = true
         
         view.addSubview(shimmerView)
-        view.addSubview(self.webview)
+        view.addSubview(webview)
         shimmerView.translatesAutoresizingMaskIntoConstraints = false
         shimmerView.contentView = contentPlaceholderImageView
     
         NSLayoutConstraint.activate([
             
-            shimmerView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-            shimmerView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
-            shimmerView.topAnchor.constraint(equalTo: self.view.topAnchor),
-            shimmerView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
-            
-//            self.contentPlaceholderImageView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-//            self.contentPlaceholderImageView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
-//            self.contentPlaceholderImageView.topAnchor.constraint(equalTo: self.view.topAnchor),
-//            self.contentPlaceholderImageView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
-            
-            self.webview.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-            self.webview.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
-            self.webview.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 0),
-            self.webview.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: 0),
+            shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            shimmerView.topAnchor.constraint(equalTo: view.topAnchor),
+            shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            webview.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            webview.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            webview.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 0),
+            webview.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
         ])
  
     }
@@ -157,8 +153,10 @@ extension PaywallViewController: WKScriptMessageHandler {
             log("unable to convert bodyString to body data")
             return
         }
-
-        guard let wrappedPaywallEvents = try? JSONDecoder().decode(WrappedPaywallEvents.self, from: bodyData) else {
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        guard let wrappedPaywallEvents = try? decoder.decode(WrappedPaywallEvents.self, from: bodyData) else {
             log("failed to parse bodyString to WrappedPaywallEvent")
             return
         }
@@ -185,12 +183,8 @@ extension PaywallViewController {
     func handleEvent(event: PaywallEvent) {
         log("handleEvent", event)
     
-//        if event == .ping {
-//
-//        }
-//
         switch (event) {
-        case .ping:
+        case .onReady:
         
             let subs = self._paywallResponse.substitutions.reduce([String: String]()) { (dict, sub) -> [String: String] in
                 var dict = dict
@@ -204,25 +198,19 @@ extension PaywallViewController {
                 window.paywall.accept(JSON.parse('\(eventString)'))
             """
             print("sriptSrc", scriptSrc)
-            self.webview.evaluateJavaScript(scriptSrc) { (result, error) in
+            webview.evaluateJavaScript(scriptSrc) { (result, error) in
                 if let result = result {
                     print("Label is updated with message: \(result)")
                 } else if let error = error {
                     print("An error occurred: \(error)")
                 }
-//                if #available(iOS 14.0, *) {
-//                    self.webview.createPDF { (result) in
-//                        print(result)
-//                    }
-//                } else {
-//                    // Fallback on earlier versions
-//                }
-                
+
                 DispatchQueue.main.async {
                     UIView.animate(withDuration: 1.0, delay: 0.6, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
                         self?.webview.alpha = 1.0
                         self?.webview.transform = .identity
                         self?.shimmerView.alpha = 0.0
+//                        self?.shimmerView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
                     }, completion: { [weak self] _ in
                         self?.shimmerView.isShimmering = false
                     })
@@ -230,8 +218,14 @@ extension PaywallViewController {
                 
             }
             
-
-
+            // block selection
+            let selectionString = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; "
+                                + "var head = document.head || document.getElementsByTagName('head')[0]; "
+                                + "var style = document.createElement('style'); style.type = 'text/css'; "
+                                + "style.appendChild(document.createTextNode(css)); head.appendChild(style); "
+             let selectionScript: WKUserScript = WKUserScript(source: selectionString, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+             webview.configuration.userContentController.addUserScript(selectionScript)
+  
         case .close:
             UIImpactFeedbackGenerator().impactOccurred()
             complete(.closed)
