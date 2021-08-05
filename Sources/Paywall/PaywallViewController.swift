@@ -223,7 +223,9 @@ extension PaywallViewController {
                         self?.webview.alpha = 1.0
                         self?.webview.transform = .identity
                         self?.shimmerView.alpha = 0.0
-                    }, completion: nil)
+                    }, completion: { _ in
+                        self?.shimmerView.isShimmering = false
+                    })
                 }
                 
             }
