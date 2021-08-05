@@ -24,45 +24,45 @@ import Foundation
 */
 
 internal struct WrappedPaywallEvents: Decodable {
-    public var version: Int = 1;
-    public var payload: PayloadEvents;
-};
+    public var version: Int = 1
+    public var payload: PayloadEvents
+}
 
 public struct PayloadEvents: Decodable {
-    var events: Array<PaywallEvent>;
-};
+    var events: Array<PaywallEvent>
+}
 
 public struct InitiatePurchaseParameters: Codable {
     var productId: String
-};
+}
 
 
 public enum PaywallEvent: Decodable {
-    case Ping
-    case Close
-    case Restore
-    case OpenURL(url: URL)
-    case OpenDeepLink(url: URL)
-    case InitiatePurchase(purchase: InitiatePurchaseParameters)
-};
+    case ping
+    case close
+    case restore
+    case openURL(url: URL)
+    case openDeepLink(url: URL)
+    case initiatePurchase(purchase: InitiatePurchaseParameters)
+}
 
 extension PaywallEvent {
 
     private enum EventNames: String, Decodable {
-        case Ping = "ping"
-        case Close = "close"
-        case Restore = "restore"
-        case OpenURL = "open_url"
-        case OpenDeepLink = "open_deep_link"
-        case InitiatePurchase = "initiate_purchase"
-    };
+        case ping = "ping"
+        case close = "close"
+        case restore = "restore"
+        case openURL = "open_url"
+        case openDeepLink = "open_deep_link"
+        case initiatePurchase = "initiate_purchase"
+    }
     
     // Everyone write to eventName, other may use the remaining keys
     private enum CodingKeys: String, CodingKey {
         case eventName = "event_name"
-        case Purchase = "purchase"
-        case URL = "url"
-        case Link = "link"
+        case purchase = "purchase"
+        case url = "url"
+        case link = "link"
     }
 
     enum PaywallEventError: Error {
@@ -73,29 +73,29 @@ extension PaywallEvent {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         if let eventName = try? values.decode(EventNames.self, forKey: .eventName) {
             switch (eventName) {
-            case .Close:
-                self = .Close
-                return;
-            case .Ping:
-                self = .Ping
-                return;
-            case .InitiatePurchase:
-                if let purchase = try? values.decode(InitiatePurchaseParameters.self, forKey: .Purchase){
-                    self = .InitiatePurchase(purchase: purchase)
-                    return;
+            case .close:
+                self = .close
+                return
+            case .ping:
+                self = .ping
+                return
+            case .initiatePurchase:
+                if let purchase = try? values.decode(InitiatePurchaseParameters.self, forKey: .purchase){
+                    self = .initiatePurchase(purchase: purchase)
+                    return
                 }
-            case .Restore:
-                self = .Restore
-                return;
-            case .OpenURL:
-                if let urlString = try? values.decode(String.self, forKey: .URL), let url = URL(string: urlString) {
-                    self = .OpenURL(url: url)
-                    return;
+            case .restore:
+                self = .restore
+                return
+            case .openURL:
+                if let urlString = try? values.decode(String.self, forKey: .url), let url = URL(string: urlString) {
+                    self = .openURL(url: url)
+                    return
                 }
-            case .OpenDeepLink:
-                if let urlString = try? values.decode(String.self, forKey: .Link), let url = URL(string: urlString) {
-                    self = .OpenDeepLink(url: url)
-                    return;
+            case .openDeepLink:
+                if let urlString = try? values.decode(String.self, forKey: .link), let url = URL(string: urlString) {
+                    self = .openDeepLink(url: url)
+                    return
                 }
             }
         }
@@ -104,9 +104,9 @@ extension PaywallEvent {
 }
 
 public enum PaywallPresentationResult {
-    case Closed
-    case InitiatePurchase(productId: String)
-    case InitiateResotre
-    case OpenedURL(url: URL)
-    case OpenedDeepLink(url: URL)
+    case closed
+    case initiatePurchase(productId: String)
+    case initiateResotre
+    case openedURL(url: URL)
+    case openedDeepLink(url: URL)
 }
