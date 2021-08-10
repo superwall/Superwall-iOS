@@ -19,7 +19,7 @@ internal class Network {
     public init(
         urlSession: URLSession = URLSession(configuration: .ephemeral),
 //        baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
-        baseURL: URL = URL(string: "https://3000-red-bovid-i7j374cl.ws-us14.gitpod.io/api/v1/")!,
+        baseURL: URL = URL(string: "https://3000-copper-boar-y47smnbf.ws-us13.gitpod.io/api/v1/")!,
         analyticsBaseURL: URL = URL(string: "https://collector.paywalrus.com/v1/")!) {
         
         self.urlSession = (urlSession)
@@ -51,10 +51,14 @@ extension Network {
     func send<ResponseType: Decodable>(_ request: URLRequest, completion: @escaping (Result<ResponseType, Swift.Error>) -> Void) {
         var request = request
 
-        
         request.setValue("Bearer " + (Store.shared.apiKey ?? ""), forHTTPHeaderField:  "Authorization")
-        request.setValue("ios", forHTTPHeaderField: "X-Platform")
-        
+        request.setValue("iOS", forHTTPHeaderField: "X-Platform")
+        request.setValue(Store.shared.appUserId ?? "", forHTTPHeaderField: "X-App-User-ID")
+        request.setValue(Store.shared.aliasId ?? "", forHTTPHeaderField: "X-Alias-ID")
+        request.setValue(DeviceHelper.device().vendor_id, forHTTPHeaderField: "X-Vendor-ID")
+        request.setValue(DeviceHelper.device().app_version, forHTTPHeaderField: "X-App-Version")
+        request.setValue(DeviceHelper.device().os_version, forHTTPHeaderField: "X-OS-Version")
+        request.setValue(DeviceHelper.device().model, forHTTPHeaderField: "X-Device-Model")
         
         let task = self.urlSession.dataTask(with: request) { (data, response, error) in
             do {
@@ -62,7 +66,7 @@ extension Network {
                 
                 if let response = response as? HTTPURLResponse, response.statusCode == 401
                 {
-                    Logger.shareThatToDebug(string: "Unable to authenticate, please make sure your ShareThatToClientId is correct.")
+                    Logger.superwallDebug(string: "Unable to authenticate, please make sure your ShareThatToClientId is correct.")
                     return completion(.failure(Error.notAuthenticated))
                 }
                 let decoder = JSONDecoder()
@@ -70,7 +74,9 @@ extension Network {
                 let response = try decoder.decode(ResponseType.self, from: unWrappedData)
                 completion(.success(response))
             } catch let error {
-                Logger.shareThatToDebug(string: "Unable to decode response to type \(ResponseType.self)")
+                Logger.superwallDebug(string: "Error requesting: \(request.url?.absoluteString ?? "unknown absolute string")")
+                Logger.superwallDebug(string: "Unable to decode response to type \(ResponseType.self)", error: error)
+                Logger.superwallDebug(string: String(decoding: data ?? Data(), as: UTF8.self))
                 completion(.failure(Error.decoding))
             }
         }
@@ -84,29 +90,37 @@ struct Substitution: Decodable {
 }
 
 public enum PaywallPresentationStyle: String, Decodable {
-    case sheet
-    case modal
-    case fullscreen
+    case sheet = "SHEET"
+    case modal = "MODAL"
+    case fullscreen = "FULLSCREEN"
 }
 
 struct PaywallResponse: Decodable {
     var url: String
     var substitutions: [Substitution]
     var presentationStyle: PaywallPresentationStyle = .sheet
-    var backgroundColorHex: String = "#FFFFFF"
+    var backgroundColorHex: String? = nil
     
     var paywallBackgroundColor: UIColor {
-        return UIColor(hexString: backgroundColorHex)
+        
+        if let s = backgroundColorHex {
+            return UIColor(hexString: s)
+        }
+        
+        return UIColor.darkGray
     }
     
 }
 
 struct PaywallRequest: Codable {
-    var userId: String
+    var appUserId: String
 }
 
+
 extension Network {
-    func paywall(paywallRequest: PaywallRequest, completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
+    func paywall(completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
+        
+        let paywallRequest = PaywallRequest(appUserId: Store.shared.userId ?? "")
         
         let components = URLComponents(string: "paywall")!
         let requestURL = components.url(relativeTo: baseURL)!
@@ -119,15 +133,17 @@ extension Network {
         
         // Bail if we can't encode
         do {
-            request.httpBody = try JSONEncoder().encode(paywallRequest)
+            request.httpBody = try encoder.encode(paywallRequest)
         } catch {
             return completion(.failure(Error.unknown))
         }
         
+        print(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
+        
         send(request, completion: { (result: Result<PaywallResponse, Swift.Error>)  in
             switch result {
                 case .failure(let error):
-                    Logger.shareThatToDebug(string: "[network POST /paywall] - failure")
+                    Logger.superwallDebug(string: "[network POST /paywall] - failure")
                     completion(.failure(error))
                 case .success(let response):
                     completion(.success(response))
@@ -136,4 +152,15 @@ extension Network {
         })
 
     }
+}
+
+
+struct UserPropertiesRequest: Codable {
+    var apnsToken: String?
+    var fcmToken: String?
+    var email: String?
+    var phoneCountryCode: String?
+    var phone: String?
+    var firstName: String?
+    var lastName: String?
 }

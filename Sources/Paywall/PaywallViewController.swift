@@ -8,6 +8,7 @@
 import WebKit
 import UIKit
 import Foundation
+import SafariServices
 
 internal class PaywallViewController: UIViewController {
     
@@ -67,6 +68,8 @@ internal class PaywallViewController: UIViewController {
         wv.scrollView.scrollIndicatorInsets = .zero
         wv.scrollView.showsVerticalScrollIndicator = false
         wv.scrollView.showsHorizontalScrollIndicator = false
+        wv.scrollView.maximumZoomScale = 1.0
+        wv.scrollView.minimumZoomScale = 1.0
         wv.scrollView.backgroundColor = .clear
         wv.scrollView.isOpaque = false
         wv.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)//.scaledBy(x: 0.97, y: 0.97)
@@ -97,10 +100,7 @@ internal class PaywallViewController: UIViewController {
     
     public override func viewDidLoad() {
        
-
-        
         shimmerView.isShimmering = true
-        
         view.addSubview(shimmerView)
         view.addSubview(webview)
         shimmerView.translatesAutoresizingMaskIntoConstraints = false
@@ -131,7 +131,7 @@ internal class PaywallViewController: UIViewController {
         completion?(completionResult)
         
         if completion == nil {
-            log("[Internal] warning: Completion not set")
+            log("[Internal] Warning: Completion not set")
         }
         
     }
@@ -176,6 +176,11 @@ struct TemplateSubstitutions: Codable {
     var substitutions: [String: String]
 }
 
+struct TemplateVariables: Codable {
+    var event_name: String
+    var variables: [String: String]
+}
+
 // MARK: Event Handler
 
 extension PaywallViewController {
@@ -191,12 +196,20 @@ extension PaywallViewController {
                 dict[sub.key] = sub.value
                 return dict
             }
+            
             let subsEvent = TemplateSubstitutions(event_name: "template_substitutions", substitutions: subs)
-            let eventData = try? JSONEncoder().encode(subsEvent)
-            let eventString = eventData != nil ? String(data: eventData!, encoding: .utf8) ?? "{}" : "{}"
+            let subsEventData = try? JSONEncoder().encode(subsEvent)
+            let subsEventString = subsEventData != nil ? String(data: subsEventData!, encoding: .utf8) ?? "{}" : "{}"
+            
+            let varsEvent = TemplateVariables(event_name: "template_variables", variables: ["price": "$89.99"])
+            let varsEventData = try? JSONEncoder().encode(varsEvent)
+            let varsEventString = varsEventData != nil ? String(data: varsEventData!, encoding: .utf8) ?? "{}" : "{}"
+            
             let scriptSrc = """
-                window.paywall.accept(JSON.parse('\(eventString)'))
+                window.paywall.accept(JSON.parse('\(subsEventString)'));
+                window.paywall.accept(JSON.parse('\(varsEventString)'));
             """
+            
             print("sriptSrc", scriptSrc)
             webview.evaluateJavaScript(scriptSrc) { (result, error) in
                 if let result = result {
@@ -219,20 +232,22 @@ extension PaywallViewController {
             }
             
             // block selection
-            let selectionString = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; "
+            let selectionString = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none} .w-webflow-badge { display: none !important; }'; "
                                 + "var head = document.head || document.getElementsByTagName('head')[0]; "
                                 + "var style = document.createElement('style'); style.type = 'text/css'; "
                                 + "style.appendChild(document.createTextNode(css)); head.appendChild(style); "
+            
              let selectionScript: WKUserScript = WKUserScript(source: selectionString, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
              webview.configuration.userContentController.addUserScript(selectionScript)
   
         case .close:
             UIImpactFeedbackGenerator().impactOccurred()
             complete(.closed)
-        case .openURL(let url):
+        case .openUrl(let url):
             UIImpactFeedbackGenerator().impactOccurred()
             complete(.openedURL(url: url))
-            UIApplication.shared.open(url, options: [:])
+            let safariVC = SFSafariViewController(url: url)
+            present(safariVC, animated: true, completion: nil)
         case .openDeepLink(let url):
             UIImpactFeedbackGenerator().impactOccurred()
             complete(.openedDeepLink(url: url))

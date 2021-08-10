@@ -18,15 +18,15 @@ internal func log(_ items: Any...) {
 import Foundation
 
 
-internal struct Logger
-{
-    static func shareThatToDebug(string: String, error: Swift.Error? = nil)
-    {
-        print("[PayWalrus] " + string)
+internal struct Logger {
+    static func superwallDebug(string: String, error: Swift.Error? = nil) {
+        print("[Superwall] " + string)
+        if error != nil {
+            print("[Superwall] ", error)
+        }
     }
     
-    private static func errorString(error: Swift.Error?) -> String
-    {
+    private static func errorString(error: Swift.Error?) -> String {
         return error == nil ? "" : " - " + (error?.localizedDescription ?? "")
     }
     

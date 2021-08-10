@@ -34,6 +34,7 @@ public struct PayloadEvents: Decodable {
 
 public struct InitiatePurchaseParameters: Codable {
     var productId: String
+    
 }
 
 
@@ -41,7 +42,7 @@ public enum PaywallEvent: Decodable {
     case onReady
     case close
     case restore
-    case openURL(url: URL)
+    case openUrl(url: URL)
     case openDeepLink(url: URL)
     case initiatePurchase(purchase: InitiatePurchaseParameters)
 }
@@ -52,7 +53,7 @@ extension PaywallEvent {
         case onReady = "ping"
         case close
         case restore
-        case openURL
+        case openUrl = "open_url"
         case openDeepLink
         case initiatePurchase
     }
@@ -87,9 +88,9 @@ extension PaywallEvent {
             case .restore:
                 self = .restore
                 return
-            case .openURL:
+            case .openUrl:
                 if let urlString = try? values.decode(String.self, forKey: .url), let url = URL(string: urlString) {
-                    self = .openURL(url: url)
+                    self = .openUrl(url: url)
                     return
                 }
             case .openDeepLink:

@@ -20,10 +20,17 @@ import Foundation
 public class Paywall {
     
     public static var debugLogsEnabled: Bool = false
-    public static var shared: Paywall = Paywall(apiKey: nil, appUserId: nil)
+    public static var shared: Paywall = Paywall(apiKey: nil)
     
-    private(set) var apiKey: String?
-    private(set) var appUserId: String?
+    private var apiKey: String? {
+        return Store.shared.apiKey
+    }
+    private var appUserId: String? {
+        return Store.shared.appUserId
+    }
+    private var aliasId: String? {
+        return Store.shared.aliasId
+    }
     
     private(set) var paywallLoaded: Bool = false
     private(set) var paywallResponse: PaywallResponse?
@@ -39,16 +46,33 @@ public class Paywall {
     
     // MARK: Initialization
     
-    private init(apiKey: String?, appUserId: String?) {
-        self.apiKey = apiKey
-        self.appUserId = appUserId
+    private init(apiKey: String?, userId: String? = nil) {
         
+        if apiKey == nil {
+            return
+        }
+        
+        if let uid = userId {
+            self.set(appUserID: uid)
+        }
+
         Store.shared.apiKey = apiKey
-        Store.shared.appUserId = appUserId
         
-        // Fetch paywall
-        let paywallRequest = PaywallRequest(userId: self.appUserId ?? "")
-        Network.shared.paywall(paywallRequest: paywallRequest) { (result) in
+        setAliasIfNeeded()
+        
+        fetchPaywall()
+
+    }
+    
+    private func setAliasIfNeeded() {
+        if Store.shared.aliasId == nil {
+            Store.shared.aliasId = "$SuperwallAlias:\(UUID().uuidString)"
+            Store.shared.save()
+        }
+    }
+
+    private func fetchPaywall() {
+        Network.shared.paywall { (result) in
             
             switch(result){
             case .success(let response):
@@ -72,38 +96,50 @@ public class Paywall {
                 
                 break
             case .failure(let error):
-                print("Error", error)
+                fatalError(error.localizedDescription)
             }
             self.paywallLoaded = true
         }
     }
     
     @discardableResult
-    public static func configure(withAPIKey: String) -> Paywall {
-        shared = Paywall(apiKey: withAPIKey, appUserId: nil)
+    public static func configure(apiKey: String, userId: String? = nil) -> Paywall {
+        shared = Paywall(apiKey: apiKey, userId: userId)
         return shared
     }
-    
-    @discardableResult
-    public static func config(withAPIKey: String, appUserID: String) -> Paywall {
-        shared = Paywall(apiKey: withAPIKey, appUserId: appUserID)
-        return shared
-    }
-    
     
     // MARK: Users
     @discardableResult
-    public func login(appUserID: String) -> Paywall {
-        self.appUserId = appUserID
-        return self
+    public static func identify(userId: String) -> Paywall {
+        
+        if Store.shared.userId != userId { // refetch the paywall, we don't know if the alias was for an existing user
+            shared.set(appUserID: userId)
+            shared.fetchPaywall()
+        } else {
+            shared.set(appUserID: userId)
+        }
+        
+        return shared
     }
     
     @discardableResult
-    public func logout() -> Paywall {
-        self.appUserId = nil
-        return self
+    public static func reset() -> Paywall {
+        
+        if Store.shared.appUserId != nil {
+            Store.shared.clear()
+            shared.setAliasIfNeeded()
+            shared.fetchPaywall()
+        }
+        
+        return shared
     }
     
+    @discardableResult
+    private func set(appUserID: String) -> Paywall {
+        Store.shared.appUserId = appUserID
+        Store.shared.save()
+        return self
+    }
     
     // helper func, closure only called after .success in init
     private func whenReady(_ block: @escaping WhenReadyCompletionBlock) {
@@ -187,48 +223,59 @@ public class Paywall {
         })
     }
     
-    private static func _present( on presentOn: UIViewController? = nil) {
+    private static func _present( on presentOn: UIViewController? = nil, presentationCompletion: (()->())? = nil) {
 
-        if (shared.paywallLoaded) {
-            
-            guard let delegate = delegate else {
-                fatalError("Yikes ... you need to set Paywall.delegate equal to a PaywallDelegate before doing anything fancy")
-            }
-            
-            guard let presentor = (presentOn ?? UIApplication.shared.keyWindow?.rootViewController) else {
-                fatalError("No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
-            }
-            
-            guard let vc = shared.paywallViewController else {
-                fatalError("Paywall's viewcontroller is nil!")
-            }
-            
-            guard let _ = shared.paywallResponse else {
-                fatalError("Paywall presented before API response was received")
-            }
-            
-            if !vc.isBeingPresented {
-                vc.willMove(toParent: nil)
-                vc.view.removeFromSuperview()
-                vc.removeFromParent()
-                vc.view.alpha = 1.0
-                vc.view.transform = .identity
-                vc.webview.scrollView.contentOffset = CGPoint.zero
-                delegate.willPresentPaywall?()
-                presentor.present(vc, animated: true, completion: {
-                    delegate.didPresentPaywall?()
-                })
-            }
-            
-        }
+
         
     }
     
     // MARK: Paywall Presentation
     
-    public static func present(on viewController: UIViewController? = nil) {
+    public static func present(on viewController: UIViewController? = nil, presentationCompletion: (()->())? = nil, failureCompletion: (() -> ())? = nil) {
         shared.whenReady {
-            _present(on: viewController)
+            if (shared.paywallLoaded) {
+                
+                guard let delegate = delegate else {
+                    Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate equal to a PaywallDelegate before doing anything fancy")
+                    failureCompletion?()
+                    return
+                }
+                
+                guard let presentor = (viewController ?? UIApplication.shared.keyWindow?.rootViewController) else {
+                    Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
+                    failureCompletion?()
+                    return
+                }
+                
+                guard let vc = shared.paywallViewController else {
+                    Logger.superwallDebug(string: "Paywall's viewcontroller is nil!")
+                    failureCompletion?()
+                    return
+                }
+                
+                guard let _ = shared.paywallResponse else {
+                    Logger.superwallDebug(string: "Paywall presented before API response was received")
+                    failureCompletion?()
+                    return
+                }
+                
+                if !vc.isBeingPresented {
+                    vc.willMove(toParent: nil)
+                    vc.view.removeFromSuperview()
+                    vc.removeFromParent()
+                    vc.view.alpha = 1.0
+                    vc.view.transform = .identity
+                    vc.webview.scrollView.contentOffset = CGPoint.zero
+                    delegate.willPresentPaywall?()
+                    presentor.present(vc, animated: true, completion: {
+                        delegate.didPresentPaywall?()
+                        presentationCompletion?()
+                    })
+                }
+                
+            } else {
+                failureCompletion?()
+            }
         }
     }
 }
