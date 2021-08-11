@@ -20,7 +20,7 @@ internal class Network {
         urlSession: URLSession = URLSession(configuration: .ephemeral),
 //        baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
         baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
-        // baseURL: URL = URL(string: "https://3000-scarlet-guppy-4bhnibfc.ws-us13.gitpod.io/api/v1/")!,
+//         baseURL: URL = URL(string: "https://3000-scarlet-guppy-4bhnibfc.ws-us13.gitpod.io/api/v1/")!,
         analyticsBaseURL: URL = URL(string: "https://collector.paywalrus.com/v1/")!) {
         
         self.urlSession = (urlSession)
@@ -29,7 +29,7 @@ internal class Network {
     }
 }
 
-struct EmptyResponse: Decodable {}
+
 
 extension Network {
     enum Error: LocalizedError {
@@ -86,48 +86,6 @@ extension Network {
     }
 }
 
-struct Substitution: Decodable {
-    var key: String
-    var value: String
-}
-
-public enum PaywallPresentationStyle: String, Decodable {
-    case sheet = "SHEET"
-    case modal = "MODAL"
-    case fullscreen = "FULLSCREEN"
-}
-
-public enum ProductType: String, Codable {
-    case primary = "primary"
-    case secondary = "secondary"
-    case tertiary = "tertiary"
-}
-
-struct Product: Codable {
-    var product: ProductType
-    var productId: String
-}
-
-struct PaywallResponse: Decodable {
-    var url: String
-    var substitutions: [Substitution]
-    var presentationStyle: PaywallPresentationStyle = .sheet
-    var backgroundColorHex: String? = nil
-    var products: [Product]
-    var paywallBackgroundColor: UIColor {
-        
-        if let s = backgroundColorHex {
-            return UIColor(hexString: s)
-        }
-        
-        return UIColor.darkGray
-    }
-    
-}
-
-struct PaywallRequest: Codable {
-    var appUserId: String
-}
 
 
 extension Network {
@@ -168,12 +126,3 @@ extension Network {
 }
 
 
-struct UserPropertiesRequest: Codable {
-    var apnsToken: String?
-    var fcmToken: String?
-    var email: String?
-    var phoneCountryCode: String?
-    var phone: String?
-    var firstName: String?
-    var lastName: String?
-}

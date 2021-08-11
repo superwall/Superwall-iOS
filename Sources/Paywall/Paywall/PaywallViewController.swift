@@ -173,21 +173,6 @@ extension PaywallViewController: WKScriptMessageHandler {
 
 
 
-struct TemplateSubstitutions: Codable {
-    var event_name: String
-    var substitutions: [String: String]
-}
-
-struct TemplateVariables: Codable {
-    var event_name: String
-    var variables: [String: String]
-}
-
-
-struct TemplateProducts: Codable {
-    var event_name: String
-    var products: [Product]
-}
 //
 //struct Events: Encodable {
 //    let shapes: [Content]
@@ -256,10 +241,10 @@ extension PaywallViewController {
             let subsEvent64String = subsUtf8str?.base64EncodedString() ?? ""
 
             
-            let varsEvent = [TemplateVariables(event_name: "template_variables", variables: ["price": "$89.99"])]
+            let varsEvent = [TemplateVariables(event_name: "template_variables", variables: ["primary": ["price": "$89.99", "period": "Year"]]) ]
             let varsEventData = try? JSONEncoder().encode(varsEvent)
             let varsEventString = varsEventData != nil ? String(data: varsEventData!, encoding: .utf8) ?? "{}" : "{}"
-            
+
             let varsUtf8str = varsEventString.data(using: .utf8)
             let varsEvent64String = varsUtf8str?.base64EncodedString() ?? ""
             

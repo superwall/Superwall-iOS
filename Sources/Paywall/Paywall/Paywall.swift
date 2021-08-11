@@ -3,7 +3,7 @@ import Foundation
 
 @objc public protocol PaywallDelegate: AnyObject {
     
-    func userDidInitiateCheckout(forProductWithId id: String, purchaseCompleted: () -> (), checkoutAbandoned: () -> (), errorOccurred: (NSError) -> ())
+    func userDidInitiateCheckout(forProductWithId productId: String, purchaseCompleted: () -> (), checkoutAbandoned: () -> (), errorOccurred: (NSError) -> ())
     func userDidInitiateRestore(restoreSucceeded: (Bool) -> ())
     
     @objc optional func willDismissPaywall()
@@ -231,31 +231,31 @@ public class Paywall {
     
     // MARK: Paywall Presentation
     
-    public static func present(on viewController: UIViewController? = nil, presentationCompletion: (()->())? = nil, failureCompletion: (() -> ())? = nil) {
+    public static func present(on viewController: UIViewController? = nil, presentationCompletion: (()->())? = nil, fallback: (() -> ())? = nil) {
         shared.whenReady {
             if (shared.paywallLoaded) {
                 
                 guard let delegate = delegate else {
                     Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate equal to a PaywallDelegate before doing anything fancy")
-                    failureCompletion?()
+                    fallback?()
                     return
                 }
                 
                 guard let presentor = (viewController ?? UIApplication.shared.keyWindow?.rootViewController) else {
                     Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
-                    failureCompletion?()
+                    fallback?()
                     return
                 }
                 
                 guard let vc = shared.paywallViewController else {
                     Logger.superwallDebug(string: "Paywall's viewcontroller is nil!")
-                    failureCompletion?()
+                    fallback?()
                     return
                 }
                 
                 guard let _ = shared.paywallResponse else {
                     Logger.superwallDebug(string: "Paywall presented before API response was received")
-                    failureCompletion?()
+                    fallback?()
                     return
                 }
                 
@@ -274,7 +274,7 @@ public class Paywall {
                 }
                 
             } else {
-                failureCompletion?()
+                fallback?()
             }
         }
     }
