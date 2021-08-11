@@ -6,19 +6,16 @@
 //
 
 import Foundation
-//import Logging
-
-internal func log(_ items: Any...) {
-//    if (Paywall.debugLogsEnabled){
-        print("Paywall Debug", items)
-//    }
-}
-
-
-import Foundation
 
 
 internal struct Logger {
+    
+    static func superwallDebug(_ items: Any...) {
+        //    if (Paywall.debugLogsEnabled){
+                print("[Superwall]", items)
+        //    }
+        }
+    
     static func superwallDebug(string: String, error: Swift.Error? = nil) {
         print("[Superwall] " + string)
         if error != nil {

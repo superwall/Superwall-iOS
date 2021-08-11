@@ -32,13 +32,13 @@ public class Paywall {
         return Store.shared.aliasId
     }
     
-    private(set) var paywallLoaded: Bool = false
+//    private(set) var paywallLoaded: Bool = false
     private(set) var paywallResponse: PaywallResponse?
     
     private(set) var paywallViewController: PaywallViewController?
     
-    private typealias WhenReadyCompletionBlock = () -> ()
-    private var whenReadyCompletionBlocks: [WhenReadyCompletionBlock] = []
+//    private typealias WhenReadyCompletionBlock = () -> ()
+//    private var whenReadyCompletionBlocks: [WhenReadyCompletionBlock] = []
     
 //    public typealias PurchaseDidEndCompletionBlock: () -> Bool
     
@@ -60,7 +60,7 @@ public class Paywall {
         
         setAliasIfNeeded()
         
-        fetchPaywall()
+//        fetchPaywall()
 
     }
     
@@ -71,34 +71,59 @@ public class Paywall {
         }
     }
 
-    private func fetchPaywall() {
+    public static func prereload(completion: @escaping (Bool) -> ()) {
+        
+        
         Network.shared.paywall { (result) in
             
             switch(result){
-            case .success(let response):
-                self.paywallResponse = response
-                DispatchQueue.main.async {
+            case .success(var response):
+                
+                
+                StoreKitManager.shared.get(productsWithIds: response.productIds) { productsById in
                     
-                    self.paywallViewController = PaywallViewController(paywallResponse: response, completion: self.paywallEventDidOccur)
                     
-                    if let v =  UIApplication.shared.keyWindow?.rootViewController {
-                        v.addChild(self.paywallViewController!)
-                        self.paywallViewController!.view.alpha = 0.01
-                        v.view.insertSubview(self.paywallViewController!.view, at: 0)
-                        self.paywallViewController!.view.transform = CGAffineTransform(translationX: 1000, y: 0)
-                        self.paywallViewController!.didMove(toParent: v)
+                    var variables = [Variables]()
+                    
+                    for p in response.products {
+                        if let appleProduct = productsById[p.productId] {
+                            variables.append(Variables(key: p.product.rawValue, value: appleProduct.eventData))
+                        }
                     }
                     
-                    self.whenReadyCompletionBlocks.forEach({$0()})
-                    self.whenReadyCompletionBlocks.removeAll()
+                    response.variables = variables
+                    
+                    DispatchQueue.main.async {
+                        
+                        shared.paywallViewController = PaywallViewController(paywallResponse: response, completion: shared.paywallEventDidOccur)
+                        
+                        if let v =  UIApplication.shared.keyWindow?.rootViewController {
+                            v.addChild(shared.paywallViewController!)
+                            shared.paywallViewController!.view.alpha = 0.01
+                            v.view.insertSubview(shared.paywallViewController!.view, at: 0)
+                            shared.paywallViewController!.view.transform = CGAffineTransform(translationX: 1000, y: 0)
+                            shared.paywallViewController!.didMove(toParent: v)
+                        }
+                        
+                        shared.paywallResponse = response
+                        
+//                        self.whenReadyCompletionBlocks.forEach({$0()})
+//                        self.whenReadyCompletionBlocks.removeAll()
+                        
+                        completion(true)
 
+                    }
+                    
                 }
+                
                 
                 break
             case .failure(let error):
-                fatalError(error.localizedDescription)
+//                fatalError(error.localizedDescription)
+                Logger.superwallDebug(string: "Failed to load paywall", error: error)
+                completion(false)
             }
-            self.paywallLoaded = true
+//            self.paywallLoaded = true
         }
     }
     
@@ -114,7 +139,7 @@ public class Paywall {
         
         if Store.shared.userId != userId { // refetch the paywall, we don't know if the alias was for an existing user
             shared.set(appUserID: userId)
-            shared.fetchPaywall()
+            shared.paywallViewController = nil
         } else {
             shared.set(appUserID: userId)
         }
@@ -128,7 +153,7 @@ public class Paywall {
         if Store.shared.appUserId != nil {
             Store.shared.clear()
             shared.setAliasIfNeeded()
-            shared.fetchPaywall()
+            shared.paywallViewController = nil
         }
         
         return shared
@@ -141,14 +166,14 @@ public class Paywall {
         return self
     }
     
-    // helper func, closure only called after .success in init
-    private func whenReady(_ block: @escaping WhenReadyCompletionBlock) {
-        if paywallLoaded {
-            block()
-        } else {
-            whenReadyCompletionBlocks.append(block)
-        }
-    }
+//    // helper func, closure only called after .success in init
+//    private func whenReady(_ block: @escaping WhenReadyCompletionBlock) {
+//        if paywallLoaded {
+//            block()
+//        } else {
+//            whenReadyCompletionBlocks.append(block)
+//        }
+//    }
     
     // we can make this overridable one day?
     private func paywallEventDidOccur(result: PaywallPresentationResult) {
@@ -231,21 +256,44 @@ public class Paywall {
     
     // MARK: Paywall Presentation
     
-    public static func present(on viewController: UIViewController? = nil, presentationCompletion: (()->())? = nil, fallback: (() -> ())? = nil) {
-        shared.whenReady {
-            if (shared.paywallLoaded) {
+    public static func present(on viewController: UIViewController? = nil, cached: Bool = false, presentationCompletion: (()->())? = nil, fallback: (() -> ())? = nil) {
+        
+        guard let delegate = delegate else {
+            Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate equal to a PaywallDelegate before doing anything fancy")
+            fallback?()
+            return
+        }
+        
+        guard let presentor = (viewController ?? UIApplication.shared.keyWindow?.rootViewController) else {
+            Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
+            fallback?()
+            return
+        }
+        
+        let presentationBlock: ((PaywallViewController) -> ()) = { vc in
+            if !vc.isBeingPresented {
+                vc.willMove(toParent: nil)
+                vc.view.removeFromSuperview()
+                vc.removeFromParent()
+                vc.view.alpha = 1.0
+                vc.view.transform = .identity
+                vc.webview.scrollView.contentOffset = CGPoint.zero
+                delegate.willPresentPaywall?()
+                presentor.present(vc, animated: true, completion: {
+                    delegate.didPresentPaywall?()
+                    presentationCompletion?()
+                })
+            }
+        }
+        
+        if let vc = shared.paywallViewController, cached {
+            presentationBlock(vc)
+            return
+        }
+        
+        prereload() { success in
+            if (success) {
                 
-                guard let delegate = delegate else {
-                    Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate equal to a PaywallDelegate before doing anything fancy")
-                    fallback?()
-                    return
-                }
-                
-                guard let presentor = (viewController ?? UIApplication.shared.keyWindow?.rootViewController) else {
-                    Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
-                    fallback?()
-                    return
-                }
                 
                 guard let vc = shared.paywallViewController else {
                     Logger.superwallDebug(string: "Paywall's viewcontroller is nil!")
@@ -259,23 +307,13 @@ public class Paywall {
                     return
                 }
                 
-                if !vc.isBeingPresented {
-                    vc.willMove(toParent: nil)
-                    vc.view.removeFromSuperview()
-                    vc.removeFromParent()
-                    vc.view.alpha = 1.0
-                    vc.view.transform = .identity
-                    vc.webview.scrollView.contentOffset = CGPoint.zero
-                    delegate.willPresentPaywall?()
-                    presentor.present(vc, animated: true, completion: {
-                        delegate.didPresentPaywall?()
-                        presentationCompletion?()
-                    })
-                }
+                presentationBlock(vc)
                 
             } else {
                 fallback?()
             }
         }
+           
+        
     }
 }

@@ -115,7 +115,7 @@ internal class PaywallViewController: UIViewController {
 
             webview.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             webview.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            webview.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 0),
+            webview.topAnchor.constraint(equalTo: view.topAnchor),
             webview.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
         ])
  
@@ -131,7 +131,7 @@ internal class PaywallViewController: UIViewController {
         completion?(completionResult)
         
         if completion == nil {
-            log("[Internal] Warning: Completion not set")
+            Logger.superwallDebug(string: "[Internal] Warning: Completion not set")
         }
         
     }
@@ -140,34 +140,34 @@ internal class PaywallViewController: UIViewController {
 
 extension PaywallViewController: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        log("userContentController - start")
+        Logger.superwallDebug(string: "userContentController - start")
         
         guard let bodyString = message.body as?  String else {
-            log("unable to convert WKScriptMessage.body to string")
+            Logger.superwallDebug("unable to convert WKScriptMessage.body to string")
             return
         }
         
-        log("body string", bodyString)
+        Logger.superwallDebug("body string", bodyString)
         
         guard let bodyData = bodyString.data(using: .utf8) else {
-            log("unable to convert bodyString to body data")
+            Logger.superwallDebug(string: "unable to convert bodyString to body data")
             return
         }
         
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         guard let wrappedPaywallEvents = try? decoder.decode(WrappedPaywallEvents.self, from: bodyData) else {
-            log("failed to parse bodyString to WrappedPaywallEvent")
+            Logger.superwallDebug(string: "failed to parse bodyString to WrappedPaywallEvent")
             return
         }
         
-        log("body struct", wrappedPaywallEvents)
+        Logger.superwallDebug("body struct", wrappedPaywallEvents)
         
         let events = wrappedPaywallEvents.payload.events
 
         events.forEach({ self.handleEvent(event: $0) })
         
-        log("userContentController - end")
+        Logger.superwallDebug(string: "userContentController - end")
     }
 }
 
@@ -222,45 +222,15 @@ extension PaywallViewController: WKScriptMessageHandler {
 extension PaywallViewController {
     
     func handleEvent(event: PaywallEvent) {
-        log("handleEvent", event)
+        Logger.superwallDebug("handleEvent", event)
     
         switch (event) {
         case .onReady:
-        
-            let subs = self._paywallResponse.substitutions.reduce([String: String]()) { (dict, sub) -> [String: String] in
-                var dict = dict
-                dict[sub.key] = sub.value
-                return dict 
-            }
-            
-            let subsEvent = [TemplateSubstitutions(event_name: "template_substitutions", substitutions: subs)]
-            let subsEventData = try? JSONEncoder().encode(subsEvent)
-            let subsEventString = subsEventData != nil ? String(data: subsEventData!, encoding: .utf8) ?? "{}" : "{}"
-            
-            let subsUtf8str = subsEventString.data(using: .utf8)
-            let subsEvent64String = subsUtf8str?.base64EncodedString() ?? ""
-
-            
-            let varsEvent = [TemplateVariables(event_name: "template_variables", variables: ["primary": ["price": "$89.99", "period": "Year"]]) ]
-            let varsEventData = try? JSONEncoder().encode(varsEvent)
-            let varsEventString = varsEventData != nil ? String(data: varsEventData!, encoding: .utf8) ?? "{}" : "{}"
-
-            let varsUtf8str = varsEventString.data(using: .utf8)
-            let varsEvent64String = varsUtf8str?.base64EncodedString() ?? ""
-            
-            let productsEvent = [TemplateProducts(event_name: "products", products: self._paywallResponse.products)]
-            let productsEventData = try? JSONEncoder().encode(productsEvent)
-            let productsEventString = productsEventData != nil ? String(data: productsEventData!, encoding: .utf8) ?? "{}" : "{}"
-            
-            let productsUtf8str = productsEventString.data(using: .utf8)
-            let productsEvent64String = productsUtf8str?.base64EncodedString() ?? ""
 
             // TODO: Jake, I couldn't figure out how to encode these as an array, ideally we would have
             // [TemplateSubstitutions,TemplateVariables] and only call accept64 once.
             let scriptSrc = """
-                window.paywall.accept64('\(subsEvent64String)');
-                window.paywall.accept64('\(varsEvent64String)');
-                window.paywall.accept64('\(productsEvent64String)'); 
+                window.paywall.accept64('\(self._paywallResponse.templateEventsBase64String)');
             """
             
             print("sriptSrc", scriptSrc)

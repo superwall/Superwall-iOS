@@ -7,6 +7,7 @@
 
 import UIKit
 import Foundation
+import StoreKit
 
 struct EmptyResponse: Decodable {}
 
@@ -18,10 +19,14 @@ struct PaywallRequest: Codable {
 
 struct PaywallResponse: Decodable {
     var url: String
-    var substitutions: [Substitution]
+    
     var presentationStyle: PaywallPresentationStyle = .sheet
     var backgroundColorHex: String? = nil
+    
+    var substitutions: [Substitution]
     var products: [Product]
+    var variables: [Variables]? = []
+    
     var paywallBackgroundColor: UIColor {
         
         if let s = backgroundColorHex {
@@ -31,11 +36,60 @@ struct PaywallResponse: Decodable {
         return UIColor.darkGray
     }
     
+    var productIds: [String] {
+        return products.map { $0.productId }
+    }
+
+    var templateSubstitutions: TemplateSubstitutions {
+        let subs = self.substitutions.reduce([String: String]()) { (dict, sub) -> [String: String] in
+            var dict = dict
+            dict[sub.key] = sub.value
+            return dict
+        }
+    
+        return TemplateSubstitutions(event_name: "template_substitutions", substitutions: subs)
+    }
+    
+    var templateVariables: TemplateVariables {
+        let variables = variables ?? []
+        let vars = variables.reduce([String: [String:String]]()) { (dict, variable) -> [String: [String:String]] in
+            var dict = dict
+            dict[variable.key] = variable.value
+            return dict
+        }
+        
+        return TemplateVariables(event_name: "template_variables", variables: vars)
+    }
+    
+    var templateProducts: TemplateProducts {
+        return TemplateProducts(event_name: "products", products: products)
+    }
+    
+    var templateEventsBase64String: String {
+
+        let encodedStrings = [encodedEventString(templateSubstitutions), encodedEventString(templateProducts), encodedEventString(templateVariables)]
+        let string = "[" + encodedStrings.joined(separator: ",") + "]"
+        
+        let utf8str = string.data(using: .utf8)
+        return utf8str?.base64EncodedString() ?? ""
+    }
+    
+    private func encodedEventString<T: Codable>(_ input: T) -> String {
+        let data = try? JSONEncoder().encode(input)
+        return data != nil ? String(data: data!, encoding: .utf8) ?? "{}" : "{}"
+    
+    }
+    
 }
 
 struct Substitution: Decodable {
     var key: String
     var value: String
+}
+
+struct Variables: Decodable {
+    var key: String
+    var value: [String: String]
 }
 
 public enum PaywallPresentationStyle: String, Decodable {
@@ -47,14 +101,13 @@ public enum PaywallPresentationStyle: String, Decodable {
 struct Product: Codable {
     var product: ProductType
     var productId: String
-    var price: String? = "$89.99"
 }
 
 
 public enum ProductType: String, Codable {
-    case primary = "primary"
-    case secondary = "secondary"
-    case tertiary = "tertiary"
+    case primary
+    case secondary
+    case tertiary
 }
 
 struct TemplateSubstitutions: Codable {

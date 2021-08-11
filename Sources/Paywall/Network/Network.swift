@@ -64,13 +64,12 @@ extension Network {
         let task = self.urlSession.dataTask(with: request) { (data, response, error) in
             do {
                 guard let unWrappedData = data else { return completion(.failure(error ?? Error.unknown))}
-                print(String(data: unWrappedData, encoding: .utf8))
                 
-                if let response = response as? HTTPURLResponse, response.statusCode == 401
-                {
-                    Logger.superwallDebug(string: "Unable to authenticate, please make sure your ShareThatToClientId is correct.")
+                if let response = response as? HTTPURLResponse, response.statusCode == 401 {
+                    Logger.superwallDebug(string: "Unable to authenticate, please make sure your Superwall API KEY is correct.")
                     return completion(.failure(Error.notAuthenticated))
                 }
+                
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let response = try decoder.decode(ResponseType.self, from: unWrappedData)
