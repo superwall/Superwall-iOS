@@ -121,7 +121,10 @@ public class Paywall {
             case .failure(let error):
 //                fatalError(error.localizedDescription)
                 Logger.superwallDebug(string: "Failed to load paywall", error: error)
-                completion(false)
+                
+                DispatchQueue.main.async {
+                    completion(false)
+                }
             }
 //            self.paywallLoaded = true
         }
