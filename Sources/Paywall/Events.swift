@@ -32,10 +32,6 @@ public struct PayloadEvents: Decodable {
     var events: Array<PaywallEvent>
 }
 
-public struct InitiatePurchaseParameters: Codable {
-    var productId: String
-    
-}
 
 
 public enum PaywallEvent: Decodable {
@@ -44,7 +40,8 @@ public enum PaywallEvent: Decodable {
     case restore
     case openUrl(url: URL)
     case openDeepLink(url: URL)
-    case initiatePurchase(purchase: InitiatePurchaseParameters)
+    case purchase(product: ProductType)
+    case custom(data: String)
 }
 
 extension PaywallEvent {
@@ -55,15 +52,17 @@ extension PaywallEvent {
         case restore
         case openUrl = "open_url"
         case openDeepLink
-        case initiatePurchase
+        case purchase
+        case custom
     }
     
     // Everyone write to eventName, other may use the remaining keys
     private enum CodingKeys: String, CodingKey {
         case eventName
-        case purchase
+        case product
         case url
         case link
+        case data
     }
 
     enum PaywallEventError: Error {
@@ -80,9 +79,9 @@ extension PaywallEvent {
             case .onReady:
                 self = .onReady
                 return
-            case .initiatePurchase:
-                if let purchase = try? values.decode(InitiatePurchaseParameters.self, forKey: .purchase){
-                    self = .initiatePurchase(purchase: purchase)
+            case .purchase:
+                if let product = try? values.decode(ProductType.self, forKey: .product){
+                    self = .purchase(product: product)
                     return
                 }
             case .restore:
@@ -98,7 +97,13 @@ extension PaywallEvent {
                     self = .openDeepLink(url: url)
                     return
                 }
+            case .custom:
+                if let dataString = try? values.decode(String.self, forKey: .data) {
+                    self = .custom(data: dataString)
+                    return
+                }
             }
+            
         }
         throw PaywallEventError.decoding("Whoops! \(dump(values))")
     }
