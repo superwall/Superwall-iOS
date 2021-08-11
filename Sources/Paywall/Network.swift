@@ -19,7 +19,7 @@ internal class Network {
     public init(
         urlSession: URLSession = URLSession(configuration: .ephemeral),
 //        baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
-        baseURL: URL = URL(string: "https://3000-copper-boar-y47smnbf.ws-us13.gitpod.io/api/v1/")!,
+        baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
         analyticsBaseURL: URL = URL(string: "https://collector.paywalrus.com/v1/")!) {
         
         self.urlSession = (urlSession)

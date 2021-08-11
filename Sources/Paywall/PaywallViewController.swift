@@ -194,7 +194,7 @@ extension PaywallViewController {
             let subs = self._paywallResponse.substitutions.reduce([String: String]()) { (dict, sub) -> [String: String] in
                 var dict = dict
                 dict[sub.key] = sub.value
-                return dict
+                return dict 
             }
             
             let subsEvent = TemplateSubstitutions(event_name: "template_substitutions", substitutions: subs)
