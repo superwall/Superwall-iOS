@@ -171,6 +171,8 @@ extension PaywallViewController: WKScriptMessageHandler {
     }
 }
 
+
+
 struct TemplateSubstitutions: Codable {
     var event_name: String
     var substitutions: [String: String]
@@ -180,6 +182,55 @@ struct TemplateVariables: Codable {
     var event_name: String
     var variables: [String: String]
 }
+
+
+struct TemplateProducts: Codable {
+    var event_name: String
+    var products: [Product]
+}
+//
+//struct Events: Encodable {
+//    let shapes: [Content]
+//
+//    enum Content: Encodable {
+//        case subs(TemplateSubstitutions)
+//        case vars(TemplateVariables)
+//
+//        var unassociated: Unassociated {
+//            switch self {
+//            case .subs:    return .subs
+//            case .vars: return .vars
+//            }
+//        }
+//
+//
+//
+//        func encode(to encoder: Encoder) throws {
+//            var container = encoder.container(keyedBy: CodingKeys.self)
+//
+//            switch self {
+//            case .subs(let square):       try container.encode(square, forKey: .attributes)
+//            case .vars(let rectangle): try container.encode(rectangle, forKey: .attributes)
+//            }
+//
+//            try container.encode(unassociated.rawValue, forKey: .type)
+//        }
+//
+//        enum Unassociated: String {
+//            case subs
+//            case vars
+//        }
+//
+//        private enum CodingKeys: String, CodingKey {
+//            case eve
+//            case type
+//        }
+//    }
+//}
+
+
+
+
 
 // MARK: Event Handler
 
@@ -197,17 +248,34 @@ extension PaywallViewController {
                 return dict 
             }
             
-            let subsEvent = TemplateSubstitutions(event_name: "template_substitutions", substitutions: subs)
+            let subsEvent = [TemplateSubstitutions(event_name: "template_substitutions", substitutions: subs)]
             let subsEventData = try? JSONEncoder().encode(subsEvent)
             let subsEventString = subsEventData != nil ? String(data: subsEventData!, encoding: .utf8) ?? "{}" : "{}"
             
-            let varsEvent = TemplateVariables(event_name: "template_variables", variables: ["price": "$89.99"])
+            let subsUtf8str = subsEventString.data(using: .utf8)
+            let subsEvent64String = subsUtf8str?.base64EncodedString() ?? ""
+
+            
+            let varsEvent = [TemplateVariables(event_name: "template_variables", variables: ["price": "$89.99"])]
             let varsEventData = try? JSONEncoder().encode(varsEvent)
             let varsEventString = varsEventData != nil ? String(data: varsEventData!, encoding: .utf8) ?? "{}" : "{}"
             
+            let varsUtf8str = varsEventString.data(using: .utf8)
+            let varsEvent64String = varsUtf8str?.base64EncodedString() ?? ""
+            
+            let productsEvent = [TemplateProducts(event_name: "products", products: self._paywallResponse.products)]
+            let productsEventData = try? JSONEncoder().encode(productsEvent)
+            let productsEventString = productsEventData != nil ? String(data: productsEventData!, encoding: .utf8) ?? "{}" : "{}"
+            
+            let productsUtf8str = productsEventString.data(using: .utf8)
+            let productsEvent64String = productsUtf8str?.base64EncodedString() ?? ""
+
+            // TODO: Jake, I couldn't figure out how to encode these as an array, ideally we would have
+            // [TemplateSubstitutions,TemplateVariables] and only call accept64 once.
             let scriptSrc = """
-                window.paywall.accept(JSON.parse('\(subsEventString)'));
-                window.paywall.accept(JSON.parse('\(varsEventString)'));
+                window.paywall.accept64('\(subsEvent64String)');
+                window.paywall.accept64('\(varsEvent64String)');
+                window.paywall.accept64('\(productsEvent64String)'); 
             """
             
             print("sriptSrc", scriptSrc)
@@ -261,6 +329,14 @@ extension PaywallViewController {
             alert.addAction(cancelAction)
             complete(.initiateResotre)
             self.present(alert, animated: true)
+        case .purchase(product: let productName):
+            let product = self._paywallResponse.products.first { (product) -> Bool in
+                return product.product == productName
+            }
+            if product != nil {
+                complete(.initiatePurchase(productId: product!.productId))
+            }
+            break;
         default:
             break
         }

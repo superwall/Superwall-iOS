@@ -20,6 +20,7 @@ internal class Network {
         urlSession: URLSession = URLSession(configuration: .ephemeral),
 //        baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
         baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
+        // baseURL: URL = URL(string: "https://3000-scarlet-guppy-4bhnibfc.ws-us13.gitpod.io/api/v1/")!,
         analyticsBaseURL: URL = URL(string: "https://collector.paywalrus.com/v1/")!) {
         
         self.urlSession = (urlSession)
@@ -63,6 +64,7 @@ extension Network {
         let task = self.urlSession.dataTask(with: request) { (data, response, error) in
             do {
                 guard let unWrappedData = data else { return completion(.failure(error ?? Error.unknown))}
+                print(String(data: unWrappedData, encoding: .utf8))
                 
                 if let response = response as? HTTPURLResponse, response.statusCode == 401
                 {
@@ -95,12 +97,23 @@ public enum PaywallPresentationStyle: String, Decodable {
     case fullscreen = "FULLSCREEN"
 }
 
+public enum ProductType: String, Codable {
+    case primary = "primary"
+    case secondary = "secondary"
+    case tertiary = "tertiary"
+}
+
+struct Product: Codable {
+    var product: ProductType
+    var productId: String
+}
+
 struct PaywallResponse: Decodable {
     var url: String
     var substitutions: [Substitution]
     var presentationStyle: PaywallPresentationStyle = .sheet
     var backgroundColorHex: String? = nil
-    
+    var products: [Product]
     var paywallBackgroundColor: UIColor {
         
         if let s = backgroundColorHex {
