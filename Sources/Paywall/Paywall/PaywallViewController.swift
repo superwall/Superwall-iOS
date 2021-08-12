@@ -231,6 +231,7 @@ extension PaywallViewController {
             // [TemplateSubstitutions,TemplateVariables] and only call accept64 once.
             let scriptSrc = """
                 window.paywall.accept64('\(self._paywallResponse.templateEventsBase64String)');
+                window.paywall.accept64('\(self._paywallResponse.paywalljsEvent)');
             """
             
             print("sriptSrc", scriptSrc)
