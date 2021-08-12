@@ -1,9 +1,10 @@
 import UIKit
 import Foundation
+import StoreKit
 
 @objc public protocol PaywallDelegate: AnyObject {
     
-    func userDidInitiateCheckout(forProductWithId productId: String, purchaseCompleted: () -> (), checkoutAbandoned: () -> (), errorOccurred: (NSError) -> ())
+    func userDidInitiateCheckout(for product: SKProduct, purchaseCompleted: @escaping () -> (), checkoutAbandoned: @escaping () -> (), errorOccurred: @escaping  (NSError) -> ())
     func userDidInitiateRestore(restoreSucceeded: (Bool) -> ())
     
     @objc optional func willDismissPaywall()
@@ -36,6 +37,8 @@ public class Paywall {
     private(set) var paywallResponse: PaywallResponse?
     
     private(set) var paywallViewController: PaywallViewController?
+    
+    private(set) var productsById: [String: SKProduct] = [String: SKProduct]()
     
 //    private typealias WhenReadyCompletionBlock = () -> ()
 //    private var whenReadyCompletionBlocks: [WhenReadyCompletionBlock] = []
@@ -88,6 +91,7 @@ public class Paywall {
                     for p in response.products {
                         if let appleProduct = productsById[p.productId] {
                             variables.append(Variables(key: p.product.rawValue, value: appleProduct.eventData))
+                            shared.productsById[p.productId] = appleProduct
                         }
                     }
                     
@@ -194,12 +198,15 @@ public class Paywall {
 //            })
             
             
-            Paywall.delegate?.userDidInitiateCheckout(forProductWithId: productId, purchaseCompleted: {
-                _purchaseDidSucceed(forProductWithId: productId)
+            // TODO: make sure this can NEVER happen
+            guard let product = productsById[productId] else { return }
+            
+            Paywall.delegate?.userDidInitiateCheckout(for: product, purchaseCompleted: {
+                self._purchaseDidSucceed(for: product)
             }, checkoutAbandoned: {
-                _checkoutWasAbandoned(forProductWithId: productId)
+                self._checkoutWasAbandoned(for: product)
             }, errorOccurred: { error in
-                _purchaseErrorDidOccur(error: error, forProductWithId: productId)
+                self._purchaseErrorDidOccur(error: error, for: product)
             })
         case .initiateResotre:
             Paywall.delegate?.userDidInitiateRestore(restoreSucceeded: { success in
@@ -217,17 +224,17 @@ public class Paywall {
     }
     
     // purchase callbacks
-    private func _purchaseDidSucceed(forProductWithId productId: String) {
+    private func _purchaseDidSucceed(for product: SKProduct) {
         // TODO: ANALYTICS
         _dismiss()
     }
     
-    private func _purchaseErrorDidOccur(error: NSError, forProductWithId productId: String) {
+    private func _purchaseErrorDidOccur(error: NSError, for product: SKProduct) {
         // TODO: ANALYTICS
         
     }
     
-    private func _checkoutWasAbandoned(forProductWithId productId: String) {
+    private func _checkoutWasAbandoned(for product: SKProduct) {
         // TODO: ANALYTICS
         
     }
