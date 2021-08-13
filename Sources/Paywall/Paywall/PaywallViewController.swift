@@ -10,16 +10,81 @@ import UIKit
 import Foundation
 import SafariServices
 
+protocol PaywallViewControllerDelegate: AnyObject {
+    func userDismissedPaywallWhileLoading()
+}
+
 internal class PaywallViewController: UIViewController {
     
     // Don't touch my private parts.
     
     private var _paywallResponse: PaywallResponse
+    
     public var completion: ((PaywallPresentationResult) -> Void)?
+    
+    weak var delegate: PaywallViewControllerDelegate? = nil
     
     var presentationStyle: PaywallPresentationStyle {
         return _paywallResponse.presentationStyle
     }
+    
+    internal enum LoadingState {
+        case unknown
+        case loading
+        case ready
+    }
+    
+    var loadingState: LoadingState  = .unknown {
+        didSet {
+            
+            
+            if loadingState == .loading {
+                DispatchQueue.main.async { [weak self] in
+                    
+                    self?.shimmerView.isShimmering = true
+                    self?.shimmerView.alpha = 0.0
+                    self?.shimmerView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
+                    
+                    UIView.animate(withDuration: 0.618, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
+                        self?.webview.alpha = 0.0
+                        self?.shimmerView.alpha = 1.0
+                        self?.webview.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)//.scaledBy(x: 0.97, y: 0.97)
+                        self?.shimmerView.transform = .identity
+                    }, completion: { [weak self] _ in
+                        self?.modalPresentationStyle = .formSheet
+                    })
+                    
+                }
+                
+
+                
+                
+            } else if loadingState == .ready {
+                DispatchQueue.main.async { [weak self] in
+                    // delay to prevent flicker
+                    self?.webview.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
+                    UIView.animate(withDuration: 1.0, delay: 0.25, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
+                        self?.webview.alpha = 1.0
+                        self?.webview.transform = .identity
+                        self?.shimmerView.alpha = 0.0
+                    }, completion: { [weak self] _ in
+                        self?.shimmerView.isShimmering = false
+                    })
+                    
+                }
+            }
+        }
+    }
+    
+//    lazy var button: UIButton = {
+//        let b = UIButton()
+//        b.setTitle("Done", for: .normal)
+//        b.translatesAutoresizingMaskIntoConstraints = false
+//        b.addTarget(self, action: #selector(pressedPurchaseButton), for: .primaryActionTriggered)
+//        b.isHidden = false
+//        return b
+//    }()
+//
     
     init?(paywallResponse: PaywallResponse, completion: ((PaywallPresentationResult) -> Void)? = nil) {
         self._paywallResponse =  paywallResponse
@@ -29,15 +94,21 @@ internal class PaywallViewController: UIViewController {
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            let url = URL(string: self._paywallResponse.url)
-            self.webview.load(URLRequest(url: url!))
+            
             self.webview.alpha = 0.0
             self.view.backgroundColor = paywallResponse.paywallBackgroundColor
+            
+            if let url = URL(string: self._paywallResponse.url) {
+                self.webview.load(URLRequest(url: url))
+                self.loadingState = .loading
+            }
         }
+        
+
         
         switch presentationStyle {
         case .sheet:
-            break
+            modalPresentationStyle = .formSheet
         case .modal:
             modalPresentationStyle = .formSheet
         case .fullscreen:
@@ -72,7 +143,7 @@ internal class PaywallViewController: UIViewController {
         wv.scrollView.minimumZoomScale = 1.0
         wv.scrollView.backgroundColor = .clear
         wv.scrollView.isOpaque = false
-        wv.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)//.scaledBy(x: 0.97, y: 0.97)
+       
 
        return wv
    }()
@@ -136,6 +207,19 @@ internal class PaywallViewController: UIViewController {
         
     }
     
+    func presentAlert(title: String? = nil, message: String? = nil) {
+        
+        if presentedViewController == nil {
+            let vc = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            let action = UIAlertAction(title: "Okay", style: .default, handler: nil)
+            vc.addAction(action)
+            present(vc, animated: true, completion: { [weak self] in
+                self?.loadingState = .ready
+            })
+        }
+        
+    }
+    
 }
 
 extension PaywallViewController: WKScriptMessageHandler {
@@ -171,52 +255,6 @@ extension PaywallViewController: WKScriptMessageHandler {
     }
 }
 
-
-
-//
-//struct Events: Encodable {
-//    let shapes: [Content]
-//
-//    enum Content: Encodable {
-//        case subs(TemplateSubstitutions)
-//        case vars(TemplateVariables)
-//
-//        var unassociated: Unassociated {
-//            switch self {
-//            case .subs:    return .subs
-//            case .vars: return .vars
-//            }
-//        }
-//
-//
-//
-//        func encode(to encoder: Encoder) throws {
-//            var container = encoder.container(keyedBy: CodingKeys.self)
-//
-//            switch self {
-//            case .subs(let square):       try container.encode(square, forKey: .attributes)
-//            case .vars(let rectangle): try container.encode(rectangle, forKey: .attributes)
-//            }
-//
-//            try container.encode(unassociated.rawValue, forKey: .type)
-//        }
-//
-//        enum Unassociated: String {
-//            case subs
-//            case vars
-//        }
-//
-//        private enum CodingKeys: String, CodingKey {
-//            case eve
-//            case type
-//        }
-//    }
-//}
-
-
-
-
-
 // MARK: Event Handler
 
 extension PaywallViewController {
@@ -235,23 +273,14 @@ extension PaywallViewController {
             """
             
             print("sriptSrc", scriptSrc)
-            webview.evaluateJavaScript(scriptSrc) { (result, error) in
+            webview.evaluateJavaScript(scriptSrc) { [weak self] (result, error) in
                 if let result = result {
                     print("Label is updated with message: \(result)")
                 } else if let error = error {
                     print("An error occurred: \(error)")
                 }
 
-                DispatchQueue.main.async {
-                    UIView.animate(withDuration: 1.0, delay: 0.6, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
-                        self?.webview.alpha = 1.0
-                        self?.webview.transform = .identity
-                        self?.shimmerView.alpha = 0.0
-//                        self?.shimmerView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
-                    }, completion: { [weak self] _ in
-                        self?.shimmerView.isShimmering = false
-                    })
-                }
+                self?.loadingState = .ready
                 
             }
             
@@ -279,12 +308,7 @@ extension PaywallViewController {
 
         case .restore:
             UIImpactFeedbackGenerator().impactOccurred()
-            let alert = UIAlertController.init(title: "Restore", message: "You selected to restore purchase", preferredStyle: .alert)
-            let cancelAction = UIAlertAction(title: "OK",
-                    style: .cancel, handler: nil)
-            alert.addAction(cancelAction)
-            complete(.initiateResotre)
-            self.present(alert, animated: true)
+            complete(.initiateRestore)
         case .purchase(product: let productName):
             let product = self._paywallResponse.products.first { (product) -> Bool in
                 return product.product == productName
@@ -293,6 +317,9 @@ extension PaywallViewController {
                 complete(.initiatePurchase(productId: product!.productId))
             }
             break;
+            
+        case .custom(data: let string):
+            complete(.custom(string: string))
         default:
             break
         }

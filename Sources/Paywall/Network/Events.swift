@@ -112,7 +112,8 @@ extension PaywallEvent {
 public enum PaywallPresentationResult {
     case closed
     case initiatePurchase(productId: String)
-    case initiateResotre
+    case initiateRestore
+    case custom(string: String)
     case openedURL(url: URL)
     case openedDeepLink(url: URL)
 }

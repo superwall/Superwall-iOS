@@ -4,8 +4,10 @@ import StoreKit
 
 @objc public protocol PaywallDelegate: AnyObject {
     
-    func userDidInitiateCheckout(for product: SKProduct, purchaseCompleted: @escaping () -> (), checkoutAbandoned: @escaping () -> (), errorOccurred: @escaping  (NSError) -> ())
-    func userDidInitiateRestore(restoreSucceeded: (Bool) -> ())
+    func userDidInitiateCheckout(for product: SKProduct)
+    func shouldTryToRestore()
+    
+    @objc optional func didReceiveCustomEvent(withName name: String)
     
     @objc optional func willDismissPaywall()
     @objc optional func willPresentPaywall()
@@ -18,7 +20,7 @@ import StoreKit
 
 }
 
-public class Paywall {
+public class Paywall: NSObject {
     
     public static var debugLogsEnabled: Bool = false
     public static var shared: Paywall = Paywall(apiKey: nil)
@@ -51,6 +53,8 @@ public class Paywall {
     
     private init(apiKey: String?, userId: String? = nil) {
         
+        super.init()
+        
         if apiKey == nil {
             return
         }
@@ -63,8 +67,8 @@ public class Paywall {
         
         setAliasIfNeeded()
         
-//        fetchPaywall()
-
+        SKPaymentQueue.default().add(self)
+        
     }
     
     private func setAliasIfNeeded() {
@@ -189,72 +193,60 @@ public class Paywall {
         case .closed:
             _dismiss()
         case .initiatePurchase(let productId):
-//            Paywall.delegate?.userDidInitiateCheckout(forProductWithId: productId, purchaseSucceeded: { success in
-//                if success {
-//                    _purchaseDidSucceed(forProductWithId: productId)
-//                } else {
-//                    _purchaseWasAbandoned(forProductWithId: productId)
-//                }
-//            })
-            
-            
             // TODO: make sure this can NEVER happen
             guard let product = productsById[productId] else { return }
-            
-            Paywall.delegate?.userDidInitiateCheckout(for: product, purchaseCompleted: {
-                self._purchaseDidSucceed(for: product)
-            }, checkoutAbandoned: {
-                self._checkoutWasAbandoned(for: product)
-            }, errorOccurred: { error in
-                self._purchaseErrorDidOccur(error: error, for: product)
-            })
-        case .initiateResotre:
-            Paywall.delegate?.userDidInitiateRestore(restoreSucceeded: { success in
-                if success {
-                    _restoreDidSucceed()
-                } else {
-                    _restoreDidFail()
-                }
-            })
+            paywallViewController?.loadingState = .loading
+            Paywall.delegate?.userDidInitiateCheckout(for: product)
+        case .initiateRestore:
+            Paywall.delegate?.shouldTryToRestore()
         case .openedURL(let url):
             Paywall.delegate?.willOpenURL?(url: url)
         case .openedDeepLink(let url):
             Paywall.delegate?.willOpenDeepLink?(url: url)
+        case .custom(let string):
+            Paywall.delegate?.didReceiveCustomEvent?(withName: string)
         }
     }
     
     // purchase callbacks
-    private func _purchaseDidSucceed(for product: SKProduct) {
+    
+    private func _transactionDidBegin(for product: SKProduct) {
+        // TODO: ANALYTICS
+        paywallViewController?.loadingState = .loading
+    }
+
+    
+    private func _transactionDidSucceed(for product: SKProduct) {
         // TODO: ANALYTICS
         _dismiss()
     }
     
-    private func _purchaseErrorDidOccur(error: NSError, for product: SKProduct) {
+    private func _transactionErrorDidOccur(error: SKError?, for product: SKProduct) {
         // TODO: ANALYTICS
-        
+        paywallViewController?.presentAlert(title: "Please try again", message: error?.localizedDescription ?? "")
     }
     
-    private func _checkoutWasAbandoned(for product: SKProduct) {
+    private func _transactionWasAbandoned(for product: SKProduct) {
         // TODO: ANALYTICS
-        
+        paywallViewController?.loadingState = .ready
     }
-
-    // restore callbacks
-    private func _restoreDidSucceed() {
+    
+    private func _transactionWasRestored() {
         // TODO: ANALYTICS
         _dismiss()
     }
-
-    private func _restoreDidFail() {
-        // TODO: ANALYTICS
-        
-    }
-
     
-    private func _dismiss() {
+    // if a parent needs to approve the purchase
+    private func _transactionWasDeferred() {
+        // TODO: ANALYTICS
+        paywallViewController?.presentAlert(title: "Waiting for Approval", message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.")
+    }
+    
+    private func _dismiss(_ completion: (()->())? = nil) {
         Paywall.delegate?.willDismissPaywall?()
         paywallViewController?.dismiss(animated: true, completion: {
             Paywall.delegate?.didDismissPaywall?()
+            completion?()
         })
     }
     
@@ -327,3 +319,54 @@ public class Paywall {
         
     }
 }
+
+
+
+extension Paywall: SKPaymentTransactionObserver {
+ 
+  public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+    for transaction in transactions {
+        guard let product = productsById[transaction.payment.productIdentifier] else { return }
+      switch transaction.transactionState {
+      case .purchased:
+          
+          if let _ = transaction.original {
+              Paywall.delegate?.shouldTryToRestore()
+          } else {
+              self._transactionDidSucceed(for: product)
+          }
+          
+        break
+      case .failed:
+          // TODO: Check if purcahse was canceled,
+          if let e = transaction.error as? SKError {
+              var userCancelled = e.code == .paymentCancelled
+              if #available(iOS 12.2, *) {
+                  userCancelled = e.code == .overlayCancelled || e.code == .paymentCancelled
+              }
+              if userCancelled {
+                  self._transactionWasAbandoned(for: product)
+                  return
+              } else {
+                  self._transactionErrorDidOccur(error: e, for: product)
+                  return
+              }
+          }
+          
+        break
+      case .restored:
+          _transactionWasRestored()
+        break
+      case .deferred:
+          _transactionWasDeferred()
+      case .purchasing:
+          _transactionDidBegin(for: product)
+      default:
+          paywallViewController?.loadingState = .ready
+      }
+    }
+  }
+ 
+ 
+}
+
