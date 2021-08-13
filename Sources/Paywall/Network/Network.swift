@@ -56,10 +56,14 @@ extension Network {
         request.setValue("iOS", forHTTPHeaderField: "X-Platform")
         request.setValue(Store.shared.appUserId ?? "", forHTTPHeaderField: "X-App-User-ID")
         request.setValue(Store.shared.aliasId ?? "", forHTTPHeaderField: "X-Alias-ID")
-        request.setValue(DeviceHelper.device().vendor_id, forHTTPHeaderField: "X-Vendor-ID")
-        request.setValue(DeviceHelper.device().app_version, forHTTPHeaderField: "X-App-Version")
-        request.setValue(DeviceHelper.device().os_version, forHTTPHeaderField: "X-OS-Version")
-        request.setValue(DeviceHelper.device().model, forHTTPHeaderField: "X-Device-Model")
+        request.setValue(DeviceHelper.shared.vendorId, forHTTPHeaderField: "X-Vendor-ID")
+        request.setValue(DeviceHelper.shared.appVersion, forHTTPHeaderField: "X-App-Version")
+        request.setValue(DeviceHelper.shared.osVersion, forHTTPHeaderField: "X-OS-Version")
+        request.setValue(DeviceHelper.shared.model, forHTTPHeaderField: "X-Device-Model")
+        request.setValue(DeviceHelper.shared.locale, forHTTPHeaderField: "X-Device-Locale") // en_US, en_GB
+        request.setValue(DeviceHelper.shared.languageCode, forHTTPHeaderField: "X-Device-Language-Code") // en
+        request.setValue(DeviceHelper.shared.currencyCode, forHTTPHeaderField: "X-Device-Currency-Code") // USD
+        request.setValue(DeviceHelper.shared.currencySymbol, forHTTPHeaderField: "X-Device-Currency-Symbol") // $
         
         let task = self.urlSession.dataTask(with: request) { (data, response, error) in
             do {

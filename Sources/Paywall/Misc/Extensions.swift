@@ -29,66 +29,6 @@ internal extension UIColor {
 }
 
 
-//enum CodingKeys: String, CodingKey {
-//    case id = ""
-//    case displayMultipleProducts = "display_multiple_products"
-//    case offeringCTA = "offering_cta"
-//    case offeringCTASubtitle = "offering_cta_subtitle"
-//    case offeringCTASubtitleTrialIneligible = "offering_cta_subtitle_trial_ineligible"
-//    case oferringCTATrialIneligible = "offering_cta_trial_ineligible"
-//    case offeringSubtitle = "offering_subtitle"
-//    case offeringTitle = "offering_title"
-//    case offeringTitleTrialIneligible = "offering_title_trial_ineligible"
-//    case primaryProduct = "primary_product"
-//    case primaryProductCTA = "primary_product_cta"
-//    case secondaryProduct = "secondary_product"
-//    case secondaryProductCTA = "secondary_product_cta"
-//    case paywallURLString = "offering_id"
-//}
-//
-//}
-
-let a = """
-
-
-"primary": {
-
-    "price": {
-        "default": "$119.99",
-        "perYear": "$119.99",
-        "perSixMonths": "$119.99",
-        "perQuarter": "$119.99",
-        "perMonth": "$119.99",
-        "perWeek": "$119.99",
-        "perYear": "$119.99",
-    },
-
-    "period": {
-        "noun": "year"
-        "adverb": "yearly"
-        "abbreviated": "yr"
-    }
-
-    "trialDescription": {
-        "days": "7 days",
-        "months": "2 months",
-        "weeks": "1 week",
-        "day": "7 day",
-        "month": "2 month",
-        "week": "1 week",
-    }
-
-    "trialLength": {
-        "days": "7",
-        "months": "2",
-        "weeks": "2",
-    }
-
-        
-}
-
-"""
-
 extension SKProduct {
     
     var eventData: [String: String] {
