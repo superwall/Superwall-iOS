@@ -207,12 +207,22 @@ internal class PaywallViewController: UIViewController {
         
     }
     
-    func presentAlert(title: String? = nil, message: String? = nil) {
+    func presentAlert(title: String? = nil, message: String? = nil, actionTitle: String? = nil, action: (() -> ())? = nil) {
         
         if presentedViewController == nil {
             let vc = UIAlertController(title: title, message: message, preferredStyle: .alert)
-            let action = UIAlertAction(title: "Okay", style: .default, handler: nil)
-            vc.addAction(action)
+           
+            if let s = actionTitle {
+                let ca = UIAlertAction(title: s, style: .default, handler: { a in
+                    action?()
+                })
+                vc.addAction(ca)
+            }
+            
+            let a = UIAlertAction(title: "Done", style: .cancel, handler: nil)
+            vc.addAction(a)
+            
+
             present(vc, animated: true, completion: { [weak self] in
                 self?.loadingState = .ready
             })

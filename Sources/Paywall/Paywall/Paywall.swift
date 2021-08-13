@@ -221,9 +221,19 @@ public class Paywall: NSObject {
         _dismiss()
     }
     
+    var didTryToAutoRestore = false
+    
     private func _transactionErrorDidOccur(error: SKError?, for product: SKProduct) {
         // TODO: ANALYTICS
-        paywallViewController?.presentAlert(title: "Please try again", message: error?.localizedDescription ?? "")
+        // prevent a recursive loop
+        if !didTryToAutoRestore {
+            Paywall.delegate?.shouldTryToRestore()
+            didTryToAutoRestore = true
+        } else {
+            paywallViewController?.presentAlert(title: "Please try again", message: error?.localizedDescription ?? "", actionTitle: "Restore Purchase", action: {
+                Paywall.delegate?.shouldTryToRestore()
+            })
+        }
     }
     
     private func _transactionWasAbandoned(for product: SKProduct) {
@@ -329,12 +339,8 @@ extension Paywall: SKPaymentTransactionObserver {
         guard let product = productsById[transaction.payment.productIdentifier] else { return }
       switch transaction.transactionState {
       case .purchased:
-          
-          if let _ = transaction.original {
-              Paywall.delegate?.shouldTryToRestore()
-          } else {
-              self._transactionDidSucceed(for: product)
-          }
+ 
+          self._transactionDidSucceed(for: product)
           
         break
       case .failed:
@@ -344,6 +350,12 @@ extension Paywall: SKPaymentTransactionObserver {
               if #available(iOS 12.2, *) {
                   userCancelled = e.code == .overlayCancelled || e.code == .paymentCancelled
               }
+              
+              if #available(iOS 14.0, *) {
+                  userCancelled = e.code == .overlayCancelled || e.code == .paymentCancelled || e.code == .overlayTimeout
+              }
+              
+              
               if userCancelled {
                   self._transactionWasAbandoned(for: product)
                   return
