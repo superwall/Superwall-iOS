@@ -78,7 +78,7 @@ public class Paywall: NSObject {
         }
     }
 
-    public static func prereload(completion: @escaping (Bool) -> ()? = nil) {
+    public static func prereload(completion: ((Bool) -> ())? = nil) {
         
         
         Network.shared.paywall { (result) in
@@ -118,7 +118,7 @@ public class Paywall: NSObject {
 //                        self.whenReadyCompletionBlocks.forEach({$0()})
 //                        self.whenReadyCompletionBlocks.removeAll()
                         
-                        completion(true)
+                        completion?(true)
 
                     }
                     
@@ -131,7 +131,7 @@ public class Paywall: NSObject {
                 Logger.superwallDebug(string: "Failed to load paywall", error: error)
                 
                 DispatchQueue.main.async {
-                    completion(false)
+                    completion?(false)
                 }
             }
 //            self.paywallLoaded = true
