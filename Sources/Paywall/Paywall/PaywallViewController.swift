@@ -18,14 +18,14 @@ internal class PaywallViewController: UIViewController {
     
     // Don't touch my private parts.
     
-    private var _paywallResponse: PaywallResponse
+    private var _paywallResponse: PaywallResponse? = nil
     
     public var completion: ((PaywallPresentationResult) -> Void)?
     
     weak var delegate: PaywallViewControllerDelegate? = nil
     
     var presentationStyle: PaywallPresentationStyle {
-        return _paywallResponse.presentationStyle
+        return _paywallResponse?.presentationStyle ?? .sheet
     }
     
     internal enum LoadingState {
@@ -76,21 +76,18 @@ internal class PaywallViewController: UIViewController {
         }
     }
     
-//    lazy var button: UIButton = {
-//        let b = UIButton()
-//        b.setTitle("Done", for: .normal)
-//        b.translatesAutoresizingMaskIntoConstraints = false
-//        b.addTarget(self, action: #selector(pressedPurchaseButton), for: .primaryActionTriggered)
-//        b.isHidden = false
-//        return b
-//    }()
-//
-    
-    init?(paywallResponse: PaywallResponse, completion: ((PaywallPresentationResult) -> Void)? = nil) {
-        self._paywallResponse =  paywallResponse
+    init?(paywallResponse: PaywallResponse?, completion: ((PaywallPresentationResult) -> Void)? = nil) {
         self.completion = completion
-        
         super.init(nibName: nil, bundle: nil)
+        
+        if let pr = paywallResponse {
+            set(paywallResponse: pr)
+        }
+        
+    }
+    
+    func set(paywallResponse: PaywallResponse) {
+        self._paywallResponse =  paywallResponse
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
@@ -98,9 +95,11 @@ internal class PaywallViewController: UIViewController {
             self.webview.alpha = 0.0
             self.view.backgroundColor = paywallResponse.paywallBackgroundColor
             
-            if let url = URL(string: self._paywallResponse.url) {
-                self.webview.load(URLRequest(url: url))
-                self.loadingState = .loading
+            if let urlString = self._paywallResponse?.url {
+                if let url = URL(string: urlString) {
+                    self.webview.load(URLRequest(url: url))
+                    self.loadingState = .loading
+                }
             }
         }
         
@@ -271,6 +270,8 @@ extension PaywallViewController {
     
     func handleEvent(event: PaywallEvent) {
         Logger.superwallDebug("handleEvent", event)
+        
+        guard let paywallResponse = self._paywallResponse else { return }
     
         switch (event) {
         case .onReady:
@@ -278,8 +279,8 @@ extension PaywallViewController {
             // TODO: Jake, I couldn't figure out how to encode these as an array, ideally we would have
             // [TemplateSubstitutions,TemplateVariables] and only call accept64 once.
             let scriptSrc = """
-                window.paywall.accept64('\(self._paywallResponse.templateEventsBase64String)');
-                window.paywall.accept64('\(self._paywallResponse.paywalljsEvent)');
+                window.paywall.accept64('\(paywallResponse.templateEventsBase64String)');
+                window.paywall.accept64('\(paywallResponse.paywalljsEvent)');
             """
             
             print("sriptSrc", scriptSrc)
@@ -320,7 +321,7 @@ extension PaywallViewController {
             UIImpactFeedbackGenerator().impactOccurred()
             complete(.initiateRestore)
         case .purchase(product: let productName):
-            let product = self._paywallResponse.products.first { (product) -> Bool in
+            let product = paywallResponse.products.first { (product) -> Bool in
                 return product.product == productName
             }
             if product != nil {

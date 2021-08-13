@@ -78,7 +78,7 @@ public class Paywall: NSObject {
         }
     }
 
-    public static func prereload(completion: @escaping (Bool) -> ()) {
+    public static func prereload(completion: @escaping (Bool) -> ()? = nil) {
         
         
         Network.shared.paywall { (result) in
