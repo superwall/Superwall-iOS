@@ -275,6 +275,8 @@ extension PaywallViewController {
     
         switch (event) {
         case .onReady:
+            
+            
 
             // TODO: Jake, I couldn't figure out how to encode these as an array, ideally we would have
             // [TemplateSubstitutions,TemplateVariables] and only call accept64 once.

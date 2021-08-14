@@ -268,6 +268,8 @@ public class Paywall: NSObject {
     
     // MARK: Paywall Presentation
     
+    private var willPresent = false
+    
     public static func present(on viewController: UIViewController? = nil, cached: Bool = false, presentationCompletion: (()->())? = nil, fallback: (() -> ())? = nil) {
         
         guard let delegate = delegate else {
@@ -282,6 +284,13 @@ public class Paywall: NSObject {
             return
         }
         
+        if shared.willPresent {
+            Logger.superwallDebug(string: "A Paywall is already being presented! If you'd like to speed this up, try calling Paywall.preload()")
+            return
+        }
+        
+        shared.willPresent = true
+        
         let presentationBlock: ((PaywallViewController) -> ()) = { vc in
             if !vc.isBeingPresented {
                 vc.willMove(toParent: nil)
@@ -291,7 +300,8 @@ public class Paywall: NSObject {
                 vc.view.transform = .identity
                 vc.webview.scrollView.contentOffset = CGPoint.zero
                 delegate.willPresentPaywall?()
-                presentor.present(vc, animated: true, completion: {
+                presentor.present(vc, animated: true, completion: { 
+                    self.shared.willPresent = false
                     delegate.didPresentPaywall?()
                     presentationCompletion?()
                 })
@@ -322,6 +332,7 @@ public class Paywall: NSObject {
                 presentationBlock(vc)
                 
             } else {
+                self.shared.willPresent = false
                 fallback?()
             }
         }
