@@ -1,6 +1,7 @@
 import UIKit
 import Foundation
 import StoreKit
+import TPInAppReceipt
 
 @objc public protocol PaywallDelegate: AnyObject {
     
@@ -96,6 +97,16 @@ public class Paywall: NSObject {
                         if let appleProduct = productsById[p.productId] {
                             variables.append(Variables(key: p.product.rawValue, value: appleProduct.eventData))
                             shared.productsById[p.productId] = appleProduct
+                            
+                            if p.product == .primary {
+                                response.isFreeTrialAvailable = appleProduct.hasFreeTrial
+                                if let receipt = try? InAppReceipt.localReceipt() {
+                                    let hasPurchased = receipt.containsPurchase(ofProductIdentifier: p.productId)
+                                    if hasPurchased && appleProduct.hasFreeTrial {
+                                        response.isFreeTrialAvailable = false
+                                    }
+                                }
+                            }
                         }
                     }
                     
@@ -177,16 +188,7 @@ public class Paywall: NSObject {
         return self
     }
     
-//    // helper func, closure only called after .success in init
-//    private func whenReady(_ block: @escaping WhenReadyCompletionBlock) {
-//        if paywallLoaded {
-//            block()
-//        } else {
-//            whenReadyCompletionBlocks.append(block)
-//        }
-//    }
-    
-    // we can make this overridable one day?
+
     private func paywallEventDidOccur(result: PaywallPresentationResult) {
         
         switch result {
@@ -261,8 +263,6 @@ public class Paywall: NSObject {
     }
     
     private static func _present( on presentOn: UIViewController? = nil, presentationCompletion: (()->())? = nil) {
-
-
         
     }
     
@@ -365,7 +365,6 @@ extension Paywall: SKPaymentTransactionObserver {
               if #available(iOS 14.0, *) {
                   userCancelled = e.code == .overlayCancelled || e.code == .paymentCancelled || e.code == .overlayTimeout
               }
-              
               
               if userCancelled {
                   self._transactionWasAbandoned(for: product)

@@ -51,12 +51,15 @@ struct PaywallResponse: Decodable {
         return TemplateVariables(event_name: "template_variables", variables: vars)
     }
     
+    var isFreeTrialAvailable: Bool? = false
     
+    var _isFreeTrialAvailable: Bool {
+        return isFreeTrialAvailable ?? false
+    }
     
     var templateSubstitutionsPrefix: TemplateSubstitutionsPrefix {
         // TODO: Jake decide if we should send `freeTrial` or `null`
-        return TemplateSubstitutionsPrefix(event_name: "template_substitutions_prefix")
-//        return TemplateSubstitutionsPrefix(event_name: "template_substitutions_prefix", prefix: "freeTrial")
+        return  TemplateSubstitutionsPrefix(event_name: "template_substitutions_prefix", prefix: _isFreeTrialAvailable ? "freeTrial" : nil)
     }
 
     var templateProducts: TemplateProducts {

@@ -86,6 +86,8 @@ extension Network {
             }
         }
         task.resume()
+        
+        
     }
 }
 

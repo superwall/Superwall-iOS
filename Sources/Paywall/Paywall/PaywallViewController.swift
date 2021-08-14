@@ -36,11 +36,12 @@ internal class PaywallViewController: UIViewController {
     
     var loadingState: LoadingState  = .unknown {
         didSet {
+            DispatchQueue.main.async { [weak self] in
+                
+                guard let loadingState = self?.loadingState else { return }
             
-            
-            if loadingState == .loading {
-                DispatchQueue.main.async { [weak self] in
-                    
+                if loadingState == .loading {
+                   
                     self?.shimmerView.isShimmering = true
                     self?.shimmerView.alpha = 0.0
                     self?.shimmerView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
@@ -53,14 +54,9 @@ internal class PaywallViewController: UIViewController {
                     }, completion: { [weak self] _ in
                         self?.modalPresentationStyle = .formSheet
                     })
+                        
+                } else if loadingState == .ready {
                     
-                }
-                
-
-                
-                
-            } else if loadingState == .ready {
-                DispatchQueue.main.async { [weak self] in
                     // delay to prevent flicker
                     self?.webview.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
                     UIView.animate(withDuration: 1.0, delay: 0.25, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
@@ -71,7 +67,9 @@ internal class PaywallViewController: UIViewController {
                         self?.shimmerView.isShimmering = false
                     })
                     
+                    
                 }
+                    
             }
         }
     }
