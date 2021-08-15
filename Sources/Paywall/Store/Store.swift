@@ -31,7 +31,6 @@ class Store {
     
     // call this when you log out
     func clear() {
-        apiKey = nil
         appUserId = nil
         aliasId = nil
         cache.cleanAll()

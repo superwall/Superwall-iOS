@@ -28,9 +28,29 @@ internal class PaywallViewController: UIViewController {
         return _paywallResponse?.presentationStyle ?? .sheet
     }
     
+    private var purchaseLoadingIndicatorContainer: UIView = {
+        let v = UIView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.isUserInteractionEnabled = false
+        v.clipsToBounds = false
+        return v
+    }()
+    
+    private var purchaseLoadingIndicator: UIActivityIndicatorView = {
+        let av = UIActivityIndicatorView()
+        av.translatesAutoresizingMaskIntoConstraints = false
+        av.style = .whiteLarge
+        av.hidesWhenStopped = false
+        av.alpha = 0.0
+//        av.stopAnimating()
+        av.startAnimating()
+        return av
+    }()
+    
     internal enum LoadingState {
         case unknown
-        case loading
+        case loadingPurchase
+        case loadingResponse
         case ready
     }
     
@@ -40,8 +60,26 @@ internal class PaywallViewController: UIViewController {
                 
                 guard let loadingState = self?.loadingState else { return }
             
-                if loadingState == .loading {
-                   
+                
+                switch loadingState {
+                case .unknown:
+                    break
+                case .loadingPurchase:
+                    self?.shimmerView.isShimmering = false
+                    self?.shimmerView.alpha = 0.0
+                    self?.shimmerView.transform = .identity
+//                    self?.purchaseLoadingIndicator.startAnimating()
+                    self?.purchaseLoadingIndicator.alpha = 0.0
+                    self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
+                    
+                    UIView.animate(withDuration: 0.618, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
+                        self?.webview.alpha = 0.0
+                        self?.webview.transform = CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97)
+                        self?.purchaseLoadingIndicator.alpha = 1.0
+                        self?.purchaseLoadingIndicator.transform = .identity
+                    }, completion: nil)
+                    
+                case .loadingResponse:
                     self?.shimmerView.isShimmering = true
                     self?.shimmerView.alpha = 0.0
                     self?.shimmerView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
@@ -51,20 +89,24 @@ internal class PaywallViewController: UIViewController {
                         self?.shimmerView.alpha = 1.0
                         self?.webview.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)//.scaledBy(x: 0.97, y: 0.97)
                         self?.shimmerView.transform = .identity
+                        self?.purchaseLoadingIndicator.alpha = 0.0
+                        self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
                     }, completion: { [weak self] _ in
-                        self?.modalPresentationStyle = .formSheet
+//                        self?.purchaseLoadingIndicator.stopAnimating()
                     })
-                        
-                } else if loadingState == .ready {
-                    
+                case .ready:
                     // delay to prevent flicker
-                    self?.webview.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
+                    self?.webview.transform = oldValue == .loadingPurchase ? CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97) : CGAffineTransform.identity.translatedBy(x: 0, y: 10)
+                    
                     UIView.animate(withDuration: 1.0, delay: 0.25, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
                         self?.webview.alpha = 1.0
                         self?.webview.transform = .identity
                         self?.shimmerView.alpha = 0.0
+                        self?.purchaseLoadingIndicator.alpha = 0.0
+                        self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
                     }, completion: { [weak self] _ in
                         self?.shimmerView.isShimmering = false
+//                        self?.purchaseLoadingIndicator.stopAnimating()
                     })
                     
                     
@@ -96,7 +138,7 @@ internal class PaywallViewController: UIViewController {
             if let urlString = self._paywallResponse?.url {
                 if let url = URL(string: urlString) {
                     self.webview.load(URLRequest(url: url))
-                    self.loadingState = .loading
+                    self.loadingState = .loadingResponse
                 }
             }
         }
@@ -167,14 +209,27 @@ internal class PaywallViewController: UIViewController {
     // UIViewController
     
     public override func viewDidLoad() {
-       
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationWillResignActive(_:)), name: UIApplication.willResignActiveNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive(_:)), name: UIApplication.didBecomeActiveNotification, object: nil)
+        
         shimmerView.isShimmering = true
         view.addSubview(shimmerView)
+        view.addSubview(purchaseLoadingIndicatorContainer)
+        purchaseLoadingIndicatorContainer.addSubview(purchaseLoadingIndicator)
         view.addSubview(webview)
         shimmerView.translatesAutoresizingMaskIntoConstraints = false
         shimmerView.contentView = contentPlaceholderImageView
     
         NSLayoutConstraint.activate([
+            
+            purchaseLoadingIndicatorContainer.topAnchor.constraint(equalTo: view.topAnchor),
+            purchaseLoadingIndicatorContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            purchaseLoadingIndicatorContainer.widthAnchor.constraint(equalTo: view.widthAnchor),
+            purchaseLoadingIndicatorContainer.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.5),
+            
+            purchaseLoadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            purchaseLoadingIndicator.centerYAnchor.constraint(equalTo: purchaseLoadingIndicatorContainer.bottomAnchor),
             
             shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -225,6 +280,45 @@ internal class PaywallViewController: UIViewController {
             })
         }
         
+    }
+
+    
+    @objc func applicationWillResignActive(_ sender: AnyObject? = nil) {
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            if self.loadingState == .loadingPurchase {
+                UIView.animate(withDuration: 0.618, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
+                    if let height = self?.purchaseLoadingIndicatorContainer.frame.size.height {
+                        self?.purchaseLoadingIndicatorContainer.transform = CGAffineTransform.identity.translatedBy(x: 0, y: height * 0.5 * -1)
+//                        self?.purchaseLoadingIndicatorContainer.alpha = 0.5
+                    }
+                }, completion: nil)
+            }
+        }
+            
+        
+            
+    }
+    
+    @objc func applicationDidBecomeActive(_ sender: AnyObject? = nil) {
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            if self.loadingState == .loadingPurchase {
+                UIView.animate(withDuration: 0.618, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
+//                    self?.purchaseLoadingIndicatorContainer.alpha = 1.0
+                    self?.purchaseLoadingIndicatorContainer.transform = CGAffineTransform.identity
+                }, completion: nil)
+            }
+        }
+        
+        
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willResignActiveNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
     }
     
 }
@@ -331,8 +425,6 @@ extension PaywallViewController {
             
         case .custom(data: let string):
             complete(.custom(string: string))
-        default:
-            break
         }
     }
 }

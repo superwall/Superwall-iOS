@@ -87,9 +87,7 @@ public class Paywall: NSObject {
             switch(result){
             case .success(var response):
                 
-                
                 StoreKitManager.shared.get(productsWithIds: response.productIds) { productsById in
-                    
                     
                     var variables = [Variables]()
                     
@@ -149,6 +147,13 @@ public class Paywall: NSObject {
         }
     }
     
+    public static func testLoading() {
+        shared.paywallViewController?.loadingState = .loadingPurchase
+        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false, block: { t in
+            shared.paywallViewController?.loadingState = .ready
+        })
+    }
+    
     @discardableResult
     public static func configure(apiKey: String, userId: String? = nil) -> Paywall {
         shared = Paywall(apiKey: apiKey, userId: userId)
@@ -197,7 +202,7 @@ public class Paywall: NSObject {
         case .initiatePurchase(let productId):
             // TODO: make sure this can NEVER happen
             guard let product = productsById[productId] else { return }
-            paywallViewController?.loadingState = .loading
+            paywallViewController?.loadingState = .loadingPurchase
             Paywall.delegate?.userDidInitiateCheckout(for: product)
         case .initiateRestore:
             Paywall.delegate?.shouldTryToRestore()
@@ -214,7 +219,7 @@ public class Paywall: NSObject {
     
     private func _transactionDidBegin(for product: SKProduct) {
         // TODO: ANALYTICS
-        paywallViewController?.loadingState = .loading
+        paywallViewController?.loadingState = .loadingPurchase
     }
 
     
@@ -350,9 +355,8 @@ extension Paywall: SKPaymentTransactionObserver {
         guard let product = productsById[transaction.payment.productIdentifier] else { return }
       switch transaction.transactionState {
       case .purchased:
- 
+          Logger.superwallDebug(string: "[Transaction Observer] transactionDidSucceed for: \(product.productIdentifier)")
           self._transactionDidSucceed(for: product)
-          
         break
       case .failed:
           // TODO: Check if purcahse was canceled,
@@ -367,9 +371,11 @@ extension Paywall: SKPaymentTransactionObserver {
               }
               
               if userCancelled {
+                  Logger.superwallDebug(string: "[Transaction Observer] transactionWasAbandoned for: \(product.productIdentifier)")
                   self._transactionWasAbandoned(for: product)
                   return
               } else {
+                  Logger.superwallDebug(string: "[Transaction Observer] transactionErrorDidOccur for: \(product.productIdentifier)")
                   self._transactionErrorDidOccur(error: e, for: product)
                   return
               }
@@ -377,11 +383,14 @@ extension Paywall: SKPaymentTransactionObserver {
           
         break
       case .restored:
+          Logger.superwallDebug(string: "[Transaction Observer] transactionWasRestored")
           _transactionWasRestored()
         break
       case .deferred:
+          Logger.superwallDebug(string: "[Transaction Observer] deferred")
           _transactionWasDeferred()
       case .purchasing:
+          Logger.superwallDebug(string: "[Transaction Observer] purchasing")
           _transactionDidBegin(for: product)
       default:
           paywallViewController?.loadingState = .ready
