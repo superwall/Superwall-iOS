@@ -8,6 +8,7 @@
 import UIKit
 import Foundation
 import StoreKit
+import CloudKit
 
 struct EmptyResponse: Decodable {}
 
@@ -18,6 +19,7 @@ struct PaywallRequest: Codable {
 }
 
 struct PaywallResponse: Decodable {
+    var id: String? = nil
     var url: String
     var paywalljsEvent: String
     
@@ -26,6 +28,10 @@ struct PaywallResponse: Decodable {
     
     var products: [Product]
     var variables: [Variables]? = []
+    
+    var idNonOptional: String {
+        return id ?? ""
+    }
     
     var paywallBackgroundColor: UIColor {
         
@@ -132,3 +138,5 @@ struct UserPropertiesRequest: Codable {
     var firstName: String?
     var lastName: String?
 }
+
+

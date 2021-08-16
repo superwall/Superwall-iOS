@@ -24,7 +24,7 @@ import TPInAppReceipt
 public class Paywall: NSObject {
     
     public static var debugLogsEnabled: Bool = false
-    public static var shared: Paywall = Paywall(apiKey: nil)
+    private static var shared: Paywall = Paywall(apiKey: nil)
     
     private var apiKey: String? {
         return Store.shared.apiKey
@@ -36,19 +36,21 @@ public class Paywall: NSObject {
         return Store.shared.aliasId
     }
     
-//    private(set) var paywallLoaded: Bool = false
+    private var willPresent = false
+
     private(set) var paywallResponse: PaywallResponse?
     
     private(set) var paywallViewController: PaywallViewController?
     
     private(set) var productsById: [String: SKProduct] = [String: SKProduct]()
     
-//    private typealias WhenReadyCompletionBlock = () -> ()
-//    private var whenReadyCompletionBlocks: [WhenReadyCompletionBlock] = []
-    
-//    public typealias PurchaseDidEndCompletionBlock: () -> Bool
+    private var didTryToAutoRestore = false
     
     public static var delegate: PaywallDelegate? = nil
+    
+    private var paywallId: String {
+        paywallResponse?.id ?? ""
+    }
     
     // MARK: Initialization
     
@@ -79,8 +81,7 @@ public class Paywall: NSObject {
         }
     }
 
-    public static func prereload(completion: ((Bool) -> ())? = nil) {
-        
+    public static func load(completion: ((Bool) -> ())? = nil) {
         
         Network.shared.paywall { (result) in
             
@@ -123,10 +124,6 @@ public class Paywall: NSObject {
                         }
                         
                         shared.paywallResponse = response
-                        
-//                        self.whenReadyCompletionBlocks.forEach({$0()})
-//                        self.whenReadyCompletionBlocks.removeAll()
-                        
                         completion?(true)
 
                     }
@@ -136,14 +133,13 @@ public class Paywall: NSObject {
                 
                 break
             case .failure(let error):
-//                fatalError(error.localizedDescription)
                 Logger.superwallDebug(string: "Failed to load paywall", error: error)
                 
                 DispatchQueue.main.async {
                     completion?(false)
                 }
             }
-//            self.paywallLoaded = true
+
         }
     }
     
@@ -157,6 +153,9 @@ public class Paywall: NSObject {
     @discardableResult
     public static func configure(apiKey: String, userId: String? = nil) -> Paywall {
         shared = Paywall(apiKey: apiKey, userId: userId)
+        
+        
+        
         return shared
     }
     
@@ -218,25 +217,25 @@ public class Paywall: NSObject {
     // purchase callbacks
     
     private func _transactionDidBegin(for product: SKProduct) {
-        // TODO: ANALYTICS
+        Paywall.track(.transactionStart(paywallId: paywallId, productId: product.productIdentifier))
         paywallViewController?.loadingState = .loadingPurchase
     }
 
     
     private func _transactionDidSucceed(for product: SKProduct) {
-        // TODO: ANALYTICS
+        Paywall.track(.transactionComplete(paywallId: paywallId, productId: product.productIdentifier))
         _dismiss()
+        
     }
     
-    var didTryToAutoRestore = false
     
     private func _transactionErrorDidOccur(error: SKError?, for product: SKProduct) {
-        // TODO: ANALYTICS
         // prevent a recursive loop
         if !didTryToAutoRestore {
             Paywall.delegate?.shouldTryToRestore()
             didTryToAutoRestore = true
         } else {
+            Paywall.track(.transactionFail(paywallId: paywallId, productId: product.productIdentifier, message: error?.localizedDescription ?? ""))
             paywallViewController?.presentAlert(title: "Please try again", message: error?.localizedDescription ?? "", actionTitle: "Restore Purchase", action: {
                 Paywall.delegate?.shouldTryToRestore()
             })
@@ -244,19 +243,19 @@ public class Paywall: NSObject {
     }
     
     private func _transactionWasAbandoned(for product: SKProduct) {
-        // TODO: ANALYTICS
+        Paywall.track(.transactionAbandon(paywallId: paywallId, productId: product.productIdentifier))
         paywallViewController?.loadingState = .ready
     }
     
     private func _transactionWasRestored() {
-        // TODO: ANALYTICS
+        Paywall.track(.transactionRestore(paywallId: paywallId, productId: ""))
         _dismiss()
     }
     
     // if a parent needs to approve the purchase
     private func _transactionWasDeferred() {
-        // TODO: ANALYTICS
         paywallViewController?.presentAlert(title: "Waiting for Approval", message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.")
+        Paywall.track(.transactionFail(paywallId: paywallId, productId: "", message: "Needs parental approval"))
     }
     
     private func _dismiss(_ completion: (()->())? = nil) {
@@ -267,13 +266,7 @@ public class Paywall: NSObject {
         })
     }
     
-    private static func _present( on presentOn: UIViewController? = nil, presentationCompletion: (()->())? = nil) {
-        
-    }
-    
     // MARK: Paywall Presentation
-    
-    private var willPresent = false
     
     public static func present(on viewController: UIViewController? = nil, cached: Bool = false, presentationCompletion: (()->())? = nil, fallback: (() -> ())? = nil) {
         
@@ -309,6 +302,7 @@ public class Paywall: NSObject {
                     self.shared.willPresent = false
                     delegate.didPresentPaywall?()
                     presentationCompletion?()
+                    Paywall.track(.paywallOpen(paywallId: self.shared.paywallId))
                 })
             }
         }
@@ -318,7 +312,7 @@ public class Paywall: NSObject {
             return
         }
         
-        prereload() { success in
+        load() { success in
             if (success) {
                 
                 
@@ -344,6 +338,9 @@ public class Paywall: NSObject {
            
         
     }
+    
+    
+    
 }
 
 
@@ -400,4 +397,6 @@ extension Paywall: SKPaymentTransactionObserver {
  
  
 }
+
+
 

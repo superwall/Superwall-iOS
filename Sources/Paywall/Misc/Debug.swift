@@ -11,15 +11,13 @@ import Foundation
 internal struct Logger {
     
     static func superwallDebug(_ items: Any...) {
-        //    if (Paywall.debugLogsEnabled){
-                print("[Superwall]", items)
-        //    }
-        }
+        print("[Superwall]", items)
+    }
     
     static func superwallDebug(string: String, error: Swift.Error? = nil) {
         print("[Superwall] " + string)
-        if error != nil {
-            print("[Superwall] ", error)
+        if let e = error {
+            print("[Superwall]  →", e)
         }
     }
     

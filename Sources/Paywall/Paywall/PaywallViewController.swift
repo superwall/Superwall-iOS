@@ -157,15 +157,18 @@ internal class PaywallViewController: UIViewController {
     
     // Views
     
-    lazy var webview: WKWebView = {
+    var wkConfig: WKWebViewConfiguration = {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
         config.allowsAirPlayForMediaPlayback = true
         config.allowsPictureInPictureMediaPlayback = true
+        return config
+    }()
+    
+    lazy var webview: WKWebView = {
+        wkConfig.userContentController.add(LeakAvoider(delegate:self), name: "paywallMessageHandler")
         
-        config.userContentController.add(self, name: "paywallMessageHandler")
-        
-        let wv = WKWebView(frame: CGRect(), configuration: config)
+        let wv = WKWebView(frame: CGRect(), configuration: wkConfig)
         wv.translatesAutoresizingMaskIntoConstraints = false
         wv.allowsBackForwardNavigationGestures = true
         wv.allowsLinkPreview = false
@@ -245,7 +248,12 @@ internal class PaywallViewController: UIViewController {
     }
 
     public override func viewWillAppear(_ animated: Bool) {
-
+        super.viewWillAppear(animated)
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        Paywall.track(.paywallClose(paywallId: _paywallResponse?.id ?? ""))
     }
     
     // WebPaywallViewController
@@ -350,7 +358,7 @@ extension PaywallViewController: WKScriptMessageHandler {
         
         let events = wrappedPaywallEvents.payload.events
 
-        events.forEach({ self.handleEvent(event: $0) })
+        events.forEach({ [weak self] in self?.handleEvent(event: $0) })
         
         Logger.superwallDebug(string: "userContentController - end")
     }
@@ -426,5 +434,20 @@ extension PaywallViewController {
         case .custom(data: let string):
             complete(.custom(string: string))
         }
+    }
+}
+
+
+
+class LeakAvoider : NSObject, WKScriptMessageHandler {
+    weak var delegate: WKScriptMessageHandler?
+    
+    init(delegate:WKScriptMessageHandler) {
+        self.delegate = delegate
+        super.init()
+    }
+    
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        delegate?.userContentController(userContentController, didReceive: message)
     }
 }
