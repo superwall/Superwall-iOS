@@ -149,12 +149,23 @@ extension Paywall {
         case appInstall
         case appOpen
         case appClose
+        
+        case paywallResponseLoadStart
+        case paywallResponseLoadFail
+        case paywallResponseLoadComplete
+        
+        case paywallWebviewLoadStart(paywallId: String)
+        case paywallWebviewLoadFail(paywallId: String)
+        case paywallWebviewLoadComplete(paywallId: String)
+        
         case paywallOpen(paywallId: String)
         case paywallClose(paywallId: String)
+       
         case transactionStart(paywallId: String, productId: String)
         case transactionComplete(paywallId: String, productId: String)
         case transactionFail(paywallId: String, productId: String, message: String)
         case transactionAbandon(paywallId: String, productId: String)
+        
         case subscriptionStart(paywallId: String, productId: String)
         case freeTrialStart(paywallId: String, productId: String)
         case transactionRestore(paywallId: String, productId: String)
@@ -176,6 +187,15 @@ extension Paywall {
         case freeTrialStart = "freeTrial_start"
         case transactionRestore = "transaction_restore"
         case nonRecurringProductPurchase = "nonRecurringProduct_purchase"
+        
+        case paywallResponseLoadStart = "paywallResponseLoad_start"
+        case paywallResponseLoadFail = "paywallResponseLoad_fail"
+        case paywallResponseLoadComplete = "paywallResponseLoad_complete"
+        
+        case paywallWebviewLoadStart = "paywallWebviewLoad_start"
+        case paywallWebviewLoadFail = "paywallWebviewLoad_fail"
+        case paywallWebviewLoadComplete = "paywallWebviewLoad_complete"
+        
     }
 
     private static func name(for event: InternalEvent) -> InternalEventName {
@@ -206,11 +226,30 @@ extension Paywall {
             return .transactionFail
         case .transactionAbandon:
             return .transactionAbandon
+
+        case .paywallResponseLoadStart:
+            return .paywallResponseLoadStart
+        case .paywallResponseLoadFail:
+            return .paywallResponseLoadFail
+        case .paywallResponseLoadComplete:
+            return .paywallResponseLoadComplete
+        case .paywallWebviewLoadStart:
+            return .paywallWebviewLoadStart
+        case .paywallWebviewLoadFail:
+            return .paywallWebviewLoadFail
+        case .paywallWebviewLoadComplete:
+            return .paywallWebviewLoadComplete
         }
     }
     
     internal static func track(_ event: InternalEvent, _ customParams: [String: Any] = [:]) {
         switch event {
+        case .paywallWebviewLoadStart(let paywallId):
+            _track(eventName: name(for: event), params: ["paywall_id": paywallId], customParams: customParams)
+        case .paywallWebviewLoadFail(let paywallId):
+            _track(eventName: name(for: event), params: ["paywall_id": paywallId], customParams: customParams)
+        case .paywallWebviewLoadComplete(let paywallId):
+            _track(eventName: name(for: event), params: ["paywall_id": paywallId], customParams: customParams)
         case .paywallOpen(let paywallId):
             _track(eventName: name(for: event), params: ["paywall_id": paywallId], customParams: customParams)
         case .paywallClose(let paywallId):

@@ -83,10 +83,14 @@ public class Paywall: NSObject {
 
     public static func load(completion: ((Bool) -> ())? = nil) {
         
+        Paywall.track(.paywallResponseLoadStart)
+        
         Network.shared.paywall { (result) in
             
             switch(result){
             case .success(var response):
+                
+                Paywall.track(.paywallResponseLoadComplete)
                 
                 StoreKitManager.shared.get(productsWithIds: response.productIds) { productsById in
                     
@@ -134,6 +138,7 @@ public class Paywall: NSObject {
                 break
             case .failure(let error):
                 Logger.superwallDebug(string: "Failed to load paywall", error: error)
+                Paywall.track(.paywallResponseLoadFail)
                 
                 DispatchQueue.main.async {
                     completion?(false)

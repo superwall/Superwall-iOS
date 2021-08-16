@@ -137,6 +137,7 @@ internal class PaywallViewController: UIViewController {
             
             if let urlString = self._paywallResponse?.url {
                 if let url = URL(string: urlString) {
+                    Paywall.track(.paywallWebviewLoadStart(paywallId: paywallResponse.id ?? ""))
                     self.webview.load(URLRequest(url: url))
                     self.loadingState = .loadingResponse
                 }
@@ -376,7 +377,7 @@ extension PaywallViewController {
         switch (event) {
         case .onReady:
             
-            
+            Paywall.track(.paywallWebviewLoadComplete(paywallId: self._paywallResponse?.id ?? ""))
 
             // TODO: Jake, I couldn't figure out how to encode these as an array, ideally we would have
             // [TemplateSubstitutions,TemplateVariables] and only call accept64 once.
