@@ -72,9 +72,20 @@ struct PaywallResponse: Decodable {
         return TemplateProducts(event_name: "products", products: products)
     }
     
+    var templateDevice: TemplateDevice {
+        let aliases: [String]
+        if let alias = Store.shared.aliasId {
+            aliases = [alias]
+        } else {
+            aliases = []
+        }
+
+        return TemplateDevice(publicApiKey: Store.shared.apiKey ?? "", platform: "iOS", appUserId: Store.shared.appUserId ?? "", aliases: aliases, vendorId: DeviceHelper.shared.vendorId, appVersion: DeviceHelper.shared.appVersion, osVersion: DeviceHelper.shared.osVersion, deviceModel: DeviceHelper.shared.model, deviceLocale: DeviceHelper.shared.locale, deviceLanguageCode: DeviceHelper.shared.languageCode, deviceCurrencyCode: DeviceHelper.shared.currencyCode, deviceCurrencySymbol: DeviceHelper.shared.currencySymbol)
+    }
+    
     var templateEventsBase64String: String {
 
-          let encodedStrings = [encodedEventString(templateProducts), encodedEventString(templateVariables), encodedEventString(templateSubstitutionsPrefix)]
+          let encodedStrings = [encodedEventString(templateDevice), encodedEventString(templateProducts), encodedEventString(templateVariables), encodedEventString(templateSubstitutionsPrefix)]
           let string = "[" + encodedStrings.joined(separator: ",") + "]"
 
           let utf8str = string.data(using: .utf8)
@@ -126,6 +137,21 @@ struct TemplateProducts: Codable {
     var products: [Product]
 }
 
+struct TemplateDevice: Codable {
+    var publicApiKey: String
+    var platform: String
+    var appUserId: String
+    var aliases: [String]
+    var vendorId: String
+    var appVersion: String
+    var osVersion: String
+    var deviceModel: String
+    var deviceLocale: String
+    var deviceLanguageCode: String
+    var deviceCurrencyCode: String
+    var deviceCurrencySymbol: String
+}
+
 // TODO: UserProperties
 
 
@@ -139,4 +165,24 @@ struct UserPropertiesRequest: Codable {
     var lastName: String?
 }
 
+
+// Mark - Events
+struct EventsRequest: Codable {
+    var events: [JSON]
+}
+
+struct EventsResponse: Codable {
+    var status: String
+}
+
+// Mark - Identify
+
+struct IdentifyRequest: Codable {
+    var parameters: JSON
+    var created_at: JSON
+}
+
+struct IdentifyResponse: Codable {
+    var status: String
+}
 
