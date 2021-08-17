@@ -19,9 +19,9 @@ internal class Network {
     public init(
         urlSession: URLSession = URLSession(configuration: .ephemeral),
 //        baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
-        baseURL: URL = URL(string: "https://api.superwall.dev/api/v1/")!,
+        baseURL: URL = URL(string: "https://api.superwall.me/api/v1/")!,
 //         baseURL: URL = URL(string: "https://3000-scarlet-guppy-4bhnibfc.ws-us13.gitpod.io/api/v1/")!,
-        analyticsBaseURL: URL = URL(string: "https://collector.superwall.dev/v1/")!) {
+        analyticsBaseURL: URL = URL(string: "https://collector.superwall.me/api/v1/")!) {
         
         self.urlSession = (urlSession)
         self.baseURL = baseURL
@@ -65,6 +65,7 @@ extension Network {
         request.setValue(DeviceHelper.shared.languageCode, forHTTPHeaderField: "X-Device-Language-Code") // en
         request.setValue(DeviceHelper.shared.currencyCode, forHTTPHeaderField: "X-Device-Currency-Code") // USD
         request.setValue(DeviceHelper.shared.currencySymbol, forHTTPHeaderField: "X-Device-Currency-Symbol") // $
+        request.setValue(DeviceHelper.shared.secondsFromGMT, forHTTPHeaderField: "X-Device-Timezone-Offset") // $
         
         let task = self.urlSession.dataTask(with: request) { (data, response, error) in
             do {

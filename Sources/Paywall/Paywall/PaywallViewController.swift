@@ -22,6 +22,8 @@ internal class PaywallViewController: UIViewController {
     
     public var completion: ((PaywallPresentationResult) -> Void)?
     
+    internal var readyForEventTracking = false
+    
     weak var delegate: PaywallViewControllerDelegate? = nil
     
     var presentationStyle: PaywallPresentationStyle {
@@ -254,7 +256,9 @@ internal class PaywallViewController: UIViewController {
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        Paywall.track(.paywallClose(paywallId: _paywallResponse?.id ?? ""))
+        if readyForEventTracking {
+            Paywall.track(.paywallClose(paywallId: _paywallResponse?.id ?? ""))
+        }
     }
     
     // WebPaywallViewController

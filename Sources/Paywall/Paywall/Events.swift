@@ -15,6 +15,8 @@ extension Paywall {
     
     internal static func _track(_ name: String, _ params: [String: Any] = [:], _ custom: [String: Any] = [:]) {
         
+        Logger.superwallDebug(string: "[Tracked Event] \(name)")
+        
         var eventParams = [String: Any]()
         
         // TODO: Brian, determine if you want to allow nested
@@ -146,6 +148,7 @@ extension Paywall {
         case phoneCountryCode = "phone_country_code"
         case fcmToken = "fcm_token"
         case apnsToken = "apns_token"
+        case createdAt = "created_at"
     }
 
     public enum StandardUserAttribute { //  add defs
@@ -158,6 +161,7 @@ extension Paywall {
         case phoneCountryCode(_ s: String)
         case fcmToken(_ s: String)
         case apnsToken(_ s: String)
+        case createdAt(_ d: Date)
     }
     
     internal enum InternalEvent {
@@ -374,7 +378,7 @@ extension Paywall {
     
     public static func setUserAttributes(_ standard: StandardUserAttribute..., custom: [String: Any?] = [:]) {
         
-        var map = [StandardUserAttributeKey: String]()
+        var map = [StandardUserAttributeKey: Any]()
         standard.forEach {
             switch $0 {
             case .id(let s):
@@ -395,6 +399,9 @@ extension Paywall {
                 map[.fcmToken] = s
             case .apnsToken(let s):
                 map[.apnsToken] = s
+            case .createdAt(let d):
+                map[.createdAt] = d
+                
             }
         }
         

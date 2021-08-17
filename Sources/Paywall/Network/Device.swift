@@ -48,6 +48,11 @@ class DeviceHelper {
     var currencySymbol: String {
         get { Locale.autoupdatingCurrent.currencySymbol ?? "" }
     }
+    
+    var secondsFromGMT: String {
+        get {
+            "\(Int(TimeZone.current.secondsFromGMT()))"}
+    }
 }
 
 

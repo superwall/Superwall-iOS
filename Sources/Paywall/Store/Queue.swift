@@ -11,11 +11,7 @@ import UIKit
 let serialQueue = DispatchQueue(label: "me.superwall.eventQueue")
 let MaxEventCount = 25;
 
-struct Event  {
-    var event_name: String
-}
-
-class Queue {
+internal class Queue {
     
     private var elements: [JSON] = [];
     private var timer: Timer?

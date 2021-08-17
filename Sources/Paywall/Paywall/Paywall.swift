@@ -273,7 +273,7 @@ public class Paywall: NSObject {
     
     // MARK: Paywall Presentation
     
-    public static func present(on viewController: UIViewController? = nil, cached: Bool = false, presentationCompletion: (()->())? = nil, fallback: (() -> ())? = nil) {
+    public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, fallback: (() -> ())? = nil) {
         
         guard let delegate = delegate else {
             Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate equal to a PaywallDelegate before doing anything fancy")
@@ -296,6 +296,7 @@ public class Paywall: NSObject {
         
         let presentationBlock: ((PaywallViewController) -> ()) = { vc in
             if !vc.isBeingPresented {
+                shared.paywallViewController?.readyForEventTracking = false
                 vc.willMove(toParent: nil)
                 vc.view.removeFromSuperview()
                 vc.removeFromParent()
@@ -308,6 +309,7 @@ public class Paywall: NSObject {
                     delegate.didPresentPaywall?()
                     presentationCompletion?()
                     Paywall.track(.paywallOpen(paywallId: self.shared.paywallId))
+                    shared.paywallViewController?.readyForEventTracking = true
                 })
             }
         }
@@ -345,7 +347,9 @@ public class Paywall: NSObject {
     }
     
     
-    
+    deinit {
+        
+    }
 }
 
 
