@@ -112,8 +112,6 @@ extension Network {
             return completion(.failure(Error.unknown))
         }
 
-        print(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
-
         send(request, completion: { (result: Result<EventsResponse, Swift.Error>)  in
             switch result {
                 case .failure(let error):
