@@ -61,4 +61,10 @@ class Queue {
             return flushInternal(depth: depth - 1)
         }
     }
+
+    deinit {
+        timer?.invalidate()
+        timer = nil
+        NotificationCenter.default.removeObserver(self)
+    }
 }
