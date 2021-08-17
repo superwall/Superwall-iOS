@@ -15,7 +15,7 @@ extension Paywall {
     
     internal static func _track(_ name: String, _ params: [String: Any] = [:], _ custom: [String: Any] = [:]) {
         
-        Logger.superwallDebug(string: "[Tracked Event] \(name)")
+        Logger.superwallDebug(string: "[Track] \(name)")
         
         var eventParams = [String: Any]()
         
