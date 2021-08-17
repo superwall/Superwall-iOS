@@ -19,9 +19,9 @@ internal class Network {
     public init(
         urlSession: URLSession = URLSession(configuration: .ephemeral),
 //        baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
-        baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
+        baseURL: URL = URL(string: "https://api.superwall.dev/api/v1/")!,
 //         baseURL: URL = URL(string: "https://3000-scarlet-guppy-4bhnibfc.ws-us13.gitpod.io/api/v1/")!,
-        analyticsBaseURL: URL = URL(string: "https://collector.paywalrus.com/v1/")!) {
+        analyticsBaseURL: URL = URL(string: "https://collector.superwall.dev/v1/")!) {
         
         self.urlSession = (urlSession)
         self.baseURL = baseURL
@@ -54,6 +54,7 @@ extension Network {
 
         request.setValue("Bearer " + (Store.shared.apiKey ?? ""), forHTTPHeaderField:  "Authorization")
         request.setValue("iOS", forHTTPHeaderField: "X-Platform")
+        request.setValue("SDK", forHTTPHeaderField: "X-Platform-Environment")
         request.setValue(Store.shared.appUserId ?? "", forHTTPHeaderField: "X-App-User-ID")
         request.setValue(Store.shared.aliasId ?? "", forHTTPHeaderField: "X-Alias-ID")
         request.setValue(DeviceHelper.shared.vendorId, forHTTPHeaderField: "X-Vendor-ID")
@@ -88,6 +89,74 @@ extension Network {
         task.resume()
         
         
+    }
+}
+
+
+
+extension Network {
+    func events(events: EventsRequest, completion: @escaping (Result<EventsResponse, Swift.Error>) -> Void) {
+        let components = URLComponents(string: "events")!
+        let requestURL = components.url(relativeTo: analyticsBaseURL)!
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+
+        // Bail if we can't encode
+        do {
+            request.httpBody = try encoder.encode(events)
+        } catch {
+            return completion(.failure(Error.unknown))
+        }
+
+        print(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
+
+        send(request, completion: { (result: Result<EventsResponse, Swift.Error>)  in
+            switch result {
+                case .failure(let error):
+                    Logger.superwallDebug(string: "[network POST /events] - failure")
+                    completion(.failure(error))
+                case .success(let response):
+                    completion(.success(response))
+            }
+
+        })
+    }
+}
+
+extension Network {
+    func identify(identifyRequest: IdentifyRequest, completion: @escaping (Result<IdentifyResponse, Swift.Error>) -> Void) {
+        let components = URLComponents(string: "identify")!
+        let requestURL = components.url(relativeTo: baseURL)!
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+
+        // Bail if we can't encode
+        do {
+            request.httpBody = try encoder.encode(identifyRequest)
+        } catch {
+            return completion(.failure(Error.unknown))
+        }
+
+        print(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
+
+        send(request, completion: { (result: Result<IdentifyResponse, Swift.Error>)  in
+            switch result {
+                case .failure(let error):
+                    Logger.superwallDebug(string: "[network POST /identify] - failure")
+                    completion(.failure(error))
+                case .success(let response):
+                    completion(.success(response))
+            }
+
+        })
     }
 }
 
@@ -129,5 +198,3 @@ extension Network {
 
     }
 }
-
-

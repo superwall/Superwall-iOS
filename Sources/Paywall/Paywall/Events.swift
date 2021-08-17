@@ -9,6 +9,7 @@ import Foundation
 
 extension Paywall {
     
+    internal static var _queue = Queue();
     
     // TODO: Brian, decide what to do with this
     
@@ -39,14 +40,25 @@ extension Paywall {
             }
         }
        
+        // We want to send this event off right away & we might need to process it in
+        // somewhat real time so we send it to the api instead of the collector. 
+        if (name == "user_attributes"){
+            Network.shared.identify(identifyRequest: IdentifyRequest(parameters: JSON(eventParams), created_at: JSON(Date.init(timeIntervalSinceNow: 0).timeIntervalSince1970))) {
+                (result) in
+                print(result)
+            }
+            return
+        }
         
         let eventData: JSON = [
-            "name": JSON(name),
-            "params": JSON(eventParams)
+            "event_id": JSON(UUID().uuidString),
+            "event_name": JSON(name),
+            "parameters": JSON(eventParams),
+            "created_at": JSON(Date.init(timeIntervalSinceNow: 0).timeIntervalSince1970),
         ]
-        
-        let jsonString = eventData.rawString(.utf8, options: .init()) // prevent pretty print
-        print(eventData)
+        _queue.addEvent(event: eventData)
+//        let jsonString = eventData.rawString(.utf8, options: .init()) // prevent pretty print
+//        print(eventData)
         // TODO: Brian, decide what to do with this
         
     }
@@ -61,6 +73,7 @@ extension Paywall {
         case coreSessionStart // tell us if they bagan to use the main function of your application i.e. call this on "workout_started"
         case coreSessionAbandon // i.e. call this on "workout_cancelled"
         case coreSessionComplete // i.e. call this on "workout_complete"
+        case signUp
         case logIn
         case logOut
         case userAttributes(standard: [StandardUserAttributeKey: Any?], custom: [String: Any?])
@@ -76,9 +89,9 @@ extension Paywall {
         case coreSessionStart = "coreSession_start" // tell us if they bagan to use the main function of your application i.e. call this on "workout_started"
         case coreSessionAbandon = "coreSession_abandon" // i.e. call this on "workout_cancelled"
         case coreSessionComplete = "coreSession_complete" // i.e. call this on "workout_complete"
-        case signUp = "sign_up"
-        case logIn = "log_in"
-        case logOut = "log_out"
+        case authSignUp = "auth_signUp"
+        case authLogIn = "auth_logIn"
+        case authLogOut = "auth_LogOut"
         case userAttributes = "user_attributes"
         case base = "base"
     }
@@ -102,11 +115,13 @@ extension Paywall {
         case .coreSessionComplete:
             return .coreSessionComplete
         case .logIn:
-            return .logIn
+            return .authLogIn
         case .logOut:
-            return .logOut
+            return .authLogOut
         case .userAttributes:
             return .userAttributes
+        case .signUp:
+            return .authSignUp
         case .base:
             return .base
         }
