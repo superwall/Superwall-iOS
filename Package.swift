@@ -17,9 +17,6 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        // .package(url: /* package url */, from: "1.0.0"),
-//        .package(url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
-        .package(url: "https://github.com/tikhop/ASN1Swift", .upToNextMajor(from: "1.0.0")),
         .package(url: "https://github.com/tikhop/TPInAppReceipt.git", .upToNextMajor(from: "3.0.0"))
     ],
     targets: [

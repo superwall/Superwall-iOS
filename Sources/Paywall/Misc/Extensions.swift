@@ -152,22 +152,22 @@ extension SKProduct {
     var trialPeriodDays: String {
         get {
             if let trialPeriod = introductoryPrice?.subscriptionPeriod {
-                _ = trialPeriod.numberOfUnits
+                let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
-                    return "\(1)"
+                    return "\(Int(1 * c))"
                 }
 
                 if trialPeriod.unit == .month {
-                    return "\(30)"
+                    return "\(Int(30 * c))"
                 }
 
                 if trialPeriod.unit == .week {
-                    return "\(7)"
+                    return "\(Int(7 * c))"
                 }
 
                 if trialPeriod.unit == .year {
-                    return "\(365)"
+                    return "\(Int(365 * c))"
                 }
 
             }
@@ -179,22 +179,22 @@ extension SKProduct {
     var trialPeriodWeeks: String {
         get {
             if let trialPeriod = introductoryPrice?.subscriptionPeriod {
-                _ = trialPeriod.numberOfUnits
+                let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
-                    return "1/7th"
+                    return ""
                 }
 
                 if trialPeriod.unit == .month {
-                    return "4"
+                    return "\(4 * c)"
                 }
 
                 if trialPeriod.unit == .week {
-                    return "1"
+                    return "\(1 * c)"
                 }
 
                 if trialPeriod.unit == .year {
-                    return "52"
+                    return "\(52 * c)"
                 }
 
             }
@@ -206,22 +206,22 @@ extension SKProduct {
     var trialPeriodMonths: String {
         get {
             if let trialPeriod = introductoryPrice?.subscriptionPeriod {
-                _ = trialPeriod.numberOfUnits
+                let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
-                    return "1/10th"
+                    return ""
                 }
 
                 if trialPeriod.unit == .month {
-                    return "1"
+                    return "\(c * 1)"
                 }
 
                 if trialPeriod.unit == .week {
-                    return "1/4th"
+                    return ""
                 }
 
                 if trialPeriod.unit == .year {
-                    return "12"
+                    return "\(c * 12)"
                 }
 
             }
@@ -233,22 +233,22 @@ extension SKProduct {
     var trialPeriodYears: String {
         get {
             if let trialPeriod = introductoryPrice?.subscriptionPeriod {
-                _ = trialPeriod.numberOfUnits
+                let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
-                    return "1/365th"
+                    return ""
                 }
 
                 if trialPeriod.unit == .month {
-                    return "1/12th"
+                    return ""
                 }
 
                 if trialPeriod.unit == .week {
-                    return "1/52nd"
+                    return ""
                 }
 
                 if trialPeriod.unit == .year {
-                    return "1"
+                    return "\(c)"
                 }
 
             }

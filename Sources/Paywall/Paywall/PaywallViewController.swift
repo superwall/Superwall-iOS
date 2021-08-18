@@ -176,6 +176,8 @@ internal class PaywallViewController: UIViewController {
         wv.allowsBackForwardNavigationGestures = true
         wv.allowsLinkPreview = false
         wv.backgroundColor = .clear
+        wv.scrollView.maximumZoomScale = 1.0
+        wv.scrollView.minimumZoomScale = 1.0
         wv.isOpaque = false
         wv.scrollView.contentInsetAdjustmentBehavior = .never
         wv.scrollView.bounces = true
@@ -407,9 +409,16 @@ extension PaywallViewController {
                                 + "var head = document.head || document.getElementsByTagName('head')[0]; "
                                 + "var style = document.createElement('style'); style.type = 'text/css'; "
                                 + "style.appendChild(document.createTextNode(css)); head.appendChild(style); "
+                            
             
              let selectionScript: WKUserScript = WKUserScript(source: selectionString, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
              webview.configuration.userContentController.addUserScript(selectionScript)
+            
+            let preventSelection = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
+            webview.evaluateJavaScript(preventSelection, completionHandler: nil)
+            
+            let preventZoom: String = "var meta = document.createElement('meta');" + "meta.name = 'viewport';" + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';" + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
+            webview.evaluateJavaScript(preventZoom, completionHandler: nil)
   
         case .close:
             UIImpactFeedbackGenerator().impactOccurred()

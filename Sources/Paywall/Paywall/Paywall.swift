@@ -199,23 +199,24 @@ public class Paywall: NSObject {
     
 
     private func paywallEventDidOccur(result: PaywallPresentationResult) {
-        
-        switch result {
-        case .closed:
-            _dismiss()
-        case .initiatePurchase(let productId):
-            // TODO: make sure this can NEVER happen
-            guard let product = productsById[productId] else { return }
-            paywallViewController?.loadingState = .loadingPurchase
-            Paywall.delegate?.userDidInitiateCheckout(for: product)
-        case .initiateRestore:
-            Paywall.delegate?.shouldTryToRestore()
-        case .openedURL(let url):
-            Paywall.delegate?.willOpenURL?(url: url)
-        case .openedDeepLink(let url):
-            Paywall.delegate?.willOpenDeepLink?(url: url)
-        case .custom(let string):
-            Paywall.delegate?.didReceiveCustomEvent?(withName: string)
+        OnMain { [weak self] in
+            switch result {
+            case .closed:
+                self?._dismiss()
+            case .initiatePurchase(let productId):
+                // TODO: make sure this can NEVER happen
+                guard let product = self?.productsById[productId] else { return }
+                self?.paywallViewController?.loadingState = .loadingPurchase
+                Paywall.delegate?.userDidInitiateCheckout(for: product)
+            case .initiateRestore:
+                Paywall.delegate?.shouldTryToRestore()
+            case .openedURL(let url):
+                Paywall.delegate?.willOpenURL?(url: url)
+            case .openedDeepLink(let url):
+                Paywall.delegate?.willOpenDeepLink?(url: url)
+            case .custom(let string):
+                Paywall.delegate?.didReceiveCustomEvent?(withName: string)
+            }
         }
     }
     
@@ -230,20 +231,24 @@ public class Paywall: NSObject {
     private func _transactionDidSucceed(for product: SKProduct) {
         Paywall.track(.transactionComplete(paywallId: paywallId, productId: product.productIdentifier))
         _dismiss()
-        
     }
     
     
     private func _transactionErrorDidOccur(error: SKError?, for product: SKProduct) {
         // prevent a recursive loop
-        if !didTryToAutoRestore {
-            Paywall.delegate?.shouldTryToRestore()
-            didTryToAutoRestore = true
-        } else {
-            Paywall.track(.transactionFail(paywallId: paywallId, productId: product.productIdentifier, message: error?.localizedDescription ?? ""))
-            paywallViewController?.presentAlert(title: "Please try again", message: error?.localizedDescription ?? "", actionTitle: "Restore Purchase", action: {
+        OnMain { [weak self] in
+            
+            guard let self = self else { return }
+            
+            if !self.didTryToAutoRestore {
                 Paywall.delegate?.shouldTryToRestore()
-            })
+                self.didTryToAutoRestore = true
+            } else {
+                Paywall.track(.transactionFail(paywallId: self.paywallId, productId: product.productIdentifier, message: error?.localizedDescription ?? ""))
+                self.paywallViewController?.presentAlert(title: "Please try again", message: error?.localizedDescription ?? "", actionTitle: "Restore Purchase", action: {
+                    Paywall.delegate?.shouldTryToRestore()
+                })
+            }
         }
     }
     
@@ -264,11 +269,13 @@ public class Paywall: NSObject {
     }
     
     private func _dismiss(_ completion: (()->())? = nil) {
-        Paywall.delegate?.willDismissPaywall?()
-        paywallViewController?.dismiss(animated: true, completion: {
-            Paywall.delegate?.didDismissPaywall?()
-            completion?()
-        })
+        OnMain { [weak self] in
+            Paywall.delegate?.willDismissPaywall?()
+            self?.paywallViewController?.dismiss(animated: true, completion: {
+                Paywall.delegate?.didDismissPaywall?()
+                completion?()
+            })
+        }
     }
     
     // MARK: Paywall Presentation
@@ -281,11 +288,6 @@ public class Paywall: NSObject {
             return
         }
         
-        guard let presentor = (viewController ?? UIApplication.shared.keyWindow?.rootViewController) else {
-            Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
-            fallback?()
-            return
-        }
         
         if shared.willPresent {
             Logger.superwallDebug(string: "A Paywall is already being presented! If you'd like to speed this up, try calling Paywall.preload()")
@@ -304,6 +306,13 @@ public class Paywall: NSObject {
                 vc.view.transform = .identity
                 vc.webview.scrollView.contentOffset = CGPoint.zero
                 delegate.willPresentPaywall?()
+                
+                guard let presentor = (viewController ?? UIApplication.shared.keyWindow?.rootViewController) else {
+                    Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
+                    fallback?()
+                    return
+                }
+                
                 presentor.present(vc, animated: true, completion: { 
                     self.shared.willPresent = false
                     delegate.didPresentPaywall?()
@@ -361,6 +370,7 @@ extension Paywall: SKPaymentTransactionObserver {
         guard let product = productsById[transaction.payment.productIdentifier] else { return }
       switch transaction.transactionState {
       case .purchased:
+          queue.finishTransaction(transaction)
           Logger.superwallDebug(string: "[Transaction Observer] transactionDidSucceed for: \(product.productIdentifier)")
           self._transactionDidSucceed(for: product)
         break
@@ -408,4 +418,6 @@ extension Paywall: SKPaymentTransactionObserver {
 }
 
 
-
+internal func OnMain(_ execute: @escaping () -> Void) {
+    DispatchQueue.main.async(execute: execute)
+}
