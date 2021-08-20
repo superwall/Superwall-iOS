@@ -11,13 +11,13 @@ import Foundation
 internal struct Logger {
     
     static func superwallDebug(_ items: Any...) {
-//        print("[Superwall]", items)
+        print("[Superwall]", items)
     }
     
     static func superwallDebug(string: String, error: Swift.Error? = nil) {
-//        print("[Superwall] " + string)
+        print("[Superwall] " + string)
         if let e = error {
-//            print("[Superwall]  →", e)
+            print("[Superwall]  →", e)
         }
     }
     
