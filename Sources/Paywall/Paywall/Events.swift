@@ -45,7 +45,7 @@ extension Paywall {
         // We want to send this event off right away & we might need to process it in
         // somewhat real time so we send it to the api instead of the collector. 
         if (name == "user_attributes"){
-            Network.shared.identify(identifyRequest: IdentifyRequest(parameters: JSON(eventParams), created_at: JSON(Date.init(timeIntervalSinceNow: 0).timeIntervalSince1970))) {
+            Network.shared.identify(identifyRequest: IdentifyRequest(parameters: JSON(eventParams), created_at: JSON(Date.init(timeIntervalSinceNow: 0).isoString))) {
                 (result) in
                 print(result)
             }
@@ -56,7 +56,7 @@ extension Paywall {
             "event_id": JSON(UUID().uuidString),
             "event_name": JSON(name),
             "parameters": JSON(eventParams),
-            "created_at": JSON(Date.init(timeIntervalSinceNow: 0).timeIntervalSince1970),
+            "created_at": JSON(Date.init(timeIntervalSinceNow: 0).isoString),
         ]
         _queue.addEvent(event: eventData)
 //        let jsonString = eventData.rawString(.utf8, options: .init()) // prevent pretty print
@@ -140,6 +140,7 @@ extension Paywall {
     
     public enum StandardUserAttributeKey: String { //  add defs
         case id = "id"
+        case applicationInstalledAt = "application_installed_at"
         case firstName = "first_name"
         case lastName = "last_name"
         case email = "email"
@@ -315,7 +316,7 @@ extension Paywall {
                     return v
                 } else {
                     if let d = v as? Date {
-                        return d.timeIntervalSince1970
+                        return d.isoString
                     } else {
                         return nil
                     }
@@ -379,6 +380,7 @@ extension Paywall {
     public static func setUserAttributes(_ standard: StandardUserAttribute..., custom: [String: Any?] = [:]) {
         
         var map = [StandardUserAttributeKey: Any]()
+        map[.applicationInstalledAt] = DeviceHelper.shared.appInstallDate
         standard.forEach {
             switch $0 {
             case .id(let s):

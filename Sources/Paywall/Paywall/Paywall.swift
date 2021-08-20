@@ -23,6 +23,8 @@ import TPInAppReceipt
 
 public class Paywall: NSObject {
     
+    public static var debugMode = false
+    
     public static var debugLogsEnabled: Bool = false
     private static var shared: Paywall = Paywall(apiKey: nil)
     

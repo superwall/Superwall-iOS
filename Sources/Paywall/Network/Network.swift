@@ -66,7 +66,9 @@ extension Network {
         request.setValue(DeviceHelper.shared.currencyCode, forHTTPHeaderField: "X-Device-Currency-Code") // USD
         request.setValue(DeviceHelper.shared.currencySymbol, forHTTPHeaderField: "X-Device-Currency-Symbol") // $
         request.setValue(DeviceHelper.shared.secondsFromGMT, forHTTPHeaderField: "X-Device-Timezone-Offset") // $
+        request.setValue(DeviceHelper.shared.appInstallDate, forHTTPHeaderField: "X-App-Install-Date") // $
         
+
         let task = self.urlSession.dataTask(with: request) { (data, response, error) in
             do {
                 guard let unWrappedData = data else { return completion(.failure(error ?? Error.unknown))}
@@ -144,7 +146,7 @@ extension Network {
             return completion(.failure(Error.unknown))
         }
 
-        print(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
+        Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
 
         send(request, completion: { (result: Result<IdentifyResponse, Swift.Error>)  in
             switch result {
@@ -182,7 +184,7 @@ extension Network {
             return completion(.failure(Error.unknown))
         }
         
-        print(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
+        Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
         
         send(request, completion: { (result: Result<PaywallResponse, Swift.Error>)  in
             switch result {

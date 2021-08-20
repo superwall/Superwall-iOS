@@ -29,7 +29,15 @@ internal extension UIColor {
 }
 
 
-extension SKProduct {
+internal extension Date {
+
+    var isoString: String {
+        return ISO8601DateFormatter().string(from: self)
+    }
+}
+
+
+internal extension SKProduct {
     
     var eventData: [String: String] {
         return [

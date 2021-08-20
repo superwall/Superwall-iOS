@@ -8,7 +8,7 @@ import UIKit
 import Foundation
 
 
-class DeviceHelper {
+internal class DeviceHelper {
 
     static let shared = DeviceHelper()
     
@@ -51,8 +51,16 @@ class DeviceHelper {
     
     var secondsFromGMT: String {
         get {
-            "\(Int(TimeZone.current.secondsFromGMT()))"}
+            "\(Int(TimeZone.current.secondsFromGMT()))"
+            
+        }
     }
+    
+    var appInstallDate: String = {
+        let urlToDocumentsFolder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last!
+        let installDate = try? FileManager.default.attributesOfItem(atPath: urlToDocumentsFolder.path)[FileAttributeKey.creationDate] as? Date
+        return installDate?.isoString ?? ""
+    }()
 }
 
 
