@@ -18,6 +18,8 @@ import TPInAppReceipt
     
     @objc optional func willOpenURL(url: URL)
     @objc optional func willOpenDeepLink(url: URL)
+    
+    @objc optional func shouldTrack(event: String, params: [String: Any])
 
 }
 
@@ -232,6 +234,15 @@ public class Paywall: NSObject {
     
     private func _transactionDidSucceed(for product: SKProduct) {
         Paywall.track(.transactionComplete(paywallId: paywallId, productId: product.productIdentifier))
+        
+        if let ft = paywallResponse?.isFreeTrialAvailable {
+            if ft {
+                Paywall.track(.freeTrialStart(paywallId: paywallId, productId: product.productIdentifier))
+            } else {
+                Paywall.track(.subscriptionStart(paywallId: paywallId, productId: product.productIdentifier))
+            }
+        }
+        
         _dismiss()
     }
     

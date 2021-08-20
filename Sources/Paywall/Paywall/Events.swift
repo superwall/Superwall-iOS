@@ -18,6 +18,8 @@ extension Paywall {
         Logger.superwallDebug(string: "[Track] \(name)")
         
         var eventParams = [String: Any]()
+        var delegateParams = [String: Any]()
+        delegateParams["isSuperwall"] = true
         
         // TODO: Brian, determine if you want to allow nested
         
@@ -25,6 +27,7 @@ extension Paywall {
             if let v = clean(input: params[k]) {
                 let key = "$\(k)"
                 eventParams[key] = v
+                delegateParams[k] = v // no $ for delegate methods
             } else {
                 Logger.superwallDebug(string: "Warning: dropping key \"\(k)\" for event \"\(name)\"", error: SuperwallEventError(message: "Could not serialize. FYI arrays & dicts aren't allowed!"))
             }
@@ -33,6 +36,7 @@ extension Paywall {
         for k in custom.keys {
             if let v = clean(input: custom[k]) {
                 if k.starts(with: "$") {
+                    delegateParams[k] = v // if they wanna use a dollar sign in their own events, let them
                     Logger.superwallDebug(string: "Warning: dropping key \"\(k)\" for event \"\(name)\"", error: SuperwallEventError(message: "$ signs are reserved for us, chump!"))
                 } else {
                     eventParams[k] = v
@@ -41,7 +45,10 @@ extension Paywall {
                 Logger.superwallDebug(string: "Warning: dropping key \"\(k)\" for event \"\(name)\"", error: SuperwallEventError(message: "Could not serialize. FYI arrays & dicts aren't allowed!"))
             }
         }
-       
+        
+
+
+        
         // We want to send this event off right away & we might need to process it in
         // somewhat real time so we send it to the api instead of the collector. 
         if (name == "user_attributes"){
@@ -51,6 +58,12 @@ extension Paywall {
             }
             return
         }
+        
+        // skip calling user_attributes on their own system, likely not needed
+        if StandardEventName(rawValue: name) != nil || InternalEventName(rawValue: name) != nil {
+            Paywall.delegate?.shouldTrack?(event: name, params: delegateParams)
+        }
+
         
         let eventData: JSON = [
             "event_id": JSON(UUID().uuidString),
