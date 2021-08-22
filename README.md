@@ -1,5 +1,16 @@
 <h3 align="center">In-App Paywalls Made Easy 💸</h1>
 
+[![License MIT](https://img.shields.io/badge/license-MIT-green/)](https://superwall.me/)
+[![SwiftPM Compatible](https://img.shields.io/badge/SwiftPM-Compatible-orange/)](https://superwall.me/)
+[![Community Active](https://img.shields.io/badge/community-active-9cf/)](https://superwall.me/)
+[![Version Number](https://img.shields.io/github/v/tag/superwall-me/paywall-ios)](https://superwall.me/)
+[![Open issues](https://img.shields.io/github/issues/superwall-me/paywall-ios)](https://superwall.me/)
+[![PRs Open](https://img.shields.io/github/issues-pr/superwall-me/paywall-ios)](https://superwall.me/)
+[![Versions Supported](https://img.shields.io/badge/ios%20version-%3E%3D%2011-blueviolet)](https://superwall.me/)
+
+
+
+
 ## Paywalls.framework
 
 *Paywalls* is a client for the [Superwall](https://superwall.me/) subscription and purchase tracking system. It is an open source framework that provides a wrapper around `StoreKit` and the Superwall backend to make implementing new paywall that you can iterate on the fly in `Swift` or `Objective-C` easy!
