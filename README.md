@@ -1,3 +1,7 @@
+<img src="https://superwall.me/SuperwallLogo.svg" alt="logo" height="50px" align="center"/>
+
+<br/>
+
 <h3 align="center">In-App Paywalls Made Easy 💸</h1>
 
 [![License MIT](https://img.shields.io/badge/license-MIT-green/)](https://superwall.me/)
