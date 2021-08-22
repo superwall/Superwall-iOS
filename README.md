@@ -1,4 +1,8 @@
-<img src="https://superwall.me/SuperwallLogo.svg" alt="logo" height="50px" align="center"/>
+
+<p align="center">
+    <img src="https://superwall.me/SuperwallLogo.svg" alt="logo" height="50px" align="center"/>
+</p>
+
 
 <br/>
 
