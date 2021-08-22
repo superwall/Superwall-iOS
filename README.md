@@ -1,8 +1,8 @@
 <h3 align="center">In-App Paywalls Made Easy 💸</h1>
 
 [![License MIT](https://img.shields.io/badge/license-MIT-green/)](https://superwall.me/)
-[![SwiftPM Compatible](https://img.shields.io/badge/SwiftPM-Compatible-orange/)](https://superwall.me/)
-[![Community Active](https://img.shields.io/badge/community-active-9cf/)](https://superwall.me/)
+[![SwiftPM Compatible](https://img.shields.io/badge/SwiftPM-Compatible-orange)](https://superwall.me/)
+[![Community Active](https://img.shields.io/badge/community-active-9cf)](https://superwall.me/)
 [![Version Number](https://img.shields.io/github/v/tag/superwall-me/paywall-ios)](https://superwall.me/)
 [![Open issues](https://img.shields.io/github/issues/superwall-me/paywall-ios)](https://superwall.me/)
 [![PRs Open](https://img.shields.io/github/issues-pr/superwall-me/paywall-ios)](https://superwall.me/)
@@ -20,8 +20,10 @@
 | --- | --- |
 ✅ | Server-side Paywall Iteration
 🖥 | macOS support
-🎯 | Subscription status tracking - know whether a user is subscribed whether they're on iOS, Android or web
-📊 | Analytics - automatic calculation of metrics like conversion, mrr, and churn
+🎯 | Paywall conversion rate tracking - know whether a user converted after seeing a paywall
+🆓 | Trial Start rate tracking - know and measure your trial start rate out of the box
+📊 | Analytics - automatic calculation of metrics like conversion and views
+✏️ | A/B Testing - automaticly calculate metrics for different paywalls
 📝 | [Online documentation](https://docs.superwall.me/docs) up to date
 🔀 | [Integrations](https://docs.superwall.me/docs) - over a dozen integrations to easily send conversion data where you need it
 💯 | Well maintained - [frequent releases](https://github.com/superwall-me/paywall-ios/releases)
