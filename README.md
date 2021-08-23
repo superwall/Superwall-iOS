@@ -21,7 +21,7 @@
 
 ## Paywalls.framework
 
-*Paywalls* is a client for the [Superwall](https://superwall.me/) subscription and purchase tracking system. It is an open source framework that provides a wrapper around `StoreKit` and the Superwall backend to make implementing new paywall that you can iterate on the fly in `Swift` or `Objective-C` easy!
+**Paywall** is a client for the [Superwall](https://superwall.me/) paywall iteration anbd event tracking system. It is an open source framework that provides a wrapper around `Webkit` for presenting and creating paywalls. The Superwall backend for implementing new paywalls lets you iterate on the fly in `Swift` or `Objective-C` easy!
 
 ## Features
 |   | Superwall |
