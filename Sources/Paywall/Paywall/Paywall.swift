@@ -56,6 +56,9 @@ public class Paywall: NSObject {
         paywallResponse?.id ?? ""
     }
     
+    public typealias PaywallCompletion = (Bool) -> ()
+    var paywallCompletion: PaywallCompletion? = nil
+    
     // MARK: Initialization
     
     private init(apiKey: String?, userId: String? = nil) {
@@ -206,7 +209,7 @@ public class Paywall: NSObject {
         OnMain { [weak self] in
             switch result {
             case .closed:
-                self?._dismiss()
+                self?._dismiss(userDidPurchase: false)
             case .initiatePurchase(let productId):
                 // TODO: make sure this can NEVER happen
                 guard let product = self?.productsById[productId] else { return }
@@ -243,7 +246,7 @@ public class Paywall: NSObject {
             }
         }
         
-        _dismiss()
+        _dismiss(userDidPurchase: true)
     }
     
     
@@ -272,7 +275,7 @@ public class Paywall: NSObject {
     
     private func _transactionWasRestored() {
         Paywall.track(.transactionRestore(paywallId: paywallId, productId: ""))
-        _dismiss()
+        _dismiss(userDidPurchase: true)
     }
     
     // if a parent needs to approve the purchase
@@ -281,26 +284,36 @@ public class Paywall: NSObject {
         Paywall.track(.transactionFail(paywallId: paywallId, productId: "", message: "Needs parental approval"))
     }
     
-    private func _dismiss(_ completion: (()->())? = nil) {
+    public static func dismiss(_ completion: (()->())? = nil) {
+        shared._dismiss(completion: completion)
+    }
+    
+    private func _dismiss(userDidPurchase: Bool? = nil, completion: (()->())? = nil) {
         OnMain { [weak self] in
             Paywall.delegate?.willDismissPaywall?()
-            self?.paywallViewController?.dismiss(animated: true, completion: {
+            self?.paywallViewController?.dismiss(animated: true, completion: { [weak self] in
                 Paywall.delegate?.didDismissPaywall?()
+                self?.paywallViewController?.loadingState = .ready
                 completion?()
+                if let s = userDidPurchase {
+                    self?.paywallCompletion?(s)
+                }
+                
             })
         }
     }
     
     // MARK: Paywall Presentation
     
-    public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, fallback: (() -> ())? = nil) {
+    public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, completion: PaywallCompletion? = nil, fallback: (() -> ())? = nil) {
+        
+        shared.paywallCompletion = completion
         
         guard let delegate = delegate else {
             Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate equal to a PaywallDelegate before doing anything fancy")
             fallback?()
             return
         }
-        
         
         if shared.willPresent {
             Logger.superwallDebug(string: "A Paywall is already being presented! If you'd like to speed this up, try calling Paywall.preload()")

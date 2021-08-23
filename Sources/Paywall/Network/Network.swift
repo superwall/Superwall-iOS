@@ -18,10 +18,10 @@ internal class Network {
     
     public init(
         urlSession: URLSession = URLSession(configuration: .ephemeral),
-//        baseURL: URL = URL(string: "https://paywall-next.herokuapp.com/api/v1/")!,
         baseURL: URL = URL(string: "https://api.superwall.me/api/v1/")!,
-//         baseURL: URL = URL(string: "https://3000-scarlet-guppy-4bhnibfc.ws-us13.gitpod.io/api/v1/")!,
         analyticsBaseURL: URL = URL(string: "https://collector.superwall.me/api/v1/")!) {
+//        baseURL: URL = URL(string: "https://api.superwallcanary.com/api/v1/")!,
+//        analyticsBaseURL: URL = URL(string: "https://collector.superwallcanary.com/api/v1/")!) {
         
         self.urlSession = (urlSession)
         self.baseURL = baseURL
