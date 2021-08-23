@@ -28,13 +28,13 @@ internal struct WrappedPaywallEvents: Decodable {
     public var payload: PayloadEvents
 }
 
-public struct PayloadEvents: Decodable {
+internal struct PayloadEvents: Decodable {
     var events: Array<PaywallEvent>
 }
 
 
 
-public enum PaywallEvent: Decodable {
+internal enum PaywallEvent: Decodable {
     case onReady
     case close
     case restore
@@ -109,7 +109,7 @@ extension PaywallEvent {
     }
 }
 
-public enum PaywallPresentationResult {
+internal enum PaywallPresentationResult {
     case closed
     case initiatePurchase(productId: String)
     case initiateRestore

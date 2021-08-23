@@ -11,59 +11,59 @@ import QuartzCore
 #if canImport(UIKit)
 import UIKit
 
-final public class ShimmeringLayer: CALayer {
+final internal class ShimmeringLayer: CALayer {
 
     /// Set to `true` to start shimmer animation, and `false` to stop. Detaults to `false`.
-    public var isShimmering: Bool = false {
+    internal var isShimmering: Bool = false {
         didSet { if oldValue != isShimmering { updateShimmering() } }
     }
 
     /// The speed of the shimmer animation in points per second. The higher the number, the faster the animation.
     /// Defaults to 230.
-    public var shimmerSpeed: CGFloat = 230.0 {
+    internal var shimmerSpeed: CGFloat = 230.0 {
         didSet { if oldValue != shimmerSpeed { updateShimmering() } }
     }
 
     /// The highlight length of the shimmer. Range of [0,1], defaults to 1.0.
-    public var shimmerHighlightLength: CGFloat = 1.0 {
+    internal var shimmerHighlightLength: CGFloat = 1.0 {
         didSet { if oldValue != shimmerHighlightLength { updateShimmering() } }
     }
 
     /// The direction of the shimmer animation.
     /// Defaults to `.right`, which will run the animation from left to right.
-    public var shimmerDirection: Shimmer.Direction = .right {
+    internal var shimmerDirection: Shimmer.Direction = .right {
         didSet { if oldValue != shimmerDirection { updateShimmering() } }
     }
 
     /// The time interval between shimmers in seconds.
     /// Defaults to 0.4.
-    public var shimmerPauseDuration: CFTimeInterval = 0.4 {
+    internal var shimmerPauseDuration: CFTimeInterval = 0.4 {
         didSet { if oldValue != shimmerPauseDuration { updateShimmering() } }
     }
 
     /// The opacity of the content during a shimmer. Defaults to 0.5.
-    public var shimmerAnimationOpacity: CGFloat = 0.5 {
+    internal var shimmerAnimationOpacity: CGFloat = 0.5 {
         didSet { if oldValue != shimmerAnimationOpacity { updateMaskColors() } }
     }
 
     /// The opacity of the content when not shimmering. Defaults to 1.0.
-    public var shimmerOpacity: CGFloat = 1.0 {
+    internal var shimmerOpacity: CGFloat = 1.0 {
         didSet { if oldValue != shimmerOpacity { updateMaskColors() } }
     }
 
     /// The absolute CoreAnimation media time when the shimmer will begin.
-    public var shimmerBeginTime: CFTimeInterval = .greatestFiniteMagnitude {
+    internal var shimmerBeginTime: CFTimeInterval = .greatestFiniteMagnitude {
         didSet { if oldValue != shimmerBeginTime { updateShimmering() } }
     }
 
     /// The duration of the fade used when the shimmer begins. Defaults to 0.1.
-    public var shimmerBeginFadeDuration: CFTimeInterval = 0.1
+    internal var shimmerBeginFadeDuration: CFTimeInterval = 0.1
 
     /// The duration of the fade used when the shimmer ends. Defaults to 0.3.
-    public var shimmerEndFadeDuration: CFTimeInterval = 0.3
+    internal var shimmerEndFadeDuration: CFTimeInterval = 0.3
 
     /// The absolute CoreAnimation media time when the shimmer will fade in.
-    public var shimmerFadeTime: CFTimeInterval?
+    internal var shimmerFadeTime: CFTimeInterval?
 
     private let shimmerDefaultBeginTime: CFTimeInterval = .greatestFiniteMagnitude
 
@@ -73,7 +73,7 @@ final public class ShimmeringLayer: CALayer {
         super.init()
     }
 
-    override public func layoutSublayers() {
+    override internal func layoutSublayers() {
         super.layoutSublayers()
         let rect = self.bounds
         contentLayer?.anchorPoint = CGPoint(x: 0.5, y: 0.5)
@@ -97,7 +97,7 @@ final public class ShimmeringLayer: CALayer {
         }
     }
 
-    override public var bounds: CGRect {
+    override internal var bounds: CGRect {
         didSet {
             if oldValue.equalTo(bounds) {
                 updateShimmering()
@@ -253,19 +253,19 @@ final public class ShimmeringLayer: CALayer {
         super.init(coder: aDecoder)
     }
 
-    override public init(layer: Any) {
+    override internal init(layer: Any) {
         super.init(layer: layer)
     }
 }
 
 extension ShimmeringLayer: CALayerDelegate {
-    public func action(for layer: CALayer, forKey event: String) -> CAAction? {
+    internal func action(for layer: CALayer, forKey event: String) -> CAAction? {
         return nil
     }
 }
 
 extension ShimmeringLayer: CAAnimationDelegate {
-    public func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
+    internal func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
         if flag == true && anim.value(forKey: Shimmer.Key.endFadeAnimation) as? Bool == true {
             maskLayer?.fadeLayer.removeAnimation(forKey: Shimmer.Key.fadeAnimation)
             clearMask()

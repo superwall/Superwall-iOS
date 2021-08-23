@@ -209,7 +209,7 @@ public class Paywall: NSObject {
     ///  - Parameter purchaseCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
     public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil, fallback: FallbackBlock? = nil) {
         
-        Paywall.purchaseCompletion = purchaseCompletion
+        self.purchaseCompletion = purchaseCompletion
         
         let fallbackUsing = fallback ?? fallbackCompletionBlock
         
@@ -288,7 +288,7 @@ public class Paywall: NSObject {
     
     // MARK: Private
     
-    internal var purchaseCompletion: PurchaseCompletionBlock? = nil
+    internal static var purchaseCompletion: PurchaseCompletionBlock? = nil
     internal static var fallbackCompletionBlock: FallbackBlock? = nil
     
     private static var shared: Paywall = Paywall(apiKey: nil)
@@ -443,7 +443,7 @@ public class Paywall: NSObject {
                 self?.paywallViewController?.loadingState = .ready
                 completion?()
                 if let s = userDidPurchase {
-                    self?.purchaseCompletion?(s)
+                    Paywall.purchaseCompletion?(s)
                 }
                 
             })

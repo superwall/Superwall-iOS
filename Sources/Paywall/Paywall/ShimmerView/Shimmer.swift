@@ -10,9 +10,9 @@ import QuartzCore
 #if canImport(UIKit)
 import UIKit
 
-final public class Shimmer {
+final internal class Shimmer {
 
-    public enum Direction {
+    internal enum Direction {
         case right
         case left
         case up

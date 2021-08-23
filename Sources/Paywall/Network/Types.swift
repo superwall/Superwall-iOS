@@ -10,15 +10,15 @@ import Foundation
 import StoreKit
 import CloudKit
 
-struct EmptyResponse: Decodable {}
+internal struct EmptyResponse: Decodable {}
 
 // MARK: Paywall
 
-struct PaywallRequest: Codable {
+internal struct PaywallRequest: Codable {
     var appUserId: String
 }
 
-struct PaywallResponse: Decodable {
+internal struct PaywallResponse: Decodable {
     var id: String? = nil
     var url: String
     var paywalljsEvent: String
@@ -98,46 +98,46 @@ struct PaywallResponse: Decodable {
     }
 }
 
-struct Variables: Decodable {
+internal struct Variables: Decodable {
     var key: String
     var value: [String: String]
 }
 
-public enum PaywallPresentationStyle: String, Decodable {
+internal enum PaywallPresentationStyle: String, Decodable {
     case sheet = "SHEET"
     case modal = "MODAL"
     case fullscreen = "FULLSCREEN"
 }
 
-struct Product: Codable {
+internal struct Product: Codable {
     var product: ProductType
     var productId: String
 }
 
 
-public enum ProductType: String, Codable {
+internal  enum ProductType: String, Codable {
     case primary
     case secondary
     case tertiary
 }
 
-struct TemplateVariables: Codable {
+internal struct TemplateVariables: Codable {
     var event_name: String
     var variables: [String: [String: String]]
 }
 
-struct TemplateSubstitutionsPrefix: Codable {
+internal struct TemplateSubstitutionsPrefix: Codable {
     var event_name: String
     // Right now can be `null` or `freeTrial`
     var prefix: String?
 }
 
-struct TemplateProducts: Codable {
+internal struct TemplateProducts: Codable {
     var event_name: String
     var products: [Product]
 }
 
-struct TemplateDevice: Codable {
+internal struct TemplateDevice: Codable {
     var publicApiKey: String
     var platform: String
     var appUserId: String
@@ -155,7 +155,7 @@ struct TemplateDevice: Codable {
 // TODO: UserProperties
 
 
-struct UserPropertiesRequest: Codable {
+internal struct UserPropertiesRequest: Codable {
     var apnsToken: String?
     var fcmToken: String?
     var email: String?
@@ -167,22 +167,22 @@ struct UserPropertiesRequest: Codable {
 
 
 // Mark - Events
-struct EventsRequest: Codable {
+internal struct EventsRequest: Codable {
     var events: [JSON]
 }
 
-struct EventsResponse: Codable {
+internal struct EventsResponse: Codable {
     var status: String
 }
 
 // Mark - Identify
 
-struct IdentifyRequest: Codable {
+internal struct IdentifyRequest: Codable {
     var parameters: JSON
     var created_at: JSON
 }
 
-struct IdentifyResponse: Codable {
+internal struct IdentifyResponse: Codable {
     var status: String
 }
 
