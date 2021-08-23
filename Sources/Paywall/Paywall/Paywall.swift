@@ -5,89 +5,59 @@ import TPInAppReceipt
 
 @objc public protocol PaywallDelegate: AnyObject {
     
+    /// Called when the user initiates checkout for a product. Add your purchase logic here by either calling `Purchases.shared.purchaseProduct()` (if you use RevenueCat: https://sdk.revenuecat.com/ios/Classes/RCPurchases.html#/c:objc(cs)RCPurchases(im)purchaseProduct:withCompletionBlock:) or by using Apple's StoreKit APIs
+    /// - Parameter product: The `SKProduct` the user would like to purchase
     func userDidInitiateCheckout(for product: SKProduct)
+    
+    /// Called when the user initiates a restore. Add your restore logic here.
     func shouldTryToRestore()
     
+    /// Called when the user taps a button with a custom `data-pw-custom` tag in your HTML paywall. See paywall.js for further documentation
+    ///  - Parameter withName: The value of the `data-pw-custom` tag in your HTML element that the user selected.
     @objc optional func didReceiveCustomEvent(withName name: String)
     
+    /// Called right before the paywall is dismissed.
     @objc optional func willDismissPaywall()
+    
+    /// Called right before the paywall is presented.
     @objc optional func willPresentPaywall()
 
+    /// Called right after the paywall is dismissed.
     @objc optional func didDismissPaywall()
+    
+    /// Called right after the paywall is presented.
     @objc optional func didPresentPaywall()
     
+    /// Called when the user opens a URL by selecting an element with the `data-pw-open-url` tag in your HTML paywall.
     @objc optional func willOpenURL(url: URL)
+    
+    /// Called when the user taps a deep link in your HTML paywall.
     @objc optional func willOpenDeepLink(url: URL)
     
+    /// Called when you should track an analytics event to your own system. For a list of all events, see `Paywall.StandardEvent`.
     @objc optional func shouldTrack(event: String, params: [String: Any])
 
 }
 
 public class Paywall: NSObject {
     
+    // MARK: Public
+    
+    /// Prints debug logs to the console if set to `true`. Default is `false`
     public static var debugMode = false
     
-    public static var debugLogsEnabled: Bool = false
-    private static var shared: Paywall = Paywall(apiKey: nil)
-    
-    private var apiKey: String? {
-        return Store.shared.apiKey
-    }
-    private var appUserId: String? {
-        return Store.shared.appUserId
-    }
-    private var aliasId: String? {
-        return Store.shared.aliasId
-    }
-    
-    private var willPresent = false
-
-    private(set) var paywallResponse: PaywallResponse?
-    
-    private(set) var paywallViewController: PaywallViewController?
-    
-    private(set) var productsById: [String: SKProduct] = [String: SKProduct]()
-    
-    private var didTryToAutoRestore = false
-    
+    /// The object that acts as the delegate of Paywall. Required implementations include `userDidInitiateCheckout(for product: SKProduct)` and `shouldTryToRestore()`. 
     public static var delegate: PaywallDelegate? = nil
     
-    private var paywallId: String {
-        paywallResponse?.id ?? ""
-    }
+    /// Completion block of type `(Bool) -> ()` that is optionally passed through `Paywall.present()`. Gets called when the paywall is dismissed by the user, by way or purchasing, restoring or manually dismissing. Accepts a BOOL that is `true` if the product is purchased or restored, and `false` if the user manually dismisses the paywall.
+    /// Please note: This completion is NOT called when  `Paywall.dismiss()` is manually called by the developer.
+    public typealias PurchaseCompletionBlock = (Bool) -> ()
     
-    public typealias PaywallCompletion = (Bool) -> ()
-    var paywallCompletion: PaywallCompletion? = nil
+    /// Completion block that is optionally passed through `Paywall.present()`. Gets called if an error occurs while presenting a Superwall paywall, or if all paywalls are set to off in your dashboard. It's a good idea to add your legacy paywall presentation logic here just in case :)
+    public typealias FallbackBlock = () -> ()
     
-    // MARK: Initialization
-    
-    private init(apiKey: String?, userId: String? = nil) {
-        
-        super.init()
-        
-        if apiKey == nil {
-            return
-        }
-        
-        if let uid = userId {
-            self.set(appUserID: uid)
-        }
-
-        Store.shared.apiKey = apiKey
-        
-        setAliasIfNeeded()
-        
-        SKPaymentQueue.default().add(self)
-        
-    }
-    
-    private func setAliasIfNeeded() {
-        if Store.shared.aliasId == nil {
-            Store.shared.aliasId = "$SuperwallAlias:\(UUID().uuidString)"
-            Store.shared.save()
-        }
-    }
-
+    /// Pre-loads your paywall so it loads instantly on `Paywall.present()`.
+    /// - Parameter completion: A completion block of type `((Bool) -> ())?`, defaulting to nil if not provided. `true` on success, and `false` on failure.
     public static func load(completion: ((Bool) -> ())? = nil) {
         
         Paywall.track(.paywallResponseLoadStart)
@@ -155,23 +125,17 @@ public class Paywall: NSObject {
         }
     }
     
-    public static func testLoading() {
-        shared.paywallViewController?.loadingState = .loadingPurchase
-        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false, block: { t in
-            shared.paywallViewController?.loadingState = .ready
-        })
-    }
-    
+    /// Configures an instance of Superwall's Paywall SDK with a specified API key. If you don't pass through a userId, we'll create one for you. Calling `Paywall.identify(userId: String)` in the future will automatically alias these two for simple reporting.
+    ///  - Parameter apiKey: Your Public API Key from: https://superwall.me/applications/1/settings/keys
+    ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
     @discardableResult
     public static func configure(apiKey: String, userId: String? = nil) -> Paywall {
         shared = Paywall(apiKey: apiKey, userId: userId)
-        
-        
-        
         return shared
     }
     
-    // MARK: Users
+    /// Links your userId to Superwall's automatically generated Alias. Call this as soon as you have a userId.
+    ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
     @discardableResult
     public static func identify(userId: String) -> Paywall {
         
@@ -185,6 +149,7 @@ public class Paywall: NSObject {
         return shared
     }
     
+    /// Resets the userId stored by Superwall. Call this when your user signs out.
     @discardableResult
     public static func reset() -> Paywall {
         
@@ -196,6 +161,190 @@ public class Paywall: NSObject {
         
         return shared
     }
+    
+    /// Dismisses the presented paywall. Doesn't trigger a `PurchaseCompletionBlock` call if provided during `Paywall.present()`, since this action is developer initiated.
+    /// - Parameter completion: A completion block of type `(()->())? = nil` that gets called after the paywall is dismissed.
+    public static func dismiss(_ completion: (()->())? = nil) {
+        shared._dismiss(completion: completion)
+    }
+    
+    // for convenience
+    
+    /// Presents a paywall to the user.
+    ///  - Parameter cached: Determines if Superwall shoudl re-fetch a paywall from the user. You should typically set this to `false` only if you think your user may now conditionally match a rule for another paywall. Defaults to `true`.
+    ///  - Parameter presentationCompletion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
+    ///  - Parameter purchaseCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
+    public static func present(cached: Bool, presentationCompletion:  (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil) {
+        present(on: nil, cached: cached, presentationCompletion: presentationCompletion, purchaseCompletion: purchaseCompletion, fallback: nil)
+    }
+    
+    /// Presents a paywall to the user.
+    ///  - Parameter presentationCompletion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
+    ///  - Parameter purchaseCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
+    public static func present(presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil) {
+        present(on: nil, presentationCompletion: presentationCompletion, purchaseCompletion: purchaseCompletion, fallback: nil)
+    }
+    
+    /// Presents a paywall to the user.
+    ///  - Parameter purchaseCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
+    public static func present(purchaseCompletion: PurchaseCompletionBlock? = nil) {
+        present(on: nil, presentationCompletion: nil, purchaseCompletion: purchaseCompletion, fallback: nil)
+    }
+    
+    /// Presents a paywall to the user.
+    ///  - Parameter cached: Determines if Superwall shoudl re-fetch a paywall from the user. You should typically set this to `false` only if you think your user may now conditionally match a rule for another paywall. Defaults to `true`.
+    public static func present(cached: Bool) {
+        present(on: nil, cached: cached, presentationCompletion: nil, purchaseCompletion: nil, fallback: nil)
+    }
+    
+    /// Presents a paywall to the user.
+    public static func present() {
+        present(on: nil, presentationCompletion: nil, purchaseCompletion: nil, fallback: nil)
+    }
+    
+    /// Presents a paywall to the user.
+    ///  - Parameter on: The view controller to present the paywall on. Presents on the `keyWindow`'s `rootViewController` if `nil`. Defaults to `nil`.
+    ///  - Parameter cached: Determines if Superwall shoudl re-fetch a paywall from the user. You should typically set this to `false` only if you think your user may now conditionally match a rule for another paywall. Defaults to `true`.
+    ///  - Parameter presentationCompletion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
+    ///  - Parameter purchaseCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
+    public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil, fallback: FallbackBlock? = nil) {
+        
+        Paywall.purchaseCompletion = purchaseCompletion
+        
+        let fallbackUsing = fallback ?? fallbackCompletionBlock
+        
+        guard let delegate = delegate else {
+            Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate equal to a PaywallDelegate before doing anything fancy")
+            fallbackUsing?()
+            return
+        }
+        
+        if shared.willPresent {
+            Logger.superwallDebug(string: "A Paywall is already being presented! If you'd like to speed this up, try calling Paywall.preload()")
+            return
+        }
+        
+        shared.willPresent = true
+        
+        let presentationBlock: ((PaywallViewController) -> ()) = { vc in
+            if !vc.isBeingPresented {
+                shared.paywallViewController?.readyForEventTracking = false
+                vc.willMove(toParent: nil)
+                vc.view.removeFromSuperview()
+                vc.removeFromParent()
+                vc.view.alpha = 1.0
+                vc.view.transform = .identity
+                vc.webview.scrollView.contentOffset = CGPoint.zero
+                delegate.willPresentPaywall?()
+                
+                guard let presentor = (viewController ?? UIApplication.shared.keyWindow?.rootViewController) else {
+                    Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
+                    fallbackUsing?()
+                    return
+                }
+                
+                presentor.present(vc, animated: true, completion: {
+                    self.shared.willPresent = false
+                    delegate.didPresentPaywall?()
+                    presentationCompletion?()
+                    Paywall.track(.paywallOpen(paywallId: self.shared.paywallId))
+                    shared.paywallViewController?.readyForEventTracking = true
+                })
+            }
+        }
+        
+        if let vc = shared.paywallViewController, cached {
+            presentationBlock(vc)
+            return
+        }
+        
+        load() { success in
+            if (success) {
+                
+                
+                guard let vc = shared.paywallViewController else {
+                    Logger.superwallDebug(string: "Paywall's viewcontroller is nil!")
+                    fallbackUsing?()
+                    return
+                }
+                
+                guard let _ = shared.paywallResponse else {
+                    Logger.superwallDebug(string: "Paywall presented before API response was received")
+                    fallbackUsing?()
+                    return
+                }
+                
+                presentationBlock(vc)
+                
+            } else {
+                self.shared.willPresent = false
+                fallbackUsing?()
+            }
+        }
+           
+        
+    }
+    
+    
+    // MARK: Private
+    
+    internal var purchaseCompletion: PurchaseCompletionBlock? = nil
+    internal static var fallbackCompletionBlock: FallbackBlock? = nil
+    
+    private static var shared: Paywall = Paywall(apiKey: nil)
+    
+    private var apiKey: String? {
+        return Store.shared.apiKey
+    }
+    private var appUserId: String? {
+        return Store.shared.appUserId
+    }
+    private var aliasId: String? {
+        return Store.shared.aliasId
+    }
+    
+    private var willPresent = false
+
+    private(set) var paywallResponse: PaywallResponse?
+    
+    private(set) var paywallViewController: PaywallViewController?
+    
+    private(set) var productsById: [String: SKProduct] = [String: SKProduct]()
+    
+    private var didTryToAutoRestore = false
+    
+    private var paywallId: String {
+        paywallResponse?.id ?? ""
+    }
+    
+    
+    private init(apiKey: String?, userId: String? = nil) {
+        
+        super.init()
+        
+        if apiKey == nil {
+            return
+        }
+        
+        if let uid = userId {
+            self.set(appUserID: uid)
+        }
+
+        Store.shared.apiKey = apiKey
+        
+        setAliasIfNeeded()
+        
+        SKPaymentQueue.default().add(self)
+        
+    }
+    
+    private func setAliasIfNeeded() {
+        if Store.shared.aliasId == nil {
+            Store.shared.aliasId = "$SuperwallAlias:\(UUID().uuidString)"
+            Store.shared.save()
+        }
+    }
+
     
     @discardableResult
     private func set(appUserID: String) -> Paywall {
@@ -284,9 +433,7 @@ public class Paywall: NSObject {
         Paywall.track(.transactionFail(paywallId: paywallId, productId: "", message: "Needs parental approval"))
     }
     
-    public static func dismiss(_ completion: (()->())? = nil) {
-        shared._dismiss(completion: completion)
-    }
+
     
     private func _dismiss(userDidPurchase: Bool? = nil, completion: (()->())? = nil) {
         OnMain { [weak self] in
@@ -296,89 +443,11 @@ public class Paywall: NSObject {
                 self?.paywallViewController?.loadingState = .ready
                 completion?()
                 if let s = userDidPurchase {
-                    self?.paywallCompletion?(s)
+                    self?.purchaseCompletion?(s)
                 }
                 
             })
         }
-    }
-    
-    // MARK: Paywall Presentation
-    
-    public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, completion: PaywallCompletion? = nil, fallback: (() -> ())? = nil) {
-        
-        shared.paywallCompletion = completion
-        
-        guard let delegate = delegate else {
-            Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate equal to a PaywallDelegate before doing anything fancy")
-            fallback?()
-            return
-        }
-        
-        if shared.willPresent {
-            Logger.superwallDebug(string: "A Paywall is already being presented! If you'd like to speed this up, try calling Paywall.preload()")
-            return
-        }
-        
-        shared.willPresent = true
-        
-        let presentationBlock: ((PaywallViewController) -> ()) = { vc in
-            if !vc.isBeingPresented {
-                shared.paywallViewController?.readyForEventTracking = false
-                vc.willMove(toParent: nil)
-                vc.view.removeFromSuperview()
-                vc.removeFromParent()
-                vc.view.alpha = 1.0
-                vc.view.transform = .identity
-                vc.webview.scrollView.contentOffset = CGPoint.zero
-                delegate.willPresentPaywall?()
-                
-                guard let presentor = (viewController ?? UIApplication.shared.keyWindow?.rootViewController) else {
-                    Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
-                    fallback?()
-                    return
-                }
-                
-                presentor.present(vc, animated: true, completion: { 
-                    self.shared.willPresent = false
-                    delegate.didPresentPaywall?()
-                    presentationCompletion?()
-                    Paywall.track(.paywallOpen(paywallId: self.shared.paywallId))
-                    shared.paywallViewController?.readyForEventTracking = true
-                })
-            }
-        }
-        
-        if let vc = shared.paywallViewController, cached {
-            presentationBlock(vc)
-            return
-        }
-        
-        load() { success in
-            if (success) {
-                
-                
-                guard let vc = shared.paywallViewController else {
-                    Logger.superwallDebug(string: "Paywall's viewcontroller is nil!")
-                    fallback?()
-                    return
-                }
-                
-                guard let _ = shared.paywallResponse else {
-                    Logger.superwallDebug(string: "Paywall presented before API response was received")
-                    fallback?()
-                    return
-                }
-                
-                presentationBlock(vc)
-                
-            } else {
-                self.shared.willPresent = false
-                fallback?()
-            }
-        }
-           
-        
     }
     
     
@@ -391,56 +460,54 @@ public class Paywall: NSObject {
 
 extension Paywall: SKPaymentTransactionObserver {
  
-  public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
-    for transaction in transactions {
-        guard let product = productsById[transaction.payment.productIdentifier] else { return }
-      switch transaction.transactionState {
-      case .purchased:
-          queue.finishTransaction(transaction)
-          Logger.superwallDebug(string: "[Transaction Observer] transactionDidSucceed for: \(product.productIdentifier)")
-          self._transactionDidSucceed(for: product)
-        break
-      case .failed:
-          // TODO: Check if purcahse was canceled,
-          if let e = transaction.error as? SKError {
-              var userCancelled = e.code == .paymentCancelled
-              if #available(iOS 12.2, *) {
-                  userCancelled = e.code == .overlayCancelled || e.code == .paymentCancelled
-              }
+    public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+        for transaction in transactions {
+            guard let product = productsById[transaction.payment.productIdentifier] else { return }
+            switch transaction.transactionState {
+            case .purchased:
+                queue.finishTransaction(transaction)
+                Logger.superwallDebug(string: "[Transaction Observer] transactionDidSucceed for: \(product.productIdentifier)")
+                self._transactionDidSucceed(for: product)
+            break
+            case .failed:
+                // TODO: Check if purcahse was canceled,
+                if let e = transaction.error as? SKError {
+                    var userCancelled = e.code == .paymentCancelled
+                    if #available(iOS 12.2, *) {
+                        userCancelled = e.code == .overlayCancelled || e.code == .paymentCancelled
+                    }
+
+                    if #available(iOS 14.0, *) {
+                        userCancelled = e.code == .overlayCancelled || e.code == .paymentCancelled || e.code == .overlayTimeout
+                    }
+
+                    if userCancelled {
+                        Logger.superwallDebug(string: "[Transaction Observer] transactionWasAbandoned for: \(product.productIdentifier)")
+                        self._transactionWasAbandoned(for: product)
+                        return
+                    } else {
+                        Logger.superwallDebug(string: "[Transaction Observer] transactionErrorDidOccur for: \(product.productIdentifier)")
+                        self._transactionErrorDidOccur(error: e, for: product)
+                        return
+                    }
+                }
               
-              if #available(iOS 14.0, *) {
-                  userCancelled = e.code == .overlayCancelled || e.code == .paymentCancelled || e.code == .overlayTimeout
-              }
-              
-              if userCancelled {
-                  Logger.superwallDebug(string: "[Transaction Observer] transactionWasAbandoned for: \(product.productIdentifier)")
-                  self._transactionWasAbandoned(for: product)
-                  return
-              } else {
-                  Logger.superwallDebug(string: "[Transaction Observer] transactionErrorDidOccur for: \(product.productIdentifier)")
-                  self._transactionErrorDidOccur(error: e, for: product)
-                  return
-              }
-          }
-          
-        break
-      case .restored:
-          Logger.superwallDebug(string: "[Transaction Observer] transactionWasRestored")
-          _transactionWasRestored()
-        break
-      case .deferred:
-          Logger.superwallDebug(string: "[Transaction Observer] deferred")
-          _transactionWasDeferred()
-      case .purchasing:
-          Logger.superwallDebug(string: "[Transaction Observer] purchasing")
-          _transactionDidBegin(for: product)
-      default:
-          paywallViewController?.loadingState = .ready
-      }
+            break
+            case .restored:
+                Logger.superwallDebug(string: "[Transaction Observer] transactionWasRestored")
+                _transactionWasRestored()
+            break
+            case .deferred:
+                Logger.superwallDebug(string: "[Transaction Observer] deferred")
+                _transactionWasDeferred()
+            case .purchasing:
+                Logger.superwallDebug(string: "[Transaction Observer] purchasing")
+                _transactionDidBegin(for: product)
+            default:
+                paywallViewController?.loadingState = .ready
+            }
+        }
     }
-  }
- 
- 
 }
 
 
