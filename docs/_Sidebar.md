@@ -1,17 +1,17 @@
 <details>
 <summary>Types</summary>
 
-  - [Paywall](/Paywall)
-  - [Paywall.StandardEvent](/Paywall.StandardEvent)
-  - [Paywall.StandardEventName](/Paywall.StandardEventName)
-  - [Paywall.StandardUserAttribute](/Paywall.StandardUserAttribute)
-  - [Paywall.StandardUserAttributeKey](/Paywall.StandardUserAttributeKey)
+  - [Paywall](https://github.com/superwall-me/paywall-ios/blob/master/docs/Paywall)
+  - [Paywall.StandardEvent](https://github.com/superwall-me/paywall-ios/blob/master/docs/Paywall.StandardEvent)
+  - [Paywall.StandardEventName](https://github.com/superwall-me/paywall-ios/blob/master/docs/Paywall.StandardEventName)
+  - [Paywall.StandardUserAttribute](https://github.com/superwall-me/paywall-ios/blob/master/docs/Paywall.StandardUserAttribute)
+  - [Paywall.StandardUserAttributeKey](https://github.com/superwall-me/paywall-ios/blob/master/docs/Paywall.StandardUserAttributeKey)
 
 </details>
 
 <details>
 <summary>Protocols</summary>
 
-  - [PaywallDelegate](/PaywallDelegate)
+  - [PaywallDelegate](https://github.com/superwall-me/paywall-ios/blob/master/docs/PaywallDelegate)
 
 </details>
