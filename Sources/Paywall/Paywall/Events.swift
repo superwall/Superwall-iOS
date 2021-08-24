@@ -72,29 +72,42 @@ extension Paywall {
             "created_at": JSON(Date.init(timeIntervalSinceNow: 0).isoString),
         ]
         _queue.addEvent(event: eventData)
-//        let jsonString = eventData.rawString(.utf8, options: .init()) // prevent pretty print
-//        print(eventData)
-        // TODO: Brian, decide what to do with this
         
     }
     
     // MARK: Public Events
+    /// Standard events for use in conjunction with `Paywall.track(_ event: StandardEvent, _ params: [String: Any] = [:])`.
     public enum StandardEvent {
+        /// Standard even used to track when a user opens your application by way of a deep link.
         case deepLinkOpen(deepLinkUrl: String)
+        /// Standard even used to track when a user begins onboarding.
         case onboardingStart
+        /// Standard even used to track when a user completes onboarding.
         case onboardingComplete
+        /// Standard even used to track when a user receives a push notification.
         case pushNotificationReceive(superwallId: String? = nil)
+        /// Standard even used to track when a user launches your application by way of a push notification.
         case pushNotificationOpen(superwallId: String? = nil)
+        /// Standard even used to track when a user completes a 'Core Session' of your app. For example, if your app is a workout app, you should call this when a workout begins.
         case coreSessionStart // tell us if they bagan to use the main function of your application i.e. call this on "workout_started"
+        /// Standard even used to track when a user completes a 'Core Session' of your app. For example, if your app is a workout app, you should call this when a workout is cancelled or aborted.
         case coreSessionAbandon // i.e. call this on "workout_cancelled"
+        /// Standard even used to track when a user completes a 'Core Session' of your app. For example, if your app is a workout app, you should call this when a workout is completed.
         case coreSessionComplete // i.e. call this on "workout_complete"
+        /// Standard even used to track when a user signs up.
         case signUp
+        /// Standard even used to track when a user logs in to your application.
         case logIn
+        /// Standard even used to track when a user logs out of your application. Not to be confused with `Paywall.reset()` — this event is strictly for analytical purposes.
         case logOut
+        /// WARNING: Use `setUserAttributes(_ standard: StandardUserAttribute..., custom: [String: Any?] = [:])` instead.
         case userAttributes(standard: [StandardUserAttributeKey: Any?], custom: [String: Any?])
+        /// WARNING: This is used internally, ignore please
         case base(name: String, params: [String: Any])
     }
-        
+    
+    
+    /// Used internally, please ignore.
     public enum StandardEventName: String { //  add defs
         case deepLinkOpen = "deepLink_open"
         case onboardingStart = "onboarding_start"
@@ -142,15 +155,8 @@ extension Paywall {
         }
     }
     
-    public enum StandardEventKey: String {
-        case eventTime
-        case timeZone
-        case paywallId
-        case productId
-        case deepLinkUrl
-        case pushNotificationId
-    }
     
+    /// Used internally, please ignore.
     public enum StandardUserAttributeKey: String { //  add defs
         case id = "id"
         case applicationInstalledAt = "application_installed_at"
@@ -164,17 +170,28 @@ extension Paywall {
         case apnsToken = "apns_token"
         case createdAt = "created_at"
     }
-
+    
+    /// Standard user attributes to be used in conjunction with `setUserAttributes(_ standard: StandardUserAttribute..., custom: [String: Any?] = [:])`.
     public enum StandardUserAttribute { //  add defs
+        /// Standard user attribute containing your user's internal identifier. This attribute is automatically added and you don't really need to include it.
         case id(_ s: String)
+        /// Standard user attribute containing your user's first name.
         case firstName(_ s: String)
+        /// Standard user attribute containing your user's last name.
         case lastName(_ s: String)
+        /// Standard user attribute containing your user's email address.
         case email(_ s: String)
+        /// Standard user attribute containing your user's phone number, without a country code.
         case phone(_ s: String)
+        /// Standard user attribute containing your user's full phone number, country code included.
         case fullPhone(_ s: String)
+        /// Standard user attribute containing your user's telephone country code.
         case phoneCountryCode(_ s: String)
+        /// Standard user attribute containing your user's FCM token to send push notifications via Firebase.
         case fcmToken(_ s: String)
+        /// Standard user attribute containing your user's APNS token to send push notification via APNS.
         case apnsToken(_ s: String)
+        /// Standard user attribute containing your user's account creation date.
         case createdAt(_ d: Date)
     }
     
@@ -339,9 +356,16 @@ extension Paywall {
         
         return nil
     }
-    
 
-    
+    /// Tracks a standard event with properties (See `Paywall.StandardEvent` for options). Properties are optional and can be added only if needed. You'll be able to reference properties when creating rules for when paywalls show up.
+    /// - Parameter event: A `StandardEvent` enum, which takes default parameters as inputs.
+    /// - Parameter params: Custom parameters you'd like to include in your event. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+    ///
+    /// Example:
+    /// ```swift
+    /// Paywall.track(.deepLinkOpen(url: someURL))
+    /// Paywall.track(.signUp, ["campaignId": "12312341", "source": "Facebook Ads"]
+    /// ```
     public static func track(_ event: StandardEvent, _ params: [String: Any] = [:]) {
         switch event {
         case .deepLinkOpen(let deepLinkUrl):
@@ -386,12 +410,29 @@ extension Paywall {
         }
     }
     
+    /// Tracks a custom event with properties. Remember to check `Paywall.StandardEvent` to determine if you should be tracking a standard event instead. Properties are optional and can be added only if needed. You'll be able to reference properties when creating rules for when paywalls show up.
+    /// - Parameter event: The name of your custom event
+    /// - Parameter params: Custom parameters you'd like to include in your event. Remember, keys begining with `$` are reserved for Superwall and will be dropped. They will however be included in `PaywallDelegate.shouldTrack(event: String, params: [String: Any])` for your own records. Values can be any JSON encodable value or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+    ///
+    /// Example:
+    /// ```swift
+    /// Paywall.track("onboarding_skip", ["steps_completed": 4])
+    /// ```
     public static func track(_ name: String, _ params: [String: Any]) {
         track(.base(name: name, params: params))
     }
     
+
+    /// Sets additional information on the user object in Superwall. Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.
+    /// - Parameter standard: Zero or more `SubscriberUserAttribute` enums describing standard user attributes.
+    /// - Parameter custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+    ///
+    ///  Example:
+    ///  ```swift
+    ///  Superwall.setUserAttributes(.firstName("Jake"), .lastName("Mor"), custom: properties)
+    ///  ```
     public static func setUserAttributes(_ standard: StandardUserAttribute..., custom: [String: Any?] = [:]) {
-        
+            
         var map = [StandardUserAttributeKey: Any]()
         map[.applicationInstalledAt] = DeviceHelper.shared.appInstallDate
         standard.forEach {

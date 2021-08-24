@@ -3,6 +3,7 @@ import Foundation
 import StoreKit
 import TPInAppReceipt
 
+/// Methods for managing important Paywall lifecycle events. For example, telling the developer when to initiate checkout on a specific `SKProduct` and when to try to restore a transaction. Also includes hooks for you to log important analytics events to your product analytics tool.
 @objc public protocol PaywallDelegate: AnyObject {
     
     /// Called when the user initiates checkout for a product. Add your purchase logic here by either calling `Purchases.shared.purchaseProduct()` (if you use RevenueCat: https://sdk.revenuecat.com/ios/Classes/RCPurchases.html#/c:objc(cs)RCPurchases(im)purchaseProduct:withCompletionBlock:) or by using Apple's StoreKit APIs
@@ -34,11 +35,49 @@ import TPInAppReceipt
     /// Called when the user taps a deep link in your HTML paywall.
     @objc optional func willOpenDeepLink(url: URL)
     
-    /// Called when you should track an analytics event to your own system. For a list of all events, see `Paywall.StandardEvent`.
+    /// Called when you should track a standard internal analytics event to your own system.
+    ///
+    
+    /// Possible Values:
+    ///  ```swift
+    /// // App Lifecycle Events
+    /// Paywall.delegate.shouldTrack(event: "app_install", params: nil)
+    /// Paywall.delegate.shouldTrack(event: "app_open", params: nil)
+    /// Paywall.delegate.shouldTrack(event: "app_close", params: nil)
+    ///
+    /// // Paywall Events
+    /// Paywall.delegate.shouldTrack(event: "paywall_open", params: ['paywall_id': 'someid'])
+    /// Paywall.delegate.shouldTrack(event: "paywall_close", params: ['paywall_id': 'someid'])
+    ///
+    /// // Transaction Events
+    /// Paywall.delegate.shouldTrack(event: "transaction_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+    /// Paywall.delegate.shouldTrack(event: "transaction_fail", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+    /// Paywall.delegate.shouldTrack(event: "transaction_abandon", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+    /// Paywall.delegate.shouldTrack(event: "transaction_complete", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+    /// Paywall.delegate.shouldTrack(event: "transaction_restore", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+    ///
+    /// // Purchase Events
+    /// Paywall.delegate.shouldTrack(event: "subscription_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+    /// Paywall.delegate.shouldTrack(event: "freeTrial_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+    /// Paywall.delegate.shouldTrack(event: "nonRecurringProduct_purchase", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+    ///
+    /// // Superwall API Request Events
+    /// Paywall.delegate.shouldTrack(event: "paywallResponseLoad_start", params: ['paywall_id': 'someid'])
+    /// Paywall.delegate.shouldTrack(event: "paywallResponseLoad_fail", params: ['paywall_id': 'someid'])
+    /// Paywall.delegate.shouldTrack(event: "paywallResponseLoad_complete", params: ['paywall_id': 'someid'])
+    ///
+    /// // Webview Reqeuest Events
+    /// Paywall.delegate.shouldTrack(event: "paywallWebviewLoad_start", params: ['paywall_id': 'someid'])
+    /// Paywall.delegate.shouldTrack(event: "paywallWebviewLoad_fail", params: ['paywall_id': 'someid'])
+    /// Paywall.delegate.shouldTrack(event: "paywallWebviewLoad_complete", params: ['paywall_id': 'someid'])
+    /// ```
+    
+    
     @objc optional func shouldTrack(event: String, params: [String: Any])
 
 }
 
+/// `Paywall` is the primary class for integrating Superwall into your application. To learn more, read our iOS getting started guide: https://docs.superwall.me/docs/ios
 public class Paywall: NSObject {
     
     // MARK: Public
