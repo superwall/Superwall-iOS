@@ -79,7 +79,7 @@ extension Paywall {
     /// Standard events for use in conjunction with `Paywall.track(_ event: StandardEvent, _ params: [String: Any] = [:])`.
     public enum StandardEvent {
         /// Standard even used to track when a user opens your application by way of a deep link.
-        case deepLinkOpen(deepLinkUrl: String)
+        case deepLinkOpen(deepLinkUrl: URL)
         /// Standard even used to track when a user begins onboarding.
         case onboardingStart
         /// Standard even used to track when a user completes onboarding.
@@ -347,6 +347,8 @@ extension Paywall {
                 } else {
                     if let d = v as? Date {
                         return d.isoString
+                    } else if let d = v as? URL {
+                        return d.absoluteString
                     } else {
                         return nil
                     }
@@ -369,7 +371,7 @@ extension Paywall {
     public static func track(_ event: StandardEvent, _ params: [String: Any] = [:]) {
         switch event {
         case .deepLinkOpen(let deepLinkUrl):
-            _track(eventName: name(for: event), params: ["url": deepLinkUrl], customParams: params)
+            _track(eventName: name(for: event), params: ["url": deepLinkUrl.absoluteString], customParams: params)
         case .pushNotificationReceive(let pushNotificationId):
             if let id = pushNotificationId {
                 _track(eventName: name(for: event), params: ["push_notification_id": id], customParams: params)

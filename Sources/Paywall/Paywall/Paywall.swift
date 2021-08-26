@@ -85,6 +85,9 @@ public class Paywall: NSObject {
     /// Prints debug logs to the console if set to `true`. Default is `false`
     public static var debugMode = false
     
+    /// WARNING: Routes all API requests to Superall's staging / nightly builds environment. 
+    public static var shouldUsePreReleaseNetworkAPIs = false
+    
     /// The object that acts as the delegate of Paywall. Required implementations include `userDidInitiateCheckout(for product: SKProduct)` and `shouldTryToRestore()`. 
     public static var delegate: PaywallDelegate? = nil
     

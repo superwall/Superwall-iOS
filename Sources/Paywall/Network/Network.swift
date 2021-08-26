@@ -11,22 +11,17 @@ internal class Network {
     internal var userId:String?
     internal static let shared = Network()
     
-    internal let baseURL: URL
-    internal let analyticsBaseURL: URL
-    internal let urlSession: URLSession
+
+    internal let urlSession: URLSession = URLSession(configuration: .ephemeral)
     
-    
-    public init(
-        urlSession: URLSession = URLSession(configuration: .ephemeral),
-        baseURL: URL = URL(string: "https://api.superwall.me/api/v1/")!,
-        analyticsBaseURL: URL = URL(string: "https://collector.superwall.me/api/v1/")!) {
-//        baseURL: URL = URL(string: "https://api.superwallcanary.com/api/v1/")!,
-//        analyticsBaseURL: URL = URL(string: "https://collector.superwallcanary.com/api/v1/")!) {
-        
-        self.urlSession = (urlSession)
-        self.baseURL = baseURL
-        self.analyticsBaseURL = analyticsBaseURL
+    internal var baseURL: URL {
+        return Paywall.shouldUsePreReleaseNetworkAPIs ? URL(string: "https://api.superwallcanary.com/api/v1/")! : URL(string: "https://api.superwall.me/api/v1/")!
     }
+
+    internal var analyticsBaseURL: URL {
+        return Paywall.shouldUsePreReleaseNetworkAPIs ? URL(string: "https://collector.superwallcanary.com/api/v1/")! : URL(string: "https://collector.superwall.me/api/v1/")!
+    }
+    
 }
 
 
