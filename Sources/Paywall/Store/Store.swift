@@ -17,6 +17,7 @@ class Store {
     
     
     public var apiKey: String?
+    public var debugKey: String?
     public var appUserId: String?
     public var aliasId: String?
     

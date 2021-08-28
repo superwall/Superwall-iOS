@@ -14,12 +14,24 @@ internal class Network {
 
     internal let urlSession: URLSession = URLSession(configuration: .ephemeral)
     
+    internal var hostDomain: String {
+        
+        switch Paywall.networkEnvironment {
+        case .release:
+            return "superwall.me"
+        case .releaseCandidate:
+            return "superwallcanary.com"
+        case .developer:
+            return "superwall.dev"
+        }
+    }
+    
     internal var baseURL: URL {
-        return Paywall.shouldUsePreReleaseNetworkAPIs ? URL(string: "https://api.superwallcanary.com/api/v1/")! : URL(string: "https://api.superwall.me/api/v1/")!
+        return URL(string: "https://api.\(hostDomain)/api/v1/")!
     }
 
     internal var analyticsBaseURL: URL {
-        return Paywall.shouldUsePreReleaseNetworkAPIs ? URL(string: "https://collector.superwallcanary.com/api/v1/")! : URL(string: "https://collector.superwall.me/api/v1/")!
+        return URL(string: "https://collector.\(hostDomain)/api/v1/")!
     }
     
 }
@@ -44,10 +56,11 @@ extension Network {
 
 // MARK: Private extension for actually making requests
 extension Network {
-    func send<ResponseType: Decodable>(_ request: URLRequest, completion: @escaping (Result<ResponseType, Swift.Error>) -> Void) {
+    func send<ResponseType: Decodable>(_ request: URLRequest, isDebugRequest: Bool = false, completion: @escaping (Result<ResponseType, Swift.Error>) -> Void) {
         var request = request
 
-        request.setValue("Bearer " + (Store.shared.apiKey ?? ""), forHTTPHeaderField:  "Authorization")
+        let auth = "Bearer " + ((isDebugRequest ? Store.shared.debugKey : Store.shared.apiKey) ?? "")
+        request.setValue(auth, forHTTPHeaderField:  "Authorization")
         request.setValue("iOS", forHTTPHeaderField: "X-Platform")
         request.setValue("SDK", forHTTPHeaderField: "X-Platform-Environment")
         request.setValue(Store.shared.appUserId ?? "", forHTTPHeaderField: "X-App-User-ID")
@@ -193,4 +206,32 @@ extension Network {
         })
 
     }
+}
+
+
+extension Network {
+    
+    func paywalls(completion: @escaping (Result<PaywallsResponse, Swift.Error>) -> Void) {
+            
+        let components = URLComponents(string: "paywalls")!
+        let requestURL = components.url(relativeTo: baseURL)!
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
+        
+        send(request, isDebugRequest: true, completion: { (result: Result<PaywallsResponse, Swift.Error>)  in
+            switch result {
+                case .failure(let error):
+                    Logger.superwallDebug(string: "[network POST /paywall] - failure")
+                    completion(.failure(error))
+                case .success(let response):
+                    completion(.success(response))
+            }
+            
+        })
+
+    }
+    
 }

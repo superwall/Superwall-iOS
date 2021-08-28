@@ -74,6 +74,7 @@ import TPInAppReceipt
     
     
     @objc optional func shouldTrack(event: String, params: [String: Any])
+    
 
 }
 
@@ -85,8 +86,18 @@ public class Paywall: NSObject {
     /// Prints debug logs to the console if set to `true`. Default is `false`
     public static var debugMode = false
     
-    /// WARNING: Routes all API requests to Superall's staging / nightly builds environment. 
-    public static var shouldUsePreReleaseNetworkAPIs = false
+    /// WARNING: Only use this enum to set `Paywall.networkEnvironment` if told so explicitly by the Superwall team.
+    public enum PaywallNetworkEnvironment {
+        /// Default: Use the standard latest environment
+        case release
+        /// Use a release candidate environment
+        case releaseCandidate
+        /// Use the nightly build environment
+        case developer
+    }
+    
+    /// WARNING: Determines which network environment your SDK should use. Defaults to latest. You should under no circumstance change this unless you received the go-ahead from the Superwall team.
+    public static var networkEnvironment: PaywallNetworkEnvironment = .release
     
     /// The object that acts as the delegate of Paywall. Required implementations include `userDidInitiateCheckout(for product: SKProduct)` and `shouldTryToRestore()`. 
     public static var delegate: PaywallDelegate? = nil
@@ -98,6 +109,99 @@ public class Paywall: NSObject {
     /// Completion block that is optionally passed through `Paywall.present()`. Gets called if an error occurs while presenting a Superwall paywall, or if all paywalls are set to off in your dashboard. It's a good idea to add your legacy paywall presentation logic here just in case :)
     public typealias FallbackBlock = () -> ()
     
+    /// Launches the debugger for you to preview paywalls. If you call `Paywall.track(.deepLinkOpen(deepLinkUrl: url))` from `application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool` in your `AppDelegate`, this funciton is called automatically after scanning your debug QR code in Superwall's web dashboard. Remember to add you URL scheme in settings for this feature to work!
+    public static func launchDebugger(toPaywall paywallId: String? = nil) {
+        Paywall.dismiss(nil)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.618) { // helps if from cold launch
+            
+            if let vc = UIApplication.shared.keyWindow?.rootViewController {
+                
+                var dvc: DebugViewController? = nil
+                var isPresented = false
+                
+                if vc.presentedViewController is DebugViewController {
+                    dvc = vc.presentedViewController as? DebugViewController
+                    isPresented = true
+                } else {
+                    dvc = DebugViewController()
+                }
+                
+                dvc?.paywallId = paywallId
+                
+                if let dvc = dvc {
+                    
+                    if isPresented {
+                        dvc.loadPreview()
+                    } else {
+                        dvc.modalPresentationStyle = .overFullScreen
+                        vc.present(dvc, animated: true)
+                    }
+                }
+                
+                
+            }
+        }
+    }
+    
+    internal static func set(response r: PaywallResponse?, completion: ((Bool) -> ())? = nil) {
+        
+        guard let r = r else {
+            self.shared.paywallViewController = nil
+            return
+        }
+        
+        shared.paywallResponse = r
+        var response = shared.paywallResponse!
+        StoreKitManager.shared.get(productsWithIds: response.productIds) { productsById in
+            
+            var variables = [Variables]()
+            
+            for p in response.products {
+                if let appleProduct = productsById[p.productId] {
+                    variables.append(Variables(key: p.product.rawValue, value: appleProduct.eventData))
+                    shared.productsById[p.productId] = appleProduct
+                    
+                    if p.product == .primary {
+                        
+                        response.isFreeTrialAvailable = appleProduct.hasFreeTrial
+                        
+                        if let receipt = try? InAppReceipt.localReceipt() {
+                            let hasPurchased = receipt.containsPurchase(ofProductIdentifier: p.productId)
+                            if hasPurchased && appleProduct.hasFreeTrial {
+                                response.isFreeTrialAvailable = false
+                            }
+                        }
+                        
+                        // use the override if it is set
+                        if let or = isFreeTrialAvailableOverride {
+                            response.isFreeTrialAvailable = or
+                            isFreeTrialAvailableOverride = nil // reset it for future use
+                        }
+                    }
+                }
+            }
+            
+            response.variables = variables
+            
+            DispatchQueue.main.async {
+                
+                shared.paywallViewController = PaywallViewController(paywallResponse: response, completion: shared.paywallEventDidOccur)
+                
+                if let v =  UIApplication.shared.keyWindow?.rootViewController {
+                    v.addChild(shared.paywallViewController!)
+                    shared.paywallViewController!.view.alpha = 0.01
+                    v.view.insertSubview(shared.paywallViewController!.view, at: 0)
+                    shared.paywallViewController!.view.transform = CGAffineTransform(translationX: 1000, y: 0)
+                    shared.paywallViewController!.didMove(toParent: v)
+                }
+                
+                completion?(true)
+
+            }
+            
+        }
+    }
+    
     /// Pre-loads your paywall so it loads instantly on `Paywall.present()`.
     /// - Parameter completion: A completion block of type `((Bool) -> ())?`, defaulting to nil if not provided. `true` on success, and `false` on failure.
     public static func load(completion: ((Bool) -> ())? = nil) {
@@ -107,51 +211,10 @@ public class Paywall: NSObject {
         Network.shared.paywall { (result) in
             
             switch(result){
-            case .success(var response):
+            case .success(let response):
                 
                 Paywall.track(.paywallResponseLoadComplete)
-                
-                StoreKitManager.shared.get(productsWithIds: response.productIds) { productsById in
-                    
-                    var variables = [Variables]()
-                    
-                    for p in response.products {
-                        if let appleProduct = productsById[p.productId] {
-                            variables.append(Variables(key: p.product.rawValue, value: appleProduct.eventData))
-                            shared.productsById[p.productId] = appleProduct
-                            
-                            if p.product == .primary {
-                                response.isFreeTrialAvailable = appleProduct.hasFreeTrial
-                                if let receipt = try? InAppReceipt.localReceipt() {
-                                    let hasPurchased = receipt.containsPurchase(ofProductIdentifier: p.productId)
-                                    if hasPurchased && appleProduct.hasFreeTrial {
-                                        response.isFreeTrialAvailable = false
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    response.variables = variables
-                    
-                    DispatchQueue.main.async {
-                        
-                        shared.paywallViewController = PaywallViewController(paywallResponse: response, completion: shared.paywallEventDidOccur)
-                        
-                        if let v =  UIApplication.shared.keyWindow?.rootViewController {
-                            v.addChild(shared.paywallViewController!)
-                            shared.paywallViewController!.view.alpha = 0.01
-                            v.view.insertSubview(shared.paywallViewController!.view, at: 0)
-                            shared.paywallViewController!.view.transform = CGAffineTransform(translationX: 1000, y: 0)
-                            shared.paywallViewController!.didMove(toParent: v)
-                        }
-                        
-                        shared.paywallResponse = response
-                        completion?(true)
-
-                    }
-                    
-                }
+                Paywall.set(response: response, completion: completion)
                 
                 
                 break
@@ -334,6 +397,8 @@ public class Paywall: NSObject {
     internal static var fallbackCompletionBlock: FallbackBlock? = nil
     
     private static var shared: Paywall = Paywall(apiKey: nil)
+    
+    internal static var isFreeTrialAvailableOverride: Bool? = nil
     
     private var apiKey: String? {
         return Store.shared.apiKey

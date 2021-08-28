@@ -18,8 +18,14 @@ internal struct PaywallRequest: Codable {
     var appUserId: String
 }
 
+internal struct PaywallsResponse: Decodable {
+    var paywalls: [PaywallResponse]
+}
+
 internal struct PaywallResponse: Decodable {
     var id: String? = nil
+    var name: String? = nil
+    var slug: String? = nil
     var url: String
     var paywalljsEvent: String
     

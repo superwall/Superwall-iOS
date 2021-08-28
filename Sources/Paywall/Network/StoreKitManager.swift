@@ -7,6 +7,7 @@
 
 import Foundation
 import StoreKit
+import TPInAppReceipt
 
 class StoreKitManager: NSObject {
     // Keep a strong reference to the product request.
@@ -14,6 +15,21 @@ class StoreKitManager: NSObject {
     internal static var shared = StoreKitManager()
     
     var networkWorkers = [String: StoreKitNetworking]() // strong reference so they don't get dealocated
+    
+    
+    func getVariables(forResponse response: PaywallResponse, completion: @escaping ([Variables]) -> ()) {
+        get(productsWithIds: response.productIds) { productsById in
+            var variables = [Variables]()
+            
+            for p in response.products {
+                if let appleProduct = productsById[p.productId] {
+                    variables.append(Variables(key: p.product.rawValue, value: appleProduct.eventData))
+                }
+            }
+            
+            completion(variables)
+        }
+    }
     
     func get(productsWithIds: [String], completion: @escaping ([String: SKProduct]) -> ()) {
         
