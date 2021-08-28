@@ -34,51 +34,50 @@ internal class DebugViewController: UIViewController {
     }()
 
     
-    lazy var exitButton: UIButton = {
-        let b = UIButton()
-        b.setTitle("Done", for: .normal)
-        b.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
+    lazy var exitButton: BounceButton = {
+        let b = BounceButton()
+        let image = UIImage(named: "exit", in: Bundle.module, compatibleWith: nil)!
+        b.setImage(image, for: .normal)
         b.translatesAutoresizingMaskIntoConstraints = false
-        b.setTitleColor(PrimaryColor, for: .normal)
+        b.imageView?.tintColor = UIColor.white.withAlphaComponent(0.5)
         b.addTarget(self, action: #selector(pressedExitButton), for: .primaryActionTriggered)
         return b
     }()
     
-    lazy var previewPickerButton: BounceButton = {
+    lazy var bottomButton: BounceButton = {
         let b = BounceButton()
-        b.setTitle("", for: .normal)
+        b.setTitle("Preview", for: .normal)
         b.titleLabel?.font = UIFont.boldSystemFont(ofSize: 17)
         b.backgroundColor = PrimaryButtonBackgroundColor
         b.setTitleColor(PrimaryColor, for: .normal)
         b.translatesAutoresizingMaskIntoConstraints = false
-        let image = UIImage(named: "down_arrow", in: Bundle.module, compatibleWith: nil)!
-        b.semanticContentAttribute = .forceRightToLeft
-        b.titleEdgeInsets = UIEdgeInsets(top: 0, left: -1, bottom: 0, right: 0)
-        b.imageEdgeInsets = UIEdgeInsets(top: 1, left: 5, bottom: -1, right: -3)
+        let image = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
+        b.titleEdgeInsets = UIEdgeInsets(top: -1, left: 0, bottom: 0, right: 0)
+//        b.imageEdgeInsets = UIEdgeInsets(top: 1, left: 5, bottom: -1, right: -3)
         b.setImage(image, for: .normal)
         b.imageView?.tintColor = PrimaryColor
         if #available(iOS 13.0, *) {
             b.layer.cornerCurve = .continuous
         }
         b.layer.cornerRadius = 64.0 / 3
-        b.addTarget(self, action: #selector(pressedPickerButton), for: .primaryActionTriggered)
+        b.addTarget(self, action: #selector(pressedBottomButton), for: .primaryActionTriggered)
         return b
     }()
     
-    lazy var previewOpenButton: BounceButton = {
+    lazy var previewPickerButton: BounceButton = {
         let b = BounceButton()
-        b.setTitle("T A P   T O   O P E N", for: .normal)
-        b.titleLabel?.font = UIFont.boldSystemFont(ofSize: 12)
+        b.setTitle("", for: .normal)
+        b.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
         b.backgroundColor = LightBackgroundColor
         b.setTitleColor(PrimaryColor, for: .normal)
-        b.titleEdgeInsets = UIEdgeInsets(top: -1, left: 0, bottom: 0, right: 0)
+        b.contentEdgeInsets = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
         b.translatesAutoresizingMaskIntoConstraints = false
-//        let image = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
-//        b.setImage(image, for: .normal)
         b.imageView?.tintColor = PrimaryColor
         b.layer.cornerRadius = 10
-//        b.layer.borderColor = UIColor.white.withAlphaComponent(0.2).cgColor
-//        b.layer.borderWidth = 1.0
+        let image = UIImage(named: "down_arrow", in: Bundle.module, compatibleWith: nil)!
+        b.semanticContentAttribute = .forceRightToLeft
+        b.setImage(image, for: .normal)
+        b.imageView?.tintColor = PrimaryColor
         b.addTarget(self, action: #selector(pressedPreview), for: .primaryActionTriggered)
         return b
     }()
@@ -112,8 +111,8 @@ internal class DebugViewController: UIViewController {
         view.addSubview(activityIndicator)
         view.addSubview(logoImageView)
         view.addSubview(exitButton)
-        view.addSubview(previewPickerButton)
-        previewContainerView.addSubview(previewOpenButton)
+        view.addSubview(bottomButton)
+        previewContainerView.addSubview(previewPickerButton)
         view.backgroundColor = LightBackgroundColor
         
         previewContainerView.clipsToBounds = false
@@ -123,28 +122,28 @@ internal class DebugViewController: UIViewController {
             previewContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             previewContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             previewContainerView.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 25),
-            previewContainerView.bottomAnchor.constraint(equalTo: previewPickerButton.topAnchor, constant: -30),
+            previewContainerView.bottomAnchor.constraint(equalTo: bottomButton.topAnchor, constant: -30),
             
             logoImageView.widthAnchor.constraint(equalTo: view.layoutMarginsGuide.widthAnchor, constant: -10),
-            logoImageView.heightAnchor.constraint(equalToConstant: 24),
+            logoImageView.heightAnchor.constraint(equalToConstant: 23),
             logoImageView.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 20),
             logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
-            exitButton.trailingAnchor.constraint(equalTo: logoImageView.trailingAnchor),
+            exitButton.centerXAnchor.constraint(equalTo: bottomButton.trailingAnchor),
             exitButton.centerYAnchor.constraint(equalTo: logoImageView.centerYAnchor),
             
             activityIndicator.centerYAnchor.constraint(equalTo: previewContainerView.centerYAnchor),
             activityIndicator.centerXAnchor.constraint(equalTo: previewContainerView.centerXAnchor),
             
-            previewPickerButton.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor),
-            previewPickerButton.heightAnchor.constraint(equalToConstant: 64),
-            previewPickerButton.widthAnchor.constraint(equalTo: view.layoutMarginsGuide.widthAnchor, constant: -10),
-            previewPickerButton.bottomAnchor.constraint(equalTo: view.layoutMarginsGuide.bottomAnchor, constant: -10),
+            bottomButton.centerXAnchor.constraint(equalTo: view.layoutMarginsGuide.centerXAnchor),
+            bottomButton.heightAnchor.constraint(equalToConstant: 64),
+            bottomButton.widthAnchor.constraint(equalTo: view.layoutMarginsGuide.widthAnchor, constant: -40),
+            bottomButton.bottomAnchor.constraint(equalTo: view.layoutMarginsGuide.bottomAnchor, constant: -10),
             
-            previewOpenButton.centerXAnchor.constraint(equalTo: previewContainerView.centerXAnchor, constant: 0),
-            previewOpenButton.heightAnchor.constraint(equalToConstant: 26),
-            previewOpenButton.widthAnchor.constraint(equalToConstant: 130),
-            previewOpenButton.centerYAnchor.constraint(equalTo: previewContainerView.bottomAnchor)
+            previewPickerButton.centerXAnchor.constraint(equalTo: previewContainerView.centerXAnchor, constant: 0),
+            previewPickerButton.heightAnchor.constraint(equalToConstant: 26),
+//            previewPickerButton.widthAnchor.constraint(equalToConstant: 130),
+            previewPickerButton.centerYAnchor.constraint(equalTo: previewContainerView.bottomAnchor)
         ])
         
         loadPreview()
@@ -231,7 +230,7 @@ internal class DebugViewController: UIViewController {
         }
     }
     
-    @objc func pressedPickerButton() {
+    @objc func pressedPreview() {
         guard let id = paywallId else { return }
         
         let options: [AlertOption] = paywallResponses.map { response in
@@ -279,7 +278,7 @@ internal class DebugViewController: UIViewController {
 
     }
     
-    @objc func pressedPreview() {
+    @objc func pressedBottomButton() {
         
         presentAlert(title: nil, message: "Which version?", options: [
             AlertOption(title: "With Free Trial", action: { [weak self] in
@@ -299,8 +298,8 @@ internal class DebugViewController: UIViewController {
     func loadAndShowPaywall(freeTrialAvailable: Bool = false) {
         Paywall.isFreeTrialAvailableOverride = freeTrialAvailable
         
-        previewPickerButton.setImage(nil, for: .normal)
-        previewPickerButton.showLoading = true
+        bottomButton.setImage(nil, for: .normal)
+        bottomButton.showLoading = true
         
         Network.shared.paywalls { [weak self] result in
             
@@ -315,8 +314,8 @@ internal class DebugViewController: UIViewController {
                     
                     Paywall.set(response: paywallResponse, completion: { [weak self] _ in
                         Paywall.present(on: self, presentationCompletion: {
-                            self?.previewPickerButton.showLoading = false
-                            self?.previewPickerButton.setImage(UIImage(named: "down_arrow", in: Bundle.module, compatibleWith: nil)!, for: .normal)
+                            self?.bottomButton.showLoading = false
+                            self?.bottomButton.setImage(UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!, for: .normal)
                         })
                     })
                     
@@ -334,9 +333,19 @@ internal class DebugViewController: UIViewController {
  
     }
     
+    
+    var oldTintColor: UIColor? = UIColor.systemBlue
+    
+    override func viewDidAppear(_ animated: Bool) {
+        let view = UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self])
+        oldTintColor = view.tintColor
+        view.tintColor = PrimaryColor
+    }
+    
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         Paywall.set(response: nil, completion: nil)
+        UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = oldTintColor
     }
 
 }
@@ -346,9 +355,6 @@ extension DebugViewController {
     
     
     func presentAlert(title: String?, message: String?, options: [AlertOption]) {
-        
-        let view = UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self])
-        view.tintColor = PrimaryColor
         
         let v = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
         v.view.tintColor = PrimaryColor
