@@ -11,7 +11,7 @@ import UIKit
 let serialQueue = DispatchQueue(label: "me.superwall.eventQueue")
 let MaxEventCount = 25;
 
-internal class Queue {
+internal class EventsQueue {
     
     private var elements: [JSON] = [];
     private var timer: Timer?
@@ -50,7 +50,9 @@ internal class Queue {
             // Network.events(Network)
             Network.shared.events(events: EventsRequest(events: eventsToSend)){
                 (result) in
-                print(result)
+                Logger.superwallDebug("Events Queue:", result)
+                
+                
             }
         }
         if (elements.count > 0 && depth > 0) {

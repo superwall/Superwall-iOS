@@ -158,37 +158,12 @@ internal struct TemplateDevice: Codable {
     var deviceCurrencySymbol: String
 }
 
-// TODO: UserProperties
-
-
-internal struct UserPropertiesRequest: Codable {
-    var apnsToken: String?
-    var fcmToken: String?
-    var email: String?
-    var phoneCountryCode: String?
-    var phone: String?
-    var firstName: String?
-    var lastName: String?
-}
-
-
 // Mark - Events
 internal struct EventsRequest: Codable {
     var events: [JSON]
 }
 
 internal struct EventsResponse: Codable {
-    var status: String
-}
-
-// Mark - Identify
-
-internal struct IdentifyRequest: Codable {
-    var parameters: JSON
-    var created_at: JSON
-}
-
-internal struct IdentifyResponse: Codable {
     var status: String
 }
 

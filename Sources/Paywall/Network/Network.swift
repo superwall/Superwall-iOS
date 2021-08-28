@@ -137,41 +137,6 @@ extension Network {
 }
 
 extension Network {
-    func identify(identifyRequest: IdentifyRequest, completion: @escaping (Result<IdentifyResponse, Swift.Error>) -> Void) {
-        let components = URLComponents(string: "identify")!
-        let requestURL = components.url(relativeTo: baseURL)!
-        var request = URLRequest(url: requestURL)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let encoder = JSONEncoder()
-        encoder.keyEncodingStrategy = .convertToSnakeCase
-
-        // Bail if we can't encode
-        do {
-            request.httpBody = try encoder.encode(identifyRequest)
-        } catch {
-            return completion(.failure(Error.unknown))
-        }
-
-        Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
-
-        send(request, completion: { (result: Result<IdentifyResponse, Swift.Error>)  in
-            switch result {
-                case .failure(let error):
-                    Logger.superwallDebug(string: "[network POST /identify] - failure")
-                    completion(.failure(error))
-                case .success(let response):
-                    completion(.success(response))
-            }
-
-        })
-    }
-}
-
-
-
-extension Network {
     func paywall(completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
         
         let paywallRequest = PaywallRequest(appUserId: Store.shared.userId ?? "")
@@ -194,6 +159,9 @@ extension Network {
         
         Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
         
+        let t = Date().timeIntervalSince1970
+        Logger.superwallDebug("[SW Elapsed Time /paywall] START \(Date().timeIntervalSince1970)")
+        
         send(request, completion: { (result: Result<PaywallResponse, Swift.Error>)  in
             switch result {
                 case .failure(let error):
@@ -201,6 +169,7 @@ extension Network {
                     completion(.failure(error))
                 case .success(let response):
                     completion(.success(response))
+                    Logger.superwallDebug("[SW Elapsed Time /paywall] END: \(Date().timeIntervalSince1970 - t)")
             }
             
         })

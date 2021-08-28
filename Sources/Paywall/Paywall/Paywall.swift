@@ -35,7 +35,7 @@ import TPInAppReceipt
     /// Called when the user taps a deep link in your HTML paywall.
     @objc optional func willOpenDeepLink(url: URL)
     
-    /// Called when you should track a standard internal analytics event to your own system.
+    /// Called when you should track a standard internal analytics event to your own system. If you want the event's name as an enum, do this:`let e = Paywall.EventName(rawValue: name)`
     ///
     
     /// Possible Values:
@@ -332,29 +332,34 @@ public class Paywall: NSObject {
         shared.willPresent = true
         
         let presentationBlock: ((PaywallViewController) -> ()) = { vc in
+            
             if !vc.isBeingPresented {
-                shared.paywallViewController?.readyForEventTracking = false
-                vc.willMove(toParent: nil)
-                vc.view.removeFromSuperview()
-                vc.removeFromParent()
-                vc.view.alpha = 1.0
-                vc.view.transform = .identity
-                vc.webview.scrollView.contentOffset = CGPoint.zero
-                delegate.willPresentPaywall?()
-                
                 guard let presentor = (viewController ?? UIApplication.shared.keyWindow?.rootViewController) else {
                     Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
                     fallbackUsing?()
                     return
                 }
                 
-                presentor.present(vc, animated: true, completion: {
-                    self.shared.willPresent = false
-                    delegate.didPresentPaywall?()
-                    presentationCompletion?()
-                    Paywall.track(.paywallOpen(paywallId: self.shared.paywallId))
-                    shared.paywallViewController?.readyForEventTracking = true
-                })
+                let isPresented = (presentor.presentedViewController as? PaywallViewController) != nil
+                
+                if !isPresented {
+                    shared.paywallViewController?.readyForEventTracking = false
+                    vc.willMove(toParent: nil)
+                    vc.view.removeFromSuperview()
+                    vc.removeFromParent()
+                    vc.view.alpha = 1.0
+                    vc.view.transform = .identity
+                    vc.webview.scrollView.contentOffset = CGPoint.zero
+                    delegate.willPresentPaywall?()
+                    
+                    presentor.present(vc, animated: true, completion: {
+                        self.shared.willPresent = false
+                        delegate.didPresentPaywall?()
+                        presentationCompletion?()
+                        Paywall.track(.paywallOpen(paywallId: self.shared.paywallId))
+                        shared.paywallViewController?.readyForEventTracking = true
+                    })
+                }
             }
         }
         
@@ -442,6 +447,9 @@ public class Paywall: NSObject {
         setAliasIfNeeded()
         
         SKPaymentQueue.default().add(self)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationWillResignActive(_:)), name: UIApplication.willResignActiveNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive(_:)), name: UIApplication.didBecomeActiveNotification, object: nil)
         
     }
     
@@ -558,9 +566,19 @@ public class Paywall: NSObject {
     }
     
     
-    deinit {
-        
+    @objc func applicationWillResignActive(_ sender: AnyObject? = nil) {
+        Paywall.track(.appClose)
     }
+    
+    @objc func applicationDidBecomeActive(_ sender: AnyObject? = nil) {
+        Paywall.track(.appOpen)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willResignActiveNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
+    }
+    
 }
 
 

@@ -9,7 +9,7 @@ import Foundation
 
 extension Paywall {
     
-    internal static var _queue = Queue();
+    internal static var _queue = EventsQueue();
     
     // TODO: Brian, decide what to do with this
     
@@ -46,25 +46,14 @@ extension Paywall {
             }
         }
         
-
-
         
-        // We want to send this event off right away & we might need to process it in
-        // somewhat real time so we send it to the api instead of the collector. 
-        if (name == "user_attributes"){
-            Network.shared.identify(identifyRequest: IdentifyRequest(parameters: JSON(eventParams), created_at: JSON(Date.init(timeIntervalSinceNow: 0).isoString))) {
-                (result) in
-                print(result)
-            }
-            return
-        }
-        
-        // skip calling user_attributes on their own system, likely not needed
-        if StandardEventName(rawValue: name) != nil || InternalEventName(rawValue: name) != nil {
+        // skip calling user_attributes and custom events on their own system likely not needed
+        // custom events wont work because StandardEventName and InternalEventName won't exist with their own event name
+        if EventName(rawValue: name) != nil && name != "user_properties" {
             Paywall.delegate?.shouldTrack?(event: name, params: delegateParams)
         }
-
         
+
         let eventData: JSON = [
             "event_id": JSON(UUID().uuidString),
             "event_name": JSON(name),
@@ -117,9 +106,9 @@ extension Paywall {
         case coreSessionStart = "coreSession_start" // tell us if they bagan to use the main function of your application i.e. call this on "workout_started"
         case coreSessionAbandon = "coreSession_abandon" // i.e. call this on "workout_cancelled"
         case coreSessionComplete = "coreSession_complete" // i.e. call this on "workout_complete"
-        case authSignUp = "auth_signUp"
-        case authLogIn = "auth_logIn"
-        case authLogOut = "auth_LogOut"
+        case signUp = "sign_up"
+        case logIn = "log_in"
+        case logOut = "log_out"
         case userAttributes = "user_attributes"
         case base = "base"
     }
@@ -143,13 +132,13 @@ extension Paywall {
         case .coreSessionComplete:
             return .coreSessionComplete
         case .logIn:
-            return .authLogIn
+            return .logIn
         case .logOut:
-            return .authLogOut
+            return .logOut
         case .userAttributes:
             return .userAttributes
         case .signUp:
-            return .authSignUp
+            return .signUp
         case .base:
             return .base
         }
@@ -193,6 +182,41 @@ extension Paywall {
         case apnsToken(_ s: String)
         /// Standard user attribute containing your user's account creation date.
         case createdAt(_ d: Date)
+    }
+    
+    public enum EventName: String {
+        case deepLinkOpen = "deepLink_open"
+        case onboardingStart = "onboarding_start"
+        case onboardingComplete = "onboarding_complete"
+        case pushNotificationReceive = "pushNotification_receive"
+        case pushNotificationOpen = "pushNotification_open"
+        case coreSessionStart = "coreSession_start" // tell us if they bagan to use the main function of your application i.e. call this on "workout_started"
+        case coreSessionAbandon = "coreSession_abandon" // i.e. call this on "workout_cancelled"
+        case coreSessionComplete = "coreSession_complete" // i.e. call this on "workout_complete"
+        case signUp = "sign_up"
+        case logIn = "log_in"
+        case logOut = "log_out"
+        case userAttributes = "user_attributes"
+        case appInstall = "app_install"
+        case appOpen = "app_open"
+        case appClose = "app_close"
+        case paywallOpen = "paywall_open"
+        case paywallClose = "paywall_close"
+        case transactionStart = "transaction_start"
+        case transactionFail = "transaction_fail"
+        case transactionAbandon = "transaction_abandon"
+        case transactionComplete = "transaction_complete"
+        case subscriptionStart = "subscription_start"
+        case freeTrialStart = "freeTrial_start"
+        case transactionRestore = "transaction_restore"
+        case nonRecurringProductPurchase = "nonRecurringProduct_purchase"
+        case paywallResponseLoadStart = "paywallResponseLoad_start"
+        case paywallResponseLoadFail = "paywallResponseLoad_fail"
+        case paywallResponseLoadComplete = "paywallResponseLoad_complete"
+        case paywallWebviewLoadStart = "paywallWebviewLoad_start"
+        case paywallWebviewLoadFail = "paywallWebviewLoad_fail"
+        case paywallWebviewLoadComplete = "paywallWebviewLoad_complete"
+        
     }
     
     internal enum InternalEvent {
