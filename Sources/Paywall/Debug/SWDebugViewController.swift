@@ -102,9 +102,11 @@ internal class SWDebugViewController: UIViewController {
     var paywallResponse: PaywallResponse? = nil
     var paywallResponses: [PaywallResponse] = []
     
-    
     init() {
         super.init(nibName: nil, bundle: nil)
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .dark
+        }
     }
     
     required init?(coder: NSCoder) {

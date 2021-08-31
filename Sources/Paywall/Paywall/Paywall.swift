@@ -122,8 +122,8 @@ public class Paywall: NSObject {
                 var dvc: SWDebugViewController? = nil
                 var isPresented = false
                 
-                if vc.presentedViewController is SWDebugViewController {
-                    dvc = vc.presentedViewController as? SWDebugViewController
+                if vc is SWDebugViewController {
+                    dvc = vc as? SWDebugViewController
                     isPresented = true
                 } else {
                     dvc = SWDebugViewController()
@@ -349,7 +349,7 @@ public class Paywall: NSObject {
                     return
                 }
                 
-                let isPresented = (presentor.presentedViewController as? SWPaywallViewController) != nil
+                let isPresented = (presentor as? SWPaywallViewController) != nil
                 
                 if !isPresented {
                     shared.paywallViewController?.readyForEventTracking = false
