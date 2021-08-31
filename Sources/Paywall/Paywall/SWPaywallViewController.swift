@@ -135,7 +135,9 @@ internal class SWPaywallViewController: UIViewController {
             
             self.webview.alpha = 0.0
             self.view.backgroundColor = paywallResponse.paywallBackgroundColor
-            self.purchaseLoadingIndicator.color = paywallResponse.paywallBackgroundColor.readableOverlayColor
+            let loadingColor = paywallResponse.paywallBackgroundColor.readableOverlayColor
+            self.purchaseLoadingIndicator.color = loadingColor
+            self.contentPlaceholderImageView.tintColor = loadingColor.withAlphaComponent(0.5)
             
             if let urlString = self._paywallResponse?.url {
                 if let url = URL(string: urlString) {
@@ -198,7 +200,7 @@ internal class SWPaywallViewController: UIViewController {
     var contentPlaceholderImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "paywall_placeholder", in: Bundle.module, compatibleWith: nil)!)
         imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .red
+        imageView.tintColor = .white
         imageView.backgroundColor = .clear
         imageView.clipsToBounds = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
