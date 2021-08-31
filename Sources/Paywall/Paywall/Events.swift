@@ -384,7 +384,7 @@ extension Paywall {
         switch event {
         case .deepLinkOpen(let deepLinkUrl):
             _track(eventName: name(for: event), params: ["url": deepLinkUrl.absoluteString], customParams: params)
-            DebugManager.shared.handle(deepLink: deepLinkUrl)
+            SWDebugManager.shared.handle(deepLink: deepLinkUrl)
         case .pushNotificationReceive(let pushNotificationId):
             if let id = pushNotificationId {
                 _track(eventName: name(for: event), params: ["push_notification_id": id], customParams: params)

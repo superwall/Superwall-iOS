@@ -10,10 +10,10 @@ import UIKit
 import AVFoundation
 
 internal protocol BounceButtonToggleDelegate: AnyObject {
-    func buttonDidToggle(_ button: BounceButton, isOn on: Bool)
+    func buttonDidToggle(_ button: SWBounceButton, isOn on: Bool)
 }
 
-internal class BounceButton: UIButton {
+internal class SWBounceButton: UIButton {
 
     // MARK: - Properties
     
@@ -72,7 +72,7 @@ internal class BounceButton: UIButton {
     
     var didAddTargetForCustomAction = false
     
-    var action: ((BounceButton) -> ())? {
+    var action: ((SWBounceButton) -> ())? {
         didSet {
             if !didAddTargetForCustomAction {
                 addTarget(self, action: #selector(tapped(sender:)), for: .primaryActionTriggered)
@@ -125,11 +125,11 @@ internal class BounceButton: UIButton {
         fatalError("init(coder:) has not been implemented")
     }
 
-    @objc func tapped(sender: BounceButton) {
+    @objc func tapped(sender: SWBounceButton) {
         action?(self)
     }
     
-    @objc func tappedBounceButton(sender: BounceButton) {
+    @objc func tappedBounceButton(sender: SWBounceButton) {
 
         if isEnabled {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()

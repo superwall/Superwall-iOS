@@ -19,9 +19,7 @@ internal struct AlertOption {
     var style: UIAlertAction.Style = .default
 }
 
-
-
-internal class DebugViewController: UIViewController {
+internal class SWDebugViewController: UIViewController {
     
     var logoImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "superwall_logo", in: Bundle.module, compatibleWith: nil)!)
@@ -34,8 +32,8 @@ internal class DebugViewController: UIViewController {
     }()
 
     
-    lazy var exitButton: BounceButton = {
-        let b = BounceButton()
+    lazy var exitButton: SWBounceButton = {
+        let b = SWBounceButton()
         let image = UIImage(named: "exit", in: Bundle.module, compatibleWith: nil)!
         b.setImage(image, for: .normal)
         b.translatesAutoresizingMaskIntoConstraints = false
@@ -44,8 +42,8 @@ internal class DebugViewController: UIViewController {
         return b
     }()
     
-    lazy var bottomButton: BounceButton = {
-        let b = BounceButton()
+    lazy var bottomButton: SWBounceButton = {
+        let b = SWBounceButton()
         b.setTitle("Preview", for: .normal)
         b.titleLabel?.font = UIFont.boldSystemFont(ofSize: 17)
         b.backgroundColor = PrimaryButtonBackgroundColor
@@ -64,8 +62,8 @@ internal class DebugViewController: UIViewController {
         return b
     }()
     
-    lazy var previewPickerButton: BounceButton = {
-        let b = BounceButton()
+    lazy var previewPickerButton: SWBounceButton = {
+        let b = SWBounceButton()
         b.setTitle("", for: .normal)
         b.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
         b.backgroundColor = LightBackgroundColor
@@ -92,8 +90,8 @@ internal class DebugViewController: UIViewController {
         return view
     }()
     
-    lazy var previewContainerView: BounceButton = {
-        let v = BounceButton()
+    lazy var previewContainerView: SWBounceButton = {
+        let v = SWBounceButton()
         v.shouldAnimateLightly = true
         v.translatesAutoresizingMaskIntoConstraints = false
         v.addTarget(self, action: #selector(pressedPreview), for: .primaryActionTriggered)
@@ -208,7 +206,7 @@ internal class DebugViewController: UIViewController {
     }
     
     func addPaywallPreview() {
-        if let child = PaywallViewController(paywallResponse: paywallResponse, completion: nil) {
+        if let child = SWPaywallViewController(paywallResponse: paywallResponse, completion: nil) {
             addChild(child)
             previewContainerView.insertSubview(child.view, at: 0)
             previewViewContent = child.view
@@ -361,7 +359,7 @@ internal class DebugViewController: UIViewController {
 }
 
 
-extension DebugViewController {
+extension SWDebugViewController {
     
     
     func presentAlert(title: String?, message: String?, options: [AlertOption]) {

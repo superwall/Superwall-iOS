@@ -10,11 +10,11 @@ import UIKit
 import Foundation
 import SafariServices
 
-protocol PaywallViewControllerDelegate: AnyObject {
+protocol SWPaywallViewControllerDelegate: AnyObject {
     func userDismissedPaywallWhileLoading()
 }
 
-internal class PaywallViewController: UIViewController {
+internal class SWPaywallViewController: UIViewController {
     
     // Don't touch my private parts.
     
@@ -24,7 +24,7 @@ internal class PaywallViewController: UIViewController {
     
     internal var readyForEventTracking = false
     
-    weak var delegate: PaywallViewControllerDelegate? = nil
+    weak var delegate: SWPaywallViewControllerDelegate? = nil
     
     var presentationStyle: PaywallPresentationStyle {
         return _paywallResponse?.presentationStyle ?? .sheet
@@ -44,7 +44,6 @@ internal class PaywallViewController: UIViewController {
         av.style = .whiteLarge
         av.hidesWhenStopped = false
         av.alpha = 0.0
-//        av.stopAnimating()
         av.startAnimating()
         return av
     }()
@@ -136,6 +135,7 @@ internal class PaywallViewController: UIViewController {
             
             self.webview.alpha = 0.0
             self.view.backgroundColor = paywallResponse.paywallBackgroundColor
+            self.purchaseLoadingIndicator.color = paywallResponse.paywallBackgroundColor.readableOverlayColor
             
             if let urlString = self._paywallResponse?.url {
                 if let url = URL(string: urlString) {
@@ -338,7 +338,7 @@ internal class PaywallViewController: UIViewController {
     
 }
 
-extension PaywallViewController: WKScriptMessageHandler {
+extension SWPaywallViewController: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         Logger.superwallDebug(string: "userContentController - start")
         
@@ -373,7 +373,7 @@ extension PaywallViewController: WKScriptMessageHandler {
 
 // MARK: Event Handler
 
-extension PaywallViewController {
+extension SWPaywallViewController {
     
     func handleEvent(event: PaywallEvent) {
         Logger.superwallDebug("handleEvent", event)

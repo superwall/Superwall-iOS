@@ -13,9 +13,9 @@ struct DebugResponse {
     
 }
 
-internal class DebugManager {
+internal class SWDebugManager {
 
-    static let shared = DebugManager()
+    static let shared = SWDebugManager()
     
     func handle(deepLink: URL) {
         

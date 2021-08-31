@@ -119,14 +119,14 @@ public class Paywall: NSObject {
             
             if let vc = UIViewController.topMostViewController {
                 
-                var dvc: DebugViewController? = nil
+                var dvc: SWDebugViewController? = nil
                 var isPresented = false
                 
-                if vc.presentedViewController is DebugViewController {
-                    dvc = vc.presentedViewController as? DebugViewController
+                if vc.presentedViewController is SWDebugViewController {
+                    dvc = vc.presentedViewController as? SWDebugViewController
                     isPresented = true
                 } else {
-                    dvc = DebugViewController()
+                    dvc = SWDebugViewController()
                 }
                 
                 dvc?.paywallId = paywallId
@@ -188,7 +188,7 @@ public class Paywall: NSObject {
             
             DispatchQueue.main.async {
                 
-                shared.paywallViewController = PaywallViewController(paywallResponse: response, completion: shared.paywallEventDidOccur)
+                shared.paywallViewController = SWPaywallViewController(paywallResponse: response, completion: shared.paywallEventDidOccur)
                 
                 if let v =  UIApplication.shared.keyWindow?.rootViewController {
                     v.addChild(shared.paywallViewController!)
@@ -320,7 +320,7 @@ public class Paywall: NSObject {
         guard (delegate?.shouldPresentPaywall() ?? false) else { return }
         
         if isDebuggerLaunched {
-            guard viewController is DebugViewController else { return }
+            guard viewController is SWDebugViewController else { return }
         }
         
         self.purchaseCompletion = purchaseCompletion
@@ -340,7 +340,7 @@ public class Paywall: NSObject {
         
         shared.willPresent = true
         
-        let presentationBlock: ((PaywallViewController) -> ()) = { vc in
+        let presentationBlock: ((SWPaywallViewController) -> ()) = { vc in
             
             if !vc.isBeingPresented {
                 guard let presentor = (viewController ?? UIViewController.topMostViewController) else {
@@ -349,7 +349,7 @@ public class Paywall: NSObject {
                     return
                 }
                 
-                let isPresented = (presentor.presentedViewController as? PaywallViewController) != nil
+                let isPresented = (presentor.presentedViewController as? SWPaywallViewController) != nil
                 
                 if !isPresented {
                     shared.paywallViewController?.readyForEventTracking = false
@@ -430,7 +430,7 @@ public class Paywall: NSObject {
 
     private(set) var paywallResponse: PaywallResponse?
     
-    private(set) var paywallViewController: PaywallViewController?
+    private(set) var paywallViewController: SWPaywallViewController?
     
     private(set) var productsById: [String: SKProduct] = [String: SKProduct]()
     
