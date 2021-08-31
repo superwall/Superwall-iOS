@@ -217,7 +217,7 @@ internal class DebugViewController: UIViewController {
             child.view.layer.borderColor = UIColor.white.withAlphaComponent(0.25).cgColor
             child.view.layer.borderWidth = 1.0
             
-            let ratio = Double(previewContainerView.frame.size.height / view.frame.size.height)
+            let ratio = CGFloat(Double(previewContainerView.frame.size.height / view.frame.size.height))
             
             child.view.transform = CGAffineTransform.identity.scaledBy(x: ratio, y: ratio)
             

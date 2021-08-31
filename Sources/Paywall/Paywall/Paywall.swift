@@ -13,6 +13,9 @@ import TPInAppReceipt
     /// Called when the user initiates a restore. Add your restore logic here.
     func shouldTryToRestore()
     
+    /// Called before ever showing a paywall. Return `false` if the user has active entitlements and `true` if the user does not.
+    @objc func shouldPresentPaywall() -> Bool
+    
     /// Called when the user taps a button with a custom `data-pw-custom` tag in your HTML paywall. See paywall.js for further documentation
     ///  - Parameter withName: The value of the `data-pw-custom` tag in your HTML element that the user selected.
     @objc optional func didReceiveCustomEvent(withName name: String)
@@ -74,7 +77,6 @@ import TPInAppReceipt
     
     
     @objc optional func shouldTrack(event: String, params: [String: Any])
-    
 
 }
 
@@ -313,6 +315,8 @@ public class Paywall: NSObject {
     ///  - Parameter presentationCompletion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
     ///  - Parameter purchaseCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
     public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil, fallback: FallbackBlock? = nil) {
+        
+        guard (delegate?.shouldPresentPaywall() ?? false) else { return }
         
         self.purchaseCompletion = purchaseCompletion
         

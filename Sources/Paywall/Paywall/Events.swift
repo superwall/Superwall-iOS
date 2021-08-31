@@ -184,19 +184,8 @@ extension Paywall {
         case createdAt(_ d: Date)
     }
     
+    /// These are the types of events we send to Paywall's delegate `shouldTrack` method
     public enum EventName: String {
-        case deepLinkOpen = "deepLink_open"
-        case onboardingStart = "onboarding_start"
-        case onboardingComplete = "onboarding_complete"
-        case pushNotificationReceive = "pushNotification_receive"
-        case pushNotificationOpen = "pushNotification_open"
-        case coreSessionStart = "coreSession_start" // tell us if they bagan to use the main function of your application i.e. call this on "workout_started"
-        case coreSessionAbandon = "coreSession_abandon" // i.e. call this on "workout_cancelled"
-        case coreSessionComplete = "coreSession_complete" // i.e. call this on "workout_complete"
-        case signUp = "sign_up"
-        case logIn = "log_in"
-        case logOut = "log_out"
-        case userAttributes = "user_attributes"
         case appInstall = "app_install"
         case appOpen = "app_open"
         case appClose = "app_close"
@@ -216,7 +205,6 @@ extension Paywall {
         case paywallWebviewLoadStart = "paywallWebviewLoad_start"
         case paywallWebviewLoadFail = "paywallWebviewLoad_fail"
         case paywallWebviewLoadComplete = "paywallWebviewLoad_complete"
-        
     }
     
     internal enum InternalEvent {
