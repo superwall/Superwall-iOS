@@ -346,6 +346,7 @@ internal class DebugViewController: UIViewController {
         super.viewDidDisappear(animated)
         Paywall.set(response: nil, completion: nil)
         UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = oldTintColor
+        Paywall.isDebuggerLaunched = false
     }
 
 }

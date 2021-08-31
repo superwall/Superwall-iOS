@@ -113,10 +113,11 @@ public class Paywall: NSObject {
     
     /// Launches the debugger for you to preview paywalls. If you call `Paywall.track(.deepLinkOpen(deepLinkUrl: url))` from `application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool` in your `AppDelegate`, this funciton is called automatically after scanning your debug QR code in Superwall's web dashboard. Remember to add you URL scheme in settings for this feature to work!
     public static func launchDebugger(toPaywall paywallId: String? = nil) {
+        isDebuggerLaunched = true
         Paywall.dismiss(nil)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.618) { // helps if from cold launch
             
-            if let vc = UIApplication.shared.keyWindow?.rootViewController {
+            if let vc = UIViewController.topMostViewController {
                 
                 var dvc: DebugViewController? = nil
                 var isPresented = false
@@ -318,6 +319,10 @@ public class Paywall: NSObject {
         
         guard (delegate?.shouldPresentPaywall() ?? false) else { return }
         
+        if isDebuggerLaunched {
+            guard viewController is DebugViewController else { return }
+        }
+        
         self.purchaseCompletion = purchaseCompletion
         
         let fallbackUsing = fallback ?? fallbackCompletionBlock
@@ -338,7 +343,7 @@ public class Paywall: NSObject {
         let presentationBlock: ((PaywallViewController) -> ()) = { vc in
             
             if !vc.isBeingPresented {
-                guard let presentor = (viewController ?? UIApplication.shared.keyWindow?.rootViewController) else {
+                guard let presentor = (viewController ?? UIViewController.topMostViewController) else {
                     Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
                     fallbackUsing?()
                     return
@@ -418,6 +423,8 @@ public class Paywall: NSObject {
     private var aliasId: String? {
         return Store.shared.aliasId
     }
+    
+    internal static var isDebuggerLaunched = false
     
     private var willPresent = false
 
@@ -643,3 +650,17 @@ extension Paywall: SKPaymentTransactionObserver {
 internal func OnMain(_ execute: @escaping () -> Void) {
     DispatchQueue.main.async(execute: execute)
 }
+
+
+internal extension UIViewController {
+    static var topMostViewController: UIViewController? {
+        var presentor: UIViewController? = UIApplication.shared.keyWindow?.rootViewController
+        
+        while let p = presentor?.presentedViewController {
+            presentor = p
+        }
+        
+        return presentor
+    }
+}
+
