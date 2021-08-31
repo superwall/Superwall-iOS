@@ -367,7 +367,13 @@ extension SWDebugViewController {
     func presentAlert(title: String?, message: String?, options: [AlertOption]) {
         
         let v = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
-        v.view.tintColor = PrimaryColor
+        if #available(iOS 13.0, *) {
+            v.overrideUserInterfaceStyle = .dark
+            v.view.tintColor = PrimaryColor
+        } else {
+            v.view.tintColor = DarkBackgroundColor
+        }
+       
         for o in options {
             let action = UIAlertAction(title: o.title, style: o.style, handler: { _ in
                 o.action?()
