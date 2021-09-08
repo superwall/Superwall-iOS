@@ -205,11 +205,19 @@ public class Paywall: NSObject {
         }
     }
     
+    internal static var isLoadingPaywallResponse = false
+    
     /// Pre-loads your paywall so it loads instantly on `Paywall.present()`.
     /// - Parameter completion: A completion block of type `((Bool) -> ())?`, defaulting to nil if not provided. `true` on success, and `false` on failure.
     public static func load(completion: ((Bool) -> ())? = nil) {
         
+        if isLoadingPaywallResponse {
+            return
+        }
+        
         Paywall.track(.paywallResponseLoadStart)
+        
+        isLoadingPaywallResponse = true
         
         Network.shared.paywall { (result) in
             
@@ -229,6 +237,8 @@ public class Paywall: NSObject {
                     completion?(false)
                 }
             }
+            
+            isLoadingPaywallResponse = false
 
         }
     }
@@ -333,16 +343,16 @@ public class Paywall: NSObject {
             return
         }
         
-        if shared.willPresent {
-            Logger.superwallDebug(string: "A Paywall is already being presented! If you'd like to speed this up, try calling Paywall.preload()")
-            return
-        }
-        
-        shared.willPresent = true
+//        if shared.willPresent {
+//            Logger.superwallDebug(string: "A Paywall is already being presented! If you'd like to speed this up, try calling Paywall.load()")
+//            return
+//        }
+//
+//        shared.willPresent = true
         
         let presentationBlock: ((SWPaywallViewController) -> ()) = { vc in
             
-            if !vc.isBeingPresented {
+//            if !vc.isBeingPresented {
                 guard let presentor = (viewController ?? UIViewController.topMostViewController) else {
                     Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
                     fallbackUsing?()
@@ -362,14 +372,15 @@ public class Paywall: NSObject {
                     delegate.willPresentPaywall?()
                     
                     presentor.present(vc, animated: true, completion: {
-                        self.shared.willPresent = false
                         delegate.didPresentPaywall?()
                         presentationCompletion?()
                         Paywall.track(.paywallOpen(paywallId: self.shared.paywallId))
                         shared.paywallViewController?.readyForEventTracking = true
                     })
+                } else {
+                    Logger.superwallDebug(string: "Note: A Paywall is already being presented")
                 }
-            }
+//            }
         }
         
         if let vc = shared.paywallViewController, cached {
@@ -378,8 +389,8 @@ public class Paywall: NSObject {
         }
         
         load() { success in
+            
             if (success) {
-                
                 
                 guard let vc = shared.paywallViewController else {
                     Logger.superwallDebug(string: "Paywall's viewcontroller is nil!")
@@ -396,7 +407,6 @@ public class Paywall: NSObject {
                 presentationBlock(vc)
                 
             } else {
-                self.shared.willPresent = false
                 fallbackUsing?()
             }
         }
@@ -425,8 +435,6 @@ public class Paywall: NSObject {
     }
     
     internal static var isDebuggerLaunched = false
-    
-    private var willPresent = false
 
     private(set) var paywallResponse: PaywallResponse?
     
