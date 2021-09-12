@@ -40,6 +40,8 @@
 ## Getting Started
 For more detailed information, you can view our complete documentation at [docs.superwall.me](https://docs.superwall.me/docs).
 
+Or, get started with [an example app](https://github.com/superwall-me/superwallQuickStart). 
+
 <!-- Or browse our iOS sample apps:
 - [Example Repos](github.com/re) -->
 
