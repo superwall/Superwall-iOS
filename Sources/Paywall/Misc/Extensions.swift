@@ -53,6 +53,7 @@ internal extension SKProduct {
     
     var eventData: [String: String] {
         return [
+            "rawPrice": "\(price)",
             "price": localizedPrice,
             "periodAlt": localizedSubscriptionPeriod,
             "period": period,
@@ -63,6 +64,10 @@ internal extension SKProduct {
             "trialPeriodMonths": trialPeriodMonths,
             "trialPeriodYears": trialPeriodYears,
             "trialPeriodText": trialPeriodText
+            "periodDays": periodDays,
+            "periodWeeks": periodWeeks,
+            "periodMonths": periodMonths,
+            "periodYears": periodYears,
         ]
     }
 
@@ -123,6 +128,110 @@ internal extension SKProduct {
 
             return ""
 
+        }
+    }
+    
+    var periodWeeks: String {
+        get {
+            
+            guard let period = subscriptionPeriod else { return "" }
+            let c = period.numberOfUnits
+            
+            if period.unit == .day {
+                return "\(Int((1 * c)/7))"
+            }
+            
+            if period.unit == .week {
+                return "\(Int(c))"
+            }
+            
+            if period.unit == .month {
+                return "\(Int(4 * c))"
+            }
+            
+            if period.unit == .year {
+                return "\(Int(52 * c))"
+            }
+
+            return "0"
+        }
+    }
+    
+    var periodMonths: String {
+        get {
+            
+            guard let period = subscriptionPeriod else { return "" }
+            let c = period.numberOfUnits
+            
+            if period.unit == .day {
+                return "\(Int((1 * c)/30))"
+            }
+            
+            if period.unit == .week {
+                return "\(Int(c / 4))"
+            }
+            
+            if period.unit == .month {
+                return "\(Int(c))"
+            }
+            
+            if period.unit == .year {
+                return "\(Int(12 * c))"
+            }
+
+            return "0"
+        }
+    }
+    
+    var periodYears: String {
+        get {
+            
+            guard let period = subscriptionPeriod else { return "" }
+            let c = period.numberOfUnits
+            
+            if period.unit == .day {
+                return "\(Int(c / 365))"
+            }
+            
+            if period.unit == .week {
+                return "\(Int(c / 52))"
+            }
+            
+            if period.unit == .month {
+                return "\(Int(c / 12))"
+            }
+            
+            if period.unit == .year {
+                return "\(Int(c))"
+            }
+
+            return "0"
+        }
+    }
+    
+    var periodDays: String {
+        get {
+            
+            guard let period = subscriptionPeriod else { return "" }
+            let c = period.numberOfUnits
+            
+            if period.unit == .day {
+                return "\(Int(1 * c))"
+            }
+            
+            if period.unit == .week {
+                return "\(Int(7 * c))"
+            }
+            
+            if period.unit == .month {
+                return "\(Int(30 * c))"
+            }
+            
+            if period.unit == .year {
+                return "\(Int(365 * c))"
+            }
+
+            return "0"
         }
     }
 
@@ -202,7 +311,7 @@ internal extension SKProduct {
                 let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
-                    return ""
+                    return "\(Int(c / 7))"
                 }
 
                 if trialPeriod.unit == .month {
@@ -229,7 +338,7 @@ internal extension SKProduct {
                 let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
-                    return ""
+                    return "\(Int(c / 30))"
                 }
 
                 if trialPeriod.unit == .month {
@@ -237,7 +346,7 @@ internal extension SKProduct {
                 }
 
                 if trialPeriod.unit == .week {
-                    return ""
+                    return "\(Int(c / 4))"
                 }
 
                 if trialPeriod.unit == .year {
@@ -256,15 +365,15 @@ internal extension SKProduct {
                 let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
-                    return ""
+                    return "\(Int(c / 365))"
                 }
 
                 if trialPeriod.unit == .month {
-                    return ""
+                    return "\(Int(c / 12))"
                 }
 
                 if trialPeriod.unit == .week {
-                    return ""
+                    return "\(Int(c / 52))"
                 }
 
                 if trialPeriod.unit == .year {
