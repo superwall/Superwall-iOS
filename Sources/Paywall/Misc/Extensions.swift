@@ -52,7 +52,7 @@ internal extension Date {
 internal extension SKProduct {
     
     var eventData: [String: String] {
-        var output = [
+        return [
             "rawPrice": "\(price)",
             "price": localizedPrice,
             "periodAlt": localizedSubscriptionPeriod,
@@ -72,23 +72,6 @@ internal extension SKProduct {
             "periodMonths": periodMonths,
             "periodYears": periodYears,
         ]
-        
-        let keys = output.keys.sorted()
-        
-        var debugStrings = [String]()
-        
-        for k in keys {
-            debugStrings.append("\(k) = \(output[k] ?? "n/a")")
-        }
-        
-        let debugString = debugStrings.joined(separator: ", ")
-        
-        output["_debug"] = debugString
-        
-        print(debugString)
-        
-        return output
-        
     }
 
     var localizedPrice: String {
@@ -113,8 +96,6 @@ internal extension SKProduct {
         case .month: dateComponents = DateComponents(month: subscriptionPeriod.numberOfUnits)
         case .year: dateComponents = DateComponents(year: subscriptionPeriod.numberOfUnits)
         @unknown default:
-            print("WARNING: SwiftyStoreKit localizedSubscriptionPeriod does not handle all SKProduct.PeriodUnit cases.")
-            // Default to month units in the unlikely event a different unit type is added to a future OS version
             dateComponents = DateComponents(month: subscriptionPeriod.numberOfUnits)
         }
 

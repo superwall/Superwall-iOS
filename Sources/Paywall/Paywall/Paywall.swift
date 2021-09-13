@@ -513,19 +513,19 @@ public class Paywall: NSObject {
     // purchase callbacks
     
     private func _transactionDidBegin(for product: SKProduct) {
-        Paywall.track(.transactionStart(paywallId: paywallId, productId: product.productIdentifier))
+        Paywall.track(.transactionStart(paywallId: paywallId, product: product))
         paywallViewController?.loadingState = .loadingPurchase
     }
 
     
     private func _transactionDidSucceed(for product: SKProduct) {
-        Paywall.track(.transactionComplete(paywallId: paywallId, productId: product.productIdentifier))
+        Paywall.track(.transactionComplete(paywallId: paywallId, product: product))
         
         if let ft = paywallResponse?.isFreeTrialAvailable {
             if ft {
-                Paywall.track(.freeTrialStart(paywallId: paywallId, productId: product.productIdentifier))
+                Paywall.track(.freeTrialStart(paywallId: paywallId, product: product))
             } else {
-                Paywall.track(.subscriptionStart(paywallId: paywallId, productId: product.productIdentifier))
+                Paywall.track(.subscriptionStart(paywallId: paywallId, product: product))
             }
         }
         
@@ -543,7 +543,7 @@ public class Paywall: NSObject {
                 Paywall.delegate?.shouldTryToRestore()
                 self.didTryToAutoRestore = true
             } else {
-                Paywall.track(.transactionFail(paywallId: self.paywallId, productId: product.productIdentifier, message: error?.localizedDescription ?? ""))
+                Paywall.track(.transactionFail(paywallId: self.paywallId, product: product, message: error?.localizedDescription ?? ""))
                 self.paywallViewController?.presentAlert(title: "Please try again", message: error?.localizedDescription ?? "", actionTitle: "Restore Purchase", action: {
                     Paywall.delegate?.shouldTryToRestore()
                 })
@@ -552,19 +552,19 @@ public class Paywall: NSObject {
     }
     
     private func _transactionWasAbandoned(for product: SKProduct) {
-        Paywall.track(.transactionAbandon(paywallId: paywallId, productId: product.productIdentifier))
+        Paywall.track(.transactionAbandon(paywallId: paywallId, product: product))
         paywallViewController?.loadingState = .ready
     }
     
     private func _transactionWasRestored() {
-        Paywall.track(.transactionRestore(paywallId: paywallId, productId: ""))
+        Paywall.track(.transactionRestore(paywallId: paywallId, product: nil))
         _dismiss(userDidPurchase: true)
     }
     
     // if a parent needs to approve the purchase
     private func _transactionWasDeferred() {
         paywallViewController?.presentAlert(title: "Waiting for Approval", message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.")
-        Paywall.track(.transactionFail(paywallId: paywallId, productId: "", message: "Needs parental approval"))
+        Paywall.track(.transactionFail(paywallId: paywallId, product: nil, message: "Needs parental approval"))
     }
     
 
