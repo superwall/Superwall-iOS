@@ -52,23 +52,43 @@ internal extension Date {
 internal extension SKProduct {
     
     var eventData: [String: String] {
-        return [
+        var output = [
             "rawPrice": "\(price)",
             "price": localizedPrice,
             "periodAlt": localizedSubscriptionPeriod,
             "period": period,
             "periodly": "\(period)ly",
             "weeklyPrice": weeklyPrice,
+            "dailyPrice": dailyPrice,
+            "monthlyPrice": monthlyPrice,
+            "yearlyPrice": yearlyPrice,
             "trialPeriodDays": trialPeriodDays,
             "trialPeriodWeeks": trialPeriodWeeks,
             "trialPeriodMonths": trialPeriodMonths,
             "trialPeriodYears": trialPeriodYears,
-            "trialPeriodText": trialPeriodText
+            "trialPeriodText": trialPeriodText,
             "periodDays": periodDays,
             "periodWeeks": periodWeeks,
             "periodMonths": periodMonths,
             "periodYears": periodYears,
         ]
+        
+        let keys = output.keys.sorted()
+        
+        var debugStrings = [String]()
+        
+        for k in keys {
+            debugStrings.append("\(k) = \(output[k] ?? "n/a")")
+        }
+        
+        let debugString = debugStrings.joined(separator: ", ")
+        
+        output["_debug"] = debugString
+        
+        print(debugString)
+        
+        return output
+        
     }
 
     var localizedPrice: String {
@@ -234,37 +254,150 @@ internal extension SKProduct {
             return "0"
         }
     }
+    
+    var dailyPrice: String {
+        get {
+            if price == NSDecimalNumber(decimal: 0.00) {
+                return "$0.00"
+            }
+            
+            let numberFormatter = NumberFormatter()
+            let locale = priceLocale
+            numberFormatter.numberStyle = .currency
+            numberFormatter.locale = locale
+            
+            guard let period = subscriptionPeriod else { return "n/a" }
+            let c = period.numberOfUnits
+            var periods = 1.0 as Decimal
+            let inputPrice = price as Decimal
+            
+            if period.unit == .year {
+                periods = Decimal(365 * c)
+            }
+            
+            if period.unit == .month {
+                periods = Decimal(30 * c)
+            }
+            
+            if period.unit == .week {
+                periods = Decimal(c) / Decimal(7)
+            }
+            
+            if period.unit == .day {
+                periods = Decimal(c) / Decimal(1)
+            }
+            
+            return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+        }
+    }
 
     var weeklyPrice: String {
         get {
             if price == NSDecimalNumber(decimal: 0.00) {
                 return "$0.00"
             }
-
+            
             let numberFormatter = NumberFormatter()
             let locale = priceLocale
             numberFormatter.numberStyle = .currency
             numberFormatter.locale = locale
             
-            let periodText = period
-
-            if periodText == "year" {
-                return numberFormatter.string(from: NSDecimalNumber(decimal: (price as Decimal) / Decimal(52.0))) ?? "N/A"
+            guard let period = subscriptionPeriod else { return "n/a" }
+            let c = period.numberOfUnits
+            var periods = 1.0 as Decimal
+            let inputPrice = price as Decimal
+            
+            if period.unit == .year {
+                periods = Decimal(52 * c)
             }
-
-            if periodText == "month" {
-                return numberFormatter.string(from: NSDecimalNumber(decimal: (price as Decimal) * Decimal(11.99) / Decimal(52.0))) ?? "N/A"
+            
+            if period.unit == .month {
+                periods = Decimal(4 * c)
             }
-
-            if periodText == "week" {
-                return numberFormatter.string(from: NSDecimalNumber(decimal: (price as Decimal))) ?? "N/A"
+            
+            if period.unit == .week {
+                periods = Decimal(c) / Decimal(1)
             }
-
-            if periodText == "day" {
-                return numberFormatter.string(from: NSDecimalNumber(decimal: (price as Decimal))) ?? "N/A"
+            
+            if period.unit == .day {
+                periods = Decimal(c) / Decimal(7)
             }
-
-            return "$0.00"
+            
+            return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+        }
+    }
+    
+    var monthlyPrice: String {
+        get {
+            if price == NSDecimalNumber(decimal: 0.00) {
+                return "$0.00"
+            }
+            
+            let numberFormatter = NumberFormatter()
+            let locale = priceLocale
+            numberFormatter.numberStyle = .currency
+            numberFormatter.locale = locale
+            
+            guard let period = subscriptionPeriod else { return "n/a" }
+            let c = period.numberOfUnits
+            var periods = 1.0 as Decimal
+            let inputPrice = price as Decimal
+            
+            if period.unit == .year {
+                periods = Decimal(12 * c)
+            }
+            
+            if period.unit == .month {
+                periods = Decimal(1 * c)
+            }
+            
+            if period.unit == .week {
+                periods = Decimal(c) / Decimal(4)
+            }
+            
+            if period.unit == .day {
+                periods = Decimal(c) / Decimal(30)
+            }
+            
+            return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+            
+        }
+    }
+    
+    var yearlyPrice: String {
+        get {
+            if price == NSDecimalNumber(decimal: 0.00) {
+                return "$0.00"
+            }
+            
+            let numberFormatter = NumberFormatter()
+            let locale = priceLocale
+            numberFormatter.numberStyle = .currency
+            numberFormatter.locale = locale
+            
+            guard let period = subscriptionPeriod else { return "n/a" }
+            let c = period.numberOfUnits
+            var periods = 1.0 as Decimal
+            let inputPrice = price as Decimal
+            
+            if period.unit == .year {
+                periods = Decimal(c)
+            }
+            
+            if period.unit == .month {
+                periods = Decimal(c) / Decimal(12)
+            }
+            
+            if period.unit == .week {
+                periods = Decimal(c) / Decimal(52)
+            }
+            
+            if period.unit == .day {
+                periods = Decimal(c) / Decimal(365)
+            }
+            
+            return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+            
         }
     }
 
