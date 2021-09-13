@@ -8,10 +8,10 @@ import TPInAppReceipt
     
     /// Called when the user initiates checkout for a product. Add your purchase logic here by either calling `Purchases.shared.purchaseProduct()` (if you use RevenueCat: https://sdk.revenuecat.com/ios/Classes/RCPurchases.html#/c:objc(cs)RCPurchases(im)purchaseProduct:withCompletionBlock:) or by using Apple's StoreKit APIs
     /// - Parameter product: The `SKProduct` the user would like to purchase
-    func userDidInitiateCheckout(for product: SKProduct)
+    @objc func userDidInitiateCheckout(for product: SKProduct)
     
     /// Called when the user initiates a restore. Add your restore logic here.
-    func shouldTryToRestore()
+    @objc func shouldTryToRestore()
     
     /// Called before ever showing a paywall. Return `false` if the user has active entitlements and `true` if the user does not.
     @objc func shouldPresentPaywall() -> Bool
@@ -86,7 +86,7 @@ public class Paywall: NSObject {
     // MARK: Public
     
     /// Prints debug logs to the console if set to `true`. Default is `false`
-    public static var debugMode = false
+    @objc public static var debugMode = false
     
     /// WARNING: Only use this enum to set `Paywall.networkEnvironment` if told so explicitly by the Superwall team.
     public enum PaywallNetworkEnvironment {
@@ -102,7 +102,7 @@ public class Paywall: NSObject {
     public static var networkEnvironment: PaywallNetworkEnvironment = .release
     
     /// The object that acts as the delegate of Paywall. Required implementations include `userDidInitiateCheckout(for product: SKProduct)` and `shouldTryToRestore()`. 
-    public static var delegate: PaywallDelegate? = nil
+    @objc public static var delegate: PaywallDelegate? = nil
     
     /// Completion block of type `(Bool) -> ()` that is optionally passed through `Paywall.present()`. Gets called when the paywall is dismissed by the user, by way or purchasing, restoring or manually dismissing. Accepts a BOOL that is `true` if the product is purchased or restored, and `false` if the user manually dismisses the paywall.
     /// Please note: This completion is NOT called when  `Paywall.dismiss()` is manually called by the developer.
@@ -209,7 +209,7 @@ public class Paywall: NSObject {
     
     /// Pre-loads your paywall so it loads instantly on `Paywall.present()`.
     /// - Parameter completion: A completion block of type `((Bool) -> ())?`, defaulting to nil if not provided. `true` on success, and `false` on failure.
-    public static func load(completion: ((Bool) -> ())? = nil) {
+    @objc public static func load(completion: ((Bool) -> ())? = nil) {
         
         if isLoadingPaywallResponse {
             return
@@ -247,7 +247,7 @@ public class Paywall: NSObject {
     ///  - Parameter apiKey: Your Public API Key from: https://superwall.me/applications/1/settings/keys
     ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
     @discardableResult
-    public static func configure(apiKey: String, userId: String? = nil) -> Paywall {
+    @objc public static func configure(apiKey: String, userId: String? = nil) -> Paywall {
         shared = Paywall(apiKey: apiKey, userId: userId)
         return shared
     }
@@ -255,7 +255,7 @@ public class Paywall: NSObject {
     /// Links your userId to Superwall's automatically generated Alias. Call this as soon as you have a userId.
     ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
     @discardableResult
-    public static func identify(userId: String) -> Paywall {
+    @objc public static func identify(userId: String) -> Paywall {
         
         if Store.shared.userId != userId { // refetch the paywall, we don't know if the alias was for an existing user
             shared.set(appUserID: userId)
@@ -269,7 +269,7 @@ public class Paywall: NSObject {
     
     /// Resets the userId stored by Superwall. Call this when your user signs out.
     @discardableResult
-    public static func reset() -> Paywall {
+    @objc public static func reset() -> Paywall {
         
         if Store.shared.appUserId != nil {
             Store.shared.clear()
@@ -282,7 +282,7 @@ public class Paywall: NSObject {
     
     /// Dismisses the presented paywall. Doesn't trigger a `PurchaseCompletionBlock` call if provided during `Paywall.present()`, since this action is developer initiated.
     /// - Parameter completion: A completion block of type `(()->())? = nil` that gets called after the paywall is dismissed.
-    public static func dismiss(_ completion: (()->())? = nil) {
+    @objc public static func dismiss(_ completion: (()->())? = nil) {
         shared._dismiss(completion: completion)
     }
     
@@ -292,31 +292,31 @@ public class Paywall: NSObject {
     ///  - Parameter cached: Determines if Superwall shoudl re-fetch a paywall from the user. You should typically set this to `false` only if you think your user may now conditionally match a rule for another paywall. Defaults to `true`.
     ///  - Parameter presentationCompletion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
     ///  - Parameter purchaseCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
-    public static func present(cached: Bool, presentationCompletion:  (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil) {
+    @objc public static func present(cached: Bool, presentationCompletion:  (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil) {
         present(on: nil, cached: cached, presentationCompletion: presentationCompletion, purchaseCompletion: purchaseCompletion, fallback: nil)
     }
     
     /// Presents a paywall to the user.
     ///  - Parameter presentationCompletion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
     ///  - Parameter purchaseCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
-    public static func present(presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil) {
+    @objc public static func present(presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil) {
         present(on: nil, presentationCompletion: presentationCompletion, purchaseCompletion: purchaseCompletion, fallback: nil)
     }
     
     /// Presents a paywall to the user.
     ///  - Parameter purchaseCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
-    public static func present(purchaseCompletion: PurchaseCompletionBlock? = nil) {
+    @objc public static func present(purchaseCompletion: PurchaseCompletionBlock? = nil) {
         present(on: nil, presentationCompletion: nil, purchaseCompletion: purchaseCompletion, fallback: nil)
     }
     
     /// Presents a paywall to the user.
     ///  - Parameter cached: Determines if Superwall shoudl re-fetch a paywall from the user. You should typically set this to `false` only if you think your user may now conditionally match a rule for another paywall. Defaults to `true`.
-    public static func present(cached: Bool) {
+    @objc public static func present(cached: Bool) {
         present(on: nil, cached: cached, presentationCompletion: nil, purchaseCompletion: nil, fallback: nil)
     }
     
     /// Presents a paywall to the user.
-    public static func present() {
+    @objc public static func present() {
         present(on: nil, presentationCompletion: nil, purchaseCompletion: nil, fallback: nil)
     }
     
@@ -325,7 +325,7 @@ public class Paywall: NSObject {
     ///  - Parameter cached: Determines if Superwall shoudl re-fetch a paywall from the user. You should typically set this to `false` only if you think your user may now conditionally match a rule for another paywall. Defaults to `true`.
     ///  - Parameter presentationCompletion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
     ///  - Parameter purchaseCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
-    public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil, fallback: FallbackBlock? = nil) {
+    @objc public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil, fallback: FallbackBlock? = nil) {
         
         guard (delegate?.shouldPresentPaywall() ?? false) else { return }
         

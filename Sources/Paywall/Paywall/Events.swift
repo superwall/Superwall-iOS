@@ -433,7 +433,7 @@ extension Paywall {
     /// ```swift
     /// Paywall.track("onboarding_skip", ["steps_completed": 4])
     /// ```
-    public static func track(_ name: String, _ params: [String: Any]) {
+    @objc public static func track(_ name: String, _ params: [String: Any]) {
         track(.base(name: name, params: params))
     }
     
