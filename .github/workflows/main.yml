@@ -27,7 +27,7 @@ jobs:
         with:
           inputs: "Sources"
           module-name: Paywall
-          format: "html"
+          format: html
           output: "docs"
       - name: Commit report
         run: |
