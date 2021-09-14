@@ -13,7 +13,7 @@ public enum StandardEvent
 Standard even used to track when a user opens your application by way of a deep link.
 
 ``` swift
-case deepLinkOpen(deepLinkUrl: String)
+case deepLinkOpen(deepLinkUrl: URL)
 ```
 
 ### `onboardingStart`

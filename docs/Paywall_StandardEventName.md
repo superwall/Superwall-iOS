@@ -60,22 +60,22 @@ case coreSessionAbandon = "coreSession_abandon"
 case coreSessionComplete = "coreSession_complete"
 ```
 
-### `authSignUp`
+### `signUp`
 
 ``` swift
-case authSignUp = "auth_signUp"
+case signUp = "sign_up"
 ```
 
-### `authLogIn`
+### `logIn`
 
 ``` swift
-case authLogIn = "auth_logIn"
+case logIn = "log_in"
 ```
 
-### `authLogOut`
+### `logOut`
 
 ``` swift
-case authLogOut = "auth_LogOut"
+case logOut = "log_out"
 ```
 
 ### `userAttributes`

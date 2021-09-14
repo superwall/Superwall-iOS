@@ -17,7 +17,7 @@ Methods for managing important Paywall lifecycle events. For example, telling th
 Called when the user initiates checkout for a product. Add your purchase logic here by either calling `Purchases.shared.purchaseProduct()` (if you use RevenueCat:​ https:​//sdk.revenuecat.com/ios/Classes/RCPurchases.html\#/c:​objc(cs)RCPurchases(im)purchaseProduct:​withCompletionBlock:​) or by using Apple's StoreKit APIs
 
 ``` swift
-func userDidInitiateCheckout(for product: SKProduct)
+@objc func userDidInitiateCheckout(for product: SKProduct)
 ```
 
 #### Parameters
@@ -29,7 +29,15 @@ func userDidInitiateCheckout(for product: SKProduct)
 Called when the user initiates a restore. Add your restore logic here.
 
 ``` swift
-func shouldTryToRestore()
+@objc func shouldTryToRestore()
+```
+
+### shouldPresentPaywall()
+
+Called before ever showing a paywall. Return `false` if the user has active entitlements and `true` if the user does not.
+
+``` swift
+@objc func shouldPresentPaywall() -> Bool
 ```
 
 ## Optional Requirements
@@ -96,7 +104,7 @@ Called when the user taps a deep link in your HTML paywall.
 
 ### shouldTrack(event:​params:​)
 
-Called when you should track a standard internal analytics event to your own system.
+Called when you should track a standard internal analytics event to your own system. If you want the event's name as an enum, do this:​`let e = Paywall.EventName(rawValue:​ name)`
 
 ``` swift
 @objc optional func shouldTrack(event: String, params: [String: Any])

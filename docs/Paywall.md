@@ -36,7 +36,15 @@ public typealias FallbackBlock = () -> ()
 Prints debug logs to the console if set to `true`. Default is `false`
 
 ``` swift
-public static var debugMode = false
+@objc public static var debugMode = false
+```
+
+### `networkEnvironment`
+
+WARNING:​ Determines which network environment your SDK should use. Defaults to latest. You should under no circumstance change this unless you received the go-ahead from the Superwall team.
+
+``` swift
+public static var networkEnvironment: PaywallNetworkEnvironment = .release
 ```
 
 ### `delegate`
@@ -44,7 +52,7 @@ public static var debugMode = false
 The object that acts as the delegate of Paywall. Required implementations include `userDidInitiateCheckout(for product:​ SKProduct)` and `shouldTryToRestore()`.
 
 ``` swift
-public static var delegate: PaywallDelegate? = nil
+@objc public static var delegate: PaywallDelegate? = nil
 ```
 
 ## Methods
@@ -67,14 +75,14 @@ Paywall.track(.signUp, ["campaignId": "12312341", "source": "Facebook Ads"]
 #### Parameters
 
   - event: A `StandardEvent` enum, which takes default parameters as inputs.
-  - params: Custom parameters you'd like to include in your event. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+  - params: Custom parameters you'd like to include in your event. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
 
 ### `track(_:_:)`
 
 Tracks a custom event with properties. Remember to check `Paywall.StandardEvent` to determine if you should be tracking a standard event instead. Properties are optional and can be added only if needed. You'll be able to reference properties when creating rules for when paywalls show up.
 
 ``` swift
-public static func track(_ name: String, _ params: [String: Any]) 
+@objc public static func track(_ name: String, _ params: [String: Any]) 
 ```
 
 Example:
@@ -86,7 +94,27 @@ Paywall.track("onboarding_skip", ["steps_completed": 4])
 #### Parameters
 
   - event: The name of your custom event
-  - params: Custom parameters you'd like to include in your event. Remember, keys begining with `$` are reserved for Superwall and will be dropped. They will however be included in `PaywallDelegate.shouldTrack(event: String, params: [String: Any])` for your own records. Values can be any JSON encodable value or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+  - params: Custom parameters you'd like to include in your event. Remember, keys begining with `$` are reserved for Superwall and will be dropped. They will however be included in `PaywallDelegate.shouldTrack(event: String, params: [String: Any])` for your own records. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+
+### `track(name:params:)`
+
+Warning:​ Should prefer `track` if using Swift
+Tracks a event with properties. Remember to check `Paywall.StandardEvent` to determine if you should use a string which maps to standard event name. Properties are optional and can be added only if needed. You'll be able to reference properties when creating rules for when paywalls show up.
+
+``` swift
+@objc public static func track(name: String, params: NSDictionary? = [:]) 
+```
+
+Example:
+
+``` objective-c
+[Paywall trackWithName:@"onboarding_skip" params:NSDictionary()];
+```
+
+#### Parameters
+
+  - event: The name of your custom event
+  - params: Custom parameters you'd like to include in your event. Remember, keys begining with `$` are reserved for Superwall and will be dropped. They will however be included in `PaywallDelegate.shouldTrack(event: String, params: [String: Any])` for your own records. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
 
 ### `setUserAttributes(_:custom:)`
 
@@ -105,14 +133,45 @@ Superwall.setUserAttributes(.firstName("Jake"), .lastName("Mor"), custom: proper
 #### Parameters
 
   - standard: Zero or more `SubscriberUserAttribute` enums describing standard user attributes.
-  - custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+  - custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+
+### `setUserAttributesDictionary(attributes:)`
+
+*Note* Please use `setUserAttributes` if you're using Swift.
+Sets additional information on the user object in Superwall. Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.
+
+``` swift
+@objc public static func setUserAttributesDictionary(attributes: NSDictionary = [:]) 
+```
+
+We make our best effort to pick out "known" user attributes and set them to our internal names. For exampe `{"first_name": "..." }` and `{"firstName": "..."}` will both be translated into `$first_name` for use in Superwall where we require a first name.
+
+Example:
+
+``` swift
+var userAttributes: NSDictionary = NSDictionary()
+userAttributes.setValue(value: "Jake", forKey: "first_name");
+Superwall.setUserAttributes(userAttributes)
+```
+
+#### Parameters
+
+  - attributes: A `NSDictionary` used to describe user attributes and any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+
+### `launchDebugger(toPaywall:)`
+
+Launches the debugger for you to preview paywalls. If you call `Paywall.track(.deepLinkOpen(deepLinkUrl:​ url))` from `application(_ app:​ UIApplication, open url:​ URL, options:​ [UIApplication.OpenURLOptionsKey:​ Any] = [:​]) -> Bool` in your `AppDelegate`, this funciton is called automatically after scanning your debug QR code in Superwall's web dashboard. Remember to add you URL scheme in settings for this feature to work\!
+
+``` swift
+public static func launchDebugger(toPaywall paywallId: String? = nil) 
+```
 
 ### `load(completion:)`
 
 Pre-loads your paywall so it loads instantly on `Paywall.present()`.
 
 ``` swift
-public static func load(completion: ((Bool) -> ())? = nil) 
+@objc public static func load(completion: ((Bool) -> ())? = nil) 
 ```
 
 #### Parameters
@@ -125,7 +184,7 @@ Configures an instance of Superwall's Paywall SDK with a specified API key. If y
 
 ``` swift
 @discardableResult
-    public static func configure(apiKey: String, userId: String? = nil) -> Paywall 
+    @objc public static func configure(apiKey: String, userId: String? = nil) -> Paywall 
 ```
 
 #### Parameters
@@ -139,7 +198,7 @@ Links your userId to Superwall's automatically generated Alias. Call this as soo
 
 ``` swift
 @discardableResult
-    public static func identify(userId: String) -> Paywall 
+    @objc public static func identify(userId: String) -> Paywall 
 ```
 
 #### Parameters
@@ -152,7 +211,7 @@ Resets the userId stored by Superwall. Call this when your user signs out.
 
 ``` swift
 @discardableResult
-    public static func reset() -> Paywall 
+    @objc public static func reset() -> Paywall 
 ```
 
 ### `dismiss(_:)`
@@ -160,7 +219,7 @@ Resets the userId stored by Superwall. Call this when your user signs out.
 Dismisses the presented paywall. Doesn't trigger a `PurchaseCompletionBlock` call if provided during `Paywall.present()`, since this action is developer initiated.
 
 ``` swift
-public static func dismiss(_ completion: (()->())? = nil) 
+@objc public static func dismiss(_ completion: (()->())? = nil) 
 ```
 
 #### Parameters
@@ -172,7 +231,7 @@ public static func dismiss(_ completion: (()->())? = nil)
 Presents a paywall to the user.
 
 ``` swift
-public static func present(cached: Bool, presentationCompletion:  (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil) 
+@objc public static func present(cached: Bool, presentationCompletion:  (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil) 
 ```
 
 #### Parameters
@@ -186,7 +245,7 @@ public static func present(cached: Bool, presentationCompletion:  (()->())? = ni
 Presents a paywall to the user.
 
 ``` swift
-public static func present(presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil) 
+@objc public static func present(presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil) 
 ```
 
 #### Parameters
@@ -199,7 +258,7 @@ public static func present(presentationCompletion: (()->())? = nil, purchaseComp
 Presents a paywall to the user.
 
 ``` swift
-public static func present(purchaseCompletion: PurchaseCompletionBlock? = nil) 
+@objc public static func present(purchaseCompletion: PurchaseCompletionBlock? = nil) 
 ```
 
 #### Parameters
@@ -211,7 +270,7 @@ public static func present(purchaseCompletion: PurchaseCompletionBlock? = nil)
 Presents a paywall to the user.
 
 ``` swift
-public static func present(cached: Bool) 
+@objc public static func present(cached: Bool) 
 ```
 
 #### Parameters
@@ -223,7 +282,7 @@ public static func present(cached: Bool)
 Presents a paywall to the user.
 
 ``` swift
-public static func present() 
+@objc public static func present() 
 ```
 
 ### `present(on:cached:presentationCompletion:purchaseCompletion:fallback:)`
@@ -231,7 +290,7 @@ public static func present()
 Presents a paywall to the user.
 
 ``` swift
-public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil, fallback: FallbackBlock? = nil) 
+@objc public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil, fallback: FallbackBlock? = nil) 
 ```
 
 #### Parameters
