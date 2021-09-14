@@ -92,7 +92,7 @@ internal class SWPaywallViewController: UIViewController {
                         self?.shimmerView.transform = .identity
                         self?.purchaseLoadingIndicator.alpha = 0.0
                         self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
-                    }, completion: { [weak self] _ in
+                    }, completion: {  _ in
 //                        self?.purchaseLoadingIndicator.stopAnimating()
                     })
                 case .ready:
@@ -192,6 +192,7 @@ internal class SWPaywallViewController: UIViewController {
         wv.scrollView.minimumZoomScale = 1.0
         wv.scrollView.backgroundColor = .clear
         wv.scrollView.isOpaque = false
+        
        
 
        return wv

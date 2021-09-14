@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import StoreKit
 
 extension Paywall {
     
@@ -223,15 +224,15 @@ extension Paywall {
         case paywallOpen(paywallId: String)
         case paywallClose(paywallId: String)
        
-        case transactionStart(paywallId: String, productId: String)
-        case transactionComplete(paywallId: String, productId: String)
-        case transactionFail(paywallId: String, productId: String, message: String)
-        case transactionAbandon(paywallId: String, productId: String)
+        case transactionStart(paywallId: String, product: SKProduct)
+        case transactionComplete(paywallId: String, product: SKProduct)
+        case transactionFail(paywallId: String, product: SKProduct?, message: String)
+        case transactionAbandon(paywallId: String, product: SKProduct)
         
-        case subscriptionStart(paywallId: String, productId: String)
-        case freeTrialStart(paywallId: String, productId: String)
-        case transactionRestore(paywallId: String, productId: String)
-        case nonRecurringProductPurchase(paywallId: String, productId: String)
+        case subscriptionStart(paywallId: String, product: SKProduct)
+        case freeTrialStart(paywallId: String, product: SKProduct)
+        case transactionRestore(paywallId: String, product: SKProduct?)
+        case nonRecurringProductPurchase(paywallId: String, product: SKProduct)
     }
 
     
@@ -304,34 +305,60 @@ extension Paywall {
         }
     }
     
+    private static func eventParams(for product: SKProduct?, paywallId: String, otherParams: [String: Any]? = nil) -> [String: Any] {
+        var output: [String: Any] = [
+            "paywall_id": paywallId
+        ]
+        
+        if let p = product {
+            output["product_id"] = p.productIdentifier
+            for k in p.eventData.keys {
+                if let v = p.eventData[k] {
+                    output["product_\(k.camelCaseToSnakeCase())"] = v
+                }
+            }
+        }
+        
+        if let p = otherParams {
+            for k in p.keys {
+                if let v = p[k] {
+                    output[k] = v
+                }
+            }
+        }
+        
+        return output
+        
+    }
+    
     internal static func track(_ event: InternalEvent, _ customParams: [String: Any] = [:]) {
         switch event {
         case .paywallWebviewLoadStart(let paywallId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId], customParams: customParams)
+            _track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
         case .paywallWebviewLoadFail(let paywallId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId], customParams: customParams)
+            _track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
         case .paywallWebviewLoadComplete(let paywallId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId], customParams: customParams)
+            _track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
         case .paywallOpen(let paywallId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId], customParams: customParams)
+            _track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
         case .paywallClose(let paywallId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId], customParams: customParams)
-        case .transactionStart(let paywallId, let productId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId, "product_id": productId], customParams: customParams)
-        case .transactionFail(let paywallId, let productId, let message):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId, "product_id": productId, "message": message], customParams: customParams)
-        case .transactionAbandon(let paywallId, let productId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId, "product_id": productId], customParams: customParams)
-        case .transactionComplete(let paywallId, let productId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId, "product_id": productId], customParams: customParams)
-        case .subscriptionStart(let paywallId, let productId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId, "product_id": productId], customParams: customParams)
-        case .freeTrialStart(let paywallId, let productId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId, "product_id": productId], customParams: customParams)
-        case .transactionRestore(let paywallId, let productId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId, "product_id": productId], customParams: customParams)
-        case .nonRecurringProductPurchase(let paywallId, let productId):
-            _track(eventName: name(for: event), params: ["paywall_id": paywallId, "product_id": productId], customParams: customParams)
+            _track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
+        case .transactionStart(let paywallId, let product):
+            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
+        case .transactionFail(let paywallId, let product, let message):
+            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId, otherParams: ["message": message]), customParams: customParams)
+        case .transactionAbandon(let paywallId, let product):
+            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
+        case .transactionComplete(let paywallId, let product):
+            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
+        case .subscriptionStart(let paywallId, let product):
+            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
+        case .freeTrialStart(let paywallId, let product):
+            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
+        case .transactionRestore(let paywallId, let product):
+            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
+        case .nonRecurringProductPurchase(let paywallId, let product):
+            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
         default:
             _track(eventName: name(for: event))
         }
@@ -549,4 +576,24 @@ extension Paywall {
 
 struct SuperwallEventError: LocalizedError {
     var message: String
+}
+
+
+extension String {
+  func camelCaseToSnakeCase() -> String {
+    let acronymPattern = "([A-Z]+)([A-Z][a-z]|[0-9])"
+    let fullWordsPattern = "([a-z])([A-Z]|[0-9])"
+    let digitsFirstPattern = "([0-9])([A-Z])"
+    return self.processCamelCaseRegex(pattern: acronymPattern)?
+      .processCamelCaseRegex(pattern: fullWordsPattern)?
+      .processCamelCaseRegex(pattern:digitsFirstPattern)?.lowercased() ?? self.lowercased()
+  }
+    
+    
+
+  fileprivate func processCamelCaseRegex(pattern: String) -> String? {
+    let regex = try? NSRegularExpression(pattern: pattern, options: [])
+    let range = NSRange(location: 0, length: count)
+    return regex?.stringByReplacingMatches(in: self, options: [], range: range, withTemplate: "$1_$2")
+  }
 }

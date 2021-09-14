@@ -53,16 +53,29 @@ internal extension SKProduct {
     
     var eventData: [String: String] {
         return [
+            "rawPrice": "\(price)",
             "price": localizedPrice,
             "periodAlt": localizedSubscriptionPeriod,
             "period": period,
             "periodly": "\(period)ly",
             "weeklyPrice": weeklyPrice,
+            "dailyPrice": dailyPrice,
+            "monthlyPrice": monthlyPrice,
+            "yearlyPrice": yearlyPrice,
             "trialPeriodDays": trialPeriodDays,
             "trialPeriodWeeks": trialPeriodWeeks,
             "trialPeriodMonths": trialPeriodMonths,
             "trialPeriodYears": trialPeriodYears,
-            "trialPeriodText": trialPeriodText
+            "trialPeriodText": trialPeriodText,
+            "periodDays": periodDays,
+            "periodWeeks": periodWeeks,
+            "periodMonths": periodMonths,
+            "periodYears": periodYears,
+            "locale": priceLocale.identifier,
+            "languageCode": priceLocale.languageCode ?? "n/a",
+            "currencyCode": priceLocale.currencyCode ?? "n/a",
+            "currencySymbol": priceLocale.currencySymbol ?? "n/a",
+
         ]
     }
 
@@ -88,8 +101,6 @@ internal extension SKProduct {
         case .month: dateComponents = DateComponents(month: subscriptionPeriod.numberOfUnits)
         case .year: dateComponents = DateComponents(year: subscriptionPeriod.numberOfUnits)
         @unknown default:
-            print("WARNING: SwiftyStoreKit localizedSubscriptionPeriod does not handle all SKProduct.PeriodUnit cases.")
-            // Default to month units in the unlikely event a different unit type is added to a future OS version
             dateComponents = DateComponents(month: subscriptionPeriod.numberOfUnits)
         }
 
@@ -125,37 +136,254 @@ internal extension SKProduct {
 
         }
     }
+    
+    var periodWeeks: String {
+        get {
+            
+            guard let period = subscriptionPeriod else { return "" }
+            let c = period.numberOfUnits
+            
+            if period.unit == .day {
+                return "\(Int((1 * c)/7))"
+            }
+            
+            if period.unit == .week {
+                return "\(Int(c))"
+            }
+            
+            if period.unit == .month {
+                return "\(Int(4 * c))"
+            }
+            
+            if period.unit == .year {
+                return "\(Int(52 * c))"
+            }
+
+            return "0"
+        }
+    }
+    
+    var periodMonths: String {
+        get {
+            
+            guard let period = subscriptionPeriod else { return "" }
+            let c = period.numberOfUnits
+            
+            if period.unit == .day {
+                return "\(Int((1 * c)/30))"
+            }
+            
+            if period.unit == .week {
+                return "\(Int(c / 4))"
+            }
+            
+            if period.unit == .month {
+                return "\(Int(c))"
+            }
+            
+            if period.unit == .year {
+                return "\(Int(12 * c))"
+            }
+
+            return "0"
+        }
+    }
+    
+    var periodYears: String {
+        get {
+            
+            guard let period = subscriptionPeriod else { return "" }
+            let c = period.numberOfUnits
+            
+            if period.unit == .day {
+                return "\(Int(c / 365))"
+            }
+            
+            if period.unit == .week {
+                return "\(Int(c / 52))"
+            }
+            
+            if period.unit == .month {
+                return "\(Int(c / 12))"
+            }
+            
+            if period.unit == .year {
+                return "\(Int(c))"
+            }
+
+            return "0"
+        }
+    }
+    
+    var periodDays: String {
+        get {
+            
+            guard let period = subscriptionPeriod else { return "" }
+            let c = period.numberOfUnits
+            
+            if period.unit == .day {
+                return "\(Int(1 * c))"
+            }
+            
+            if period.unit == .week {
+                return "\(Int(7 * c))"
+            }
+            
+            if period.unit == .month {
+                return "\(Int(30 * c))"
+            }
+            
+            if period.unit == .year {
+                return "\(Int(365 * c))"
+            }
+
+            return "0"
+        }
+    }
+    
+    var dailyPrice: String {
+        get {
+            if price == NSDecimalNumber(decimal: 0.00) {
+                return "$0.00"
+            }
+            
+            let numberFormatter = NumberFormatter()
+            let locale = priceLocale
+            numberFormatter.numberStyle = .currency
+            numberFormatter.locale = locale
+            
+            guard let period = subscriptionPeriod else { return "n/a" }
+            let c = period.numberOfUnits
+            var periods = 1.0 as Decimal
+            let inputPrice = price as Decimal
+            
+            if period.unit == .year {
+                periods = Decimal(365 * c)
+            }
+            
+            if period.unit == .month {
+                periods = Decimal(30 * c)
+            }
+            
+            if period.unit == .week {
+                periods = Decimal(c) / Decimal(7)
+            }
+            
+            if period.unit == .day {
+                periods = Decimal(c) / Decimal(1)
+            }
+            
+            return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+        }
+    }
 
     var weeklyPrice: String {
         get {
             if price == NSDecimalNumber(decimal: 0.00) {
                 return "$0.00"
             }
-
+            
             let numberFormatter = NumberFormatter()
             let locale = priceLocale
             numberFormatter.numberStyle = .currency
             numberFormatter.locale = locale
             
-            let periodText = period
-
-            if periodText == "year" {
-                return numberFormatter.string(from: NSDecimalNumber(decimal: (price as Decimal) / Decimal(52.0))) ?? "N/A"
+            guard let period = subscriptionPeriod else { return "n/a" }
+            let c = period.numberOfUnits
+            var periods = 1.0 as Decimal
+            let inputPrice = price as Decimal
+            
+            if period.unit == .year {
+                periods = Decimal(52 * c)
             }
-
-            if periodText == "month" {
-                return numberFormatter.string(from: NSDecimalNumber(decimal: (price as Decimal) * Decimal(11.99) / Decimal(52.0))) ?? "N/A"
+            
+            if period.unit == .month {
+                periods = Decimal(4 * c)
             }
-
-            if periodText == "week" {
-                return numberFormatter.string(from: NSDecimalNumber(decimal: (price as Decimal))) ?? "N/A"
+            
+            if period.unit == .week {
+                periods = Decimal(c) / Decimal(1)
             }
-
-            if periodText == "day" {
-                return numberFormatter.string(from: NSDecimalNumber(decimal: (price as Decimal))) ?? "N/A"
+            
+            if period.unit == .day {
+                periods = Decimal(c) / Decimal(7)
             }
-
-            return "$0.00"
+            
+            return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+        }
+    }
+    
+    var monthlyPrice: String {
+        get {
+            if price == NSDecimalNumber(decimal: 0.00) {
+                return "$0.00"
+            }
+            
+            let numberFormatter = NumberFormatter()
+            let locale = priceLocale
+            numberFormatter.numberStyle = .currency
+            numberFormatter.locale = locale
+            
+            guard let period = subscriptionPeriod else { return "n/a" }
+            let c = period.numberOfUnits
+            var periods = 1.0 as Decimal
+            let inputPrice = price as Decimal
+            
+            if period.unit == .year {
+                periods = Decimal(12 * c)
+            }
+            
+            if period.unit == .month {
+                periods = Decimal(1 * c)
+            }
+            
+            if period.unit == .week {
+                periods = Decimal(c) / Decimal(4)
+            }
+            
+            if period.unit == .day {
+                periods = Decimal(c) / Decimal(30)
+            }
+            
+            return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+            
+        }
+    }
+    
+    var yearlyPrice: String {
+        get {
+            if price == NSDecimalNumber(decimal: 0.00) {
+                return "$0.00"
+            }
+            
+            let numberFormatter = NumberFormatter()
+            let locale = priceLocale
+            numberFormatter.numberStyle = .currency
+            numberFormatter.locale = locale
+            
+            guard let period = subscriptionPeriod else { return "n/a" }
+            let c = period.numberOfUnits
+            var periods = 1.0 as Decimal
+            let inputPrice = price as Decimal
+            
+            if period.unit == .year {
+                periods = Decimal(c)
+            }
+            
+            if period.unit == .month {
+                periods = Decimal(c) / Decimal(12)
+            }
+            
+            if period.unit == .week {
+                periods = Decimal(c) / Decimal(52)
+            }
+            
+            if period.unit == .day {
+                periods = Decimal(c) / Decimal(365)
+            }
+            
+            return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+            
         }
     }
 
@@ -202,7 +430,7 @@ internal extension SKProduct {
                 let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
-                    return ""
+                    return "\(Int(c / 7))"
                 }
 
                 if trialPeriod.unit == .month {
@@ -229,7 +457,7 @@ internal extension SKProduct {
                 let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
-                    return ""
+                    return "\(Int(c / 30))"
                 }
 
                 if trialPeriod.unit == .month {
@@ -237,7 +465,7 @@ internal extension SKProduct {
                 }
 
                 if trialPeriod.unit == .week {
-                    return ""
+                    return "\(Int(c / 4))"
                 }
 
                 if trialPeriod.unit == .year {
@@ -256,15 +484,15 @@ internal extension SKProduct {
                 let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
-                    return ""
+                    return "\(Int(c / 365))"
                 }
 
                 if trialPeriod.unit == .month {
-                    return ""
+                    return "\(Int(c / 12))"
                 }
 
                 if trialPeriod.unit == .week {
-                    return ""
+                    return "\(Int(c / 52))"
                 }
 
                 if trialPeriod.unit == .year {

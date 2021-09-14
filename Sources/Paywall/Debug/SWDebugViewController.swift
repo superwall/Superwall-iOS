@@ -6,6 +6,7 @@
 //
 import UIKit
 import Foundation
+import StoreKit
 
 internal var PrimaryColor = UIColor(hexString: "#75FFF1")
 internal var PrimaryButtonBackgroundColor = UIColor(hexString: "#203133")
@@ -39,6 +40,16 @@ internal class SWDebugViewController: UIViewController {
         b.translatesAutoresizingMaskIntoConstraints = false
         b.imageView?.tintColor = UIColor.white.withAlphaComponent(0.5)
         b.addTarget(self, action: #selector(pressedExitButton), for: .primaryActionTriggered)
+        return b
+    }()
+    
+    lazy var consoleButton: SWBounceButton = {
+        let b = SWBounceButton()
+        let image = UIImage(named: "debugger", in: Bundle.module, compatibleWith: nil)!
+        b.setImage(image, for: .normal)
+        b.translatesAutoresizingMaskIntoConstraints = false
+        b.imageView?.tintColor = UIColor.white.withAlphaComponent(0.5)
+        b.addTarget(self, action: #selector(pressedConsoleButton), for: .primaryActionTriggered)
         return b
     }()
     
@@ -119,6 +130,7 @@ internal class SWDebugViewController: UIViewController {
         view.addSubview(previewContainerView)
         view.addSubview(activityIndicator)
         view.addSubview(logoImageView)
+        view.addSubview(consoleButton)
         view.addSubview(exitButton)
         view.addSubview(bottomButton)
         previewContainerView.addSubview(previewPickerButton)
@@ -134,9 +146,12 @@ internal class SWDebugViewController: UIViewController {
             previewContainerView.bottomAnchor.constraint(equalTo: bottomButton.topAnchor, constant: -30),
             
             logoImageView.widthAnchor.constraint(equalTo: view.layoutMarginsGuide.widthAnchor, constant: -10),
-            logoImageView.heightAnchor.constraint(equalToConstant: 23),
+            logoImageView.heightAnchor.constraint(equalToConstant: 20),
             logoImageView.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 20),
             logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            consoleButton.centerXAnchor.constraint(equalTo: bottomButton.leadingAnchor),
+            consoleButton.centerYAnchor.constraint(equalTo: logoImageView.centerYAnchor),
             
             exitButton.centerXAnchor.constraint(equalTo: bottomButton.trailingAnchor),
             exitButton.centerYAnchor.constraint(equalTo: logoImageView.centerYAnchor),
@@ -281,10 +296,47 @@ internal class SWDebugViewController: UIViewController {
     }
     
     @objc func pressedExitButton() {
-        
         presentingViewController?.dismiss(animated: true, completion: nil)
-        
+    }
+    
+    @objc func pressedConsoleButton() {
 
+        
+        self.activityIndicator.startAnimating()
+        self.previewContainerView.isHidden = true
+        
+        Network.shared.paywalls { [weak self] result in
+            
+            switch(result){
+            case .success(let response):
+                let paywalls = response.paywalls
+                
+                let paywallResponse = paywalls.first { p in
+                    p.id == self?.paywallId
+                }
+                
+                if let paywallResponse = paywallResponse {
+                    StoreKitManager.shared.get(productsWithIds: paywallResponse.productIds) { productsById in
+                        OnMain {
+                            let products = Array(productsById.values)
+                            let vc = SWConsoleViewController(products: products)
+                            let nc = UINavigationController(rootViewController: vc)
+                            self?.present(nc, animated: true)
+                        }
+                    }
+                }
+                
+            case .failure(let error):
+                Logger.superwallDebug(string: "Debug Mode Error", error: error)
+                self?.activityIndicator.stopAnimating()
+            }
+            
+            OnMain {
+                self?.activityIndicator.stopAnimating()
+                self?.previewContainerView.isHidden = false
+            }
+            
+        }
     }
     
     @objc func pressedBottomButton() {
