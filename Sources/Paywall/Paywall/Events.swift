@@ -438,6 +438,23 @@ extension Paywall {
     }
     
 
+    /// Warning: Should prefer `track` if using Swift
+    /// Tracks a event with properties. Remember to check `Paywall.StandardEvent` to determine if you should use a string which maps to standard event name. Properties are optional and can be added only if needed. You'll be able to reference properties when creating rules for when paywalls show up.
+    /// - Parameter event: The name of your custom event
+    /// - Parameter params: Custom parameters you'd like to include in your event. Remember, keys begining with `$` are reserved for Superwall and will be dropped. They will however be included in `PaywallDelegate.shouldTrack(event: String, params: [String: Any])` for your own records. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+    ///
+    /// Example:
+    /// ```objective-c
+    /// [Paywall trackWithName:@"onboarding_skip" params:NSDictionary()];
+    /// ```
+    @objc public static func track(name: String, params: NSDictionary? = [:]) {
+        if let stringParameterMap = params as? [String: Any] {
+            track(.base(name: name, params: stringParameterMap))
+        } else {
+            Logger.superwallDebug(string: "Unable to convert event into [String:Any]")
+        }
+    }
+
     /// Sets additional information on the user object in Superwall. Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.
     /// - Parameter standard: Zero or more `SubscriberUserAttribute` enums describing standard user attributes.
     /// - Parameter custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
