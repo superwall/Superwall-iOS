@@ -34,7 +34,7 @@ internal class DeviceHelper {
     }
 
     var locale: String {
-        get { Locale.autoupdatingCurrent.identifier ?? "" }
+        get { Locale.autoupdatingCurrent.identifier }
     }
     
     var languageCode: String {

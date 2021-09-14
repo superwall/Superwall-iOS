@@ -314,7 +314,7 @@ extension Paywall {
             output["product_id"] = p.productIdentifier
             for k in p.eventData.keys {
                 if let v = p.eventData[k] {
-                    output["product_\(k)"] = v
+                    output["product_\(k.camelCaseToSnakeCase())"] = v
                 }
             }
         }
@@ -559,4 +559,24 @@ extension Paywall {
 
 struct SuperwallEventError: LocalizedError {
     var message: String
+}
+
+
+extension String {
+  func camelCaseToSnakeCase() -> String {
+    let acronymPattern = "([A-Z]+)([A-Z][a-z]|[0-9])"
+    let fullWordsPattern = "([a-z])([A-Z]|[0-9])"
+    let digitsFirstPattern = "([0-9])([A-Z])"
+    return self.processCamelCaseRegex(pattern: acronymPattern)?
+      .processCamelCaseRegex(pattern: fullWordsPattern)?
+      .processCamelCaseRegex(pattern:digitsFirstPattern)?.lowercased() ?? self.lowercased()
+  }
+    
+    
+
+  fileprivate func processCamelCaseRegex(pattern: String) -> String? {
+    let regex = try? NSRegularExpression(pattern: pattern, options: [])
+    let range = NSRange(location: 0, length: count)
+    return regex?.stringByReplacingMatches(in: self, options: [], range: range, withTemplate: "$1_$2")
+  }
 }

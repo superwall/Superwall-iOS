@@ -71,6 +71,11 @@ internal extension SKProduct {
             "periodWeeks": periodWeeks,
             "periodMonths": periodMonths,
             "periodYears": periodYears,
+            "locale": priceLocale.identifier,
+            "languageCode": priceLocale.languageCode ?? "n/a",
+            "currencyCode": priceLocale.currencyCode ?? "n/a",
+            "currencySymbol": priceLocale.currencySymbol ?? "n/a",
+
         ]
     }
 
