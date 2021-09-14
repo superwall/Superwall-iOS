@@ -6,7 +6,7 @@ name: CI
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ develop ]
+    branches: [ develop, master ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -27,16 +27,8 @@ jobs:
         with:
           inputs: "Sources"
           module-name: Paywall
-          output: "docs"
-          base-url: "/docs"
-      - name: Generate Documentation
-        uses: SwiftDocOrg/swift-doc@master
-        with:
-          inputs: "Sources"
-          module-name: Paywall
-          output: "docs-html"
           format: "html"
-          base-url: "/"
+          output: "docs"
       - name: Commit report
         run: |
           git config --global user.name 'Jake'
