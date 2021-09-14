@@ -28,11 +28,10 @@ jobs:
           inputs: "Sources"
           module-name: Paywall
           output: "docs"
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@4.1.5
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}                 
-          BASE_BRANCH: master
-          branch: gh-pages # The branch the action should deploy to.
-          folder: docs # The folder the action should deploy.
+      - name: Commit report
+        run: |
+          git config --global user.name 'Jake'
+          git config --global user.email 'jakemor@users.noreply.github.com'
+          git commit -am "Automated report"
+          git push
 
