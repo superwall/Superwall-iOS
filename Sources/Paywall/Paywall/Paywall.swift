@@ -637,7 +637,7 @@ extension Paywall: SKPaymentTransactionObserver {
             case .purchased:
 				// fixes a weird bug in development
 //				if _isDebugAssertConfiguration() {
-					queue.finishTransaction(transaction)
+//					queue.finishTransaction(transaction)
 //				}
                 Logger.superwallDebug(string: "[Transaction Observer] transactionDidSucceed for: \(product.productIdentifier)")
                 self._transactionDidSucceed(for: product)
@@ -673,7 +673,7 @@ extension Paywall: SKPaymentTransactionObserver {
 
 				// fixes a weird bug in development
 //				if _isDebugAssertConfiguration() {
-					queue.finishTransaction(transaction)
+//					queue.finishTransaction(transaction)
 //				}
               
             break
