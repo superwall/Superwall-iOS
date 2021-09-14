@@ -28,6 +28,15 @@ jobs:
           inputs: "Sources"
           module-name: Paywall
           output: "docs"
+          base-url: "/docs"
+      - name: Generate Documentation
+        uses: SwiftDocOrg/swift-doc@master
+        with:
+          inputs: "Sources"
+          module-name: Paywall
+          output: "docs-html"
+          format: "html"
+          base-url: "/"
       - name: Commit report
         run: |
           git config --global user.name 'Jake'
