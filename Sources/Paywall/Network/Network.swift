@@ -204,3 +204,31 @@ extension Network {
     }
     
 }
+
+
+extension Network {
+    
+    func config(completion: @escaping (Result<PaywallsResponse, Swift.Error>) -> Void) {
+            
+        let components = URLComponents(string: "config")!
+        let requestURL = components.url(relativeTo: baseURL)!
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
+        
+        send(request, isDebugRequest: true, completion: { (result: Result<PaywallsResponse, Swift.Error>)  in
+            switch result {
+                case .failure(let error):
+                    Logger.superwallDebug(string: "[network POST /config] - failure")
+                    completion(.failure(error))
+                case .success(let response):
+                    completion(.success(response))
+            }
+            
+        })
+
+    }
+    
+}
