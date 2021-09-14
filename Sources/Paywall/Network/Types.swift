@@ -167,3 +167,14 @@ internal struct EventsResponse: Codable {
     var status: String
 }
 
+// Config
+
+internal struct ConfigResponse: Decodable {
+	var triggers: [Trigger]
+}
+
+// Triggers
+
+internal struct Trigger: Decodable {
+	var eventName: String
+}

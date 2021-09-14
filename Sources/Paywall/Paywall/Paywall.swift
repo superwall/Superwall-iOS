@@ -473,8 +473,22 @@ public class Paywall: NSObject {
         
         NotificationCenter.default.addObserver(self, selector: #selector(applicationWillResignActive(_:)), name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive(_:)), name: UIApplication.didBecomeActiveNotification, object: nil)
-        
+		
+		fetchConfiguration()
     }
+	
+	private func fetchConfiguration() {
+		Network.shared.config { (result) in
+			
+			switch(result) {
+				case .success(let config):
+					print(response)
+				case .failure(let error):
+					
+			}
+
+		}
+	}
     
     private func setAliasIfNeeded() {
         if Store.shared.aliasId == nil {

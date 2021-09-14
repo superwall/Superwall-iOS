@@ -56,6 +56,7 @@ extension Network {
 
 // MARK: Private extension for actually making requests
 extension Network {
+    
     func send<ResponseType: Decodable>(_ request: URLRequest, isDebugRequest: Bool = false, completion: @escaping (Result<ResponseType, Swift.Error>) -> Void) {
         var request = request
 
@@ -208,7 +209,7 @@ extension Network {
 
 extension Network {
     
-    func config(completion: @escaping (Result<PaywallsResponse, Swift.Error>) -> Void) {
+    func config(completion: @escaping (Result<ConfigResponse, Swift.Error>) -> Void) {
             
         let components = URLComponents(string: "config")!
         let requestURL = components.url(relativeTo: baseURL)!
@@ -218,7 +219,7 @@ extension Network {
         
         Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
         
-        send(request, isDebugRequest: true, completion: { (result: Result<PaywallsResponse, Swift.Error>)  in
+        send(request, isDebugRequest: false, completion: { (result: Result<ConfigResponse, Swift.Error>)  in
             switch result {
                 case .failure(let error):
                     Logger.superwallDebug(string: "[network POST /config] - failure")
