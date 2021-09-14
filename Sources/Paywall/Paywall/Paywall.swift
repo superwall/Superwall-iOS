@@ -451,6 +451,8 @@ public class Paywall: NSObject {
     private var paywallId: String {
         paywallResponse?.id ?? ""
     }
+	
+	private var didAddPaymentQueueObserver = false
     
     
     private init(apiKey: String?, userId: String? = nil) {
@@ -469,7 +471,10 @@ public class Paywall: NSObject {
         
         setAliasIfNeeded()
         
-        SKPaymentQueue.default().add(self)
+		if !didAddPaymentQueueObserver {
+			SKPaymentQueue.default().add(self)
+			didAddPaymentQueueObserver = true
+		}
         
         NotificationCenter.default.addObserver(self, selector: #selector(applicationWillResignActive(_:)), name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive(_:)), name: UIApplication.didBecomeActiveNotification, object: nil)
@@ -503,7 +508,7 @@ public class Paywall: NSObject {
                 self?.paywallViewController?.loadingState = .loadingPurchase
                 Paywall.delegate?.userDidInitiateCheckout(for: product)
             case .initiateRestore:
-                Paywall.delegate?.shouldTryToRestore()
+                Paywall.shared.shouldTryToRestore()
             case .openedURL(let url):
                 Paywall.delegate?.willOpenURL?(url: url)
             case .openedDeepLink(let url):
@@ -540,20 +545,36 @@ public class Paywall: NSObject {
     private func _transactionErrorDidOccur(error: SKError?, for product: SKProduct) {
         // prevent a recursive loop
         OnMain { [weak self] in
+			
             
             guard let self = self else { return }
-            
+			
+			self.paywallViewController?.loadingState = .ready
+			
             if !self.didTryToAutoRestore {
-                Paywall.delegate?.shouldTryToRestore()
+                Paywall.shared.shouldTryToRestore()
                 self.didTryToAutoRestore = true
             } else {
+				self.paywallViewController?.loadingState = .ready
                 Paywall.track(.transactionFail(paywallId: self.paywallId, product: product, message: error?.localizedDescription ?? ""))
                 self.paywallViewController?.presentAlert(title: "Please try again", message: error?.localizedDescription ?? "", actionTitle: "Restore Purchase", action: {
-                    Paywall.delegate?.shouldTryToRestore()
+                    Paywall.shared.shouldTryToRestore()
                 })
             }
         }
     }
+	
+	private func shouldTryToRestore() {
+		OnMain {
+			
+			if let d = Paywall.delegate {
+//				self.paywallViewController?.loadingState = .loadingPurchase
+				d.shouldTryToRestore()
+			}
+			
+			
+		}
+	}
     
     private func _transactionWasAbandoned(for product: SKProduct) {
         Paywall.track(.transactionAbandon(paywallId: paywallId, product: product))
@@ -607,13 +628,17 @@ public class Paywall: NSObject {
 
 
 extension Paywall: SKPaymentTransactionObserver {
- 
+	
     public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         for transaction in transactions {
+			
             guard let product = productsById[transaction.payment.productIdentifier] else { return }
             switch transaction.transactionState {
             case .purchased:
-                queue.finishTransaction(transaction)
+				// fixes a weird bug in development
+//				if _isDebugAssertConfiguration() {
+					queue.finishTransaction(transaction)
+//				}
                 Logger.superwallDebug(string: "[Transaction Observer] transactionDidSucceed for: \(product.productIdentifier)")
                 self._transactionDidSucceed(for: product)
             break
@@ -630,15 +655,26 @@ extension Paywall: SKPaymentTransactionObserver {
                     }
 
                     if userCancelled {
-                        Logger.superwallDebug(string: "[Transaction Observer] transactionWasAbandoned for: \(product.productIdentifier)")
+                        Logger.superwallDebug(string: "[Transaction Observer] transactionWasAbandoned for: \(product.productIdentifier)", error: e)
                         self._transactionWasAbandoned(for: product)
                         return
                     } else {
-                        Logger.superwallDebug(string: "[Transaction Observer] transactionErrorDidOccur for: \(product.productIdentifier)")
+                        Logger.superwallDebug(string: "[Transaction Observer] transactionErrorDidOccur for: \(product.productIdentifier)", error: e)
                         self._transactionErrorDidOccur(error: e, for: product)
                         return
                     }
-                }
+				} else {
+					self._transactionErrorDidOccur(error: nil, for: product)
+					Logger.superwallDebug(string: "[Transaction Observer] transactionErrorDidOccur for: \(product.productIdentifier)", error: transaction.error)
+					OnMain { [weak self] in
+						self?.paywallViewController?.presentAlert(title: "Something went wrong", message: transaction.error?.localizedDescription ?? "", actionTitle: nil, action: nil)
+					}
+				}
+
+				// fixes a weird bug in development
+//				if _isDebugAssertConfiguration() {
+					queue.finishTransaction(transaction)
+//				}
               
             break
             case .restored:
