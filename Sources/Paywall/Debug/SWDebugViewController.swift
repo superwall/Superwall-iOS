@@ -302,8 +302,8 @@ internal class SWDebugViewController: UIViewController {
     @objc func pressedConsoleButton() {
 
         
-        self.activityIndicator.startAnimating()
-        self.previewContainerView.isHidden = true
+//        self.activityIndicator.startAnimating()
+//        self.previewContainerView.isHidden = true
         
         Network.shared.paywalls { [weak self] result in
             
@@ -328,12 +328,12 @@ internal class SWDebugViewController: UIViewController {
                 
             case .failure(let error):
                 Logger.superwallDebug(string: "Debug Mode Error", error: error)
-                self?.activityIndicator.stopAnimating()
+//                self?.activityIndicator.stopAnimating()
             }
             
             OnMain {
-                self?.activityIndicator.stopAnimating()
-                self?.previewContainerView.isHidden = false
+//                self?.activityIndicator.stopAnimating()
+//                self?.previewContainerView.isHidden = false
             }
             
         }
