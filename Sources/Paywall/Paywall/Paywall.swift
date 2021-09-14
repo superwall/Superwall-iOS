@@ -327,10 +327,14 @@ public class Paywall: NSObject {
     ///  - Parameter purchaseCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
     @objc public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, purchaseCompletion: PurchaseCompletionBlock? = nil, fallback: FallbackBlock? = nil) {
         
-        guard (delegate?.shouldPresentPaywall() ?? false) else { return }
+        
         
         if isDebuggerLaunched {
+            // if the debugger is launched, ensure the viewcontroller is the debugger
             guard viewController is SWDebugViewController else { return }
+        } else {
+            // otherwise, ensure we should present the paywall via the delegate method
+            guard (delegate?.shouldPresentPaywall() ?? false) else { return }
         }
         
         self.purchaseCompletion = purchaseCompletion
@@ -338,7 +342,7 @@ public class Paywall: NSObject {
         let fallbackUsing = fallback ?? fallbackCompletionBlock
         
         guard let delegate = delegate else {
-            Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate equal to a PaywallDelegate before doing anything fancy")
+            Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate before doing anything fancy")
             fallbackUsing?()
             return
         }
