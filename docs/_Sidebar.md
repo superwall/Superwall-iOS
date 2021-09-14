@@ -1,19 +1,19 @@
 <details>
 <summary>Types</summary>
 
-  - [Paywall](./Paywall)
-  - [Paywall.EventName](./Paywall.EventName)
-  - [Paywall.PaywallNetworkEnvironment](./Paywall.PaywallNetworkEnvironment)
-  - [Paywall.StandardEvent](./Paywall.StandardEvent)
-  - [Paywall.StandardEventName](./Paywall.StandardEventName)
-  - [Paywall.StandardUserAttribute](./Paywall.StandardUserAttribute)
-  - [Paywall.StandardUserAttributeKey](./Paywall.StandardUserAttributeKey)
+  - [Paywall](/docs/Paywall)
+  - [Paywall.EventName](/docs/Paywall.EventName)
+  - [Paywall.PaywallNetworkEnvironment](/docs/Paywall.PaywallNetworkEnvironment)
+  - [Paywall.StandardEvent](/docs/Paywall.StandardEvent)
+  - [Paywall.StandardEventName](/docs/Paywall.StandardEventName)
+  - [Paywall.StandardUserAttribute](/docs/Paywall.StandardUserAttribute)
+  - [Paywall.StandardUserAttributeKey](/docs/Paywall.StandardUserAttributeKey)
 
 </details>
 
 <details>
 <summary>Protocols</summary>
 
-  - [PaywallDelegate](./PaywallDelegate)
+  - [PaywallDelegate](/docs/PaywallDelegate)
 
 </details>
