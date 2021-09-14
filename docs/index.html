@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paywall - Paywall</title>
+    <link rel="stylesheet" type="text/css" href="./all.css" media="all" />
+</head>
+<body>
+    <header>
+        <a href="./">
+            <strong>
+                Paywall
+            </strong>
+            <span>Documentation</span>
+        </a>
+    </header>
+
+    <!--
+    <form class="search">
+        <input type="search" placeholder="Search" />
+    </form>
+    -->
+
+    <nav>
+        <div class="wrapper">
+            <h2>On This Page</h2>
+            <ol><li><a href="#classes">Classes</a></li><li><a href="#enumerations">Enumerations</a></li><li><a href="#protocols">Protocols</a></li></ol>
+        </div>
+    </nav>
+
+    <main>
+        <article>
+                <section id="classes">
+        <h2>Classes</h2>
+        <dl>
+            <dt class="class">
+    <a href="./Paywall" title="class - Paywall">
+        Paywall
+    </a>
+</dt>
+<dd>
+    <p><code>Paywall</code> is the primary class for integrating Superwall into your application. To learn more, read our iOS getting started guide: https://docs.superwall.me/docs/ios</p>
+
+</dd>
+        </dl>
+    </section>
+    <section id="enumerations">
+        <h2>Enumerations</h2>
+        <dl>
+            <dt class="enumeration">
+    <a href="./Paywall_StandardEvent" title="enumeration - Paywall.StandardEvent">
+        Paywall.​Standard​Event
+    </a>
+</dt>
+<dd>
+    <p>Standard events for use in conjunction with <code>Paywall.track(_ event: StandardEvent, _ params: [String: Any] = [:])</code>.</p>
+
+</dd>
+<dt class="enumeration">
+    <a href="./Paywall_StandardEventName" title="enumeration - Paywall.StandardEventName">
+        Paywall.​Standard​Event​Name
+    </a>
+</dt>
+<dd>
+    <p>Used internally, please ignore.</p>
+
+</dd>
+<dt class="enumeration">
+    <a href="./Paywall_StandardUserAttributeKey" title="enumeration - Paywall.StandardUserAttributeKey">
+        Paywall.​Standard​User​Attribute​Key
+    </a>
+</dt>
+<dd>
+    <p>Used internally, please ignore.</p>
+
+</dd>
+<dt class="enumeration">
+    <a href="./Paywall_StandardUserAttribute" title="enumeration - Paywall.StandardUserAttribute">
+        Paywall.​Standard​User​Attribute
+    </a>
+</dt>
+<dd>
+    <p>Standard user attributes to be used in conjunction with <code>setUserAttributes(_ standard: StandardUserAttribute..., custom: [String: Any?] = [:])</code>.</p>
+
+</dd>
+<dt class="enumeration">
+    <a href="./Paywall_EventName" title="enumeration - Paywall.EventName">
+        Paywall.​Event​Name
+    </a>
+</dt>
+<dd>
+    <p>These are the types of events we send to Paywall's delegate <code>shouldTrack</code> method</p>
+
+</dd>
+<dt class="enumeration">
+    <a href="./Paywall_PaywallNetworkEnvironment" title="enumeration - Paywall.PaywallNetworkEnvironment">
+        Paywall.​Paywall​Network​Environment
+    </a>
+</dt>
+<dd>
+    <p>WARNING: Only use this enum to set <code>Paywall.networkEnvironment</code> if told so explicitly by the Superwall team.</p>
+
+</dd>
+        </dl>
+    </section>
+    <section id="protocols">
+        <h2>Protocols</h2>
+        <dl>
+            <dt class="protocol">
+    <a href="./PaywallDelegate" title="protocol - PaywallDelegate">
+        Paywall​Delegate
+    </a>
+</dt>
+<dd>
+    <p>Methods for managing important Paywall lifecycle events. For example, telling the developer when to initiate checkout on a specific <code>SKProduct</code> and when to try to restore a transaction. Also includes hooks for you to log important analytics events to your product analytics tool.</p>
+
+</dd>
+        </dl>
+    </section>
+
+        </article>
+    </main>
+
+    <footer>
+        <p>
+    Generated on <time datetime="2021-09-14T04:41:01+0000">September 14, 2021</time> using <a href="https://github.com/SwiftDocOrg/swift-doc">swift-doc</a> <span class="version">1.0.0-rc.1</span>.
+</p>
+    </footer>
+</body>
+</html>
