@@ -1,5 +1,5 @@
 
-<p align="center">
+<p align="center" style="background-color: #0D1116; padding: 40px; corner-radius: 15px;">
     <img src="https://superwall.me/SuperwallLogo.svg" alt="logo" height="50px" align="center"/>
 </p>
 
