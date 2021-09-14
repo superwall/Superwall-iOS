@@ -26,6 +26,10 @@ let package = Package(
             name: "Paywall",
             dependencies: [
                 .product(name: "TPInAppReceipt", package: "TPInAppReceipt")
+            ],
+            // A way to re-defined "Bundle.module" if using pods instead of SPM
+            swiftSettings: [
+              .define("SPM")
             ]),
         .testTarget(
             name: "PaywallTests",
