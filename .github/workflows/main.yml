@@ -28,7 +28,7 @@ jobs:
           inputs: "Sources"
           module-name: Paywall
           format: html
-          output: "docs"
+          output: "paywall-ios"
       - name: Commit report
         run: |
           sudo git config --global user.name 'Jake'
