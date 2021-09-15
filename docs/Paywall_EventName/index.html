@@ -25,7 +25,7 @@
     <nav>
         <div class="wrapper">
             <h2>On This Page</h2>
-            <ol><li><a href="#relationships">Relationships</a><ul><li><a href="#relationships">Member Of</a></li><li><a href="#relationships">Conforms To</a></li></ul></li><li><a href="#enumeration cases">Enumeration Cases</a><ul><li class="case"><a href="#paywall.eventname.appinstall">app​Install</a></li><li class="case"><a href="#paywall.eventname.appopen">app​Open</a></li><li class="case"><a href="#paywall.eventname.appclose">app​Close</a></li><li class="case"><a href="#paywall.eventname.paywallopen">paywall​Open</a></li><li class="case"><a href="#paywall.eventname.paywallclose">paywall​Close</a></li><li class="case"><a href="#paywall.eventname.transactionstart">transaction​Start</a></li><li class="case"><a href="#paywall.eventname.transactionfail">transaction​Fail</a></li><li class="case"><a href="#paywall.eventname.transactionabandon">transaction​Abandon</a></li><li class="case"><a href="#paywall.eventname.transactioncomplete">transaction​Complete</a></li><li class="case"><a href="#paywall.eventname.subscriptionstart">subscription​Start</a></li><li class="case"><a href="#paywall.eventname.freetrialstart">free​Trial​Start</a></li><li class="case"><a href="#paywall.eventname.transactionrestore">transaction​Restore</a></li><li class="case"><a href="#paywall.eventname.nonrecurringproductpurchase">non​Recurring​Product​Purchase</a></li><li class="case"><a href="#paywall.eventname.paywallresponseloadstart">paywall​Response​Load​Start</a></li><li class="case"><a href="#paywall.eventname.paywallresponseloadfail">paywall​Response​Load​Fail</a></li><li class="case"><a href="#paywall.eventname.paywallresponseloadcomplete">paywall​Response​Load​Complete</a></li><li class="case"><a href="#paywall.eventname.paywallwebviewloadstart">paywall​Webview​Load​Start</a></li><li class="case"><a href="#paywall.eventname.paywallwebviewloadfail">paywall​Webview​Load​Fail</a></li><li class="case"><a href="#paywall.eventname.paywallwebviewloadcomplete">paywall​Webview​Load​Complete</a></li></ul></li></ol>
+            <ol><li><a href="#relationships">Relationships</a><ul><li><a href="#relationships">Member Of</a></li><li><a href="#relationships">Conforms To</a></li></ul></li><li><a href="#enumeration cases">Enumeration Cases</a><ul><li class="case"><a href="#paywall.eventname.firstseen">first​Seen</a></li><li class="case"><a href="#paywall.eventname.appopen">app​Open</a></li><li class="case"><a href="#paywall.eventname.applaunch">app​Launch</a></li><li class="case"><a href="#paywall.eventname.appclose">app​Close</a></li><li class="case"><a href="#paywall.eventname.paywallopen">paywall​Open</a></li><li class="case"><a href="#paywall.eventname.paywallclose">paywall​Close</a></li><li class="case"><a href="#paywall.eventname.transactionstart">transaction​Start</a></li><li class="case"><a href="#paywall.eventname.transactionfail">transaction​Fail</a></li><li class="case"><a href="#paywall.eventname.transactionabandon">transaction​Abandon</a></li><li class="case"><a href="#paywall.eventname.transactioncomplete">transaction​Complete</a></li><li class="case"><a href="#paywall.eventname.subscriptionstart">subscription​Start</a></li><li class="case"><a href="#paywall.eventname.freetrialstart">free​Trial​Start</a></li><li class="case"><a href="#paywall.eventname.transactionrestore">transaction​Restore</a></li><li class="case"><a href="#paywall.eventname.nonrecurringproductpurchase">non​Recurring​Product​Purchase</a></li><li class="case"><a href="#paywall.eventname.paywallresponseloadstart">paywall​Response​Load​Start</a></li><li class="case"><a href="#paywall.eventname.paywallresponseloadfail">paywall​Response​Load​Fail</a></li><li class="case"><a href="#paywall.eventname.paywallresponseloadcomplete">paywall​Response​Load​Complete</a></li><li class="case"><a href="#paywall.eventname.paywallwebviewloadstart">paywall​Webview​Load​Start</a></li><li class="case"><a href="#paywall.eventname.paywallwebviewloadfail">paywall​Webview​Load​Fail</a></li><li class="case"><a href="#paywall.eventname.paywallwebviewloadcomplete">paywall​Webview​Load​Complete</a></li></ul></li></ol>
         </div>
     </nav>
 
@@ -98,12 +98,12 @@
     <section id="enumeration cases">
         <h2>Enumeration Cases</h2>
 
-        <div role="article" class="case" id="paywall.eventname.appinstall">
+        <div role="article" class="case" id="paywall.eventname.firstseen">
     <h3>
-        <code><a href="#paywall.eventname.appinstall">app​Install</a></code>
+        <code><a href="#paywall.eventname.firstseen">first​Seen</a></code>
     </h3>
     <div class="declaration">
-<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">appInstall</span> = <span class="string literal">"</span><span class="string literal">app_install</span><span class="string literal">"</span></body></html></code></pre>
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">firstSeen</span> = <span class="string literal">"</span><span class="string literal">first_seen</span><span class="string literal">"</span></body></html></code></pre>
 </div>
 </div>
 <div role="article" class="case" id="paywall.eventname.appopen">
@@ -112,6 +112,14 @@
     </h3>
     <div class="declaration">
 <pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">appOpen</span> = <span class="string literal">"</span><span class="string literal">app_open</span><span class="string literal">"</span></body></html></code></pre>
+</div>
+</div>
+<div role="article" class="case" id="paywall.eventname.applaunch">
+    <h3>
+        <code><a href="#paywall.eventname.applaunch">app​Launch</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">appLaunch</span> = <span class="string literal">"</span><span class="string literal">app_launch</span><span class="string literal">"</span></body></html></code></pre>
 </div>
 </div>
 <div role="article" class="case" id="paywall.eventname.appclose">
@@ -259,7 +267,7 @@
 
     <footer>
         <p>
-    Generated on <time datetime="2021-09-14T22:03:25+0000">September 14, 2021</time> using <a href="https://github.com/SwiftDocOrg/swift-doc">swift-doc</a> <span class="version">1.0.0-rc.1</span>.
+    Generated on <time datetime="2021-09-15T05:32:03+0000">September 15, 2021</time> using <a href="https://github.com/SwiftDocOrg/swift-doc">swift-doc</a> <span class="version">1.0.0-rc.1</span>.
 </p>
     </footer>
 </body>
