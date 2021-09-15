@@ -8,6 +8,9 @@
 import Foundation
 import StoreKit
 
+
+
+
 extension Paywall {
     
     internal static var _queue = EventsQueue();
@@ -16,7 +19,7 @@ extension Paywall {
     
     internal static func _track(_ name: String, _ params: [String: Any] = [:], _ custom: [String: Any] = [:]) {
         
-        Logger.superwallDebug(string: "[Track] \(name)")
+//        Logger.superwallDebug(string: "[Track] \(name)")
         
         var eventParams = [String: Any]()
         var delegateParams = [String: Any]()
@@ -54,14 +57,11 @@ extension Paywall {
             Paywall.delegate?.shouldTrack?(event: name, params: delegateParams)
         }
         
-
-        let eventData: JSON = [
-            "event_id": JSON(UUID().uuidString),
-            "event_name": JSON(name),
-            "parameters": JSON(eventParams),
-            "created_at": JSON(Date.init(timeIntervalSinceNow: 0).isoString),
-        ]
-        _queue.addEvent(event: eventData)
+		
+		let eventData = EventData(id: UUID().uuidString, name: name, parameters: JSON(eventParams), createdAt: Date.init(timeIntervalSinceNow: 0).isoString)
+		
+		_queue.addEvent(event: eventData.jsonData)
+		Paywall.shared.handleTrigger(forEvent: eventData)
         
     }
     
@@ -114,7 +114,7 @@ extension Paywall {
         case base = "base"
     }
     
-    private static func name(for event: StandardEvent) -> StandardEventName {
+    internal static func name(for event: StandardEvent) -> StandardEventName {
         switch event {
         case .deepLinkOpen:
             return .deepLinkOpen
@@ -187,8 +187,9 @@ extension Paywall {
     
     /// These are the types of events we send to Paywall's delegate `shouldTrack` method
     public enum EventName: String {
-        case appInstall = "app_install"
+        case firstSeen = "first_seen"
         case appOpen = "app_open"
+		case appLaunch = "app_launch"
         case appClose = "app_close"
         case paywallOpen = "paywall_open"
         case paywallClose = "paywall_close"
@@ -209,13 +210,14 @@ extension Paywall {
     }
     
     internal enum InternalEvent {
-        case appInstall
+        case firstSeen
         case appOpen
+		case appLaunch
         case appClose
         
-        case paywallResponseLoadStart
-        case paywallResponseLoadFail
-        case paywallResponseLoadComplete
+		case paywallResponseLoadStart(fromEvent: Bool, event: EventData?)
+        case paywallResponseLoadFail(fromEvent: Bool, event: EventData?)
+        case paywallResponseLoadComplete(fromEvent: Bool, event: EventData?)
         
         case paywallWebviewLoadStart(paywallId: String)
         case paywallWebviewLoadFail(paywallId: String)
@@ -237,8 +239,9 @@ extension Paywall {
 
     
     internal enum InternalEventName: String { //  add defs
-        case appInstall = "app_install"
+        case firstSeen = "first_seen"
         case appOpen = "app_open"
+		case appLaunch = "app_launch"
         case appClose = "app_close"
         case paywallOpen = "paywall_open"
         case paywallClose = "paywall_close"
@@ -263,45 +266,47 @@ extension Paywall {
 
     private static func name(for event: InternalEvent) -> InternalEventName {
         switch event {
-        case .appInstall:
-            return .appInstall
-        case .appOpen:
-            return .appOpen
-        case .appClose:
-            return .appClose
-        case .paywallOpen:
-            return .paywallOpen
-        case .paywallClose:
-            return .paywallClose
-        case .transactionStart:
-            return .transactionStart
-        case .transactionComplete:
-            return .transactionComplete
-        case .subscriptionStart:
-            return .subscriptionStart
-        case .freeTrialStart:
-            return .freeTrialStart
-        case .transactionRestore:
-            return .transactionRestore
-        case .nonRecurringProductPurchase:
-            return .nonRecurringProductPurchase
-        case .transactionFail:
-            return .transactionFail
-        case .transactionAbandon:
-            return .transactionAbandon
+			case .firstSeen:
+				return .firstSeen
+			case .appOpen:
+				return .appOpen
+			case .appLaunch:
+				return .appLaunch
+			case .appClose:
+				return .appClose
+			case .paywallOpen:
+				return .paywallOpen
+			case .paywallClose:
+				return .paywallClose
+			case .transactionStart:
+				return .transactionStart
+			case .transactionComplete:
+				return .transactionComplete
+			case .subscriptionStart:
+				return .subscriptionStart
+			case .freeTrialStart:
+				return .freeTrialStart
+			case .transactionRestore:
+				return .transactionRestore
+			case .nonRecurringProductPurchase:
+				return .nonRecurringProductPurchase
+			case .transactionFail:
+				return .transactionFail
+			case .transactionAbandon:
+				return .transactionAbandon
 
-        case .paywallResponseLoadStart:
-            return .paywallResponseLoadStart
-        case .paywallResponseLoadFail:
-            return .paywallResponseLoadFail
-        case .paywallResponseLoadComplete:
-            return .paywallResponseLoadComplete
-        case .paywallWebviewLoadStart:
-            return .paywallWebviewLoadStart
-        case .paywallWebviewLoadFail:
-            return .paywallWebviewLoadFail
-        case .paywallWebviewLoadComplete:
-            return .paywallWebviewLoadComplete
+			case .paywallResponseLoadStart:
+				return .paywallResponseLoadStart
+			case .paywallResponseLoadFail:
+				return .paywallResponseLoadFail
+			case .paywallResponseLoadComplete:
+				return .paywallResponseLoadComplete
+			case .paywallWebviewLoadStart:
+				return .paywallWebviewLoadStart
+			case .paywallWebviewLoadFail:
+				return .paywallWebviewLoadFail
+			case .paywallWebviewLoadComplete:
+				return .paywallWebviewLoadComplete
         }
     }
     
@@ -333,34 +338,40 @@ extension Paywall {
     
     internal static func track(_ event: InternalEvent, _ customParams: [String: Any] = [:]) {
         switch event {
-        case .paywallWebviewLoadStart(let paywallId):
-            _track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
-        case .paywallWebviewLoadFail(let paywallId):
-            _track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
-        case .paywallWebviewLoadComplete(let paywallId):
-            _track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
-        case .paywallOpen(let paywallId):
-            _track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
-        case .paywallClose(let paywallId):
-            _track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
-        case .transactionStart(let paywallId, let product):
-            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
-        case .transactionFail(let paywallId, let product, let message):
-            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId, otherParams: ["message": message]), customParams: customParams)
-        case .transactionAbandon(let paywallId, let product):
-            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
-        case .transactionComplete(let paywallId, let product):
-            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
-        case .subscriptionStart(let paywallId, let product):
-            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
-        case .freeTrialStart(let paywallId, let product):
-            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
-        case .transactionRestore(let paywallId, let product):
-            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
-        case .nonRecurringProductPurchase(let paywallId, let product):
-            _track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
-        default:
-            _track(eventName: name(for: event))
+			
+			case 	.paywallWebviewLoadStart(let paywallId),
+					.paywallWebviewLoadFail(let paywallId),
+					.paywallWebviewLoadComplete(let paywallId),
+					.paywallOpen(let paywallId),
+					.paywallClose(let paywallId):
+				
+					_track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
+			
+			case 	.transactionFail(let paywallId, let product, let message):
+				
+					_track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId, otherParams: ["message": message]), customParams: customParams)
+			
+			case 	.transactionRestore(let paywallId, let product):
+					
+					_track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
+				
+			case 	.transactionStart(let paywallId, let product),
+					.transactionAbandon(let paywallId, let product),
+					.transactionComplete(let paywallId, let product),
+					.subscriptionStart(let paywallId, let product),
+					.freeTrialStart(let paywallId, let product),
+					.nonRecurringProductPurchase(let paywallId, let product):
+				
+					_track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
+
+			case 	.paywallResponseLoadStart(let fromEvent, let eventData),
+					.paywallResponseLoadFail(let fromEvent, let eventData),
+					.paywallResponseLoadComplete(let fromEvent, let eventData):
+				
+					_track(eventName: name(for: event), params: ["isTriggeredFromEvent": fromEvent, "eventName": eventData?.name ?? ""], customParams: customParams)
+        
+			default:
+					_track(eventName: name(for: event))
         }
     }
     

@@ -18,6 +18,11 @@ internal struct PaywallRequest: Codable {
     var appUserId: String
 }
 
+internal struct PaywallFromEventRequest: Codable {
+	var appUserId: String
+	var event: EventData? = nil
+}
+
 internal struct PaywallsResponse: Decodable {
     var paywalls: [PaywallResponse]
 }
@@ -165,6 +170,22 @@ internal struct EventsRequest: Codable {
 
 internal struct EventsResponse: Codable {
     var status: String
+}
+
+internal struct EventData: Codable {
+	var id: String
+	var name: String
+	var parameters: JSON
+	var createdAt: String
+	
+	var jsonData: JSON {
+		return [
+			"event_id": JSON(id),
+			"event_name": JSON(name),
+			"parameters": parameters,
+			"created_at": JSON(createdAt),
+		]
+	}
 }
 
 // Config

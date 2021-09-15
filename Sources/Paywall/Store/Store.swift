@@ -20,6 +20,7 @@ class Store {
     public var debugKey: String?
     public var appUserId: String?
     public var aliasId: String?
+	public var didTrackFirstSeen = false
     
     public var userId: String? {
         return appUserId ?? aliasId ?? nil
@@ -30,6 +31,7 @@ class Store {
     init() {
         self.appUserId = cache.readString(forKey: "store.appUserId")
         self.aliasId = cache.readString(forKey: "store.aliasId")
+		self.didTrackFirstSeen = cache.hasData(forKey: "store.didTrackFirstSeen")
 		self.setCachedTriggers()
     }
     
@@ -37,6 +39,8 @@ class Store {
     func clear() {
         appUserId = nil
         aliasId = nil
+		didTrackFirstSeen = false
+		triggers.removeAll()
         cache.cleanAll()
     }
     
@@ -60,9 +64,17 @@ class Store {
 		triggers = Set(data.keys)
 	}
 	
+	func recordFirstSeenTracked() {
+		cache.write(string: "true", forKey: "store.didTrackFirstSeen")
+		didTrackFirstSeen = true
+	}
+	
 	private func setCachedTriggers() {
-		let triggerDict = cache.readDictionary(forKey: "store.config") ?? [:]
-		triggers = Set(triggerDict.keys)
+		let triggerDict: [String: Bool] = (cache.readDictionary(forKey: "store.config") as? [String: Bool]) ?? [:]
+		triggers = Set<String>()
+		for k in Array(triggerDict.keys) {
+			triggers.insert(k)
+		}
 	}
     
 }

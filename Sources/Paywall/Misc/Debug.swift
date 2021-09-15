@@ -20,7 +20,7 @@ internal struct Logger {
         if Paywall.debugMode {
             print("[Superwall] " + string)
             if let e = error {
-                print("[Superwall]  →", e)
+                print("[Superwall] Error →", e)
             }
         }
     }
