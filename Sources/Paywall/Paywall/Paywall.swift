@@ -647,6 +647,8 @@ public class Paywall: NSObject {
 	private func shouldTryToRestore() {
 		OnMain {
 			
+			Logger.superwallDebug(string: "attempting restore ...")
+			
 			if let d = Paywall.delegate {
 //				self.paywallViewController?.loadingState = .loadingPurchase
 				d.shouldTryToRestore()
