@@ -28,7 +28,7 @@ let package = Package(
                 .product(name: "TPInAppReceipt", package: "TPInAppReceipt")
             ],
             path: "Sources/Paywall",
-			      exclude: ["Sources/Paywall/BundleHelper.swift"]
+			      exclude: ["BundleHelper.swift"]
         ),
         .testTarget(
             name: "PaywallTests",
