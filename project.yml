@@ -1,0 +1,36 @@
+name: Paywall
+options:
+  bundleIdentifer: me.superwall
+packages:
+  TPInAppReceipt:
+    url: https://github.com/tikhop/TPInAppReceipt
+    from: 3.0.0
+
+targets:
+  Paywall:
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: "me.superwall.Paywall"
+    info:
+      path: Paywall.xcodeproj/Paywall_Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleExecutable: "$(EXECUTABLE_NAME)"
+        CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
+        CFBundleInfoDictionaryVersion: 6.0
+        CFBundleName: "$(PRODUCT_NAME)"
+        CFBundlePackageType: "FMWK"
+        CFBundleShortVersionString: 1.0
+        CFBundleSignature: ????
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSPrincipalClass: ""
+    type: framework
+    platform: iOS
+    deploymentTarget: "11.2"
+    sources: [Sources/]
+    dependencies:
+      - package: TPInAppReceipt
+  #Paywall_Paywall:
+  #   type: bundle
+  #  platform: iOS
+  #  deploymentTarget: "11.2"
+  # sources: [Sources/Paywall/Assets.xcassets]
