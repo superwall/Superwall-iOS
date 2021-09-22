@@ -17,7 +17,7 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/tikhop/TPInAppReceipt.git", .upToNextMajor(from: "3.0.0"))
+        .package(url: "https://github.com/tikhop/TPInAppReceipt.git", .revision("695f0db9a790c8c62d5335728877059851ffd912"))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -27,10 +27,9 @@ let package = Package(
             dependencies: [
                 .product(name: "TPInAppReceipt", package: "TPInAppReceipt")
             ],
-            // A way to re-defined "Bundle.module" if using pods instead of SPM
-            swiftSettings: [
-              .define("SPM")
-            ]),
+            path: "Sources/Paywall",
+			      exclude: ["Sources/Paywall/BundleHelper.swift"]
+        ),
         .testTarget(
             name: "PaywallTests",
             dependencies: ["Paywall"]),
