@@ -167,6 +167,15 @@ internal class SWPaywallViewController: UIViewController {
         config.allowsInlineMediaPlayback = true
         config.allowsAirPlayForMediaPlayback = true
         config.allowsPictureInPictureMediaPlayback = true
+		
+		let preferences = WKPreferences()
+		if #available(iOS 14.5, *) {
+			preferences.isTextInteractionEnabled = false
+		}
+		preferences.javaScriptCanOpenWindowsAutomatically = true
+		
+		config.preferences = preferences
+		
         return config
     }()
     
@@ -192,8 +201,6 @@ internal class SWPaywallViewController: UIViewController {
         wv.scrollView.minimumZoomScale = 1.0
         wv.scrollView.backgroundColor = .clear
         wv.scrollView.isOpaque = false
-        
-       
 
        return wv
    }()
@@ -257,6 +264,9 @@ internal class SWPaywallViewController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+		if #available(iOS 14.5, *) {
+			webview.setAllMediaPlaybackSuspended(false, completionHandler: nil)
+		}
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -264,6 +274,9 @@ internal class SWPaywallViewController: UIViewController {
         if readyForEventTracking {
             Paywall.track(.paywallClose(paywallId: _paywallResponse?.id ?? ""))
         }
+		if #available(iOS 14.5, *) {
+			webview.setAllMediaPlaybackSuspended(true, completionHandler: nil)
+		}
     }
     
     // WebPaywallViewController

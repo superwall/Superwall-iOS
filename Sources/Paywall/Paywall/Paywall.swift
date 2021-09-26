@@ -381,7 +381,12 @@ public class Paywall: NSObject {
 				return
 			}
 			
-			let isPresented = (presentor as? SWPaywallViewController) != nil
+			// if the top most view controller is a paywall view controller
+			// the paywall view controller to present has a presenting view controller
+			// the paywall view controller to present is in the process of being presented
+			
+			
+			let isPresented = (presentor as? SWPaywallViewController) != nil //|| vc.presentingViewController != nil || vc.isBeingPresented
 			
 			if !isPresented {
 				shared.paywallViewController?.readyForEventTracking = false
@@ -599,10 +604,19 @@ public class Paywall: NSObject {
 					let name = event.name
 					
 					// ignore if the paywall is already being presented
+					
 					if let _ = UIViewController.topMostViewController as? SWPaywallViewController {
 						return
 					}
 					
+					if let isBeingPresented = self.paywallViewController?.isBeingPresented, isBeingPresented {
+						return
+					}
+
+					if let _ = self.paywallViewController?.presentingViewController {
+						return
+					}
+
 					let allowedInternalEvents = Set(["app_install", "app_open", "app_close", "app_launch"])
 
 					// special cases are allowed
@@ -739,7 +753,6 @@ extension Paywall: SKPaymentTransactionObserver {
                 self._transactionDidSucceed(for: product)
             break
             case .failed:
-                // TODO: Check if purcahse was canceled,
                 if let e = transaction.error as? SKError {
                     var userCancelled = e.code == .paymentCancelled
                     if #available(iOS 12.2, *) {
