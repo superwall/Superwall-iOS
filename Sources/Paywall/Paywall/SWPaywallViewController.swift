@@ -169,7 +169,7 @@ internal class SWPaywallViewController: UIViewController {
         config.allowsPictureInPictureMediaPlayback = true
 		
 		let preferences = WKPreferences()
-		if #available(iOS 14.5, *) {
+		if #available(iOS 15.0, *) {
 			preferences.isTextInteractionEnabled = false
 		}
 		preferences.javaScriptCanOpenWindowsAutomatically = true
@@ -264,7 +264,7 @@ internal class SWPaywallViewController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-		if #available(iOS 14.5, *) {
+		if #available(iOS 15.0, *) {
 			webview.setAllMediaPlaybackSuspended(false, completionHandler: nil)
 		}
     }
@@ -274,7 +274,7 @@ internal class SWPaywallViewController: UIViewController {
         if readyForEventTracking {
             Paywall.track(.paywallClose(paywallId: _paywallResponse?.id ?? ""))
         }
-		if #available(iOS 14.5, *) {
+		if #available(iOS 15.0, *) {
 			webview.setAllMediaPlaybackSuspended(true, completionHandler: nil)
 		}
     }
