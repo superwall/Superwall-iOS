@@ -50,9 +50,7 @@ internal class EventsQueue {
             // Network.events(Network)
             Network.shared.events(events: EventsRequest(events: eventsToSend)){
                 (result) in
-                Logger.superwallDebug("Events Queue:", result)
-                
-                
+//                Logger.superwallDebug("Events Queue:", result)
             }
         }
         if (elements.count > 0 && depth > 0) {

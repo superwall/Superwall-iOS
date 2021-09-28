@@ -56,6 +56,7 @@ extension Network {
 
 // MARK: Private extension for actually making requests
 extension Network {
+    
     func send<ResponseType: Decodable>(_ request: URLRequest, isDebugRequest: Bool = false, completion: @escaping (Result<ResponseType, Swift.Error>) -> Void) {
         var request = request
 
@@ -137,9 +138,9 @@ extension Network {
 }
 
 extension Network {
-    func paywall(completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
+	func paywall(fromEvent event: EventData? = nil, completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
         
-        let paywallRequest = PaywallRequest(appUserId: Store.shared.userId ?? "")
+        
         
         let components = URLComponents(string: "paywall")!
         let requestURL = components.url(relativeTo: baseURL)!
@@ -152,7 +153,16 @@ extension Network {
         
         // Bail if we can't encode
         do {
-            request.httpBody = try encoder.encode(paywallRequest)
+			
+			if let e = event {
+				let paywallRequest = ["event": e.jsonData]
+				request.httpBody = try encoder.encode(paywallRequest)
+			} else {
+				let paywallRequest = PaywallRequest(appUserId: Store.shared.userId ?? "")
+				request.httpBody = try encoder.encode(paywallRequest)
+			}
+			
+
         } catch {
             return completion(.failure(Error.unknown))
         }
@@ -194,6 +204,34 @@ extension Network {
             switch result {
                 case .failure(let error):
                     Logger.superwallDebug(string: "[network POST /paywall] - failure")
+                    completion(.failure(error))
+                case .success(let response):
+                    completion(.success(response))
+            }
+            
+        })
+
+    }
+    
+}
+
+
+extension Network {
+    
+    func config(completion: @escaping (Result<ConfigResponse, Swift.Error>) -> Void) {
+            
+        let components = URLComponents(string: "config")!
+        let requestURL = components.url(relativeTo: baseURL)!
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
+        
+        send(request, isDebugRequest: false, completion: { (result: Result<ConfigResponse, Swift.Error>)  in
+            switch result {
+                case .failure(let error):
+                    Logger.superwallDebug(string: "[network POST /config] - failure")
                     completion(.failure(error))
                 case .success(let response):
                     completion(.success(response))
