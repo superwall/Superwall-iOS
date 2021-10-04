@@ -44,7 +44,9 @@ internal extension UIColor {
 internal extension Date {
 
     var isoString: String {
-        return ISO8601DateFormatter().string(from: self)
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.string(from: self)
     }
 }
 
