@@ -386,7 +386,7 @@ public class Paywall: NSObject {
 			// the paywall view controller to present is in the process of being presented
 			
 			
-			let isPresented = (presentor as? SWPaywallViewController) != nil //|| vc.presentingViewController != nil || vc.isBeingPresented
+			let isPresented = (presentor as? SWPaywallViewController) != nil || vc.presentingViewController != nil || vc.isBeingPresented
 			
 			if !isPresented {
 				shared.paywallViewController?.readyForEventTracking = false
