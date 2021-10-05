@@ -110,7 +110,6 @@ internal class SWPaywallViewController: UIViewController {
 //                        self?.purchaseLoadingIndicator.stopAnimating()
                     })
                     
-                    
                 }
                     
             }
@@ -354,6 +353,9 @@ internal class SWPaywallViewController: UIViewController {
     deinit {
         NotificationCenter.default.removeObserver(self, name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
+		if (Paywall.isGameControllerEnabled && GameControllerManager.shared.delegate == self) {
+			GameControllerManager.shared.delegate = nil
+		}
     }
     
 }
@@ -484,4 +486,25 @@ class LeakAvoider : NSObject, WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         delegate?.userContentController(userContentController, didReceive: message)
     }
+}
+
+
+
+extension SWPaywallViewController: GameControllerDelegate {
+	func connectionStatusDidChange(isConnected: Bool) {
+		
+	}
+	
+	func gameControllerEventDidOccur(event: GameControllerEvent) {
+		let encoder = JSONEncoder()
+		encoder.keyEncodingStrategy = .convertToSnakeCase
+		
+		if let d = try? encoder.encode(event) {
+			let payload = String(data: d, encoding: .utf8)!
+			let script = "window.gameControllerValueChanged('\(payload)')"
+			webview.evaluateJavaScript(script, completionHandler: nil)
+			Logger.superwallDebug("Game Controller Event", payload)
+		}
+	}
+	
 }

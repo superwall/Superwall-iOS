@@ -20,6 +20,11 @@ public class Paywall: NSObject {
         /// Use the nightly build environment
         case developer
     }
+
+	public static func setGameControllerEnabled() {
+		GameControllerManager.shared.begin()
+		isGameControllerEnabled = true
+	}
     
     /// WARNING: Determines which network environment your SDK should use. Defaults to latest. You should under no circumstance change this unless you received the go-ahead from the Superwall team.
     public static var networkEnvironment: PaywallNetworkEnvironment = .release
@@ -326,6 +331,9 @@ public class Paywall: NSObject {
 					presentationCompletion?()
 					Paywall.track(.paywallOpen(paywallId: self.shared.paywallId))
 					shared.paywallViewController?.readyForEventTracking = true
+					if (Paywall.isGameControllerEnabled) {
+						GameControllerManager.shared.delegate = vc
+					}
 				})
 			} else {
 				Logger.superwallDebug(string: "Note: A Paywall is already being presented")
@@ -396,6 +404,8 @@ public class Paywall: NSObject {
     private(set) var productsById: [String: SKProduct] = [String: SKProduct]()
     
     private var didTryToAutoRestore = false
+	
+	internal static var isGameControllerEnabled = false
     
     private var paywallId: String {
         paywallResponse?.id ?? ""
