@@ -267,6 +267,10 @@ internal class SWPaywallViewController: UIViewController {
 		if #available(iOS 15.0, *) {
 			webview.setAllMediaPlaybackSuspended(false, completionHandler: nil)
 		}
+		
+		if UIWindow.isLandscape {
+			contentPlaceholderImageView.image = UIImage(named: "paywall_placeholder_landscape", in: Bundle.module, compatibleWith: nil)!
+		}
     }
     
     override func viewDidDisappear(_ animated: Bool) {
