@@ -443,22 +443,33 @@ extension SWPaywallViewController {
             webview.evaluateJavaScript(preventZoom, completionHandler: nil)
   
         case .close:
-            UIImpactFeedbackGenerator().impactOccurred()
+			if !Paywall.isGameControllerEnabled {
+				UIImpactFeedbackGenerator().impactOccurred()
+			}
             complete(.closed)
         case .openUrl(let url):
-            UIImpactFeedbackGenerator().impactOccurred()
+			if !Paywall.isGameControllerEnabled {
+				UIImpactFeedbackGenerator().impactOccurred()
+			}
             complete(.openedURL(url: url))
             let safariVC = SFSafariViewController(url: url)
             present(safariVC, animated: true, completion: nil)
         case .openDeepLink(let url):
-            UIImpactFeedbackGenerator().impactOccurred()
+			if !Paywall.isGameControllerEnabled {
+				UIImpactFeedbackGenerator().impactOccurred()
+			}
             complete(.openedDeepLink(url: url))
             // TODO: Handle deep linking
 
         case .restore:
-            UIImpactFeedbackGenerator().impactOccurred()
+			if !Paywall.isGameControllerEnabled {
+				UIImpactFeedbackGenerator().impactOccurred()
+			}
             complete(.initiateRestore)
         case .purchase(product: let productName):
+			if !Paywall.isGameControllerEnabled {
+				UIImpactFeedbackGenerator().impactOccurred()
+			}
             let product = paywallResponse.products.first { (product) -> Bool in
                 return product.product == productName
             }
@@ -504,7 +515,11 @@ extension SWPaywallViewController: GameControllerDelegate {
 		
 		if !event.directional {
 			if event.value == 1.0 {
-				
+				UIImpactFeedbackGenerator().impactOccurred()
+			} else {
+				if #available(iOS 13.0, *) {
+					UIImpactFeedbackGenerator().impactOccurred(intensity: 0.5)
+				}
 			}
 		}
 		
