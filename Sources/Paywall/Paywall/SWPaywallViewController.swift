@@ -501,6 +501,13 @@ extension SWPaywallViewController: GameControllerDelegate {
 			webview.evaluateJavaScript(script, completionHandler: nil)
 			Logger.superwallDebug("Game Controller Event", payload)
 		}
+		
+		if !event.directional {
+			if event.value == 1.0 {
+				
+			}
+		}
+		
 	}
 	
 }

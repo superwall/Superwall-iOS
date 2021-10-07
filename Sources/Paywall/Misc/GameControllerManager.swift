@@ -59,7 +59,7 @@ internal class GameControllerManager: NSObject {
 	
 	func gamepadValueChanged(gamepad: GCExtendedGamepad, element: GCControllerElement) {
 		guard Paywall.isGameControllerEnabled else { return }
-		let name = element.localizedName ?? "unknown"
+		let name = element.unmappedLocalizedName ?? "unknown"
 		if #available(iOS 13.0, *) {
 			switch element {
 				case gamepad.leftTrigger:
