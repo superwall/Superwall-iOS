@@ -513,15 +513,7 @@ extension SWPaywallViewController: GameControllerDelegate {
 			Logger.superwallDebug("Game Controller Event", payload)
 		}
 		
-		if !event.directional {
-			if event.value == 1.0 {
-				UIImpactFeedbackGenerator().impactOccurred()
-			} else {
-				if #available(iOS 13.0, *) {
-					UIImpactFeedbackGenerator().impactOccurred(intensity: 0.5)
-				}
-			}
-		}
+
 		
 	}
 	
