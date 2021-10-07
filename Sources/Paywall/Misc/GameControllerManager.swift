@@ -14,7 +14,7 @@ struct GameControllerEvent: Codable {
 	var value: Double
 	var x: Double
 	var y: Double
-	var isDirectional: Bool
+	var directional: Bool
 	
 	var jsonString: String? {
 
@@ -47,10 +47,9 @@ internal class GameControllerManager: NSObject {
 	}
 	
 	func valueChanged(_ name: String, _ value: Float) {
-		
 		DispatchQueue.main.async { [weak self] in
 			guard let self = self else { return }
-			let e = GameControllerEvent(controllerElement: name, value: Double(value), x: 0, y: 0, isDirectional: false)
+			let e = GameControllerEvent(controllerElement: name, value: Double(value), x: 0, y: 0, directional: false)
 			self.delegate?.gameControllerEventDidOccur(event: e)
 		}
 		
@@ -60,7 +59,7 @@ internal class GameControllerManager: NSObject {
 	func valueChanged(_ name: String, _ x: Float, _ y: Float) {
 		DispatchQueue.main.async { [weak self] in
 			guard let self = self else { return }
-			let e = GameControllerEvent(controllerElement: name, value: 0, x: Double(x), y: Double(y), isDirectional: true)
+			let e = GameControllerEvent(controllerElement: name, value: 0, x: Double(x), y: Double(y), directional: true)
 			self.delegate?.gameControllerEventDidOccur(event: e)
 		}
 	}

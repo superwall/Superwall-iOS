@@ -497,7 +497,7 @@ extension SWPaywallViewController: GameControllerDelegate {
 	
 	func gameControllerEventDidOccur(event: GameControllerEvent) {
 		if let payload = event.jsonString {
-			let script = "window.paywall.accept('\(payload)')"
+			let script = "window.paywall.accept([\(payload)])"
 			webview.evaluateJavaScript(script, completionHandler: nil)
 			Logger.superwallDebug("Game Controller Event", payload)
 		}
