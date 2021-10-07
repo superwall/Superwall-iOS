@@ -492,16 +492,12 @@ class LeakAvoider : NSObject, WKScriptMessageHandler {
 
 extension SWPaywallViewController: GameControllerDelegate {
 	func connectionStatusDidChange(isConnected: Bool) {
-		
+		Logger.superwallDebug("Game Controller \(isConnected ? "Connected" : "Disconnected")")
 	}
 	
 	func gameControllerEventDidOccur(event: GameControllerEvent) {
-		let encoder = JSONEncoder()
-		encoder.keyEncodingStrategy = .convertToSnakeCase
-		
-		if let d = try? encoder.encode(event) {
-			let payload = String(data: d, encoding: .utf8)!
-			let script = "window.gameControllerValueChanged('\(payload)')"
+		if let payload = event.jsonString {
+			let script = "window.paywall.accept('\(payload)')"
 			webview.evaluateJavaScript(script, completionHandler: nil)
 			Logger.superwallDebug("Game Controller Event", payload)
 		}
