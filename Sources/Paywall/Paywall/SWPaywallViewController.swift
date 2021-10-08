@@ -67,6 +67,7 @@ internal class SWPaywallViewController: UIViewController {
                     break
                 case .loadingPurchase:
                     self?.shimmerView.isShimmering = false
+					self?.showRefreshButtonAfterTimeout(show: true)
                     self?.shimmerView.alpha = 0.0
                     self?.shimmerView.transform = .identity
 //                    self?.purchaseLoadingIndicator.startAnimating()
@@ -84,6 +85,7 @@ internal class SWPaywallViewController: UIViewController {
                     self?.shimmerView.isShimmering = true
                     self?.shimmerView.alpha = 0.0
                     self?.shimmerView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
+					self?.showRefreshButtonAfterTimeout(show: true)
                     
                     UIView.animate(withDuration: 0.618, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
                         self?.webview.alpha = 0.0
@@ -98,6 +100,8 @@ internal class SWPaywallViewController: UIViewController {
                 case .ready:
                     // delay to prevent flicker
                     self?.webview.transform = oldValue == .loadingPurchase ? CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97) : CGAffineTransform.identity.translatedBy(x: 0, y: 10)
+						
+					self?.showRefreshButtonAfterTimeout(show: false)
                     
                     UIView.animate(withDuration: 1.0, delay: 0.25, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
                         self?.webview.alpha = 1.0
@@ -125,6 +129,37 @@ internal class SWPaywallViewController: UIViewController {
         }
         
     }
+	
+	var showRefreshTimer: Timer? = nil
+	
+	
+	func showRefreshButtonAfterTimeout(show: Bool) {
+		showRefreshTimer?.invalidate()
+		showRefreshTimer = nil
+		
+		guard show else {
+			hideRefreshButton()
+			return
+		}
+		
+		showRefreshTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: false, block: { [weak self] t in
+			self?.refreshPaywallButton.isHidden = false
+			self?.refreshPaywallButton.alpha = 0.0
+			UIView.animate(withDuration: 2.0, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
+				self?.refreshPaywallButton.alpha = 1.0
+			}, completion: nil)
+		})
+	}
+	
+	func hideRefreshButton() {
+		showRefreshTimer?.invalidate()
+		showRefreshTimer = nil
+		UIView.animate(withDuration: 0.618, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
+			self?.refreshPaywallButton.alpha = 0.0
+		}, completion: { [weak self] _ in
+			self?.refreshPaywallButton.isHidden = true
+		})
+	}
     
     func set(paywallResponse: PaywallResponse) {
         self._paywallResponse =  paywallResponse
@@ -136,6 +171,7 @@ internal class SWPaywallViewController: UIViewController {
             self.view.backgroundColor = paywallResponse.paywallBackgroundColor
             let loadingColor = paywallResponse.paywallBackgroundColor.readableOverlayColor
             self.purchaseLoadingIndicator.color = loadingColor
+			self.refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
             self.contentPlaceholderImageView.tintColor = loadingColor.withAlphaComponent(0.5)
             
             if let urlString = self._paywallResponse?.url {
@@ -203,6 +239,15 @@ internal class SWPaywallViewController: UIViewController {
 
        return wv
    }()
+	
+	lazy var refreshPaywallButton: UIButton = {
+		let button = UIButton()
+		button.setImage(UIImage(named: "reload_paywall", in: Bundle.module, compatibleWith: nil)!, for: .normal)
+		button.translatesAutoresizingMaskIntoConstraints = false
+		button.addTarget(self, action: #selector(pressedRefreshPaywall), for: .primaryActionTriggered)
+		button.isHidden = true
+		return button
+	}()
     
     var contentPlaceholderImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "paywall_placeholder", in: Bundle.module, compatibleWith: nil)!)
@@ -237,6 +282,8 @@ internal class SWPaywallViewController: UIViewController {
         view.addSubview(webview)
         shimmerView.translatesAutoresizingMaskIntoConstraints = false
         shimmerView.contentView = contentPlaceholderImageView
+		
+		view.addSubview(refreshPaywallButton)
     
         NSLayoutConstraint.activate([
             
@@ -257,9 +304,20 @@ internal class SWPaywallViewController: UIViewController {
             webview.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             webview.topAnchor.constraint(equalTo: view.topAnchor),
             webview.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
+			
+			refreshPaywallButton.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
+			refreshPaywallButton.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor, constant: 0),
+			refreshPaywallButton.widthAnchor.constraint(equalToConstant: 55),
+			refreshPaywallButton.heightAnchor.constraint(equalToConstant: 55),
         ])
  
     }
+	
+	@objc func pressedRefreshPaywall() {
+		dismiss(animated: true, completion: {
+			Paywall.presentAgain()
+		})
+	}
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -396,6 +454,12 @@ extension SWPaywallViewController: WKScriptMessageHandler {
 // MARK: Event Handler
 
 extension SWPaywallViewController {
+	
+	func hapticFeedback() {
+		if !Paywall.isGameControllerEnabled {
+			UIImpactFeedbackGenerator().impactOccurred()
+		}
+	}
     
     func handleEvent(event: PaywallEvent) {
         Logger.superwallDebug("handleEvent", event)
@@ -443,33 +507,23 @@ extension SWPaywallViewController {
             webview.evaluateJavaScript(preventZoom, completionHandler: nil)
   
         case .close:
-			if !Paywall.isGameControllerEnabled {
-				UIImpactFeedbackGenerator().impactOccurred()
-			}
+			hapticFeedback()
             complete(.closed)
         case .openUrl(let url):
-			if !Paywall.isGameControllerEnabled {
-				UIImpactFeedbackGenerator().impactOccurred()
-			}
+			hapticFeedback()
             complete(.openedURL(url: url))
             let safariVC = SFSafariViewController(url: url)
             present(safariVC, animated: true, completion: nil)
         case .openDeepLink(let url):
-			if !Paywall.isGameControllerEnabled {
-				UIImpactFeedbackGenerator().impactOccurred()
-			}
+			hapticFeedback()
             complete(.openedDeepLink(url: url))
             // TODO: Handle deep linking
 
         case .restore:
-			if !Paywall.isGameControllerEnabled {
-				UIImpactFeedbackGenerator().impactOccurred()
-			}
+			hapticFeedback()
             complete(.initiateRestore)
         case .purchase(product: let productName):
-			if !Paywall.isGameControllerEnabled {
-				UIImpactFeedbackGenerator().impactOccurred()
-			}
+			hapticFeedback()
             let product = paywallResponse.products.first { (product) -> Bool in
                 return product.product == productName
             }

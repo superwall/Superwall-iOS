@@ -250,6 +250,10 @@ public class Paywall: NSObject {
 	
 	internal static var lastEventTrigger: String? = nil
 	
+	internal static var presentAgain = {
+		
+	}
+	
 	internal static func present(on viewController: UIViewController? = nil, fromEvent: EventData? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, dismissalCompletion: DismissalCompletionBlock? = nil, fallback: FallbackBlock? = nil) {
 		
 		if isDebuggerLaunched {
@@ -298,6 +302,9 @@ public class Paywall: NSObject {
 				delegate.willPresentPaywall?()
 				
 				presentor.present(vc, animated: true, completion: {
+					self.presentAgain = {
+						present(on: viewController, fromEvent: fromEvent, cached: false, presentationCompletion: presentationCompletion, dismissalCompletion: dismissalCompletion, fallback: fallback)
+					}
 					delegate.didPresentPaywall?()
 					presentationCompletion?()
 					Paywall.track(.paywallOpen(paywallId: self.shared.paywallId))
@@ -476,6 +483,12 @@ public class Paywall: NSObject {
     private func _transactionDidBegin(for product: SKProduct) {
         Paywall.track(.transactionStart(paywallId: paywallId, product: product))
         paywallViewController?.loadingState = .loadingPurchase
+		
+		OnMain { [weak self] in 
+			self?.paywallViewController?.showRefreshButtonAfterTimeout(show: false)
+		}
+		
+		
     }
 
     
