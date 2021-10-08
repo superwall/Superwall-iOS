@@ -253,15 +253,12 @@ extension Paywall {
         case freeTrialStart = "freeTrial_start"
         case transactionRestore = "transaction_restore"
         case nonRecurringProductPurchase = "nonRecurringProduct_purchase"
-        
         case paywallResponseLoadStart = "paywallResponseLoad_start"
         case paywallResponseLoadFail = "paywallResponseLoad_fail"
         case paywallResponseLoadComplete = "paywallResponseLoad_complete"
-        
         case paywallWebviewLoadStart = "paywallWebviewLoad_start"
         case paywallWebviewLoadFail = "paywallWebviewLoad_fail"
         case paywallWebviewLoadComplete = "paywallWebviewLoad_complete"
-        
     }
 
     private static func name(for event: InternalEvent) -> InternalEventName {

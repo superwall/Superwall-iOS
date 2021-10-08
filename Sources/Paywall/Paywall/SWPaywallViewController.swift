@@ -110,7 +110,6 @@ internal class SWPaywallViewController: UIViewController {
 //                        self?.purchaseLoadingIndicator.stopAnimating()
                     })
                     
-                    
                 }
                     
             }
@@ -354,6 +353,9 @@ internal class SWPaywallViewController: UIViewController {
     deinit {
         NotificationCenter.default.removeObserver(self, name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
+		if (Paywall.isGameControllerEnabled && GameControllerManager.shared.delegate == self) {
+			GameControllerManager.shared.delegate = nil
+		}
     }
     
 }
@@ -441,22 +443,33 @@ extension SWPaywallViewController {
             webview.evaluateJavaScript(preventZoom, completionHandler: nil)
   
         case .close:
-            UIImpactFeedbackGenerator().impactOccurred()
+			if !Paywall.isGameControllerEnabled {
+				UIImpactFeedbackGenerator().impactOccurred()
+			}
             complete(.closed)
         case .openUrl(let url):
-            UIImpactFeedbackGenerator().impactOccurred()
+			if !Paywall.isGameControllerEnabled {
+				UIImpactFeedbackGenerator().impactOccurred()
+			}
             complete(.openedURL(url: url))
             let safariVC = SFSafariViewController(url: url)
             present(safariVC, animated: true, completion: nil)
         case .openDeepLink(let url):
-            UIImpactFeedbackGenerator().impactOccurred()
+			if !Paywall.isGameControllerEnabled {
+				UIImpactFeedbackGenerator().impactOccurred()
+			}
             complete(.openedDeepLink(url: url))
             // TODO: Handle deep linking
 
         case .restore:
-            UIImpactFeedbackGenerator().impactOccurred()
+			if !Paywall.isGameControllerEnabled {
+				UIImpactFeedbackGenerator().impactOccurred()
+			}
             complete(.initiateRestore)
         case .purchase(product: let productName):
+			if !Paywall.isGameControllerEnabled {
+				UIImpactFeedbackGenerator().impactOccurred()
+			}
             let product = paywallResponse.products.first { (product) -> Bool in
                 return product.product == productName
             }
@@ -484,4 +497,24 @@ class LeakAvoider : NSObject, WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         delegate?.userContentController(userContentController, didReceive: message)
     }
+}
+
+
+
+extension SWPaywallViewController: GameControllerDelegate {
+	func connectionStatusDidChange(isConnected: Bool) {
+		Logger.superwallDebug("Game Controller \(isConnected ? "Connected" : "Disconnected")")
+	}
+	
+	func gameControllerEventDidOccur(event: GameControllerEvent) {
+		if let payload = event.jsonString {
+			let script = "window.paywall.accept([\(payload)])"
+			webview.evaluateJavaScript(script, completionHandler: nil)
+			Logger.superwallDebug("Game Controller Event", payload)
+		}
+		
+
+		
+	}
+	
 }
