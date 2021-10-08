@@ -140,7 +140,7 @@ public class Paywall: NSObject {
 		completion?(true)
 	}
 	
-	private static func getPaywallResponse(fromEvent event: EventData? = nil, completion: ((Bool) -> ())? = nil) {
+	private static func getPaywallResponse(withIdentifier: String? = nil, fromEvent event: EventData? = nil, completion: ((Bool) -> ())? = nil) {
         
 		let isFromEvent = event != nil
 		let eventName = event?.name ?? "$called_manually"
@@ -155,7 +155,7 @@ public class Paywall: NSObject {
 		shared.triggerPaywallResponseIsLoading.removeAll()
 		shared.triggerPaywallResponseIsLoading.insert(eventName)
         
-		Network.shared.paywall(fromEvent: event) { (result) in
+		Network.shared.paywall(withIdentifier: withIdentifier, fromEvent: event) { (result) in
             
             switch(result){
             case .success(let response):
@@ -174,7 +174,7 @@ public class Paywall: NSObject {
 
 					Logger.superwallDebug(string: "Failed to load paywall", error: error)
 					Paywall.track(.paywallResponseLoadFail(fromEvent: isFromEvent, event: event))
-					
+					shared.triggerPaywallResponseIsLoading.remove(eventName)
 					DispatchQueue.main.async {
 						completion?(false)
 					}
@@ -235,17 +235,97 @@ public class Paywall: NSObject {
     }
         
 	@available(*, deprecated, message: "use present(on viewController: UIViewController? = nil, presentationCompletion: (()->())? = nil, dismissalCompletion: DismissalCompletionBlock? = nil, fallback: FallbackBlock? = nil) instead")
-    @objc public static func present(on viewController: UIViewController? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, purchaseCompletion: DismissalCompletionBlock? = nil, fallback: FallbackBlock? = nil) {
-        present(on: viewController, fromEvent: nil, cached: cached, presentationCompletion: presentationCompletion, dismissalCompletion: purchaseCompletion, fallback: fallback)
+    @objc public static func present(on viewController: UIViewController? = nil,
+									 cached: Bool = true,
+									 presentationCompletion: (()->())? = nil,
+									 purchaseCompletion: DismissalCompletionBlock? = nil,
+									 fallback: FallbackBlock? = nil) {
+		present(on: viewController, presentationCompletion: presentationCompletion, dismissalCompletion: purchaseCompletion, fallback: fallback)
     }
+	
+	
+	
+	
+	
+	
+	
+	/// Presents a paywall to the user.
+	///  - Parameter completion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
+	///  - Parameter onDismiss: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
+	///  - Parameter fallback: Gets called when all paywalls are off in the dashboard and the user doesn't have a previously assigned paywall or if an error occurs
+	@objc public static func present(completion: ((Bool)->())? = nil,
+									 onDismiss: DismissalCompletionBlock? = nil) {
+		_present(identifier: nil, on: nil, fromEvent: nil, cached: true, dismissalCompletion: onDismiss, completion: completion)
+		
+	}
+	
+	
+	
+	
+	
+	
 	
 	/// Presents a paywall to the user.
 	///  - Parameter on: The view controller to present the paywall on. Presents on the `keyWindow`'s `rootViewController` if `nil`. Defaults to `nil`.
-	///  - Parameter presentationCompletion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
-	///  - Parameter dismissalCompletion: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
+	///  - Parameter completion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
+	///  - Parameter onDismiss: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
 	///  - Parameter fallback: Gets called when all paywalls are off in the dashboard and the user doesn't have a previously assigned paywall or if an error occurs
-	@objc public static func present(on viewController: UIViewController? = nil, presentationCompletion: (()->())? = nil, dismissalCompletion: DismissalCompletionBlock? = nil, fallback: FallbackBlock? = nil) {
-		present(on: viewController, fromEvent: nil, cached: true, presentationCompletion: presentationCompletion, dismissalCompletion: dismissalCompletion, fallback: fallback)
+	@objc public static func present(on viewController: UIViewController? = nil,
+									 completion: ((Bool)->())? = nil,
+									 onDismiss: DismissalCompletionBlock? = nil) {
+		_present(identifier: nil, on: viewController, fromEvent: nil, cached: true, dismissalCompletion: onDismiss, completion: completion)
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/// Presents a paywall to the user.
+	///  - Parameter identifier: The identifier of the paywall you wish to present
+	///  - Parameter on: The view controller to present the paywall on. Presents on the `keyWindow`'s `rootViewController` if `nil`. Defaults to `nil`.
+	///  - Parameter completion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
+	///  - Parameter onDismiss: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
+	///  - Parameter fallback: Gets called when all paywalls are off in the dashboard and the user doesn't have a previously assigned paywall or if an error occurs
+	@objc public static func present(identifier: String? = nil,
+									 on viewController: UIViewController? = nil,
+									 completion: ((Bool)->())? = nil,
+									 onDismiss: DismissalCompletionBlock? = nil) {
+		
+
+		_present(identifier: identifier, on: viewController, fromEvent: nil, cached: true, dismissalCompletion: onDismiss, completion: completion)
+	}
+	
+	
+	
+	
+	
+	
+	
+	/// This function is equivalent to logging an event, but exposes completion blocks in case you would like to execute code based on specific outcomes
+	///  - Parameter event: The name of the event you wish to trigger (equivalent to event name in `Paywall.track()`)
+	///  - Parameter params: Parameters you wish to pass along to the trigger (equivalent to params in `Paywall.track()`)
+	///  - Parameter on: The view controller to present the paywall on. Presents on the `keyWindow`'s `rootViewController` if `nil`. Defaults to `nil`.
+	///  - Parameter completion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
+	///  - Parameter onDismiss: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
+	///  - Parameter triggerFallback: Gets called if the trigger is not defined, if the trigger is off,  or if an error occurs
+	@objc public static func trigger(event: String? = nil,
+									 params: [String: Any]? = nil,
+									 on viewController: UIViewController? = nil,
+									 completion: ((Bool) -> ())? = nil,
+									 onDismiss: DismissalCompletionBlock? = nil) {
+		
+		var e: EventData? = nil
+		
+		if let name = event {
+			e = Paywall._track(name, [:], params ?? [:], handleTrigger: false)
+		}
+		
+		_present(identifier: nil, on: viewController, fromEvent: e, cached: true, dismissalCompletion: onDismiss, completion: completion)
 	}
 	
 	internal static var lastEventTrigger: String? = nil
@@ -254,7 +334,28 @@ public class Paywall: NSObject {
 		
 	}
 	
-	internal static func present(on viewController: UIViewController? = nil, fromEvent: EventData? = nil, cached: Bool = true, presentationCompletion: (()->())? = nil, dismissalCompletion: DismissalCompletionBlock? = nil, fallback: FallbackBlock? = nil) {
+	fileprivate static func _present(identifier: String? = nil,
+									 on viewController: UIViewController? = nil,
+									 fromEvent: EventData? = nil,
+									 cached: Bool = true,
+									 dismissalCompletion: DismissalCompletionBlock? = nil,
+									 completion: ((Bool)->())? = nil) {
+		
+		present(identifier: identifier, on: viewController, fromEvent: fromEvent, cached: cached, presentationCompletion: {
+			completion?(true)
+		}, dismissalCompletion: dismissalCompletion, fallback: {
+			completion?(false)
+		})
+		
+	}
+	
+	fileprivate static func present(identifier: String? = nil,
+									on viewController: UIViewController? = nil,
+									fromEvent: EventData? = nil,
+									cached: Bool = true,
+									presentationCompletion: (()->())? = nil,
+									dismissalCompletion: DismissalCompletionBlock? = nil,
+									fallback: FallbackBlock? = nil) {
 		
 		if isDebuggerLaunched {
 			// if the debugger is launched, ensure the viewcontroller is the debugger
@@ -326,17 +427,19 @@ public class Paywall: NSObject {
 		
 		lastEventTrigger = fromEvent?.name
 		
-		getPaywallResponse(fromEvent: fromEvent) { success in
+		getPaywallResponse(withIdentifier: identifier, fromEvent: fromEvent) { success in
 			
 			if (success) {
 				
 				guard let vc = shared.paywallViewController else {
+					lastEventTrigger = nil
 					Logger.superwallDebug(string: "Paywall's viewcontroller is nil!")
 					fallbackUsing?()
 					return
 				}
 				
 				guard let _ = shared.paywallResponse else {
+					lastEventTrigger = nil
 					Logger.superwallDebug(string: "Paywall presented before API response was received")
 					fallbackUsing?()
 					return
@@ -345,6 +448,7 @@ public class Paywall: NSObject {
 				presentationBlock(vc)
 				
 			} else {
+				lastEventTrigger = nil
 				fallbackUsing?()
 			}
 		}
@@ -662,10 +766,6 @@ extension Paywall: SKPaymentTransactionObserver {
             guard let product = productsById[transaction.payment.productIdentifier] else { return }
             switch transaction.transactionState {
             case .purchased:
-				// fixes a weird bug in development
-//				if _isDebugAssertConfiguration() {
-//					queue.finishTransaction(transaction)
-//				}
                 Logger.superwallDebug(string: "[Transaction Observer] transactionDidSucceed for: \(product.productIdentifier)")
                 self._transactionDidSucceed(for: product)
             break
@@ -696,11 +796,6 @@ extension Paywall: SKPaymentTransactionObserver {
 						self?.paywallViewController?.presentAlert(title: "Something went wrong", message: transaction.error?.localizedDescription ?? "", actionTitle: nil, action: nil)
 					}
 				}
-
-				// fixes a weird bug in development
-//				if _isDebugAssertConfiguration() {
-//					queue.finishTransaction(transaction)
-//				}
               
             break
             case .restored:

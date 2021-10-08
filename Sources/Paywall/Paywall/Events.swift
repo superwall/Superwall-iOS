@@ -15,9 +15,9 @@ extension Paywall {
     
     internal static var _queue = EventsQueue();
     
-    // TODO: Brian, decide what to do with this
-    
-    internal static func _track(_ name: String, _ params: [String: Any] = [:], _ custom: [String: Any] = [:]) {
+
+	@discardableResult
+	internal static func _track(_ name: String, _ params: [String: Any] = [:], _ custom: [String: Any] = [:], handleTrigger: Bool = true) -> EventData {
         
 //        Logger.superwallDebug(string: "[Track] \(name)")
         
@@ -61,7 +61,11 @@ extension Paywall {
 		let eventData = EventData(id: UUID().uuidString, name: name, parameters: JSON(eventParams), createdAt: Date.init(timeIntervalSinceNow: 0).isoString)
 		
 		_queue.addEvent(event: eventData.jsonData)
-		Paywall.shared.handleTrigger(forEvent: eventData)
+		if handleTrigger {
+			Paywall.shared.handleTrigger(forEvent: eventData)
+		}
+		
+		return eventData
         
     }
     

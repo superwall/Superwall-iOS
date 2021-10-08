@@ -138,7 +138,7 @@ extension Network {
 }
 
 extension Network {
-	func paywall(fromEvent event: EventData? = nil, completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
+	func paywall(withIdentifier: String? = nil, fromEvent event: EventData? = nil, completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
         
         
         
@@ -154,7 +154,10 @@ extension Network {
         // Bail if we can't encode
         do {
 			
-			if let e = event {
+			if let id = withIdentifier {
+				let paywallRequest = ["identifier": withIdentifier]
+				request.httpBody = try encoder.encode(paywallRequest)
+			} else if let e = event {
 				let paywallRequest = ["event": e.jsonData]
 				request.httpBody = try encoder.encode(paywallRequest)
 			} else {
@@ -162,7 +165,6 @@ extension Network {
 				request.httpBody = try encoder.encode(paywallRequest)
 			}
 			
-
         } catch {
             return completion(.failure(Error.unknown))
         }
