@@ -34,11 +34,11 @@ public class Paywall: NSObject {
     
     /// Completion block of type `(Bool) -> ()` that is optionally passed through `Paywall.present()`. Gets called when the paywall is dismissed by the user, by way or purchasing, restoring or manually dismissing. Accepts a BOOL that is `true` if the product is purchased or restored, and `false` if the user manually dismisses the paywall.
     /// Please note: This completion is NOT called when  `Paywall.dismiss()` is manually called by the developer.
-    public typealias DismissalCompletionBlock = (Bool) -> ()
+	internal typealias DismissalCompletionBlock = (Bool) -> ()
     
     /// Completion block that is optionally passed through `Paywall.present()`. Gets called if an error occurs while presenting a Superwall paywall, or if all paywalls are set to off in your dashboard. It's a good idea to add your legacy paywall presentation logic here just in case :)
-    public typealias FallbackBlock = () -> ()
-    
+	internal typealias FallbackBlock = () -> ()
+	
     /// Launches the debugger for you to preview paywalls. If you call `Paywall.track(.deepLinkOpen(deepLinkUrl: url))` from `application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool` in your `AppDelegate`, this funciton is called automatically after scanning your debug QR code in Superwall's web dashboard. Remember to add you URL scheme in settings for this feature to work!
     public static func launchDebugger(toPaywall paywallId: String? = nil) {
         isDebuggerLaunched = true
@@ -140,7 +140,7 @@ public class Paywall: NSObject {
 		completion?(true)
 	}
 	
-	private static func getPaywallResponse(withIdentifier: String? = nil, fromEvent event: EventData? = nil, completion: ((Bool) -> ())? = nil) {
+	private static func getPaywallResponse(withIdentifier: String? = nil, fromEvent event: EventData? = nil, completion: ((Bool, NSError?) -> ())? = nil) {
         
 		let isFromEvent = event != nil
 		let eventName = event?.name ?? "$called_manually"
@@ -163,7 +163,11 @@ public class Paywall: NSObject {
 				if shared.triggerPaywallResponseIsLoading.contains(eventName) {
 					
 					Paywall.track(.paywallResponseLoadComplete(fromEvent: isFromEvent, event: event))
-					Paywall.set(response: response, completion: completion)
+					Paywall.set(response: response, completion: { success in
+						
+						completion?(success, nil)
+						
+					})
 					shared.triggerPaywallResponseIsLoading.remove(eventName)
 					
 				}
@@ -176,7 +180,11 @@ public class Paywall: NSObject {
 					Paywall.track(.paywallResponseLoadFail(fromEvent: isFromEvent, event: event))
 					shared.triggerPaywallResponseIsLoading.remove(eventName)
 					DispatchQueue.main.async {
-						completion?(false)
+						let userInfo: [String : Any] = [
+							NSLocalizedDescriptionKey :  NSLocalizedString("Not Found", value: "There isn't a paywall configured to show in this context", comment: "") ,
+						]
+						let error = NSError(domain: "SWPaywallNotFound", code: 404, userInfo: userInfo)
+						completion?(false, error)
 					}
 				}
             }
@@ -238,8 +246,8 @@ public class Paywall: NSObject {
     @objc public static func present(on viewController: UIViewController? = nil,
 									 cached: Bool = true,
 									 presentationCompletion: (()->())? = nil,
-									 purchaseCompletion: DismissalCompletionBlock? = nil,
-									 fallback: FallbackBlock? = nil) {
+									 purchaseCompletion: ((Bool) -> ())? = nil,
+									 fallback: (()->())? = nil) {
 		present(on: viewController, presentationCompletion: presentationCompletion, dismissalCompletion: purchaseCompletion, fallback: fallback)
     }
 	
@@ -254,7 +262,7 @@ public class Paywall: NSObject {
 	///  - Parameter onDismiss: Gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the product is purchased or restored, and `false` if the paywall is manually dismissed by the user.
 	///  - Parameter fallback: Gets called when all paywalls are off in the dashboard and the user doesn't have a previously assigned paywall or if an error occurs
 	@objc public static func present(completion: ((Bool)->())? = nil,
-									 onDismiss: DismissalCompletionBlock? = nil) {
+									 onDismiss: ((Bool) -> ())? = nil) {
 		_present(identifier: nil, on: nil, fromEvent: nil, cached: true, dismissalCompletion: onDismiss, completion: completion)
 		
 	}
@@ -272,7 +280,7 @@ public class Paywall: NSObject {
 	///  - Parameter fallback: Gets called when all paywalls are off in the dashboard and the user doesn't have a previously assigned paywall or if an error occurs
 	@objc public static func present(on viewController: UIViewController? = nil,
 									 completion: ((Bool)->())? = nil,
-									 onDismiss: DismissalCompletionBlock? = nil) {
+									 onDismiss: ((Bool) -> ())? = nil) {
 		_present(identifier: nil, on: viewController, fromEvent: nil, cached: true, dismissalCompletion: onDismiss, completion: completion)
 		
 	}
@@ -294,7 +302,7 @@ public class Paywall: NSObject {
 	@objc public static func present(identifier: String? = nil,
 									 on viewController: UIViewController? = nil,
 									 completion: ((Bool)->())? = nil,
-									 onDismiss: DismissalCompletionBlock? = nil) {
+									 onDismiss: ((Bool) -> ())? = nil) {
 		
 
 		_present(identifier: identifier, on: viewController, fromEvent: nil, cached: true, dismissalCompletion: onDismiss, completion: completion)
@@ -317,7 +325,7 @@ public class Paywall: NSObject {
 									 params: [String: Any]? = nil,
 									 on viewController: UIViewController? = nil,
 									 completion: ((Bool) -> ())? = nil,
-									 onDismiss: DismissalCompletionBlock? = nil) {
+									 onDismiss: ((Bool) -> ())? = nil) {
 		
 		var e: EventData? = nil
 		
@@ -330,15 +338,13 @@ public class Paywall: NSObject {
 	
 	internal static var lastEventTrigger: String? = nil
 	
-	internal static var presentAgain = {
-		
-	}
+	internal static var presentAgain = {}
 	
 	fileprivate static func _present(identifier: String? = nil,
 									 on viewController: UIViewController? = nil,
 									 fromEvent: EventData? = nil,
 									 cached: Bool = true,
-									 dismissalCompletion: DismissalCompletionBlock? = nil,
+									 dismissalCompletion: ((Bool) -> ())? = nil,
 									 completion: ((Bool)->())? = nil) {
 		
 		present(identifier: identifier, on: viewController, fromEvent: fromEvent, cached: cached, presentationCompletion: {
@@ -354,8 +360,8 @@ public class Paywall: NSObject {
 									fromEvent: EventData? = nil,
 									cached: Bool = true,
 									presentationCompletion: (()->())? = nil,
-									dismissalCompletion: DismissalCompletionBlock? = nil,
-									fallback: FallbackBlock? = nil) {
+									dismissalCompletion: ((Bool) -> ())? = nil,
+									fallback: (() -> ())? = nil) {
 		
 		if isDebuggerLaunched {
 			// if the debugger is launched, ensure the viewcontroller is the debugger
@@ -401,7 +407,6 @@ public class Paywall: NSObject {
 				vc.view.transform = .identity
 				vc.webview.scrollView.contentOffset = CGPoint.zero
 				delegate.willPresentPaywall?()
-				
 				presentor.present(vc, animated: true, completion: {
 					self.presentAgain = {
 						present(on: viewController, fromEvent: fromEvent, cached: false, presentationCompletion: presentationCompletion, dismissalCompletion: dismissalCompletion, fallback: fallback)
@@ -427,7 +432,7 @@ public class Paywall: NSObject {
 		
 		lastEventTrigger = fromEvent?.name
 		
-		getPaywallResponse(withIdentifier: identifier, fromEvent: fromEvent) { success in
+		getPaywallResponse(withIdentifier: identifier, fromEvent: fromEvent) { success, error in
 			
 			if (success) {
 				

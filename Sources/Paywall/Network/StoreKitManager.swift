@@ -35,15 +35,18 @@ class StoreKitManager: NSObject {
         
         Logger.superwallDebug("Begining to fetch products from ASC ...")
         
-        let network = StoreKitNetworking()
-        networkWorkers[network.id] = network
-        
-        network.get(productsWithIds: productsWithIds) {
+		let id = UUID().uuidString
+        networkWorkers[id] = StoreKitNetworking()
+
+		networkWorkers[id]?.get(productsWithIds: productsWithIds) {
         
             
             
             var output = [String: SKProduct]()
-            
+			guard let network = self.networkWorkers[id] else {
+				Logger.superwallDebug("Lost reference to StoreKitNetworker")
+				return
+			}
             for p in network.products {
                 output[p.productIdentifier] = p
             }
@@ -61,7 +64,7 @@ class StoreKitManager: NSObject {
 
 class StoreKitNetworking: NSObject, SKProductsRequestDelegate {
     
-    var id = UUID().uuidString
+	var id = ""
     var request: SKProductsRequest!
     var didLoadProducts = false
     
@@ -98,6 +101,14 @@ class StoreKitNetworking: NSObject, SKProductsRequestDelegate {
             Logger.superwallDebug("Invalid product identifier: \(invalidId) Did you set the correct SKProduct id in the Superwall web dashboard?")
         }
     }
+	
+	func requestDidFinish(_ request: SKRequest) {
+		Logger.superwallDebug("[StoreKitNetworking] requestDidFinish")
+	}
+	
+	func request(_ request: SKRequest, didFailWithError error: Error) {
+		Logger.superwallDebug("[StoreKitNetworking] didFailWithError Unable to reach App Store Connect", error)
+	}
     
     
 }

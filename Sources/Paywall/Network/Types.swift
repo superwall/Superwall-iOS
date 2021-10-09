@@ -27,10 +27,18 @@ internal struct PaywallsResponse: Decodable {
     var paywalls: [PaywallResponse]
 }
 
+public struct PaywallInfo: Codable {
+	var identifier: String
+	var name: String
+	var url: URL
+//	var products: [String]
+}
+
 internal struct PaywallResponse: Decodable {
     var id: String? = nil
     var name: String? = nil
     var slug: String? = nil
+	var identifier: String? = nil
     var url: String
     var paywalljsEvent: String
     

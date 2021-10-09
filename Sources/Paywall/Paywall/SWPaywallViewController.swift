@@ -10,9 +10,11 @@ import UIKit
 import Foundation
 import SafariServices
 
-protocol SWPaywallViewControllerDelegate: AnyObject {
-    func userDismissedPaywallWhileLoading()
-}
+//protocol SWPaywallViewControllerDelegate: AnyObject {
+//    func userDismissedPaywallWhileLoading()
+//}
+//
+
 
 internal class SWPaywallViewController: UIViewController {
     
@@ -24,7 +26,7 @@ internal class SWPaywallViewController: UIViewController {
     
     internal var readyForEventTracking = false
     
-    weak var delegate: SWPaywallViewControllerDelegate? = nil
+//    weak var delegate: SWPaywallViewControllerDelegate? = nil
     
     var presentationStyle: PaywallPresentationStyle {
         return _paywallResponse?.presentationStyle ?? .sheet
