@@ -20,7 +20,7 @@ internal class SWPaywallViewController: UIViewController {
     
     // Don't touch my private parts.
     
-    private var _paywallResponse: PaywallResponse? = nil
+    internal var _paywallResponse: PaywallResponse? = nil
     
     public var completion: ((PaywallPresentationResult) -> Void)?
     

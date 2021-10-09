@@ -34,7 +34,7 @@ public class Paywall: NSObject {
     
     /// Completion block of type `(Bool) -> ()` that is optionally passed through `Paywall.present()`. Gets called when the paywall is dismissed by the user, by way or purchasing, restoring or manually dismissing. Accepts a BOOL that is `true` if the product is purchased or restored, and `false` if the user manually dismisses the paywall.
     /// Please note: This completion is NOT called when  `Paywall.dismiss()` is manually called by the developer.
-	internal typealias DismissalCompletionBlock = (Bool) -> ()
+	internal typealias DismissalCompletionBlock = (Bool, String?, PaywallInfo?) -> ()
     
     /// Completion block that is optionally passed through `Paywall.present()`. Gets called if an error occurs while presenting a Superwall paywall, or if all paywalls are set to off in your dashboard. It's a good idea to add your legacy paywall presentation logic here just in case :)
 	internal typealias FallbackBlock = () -> ()
@@ -249,7 +249,6 @@ public class Paywall: NSObject {
     // MARK: Private
     
     internal static var dismissalCompletion: DismissalCompletionBlock? = nil
-    internal static var fallbackCompletionBlock: FallbackBlock? = nil
     
     internal static var shared: Paywall = Paywall(apiKey: nil)
     
@@ -398,7 +397,7 @@ public class Paywall: NSObject {
             }
         }
         
-        _dismiss(userDidPurchase: true)
+		_dismiss(userDidPurchase: true, productId: product.productIdentifier)
     }
 	
 	internal func handleTrigger(forEvent event: EventData) {
@@ -502,15 +501,15 @@ public class Paywall: NSObject {
     
 
     
-    private func _dismiss(userDidPurchase: Bool? = nil, completion: (()->())? = nil) {
+	private func _dismiss(userDidPurchase: Bool? = nil, productId: String? = nil, completion: (()->())? = nil) {
         OnMain { [weak self] in
             Paywall.delegate?.willDismissPaywall?()
             self?.paywallViewController?.dismiss(animated: true, completion: { [weak self] in
                 Paywall.delegate?.didDismissPaywall?()
                 self?.paywallViewController?.loadingState = .ready
                 completion?()
-                if let s = userDidPurchase {
-                    Paywall.dismissalCompletion?(s)
+				if let s = userDidPurchase, let paywallInfo = self?.paywallViewController?._paywallResponse?.paywallInfo {
+                    Paywall.dismissalCompletion?(s, productId, paywallInfo)
                 }
                 
             })
@@ -522,7 +521,6 @@ public class Paywall: NSObject {
     @objc func applicationWillResignActive(_ sender: AnyObject? = nil) {
         Paywall.track(.appClose)
 		lastAppClose = Date()
-//		Paywall.track(name: "workout_start")
     }
 	
 	var didTrackLaunch = false
