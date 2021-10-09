@@ -194,6 +194,7 @@ extension Paywall {
         case firstSeen = "first_seen"
         case appOpen = "app_open"
 		case appLaunch = "app_launch"
+		case sessionStart = "session_start"
         case appClose = "app_close"
         case paywallOpen = "paywall_open"
         case paywallClose = "paywall_close"
@@ -218,6 +219,7 @@ extension Paywall {
         case appOpen
 		case appLaunch
         case appClose
+		case sessionStart
         
 		case paywallResponseLoadStart(fromEvent: Bool, event: EventData?)
         case paywallResponseLoadFail(fromEvent: Bool, event: EventData?)
@@ -247,6 +249,7 @@ extension Paywall {
         case appOpen = "app_open"
 		case appLaunch = "app_launch"
         case appClose = "app_close"
+		case sessionStart = "session_start"
         case paywallOpen = "paywall_open"
         case paywallClose = "paywall_close"
         case transactionStart = "transaction_start"
@@ -271,6 +274,8 @@ extension Paywall {
 				return .firstSeen
 			case .appOpen:
 				return .appOpen
+			case .sessionStart:
+				return .sessionStart
 			case .appLaunch:
 				return .appLaunch
 			case .appClose:
