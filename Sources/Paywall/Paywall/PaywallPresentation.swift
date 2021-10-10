@@ -8,6 +8,26 @@
 import Foundation
 import UIKit
 
+public class PaywallResult {
+	public var didPresent: Bool
+	public var paywallInfo: PaywallInfo?
+	public var error: NSError?
+	
+	internal var onDismissalCompletion: (Bool, String?) -> () = { _, _ in
+		
+	}
+
+	public func onCompletion(completion: @escaping ((Bool, String?) -> ())) {
+		self.onDismissalCompletion = completion
+	}
+	
+	init(didPresent: Bool, paywallInfo: PaywallInfo?, error: NSError?) {
+		self.didPresent = didPresent
+		self.paywallInfo = paywallInfo
+		self.error = error
+	}
+}
+
 
 extension Paywall {
 	@available(*, deprecated, message: "use present(on viewController: UIViewController? = nil, presentationCompletion: (()->())? = nil, dismissalCompletion: DismissalCompletionBlock? = nil, fallback: FallbackBlock? = nil) instead")
@@ -23,6 +43,22 @@ extension Paywall {
 			fallback?()
 		})
 	}	
+	
+	public static func present(identifier: String? = nil, on viewController: UIViewController? = nil, completion: @escaping (PaywallResult) -> ()) {
+		var result: PaywallResult? = nil
+		
+		present(identifier: identifier, on: viewController) { didPresent, info, error in
+			result = PaywallResult(didPresent: didPresent, paywallInfo: info, error: error)
+			if let r = result {
+				completion(r)
+			}
+		} onDismiss: { didPurchase, productId, info in
+			result?.paywallInfo = info
+			result?.onDismissalCompletion(didPurchase, productId)
+		}
+
+		
+	}
 	
 	/// Presents a paywall to the user.
 	///  - Parameter completion: A completion block that gets called immediately after the paywall is presented. Defaults to  `nil`,
