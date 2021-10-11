@@ -170,7 +170,7 @@ internal class SWPaywallViewController: UIViewController {
 		
 		let preferences = WKPreferences()
 		if #available(iOS 15.0, *) {
-			preferences.isTextInteractionEnabled = false
+			//preferences.isTextInteractionEnabled = false
 		}
 		preferences.javaScriptCanOpenWindowsAutomatically = true
 		
@@ -265,7 +265,7 @@ internal class SWPaywallViewController: UIViewController {
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 		if #available(iOS 15.0, *) {
-			webview.setAllMediaPlaybackSuspended(false, completionHandler: nil)
+			//webview.setAllMediaPlaybackSuspended(false, completionHandler: nil)
 		}
     }
     
@@ -275,7 +275,7 @@ internal class SWPaywallViewController: UIViewController {
             Paywall.track(.paywallClose(paywallId: _paywallResponse?.id ?? ""))
         }
 		if #available(iOS 15.0, *) {
-			webview.setAllMediaPlaybackSuspended(true, completionHandler: nil)
+			//webview.setAllMediaPlaybackSuspended(true, completionHandler: nil)
 		}
     }
     
