@@ -28,13 +28,15 @@ internal struct PaywallsResponse: Decodable {
 }
 
 public class PaywallInfo: NSObject {
+	var id: String
 	var identifier: String
 	var name: String
 	var slug: String
 	var url: URL? = nil
 	var productIds: [String]
 	
-	init(identifier: String, name: String, slug: String, url: URL?, productIds: [String]) {
+	init(id: String, identifier: String, name: String, slug: String, url: URL?, productIds: [String]) {
+		self.id = id
 		self.identifier = identifier
 		self.name = name
 		self.slug = slug
@@ -62,7 +64,7 @@ internal struct PaywallResponse: Decodable {
     }
 	
 	var paywallInfo: PaywallInfo {
-		return PaywallInfo(identifier: identifier ?? "unknown", name: name ?? "unknown", slug: slug ?? "unknown", url: URL(string: url), productIds: productIds)
+		return PaywallInfo(id: id ?? "unknown", identifier: identifier ?? "unknown", name: name ?? "unknown", slug: slug ?? "unknown", url: URL(string: url), productIds: productIds)
 	}
     
     var paywallBackgroundColor: UIColor {

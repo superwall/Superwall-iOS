@@ -178,7 +178,7 @@ internal class SWPaywallViewController: UIViewController {
             
             if let urlString = self._paywallResponse?.url {
                 if let url = URL(string: urlString) {
-                    Paywall.track(.paywallWebviewLoadStart(paywallId: paywallResponse.id ?? ""))
+					Paywall.track(.paywallWebviewLoadStart(paywallInfo: paywallResponse.paywallInfo))
                     self.webview.load(URLRequest(url: url))
                     self.loadingState = .loadingResponse
                 }
@@ -335,7 +335,9 @@ internal class SWPaywallViewController: UIViewController {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         if readyForEventTracking {
-            Paywall.track(.paywallClose(paywallId: _paywallResponse?.id ?? ""))
+			if let i = _paywallResponse?.paywallInfo {
+				Paywall.track(.paywallClose(paywallInfo: i))
+			}
         }
 		if #available(iOS 15.0, *) {
 			webview.setAllMediaPlaybackSuspended(true, completionHandler: nil)
@@ -470,8 +472,9 @@ extension SWPaywallViewController {
     
         switch (event) {
         case .onReady:
-            
-            Paywall.track(.paywallWebviewLoadComplete(paywallId: self._paywallResponse?.id ?? ""))
+				if let i = self._paywallResponse?.paywallInfo {
+					Paywall.track(.paywallWebviewLoadComplete(paywallInfo: i))
+				}
 
             // TODO: Jake, I couldn't figure out how to encode these as an array, ideally we would have
             // [TemplateSubstitutions,TemplateVariables] and only call accept64 once.

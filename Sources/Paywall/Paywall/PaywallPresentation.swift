@@ -160,7 +160,11 @@ extension Paywall {
 					}
 					delegate.didPresentPaywall?()
 					presentationCompletion?(vc._paywallResponse?.paywallInfo)
-					Paywall.track(.paywallOpen(paywallId: self.shared.paywallId))
+					
+					if let i = vc._paywallResponse?.paywallInfo {
+						Paywall.track(.paywallOpen(paywallInfo: i))
+					}
+					
 					shared.paywallViewController?.readyForEventTracking = true
 					if (Paywall.isGameControllerEnabled) {
 						GameControllerManager.shared.delegate = vc

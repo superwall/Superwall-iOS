@@ -225,22 +225,22 @@ extension Paywall {
         case paywallResponseLoadFail(fromEvent: Bool, event: EventData?)
         case paywallResponseLoadComplete(fromEvent: Bool, event: EventData?)
         
-        case paywallWebviewLoadStart(paywallId: String)
-        case paywallWebviewLoadFail(paywallId: String)
-        case paywallWebviewLoadComplete(paywallId: String)
+        case paywallWebviewLoadStart(paywallInfo: PaywallInfo)
+        case paywallWebviewLoadFail(paywallInfo: PaywallInfo)
+        case paywallWebviewLoadComplete(paywallInfo: PaywallInfo)
         
-        case paywallOpen(paywallId: String)
-        case paywallClose(paywallId: String)
+        case paywallOpen(paywallInfo: PaywallInfo)
+        case paywallClose(paywallInfo: PaywallInfo)
        
-        case transactionStart(paywallId: String, product: SKProduct)
-        case transactionComplete(paywallId: String, product: SKProduct)
-        case transactionFail(paywallId: String, product: SKProduct?, message: String)
-        case transactionAbandon(paywallId: String, product: SKProduct)
+        case transactionStart(paywallInfo: PaywallInfo, product: SKProduct)
+        case transactionComplete(paywallInfo: PaywallInfo, product: SKProduct)
+        case transactionFail(paywallInfo: PaywallInfo, product: SKProduct?, message: String)
+        case transactionAbandon(paywallInfo: PaywallInfo, product: SKProduct)
         
-        case subscriptionStart(paywallId: String, product: SKProduct)
-        case freeTrialStart(paywallId: String, product: SKProduct)
-        case transactionRestore(paywallId: String, product: SKProduct?)
-        case nonRecurringProductPurchase(paywallId: String, product: SKProduct)
+        case subscriptionStart(paywallInfo: PaywallInfo, product: SKProduct)
+        case freeTrialStart(paywallInfo: PaywallInfo, product: SKProduct)
+        case transactionRestore(paywallInfo: PaywallInfo, product: SKProduct?)
+        case nonRecurringProductPurchase(paywallInfo: PaywallInfo, product: SKProduct)
     }
 
     
@@ -316,11 +316,15 @@ extension Paywall {
         }
     }
     
-    private static func eventParams(for product: SKProduct?, paywallId: String, otherParams: [String: Any]? = nil) -> [String: Any] {
+    private static func eventParams(for product: SKProduct?, paywallInfo: PaywallInfo, otherParams: [String: Any]? = nil) -> [String: Any] {
         var output: [String: Any] = [
-            "paywall_id": paywallId
+			"paywall_id": paywallInfo.id,
+			"paywall_identifier": paywallInfo.identifier,
+			"paywall_slug": paywallInfo.slug,
+			"paywall_name": paywallInfo.name,
+			"paywall_url": paywallInfo.url?.absoluteString ?? "unknown",
         ]
-        
+		
         if let p = product {
             output["product_id"] = p.productIdentifier
             for k in p.eventData.keys {
@@ -345,30 +349,30 @@ extension Paywall {
     internal static func track(_ event: InternalEvent, _ customParams: [String: Any] = [:]) {
         switch event {
 			
-			case 	.paywallWebviewLoadStart(let paywallId),
-					.paywallWebviewLoadFail(let paywallId),
-					.paywallWebviewLoadComplete(let paywallId),
-					.paywallOpen(let paywallId),
-					.paywallClose(let paywallId):
+			case 	.paywallWebviewLoadStart(let paywallInfo),
+					.paywallWebviewLoadFail(let paywallInfo),
+					.paywallWebviewLoadComplete(let paywallInfo),
+					.paywallOpen(let paywallInfo),
+					.paywallClose(let paywallInfo):
 				
-					_track(eventName: name(for: event), params: eventParams(for: nil, paywallId: paywallId), customParams: customParams)
+					_track(eventName: name(for: event), params: eventParams(for: nil, paywallInfo: paywallInfo), customParams: customParams)
 			
-			case 	.transactionFail(let paywallId, let product, let message):
+			case 	.transactionFail(let paywallInfo, let product, let message):
 				
-					_track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId, otherParams: ["message": message]), customParams: customParams)
+					_track(eventName: name(for: event), params: eventParams(for: product, paywallInfo: paywallInfo, otherParams: ["message": message]), customParams: customParams)
 			
-			case 	.transactionRestore(let paywallId, let product):
+			case 	.transactionRestore(let paywallInfo, let product):
 					
-					_track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
+					_track(eventName: name(for: event), params: eventParams(for: product, paywallInfo: paywallInfo), customParams: customParams)
 				
-			case 	.transactionStart(let paywallId, let product),
-					.transactionAbandon(let paywallId, let product),
-					.transactionComplete(let paywallId, let product),
-					.subscriptionStart(let paywallId, let product),
-					.freeTrialStart(let paywallId, let product),
-					.nonRecurringProductPurchase(let paywallId, let product):
+			case 	.transactionStart(let paywallInfo, let product),
+					.transactionAbandon(let paywallInfo, let product),
+					.transactionComplete(let paywallInfo, let product),
+					.subscriptionStart(let paywallInfo, let product),
+					.freeTrialStart(let paywallInfo, let product),
+					.nonRecurringProductPurchase(let paywallInfo, let product):
 				
-					_track(eventName: name(for: event), params: eventParams(for: product, paywallId: paywallId), customParams: customParams)
+					_track(eventName: name(for: event), params: eventParams(for: product, paywallInfo: paywallInfo), customParams: customParams)
 
 			case 	.paywallResponseLoadStart(let fromEvent, let eventData),
 					.paywallResponseLoadFail(let fromEvent, let eventData),
