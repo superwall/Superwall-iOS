@@ -34,7 +34,7 @@ public class Paywall: NSObject {
     
     /// Completion block of type `(Bool) -> ()` that is optionally passed through `Paywall.present()`. Gets called when the paywall is dismissed by the user, by way or purchasing, restoring or manually dismissing. Accepts a BOOL that is `true` if the product is purchased or restored, and `false` if the user manually dismisses the paywall.
     /// Please note: This completion is NOT called when  `Paywall.dismiss()` is manually called by the developer.
-	internal typealias DismissalCompletionBlock = (Bool) -> ()
+	internal typealias DismissalCompletionBlock = (Bool, String?, PaywallInfo?) -> ()
     
     /// Completion block that is optionally passed through `Paywall.present()`. Gets called if an error occurs while presenting a Superwall paywall, or if all paywalls are set to off in your dashboard. It's a good idea to add your legacy paywall presentation logic here just in case :)
 	internal typealias FallbackBlock = () -> ()
@@ -249,7 +249,6 @@ public class Paywall: NSObject {
     // MARK: Private
     
     internal static var dismissalCompletion: DismissalCompletionBlock? = nil
-    internal static var fallbackCompletionBlock: FallbackBlock? = nil
     
     internal static var shared: Paywall = Paywall(apiKey: nil)
     
@@ -376,7 +375,11 @@ public class Paywall: NSObject {
     // purchase callbacks
     
     private func _transactionDidBegin(for product: SKProduct) {
-        Paywall.track(.transactionStart(paywallId: paywallId, product: product))
+		
+		if let i = paywallViewController?._paywallResponse?.paywallInfo {
+			Paywall.track(.transactionStart(paywallInfo: i, product: product))
+		}
+		
         paywallViewController?.loadingState = .loadingPurchase
 		
 		OnMain { [weak self] in 
@@ -388,17 +391,21 @@ public class Paywall: NSObject {
 
     
     private func _transactionDidSucceed(for product: SKProduct) {
-        Paywall.track(.transactionComplete(paywallId: paywallId, product: product))
+		
+		if let i = paywallViewController?._paywallResponse?.paywallInfo {
+			Paywall.track(.transactionComplete(paywallInfo: i, product: product))
+			if let ft = paywallViewController?._paywallResponse?.isFreeTrialAvailable {
+				if ft {
+					Paywall.track(.freeTrialStart(paywallInfo: i, product: product))
+				} else {
+					Paywall.track(.subscriptionStart(paywallInfo: i, product: product))
+				}
+			}
+		}
         
-        if let ft = paywallResponse?.isFreeTrialAvailable {
-            if ft {
-                Paywall.track(.freeTrialStart(paywallId: paywallId, product: product))
-            } else {
-                Paywall.track(.subscriptionStart(paywallId: paywallId, product: product))
-            }
-        }
+
         
-        _dismiss(userDidPurchase: true)
+		_dismiss(userDidPurchase: true, productId: product.productIdentifier)
     }
 	
 	internal func handleTrigger(forEvent event: EventData) {
@@ -462,7 +469,11 @@ public class Paywall: NSObject {
                 self.didTryToAutoRestore = true
             } else {
 				self.paywallViewController?.loadingState = .ready
-                Paywall.track(.transactionFail(paywallId: self.paywallId, product: product, message: error?.localizedDescription ?? ""))
+				
+				if let i = self.paywallViewController?._paywallResponse?.paywallInfo {
+					Paywall.track(.transactionFail(paywallInfo: i, product: product, message: error?.localizedDescription ?? ""))
+				}
+                
                 self.paywallViewController?.presentAlert(title: "Please try again", message: error?.localizedDescription ?? "", actionTitle: "Restore Purchase", action: {
                     Paywall.shared.shouldTryToRestore()
                 })
@@ -485,32 +496,41 @@ public class Paywall: NSObject {
 	}
     
     private func _transactionWasAbandoned(for product: SKProduct) {
-        Paywall.track(.transactionAbandon(paywallId: paywallId, product: product))
+		if let i = paywallViewController?._paywallResponse?.paywallInfo {
+			Paywall.track(.transactionAbandon(paywallInfo: i, product: product))
+		}
+        
         paywallViewController?.loadingState = .ready
     }
     
     private func _transactionWasRestored() {
-        Paywall.track(.transactionRestore(paywallId: paywallId, product: nil))
+		if let i = paywallViewController?._paywallResponse?.paywallInfo {
+			Paywall.track(.transactionRestore(paywallInfo: i, product: nil))
+		}
         _dismiss(userDidPurchase: true)
     }
     
     // if a parent needs to approve the purchase
     private func _transactionWasDeferred() {
         paywallViewController?.presentAlert(title: "Waiting for Approval", message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.")
-        Paywall.track(.transactionFail(paywallId: paywallId, product: nil, message: "Needs parental approval"))
+       
+		
+		if let i = paywallViewController?._paywallResponse?.paywallInfo {
+			Paywall.track(.transactionFail(paywallInfo: i, product: nil, message: "Needs parental approval"))
+		}
     }
     
 
     
-    private func _dismiss(userDidPurchase: Bool? = nil, completion: (()->())? = nil) {
+	private func _dismiss(userDidPurchase: Bool? = nil, productId: String? = nil, completion: (()->())? = nil) {
         OnMain { [weak self] in
             Paywall.delegate?.willDismissPaywall?()
             self?.paywallViewController?.dismiss(animated: true, completion: { [weak self] in
                 Paywall.delegate?.didDismissPaywall?()
                 self?.paywallViewController?.loadingState = .ready
                 completion?()
-                if let s = userDidPurchase {
-                    Paywall.dismissalCompletion?(s)
+				if let s = userDidPurchase, let paywallInfo = self?.paywallViewController?._paywallResponse?.paywallInfo {
+                    Paywall.dismissalCompletion?(s, productId, paywallInfo)
                 }
                 
             })
@@ -522,7 +542,6 @@ public class Paywall: NSObject {
     @objc func applicationWillResignActive(_ sender: AnyObject? = nil) {
         Paywall.track(.appClose)
 		lastAppClose = Date()
-//		Paywall.track(name: "workout_start")
     }
 	
 	var didTrackLaunch = false
