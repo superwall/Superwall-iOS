@@ -115,7 +115,7 @@ extension Paywall {
 			guard viewController is SWDebugViewController else { return }
 		} else {
 			// otherwise, ensure we should present the paywall via the delegate method
-			guard (delegate?.shouldPresentPaywall() ?? false) else { return }
+			guard !(delegate?.isUserSubscribed() ?? false) else { return }
 		}
 		
 		self.dismissalCompletion = dismissalCompletion

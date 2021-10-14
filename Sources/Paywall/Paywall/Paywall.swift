@@ -359,7 +359,7 @@ public class Paywall: NSObject {
                 // TODO: make sure this can NEVER happen
                 guard let product = self?.productsById[productId] else { return }
                 self?.paywallViewController?.loadingState = .loadingPurchase
-                Paywall.delegate?.userDidInitiateCheckout(for: product)
+				Paywall.delegate?.purchase(product: product)
             case .initiateRestore:
                 Paywall.shared.shouldTryToRestore()
             case .openedURL(let url):
@@ -488,7 +488,7 @@ public class Paywall: NSObject {
 			
 			if let d = Paywall.delegate {
 //				self.paywallViewController?.loadingState = .loadingPurchase
-				d.shouldTryToRestore()
+				d.restorePurchases()
 			}
 			
 			

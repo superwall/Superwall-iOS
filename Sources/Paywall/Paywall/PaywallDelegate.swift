@@ -13,13 +13,13 @@ import StoreKit
 	
 	/// Called when the user initiates checkout for a product. Add your purchase logic here by either calling `Purchases.shared.purchaseProduct()` (if you use RevenueCat: https://sdk.revenuecat.com/ios/Classes/RCPurchases.html#/c:objc(cs)RCPurchases(im)purchaseProduct:withCompletionBlock:) or by using Apple's StoreKit APIs
 	/// - Parameter product: The `SKProduct` the user would like to purchase
-	@objc func userDidInitiateCheckout(for product: SKProduct)
+	@objc func purchase(product: SKProduct)
 	
 	/// Called when the user initiates a restore. Add your restore logic here.
-	@objc func shouldTryToRestore()
+	@objc func restorePurchases()
 	
-	/// Called before ever showing a paywall. Return `false` if the user has active entitlements and `true` if the user does not.
-	@objc func shouldPresentPaywall() -> Bool
+	/// Decides whether a paywall should be presented programatically or by way of a trigger. A paywall will never be shown if this function returns `true`. Return `true` if the user has active entitlements and `false` if the user does not.
+	@objc func isUserSubscribed() -> Bool
 	
 	/// Called when the user taps a button with a custom `data-pw-custom` tag in your HTML paywall. See paywall.js for further documentation
 	///  - Parameter withName: The value of the `data-pw-custom` tag in your HTML element that the user selected.
