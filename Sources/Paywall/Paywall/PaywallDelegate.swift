@@ -15,15 +15,15 @@ import StoreKit
 	/// - Parameter product: The `SKProduct` the user would like to purchase
 	@objc func purchase(product: SKProduct)
 	
-	/// Called when the user initiates a restore. Add your restore logic here.
-	@objc func restorePurchases()
+	/// Called when the user initiates a restore. Add your restore logic here. Call the completion with `true` if the user's transactions were restored or `false` if they weren't.
+	@objc func restorePurchases(completion: @escaping (Bool) -> ())
 	
 	/// Decides whether a paywall should be presented programatically or by way of a trigger. A paywall will never be shown if this function returns `true`. Return `true` if the user has active entitlements and `false` if the user does not.
 	@objc func isUserSubscribed() -> Bool
 	
 	/// Called when the user taps a button with a custom `data-pw-custom` tag in your HTML paywall. See paywall.js for further documentation
 	///  - Parameter withName: The value of the `data-pw-custom` tag in your HTML element that the user selected.
-	@objc optional func didReceiveCustomEvent(withName name: String)
+	@objc optional func handleCustomPaywallAction(withName name: String)
 	
 	/// Called right before the paywall is dismissed.
 	@objc optional func willDismissPaywall()
@@ -49,38 +49,38 @@ import StoreKit
 	/// Possible Values:
 	///  ```swift
 	/// // App Lifecycle Events
-	/// Paywall.delegate.shouldTrack(event: "app_install", params: nil)
-	/// Paywall.delegate.shouldTrack(event: "app_open", params: nil)
-	/// Paywall.delegate.shouldTrack(event: "app_close", params: nil)
+	/// Paywall.delegate.trackAnalyticsEvent(name: "app_install", params: nil)
+	/// Paywall.delegate.trackAnalyticsEvent(name: "app_open", params: nil)
+	/// Paywall.delegate.trackAnalyticsEvent(name: "app_close", params: nil)
 	///
 	/// // Paywall Events
-	/// Paywall.delegate.shouldTrack(event: "paywall_open", params: ['paywall_id': 'someid'])
-	/// Paywall.delegate.shouldTrack(event: "paywall_close", params: ['paywall_id': 'someid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "paywall_open", params: ['paywall_id': 'someid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "paywall_close", params: ['paywall_id': 'someid'])
 	///
 	/// // Transaction Events
-	/// Paywall.delegate.shouldTrack(event: "transaction_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.shouldTrack(event: "transaction_fail", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.shouldTrack(event: "transaction_abandon", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.shouldTrack(event: "transaction_complete", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.shouldTrack(event: "transaction_restore", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "transaction_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "transaction_fail", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "transaction_abandon", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "transaction_complete", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "transaction_restore", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
 	///
 	/// // Purchase Events
-	/// Paywall.delegate.shouldTrack(event: "subscription_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.shouldTrack(event: "freeTrial_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.shouldTrack(event: "nonRecurringProduct_purchase", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "subscription_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "freeTrial_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "nonRecurringProduct_purchase", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
 	///
 	/// // Superwall API Request Events
-	/// Paywall.delegate.shouldTrack(event: "paywallResponseLoad_start", params: ['paywall_id': 'someid'])
-	/// Paywall.delegate.shouldTrack(event: "paywallResponseLoad_fail", params: ['paywall_id': 'someid'])
-	/// Paywall.delegate.shouldTrack(event: "paywallResponseLoad_complete", params: ['paywall_id': 'someid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallResponseLoad_start", params: ['paywall_id': 'someid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallResponseLoad_fail", params: ['paywall_id': 'someid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallResponseLoad_complete", params: ['paywall_id': 'someid'])
 	///
 	/// // Webview Reqeuest Events
-	/// Paywall.delegate.shouldTrack(event: "paywallWebviewLoad_start", params: ['paywall_id': 'someid'])
-	/// Paywall.delegate.shouldTrack(event: "paywallWebviewLoad_fail", params: ['paywall_id': 'someid'])
-	/// Paywall.delegate.shouldTrack(event: "paywallWebviewLoad_complete", params: ['paywall_id': 'someid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallWebviewLoad_start", params: ['paywall_id': 'someid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallWebviewLoad_fail", params: ['paywall_id': 'someid'])
+	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallWebviewLoad_complete", params: ['paywall_id': 'someid'])
 	/// ```
 	
 	
-	@objc optional func shouldTrack(event: String, params: [String: Any])
+	@objc optional func trackAnalyticsEvent(withName name: String, params: [String: Any])
 
 }

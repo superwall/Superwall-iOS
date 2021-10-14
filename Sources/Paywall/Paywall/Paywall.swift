@@ -29,7 +29,7 @@ public class Paywall: NSObject {
     /// WARNING: Determines which network environment your SDK should use. Defaults to latest. You should under no circumstance change this unless you received the go-ahead from the Superwall team.
     public static var networkEnvironment: PaywallNetworkEnvironment = .release
     
-    /// The object that acts as the delegate of Paywall. Required implementations include `userDidInitiateCheckout(for product: SKProduct)` and `shouldTryToRestore()`. 
+    /// The object that acts as the delegate of Paywall.
     @objc public static var delegate: PaywallDelegate? = nil
     
     /// Completion block of type `(Bool) -> ()` that is optionally passed through `Paywall.present()`. Gets called when the paywall is dismissed by the user, by way or purchasing, restoring or manually dismissing. Accepts a BOOL that is `true` if the product is purchased or restored, and `false` if the user manually dismisses the paywall.
@@ -361,13 +361,13 @@ public class Paywall: NSObject {
                 self?.paywallViewController?.loadingState = .loadingPurchase
 				Paywall.delegate?.purchase(product: product)
             case .initiateRestore:
-                Paywall.shared.shouldTryToRestore()
+                Paywall.shared.tryToRestore(userInitiated: true)
             case .openedURL(let url):
                 Paywall.delegate?.willOpenURL?(url: url)
             case .openedDeepLink(let url):
                 Paywall.delegate?.willOpenDeepLink?(url: url)
             case .custom(let string):
-                Paywall.delegate?.didReceiveCustomEvent?(withName: string)
+                Paywall.delegate?.handleCustomPaywallAction?(withName: string)
             }
         }
     }
@@ -465,7 +465,7 @@ public class Paywall: NSObject {
 			self.paywallViewController?.loadingState = .ready
 			
             if !self.didTryToAutoRestore {
-                Paywall.shared.shouldTryToRestore()
+                Paywall.shared.tryToRestore()
                 self.didTryToAutoRestore = true
             } else {
 				self.paywallViewController?.loadingState = .ready
@@ -475,22 +475,45 @@ public class Paywall: NSObject {
 				}
                 
                 self.paywallViewController?.presentAlert(title: "Please try again", message: error?.localizedDescription ?? "", actionTitle: "Restore Purchase", action: {
-                    Paywall.shared.shouldTryToRestore()
+                    Paywall.shared.tryToRestore()
                 })
             }
         }
     }
 	
-	private func shouldTryToRestore() {
+	public static var restoreFailedTitleString = "No Subscription Found"
+	public static var restoreFailedMessageString = "We couldn't find an active subscription for your account."
+	public static var restoreFailedCloseButtonString = "Okay"
+	
+	private func tryToRestore(userInitiated: Bool = false) {
 		OnMain {
 			
 			Logger.superwallDebug(string: "attempting restore ...")
 			
 			if let d = Paywall.delegate {
-//				self.paywallViewController?.loadingState = .loadingPurchase
-				d.restorePurchases()
+				
+				if userInitiated {
+					self.paywallViewController?.loadingState = .loadingPurchase
+				}
+				
+				d.restorePurchases { [weak self] success in
+					OnMain { [weak self] in
+						if userInitiated {
+							self?.paywallViewController?.loadingState = .ready
+						}
+						if success {
+							Logger.superwallDebug(string: "transaction restored")
+							Logger.superwallDebug(string: "[Transaction Observer] restored")
+							self?._transactionWasRestored()
+						} else {
+							Logger.superwallDebug(string: "transaction failed to restore")
+							if userInitiated {
+								self?.paywallViewController?.presentAlert(title: Paywall.restoreFailedTitleString, message: Paywall.restoreFailedMessageString, closeActionTitle: Paywall.restoreFailedCloseButtonString)
+							}
+						}
+					}
+				}
 			}
-			
 			
 		}
 	}
@@ -576,6 +599,14 @@ public class Paywall: NSObject {
 
 extension Paywall: SKPaymentTransactionObserver {
 	
+	public func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
+		Logger.superwallDebug(string: "[Transaction Observer] paymentQueueRestoreCompletedTransactionsFinished")
+	}
+	
+	public func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
+		Logger.superwallDebug(string: "[Transaction Observer] restoreCompletedTransactionsFailedWithError", error: error)
+	}
+	
     public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         for transaction in transactions {
 			
@@ -615,9 +646,8 @@ extension Paywall: SKPaymentTransactionObserver {
               
             break
             case .restored:
-                Logger.superwallDebug(string: "[Transaction Observer] transactionWasRestored")
-                _transactionWasRestored()
-            break
+				
+				break
             case .deferred:
                 Logger.superwallDebug(string: "[Transaction Observer] deferred")
                 _transactionWasDeferred()

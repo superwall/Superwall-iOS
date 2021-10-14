@@ -54,7 +54,7 @@ extension Paywall {
         // skip calling user_attributes and custom events on their own system likely not needed
         // custom events wont work because StandardEventName and InternalEventName won't exist with their own event name
         if EventName(rawValue: name) != nil && name != "user_properties" {
-            Paywall.delegate?.shouldTrack?(event: name, params: delegateParams)
+			Paywall.delegate?.trackAnalyticsEvent?(withName: name, params: delegateParams)
         }
         
 		

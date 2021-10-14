@@ -355,7 +355,7 @@ internal class SWPaywallViewController: UIViewController {
         
     }
     
-    func presentAlert(title: String? = nil, message: String? = nil, actionTitle: String? = nil, action: (() -> ())? = nil) {
+	func presentAlert(title: String? = nil, message: String? = nil, actionTitle: String? = nil, action: (() -> ())? = nil, closeActionTitle: String = "Done") {
         
         if presentedViewController == nil {
             let vc = UIAlertController(title: title, message: message, preferredStyle: .alert)
@@ -367,7 +367,7 @@ internal class SWPaywallViewController: UIViewController {
                 vc.addAction(ca)
             }
             
-            let a = UIAlertAction(title: "Done", style: .cancel, handler: nil)
+            let a = UIAlertAction(title: closeActionTitle, style: .cancel, handler: nil)
             vc.addAction(a)
             
 
