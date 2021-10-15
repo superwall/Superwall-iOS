@@ -22,6 +22,16 @@ public class Paywall: NSObject {
         case developer
     }
 	
+	/// Defines the `title` of the alert presented to the end user when restoring transactions fails. Defaults to `No Subscription Found`
+	public static var restoreFailedTitleString = "No Subscription Found"
+	
+	/// Defines the `message` of the alert presented to the end user when restoring transactions fails. Defaults to `We couldn't find an active subscription for your account.`
+	public static var restoreFailedMessageString = "We couldn't find an active subscription for your account."
+	
+	/// Defines the `close button title` of the alert presented to the end user when restoring transactions fails. Defaults to `Okay`
+	public static var restoreFailedCloseButtonString = "Okay"
+	
+	/// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`
 	public static func gamepadValueChanged(gamepad: GCExtendedGamepad, element: GCControllerElement) {
 		GameControllerManager.shared.gamepadValueChanged(gamepad: gamepad, element: element)
 	}
@@ -39,7 +49,7 @@ public class Paywall: NSObject {
     /// Completion block that is optionally passed through `Paywall.present()`. Gets called if an error occurs while presenting a Superwall paywall, or if all paywalls are set to off in your dashboard. It's a good idea to add your legacy paywall presentation logic here just in case :)
 	internal typealias FallbackBlock = () -> ()
 	
-    /// Launches the debugger for you to preview paywalls. If you call `Paywall.track(.deepLinkOpen(deepLinkUrl: url))` from `application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool` in your `AppDelegate`, this funciton is called automatically after scanning your debug QR code in Superwall's web dashboard. Remember to add you URL scheme in settings for this feature to work!
+    /// Launches the debugger for you to preview paywalls. If you call `Paywall.track(.deepLinkOpen(deepLinkUrl: url))` from `application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool` in your `AppDelegate`, this funciton is called automatically after scanning your debug QR code in Superwall's web dashboard. Remember to add you URL scheme in settings for QR code scanning to work. 
     public static func launchDebugger(toPaywall paywallId: String? = nil) {
         isDebuggerLaunched = true
         Paywall.dismiss(nil)
@@ -277,6 +287,7 @@ public class Paywall: NSObject {
     
     private var didTryToAutoRestore = false
 	
+	/// Set this to `true` to forward events from the Game Controller to the Paywall via `Paywall.gamepadValueChanged(gamepad:element:)`
 	public static var isGameControllerEnabled = false
     
     internal var paywallId: String {
@@ -481,10 +492,6 @@ public class Paywall: NSObject {
         }
     }
 	
-	public static var restoreFailedTitleString = "No Subscription Found"
-	public static var restoreFailedMessageString = "We couldn't find an active subscription for your account."
-	public static var restoreFailedCloseButtonString = "Okay"
-	
 	private func tryToRestore(userInitiated: Bool = false) {
 		OnMain {
 			
@@ -599,15 +606,15 @@ public class Paywall: NSObject {
 
 extension Paywall: SKPaymentTransactionObserver {
 	
-	public func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
+	internal func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
 		Logger.superwallDebug(string: "[Transaction Observer] paymentQueueRestoreCompletedTransactionsFinished")
 	}
 	
-	public func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
+	internal func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
 		Logger.superwallDebug(string: "[Transaction Observer] restoreCompletedTransactionsFailedWithError", error: error)
 	}
 	
-    public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+	internal func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         for transaction in transactions {
 			
             guard let product = productsById[transaction.payment.productIdentifier] else { return }
@@ -661,21 +668,4 @@ extension Paywall: SKPaymentTransactionObserver {
     }
 }
 
-
-internal func OnMain(_ execute: @escaping () -> Void) {
-    DispatchQueue.main.async(execute: execute)
-}
-
-
-internal extension UIViewController {
-    static var topMostViewController: UIViewController? {
-        var presentor: UIViewController? = UIApplication.shared.keyWindow?.rootViewController
-        
-        while let p = presentor?.presentedViewController {
-            presentor = p
-        }
-        
-        return presentor
-    }
-}
 

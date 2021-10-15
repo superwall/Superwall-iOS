@@ -608,3 +608,24 @@ extension Dictionary {
 	}
 
 }
+
+
+internal extension UIViewController {
+	static var topMostViewController: UIViewController? {
+		var presentor: UIViewController? = UIApplication.shared.keyWindow?.rootViewController
+		
+		while let p = presentor?.presentedViewController {
+			presentor = p
+		}
+		
+		return presentor
+	}
+}
+
+
+
+internal func OnMain(_ execute: @escaping () -> Void) {
+	DispatchQueue.main.async(execute: execute)
+}
+
+
