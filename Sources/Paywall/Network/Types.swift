@@ -28,11 +28,16 @@ internal struct PaywallsResponse: Decodable {
 }
 
 public class PaywallInfo: NSObject {
+	/// Superwall's internal identifier for this paywall
 	var id: String
+	/// The identifier set for this paywall in Superwall's web dashboard
 	var identifier: String
+	/// The name set for this paywall in Superwall's web dashboard
 	var name: String
 	var slug: String
+	/// The URL where this paywall is hosted
 	var url: URL? = nil
+	/// An array of product IDs that this paywall is displaying in `[Primary, Secondary, Tertiary]` order
 	var productIds: [String]
 	
 	init(id: String, identifier: String, name: String, slug: String, url: URL?, productIds: [String]) {
