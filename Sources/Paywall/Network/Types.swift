@@ -29,16 +29,21 @@ internal struct PaywallsResponse: Decodable {
 
 /// `PaywallInfo` is the primary class used to distinguish one paywall from another. Used primarily in `Paywall.present(onPresent:onDismiss)`'s completion handlers.
 public class PaywallInfo: NSObject {
-	/// Superwall's internal identifier for this paywall
+	
+	/// Superwall's internal identifier for this paywall.
 	var id: String
-	/// The identifier set for this paywall in Superwall's web dashboard
+	
+	/// The identifier set for this paywall in Superwall's web dashboard.
 	var identifier: String
-	/// The name set for this paywall in Superwall's web dashboard
+	
+	/// The name set for this paywall in Superwall's web dashboard.
 	var name: String
 	var slug: String
-	/// The URL where this paywall is hosted
+	
+	/// The URL where this paywall is hosted.
 	var url: URL? = nil
-	/// An array of product IDs that this paywall is displaying in `[Primary, Secondary, Tertiary]` order
+	
+	/// An array of product IDs that this paywall is displaying in `[Primary, Secondary, Tertiary]` order.
 	var productIds: [String]
 	
 	init(id: String, identifier: String, name: String, slug: String, url: URL?, productIds: [String]) {
