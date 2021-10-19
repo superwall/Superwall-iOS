@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 let serialQueue = DispatchQueue(label: "me.superwall.eventQueue")
-let MaxEventCount = 25;
+let MaxEventCount = 50;
 
 internal class EventsQueue {
     
@@ -18,7 +18,7 @@ internal class EventsQueue {
     
     public init () {
         
-        timer = Timer.scheduledTimer(timeInterval: 1.0, target:self, selector: #selector(flush), userInfo: nil, repeats: true)
+		timer = Timer.scheduledTimer(timeInterval: 20.0, target:self, selector: #selector(flush), userInfo: nil, repeats: true)
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(flush), name: UIApplication.willResignActiveNotification, object: nil)
     }
@@ -36,7 +36,7 @@ internal class EventsQueue {
         }
     }
     
-    private func flushInternal(depth: Int = 5) {
+    private func flushInternal(depth: Int = 10) {
         var eventsToSend: [JSON] = [];
         
         var i = 0;
@@ -53,6 +53,7 @@ internal class EventsQueue {
 //                Logger.superwallDebug("Events Queue:", result)
             }
         }
+		
         if (elements.count > 0 && depth > 0) {
             return flushInternal(depth: depth - 1)
         }
