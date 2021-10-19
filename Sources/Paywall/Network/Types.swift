@@ -129,13 +129,20 @@ internal struct PaywallResponse: Decodable {
     }
     
     var templateEventsBase64String: String {
+		let encodedStrings = [encodedEventString(templateDevice), encodedEventString(templateProducts), encodedEventString(templateVariables), encodedEventString(templateSubstitutionsPrefix)]
+		let string = "[" + encodedStrings.joined(separator: ",") + "]"
 
-          let encodedStrings = [encodedEventString(templateDevice), encodedEventString(templateProducts), encodedEventString(templateVariables), encodedEventString(templateSubstitutionsPrefix)]
-          let string = "[" + encodedStrings.joined(separator: ",") + "]"
-
-          let utf8str = string.data(using: .utf8)
-          return utf8str?.base64EncodedString() ?? ""
-      }
+		let utf8str = string.data(using: .utf8)
+		return utf8str?.base64EncodedString() ?? ""
+	}
+	
+	internal func equals(_ r: PaywallResponse) -> Bool {
+		let sameIdentity = id == r.id && identifier == r.identifier && name == r.name && slug == r.slug && identifier == r.identifier && url == r.url && paywalljsEvent == r.paywalljsEvent && presentationStyle == r.presentationStyle && backgroundColorHex == r.backgroundColorHex
+		
+		let sameProducts = r.productIds == productIds
+		
+		return sameIdentity && sameProducts
+	}
     
     private func encodedEventString<T: Codable>(_ input: T) -> String {
         let data = try? JSONEncoder().encode(input)

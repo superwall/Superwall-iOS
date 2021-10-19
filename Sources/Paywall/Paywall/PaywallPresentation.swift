@@ -119,19 +119,15 @@ extension Paywall {
 		}
 		
 		self.dismissalCompletion = dismissalCompletion
-		
-		
-		
+				
 		guard let delegate = delegate else {
 			Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate before doing anything fancy")
 			fallback?(Paywall.shared.presentationError(domain: "SWDelegateError", code: 100, title: "Paywall delegate not set", value: "You need to set Paywall.delegate before doing anything fancy"))
 			return
 		}
 		
-		
 		let presentationBlock: ((SWPaywallViewController) -> ()) = { vc in
 			
-
 			guard let presentor = (viewController ?? UIViewController.topMostViewController) else {
 				Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
 				fallback?(Paywall.shared.presentationError(domain: "SWPresentationError", code: 101, title: "No UIViewController to present paywall on", value: "This usually happens when you call this method before a window was made key and visible."))
@@ -141,7 +137,6 @@ extension Paywall {
 			// if the top most view controller is a paywall view controller
 			// the paywall view controller to present has a presenting view controller
 			// the paywall view controller to present is in the process of being presented
-			
 			
 			let isPresented = (presentor as? SWPaywallViewController) != nil || vc.presentingViewController != nil || vc.isBeingPresented
 			

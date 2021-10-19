@@ -88,8 +88,19 @@ public class Paywall: NSObject {
         
         guard let r = r else {
             self.shared.paywallViewController = nil
+			// TODO: add this???
+			// add completion?(false) ?
             return
         }
+		
+		if let old = shared.paywallResponse {
+			if old.equals(r) {
+				DispatchQueue.main.async {
+					completion?(true)
+				}
+				return
+			}
+		}
         
         shared.paywallResponse = r
         var response = shared.paywallResponse!
@@ -173,6 +184,9 @@ public class Paywall: NSObject {
 				if shared.triggerPaywallResponseIsLoading.contains(eventName) {
 					
 					Paywall.track(.paywallResponseLoadComplete(fromEvent: isFromEvent, event: event))
+					
+					// if the response we have has a paywall_id equal to the one we just got, just call the completion
+
 					Paywall.set(response: response, completion: { success in
 						
 						completion?(success, nil)
@@ -606,15 +620,15 @@ public class Paywall: NSObject {
 
 extension Paywall: SKPaymentTransactionObserver {
 	
-	internal func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
+	public func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
 		Logger.superwallDebug(string: "[Transaction Observer] paymentQueueRestoreCompletedTransactionsFinished")
 	}
 	
-	internal func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
+	public func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
 		Logger.superwallDebug(string: "[Transaction Observer] restoreCompletedTransactionsFailedWithError", error: error)
 	}
 	
-	internal func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+	public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         for transaction in transactions {
 			
             guard let product = productsById[transaction.payment.productIdentifier] else { return }
