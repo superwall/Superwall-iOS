@@ -62,6 +62,13 @@ class Store {
 		config.triggers.forEach { data[$0.eventName] = true }
 		cache.write(dictionary: data, forKey: "store.config")
 		triggers = Set(data.keys)
+		
+		for group in config.productIdentifierGroups {
+			StoreKitManager.shared.get(productsWithIds: group) { _ in
+				
+			}
+		}
+		
 	}
 	
 	func recordFirstSeenTracked() {

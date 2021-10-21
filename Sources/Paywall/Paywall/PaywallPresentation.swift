@@ -128,7 +128,11 @@ extension Paywall {
 		
 		let presentationBlock: ((SWPaywallViewController) -> ()) = { vc in
 			
-			guard let presentor = (viewController ?? UIViewController.topMostViewController) else {
+			if viewController == nil {
+				shared.createPresentingWindow()
+			}
+			
+			guard let presentor = (viewController ?? shared.presentingWindow?.rootViewController) else {
 				Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call this method before a window was made key and visible. Try calling this a little later, or explicitly pass in a UIViewController to present your Paywall on :)")
 				fallback?(Paywall.shared.presentationError(domain: "SWPresentationError", code: 101, title: "No UIViewController to present paywall on", value: "This usually happens when you call this method before a window was made key and visible."))
 				return
@@ -138,7 +142,7 @@ extension Paywall {
 			// the paywall view controller to present has a presenting view controller
 			// the paywall view controller to present is in the process of being presented
 			
-			let isPresented = (presentor as? SWPaywallViewController) != nil || vc.presentingViewController != nil || vc.isBeingPresented
+			let isPresented = (presentor as? SWPaywallViewController) != nil || vc.presentingViewController != nil || vc.isBeingPresented 
 			
 			if !isPresented {
 				shared.paywallViewController?.readyForEventTracking = false
@@ -149,9 +153,12 @@ extension Paywall {
 				vc.view.transform = .identity
 				vc.webview.scrollView.contentOffset = CGPoint.zero
 				delegate.willPresentPaywall?()
+				
+				
+				
 				presentor.present(vc, animated: true, completion: {
 					self.presentAgain = {
-						present(on: viewController, fromEvent: fromEvent, cached: false, presentationCompletion: presentationCompletion, dismissalCompletion: dismissalCompletion, fallback: fallback)
+						present(on: presentor, fromEvent: fromEvent, cached: false, presentationCompletion: presentationCompletion, dismissalCompletion: dismissalCompletion, fallback: fallback)
 					}
 					delegate.didPresentPaywall?()
 					presentationCompletion?(vc._paywallResponse?.paywallInfo)
@@ -178,31 +185,37 @@ extension Paywall {
 		
 		lastEventTrigger = fromEvent?.name
 		
-		getPaywallResponse(withIdentifier: identifier, fromEvent: fromEvent) { success, error in
+		PaywallResponseManager.shared.getResponse(identifier: identifier, event: fromEvent) { r, e in
 			
-			if (success) {
-				
-				guard let vc = shared.paywallViewController else {
-					lastEventTrigger = nil
-					Logger.superwallDebug(string: "Paywall's viewcontroller is nil!")
-					fallback?(Paywall.shared.presentationError(domain: "SWInternalError", code: 102, title: "Paywall not set", value: "Paywall.paywallViewController was nil"))
-					return
+			if let r = r {
+				Paywall.set(response: r) { success in
+					if (success) {
+						
+						guard let vc = shared.paywallViewController else {
+							lastEventTrigger = nil
+							Logger.superwallDebug(string: "Paywall's viewcontroller is nil!")
+							fallback?(Paywall.shared.presentationError(domain: "SWInternalError", code: 102, title: "Paywall not set", value: "Paywall.paywallViewController was nil"))
+							return
+						}
+						
+						guard let _ = shared.paywallResponse else {
+							lastEventTrigger = nil
+							Logger.superwallDebug(string: "Paywall presented before API response was received")
+							fallback?(Paywall.shared.presentationError(domain: "SWInternalError", code: 103, title: "Paywall Presented to Early", value: "Paywall presented before API response was received"))
+							return
+						}
+						
+						presentationBlock(vc)
+						
+					} else {
+						lastEventTrigger = nil
+						fallback?(e)
+					}
 				}
-				
-				guard let _ = shared.paywallResponse else {
-					lastEventTrigger = nil
-					Logger.superwallDebug(string: "Paywall presented before API response was received")
-					fallback?(Paywall.shared.presentationError(domain: "SWInternalError", code: 103, title: "Paywall Presented to Early", value: "Paywall presented before API response was received"))
-					return
-				}
-				
-				presentationBlock(vc)
-				
-			} else {
-				lastEventTrigger = nil
-				fallback?(error)
 			}
+			
 		}
+		
 	}
 	
 	

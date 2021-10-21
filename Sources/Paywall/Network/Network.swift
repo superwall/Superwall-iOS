@@ -139,9 +139,7 @@ extension Network {
 
 extension Network {
 	func paywall(withIdentifier: String? = nil, fromEvent event: EventData? = nil, completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
-        
-        
-        
+                
         let components = URLComponents(string: "paywall")!
         let requestURL = components.url(relativeTo: baseURL)!
         var request = URLRequest(url: requestURL)

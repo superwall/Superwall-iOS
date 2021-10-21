@@ -233,6 +233,7 @@ internal struct EventData: Codable {
 
 internal struct ConfigResponse: Decodable {
 	var triggers: [Trigger]
+	var productIdentifierGroups: [[String]]
 }
 
 // Triggers
