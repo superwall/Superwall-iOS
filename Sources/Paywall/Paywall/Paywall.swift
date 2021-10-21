@@ -161,61 +161,7 @@ public class Paywall: NSObject {
 		completion?(true)
 	}
 	
-	internal static func getPaywallResponse(withIdentifier: String? = nil, fromEvent event: EventData? = nil, completion: ((Bool, NSError?) -> ())? = nil) {
-        
-		let isFromEvent = event != nil
-		let eventName = event?.name ?? "$called_manually"
-		
-		
-		if shared.triggerPaywallResponseIsLoading.contains(eventName) || shared.triggerPaywallResponseIsLoading.contains("$called_manually") {
-			return
-		}
 
-        Paywall.track(.paywallResponseLoadStart(fromEvent: isFromEvent, event: event))
-		
-		shared.triggerPaywallResponseIsLoading.removeAll()
-		shared.triggerPaywallResponseIsLoading.insert(eventName)
-        
-		Network.shared.paywall(withIdentifier: withIdentifier, fromEvent: event) { (result) in
-            
-            switch(result){
-            case .success(let response):
-					
-				if shared.triggerPaywallResponseIsLoading.contains(eventName) {
-					
-					Paywall.track(.paywallResponseLoadComplete(fromEvent: isFromEvent, event: event))
-					
-					// if the response we have has a paywall_id equal to the one we just got, just call the completion
-
-					Paywall.set(response: response, completion: { success in
-						
-						completion?(success, nil)
-						
-					})
-					shared.triggerPaywallResponseIsLoading.remove(eventName)
-					
-				}
-                
-            case .failure(let error):
-				
-				if shared.triggerPaywallResponseIsLoading.contains(eventName) {
-
-					Logger.superwallDebug(string: "Failed to load paywall", error: error)
-					Paywall.track(.paywallResponseLoadFail(fromEvent: isFromEvent, event: event))
-					shared.triggerPaywallResponseIsLoading.remove(eventName)
-					DispatchQueue.main.async {
-						let userInfo: [String : Any] = [
-							NSLocalizedDescriptionKey :  NSLocalizedString("Not Found", value: "There isn't a paywall configured to show in this context", comment: "") ,
-						]
-						let error = NSError(domain: "SWPaywallNotFound", code: 404, userInfo: userInfo)
-						completion?(false, error)
-					}
-				}
-            }
-            
-			
-        }
-    }
     
     /// Configures an instance of Superwall's Paywall SDK with a specified API key. If you don't pass through a userId, we'll create one for you. Calling `Paywall.identify(userId: String)` in the future will automatically alias these two for simple reporting.
     ///  - Parameter apiKey: Your Public API Key from: https://superwall.me/applications/1/settings/keys
@@ -272,6 +218,20 @@ public class Paywall: NSObject {
     
     // MARK: Private
     
+	internal var presentingWindow: UIWindow? = nil
+	
+	internal func createPresentingWindow() {
+		presentingWindow = UIWindow(frame: UIScreen.main.bounds)
+		presentingWindow?.rootViewController = UIViewController()
+		presentingWindow?.windowLevel = .normal
+		presentingWindow?.makeKeyAndVisible()
+	}
+	
+	internal func destroyPresentingWindow() {
+		presentingWindow?.resignKey()
+		presentingWindow = nil
+	}
+	
     internal static var dismissalCompletion: DismissalCompletionBlock? = nil
     
     internal static var shared: Paywall = Paywall(apiKey: nil)
@@ -350,6 +310,13 @@ public class Paywall: NSObject {
 					self?.didFetchConfig = true
 					self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleTrigger(forEvent: $0) }
 					self?.eventsTrackedBeforeConfigWasFetched.removeAll()
+					
+					// pre-fetch the default response
+					PaywallResponseManager.shared.getResponse { result, _ in
+						if self?.paywallViewController == nil {
+							Paywall.set(response: result, completion: nil)
+						}
+					}
 					
 				case .failure(let error):
 					Logger.superwallDebug(string: "Warning: ", error: error)
@@ -576,6 +543,8 @@ public class Paywall: NSObject {
 				if let s = userDidPurchase, let paywallInfo = self?.paywallViewController?._paywallResponse?.paywallInfo {
                     Paywall.dismissalCompletion?(s, productId, paywallInfo)
                 }
+				
+				self?.destroyPresentingWindow()
                 
             })
         }
