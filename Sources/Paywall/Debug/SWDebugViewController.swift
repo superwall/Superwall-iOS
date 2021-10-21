@@ -198,8 +198,6 @@ internal class SWDebugViewController: UIViewController {
                     self?.previewPickerButton.setTitle("\(paywallResponse?.name ?? "Preview")", for: .normal)
                 }
                 
-                
-                
                 if let paywallResponse = self?.paywallResponse {
                     StoreKitManager.shared.getVariables(forResponse: paywallResponse) { variables in
                         self?.paywallResponse?.variables = variables
@@ -209,8 +207,6 @@ internal class SWDebugViewController: UIViewController {
                         }
                     }
                 }
-                
-  
                 
             case .failure(let error):
                 Logger.superwallDebug(string: "Debug Mode Error", error: error)
@@ -372,14 +368,14 @@ internal class SWDebugViewController: UIViewController {
                     let paywallResponse = paywalls.first { p in
                         p.id == self?.paywallId
                     }
-                    
+						
+					Paywall.set(response: nil, completion: nil)
                     Paywall.set(response: paywallResponse, completion: { [weak self] _ in
-                        Paywall.present(on: self, presentationCompletion: {
-                            self?.bottomButton.showLoading = false
-                            self?.bottomButton.setImage(UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!, for: .normal)
-                        })
+						Paywall.present(on: self, onPresent: { _ in
+							self?.bottomButton.showLoading = false
+							self?.bottomButton.setImage(UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!, for: .normal)
+						})
                     })
-                    
                     
                 case .failure(let error):
                     Logger.superwallDebug(string: "Debug Mode Error", error: error)
