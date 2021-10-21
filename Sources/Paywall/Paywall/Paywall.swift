@@ -85,6 +85,10 @@ public class Paywall: NSObject {
     }
     
     internal static func set(response r: PaywallResponse?, completion: ((Bool) -> ())? = nil) {
+		
+		if shared.paywallViewController?.presentingViewController != nil {
+			return
+		}
         
         guard let r = r else {
             self.shared.paywallViewController = nil
@@ -136,6 +140,12 @@ public class Paywall: NSObject {
             response.variables = variables
             
             DispatchQueue.main.async {
+				
+				if shared.paywallViewController != nil && shared.paywallViewController?.parent != nil {
+					shared.paywallViewController?.willMove(toParent: nil)
+					shared.paywallViewController?.view.removeFromSuperview()
+					shared.paywallViewController?.removeFromParent()
+				}
                 
                 shared.paywallViewController = SWPaywallViewController(paywallResponse: response, completion: shared.paywallEventDidOccur)
                 
@@ -154,14 +164,16 @@ public class Paywall: NSObject {
         }
     }
     
-    
-    /// DEPRECATED: This method does nothing.
-    /// - Parameter completion: DEPRECATED: this will get called with `true` no matter what
-	@objc public static func load(completion: ((Bool) -> ())? = nil) {
-		completion?(true)
-	}
+	internal static var didPreLoad = false
 	
-
+	/// Use this to preload a paywall before presenting it. Only necessary if you are manually specifying which paywall to present later — Superwall automatically does this otherwise.
+	///  - Parameter identifier: The identifier of the paywall you would like to load in the background, as found in your paywall's settings in the dashboard.
+	@objc public static func load(identifier: String) {
+		didPreLoad = true
+		PaywallResponseManager.shared.getResponse(identifier: identifier) { result, _ in
+			Paywall.set(response: result, completion: nil)
+		}
+	}
     
     /// Configures an instance of Superwall's Paywall SDK with a specified API key. If you don't pass through a userId, we'll create one for you. Calling `Paywall.identify(userId: String)` in the future will automatically alias these two for simple reporting.
     ///  - Parameter apiKey: Your Public API Key from: https://superwall.me/applications/1/settings/keys
@@ -217,6 +229,17 @@ public class Paywall: NSObject {
 	internal static var presentAgain = {}
     
     // MARK: Private
+	
+	
+	internal var isPresenting: Bool = false {
+		didSet {
+			if isPresenting {
+				DispatchQueue.main.asyncAfter(deadline: .now() + 0.7, execute: {
+					self.isPresenting = false
+				})
+			}
+		}
+	}
     
 	internal var presentingWindow: UIWindow? = nil
 	
@@ -305,6 +328,7 @@ public class Paywall: NSObject {
 	
 	private var didFetchConfig = !Store.shared.triggers.isEmpty
 	private var eventsTrackedBeforeConfigWasFetched = [EventData]()
+
 	
 	private func fetchConfiguration() {
 		Network.shared.config { [weak self] (result) in
@@ -313,15 +337,17 @@ public class Paywall: NSObject {
 				case .success(let config):
 					Store.shared.add(config: config)
 					self?.didFetchConfig = true
-					self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleTrigger(forEvent: $0) }
-					self?.eventsTrackedBeforeConfigWasFetched.removeAll()
 					
 					// pre-fetch the default response
 					PaywallResponseManager.shared.getResponse { result, _ in
-						if self?.paywallViewController == nil {
+						if self?.paywallViewController == nil && !Paywall.didPreLoad {
 							Paywall.set(response: result, completion: nil)
 						}
 					}
+					
+					self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleTrigger(forEvent: $0) }
+					self?.eventsTrackedBeforeConfigWasFetched.removeAll()
+
 					
 				case .failure(let error):
 					Logger.superwallDebug(string: "Warning: ", error: error)
