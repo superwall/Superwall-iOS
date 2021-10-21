@@ -164,6 +164,7 @@ public class Paywall: NSObject {
         }
     }
     
+	
 	internal static var didPreLoad = false
 	
 	/// Use this to preload a paywall before presenting it. Only necessary if you are manually specifying which paywall to present later — Superwall automatically does this otherwise.
