@@ -204,6 +204,7 @@ internal class SWPaywallViewController: UIViewController {
         config.allowsInlineMediaPlayback = true
         config.allowsAirPlayForMediaPlayback = true
         config.allowsPictureInPictureMediaPlayback = true
+		config.mediaTypesRequiringUserActionForPlayback = []
 		
 		let preferences = WKPreferences()
 		if #available(iOS 15.0, *) {

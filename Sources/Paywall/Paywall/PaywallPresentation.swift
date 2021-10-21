@@ -36,7 +36,7 @@ extension Paywall {
 	
 	
 	/// Presents a paywall to the user.
-	///  - Parameter on: The view controller to present the paywall on. Presents on the `keyWindow`'s `rootViewController`'s top most view controller  if `nil`. Defaults to `nil`.
+	///  - Parameter on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
 	///  - Parameter onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a `PaywallInfo?` object containing information about the paywall.
 	///  - Parameter onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a `PaywallInfo?` object containing information about the paywall.
 	///  - Parameter onFail: A completion block that gets called when the paywall fails to present, either because an error occured or because all paywalls are off. Defaults to `nil`.  Accepts an `NSError?` with more details.
@@ -51,7 +51,7 @@ extension Paywall {
 	
 	/// Presents a paywall to the user.
 	///  - Parameter identifier: The identifier of the paywall you wish to present
-	///  - Parameter on: The view controller to present the paywall on. Presents on the `keyWindow`'s `rootViewController`'s top most view controller  if `nil`. Defaults to `nil`.
+	///  - Parameter on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
 	///  - Parameter onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a `PaywallInfo?` object containing information about the paywall.
 	///  - Parameter onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a `PaywallInfo?` object containing information about the paywall.
 	///  - Parameter onFail: A completion block that gets called when the paywall fails to present, either because an error occured or because all paywalls are off. Defaults to `nil`.  Accepts an `NSError?` with more details.
@@ -69,7 +69,7 @@ extension Paywall {
 	/// This function is equivalent to logging an event, but exposes completion blocks in case you would like to execute code based on specific outcomes
 	///  - Parameter event: The name of the event you wish to trigger (equivalent to event name in `Paywall.track()`)
 	///  - Parameter params: Parameters you wish to pass along to the trigger (equivalent to params in `Paywall.track()`)
-	///  - Parameter on: The view controller to present the paywall on. Presents on the `keyWindow`'s `rootViewController`'s top most view controller  if `nil`. Defaults to `nil`.
+	///  - Parameter on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
 	///  - Parameter onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a `PaywallInfo?` object containing information about the paywall.
 	///  - Parameter onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a `PaywallInfo?` object containing information about the paywall.
 	///  - Parameter onSkip: A completion block that gets called when the paywall's presentation is skipped, either because the trigger is disabled or an error has occurred. Defaults to `nil`.  Accepts an `NSError?` with more details.
@@ -128,6 +128,8 @@ extension Paywall {
 		
 		let presentationBlock: ((SWPaywallViewController) -> ()) = { vc in
 			
+			let presentingWindowExists = shared.presentingWindow != nil
+			
 			if viewController == nil {
 				shared.createPresentingWindow()
 			}
@@ -142,7 +144,7 @@ extension Paywall {
 			// the paywall view controller to present has a presenting view controller
 			// the paywall view controller to present is in the process of being presented
 			
-			let isPresented = (presentor as? SWPaywallViewController) != nil || vc.presentingViewController != nil || vc.isBeingPresented 
+			let isPresented = (presentor as? SWPaywallViewController) != nil || vc.presentingViewController != nil || vc.isBeingPresented || presentingWindowExists
 			
 			if !isPresented {
 				shared.paywallViewController?.readyForEventTracking = false
@@ -158,6 +160,7 @@ extension Paywall {
 				
 				presentor.present(vc, animated: true, completion: {
 					self.presentAgain = {
+						Paywall.set(response: nil, completion: nil)
 						present(on: presentor, fromEvent: fromEvent, cached: false, presentationCompletion: presentationCompletion, dismissalCompletion: dismissalCompletion, fallback: fallback)
 					}
 					delegate.didPresentPaywall?()

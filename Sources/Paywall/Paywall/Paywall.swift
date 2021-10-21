@@ -93,7 +93,7 @@ public class Paywall: NSObject {
             return
         }
 		
-		if let old = shared.paywallResponse {
+		if let old = shared.paywallViewController?._paywallResponse {
 			if old.equals(r) {
 				DispatchQueue.main.async {
 					completion?(true)
@@ -221,6 +221,11 @@ public class Paywall: NSObject {
 	internal var presentingWindow: UIWindow? = nil
 	
 	internal func createPresentingWindow() {
+		
+		if presentingWindow != nil {
+			return
+		}
+		
 		presentingWindow = UIWindow(frame: UIScreen.main.bounds)
 		presentingWindow?.rootViewController = UIViewController()
 		presentingWindow?.windowLevel = .normal
