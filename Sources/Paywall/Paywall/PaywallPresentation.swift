@@ -212,8 +212,11 @@ extension Paywall {
 						fallback?(e)
 					}
 				}
+			} else {
+				lastEventTrigger = nil
+				fallback?(e)
 			}
-			
+
 		}
 		
 	}
