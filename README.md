@@ -22,7 +22,7 @@
 
 ## Paywalls.framework
 
-**Paywall** is a client for the [Superwall](https://superwall.me/) paywall iteration anbd event tracking system. It is an open source framework that provides a wrapper around `Webkit` for presenting and creating paywalls. The Superwall backend for implementing new paywalls lets you iterate on the fly in `Swift` or `Objective-C` easy!
+**Paywall** is a client for the [Superwall](https://superwall.me/) paywall iteration and event tracking system. It is an open source framework that provides a wrapper around `Webkit` for presenting and creating paywalls. The Superwall backend for implementing new paywalls lets you iterate on the fly in `Swift` or `Objective-C` easy!
 
 ## Features
 |   | Superwall |
