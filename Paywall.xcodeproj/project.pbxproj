@@ -3,10 +3,12 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0710F1429BA795E58A6461DB /* GameControllerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55E5A5606736C70494B6EA37 /* GameControllerManager.swift */; };
+		0B9F89164667B376D47D6C6A /* PaywallPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3EF821C1CFD440F2C10BD04 /* PaywallPresentation.swift */; };
 		0BBFC767922F24ABF42589D1 /* Debug.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67E79A4B4F9CA8D4FA62DF0C /* Debug.swift */; };
 		0E70DAD87A92723C4FAFDFAE /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0718F817A6D2C9493AF6FBE5 /* StoreKitManager.swift */; };
 		0FD23369D3FD47831A02E972 /* SWBounceButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 271079AB0915D7C997940C95 /* SWBounceButton.swift */; };
@@ -20,6 +22,7 @@
 		5E417214B1381CA60162E0D5 /* SWConsoleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39C933A6381DB152E672FCE9 /* SWConsoleViewController.swift */; };
 		67E3DBC1883F3965BA4DE938 /* Cache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FB351A84EEC5D8E5E8798FA /* Cache.swift */; };
 		6FBFE2509CC7A4ACE4068CAE /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = C387A7567FDEF78FDDE6DFC0 /* Store.swift */; };
+		7691C1718BA95F3D9809521A /* PaywallResponseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08628840CDA0FD7E8B50D224 /* PaywallResponseManager.swift */; };
 		7AD13EAC110C54195DEAEFB1 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD2A08A7B5B4D29500F34927 /* Extensions.swift */; };
 		824933BE91877E221F976014 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ECF855DE5D99DE526EAB147 /* SwiftyJSON.swift */; };
 		89C930F9AF3E78401DA75EBB /* Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF54D10298EB2DAEBE67770 /* Events.swift */; };
@@ -28,30 +31,36 @@
 		9A17ACCA20FA446852E6D60E /* EventsQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7B553F877CB9EB9156D803 /* EventsQueue.swift */; };
 		9F4C01C37A3D415E7F1DB27B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E392B6BD026B3616179AD097 /* Assets.xcassets */; };
 		A2897495E7CF38F8AE8B3F15 /* PaywallEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDFF57BA43FA58EBD97FE5B7 /* PaywallEvents.swift */; };
+		A4069F9FDB258F21E1E68EF6 /* ProductsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A387AC3403C1525AB78CDF /* ProductsManager.swift */; };
 		A49230BAE35CFBB29870F6DA /* BundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BAB288702408C2788E00C56 /* BundleHelper.swift */; };
 		C4D655EDB16A8528F989FC6F /* SWPaywallViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCA3CCA5BA8B08041A798297 /* SWPaywallViewController.swift */; };
 		CF20978CDB4E42FB242D2C9E /* Shimmer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D9C63C76AE79C2254DF1C /* Shimmer.swift */; };
 		D39F9A30F66BDBF19778AD4B /* Example.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6141A41709926F5628A3A0 /* Example.swift */; };
 		DB5D4A75F57964597B02CD94 /* TPInAppReceipt in Frameworks */ = {isa = PBXBuildFile; productRef = F82B5A085AE5FBA1919CA8EF /* TPInAppReceipt */; };
 		E2C928F75405E84DEB0882B6 /* ShimmeringMaskLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172F9EA3F79A4A44E12F7BE /* ShimmeringMaskLayer.swift */; };
+		FE82C1853125202647F35D89 /* PaywallDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3120D4B1C19900CA6951E6F8 /* PaywallDelegate.swift */; };
 		FEB31F66186E30FDAF63D045 /* Network.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82C4F84E15DB7596C36F04DD /* Network.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0174F2F10C41C0E955B23457 /* SWDebugManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWDebugManager.swift; sourceTree = "<group>"; };
 		0718F817A6D2C9493AF6FBE5 /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
+		08628840CDA0FD7E8B50D224 /* PaywallResponseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallResponseManager.swift; sourceTree = "<group>"; };
 		09D4F343E0BA85AC451816E4 /* Paywall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Paywall.swift; sourceTree = "<group>"; };
 		0BAB288702408C2788E00C56 /* BundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleHelper.swift; sourceTree = "<group>"; };
 		1172F9EA3F79A4A44E12F7BE /* ShimmeringMaskLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringMaskLayer.swift; sourceTree = "<group>"; };
 		23D70898410086252ECA7B4D /* ShimmeringLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringLayer.swift; sourceTree = "<group>"; };
 		271079AB0915D7C997940C95 /* SWBounceButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWBounceButton.swift; sourceTree = "<group>"; };
+		3120D4B1C19900CA6951E6F8 /* PaywallDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallDelegate.swift; sourceTree = "<group>"; };
 		39C933A6381DB152E672FCE9 /* SWConsoleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWConsoleViewController.swift; sourceTree = "<group>"; };
 		3FB351A84EEC5D8E5E8798FA /* Cache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cache.swift; sourceTree = "<group>"; };
 		46323AB736A8AD9C4DFB8F16 /* Paywall.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Paywall.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DCBAC4DB0C7A95C8B7CB232 /* String+MD5.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+MD5.swift"; sourceTree = "<group>"; };
 		4ECF855DE5D99DE526EAB147 /* SwiftyJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyJSON.swift; sourceTree = "<group>"; };
+		55E5A5606736C70494B6EA37 /* GameControllerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameControllerManager.swift; sourceTree = "<group>"; };
 		67E79A4B4F9CA8D4FA62DF0C /* Debug.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Debug.swift; sourceTree = "<group>"; };
 		6F0DF5E8AC71E05726109BE5 /* SWDebugViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWDebugViewController.swift; sourceTree = "<group>"; };
+		74A387AC3403C1525AB78CDF /* ProductsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsManager.swift; sourceTree = "<group>"; };
 		7BCB92333070318FF40FD013 /* ShimmeringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringView.swift; sourceTree = "<group>"; };
 		82C4F84E15DB7596C36F04DD /* Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network.swift; sourceTree = "<group>"; };
 		A8661C67ACCFCA3AAAFF026C /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
@@ -59,6 +68,7 @@
 		BB7B553F877CB9EB9156D803 /* EventsQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsQueue.swift; sourceTree = "<group>"; };
 		C01D9C63C76AE79C2254DF1C /* Shimmer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shimmer.swift; sourceTree = "<group>"; };
 		C387A7567FDEF78FDDE6DFC0 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
+		C3EF821C1CFD440F2C10BD04 /* PaywallPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPresentation.swift; sourceTree = "<group>"; };
 		CCA3CCA5BA8B08041A798297 /* SWPaywallViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWPaywallViewController.swift; sourceTree = "<group>"; };
 		CD2A08A7B5B4D29500F34927 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		CD6141A41709926F5628A3A0 /* Example.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Example.swift; sourceTree = "<group>"; };
@@ -85,6 +95,8 @@
 			children = (
 				DCF54D10298EB2DAEBE67770 /* Events.swift */,
 				09D4F343E0BA85AC451816E4 /* Paywall.swift */,
+				3120D4B1C19900CA6951E6F8 /* PaywallDelegate.swift */,
+				C3EF821C1CFD440F2C10BD04 /* PaywallPresentation.swift */,
 				CCA3CCA5BA8B08041A798297 /* SWPaywallViewController.swift */,
 				B1ACB0917547FD193909E9B0 /* ShimmerView */,
 			);
@@ -169,6 +181,7 @@
 				67E79A4B4F9CA8D4FA62DF0C /* Debug.swift */,
 				CD6141A41709926F5628A3A0 /* Example.swift */,
 				CD2A08A7B5B4D29500F34927 /* Extensions.swift */,
+				55E5A5606736C70494B6EA37 /* GameControllerManager.swift */,
 				4ECF855DE5D99DE526EAB147 /* SwiftyJSON.swift */,
 			);
 			path = Misc;
@@ -180,6 +193,8 @@
 				B64A36AB939D7351F687712C /* Device.swift */,
 				82C4F84E15DB7596C36F04DD /* Network.swift */,
 				FDFF57BA43FA58EBD97FE5B7 /* PaywallEvents.swift */,
+				08628840CDA0FD7E8B50D224 /* PaywallResponseManager.swift */,
+				74A387AC3403C1525AB78CDF /* ProductsManager.swift */,
 				0718F817A6D2C9493AF6FBE5 /* StoreKitManager.swift */,
 				A8661C67ACCFCA3AAAFF026C /* Types.swift */,
 			);
@@ -215,7 +230,9 @@
 		FC6A155FC7F8B4F1C84F6629 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1300;
+				LastUpgradeCheck = 1200;
+				TargetAttributes = {
+				};
 			};
 			buildConfigurationList = 49E56C13DC94177BCFDBE533 /* Build configuration list for PBXProject "Paywall" */;
 			compatibilityVersion = "Xcode 10.0";
@@ -262,9 +279,14 @@
 				9A17ACCA20FA446852E6D60E /* EventsQueue.swift in Sources */,
 				D39F9A30F66BDBF19778AD4B /* Example.swift in Sources */,
 				7AD13EAC110C54195DEAEFB1 /* Extensions.swift in Sources */,
+				0710F1429BA795E58A6461DB /* GameControllerManager.swift in Sources */,
 				FEB31F66186E30FDAF63D045 /* Network.swift in Sources */,
 				29735852190A0E7ADCA1134E /* Paywall.swift in Sources */,
+				FE82C1853125202647F35D89 /* PaywallDelegate.swift in Sources */,
 				A2897495E7CF38F8AE8B3F15 /* PaywallEvents.swift in Sources */,
+				0B9F89164667B376D47D6C6A /* PaywallPresentation.swift in Sources */,
+				7691C1718BA95F3D9809521A /* PaywallResponseManager.swift in Sources */,
+				A4069F9FDB258F21E1E68EF6 /* ProductsManager.swift in Sources */,
 				0FD23369D3FD47831A02E972 /* SWBounceButton.swift in Sources */,
 				5E417214B1381CA60162E0D5 /* SWConsoleViewController.swift in Sources */,
 				8ED134478ED2308C222205C0 /* SWDebugManager.swift in Sources */,
@@ -296,7 +318,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = Paywall.xcodeproj/Paywall_Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -320,7 +342,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = Paywall.xcodeproj/Paywall_Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -384,7 +406,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -441,7 +462,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
