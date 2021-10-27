@@ -24,6 +24,13 @@ extension Paywall {
         var eventParams = [String: Any]()
         var delegateParams = [String: Any]()
         delegateParams["isSuperwall"] = true
+		
+		// add a special property if it's one of ours
+		if EventName(rawValue: name) != nil {
+			eventParams["$isStandardEvent"] = true
+		} else {
+			eventParams["$isStandardEvent"] = false
+		}
         
         // TODO: Brian, determine if you want to allow nested
         

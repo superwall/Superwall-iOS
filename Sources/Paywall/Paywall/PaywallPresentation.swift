@@ -187,8 +187,9 @@ extension Paywall {
 			presentationBlock(vc)
 			return
 		}
-		
+
 		lastEventTrigger = (fromEvent?.name ?? identifier)
+				
 		
 		PaywallResponseManager.shared.getResponse(identifier: identifier, event: fromEvent) { r, e in
 			
