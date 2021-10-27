@@ -34,8 +34,8 @@ class PaywallResponseManager: NSObject {
 		
 		// if the request is in progress, enque the completion handler
 		if let handlers = handlersByHash[hash] {
-//			handlersByHash[hash] = handlers + [completion] // to execute all completion handlers
-			handlersByHash[hash] = [completion] // to only execute the last completion handler
+			handlersByHash[hash] = handlers + [completion] // to execute all completion handlers
+//			handlersByHash[hash] = [completion] // to only execute the last completion handler
 			return
 		}
 		
