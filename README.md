@@ -10,6 +10,7 @@
 <h3 align="center">In-App Paywalls Made Easy 💸</h1>
 
 [![License MIT](https://img.shields.io/badge/license-MIT-green/)](https://superwall.me/)
+[![Pod Compatible](https://img.shields.io/badge/pod-compatible-informational)](https://superwall.me/)
 [![SwiftPM Compatible](https://img.shields.io/badge/SwiftPM-Compatible-orange)](https://superwall.me/)
 [![Community Active](https://img.shields.io/badge/community-active-9cf)](https://superwall.me/)
 [![Version Number](https://img.shields.io/github/v/tag/superwall-me/paywall-ios)](https://superwall.me/)
