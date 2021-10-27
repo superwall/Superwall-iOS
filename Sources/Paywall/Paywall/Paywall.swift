@@ -250,7 +250,16 @@ public class Paywall: NSObject {
 			return
 		}
 		
-		presentingWindow = UIWindow(frame: UIScreen.main.bounds)
+		if #available(iOS 13.0, *) {
+			if let windowScene = UIApplication.shared.connectedScenes.first(where: {$0.activationState == .foregroundActive }) as? UIWindowScene {
+				presentingWindow = UIWindow(windowScene: windowScene)
+			}
+		}
+		
+		if presentingWindow == nil {
+			presentingWindow = UIWindow(frame: UIScreen.main.bounds)
+		}
+		
 		presentingWindow?.rootViewController = UIViewController()
 		presentingWindow?.windowLevel = .normal
 		presentingWindow?.makeKeyAndVisible()
