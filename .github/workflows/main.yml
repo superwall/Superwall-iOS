@@ -28,13 +28,15 @@ jobs:
           inputs: "Sources"
           module-name: Paywall
           format: html
-          output: "docs"
+          output: "docs-build"
           base-url: ""
       - name: Commit report
         run: |
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
-          sudo git add -A
+          git fetch --all
+          git checkout --track origin/gh-pages
+          sudo mv docs-build/* docs/
+          sudo git add -A docs/
           sudo git commit -am "Automated report"
           sudo git push
-
