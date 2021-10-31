@@ -36,7 +36,7 @@ jobs:
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           git fetch --all
           git checkout --track origin/gh-pages
-          sudo mv docs-build/* docs/
+          sudo cp -r docs-build/* docs/
           sudo git add -A docs/
           sudo git commit -am "Automated report"
           sudo git push
