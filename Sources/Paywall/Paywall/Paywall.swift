@@ -149,14 +149,20 @@ public class Paywall: NSObject {
                 
                 shared.paywallViewController = SWPaywallViewController(paywallResponse: response, completion: shared.paywallEventDidOccur)
                 
-                if let v =  UIApplication.shared.keyWindow?.rootViewController {
-                    v.addChild(shared.paywallViewController!)
-                    shared.paywallViewController!.view.alpha = 0.01
-                    v.view.insertSubview(shared.paywallViewController!.view, at: 0)
-                    shared.paywallViewController!.view.transform = CGAffineTransform(translationX: 1000, y: 0)
-                    shared.paywallViewController!.didMove(toParent: v)
-                }
+//                if let v =  UIApplication.shared.keyWindow?.rootViewController {
+//                    v.addChild(shared.paywallViewController!)
+//                    shared.paywallViewController!.view.alpha = 0.01
+//                    v.view.insertSubview(shared.paywallViewController!.view, at: 0)
+//                    shared.paywallViewController!.view.transform = CGAffineTransform(translationX: 1000, y: 0)
+//                    shared.paywallViewController!.didMove(toParent: v)
+//                }
                 
+				if let v =  UIApplication.shared.keyWindow {
+					shared.paywallViewController!.view.alpha = 0.01
+					v.addSubview(shared.paywallViewController!.view)
+					shared.paywallViewController!.view.transform = CGAffineTransform(translationX: UIScreen.main.bounds.width, y: 0).scaledBy(x: 0.1, y: 0.1)
+				}
+				
                 completion?(true)
 
             }
@@ -266,7 +272,7 @@ public class Paywall: NSObject {
 	}
 	
 	internal func destroyPresentingWindow() {
-		presentingWindow?.resignKey()
+		presentingWindow?.isHidden = true
 		presentingWindow = nil
 	}
 	
