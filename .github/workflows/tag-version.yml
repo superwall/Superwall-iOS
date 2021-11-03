@@ -1,0 +1,20 @@
+name: TagVersion
+
+on:
+  push:
+    branches: [ jake/sw-183-add-x-sdk-version-to-headers-on-all ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: | 
+          sudo git config --global user.name 'Jake'
+          sudo git config --global user.email 'jakemor@users.noreply.github.com'
+          git pull
+          ls -la
+          pwd

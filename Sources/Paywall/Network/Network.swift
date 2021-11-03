@@ -76,6 +76,7 @@ extension Network {
         request.setValue(DeviceHelper.shared.currencySymbol, forHTTPHeaderField: "X-Device-Currency-Symbol") // $
         request.setValue(DeviceHelper.shared.secondsFromGMT, forHTTPHeaderField: "X-Device-Timezone-Offset") // $
         request.setValue(DeviceHelper.shared.appInstallDate, forHTTPHeaderField: "X-App-Install-Date") // $
+		request.setValue(SDK_VERSION, forHTTPHeaderField: "X-SDK-Version")
         
 
         let task = self.urlSession.dataTask(with: request) { (data, response, error) in
