@@ -15,9 +15,9 @@ jobs:
       run: | 
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
-          git pull
+          sudo git pull
           echo "\n\n\n- - - - - VERSION - - - - -\n\n\n"
           sed -n 21p ./Sources/Paywall/Misc/Constants.swift
           echo "\n\n\n- - - - - END VERSION - - - - -\n\n\n"
-          git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift) -m "tags with latest version"
-          git push --tags
+          sudo git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift) -m "tags with latest version"
+          sudo git push --tags
