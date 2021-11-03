@@ -18,5 +18,5 @@ internal let SDK_VERSION = """
 */
 
 internal let SDK_VERSION = """
-2.0.4-rc.4
+2.0.4-rc.5
 """
