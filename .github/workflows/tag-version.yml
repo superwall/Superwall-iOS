@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build
+    - name: Tag
       run: | 
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
@@ -20,6 +20,5 @@ jobs:
           sed -n 21p ./Sources/Paywall/Misc/Constants.swift
           echo "\n\n\n- - - - - END VERSION - - - - -\n\n\n"
           VER=$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)
-          echo "SDK_VERSION=$VER" >> $GITHUB_ENV
-          echo "the version is: ${{ env.SDK_VERSION }}"
-
+          git tag -a $VER -m "tags with latest version"
+          git push
