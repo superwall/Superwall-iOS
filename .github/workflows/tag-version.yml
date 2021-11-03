@@ -2,7 +2,7 @@ name: TagVersion
 
 on:
   push:
-    branches: [ jake/sw-183-add-x-sdk-version-to-headers-on-all ]
+    branches: [ master ]
 
 jobs:
   build:
