@@ -20,4 +20,4 @@ jobs:
           sed -n 21p ./Sources/Paywall/Misc/Constants.swift
           echo "\n\n\n- - - - - END VERSION - - - - -\n\n\n"
           sudo git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift) -m "tags with latest version"
-          sudo git push --tags
+          sudo git push --tags || true
