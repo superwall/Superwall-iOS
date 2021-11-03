@@ -21,5 +21,5 @@ jobs:
           echo "\n\n\n- - - - - END VERSION - - - - -\n\n\n"
           VER=$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)
           echo "SDK_VERSION=$VER" >> $GITHUB_ENV
-          echo "the version is: ${SDK_VERSION}"
+          echo "the version is: ${{ env.SDK_VERSION }}"
 
