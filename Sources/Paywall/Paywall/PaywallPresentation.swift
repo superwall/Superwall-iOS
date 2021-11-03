@@ -159,6 +159,8 @@ extension Paywall {
 				vc.view.transform = .identity
 				vc.webview.scrollView.contentOffset = CGPoint.zero
 				delegate.willPresentPaywall?()
+				
+				shared.paywallWasPresentedThisSession = true
 								
 				presentor.present(vc, animated: true, completion: {
 					self.presentAgain = {
@@ -196,13 +198,13 @@ extension Paywall {
 			if let r = r {
 				
 				// if there's a paywall being presented, don't do anything
-				if let vc = shared.paywallViewController, vc.presentingViewController != nil || vc.isBeingPresented || shared.presentingWindow != nil || shared.isPresenting {
+				if let vc = shared.paywallViewController, vc.presentingViewController != nil || vc.isBeingPresented || shared.presentingWindow != nil || shared.recentlyPresented {
 					Logger.superwallDebug(string: "Note: A Paywall is already being presented, skipping setting a new one.")
 					return
 				}
 				
 				// disable immediately subsequent responses from overwritting this one
-				shared.isPresenting = true
+				shared.recentlyPresented = true
 				
 				Paywall.set(response: r) { success in
 					if (success) {

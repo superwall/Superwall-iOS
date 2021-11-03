@@ -238,11 +238,11 @@ public class Paywall: NSObject {
     // MARK: Private
 	
 	
-	internal var isPresenting: Bool = false {
+	internal var recentlyPresented: Bool = false {
 		didSet {
-			if isPresenting {
+			if recentlyPresented {
 				DispatchQueue.main.asyncAfter(deadline: .now() + 0.7, execute: {
-					self.isPresenting = false
+					self.recentlyPresented = false
 				})
 			}
 		}
@@ -344,7 +344,7 @@ public class Paywall: NSObject {
 	
 	private var didFetchConfig = !Store.shared.triggers.isEmpty
 	private var eventsTrackedBeforeConfigWasFetched = [EventData]()
-
+	internal var paywallWasPresentedThisSession = false
 	
 	private func fetchConfiguration() {
 		Network.shared.config { [weak self] (result) in
@@ -646,6 +646,8 @@ extension Paywall: SKPaymentTransactionObserver {
 	
 	public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         for transaction in transactions {
+			
+			guard paywallWasPresentedThisSession else { return }
 			
             guard let product = productsById[transaction.payment.productIdentifier] else { return }
             switch transaction.transactionState {
