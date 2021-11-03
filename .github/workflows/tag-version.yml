@@ -16,5 +16,7 @@ jobs:
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           git pull
-          ls -la
-          pwd
+          echo "\n\n\n- - - - - VERSION - - - - -\n\n\n"
+          car ./Sources/Paywall/Misc/Constants.swift
+          echo "\n\n\n- - - - - END VERSION - - - - -\n\n\n"
+
