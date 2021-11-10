@@ -214,6 +214,7 @@ extension Paywall {
         case transactionRestore = "transaction_restore"
         case nonRecurringProductPurchase = "nonRecurringProduct_purchase"
         case paywallResponseLoadStart = "paywallResponseLoad_start"
+		case paywallResponseLoadNotFound = "paywallResponseLoad_notFound"
         case paywallResponseLoadFail = "paywallResponseLoad_fail"
         case paywallResponseLoadComplete = "paywallResponseLoad_complete"
         case paywallWebviewLoadStart = "paywallWebviewLoad_start"
@@ -229,6 +230,7 @@ extension Paywall {
 		case sessionStart
         
 		case paywallResponseLoadStart(fromEvent: Bool, event: EventData?)
+		case paywallResponseLoadNotFound(fromEvent: Bool, event: EventData?)
         case paywallResponseLoadFail(fromEvent: Bool, event: EventData?)
         case paywallResponseLoadComplete(fromEvent: Bool, event: EventData?)
         
@@ -268,6 +270,7 @@ extension Paywall {
         case transactionRestore = "transaction_restore"
         case nonRecurringProductPurchase = "nonRecurringProduct_purchase"
         case paywallResponseLoadStart = "paywallResponseLoad_start"
+		case paywallResponseLoadNotFound = "paywallResponseLoad_notFound"
         case paywallResponseLoadFail = "paywallResponseLoad_fail"
         case paywallResponseLoadComplete = "paywallResponseLoad_complete"
         case paywallWebviewLoadStart = "paywallWebviewLoad_start"
@@ -307,9 +310,10 @@ extension Paywall {
 				return .transactionFail
 			case .transactionAbandon:
 				return .transactionAbandon
-
 			case .paywallResponseLoadStart:
 				return .paywallResponseLoadStart
+			case .paywallResponseLoadNotFound:
+				return .paywallResponseLoadNotFound
 			case .paywallResponseLoadFail:
 				return .paywallResponseLoadFail
 			case .paywallResponseLoadComplete:
@@ -382,6 +386,7 @@ extension Paywall {
 					_track(eventName: name(for: event), params: eventParams(for: product, paywallInfo: paywallInfo), customParams: customParams)
 
 			case 	.paywallResponseLoadStart(let fromEvent, let eventData),
+					.paywallResponseLoadNotFound(let fromEvent, let eventData),
 					.paywallResponseLoadFail(let fromEvent, let eventData),
 					.paywallResponseLoadComplete(let fromEvent, let eventData):
 				

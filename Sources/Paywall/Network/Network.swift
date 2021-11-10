@@ -43,12 +43,14 @@ extension Network {
         case unknown
         case notAuthenticated
         case decoding
+		case notFound
         
         var errorDescription: String? {
             switch self {
                 case .unknown: return NSLocalizedString("An unknown error occurred.", comment: "")
                 case .notAuthenticated: return NSLocalizedString("Unauthorized.", comment: "")
                 case .decoding: return NSLocalizedString("Decoding error.", comment: "")
+				case .notFound: return NSLocalizedString("Not found", comment: "")
             }
         }
     }
@@ -82,10 +84,22 @@ extension Network {
         let task = self.urlSession.dataTask(with: request) { (data, response, error) in
             do {
                 guard let unWrappedData = data else { return completion(.failure(error ?? Error.unknown))}
+				
+				if let response = response {
+					print("the response is:", response)
+				}
                 
-                if let response = response as? HTTPURLResponse, response.statusCode == 401 {
-                    Logger.superwallDebug(string: "Unable to authenticate, please make sure your Superwall API KEY is correct.")
-                    return completion(.failure(Error.notAuthenticated))
+				if let response = response as? HTTPURLResponse {
+					
+					if response.statusCode == 401 {
+						Logger.superwallDebug(string: "Unable to authenticate, please make sure your Superwall API KEY is correct.")
+						return completion(.failure(Error.notAuthenticated))
+					}
+				
+					if response.statusCode == 404 {
+						Logger.superwallDebug(string: "Paywall not found.")
+						return completion(.failure(Error.notFound))
+					}
                 }
                 
                 let decoder = JSONDecoder()

@@ -50,9 +50,9 @@ class PaywallResponseManager: NSObject {
 			
 			Network.shared.paywall(withIdentifier: identifier, fromEvent: event) { (result) in
 				self.queue.async {
-					switch(result){
-					case .success(let response):
-							
+					switch(result) {
+						case .success(let response):
+								
 							Paywall.track(.paywallResponseLoadComplete(fromEvent: isFromEvent, event: event))
 							
 							// cache the response for later
@@ -70,11 +70,17 @@ class PaywallResponseManager: NSObject {
 							// reset the handler cache
 							self.handlersByHash.removeValue(forKey: hash)
 							
-							
-					case .failure(_):
-							
-							Paywall.track(.paywallResponseLoadFail(fromEvent: isFromEvent, event: event))
-							
+								
+						case .failure(let error):
+								
+							print("error:", (error as! Network.Error) == .notFound)
+						
+							if let e = error as? Network.Error, e == .notFound {
+								Paywall.track(.paywallResponseLoadNotFound(fromEvent: isFromEvent, event: event))
+							} else {
+								Paywall.track(.paywallResponseLoadFail(fromEvent: isFromEvent, event: event))
+							}
+						
 							// create the error
 							let userInfo: [String : Any] = [
 								NSLocalizedDescriptionKey :  NSLocalizedString("Not Found", value: "There isn't a paywall configured to show in this context", comment: "") ,
@@ -95,8 +101,8 @@ class PaywallResponseManager: NSObject {
 								// reset the handler cache
 								self.handlersByHash.removeValue(forKey: hash)
 							}
-							
-							
+								
+								
 					}
 				}
 
