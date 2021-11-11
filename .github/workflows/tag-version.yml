@@ -24,7 +24,7 @@ jobs:
 
   cocoapods:
     needs: tag
-    runs-on: macOS-latest
+    runs-on: macos-11
     steps:
     - uses: actions/checkout@v1
     - name: Publish to CocoaPod register
