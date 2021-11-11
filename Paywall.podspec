@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 	s.name         = "Paywall"
-    s.version      = "2.0.5"
+    s.version      = "2.0.6"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall is a client for the Superwall paywall iteration anbd event tracking system. It is an open source framework that provides a wrapper around Webkit for presenting and creating paywalls. The Superwall backend for implementing new paywalls lets you iterate on the fly in Swift or Objective-C easy!"
 

@@ -5,7 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  tag:
 
     runs-on: ubuntu-latest
 
@@ -21,3 +21,15 @@ jobs:
           echo "\n\n\n- - - - - END VERSION - - - - -\n\n\n"
           sudo git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift) -m "tags with latest version"
           sudo git push --tags || true
+
+  cocoapods:
+    needs: tag
+    runs-on: macOS-latest
+      
+      steps:
+      - uses: actions/checkout@v1
+      - name: Publish to CocoaPod register
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+        run: |
+          pod trunk push Paywall.podspec
