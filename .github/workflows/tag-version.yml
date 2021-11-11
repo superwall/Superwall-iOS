@@ -31,4 +31,4 @@ jobs:
       env:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
       run: |
-        pod trunk push Paywall.podspec
+        pod trunk push Paywall.podspec --allow-warnings

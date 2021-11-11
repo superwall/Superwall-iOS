@@ -168,7 +168,7 @@ extension Network {
         do {
 			
 			if let id = withIdentifier {
-				let paywallRequest = ["identifier": withIdentifier]
+				let paywallRequest = ["identifier": id]
 				request.httpBody = try encoder.encode(paywallRequest)
 			} else if let e = event {
 				let paywallRequest = ["event": e.jsonData]
