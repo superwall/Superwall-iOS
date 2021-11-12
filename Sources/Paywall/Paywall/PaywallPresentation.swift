@@ -158,6 +158,7 @@ extension Paywall {
 				vc.view.alpha = 1.0
 				vc.view.transform = .identity
 				vc.webview.scrollView.contentOffset = CGPoint.zero
+				vc.set(fromEventData: fromEvent, calledFromIdentifier: identifier != nil)
 				delegate.willPresentPaywall?()
 				
 				shared.paywallWasPresentedThisSession = true
@@ -168,11 +169,9 @@ extension Paywall {
 						present(on: presentor, fromEvent: fromEvent, cached: false, presentationCompletion: presentationCompletion, dismissalCompletion: dismissalCompletion, fallback: fallback)
 					}
 					delegate.didPresentPaywall?()
-					presentationCompletion?(vc._paywallResponse?.paywallInfo)
+					presentationCompletion?(vc.paywallInfo)
 					
-					if let i = vc._paywallResponse?.paywallInfo {
-						Paywall.track(.paywallOpen(paywallInfo: i))
-					}
+					vc.trackOpen()
 					
 					shared.paywallViewController?.readyForEventTracking = true
 					if (Paywall.isGameControllerEnabled) {

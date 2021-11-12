@@ -27,9 +27,9 @@ extension Paywall {
 		
 		// add a special property if it's one of ours
 		if EventName(rawValue: name) != nil {
-			eventParams["$isStandardEvent"] = true
+			eventParams["$is_standard_event"] = true
 		} else {
-			eventParams["$isStandardEvent"] = false
+			eventParams["$is_standard_event"] = false
 		}
         
         // TODO: Brian, determine if you want to allow nested
@@ -334,6 +334,10 @@ extension Paywall {
 			"paywall_slug": paywallInfo.slug,
 			"paywall_name": paywallInfo.name,
 			"paywall_url": paywallInfo.url?.absoluteString ?? "unknown",
+			"presented_by_event_name": paywallInfo.presentedByEventWithName as Any,
+			"presented_by_event_id": paywallInfo.presentedByEventWithId as Any,
+			"presented_by_event_timestamp": paywallInfo.presentedByEventAt as Any,
+			"presented_by": paywallInfo.presentedBy as Any
         ]
 		
         if let p = product {

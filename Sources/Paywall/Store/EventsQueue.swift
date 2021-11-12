@@ -18,7 +18,7 @@ internal class EventsQueue {
     
     public init () {
         
-		timer = Timer.scheduledTimer(timeInterval: 20.0, target:self, selector: #selector(flush), userInfo: nil, repeats: true)
+		timer = Timer.scheduledTimer(timeInterval: Paywall.networkEnvironment == .release ? 20.0 : 1.0 , target:self, selector: #selector(flush), userInfo: nil, repeats: true)
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(flush), name: UIApplication.willResignActiveNotification, object: nil)
     }

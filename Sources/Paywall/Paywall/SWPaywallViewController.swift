@@ -21,6 +21,14 @@ internal class SWPaywallViewController: UIViewController {
     // Don't touch my private parts.
     
     internal var _paywallResponse: PaywallResponse? = nil
+	
+	internal var fromEventData: EventData? = nil
+	internal var calledByIdentifier: Bool = false
+	
+	
+	var paywallInfo: PaywallInfo? {
+		return _paywallResponse?.getPaywallInfo(fromEvent: fromEventData, calledByIdentifier: calledByIdentifier)
+	}
     
     public var completion: ((PaywallPresentationResult) -> Void)?
     
@@ -162,8 +170,13 @@ internal class SWPaywallViewController: UIViewController {
 			self?.refreshPaywallButton.isHidden = true
 		})
 	}
+	
+	func set(fromEventData: EventData?, calledFromIdentifier: Bool) {
+		self.fromEventData = fromEventData
+		self.calledByIdentifier = calledFromIdentifier
+	}
     
-    func set(paywallResponse: PaywallResponse) {
+	func set(paywallResponse: PaywallResponse) {
         self._paywallResponse =  paywallResponse
         
         DispatchQueue.main.async { [weak self] in
@@ -178,8 +191,12 @@ internal class SWPaywallViewController: UIViewController {
             
             if let urlString = self._paywallResponse?.url {
                 if let url = URL(string: urlString) {
-					Paywall.track(.paywallWebviewLoadStart(paywallInfo: paywallResponse.paywallInfo))
-                    self.webview.load(URLRequest(url: url))
+					
+					if let paywallInfo = self.paywallInfo {
+						Paywall.track(.paywallWebviewLoadStart(paywallInfo: paywallInfo))
+					}
+                    
+					self.webview.load(URLRequest(url: url))
                     self.loadingState = .loadingResponse
                 }
             }
@@ -336,14 +353,24 @@ internal class SWPaywallViewController: UIViewController {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         if readyForEventTracking {
-			if let i = _paywallResponse?.paywallInfo {
-				Paywall.track(.paywallClose(paywallInfo: i))
-			}
+			trackClose()
         }
 		if #available(iOS 15.0, *) {
 			webview.setAllMediaPlaybackSuspended(true, completionHandler: nil)
 		}
     }
+	
+	func trackOpen() {
+		if let i = paywallInfo {
+			Paywall.track(.paywallOpen(paywallInfo: i))
+		}
+	}
+	
+	func trackClose() {
+		if let i = paywallInfo {
+			Paywall.track(.paywallClose(paywallInfo: i))
+		}
+	}
     
     // WebPaywallViewController
     
@@ -473,7 +500,7 @@ extension SWPaywallViewController {
     
         switch (event) {
         case .onReady:
-				if let i = self._paywallResponse?.paywallInfo {
+				if let i = self.paywallInfo {
 					Paywall.track(.paywallWebviewLoadComplete(paywallInfo: i))
 				}
 

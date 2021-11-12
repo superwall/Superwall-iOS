@@ -42,17 +42,41 @@ public class PaywallInfo: NSObject {
 	
 	/// The URL where this paywall is hosted.
 	public let url: URL?
+		
+	/// The name of the event that triggered this Paywall. Defaults to `nil` if `triggeredByEvent` is false.
+	public let presentedByEventWithName: String?
+	
+	/// The Superwall internal id (for debugging) of the event that triggered this Paywall. Defaults to `nil` if `triggeredByEvent` is false.
+	public let presentedByEventWithId: String?
+	
+	/// The ISO date string (sorry) describing when the event triggered this paywall. Defaults to `nil` if `triggeredByEvent` is false.
+	public let presentedByEventAt: String?
+	
+	/// How the paywall was presented, either 'programmatically', 'identifier', or 'event'
+	public let presentedBy: String
 	
 	/// An array of product IDs that this paywall is displaying in `[Primary, Secondary, Tertiary]` order.
 	public let productIds: [String]
 	
-	init(id: String, identifier: String, name: String, slug: String, url: URL?, productIds: [String]) {
+	init(id: String, identifier: String, name: String, slug: String, url: URL?, productIds: [String], fromEventData: EventData?, calledByIdentifier: Bool = false) {
 		self.id = id
 		self.identifier = identifier
 		self.name = name
 		self.slug = slug
 		self.url = url
 		self.productIds = productIds
+		self.presentedByEventWithName = fromEventData?.name
+		self.presentedByEventAt = fromEventData?.createdAt
+		self.presentedByEventWithId = fromEventData?.id.lowercased()
+		
+		if fromEventData != nil {
+			self.presentedBy = "event"
+		} else if calledByIdentifier {
+			self.presentedBy = "identifier"
+		} else {
+			self.presentedBy = "programmatically"
+		}
+		
 	}
 }
 
@@ -74,8 +98,12 @@ internal struct PaywallResponse: Decodable {
         return id ?? ""
     }
 	
-	var paywallInfo: PaywallInfo {
-		return PaywallInfo(id: id ?? "unknown", identifier: identifier ?? "unknown", name: name ?? "unknown", slug: slug ?? "unknown", url: URL(string: url), productIds: productIds)
+//	var paywallInfo: PaywallInfo {
+//
+//	}
+	
+	func getPaywallInfo(fromEvent: EventData?, calledByIdentifier: Bool = false) -> PaywallInfo {
+		return PaywallInfo(id: id ?? "unknown", identifier: identifier ?? "unknown", name: name ?? "unknown", slug: slug ?? "unknown", url: URL(string: url), productIds: productIds, fromEventData: fromEvent, calledByIdentifier: calledByIdentifier)
 	}
     
     var paywallBackgroundColor: UIColor {
