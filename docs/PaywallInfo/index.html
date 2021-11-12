@@ -25,7 +25,7 @@
     <nav>
         <div class="wrapper">
             <h2>On This Page</h2>
-            <ol><li><a href="#relationships">Relationships</a><ul><li><a href="#relationships">Conforms To</a></li></ul></li><li><a href="#properties">Properties</a><ul><li class="variable"><a href="#paywallinfo.identifier">identifier</a></li><li class="variable"><a href="#paywallinfo.name">name</a></li><li class="variable"><a href="#paywallinfo.slug">slug</a></li><li class="variable"><a href="#paywallinfo.url">url</a></li><li class="variable"><a href="#paywallinfo.productids">product​Ids</a></li></ul></li></ol>
+            <ol><li><a href="#relationships">Relationships</a><ul><li><a href="#relationships">Conforms To</a></li></ul></li><li><a href="#properties">Properties</a><ul><li class="variable"><a href="#paywallinfo.identifier">identifier</a></li><li class="variable"><a href="#paywallinfo.name">name</a></li><li class="variable"><a href="#paywallinfo.slug">slug</a></li><li class="variable"><a href="#paywallinfo.url">url</a></li><li class="variable"><a href="#paywallinfo.presentedbyeventwithname">presented​ByEvent​With​Name</a></li><li class="variable"><a href="#paywallinfo.presentedbyeventwithid">presented​ByEvent​With​Id</a></li><li class="variable"><a href="#paywallinfo.presentedbyeventat">presented​ByEvent​At</a></li><li class="variable"><a href="#paywallinfo.presentedby">presented​By</a></li><li class="variable"><a href="#paywallinfo.productids">product​Ids</a></li></ul></li></ol>
         </div>
     </nav>
 
@@ -136,6 +136,54 @@
 
 </div>
 </div>
+<div role="article" class="variable" id="paywallinfo.presentedbyeventwithname">
+    <h3>
+        <code><a href="#paywallinfo.presentedbyeventwithname">presented​ByEvent​With​Name</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">let</span> <span class="variable">presentedByEventWithName</span>: <span class="type">String</span>? </body></html></code></pre>
+</div>
+<div class="summary" role="doc-abstract">
+    <p>The name of the event that triggered this Paywall. Defaults to <code>nil</code> if <code>triggeredByEvent</code> is false.</p>
+
+</div>
+</div>
+<div role="article" class="variable" id="paywallinfo.presentedbyeventwithid">
+    <h3>
+        <code><a href="#paywallinfo.presentedbyeventwithid">presented​ByEvent​With​Id</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">let</span> <span class="variable">presentedByEventWithId</span>: <span class="type">String</span>? </body></html></code></pre>
+</div>
+<div class="summary" role="doc-abstract">
+    <p>The Superwall internal id (for debugging) of the event that triggered this Paywall. Defaults to <code>nil</code> if <code>triggeredByEvent</code> is false.</p>
+
+</div>
+</div>
+<div role="article" class="variable" id="paywallinfo.presentedbyeventat">
+    <h3>
+        <code><a href="#paywallinfo.presentedbyeventat">presented​ByEvent​At</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">let</span> <span class="variable">presentedByEventAt</span>: <span class="type">String</span>? </body></html></code></pre>
+</div>
+<div class="summary" role="doc-abstract">
+    <p>The ISO date string (sorry) describing when the event triggered this paywall. Defaults to <code>nil</code> if <code>triggeredByEvent</code> is false.</p>
+
+</div>
+</div>
+<div role="article" class="variable" id="paywallinfo.presentedby">
+    <h3>
+        <code><a href="#paywallinfo.presentedby">presented​By</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">let</span> <span class="variable">presentedBy</span>: <span class="type">String</span></body></html></code></pre>
+</div>
+<div class="summary" role="doc-abstract">
+    <p>How the paywall was presented, either 'programmatically', 'identifier', or 'event'</p>
+
+</div>
+</div>
 <div role="article" class="variable" id="paywallinfo.productids">
     <h3>
         <code><a href="#paywallinfo.productids">product​Ids</a></code>
@@ -157,7 +205,7 @@
 
     <footer>
         <p>
-    Generated on <time datetime="2021-11-11T21:03:25+0000">November 11, 2021</time> using <a href="https://github.com/SwiftDocOrg/swift-doc">swift-doc</a> <span class="version">1.0.0-rc.1</span>.
+    Generated on <time datetime="2021-11-12T00:42:13+0000">November 12, 2021</time> using <a href="https://github.com/SwiftDocOrg/swift-doc">swift-doc</a> <span class="version">1.0.0-rc.1</span>.
 </p>
     </footer>
 </body>
