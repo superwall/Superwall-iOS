@@ -296,44 +296,45 @@ internal class SWDebugViewController: UIViewController {
     }
     
     @objc func pressedConsoleButton() {
-
-        
-//        self.activityIndicator.startAnimating()
-//        self.previewContainerView.isHidden = true
-        
-        Network.shared.paywalls { [weak self] result in
-            
-            switch(result){
-            case .success(let response):
-                let paywalls = response.paywalls
-                
-                let paywallResponse = paywalls.first { p in
-                    p.id == self?.paywallId
-                }
-                
-                if let paywallResponse = paywallResponse {
-                    StoreKitManager.shared.get(productsWithIds: paywallResponse.productIds) { productsById in
-                        OnMain {
-                            let products = Array(productsById.values)
-                            let vc = SWConsoleViewController(products: products)
-                            let nc = UINavigationController(rootViewController: vc)
-                            self?.present(nc, animated: true)
-                        }
-                    }
-                }
-                
-            case .failure(let error):
-                Logger.superwallDebug(string: "Debug Mode Error", error: error)
-//                self?.activityIndicator.stopAnimating()
-            }
-            
-            OnMain {
-//                self?.activityIndicator.stopAnimating()
-//                self?.previewContainerView.isHidden = false
-            }
-            
-        }
+		presentAlert(title: nil, message: "Menu", options: [
+			AlertOption(title: "Localization", action: showLocalizationPicker, style: .default),
+			AlertOption(title: "Templates", action: showConsole, style: .default),
+		])
     }
+	
+	func showLocalizationPicker() {
+		let vc = SWLocalizationViewController()
+		let nc = UINavigationController(rootViewController: vc)
+		self.present(nc, animated: true)
+	}
+	
+	func showConsole() {
+		Network.shared.paywalls { [weak self] result in
+			
+			switch(result){
+			case .success(let response):
+				let paywalls = response.paywalls
+				
+				let paywallResponse = paywalls.first { p in
+					p.id == self?.paywallId
+				}
+				
+				if let paywallResponse = paywallResponse {
+					StoreKitManager.shared.get(productsWithIds: paywallResponse.productIds) { productsById in
+						OnMain {
+							let products = Array(productsById.values)
+							let vc = SWConsoleViewController(products: products)
+							let nc = UINavigationController(rootViewController: vc)
+							self?.present(nc, animated: true)
+						}
+					}
+				}
+				
+			case .failure(let error):
+				Logger.superwallDebug(string: "Debug Mode Error", error: error)
+			}
+		}
+	}
     
     @objc func pressedBottomButton() {
         
