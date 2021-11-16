@@ -18,7 +18,7 @@ class PaywallResponseManager: NSObject {
 	private var handlersByHash: [String: [(PaywallResponse?, NSError?) -> Void]] = [:]
 	
 	func requestHash(identifier: String? = nil, event: EventData? = nil) -> String {
-		return identifier ?? event?.name ?? "$called_manually"
+		return "\((identifier ?? event?.name ?? "$called_manually"))_\(DeviceHelper.shared.locale)"
 	}
 	
 	func getResponse(identifier: String? = nil, event: EventData? = nil, completion: @escaping (PaywallResponse?, NSError?) -> ()) {

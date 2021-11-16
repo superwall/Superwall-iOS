@@ -83,6 +83,12 @@ public class Paywall: NSObject {
             }
         }
     }
+	
+	/// Overrides the default device locale for testing purposes. You can also use the in app debugger by scanning a QR code inside of a paywall
+	///  - Parameter localeIdentifier: The locale identifier for the language you would like to test
+	public static func localizationOverride(localeIdentifier: String? = nil) {
+		LocalizationManager.shared.selectedLocale = localeIdentifier
+	}
     
     internal static func set(response r: PaywallResponse?, completion: ((Bool) -> ())? = nil) {
 		

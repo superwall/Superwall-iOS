@@ -110,6 +110,7 @@ internal class SWDebugViewController: UIViewController {
     }()
     
     var paywallId: String? = nil
+	var paywallIdentifier: String? = nil
     var paywallResponse: PaywallResponse? = nil
     var paywallResponses: [PaywallResponse] = []
     
@@ -181,40 +182,43 @@ internal class SWDebugViewController: UIViewController {
         previewViewContent?.removeFromSuperview()
         
 //        previewPickerButton.setTitle("", for: .normal)
-        
-        Network.shared.paywalls { [weak self] result in
-            switch(result){
-            case .success(let response):
-                let paywalls = response.paywalls
-                self?.paywallResponses = response.paywalls
-                
-                let paywallResponse = paywalls.first { p in
-                    p.id == self?.paywallId
-                }
-                
-                self?.paywallResponse = paywallResponse
-                
-                OnMain { [weak self] in
-                    self?.previewPickerButton.setTitle("\(paywallResponse?.name ?? "Preview")", for: .normal)
-                }
-                
-                if let paywallResponse = self?.paywallResponse {
-                    StoreKitManager.shared.getVariables(forResponse: paywallResponse) { variables in
-                        self?.paywallResponse?.variables = variables
-                        OnMain { [weak self] in
-                            self?.activityIndicator.stopAnimating()
-                            self?.addPaywallPreview()
-                        }
-                    }
-                }
-                
-            case .failure(let error):
-                Logger.superwallDebug(string: "Debug Mode Error", error: error)
-                
-            }
-            
 
-        }
+		PaywallResponseManager.shared.getResponse(identifier: paywallIdentifier, event: nil) { [weak self] response, error in
+			
+			self?.paywallResponse = response
+			
+			OnMain { [weak self] in
+				self?.previewPickerButton.setTitle("\(response?.name ?? "Preview")", for: .normal)
+			}
+
+			if let paywallResponse = self?.paywallResponse {
+				StoreKitManager.shared.getVariables(forResponse: paywallResponse) { variables in
+					self?.paywallResponse?.variables = variables
+					OnMain { [weak self] in
+						self?.activityIndicator.stopAnimating()
+						self?.addPaywallPreview()
+					}
+					
+					Network.shared.paywalls { [weak self] result in
+						switch(result){
+						case .success(let response):
+							self?.paywallResponses = response.paywalls
+								
+						case .failure(let error):
+							Logger.superwallDebug(string: "Debug Mode Error", error: error)
+
+						}
+
+
+					}
+				}
+			} else {
+				Logger.superwallDebug(string: "Debug Mode Error", error: error)
+			}
+			
+		}
+        
+
         
     }
     
@@ -263,24 +267,8 @@ internal class SWDebugViewController: UIViewController {
          
             let a = AlertOption(title: name, action: { [weak self] in
                 self?.paywallId = response.id
-                self?.paywallResponse = response
-                
-                self?.previewViewContent?.removeFromSuperview()
-                
-                OnMain { [weak self] in
-                    self?.activityIndicator.startAnimating()
-                    self?.previewPickerButton.setTitle(response.name, for: .normal)
-                }
-                
-                if let paywallResponse = self?.paywallResponse {
-                    StoreKitManager.shared.getVariables(forResponse: paywallResponse) { variables in
-                        self?.paywallResponse?.variables = variables
-                        OnMain { [weak self] in
-                            self?.activityIndicator.stopAnimating()
-                            self?.addPaywallPreview()
-                        }
-                    }
-                }
+				self?.paywallIdentifier = response.identifier
+				self?.loadPreview()
                 
             }, style: .default)
             
@@ -303,7 +291,11 @@ internal class SWDebugViewController: UIViewController {
     }
 	
 	func showLocalizationPicker() {
-		let vc = SWLocalizationViewController()
+		let vc = SWLocalizationViewController(completion: { [weak self] locale in
+			LocalizationManager.shared.selectedLocale = locale
+			self?.loadPreview()
+		})
+		
 		let nc = UINavigationController(rootViewController: vc)
 		self.present(nc, animated: true)
 	}
@@ -358,35 +350,48 @@ internal class SWDebugViewController: UIViewController {
         
         bottomButton.setImage(nil, for: .normal)
         bottomButton.showLoading = true
+		
+		Paywall.present(identifier: paywallIdentifier, on: self) { [weak self] info in
+			self?.bottomButton.showLoading = false
+			self?.bottomButton.setImage(UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!, for: .normal)
+		} onDismiss: { _, _, _ in
+			
+		} onFail: { [weak self] error in
+			Logger.superwallDebug(string: "Debug Mode Error", error: error)
+			self?.activityIndicator.stopAnimating()
+		}
+
+		
+
         
-        Network.shared.paywalls { [weak self] result in
-            
-            OnMain {
-                switch(result){
-                case .success(let response):
-                    let paywalls = response.paywalls
-                    
-                    let paywallResponse = paywalls.first { p in
-                        p.id == self?.paywallId
-                    }
-						
-					Paywall.set(response: nil, completion: nil)
-                    Paywall.set(response: paywallResponse, completion: { [weak self] _ in
-						Paywall.present(on: self, onPresent: { _ in
-							self?.bottomButton.showLoading = false
-							self?.bottomButton.setImage(UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!, for: .normal)
-						})
-                    })
-                    
-                case .failure(let error):
-                    Logger.superwallDebug(string: "Debug Mode Error", error: error)
-                    self?.activityIndicator.stopAnimating()
-                }
-                
-                
-            }
-            
-        }
+//        Network.shared.paywalls { [weak self] result in
+//
+//            OnMain {
+//                switch(result){
+//                case .success(let response):
+//                    let paywalls = response.paywalls
+//
+//                    let paywallResponse = paywalls.first { p in
+//                        p.id == self?.paywallId
+//                    }
+//
+//					Paywall.set(response: nil, completion: nil)
+//                    Paywall.set(response: paywallResponse, completion: { [weak self] _ in
+//						Paywall.present(on: self, onPresent: { _ in
+//							self?.bottomButton.showLoading = false
+//							self?.bottomButton.setImage(UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!, for: .normal)
+//						})
+//                    })
+//
+//                case .failure(let error):
+//                    Logger.superwallDebug(string: "Debug Mode Error", error: error)
+//                    self?.activityIndicator.stopAnimating()
+//                }
+//
+//
+//            }
+//
+//        }
         
  
     }
@@ -405,6 +410,7 @@ internal class SWDebugViewController: UIViewController {
         Paywall.set(response: nil, completion: nil)
         UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = oldTintColor
         Paywall.isDebuggerLaunched = false
+		LocalizationManager.shared.selectedLocale = nil
     }
 
 }
@@ -430,16 +436,12 @@ extension SWDebugViewController {
             v.addAction(action)
         }
         
-        
-        
         v.addAction(UIAlertAction(title: "Close", style: .cancel, handler: nil))
         v.view.tintColor = PrimaryColor
 
         present(v, animated: true, completion: {
             v.view.tintColor = PrimaryColor
         })
-        
-        
         
     }
     

@@ -39,8 +39,6 @@ extension Paywall {
                 let key = "$\(k)"
                 eventParams[key] = v
                 delegateParams[k] = v // no $ for delegate methods
-            } else {
-                Logger.superwallDebug(string: "Warning: dropping key \"\(k)\" for event \"\(name)\"", error: SuperwallEventError(message: "Could not serialize. FYI arrays & dicts aren't allowed!"))
             }
         }
         

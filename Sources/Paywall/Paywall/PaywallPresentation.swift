@@ -184,7 +184,7 @@ extension Paywall {
 
 		}
 		
-		if let vc = shared.paywallViewController, cached, (fromEvent?.name ?? identifier) == lastEventTrigger {
+		if let vc = shared.paywallViewController, cached, (fromEvent?.name ?? identifier) == lastEventTrigger, !isDebuggerLaunched {
 			presentationBlock(vc)
 			return
 		}
@@ -231,6 +231,7 @@ extension Paywall {
 				}
 			} else {
 				lastEventTrigger = nil
+				// Paywall.set(response: nil, completion: nil) // otherwise it will incorrectly cache a previously presented paywall as the paywall for a nil event trigger (presented manually)
 				fallback?(e)
 			}
 
