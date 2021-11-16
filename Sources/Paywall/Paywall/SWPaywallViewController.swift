@@ -16,9 +16,14 @@ import SafariServices
 //
 
 
+
+
 internal class SWPaywallViewController: UIViewController {
     
     // Don't touch my private parts.
+	
+	internal typealias DismissalCompletionBlock = (Bool, String?, PaywallInfo?) -> ()
+	internal var dismissalCompletion: DismissalCompletionBlock? = nil
     
     internal var _paywallResponse: PaywallResponse? = nil
 	
@@ -171,9 +176,10 @@ internal class SWPaywallViewController: UIViewController {
 		})
 	}
 	
-	func set(fromEventData: EventData?, calledFromIdentifier: Bool) {
+	func set(fromEventData: EventData?, calledFromIdentifier: Bool, dismissalBlock: DismissalCompletionBlock?) {
 		self.fromEventData = fromEventData
 		self.calledByIdentifier = calledFromIdentifier
+		self.dismissalCompletion = dismissalBlock
 	}
     
 	func set(paywallResponse: PaywallResponse) {
@@ -382,6 +388,8 @@ internal class SWPaywallViewController: UIViewController {
         }
         
     }
+	
+
     
 	func presentAlert(title: String? = nil, message: String? = nil, actionTitle: String? = nil, action: (() -> ())? = nil, closeActionTitle: String = "Done") {
         
@@ -601,6 +609,75 @@ extension SWPaywallViewController: GameControllerDelegate {
 		}
 		
 
+		
+	}
+	
+}
+
+
+// presentation logic
+
+extension SWPaywallViewController {
+	
+	func dismiss(didPurchase: Bool, productId: String?, paywallInfo: PaywallInfo?, completion: (() -> Void)?) {
+		Paywall.delegate?.willDismissPaywall?()
+		self.dismiss(animated: true) { [weak self] in
+			Paywall.delegate?.didDismissPaywall?()
+			self?.loadingState = .ready
+			self?.dismissalCompletion?(didPurchase, productId, paywallInfo)
+			completion?()
+			Paywall.shared.destroyPresentingWindow()
+		}
+	}
+	
+	func prepareForPresentation() {
+		readyForEventTracking = false
+		willMove(toParent: nil)
+		view.removeFromSuperview()
+		removeFromParent()
+		view.alpha = 1.0
+		view.transform = .identity
+		webview.scrollView.contentOffset = CGPoint.zero
+		
+		Paywall.delegate?.willPresentPaywall?()
+		Paywall.shared.paywallWasPresentedThisSession = true
+		Paywall.shared.paywallViewController = self
+		Paywall.shared.recentlyPresented = true
+	}
+	
+	func presentationDidFinish() {
+		Paywall.delegate?.didPresentPaywall?()
+		readyForEventTracking = true
+		trackOpen()
+		
+		if (Paywall.isGameControllerEnabled) {
+			GameControllerManager.shared.delegate = self
+		}
+		
+		if Paywall.delegate == nil {
+			presentAlert(title: "Almost Done...", message: "Set Paywall.delegate to handle purchases, restores and more!", actionTitle: "Docs →", action: {
+				if let url = URL(string: "https://docs.superwall.me/docs/configuring-the-sdk-1") {
+					UIApplication.shared.open(url, options: [:], completionHandler: nil)
+				}
+			}, closeActionTitle: "Done")
+		}
+		
+	}
+	
+	func present(on presentor: UIViewController, fromEventData: EventData?, calledFromIdentifier: Bool, dismissalBlock: DismissalCompletionBlock?, completion: @escaping (Bool) -> ()) {
+		
+		let isPresented = (presentor is SWPaywallViewController) || presentingViewController != nil || isBeingPresented || Paywall.shared.isPaywallPresented
+		
+		if isPresented {
+			completion(false)
+			return
+		} else {
+			prepareForPresentation()
+			set(fromEventData: fromEventData, calledFromIdentifier: calledFromIdentifier, dismissalBlock: dismissalBlock)
+			presentor.present(self, animated: true, completion: { [weak self] in
+				self?.presentationDidFinish()
+			})
+		}
 		
 	}
 	

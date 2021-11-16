@@ -7,6 +7,7 @@
 
 import Foundation
 import StoreKit
+import TPInAppReceipt
 
 class PaywallResponseManager: NSObject {
 	
@@ -25,7 +26,7 @@ class PaywallResponseManager: NSObject {
 		let hash = requestHash(identifier: identifier, event: event)
 		
 		// if the response exists, return it
-		if let (r, e) = responsesByHash[hash] {
+		if let (r, e) = responsesByHash[hash], !SWDebugManager.shared.isDebuggerLaunched {
 			OnMain {
 				completion(r, e)
 			}
@@ -48,6 +49,7 @@ class PaywallResponseManager: NSObject {
 	
 			Paywall.track(.paywallResponseLoadStart(fromEvent: isFromEvent, event: event))
 			
+			// get the paywall
 			Network.shared.paywall(withIdentifier: identifier, fromEvent: event) { (result) in
 				self.queue.async {
 					switch(result) {
@@ -55,20 +57,53 @@ class PaywallResponseManager: NSObject {
 								
 							Paywall.track(.paywallResponseLoadComplete(fromEvent: isFromEvent, event: event))
 							
-							// cache the response for later
-							self.responsesByHash[hash] = (response, nil)
-						
-							// execulte all the cached handlers
-							if let handlers = self.handlersByHash[hash]  {
-								OnMain {
-									for h in handlers {
-										h(response, nil)
+							// add its products
+							StoreKitManager.shared.get(productsWithIds: response.productIds) { productsById in
+								
+								var variables = [Variables]()
+								var response = response
+								
+								for p in response.products {
+									if let appleProduct = productsById[p.productId] {
+										variables.append(Variables(key: p.product.rawValue, value: appleProduct.eventData))
+										
+										if p.product == .primary {
+											response.isFreeTrialAvailable = appleProduct.hasFreeTrial
+											if let receipt = try? InAppReceipt.localReceipt() {
+												let hasPurchased = receipt.containsPurchase(ofProductIdentifier: p.productId)
+												if hasPurchased && appleProduct.hasFreeTrial {
+													response.isFreeTrialAvailable = false
+												}
+											}
+											// use the override if it is set
+											if let or = Paywall.isFreeTrialAvailableOverride {
+												response.isFreeTrialAvailable = or
+												Paywall.isFreeTrialAvailableOverride = nil // reset it for future use
+											}
+										}
 									}
 								}
+								
+								response.variables = variables
+								
+								// cache the response for later
+								self.responsesByHash[hash] = (response, nil)
+							
+								// execulte all the cached handlers
+								if let handlers = self.handlersByHash[hash]  {
+									OnMain {
+										for h in handlers {
+											h(response, nil)
+										}
+									}
+								}
+								
+								// reset the handler cache
+								self.handlersByHash.removeValue(forKey: hash)
+								
 							}
 							
-							// reset the handler cache
-							self.handlersByHash.removeValue(forKey: hash)
+								
 							
 								
 						case .failure(let error):

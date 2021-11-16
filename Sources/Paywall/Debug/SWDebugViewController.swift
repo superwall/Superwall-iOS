@@ -407,9 +407,9 @@ internal class SWDebugViewController: UIViewController {
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        Paywall.set(response: nil, completion: nil)
+		PaywallManager.shared.clearCache() // TODO: test if we need this
         UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = oldTintColor
-        Paywall.isDebuggerLaunched = false
+		SWDebugManager.shared.isDebuggerLaunched = false
 		LocalizationManager.shared.selectedLocale = nil
     }
 

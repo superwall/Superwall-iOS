@@ -8,6 +8,7 @@ class StoreKitManager: NSObject {
 	internal static var shared = StoreKitManager()
 	
 	var productsManager = ProductsManager()
+	var productsById = [String: SKProduct]()
 	
 	
 	func getVariables(forResponse response: PaywallResponse, completion: @escaping ([Variables]) -> ()) {
@@ -55,6 +56,7 @@ class StoreKitManager: NSObject {
 			
 			for p in productsSet {
 				output[p.productIdentifier] = p
+				self.productsById[p.productIdentifier] = p
 			}
 			
 			completion(output)

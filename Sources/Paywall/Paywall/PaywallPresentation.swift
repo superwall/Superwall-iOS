@@ -9,19 +9,12 @@ import Foundation
 import UIKit
 
 extension Paywall {
-//	@available(*, deprecated, message: "use present(on viewController: UIViewController? = nil, presentationCompletion: (()->())? = nil, dismissalCompletion: DismissalCompletionBlock? = nil, fallback: FallbackBlock? = nil) instead")
-//	@objc public static func present(on viewController: UIViewController? = nil,
-//									 cached: Bool = true,
-//									 presentationCompletion: (()->())? = nil,
-//									 purchaseCompletion: ((Bool) -> ())? = nil,
-//									 fallback: (()->())? = nil) {
-//		present(on: viewController, presentationCompletion: { _  in
-//			presentationCompletion?()}, dismissalCompletion: { didPurchase, _, _ in
-//				purchaseCompletion?(didPurchase)
-//			}, fallback: { _ in
-//			fallback?()
-//		})
-//	}
+
+	/// Dismisses the presented paywall. Doesn't trigger a `PurchaseCompletionBlock` call if provided during `Paywall.present()`, since this action is developer initiated.
+	/// - Parameter completion: A completion block of type `(()->())? = nil` that gets called after the paywall is dismissed.
+	@objc public static func dismiss(_ completion: (()->())? = nil) {
+		shared._dismiss(completion: completion)
+	}
 	
 	/// Presents a paywall to the user.
 	///  - Parameter onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a `PaywallInfo?` object containing information about the paywall.
@@ -110,135 +103,62 @@ extension Paywall {
 									dismissalCompletion: ((Bool, String?, PaywallInfo?) -> ())? = nil,
 									fallback: ((NSError?) -> ())? = nil) {
 		
-		
-		if isDebuggerLaunched {
+		if SWDebugManager.shared.isDebuggerLaunched {
 			// if the debugger is launched, ensure the viewcontroller is the debugger
 			guard viewController is SWDebugViewController else { return }
-		} else {
-			// otherwise, ensure we should present the paywall via the delegate method
-			guard !(delegate?.isUserSubscribed() ?? false) else { return }
 		}
-		
-		self.dismissalCompletion = dismissalCompletion
-				
-		guard let delegate = delegate else {
-			Logger.superwallDebug(string: "Yikes ... you need to set Paywall.delegate before doing anything fancy")
-			fallback?(Paywall.shared.presentationError(domain: "SWDelegateError", code: 100, title: "Paywall delegate not set", value: "You need to set Paywall.delegate before doing anything fancy"))
-			return
+
+		if let delegate = delegate {
+			guard !delegate.isUserSubscribed() else { return }
 		}
-		
-		let presentationBlock: ((SWPaywallViewController) -> ()) = { vc in
+
+		PaywallManager.shared.viewController(identifier: identifier, event: fromEvent, cached: cached && !SWDebugManager.shared.isDebuggerLaunched) { vc, error in
 			
-			let presentingWindowExists = shared.presentingWindow != nil
-			let alreadyPresented = vc.presentingViewController != nil || vc.isBeingPresented || presentingWindowExists
-			
-			if viewController == nil && !alreadyPresented {
-				shared.createPresentingWindow()
+			// if there's a paywall being presented, don't do anything
+			if Paywall.shared.isPaywallPresented {
+				Logger.superwallDebug(string: "Note: A Paywall is already being presented, skipping setting a new one.")
+				return
 			}
 			
+			// check for errors
+			if let error = error {
+				fallback?(error)
+				return
+			}
+			
+			// make sure there's a vc
+			guard let vc = vc else {
+				Logger.superwallDebug(string: "Failed to create SWPaywallViewController!")
+				fallback?(Paywall.shared.presentationError(domain: "SWInternalError", code: 102, title: "Paywall view controller was nil", value: "No further errors were propogated"))
+				return
+			}
+			
+			if viewController == nil {
+ 				shared.createPresentingWindowIfNeeded()
+			}
+			
+			// make sure there's a presentor. if there isn't throw an error if no paywall is presented
 			guard let presentor = (viewController ?? shared.presentingWindow?.rootViewController) else {
 				Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call Paywall.present(on: nil) immediately after calling Paywall.present(on: someViewController)")
-				if !alreadyPresented {
+				if !Paywall.shared.isPaywallPresented {
 					fallback?(Paywall.shared.presentationError(domain: "SWPresentationError", code: 101, title: "No UIViewController to present paywall on", value: "This usually happens when you call this method before a window was made key and visible."))
 				}
 				return
 			}
 			
-			// if the top most view controller is a paywall view controller
-			// the paywall view controller to present has a presenting view controller
-			// the paywall view controller to present is in the process of being presented
-			
-			let isPresented = (presentor as? SWPaywallViewController) != nil || vc.presentingViewController != nil || vc.isBeingPresented || presentingWindowExists
-			
-			if !isPresented {
-				shared.paywallViewController?.readyForEventTracking = false
-				vc.willMove(toParent: nil)
-				vc.view.removeFromSuperview()
-				vc.removeFromParent()
-				vc.view.alpha = 1.0
-				vc.view.transform = .identity
-				vc.webview.scrollView.contentOffset = CGPoint.zero
-				vc.set(fromEventData: fromEvent, calledFromIdentifier: identifier != nil)
-				delegate.willPresentPaywall?()
-				
-				shared.paywallWasPresentedThisSession = true
-								
-				presentor.present(vc, animated: true, completion: {
+			vc.present(on: presentor, fromEventData: fromEvent, calledFromIdentifier: identifier != nil, dismissalBlock: dismissalCompletion) { success in
+				if success {
 					self.presentAgain = {
-						Paywall.set(response: nil, completion: nil)
+						PaywallManager.shared.removePaywall(identifier: identifier, event: fromEvent)
 						present(on: presentor, fromEvent: fromEvent, cached: false, presentationCompletion: presentationCompletion, dismissalCompletion: dismissalCompletion, fallback: fallback)
 					}
-					delegate.didPresentPaywall?()
 					presentationCompletion?(vc.paywallInfo)
-					
-					vc.trackOpen()
-					
-					shared.paywallViewController?.readyForEventTracking = true
-					if (Paywall.isGameControllerEnabled) {
-						GameControllerManager.shared.delegate = vc
-					}
-				})
-			} else {
-				Logger.superwallDebug(string: "Note: A Paywall is already being presented")
-			}
-
-		}
-		
-		if let vc = shared.paywallViewController, cached, (fromEvent?.name ?? identifier) == lastEventTrigger, !isDebuggerLaunched {
-			presentationBlock(vc)
-			return
-		}
-
-		lastEventTrigger = (fromEvent?.name ?? identifier)
-				
-		
-		PaywallResponseManager.shared.getResponse(identifier: identifier, event: fromEvent) { r, e in
-			
-			if let r = r {
-				
-				// if there's a paywall being presented, don't do anything
-				if let vc = shared.paywallViewController, vc.presentingViewController != nil || vc.isBeingPresented || shared.presentingWindow != nil || shared.recentlyPresented {
-					Logger.superwallDebug(string: "Note: A Paywall is already being presented, skipping setting a new one.")
-					return
+				} else {
+					Logger.superwallDebug(string: "Note: A Paywall is already being presented")
 				}
-				
-				// disable immediately subsequent responses from overwritting this one
-				shared.recentlyPresented = true
-				
-				Paywall.set(response: r) { success in
-					if (success) {
-						
-						guard let vc = shared.paywallViewController else {
-							lastEventTrigger = nil
-							Logger.superwallDebug(string: "Paywall's viewcontroller is nil!")
-							fallback?(Paywall.shared.presentationError(domain: "SWInternalError", code: 102, title: "Paywall not set", value: "Paywall.paywallViewController was nil"))
-							return
-						}
-						
-						guard let _ = shared.paywallResponse else {
-							lastEventTrigger = nil
-							Logger.superwallDebug(string: "Paywall presented before API response was received")
-							fallback?(Paywall.shared.presentationError(domain: "SWInternalError", code: 103, title: "Paywall Presented to Early", value: "Paywall presented before API response was received"))
-							return
-						}
-						
-						presentationBlock(vc)
-						
-					} else {
-						lastEventTrigger = nil
-						fallback?(e)
-					}
-				}
-			} else {
-				lastEventTrigger = nil
-				// Paywall.set(response: nil, completion: nil) // otherwise it will incorrectly cache a previously presented paywall as the paywall for a nil event trigger (presented manually)
-				fallback?(e)
 			}
-
 		}
-		
 	}
-	
 	
 	func presentationError(domain: String, code: Int, title: String, value: String) -> NSError {
 		let userInfo: [String : Any] = [
@@ -250,4 +170,43 @@ extension Paywall {
 }
 
 
+extension Paywall {
+	
+	internal func _dismiss(userDidPurchase: Bool? = nil, productId: String? = nil, completion: (()->())? = nil) {
+		OnMain { [weak self] in
+			if let s = userDidPurchase, let paywallInfo = self?.paywallViewController?.paywallInfo {
+				self?.paywallViewController?.dismiss(didPurchase: s, productId: productId, paywallInfo: paywallInfo, completion: {
+					completion?()
+				})
+			}
+		}
+	}
+	
+	internal func createPresentingWindowIfNeeded() {
+		
+		if presentingWindow == nil {
+				
+			if #available(iOS 13.0, *) {
+				if let windowScene = UIApplication.shared.connectedScenes.first(where: {$0.activationState == .foregroundActive }) as? UIWindowScene {
+					presentingWindow = UIWindow(windowScene: windowScene)
+				}
+			}
+			
+			if presentingWindow == nil {
+				presentingWindow = UIWindow(frame: UIScreen.main.bounds)
+			}
+			
+			presentingWindow?.rootViewController = UIViewController()
+			presentingWindow?.windowLevel = .normal
+			presentingWindow?.makeKeyAndVisible()
+			
+		}
+	}
+	
+	internal func destroyPresentingWindow() {
+		presentingWindow?.isHidden = true
+		presentingWindow = nil
+	}
+	
 
+}
