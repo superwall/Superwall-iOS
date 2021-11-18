@@ -10,36 +10,90 @@ import UIKit
 import Foundation
 import SafariServices
 
-//protocol SWPaywallViewControllerDelegate: AnyObject {
-//    func userDismissedPaywallWhileLoading()
-//}
-//
+protocol SWPaywallViewControllerDelegate: AnyObject {
+	func eventDidOccur(paywallViewController: SWPaywallViewController, result: PaywallPresentationResult)
+}
+
 
 
 
 
 internal class SWPaywallViewController: UIViewController {
-    
-    // Don't touch my private parts.
 	
+	
+	
+	
+	
+	
+	// ----------------
+	// MARK: Properties
+	// ----------------
+	
+	
+	
+	
+	
+	internal weak var delegate: SWPaywallViewControllerDelegate? = nil
 	internal typealias DismissalCompletionBlock = (Bool, String?, PaywallInfo?) -> ()
 	internal var dismissalCompletion: DismissalCompletionBlock? = nil
-    
     internal var _paywallResponse: PaywallResponse? = nil
-	
 	internal var fromEventData: EventData? = nil
 	internal var calledByIdentifier: Bool = false
+	internal var readyForEventTracking = false
+	internal var showRefreshTimer: Timer? = nil
+//	public var completion: ((PaywallPresentationResult) -> Void)?
 	
+	// Views
+	
+	lazy var shimmerView = ShimmeringView(frame: self.view.bounds)
+	
+	lazy var webview: WKWebView = {
+		wkConfig.userContentController.add(LeakAvoider(delegate:self), name: "paywallMessageHandler")
+		
+		let wv = WKWebView(frame: CGRect(), configuration: wkConfig)
+		wv.translatesAutoresizingMaskIntoConstraints = false
+		wv.allowsBackForwardNavigationGestures = true
+		wv.allowsLinkPreview = false
+		wv.backgroundColor = .clear
+		wv.scrollView.maximumZoomScale = 1.0
+		wv.scrollView.minimumZoomScale = 1.0
+		wv.isOpaque = false
+		wv.scrollView.contentInsetAdjustmentBehavior = .never
+		wv.scrollView.bounces = true
+		wv.scrollView.contentInsetAdjustmentBehavior = .never
+		wv.scrollView.contentInset = .init(top: 0, left: 0, bottom: 0, right: 0)
+		wv.scrollView.scrollIndicatorInsets = .zero
+		wv.scrollView.showsVerticalScrollIndicator = false
+		wv.scrollView.showsHorizontalScrollIndicator = false
+		wv.scrollView.maximumZoomScale = 1.0
+		wv.scrollView.minimumZoomScale = 1.0
+		wv.scrollView.backgroundColor = .clear
+		wv.scrollView.isOpaque = false
+
+	   return wv
+	}()
+	
+	var wkConfig: WKWebViewConfiguration = {
+		let config = WKWebViewConfiguration()
+		config.allowsInlineMediaPlayback = true
+		config.allowsAirPlayForMediaPlayback = true
+		config.allowsPictureInPictureMediaPlayback = true
+		config.mediaTypesRequiringUserActionForPlayback = []
+		
+		let preferences = WKPreferences()
+		if #available(iOS 15.0, *) {
+			preferences.isTextInteractionEnabled = false
+		}
+		preferences.javaScriptCanOpenWindowsAutomatically = true
+		
+		config.preferences = preferences
+		
+		return config
+	}()
 	
 	var paywallInfo: PaywallInfo? {
 		return _paywallResponse?.getPaywallInfo(fromEvent: fromEventData, calledByIdentifier: calledByIdentifier)
 	}
-    
-    public var completion: ((PaywallPresentationResult) -> Void)?
-    
-    internal var readyForEventTracking = false
-    
-//    weak var delegate: SWPaywallViewControllerDelegate? = nil
     
     var presentationStyle: PaywallPresentationStyle {
         return _paywallResponse?.presentationStyle ?? .sheet
@@ -72,98 +126,211 @@ internal class SWPaywallViewController: UIViewController {
     
     var loadingState: LoadingState  = .unknown {
         didSet {
-            DispatchQueue.main.async { [weak self] in
-                
-                guard let loadingState = self?.loadingState else { return }
-            
-                
-                switch loadingState {
-                case .unknown:
-                    break
-                case .loadingPurchase:
-                    self?.shimmerView.isShimmering = false
-					self?.showRefreshButtonAfterTimeout(show: true)
-                    self?.shimmerView.alpha = 0.0
-                    self?.shimmerView.transform = .identity
-//                    self?.purchaseLoadingIndicator.startAnimating()
-                    self?.purchaseLoadingIndicator.alpha = 0.0
-                    self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
-                    
-                    UIView.animate(withDuration: 0.618, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
-                        self?.webview.alpha = 0.0
-                        self?.webview.transform = CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97)
-                        self?.purchaseLoadingIndicator.alpha = 1.0
-                        self?.purchaseLoadingIndicator.transform = .identity
-                    }, completion: nil)
-                    
-                case .loadingResponse:
-                    self?.shimmerView.isShimmering = true
-                    self?.shimmerView.alpha = 0.0
-                    self?.shimmerView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
-					self?.showRefreshButtonAfterTimeout(show: true)
-                    
-                    UIView.animate(withDuration: 0.618, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
-                        self?.webview.alpha = 0.0
-                        self?.shimmerView.alpha = 1.0
-                        self?.webview.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)//.scaledBy(x: 0.97, y: 0.97)
-                        self?.shimmerView.transform = .identity
-                        self?.purchaseLoadingIndicator.alpha = 0.0
-                        self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
-                    }, completion: {  _ in
-//                        self?.purchaseLoadingIndicator.stopAnimating()
-                    })
-                case .ready:
-                    // delay to prevent flicker
-                    self?.webview.transform = oldValue == .loadingPurchase ? CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97) : CGAffineTransform.identity.translatedBy(x: 0, y: 10)
-						
-					self?.showRefreshButtonAfterTimeout(show: false)
-                    
-                    UIView.animate(withDuration: 1.0, delay: 0.25, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
-                        self?.webview.alpha = 1.0
-                        self?.webview.transform = .identity
-                        self?.shimmerView.alpha = 0.0
-                        self?.purchaseLoadingIndicator.alpha = 0.0
-                        self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
-                    }, completion: { [weak self] _ in
-                        self?.shimmerView.isShimmering = false
-//                        self?.purchaseLoadingIndicator.stopAnimating()
-                    })
-                    
-                }
-                    
-            }
+			self.loadingStateDidChange(oldValue: oldValue)
         }
     }
-    
-    init?(paywallResponse: PaywallResponse?, completion: ((PaywallPresentationResult) -> Void)? = nil) {
-        self.completion = completion
-        super.init(nibName: nil, bundle: nil)
-        
-        if let pr = paywallResponse {
-            set(paywallResponse: pr)
-        }
-        
-    }
 	
-	var showRefreshTimer: Timer? = nil
+	lazy var refreshPaywallButton: UIButton = {
+		let button = UIButton()
+		button.setImage(UIImage(named: "reload_paywall", in: Bundle.module, compatibleWith: nil)!, for: .normal)
+		button.translatesAutoresizingMaskIntoConstraints = false
+		button.addTarget(self, action: #selector(pressedRefreshPaywall), for: .primaryActionTriggered)
+		button.isHidden = true
+		return button
+	}()
 	
+	var contentPlaceholderImageView: UIImageView = {
+		let imageView = UIImageView(image: UIImage(named: "paywall_placeholder", in: Bundle.module, compatibleWith: nil)!)
+		imageView.contentMode = .scaleAspectFit
+		imageView.tintColor = .white
+		imageView.backgroundColor = .clear
+		imageView.clipsToBounds = true
+		imageView.translatesAutoresizingMaskIntoConstraints = false
+		imageView.isHidden = false
+		imageView.alpha = 1.0 - 0.618
+		return imageView
+	 
+	}()
+
+	var isPresented: Bool {
+		return (isBeingPresented || presentingViewController != nil || navigationController != nil ) && delegate != nil
+	}
+	
+	
+
+	
+	
+	
+	// ---------------
+	// MARK: Functions
+	// ---------------
+	
+	
+	
+	
+	
+	
+//    init?(paywallResponse: PaywallResponse?, completion: ((PaywallPresentationResult) -> Void)? = nil) {
+//        self.completion = completion
+//        super.init(nibName: nil, bundle: nil)
+//
+//        if let pr = paywallResponse {
+//            set(paywallResponse: pr)
+//        }
+//
+//    }
+	
+	init?(paywallResponse: PaywallResponse?, delegate: SWPaywallViewControllerDelegate? = nil) {
+		self.delegate = delegate
+		super.init(nibName: nil, bundle: nil)
+		
+		if let pr = paywallResponse {
+			set(paywallResponse: pr)
+		}
+		
+	}
+	
+	required init?(coder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+	
+	public override func viewDidLoad() {
+		
+		NotificationCenter.default.addObserver(self, selector: #selector(applicationWillResignActive(_:)), name: UIApplication.willResignActiveNotification, object: nil)
+		NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive(_:)), name: UIApplication.didBecomeActiveNotification, object: nil)
+		
+		shimmerView.isShimmering = true
+		view.addSubview(shimmerView)
+		view.addSubview(purchaseLoadingIndicatorContainer)
+		purchaseLoadingIndicatorContainer.addSubview(purchaseLoadingIndicator)
+		view.addSubview(webview)
+		shimmerView.translatesAutoresizingMaskIntoConstraints = false
+		shimmerView.contentView = contentPlaceholderImageView
+		
+		view.addSubview(refreshPaywallButton)
+	
+		NSLayoutConstraint.activate([
+			
+			purchaseLoadingIndicatorContainer.topAnchor.constraint(equalTo: view.topAnchor),
+			purchaseLoadingIndicatorContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+			purchaseLoadingIndicatorContainer.widthAnchor.constraint(equalTo: view.widthAnchor),
+			purchaseLoadingIndicatorContainer.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.5),
+			
+			purchaseLoadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+			purchaseLoadingIndicator.centerYAnchor.constraint(equalTo: purchaseLoadingIndicatorContainer.bottomAnchor),
+			
+			shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+			shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+			shimmerView.topAnchor.constraint(equalTo: view.topAnchor),
+			shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+			webview.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+			webview.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+			webview.topAnchor.constraint(equalTo: view.topAnchor),
+			webview.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
+			
+			refreshPaywallButton.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
+			refreshPaywallButton.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor, constant: 0),
+			refreshPaywallButton.widthAnchor.constraint(equalToConstant: 55),
+			refreshPaywallButton.heightAnchor.constraint(equalToConstant: 55),
+		])
+ 
+	}
+	
+	public override func viewWillAppear(_ animated: Bool) {
+		super.viewWillAppear(animated)
+		if #available(iOS 15.0, *) {
+			webview.setAllMediaPlaybackSuspended(false, completionHandler: nil)
+		}
+		
+		if UIWindow.isLandscape {
+			contentPlaceholderImageView.image = UIImage(named: "paywall_placeholder_landscape", in: Bundle.module, compatibleWith: nil)!
+		}
+	}
+	
+	override func viewDidDisappear(_ animated: Bool) {
+		super.viewDidDisappear(animated)
+		if readyForEventTracking {
+			trackClose()
+		}
+		if #available(iOS 15.0, *) {
+			webview.setAllMediaPlaybackSuspended(true, completionHandler: nil)
+		}
+	}
+	
+	func loadingStateDidChange(oldValue: LoadingState) {
+		DispatchQueue.main.async { [weak self] in
+			
+			guard let loadingState = self?.loadingState else { return }
+		
+			switch loadingState {
+			case .unknown:
+				break
+			case .loadingPurchase:
+				self?.shimmerView.isShimmering = false
+				self?.showRefreshButtonAfterTimeout(show: true)
+				self?.shimmerView.alpha = 0.0
+				self?.shimmerView.transform = .identity
+				self?.purchaseLoadingIndicator.alpha = 0.0
+				self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
+				
+				UIView.animate(withDuration: 0.618, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
+					self?.webview.alpha = 0.0
+					self?.webview.transform = CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97)
+					self?.purchaseLoadingIndicator.alpha = 1.0
+					self?.purchaseLoadingIndicator.transform = .identity
+				}, completion: nil)
+				
+			case .loadingResponse:
+				self?.shimmerView.isShimmering = true
+				self?.shimmerView.alpha = 0.0
+				self?.shimmerView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
+				self?.showRefreshButtonAfterTimeout(show: true)
+				
+				UIView.animate(withDuration: 0.618, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
+					self?.webview.alpha = 0.0
+					self?.shimmerView.alpha = 1.0
+					self?.webview.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)//.scaledBy(x: 0.97, y: 0.97)
+					self?.shimmerView.transform = .identity
+					self?.purchaseLoadingIndicator.alpha = 0.0
+					self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
+				}, completion: {  _ in
+
+				})
+			case .ready:
+				self?.webview.transform = oldValue == .loadingPurchase ? CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97) : CGAffineTransform.identity.translatedBy(x: 0, y: 10)
+				self?.showRefreshButtonAfterTimeout(show: false)
+				UIView.animate(withDuration: 1.0, delay: 0.25, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
+					self?.webview.alpha = 1.0
+					self?.webview.transform = .identity
+					self?.shimmerView.alpha = 0.0
+					self?.purchaseLoadingIndicator.alpha = 0.0
+					self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
+				}, completion: { [weak self] _ in
+					self?.shimmerView.isShimmering = false
+				})
+				
+			}
+				
+		}
+	}
 	
 	func showRefreshButtonAfterTimeout(show: Bool) {
 		showRefreshTimer?.invalidate()
 		showRefreshTimer = nil
 		
-		guard show else {
+		if show {
+			showRefreshTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: false, block: { [weak self] t in
+				self?.refreshPaywallButton.isHidden = false
+				self?.refreshPaywallButton.alpha = 0.0
+				UIView.animate(withDuration: 2.0, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
+					self?.refreshPaywallButton.alpha = 1.0
+				}, completion: nil)
+			})
+		} else {
 			hideRefreshButton()
 			return
 		}
-		
-		showRefreshTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: false, block: { [weak self] t in
-			self?.refreshPaywallButton.isHidden = false
-			self?.refreshPaywallButton.alpha = 0.0
-			UIView.animate(withDuration: 2.0, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
-				self?.refreshPaywallButton.alpha = 1.0
-			}, completion: nil)
-		})
 	}
 	
 	func hideRefreshButton() {
@@ -176,10 +343,10 @@ internal class SWPaywallViewController: UIViewController {
 		})
 	}
 	
-	func set(fromEventData: EventData?, calledFromIdentifier: Bool, dismissalBlock: DismissalCompletionBlock?) {
-		self.fromEventData = fromEventData
-		self.calledByIdentifier = calledFromIdentifier
-		self.dismissalCompletion = dismissalBlock
+	@objc func pressedRefreshPaywall() {
+		dismiss(animated: true, completion: {
+			Paywall.presentAgain()
+		})
 	}
     
 	func set(paywallResponse: PaywallResponse) {
@@ -208,8 +375,6 @@ internal class SWPaywallViewController: UIViewController {
             }
         }
         
-
-        
         switch presentationStyle {
         case .sheet:
             modalPresentationStyle = .formSheet
@@ -219,152 +384,12 @@ internal class SWPaywallViewController: UIViewController {
             modalPresentationStyle = .overFullScreen
         }
     }
-    
-    // Views
-    
-    var wkConfig: WKWebViewConfiguration = {
-        let config = WKWebViewConfiguration()
-        config.allowsInlineMediaPlayback = true
-        config.allowsAirPlayForMediaPlayback = true
-        config.allowsPictureInPictureMediaPlayback = true
-		config.mediaTypesRequiringUserActionForPlayback = []
-		
-		let preferences = WKPreferences()
-		if #available(iOS 15.0, *) {
-			preferences.isTextInteractionEnabled = false
-		}
-		preferences.javaScriptCanOpenWindowsAutomatically = true
-		
-		config.preferences = preferences
-		
-        return config
-    }()
-    
-    lazy var webview: WKWebView = {
-        wkConfig.userContentController.add(LeakAvoider(delegate:self), name: "paywallMessageHandler")
-        
-        let wv = WKWebView(frame: CGRect(), configuration: wkConfig)
-        wv.translatesAutoresizingMaskIntoConstraints = false
-        wv.allowsBackForwardNavigationGestures = true
-        wv.allowsLinkPreview = false
-        wv.backgroundColor = .clear
-        wv.scrollView.maximumZoomScale = 1.0
-        wv.scrollView.minimumZoomScale = 1.0
-        wv.isOpaque = false
-        wv.scrollView.contentInsetAdjustmentBehavior = .never
-        wv.scrollView.bounces = true
-        wv.scrollView.contentInsetAdjustmentBehavior = .never
-        wv.scrollView.contentInset = .init(top: 0, left: 0, bottom: 0, right: 0)
-        wv.scrollView.scrollIndicatorInsets = .zero
-        wv.scrollView.showsVerticalScrollIndicator = false
-        wv.scrollView.showsHorizontalScrollIndicator = false
-        wv.scrollView.maximumZoomScale = 1.0
-        wv.scrollView.minimumZoomScale = 1.0
-        wv.scrollView.backgroundColor = .clear
-        wv.scrollView.isOpaque = false
-
-       return wv
-   }()
 	
-	lazy var refreshPaywallButton: UIButton = {
-		let button = UIButton()
-		button.setImage(UIImage(named: "reload_paywall", in: Bundle.module, compatibleWith: nil)!, for: .normal)
-		button.translatesAutoresizingMaskIntoConstraints = false
-		button.addTarget(self, action: #selector(pressedRefreshPaywall), for: .primaryActionTriggered)
-		button.isHidden = true
-		return button
-	}()
-    
-    var contentPlaceholderImageView: UIImageView = {
-        let imageView = UIImageView(image: UIImage(named: "paywall_placeholder", in: Bundle.module, compatibleWith: nil)!)
-        imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .white
-        imageView.backgroundColor = .clear
-        imageView.clipsToBounds = true
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.isHidden = false
-        imageView.alpha = 1.0 - 0.618
-        return imageView
-     
-    }()
-    
-    lazy var shimmerView = ShimmeringView(frame: self.view.bounds)
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    // UIViewController
-    
-    public override func viewDidLoad() {
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(applicationWillResignActive(_:)), name: UIApplication.willResignActiveNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive(_:)), name: UIApplication.didBecomeActiveNotification, object: nil)
-        
-        shimmerView.isShimmering = true
-        view.addSubview(shimmerView)
-        view.addSubview(purchaseLoadingIndicatorContainer)
-        purchaseLoadingIndicatorContainer.addSubview(purchaseLoadingIndicator)
-        view.addSubview(webview)
-        shimmerView.translatesAutoresizingMaskIntoConstraints = false
-        shimmerView.contentView = contentPlaceholderImageView
-		
-		view.addSubview(refreshPaywallButton)
-    
-        NSLayoutConstraint.activate([
-            
-            purchaseLoadingIndicatorContainer.topAnchor.constraint(equalTo: view.topAnchor),
-            purchaseLoadingIndicatorContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            purchaseLoadingIndicatorContainer.widthAnchor.constraint(equalTo: view.widthAnchor),
-            purchaseLoadingIndicatorContainer.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.5),
-            
-            purchaseLoadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            purchaseLoadingIndicator.centerYAnchor.constraint(equalTo: purchaseLoadingIndicatorContainer.bottomAnchor),
-            
-            shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            shimmerView.topAnchor.constraint(equalTo: view.topAnchor),
-            shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-
-            webview.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            webview.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            webview.topAnchor.constraint(equalTo: view.topAnchor),
-            webview.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
-			
-			refreshPaywallButton.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
-			refreshPaywallButton.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor, constant: 0),
-			refreshPaywallButton.widthAnchor.constraint(equalToConstant: 55),
-			refreshPaywallButton.heightAnchor.constraint(equalToConstant: 55),
-        ])
- 
-    }
-	
-	@objc func pressedRefreshPaywall() {
-		dismiss(animated: true, completion: {
-			Paywall.presentAgain()
-		})
+	func set(fromEventData: EventData?, calledFromIdentifier: Bool, dismissalBlock: DismissalCompletionBlock?) {
+		self.fromEventData = fromEventData
+		self.calledByIdentifier = calledFromIdentifier
+		self.dismissalCompletion = dismissalBlock
 	}
-
-    public override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-		if #available(iOS 15.0, *) {
-			webview.setAllMediaPlaybackSuspended(false, completionHandler: nil)
-		}
-		
-		if UIWindow.isLandscape {
-			contentPlaceholderImageView.image = UIImage(named: "paywall_placeholder_landscape", in: Bundle.module, compatibleWith: nil)!
-		}
-    }
-    
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
-        if readyForEventTracking {
-			trackClose()
-        }
-		if #available(iOS 15.0, *) {
-			webview.setAllMediaPlaybackSuspended(true, completionHandler: nil)
-		}
-    }
 	
 	func trackOpen() {
 		if let i = paywallInfo {
@@ -378,18 +403,9 @@ internal class SWPaywallViewController: UIViewController {
 		}
 	}
     
-    // WebPaywallViewController
-    
     internal func complete(_ completionResult: PaywallPresentationResult) {
-        completion?(completionResult)
-        
-        if completion == nil {
-            Logger.superwallDebug(string: "[Internal] Warning: Completion not set")
-        }
-        
+		self.delegate?.eventDidOccur(paywallViewController: self, result: completionResult)
     }
-	
-
     
 	func presentAlert(title: String? = nil, message: String? = nil, actionTitle: String? = nil, action: (() -> ())? = nil, closeActionTitle: String = "Done") {
         
@@ -416,36 +432,27 @@ internal class SWPaywallViewController: UIViewController {
 
     
     @objc func applicationWillResignActive(_ sender: AnyObject? = nil) {
-        
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             if self.loadingState == .loadingPurchase {
                 UIView.animate(withDuration: 0.618, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
                     if let height = self?.purchaseLoadingIndicatorContainer.frame.size.height {
                         self?.purchaseLoadingIndicatorContainer.transform = CGAffineTransform.identity.translatedBy(x: 0, y: height * 0.5 * -1)
-//                        self?.purchaseLoadingIndicatorContainer.alpha = 0.5
                     }
                 }, completion: nil)
             }
         }
-            
-        
-            
     }
     
     @objc func applicationDidBecomeActive(_ sender: AnyObject? = nil) {
-        
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             if self.loadingState == .loadingPurchase {
                 UIView.animate(withDuration: 0.618, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
-//                    self?.purchaseLoadingIndicatorContainer.alpha = 1.0
                     self?.purchaseLoadingIndicatorContainer.transform = CGAffineTransform.identity
                 }, completion: nil)
             }
         }
-        
-        
     }
     
     deinit {
@@ -508,12 +515,10 @@ extension SWPaywallViewController {
     
         switch (event) {
         case .onReady:
-				if let i = self.paywallInfo {
-					Paywall.track(.paywallWebviewLoadComplete(paywallInfo: i))
-				}
+			if let i = self.paywallInfo {
+				Paywall.track(.paywallWebviewLoadComplete(paywallInfo: i))
+			}
 
-            // TODO: Jake, I couldn't figure out how to encode these as an array, ideally we would have
-            // [TemplateSubstitutions,TemplateVariables] and only call accept64 once.
             let scriptSrc = """
                 window.paywall.accept64('\(paywallResponse.templateEventsBase64String)');
                 window.paywall.accept64('\(paywallResponse.paywalljsEvent)');
@@ -536,7 +541,6 @@ extension SWPaywallViewController {
                                 + "var head = document.head || document.getElementsByTagName('head')[0]; "
                                 + "var style = document.createElement('style'); style.type = 'text/css'; "
                                 + "style.appendChild(document.createTextNode(css)); head.appendChild(style); "
-                            
             
              let selectionScript: WKUserScript = WKUserScript(source: selectionString, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
              webview.configuration.userContentController.addUserScript(selectionScript)
@@ -641,7 +645,6 @@ extension SWPaywallViewController {
 		
 		Paywall.delegate?.willPresentPaywall?()
 		Paywall.shared.paywallWasPresentedThisSession = true
-		Paywall.shared.paywallViewController = self
 		Paywall.shared.recentlyPresented = true
 	}
 	
@@ -676,6 +679,7 @@ extension SWPaywallViewController {
 			set(fromEventData: fromEventData, calledFromIdentifier: calledFromIdentifier, dismissalBlock: dismissalBlock)
 			presentor.present(self, animated: true, completion: { [weak self] in
 				self?.presentationDidFinish()
+				completion(true)
 			})
 		}
 		

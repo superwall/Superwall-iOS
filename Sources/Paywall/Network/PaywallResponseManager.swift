@@ -108,7 +108,7 @@ class PaywallResponseManager: NSObject {
 								
 						case .failure(let error):
 								
-							print("error:", (error as! Network.Error) == .notFound)
+							print("error:", (error as? Network.Error) == .notFound)
 						
 							if let e = error as? Network.Error, e == .notFound {
 								Paywall.track(.paywallResponseLoadNotFound(fromEvent: isFromEvent, event: event))

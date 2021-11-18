@@ -20,7 +20,7 @@ extension Paywall {
 	internal static func _track(_ name: String, _ params: [String: Any] = [:], _ custom: [String: Any] = [:], handleTrigger: Bool = true) -> EventData {
         
 //        Logger.superwallDebug(string: "[Track] \(name)")
-        
+		
         var eventParams = [String: Any]()
         var delegateParams = [String: Any]()
         delegateParams["isSuperwall"] = true
@@ -60,6 +60,12 @@ extension Paywall {
         // custom events wont work because StandardEventName and InternalEventName won't exist with their own event name
         if EventName(rawValue: name) != nil && name != "user_properties" {
 			Paywall.delegate?.trackAnalyticsEvent?(withName: name, params: delegateParams)
+			Logger.debug("Paywall._track", items: [
+				"name": name,
+				"params": eventParams,
+	//			"custom": custom,
+	//			"handleTrigger": handleTrigger,
+			])
         }
         
 		
@@ -69,6 +75,8 @@ extension Paywall {
 		if handleTrigger {
 			Paywall.shared.handleTrigger(forEvent: eventData)
 		}
+		
+		
 		
 		return eventData
         

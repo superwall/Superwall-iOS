@@ -12,6 +12,23 @@ internal class PaywallManager {
 	static var shared = PaywallManager()
 
 	var cache = [String: SWPaywallViewController]()
+	
+	var viewControllers: Set<SWPaywallViewController> {
+		return Set<SWPaywallViewController>(Array(cache.values))
+	}
+	
+	var presentedViewController: SWPaywallViewController? {
+		
+		let vcs = viewControllers.filter {
+			$0.isPresented
+		}
+		
+		// TODO: log this
+		
+//		assert(vcs.count <= 1, "Somehow multiple view controllers have .isPresented == true")
+		
+		return vcs.first
+	}
 
 	func cacheKey(for identifier: String?, event: EventData?) -> String {
 		return "\(identifier ?? "$no_id")_\(event?.name ?? "$no_event")_\(DeviceHelper.shared.locale)"
@@ -51,7 +68,7 @@ internal class PaywallManager {
 	//						shared.paywallViewController?.removeFromParent()
 	//					}
 						
-						if let vc = SWPaywallViewController(paywallResponse: response, completion: Paywall.shared.paywallEventDidOccur) {
+						if let vc = SWPaywallViewController(paywallResponse: response, delegate: Paywall.shared) {
 						
 					
 							if let v = UIApplication.shared.keyWindow {

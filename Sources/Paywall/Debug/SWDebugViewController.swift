@@ -223,7 +223,7 @@ internal class SWDebugViewController: UIViewController {
     }
     
     func addPaywallPreview() {
-        if let child = SWPaywallViewController(paywallResponse: paywallResponse, completion: nil) {
+        if let child = SWPaywallViewController(paywallResponse: paywallResponse, delegate: nil) {
             addChild(child)
             previewContainerView.insertSubview(child.view, at: 0)
             previewViewContent = child.view

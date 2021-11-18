@@ -15,6 +15,12 @@ internal struct Logger {
             print("[Superwall]", items)
         }
     }
+	
+	static func debug(_ namespace: String, items: [String: Any]) {
+		if Paywall.debugMode {
+			print("[Superwall \(namespace)] → \(items.debugDescription)")
+		}
+	}
     
     static func superwallDebug(string: String, error: Swift.Error? = nil) {
         if Paywall.debugMode {

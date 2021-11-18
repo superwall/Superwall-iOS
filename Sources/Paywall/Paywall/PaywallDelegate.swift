@@ -82,5 +82,6 @@ import StoreKit
 	
 	
 	@objc optional func trackAnalyticsEvent(withName name: String, params: [String: Any])
+	
 
 }

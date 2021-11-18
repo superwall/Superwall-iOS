@@ -81,7 +81,6 @@ public class Paywall: NSObject {
 	
 	internal var presentingWindow: UIWindow? = nil
 	internal var triggerPaywallResponseIsLoading = Set<String>() // used to keep track of which triggers are loading paywalls, so we don't do it 100 times
-	internal var paywallViewController: SWPaywallViewController?
 	internal var productsById: [String: SKProduct] = [String: SKProduct]()
 	internal var didTryToAutoRestore = false
 	internal var didAddPaymentQueueObserver = false
@@ -90,6 +89,10 @@ public class Paywall: NSObject {
 	internal var paywallWasPresentedThisSession = false
 	internal var lastAppClose: Date? = nil
 	internal var didTrackLaunch = false
+	
+	internal var paywallViewController: SWPaywallViewController? {
+		return PaywallManager.shared.presentedViewController
+	}
 	
 	internal var recentlyPresented: Bool = false {
 		didSet {
@@ -150,7 +153,7 @@ public class Paywall: NSObject {
 		
 		if Store.shared.userId != userId { // refetch the paywall, we don't know if the alias was for an existing user
 			shared.set(appUserID: userId)
-			shared.paywallViewController = nil
+			PaywallManager.shared.clearCache()
 		} else {
 			shared.set(appUserID: userId)
 		}
@@ -165,7 +168,7 @@ public class Paywall: NSObject {
 		if Store.shared.appUserId != nil {
 			Store.shared.clear()
 			shared.setAliasIfNeeded()
-			shared.paywallViewController = nil
+			PaywallManager.shared.clearCache()
 			shared.fetchConfiguration()
 			
 			if !Store.shared.didTrackFirstSeen {
@@ -311,30 +314,6 @@ public class Paywall: NSObject {
 			}
 		}
 	}
-	
-
-    internal func paywallEventDidOccur(result: PaywallPresentationResult) {
-        OnMain { [weak self] in
-            switch result {
-            case .closed:
-                self?._dismiss(userDidPurchase: false)
-            case .initiatePurchase(let productId):
-                // TODO: make sure this can NEVER happen
-					guard let product = StoreKitManager.shared.productsById[productId] else { return }
-                self?.paywallViewController?.loadingState = .loadingPurchase
-				Paywall.delegate?.purchase(product: product)
-            case .initiateRestore:
-                Paywall.shared.tryToRestore(userInitiated: true)
-            case .openedURL(let url):
-                Paywall.delegate?.willOpenURL?(url: url)
-            case .openedDeepLink(let url):
-                Paywall.delegate?.willOpenDeepLink?(url: url)
-            case .custom(let string):
-                Paywall.delegate?.handleCustomPaywallAction?(withName: string)
-            }
-        }
-    }
-    
     
     deinit {
         removeActiveStateObservers()
@@ -363,7 +342,7 @@ extension Paywall {
 	@objc func applicationDidBecomeActive(_ sender: AnyObject? = nil) {
 		Paywall.track(.appOpen)
 		
-		if (Date().timeIntervalSince1970 - (lastAppClose?.timeIntervalSince1970 ?? 0) > 30.0) {
+		if (Date().timeIntervalSince1970 - (lastAppClose?.timeIntervalSince1970 ?? 0) > 120.0) {
 			Paywall.track(.sessionStart)
 		}
 		
@@ -378,4 +357,56 @@ extension Paywall {
 		}
 		
 	}
+}
+
+extension Paywall: SWPaywallViewControllerDelegate {
+	internal func eventDidOccur(paywallViewController: SWPaywallViewController, result: PaywallPresentationResult) {
+		
+		// TODO: log this
+		
+//		if let pvc = self.paywallViewController {
+//			assert(paywallViewController == pvc)
+//		}
+		
+		OnMain { [weak self] in
+			switch result {
+			case .closed:
+					self?._dismiss(paywallViewController: paywallViewController, userDidPurchase: false)
+			case .initiatePurchase(let productId):
+				guard let product = StoreKitManager.shared.productsById[productId] else { return }
+				paywallViewController.loadingState = .loadingPurchase
+				Paywall.delegate?.purchase(product: product)
+			case .initiateRestore:
+				Paywall.shared.tryToRestore(paywallViewController: paywallViewController, userInitiated: true)
+			case .openedURL(let url):
+				Paywall.delegate?.willOpenURL?(url: url)
+			case .openedDeepLink(let url):
+				Paywall.delegate?.willOpenDeepLink?(url: url)
+			case .custom(let string):
+				Paywall.delegate?.handleCustomPaywallAction?(withName: string)
+			}
+		}
+	}
+	
+//	internal func paywallEventDidOccur(result: PaywallPresentationResult) {
+//		OnMain { [weak self] in
+//			switch result {
+//			case .closed:
+//				self?._dismiss(userDidPurchase: false)
+//			case .initiatePurchase(let productId):
+//				// TODO: make sure this can NEVER happen
+//					guard let product = StoreKitManager.shared.productsById[productId] else { return }
+//				self?.paywallViewController?.loadingState = .loadingPurchase
+//				Paywall.delegate?.purchase(product: product)
+//			case .initiateRestore:
+//				Paywall.shared.tryToRestore(userInitiated: true)
+//			case .openedURL(let url):
+//				Paywall.delegate?.willOpenURL?(url: url)
+//			case .openedDeepLink(let url):
+//				Paywall.delegate?.willOpenDeepLink?(url: url)
+//			case .custom(let string):
+//				Paywall.delegate?.handleCustomPaywallAction?(withName: string)
+//			}
+//		}
+//	}
 }

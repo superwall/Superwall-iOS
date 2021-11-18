@@ -13,7 +13,11 @@ extension Paywall {
 	/// Dismisses the presented paywall. Doesn't trigger a `PurchaseCompletionBlock` call if provided during `Paywall.present()`, since this action is developer initiated.
 	/// - Parameter completion: A completion block of type `(()->())? = nil` that gets called after the paywall is dismissed.
 	@objc public static func dismiss(_ completion: (()->())? = nil) {
-		shared._dismiss(completion: completion)
+		
+		if let pwv = shared.paywallViewController {
+			shared._dismiss(paywallViewController: pwv, completion: completion)
+		}
+		
 	}
 	
 	/// Presents a paywall to the user.
@@ -103,6 +107,8 @@ extension Paywall {
 									dismissalCompletion: ((Bool, String?, PaywallInfo?) -> ())? = nil,
 									fallback: ((NSError?) -> ())? = nil) {
 		
+		Logger.superwallDebug("Present: identifier: \(identifier), on: \(viewController), fromEvent: \(fromEvent), cached: \(cached), presentationCompletion: \(presentationCompletion), dismissalCompletion: \(dismissalCompletion), fallback: \(fallback)")
+		
 		if SWDebugManager.shared.isDebuggerLaunched {
 			// if the debugger is launched, ensure the viewcontroller is the debugger
 			guard viewController is SWDebugViewController else { return }
@@ -172,10 +178,10 @@ extension Paywall {
 
 extension Paywall {
 	
-	internal func _dismiss(userDidPurchase: Bool? = nil, productId: String? = nil, completion: (()->())? = nil) {
-		OnMain { [weak self] in
-			if let s = userDidPurchase, let paywallInfo = self?.paywallViewController?.paywallInfo {
-				self?.paywallViewController?.dismiss(didPurchase: s, productId: productId, paywallInfo: paywallInfo, completion: {
+	internal func _dismiss(paywallViewController: SWPaywallViewController, userDidPurchase: Bool? = nil, productId: String? = nil, completion: (()->())? = nil) {
+		OnMain {
+			if let s = userDidPurchase, let paywallInfo = paywallViewController.paywallInfo {
+				paywallViewController.dismiss(didPurchase: s, productId: productId, paywallInfo: paywallInfo, completion: {
 					completion?()
 				})
 			}
