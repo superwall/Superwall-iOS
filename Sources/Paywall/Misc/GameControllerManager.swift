@@ -101,12 +101,32 @@ internal class GameControllerManager: NSObject {
 				case gamepad.buttonOptions:
 					self.valueChanged(name, gamepad.buttonOptions!.value)
 				default:
-					Logger.superwallDebug("Warning: unrecognized button:", element)
+					Logger.debug(logLevel: .debug, scope: .gameControllerManager, message: "Unrecognized Button", info: ["button": element], error: nil)
 					
 			}
 		} else {
-			Logger.superwallDebug("Warning: Unsupported OS for Game Controller input")
+			Logger.debug(logLevel: .debug, scope: .gameControllerManager, message: "Unsupported OS", info: nil, error: nil)
 		}
+	}
+	
+}
+
+
+
+extension SWPaywallViewController: GameControllerDelegate {
+	func connectionStatusDidChange(isConnected: Bool) {
+		Logger.debug(logLevel: .debug, scope: .gameControllerManager, message: "Status Changed", info: ["connected": isConnected], error: nil)
+	}
+	
+	func gameControllerEventDidOccur(event: GameControllerEvent) {
+		if let payload = event.jsonString {
+			let script = "window.paywall.accept([\(payload)])"
+			webview.evaluateJavaScript(script, completionHandler: nil)
+			Logger.debug(logLevel: .debug, scope: .gameControllerManager, message: "Received Event", info: ["payload": payload], error: nil)
+		}
+		
+
+		
 	}
 	
 }

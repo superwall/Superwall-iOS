@@ -61,7 +61,9 @@ extension Network {
     
     func send<ResponseType: Decodable>(_ request: URLRequest, isDebugRequest: Bool = false, completion: @escaping (Result<ResponseType, Swift.Error>) -> Void) {
         var request = request
-
+		
+		Logger.debug(logLevel: .debug, scope: .network, message: "Request Started", info: ["body": String(data: request.httpBody ?? Data(), encoding: .utf8) ?? "none", "url": request.url?.absoluteString ?? "unkown"], error: nil)
+		
         let auth = "Bearer " + ((isDebugRequest ? Store.shared.debugKey : Store.shared.apiKey) ?? "")
         request.setValue(auth, forHTTPHeaderField:  "Authorization")
         request.setValue("iOS", forHTTPHeaderField: "X-Platform")
@@ -85,19 +87,17 @@ extension Network {
             do {
                 guard let unWrappedData = data else { return completion(.failure(error ?? Error.unknown))}
 				
-				if let response = response {
-					print("the response is:", response)
-				}
-                
+//				Logger.debug(logLevel: .debug, scope: .network, message: "Response Body", info: ["body": response], error: nil)
+				
 				if let response = response as? HTTPURLResponse {
 					
 					if response.statusCode == 401 {
-						Logger.superwallDebug(string: "Unable to authenticate, please make sure your Superwall API KEY is correct.")
+						Logger.debug(logLevel: .error, scope: .network, message: "Unable to Authenticate", info: ["request": request.debugDescription, "api_key": auth, "url": request.url?.absoluteString ?? "unkown"], error: error)
 						return completion(.failure(Error.notAuthenticated))
 					}
 				
 					if response.statusCode == 404 {
-						Logger.superwallDebug(string: "Paywall not found.")
+						Logger.debug(logLevel: .error, scope: .network, message: "Not Found", info: ["request": request.debugDescription, "api_key": auth, "url": request.url?.absoluteString ?? "unkown"], error: error)
 						return completion(.failure(Error.notFound))
 					}
                 }
@@ -107,9 +107,7 @@ extension Network {
                 let response = try decoder.decode(ResponseType.self, from: unWrappedData)
                 completion(.success(response))
             } catch let error {
-                Logger.superwallDebug(string: "Error requesting: \(request.url?.absoluteString ?? "unknown absolute string")")
-                Logger.superwallDebug(string: "Unable to decode response to type \(ResponseType.self)", error: error)
-                Logger.superwallDebug(string: String(decoding: data ?? Data(), as: UTF8.self))
+				Logger.debug(logLevel: .error, scope: .network, message: "Request Error", info: ["request": request.debugDescription, "api_key": auth, "url": request.url?.absoluteString ?? "unkown", "message": "Unable to decode response to type \(ResponseType.self)", "info": String(decoding: data ?? Data(), as: UTF8.self)], error: error)
                 completion(.failure(Error.decoding))
             }
         }
@@ -142,7 +140,7 @@ extension Network {
         send(request, completion: { (result: Result<EventsResponse, Swift.Error>)  in
             switch result {
                 case .failure(let error):
-                    Logger.superwallDebug(string: "[network POST /events] - failure")
+					Logger.debug(logLevel: .error, scope: .network, message: "Request Failed: /events", info: ["payload": events], error: error)
                     completion(.failure(error))
                 case .success(let response):
                     completion(.success(response))
@@ -182,19 +180,15 @@ extension Network {
             return completion(.failure(Error.unknown))
         }
         
-        Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
         
-        let t = Date().timeIntervalSince1970
-        Logger.superwallDebug("[SW Elapsed Time /paywall] START \(Date().timeIntervalSince1970)")
         
         send(request, completion: { (result: Result<PaywallResponse, Swift.Error>)  in
             switch result {
                 case .failure(let error):
-                    Logger.superwallDebug(string: "[network POST /paywall] - failure")
+					Logger.debug(logLevel: .error, scope: .network, message: "Request Failed: /paywall", info: ["identifier": withIdentifier ?? "none", "event": event.debugDescription], error: error)
                     completion(.failure(error))
                 case .success(let response):
                     completion(.success(response))
-                    Logger.superwallDebug("[SW Elapsed Time /paywall] END: \(Date().timeIntervalSince1970 - t)")
             }
             
         })
@@ -213,12 +207,11 @@ extension Network {
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
         
         send(request, isDebugRequest: true, completion: { (result: Result<PaywallsResponse, Swift.Error>)  in
             switch result {
                 case .failure(let error):
-                    Logger.superwallDebug(string: "[network POST /paywall] - failure")
+					Logger.debug(logLevel: .error, scope: .network, message: "Request Failed: /paywalls", info: nil, error: error)
                     completion(.failure(error))
                 case .success(let response):
                     completion(.success(response))
@@ -241,12 +234,12 @@ extension Network {
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
+//        Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
         
         send(request, isDebugRequest: false, completion: { (result: Result<ConfigResponse, Swift.Error>)  in
             switch result {
                 case .failure(let error):
-                    Logger.superwallDebug(string: "[network POST /config] - failure")
+					Logger.debug(logLevel: .error, scope: .network, message: "Request Failed: /config", info: nil, error: error)
                     completion(.failure(error))
                 case .success(let response):
                     completion(.success(response))

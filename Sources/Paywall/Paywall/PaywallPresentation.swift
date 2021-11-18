@@ -107,7 +107,9 @@ extension Paywall {
 									dismissalCompletion: ((Bool, String?, PaywallInfo?) -> ())? = nil,
 									fallback: ((NSError?) -> ())? = nil) {
 		
-		Logger.superwallDebug("Present: identifier: \(identifier), on: \(viewController), fromEvent: \(fromEvent), cached: \(cached), presentationCompletion: \(presentationCompletion), dismissalCompletion: \(dismissalCompletion), fallback: \(fallback)")
+		let debugInfo: [String: Any] = ["on": viewController.debugDescription, "fromEvent": fromEvent.debugDescription, "cached": cached, "presentationCompletion": presentationCompletion.debugDescription, "dismissalCompletion": dismissalCompletion.debugDescription, "fallback": fallback.debugDescription]
+		
+		Logger.debug(logLevel: .debug, scope: .paywallPresentation, message: "Called Paywall.present", info: debugInfo, error: nil)
 		
 		if SWDebugManager.shared.isDebuggerLaunched {
 			// if the debugger is launched, ensure the viewcontroller is the debugger
@@ -122,19 +124,20 @@ extension Paywall {
 			
 			// if there's a paywall being presented, don't do anything
 			if Paywall.shared.isPaywallPresented {
-				Logger.superwallDebug(string: "Note: A Paywall is already being presented, skipping setting a new one.")
+				Logger.debug(logLevel: .error, scope: .paywallPresentation, message: "Paywall Already Presented", info: ["message": "Paywall.shared.isPaywallPresented is true"], error: nil)
 				return
 			}
 			
 			// check for errors
 			if let error = error {
+				Logger.debug(logLevel: .error, scope: .paywallPresentation, message: "Error Getting Paywall View Controller", info: debugInfo, error: error)
 				fallback?(error)
 				return
 			}
 			
 			// make sure there's a vc
 			guard let vc = vc else {
-				Logger.superwallDebug(string: "Failed to create SWPaywallViewController!")
+				Logger.debug(logLevel: .error, scope: .paywallPresentation, message: "Paywall View Controller is Nil", info: debugInfo, error: nil)
 				fallback?(Paywall.shared.presentationError(domain: "SWInternalError", code: 102, title: "Paywall view controller was nil", value: "No further errors were propogated"))
 				return
 			}
@@ -145,7 +148,7 @@ extension Paywall {
 			
 			// make sure there's a presentor. if there isn't throw an error if no paywall is presented
 			guard let presentor = (viewController ?? shared.presentingWindow?.rootViewController) else {
-				Logger.superwallDebug(string: "No UIViewController to present paywall on. This usually happens when you call Paywall.present(on: nil) immediately after calling Paywall.present(on: someViewController)")
+				Logger.debug(logLevel: .error, scope: .paywallPresentation, message: "No Presentor to Present Paywall", info: debugInfo, error: nil)
 				if !Paywall.shared.isPaywallPresented {
 					fallback?(Paywall.shared.presentationError(domain: "SWPresentationError", code: 101, title: "No UIViewController to present paywall on", value: "This usually happens when you call this method before a window was made key and visible."))
 				}
@@ -160,7 +163,7 @@ extension Paywall {
 					}
 					presentationCompletion?(vc.paywallInfo)
 				} else {
-					Logger.superwallDebug(string: "Note: A Paywall is already being presented")
+					Logger.debug(logLevel: .info, scope: .paywallPresentation, message: "Paywall Already Presented", info: debugInfo, error: nil)
 				}
 			}
 		}

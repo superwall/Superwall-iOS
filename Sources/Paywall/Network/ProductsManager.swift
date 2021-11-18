@@ -36,19 +36,18 @@ class ProductsManager: NSObject {
 			let productsAlreadyCached = self.cachedProductsByIdentifier.filter { key, _ in identifiers.contains(key) }
 			if productsAlreadyCached.count == identifiers.count {
 				let productsAlreadyCachedSet = Set(productsAlreadyCached.values)
-
-				Logger.superwallDebug("Products already cached:", identifiers)
+				Logger.debug(logLevel: .debug, scope: .productsManager, message: "Products Already Cached", info: ["product_ids": identifiers], error: nil)
 				completion(productsAlreadyCachedSet)
 				return
 			}
 
 			if let existingHandlers = self.completionHandlers[identifiers] {
-				Logger.superwallDebug("Found existing product request:", identifiers)
+				Logger.debug(logLevel: .debug, scope: .productsManager, message: "Found Existing Product Request", info: ["product_ids": identifiers], error: nil)
 				self.completionHandlers[identifiers] = existingHandlers + [completion]
 				return
 			}
 
-			Logger.superwallDebug("No cachced request and products starting skproduct request:", identifiers)
+			Logger.debug(logLevel: .debug, scope: .productsManager, message: "Creating New Request", info: ["product_ids": identifiers], error: nil)
 			let request = self.productsRequestFactory.request(productIdentifiers: identifiers)
 			request.delegate = self
 			self.completionHandlers[identifiers] = [completion]
@@ -69,13 +68,13 @@ extension ProductsManager: SKProductsRequestDelegate {
 
 	func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
 		queue.async { [self] in
-			Logger.superwallDebug("Fetched product!")
+			Logger.debug(logLevel: .debug, scope: .productsManager, message: "Fetched Product", info: ["request": request.debugDescription], error: nil)
 			guard let requestProducts = self.productsByRequests[request] else {
-				Logger.superwallDebug("requested products not found for request: \(request)")
+				Logger.debug(logLevel: .warn, scope: .productsManager, message: "Requested Products Not Found", info: ["request": request.debugDescription], error: nil)
 				return
 			}
 			guard let completionBlocks = self.completionHandlers[requestProducts] else {
-				Logger.superwallDebug("callback not found for failing request: \(request)")
+				Logger.debug(logLevel: .error, scope: .productsManager, message: "Completion Handler Not Found", info: ["products": requestProducts, "request": request.debugDescription], error: nil)
 				return
 			}
 
@@ -90,19 +89,19 @@ extension ProductsManager: SKProductsRequestDelegate {
 	}
 
 	func requestDidFinish(_ request: SKRequest) {
-		Logger.superwallDebug("Request finished")
+		Logger.debug(logLevel: .debug, scope: .productsManager, message: "Request Complete", info: ["request": request.debugDescription], error: nil)
 		request.cancel()
 	}
 
 	func request(_ request: SKRequest, didFailWithError error: Error) {
 		queue.async { [self] in
-			Logger.superwallDebug("Failed with error (Apple)", error)
+			Logger.debug(logLevel: .error, scope: .productsManager, message: "Request Failed", info: ["request": request.debugDescription], error: error)
 			guard let products = self.productsByRequests[request] else {
-				Logger.superwallDebug("requested products not found for request: \(request)")
+				Logger.debug(logLevel: .error, scope: .productsManager, message: "Requested Products Not Found", info: ["request": request.debugDescription], error: error)
 				return
 			}
 			guard let completionBlocks = self.completionHandlers[products] else {
-				Logger.superwallDebug("callback not found for failing request: \(request)")
+				Logger.debug(logLevel: .error, scope: .productsManager, message: "Callback Not Found for Failed Request", info: ["request": request.debugDescription], error: error)
 				return
 			}
 

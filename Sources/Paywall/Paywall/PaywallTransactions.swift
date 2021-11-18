@@ -78,7 +78,8 @@ extension Paywall {
 	internal func tryToRestore(paywallViewController: SWPaywallViewController, userInitiated: Bool = false) {
 		OnMain {
 			
-			Logger.superwallDebug(string: "attempting restore ...")
+			
+			Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Attempting Restore", info: nil, error: nil)
 			
 			if let d = Paywall.delegate {
 				
@@ -92,11 +93,10 @@ extension Paywall {
 							paywallViewController.loadingState = .ready
 						}
 						if success {
-							Logger.superwallDebug(string: "transaction restored")
-							Logger.superwallDebug(string: "[Transaction Observer] restored")
+							Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Transaction Restored", info: nil, error: nil)
 							self?._transactionWasRestored(paywallViewController: paywallViewController)
 						} else {
-							Logger.superwallDebug(string: "transaction failed to restore")
+							Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Transaction Restored", info: nil, error: nil)
 							if userInitiated {
 								paywallViewController.presentAlert(title: Paywall.restoreFailedTitleString, message: Paywall.restoreFailedMessageString, closeActionTitle: Paywall.restoreFailedCloseButtonString)
 							}
@@ -138,11 +138,11 @@ extension Paywall {
 extension Paywall: SKPaymentTransactionObserver {
 	
 	public func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
-		Logger.superwallDebug(string: "[Transaction Observer] paymentQueueRestoreCompletedTransactionsFinished")
+		Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Restore Completed Transactions Finished", info: nil, error: nil)
 	}
 	
 	public func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
-		Logger.superwallDebug(string: "[Transaction Observer] restoreCompletedTransactionsFailedWithError", error: error)
+		Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Restore Completed Transactions Failed With Error", info: nil, error: error)
 	}
 	
 	public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
@@ -154,7 +154,7 @@ extension Paywall: SKPaymentTransactionObserver {
 			guard let product = StoreKitManager.shared.productsById[transaction.payment.productIdentifier] else { return }
 			switch transaction.transactionState {
 			case .purchased:
-				Logger.superwallDebug(string: "[Transaction Observer] transactionDidSucceed for: \(product.productIdentifier)")
+				Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Transaction Succeeded", info: ["product_id": product.productIdentifier, "paywall_vc": paywallViewController], error: nil)
 				self._transactionDidSucceed(paywallViewController: paywallViewController, for: product)
 			break
 			case .failed:
@@ -169,17 +169,17 @@ extension Paywall: SKPaymentTransactionObserver {
 					}
 
 					if userCancelled {
-						Logger.superwallDebug(string: "[Transaction Observer] transactionWasAbandoned for: \(product.productIdentifier)", error: e)
+						Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Transaction Abandoned", info: ["product_id": product.productIdentifier, "paywall_vc": paywallViewController], error: nil)
 						self._transactionWasAbandoned(paywallViewController: paywallViewController, for: product)
 						return
 					} else {
-						Logger.superwallDebug(string: "[Transaction Observer] transactionErrorDidOccur for: \(product.productIdentifier)", error: e)
+						Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Transaction Error", info: ["product_id": product.productIdentifier, "paywall_vc": paywallViewController], error: e)
 						self._transactionErrorDidOccur(paywallViewController: paywallViewController, error: e, for: product)
 						return
 					}
 				} else {
+					Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Transaction Error", info: ["product_id": product.productIdentifier, "paywall_vc": paywallViewController], error: transaction.error)
 					self._transactionErrorDidOccur(paywallViewController: paywallViewController, error: nil, for: product)
-					Logger.superwallDebug(string: "[Transaction Observer] transactionErrorDidOccur for: \(product.productIdentifier)", error: transaction.error)
 					OnMain { 
 						paywallViewController.presentAlert(title: "Something went wrong", message: transaction.error?.localizedDescription ?? "", actionTitle: nil, action: nil)
 					}
@@ -190,10 +190,10 @@ extension Paywall: SKPaymentTransactionObserver {
 				
 				break
 			case .deferred:
-				Logger.superwallDebug(string: "[Transaction Observer] deferred")
+				Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Transaction Deferred", info: ["paywall_vc": paywallViewController], error: nil)
 				_transactionWasDeferred(paywallViewController: paywallViewController)
 			case .purchasing:
-				Logger.superwallDebug(string: "[Transaction Observer] purchasing")
+				Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Transaction Purchasing", info: ["paywall_vc": paywallViewController], error: nil)
 				_transactionDidBegin(paywallViewController: paywallViewController, for: product)
 			default:
 				paywallViewController.loadingState = .ready

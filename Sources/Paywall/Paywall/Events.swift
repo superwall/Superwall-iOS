@@ -46,12 +46,13 @@ extension Paywall {
             if let v = clean(input: custom[k]) {
                 if k.starts(with: "$") {
                     delegateParams[k] = v // if they wanna use a dollar sign in their own events, let them
-                    Logger.superwallDebug(string: "Warning: dropping key \"\(k)\" for event \"\(name)\"", error: SuperwallEventError(message: "$ signs are reserved for us, chump!"))
+					Logger.debug(logLevel: .info, scope: .events, message: "Dropping Key", info: ["key":k, "name": name, "reason": "$ signs not allowed"], error: nil)
+//					Logger.sup
                 } else {
                     eventParams[k] = v
                 }
             } else {
-                Logger.superwallDebug(string: "Warning: dropping key \"\(k)\" for event \"\(name)\"", error: SuperwallEventError(message: "Could not serialize. FYI arrays & dicts aren't allowed!"))
+				Logger.debug(logLevel: .debug, scope: .events, message: "Dropping Key", info: ["key":k, "name": name, "reason": "Failed to serialize value"], error: nil)
             }
         }
         
@@ -60,12 +61,7 @@ extension Paywall {
         // custom events wont work because StandardEventName and InternalEventName won't exist with their own event name
         if EventName(rawValue: name) != nil && name != "user_properties" {
 			Paywall.delegate?.trackAnalyticsEvent?(withName: name, params: delegateParams)
-			Logger.debug("Paywall._track", items: [
-				"name": name,
-				"params": eventParams,
-	//			"custom": custom,
-	//			"handleTrigger": handleTrigger,
-			])
+			Logger.debug(logLevel: .debug, scope: .events, message: "Logged Internal Event", info: eventParams, error: nil)
         }
         
 		
@@ -521,7 +517,7 @@ extension Paywall {
         if let stringParameterMap = params as? [String: Any] {
             track(.base(name: name, params: stringParameterMap))
         } else {
-            Logger.superwallDebug(string: "Unable to convert event into [String:Any]")
+			Logger.debug(logLevel: .debug, scope: .events, message: "Unable to Track Event", info: ["message": "Not of Type [String: Any]"], error: nil)
         }
     }
 

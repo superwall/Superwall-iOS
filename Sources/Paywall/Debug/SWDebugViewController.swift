@@ -205,15 +205,14 @@ internal class SWDebugViewController: UIViewController {
 							self?.paywallResponses = response.paywalls
 								
 						case .failure(let error):
-							Logger.superwallDebug(string: "Debug Mode Error", error: error)
-
+							Logger.debug(logLevel: .error, scope: .debugViewController, message: "Failed to Fetch Paywalls", info: nil, error: error)
 						}
 
 
 					}
 				}
 			} else {
-				Logger.superwallDebug(string: "Debug Mode Error", error: error)
+				Logger.debug(logLevel: .error, scope: .debugViewController, message: "No Paywall Response", info: nil, error: error)
 			}
 			
 		}
@@ -323,7 +322,7 @@ internal class SWDebugViewController: UIViewController {
 				}
 				
 			case .failure(let error):
-				Logger.superwallDebug(string: "Debug Mode Error", error: error)
+				Logger.debug(logLevel: .error, scope: .debugViewController, message: "Failed Getting Paywalls", info: nil, error: error)
 			}
 		}
 	}
@@ -357,7 +356,7 @@ internal class SWDebugViewController: UIViewController {
 		} onDismiss: { _, _, _ in
 			
 		} onFail: { [weak self] error in
-			Logger.superwallDebug(string: "Debug Mode Error", error: error)
+			Logger.debug(logLevel: .error, scope: .debugViewController, message: "Failed to Show Paywall", info: nil, error: error)
 			self?.activityIndicator.stopAnimating()
 		}
 

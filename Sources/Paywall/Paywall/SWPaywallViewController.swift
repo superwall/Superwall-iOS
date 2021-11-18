@@ -467,34 +467,30 @@ internal class SWPaywallViewController: UIViewController {
 
 extension SWPaywallViewController: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        Logger.superwallDebug(string: "userContentController - start")
+		Logger.debug(logLevel: .debug, scope: .paywallViewController, message: "Did Receive Message", info: ["message": message.debugDescription], error: nil)
         
         guard let bodyString = message.body as?  String else {
-            Logger.superwallDebug("unable to convert WKScriptMessage.body to string")
+			Logger.debug(logLevel: .warn, scope: .paywallViewController, message: "Unable to Convert Message to String", info: ["message": message.debugDescription], error: nil)
             return
         }
         
-        Logger.superwallDebug("body string", bodyString)
-        
         guard let bodyData = bodyString.data(using: .utf8) else {
-            Logger.superwallDebug(string: "unable to convert bodyString to body data")
+			Logger.debug(logLevel: .warn, scope: .paywallViewController, message: "Unable to Convert Message to Data", info: ["message": message.debugDescription], error: nil)
             return
         }
         
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         guard let wrappedPaywallEvents = try? decoder.decode(WrappedPaywallEvents.self, from: bodyData) else {
-            Logger.superwallDebug(string: "failed to parse bodyString to WrappedPaywallEvent")
+			Logger.debug(logLevel: .warn, scope: .paywallViewController, message: "Invalid WrappedPaywallEvent", info: ["message": message.debugDescription], error: nil)
             return
         }
         
-        Logger.superwallDebug("body struct", wrappedPaywallEvents)
+		Logger.debug(logLevel: .debug, scope: .paywallViewController, message: "Body Converted", info: ["message": message.debugDescription, "events": wrappedPaywallEvents], error: nil)
         
         let events = wrappedPaywallEvents.payload.events
 
         events.forEach({ [weak self] in self?.handleEvent(event: $0) })
-        
-        Logger.superwallDebug(string: "userContentController - end")
     }
 }
 
@@ -509,8 +505,7 @@ extension SWPaywallViewController {
 	}
     
     func handleEvent(event: PaywallEvent) {
-        Logger.superwallDebug("handleEvent", event)
-        
+		Logger.debug(logLevel: .debug, scope: .paywallViewController, message: "Handle Event", info: ["event": event], error: nil)
         guard let paywallResponse = self._paywallResponse else { return }
     
         switch (event) {
@@ -523,13 +518,12 @@ extension SWPaywallViewController {
                 window.paywall.accept64('\(paywallResponse.templateEventsBase64String)');
                 window.paywall.accept64('\(paywallResponse.paywalljsEvent)');
             """
-            
-            print("sriptSrc", scriptSrc)
+            	
+			Logger.debug(logLevel: .debug, scope: .paywallViewController, message: "Posting Message", info: ["message": scriptSrc], error: nil)
+				
             webview.evaluateJavaScript(scriptSrc) { [weak self] (result, error) in
-                if let result = result {
-                    print("Label is updated with message: \(result)")
-                } else if let error = error {
-                    print("An error occurred: \(error)")
+                if let error = error {
+					Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Error Evaluating JS", info: ["message": scriptSrc], error: error)
                 }
 
                 self?.loadingState = .ready
@@ -600,23 +594,6 @@ class LeakAvoider : NSObject, WKScriptMessageHandler {
 
 
 
-extension SWPaywallViewController: GameControllerDelegate {
-	func connectionStatusDidChange(isConnected: Bool) {
-		Logger.superwallDebug("Game Controller \(isConnected ? "Connected" : "Disconnected")")
-	}
-	
-	func gameControllerEventDidOccur(event: GameControllerEvent) {
-		if let payload = event.jsonString {
-			let script = "window.paywall.accept([\(payload)])"
-			webview.evaluateJavaScript(script, completionHandler: nil)
-			Logger.superwallDebug("Game Controller Event", payload)
-		}
-		
-
-		
-	}
-	
-}
 
 
 // presentation logic

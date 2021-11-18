@@ -251,10 +251,8 @@ public class Paywall: NSObject {
 					PaywallManager.shared.viewController(identifier: nil, event: nil, cached: false, completion: nil)
 					self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleTrigger(forEvent: $0) }
 					self?.eventsTrackedBeforeConfigWasFetched.removeAll()
-
-					
 				case .failure(let error):
-					Logger.superwallDebug(string: "Warning: ", error: error)
+					Logger.debug(logLevel: .error, scope: .paywallCore, message: "Failed to Fetch Configuration", info: nil, error: error)
 					self?.didFetchConfig = true
 			}
 
@@ -283,7 +281,7 @@ public class Paywall: NSObject {
 			let name = event.name
 			let allowedInternalEvents = Set(["app_install", "session_start", "app_launch"])
 			guard (allowedInternalEvents.contains(name) || InternalEventName(rawValue: name) == nil) else {
-				Logger.superwallDebug(string: "[Trigger] Warning: We use that event name internally for paywall analytics and you can't use it as a trigger", error: nil)
+				Logger.debug(logLevel: .warn, scope: .paywallCore, message: "Internal Event Used as Trigger", info: ["message": "You can't use internal events as triggers"], error: nil)
 				return false
 			}
 			
