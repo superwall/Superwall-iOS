@@ -258,9 +258,20 @@ internal struct EventData: Codable {
 }
 
 // Config
-
+//
+//internal struct ProductConfig: Decodable {
+//	var identifier: String
+//}
+//
+//internal struct PaywallConfig: Decodable {
+//	var identifier: String
+//	var products: [ProductConfig]
+//}
+//
 internal struct ConfigResponse: Decodable {
 	var triggers: [Trigger]
+//	var paywalls: [PaywallConfig]
+//	var logLevel: Int
 	var productIdentifierGroups: [[String]]
 }
 

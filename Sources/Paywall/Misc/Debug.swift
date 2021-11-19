@@ -6,11 +6,15 @@
 //
 
 import Foundation
+import CloudKit
 
 
-public enum LogLevel: Int, CustomStringConvertible {
+@objc public enum LogLevel: Int, CustomStringConvertible {
 
-	case debug, info, warn, error
+	case debug = 10
+	case info = 20
+	case warn = 30
+	case error = 40
 
 	public var description: String {
 		switch self {
@@ -20,10 +24,9 @@ public enum LogLevel: Int, CustomStringConvertible {
 		case .error: return "ERROR"
 		}
 	}
-
 }
 
-internal enum LogScope: String {
+public enum LogScope: String {
 	case localizationManager
 	case bounceButton
 	case debugManager
@@ -42,50 +45,64 @@ internal enum LogScope: String {
 	case paywallTransactions
 	case paywallViewController
 	case cache
+	case all
 }
 
 internal struct Logger {
-    
-//    static func superwallDebug(_ items: Any...) {
-//        if Paywall.debugMode {
-//            print("[Superwall]", items)
-//        }
-//    }
+	
+	static func shouldPrint(logLevel: LogLevel, scope: LogScope) -> Bool {
+		return Paywall.debugMode && logLevel.rawValue >= (Paywall.logLevel?.rawValue ?? 99) && (Paywall.logScopes.contains(scope) || Paywall.logScopes.contains(.all))
+	}
 	
 	static func debug(logLevel: LogLevel, scope: LogScope, message: String? = nil, info: [String: Any]? = nil, error: Swift.Error? = nil) {
-		if Paywall.debugMode {
-			
-			var output = [String]()
-			
-			if let m = message {
-				output.append(m)
-			}
-			
-			if let i = info {
-				output.append(i.debugDescription)
-			}
-			
-			if let e = error {
-				output.append(e.localizedDescription)
-			}
-			
-			print("[Superwall]\t\(logLevel.description)\t\(scope.rawValue)\t\(output.joined(separator: "\t"))")
-			
+		var output = [String]()
+		var dumping = [String: Any]()
 		
+		if let m = message {
+			output.append(m)
+//			dumping["message"] = m
 		}
-	}
-    
-//    static func superwallDebug(string: String, error: Swift.Error? = nil) {
-//        if Paywall.debugMode {
-//            print("[Superwall] " + string)
-//            if let e = error {
-//                print("[Superwall] Error →", e)
-//            }
-//        }
-//    }
+		
+		if let i = info {
+			output.append(i.debugDescription)
+			dumping["info"] = i
+		}
+		
+		if let e = error {
+			output.append(e.localizedDescription)
+			dumping["error"] = e
+		}
+		
+//		dumping["logLevel"] = logLevel
+//		dumping["scope"] = scope
+		dumping["app_user_id"] = Store.shared.appUserId
+		dumping["alias_id"] = Store.shared.aliasId
+//		dumping["api_key"] = Store.shared.apiKey
+		
+//		dump("[Superwall]\t\(logLevel.description)\t\(scope.rawValue)\t\(output.joined(separator: "\t"))")
+		
 //
-//    private static func errorString(error: Swift.Error?) -> String {
-//        return error == nil ? "" : " - " + (error?.localizedDescription ?? "")
-//    }
+		
+//		debugPrint(logLevel, scope, message, info, error)
+		
+		Paywall.delegate?.handleLog?(level: logLevel.description, scope: scope.rawValue, message: message, info: info, error: error)
+		
+		if shouldPrint(logLevel: logLevel, scope: scope) {
+			
+
+			
+			let formatter = ISO8601DateFormatter()
+			formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+			let dateString = formatter.string(from: Date()).replacingOccurrences(of: "T", with: " ").replacingOccurrences(of: "Z", with: "")
+			
+			dump(dumping, name: "[Superwall]  [\(dateString)]  \(logLevel.description)  \(scope.rawValue)  \(message ?? "")", indent: 0, maxDepth: 100, maxItems: 100)
+			
+//			let json = JSON(dumping).rawString()
+//			print("[Superwall]  \(logLevel.description)  \(scope.rawValue)")
+//			print(dumping.debugDescription)
+		}
+	
+	
+	}
     
 }

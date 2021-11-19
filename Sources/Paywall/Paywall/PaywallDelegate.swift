@@ -83,5 +83,6 @@ import StoreKit
 	
 	@objc optional func trackAnalyticsEvent(withName name: String, params: [String: Any])
 	
+	@objc optional func handleLog(level: String, scope: String, message: String?, info: [String: Any]?, error: Swift.Error?)
 
 }

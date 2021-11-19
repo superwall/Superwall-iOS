@@ -43,9 +43,6 @@ public class Paywall: NSObject {
 	/// The object that acts as the delegate of Paywall.
 	@objc public static var delegate: PaywallDelegate? = nil
 	
-	/// Prints debug logs to the console if set to `true`. Default is `false`
-	@objc public static var debugMode = false
-	
 	/// WARNING: Determines which network environment your SDK should use. Defaults to latest. You should under no circumstance change this unless you received the go-ahead from the Superwall team.
 	public static var networkEnvironment: PaywallNetworkEnvironment = .release
 	
@@ -61,7 +58,22 @@ public class Paywall: NSObject {
 	/// Set this to `true` to forward events from the Game Controller to the Paywall via `Paywall.gamepadValueChanged(gamepad:element:)`
 	public static var isGameControllerEnabled = false
 	
+	/// Prints logs to the console if set to `true`. Default is `false`
+	@objc public static var debugMode = false
 	
+	/// Defines the minimum log level to print to the console. Defaults to nil (none)
+	public static var logLevel: LogLevel? = .debug {
+		didSet {
+			debugMode = logLevel != nil
+		}
+	}
+	
+	/// Defines the scope of logs to print to the console. Defaults to .all
+	public static var logScopes: Set<LogScope> = [.all] {
+		didSet {
+			debugMode = !logScopes.isEmpty
+		}
+	}
 	
 	
 	
@@ -248,7 +260,16 @@ public class Paywall: NSObject {
 				case .success(let config):
 					Store.shared.add(config: config)
 					self?.didFetchConfig = true
+					
+					
 					PaywallManager.shared.viewController(identifier: nil, event: nil, cached: false, completion: nil)
+					PaywallManager.shared.viewController(identifier: "something-happened-1343-2021-10-27", event: nil, cached: false, completion: nil)
+					PaywallManager.shared.viewController(identifier: "event_2-ecb7-2021-11-11", event: nil, cached: false, completion: nil)
+					PaywallManager.shared.viewController(identifier: "event_3-6844-2021-11-11", event: nil, cached: false, completion: nil)
+					PaywallManager.shared.viewController(identifier: "backbone-ddb1-2021-10-07", event: nil, cached: false, completion: nil)
+					
+					
+					
 					self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleTrigger(forEvent: $0) }
 					self?.eventsTrackedBeforeConfigWasFetched.removeAll()
 				case .failure(let error):
@@ -369,7 +390,7 @@ extension Paywall: SWPaywallViewControllerDelegate {
 		OnMain { [weak self] in
 			switch result {
 			case .closed:
-					self?._dismiss(paywallViewController: paywallViewController, userDidPurchase: false)
+				self?._dismiss(paywallViewController: paywallViewController, userDidPurchase: false)
 			case .initiatePurchase(let productId):
 				guard let product = StoreKitManager.shared.productsById[productId] else { return }
 				paywallViewController.loadingState = .loadingPurchase

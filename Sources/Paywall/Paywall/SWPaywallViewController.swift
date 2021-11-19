@@ -167,18 +167,9 @@ internal class SWPaywallViewController: UIViewController {
 	
 	
 	
-	
-	
-	
-//    init?(paywallResponse: PaywallResponse?, completion: ((PaywallPresentationResult) -> Void)? = nil) {
-//        self.completion = completion
-//        super.init(nibName: nil, bundle: nil)
-//
-//        if let pr = paywallResponse {
-//            set(paywallResponse: pr)
-//        }
-//
-//    }
+	override func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
+		fatalError("This method is blocked, please call dismiss(didPurchase: Bool, productId: String?, paywallInfo: PaywallInfo?, completion: (() -> Void)?)")
+	}
 	
 	init?(paywallResponse: PaywallResponse?, delegate: SWPaywallViewControllerDelegate? = nil) {
 		self.delegate = delegate
@@ -458,9 +449,6 @@ internal class SWPaywallViewController: UIViewController {
     deinit {
         NotificationCenter.default.removeObserver(self, name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
-		if (Paywall.isGameControllerEnabled && GameControllerManager.shared.delegate == self) {
-			GameControllerManager.shared.delegate = nil
-		}
     }
     
 }
@@ -549,19 +537,33 @@ extension SWPaywallViewController {
 			hapticFeedback()
             complete(.closed)
         case .openUrl(let url):
+			if self != Paywall.shared.paywallViewController {
+				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController, "event": "openUrl", "url": url], error: nil)
+			}
 			hapticFeedback()
             complete(.openedURL(url: url))
             let safariVC = SFSafariViewController(url: url)
             present(safariVC, animated: true, completion: nil)
         case .openDeepLink(let url):
+			if self != Paywall.shared.paywallViewController {
+				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController, "event": "openDeepLink", "url": url], error: nil)
+			}
 			hapticFeedback()
             complete(.openedDeepLink(url: url))
             // TODO: Handle deep linking
-
         case .restore:
+			if self != Paywall.shared.paywallViewController {
+				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController, "event": "restore"], error: nil)
+			}
 			hapticFeedback()
             complete(.initiateRestore)
         case .purchase(product: let productName):
+				
+			if self != Paywall.shared.paywallViewController {
+				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController, "event": "purchase"], error: nil)
+			}
+				
+				
 			hapticFeedback()
             let product = paywallResponse.products.first { (product) -> Bool in
                 return product.product == productName
@@ -572,6 +574,9 @@ extension SWPaywallViewController {
             break;
             
         case .custom(data: let string):
+			if self != Paywall.shared.paywallViewController {
+				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController, "event": "custom", "custom_event": string], error: nil)
+			}
             complete(.custom(string: string))
         }
     }
@@ -600,15 +605,37 @@ class LeakAvoider : NSObject, WKScriptMessageHandler {
 
 extension SWPaywallViewController {
 	
+	func present(on presentor: UIViewController, fromEventData: EventData?, calledFromIdentifier: Bool, dismissalBlock: DismissalCompletionBlock?, completion: @escaping (Bool) -> ()) {
+		
+		let isPresented = (presentor is SWPaywallViewController) || presentingViewController != nil || isBeingPresented || Paywall.shared.isPaywallPresented
+		
+		if isPresented {
+			completion(false)
+			return
+		} else {
+			prepareForPresentation()
+			set(fromEventData: fromEventData, calledFromIdentifier: calledFromIdentifier, dismissalBlock: dismissalBlock)
+			presentor.present(self, animated: true, completion: { [weak self] in
+				self?.presentationDidFinish()
+				completion(true)
+			})
+		}
+		
+	}
+	
 	func dismiss(didPurchase: Bool, productId: String?, paywallInfo: PaywallInfo?, completion: (() -> Void)?) {
 		Paywall.delegate?.willDismissPaywall?()
-		self.dismiss(animated: true) { [weak self] in
+		super.dismiss(animated: true) { [weak self] in
+			if (Paywall.isGameControllerEnabled && GameControllerManager.shared.delegate == self) {
+				GameControllerManager.shared.delegate = nil
+			}
 			Paywall.delegate?.didDismissPaywall?()
 			self?.loadingState = .ready
 			self?.dismissalCompletion?(didPurchase, productId, paywallInfo)
 			completion?()
 			Paywall.shared.destroyPresentingWindow()
 		}
+		
 	}
 	
 	func prepareForPresentation() {
@@ -640,24 +667,6 @@ extension SWPaywallViewController {
 					UIApplication.shared.open(url, options: [:], completionHandler: nil)
 				}
 			}, closeActionTitle: "Done")
-		}
-		
-	}
-	
-	func present(on presentor: UIViewController, fromEventData: EventData?, calledFromIdentifier: Bool, dismissalBlock: DismissalCompletionBlock?, completion: @escaping (Bool) -> ()) {
-		
-		let isPresented = (presentor is SWPaywallViewController) || presentingViewController != nil || isBeingPresented || Paywall.shared.isPaywallPresented
-		
-		if isPresented {
-			completion(false)
-			return
-		} else {
-			prepareForPresentation()
-			set(fromEventData: fromEventData, calledFromIdentifier: calledFromIdentifier, dismissalBlock: dismissalBlock)
-			presentor.present(self, animated: true, completion: { [weak self] in
-				self?.presentationDidFinish()
-				completion(true)
-			})
 		}
 		
 	}
