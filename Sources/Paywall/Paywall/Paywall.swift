@@ -260,16 +260,7 @@ public class Paywall: NSObject {
 				case .success(let config):
 					Store.shared.add(config: config)
 					self?.didFetchConfig = true
-					
-					
-					PaywallManager.shared.viewController(identifier: nil, event: nil, cached: false, completion: nil)
-					PaywallManager.shared.viewController(identifier: "something-happened-1343-2021-10-27", event: nil, cached: false, completion: nil)
-					PaywallManager.shared.viewController(identifier: "event_2-ecb7-2021-11-11", event: nil, cached: false, completion: nil)
-					PaywallManager.shared.viewController(identifier: "event_3-6844-2021-11-11", event: nil, cached: false, completion: nil)
-					PaywallManager.shared.viewController(identifier: "backbone-ddb1-2021-10-07", event: nil, cached: false, completion: nil)
-					
-					
-					
+					config.cache()
 					self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleTrigger(forEvent: $0) }
 					self?.eventsTrackedBeforeConfigWasFetched.removeAll()
 				case .failure(let error):

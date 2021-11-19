@@ -258,21 +258,28 @@ internal struct EventData: Codable {
 }
 
 // Config
-//
-//internal struct ProductConfig: Decodable {
-//	var identifier: String
-//}
-//
-//internal struct PaywallConfig: Decodable {
-//	var identifier: String
-//	var products: [ProductConfig]
-//}
-//
+
+internal struct ProductConfig: Decodable {
+	var identifier: String
+}
+
+internal struct PaywallConfig: Decodable {
+	var identifier: String
+	var products: [ProductConfig]
+}
+
 internal struct ConfigResponse: Decodable {
 	var triggers: [Trigger]
-//	var paywalls: [PaywallConfig]
-//	var logLevel: Int
-	var productIdentifierGroups: [[String]]
+	var paywalls: [PaywallConfig]
+	var logLevel: Int
+//	var productIdentifierGroups: [[String]]
+	
+	func cache() {
+		for paywall in paywalls {
+			StoreKitManager.shared.get(productsWithIds: paywall.products.map { $0.identifier }, completion: nil)
+			PaywallManager.shared.viewController(identifier: paywall.identifier, event: nil, cached: true, completion: nil)
+		}
+	}
 }
 
 // Triggers

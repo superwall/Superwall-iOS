@@ -25,7 +25,7 @@ class StoreKitManager: NSObject {
 		}
 	}
 	
-	func get(productsWithIds: [String], completion: @escaping ([String: SKProduct]) -> ()) {
+	func get(productsWithIds: [String], completion: (([String: SKProduct]) -> Void)?) {
 		
 //		Logger.superwallDebug("Begining to fetch products from ASC ...")
 //
@@ -59,7 +59,7 @@ class StoreKitManager: NSObject {
 				self.productsById[p.productIdentifier] = p
 			}
 			
-			completion(output)
+			completion?(output)
 		}
 		
 	}
