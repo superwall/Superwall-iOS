@@ -127,12 +127,7 @@ public class Paywall: NSObject {
 	}
 	
 	internal var isPaywallPresented: Bool {
-		
-//		(presentor as? SWPaywallViewController) != nil || vc.presentingViewController != nil || vc.isBeingPresented || presentingWindowExists
-		
-		return 	UIViewController.topMostViewController is SWPaywallViewController ||
-				self.paywallViewController?.presentingViewController != nil ||
-				self.paywallViewController?.isBeingPresented ?? false 
+		return self.paywallViewController != nil
 	}
 	
 	

@@ -60,7 +60,6 @@ internal struct Logger {
 		
 		if let m = message {
 			output.append(m)
-//			dumping["message"] = m
 		}
 		
 		if let i = info {
@@ -72,34 +71,18 @@ internal struct Logger {
 			output.append(e.localizedDescription)
 			dumping["error"] = e
 		}
-		
-//		dumping["logLevel"] = logLevel
-//		dumping["scope"] = scope
-		dumping["app_user_id"] = Store.shared.appUserId
-		dumping["alias_id"] = Store.shared.aliasId
-//		dumping["api_key"] = Store.shared.apiKey
-		
-//		dump("[Superwall]\t\(logLevel.description)\t\(scope.rawValue)\t\(output.joined(separator: "\t"))")
-		
-//
-		
-//		debugPrint(logLevel, scope, message, info, error)
-		
-		Paywall.delegate?.handleLog?(level: logLevel.description, scope: scope.rawValue, message: message, info: info, error: error)
+
+		OnMain {
+			Paywall.delegate?.handleLog?(level: logLevel.description, scope: scope.rawValue, message: message, info: info, error: error)
+		}
 		
 		if shouldPrint(logLevel: logLevel, scope: scope) {
-			
-
 			
 			let formatter = ISO8601DateFormatter()
 			formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 			let dateString = formatter.string(from: Date()).replacingOccurrences(of: "T", with: " ").replacingOccurrences(of: "Z", with: "")
 			
 			dump(dumping, name: "[Superwall]  [\(dateString)]  \(logLevel.description)  \(scope.rawValue)  \(message ?? "")", indent: 0, maxDepth: 100, maxItems: 100)
-			
-//			let json = JSON(dumping).rawString()
-//			print("[Superwall]  \(logLevel.description)  \(scope.rawValue)")
-//			print(dumping.debugDescription)
 		}
 	
 	

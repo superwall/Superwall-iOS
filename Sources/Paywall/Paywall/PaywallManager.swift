@@ -20,12 +20,8 @@ internal class PaywallManager {
 	var presentedViewController: SWPaywallViewController? {
 		
 		let vcs = viewControllers.filter {
-			$0.isPresented
+			$0.isActive
 		}
-		
-		// TODO: log this
-		
-//		assert(vcs.count <= 1, "Somehow multiple view controllers have .isPresented == true")
 		
 		return vcs.first
 	}

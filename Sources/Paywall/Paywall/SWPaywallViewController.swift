@@ -36,12 +36,17 @@ internal class SWPaywallViewController: UIViewController {
 	internal weak var delegate: SWPaywallViewControllerDelegate? = nil
 	internal typealias DismissalCompletionBlock = (Bool, String?, PaywallInfo?) -> ()
 	internal var dismissalCompletion: DismissalCompletionBlock? = nil
+	internal var isPresented: Bool = false
+	internal var calledDismiss = false
     internal var _paywallResponse: PaywallResponse? = nil
 	internal var fromEventData: EventData? = nil
 	internal var calledByIdentifier: Bool = false
 	internal var readyForEventTracking = false
 	internal var showRefreshTimer: Timer? = nil
-//	public var completion: ((PaywallPresentationResult) -> Void)?
+	
+	internal var isActive: Bool {
+		return isPresented || isBeingPresented
+	}
 	
 	// Views
 	
@@ -152,15 +157,10 @@ internal class SWPaywallViewController: UIViewController {
 	 
 	}()
 
-	var isPresented: Bool {
-		return (isBeingPresented || presentingViewController != nil || navigationController != nil ) && delegate != nil
-	}
+	
 	
 	
 
-	
-	
-	
 	// ---------------
 	// MARK: Functions
 	// ---------------
@@ -230,22 +230,47 @@ internal class SWPaywallViewController: UIViewController {
 	
 	public override func viewWillAppear(_ animated: Bool) {
 		super.viewWillAppear(animated)
-		if #available(iOS 15.0, *) {
-			webview.setAllMediaPlaybackSuspended(false, completionHandler: nil)
-		}
 		
-		if UIWindow.isLandscape {
-			contentPlaceholderImageView.image = UIImage(named: "paywall_placeholder_landscape", in: Bundle.module, compatibleWith: nil)!
+		if isActive {
+			if #available(iOS 15.0, *) {
+				webview.setAllMediaPlaybackSuspended(false, completionHandler: nil)
+			}
+			
+			if UIWindow.isLandscape {
+				contentPlaceholderImageView.image = UIImage(named: "paywall_placeholder_landscape", in: Bundle.module, compatibleWith: nil)!
+			}
+		}
+	}
+	
+	override func viewWillDisappear(_ animated: Bool) {
+		super.viewWillDisappear(animated)
+		if isPresented {
+			
+			if !calledDismiss {
+				Paywall.delegate?.willDismissPaywall?()
+			}
+			
+			print("viewWillDisappear")
 		}
 	}
 	
 	override func viewDidDisappear(_ animated: Bool) {
 		super.viewDidDisappear(animated)
-		if readyForEventTracking {
-			trackClose()
-		}
-		if #available(iOS 15.0, *) {
-			webview.setAllMediaPlaybackSuspended(true, completionHandler: nil)
+		
+		if isPresented {
+			print("viewDidDisappear")
+			if readyForEventTracking {
+				trackClose()
+			}
+			if #available(iOS 15.0, *) {
+				webview.setAllMediaPlaybackSuspended(true, completionHandler: nil)
+			}
+
+			if !calledDismiss {
+				didDismiss(didPurchase: false, productId: nil, paywallInfo: paywallInfo, completion: nil)
+			}
+
+			calledDismiss = false
 		}
 	}
 	
@@ -607,15 +632,14 @@ extension SWPaywallViewController {
 	
 	func present(on presentor: UIViewController, fromEventData: EventData?, calledFromIdentifier: Bool, dismissalBlock: DismissalCompletionBlock?, completion: @escaping (Bool) -> ()) {
 		
-		let isPresented = (presentor is SWPaywallViewController) || presentingViewController != nil || isBeingPresented || Paywall.shared.isPaywallPresented
-		
-		if isPresented {
+		if Paywall.shared.isPaywallPresented || presentor is SWPaywallViewController || isBeingPresented {
 			completion(false)
 			return
 		} else {
 			prepareForPresentation()
 			set(fromEventData: fromEventData, calledFromIdentifier: calledFromIdentifier, dismissalBlock: dismissalBlock)
 			presentor.present(self, animated: true, completion: { [weak self] in
+				self?.isPresented = true
 				self?.presentationDidFinish()
 				completion(true)
 			})
@@ -624,18 +648,24 @@ extension SWPaywallViewController {
 	}
 	
 	func dismiss(didPurchase: Bool, productId: String?, paywallInfo: PaywallInfo?, completion: (() -> Void)?) {
+		calledDismiss = true
 		Paywall.delegate?.willDismissPaywall?()
 		super.dismiss(animated: true) { [weak self] in
-			if (Paywall.isGameControllerEnabled && GameControllerManager.shared.delegate == self) {
-				GameControllerManager.shared.delegate = nil
-			}
-			Paywall.delegate?.didDismissPaywall?()
-			self?.loadingState = .ready
-			self?.dismissalCompletion?(didPurchase, productId, paywallInfo)
-			completion?()
-			Paywall.shared.destroyPresentingWindow()
+			self?.didDismiss(didPurchase: didPurchase, productId: productId, paywallInfo: paywallInfo, completion: completion)
 		}
 		
+	}
+	
+	func didDismiss(didPurchase: Bool, productId: String?, paywallInfo: PaywallInfo?, completion: (() -> Void)?) {
+		isPresented = false
+		if (Paywall.isGameControllerEnabled && GameControllerManager.shared.delegate == self) {
+			GameControllerManager.shared.delegate = nil
+		}
+		Paywall.delegate?.didDismissPaywall?()
+		loadingState = .ready
+		dismissalCompletion?(didPurchase, productId, paywallInfo)
+		completion?()
+		Paywall.shared.destroyPresentingWindow()
 	}
 	
 	func prepareForPresentation() {
