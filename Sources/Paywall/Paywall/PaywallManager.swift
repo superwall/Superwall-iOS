@@ -39,6 +39,11 @@ internal class PaywallManager {
 		}
 	}
 	
+	func removePaywall(viewController: SWPaywallViewController) {
+		let keys = cache.allKeys(forValue: viewController)
+		keys.forEach { cache[$0] = nil }
+	}
+	
 	func clearCache() {
 		cache.removeAll()
 	}
@@ -96,4 +101,11 @@ internal class PaywallManager {
 
 	}
 
+}
+
+
+extension Dictionary where Value: Equatable {
+	func allKeys(forValue val: Value) -> [Key] {
+		return self.filter { $1 == val }.map { $0.0 }
+	}
 }

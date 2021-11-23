@@ -159,7 +159,13 @@ extension Paywall {
 				if success {
 					self.presentAgain = {
 						PaywallManager.shared.removePaywall(identifier: identifier, event: fromEvent)
-						present(on: presentor, fromEvent: fromEvent, cached: false, presentationCompletion: presentationCompletion, dismissalCompletion: dismissalCompletion, fallback: fallback)
+						present(identifier: identifier,
+								on: viewController,
+								fromEvent: fromEvent,
+								cached: false,
+								presentationCompletion: presentationCompletion,
+								dismissalCompletion: dismissalCompletion,
+								fallback: fallback)
 					}
 					presentationCompletion?(vc.paywallInfo)
 				} else {

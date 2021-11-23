@@ -144,6 +144,15 @@ internal class SWPaywallViewController: UIViewController {
 		return button
 	}()
 	
+	lazy var exitButton: UIButton = {
+		let button = UIButton()
+		button.setImage(UIImage(named: "exit_paywall", in: Bundle.module, compatibleWith: nil)!, for: .normal)
+		button.translatesAutoresizingMaskIntoConstraints = false
+		button.addTarget(self, action: #selector(pressedExitPaywall), for: .primaryActionTriggered)
+		button.isHidden = true
+		return button
+	}()
+	
 	var contentPlaceholderImageView: UIImageView = {
 		let imageView = UIImageView(image: UIImage(named: "paywall_placeholder", in: Bundle.module, compatibleWith: nil)!)
 		imageView.contentMode = .scaleAspectFit
@@ -165,11 +174,6 @@ internal class SWPaywallViewController: UIViewController {
 	// MARK: Functions
 	// ---------------
 	
-	
-	
-	override func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
-		fatalError("This method is blocked, please call dismiss(didPurchase: Bool, productId: String?, paywallInfo: PaywallInfo?, completion: (() -> Void)?)")
-	}
 	
 	init?(paywallResponse: PaywallResponse?, delegate: SWPaywallViewControllerDelegate? = nil) {
 		self.delegate = delegate
@@ -199,6 +203,7 @@ internal class SWPaywallViewController: UIViewController {
 		shimmerView.contentView = contentPlaceholderImageView
 		
 		view.addSubview(refreshPaywallButton)
+		view.addSubview(exitButton)
 	
 		NSLayoutConstraint.activate([
 			
@@ -224,6 +229,11 @@ internal class SWPaywallViewController: UIViewController {
 			refreshPaywallButton.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor, constant: 0),
 			refreshPaywallButton.widthAnchor.constraint(equalToConstant: 55),
 			refreshPaywallButton.heightAnchor.constraint(equalToConstant: 55),
+			
+			exitButton.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
+			exitButton.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor, constant: 0),
+			exitButton.widthAnchor.constraint(equalToConstant: 55),
+			exitButton.heightAnchor.constraint(equalToConstant: 55),
 		])
  
 	}
@@ -325,9 +335,7 @@ internal class SWPaywallViewController: UIViewController {
 				}, completion: { [weak self] _ in
 					self?.shimmerView.isShimmering = false
 				})
-				
 			}
-				
 		}
 	}
 	
@@ -339,8 +347,11 @@ internal class SWPaywallViewController: UIViewController {
 			showRefreshTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: false, block: { [weak self] t in
 				self?.refreshPaywallButton.isHidden = false
 				self?.refreshPaywallButton.alpha = 0.0
+				self?.exitButton.isHidden = false
+				self?.exitButton.alpha = 0.0
 				UIView.animate(withDuration: 2.0, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
 					self?.refreshPaywallButton.alpha = 1.0
+					self?.exitButton.alpha = 1.0
 				}, completion: nil)
 			})
 		} else {
@@ -354,15 +365,23 @@ internal class SWPaywallViewController: UIViewController {
 		showRefreshTimer = nil
 		UIView.animate(withDuration: 0.618, delay: 0.0, usingSpringWithDamping: 0.8, initialSpringVelocity: 1.2, options: [.allowUserInteraction, .curveEaseInOut], animations: {  [weak self] in
 			self?.refreshPaywallButton.alpha = 0.0
+			self?.exitButton.alpha = 0.0
 		}, completion: { [weak self] _ in
 			self?.refreshPaywallButton.isHidden = true
+			self?.exitButton.isHidden = true
 		})
 	}
 	
 	@objc func pressedRefreshPaywall() {
-		dismiss(animated: true, completion: {
+		dismiss(shouldCallCompletion: false, didPurchase: false, productId: nil, paywallInfo: nil) {
 			Paywall.presentAgain()
-		})
+		}
+	}
+	
+	@objc func pressedExitPaywall() {
+		dismiss(shouldCallCompletion: true, didPurchase: false, productId: nil, paywallInfo: nil) {
+			PaywallManager.shared.removePaywall(viewController: self)
+		}
 	}
     
 	func set(paywallResponse: PaywallResponse) {
@@ -376,6 +395,7 @@ internal class SWPaywallViewController: UIViewController {
             let loadingColor = paywallResponse.paywallBackgroundColor.readableOverlayColor
             self.purchaseLoadingIndicator.color = loadingColor
 			self.refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
+			self.exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
             self.contentPlaceholderImageView.tintColor = loadingColor.withAlphaComponent(0.5)
             
             if let urlString = self._paywallResponse?.url {
@@ -440,7 +460,11 @@ internal class SWPaywallViewController: UIViewController {
             
 
             present(vc, animated: true, completion: { [weak self] in
-                self?.loadingState = .ready
+				if let ls = self?.loadingState {
+					if ls != .loadingResponse {
+						self?.loadingState = .ready
+					}
+				}
             })
         }
         
@@ -647,23 +671,25 @@ extension SWPaywallViewController {
 		
 	}
 	
-	func dismiss(didPurchase: Bool, productId: String?, paywallInfo: PaywallInfo?, completion: (() -> Void)?) {
+	func dismiss(shouldCallCompletion: Bool = true, didPurchase: Bool, productId: String?, paywallInfo: PaywallInfo?, completion: (() -> Void)?) {
 		calledDismiss = true
 		Paywall.delegate?.willDismissPaywall?()
-		super.dismiss(animated: true) { [weak self] in
-			self?.didDismiss(didPurchase: didPurchase, productId: productId, paywallInfo: paywallInfo, completion: completion)
+		dismiss(animated: true) { [weak self] in
+			self?.didDismiss(shouldCallCompletion: shouldCallCompletion, didPurchase: didPurchase, productId: productId, paywallInfo: paywallInfo, completion: completion)
 		}
 		
 	}
 	
-	func didDismiss(didPurchase: Bool, productId: String?, paywallInfo: PaywallInfo?, completion: (() -> Void)?) {
+	func didDismiss(shouldCallCompletion: Bool = true, didPurchase: Bool, productId: String?, paywallInfo: PaywallInfo?, completion: (() -> Void)?) {
 		isPresented = false
 		if (Paywall.isGameControllerEnabled && GameControllerManager.shared.delegate == self) {
 			GameControllerManager.shared.delegate = nil
 		}
 		Paywall.delegate?.didDismissPaywall?()
-		loadingState = .ready
-		dismissalCompletion?(didPurchase, productId, paywallInfo)
+//		loadingState = .ready
+		if shouldCallCompletion {
+			dismissalCompletion?(didPurchase, productId, paywallInfo)
+		}
 		completion?()
 		Paywall.shared.destroyPresentingWindow()
 	}
