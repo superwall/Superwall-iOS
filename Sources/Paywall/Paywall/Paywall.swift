@@ -311,7 +311,7 @@ public class Paywall: NSObject {
 				
 				if self.canTriggerPaywall(event: event) {
 					// delay in case they are presenting a view controller alongside an event they are calling
-					DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
+					DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
 						Paywall.present(fromEvent: event)
 					})
 				}

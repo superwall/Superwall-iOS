@@ -15,7 +15,7 @@ extension Paywall {
 	@objc public static func dismiss(_ completion: (()->())? = nil) {
 		
 		if let pwv = shared.paywallViewController {
-			shared._dismiss(paywallViewController: pwv, completion: completion)
+			shared._dismiss(paywallViewController: pwv, userDidPurchase: false, completion: completion)
 		}
 		
 	}
@@ -117,7 +117,9 @@ extension Paywall {
 		}
 
 		if let delegate = delegate {
-			guard !delegate.isUserSubscribed() else { return }
+			if delegate.isUserSubscribed() && !SWDebugManager.shared.isDebuggerLaunched {
+				return
+			}
 		}
 
 		PaywallManager.shared.viewController(identifier: identifier, event: fromEvent, cached: cached && !SWDebugManager.shared.isDebuggerLaunched) { vc, error in

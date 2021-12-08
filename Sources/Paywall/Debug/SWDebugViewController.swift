@@ -181,9 +181,36 @@ internal class SWDebugViewController: UIViewController {
         activityIndicator.startAnimating()
         previewViewContent?.removeFromSuperview()
         
-//        previewPickerButton.setTitle("", for: .normal)
+		if paywallResponses.count > 0 {
+			finishLoadingPreview()
+		} else {
+			Network.shared.paywalls { [weak self] result in
+				switch(result){
+				case .success(let response):
+					self?.paywallResponses = response.paywalls
+					self?.finishLoadingPreview()
+				case .failure(let error):
+					Logger.debug(logLevel: .error, scope: .debugViewController, message: "Failed to Fetch Paywalls", info: nil, error: error)
+				}
+			}
+		}
 
-		PaywallResponseManager.shared.getResponse(identifier: paywallIdentifier, event: nil) { [weak self] response, error in
+
+
+        
+    }
+	
+	func finishLoadingPreview() {
+		var pid: String? = nil
+			
+		if let paywallIdentifier = paywallIdentifier {
+			pid = paywallIdentifier
+		} else if let paywallId = paywallId {
+			pid = paywallResponses.first(where: { $0.id == paywallId })?.identifier
+			paywallIdentifier = pid
+		}
+			
+		PaywallResponseManager.shared.getResponse(identifier: pid, event: nil) { [weak self] response, error in
 			
 			self?.paywallResponse = response
 			
@@ -198,28 +225,13 @@ internal class SWDebugViewController: UIViewController {
 						self?.activityIndicator.stopAnimating()
 						self?.addPaywallPreview()
 					}
-					
-					Network.shared.paywalls { [weak self] result in
-						switch(result){
-						case .success(let response):
-							self?.paywallResponses = response.paywalls
-								
-						case .failure(let error):
-							Logger.debug(logLevel: .error, scope: .debugViewController, message: "Failed to Fetch Paywalls", info: nil, error: error)
-						}
-
-
-					}
 				}
 			} else {
 				Logger.debug(logLevel: .error, scope: .debugViewController, message: "No Paywall Response", info: nil, error: error)
 			}
 			
 		}
-        
-
-        
-    }
+	}
     
     func addPaywallPreview() {
         if let child = SWPaywallViewController(paywallResponse: paywallResponse, delegate: nil) {
@@ -239,6 +251,7 @@ internal class SWDebugViewController: UIViewController {
             child.view.clipsToBounds = true
             child.view.layer.borderColor = UIColor.white.withAlphaComponent(0.25).cgColor
             child.view.layer.borderWidth = 1.0
+			child.view.alpha = 0.0
             
             let ratio = CGFloat(Double(previewContainerView.frame.size.height / view.frame.size.height))
             
@@ -250,6 +263,10 @@ internal class SWDebugViewController: UIViewController {
                 child.view.layer.cornerCurve = .continuous
             }
             
+			UIView.animate(withDuration: 0.25, delay: 0.1, options: [], animations: {
+				child.view.alpha = 1.0
+			}, completion: nil)
+			
         }
     }
     
@@ -279,7 +296,7 @@ internal class SWDebugViewController: UIViewController {
     }
     
     @objc func pressedExitButton() {
-        presentingViewController?.dismiss(animated: true, completion: nil)
+		SWDebugManager.shared.closeDebugger(completion: nil)
     }
     
     @objc func pressedConsoleButton() {
@@ -300,31 +317,29 @@ internal class SWDebugViewController: UIViewController {
 	}
 	
 	func showConsole() {
-		Network.shared.paywalls { [weak self] result in
-			
-			switch(result){
-			case .success(let response):
-				let paywalls = response.paywalls
-				
-				let paywallResponse = paywalls.first { p in
-					p.id == self?.paywallId
-				}
-				
-				if let paywallResponse = paywallResponse {
-					StoreKitManager.shared.get(productsWithIds: paywallResponse.productIds) { productsById in
-						OnMain {
-							let products = Array(productsById.values)
-							let vc = SWConsoleViewController(products: products)
-							let nc = UINavigationController(rootViewController: vc)
-							self?.present(nc, animated: true)
+		if let paywallResponse = paywallResponse {
+			StoreKitManager.shared.get(productsWithIds: paywallResponse.productIds) { [weak self] productsById in
+				OnMain {
+					var products = [SKProduct]()
+					
+					for id in paywallResponse.productIds {
+						if let p = productsById[id] {
+							products.append(p)
 						}
 					}
+					
+					let vc = SWConsoleViewController(products: products)
+					let nc = UINavigationController(rootViewController: vc)
+					nc.modalPresentationStyle = .overFullScreen
+					self?.present(nc, animated: true)
 				}
-				
-			case .failure(let error):
-				Logger.debug(logLevel: .error, scope: .debugViewController, message: "Failed Getting Paywalls", info: nil, error: error)
 			}
+		} else {
+			Logger.debug(logLevel: .error, scope: .debugViewController, message: "Paywall Response is Nil", info: nil, error: nil)
 		}
+		
+		
+
 	}
     
     @objc func pressedBottomButton() {
@@ -356,6 +371,10 @@ internal class SWDebugViewController: UIViewController {
 		} onDismiss: { _, _, _ in
 			
 		} onFail: { [weak self] error in
+			
+			self?.presentAlert(title: "Error Occurred", message: error?.localizedDescription, options: [])
+			self?.bottomButton.showLoading = false
+			self?.bottomButton.setImage(UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!, for: .normal)
 			Logger.debug(logLevel: .error, scope: .debugViewController, message: "Failed to Show Paywall", info: nil, error: error)
 			self?.activityIndicator.stopAnimating()
 		}

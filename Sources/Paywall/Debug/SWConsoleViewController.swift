@@ -50,9 +50,11 @@ internal class SWConsoleViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = DarkBackgroundColor
-        title = "Paywall Debugger"
+        title = "Tamplate Variables"
         view.addSubview(tableView)
         view.addSubview(productPicker)
+		
+
         
         NSLayoutConstraint.activate([
             productPicker.widthAnchor.constraint(equalTo: view.widthAnchor),
@@ -66,9 +68,30 @@ internal class SWConsoleViewController: UIViewController {
             tableView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
         ])
         
+		if #available(iOS 13.0, *) {
+			let appearance = UINavigationBarAppearance()
+			appearance.configureWithOpaqueBackground()
+			appearance.backgroundColor = LightBackgroundColor
+			appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+			navigationController?.navigationBar.standardAppearance = appearance
+			navigationController?.navigationBar.scrollEdgeAppearance = navigationController?.navigationBar.standardAppearance
+		}
+
+		navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Done", style: .plain, target: self, action: #selector(addTapped))
+		navigationItem.rightBarButtonItem?.tintColor = PrimaryColor
+		navigationItem.largeTitleDisplayMode = .never
+		
         productPicker.reloadAllComponents()
         reloadTableView()
     }
+	
+	
+	
+
+
+	@objc func addTapped() {
+		self.dismiss(animated: true, completion: nil)
+	}
     
     func reloadTableView() {
         let index = productPicker.selectedRow(inComponent: 0)
@@ -121,11 +144,22 @@ extension SWConsoleViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "cell")
+		
+		let productLevels = ["primary", "secondary", "tertiary"]
+		var selectedProduct: String? = nil
+		let i = productPicker.selectedRow(inComponent: 0)
+		
+		if i < productLevels.count {
+			selectedProduct = productLevels[i]
+		}
+		
+		
         
         let (key, value) = tableViewCellData[indexPath.row]
         cell.textLabel?.text = value
         cell.textLabel?.textColor = .white
-        cell.detailTextLabel?.text = "{{ \(key) }}"
+		let text = selectedProduct == nil ? key : "\(selectedProduct!).\(key)"
+        cell.detailTextLabel?.text = "{{ \(text) }}"
         cell.detailTextLabel?.textColor = UIColor.white.withAlphaComponent(0.618)
         cell.backgroundView = nil
         cell.backgroundColor = .clear

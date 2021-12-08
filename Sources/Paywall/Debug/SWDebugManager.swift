@@ -15,6 +15,8 @@ struct DebugResponse {
 }
 
 internal class SWDebugManager {
+	
+	var viewController: SWDebugViewController? = nil
 
     static let shared = SWDebugManager()
 	
@@ -39,37 +41,65 @@ internal class SWDebugManager {
 	
 	/// Launches the debugger for you to preview paywalls. If you call `Paywall.track(.deepLinkOpen(deepLinkUrl: url))` from `application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool` in your `AppDelegate`, this funciton is called automatically after scanning your debug QR code in Superwall's web dashboard. Remember to add you URL scheme in settings for QR code scanning to work.
 	func launchDebugger(toPaywall paywallId: String? = nil) {
-		isDebuggerLaunched = true
-		Paywall.dismiss(nil)
-		DispatchQueue.main.asyncAfter(deadline: .now() + 0.618) { // helps if from cold launch
+		
+		if Paywall.shared.isPaywallPresented {
+			Paywall.dismiss { [weak self] in
+				self?.launchDebugger(toPaywall: paywallId)
+			}
+		} else {
 			
-			if let vc = UIViewController.topMostViewController {
-				
-				var dvc: SWDebugViewController? = nil
-				var isPresented = false
-				
-				if vc is SWDebugViewController {
-					dvc = vc as? SWDebugViewController
-					isPresented = true
-				} else {
-					dvc = SWDebugViewController()
-				}
-				
-				dvc?.paywallId = paywallId
-				
-				if let dvc = dvc {
-					
-					if isPresented {
-						dvc.loadPreview()
-					} else {
-						dvc.modalPresentationStyle = .overFullScreen
-						vc.present(dvc, animated: true)
-					}
-				}
-				
-				
+			if viewController != nil {
+				closeDebugger(completion: { [weak self] in
+					self?.launchDebugger(toPaywall: paywallId)
+				})
+			} else {
+				DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: { [weak self] in
+					self?.presentDebugger(toPaywall: paywallId)
+				})
 			}
 		}
+		
+
+		
+	}
+	
+	func presentDebugger(toPaywall paywallId: String? = nil) {
+		
+//		let presentor = Paywall.shared.presentingWindow?.rootViewController ??
+		
+		isDebuggerLaunched = true
+		if viewController != nil {
+			viewController?.paywallId = paywallId
+			viewController?.loadPreview()
+			UIViewController.topMostViewController?.present(viewController!, animated: true, completion: nil)
+		} else {
+			viewController = SWDebugViewController()
+			viewController?.paywallId = paywallId
+			viewController?.modalPresentationStyle = .overFullScreen
+			UIViewController.topMostViewController?.present(viewController!, animated: true, completion: nil)
+		}
+	}
+	
+	func closeDebugger(completion: (() -> Void)?) {
+		
+		let animate = completion == nil
+		
+		if viewController?.presentedViewController != nil {
+			viewController?.presentedViewController?.dismiss(animated: animate, completion: { [weak self] in
+				self?.viewController?.dismiss(animated: animate, completion: { [weak self] in
+					self?.viewController = nil
+					self?.isDebuggerLaunched = false
+					completion?()
+				})
+			})
+		} else {
+			viewController?.dismiss(animated: animate, completion: { [weak self] in
+				self?.viewController = nil
+				self?.isDebuggerLaunched = false
+				completion?()
+			})
+		}
+	
 	}
     
     func getQueryStringParameter(url: String, param: String) -> String? {
