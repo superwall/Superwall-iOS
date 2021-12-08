@@ -96,7 +96,7 @@ extension Paywall {
 							Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Transaction Restored", info: nil, error: nil)
 							self?._transactionWasRestored(paywallViewController: paywallViewController)
 						} else {
-							Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Transaction Restored", info: nil, error: nil)
+							Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Transaction Failed to Restore", info: nil, error: nil)
 							if userInitiated {
 								paywallViewController.presentAlert(title: Paywall.restoreFailedTitleString, message: Paywall.restoreFailedMessageString, closeActionTitle: Paywall.restoreFailedCloseButtonString)
 							}
