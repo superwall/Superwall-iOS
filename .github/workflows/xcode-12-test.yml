@@ -1,0 +1,42 @@
+name: TagVersion
+
+on:
+  push:
+    branches: [ xcode-12-test ]
+
+jobs:
+  tag:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '2.7.18'
+        
+    - name: Tag
+      run: | 
+          sudo git config --global user.name 'Jake'
+          sudo git config --global user.email 'jakemor@users.noreply.github.com'
+          sudo git pull
+          echo "\n\n\n- - - - - VERSION - - - - -\n\n\n"
+          sed -n 21p ./Sources/Paywall/Misc/Constants.swift
+          echo "\n\n\n- - - - - END VERSION - - - - -\n\n\n"
+          sudo git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift) -m "tags with latest version"
+          sudo git push --tags || true
+          sudo python xcode12.py
+          sudo git add -a
+          sudo git commit -m "xcode 12 support"
+          sudo git push
+
+  cocoapods:
+    needs: tag
+    runs-on: macos-11
+    steps:
+    - uses: actions/checkout@v1
+    - name: Publish to CocoaPod register
+      env:
+        COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+      run: |
+        pod trunk push Paywall.podspec --allow-warnings
