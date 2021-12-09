@@ -290,7 +290,7 @@ internal class SWPaywallViewController: UIViewController {
 	}
 	
 	func loadingStateDidChange(oldValue: LoadingState) {
-		DispatchQueue.main.async { [weak self] in
+		DispatchQueue.main.async { [weak self] in 
 			
 			guard let loadingState = self?.loadingState else { return }
 		
