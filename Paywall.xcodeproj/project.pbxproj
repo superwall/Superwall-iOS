@@ -20,6 +20,7 @@
 		3B6078CE25A95572777782D2 /* Dictionary+Cache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F12B757A7BB6EB02FA9AEE35 /* Dictionary+Cache.swift */; };
 		437E35C915790CE78DCD3882 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8661C67ACCFCA3AAAFF026C /* Types.swift */; };
 		44942B8B0ED4C6625D1130ED /* SWDebugViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F0DF5E8AC71E05726109BE5 /* SWDebugViewController.swift */; };
+		5157B2C42956FBC815F9DA35 /* TestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 540FB3F772F1A882A7FB0BC0 /* TestFile.swift */; };
 		51B2799C24C8F805897F3BA4 /* PaywallManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3666401586002D78C88C2A /* PaywallManager.swift */; };
 		56F6CAD55C77243E7677A605 /* ShimmeringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BCB92333070318FF40FD013 /* ShimmeringView.swift */; };
 		5E1738AAF67F8695B1A6A01F /* String+MD5.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DCBAC4DB0C7A95C8B7CB232 /* String+MD5.swift */; };
@@ -64,6 +65,7 @@
 		46323AB736A8AD9C4DFB8F16 /* Paywall.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Paywall.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DCBAC4DB0C7A95C8B7CB232 /* String+MD5.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+MD5.swift"; sourceTree = "<group>"; };
 		4ECF855DE5D99DE526EAB147 /* SwiftyJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyJSON.swift; sourceTree = "<group>"; };
+		540FB3F772F1A882A7FB0BC0 /* TestFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestFile.swift; sourceTree = "<group>"; };
 		55E5A5606736C70494B6EA37 /* GameControllerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameControllerManager.swift; sourceTree = "<group>"; };
 		67E79A4B4F9CA8D4FA62DF0C /* Debug.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Debug.swift; sourceTree = "<group>"; };
 		6F0DF5E8AC71E05726109BE5 /* SWDebugViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWDebugViewController.swift; sourceTree = "<group>"; };
@@ -110,6 +112,7 @@
 				C3EF821C1CFD440F2C10BD04 /* PaywallPresentation.swift */,
 				BEECF871CEF5502F22C21CF6 /* PaywallTransactions.swift */,
 				CCA3CCA5BA8B08041A798297 /* SWPaywallViewController.swift */,
+				540FB3F772F1A882A7FB0BC0 /* TestFile.swift */,
 				B1ACB0917547FD193909E9B0 /* ShimmerView */,
 			);
 			path = Paywall;
@@ -320,6 +323,7 @@
 				0E70DAD87A92723C4FAFDFAE /* StoreKitManager.swift in Sources */,
 				5E1738AAF67F8695B1A6A01F /* String+MD5.swift in Sources */,
 				824933BE91877E221F976014 /* SwiftyJSON.swift in Sources */,
+				5157B2C42956FBC815F9DA35 /* TestFile.swift in Sources */,
 				437E35C915790CE78DCD3882 /* Types.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
