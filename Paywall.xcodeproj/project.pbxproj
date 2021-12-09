@@ -12,14 +12,19 @@
 		0BBFC767922F24ABF42589D1 /* Debug.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67E79A4B4F9CA8D4FA62DF0C /* Debug.swift */; };
 		0E70DAD87A92723C4FAFDFAE /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0718F817A6D2C9493AF6FBE5 /* StoreKitManager.swift */; };
 		0FD23369D3FD47831A02E972 /* SWBounceButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 271079AB0915D7C997940C95 /* SWBounceButton.swift */; };
+		126A65421711AE3DCDD0CE76 /* SWLocalizationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10981E067436E13F06E5A58C /* SWLocalizationViewController.swift */; };
+		22850AA7B711BA4CA3B689B0 /* PaywallTransactions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEECF871CEF5502F22C21CF6 /* PaywallTransactions.swift */; };
 		2559BEECCD493062B2B8B9D7 /* ShimmeringLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23D70898410086252ECA7B4D /* ShimmeringLayer.swift */; };
+		26FCA273A8C9F4BE35C252EB /* LocalizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9A6BAF6E54CA507528440E /* LocalizationManager.swift */; };
 		29735852190A0E7ADCA1134E /* Paywall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09D4F343E0BA85AC451816E4 /* Paywall.swift */; };
 		3B6078CE25A95572777782D2 /* Dictionary+Cache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F12B757A7BB6EB02FA9AEE35 /* Dictionary+Cache.swift */; };
 		437E35C915790CE78DCD3882 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8661C67ACCFCA3AAAFF026C /* Types.swift */; };
 		44942B8B0ED4C6625D1130ED /* SWDebugViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F0DF5E8AC71E05726109BE5 /* SWDebugViewController.swift */; };
+		51B2799C24C8F805897F3BA4 /* PaywallManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3666401586002D78C88C2A /* PaywallManager.swift */; };
 		56F6CAD55C77243E7677A605 /* ShimmeringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BCB92333070318FF40FD013 /* ShimmeringView.swift */; };
 		5E1738AAF67F8695B1A6A01F /* String+MD5.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DCBAC4DB0C7A95C8B7CB232 /* String+MD5.swift */; };
 		5E417214B1381CA60162E0D5 /* SWConsoleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39C933A6381DB152E672FCE9 /* SWConsoleViewController.swift */; };
+		626FB8EA1D4A1898A72F4F1C /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCF23E39CC3AE2642EB9FE3 /* Constants.swift */; };
 		67E3DBC1883F3965BA4DE938 /* Cache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FB351A84EEC5D8E5E8798FA /* Cache.swift */; };
 		6FBFE2509CC7A4ACE4068CAE /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = C387A7567FDEF78FDDE6DFC0 /* Store.swift */; };
 		7691C1718BA95F3D9809521A /* PaywallResponseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08628840CDA0FD7E8B50D224 /* PaywallResponseManager.swift */; };
@@ -48,9 +53,11 @@
 		08628840CDA0FD7E8B50D224 /* PaywallResponseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallResponseManager.swift; sourceTree = "<group>"; };
 		09D4F343E0BA85AC451816E4 /* Paywall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Paywall.swift; sourceTree = "<group>"; };
 		0BAB288702408C2788E00C56 /* BundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleHelper.swift; sourceTree = "<group>"; };
+		10981E067436E13F06E5A58C /* SWLocalizationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWLocalizationViewController.swift; sourceTree = "<group>"; };
 		1172F9EA3F79A4A44E12F7BE /* ShimmeringMaskLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringMaskLayer.swift; sourceTree = "<group>"; };
 		23D70898410086252ECA7B4D /* ShimmeringLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringLayer.swift; sourceTree = "<group>"; };
 		271079AB0915D7C997940C95 /* SWBounceButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWBounceButton.swift; sourceTree = "<group>"; };
+		2B3666401586002D78C88C2A /* PaywallManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallManager.swift; sourceTree = "<group>"; };
 		3120D4B1C19900CA6951E6F8 /* PaywallDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallDelegate.swift; sourceTree = "<group>"; };
 		39C933A6381DB152E672FCE9 /* SWConsoleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWConsoleViewController.swift; sourceTree = "<group>"; };
 		3FB351A84EEC5D8E5E8798FA /* Cache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cache.swift; sourceTree = "<group>"; };
@@ -64,8 +71,10 @@
 		7BCB92333070318FF40FD013 /* ShimmeringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringView.swift; sourceTree = "<group>"; };
 		82C4F84E15DB7596C36F04DD /* Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network.swift; sourceTree = "<group>"; };
 		A8661C67ACCFCA3AAAFF026C /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
+		AB9A6BAF6E54CA507528440E /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
 		B64A36AB939D7351F687712C /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
 		BB7B553F877CB9EB9156D803 /* EventsQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsQueue.swift; sourceTree = "<group>"; };
+		BEECF871CEF5502F22C21CF6 /* PaywallTransactions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallTransactions.swift; sourceTree = "<group>"; };
 		C01D9C63C76AE79C2254DF1C /* Shimmer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shimmer.swift; sourceTree = "<group>"; };
 		C387A7567FDEF78FDDE6DFC0 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		C3EF821C1CFD440F2C10BD04 /* PaywallPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPresentation.swift; sourceTree = "<group>"; };
@@ -73,6 +82,7 @@
 		CD2A08A7B5B4D29500F34927 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		CD6141A41709926F5628A3A0 /* Example.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Example.swift; sourceTree = "<group>"; };
 		DCF54D10298EB2DAEBE67770 /* Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Events.swift; sourceTree = "<group>"; };
+		DDCF23E39CC3AE2642EB9FE3 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		E392B6BD026B3616179AD097 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F12B757A7BB6EB02FA9AEE35 /* Dictionary+Cache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dictionary+Cache.swift"; sourceTree = "<group>"; };
 		FDFF57BA43FA58EBD97FE5B7 /* PaywallEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallEvents.swift; sourceTree = "<group>"; };
@@ -96,7 +106,9 @@
 				DCF54D10298EB2DAEBE67770 /* Events.swift */,
 				09D4F343E0BA85AC451816E4 /* Paywall.swift */,
 				3120D4B1C19900CA6951E6F8 /* PaywallDelegate.swift */,
+				2B3666401586002D78C88C2A /* PaywallManager.swift */,
 				C3EF821C1CFD440F2C10BD04 /* PaywallPresentation.swift */,
+				BEECF871CEF5502F22C21CF6 /* PaywallTransactions.swift */,
 				CCA3CCA5BA8B08041A798297 /* SWPaywallViewController.swift */,
 				B1ACB0917547FD193909E9B0 /* ShimmerView */,
 			);
@@ -128,10 +140,12 @@
 		46E17D5502F50E6EBB6F171C /* Debug */ = {
 			isa = PBXGroup;
 			children = (
+				AB9A6BAF6E54CA507528440E /* LocalizationManager.swift */,
 				271079AB0915D7C997940C95 /* SWBounceButton.swift */,
 				39C933A6381DB152E672FCE9 /* SWConsoleViewController.swift */,
 				0174F2F10C41C0E955B23457 /* SWDebugManager.swift */,
 				6F0DF5E8AC71E05726109BE5 /* SWDebugViewController.swift */,
+				10981E067436E13F06E5A58C /* SWLocalizationViewController.swift */,
 			);
 			path = Debug;
 			sourceTree = "<group>";
@@ -178,6 +192,7 @@
 		E94164BCC934D771B5086786 /* Misc */ = {
 			isa = PBXGroup;
 			children = (
+				DDCF23E39CC3AE2642EB9FE3 /* Constants.swift */,
 				67E79A4B4F9CA8D4FA62DF0C /* Debug.swift */,
 				CD6141A41709926F5628A3A0 /* Example.swift */,
 				CD2A08A7B5B4D29500F34927 /* Extensions.swift */,
@@ -272,6 +287,7 @@
 			files = (
 				A49230BAE35CFBB29870F6DA /* BundleHelper.swift in Sources */,
 				67E3DBC1883F3965BA4DE938 /* Cache.swift in Sources */,
+				626FB8EA1D4A1898A72F4F1C /* Constants.swift in Sources */,
 				0BBFC767922F24ABF42589D1 /* Debug.swift in Sources */,
 				969A24DBD53AD76F6F01BB66 /* Device.swift in Sources */,
 				3B6078CE25A95572777782D2 /* Dictionary+Cache.swift in Sources */,
@@ -280,17 +296,21 @@
 				D39F9A30F66BDBF19778AD4B /* Example.swift in Sources */,
 				7AD13EAC110C54195DEAEFB1 /* Extensions.swift in Sources */,
 				0710F1429BA795E58A6461DB /* GameControllerManager.swift in Sources */,
+				26FCA273A8C9F4BE35C252EB /* LocalizationManager.swift in Sources */,
 				FEB31F66186E30FDAF63D045 /* Network.swift in Sources */,
 				29735852190A0E7ADCA1134E /* Paywall.swift in Sources */,
 				FE82C1853125202647F35D89 /* PaywallDelegate.swift in Sources */,
 				A2897495E7CF38F8AE8B3F15 /* PaywallEvents.swift in Sources */,
+				51B2799C24C8F805897F3BA4 /* PaywallManager.swift in Sources */,
 				0B9F89164667B376D47D6C6A /* PaywallPresentation.swift in Sources */,
 				7691C1718BA95F3D9809521A /* PaywallResponseManager.swift in Sources */,
+				22850AA7B711BA4CA3B689B0 /* PaywallTransactions.swift in Sources */,
 				A4069F9FDB258F21E1E68EF6 /* ProductsManager.swift in Sources */,
 				0FD23369D3FD47831A02E972 /* SWBounceButton.swift in Sources */,
 				5E417214B1381CA60162E0D5 /* SWConsoleViewController.swift in Sources */,
 				8ED134478ED2308C222205C0 /* SWDebugManager.swift in Sources */,
 				44942B8B0ED4C6625D1130ED /* SWDebugViewController.swift in Sources */,
+				126A65421711AE3DCDD0CE76 /* SWLocalizationViewController.swift in Sources */,
 				C4D655EDB16A8528F989FC6F /* SWPaywallViewController.swift in Sources */,
 				CF20978CDB4E42FB242D2C9E /* Shimmer.swift in Sources */,
 				2559BEECCD493062B2B8B9D7 /* ShimmeringLayer.swift in Sources */,
