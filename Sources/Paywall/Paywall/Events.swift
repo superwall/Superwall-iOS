@@ -57,12 +57,17 @@ extension Paywall {
         }
         
         
-        // skip calling user_attributes and custom events on their own system likely not needed
+        // skip calling disallowed events on their own system likely not needed
         // custom events wont work because StandardEventName and InternalEventName won't exist with their own event name
-        if EventName(rawValue: name) != nil && name != "user_properties" {
+        if EventName(rawValue: name) != nil {
 			Paywall.delegate?.trackAnalyticsEvent?(withName: name, params: delegateParams)
 			Logger.debug(logLevel: .debug, scope: .events, message: "Logged Internal Event", info: eventParams, error: nil)
         }
+		
+		
+		if let e = StandardEventName(rawValue: name), e == .userAttributes {
+			Store.shared.add(userAttributes: eventParams)
+		}
         
 		
 		let eventData = EventData(id: UUID().uuidString, name: name, parameters: JSON(eventParams), createdAt: Date.init(timeIntervalSinceNow: 0).isoString)
@@ -529,6 +534,7 @@ extension Paywall {
     ///  ```swift
     ///  Superwall.setUserAttributes(.firstName("Jake"), .lastName("Mor"), custom: properties)
     ///  ```
+	@available(*, deprecated)
     public static func setUserAttributes(_ standard: StandardUserAttribute..., custom: [String: Any?] = [:]) {
             
         var map = [StandardUserAttributeKey: Any]()
@@ -559,6 +565,19 @@ extension Paywall {
         }
         track(.userAttributes(standard: map, custom: custom))
     }
+	
+	/// Sets additional information on the user object in Superwall. Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.
+	/// - Parameter custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+	///
+	///  Example:
+	///  ```swift
+	///  Superwall.setUserAttributes(properties)
+	///  ```
+	public static func setUserAttributes(_ custom: [String: Any?] = [:]) {
+		var map = [StandardUserAttributeKey: Any]()
+		map[.applicationInstalledAt] = DeviceHelper.shared.appInstallDate
+		track(.userAttributes(standard: map, custom: custom))
+	}
     
     /// *Note* Please use `setUserAttributes` if you're using Swift.
     /// Sets additional information on the user object in Superwall. Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.

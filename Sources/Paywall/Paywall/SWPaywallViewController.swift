@@ -249,6 +249,11 @@ internal class SWPaywallViewController: UIViewController {
 			if UIWindow.isLandscape {
 				contentPlaceholderImageView.image = UIImage(named: "paywall_placeholder_landscape", in: Bundle.module, compatibleWith: nil)!
 			}
+			
+			// if the loading state is ready, re template user attributes
+			if self.loadingState == .ready {
+				handleEvent(event: .templateUserAttributes)
+			}
 		}
 	}
 	
@@ -546,6 +551,19 @@ extension SWPaywallViewController {
         guard let paywallResponse = self._paywallResponse else { return }
     
         switch (event) {
+		case .templateUserAttributes:
+			let scriptSrc = """
+				window.paywall.accept64('\(paywallResponse.templateEventsBase64String)');
+			"""
+				
+			webview.evaluateJavaScript(scriptSrc) { [weak self] (result, error) in
+				if let error = error {
+					Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Error Evaluating JS", info: ["message": scriptSrc], error: error)
+				}
+			}
+			
+			Logger.debug(logLevel: .debug, scope: .paywallViewController, message: "Posting Message", info: ["message": scriptSrc], error: nil)
+				
         case .onReady:
 			if let i = self.paywallInfo {
 				Paywall.track(.paywallWebviewLoadComplete(paywallInfo: i))

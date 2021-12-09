@@ -129,6 +129,17 @@ internal struct PaywallResponse: Decodable {
         
         return TemplateVariables(event_name: "template_variables", variables: vars)
     }
+	
+	var userVariables: JSON {
+		let values: [String: Any] = [
+			"event_name":"template_variables",
+			"variables": [
+				"user": Store.shared.userAttributes,
+				"device": templateDevice.dictionary ?? [String: Any]()
+			]
+		]
+		return JSON(values)
+	}
     
     var isFreeTrialAvailable: Bool? = false
     
@@ -157,7 +168,9 @@ internal struct PaywallResponse: Decodable {
     }
     
     var templateEventsBase64String: String {
-		let encodedStrings = [encodedEventString(templateDevice), encodedEventString(templateProducts), encodedEventString(templateVariables), encodedEventString(templateSubstitutionsPrefix)]
+		
+		let encodedStrings = [encodedEventString(templateDevice), encodedEventString(templateProducts), encodedEventString(templateVariables), encodedEventString(templateSubstitutionsPrefix), encodedEventString(userVariables)]
+		
 		let string = "[" + encodedStrings.joined(separator: ",") + "]"
 
 		let utf8str = string.data(using: .utf8)
@@ -286,4 +299,12 @@ internal struct ConfigResponse: Decodable {
 
 internal struct Trigger: Decodable {
 	var eventName: String
+}
+
+
+extension Encodable {
+  var dictionary: [String: Any]? {
+	guard let data = try? JSONEncoder().encode(self) else { return nil }
+	return (try? JSONSerialization.jsonObject(with: data, options: .allowFragments)).flatMap { $0 as? [String: Any] }
+  }
 }

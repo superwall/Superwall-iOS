@@ -75,7 +75,10 @@ public class Paywall: NSObject {
 		}
 	}
 	
-	
+	/// Access properties stored on the user
+	public static var userAttributes: [String: Any] {
+		return Store.shared.userAttributes
+	}
 	
 	
 	// ------------------------

@@ -36,6 +36,7 @@ internal struct PayloadEvents: Decodable {
 
 internal enum PaywallEvent: Decodable {
     case onReady
+	case templateUserAttributes
     case close
     case restore
     case openUrl(url: URL)
