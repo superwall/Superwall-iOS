@@ -48,6 +48,7 @@ jobs:
           sudo git pull
           sudo git checkout -b xcode-12-$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)
           sudo python xcode12.py
+          sed -i '' "4s/.*/    s.version      = \"$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)-xcode-12\"/" Paywall.podspec
           sudo git add -A
           sudo git commit -m "xcode 12 support"
           sudo git push -u origin xcode-12-$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)
