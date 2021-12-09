@@ -87,7 +87,7 @@ internal class SWPaywallViewController: UIViewController {
 		
 		let preferences = WKPreferences()
 		if #available(iOS 15.0, *) {
-// 			preferences.isTextInteractionEnabled = false // ignore-xcode-12
+ 			preferences.isTextInteractionEnabled = false // ignore-xcode-12
 		}
 		preferences.javaScriptCanOpenWindowsAutomatically = true
 		
@@ -243,7 +243,7 @@ internal class SWPaywallViewController: UIViewController {
 		
 		if isActive {
 			if #available(iOS 15.0, *) {
-// 				webview.setAllMediaPlaybackSuspended(false, completionHandler: nil) // ignore-xcode-12
+ 				webview.setAllMediaPlaybackSuspended(false, completionHandler: nil) // ignore-xcode-12
 			}
 			
 			if UIWindow.isLandscape {
@@ -278,7 +278,7 @@ internal class SWPaywallViewController: UIViewController {
 				trackClose()
 			}
 			if #available(iOS 15.0, *) {
-// 				webview.setAllMediaPlaybackSuspended(true, completionHandler: nil) // ignore-xcode-12
+ 				webview.setAllMediaPlaybackSuspended(true, completionHandler: nil) // ignore-xcode-12
 			}
 
 			if !calledDismiss {
