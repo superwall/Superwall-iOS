@@ -26,7 +26,7 @@ jobs:
           sudo git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift) -m "tags with latest version"
           sudo git push --tags || true
           sudo python xcode12.py
-          sudo git add -a
+          sudo git add -A
           sudo git commit -m "xcode 12 support"
           sudo git push
 
