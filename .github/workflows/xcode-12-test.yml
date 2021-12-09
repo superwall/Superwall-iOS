@@ -10,11 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: '2.7.18'
-        
+    - uses: actions/checkout@v2        
     - name: Tag
       run: | 
           sudo git config --global user.name 'Jake'
@@ -25,6 +21,31 @@ jobs:
           echo "\n\n\n- - - - - END VERSION - - - - -\n\n\n"
           sudo git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift) -m "tags with latest version"
           sudo git push --tags || true
+
+  # cocoapods:
+  #   needs: tag
+  #   runs-on: macos-11
+  #   steps:
+  #   - uses: actions/checkout@v1
+  #   - name: Publish to CocoaPod register
+  #     env:
+  #       COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+  #     run: |
+  #       pod trunk push Paywall.podspec --allow-warnings
+
+  xcode12:
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '2.7.18'
+    - name: Tag
+      run: | 
+          sudo git config --global user.name 'Jake'
+          sudo git config --global user.email 'jakemor@users.noreply.github.com'
+          sudo git pull
           sudo git checkout -b xcode-12-$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)
           sudo python xcode12.py
           sudo git add -A
@@ -32,14 +53,3 @@ jobs:
           sudo git push -u origin xcode-12-$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)
           sudo git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)-xcode-12 -m "tags with latest version for xcode-12"
           sudo git push --tags || true
-
-  cocoapods:
-    needs: tag
-    runs-on: macos-11
-    steps:
-    - uses: actions/checkout@v1
-    - name: Publish to CocoaPod register
-      env:
-        COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
-      run: |
-        pod trunk push Paywall.podspec --allow-warnings
