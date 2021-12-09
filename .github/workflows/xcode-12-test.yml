@@ -29,8 +29,9 @@ jobs:
           sudo python xcode12.py
           sudo git add -A
           sudo git commit -m "xcode 12 support"
+          sudo git push 
           sudo git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)-xcode-12 -m "tags with latest version for xcode-12"
-          sudo git push --set-upstream origin xcode-12/2.1.3-rc.4
+          sudo git push --tags || true
 
   cocoapods:
     needs: tag
