@@ -25,9 +25,11 @@ jobs:
           echo "\n\n\n- - - - - END VERSION - - - - -\n\n\n"
           sudo git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift) -m "tags with latest version"
           sudo git push --tags || true
+          sudo git checkout -b xcode-12/$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)
           sudo python xcode12.py
           sudo git add -A
           sudo git commit -m "xcode 12 support"
+          sudo git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)-xcode-12 -m "tags with latest version for xcode-12"
           sudo git push
 
   cocoapods:
