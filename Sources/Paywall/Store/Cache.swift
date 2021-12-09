@@ -226,7 +226,7 @@ extension Cache {
     internal func clean(byKey key: String) {
         memCache.removeObject(forKey: key as AnyObject)
         
-        ioQueue.async {
+        ioQueue.async { 
             do {
                 try self.fileManager.removeItem(atPath: self.cachePath(forKey: key))
             } catch {
