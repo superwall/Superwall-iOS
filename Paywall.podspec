@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 	s.name         = "Paywall"
-    s.version      = "2.1.4-rc.3"
+    s.version      = "2.1.4-rc.4"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. www.superwall.me"
 

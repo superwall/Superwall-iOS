@@ -48,12 +48,12 @@ jobs:
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           sudo git pull
-          sudo git checkout -b xcode-12/$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)
+          sudo git checkout -b xcode12/$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)
           sudo python xcode12.py
           sed -i '' "4s/.*/    s.version      = \"$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)-xcode-12\"/" Paywall.podspec
           sudo git add -A
           sudo git commit -m "xcode 12 support"
-          sudo git push -u origin xcode-12/$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)
+          sudo git push -u origin xcode12/$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)
           sudo git tag -a $(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)-xcode-12 -m "tags with latest version for xcode-12"
           sudo git push --tags || true
           pod trunk push Paywall.podspec --allow-warnings
