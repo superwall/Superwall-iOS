@@ -49,17 +49,19 @@ extension Paywall {
 	/// Presents a paywall to the user.
 	///  - Parameter identifier: The identifier of the paywall you wish to present
 	///  - Parameter on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
+	///  - Parameter ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
 	///  - Parameter onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a `PaywallInfo?` object containing information about the paywall.
 	///  - Parameter onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a `PaywallInfo?` object containing information about the paywall.
 	///  - Parameter onFail: A completion block that gets called when the paywall fails to present, either because an error occured or because all paywalls are off. Defaults to `nil`.  Accepts an `NSError?` with more details.
 	@objc public static func present(identifier: String? = nil,
 									 on viewController: UIViewController? = nil,
+									 ignoreSubscriptionStatus: Bool = false,
 									 onPresent: ((PaywallInfo?)->())? = nil,
 									 onDismiss: ((Bool, String?, PaywallInfo?) -> ())? = nil,
 									 onFail: ((NSError?)->())? = nil)  {
 		
 
-		_present(identifier: identifier, on: viewController, fromEvent: nil, cached: true, onPresent: onPresent, onDismiss: onDismiss, onFail: onFail)
+		_present(identifier: identifier, on: viewController, fromEvent: nil, cached: true, ignoreSubscriptionStatus: ignoreSubscriptionStatus, onPresent: onPresent, onDismiss: onDismiss, onFail: onFail)
 	}
 	
 	
@@ -67,12 +69,14 @@ extension Paywall {
 	///  - Parameter event: The name of the event you wish to trigger (equivalent to event name in `Paywall.track()`)
 	///  - Parameter params: Parameters you wish to pass along to the trigger (equivalent to params in `Paywall.track()`)
 	///  - Parameter on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
+	///  - Parameter ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
 	///  - Parameter onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a `PaywallInfo?` object containing information about the paywall.
 	///  - Parameter onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a `PaywallInfo?` object containing information about the paywall.
 	///  - Parameter onSkip: A completion block that gets called when the paywall's presentation is skipped, either because the trigger is disabled or an error has occurred. Defaults to `nil`.  Accepts an `NSError?` with more details.
 	@objc public static func trigger(event: String? = nil,
 									 params: [String: Any]? = nil,
 									 on viewController: UIViewController? = nil,
+									 ignoreSubscriptionStatus: Bool = false,
 									 onSkip: ((NSError?)->())? = nil,
 									 onPresent: ((PaywallInfo?)->())? = nil,
 									 onDismiss: ((Bool, String?, PaywallInfo?) -> ())? = nil)  {
@@ -83,7 +87,7 @@ extension Paywall {
 			e = Paywall._track(name, [:], params ?? [:], handleTrigger: false)
 		}
 		
-		_present(identifier: nil, on: viewController, fromEvent: e, cached: true, onPresent: onPresent, onDismiss: onDismiss, onFail: onSkip)
+		_present(identifier: nil, on: viewController, fromEvent: e, cached: true, ignoreSubscriptionStatus: ignoreSubscriptionStatus, onPresent: onPresent, onDismiss: onDismiss, onFail: onSkip)
 	}
 	
 	
@@ -91,11 +95,12 @@ extension Paywall {
 								  on viewController: UIViewController? = nil,
 								  fromEvent: EventData? = nil,
 								  cached: Bool = true,
+								  ignoreSubscriptionStatus: Bool = false,
 								  onPresent: ((PaywallInfo?)->())? = nil,
 								  onDismiss: ((Bool, String?, PaywallInfo?) -> ())? = nil,
 								  onFail: ((NSError?)->())? = nil)  {
 		
-		present(identifier: identifier, on: viewController, fromEvent: fromEvent, cached: cached, presentationCompletion: onPresent, dismissalCompletion: onDismiss, fallback: onFail)
+		present(identifier: identifier, on: viewController, fromEvent: fromEvent, cached: cached, ignoreSubscriptionStatus: ignoreSubscriptionStatus, presentationCompletion: onPresent, dismissalCompletion: onDismiss, fallback: onFail)
 		
 	}
 	
@@ -103,6 +108,7 @@ extension Paywall {
 									on viewController: UIViewController? = nil,
 									fromEvent: EventData? = nil,
 									cached: Bool = true,
+									ignoreSubscriptionStatus: Bool = false,
 									presentationCompletion: ((PaywallInfo?)->())? = nil,
 									dismissalCompletion: ((Bool, String?, PaywallInfo?) -> ())? = nil,
 									fallback: ((NSError?) -> ())? = nil) {
@@ -118,7 +124,9 @@ extension Paywall {
 
 		if let delegate = delegate {
 			if delegate.isUserSubscribed() && !SWDebugManager.shared.isDebuggerLaunched {
-				return
+				if !ignoreSubscriptionStatus {
+					return
+				}
 			}
 		}
 
