@@ -63,6 +63,8 @@ extension Network {
         var request = request
 		
 		Logger.debug(logLevel: .debug, scope: .network, message: "Request Started", info: ["body": String(data: request.httpBody ?? Data(), encoding: .utf8) ?? "none", "url": request.url?.absoluteString ?? "unkown"], error: nil)
+		let startTime = Date().timeIntervalSince1970
+		let requestId = UUID().uuidString
 		
         let auth = "Bearer " + ((isDebugRequest ? Store.shared.debugKey : Store.shared.apiKey) ?? "")
         request.setValue(auth, forHTTPHeaderField:  "Authorization")
@@ -81,33 +83,41 @@ extension Network {
         request.setValue(DeviceHelper.shared.secondsFromGMT, forHTTPHeaderField: "X-Device-Timezone-Offset") // $
         request.setValue(DeviceHelper.shared.appInstallDate, forHTTPHeaderField: "X-App-Install-Date") // $
 		request.setValue(SDK_VERSION, forHTTPHeaderField: "X-SDK-Version")
-        
-
+		request.setValue( requestId, forHTTPHeaderField: "X-Request-Id")
+		
         let task = self.urlSession.dataTask(with: request) { (data, response, error) in
+			
+			let requestDuration = Date().timeIntervalSince1970 - startTime
+			
             do {
                 guard let unWrappedData = data else { return completion(.failure(error ?? Error.unknown))}
 				
-//				Logger.debug(logLevel: .debug, scope: .network, message: "Response Body", info: ["body": response], error: nil)
+				var requestId = "unknown"
+				
+				if let response = response as? HTTPURLResponse, let rid = response.allHeaderFields["x-request-id"] as? String {
+					requestId = rid
+				}
 				
 				if let response = response as? HTTPURLResponse {
-					
 					if response.statusCode == 401 {
-						Logger.debug(logLevel: .error, scope: .network, message: "Unable to Authenticate", info: ["request": request.debugDescription, "api_key": auth, "url": request.url?.absoluteString ?? "unkown"], error: error)
+						Logger.debug(logLevel: .error, scope: .network, message: "Unable to Authenticate", info: ["request": request.debugDescription, "api_key": auth, "url": request.url?.absoluteString ?? "unkown", "request_id": requestId, "request_duration": requestDuration], error: error)
 						return completion(.failure(Error.notAuthenticated))
 					}
 				
 					if response.statusCode == 404 {
-						Logger.debug(logLevel: .error, scope: .network, message: "Not Found", info: ["request": request.debugDescription, "api_key": auth, "url": request.url?.absoluteString ?? "unkown"], error: error)
+						Logger.debug(logLevel: .error, scope: .network, message: "Not Found", info: ["request": request.debugDescription, "api_key": auth, "url": request.url?.absoluteString ?? "unkown", "request_id": requestId, "request_duration": requestDuration], error: error)
 						return completion(.failure(Error.notFound))
 					}
                 }
+				
+				Logger.debug(logLevel: .debug, scope: .network, message: "Request Completed", info: ["request": request.debugDescription, "api_key": auth, "url": request.url?.absoluteString ?? "unkown", "request_id": requestId, "request_duration": requestDuration])
                 
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let response = try decoder.decode(ResponseType.self, from: unWrappedData)
                 completion(.success(response))
             } catch let error {
-				Logger.debug(logLevel: .error, scope: .network, message: "Request Error", info: ["request": request.debugDescription, "api_key": auth, "url": request.url?.absoluteString ?? "unkown", "message": "Unable to decode response to type \(ResponseType.self)", "info": String(decoding: data ?? Data(), as: UTF8.self)], error: error)
+				Logger.debug(logLevel: .error, scope: .network, message: "Request Error", info: ["request": request.debugDescription, "api_key": auth, "url": request.url?.absoluteString ?? "unkown", "message": "Unable to decode response to type \(ResponseType.self)", "info": String(decoding: data ?? Data(), as: UTF8.self), "request_duration": requestDuration], error: error)
                 completion(.failure(Error.decoding))
             }
         }
