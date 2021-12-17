@@ -23,6 +23,14 @@ internal class DeviceHelper {
             return String(format: "%ld.%ld.%ld", arguments: [systemVersion.majorVersion, systemVersion.minorVersion, systemVersion.patchVersion])
         }
     }
+	
+	var isMac: Bool {
+		var output = false
+		if #available(iOS 14.0, *) {
+			output = ProcessInfo.processInfo.isiOSAppOnMac
+		}
+		return output
+	}
     
     
     var model: String {
