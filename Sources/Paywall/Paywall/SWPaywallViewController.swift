@@ -89,7 +89,7 @@ internal class SWPaywallViewController: UIViewController {
 		let preferences = WKPreferences()
 		if #available(iOS 15.0, *) {
 			if !DeviceHelper.shared.isMac {
-				preferences.isTextInteractionEnabled = false // ignore-xcode-12
+// 				preferences.isTextInteractionEnabled = false // ignore-xcode-12
 			}
 		}
 		preferences.javaScriptCanOpenWindowsAutomatically = true
@@ -247,7 +247,7 @@ internal class SWPaywallViewController: UIViewController {
 		if isActive && !isSafariVCPresented {
 			if #available(iOS 15.0, *) {
 				if !DeviceHelper.shared.isMac {
-					webview.setAllMediaPlaybackSuspended(false, completionHandler: nil) // ignore-xcode-12
+// 					webview.setAllMediaPlaybackSuspended(false, completionHandler: nil) // ignore-xcode-12
 				}
 			}
 			
@@ -284,7 +284,7 @@ internal class SWPaywallViewController: UIViewController {
 			}
 			if #available(iOS 15.0, *) {
 				if !DeviceHelper.shared.isMac {
-					webview.setAllMediaPlaybackSuspended(true, completionHandler: nil) // ignore-xcode-12
+// 					webview.setAllMediaPlaybackSuspended(true, completionHandler: nil) // ignore-xcode-12
 				}
 			}
 
