@@ -43,6 +43,7 @@ internal class SWPaywallViewController: UIViewController {
 	internal var calledByIdentifier: Bool = false
 	internal var readyForEventTracking = false
 	internal var showRefreshTimer: Timer? = nil
+	internal var isSafariVCPresented: Bool = false
 	
 	internal var isActive: Bool {
 		return isPresented || isBeingPresented
@@ -243,7 +244,7 @@ internal class SWPaywallViewController: UIViewController {
 	public override func viewWillAppear(_ animated: Bool) {
 		super.viewWillAppear(animated)
 		
-		if isActive {
+		if isActive && !isSafariVCPresented {
 			if #available(iOS 15.0, *) {
 				if !DeviceHelper.shared.isMac {
 					webview.setAllMediaPlaybackSuspended(false, completionHandler: nil) // ignore-xcode-12
@@ -263,7 +264,7 @@ internal class SWPaywallViewController: UIViewController {
 	
 	override func viewWillDisappear(_ animated: Bool) {
 		super.viewWillDisappear(animated)
-		if isPresented {
+		if isPresented && !isSafariVCPresented {
 			
 			if !calledDismiss {
 				Paywall.delegate?.willDismissPaywall?()
@@ -276,7 +277,7 @@ internal class SWPaywallViewController: UIViewController {
 	override func viewDidDisappear(_ animated: Bool) {
 		super.viewDidDisappear(animated)
 		
-		if isPresented {
+		if isPresented && !isSafariVCPresented {
 			print("viewDidDisappear")
 			if readyForEventTracking {
 				trackClose()
@@ -616,6 +617,7 @@ extension SWPaywallViewController {
 			hapticFeedback()
             complete(.openedURL(url: url))
             let safariVC = SFSafariViewController(url: url)
+			self.isSafariVCPresented = true
             present(safariVC, animated: true, completion: nil)
         case .openDeepLink(let url):
 			if self != Paywall.shared.paywallViewController {
@@ -751,4 +753,11 @@ extension SWPaywallViewController {
 		
 	}
 	
+}
+
+
+extension SWPaywallViewController: SFSafariViewControllerDelegate {
+	func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
+		self.isSafariVCPresented = false
+	}
 }
