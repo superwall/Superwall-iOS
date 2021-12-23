@@ -79,7 +79,9 @@ internal class SWConsoleViewController: UIViewController {
 
 		navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Done", style: .plain, target: self, action: #selector(addTapped))
 		navigationItem.rightBarButtonItem?.tintColor = PrimaryColor
-		navigationItem.largeTitleDisplayMode = .never
+        if #available(iOS 11.0, *) {
+            navigationItem.largeTitleDisplayMode = .never
+        }
 		
         productPicker.reloadAllComponents()
         reloadTableView()

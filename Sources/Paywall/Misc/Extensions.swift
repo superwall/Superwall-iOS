@@ -44,9 +44,20 @@ internal extension UIColor {
 internal extension Date {
 
     var isoString: String {
-		let formatter = ISO8601DateFormatter()
-		formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-		return formatter.string(from: self)
+		
+		if #available(iOS 11.0, *) {
+			let f1 = ISO8601DateFormatter()
+			f1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+			return f1.string(from: self)
+		}
+		
+		let f2 = DateFormatter()
+		f2.calendar = Calendar(identifier: .iso8601)
+		f2.locale = Locale(identifier: "en_US_POSIX")
+		f2.timeZone = TimeZone(secondsFromGMT: 0)
+		f2.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX"
+		return f2.string(from: self)
+		
     }
 }
 
@@ -58,6 +69,7 @@ internal extension SKProduct {
             "rawPrice": "\(price)",
             "price": localizedPrice,
             "periodAlt": localizedSubscriptionPeriod,
+			"localizedPeriod": localizedSubscriptionPeriod,
             "period": period,
             "periodly": "\(period)ly",
             "weeklyPrice": weeklyPrice,
@@ -93,7 +105,7 @@ internal extension SKProduct {
     }
     
     var localizedSubscriptionPeriod: String {
-        guard let subscriptionPeriod = self.subscriptionPeriod else { return "" }
+        guard #available(iOS 11.2, *), let subscriptionPeriod = self.subscriptionPeriod else { return "" }
         
         let dateComponents: DateComponents
         
@@ -111,8 +123,8 @@ internal extension SKProduct {
 
     var period: String {
         get {
-
-            guard let period = subscriptionPeriod else { return "" }
+			
+            guard #available(iOS 11.2, *), let period = subscriptionPeriod else { return "" }
 
             if period.unit == .day {
                 if period.numberOfUnits == 7 {
@@ -142,7 +154,7 @@ internal extension SKProduct {
     var periodWeeks: String {
         get {
             
-            guard let period = subscriptionPeriod else { return "" }
+            guard #available(iOS 11.2, *), let period = subscriptionPeriod else { return "" }
             let c = period.numberOfUnits
             
             if period.unit == .day {
@@ -168,7 +180,7 @@ internal extension SKProduct {
     var periodMonths: String {
         get {
             
-            guard let period = subscriptionPeriod else { return "" }
+            guard #available(iOS 11.2, *), let period = subscriptionPeriod else { return "" }
             let c = period.numberOfUnits
             
             if period.unit == .day {
@@ -194,7 +206,7 @@ internal extension SKProduct {
     var periodYears: String {
         get {
             
-            guard let period = subscriptionPeriod else { return "" }
+            guard #available(iOS 11.2, *), let period = subscriptionPeriod else { return "" }
             let c = period.numberOfUnits
             
             if period.unit == .day {
@@ -220,7 +232,7 @@ internal extension SKProduct {
     var periodDays: String {
         get {
             
-            guard let period = subscriptionPeriod else { return "" }
+            guard #available(iOS 11.2, *), let period = subscriptionPeriod else { return "" }
             let c = period.numberOfUnits
             
             if period.unit == .day {
@@ -254,7 +266,7 @@ internal extension SKProduct {
             numberFormatter.numberStyle = .currency
             numberFormatter.locale = locale
             
-            guard let period = subscriptionPeriod else { return "n/a" }
+            guard #available(iOS 11.2, *), let period = subscriptionPeriod else { return "n/a" }
             let c = period.numberOfUnits
             var periods = 1.0 as Decimal
             let inputPrice = price as Decimal
@@ -290,7 +302,7 @@ internal extension SKProduct {
             numberFormatter.numberStyle = .currency
             numberFormatter.locale = locale
             
-            guard let period = subscriptionPeriod else { return "n/a" }
+            guard #available(iOS 11.2, *), let period = subscriptionPeriod else { return "n/a" }
             let c = period.numberOfUnits
             var periods = 1.0 as Decimal
             let inputPrice = price as Decimal
@@ -326,7 +338,7 @@ internal extension SKProduct {
             numberFormatter.numberStyle = .currency
             numberFormatter.locale = locale
             
-            guard let period = subscriptionPeriod else { return "n/a" }
+            guard #available(iOS 11.2, *), let period = subscriptionPeriod else { return "n/a" }
             let c = period.numberOfUnits
             var periods = 1.0 as Decimal
             let inputPrice = price as Decimal
@@ -363,7 +375,7 @@ internal extension SKProduct {
             numberFormatter.numberStyle = .currency
             numberFormatter.locale = locale
             
-            guard let period = subscriptionPeriod else { return "n/a" }
+            guard #available(iOS 11.2, *), let period = subscriptionPeriod else { return "n/a" }
             let c = period.numberOfUnits
             var periods = 1.0 as Decimal
             let inputPrice = price as Decimal
@@ -391,7 +403,7 @@ internal extension SKProduct {
 
     var hasFreeTrial: Bool {
         get {
-            if let _ = introductoryPrice?.subscriptionPeriod {
+            if #available(iOS 11.2, *), let _ = introductoryPrice?.subscriptionPeriod {
                 return true
             } else {
                 return false
@@ -401,7 +413,7 @@ internal extension SKProduct {
 
     var trialPeriodDays: String {
         get {
-            if let trialPeriod = introductoryPrice?.subscriptionPeriod {
+            if #available(iOS 11.2, *), let trialPeriod = introductoryPrice?.subscriptionPeriod {
                 let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
@@ -428,7 +440,7 @@ internal extension SKProduct {
     
     var trialPeriodWeeks: String {
         get {
-            if let trialPeriod = introductoryPrice?.subscriptionPeriod {
+            if #available(iOS 11.2, *), let trialPeriod = introductoryPrice?.subscriptionPeriod {
                 let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
@@ -455,7 +467,7 @@ internal extension SKProduct {
     
     var trialPeriodMonths: String {
         get {
-            if let trialPeriod = introductoryPrice?.subscriptionPeriod {
+            if #available(iOS 11.2, *), let trialPeriod = introductoryPrice?.subscriptionPeriod {
                 let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
@@ -482,7 +494,7 @@ internal extension SKProduct {
     
     var trialPeriodYears: String {
         get {
-            if let trialPeriod = introductoryPrice?.subscriptionPeriod {
+            if #available(iOS 11.2, *), let trialPeriod = introductoryPrice?.subscriptionPeriod {
                 let c = trialPeriod.numberOfUnits
 
                 if trialPeriod.unit == .day {
@@ -510,7 +522,7 @@ internal extension SKProduct {
     var trialPeriodText: String {
         get {
 
-            if let trialPeriod = introductoryPrice?.subscriptionPeriod {
+            if #available(iOS 11.2, *), let trialPeriod = introductoryPrice?.subscriptionPeriod {
 
                 let units = trialPeriod.numberOfUnits
 
