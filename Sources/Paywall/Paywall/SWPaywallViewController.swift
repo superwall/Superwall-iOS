@@ -64,13 +64,12 @@ internal class SWPaywallViewController: UIViewController {
 		wv.scrollView.maximumZoomScale = 1.0
 		wv.scrollView.minimumZoomScale = 1.0
 		wv.isOpaque = false
+		
         if #available(iOS 11.0, *) {
             wv.scrollView.contentInsetAdjustmentBehavior = .never
         }
+		
 		wv.scrollView.bounces = true
-        if #available(iOS 11.0, *) {
-            wv.scrollView.contentInsetAdjustmentBehavior = .never
-        }
 		wv.scrollView.contentInset = .init(top: 0, left: 0, bottom: 0, right: 0)
 		wv.scrollView.scrollIndicatorInsets = .zero
 		wv.scrollView.showsVerticalScrollIndicator = false
