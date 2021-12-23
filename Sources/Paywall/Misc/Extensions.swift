@@ -44,13 +44,20 @@ internal extension UIColor {
 internal extension Date {
 
     var isoString: String {
-		let formatter = ISO8601DateFormatter()
-        if #available(iOS 11.0, *) {
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        } else {
-            formatter.formatOptions = [.withInternetDateTime]
-        }
-		return formatter.string(from: self)
+		
+		if #available(iOS 11.0, *) {
+			let f1 = ISO8601DateFormatter()
+			f1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+			return f1.string(from: self)
+		}
+		
+		let f2 = DateFormatter()
+		f2.calendar = Calendar(identifier: .iso8601)
+		f2.locale = Locale(identifier: "en_US_POSIX")
+		f2.timeZone = TimeZone(secondsFromGMT: 0)
+		f2.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX"
+		return f2.string(from: self)
+		
     }
 }
 
@@ -62,6 +69,7 @@ internal extension SKProduct {
             "rawPrice": "\(price)",
             "price": localizedPrice,
             "periodAlt": localizedSubscriptionPeriod,
+			"localizedPeriod": localizedSubscriptionPeriod,
             "period": period,
             "periodly": "\(period)ly",
             "weeklyPrice": weeklyPrice,
@@ -115,7 +123,7 @@ internal extension SKProduct {
 
     var period: String {
         get {
-
+			
             guard #available(iOS 11.2, *), let period = subscriptionPeriod else { return "" }
 
             if period.unit == .day {

@@ -78,13 +78,10 @@ internal struct Logger {
 		
 		if shouldPrint(logLevel: logLevel, scope: scope) {
 			
-			let formatter = ISO8601DateFormatter()
-            if #available(iOS 11.0, *) {
-                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            } else {
-                formatter.formatOptions = [.withInternetDateTime]
-            }
-			let dateString = formatter.string(from: Date()).replacingOccurrences(of: "T", with: " ").replacingOccurrences(of: "Z", with: "")
+
+			
+			var dateString = Date().isoString.replacingOccurrences(of: "T", with: " ").replacingOccurrences(of: "Z", with: "")
+			
 			
 			dump(dumping, name: "[Superwall]  [\(dateString)]  \(logLevel.description)  \(scope.rawValue)  \(message ?? "")", indent: 0, maxDepth: 100, maxItems: 100)
 		}
