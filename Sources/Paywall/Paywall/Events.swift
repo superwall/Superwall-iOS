@@ -349,8 +349,8 @@ extension Paywall {
 		
         if let p = product {
             output["product_id"] = p.productIdentifier
-            for k in p.eventData.keys {
-                if let v = p.eventData[k] {
+            for k in p.legacyEventData.keys {
+                if let v = p.legacyEventData[k] {
                     output["product_\(k.camelCaseToSnakeCase())"] = v
                 }
             }

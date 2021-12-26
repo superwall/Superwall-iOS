@@ -65,6 +65,7 @@ class PaywallResponseManager: NSObject {
 								
 								for p in response.products {
 									if let appleProduct = productsById[p.productId] {
+										
 										variables.append(Variables(key: p.product.rawValue, value: appleProduct.eventData))
 										
 										if p.product == .primary {

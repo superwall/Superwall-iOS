@@ -259,6 +259,7 @@ public class Paywall: NSObject {
 					Store.shared.add(config: config)
 					self?.didFetchConfig = true
 					config.cache()
+					config.executePostback()
 					self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleTrigger(forEvent: $0) }
 					self?.eventsTrackedBeforeConfigWasFetched.removeAll()
 				case .failure(let error):

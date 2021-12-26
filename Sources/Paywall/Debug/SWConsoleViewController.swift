@@ -53,8 +53,6 @@ internal class SWConsoleViewController: UIViewController {
         title = "Tamplate Variables"
         view.addSubview(tableView)
         view.addSubview(productPicker)
-		
-
         
         NSLayoutConstraint.activate([
             productPicker.widthAnchor.constraint(equalTo: view.widthAnchor),
@@ -100,7 +98,7 @@ internal class SWConsoleViewController: UIViewController {
         
         tableViewCellData = []
         let p = products[index]
-        for i in p.eventData {
+        for i in p.legacyEventData {
             tableViewCellData.append(i)
         }
         

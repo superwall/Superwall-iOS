@@ -76,6 +76,10 @@ internal enum Type: Int {
 
 // MARK: - JSON Base
 internal struct JSON {
+	
+	init(codable: Codable) {
+		self.init(codable.dictionary as Any)
+	}
 
     /**
      Creates a JSON using the data.
@@ -85,6 +89,7 @@ internal struct JSON {
     
      - returns: The created JSON
      */
+	
     internal init(data: Data, options opt: JSONSerialization.ReadingOptions = []) throws {
         let object: Any = try JSONSerialization.jsonObject(with: data, options: opt)
         self.init(jsonObject: object)

@@ -9,15 +9,14 @@ class StoreKitManager: NSObject {
 	
 	var productsManager = ProductsManager()
 	var productsById = [String: SKProduct]()
-	
-	
+		
 	func getVariables(forResponse response: PaywallResponse, completion: @escaping ([Variables]) -> ()) {
 		get(productsWithIds: response.productIds) { productsById in
 			var variables = [Variables]()
 			
 			for p in response.products {
 				if let appleProduct = productsById[p.productId] {
-					variables.append(Variables(key: p.product.rawValue, value: appleProduct.eventData))
+					variables.append(Variables(key: p.product.rawValue, value: JSON(appleProduct.legacyEventData)))
 				}
 			}
 			
@@ -27,27 +26,6 @@ class StoreKitManager: NSObject {
 	
 	func get(productsWithIds: [String], completion: (([String: SKProduct]) -> Void)?) {
 		
-//		Logger.superwallDebug("Begining to fetch products from ASC ...")
-//
-//		let network = StoreKitNetworking()
-//		networkWorkers[network.id] = network
-//
-//		network.get(productsWithIds: productsWithIds) {
-//
-//
-//
-//			var output = [String: SKProduct]()
-//
-//			for p in network.products {
-//				output[p.productIdentifier] = p
-//			}
-//
-//			Logger.superwallDebug("Done fetching products from ASC")
-//			completion(output)
-//			self.networkWorkers[network.id] = nil
-//		}
-		
-			
 		let ids = Set<String>(productsWithIds)
 		
 		productsManager.products(withIdentifiers: ids) { productsSet in

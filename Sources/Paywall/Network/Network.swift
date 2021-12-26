@@ -217,7 +217,6 @@ extension Network {
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        
         send(request, isDebugRequest: true, completion: { (result: Result<PaywallsResponse, Swift.Error>)  in
             switch result {
                 case .failure(let error):
@@ -244,7 +243,6 @@ extension Network {
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-//        Logger.superwallDebug(String(data: request.httpBody ?? Data(), encoding: .utf8)!)
         
         send(request, isDebugRequest: false, completion: { (result: Result<ConfigResponse, Swift.Error>)  in
             switch result {
@@ -253,10 +251,43 @@ extension Network {
                     completion(.failure(error))
                 case .success(let response):
                     completion(.success(response))
+					
+					
             }
             
         })
 
     }
     
+}
+
+extension Network {
+	func postback(postback: Postback, completion: @escaping (Result<PostBackResponse, Swift.Error>) -> Void) {
+		let components = URLComponents(string: "postback")!
+		let requestURL = components.url(relativeTo: baseURL)!
+		var request = URLRequest(url: requestURL)
+		request.httpMethod = "POST"
+		request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+		let encoder = JSONEncoder()
+		encoder.keyEncodingStrategy = .convertToSnakeCase
+
+		// Bail if we can't encode
+		do {
+			request.httpBody = try encoder.encode(postback)
+		} catch {
+			return completion(.failure(Error.unknown))
+		}
+
+		send(request, completion: { (result: Result<PostBackResponse, Swift.Error>)  in
+			switch result {
+				case .failure(let error):
+					Logger.debug(logLevel: .error, scope: .network, message: "Request Failed: /postback", info: ["payload": postback], error: error)
+					completion(.failure(error))
+				case .success(let response):
+					completion(.success(response))
+			}
+
+		})
+	}
 }
