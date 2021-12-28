@@ -8,24 +8,24 @@
 import Foundation
 import StoreKit
 
-internal struct TemplateProduct: Codable {
-	
-	var underlyingProduct: SWProduct
-
-	var legacy: [String: String]
-	
-	var pricing: [String: String]
-	
-	var period: [String: String]
-	
-	var trial: [String: String]
-	
-	init(skProduct: SKProduct) {
-		self.underlyingProduct = SWProduct(product: skProduct)
-		self.legacy = skProduct.legacyEventData
-	}
-	
-}
+//internal struct TemplateProduct: Codable {
+//
+//	var underlyingProduct: SWProduct
+//
+//	var legacy: [String: String]
+//
+//	var pricing: [String: String]
+//
+//	var period: [String: String]
+//
+//	var trial: [String: String]
+//
+//	init(skProduct: SKProduct) {
+//		self.underlyingProduct = SWProduct(product: skProduct)
+//		self.legacy = skProduct.legacyEventData
+//	}
+//
+//}
 
 
 // Product Abstraction
@@ -158,6 +158,14 @@ internal struct SWProductSubscriptionPeriod: Codable {
 		case unknown
 	}
 	
+	public enum ColloquialUnit: String, Codable {
+		case days
+		case weeks
+		case months
+		case quarters
+		case years
+	}
+	
 	var numberOfUnits: Int
 	
 	var unit: SWProductSubscriptionPeriod.Unit
@@ -258,30 +266,98 @@ internal struct SWProductSubscriptionPeriod: Codable {
 		}
 	}
 	
-	var numberOfUnitsInDays: Double {
-		return daysPerUnit * numberOfUnitsDouble
+	func numberOfUnits(in cUnit: ColloquialUnit) -> Double {
+		switch cUnit {
+			case .days:
+				return daysPerUnit * numberOfUnitsDouble
+			case .weeks:
+				return weeksPerUnit * numberOfUnitsDouble
+			case .months:
+				return monthsPerUnit * numberOfUnitsDouble
+			case .quarters:
+				return quartersPerUnit * numberOfUnitsDouble
+			case .years:
+				return yearsPerUnit * numberOfUnitsDouble
+		}
 	}
 	
-	var numberOfUnitsInWeeks: Double {
-		return weeksPerUnit * numberOfUnitsDouble
+	func unitString(for cUnit: ColloquialUnit, pluralIfNeeded: Bool) -> String {
+		
+		let plural = (numberOfUnits(in: cUnit)) != 1 && pluralIfNeeded
+		
+		switch cUnit {
+			case .days:
+				return plural ? "days" : "day"
+			case .weeks:
+				return plural ? "weeks" : "week"
+			case .months:
+				return plural ? "months" : "month"
+			case .quarters:
+				return plural ? "quarters" : "quarter"
+			case .years:
+				return plural ? "years" : "year"
+		}
 	}
 	
-	var numberOfUnitsInMonths: Double {
-		return monthsPerUnit * numberOfUnitsDouble
-	}
-	
-	var numberOfUnitsInQuarters: Double {
-		return quartersPerUnit * numberOfUnitsDouble
-	}
-	
-	var numberOfUnitsInYears: Double {
-		return yearsPerUnit * numberOfUnitsDouble
-	}
+//	func string(for cUnit: ColloquialUnit, separator: String, plural: Bool) {
+//		let n = round(numberOfUnits(in: cUnit) * 100) / 100 // make it 2 decimal places
+//
+//
+//	}
+
 }
 
 
+internal struct ProductNumber {
+	public enum Format: String, Codable {
+		case number
+		case currency
+		case percent
+	}
+	
+	var format: Format
+	var value: Double
+	var formatted: String?
+	var pretty: String?
 
-
+	var prettyValue: Double {
+		return round(value / 0.05) * 0.05
+	}
+	
+	init(value: Double, format: Format, locale: Locale) {
+		self.value = value
+		self.format = format
+		
+		switch format {
+			case .number:
+				let formatter = NumberFormatter()
+				formatter.usesGroupingSeparator = true
+				formatter.numberStyle = .decimal
+				formatter.locale = locale
+				formatter.maximumFractionDigits = 2
+				formatter.minimumFractionDigits = 0
+				self.formatted = formatter.string(from: NSNumber(value: self.value))
+				self.pretty = formatter.string(from: NSNumber(value: self.prettyValue))
+			case .currency:
+				let formatter = NumberFormatter()
+				formatter.usesGroupingSeparator = true
+				formatter.numberStyle = .currency
+				formatter.locale = locale
+				self.formatted = formatter.string(from: NSNumber(value: self.value))
+				self.pretty = formatter.string(from: NSNumber(value: self.prettyValue))
+			case .percent:
+				let formatter = NumberFormatter()
+				formatter.usesGroupingSeparator = true
+				formatter.numberStyle = .percent
+				formatter.locale = locale
+				formatter.minimumFractionDigits = 0
+				self.formatted = formatter.string(from: NSNumber(value: self.value))
+				self.pretty = formatter.string(from: NSNumber(value: self.prettyValue))
+		}
+		
+		
+	}
+}
 
 
 internal extension SKProduct {

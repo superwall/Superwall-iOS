@@ -5,7 +5,7 @@
 //  Created by Jake Mor on 12/26/21.
 //
 import Foundation
-
+import UIKit
 
 internal struct PaywallRequest: Codable {
 	var appUserId: String
