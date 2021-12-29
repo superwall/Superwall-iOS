@@ -86,6 +86,7 @@ internal struct PaywallResponse: Decodable {
 	
 	var products: [Product]
 	var variables: [Variables]? = []
+	var productVariables: [ProductVariables]? = []
 	
 	var idNonOptional: String {
 		return id ?? ""
@@ -132,6 +133,21 @@ internal struct PaywallResponse: Decodable {
 		return JSON(values)
 	}
 	
+	var templateProductVariables: JSON {
+		var variables: [String: Any] = [:]
+		
+		for v in self.productVariables ?? [ProductVariables]() {
+			variables[v.key] = v.value
+		}
+		
+		let values: [String: Any] = [
+			"event_name":"template_product_variables",
+			"variables": variables
+		]
+		
+		return JSON(values)
+	}
+	
 	var isFreeTrialAvailable: Bool? = false
 	
 	var _isFreeTrialAvailable: Bool {
@@ -160,9 +176,7 @@ internal struct PaywallResponse: Decodable {
 	
 	var templateEventsBase64String: String {
 		
-		let encodedStrings = [encodedEventString(templateDevice), encodedEventString(templateProducts), encodedEventString(templateSubstitutionsPrefix), encodedEventString(templateVariables)]
-		
-		print(templateVariables)
+		let encodedStrings = [encodedEventString(templateDevice), encodedEventString(templateProducts), encodedEventString(templateSubstitutionsPrefix), encodedEventString(templateVariables), encodedEventString(templateProductVariables)]
 		
 		let string = "[" + encodedStrings.joined(separator: ",") + "]"
 
@@ -185,6 +199,11 @@ internal struct PaywallResponse: Decodable {
 }
 
 internal struct Variables: Decodable {
+	var key: String
+	var value: JSON
+}
+
+internal struct ProductVariables: Decodable {
 	var key: String
 	var value: JSON
 }

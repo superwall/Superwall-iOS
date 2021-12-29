@@ -61,12 +61,14 @@ class PaywallResponseManager: NSObject {
 							StoreKitManager.shared.get(productsWithIds: response.productIds) { productsById in
 								
 								var variables = [Variables]()
+								var productVariables = [ProductVariables]()
 								var response = response
 								
 								for p in response.products {
 									if let appleProduct = productsById[p.productId] {
 										
 										variables.append(Variables(key: p.product.rawValue, value: appleProduct.eventData))
+										productVariables.append(ProductVariables(key: p.product.rawValue, value: appleProduct.productVariables))
 										
 										if p.product == .primary {
 											response.isFreeTrialAvailable = appleProduct.hasFreeTrial
@@ -86,6 +88,7 @@ class PaywallResponseManager: NSObject {
 								}
 								
 								response.variables = variables
+								response.productVariables = productVariables
 								
 								// cache the response for later
 								self.responsesByHash[hash] = (response, nil)

@@ -162,3 +162,30 @@ extension Encodable {
   }
 }
 
+//
+extension String  {
+//	var isNumber: Bool {
+//		let numberSet = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: "."))
+//		let input = trimmingCharacters(in: .whitespacesAndNewlines)
+//		return !input.isEmpty && input.rangeOfCharacter(from: numberSet.inverted) == nil
+//	}
+//	
+	func removeCharacters(from forbiddenChars: CharacterSet) -> String {
+		let passed = self.unicodeScalars.filter { !forbiddenChars.contains($0) }
+		return String(String.UnicodeScalarView(passed))
+	}
+}
+
+extension Decimal {
+	mutating func round(_ scale: Int, _ roundingMode: NSDecimalNumber.RoundingMode) {
+		var localCopy = self
+		NSDecimalRound(&self, &localCopy, scale, roundingMode)
+	}
+
+	func rounded(_ scale: Int, _ roundingMode: NSDecimalNumber.RoundingMode) -> Decimal {
+		var result = Decimal()
+		var localCopy = self
+		NSDecimalRound(&result, &localCopy, scale, roundingMode)
+		return result
+	}
+}

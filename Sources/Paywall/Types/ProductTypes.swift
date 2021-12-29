@@ -8,24 +8,168 @@
 import Foundation
 import StoreKit
 
-//internal struct TemplateProduct: Codable {
-//
-//	var underlyingProduct: SWProduct
-//
-//	var legacy: [String: String]
-//
-//	var pricing: [String: String]
-//
-//	var period: [String: String]
-//
-//	var trial: [String: String]
-//
-//	init(skProduct: SKProduct) {
-//		self.underlyingProduct = SWProduct(product: skProduct)
-//		self.legacy = skProduct.legacyEventData
-//	}
-//
-//}
+internal struct SWTemplateVariable: Codable {
+
+	var raw: SWProduct?
+	var subscription: SWSubscriptionTemplateVariable?
+	var trial: SWSubscriptionTemplateVariable?
+	var discount: SWSubscriptionTemplateVariable?
+	var lifetime: SWSubscriptionTemplateVariable?
+	var identifier: String
+	
+	var locale: String?
+	var languageCode: String?
+	var currencyCode: String?
+	var currencySymbol: String?
+	
+
+
+	init(product: SKProduct) {
+		
+		self.locale = product.priceLocale.identifier
+		self.languageCode = product.priceLocale.languageCode
+		self.currencyCode = product.priceLocale.currencyCode
+		self.currencySymbol = product.priceLocale.currencySymbol
+
+		self.identifier = product.productIdentifier
+		
+		let subscription = SWSubscriptionTemplateVariable(type: .subscription, product: product)
+		let trial = SWSubscriptionTemplateVariable(type: .trial, product: product)
+//		let discount = SWSubscriptionTemplateVariable(type: .discount, product: product)
+		let lifetime = SWSubscriptionTemplateVariable(type: .lifetime, product: product)
+		
+		self.subscription = subscription.exists ? subscription : nil
+		self.trial = trial.exists ? trial : nil
+//		self.discount = discount.exists ? discount : nil
+		self.lifetime = lifetime.exists ? lifetime : nil
+		
+	}
+
+}
+
+
+
+struct SWSubscriptionTemplateVariable: Codable {
+	
+	public enum TemplateType: String, Codable {
+		case subscription
+		case trial
+		case discount
+		case lifetime
+	}
+	
+	var price: SWPriceTemplateVariable?
+	var period: SWPeriodTemplateVariable?
+	var identifier: String?
+	var type: TemplateType
+	var exists: Bool = true
+	
+	init(type: TemplateType, product: SKProduct) {
+		
+		let swProduct = SWProduct(product: product)
+		self.type = type
+		
+		switch type {
+			case .subscription:
+				
+				if let p = swProduct.subscriptionPeriod {
+					self.identifier = swProduct.productIdentifier
+					self.period = SWPeriodTemplateVariable(period: p, locale: product.priceLocale)
+					self.price = SWPriceTemplateVariable(value: swProduct.price, locale: product.priceLocale, period: p)
+					return
+				}
+				
+				
+			case .trial:
+				
+				if #available(iOS 11.2, *) {
+					if let discount = swProduct.introductoryPrice {
+						self.identifier = discount.identifier
+						if discount.price != 0 {
+							self.price = SWPriceTemplateVariable(value: discount.price, locale: product.priceLocale, period: discount.subscriptionPeriod)
+						}
+						self.period = SWPeriodTemplateVariable(period: discount.subscriptionPeriod, locale: product.priceLocale)
+						return
+					}
+				}
+				
+			
+			case .discount:
+				break
+			case .lifetime:
+				if swProduct.subscriptionPeriod == nil {
+					self.exists = true
+					self.price = SWPriceTemplateVariable(value: swProduct.price, locale: product.priceLocale, period: nil)
+				}
+		}
+		
+		self.exists = false
+	}
+}
+
+struct SWPriceTemplateVariable: Codable {
+	var `default`: SWProductNumberGroup?
+	var daily: SWProductNumberGroup?
+	var weekly: SWProductNumberGroup?
+	var monthly: SWProductNumberGroup?
+	var quarterly: SWProductNumberGroup?
+	var yearly: SWProductNumberGroup?
+	
+	
+	var raw: SWProductNumber?
+	var pretty: SWProductNumber?
+	var rounded: SWProductNumber?
+	
+	
+	init(value: Double, locale: Locale, period: SWProductSubscriptionPeriod?) {
+		
+		if let period = period {
+			self.default = SWProductNumberGroup(value: period.price(for: value, in: period.colloquialUnit), format: .currency, locale: locale)
+			self.daily = SWProductNumberGroup(value: period.price(for: value, in: .days), format: .currency, locale: locale)
+			self.weekly = SWProductNumberGroup(value: period.price(for: value, in: .weeks), format: .currency, locale: locale)
+			self.monthly = SWProductNumberGroup(value: period.price(for: value, in: .months), format: .currency, locale: locale)
+			self.quarterly = SWProductNumberGroup(value: period.price(for: value, in: .quarters), format: .currency, locale: locale)
+			self.yearly = SWProductNumberGroup(value: period.price(for: value, in: .years), format: .currency, locale: locale)
+		} else {
+			let p = SWProductNumberGroup(value: value, format: .currency, locale: locale)
+			self.raw = p.raw
+			self.pretty = p.pretty
+			self.rounded = p.rounded
+		}
+	}
+}
+
+struct SWProductPeriod: Codable {
+	var full: String?
+	var short: String?
+	var abbreviated: String?
+	var duration: SWProductNumberGroup?
+	
+	init(units: SWProductSubscriptionPeriod.ColloquialUnit, period: SWProductSubscriptionPeriod, locale: Locale) {
+		self.full = period.period(in: units, unitsStyle: .full)
+		self.short = period.period(in: units, unitsStyle: .short)
+		self.abbreviated = period.period(in: units, unitsStyle: .abbreviated)
+		self.duration = SWProductNumberGroup(value: period.numberOfUnits(in: units), format: .number, locale: locale)
+	}
+}
+
+struct SWPeriodTemplateVariable: Codable {
+	var `default`: SWProductPeriod
+	var daily: SWProductPeriod
+	var weekly: SWProductPeriod
+	var monthly: SWProductPeriod
+	var quarterly: SWProductPeriod
+	var yearly: SWProductPeriod
+	
+	init(period: SWProductSubscriptionPeriod, locale: Locale) {
+		self.default = SWProductPeriod(units: period.colloquialUnit, period: period, locale: locale)
+		self.daily = SWProductPeriod(units: .days, period: period, locale: locale)
+		self.weekly = SWProductPeriod(units: .weeks, period: period, locale: locale)
+		self.monthly = SWProductPeriod(units: .months, period: period, locale: locale)
+		self.quarterly = SWProductPeriod(units: .quarters, period: period, locale: locale)
+		self.yearly = SWProductPeriod(units: .years, period: period, locale: locale)
+	}
+}
 
 
 // Product Abstraction
@@ -73,7 +217,7 @@ internal struct SWProduct: Codable {
 
 		if #available(iOS 11.2, *) {
 			if let p = product.subscriptionPeriod {
-				subscriptionPeriod = SWProductSubscriptionPeriod(period: p)
+				subscriptionPeriod = SWProductSubscriptionPeriod(period: p, numberOfPeriods: 1)
 			}
 			if let d = product.introductoryPrice {
 				introductoryPrice = SWProductDiscount(discount: d)
@@ -85,7 +229,6 @@ internal struct SWProduct: Codable {
 }
 
 internal struct SWProductDiscount: Codable {
-	
 	
 	public enum PaymentMode: String, Codable {
 		case payAsYouGo
@@ -112,10 +255,11 @@ internal struct SWProductDiscount: Codable {
 	init(discount: SKProductDiscount) {
 		price = discount.price.doubleValue
 		priceLocale = discount.priceLocale.identifier
+		
 		if #available(iOS 12.2, *) {
 			identifier = discount.identifier
 		}
-		subscriptionPeriod = SWProductSubscriptionPeriod(period: discount.subscriptionPeriod)
+		subscriptionPeriod = SWProductSubscriptionPeriod(period: discount.subscriptionPeriod, numberOfPeriods: discount.numberOfPeriods)
 		numberOfPeriods = discount.numberOfPeriods
 		
 		switch discount.paymentMode {
@@ -170,9 +314,45 @@ internal struct SWProductSubscriptionPeriod: Codable {
 	
 	var unit: SWProductSubscriptionPeriod.Unit
 	
+	var colloquialUnit: ColloquialUnit {
+		if numberOfUnits(in: .days) == 1 {
+			return .days
+		}
+		
+		if numberOfUnits(in: .weeks) == 1 {
+			return .weeks
+		}
+		
+		if numberOfUnits(in: .months) == 1 {
+			return .months
+		}
+		
+		if numberOfUnits(in: .quarters) == 1 {
+			return .quarters
+		}
+		
+		if numberOfUnits(in: .years) == 1 {
+			return .years
+		}
+		
+		switch unit {
+			case .day:
+				return .days
+			case .week:
+				return .weeks
+			case .month:
+				return .months
+			case .year:
+				return .years
+			case .unknown:
+				return .months
+		}
+		
+	}
+	
 	@available(iOS 11.2, *)
-	init(period: SKProductSubscriptionPeriod) {
-		self.numberOfUnits = period.numberOfUnits
+	init(period: SKProductSubscriptionPeriod, numberOfPeriods: Int) {
+		self.numberOfUnits = period.numberOfUnits * numberOfPeriods
 		switch period.unit {
 			case .day:
 				self.unit = .day
@@ -281,34 +461,86 @@ internal struct SWProductSubscriptionPeriod: Codable {
 		}
 	}
 	
-	func unitString(for cUnit: ColloquialUnit, pluralIfNeeded: Bool) -> String {
-		
-		let plural = (numberOfUnits(in: cUnit)) != 1 && pluralIfNeeded
-		
+	func numberOfUnits(in cUnit: ColloquialUnit) -> Int {
 		switch cUnit {
 			case .days:
-				return plural ? "days" : "day"
+				return Int(round(daysPerUnit * numberOfUnitsDouble))
 			case .weeks:
-				return plural ? "weeks" : "week"
+				return Int(round(weeksPerUnit * numberOfUnitsDouble))
 			case .months:
-				return plural ? "months" : "month"
+				return Int(round(monthsPerUnit * numberOfUnitsDouble))
 			case .quarters:
-				return plural ? "quarters" : "quarter"
+				return Int(round(quartersPerUnit * numberOfUnitsDouble))
 			case .years:
-				return plural ? "years" : "year"
+				return Int(round(yearsPerUnit * numberOfUnitsDouble))
 		}
 	}
 	
-//	func string(for cUnit: ColloquialUnit, separator: String, plural: Bool) {
-//		let n = round(numberOfUnits(in: cUnit) * 100) / 100 // make it 2 decimal places
-//
-//
-//	}
+	func price(for value: Double, in cUnit: ColloquialUnit) -> Double {
+		let units: Double = numberOfUnits(in: cUnit)
+		return value / units
+	}
+	
+	func string(for cUnit: ColloquialUnit, unitsStyle: DateComponentsFormatter.UnitsStyle) -> String? {
+		
+		let f = DateComponentsFormatter()
+		f.allowsFractionalUnits = true
+		f.unitsStyle = unitsStyle
+		let numberOfUnits: Int = numberOfUnits(in: .days)
+		
+		switch cUnit {
+			case .days:
+				f.allowedUnits = [.day]
+				return f.string(from: DateComponents(day: numberOfUnits))
+			case .weeks:
+				f.allowedUnits = [.weekOfMonth]
+				return f.string(from: DateComponents(day: numberOfUnits))
+			case .months:
+				f.allowedUnits = [.month]
+				return f.string(from: DateComponents(day: numberOfUnits))
+			case .quarters:
+				let nf = NumberFormatter()
+				nf.maximumFractionDigits = 2
+				nf.minimumFractionDigits = 0
+				
+				let numberOfQuarters: Double = self.numberOfUnits(in: .quarters)
+				
+				if let s = nf.string(from: NSNumber(value: numberOfQuarters)) {
+					return numberOfQuarters == 1.0 ? "\(numberOfUnits) quarter" : "\(s) quarters"
+				} else {
+					return numberOfQuarters == 1.0 ? "\(numberOfUnits) quarter" : "\(numberOfUnits) quarters"
+				}
+			case .years:
+				f.allowedUnits = [.year]
+				return f.string(from: DateComponents(day: numberOfUnits))
+		}
+	}
+	
+	func unit(from: String) -> String {
+		let forbidden = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: "."))
+		return from.removeCharacters(from: forbidden).trimmingCharacters(in: .whitespacesAndNewlines)
+	}
+	
+	func period(in cUnit: ColloquialUnit, unitsStyle: DateComponentsFormatter.UnitsStyle) -> String? {
+		if numberOfUnits(in: cUnit) == 1 {
+			return unitString(for: cUnit, unitsStyle: unitsStyle)
+		} else {
+			return string(for: cUnit, unitsStyle: unitsStyle)
+		}
+	}
+	
+	func unitString(for cUnit: ColloquialUnit, unitsStyle: DateComponentsFormatter.UnitsStyle) -> String? {
+		if let s = string(for: cUnit, unitsStyle: unitsStyle) {
+			return unit(from: s)
+		}
+		
+		return nil
+	}
 
 }
 
-
-internal struct ProductNumber {
+internal struct SWProductNumber: Codable {
+	
 	public enum Format: String, Codable {
 		case number
 		case currency
@@ -316,16 +548,24 @@ internal struct ProductNumber {
 	}
 	
 	var format: Format
-	var value: Double
 	var formatted: String?
-	var pretty: String?
-
-	var prettyValue: Double {
-		return round(value / 0.05) * 0.05
-	}
+	var value: Decimal
 	
 	init(value: Double, format: Format, locale: Locale) {
-		self.value = value
+		
+		let formatter = NumberFormatter()
+		formatter.usesGroupingSeparator = true
+		formatter.numberStyle = .decimal
+		formatter.locale = locale
+		formatter.maximumFractionDigits = 2
+		formatter.minimumFractionDigits = 0
+		
+		if let s = formatter.string(from: NSNumber(value: value)) {
+			self.value = Decimal(string: s) ?? Decimal(value)
+		} else {
+			self.value = Decimal(value)
+		}
+		
 		self.format = format
 		
 		switch format {
@@ -336,25 +576,49 @@ internal struct ProductNumber {
 				formatter.locale = locale
 				formatter.maximumFractionDigits = 2
 				formatter.minimumFractionDigits = 0
-				self.formatted = formatter.string(from: NSNumber(value: self.value))
-				self.pretty = formatter.string(from: NSNumber(value: self.prettyValue))
+				self.formatted = formatter.string(from: NSNumber(value: value))
 			case .currency:
 				let formatter = NumberFormatter()
 				formatter.usesGroupingSeparator = true
 				formatter.numberStyle = .currency
 				formatter.locale = locale
-				self.formatted = formatter.string(from: NSNumber(value: self.value))
-				self.pretty = formatter.string(from: NSNumber(value: self.prettyValue))
+				self.formatted = formatter.string(from: NSNumber(value: value))
 			case .percent:
 				let formatter = NumberFormatter()
 				formatter.usesGroupingSeparator = true
 				formatter.numberStyle = .percent
 				formatter.locale = locale
 				formatter.minimumFractionDigits = 0
-				self.formatted = formatter.string(from: NSNumber(value: self.value))
-				self.pretty = formatter.string(from: NSNumber(value: self.prettyValue))
+				self.formatted = formatter.string(from: NSNumber(value: value))
 		}
 		
+		
+	}
+}
+
+
+
+internal struct SWProductNumberGroup: Codable {
+
+	
+	var raw: SWProductNumber?
+	var pretty: SWProductNumber?
+	var rounded: SWProductNumber?
+	
+	
+	init(value: Double, format: SWProductNumber.Format, locale: Locale) {
+		
+		let rawValue = value
+		let roundedValue = round(value * 100) / 100
+		var prettyValue = round(value / 0.05) * 0.05
+		
+		if format == .currency {
+			prettyValue = round(rawValue / 0.1) * 0.1 - 0.01
+		}
+		
+		self.raw = SWProductNumber(value: rawValue, format: format, locale: locale)
+		self.rounded = SWProductNumber(value: roundedValue, format: format, locale: locale)
+		self.pretty = SWProductNumber(value: prettyValue, format: format, locale: locale)
 		
 	}
 }
@@ -393,9 +657,11 @@ internal extension SKProduct {
 	}
 	
 	var eventData: JSON {
-		var output = legacyEventData as [String: Any]
-		output["new"] = swProduct.dictionary
-		return JSON(output)
+		return JSON(legacyEventData)
+	}
+	
+	var productVariables: JSON {
+		return JSON(SWTemplateVariable(product: self).dictionary)
 	}
 	
 	var swProduct: SWProduct {

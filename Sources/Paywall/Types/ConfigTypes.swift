@@ -97,7 +97,7 @@ internal struct PostbackProduct: Codable {
 	
 	init(product: SKProduct) {
 		self.identifier = product.productIdentifier
-		self.productVariables = JSON(product.legacyEventData)
+		self.productVariables = product.productVariables
 		self.product = SWProduct(product: product)
 	}
 }
