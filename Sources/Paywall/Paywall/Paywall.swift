@@ -58,6 +58,12 @@ public class Paywall: NSObject {
 	/// Set this to `true` to forward events from the Game Controller to the Paywall via `Paywall.gamepadValueChanged(gamepad:element:)`
 	public static var isGameControllerEnabled = false
 	
+	/// Set this to `false` to globally disable paywall presentation animations (passed  to `paywallPresentor.present(animated:)`) `
+	public static var shouldAnimatePaywallPresentation = true
+	
+	/// Set this to `false` to globally disable paywall dismissal animations (passed  to `paywallVC.dismiss(animated:)`) `
+	public static var shouldAnimatePaywallDismissal = true
+	
 	/// Prints logs to the console if set to `true`. Default is `false`
 	@objc public static var debugMode = false
 	

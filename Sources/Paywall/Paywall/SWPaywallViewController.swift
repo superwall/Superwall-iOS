@@ -691,7 +691,7 @@ extension SWPaywallViewController {
 		} else {
 			prepareForPresentation()
 			set(fromEventData: fromEventData, calledFromIdentifier: calledFromIdentifier, dismissalBlock: dismissalBlock)
-			presentor.present(self, animated: true, completion: { [weak self] in
+			presentor.present(self, animated: Paywall.shouldAnimatePaywallPresentation, completion: { [weak self] in
 				self?.isPresented = true
 				self?.presentationDidFinish()
 				completion(true)
@@ -703,7 +703,7 @@ extension SWPaywallViewController {
 	func dismiss(shouldCallCompletion: Bool = true, didPurchase: Bool, productId: String?, paywallInfo: PaywallInfo?, completion: (() -> Void)?) {
 		calledDismiss = true
 		Paywall.delegate?.willDismissPaywall?()
-		dismiss(animated: true) { [weak self] in
+		dismiss(animated: Paywall.shouldAnimatePaywallDismissal) { [weak self] in
 			self?.didDismiss(shouldCallCompletion: shouldCallCompletion, didPurchase: didPurchase, productId: productId, paywallInfo: paywallInfo, completion: completion)
 		}
 		
