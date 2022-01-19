@@ -154,6 +154,10 @@ internal func OnMain(_ execute: @escaping () -> Void) {
 	DispatchQueue.main.async(execute: execute)
 }
 
+internal func OnMain(after: TimeInterval, _ execute: @escaping () -> Void) {
+	DispatchQueue.main.asyncAfter(deadline: .now() + after, execute: execute)
+}
+
 
 extension Encodable {
   var dictionary: [String: Any]? {

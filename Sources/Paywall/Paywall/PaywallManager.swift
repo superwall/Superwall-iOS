@@ -63,11 +63,6 @@ internal class PaywallManager {
 						completion?(vc, nil)
 					} else {
 
-	//					if shared.paywallViewController != nil && shared.paywallViewController?.parent != nil {
-	//						shared.paywallViewController?.willMove(toParent: nil)
-	//						shared.paywallViewController?.view.removeFromSuperview()
-	//						shared.paywallViewController?.removeFromParent()
-	//					}
 						
 						if let vc = SWPaywallViewController(paywallResponse: response, delegate: Paywall.shared) {
 						

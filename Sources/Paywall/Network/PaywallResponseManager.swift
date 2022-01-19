@@ -50,6 +50,9 @@ class PaywallResponseManager: NSObject {
 			Paywall.track(.paywallResponseLoadStart(fromEvent: isFromEvent, event: event))
 			
 			// get the paywall
+		
+		
+		
 			Network.shared.paywall(withIdentifier: identifier, fromEvent: event) { (result) in
 				self.queue.async {
 					switch(result) {
@@ -144,6 +147,8 @@ class PaywallResponseManager: NSObject {
 				}
 
 			}
+		
+		
 		}
 		
 		

@@ -30,6 +30,14 @@ internal struct ConfigResponse: Decodable {
 			StoreKitManager.shared.get(productsWithIds: paywall.products.map { $0.identifier }, completion: nil)
 			PaywallManager.shared.viewController(identifier: paywall.identifier, event: nil, cached: true, completion: nil)
 		}
+		
+		if Paywall.shouldPreloadTriggers {
+			let eventNames: Set<String> = Set(triggers.map { $0.eventName })
+			for e in eventNames {
+				let event = EventData(id: UUID().uuidString, name: e, parameters: JSON(["caching": true]), createdAt: Date().isoString)
+				PaywallResponseManager.shared.getResponse(event: event, completion: {_, _ in})
+			}
+		}
 	}
 	
 	func executePostback() {
