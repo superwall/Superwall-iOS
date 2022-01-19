@@ -132,7 +132,7 @@ extension SWPaywallViewController: GameControllerDelegate {
 }
 
 extension GCControllerElement {
-    // the identifier of this gamecontroller element that is accepted by the
+    // the identifier of this gamecontroller element that is accepted by the paywall javascript event listeners
     @available(iOS 13, macOS 10.15, *)
     func buttonName(gamepad: GCExtendedGamepad) -> String {
         switch self {
