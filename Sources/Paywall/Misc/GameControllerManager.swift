@@ -59,8 +59,8 @@ internal class GameControllerManager: NSObject {
 	
 	func gamepadValueChanged(gamepad: GCExtendedGamepad, element: GCControllerElement) {
 		guard Paywall.isGameControllerEnabled else { return }
-		let name = element.buttonName(gamepad: gamepad)
 		if #available(iOS 13.0, *) {
+            let name = element.buttonName(gamepad: gamepad)
 			switch element {
 				case gamepad.leftTrigger:
 					self.valueChanged(name, gamepad.leftTrigger.value)
@@ -133,6 +133,7 @@ extension SWPaywallViewController: GameControllerDelegate {
 
 extension GCControllerElement {
     // the identifier of this gamecontroller element that is accepted by the
+    @available(iOS 13, macOS 10.15, *)
     func buttonName(gamepad: GCExtendedGamepad) -> String {
         switch self {
         case gamepad.leftTrigger:
