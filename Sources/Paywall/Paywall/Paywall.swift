@@ -108,11 +108,11 @@ public class Paywall: NSObject {
 	internal var productsById: [String: SKProduct] = [String: SKProduct]()
 	internal var didTryToAutoRestore = false
 	internal var didAddPaymentQueueObserver = false
-	internal var didFetchConfig = !Store.shared.triggers.isEmpty
 	internal var eventsTrackedBeforeConfigWasFetched = [EventData]()
 	internal var paywallWasPresentedThisSession = false
 	internal var lastAppClose: Date? = nil
 	internal var didTrackLaunch = false
+	internal var didFetchConfig = !Store.shared.triggers.isEmpty
 	
 	internal var paywallViewController: SWPaywallViewController? {
 		return PaywallManager.shared.presentedViewController

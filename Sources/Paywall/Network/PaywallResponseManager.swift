@@ -23,6 +23,20 @@ class PaywallResponseManager: NSObject {
 	}
 	
 	func getResponse(identifier: String? = nil, event: EventData? = nil, completion: @escaping (PaywallResponse?, NSError?) -> ()) {
+		
+		// if we're requesting a response for a trigger/event that wasn't in the initial config endpoint, ignore it
+		if Paywall.shared.didFetchConfig, let eventName = event?.name {
+			if !Store.shared.triggers.contains(eventName) {
+				// create the error
+				let userInfo: [String : Any] = [
+					NSLocalizedDescriptionKey :  NSLocalizedString("Trigger Disabled", value: "There isn't a paywall configured to show in this context", comment: "") ,
+				]
+				let error = NSError(domain: "SWTriggerDisabled", code: 404, userInfo: userInfo)
+				completion(nil, error)
+				return
+			}
+		}
+		
 		let hash = requestHash(identifier: identifier, event: event)
 		
 		// if the response exists, return it
@@ -51,7 +65,9 @@ class PaywallResponseManager: NSObject {
 			
 			// get the paywall
 		
-		
+//			OnMain(after: 2.0, {
+				
+			
 		
 			Network.shared.paywall(withIdentifier: identifier, fromEvent: event) { (result) in
 				self.queue.async {
@@ -147,6 +163,8 @@ class PaywallResponseManager: NSObject {
 				}
 
 			}
+				
+//			})
 		
 		
 		}
