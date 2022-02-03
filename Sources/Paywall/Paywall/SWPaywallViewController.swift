@@ -280,7 +280,6 @@ internal class SWPaywallViewController: UIViewController {
 				Paywall.delegate?.willDismissPaywall?()
 			}
 			
-			print("viewWillDisappear")
 		}
 	}
 	
@@ -288,7 +287,6 @@ internal class SWPaywallViewController: UIViewController {
 		super.viewDidDisappear(animated)
 		
 		if isPresented && !isSafariVCPresented {
-			print("viewDidDisappear")
 			if readyForEventTracking {
 				trackClose()
 			}
