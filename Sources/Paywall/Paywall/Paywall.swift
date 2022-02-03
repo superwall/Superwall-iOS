@@ -64,8 +64,8 @@ public class Paywall: NSObject {
 	/// Set this to `false` to globally disable paywall dismissal animations (passed  to `paywallVC.dismiss(animated:)`) `
 	public static var shouldAnimatePaywallDismissal = true
 	
-	/// Set this to `true` to pre-load and cache triggers (and all associated paywalls / products) upon initializing the SDK instead of loading and caching triggers in a just-in-time fashion. Defaults to `false`
-	public static var shouldPreloadTriggers = false
+	/// Set this to `true` to pre-load and cache triggers (and all associated paywalls / products) upon initializing the SDK instead of loading and caching triggers in a just-in-time fashion. Defaults to `true`
+	public static var shouldPreloadTriggers = true
 	
 	/// Prints logs to the console if set to `true`. Default is `false`
 	@objc public static var debugMode = false

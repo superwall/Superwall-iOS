@@ -113,6 +113,7 @@ internal struct PaywallResponse: Decodable {
 		return products.map { $0.productId }
 	}
 	
+	
 	var templateVariables: JSON {
 		
 		var variables: [String: Any] = [
@@ -174,7 +175,15 @@ internal struct PaywallResponse: Decodable {
 		return TemplateDevice(publicApiKey: Store.shared.apiKey ?? "", platform: "iOS", appUserId: Store.shared.appUserId ?? "", aliases: aliases, vendorId: DeviceHelper.shared.vendorId, appVersion: DeviceHelper.shared.appVersion, osVersion: DeviceHelper.shared.osVersion, deviceModel: DeviceHelper.shared.model, deviceLocale: DeviceHelper.shared.locale, deviceLanguageCode: DeviceHelper.shared.languageCode, deviceCurrencyCode: DeviceHelper.shared.currencyCode, deviceCurrencySymbol: DeviceHelper.shared.currencySymbol)
 	}
 	
-	var templateEventsBase64String: String {
+	func getBase64EventsString(params: JSON? = nil) -> String {
+		
+		var templateVariables = self.templateVariables
+		
+		if let params = params {
+			templateVariables["variables"]["params"] = params
+		} else {
+			templateVariables["variables"]["params"] = JSON([String:Any]())
+		}
 		
 		let encodedStrings = [encodedEventString(templateDevice), encodedEventString(templateProducts), encodedEventString(templateSubstitutionsPrefix), encodedEventString(templateVariables), encodedEventString(templateProductVariables)]
 		

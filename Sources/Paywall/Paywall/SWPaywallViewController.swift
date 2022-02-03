@@ -49,6 +49,13 @@ internal class SWPaywallViewController: UIViewController {
 		return isPresented || isBeingPresented
 	}
 	
+//	override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge {
+//		
+//		print("swipe bottom")
+//
+//		return .bottom
+//	}
+	
 	// Views
 	
 	lazy var shimmerView = ShimmeringView(frame: self.view.bounds)
@@ -260,7 +267,7 @@ internal class SWPaywallViewController: UIViewController {
 			
 			// if the loading state is ready, re template user attributes
 			if self.loadingState == .ready {
-				handleEvent(event: .templateUserAttributes)
+				handleEvent(event: .templateParamsAndUserAttributes)
 			}
 		}
 	}
@@ -561,9 +568,10 @@ extension SWPaywallViewController {
         guard let paywallResponse = self._paywallResponse else { return }
     
         switch (event) {
-		case .templateUserAttributes:
+		case .templateParamsAndUserAttributes:
+				
 			let scriptSrc = """
-				window.paywall.accept64('\(paywallResponse.templateEventsBase64String)');
+				window.paywall.accept64('\(paywallResponse.getBase64EventsString(params: fromEventData?.parameters))');
 			"""
 				
 			webview.evaluateJavaScript(scriptSrc) { [weak self] (result, error) in
@@ -580,7 +588,7 @@ extension SWPaywallViewController {
 			}
 
             let scriptSrc = """
-                window.paywall.accept64('\(paywallResponse.templateEventsBase64String)');
+                window.paywall.accept64('\(paywallResponse.getBase64EventsString(params: fromEventData?.parameters))');
                 window.paywall.accept64('\(paywallResponse.paywalljsEvent)');
             """
             	
