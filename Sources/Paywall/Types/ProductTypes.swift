@@ -215,7 +215,7 @@ internal struct SWProduct: Codable {
 			subscriptionGroupIdentifier = product.subscriptionGroupIdentifier
 		}
 
-		if #available(iOS 11.2, *) {
+		if #available(iOS 12.2, *) {
 			if let p = product.subscriptionPeriod {
 				subscriptionPeriod = SWProductSubscriptionPeriod(period: p, numberOfPeriods: 1)
 			}
@@ -251,14 +251,14 @@ internal struct SWProductDiscount: Codable {
 	var paymentMode: SWProductDiscount.PaymentMode
 	var type: SWProductDiscount.`Type`
 	
-	@available(iOS 11.2, *)
+	@available(iOS 12.2, *)
 	init(discount: SKProductDiscount) {
 		price = discount.price.doubleValue
 		priceLocale = discount.priceLocale.identifier
 		
-		if #available(iOS 12.2, *) {
-			identifier = discount.identifier
-		}
+		
+		identifier = discount.identifier
+		
 		subscriptionPeriod = SWProductSubscriptionPeriod(period: discount.subscriptionPeriod, numberOfPeriods: discount.numberOfPeriods)
 		numberOfPeriods = discount.numberOfPeriods
 		
@@ -273,19 +273,14 @@ internal struct SWProductDiscount: Codable {
 				self.paymentMode = .unknown
 		}
 		
-		if #available(iOS 12.2, *) {
-			switch discount.type {
-				case .introductory:
-					self.type = .introductory
-				case .subscription:
-					self.type = .subscription
-				@unknown default:
-					self.type = .unknown
-			}
-		} else {
-			self.type = .unknown
+		switch discount.type {
+			case .introductory:
+				self.type = .introductory
+			case .subscription:
+				self.type = .subscription
+			@unknown default:
+				self.type = .unknown
 		}
-		
 		
 	}
 	
