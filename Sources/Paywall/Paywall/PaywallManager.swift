@@ -62,7 +62,6 @@ internal class PaywallManager {
 					if let identifier = response.identifier, let vc = self.cache[identifier+DeviceHelper.shared.locale], cached {
 						completion?(vc, nil)
 					} else {
-
 						
 						if let vc = SWPaywallViewController(paywallResponse: response, delegate: Paywall.shared) {
 						

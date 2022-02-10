@@ -6,12 +6,16 @@
 
 import UIKit
 import Foundation
+import SystemConfiguration
+import CoreTelephony
 
 
 internal class DeviceHelper {
 
     static let shared = DeviceHelper()
-    
+	
+	let reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, Network.shared.hostDomain)
+	
     var appVersion: String {
         get { Bundle.main.releaseVersionNumber ?? "" }
     }
@@ -63,6 +67,28 @@ internal class DeviceHelper {
             
         }
     }
+	
+	var radioType: String {
+		guard let reachability = reachability else {
+			return "No Internet"
+		}
+
+		var flags = SCNetworkReachabilityFlags()
+		SCNetworkReachabilityGetFlags(reachability, &flags)
+
+		let isReachable = flags.contains(.reachable)
+		let isWWAN = flags.contains(.isWWAN)
+
+		if isReachable {
+			if isWWAN {
+				return "Cellular"
+			} else {
+				return "Wifi"
+			}
+		} else {
+			return "No Internet"
+		}
+	}
     
     var appInstallDate: String = {
         let urlToDocumentsFolder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last!
