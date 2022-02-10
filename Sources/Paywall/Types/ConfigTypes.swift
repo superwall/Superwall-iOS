@@ -26,18 +26,28 @@ internal struct ConfigResponse: Decodable {
 	var postback: PostbackRequest
 	
 	func cache() {
+		
+		// for each paywall ...
 		for paywall in paywalls {
+			// cache its products
 			StoreKitManager.shared.get(productsWithIds: paywall.products.map { $0.identifier }, completion: nil)
+			// cache the view controller
 			PaywallManager.shared.viewController(identifier: paywall.identifier, event: nil, cached: true, completion: nil)
 		}
 		
+		// cache paywall.present(), when identifier and event is nil
+		PaywallManager.shared.viewController(identifier: nil, event: nil, cached: true, completion: nil)
+		
+		// if we should preload trigger responses
 		if Paywall.shouldPreloadTriggers {
 			let eventNames: Set<String> = Set(triggers.map { $0.eventName })
 			for e in eventNames {
 				let event = EventData(id: UUID().uuidString, name: e, parameters: JSON(["caching": true]), createdAt: Date().isoString)
+				// prelaod the response for that trigger
 				PaywallResponseManager.shared.getResponse(event: event, completion: {_, _ in})
 			}
 		}
+		
 	}
 	
 	func executePostback() {
