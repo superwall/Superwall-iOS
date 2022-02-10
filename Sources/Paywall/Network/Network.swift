@@ -83,6 +83,7 @@ extension Network {
         request.setValue(DeviceHelper.shared.secondsFromGMT, forHTTPHeaderField: "X-Device-Timezone-Offset") // $
         request.setValue(DeviceHelper.shared.appInstallDate, forHTTPHeaderField: "X-App-Install-Date") // $
 		request.setValue(DeviceHelper.shared.radioType, forHTTPHeaderField: "X-Radio-Type") // $
+		request.setValue(DeviceHelper.shared.interfaceStyle, forHTTPHeaderField: "X-Device-Interface-Style") // $
 		request.setValue(SDK_VERSION, forHTTPHeaderField: "X-SDK-Version")
 		request.setValue( requestId, forHTTPHeaderField: "X-Request-Id")
 		

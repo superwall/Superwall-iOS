@@ -89,6 +89,24 @@ internal class DeviceHelper {
 			return "No Internet"
 		}
 	}
+	
+	var interfaceStyle: String {
+		if #available(iOS 12.0, *) {
+			let style = UIScreen.main.traitCollection.userInterfaceStyle
+			switch style {
+				case .unspecified:
+					return "Unspecified"
+				case .light:
+					return "Light"
+				case .dark:
+					return "Dark"
+				default:
+					return "Unknown"
+			}
+		} else {
+			return "Unavailable"
+		}
+	}
     
     var appInstallDate: String = {
         let urlToDocumentsFolder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last!
