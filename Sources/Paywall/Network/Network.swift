@@ -85,7 +85,9 @@ extension Network {
 		request.setValue(DeviceHelper.shared.radioType, forHTTPHeaderField: "X-Radio-Type") // $
 		request.setValue(DeviceHelper.shared.interfaceStyle, forHTTPHeaderField: "X-Device-Interface-Style") // $
 		request.setValue(SDK_VERSION, forHTTPHeaderField: "X-SDK-Version")
-		request.setValue( requestId, forHTTPHeaderField: "X-Request-Id")
+		request.setValue(requestId, forHTTPHeaderField: "X-Request-Id")
+		request.setValue(DeviceHelper.shared.bundleId, forHTTPHeaderField: "X-Bundle-ID")
+		
 		
         let task = self.urlSession.dataTask(with: request) { (data, response, error) in
 			

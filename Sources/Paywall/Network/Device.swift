@@ -108,6 +108,10 @@ internal class DeviceHelper {
 		}
 	}
     
+	var bundleId: String {
+		return Bundle.main.bundleIdentifier ?? ""
+	}
+	
     var appInstallDate: String = {
         let urlToDocumentsFolder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last!
         let installDate = try? FileManager.default.attributesOfItem(atPath: urlToDocumentsFolder.path)[FileAttributeKey.creationDate] as? Date
