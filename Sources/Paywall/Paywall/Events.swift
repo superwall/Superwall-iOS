@@ -239,7 +239,11 @@ extension Paywall {
 		case paywallResponseLoadStart(fromEvent: Bool, event: EventData?)
 		case paywallResponseLoadNotFound(fromEvent: Bool, event: EventData?)
         case paywallResponseLoadFail(fromEvent: Bool, event: EventData?)
-        case paywallResponseLoadComplete(fromEvent: Bool, event: EventData?)
+		case paywallResponseLoadComplete(fromEvent: Bool, event: EventData?, paywallInfo: PaywallInfo)
+		
+		case paywallProductsLoadStart(fromEvent: Bool, event: EventData?, paywallInfo: PaywallInfo)
+		case paywallProductsLoadFail(fromEvent: Bool, event: EventData?, paywallInfo: PaywallInfo)
+		case paywallProductsLoadComplete(fromEvent: Bool, event: EventData?, paywallInfo: PaywallInfo)
         
         case paywallWebviewLoadStart(paywallInfo: PaywallInfo)
         case paywallWebviewLoadFail(paywallInfo: PaywallInfo)
@@ -280,6 +284,11 @@ extension Paywall {
 		case paywallResponseLoadNotFound = "paywallResponseLoad_notFound"
         case paywallResponseLoadFail = "paywallResponseLoad_fail"
         case paywallResponseLoadComplete = "paywallResponseLoad_complete"
+		
+		case paywallProductsLoadStart = "paywallProductsLoad_start"
+		case paywallProductsLoadFail = "paywallProductsLoad_fail"
+		case paywallProductsLoadComplete = "paywallProductsLoad_complete"
+		
         case paywallWebviewLoadStart = "paywallWebviewLoad_start"
         case paywallWebviewLoadFail = "paywallWebviewLoad_fail"
         case paywallWebviewLoadComplete = "paywallWebviewLoad_complete"
@@ -325,6 +334,12 @@ extension Paywall {
 				return .paywallResponseLoadFail
 			case .paywallResponseLoadComplete:
 				return .paywallResponseLoadComplete
+			case .paywallProductsLoadStart:
+				return .paywallProductsLoadStart
+			case .paywallProductsLoadFail:
+				return .paywallProductsLoadFail
+			case .paywallProductsLoadComplete:
+				return .paywallProductsLoadComplete
 			case .paywallWebviewLoadStart:
 				return .paywallWebviewLoadStart
 			case .paywallWebviewLoadFail:
@@ -344,8 +359,19 @@ extension Paywall {
 			"presented_by_event_name": paywallInfo.presentedByEventWithName as Any,
 			"presented_by_event_id": paywallInfo.presentedByEventWithId as Any,
 			"presented_by_event_timestamp": paywallInfo.presentedByEventAt as Any,
-			"presented_by": paywallInfo.presentedBy as Any
+			"presented_by": paywallInfo.presentedBy as Any,
+			"paywall_product_ids": paywallInfo.productIds.joined(separator: ",")
         ]
+		
+		let levels = ["primary", "secondary", "tertiary"]
+		
+		for (i,l) in levels.enumerated() {
+			let key = "\(l)_product_id"
+			output[key] = ""
+			if i < paywallInfo.productIds.count {
+				output[key] = paywallInfo.productIds[i]
+			}
+		}
 		
         if let p = product {
             output["product_id"] = p.productIdentifier
@@ -398,10 +424,16 @@ extension Paywall {
 
 			case 	.paywallResponseLoadStart(let fromEvent, let eventData),
 					.paywallResponseLoadNotFound(let fromEvent, let eventData),
-					.paywallResponseLoadFail(let fromEvent, let eventData),
-					.paywallResponseLoadComplete(let fromEvent, let eventData):
-				
+					.paywallResponseLoadFail(let fromEvent, let eventData):
 					_track(eventName: name(for: event), params: ["isTriggeredFromEvent": fromEvent, "eventName": eventData?.name ?? ""], customParams: customParams)
+				
+			case 	.paywallResponseLoadComplete(let fromEvent, let eventData, let paywallInfo),
+					.paywallProductsLoadStart(let fromEvent, let eventData, let paywallInfo),
+					.paywallProductsLoadFail(let fromEvent, let eventData, let paywallInfo),
+					.paywallProductsLoadComplete(let fromEvent, let eventData, let paywallInfo):
+				
+					let p = eventParams(for: nil, paywallInfo: paywallInfo, otherParams: ["isTriggeredFromEvent": fromEvent, "eventName": eventData?.name ?? ""])
+					_track(eventName: name(for: event), params: p, customParams: customParams)
         
 			default:
 					_track(eventName: name(for: event))

@@ -74,7 +74,8 @@ class PaywallResponseManager: NSObject {
 					switch(result) {
 						case .success(let response):
 								
-							Paywall.track(.paywallResponseLoadComplete(fromEvent: isFromEvent, event: event))
+							Paywall.track(.paywallResponseLoadComplete(fromEvent: isFromEvent, event: event, paywallInfo: response.getPaywallInfo(fromEvent: event)))
+							Paywall.track(.paywallProductsLoadStart(fromEvent: isFromEvent, event: event, paywallInfo: response.getPaywallInfo(fromEvent: event)))
 							
 							// add its products
 							StoreKitManager.shared.get(productsWithIds: response.productIds) { productsById in
@@ -123,6 +124,8 @@ class PaywallResponseManager: NSObject {
 								
 								// reset the handler cache
 								self.handlersByHash.removeValue(forKey: hash)
+								
+								Paywall.track(.paywallProductsLoadComplete(fromEvent: isFromEvent, event: event, paywallInfo: response.getPaywallInfo(fromEvent: event)))
 								
 							}
 							
