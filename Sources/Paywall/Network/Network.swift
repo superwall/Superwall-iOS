@@ -87,6 +87,8 @@ extension Network {
 		request.setValue(SDK_VERSION, forHTTPHeaderField: "X-SDK-Version")
 		request.setValue(requestId, forHTTPHeaderField: "X-Request-Id")
 		request.setValue(DeviceHelper.shared.bundleId, forHTTPHeaderField: "X-Bundle-ID")
+		request.setValue(DeviceHelper.shared.isLowPowerModeEnabled, forHTTPHeaderField: "X-Low-Power-Mode")
+		
 		
 		
         let task = self.urlSession.dataTask(with: request) { (data, response, error) in

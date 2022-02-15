@@ -107,6 +107,12 @@ internal class DeviceHelper {
 			return "Unavailable"
 		}
 	}
+	
+	var isLowPowerModeEnabled: String {
+		get {
+			return ProcessInfo.processInfo.isLowPowerModeEnabled ? "true" : "false"
+		}
+	}
     
 	var bundleId: String {
 		return Bundle.main.bundleIdentifier ?? ""
