@@ -77,12 +77,7 @@ internal struct Logger {
 		}
 		
 		if shouldPrint(logLevel: logLevel, scope: scope) {
-			
-
-			
-			var dateString = Date().isoString.replacingOccurrences(of: "T", with: " ").replacingOccurrences(of: "Z", with: "")
-			
-			
+			let dateString = Date().isoString.replacingOccurrences(of: "T", with: " ").replacingOccurrences(of: "Z", with: "")
 			dump(dumping, name: "[Superwall]  [\(dateString)]  \(logLevel.description)  \(scope.rawValue)  \(message ?? "")", indent: 0, maxDepth: 100, maxItems: 100)
 		}
 	

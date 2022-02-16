@@ -21,7 +21,7 @@ extension Paywall {
 		
 		paywallViewController.loadingState = .loadingPurchase
 		
-		OnMain { [weak self] in
+		OnMain { 
 			paywallViewController.showRefreshButtonAfterTimeout(show: false)
 		}
 		

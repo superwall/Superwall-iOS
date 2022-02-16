@@ -51,25 +51,76 @@ public class PaywallInfo: NSObject {
 	/// An array of product IDs that this paywall is displaying in `[Primary, Secondary, Tertiary]` order.
 	public let productIds: [String]
 	
-	init(id: String, identifier: String, name: String, slug: String, url: URL?, productIds: [String], fromEventData: EventData?, calledByIdentifier: Bool = false) {
-		self.id = id
-		self.identifier = identifier
-		self.name = name
-		self.slug = slug
-		self.url = url
-		self.productIds = productIds
-		self.presentedByEventWithName = fromEventData?.name
-		self.presentedByEventAt = fromEventData?.createdAt
-		self.presentedByEventWithId = fromEventData?.id.lowercased()
+	public let responseLoadStartTime: String?
+	public let responseLoadCompleteTime: String?
+	public let responseLoadDuration: Double?
+	
+	public let webViewLoadStartTime: String?
+	public let webViewLoadCompleteTime: String?
+	public let webViewLoadDuration: Double?
+	
+	public let productsLoadStartTime: String?
+	public let productsLoadCompleteTime: String?
+	public let productsLoadDuration: Double?
+	
+	
+	init(id: String,
+		 identifier: String,
+		 name: String,
+		 slug: String,
+		 url: URL?,
+		 productIds: [String],
+		 fromEventData: EventData?,
+		 calledByIdentifier: Bool = false,
+		 responseLoadStartTime: Date?,
+		 responseLoadCompleteTime: Date?,
+		 webViewLoadStartTime: Date?,
+		 webViewLoadCompleteTime: Date?,
+		 productsLoadStartTime: Date?,
+		 productsLoadCompleteTime: Date?) {
 		
-		if fromEventData != nil {
-			self.presentedBy = "event"
-		} else if calledByIdentifier {
-			self.presentedBy = "identifier"
-		} else {
-			self.presentedBy = "programmatically"
-		}
-		
+			self.id = id
+			self.identifier = identifier
+			self.name = name
+			self.slug = slug
+			self.url = url
+			self.productIds = productIds
+			self.presentedByEventWithName = fromEventData?.name
+			self.presentedByEventAt = fromEventData?.createdAt
+			self.presentedByEventWithId = fromEventData?.id.lowercased()
+			
+			self.responseLoadStartTime = responseLoadStartTime?.isoString ?? ""
+			self.responseLoadCompleteTime = responseLoadStartTime?.isoString ?? ""
+			if let s = responseLoadStartTime, let e = responseLoadCompleteTime {
+				self.responseLoadDuration = e.timeIntervalSince1970 - s.timeIntervalSince1970
+			} else {
+				self.responseLoadDuration = nil
+			}
+			
+			self.webViewLoadStartTime = webViewLoadStartTime?.isoString ?? ""
+			self.webViewLoadCompleteTime = webViewLoadCompleteTime?.isoString ?? ""
+			if let s = webViewLoadStartTime, let e = webViewLoadCompleteTime {
+				self.webViewLoadDuration = e.timeIntervalSince1970 - s.timeIntervalSince1970
+			} else {
+				self.webViewLoadDuration = nil
+			}
+			
+			self.productsLoadStartTime = productsLoadStartTime?.isoString ?? ""
+			self.productsLoadCompleteTime = productsLoadCompleteTime?.isoString ?? ""
+			if let s = productsLoadStartTime, let e = productsLoadCompleteTime {
+				self.productsLoadDuration = e.timeIntervalSince1970 - s.timeIntervalSince1970
+			} else {
+				self.productsLoadDuration = nil
+			}
+			
+			if fromEventData != nil {
+				self.presentedBy = "event"
+			} else if calledByIdentifier {
+				self.presentedBy = "identifier"
+			} else {
+				self.presentedBy = "programmatically"
+			}
+			
 	}
 }
 
@@ -96,8 +147,31 @@ internal struct PaywallResponse: Decodable {
 //
 //	}
 	
+	var responseLoadStartTime: Date? = nil
+	var responseLoadCompleteTime: Date? = nil
+	
+	var webViewLoadStartTime: Date? = nil
+	var webViewLoadCompleteTime: Date? = nil
+	
+	var productsLoadStartTime: Date? = nil
+	var productsLoadCompleteTime: Date? = nil
+	
 	func getPaywallInfo(fromEvent: EventData?, calledByIdentifier: Bool = false) -> PaywallInfo {
-		return PaywallInfo(id: id ?? "unknown", identifier: identifier ?? "unknown", name: name ?? "unknown", slug: slug ?? "unknown", url: URL(string: url), productIds: productIds, fromEventData: fromEvent, calledByIdentifier: calledByIdentifier)
+		return PaywallInfo(id: id ?? "unknown",
+						   identifier: identifier ?? "unknown",
+						   name: name ?? "unknown",
+						   slug: slug ?? "unknown",
+						   url: URL(string: url),
+						   productIds: productIds,
+						   fromEventData: fromEvent,
+						   calledByIdentifier: calledByIdentifier,
+						   responseLoadStartTime: responseLoadStartTime,
+						   responseLoadCompleteTime: responseLoadCompleteTime,
+						   webViewLoadStartTime: webViewLoadStartTime,
+						   webViewLoadCompleteTime: webViewLoadCompleteTime,
+						   productsLoadStartTime: productsLoadStartTime,
+						   productsLoadCompleteTime: productsLoadCompleteTime
+		)
 	}
 	
 	var paywallBackgroundColor: UIColor {
