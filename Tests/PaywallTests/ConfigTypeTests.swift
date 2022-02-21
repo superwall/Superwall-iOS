@@ -10,7 +10,7 @@ let response = #"""
             "event_name": "opened_application",
             "rules": [
                 {
-                    "expression": null,
+                    "expression": "name == jake",
                     "assigned": false,
                     "variant": {
                         "id": "7",

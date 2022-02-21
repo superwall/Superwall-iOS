@@ -28,6 +28,7 @@ class Store {
     }
 	
 	public var triggers: Set<String> = Set<String>()
+    public var v2Triggers: Dictionary<String, TriggerV2> = {};
     
     init() {
         self.appUserId = cache.readString(forKey: "store.appUserId")
@@ -75,6 +76,18 @@ class Store {
 		var data = [String: Bool]()
 		config.triggers.forEach { data[$0.eventName] = true }
 		cache.write(dictionary: data, forKey: "store.config")
+        let v2Triggers: [TriggerV2?] = config.triggers.map { (trigger) in
+            switch(trigger.triggerVersion) {
+            case .V1:
+                return nil
+            case .V2(let triggerV2):
+                return triggerV2
+            }
+        }.filter {
+            (triggerOrNil) in
+            return triggerOrNil != nil ? true : false
+        }
+        
 		triggers = Set(data.keys)
 	}
 	
