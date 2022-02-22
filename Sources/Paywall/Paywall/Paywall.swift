@@ -3,7 +3,7 @@ import Foundation
 import StoreKit
 import TPInAppReceipt
 import GameController
-import JavaScriptCore
+
 
 // MARK: Types
 
@@ -222,27 +222,6 @@ public class Paywall: NSObject {
 	}
 	
 	
-	
-	
-    public static func evaluateExpression(expression: String) {
-        let jsCtx = JSContext.init()!
-        jsCtx.exceptionHandler = { (ctx: JSContext!, value: JSValue!) in
-            // type of String
-            let stacktrace = value.objectForKeyedSubscript("stack").toString()
-            // type of Number
-            let lineNumber = value.objectForKeyedSubscript("line")
-            // type of Number
-            let column = value.objectForKeyedSubscript("column")
-            let moreInfo = "in method \(String(describing: stacktrace))Line number in file: \(String(describing: lineNumber)), column: \(String(describing: column))"
-            print("JS ERROR: \(String(describing: value)) \(moreInfo)")
-        }
-        print("Evaluating...", jsCtx)
-        let postfix = "\n SuperwallSDKJS.evaluate({ expression: 'a == \"b\"', values: { a: \"b\" }})"
-        print("script ", postfix)
-        
-        print(jsCtx.evaluateScript(script + "\n " + postfix)!)
-    }
-	
 	// -----------------------
 	// MARK: Private Functions
 	// -----------------------
@@ -314,7 +293,7 @@ public class Paywall: NSObject {
 	
 	internal func canTriggerPaywall(event: EventData) -> Bool {
 		
-		if Store.shared.triggers.contains(event.name) && !isPaywallPresented {
+        if (Store.shared.triggers.contains(event.name) || Store.shared.v2Triggers.keys.contains(event.name)) && !isPaywallPresented {
 
 			let name = event.name
 			let allowedInternalEvents = Set(["app_install", "session_start", "app_launch"])

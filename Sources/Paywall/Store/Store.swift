@@ -9,7 +9,7 @@ import Foundation
 
 
 
-class Store {
+internal class Store {
     
     let cache = Cache(name: "Store")
     
@@ -28,7 +28,7 @@ class Store {
     }
 	
 	public var triggers: Set<String> = Set<String>()
-    public var v2Triggers: Dictionary<String, TriggerV2> = {};
+    public var v2Triggers: Dictionary<String, TriggerV2> = [:];
     
     init() {
         self.appUserId = cache.readString(forKey: "store.appUserId")
@@ -45,6 +45,7 @@ class Store {
 		didTrackFirstSeen = false
 		userAttributes = [String: Any]()
 		triggers.removeAll()
+        v2Triggers.removeAll()
         cache.cleanAll()
     }
     
@@ -74,9 +75,16 @@ class Store {
     
 	func add(config: ConfigResponse) {
 		var data = [String: Bool]()
-		config.triggers.forEach { data[$0.eventName] = true }
-		cache.write(dictionary: data, forKey: "store.config")
-        let v2Triggers: [TriggerV2?] = config.triggers.map { (trigger) in
+        config.triggers.filter({ (trigger) in
+            switch(trigger.triggerVersion) {
+            case .V1:
+                return  true
+            default:
+                return false
+            }
+        }).forEach { data[$0.eventName] = true }
+
+        let v2TriggersArray: [TriggerV2?] = config.triggers.map { (trigger) in
             switch(trigger.triggerVersion) {
             case .V1:
                 return nil
@@ -88,7 +96,14 @@ class Store {
             return triggerOrNil != nil ? true : false
         }
         
+        self.v2Triggers = v2TriggersArray.reduce([String:TriggerV2](), { (result, trigger) in
+            var result = result
+            result[trigger!.eventName] = trigger!
+            return result
+        })
+        cache.write(dictionary: data, forKey: "store.config")
 		triggers = Set(data.keys)
+        
 	}
 	
 	func add(userAttributes newAttributes: [String: Any]) {

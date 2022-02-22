@@ -10,18 +10,20 @@ let response = #"""
             "event_name": "opened_application",
             "rules": [
                 {
+                    "experiment_id": "2",
                     "expression": "name == jake",
                     "assigned": false,
                     "variant": {
-                        "id": "7",
+                        "variant_id": "7",
                         "variant_type": "HOLDOUT"
                     }
                 },
                 {
+                    "experiment_id": "2",
                     "expression": null,
                     "assigned": false,
                     "variant": {
-                        "id": "6",
+                        "variant_id": "6",
                         "variant_type": "TREATMENT",
                         "paywall_identifier": "omnis-id-ab"
                     }
@@ -63,13 +65,14 @@ final class ConfigTypeTests: XCTestCase {
         case .V2(let v2):
             let firstRule = v2.rules[0]
             XCTAssertEqual(firstRule.assigned, false)
-            XCTAssertEqual(firstRule.expresssion, nil)
+            XCTAssertEqual(firstRule.expression, "name == jake")
+            XCTAssertEqual(firstRule.experimentId, "2")
             switch(firstRule.variant) {
             case .Treatment(_):
                 throw TestError.init("Expecting Holdout")
                 
             case .Holdout(let holdout):
-                XCTAssertEqual(holdout.id, "7")
+                XCTAssertEqual(holdout.variantId, "7")
                 break;
             }
             let secondRule = v2.rules[1]
@@ -78,7 +81,7 @@ final class ConfigTypeTests: XCTestCase {
                 throw TestError.init("Expecting holdout")
             case .Treatment(let treatment):
                 XCTAssertEqual(treatment.paywallIdentifier, "omnis-id-ab")
-                XCTAssertEqual(treatment.id, "6")
+                XCTAssertEqual(treatment.variantId, "6")
             }
         }
         let secondTrigger = parsedResponse.triggers[1]

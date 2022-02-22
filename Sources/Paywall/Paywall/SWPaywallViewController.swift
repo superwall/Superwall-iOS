@@ -110,7 +110,7 @@ internal class SWPaywallViewController: UIViewController {
 	}()
 	
 	var paywallInfo: PaywallInfo? {
-		return _paywallResponse?.getPaywallInfo(fromEvent: fromEventData, calledByIdentifier: calledByIdentifier)
+		return _paywallResponse?.getPaywallInfo(fromEvent: fromEventData, calledByIdentifier: calledByIdentifier, includeExperiment: true)
 	}
     
     var presentationStyle: PaywallPresentationStyle {

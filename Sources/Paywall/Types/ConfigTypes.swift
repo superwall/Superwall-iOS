@@ -34,13 +34,41 @@ internal struct ConfigResponse: Decodable {
 			// cache the view controller
 			PaywallManager.shared.viewController(identifier: paywall.identifier, event: nil, cached: true, completion: nil)
 		}
-		
+        
+        // Pre-load all the paywalls from v2 triggers
+        var identifiers: [String] = [];
+        triggers.forEach { (trigger) in
+            switch(trigger.triggerVersion) {
+            case .V1:
+                break;
+            case .V2(let triggerV2):
+                triggerV2.rules.forEach { (rule) in
+                    switch(rule.variant) {
+                    case .Treatment(let treatment):
+                        identifiers.append(treatment.paywallIdentifier)
+                    default:
+                        break;
+                    }
+                }
+            }
+        }
+        for identifier in Set(identifiers) {
+            PaywallManager.shared.viewController(identifier: identifier, event: nil, cached: true, completion: nil)
+        }
+        
 		// cache paywall.present(), when identifier and event is nil
 		PaywallManager.shared.viewController(identifier: nil, event: nil, cached: true, completion: nil)
 		
 		// if we should preload trigger responses
 		if Paywall.shouldPreloadTriggers {
-			let eventNames: Set<String> = Set(triggers.map { $0.eventName })
+            let eventNames: Set<String> = Set(triggers.filter({ (trigger) in
+                switch(trigger.triggerVersion) {
+                case .V1:
+                    return true
+                default:
+                    return false
+                }
+            }).map { $0.eventName })
 			for e in eventNames {
 				let event = EventData(id: UUID().uuidString, name: e, parameters: JSON(["caching": true]), createdAt: Date().isoString)
 				// prelaod the response for that trigger
@@ -92,13 +120,38 @@ internal struct ConfigResponse: Decodable {
 //}
 
 internal struct TriggerV2: Decodable {
+    // Just for convience, should be captured in the "Trigger" struct
+    var eventName: String
     var rules: [TriggerRule]
 }
 
 internal struct TriggerRule: Decodable {
-    var expresssion: String?
+    var experimentId: String
+    var expression: String?
     var assigned: Bool
     var variant: Variant
+    var variantId: String
+    
+    enum Keys: String, CodingKey {
+        case experimentId;
+        case expression;
+        case assigned;
+        case variant;
+    }
+    
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: TriggerRule.Keys.self)
+        experimentId = try values.decode(String.self, forKey: .experimentId)
+        expression = try? values.decode(String.self, forKey: .expression)
+        assigned = try values.decode(Bool.self, forKey: .assigned)
+        variant = try values.decode(Variant.self, forKey: .variant)
+        switch(variant) {
+        case .Holdout(let holdout):
+            variantId = holdout.variantId
+        case .Treatment(let treatment):
+            variantId = treatment.variantId
+        }
+    }
 }
 
 internal enum Variant: Decodable {
@@ -127,12 +180,12 @@ internal enum Variant: Decodable {
 
         
 internal struct VariantTreatment: Decodable {
-    var id: String
+    var variantId: String
     var paywallIdentifier: String
 }
 
 internal struct VariantHoldout: Decodable {
-    var id: String
+    var variantId: String
 }
 
 
@@ -179,11 +232,25 @@ struct Trigger: Decodable {
             default:
                 triggerVersion = .V1
                 break;
-            
         }
     }
-    
 }
+
+// Confirm Assignments
+
+
+internal struct ConfirmAssignments: Codable {
+    var assignments: [Assignment]
+}
+internal struct Assignment: Codable {
+    var experimentId: String
+    var variantId: String
+}
+
+internal struct ConfirmAssignmentResponse: Codable {
+    var status: String
+}
+
 
 // Postback
 

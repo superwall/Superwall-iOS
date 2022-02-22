@@ -23,18 +23,51 @@ class PaywallResponseManager: NSObject {
 	}
 	
 	func getResponse(identifier: String? = nil, event: EventData? = nil, completion: @escaping (PaywallResponse?, NSError?) -> ()) {
-		
+        var experimentId: String?  = nil
+        var variantId: String? = nil
+        var identifier = identifier;
+
 		// if we're requesting a response for a trigger/event that wasn't in the initial config endpoint, ignore it
 		if Paywall.shared.didFetchConfig, let eventName = event?.name {
-			if !Store.shared.triggers.contains(eventName) {
-				// create the error
-				let userInfo: [String : Any] = [
-					NSLocalizedDescriptionKey :  NSLocalizedString("Trigger Disabled", value: "There isn't a paywall configured to show in this context", comment: "") ,
-				]
-				let error = NSError(domain: "SWTriggerDisabled", code: 404, userInfo: userInfo)
-				completion(nil, error)
-				return
-			}
+            let triggerResponse = TriggerManager.shared.handleEvent(eventName: eventName)
+            switch(triggerResponse) {
+                // Do nothing, continue with loading as expected
+            case .PresentV1:
+                    break;
+                
+            case .PresentIdentifier(let _experimentId,  let _variantId, let paywallIdentifier):
+                identifier = paywallIdentifier;
+                experimentId = _experimentId
+                variantId = _variantId
+                break;
+            case .Holdout(let experimentId, let variantId):
+                let userInfo: [String : Any] = [
+                    NSLocalizedDescriptionKey :  NSLocalizedString("Trigger Holdout", value: "This user was assigned to a holdout in a trigger experiment", comment: "ExperimentId: \(experimentId) VariantId: \(variantId)") ,
+                        ]
+                                let error = NSError(domain: "SWTrigger", code: 4001, userInfo: userInfo)
+                                completion(nil, error)
+                return;
+            
+            case .NoRuleMatch:
+                let userInfo: [String : Any] = [
+                                NSLocalizedDescriptionKey :  NSLocalizedString("No rule match", value: "The user did not match any rules configured for this trigger", comment: "") ,
+                            ]
+                            let error = NSError(domain: "SWTriggerNoRules", code: 4000, userInfo: userInfo)
+                            completion(nil, error)
+                            return
+            
+                
+            case .UnknownEvent:
+                                // create the error
+                    let userInfo: [String : Any] = [
+                        NSLocalizedDescriptionKey :  NSLocalizedString("Trigger Disabled", value: "There isn't a paywall configured to show in this context", comment: "") ,
+                    ]
+                    let error = NSError(domain: "SWTriggerDisabled", code: 404, userInfo: userInfo)
+                    completion(nil, error)
+                    return
+                
+            }
+        
 		}
 		
 		let hash = requestHash(identifier: identifier, event: event)
@@ -72,8 +105,9 @@ class PaywallResponseManager: NSObject {
 			Network.shared.paywall(withIdentifier: identifier, fromEvent: event) { (result) in
 				self.queue.async {
 					switch(result) {
-						case .success(let response):
-								
+						case .success(var response):
+                            response.experimentId = experimentId
+                            response.variantId = variantId
 							Paywall.track(.paywallResponseLoadComplete(fromEvent: isFromEvent, event: event, paywallInfo: response.getPaywallInfo(fromEvent: event)))
 							Paywall.track(.paywallProductsLoadStart(fromEvent: isFromEvent, event: event, paywallInfo: response.getPaywallInfo(fromEvent: event)))
 							
