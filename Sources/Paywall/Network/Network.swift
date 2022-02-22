@@ -257,14 +257,39 @@ extension Network {
                     completion(.failure(error))
                 case .success(let response):
                     completion(.success(response))
-					
-					
             }
-            
         })
-
     }
+}
+
+extension Network {
     
+    func confirmAssignments(confirmAssignments: ConfirmAssignments, completion: ( ((Result<ConfirmAssignmentResponse, Swift.Error>)) -> Void)?) {
+        let components = URLComponents(string: "confirm_assignments")!
+        let requestURL = components.url(relativeTo: baseURL)!
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        // Bail if we can't encode
+        do {
+            request.httpBody = try encoder.encode(confirmAssignments)
+        } catch {
+            completion?(.failure(Error.unknown))
+            return
+        }
+        send(request, completion: { (result: Result<ConfirmAssignmentResponse, Swift.Error>)  in
+            switch result {
+                case .failure(let error):
+                    Logger.debug(logLevel: .error, scope: .network, message: "Request Failed: /confirm_assignments", info: ["assignments": confirmAssignments], error: error)
+                completion?(.failure(error))
+                case .success(let response):
+                completion?(.success(response))
+            }
+        })
+    }
 }
 
 extension Network {
