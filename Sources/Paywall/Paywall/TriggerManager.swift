@@ -103,16 +103,14 @@ internal struct ExpressionEvaluator  {
             // type of Number
             let column = value.objectForKeyedSubscript("column")
             let moreInfo = "in method \(String(describing: stacktrace))Line number in file: \(String(describing: lineNumber)), column: \(String(describing: column))"
-            print("JS ERROR: \(String(describing: value)) \(moreInfo)")
+            Logger.debug(logLevel: .error, scope: .events, message: "JS ERROR: \(String(describing: value)) \(moreInfo)", info: nil, error: nil)
         }
         
-        let parameters = ExpressionEvaluatorParams(expression: expression!, values:  JSON(["user": Store.shared.userAttributes]))
-        print("params", parameters)
-        print("Evaluating...", jsCtx)
-//        let postfix = "\n SuperwallSDKJS.evaluate({ expression: 'a == \"b\"', values: { a: \"b\" }})"
+        let parameters = ExpressionEvaluatorParams(expression: expression!, values:  JSON([
+            "user": Store.shared.userAttributes
+        ]))
         if let base64String = parameters.toBase64Input() {
             let postfix = "\n SuperwallSDKJS.evaluate64('\(base64String)');"
-            print("script ", postfix)
             let result =  jsCtx.evaluateScript(script + "\n " + postfix)
             if ((result?.isString) != nil) {
                 return result?.toString() == "true"

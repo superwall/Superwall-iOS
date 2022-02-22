@@ -165,7 +165,6 @@ internal enum Variant: Decodable {
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: Variant.Keys.self)
         let variantType = try values.decode(String.self, forKey: .variantType)
-        print("triggerVersion", variantType)
        switch variantType {
        case "HOLDOUT":
            self = .Holdout(try VariantHoldout.init(from: decoder))
@@ -200,13 +199,13 @@ enum TriggerVersion: Decodable {
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: TriggerVersion.Keys.self)
         let triggerVersion = try values.decode(String.self, forKey: .triggerVersion)
-        print("triggerVersion", triggerVersion)
-       switch triggerVersion {
-       case "V1": self = .V1
-       case "V2": self = .V2(try TriggerV2.init(from: decoder))
-       default:
-           self = .V1
-    }
+        
+        switch triggerVersion {
+            case "V1": self = .V1
+            case "V2": self = .V2(try TriggerV2.init(from: decoder))
+            default:
+                self = .V1
+        }
     }
 }
 
