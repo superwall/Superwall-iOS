@@ -210,6 +210,7 @@ extension Paywall {
 		case appLaunch = "app_launch"
 		case sessionStart = "session_start"
         case appClose = "app_close"
+        case triggerFire = "trigger_fire"
         case paywallOpen = "paywall_open"
         case paywallClose = "paywall_close"
         case transactionStart = "transaction_start"
@@ -251,6 +252,7 @@ extension Paywall {
         
         case paywallOpen(paywallInfo: PaywallInfo)
         case paywallClose(paywallInfo: PaywallInfo)
+        case triggerFire(triggerInfo: TriggerInfo)
        
         case transactionStart(paywallInfo: PaywallInfo, product: SKProduct)
         case transactionComplete(paywallInfo: PaywallInfo, product: SKProduct)
@@ -270,6 +272,7 @@ extension Paywall {
 		case appLaunch = "app_launch"
         case appClose = "app_close"
 		case sessionStart = "session_start"
+        case triggerFire = "trigger_fire"
         case paywallOpen = "paywall_open"
         case paywallClose = "paywall_close"
         case transactionStart = "transaction_start"
@@ -306,6 +309,8 @@ extension Paywall {
 				return .appLaunch
 			case .appClose:
 				return .appClose
+            case .triggerFire:
+                return .triggerFire
 			case .paywallOpen:
 				return .paywallOpen
 			case .paywallClose:
@@ -434,7 +439,13 @@ extension Paywall {
 				
 					let p = eventParams(for: nil, paywallInfo: paywallInfo, otherParams: ["isTriggeredFromEvent": fromEvent, "eventName": eventData?.name ?? ""])
 					_track(eventName: name(for: event), params: p, customParams: customParams)
-        
+            case .triggerFire(let triggerInfo):
+                    _track(eventName: name(for: event), params: [
+                        "variant_id": triggerInfo.variantId as Any,
+                        "experiment_id": triggerInfo.experimentId as Any,
+                        "paywall_identifier": triggerInfo.paywallIdentifier as Any,
+                        "result": triggerInfo.result
+                    ])
 			default:
 					_track(eventName: name(for: event))
         }

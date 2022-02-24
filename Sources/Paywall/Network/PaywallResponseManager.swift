@@ -39,23 +39,29 @@ class PaywallResponseManager: NSObject {
                 identifier = paywallIdentifier;
                 experimentId = _experimentId
                 variantId = _variantId
+//                Paywall.track(.paywallResponseLoadComplete(fromEvent: isFromEvent, event: event, paywallInfo: response.getPaywallInfo(fromEvent: event)))
+                Paywall.track(.triggerFire(triggerInfo: TriggerInfo(result: "present", experimentId: experimentId, variantId: variantId, paywallIdentifier: identifier)))
                 break;
             case .Holdout(let experimentId, let variantId):
                 let userInfo: [String : Any] = [
+                    "experimentId": experimentId,
+                    "variantId": variantId,
                     NSLocalizedDescriptionKey :  NSLocalizedString("Trigger Holdout", value: "This user was assigned to a holdout in a trigger experiment", comment: "ExperimentId: \(experimentId) VariantId: \(variantId)") ,
                         ]
-                                let error = NSError(domain: "com.superwall", code: 4001, userInfo: userInfo)
-                                completion(nil, error)
+                let error = NSError(domain: "com.superwall", code: 4001, userInfo: userInfo)
+                Paywall.track(.triggerFire(triggerInfo: TriggerInfo(result: "holdout", experimentId: experimentId, variantId: variantId, paywallIdentifier: nil)))
+                completion(nil, error)
                 return;
             
             case .NoRuleMatch:
                 let userInfo: [String : Any] = [
                                 NSLocalizedDescriptionKey :  NSLocalizedString("No rule match", value: "The user did not match any rules configured for this trigger", comment: "") ,
                             ]
-                            let error = NSError(domain: "com.superwall", code: 4000, userInfo: userInfo)
-                            completion(nil, error)
-                            return
-            
+                let error = NSError(domain: "com.superwall", code: 4000, userInfo: userInfo)
+                Paywall.track(.triggerFire(triggerInfo: TriggerInfo(result: "no_rule_match", experimentId: nil, variantId: nil, paywallIdentifier: nil)))
+                completion(nil, error)
+                return
+
                 
             case .UnknownEvent:
                                 // create the error
@@ -67,6 +73,7 @@ class PaywallResponseManager: NSObject {
                     return
                 
             }
+            
         
 		}
 		
