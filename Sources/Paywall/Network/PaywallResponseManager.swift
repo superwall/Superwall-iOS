@@ -44,7 +44,7 @@ class PaywallResponseManager: NSObject {
                 let userInfo: [String : Any] = [
                     NSLocalizedDescriptionKey :  NSLocalizedString("Trigger Holdout", value: "This user was assigned to a holdout in a trigger experiment", comment: "ExperimentId: \(experimentId) VariantId: \(variantId)") ,
                         ]
-                                let error = NSError(domain: "SWTrigger", code: 4001, userInfo: userInfo)
+                                let error = NSError(domain: "com.superwall", code: 4001, userInfo: userInfo)
                                 completion(nil, error)
                 return;
             
@@ -52,7 +52,7 @@ class PaywallResponseManager: NSObject {
                 let userInfo: [String : Any] = [
                                 NSLocalizedDescriptionKey :  NSLocalizedString("No rule match", value: "The user did not match any rules configured for this trigger", comment: "") ,
                             ]
-                            let error = NSError(domain: "SWTriggerNoRules", code: 4000, userInfo: userInfo)
+                            let error = NSError(domain: "com.superwall", code: 4000, userInfo: userInfo)
                             completion(nil, error)
                             return
             
@@ -75,6 +75,9 @@ class PaywallResponseManager: NSObject {
 		// if the response exists, return it
 		if let (r, e) = responsesByHash[hash], !SWDebugManager.shared.isDebuggerLaunched {
 			OnMain {
+                var r = r;
+                r?.experimentId = experimentId
+                r?.variantId = variantId
 				completion(r, e)
 			}
 			return

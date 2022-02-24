@@ -98,12 +98,14 @@ internal class Store {
         
         self.v2Triggers = v2TriggersArray.reduce([String:TriggerV2](), { (result, trigger) in
             var result = result
-            result[trigger!.eventName] = trigger!
+            guard let unwrappedTrigger = trigger else {
+                return result
+            }
+            result[unwrappedTrigger.eventName] = unwrappedTrigger
             return result
         })
         cache.write(dictionary: data, forKey: "store.config")
 		triggers = Set(data.keys)
-        
 	}
 	
 	func add(userAttributes newAttributes: [String: Any]) {
