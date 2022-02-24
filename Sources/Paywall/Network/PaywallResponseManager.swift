@@ -29,7 +29,7 @@ class PaywallResponseManager: NSObject {
 
 		// if we're requesting a response for a trigger/event that wasn't in the initial config endpoint, ignore it
 		if Paywall.shared.didFetchConfig, let eventName = event?.name {
-            let triggerResponse = TriggerManager.shared.handleEvent(eventName: eventName)
+            let triggerResponse = TriggerManager.shared.handleEvent(eventName: eventName, eventData: event)
             switch(triggerResponse) {
                 // Do nothing, continue with loading as expected
             case .PresentV1:

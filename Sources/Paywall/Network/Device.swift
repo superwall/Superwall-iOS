@@ -123,6 +123,18 @@ internal class DeviceHelper {
         let installDate = try? FileManager.default.attributesOfItem(atPath: urlToDocumentsFolder.path)[FileAttributeKey.creationDate] as? Date
         return installDate?.isoString ?? ""
     }()
+    
+    var templateDevice: TemplateDevice {
+        let aliases: [String]
+        if let alias = Store.shared.aliasId {
+            aliases = [alias]
+        } else {
+            aliases = []
+        }
+
+        return TemplateDevice(publicApiKey: Store.shared.apiKey ?? "", platform: "iOS", appUserId: Store.shared.appUserId ?? "", aliases: aliases, vendorId: DeviceHelper.shared.vendorId, appVersion: DeviceHelper.shared.appVersion, osVersion: DeviceHelper.shared.osVersion, deviceModel: DeviceHelper.shared.model, deviceLocale: DeviceHelper.shared.locale, deviceLanguageCode: DeviceHelper.shared.languageCode, deviceCurrencyCode: DeviceHelper.shared.currencyCode, deviceCurrencySymbol: DeviceHelper.shared.currencySymbol)
+    }
+    
 }
 
 

@@ -7,6 +7,7 @@
 
 import Foundation
 import JavaScriptCore
+import UIKit
 
 
 enum HandleEventResult {
@@ -26,12 +27,12 @@ class TriggerManager {
     
     internal static let shared = TriggerManager();
     
-    internal func handleEvent(eventName: String) -> HandleEventResult {
+    internal func handleEvent(eventName: String, eventData: EventData?) -> HandleEventResult {
         // If we have the config response, all valid triggers should be in reponse
         
         // See if this is a v2 trigger
         if let triggerV2: TriggerV2 = Store.shared.v2Triggers[eventName] {
-            if let rule = self.resolveAndAssign(v2Trigger: triggerV2) {
+            if let rule = self.resolveAndAssign(v2Trigger: triggerV2, eventData: eventData) {
                 switch(rule.variant) {
                 case .Holdout(let holdout):
                     return HandleEventResult.Holdout(rule.experimentId, holdout.variantId)
@@ -51,9 +52,9 @@ class TriggerManager {
     }
     
     
-    private func resolveAndAssign(v2Trigger: TriggerV2) -> TriggerRule? {
+    private func resolveAndAssign(v2Trigger: TriggerV2, eventData: EventData?) -> TriggerRule? {
         for  rule in v2Trigger.rules {
-            if ExpressionEvaluator.evaluateExpression(expression: rule.expression) {
+            if ExpressionEvaluator.evaluateExpression(expression: rule.expression, eventData: eventData) {
                 // We've found the correct one
                 if (!rule.assigned) {
                     // Call confirm assignment
@@ -87,7 +88,7 @@ struct ExpressionEvaluatorParams: Codable {
 internal struct ExpressionEvaluator  {
     
     
-    public static func evaluateExpression(expression: String?) -> Bool {
+    public static func evaluateExpression(expression: String?, eventData: EventData?) -> Bool {
         // Expression matches all
         if ((expression == nil)) {
             return true
@@ -107,7 +108,9 @@ internal struct ExpressionEvaluator  {
         }
         
         let parameters = ExpressionEvaluatorParams(expression: expression!, values:  JSON([
-            "user": Store.shared.userAttributes
+            "user": Store.shared.userAttributes,
+            "device": DeviceHelper.shared.templateDevice.toDictionary(),
+            "event": eventData?.parameters ?? [:],
         ]))
         if let base64String = parameters.toBase64Input() {
             let postfix = "\n SuperwallSDKJS.evaluate64('\(base64String)');"

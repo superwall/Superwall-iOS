@@ -130,7 +130,7 @@ internal struct PaywallResponse: Decodable {
 		
 		var variables: [String: Any] = [
 			"user": Store.shared.userAttributes,
-			"device": templateDevice.dictionary ?? [String: Any]()
+            "device": DeviceHelper.shared.templateDevice.dictionary ?? [String: Any]()
 		]
 		
 		for v in self.variables ?? [Variables]() {
@@ -176,16 +176,6 @@ internal struct PaywallResponse: Decodable {
 		return TemplateProducts(event_name: "products", products: products)
 	}
 	
-	var templateDevice: TemplateDevice {
-		let aliases: [String]
-		if let alias = Store.shared.aliasId {
-			aliases = [alias]
-		} else {
-			aliases = []
-		}
-
-		return TemplateDevice(publicApiKey: Store.shared.apiKey ?? "", platform: "iOS", appUserId: Store.shared.appUserId ?? "", aliases: aliases, vendorId: DeviceHelper.shared.vendorId, appVersion: DeviceHelper.shared.appVersion, osVersion: DeviceHelper.shared.osVersion, deviceModel: DeviceHelper.shared.model, deviceLocale: DeviceHelper.shared.locale, deviceLanguageCode: DeviceHelper.shared.languageCode, deviceCurrencyCode: DeviceHelper.shared.currencyCode, deviceCurrencySymbol: DeviceHelper.shared.currencySymbol)
-	}
 	
 	func getBase64EventsString(params: JSON? = nil) -> String {
 		
@@ -197,7 +187,7 @@ internal struct PaywallResponse: Decodable {
 			templateVariables["variables"]["params"] = JSON([String:Any]())
 		}
 		
-		let encodedStrings = [encodedEventString(templateDevice), encodedEventString(templateProducts), encodedEventString(templateSubstitutionsPrefix), encodedEventString(templateVariables), encodedEventString(templateProductVariables)]
+        let encodedStrings = [encodedEventString(DeviceHelper.shared.templateDevice), encodedEventString(templateProducts), encodedEventString(templateSubstitutionsPrefix), encodedEventString(templateVariables), encodedEventString(templateProductVariables)]
 		
 		let string = "[" + encodedStrings.joined(separator: ",") + "]"
 
@@ -271,4 +261,9 @@ internal struct TemplateDevice: Codable {
 	var deviceLanguageCode: String
 	var deviceCurrencyCode: String
 	var deviceCurrencySymbol: String
+    
+    func toDictionary() -> [String: Any]{
+        guard let data = try? JSONEncoder().encode(self) else { return [:] }
+        return (try? JSONSerialization.jsonObject(with: data, options: .allowFragments)).flatMap { $0 as? [String: Any] } as? [String : Any] ?? [:]
+    }
 }
