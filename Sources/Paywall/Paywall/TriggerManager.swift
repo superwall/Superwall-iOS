@@ -110,7 +110,7 @@ internal struct ExpressionEvaluator  {
         let parameters = ExpressionEvaluatorParams(expression: expression!, values:  JSON([
             "user": Store.shared.userAttributes,
             "device": DeviceHelper.shared.templateDevice.toDictionary(),
-            "event": eventData?.parameters ?? [:],
+            "params": eventData?.parameters ?? [:],
         ]))
         if let base64String = parameters.toBase64Input() {
             let postfix = "\n SuperwallSDKJS.evaluate64('\(base64String)');"

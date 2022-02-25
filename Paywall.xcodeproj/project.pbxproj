@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		039BF528CE4F705D70F2177A /* TriggerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CB7F6F4F3438F00EC6D681 /* TriggerManager.swift */; };
 		0710F1429BA795E58A6461DB /* GameControllerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55E5A5606736C70494B6EA37 /* GameControllerManager.swift */; };
 		07DE9F5B9BE44235B3A9330F /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 819D90B0DA165B3040F87984 /* StoreKitManager.swift */; };
 		0B9F89164667B376D47D6C6A /* PaywallPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3EF821C1CFD440F2C10BD04 /* PaywallPresentation.swift */; };
@@ -38,6 +39,7 @@
 		8ED134478ED2308C222205C0 /* SWDebugManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0174F2F10C41C0E955B23457 /* SWDebugManager.swift */; };
 		969A24DBD53AD76F6F01BB66 /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = B64A36AB939D7351F687712C /* Device.swift */; };
 		9A17ACCA20FA446852E6D60E /* EventsQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7B553F877CB9EB9156D803 /* EventsQueue.swift */; };
+		9A7F5ED970C8BC6658A0C604 /* SDKJS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97FBE507568D7EB358372E0 /* SDKJS.swift */; };
 		9F4C01C37A3D415E7F1DB27B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E392B6BD026B3616179AD097 /* Assets.xcassets */; };
 		A2897495E7CF38F8AE8B3F15 /* PaywallEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDFF57BA43FA58EBD97FE5B7 /* PaywallEvents.swift */; };
 		A49230BAE35CFBB29870F6DA /* BundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BAB288702408C2788E00C56 /* BundleHelper.swift */; };
@@ -74,7 +76,9 @@
 		7BCB92333070318FF40FD013 /* ShimmeringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringView.swift; sourceTree = "<group>"; };
 		819D90B0DA165B3040F87984 /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		82C4F84E15DB7596C36F04DD /* Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network.swift; sourceTree = "<group>"; };
+		84CB7F6F4F3438F00EC6D681 /* TriggerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerManager.swift; sourceTree = "<group>"; };
 		90F7F547ED979B27057D45EA /* MiscTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiscTypes.swift; sourceTree = "<group>"; };
+		A97FBE507568D7EB358372E0 /* SDKJS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKJS.swift; sourceTree = "<group>"; };
 		AB9A6BAF6E54CA507528440E /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
 		B64A36AB939D7351F687712C /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
 		BB7B553F877CB9EB9156D803 /* EventsQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsQueue.swift; sourceTree = "<group>"; };
@@ -127,6 +131,7 @@
 				C3EF821C1CFD440F2C10BD04 /* PaywallPresentation.swift */,
 				BEECF871CEF5502F22C21CF6 /* PaywallTransactions.swift */,
 				CCA3CCA5BA8B08041A798297 /* SWPaywallViewController.swift */,
+				84CB7F6F4F3438F00EC6D681 /* TriggerManager.swift */,
 				B1ACB0917547FD193909E9B0 /* ShimmerView */,
 			);
 			path = Paywall;
@@ -137,6 +142,7 @@
 			children = (
 				E392B6BD026B3616179AD097 /* Assets.xcassets */,
 				0BAB288702408C2788E00C56 /* BundleHelper.swift */,
+				A97FBE507568D7EB358372E0 /* SDKJS.swift */,
 				46E17D5502F50E6EBB6F171C /* Debug */,
 				E94164BCC934D771B5086786 /* Misc */,
 				F0BD6663A4F804281BD37F83 /* Network */,
@@ -339,6 +345,7 @@
 				8E88970FE466B86D1F139E0D /* PaywallTypes.swift in Sources */,
 				27BECB97377BE078AFA96AA8 /* ProductTypes.swift in Sources */,
 				30D35D245959F241F9A0B897 /* ProductsManager.swift in Sources */,
+				9A7F5ED970C8BC6658A0C604 /* SDKJS.swift in Sources */,
 				0FD23369D3FD47831A02E972 /* SWBounceButton.swift in Sources */,
 				5E417214B1381CA60162E0D5 /* SWConsoleViewController.swift in Sources */,
 				8ED134478ED2308C222205C0 /* SWDebugManager.swift in Sources */,
@@ -353,6 +360,7 @@
 				07DE9F5B9BE44235B3A9330F /* StoreKitManager.swift in Sources */,
 				5E1738AAF67F8695B1A6A01F /* String+MD5.swift in Sources */,
 				824933BE91877E221F976014 /* SwiftyJSON.swift in Sources */,
+				039BF528CE4F705D70F2177A /* TriggerManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
