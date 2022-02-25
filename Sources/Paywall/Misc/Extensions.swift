@@ -59,6 +59,23 @@ internal extension Date {
 		return f2.string(from: self)
 		
     }
+	
+	var isoStringFormatted: String {
+		
+		if #available(iOS 11.0, *) {
+			let f1 = ISO8601DateFormatter()
+			f1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+			return f1.string(from: self)
+		}
+		
+		let f2 = DateFormatter()
+		f2.calendar = Calendar(identifier: .iso8601)
+		f2.locale = Locale(identifier: "en_US_POSIX")
+		f2.timeZone = TimeZone(secondsFromGMT: 0)
+		f2.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX"
+		return f2.string(from: self)
+		
+	}
 }
 
 

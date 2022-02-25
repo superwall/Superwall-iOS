@@ -104,21 +104,27 @@ class PaywallResponseManager: NSObject {
 			
 			let isFromEvent = event != nil
 	
+			let responseLoadStartTime = Date()
 			Paywall.track(.paywallResponseLoadStart(fromEvent: isFromEvent, event: event))
 			
 			// get the paywall
 		
 //			OnMain(after: 2.0, {
-				
-			
 		
 			Network.shared.paywall(withIdentifier: identifier, fromEvent: event) { (result) in
 				self.queue.async {
 					switch(result) {
 						case .success(var response):
+							
                             response.experimentId = experimentId
                             response.variantId = variantId
+							response.responseLoadStartTime = responseLoadStartTime
+							response.responseLoadCompleteTime = Date()
+								
 							Paywall.track(.paywallResponseLoadComplete(fromEvent: isFromEvent, event: event, paywallInfo: response.getPaywallInfo(fromEvent: event)))
+							
+							response.productsLoadStartTime = Date()
+							
 							Paywall.track(.paywallProductsLoadStart(fromEvent: isFromEvent, event: event, paywallInfo: response.getPaywallInfo(fromEvent: event)))
 							
 							// add its products
@@ -126,7 +132,7 @@ class PaywallResponseManager: NSObject {
 								
 								var variables = [Variables]()
 								var productVariables = [ProductVariables]()
-								var response = response
+//								var response = response
 								
 								for p in response.products {
 									if let appleProduct = productsById[p.productId] {
@@ -169,6 +175,7 @@ class PaywallResponseManager: NSObject {
 								// reset the handler cache
 								self.handlersByHash.removeValue(forKey: hash)
 								
+								response.productsLoadCompleteTime = Date()
 								Paywall.track(.paywallProductsLoadComplete(fromEvent: isFromEvent, event: event, paywallInfo: response.getPaywallInfo(fromEvent: event)))
 								
 							}

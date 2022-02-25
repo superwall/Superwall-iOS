@@ -255,10 +255,7 @@ internal struct SWProductDiscount: Codable {
 	init(discount: SKProductDiscount) {
 		price = discount.price.doubleValue
 		priceLocale = discount.priceLocale.identifier
-		
-		
 		identifier = discount.identifier
-		
 		subscriptionPeriod = SWProductSubscriptionPeriod(period: discount.subscriptionPeriod, numberOfPeriods: discount.numberOfPeriods)
 		numberOfPeriods = discount.numberOfPeriods
 		
@@ -656,7 +653,7 @@ internal extension SKProduct {
 	}
 	
 	var productVariables: JSON {
-		return JSON(SWTemplateVariable(product: self).dictionary)
+		return JSON(SWTemplateVariable(product: self).dictionary as Any)
 	}
 	
 	var swProduct: SWProduct {

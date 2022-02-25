@@ -426,6 +426,9 @@ internal class SWPaywallViewController: UIViewController {
 					}
                     
 					self.webview.load(URLRequest(url: url))
+					if self._paywallResponse?.webViewLoadStartTime == nil, self._paywallResponse != nil {
+						self._paywallResponse?.webViewLoadStartTime = Date()
+					}
                     self.loadingState = .loadingResponse
                 }
             }
@@ -572,7 +575,7 @@ extension SWPaywallViewController {
 				window.paywall.accept64('\(paywallResponse.getBase64EventsString(params: fromEventData?.parameters))');
 			"""
 				
-			webview.evaluateJavaScript(scriptSrc) { [weak self] (result, error) in
+			webview.evaluateJavaScript(scriptSrc) { (result, error) in
 				if let error = error {
 					Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Error Evaluating JS", info: ["message": scriptSrc], error: error)
 				}
@@ -582,6 +585,15 @@ extension SWPaywallViewController {
 				
         case .onReady:
 			if let i = self.paywallInfo {
+				
+				
+				if self._paywallResponse != nil {
+					if self._paywallResponse?.webViewLoadCompleteTime == nil {
+						self._paywallResponse?.webViewLoadCompleteTime = Date()
+					}
+				}
+			
+				
 				Paywall.track(.paywallWebviewLoadComplete(paywallInfo: i))
 			}
 
@@ -621,7 +633,7 @@ extension SWPaywallViewController {
             complete(.closed)
         case .openUrl(let url):
 			if self != Paywall.shared.paywallViewController {
-				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController, "event": "openUrl", "url": url], error: nil)
+				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController.debugDescription, "event": "openUrl", "url": url], error: nil)
 			}
 			hapticFeedback()
             complete(.openedURL(url: url))
@@ -630,21 +642,21 @@ extension SWPaywallViewController {
             present(safariVC, animated: true, completion: nil)
         case .openDeepLink(let url):
 			if self != Paywall.shared.paywallViewController {
-				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController, "event": "openDeepLink", "url": url], error: nil)
+				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController.debugDescription, "event": "openDeepLink", "url": url], error: nil)
 			}
 			hapticFeedback()
             complete(.openedDeepLink(url: url))
             // TODO: Handle deep linking
         case .restore:
 			if self != Paywall.shared.paywallViewController {
-				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController, "event": "restore"], error: nil)
+				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController.debugDescription, "event": "restore"], error: nil)
 			}
 			hapticFeedback()
             complete(.initiateRestore)
         case .purchase(product: let productName):
 				
 			if self != Paywall.shared.paywallViewController {
-				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController, "event": "purchase"], error: nil)
+				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController.debugDescription, "event": "purchase"], error: nil)
 			}
 				
 				
@@ -659,7 +671,7 @@ extension SWPaywallViewController {
             
         case .custom(data: let string):
 			if self != Paywall.shared.paywallViewController {
-				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController, "event": "custom", "custom_event": string], error: nil)
+				Logger.debug(logLevel: .error, scope: .paywallViewController, message: "Received Event on Hidden Paywall", info: ["self": self, "Paywall.shared.paywallViewController": Paywall.shared.paywallViewController.debugDescription, "event": "custom", "custom_event": string], error: nil)
 			}
             complete(.custom(string: string))
         }

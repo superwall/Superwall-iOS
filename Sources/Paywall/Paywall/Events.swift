@@ -365,8 +365,24 @@ extension Paywall {
 			"presented_by_event_id": paywallInfo.presentedByEventWithId as Any,
 			"presented_by_event_timestamp": paywallInfo.presentedByEventAt as Any,
 			"presented_by": paywallInfo.presentedBy as Any,
-			"paywall_product_ids": paywallInfo.productIds.joined(separator: ",")
+			"paywall_product_ids": paywallInfo.productIds.joined(separator: ","),
+			"paywall_response_load_start_time": paywallInfo.responseLoadStartTime as Any,
+			"paywall_response_load_complete_time": paywallInfo.responseLoadCompleteTime as Any,
+			"paywall_response_load_duration": paywallInfo.responseLoadDuration as Any,
+			"paywall_webview_load_start_time": paywallInfo.webViewLoadStartTime as Any,
+			"paywall_webview_load_complete_time": paywallInfo.webViewLoadCompleteTime as Any,
+			"paywall_webview_load_duration": paywallInfo.webViewLoadDuration as Any,
+			"paywall_products_load_start_time": paywallInfo.productsLoadStartTime as Any,
+			"paywall_products_load_complete_time": paywallInfo.productsLoadCompleteTime as Any,
+			"paywall_products_load_duration": paywallInfo.productsLoadDuration as Any,
         ]
+		
+		for k in output.keys {
+			if k.contains("_load_") {
+				print(k, output[k]!)
+			}
+		}
+		print( "========== _load_ vars")
 		
 		let levels = ["primary", "secondary", "tertiary"]
 		
