@@ -217,10 +217,32 @@ extension Network {
     }
 
     func paywallByIdentifier(identifier: String, completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
+        // WARNING: Do not modify anything about this request without considering our cache eviction code
+        // we must know all the exact urls we need to invalidate so chaning the order, inclusion, etc of any query
+        // parameters will cause issues
         var components = URLComponents(string: "paywall/\(identifier)")!
         let queryPk = URLQueryItem(name: "pk", value: Store.shared.apiKey ?? "")
-        let queryLocale = URLQueryItem(name: "locale", value: DeviceHelper.shared.locale)
-        components.queryItems = [queryPk, queryLocale]
+
+
+        // In the config endpoint we return all the locales, this code will check if:
+        // 1. The device locale (ex: en_US) exists in the locales list
+        // 2. The shortend device locale (ex: en) exists in the locale list
+        // If either exist (preferring the most specific) include the locale in the
+        // the url as a query param.
+        var queryLocale: URLQueryItem? = nil
+        if Store.shared.locales.contains(DeviceHelper.shared.locale) {
+            queryLocale = URLQueryItem(name: "locale", value: DeviceHelper.shared.locale)
+        } else {
+            let shortLocale = DeviceHelper.shared.locale.split("_")[0]
+            if (Store.shared.locales.contains(shortLocale)) {
+                queryLocale = URLQueryItem(name: "locale", value: shortLocale)
+            }
+        }
+        if queryLocale != nil {
+            components.queryItems = [queryPk, queryLocale]
+        } else {
+            components.queryItems = [queryPk]
+        }
 
         let requestURL = components.url(relativeTo: baseURL)!
         var request = URLRequest(url: requestURL)

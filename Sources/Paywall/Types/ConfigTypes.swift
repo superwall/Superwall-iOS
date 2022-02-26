@@ -19,11 +19,20 @@ internal struct PaywallConfig: Decodable {
 	var products: [ProductConfig]
 }
 
+
+internal struct LocaleConfig: Decodable {
+    var locale: String
+}
+
+internal struct LocalizationConfig: Decodable {
+    var locales: [LocaleConfig]
+}
 internal struct ConfigResponse: Decodable {
 	var triggers: [Trigger]
 	var paywalls: [PaywallConfig]
 	var logLevel: Int
 	var postback: PostbackRequest
+    var localization: LocalizationConfig
 	
 	func cache() {
 		
