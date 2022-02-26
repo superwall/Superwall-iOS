@@ -168,7 +168,12 @@ extension Network {
 
 extension Network {
 	func paywall(withIdentifier: String? = nil, fromEvent event: EventData? = nil, completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
-                
+
+        if let id = withIdentifier {
+            self.paywallByIdentifier(identifier: id, completion: completion)
+            return
+        }
+
         let components = URLComponents(string: "paywall")!
         let requestURL = components.url(relativeTo: baseURL)!
         var request = URLRequest(url: requestURL)
@@ -209,6 +214,28 @@ extension Network {
             
         })
 
+    }
+
+    func paywallByIdentifier(identifier: String, completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
+        var components = URLComponents(string: "paywall/\(identifier)")!
+        let queryPk = URLQueryItem(name: "pk", value: Store.shared.apiKey ?? "")
+        let queryLocale = URLQueryItem(name: "locale", value: DeviceHelper.shared.locale)
+        components.queryItems = [queryPk, queryLocale]
+
+        let requestURL = components.url(relativeTo: baseURL)!
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        send(request, completion: { (result: Result<PaywallResponse, Swift.Error>)  in
+            switch result {
+                case .failure(let error):
+                    Logger.debug(logLevel: .error, scope: .network, message: "Request Failed: /paywall/:identifier", info: nil, error: error)
+                    completion(.failure(error))
+                case .success(let response):
+                    completion(.success(response))
+            }
+        })
     }
 }
 
