@@ -1,5 +1,6 @@
+// swiftlint:disable all
 
-internal let script = #"""
+let script = #"""
 /*
  * ATTENTION: The "eval" devtool has been used (maybe by default in mode: "development").
  * This devtool is neither made for production nor for readable output files.

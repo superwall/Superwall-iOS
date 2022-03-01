@@ -7,15 +7,15 @@
 
 import Foundation
 
-internal struct EventsRequest: Codable {
+struct EventsRequest: Codable {
 	var events: [JSON]
 }
 
-internal struct EventsResponse: Codable {
+struct EventsResponse: Codable {
 	var status: String
 }
 
-internal struct EventData: Codable {
+struct EventData: Codable {
 	var id: String
 	var name: String
 	var parameters: JSON
@@ -25,7 +25,7 @@ internal struct EventData: Codable {
 			"event_id": JSON(id),
 			"event_name": JSON(name),
 			"parameters": parameters,
-			"created_at": JSON(createdAt),
+			"created_at": JSON(createdAt)
 		]
 	}
 }

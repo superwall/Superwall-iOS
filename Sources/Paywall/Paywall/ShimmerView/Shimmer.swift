@@ -10,55 +10,60 @@ import QuartzCore
 #if canImport(UIKit)
 import UIKit
 
-final internal class Shimmer {
+enum Shimmer {
+  enum Direction {
+    case right
+    case left
+    // swiftlint:disable:next identifier_name
+    case up
+    case down
+  }
 
-    internal enum Direction {
-        case right
-        case left
-        case up
-        case down
+  enum Key {
+    static let slideAnimation = "slide"
+    static let fadeAnimation = "fade"
+    static let endFadeAnimation = "fade-end"
+  }
+
+  static func fadeAnimation(layer: CALayer, opacity: CGFloat, duration: CFTimeInterval) -> CABasicAnimation {
+    let animation = CABasicAnimation(keyPath: "opacity")
+    animation.fromValue = layer.presentation()?.opacity
+    animation.toValue = opacity
+    animation.fillMode = .both
+    animation.isRemovedOnCompletion = false
+    animation.duration = duration
+    return animation
+  }
+
+  static func slideAnimation(duration: CFTimeInterval, direction: Direction) -> CABasicAnimation {
+    let animation = CABasicAnimation(keyPath: "position")
+    animation.toValue = NSValue(cgPoint: .zero)
+    animation.duration = duration
+    animation.repeatCount = .greatestFiniteMagnitude
+    if direction == .left || direction == .up {
+      animation.speed = -fabsf(animation.speed)
     }
+    return animation
+  }
 
-    struct Key {
-        static let slideAnimation = "slide"
-        static let fadeAnimation = "fade"
-        static let endFadeAnimation = "fade-end"
-    }
+  static func slideRepeat(
+    animation: CAAnimation,
+    duration: CFTimeInterval,
+    direction: Direction
+  ) -> CAAnimation {
+    // swiftlint:disable:next force_cast
+    let anim = animation.copy() as! CAAnimation
+    anim.repeatCount = .greatestFiniteMagnitude
+    anim.duration = duration
+    anim.speed = (direction == .right || direction == .down) ? fabsf(anim.speed) : -fabsf(anim.speed)
+    return anim
+  }
 
-    static func fadeAnimation(layer: CALayer, opacity: CGFloat, duration: CFTimeInterval) -> CABasicAnimation {
-        let animation = CABasicAnimation(keyPath: "opacity")
-        animation.fromValue = layer.presentation()?.opacity
-        animation.toValue = opacity
-        animation.fillMode = .both
-        animation.isRemovedOnCompletion = false
-        animation.duration = duration
-        return animation
-    }
-
-    static func slideAnimation(duration: CFTimeInterval, direction: Direction) -> CABasicAnimation {
-        let animation = CABasicAnimation(keyPath: "position")
-        animation.toValue = NSValue(cgPoint: .zero)
-        animation.duration = duration
-        animation.repeatCount = .greatestFiniteMagnitude
-        if direction == .left || direction == .up {
-            animation.speed = -fabsf(animation.speed)
-        }
-        return animation
-    }
-
-    static func slideRepeat(animation: CAAnimation, duration: CFTimeInterval, direction: Direction) -> CAAnimation {
-        let anim = animation.copy() as! CAAnimation
-        anim.repeatCount = .greatestFiniteMagnitude
-        anim.duration = duration
-        anim.speed = (direction == .right || direction == .down) ? fabsf(anim.speed) : -fabsf(anim.speed)
-        return anim
-    }
-
-    static func slideFinish(animation: CAAnimation) -> CAAnimation {
-        let anim = animation.copy() as! CAAnimation
-        anim.repeatCount = 0
-        return anim
-    }
-
+  static func slideFinish(animation: CAAnimation) -> CAAnimation {
+    // swiftlint:disable:next force_cast
+    let anim = animation.copy() as! CAAnimation
+    anim.repeatCount = 0
+    return anim
+  }
 }
 #endif

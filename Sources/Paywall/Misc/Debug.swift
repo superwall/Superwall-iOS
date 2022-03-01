@@ -10,7 +10,6 @@ import CloudKit
 
 
 @objc public enum LogLevel: Int, CustomStringConvertible {
-
 	case debug = 10
 	case info = 20
 	case warn = 30
@@ -48,40 +47,66 @@ public enum LogScope: String {
 	case all
 }
 
-internal struct Logger {
-	
-	static func shouldPrint(logLevel: LogLevel, scope: LogScope) -> Bool {
-		return Paywall.debugMode && logLevel.rawValue >= (Paywall.logLevel?.rawValue ?? 99) && (Paywall.logScopes.contains(scope) || Paywall.logScopes.contains(.all))
+enum Logger {
+	static func shouldPrint(
+    logLevel: LogLevel,
+    scope: LogScope
+  ) -> Bool {
+    let exceedsCurrentLogLevel = logLevel.rawValue >= (Paywall.logLevel?.rawValue ?? 99)
+    let isInScope = Paywall.logScopes.contains(scope)
+    let allLogsActive = Paywall.logScopes.contains(.all)
+
+    return Paywall.debugMode
+      && exceedsCurrentLogLevel
+      && (isInScope || allLogsActive)
 	}
-	
-	static func debug(logLevel: LogLevel, scope: LogScope, message: String? = nil, info: [String: Any]? = nil, error: Swift.Error? = nil) {
-		var output = [String]()
-		var dumping = [String: Any]()
-		
-		if let m = message {
-			output.append(m)
-		}
-		
-		if let i = info {
-			output.append(i.debugDescription)
-			dumping["info"] = i
-		}
-		
-		if let e = error {
-			output.append(e.localizedDescription)
-			dumping["error"] = e
+
+	static func debug(
+    logLevel: LogLevel,
+    scope: LogScope,
+    message: String? = nil,
+    info: [String: Any]? = nil,
+    error: Swift.Error? = nil
+  ) {
+    var output: [String] = []
+    var dumping: [String: Any] = [:]
+
+    if let message = message {
+			output.append(message)
 		}
 
-		OnMain {
-			Paywall.delegate?.handleLog?(level: logLevel.description, scope: scope.rawValue, message: message, info: info, error: error)
+		if let info = info {
+			output.append(info.debugDescription)
+			dumping["info"] = info
 		}
-		
+
+		if let error = error {
+			output.append(error.localizedDescription)
+			dumping["error"] = error
+		}
+
+		onMain {
+			Paywall.delegate?.handleLog?(
+        level: logLevel.description,
+        scope: scope.rawValue,
+        message: message,
+        info: info,
+        error: error
+      )
+		}
+
 		if shouldPrint(logLevel: logLevel, scope: scope) {
-			let dateString = Date().isoString.replacingOccurrences(of: "T", with: " ").replacingOccurrences(of: "Z", with: "")
-			dump(dumping, name: "[Superwall]  [\(dateString)]  \(logLevel.description)  \(scope.rawValue)  \(message ?? "")", indent: 0, maxDepth: 100, maxItems: 100)
+			let dateString = Date().isoString
+        .replacingOccurrences(of: "T", with: " ")
+        .replacingOccurrences(of: "Z", with: "")
+
+			dump(
+        dumping,
+        name: "[Superwall]  [\(dateString)]  \(logLevel.description)  \(scope.rawValue)  \(message ?? "")",
+        indent: 0,
+        maxDepth: 100,
+        maxItems: 100
+      )
 		}
-	
-	
 	}
-    
 }

@@ -2,51 +2,55 @@ import Foundation
 import StoreKit
 import TPInAppReceipt
 
-class StoreKitManager: NSObject {
-	// Keep a strong reference to the product request.
-	
-	internal static var shared = StoreKitManager()
-	
+final class StoreKitManager: NSObject {
+  // Keep a strong reference to the product request.
+	static var shared = StoreKitManager()
+
 	var productsManager = ProductsManager()
-	var productsById = [String: SKProduct]()
-		
-	func getVariables(forResponse response: PaywallResponse, completion: @escaping ([Variables]) -> ()) {
+  var productsById: [String: SKProduct] = [:]
+
+	func getVariables(
+    forResponse response: PaywallResponse,
+    completion: @escaping ([Variable]) -> Void
+  ) {
 		get(productsWithIds: response.productIds) { productsById in
-			var variables = [Variables]()
-			
-			for p in response.products {
-				if let appleProduct = productsById[p.productId] {
-					variables.append(Variables(key: p.product.rawValue, value: JSON(appleProduct.legacyEventData)))
+      var variables: [Variable] = []
+
+			for product in response.products {
+				if let skProduct = productsById[product.id] {
+          let variable = Variable(
+            key: product.type.rawValue,
+            value: JSON(skProduct.legacyEventData)
+          )
+					variables.append(variable)
 				}
 			}
-			
+
 			completion(variables)
 		}
 	}
-	
-	func get(productsWithIds: [String], completion: (([String: SKProduct]) -> Void)?) {
-		
+
+	func get(
+    productsWithIds: [String],
+    completion: (([String: SKProduct]) -> Void)?
+  ) {
 		let ids = Set<String>(productsWithIds)
-		
+
 		productsManager.products(withIdentifiers: ids) { productsSet in
-			
-			var output = [String: SKProduct]()
-			
-			for p in productsSet {
-				output[p.productIdentifier] = p
-				self.productsById[p.productIdentifier] = p
+      var output: [String: SKProduct] = [:]
+
+			for product in productsSet {
+				output[product.productIdentifier] = product
+				self.productsById[product.productIdentifier] = product
 			}
-			
+
 			completion?(output)
 		}
-		
 	}
-	
-	
 }
 
 //
-//class StoreKitNetworking: NSObject, SKProductsRequestDelegate {
+// class StoreKitNetworking: NSObject, SKProductsRequestDelegate {
 //
 //	var id = UUID().uuidString
 //	var request: SKProductsRequest!
@@ -67,7 +71,7 @@ class StoreKitManager: NSObject {
 //
 //	}
 //
-//	var products = [SKProduct]()
+//	var products: [SKProduct] = []
 //	func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
 //		didLoadProducts = true
 //
@@ -96,4 +100,4 @@ class StoreKitManager: NSObject {
 //
 //
 //
-//}
+// }

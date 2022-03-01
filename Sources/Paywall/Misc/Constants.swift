@@ -11,12 +11,12 @@ import Foundation
  
 Must follow the following format. Version should land on line 21
  
-internal let SDK_VERSION = """
+let sdkVersion = """
 1.0.0
 """
 
 */
 
-internal let SDK_VERSION = """
+let sdkVersion = """
 2.2.9-beta.1
 """

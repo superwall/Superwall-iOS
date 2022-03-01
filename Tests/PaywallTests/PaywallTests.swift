@@ -3,11 +3,9 @@ import XCTest
 
 final class PaywallTests: XCTestCase {
 	func testProductNumber() {
-		
 		// This is an example of a functional test case.
 		// Use XCTAssert and related functions to verify your tests produce the correct
 		// results.
-		
 //		let a = SWProductNumberGroup(value: 0.82, format: .currency, locale: .autoupdatingCurrent)
 //		XCTAssertEqual(a.value, 0.82)
 //		XCTAssertEqual(a.prettyValue, 0.79)
@@ -63,29 +61,22 @@ final class PaywallTests: XCTestCase {
 //		XCTAssertEqual(i.pretty, "90")
 //
 	}
-	
-	func testDateComponents() {
-//		let dateComponents: DateComponents
-//
-//		switch subscriptionPeriod.unit {
-//		case .day: dateComponents = DateComponents(day: subscriptionPeriod.numberOfUnits)
-//		case .week: dateComponents = DateComponents(weekOfMonth: subscriptionPeriod.numberOfUnits)
-//		case .month: dateComponents = DateComponents(month: subscriptionPeriod.numberOfUnits)
-//		case .year: dateComponents = DateComponents(year: subscriptionPeriod.numberOfUnits)
-//		@unknown default:
-//			dateComponents = DateComponents(month: subscriptionPeriod.numberOfUnits)
-//		}
 
-		let f = DateComponentsFormatter()
-		f.unitsStyle = .full
-		f.allowedUnits = [.year]
-		f.allowsFractionalUnits = true
-		
-		
-		print(f.string(from: DateComponents(day: 390)))
-
-		
+  func testDateComponents() {
+    //		let dateComponents: DateComponents
+    //
+    //		switch subscriptionPeriod.unit {
+    //		case .day: dateComponents = DateComponents(day: subscriptionPeriod.numberOfUnits)
+    //		case .week: dateComponents = DateComponents(weekOfMonth: subscriptionPeriod.numberOfUnits)
+    //		case .month: dateComponents = DateComponents(month: subscriptionPeriod.numberOfUnits)
+    //		case .year: dateComponents = DateComponents(year: subscriptionPeriod.numberOfUnits)
+    //		@unknown default:
+    //			dateComponents = DateComponents(month: subscriptionPeriod.numberOfUnits)
+    //		}
+    let formatter = DateComponentsFormatter()
+    formatter.unitsStyle = .full
+    formatter.allowedUnits = [.year]
+    formatter.allowsFractionalUnits = true
+    print(formatter.string(from: DateComponents(day: 390)))
 	}
 }
-
-
