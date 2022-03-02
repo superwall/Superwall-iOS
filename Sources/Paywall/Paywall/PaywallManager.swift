@@ -25,7 +25,11 @@ final class PaywallManager {
 	}
 
 	func cacheKey(for identifier: String?, event: EventData?) -> String {
-		return "\(identifier ?? "$no_id")_\(event?.name ?? "$no_event")_\(DeviceHelper.shared.locale)"
+    let id = identifier ?? "$no_id"
+    let name = event?.name ?? "$no_event"
+    let locale = DeviceHelper.shared.locale
+
+		return "\(id)_\(name)_\(locale)"
 	}
 
 	func removePaywall(identifier: String?, event: EventData?) {
@@ -57,7 +61,10 @@ final class PaywallManager {
 		if let viewController = cache[key], cached {
 			completion?(viewController, nil)
 		} else {
-			PaywallResponseManager.shared.getResponse(identifier: identifier, event: event) { response, error in
+			PaywallResponseManager.shared.getResponse(
+        identifier: identifier,
+        event: event
+      ) { response, error in
 				if let response = response {
 					if let identifier = response.identifier,
             let viewController = self.cache[identifier + DeviceHelper.shared.locale],
@@ -91,11 +98,5 @@ final class PaywallManager {
 				}
 			}
 		}
-	}
-}
-
-extension Dictionary where Value: Equatable {
-	func allKeys(forValue val: Value) -> [Key] {
-		return self.filter { $1 == val }.map { $0.0 }
 	}
 }

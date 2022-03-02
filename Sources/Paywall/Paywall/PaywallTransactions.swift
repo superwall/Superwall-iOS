@@ -35,7 +35,7 @@ extension Paywall {
 			}
 		}
 
-		dismiss(paywallViewController: paywallViewController, userDidPurchase: true, productId: product.productIdentifier)
+		dismiss(paywallViewController, userDidPurchase: true, productId: product.productIdentifier)
 	}
 
 	private func _transactionErrorDidOccur(paywallViewController: SWPaywallViewController, error: SKError?, for product: SKProduct) {
@@ -47,7 +47,7 @@ extension Paywall {
 			paywallViewController.loadingState = .ready
 
 			if !self.didTryToAutoRestore {
-				Paywall.shared.tryToRestore(paywallViewController: paywallViewController)
+				Paywall.shared.tryToRestore(paywallViewController)
 				self.didTryToAutoRestore = true
 			} else {
 				paywallViewController.loadingState = .ready
@@ -61,13 +61,16 @@ extension Paywall {
           message: error?.localizedDescription ?? "",
           actionTitle: "Restore Purchase"
         ) {
-					Paywall.shared.tryToRestore(paywallViewController: paywallViewController)
+					Paywall.shared.tryToRestore(paywallViewController)
 				}
 			}
 		}
 	}
 
-  func tryToRestore(paywallViewController: SWPaywallViewController, userInitiated: Bool = false) {
+  func tryToRestore(
+    _ paywallViewController: SWPaywallViewController,
+    userInitiated: Bool = false
+  ) {
     onMain {
       Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Attempting Restore", info: nil, error: nil)
       if let delegate = Paywall.delegate {
@@ -123,7 +126,7 @@ extension Paywall {
 		if let i = paywallViewController.paywallInfo {
 			Paywall.track(.transactionRestore(paywallInfo: i, product: nil))
 		}
-		dismiss(paywallViewController: paywallViewController, userDidPurchase: true)
+		dismiss(paywallViewController, userDidPurchase: true)
 	}
 
 	// if a parent needs to approve the purchase

@@ -4,30 +4,21 @@ import StoreKit
 import TPInAppReceipt
 import GameController
 
-
-// MARK: Types
-
-extension Paywall {
-	/// Completion block that is optionally passed through `Paywall.present()`. Gets called if an error occurs while presenting a Superwall paywall, or if all paywalls are set to off in your dashboard. It's a good idea to add your legacy paywall presentation logic here just in case :)
-	typealias FallbackBlock = () -> Void
-
-	/// WARNING: Only use this enum to set `Paywall.networkEnvironment` if told so explicitly by the Superwall team.
-	public enum PaywallNetworkEnvironment {
-		/// Default: Use the standard latest environment
-		case release
-		/// WARNING: Use a release candidate environment
-		case releaseCandidate
-		/// WARNING: Use the nightly build environment
-		case developer
-	}
-}
-
-
 /// `Paywall` is the primary class for integrating Superwall into your application. To learn more, read our iOS getting started guide: https://docs.superwall.me/docs/ios
 public final class Paywall: NSObject {
   // MARK: - Public Properties
   /// The object that acts as the delegate of Paywall.
 	@objc public static var delegate: PaywallDelegate?
+
+  /// WARNING: Only use this enum to set `Paywall.networkEnvironment` if told so explicitly by the Superwall team.
+  public enum PaywallNetworkEnvironment {
+    /// Default: Use the standard latest environment
+    case release
+    /// WARNING: Use a release candidate environment
+    case releaseCandidate
+    /// WARNING: Use the nightly build environment
+    case developer
+  }
 
 	/// WARNING: Determines which network environment your SDK should use. Defaults to latest. You should under no circumstance change this unless you received the go-ahead from the Superwall team.
 	public static var networkEnvironment: PaywallNetworkEnvironment = .release
@@ -99,7 +90,7 @@ public final class Paywall: NSObject {
 	var recentlyPresented = false {
 		didSet {
 			if recentlyPresented {
-				DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(700)) {
 					self.recentlyPresented = false
 				}
 			}
@@ -107,7 +98,7 @@ public final class Paywall: NSObject {
 	}
 
 	var isPaywallPresented: Bool {
-		return self.paywallViewController != nil
+		return paywallViewController != nil
 	}
 
   // MARK: - Public Functions
@@ -280,32 +271,6 @@ public final class Paywall: NSObject {
 		}
 	}
 
-
-	func canTriggerPaywall(event: EventData) -> Bool {
-    let isV1Trigger = Store.shared.triggers.contains(event.name)
-    let isV2Trigger = Store.shared.triggers.contains(event.name)
-    if (isV1Trigger || isV2Trigger) && !isPaywallPresented {
-			let name = event.name
-			let allowedInternalEvents = Set(["app_install", "session_start", "app_launch"])
-			guard
-        allowedInternalEvents.contains(name) || InternalEventName(rawValue: name) == nil
-      else {
-				Logger.debug(
-          logLevel: .warn,
-          scope: .paywallCore,
-          message: "Event Used as Trigger",
-          info: ["message": "You can't use events as triggers"],
-          error: nil
-        )
-				return false
-			}
-
-			return true
-		}
-
-		return false
-	}
-
 	func handleTrigger(forEvent event: EventData) {
 		onMain { [weak self] in
 			guard let self = self else {
@@ -346,21 +311,24 @@ extension Paywall: SWPaywallViewControllerDelegate {
     result: PaywallPresentationResult
   ) {
 		// TODO: log this
-
-    //  if let pvc = self.paywallViewController {
-    //	  assert(paywallViewController == pvc)
-    //	}
-
 		onMain { [weak self] in
 			switch result {
 			case .closed:
-				self?.dismiss(paywallViewController: paywallViewController, userDidPurchase: false)
+				self?.dismiss(
+          paywallViewController,
+          userDidPurchase: false
+        )
 			case .initiatePurchase(let productId):
-				guard let product = StoreKitManager.shared.productsById[productId] else { return }
+				guard let product = StoreKitManager.shared.productsById[productId] else {
+          return
+        }
 				paywallViewController.loadingState = .loadingPurchase
 				Paywall.delegate?.purchase(product: product)
 			case .initiateRestore:
-				Paywall.shared.tryToRestore(paywallViewController: paywallViewController, userInitiated: true)
+				Paywall.shared.tryToRestore(
+          paywallViewController,
+          userInitiated: true
+        )
 			case .openedURL(let url):
 				Paywall.delegate?.willOpenURL?(url: url)
 			case .openedDeepLink(let url):

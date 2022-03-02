@@ -13,7 +13,7 @@ extension Paywall {
 	/// - Parameter completion: A completion block of type `(()->())? = nil` that gets called after the paywall is dismissed.
 	@objc public static func dismiss(_ completion: (() -> Void)? = nil) {
 		if let pwv = shared.paywallViewController {
-			shared.dismiss(paywallViewController: pwv, userDidPurchase: false, completion: completion)
+			shared.dismiss(pwv, userDidPurchase: false, completion: completion)
 		}
 	}
 
@@ -304,22 +304,22 @@ extension Paywall {
 
 extension Paywall {
   func dismiss(
-    paywallViewController: SWPaywallViewController,
-    userDidPurchase: Bool? = nil,
+    _ paywallViewController: SWPaywallViewController,
+    userDidPurchase: Bool,
     productId: String? = nil,
     completion: (() -> Void)? = nil
   ) {
 		onMain {
-			if let userDidPurchase = userDidPurchase,
-        let paywallInfo = paywallViewController.paywallInfo {
-        paywallViewController.dismiss(
-          didPurchase: userDidPurchase,
-          productId: productId,
-          paywallInfo: paywallInfo
-        ) {
-          completion?()
-        }
-			}
+      guard let paywallInfo = paywallViewController.paywallInfo else {
+        return
+      }
+      paywallViewController.dismiss(
+        didPurchase: userDidPurchase,
+        productId: productId,
+        paywallInfo: paywallInfo
+      ) {
+        completion?()
+      }
 		}
 	}
 

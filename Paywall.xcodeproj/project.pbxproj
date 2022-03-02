@@ -82,6 +82,9 @@
 		88B8489227CFCA6200935AE4 /* Variable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8489127CFCA6200935AE4 /* Variable.swift */; };
 		88B8489427CFCB8800935AE4 /* PaywallLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8489327CFCB8800935AE4 /* PaywallLogic.swift */; };
 		88B8489627CFCBEC00935AE4 /* InternalEventName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8489527CFCBEC00935AE4 /* InternalEventName.swift */; };
+		88B8489827CFE44300935AE4 /* Dictionary+Keys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8489727CFE44300935AE4 /* Dictionary+Keys.swift */; };
+		88B8489B27CFE61000935AE4 /* TriggerLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8489A27CFE61000935AE4 /* TriggerLogic.swift */; };
+		88B8489D27CFE66C00935AE4 /* ExpressionEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8489C27CFE66C00935AE4 /* ExpressionEvaluator.swift */; };
 		89C930F9AF3E78401DA75EBB /* Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF54D10298EB2DAEBE67770 /* Events.swift */; };
 		8ED134478ED2308C222205C0 /* SWDebugManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0174F2F10C41C0E955B23457 /* SWDebugManager.swift */; };
 		969A24DBD53AD76F6F01BB66 /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = B64A36AB939D7351F687712C /* Device.swift */; };
@@ -172,6 +175,9 @@
 		88B8489127CFCA6200935AE4 /* Variable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Variable.swift; sourceTree = "<group>"; };
 		88B8489327CFCB8800935AE4 /* PaywallLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallLogic.swift; sourceTree = "<group>"; };
 		88B8489527CFCBEC00935AE4 /* InternalEventName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalEventName.swift; sourceTree = "<group>"; };
+		88B8489727CFE44300935AE4 /* Dictionary+Keys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dictionary+Keys.swift"; sourceTree = "<group>"; };
+		88B8489A27CFE61000935AE4 /* TriggerLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerLogic.swift; sourceTree = "<group>"; };
+		88B8489C27CFE66C00935AE4 /* ExpressionEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpressionEvaluator.swift; sourceTree = "<group>"; };
 		A97FBE507568D7EB358372E0 /* SDKJS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKJS.swift; sourceTree = "<group>"; };
 		AB9A6BAF6E54CA507528440E /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
 		B64A36AB939D7351F687712C /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
@@ -223,7 +229,7 @@
 				C3EF821C1CFD440F2C10BD04 /* PaywallPresentation.swift */,
 				BEECF871CEF5502F22C21CF6 /* PaywallTransactions.swift */,
 				CCA3CCA5BA8B08041A798297 /* SWPaywallViewController.swift */,
-				84CB7F6F4F3438F00EC6D681 /* TriggerManager.swift */,
+				88B8489927CFE60500935AE4 /* Trigger Manager */,
 				B1ACB0917547FD193909E9B0 /* ShimmerView */,
 			);
 			path = Paywall;
@@ -294,8 +300,9 @@
 		88B8483727CCF49300935AE4 /* Dictionary */ = {
 			isa = PBXGroup;
 			children = (
-				88B8483327CCF40900935AE4 /* Dictionary+Merging.swift */,
 				88B8483527CCF44500935AE4 /* Dictionary+Filter.swift */,
+				88B8489727CFE44300935AE4 /* Dictionary+Keys.swift */,
+				88B8483327CCF40900935AE4 /* Dictionary+Merging.swift */,
 			);
 			path = Dictionary;
 			sourceTree = "<group>";
@@ -413,6 +420,16 @@
 				88B8484027CD009900935AE4 /* TemplateSubstitutionsPrefix.swift */,
 			);
 			path = Template;
+			sourceTree = "<group>";
+		};
+		88B8489927CFE60500935AE4 /* Trigger Manager */ = {
+			isa = PBXGroup;
+			children = (
+				84CB7F6F4F3438F00EC6D681 /* TriggerManager.swift */,
+				88B8489A27CFE61000935AE4 /* TriggerLogic.swift */,
+				88B8489C27CFE66C00935AE4 /* ExpressionEvaluator.swift */,
+			);
+			path = "Trigger Manager";
 			sourceTree = "<group>";
 		};
 		8DDE3A1F5D9EA72CC0A7E096 /* Sources */ = {
@@ -579,6 +596,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				88B8488E27CFCA3F00935AE4 /* PaywallPresentationStyle.swift in Sources */,
+				88B8489D27CFE66C00935AE4 /* ExpressionEvaluator.swift in Sources */,
 				88B8486627CF999A00935AE4 /* Assignment.swift in Sources */,
 				88B8486127CF996400935AE4 /* EventsResponse.swift in Sources */,
 				A49230BAE35CFBB29870F6DA /* BundleHelper.swift in Sources */,
@@ -615,6 +633,7 @@
 				88B8485F27CF995800935AE4 /* EventData.swift in Sources */,
 				88B8483A27CCF52200935AE4 /* GameControllerEvent.swift in Sources */,
 				88B8482627CCF15400935AE4 /* Date+IsoString.swift in Sources */,
+				88B8489827CFE44300935AE4 /* Dictionary+Keys.swift in Sources */,
 				51B2799C24C8F805897F3BA4 /* PaywallManager.swift in Sources */,
 				88B8487D27CFA4B900935AE4 /* SWProductDiscount.swift in Sources */,
 				88B8487527CFA40E00935AE4 /* SWSubscriptionTemplateVariable.swift in Sources */,
@@ -632,6 +651,7 @@
 				88B8482C27CCF2B400935AE4 /* String+RemoveChars.swift in Sources */,
 				88B8482E27CCF2ED00935AE4 /* Encodable+Dictionary.swift in Sources */,
 				9A7F5ED970C8BC6658A0C604 /* SDKJS.swift in Sources */,
+				88B8489B27CFE61000935AE4 /* TriggerLogic.swift in Sources */,
 				88B8487027CFA3A900935AE4 /* EmptyResponse.swift in Sources */,
 				88B8487B27CFA46F00935AE4 /* SWProduct.swift in Sources */,
 				88B8489627CFCBEC00935AE4 /* InternalEventName.swift in Sources */,

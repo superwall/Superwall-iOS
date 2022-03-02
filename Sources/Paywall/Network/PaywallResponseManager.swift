@@ -10,22 +10,29 @@ import StoreKit
 import TPInAppReceipt
 
 final class PaywallResponseManager: NSObject {
-	static var shared = PaywallResponseManager()
+	static let shared = PaywallResponseManager()
 
+  private let queue = DispatchQueue(label: "PaywallRequests")
 	private var cachedResponsesByIdentifier: [String: PaywallResponse] = [:]
-	private let queue = DispatchQueue(label: "PaywallRequests")
-	private var responsesByHash: [String: (PaywallResponse?, NSError?)] = [:]
+	private var responsesByHash: [String: Result<PaywallResponse, NSError>] = [:]
 	private var handlersByHash: [String: [(PaywallResponse?, NSError?) -> Void]] = [:]
 
-	func requestHash(identifier: String? = nil, event: EventData? = nil) -> String {
-		return "\((identifier ?? event?.name ?? "$called_manually"))_\(DeviceHelper.shared.locale)"
+  typealias PaywallResponseCompletionBlock = (Result<PaywallResponse, NSError>) -> Void
+
+	func requestHash(
+    identifier: String? = nil,
+    event: EventData? = nil
+  ) -> String {
+    let id = identifier ?? event?.name ?? "$called_manually"
+    let locale = DeviceHelper.shared.locale
+		return "\(id)_\(locale)"
 	}
 
   // swiftlint:disable:next cyclomatic_complexity function_body_length
 	func getResponse(
     identifier: String? = nil,
     event: EventData? = nil,
-    completion: @escaping (PaywallResponse?, NSError?) -> Void
+    completion: @escaping PaywallResponseCompletionBlock
   ) {
     var experimentId: String?
     var variantId: String?
@@ -75,8 +82,7 @@ final class PaywallResponseManager: NSObject {
               )
           )
         )
-        completion(nil, error)
-        return
+        return completion(.failure(error))
       case .noRuleMatch:
         let userInfo: [String: Any] = [
           NSLocalizedDescriptionKey: NSLocalizedString(
@@ -97,8 +103,7 @@ final class PaywallResponseManager: NSObject {
               )
           )
         )
-        completion(nil, error)
-        return
+        return completion(.failure(error))
       case .unknownEvent:
         // create the error
         let userInfo: [String: Any] = [
@@ -109,8 +114,7 @@ final class PaywallResponseManager: NSObject {
           )
         ]
         let error = NSError(domain: "SWTriggerDisabled", code: 404, userInfo: userInfo)
-        completion(nil, error)
-        return
+        return completion(.failure(error))
       }
 		}
 
