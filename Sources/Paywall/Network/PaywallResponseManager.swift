@@ -174,7 +174,7 @@ final class PaywallResponseManager: NSObject {
             )
 
             // add its products
-            StoreKitManager.shared.get(productsWithIds: response.productIds) { productsById in
+            StoreKitManager.shared.getProducts(withIds: response.productIds) { productsById in
               var variables: [Variable] = []
               var productVariables: [ProductVariable] = []
               //  var response = response

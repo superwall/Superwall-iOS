@@ -48,7 +48,7 @@ final class SWConsoleViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     view.backgroundColor = darkBackgroundColor
-    title = "Tamplate Variables"
+    title = "Template Variables"
     view.addSubview(tableView)
     view.addSubview(productPicker)
 

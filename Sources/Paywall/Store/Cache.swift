@@ -140,12 +140,12 @@ extension Cache {
   }
 
   /// Write a string for key
-  func write(string: String, forKey key: String) {
+  func write(_ string: String, forKey key: String) {
     write(object: string as NSCoding, forKey: key)
   }
 
   /// Write a dictionary for key
-  func write(dictionary: [AnyHashable: Any], forKey key: String) {
+  func write(_ dictionary: [AnyHashable: Any], forKey key: String) {
     write(object: dictionary as NSCoding, forKey: key)
   }
 

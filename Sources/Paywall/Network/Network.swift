@@ -73,7 +73,7 @@ extension Network {
     let startTime = Date().timeIntervalSince1970
     let requestId = UUID().uuidString
 
-    let auth = "Bearer " + ((isDebugRequest ? Store.shared.debugKey : Store.shared.apiKey) ?? "")
+    let auth = "Bearer " + (isDebugRequest ? (Store.shared.debugKey ?? "") : Store.shared.apiKey)
     request.setValue(auth, forHTTPHeaderField: "Authorization")
     request.setValue("iOS", forHTTPHeaderField: "X-Platform")
     request.setValue("SDK", forHTTPHeaderField: "X-Platform-Environment")
@@ -314,7 +314,6 @@ extension Network {
     request.httpMethod = "GET"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-
     send(request, isDebugRequest: false) { (result: Result<ConfigResponse, Swift.Error>)  in
       switch result {
       case .failure(let error):
@@ -375,7 +374,7 @@ extension Network {
 
 extension Network {
 	func postback(
-    postback: Postback,
+    _ postback: Postback,
     completion: @escaping (Result<PostBackResponse, Swift.Error>) -> Void
   ) {
     // swiftlint:disable:next force_unwrapping

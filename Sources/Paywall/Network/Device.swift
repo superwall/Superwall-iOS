@@ -135,7 +135,7 @@ final class DeviceHelper {
     }
 
     return TemplateDevice(
-      publicApiKey: Store.shared.apiKey ?? "",
+      publicApiKey: Store.shared.apiKey,
       platform: "iOS",
       appUserId: Store.shared.appUserId ?? "",
       aliases: aliases,

@@ -3,17 +3,16 @@ import StoreKit
 import TPInAppReceipt
 
 final class StoreKitManager: NSObject {
-  // Keep a strong reference to the product request.
 	static var shared = StoreKitManager()
-
-	var productsManager = ProductsManager()
   var productsById: [String: SKProduct] = [:]
+
+	private let productsManager = ProductsManager()
 
 	func getVariables(
     forResponse response: PaywallResponse,
     completion: @escaping ([Variable]) -> Void
   ) {
-		get(productsWithIds: response.productIds) { productsById in
+		getProducts(withIds: response.productIds) { productsById in
       var variables: [Variable] = []
 
 			for product in response.products {
@@ -30,11 +29,11 @@ final class StoreKitManager: NSObject {
 		}
 	}
 
-	func get(
-    productsWithIds: [String],
-    completion: (([String: SKProduct]) -> Void)?
+	func getProducts(
+    withIds ids: [String],
+    completion: (([String: SKProduct]) -> Void)? = nil
   ) {
-		let ids = Set<String>(productsWithIds)
+		let ids = Set(ids)
 
 		productsManager.products(withIdentifiers: ids) { productsSet in
       var output: [String: SKProduct] = [:]
@@ -48,56 +47,3 @@ final class StoreKitManager: NSObject {
 		}
 	}
 }
-
-//
-// class StoreKitNetworking: NSObject, SKProductsRequestDelegate {
-//
-//	var id = UUID().uuidString
-//	var request: SKProductsRequest!
-//	var didLoadProducts = false
-//
-//	var onLoadProductsComplete: (() -> ())? = nil
-//
-//	func get(productsWithIds: [String], completion: @escaping () -> ()) {
-//		onLoadProductsComplete = completion
-//		didLoadProducts = false
-//
-//		let productIdentifiers = Set(productsWithIds)
-//		request = SKProductsRequest(productIdentifiers: productIdentifiers)
-//		request.delegate = self
-//		request.start()
-//
-//		Logger.superwallDebug("Fetching products began ... ")
-//
-//	}
-//
-//	var products: [SKProduct] = []
-//	func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-//		didLoadProducts = true
-//
-//		Logger.superwallDebug("Fetching products complete ... ")
-//
-//
-//
-//		if !response.products.isEmpty {
-//		   products = response.products
-//		}
-//
-//		onLoadProductsComplete!()
-//
-//		for invalidId in response.invalidProductIdentifiers {
-//			Logger.superwallDebug("Invalid product identifier: \(invalidId) Did you set the correct SKProduct id in the Superwall web dashboard?")
-//		}
-//	}
-//
-//	func requestDidFinish(_ request: SKRequest) {
-//		Logger.superwallDebug("[StoreKitNetworking] requestDidFinish")
-//	}
-//
-//	func request(_ request: SKRequest, didFailWithError error: Error) {
-//		Logger.superwallDebug("[StoreKitNetworking] didFailWithError Unable to reach App Store Connect", error)
-//	}
-//
-//
-//
-// }

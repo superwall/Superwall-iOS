@@ -83,6 +83,7 @@ class ProductsManager: NSObject {
 	}
 }
 
+// MARK: - SKProductsRequestDelegate
 extension ProductsManager: SKProductsRequestDelegate {
 	func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
 		queue.async { [self] in

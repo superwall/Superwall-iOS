@@ -31,7 +31,7 @@ final class TriggerManager {
     // If we have the config response, all valid triggers should be in reponse
 
     // See if this is a v2 trigger
-    if let triggerV2: TriggerV2 = Store.shared.v2Triggers[eventName] {
+    if let triggerV2 = Store.shared.v2Triggers[eventName] {
       if let rule = self.resolveAndAssign(v2Trigger: triggerV2, eventData: eventData) {
         switch rule.variant {
         case .holdout(let holdout):

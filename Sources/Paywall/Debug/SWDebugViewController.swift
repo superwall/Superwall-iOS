@@ -324,7 +324,7 @@ final class SWDebugViewController: UIViewController {
 
 	func showConsole() {
 		if let paywallResponse = paywallResponse {
-			StoreKitManager.shared.get(productsWithIds: paywallResponse.productIds) { [weak self] productsById in
+			StoreKitManager.shared.getProducts(withIds: paywallResponse.productIds) { [weak self] productsById in
 				onMain {
           var products: [SKProduct] = []
 

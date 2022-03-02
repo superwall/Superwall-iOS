@@ -8,13 +8,20 @@
 import Foundation
 
 final class Store {
-  let cache = Cache(name: "Store")
   static let shared = Store()
 
-  var apiKey: String?
+  var apiKey = ""
   var debugKey: String?
-  var appUserId: String?
-  var aliasId: String?
+  var appUserId: String? {
+    didSet {
+      save()
+    }
+  }
+  var aliasId: String? {
+    didSet {
+      save()
+    }
+  }
 	var didTrackFirstSeen = false
 	var userAttributes = [String: Any]()
 
@@ -22,7 +29,9 @@ final class Store {
     return appUserId ?? aliasId
   }
 	var triggers: Set<String> = Set<String>()
+  // swiftlint:disable:next array_constructor
   var v2Triggers: [String: TriggerV2] = [:]
+  private let cache = Cache(name: "Store")
 
   init() {
     self.appUserId = cache.readString(forKey: "store.appUserId")
@@ -32,24 +41,37 @@ final class Store {
     self.setCachedTriggers()
   }
 
-  // call this when you log out
+  func configure(
+    appUserId: String?,
+    apiKey: String
+  ) {
+    self.appUserId = appUserId
+    self.apiKey = apiKey
+
+    if aliasId == nil {
+      aliasId = StoreLogic.generateAlias()
+    }
+  }
+
+  /// Call this when you log out
   func clear() {
     appUserId = nil
-    aliasId = nil
+    aliasId = StoreLogic.generateAlias()
     didTrackFirstSeen = false
-    userAttributes = [String: Any]()
+    userAttributes = [:]
     triggers.removeAll()
     v2Triggers.removeAll()
     cache.cleanAll()
+    recordFirstSeenTracked()
   }
 
   func save() {
     if let appUserId = appUserId {
-      cache.write(string: appUserId, forKey: "store.appUserId")
+      cache.write(appUserId, forKey: "store.appUserId")
     }
 
     if let aliasId = aliasId {
-      cache.write(string: aliasId, forKey: "store.aliasId")
+      cache.write(aliasId, forKey: "store.aliasId")
     }
 
     var standardUserAttributes: [String: Any] = [:]
@@ -62,82 +84,42 @@ final class Store {
       standardUserAttributes["appUserId"] = appUserId
     }
 
-    add(userAttributes: standardUserAttributes)
+    addUserAttributes(standardUserAttributes)
   }
 
-	func add(config: ConfigResponse) {
-    // swiftlint:disable:next array_constructor
-    var data: [String: Bool] = [:]
+	func addConfig(_ config: ConfigResponse) {
+    let v1TriggerDictionary = StoreLogic.getV1TriggerDictionary(from: config.triggers)
+    cache.write(v1TriggerDictionary, forKey: "store.config")
+    triggers = Set(v1TriggerDictionary.keys)
 
-    config.triggers.filter { trigger in
-      switch trigger.triggerVersion {
-      case .v1:
-        return  true
-      default:
-        return false
-      }
-    }
-    .forEach { data[$0.eventName] = true }
-
-    let v2TriggersArray: [TriggerV2?] = config.triggers.map { trigger in
-      switch trigger.triggerVersion {
-      case .v1:
-        return nil
-      case .v2(let triggerV2):
-        return triggerV2
-      }
-    }
-    .filter { triggerOrNil in
-      return triggerOrNil != nil ? true : false
-    }
-
-    self.v2Triggers = v2TriggersArray.reduce([String: TriggerV2]()) { result, trigger in
-      var result = result
-      guard let unwrappedTrigger = trigger else {
-        return result
-      }
-      result[unwrappedTrigger.eventName] = unwrappedTrigger
-      return result
-    }
-
-    cache.write(dictionary: data, forKey: "store.config")
-		triggers = Set(data.keys)
+    v2Triggers = StoreLogic.getV2TriggerDictionary(from: config.triggers)
 	}
 
-	func add(userAttributes newAttributes: [String: Any]) {
-		var merged = self.userAttributes
-
-		for key in newAttributes.keys {
-			if key != "$is_standard_event" && key != "$application_installed_at" { // ignore these
-				var key = key
-
-				if key.starts(with: "$") { // replace dollar signs
-					key = key.replacingOccurrences(of: "$", with: "")
-				}
-
-				if let value = newAttributes[key] {
-					merged[key] = value
-				} else {
-					merged[key] = nil
-				}
-			}
-		}
-
-		merged["applicationInstalledAt"] = DeviceHelper.shared.appInstallDate // we want camel case
-
-		cache.write(dictionary: merged, forKey: "store.userAttributes")
-		self.userAttributes = merged
+	func addUserAttributes(_ newAttributes: [String: Any]) {
+    let mergedAttributes = StoreLogic.mergeAttributes(
+      newAttributes,
+      with: userAttributes
+    )
+		cache.write(mergedAttributes, forKey: "store.userAttributes")
+    userAttributes = mergedAttributes
 	}
 
 	func recordFirstSeenTracked() {
-		cache.write(string: "true", forKey: "store.didTrackFirstSeen")
+    if didTrackFirstSeen {
+      return
+    }
+
+    Paywall.track(.firstSeen)
+		cache.write("true", forKey: "store.didTrackFirstSeen")
 		didTrackFirstSeen = true
 	}
 
 	private func setCachedTriggers() {
-		let triggerDict: [String: Bool] = (cache.readDictionary(forKey: "store.config") as? [String: Bool]) ?? [:]
-		triggers = Set<String>()
-		for key in Array(triggerDict.keys) {
+    let cachedTriggers = cache.readDictionary(forKey: "store.config") as? [String: Bool]
+		let triggerDict = cachedTriggers ?? [:]
+
+    triggers = []
+		for key in triggerDict.keys {
 			triggers.insert(key)
 		}
 	}

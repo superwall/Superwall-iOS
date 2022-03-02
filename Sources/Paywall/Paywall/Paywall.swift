@@ -24,7 +24,7 @@ extension Paywall {
 
 
 /// `Paywall` is the primary class for integrating Superwall into your application. To learn more, read our iOS getting started guide: https://docs.superwall.me/docs/ios
-public class Paywall: NSObject {
+public final class Paywall: NSObject {
   // MARK: - Public Properties
   /// The object that acts as the delegate of Paywall.
 	@objc public static var delegate: PaywallDelegate?
@@ -86,7 +86,6 @@ public class Paywall: NSObject {
 	var triggerPaywallResponseIsLoading = Set<String>()
   var productsById: [String: SKProduct] = [:]
 	var didTryToAutoRestore = false
-	var didAddPaymentQueueObserver = false
   var eventsTrackedBeforeConfigWasFetched: [EventData] = []
 	var paywallWasPresentedThisSession = false
 	var lastAppClose: Date?
@@ -107,31 +106,25 @@ public class Paywall: NSObject {
 		}
 	}
 
-	private var apiKey: String? {
-		return Store.shared.apiKey
-	}
-	private var appUserId: String? {
-		return Store.shared.appUserId
-	}
-	private var aliasId: String? {
-		return Store.shared.aliasId
-	}
-
 	var isPaywallPresented: Bool {
 		return self.paywallViewController != nil
 	}
-
-  deinit {
-    removeActiveStateObservers()
-  }
 
   // MARK: - Public Functions
 	/// Configures an instance of Superwall's Paywall SDK with a specified API key. If you don't pass through a userId, we'll create one for you. Calling `Paywall.identify(userId: String)` in the future will automatically alias these two for simple reporting.
 	///  - Parameter apiKey: Your Public API Key from: https://superwall.me/applications/1/settings/keys
 	///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
 	@discardableResult
-	@objc public static func configure(apiKey: String, userId: String? = nil) -> Paywall {
-		shared = Paywall(apiKey: apiKey, userId: userId)
+	@objc public static func configure(
+    apiKey: String,
+    userId: String? = nil,
+    delegate: PaywallDelegate? = nil
+  ) -> Paywall {
+		shared = Paywall(
+      apiKey: apiKey,
+      userId: userId,
+      delegate: delegate
+    )
 		return shared
 	}
 
@@ -139,12 +132,11 @@ public class Paywall: NSObject {
 	///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
 	@discardableResult
 	@objc public static func identify(userId: String) -> Paywall {
-		if Store.shared.userId != userId { // refetch the paywall, we don't know if the alias was for an existing user
-			shared.set(appUserID: userId)
+    // refetch the paywall, we don't know if the alias was for an existing user
+    if Store.shared.userId != userId {
 			PaywallManager.shared.clearCache()
-		} else {
-			shared.set(appUserID: userId)
 		}
+    Store.shared.appUserId = userId
 
 		return shared
 	}
@@ -152,22 +144,22 @@ public class Paywall: NSObject {
 	/// Resets the userId stored by Superwall. Call this when your user signs out.
 	@discardableResult
 	@objc public static func reset() -> Paywall {
-		if Store.shared.appUserId != nil {
-			Store.shared.clear()
-			shared.setAliasIfNeeded()
-			PaywallManager.shared.clearCache()
-			shared.fetchConfiguration()
+    guard Store.shared.appUserId != nil else {
+      return shared
+    }
 
-			if !Store.shared.didTrackFirstSeen {
-				Paywall.track(.firstSeen)
-				Store.shared.recordFirstSeenTracked()
-			}
-		}
-		return shared
+    Store.shared.clear()
+    PaywallManager.shared.clearCache()
+    shared.fetchConfiguration()
+
+    return shared
 	}
 
 	/// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`
-	public static func gamepadValueChanged(gamepad: GCExtendedGamepad, element: GCControllerElement) {
+	public static func gamepadValueChanged(
+    gamepad: GCExtendedGamepad,
+    element: GCControllerElement
+  ) {
 		GameControllerManager.shared.gamepadValueChanged(gamepad: gamepad, element: element)
 	}
 
@@ -182,42 +174,97 @@ public class Paywall: NSObject {
 	/// Use this to preload a paywall before presenting it. Only necessary if you are manually specifying which paywall to present later — Superwall automatically does this otherwise.
 	///  - Parameter identifier: The identifier of the paywall you would like to load in the background, as found in your paywall's settings in the dashboard.
 	@objc public static func load(identifier: String) {
-		PaywallManager.shared.viewController(identifier: identifier, event: nil, cached: true, completion: nil)
+		PaywallManager.shared.viewController(
+      identifier: identifier,
+      event: nil,
+      cached: true,
+      completion: nil
+    )
 	}
 
   // MARK: - Private Functions
-	private init(apiKey: String?, userId: String? = nil) {
+	private init(
+    apiKey: String?,
+    userId: String? = nil,
+    delegate: PaywallDelegate? = nil
+  ) {
 		super.init()
-		if apiKey == nil {
+		guard let apiKey = apiKey else {
 			return
 		}
+    Store.shared.configure(
+      appUserId: userId,
+      apiKey: apiKey
+    )
 
-		if let uid = userId {
-			self.set(appUserID: uid)
-		}
-
-		Store.shared.apiKey = apiKey
-
-		setAliasIfNeeded()
-
-		if !didAddPaymentQueueObserver {
-			SKPaymentQueue.default().add(self)
-			didAddPaymentQueueObserver = true
-		}
-
-		self.addActiveStateObservers()
-
+    Self.delegate = delegate
+    SKPaymentQueue.default().add(self)
+		addActiveStateObservers()
 		fetchConfiguration()
 	}
+
+  deinit {
+    removeActiveStateObservers()
+  }
+
+  private func removeActiveStateObservers() {
+    NotificationCenter.default.removeObserver(
+      self,
+      name: UIApplication.willResignActiveNotification,
+      object: nil
+    )
+    NotificationCenter.default.removeObserver(
+      self,
+      name: UIApplication.didBecomeActiveNotification,
+      object: nil
+    )
+  }
+
+  private func addActiveStateObservers() {
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(applicationWillResignActive),
+      name: UIApplication.willResignActiveNotification,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(applicationDidBecomeActive),
+      name: UIApplication.didBecomeActiveNotification,
+      object: nil
+    )
+  }
+
+  @objc private func applicationWillResignActive() {
+    Paywall.track(.appClose)
+    lastAppClose = Date()
+  }
+
+  @objc private func applicationDidBecomeActive() {
+    Paywall.track(.appOpen)
+
+    let twoMinsAgo = 120.0
+    let lastAppClose = -(lastAppClose?.timeIntervalSinceNow ?? 0)
+
+    if lastAppClose > twoMinsAgo {
+      Paywall.track(.sessionStart)
+    }
+
+    if !didTrackLaunch {
+      Paywall.track(.appLaunch)
+      didTrackLaunch = true
+    }
+
+    Store.shared.recordFirstSeenTracked()
+  }
 
 	private func fetchConfiguration() {
 		Network.shared.config { [weak self] result in
       switch result {
       case .success(let config):
-        Store.shared.add(config: config)
+        Store.shared.addConfig(config)
         self?.didFetchConfig = true
         config.cache()
-        config.executePostback()
         self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleTrigger(forEvent: $0) }
         self?.eventsTrackedBeforeConfigWasFetched.removeAll()
       case .failure(let error):
@@ -233,19 +280,6 @@ public class Paywall: NSObject {
 		}
 	}
 
-	private func setAliasIfNeeded() {
-		if Store.shared.aliasId == nil {
-			Store.shared.aliasId = "$SuperwallAlias:\(UUID().uuidString)"
-			Store.shared.save()
-		}
-	}
-
-	@discardableResult
-	private func set(appUserID: String) -> Paywall {
-		Store.shared.appUserId = appUserID
-		Store.shared.save()
-		return self
-	}
 
 	func canTriggerPaywall(event: EventData) -> Bool {
     let isV1Trigger = Store.shared.triggers.contains(event.name)
@@ -277,68 +311,40 @@ public class Paywall: NSObject {
 			guard let self = self else {
         return
       }
+      guard self.didFetchConfig else {
+        return self.eventsTrackedBeforeConfigWasFetched.append(event)
+      }
 
-			if !self.didFetchConfig {
-				self.eventsTrackedBeforeConfigWasFetched.append(event)
-			} else {
-				if self.canTriggerPaywall(event: event) {
-					// delay in case they are presenting a view controller alongside an event they are calling
-					DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-						Paywall.present(fromEvent: event)
-					}
-				}
-			}
+      let canTriggerPaywall = PaywallLogic.canTriggerPaywall(
+        eventName: event.name,
+        triggers: Store.shared.triggers,
+        isPaywallPresented: self.isPaywallPresented
+      )
+
+      if canTriggerPaywall {
+        // delay in case they are presenting a view controller alongside an event they are calling
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
+          Paywall.present(fromEvent: event)
+        }
+      } else {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .paywallCore,
+          message: "Event Used as Trigger",
+          info: ["message": "You can't use events as triggers"],
+          error: nil
+        )
+      }
 		}
 	}
 }
 
-extension Paywall {
-	func removeActiveStateObservers() {
-		NotificationCenter.default.removeObserver(self, name: UIApplication.willResignActiveNotification, object: nil)
-		NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
-	}
-
-	func addActiveStateObservers() {
-		NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(applicationWillResignActive(_:)),
-      name: UIApplication.willResignActiveNotification,
-      object: nil
-    )
-		NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(applicationDidBecomeActive(_:)),
-      name: UIApplication.didBecomeActiveNotification,
-      object: nil
-    )
-	}
-
-	@objc func applicationWillResignActive(_ sender: AnyObject? = nil) {
-		Paywall.track(.appClose)
-		lastAppClose = Date()
-	}
-
-	@objc func applicationDidBecomeActive(_ sender: AnyObject? = nil) {
-		Paywall.track(.appOpen)
-
-		if Date().timeIntervalSince1970 - (lastAppClose?.timeIntervalSince1970 ?? 0) > 120.0 {
-			Paywall.track(.sessionStart)
-		}
-
-		if !didTrackLaunch {
-			Paywall.track(.appLaunch)
-			didTrackLaunch = true
-		}
-
-		if !Store.shared.didTrackFirstSeen {
-			Paywall.track(.firstSeen)
-			Store.shared.recordFirstSeenTracked()
-		}
-	}
-}
-
+// MARK: - SWPaywallViewControllerDelegate
 extension Paywall: SWPaywallViewControllerDelegate {
-	func eventDidOccur(paywallViewController: SWPaywallViewController, result: PaywallPresentationResult) {
+	func eventDidOccur(
+    paywallViewController: SWPaywallViewController,
+    result: PaywallPresentationResult
+  ) {
 		// TODO: log this
 
     //  if let pvc = self.paywallViewController {
@@ -364,26 +370,4 @@ extension Paywall: SWPaywallViewControllerDelegate {
 			}
 		}
 	}
-
-//	func paywallEventDidOccur(result: PaywallPresentationResult) {
-//		OnMain { [weak self] in
-//			switch result {
-//			case .closed:
-//				self?._dismiss(userDidPurchase: false)
-//			case .initiatePurchase(let productId):
-//				// TODO: make sure this can NEVER happen
-//					guard let product = StoreKitManager.shared.productsById[productId] else { return }
-//				self?.paywallViewController?.loadingState = .loadingPurchase
-//				Paywall.delegate?.purchase(product: product)
-//			case .initiateRestore:
-//				Paywall.shared.tryToRestore(userInitiated: true)
-//			case .openedURL(let url):
-//				Paywall.delegate?.willOpenURL?(url: url)
-//			case .openedDeepLink(let url):
-//				Paywall.delegate?.willOpenDeepLink?(url: url)
-//			case .custom(let string):
-//				Paywall.delegate?.handleCustomPaywallAction?(withName: string)
-//			}
-//		}
-//	}
 }

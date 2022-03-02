@@ -7,6 +7,10 @@
 
 import UIKit
 
+struct PaywallsResponse: Decodable {
+  var paywalls: [PaywallResponse]
+}
+
 struct PaywallResponse: Decodable {
   var id: String?
   var name: String?
