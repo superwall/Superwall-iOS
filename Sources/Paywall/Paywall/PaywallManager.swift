@@ -64,38 +64,42 @@ final class PaywallManager {
 			PaywallResponseManager.shared.getResponse(
         identifier: identifier,
         event: event
-      ) { response, error in
-				if let response = response {
-					if let identifier = response.identifier,
+      ) { result in
+        switch result {
+        case .success(let response):
+          if let identifier = response.identifier,
             let viewController = self.cache[identifier + DeviceHelper.shared.locale],
             cached {
-						completion?(viewController, nil)
-					} else {
-						if let viewController = SWPaywallViewController(paywallResponse: response, delegate: Paywall.shared) {
-							if let window = UIApplication.shared.keyWindow {
-								viewController.view.alpha = 0.01
+            completion?(viewController, nil)
+          } else {
+            if let viewController = SWPaywallViewController(
+              paywallResponse: response,
+              delegate: Paywall.shared
+            ) {
+              if let window = UIApplication.shared.keyWindow {
+                viewController.view.alpha = 0.01
                 window.addSubview(viewController.view)
-								viewController.view.transform = CGAffineTransform(
+                viewController.view.transform = CGAffineTransform(
                   translationX: UIScreen.main.bounds.width,
                   y: 0
                 )
                 .scaledBy(x: 0.1, y: 0.1)
-							}
+              }
 
-							self.cache[key] = viewController
+              self.cache[key] = viewController
 
-							if let identifier = response.identifier {
-								self.cache[identifier + DeviceHelper.shared.locale] = viewController
-							}
+              if let identifier = response.identifier {
+                self.cache[identifier + DeviceHelper.shared.locale] = viewController
+              }
 
-							completion?(viewController, nil)
-						} else {
-							completion?(nil, NSError(domain: "Failed to create PaywallViewController", code: 104, userInfo: nil))
-						}
-					}
-				} else {
-					completion?(nil, error)
-				}
+              completion?(viewController, nil)
+            } else {
+              completion?(nil, NSError(domain: "Failed to create PaywallViewController", code: 104, userInfo: nil))
+            }
+          }
+        case .failure(let error):
+          completion?(nil, error)
+        }
 			}
 		}
 	}

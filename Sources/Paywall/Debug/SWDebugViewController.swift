@@ -215,24 +215,37 @@ final class SWDebugViewController: UIViewController {
 			paywallIdentifier = pid
 		}
 
-		PaywallResponseManager.shared.getResponse(identifier: pid, event: nil) { [weak self] response, error in
-			self?.paywallResponse = response
+		PaywallResponseManager.shared.getResponse(
+      identifier: pid,
+      event: nil
+    ) { [weak self] result in
+      guard let self = self else {
+        return
+      }
+      switch result {
+      case .success(let response):
+        self.paywallResponse = response
 
-			onMain { [weak self] in
-				self?.previewPickerButton.setTitle("\(response?.name ?? "Preview")", for: .normal)
-			}
+        onMain {
+          self.previewPickerButton.setTitle("\(response.name ?? "Preview")", for: .normal)
+        }
 
-			if let paywallResponse = self?.paywallResponse {
-				StoreKitManager.shared.getVariables(forResponse: paywallResponse) { variables in
-					self?.paywallResponse?.variables = variables
-					onMain { [weak self] in
-						self?.activityIndicator.stopAnimating()
-						self?.addPaywallPreview()
-					}
-				}
-			} else {
-				Logger.debug(logLevel: .error, scope: .debugViewController, message: "No Paywall Response", info: nil, error: error)
-			}
+        StoreKitManager.shared.getVariables(forResponse: response) { variables in
+          self.paywallResponse?.variables = variables
+          onMain {
+            self.activityIndicator.stopAnimating()
+            self.addPaywallPreview()
+          }
+        }
+      case .failure(let error):
+        Logger.debug(
+          logLevel: .error,
+          scope: .debugViewController,
+          message: "No Paywall Response",
+          info: nil,
+          error: error
+        )
+      }
 		}
 	}
 

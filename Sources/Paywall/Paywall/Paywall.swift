@@ -91,8 +91,8 @@ public final class Paywall: NSObject {
 		didSet {
 			if recentlyPresented {
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(700)) {
-					self.recentlyPresented = false
-				}
+          self.recentlyPresented = false
+        }
 			}
 		}
 	}

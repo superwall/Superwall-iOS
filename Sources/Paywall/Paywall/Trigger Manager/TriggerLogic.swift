@@ -13,7 +13,7 @@ enum TriggerLogic {
     var result: HandleEventResult
   }
 
-  static func triggerOutcome(
+  static func outcome(
     forEventName eventName: String,
     eventData: EventData?,
     v1Triggers: Set<String>,

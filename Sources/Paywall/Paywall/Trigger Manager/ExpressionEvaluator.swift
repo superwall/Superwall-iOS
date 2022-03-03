@@ -44,7 +44,7 @@ enum ExpressionEvaluator {
       let lineNumber = value.objectForKeyedSubscript("line")
 
       let columnNumber = value.objectForKeyedSubscript("column")
-      
+
       // swiftlint:disable:next line_length
       let moreInfo = "In method \(String(describing: stackTraceString)), Line number in file: \(String(describing: lineNumber)), column: \(String(describing: columnNumber))"
       Logger.debug(

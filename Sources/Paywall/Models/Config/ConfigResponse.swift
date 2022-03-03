@@ -66,7 +66,7 @@ struct ConfigResponse: Decodable {
       // Preload the response for that trigger
       PaywallResponseManager.shared.getResponse(
         event: eventData
-      ) { _, _ in }
+      ) { _ in }
     }
   }
 

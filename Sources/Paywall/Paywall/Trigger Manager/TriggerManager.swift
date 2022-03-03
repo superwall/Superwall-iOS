@@ -20,15 +20,13 @@ enum HandleEventResult {
   case presentIdentifier(String, String, String)
 }
 
-final class TriggerManager {
-  static let shared = TriggerManager()
-
-  func handleEvent(
+enum TriggerManager {
+  static func handleEvent(
     eventName: String,
     eventData: EventData?
   ) -> HandleEventResult {
     // If we have the config response, all valid triggers should be in response
-    let outcome = TriggerLogic.triggerOutcome(
+    let outcome = TriggerLogic.outcome(
       forEventName: eventName,
       eventData: eventData,
       v1Triggers: Store.shared.triggers,

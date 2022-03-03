@@ -17,9 +17,9 @@ public final class TriggerInfo: NSObject {
 
   init(
     result: String,
-    experimentId: String?,
-    variantId: String?,
-    paywallIdentifier: String?
+    experimentId: String? = nil,
+    variantId: String? = nil,
+    paywallIdentifier: String? = nil
   ) {
     self.result = result
     self.experimentId = experimentId
