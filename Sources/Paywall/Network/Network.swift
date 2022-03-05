@@ -39,6 +39,7 @@ extension Network {
     case notAuthenticated
     case decoding
     case notFound
+    case invalidUrl
 
     var errorDescription: String? {
       switch self {
@@ -46,6 +47,7 @@ extension Network {
       case .notAuthenticated: return NSLocalizedString("Unauthorized.", comment: "")
       case .decoding: return NSLocalizedString("Decoding error.", comment: "")
       case .notFound: return NSLocalizedString("Not found", comment: "")
+      case .invalidUrl: return NSLocalizedString("URL invalid", comment: "")
       }
     }
   }
@@ -59,6 +61,7 @@ extension Network {
     isDebugRequest: Bool = false,
     completion: @escaping (Result<ResponseType, Swift.Error>) -> Void
   ) {
+    
     var request = request
     Logger.debug(
       logLevel: .debug,

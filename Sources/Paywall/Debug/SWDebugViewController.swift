@@ -250,42 +250,46 @@ final class SWDebugViewController: UIViewController {
 	}
 
   func addPaywallPreview() {
-    if let child = SWPaywallViewController(paywallResponse: paywallResponse, delegate: nil) {
-      addChild(child)
-      previewContainerView.insertSubview(child.view, at: 0)
-      previewViewContent = child.view
-      child.didMove(toParent: self)
-      child.view.translatesAutoresizingMaskIntoConstraints = false
-      child.view.isUserInteractionEnabled = false
-      NSLayoutConstraint.activate([
-        child.view.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 1.0),
-        child.view.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 1.0),
-        child.view.centerYAnchor.constraint(equalTo: previewContainerView.centerYAnchor),
-        child.view.centerXAnchor.constraint(equalTo: previewContainerView.centerXAnchor)
-      ])
+    let child = SWPaywallViewController(
+      paywallResponse: paywallResponse
+    )
+    addChild(child)
+    previewContainerView.insertSubview(child.view, at: 0)
+    previewViewContent = child.view
+    child.didMove(toParent: self)
 
-      child.view.clipsToBounds = true
-      child.view.layer.borderColor = UIColor.white.withAlphaComponent(0.25).cgColor
-      child.view.layer.borderWidth = 1.0
-      child.view.alpha = 0.0
+    child.view.translatesAutoresizingMaskIntoConstraints = false
+    child.view.isUserInteractionEnabled = false
 
-      let ratio = CGFloat(Double(previewContainerView.frame.size.height / view.frame.size.height))
+    NSLayoutConstraint.activate([
+      child.view.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 1.0),
+      child.view.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 1.0),
+      child.view.centerYAnchor.constraint(equalTo: previewContainerView.centerYAnchor),
+      child.view.centerXAnchor.constraint(equalTo: previewContainerView.centerXAnchor)
+    ])
 
-      child.view.transform = CGAffineTransform.identity.scaledBy(x: ratio, y: ratio)
+    child.view.clipsToBounds = true
+    child.view.layer.borderColor = UIColor.white.withAlphaComponent(0.25).cgColor
+    child.view.layer.borderWidth = 1.0
+    child.view.layer.cornerRadius = 52
+    child.view.alpha = 0.0
 
-      child.view.layer.cornerRadius = 52
+    let ratio = previewContainerView.frame.size.height / view.frame.size.height
 
-      if #available(iOS 13.0, *) {
-        child.view.layer.cornerCurve = .continuous
-      }
+    child.view.transform = CGAffineTransform.identity.scaledBy(
+      x: ratio,
+      y: ratio
+    )
 
-      UIView.animate(
-        withDuration: 0.25,
-        delay: 0.1,
-        options: []
-      ) {
-        child.view.alpha = 1.0
-      }
+    if #available(iOS 13.0, *) {
+      child.view.layer.cornerCurve = .continuous
+    }
+
+    UIView.animate(
+      withDuration: 0.25,
+      delay: 0.1
+    ) {
+      child.view.alpha = 1.0
     }
   }
 

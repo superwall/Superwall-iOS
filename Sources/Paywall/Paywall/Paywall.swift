@@ -73,8 +73,6 @@ public final class Paywall: NSObject {
 	static var isFreeTrialAvailableOverride: Bool?
 
 	var presentingWindow: UIWindow?
-  /// used to keep track of which triggers are loading paywalls, so we don't do it 100 times
-	var triggerPaywallResponseIsLoading = Set<String>()
   var productsById: [String: SKProduct] = [:]
 	var didTryToAutoRestore = false
   var eventsTrackedBeforeConfigWasFetched: [EventData] = []
@@ -165,8 +163,8 @@ public final class Paywall: NSObject {
 	/// Use this to preload a paywall before presenting it. Only necessary if you are manually specifying which paywall to present later — Superwall automatically does this otherwise.
 	///  - Parameter identifier: The identifier of the paywall you would like to load in the background, as found in your paywall's settings in the dashboard.
 	@objc public static func load(identifier: String) {
-		PaywallManager.shared.viewController(
-      identifier: identifier,
+		PaywallManager.shared.getPaywallViewController(
+      withIdentifier: identifier,
       event: nil,
       cached: true,
       completion: nil
@@ -289,7 +287,7 @@ public final class Paywall: NSObject {
       if canTriggerPaywall {
         // delay in case they are presenting a view controller alongside an event they are calling
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
-          Paywall.present(fromEvent: event)
+          Paywall.internallyPresent(fromEvent: event)
         }
       } else {
         Logger.debug(
@@ -314,9 +312,9 @@ extension Paywall: SWPaywallViewControllerDelegate {
 		onMain { [weak self] in
 			switch result {
 			case .closed:
-				self?.dismiss(
+        self?.dismiss(
           paywallViewController,
-          userDidPurchase: false
+          state: .closed
         )
 			case .initiatePurchase(let productId):
 				guard let product = StoreKitManager.shared.productsById[productId] else {

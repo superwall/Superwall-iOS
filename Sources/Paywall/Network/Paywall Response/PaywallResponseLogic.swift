@@ -10,9 +10,9 @@ import StoreKit
 import TPInAppReceipt
 
 struct TriggerResponseIdentifiers {
-  let paywallId: String
-  let experimentId: String
-  let variantId: String
+  let paywallId: String?
+  let experimentId: String?
+  let variantId: String?
 }
 
 enum PaywallResponseLogic {
@@ -46,14 +46,23 @@ enum PaywallResponseLogic {
 
   // swiftlint:disable:next function_body_length
   static func handleTriggerResponse(
+    withPaywallId paywallId: String?,
     fromEvent event: EventData?,
     didFetchConfig: Bool
-  ) throws -> TriggerResponseIdentifiers? {
+  ) throws -> TriggerResponseIdentifiers {
     guard didFetchConfig else {
-      return nil
+      return TriggerResponseIdentifiers(
+        paywallId: paywallId,
+        experimentId: nil,
+        variantId: nil
+      )
     }
     guard let eventName = event?.name else {
-      return nil
+      return TriggerResponseIdentifiers(
+        paywallId: paywallId,
+        experimentId: nil,
+        variantId: nil
+      )
     }
 
     let triggerResponse = TriggerManager.handleEvent(
@@ -63,7 +72,11 @@ enum PaywallResponseLogic {
 
     switch triggerResponse {
     case .presentV1:
-      return nil
+      return TriggerResponseIdentifiers(
+        paywallId: paywallId,
+        experimentId: nil,
+        variantId: nil
+      )
     case let .presentIdentifier(experimentIdentifier, variantIdentifier, paywallIdentifier):
       let outcome = TriggerResponseIdentifiers(
         paywallId: paywallIdentifier,

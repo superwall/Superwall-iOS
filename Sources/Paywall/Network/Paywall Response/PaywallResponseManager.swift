@@ -24,12 +24,13 @@ final class PaywallResponseManager: NSObject {
   ) {
     do {
       let triggerIdentifiers = try PaywallResponseLogic.handleTriggerResponse(
+        withPaywallId: identifier,
         fromEvent: event,
         didFetchConfig: Paywall.shared.didFetchConfig
       )
 
       let paywallRequestHash = PaywallResponseLogic.requestHash(
-        identifier: triggerIdentifiers?.paywallId,
+        identifier: triggerIdentifiers.paywallId,
         event: event
       )
 

@@ -28,8 +28,8 @@ struct ConfigResponse: Decodable {
       StoreKitManager.shared.getProducts(withIds: productIds)
 
       // cache the view controller
-      PaywallManager.shared.viewController(
-        identifier: paywall.identifier,
+      PaywallManager.shared.getPaywallViewController(
+        withIdentifier: paywall.identifier,
         event: nil,
         cached: true,
         completion: nil
@@ -41,13 +41,13 @@ struct ConfigResponse: Decodable {
     let triggerPaywallIds = ConfigResponseLogic.getPaywallIds(from: triggers)
     // Pre-load all the paywalls from v2 triggers
     for id in triggerPaywallIds {
-      PaywallManager.shared.viewController(identifier: id, event: nil, cached: true, completion: nil)
+      PaywallManager.shared.getPaywallViewController(withIdentifier: id, event: nil, cached: true, completion: nil)
     }
   }
 
   private func preloadDefaultPaywall() {
     // cache paywall.present(), when identifier and event is nil
-    PaywallManager.shared.viewController(identifier: nil, event: nil, cached: true, completion: nil)
+    PaywallManager.shared.getPaywallViewController(withIdentifier: nil, event: nil, cached: true, completion: nil)
   }
 
   private func preloadTriggerResponses() {

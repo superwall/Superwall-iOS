@@ -150,32 +150,3 @@ final class DeviceHelper {
     )
   }
 }
-
-extension UIDevice {
-  static var modelName: String {
-    var systemInfo = utsname()
-    uname(&systemInfo)
-    let machineMirror = Mirror(reflecting: systemInfo.machine)
-    return machineMirror.children.reduce("") { identifier, element in
-      guard let value = element.value as? Int8, value != 0 else { return identifier }
-      return identifier + String(UnicodeScalar(UInt8(value)))
-    }
-  }
-}
-
-extension Bundle {
-  var superwallClientId: String? {
-    return infoDictionary?["SuperwallClientId"] as? String
-  }
-
-  var releaseVersionNumber: String? {
-    return infoDictionary?["CFBundleShortVersionString"] as? String
-  }
-  var buildVersionNumber: String? {
-    return infoDictionary?["CFBundleVersion"] as? String
-  }
-
-  var applicationQuerySchemes: [String] {
-    return infoDictionary?["LSApplicationQueriesSchemes"] as? [String] ?? []
-  }
-}

@@ -8,12 +8,14 @@
 import Foundation
 import StoreKit
 
-
 extension Paywall {
 	// purchase callbacks
-	private func _transactionDidBegin(paywallViewController: SWPaywallViewController, for product: SKProduct) {
-		if let i = paywallViewController.paywallInfo {
-			Paywall.track(.transactionStart(paywallInfo: i, product: product))
+	private func transactionDidBegin(
+    paywallViewController: SWPaywallViewController,
+    for product: SKProduct
+  ) {
+		if let paywallInfo = paywallViewController.paywallInfo {
+			Paywall.track(.transactionStart(paywallInfo: paywallInfo, product: product))
 		}
 
 		paywallViewController.loadingState = .loadingPurchase
@@ -23,22 +25,31 @@ extension Paywall {
 		}
 	}
 
-	private func _transactionDidSucceed(paywallViewController: SWPaywallViewController, for product: SKProduct) {
-		if let i = paywallViewController.paywallInfo {
-			Paywall.track(.transactionComplete(paywallInfo: i, product: product))
+	private func transactionDidSucceed(
+    paywallViewController: SWPaywallViewController,
+    for product: SKProduct
+  ) {
+    if let paywallInfo = paywallViewController.paywallInfo {
+			Paywall.track(.transactionComplete(paywallInfo: paywallInfo, product: product))
 			if let freeTrialAvailable = paywallViewController.paywallResponse?.isFreeTrialAvailable {
 				if freeTrialAvailable {
-					Paywall.track(.freeTrialStart(paywallInfo: i, product: product))
+					Paywall.track(.freeTrialStart(paywallInfo: paywallInfo, product: product))
 				} else {
-					Paywall.track(.subscriptionStart(paywallInfo: i, product: product))
+					Paywall.track(.subscriptionStart(paywallInfo: paywallInfo, product: product))
 				}
 			}
 		}
-
-		dismiss(paywallViewController, userDidPurchase: true, productId: product.productIdentifier)
+    dismiss(
+      paywallViewController,
+      state: .purchased(productId: product.productIdentifier)
+    )
 	}
 
-	private func _transactionErrorDidOccur(paywallViewController: SWPaywallViewController, error: SKError?, for product: SKProduct) {
+	private func transactionErrorDidOccur(
+    paywallViewController: SWPaywallViewController,
+    error: SKError?,
+    for product: SKProduct
+  ) {
 		// prevent a recursive loop
 		onMain { [weak self] in
 			guard let self = self else {
@@ -46,14 +57,17 @@ extension Paywall {
       }
 			paywallViewController.loadingState = .ready
 
-			if !self.didTryToAutoRestore {
-				Paywall.shared.tryToRestore(paywallViewController)
-				self.didTryToAutoRestore = true
-			} else {
+			if self.didTryToAutoRestore {
 				paywallViewController.loadingState = .ready
 
-				if let i = paywallViewController.paywallInfo {
-					Paywall.track(.transactionFail(paywallInfo: i, product: product, message: error?.localizedDescription ?? ""))
+				if let paywallInfo = paywallViewController.paywallInfo {
+					Paywall.track(
+            .transactionFail(
+              paywallInfo: paywallInfo,
+              product: product,
+              message: error?.localizedDescription ?? ""
+            )
+          )
 				}
 
 				self.paywallViewController?.presentAlert(
@@ -63,7 +77,10 @@ extension Paywall {
         ) {
 					Paywall.shared.tryToRestore(paywallViewController)
 				}
-			}
+      } else {
+        Paywall.shared.tryToRestore(paywallViewController)
+        self.didTryToAutoRestore = true
+      }
 		}
 	}
 
@@ -72,41 +89,42 @@ extension Paywall {
     userInitiated: Bool = false
   ) {
     onMain {
-      Logger.debug(logLevel: .debug, scope: .paywallTransactions, message: "Attempting Restore", info: nil, error: nil)
-      if let delegate = Paywall.delegate {
-        if userInitiated {
-          paywallViewController.loadingState = .loadingPurchase
-        }
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallTransactions,
+        message: "Attempting Restore"
+      )
+      guard let delegate = Paywall.delegate else {
+        return
+      }
+      if userInitiated {
+        paywallViewController.loadingState = .loadingPurchase
+      }
 
-        delegate.restorePurchases { [weak self] success in
-          onMain { [weak self] in
+      delegate.restorePurchases { [weak self] success in
+        onMain {
+          if userInitiated {
+            paywallViewController.loadingState = .ready
+          }
+          if success {
+            Logger.debug(
+              logLevel: .debug,
+              scope: .paywallTransactions,
+              message: "Transaction Restored"
+            )
+            self?.transactionWasRestored(paywallViewController: paywallViewController)
+          } else {
+            Logger.debug(
+              logLevel: .debug,
+              scope: .paywallTransactions,
+              message: "Transaction Failed to Restore"
+            )
             if userInitiated {
-              paywallViewController.loadingState = .ready
-            }
-            if success {
-              Logger.debug(
-                logLevel: .debug,
-                scope: .paywallTransactions,
-                message: "Transaction Restored",
-                info: nil,
-                error: nil
+              paywallViewController.presentAlert(
+                title: Paywall.restoreFailedTitleString,
+                message: Paywall.restoreFailedMessageString,
+                closeActionTitle: Paywall.restoreFailedCloseButtonString
               )
-              self?._transactionWasRestored(paywallViewController: paywallViewController)
-            } else {
-              Logger.debug(
-                logLevel: .debug,
-                scope: .paywallTransactions,
-                message: "Transaction Failed to Restore",
-                info: nil,
-                error: nil
-              )
-              if userInitiated {
-                paywallViewController.presentAlert(
-                  title: Paywall.restoreFailedTitleString,
-                  message: Paywall.restoreFailedMessageString,
-                  closeActionTitle: Paywall.restoreFailedCloseButtonString
-                )
-              }
             }
           }
         }
@@ -114,19 +132,22 @@ extension Paywall {
     }
 	}
 
-	private func _transactionWasAbandoned(paywallViewController: SWPaywallViewController, for product: SKProduct) {
-		if let i = paywallViewController.paywallInfo {
-			Paywall.track(.transactionAbandon(paywallInfo: i, product: product))
+	private func _transactionWasAbandoned(
+    paywallViewController: SWPaywallViewController,
+    for product: SKProduct
+  ) {
+		if let paywallInfo = paywallViewController.paywallInfo {
+			Paywall.track(.transactionAbandon(paywallInfo: paywallInfo, product: product))
 		}
 
 		paywallViewController.loadingState = .ready
 	}
 
-	private func _transactionWasRestored(paywallViewController: SWPaywallViewController) {
-		if let i = paywallViewController.paywallInfo {
-			Paywall.track(.transactionRestore(paywallInfo: i, product: nil))
+	private func transactionWasRestored(paywallViewController: SWPaywallViewController) {
+		if let paywallInfo = paywallViewController.paywallInfo {
+			Paywall.track(.transactionRestore(paywallInfo: paywallInfo, product: nil))
 		}
-		dismiss(paywallViewController, userDidPurchase: true)
+    dismiss(paywallViewController, state: .restored)
 	}
 
 	// if a parent needs to approve the purchase
@@ -136,12 +157,19 @@ extension Paywall {
       message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved."
     )
 
-		if let i = paywallViewController.paywallInfo {
-			Paywall.track(.transactionFail(paywallInfo: i, product: nil, message: "Needs parental approval"))
+		if let paywallInfo = paywallViewController.paywallInfo {
+			Paywall.track(
+        .transactionFail(
+          paywallInfo: paywallInfo,
+          product: nil,
+          message: "Needs parental approval"
+        )
+      )
 		}
 	}
 }
 
+// MARK: - SKPaymentTransactionObserver
 extension Paywall: SKPaymentTransactionObserver {
 	public func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
 		Logger.debug(
@@ -185,7 +213,7 @@ extension Paywall: SKPaymentTransactionObserver {
           ],
           error: nil
         )
-				self._transactionDidSucceed(paywallViewController: paywallViewController, for: product)
+				self.transactionDidSucceed(paywallViewController: paywallViewController, for: product)
 			case .failed:
 				if let error = transaction.error as? SKError {
 					var userCancelled = error.code == .paymentCancelled
@@ -217,7 +245,7 @@ extension Paywall: SKPaymentTransactionObserver {
               info: ["product_id": product.productIdentifier, "paywall_vc": paywallViewController],
               error: error
             )
-						self._transactionErrorDidOccur(paywallViewController: paywallViewController, error: error, for: product)
+						self.transactionErrorDidOccur(paywallViewController: paywallViewController, error: error, for: product)
 						return
 					}
 				} else {
@@ -231,7 +259,7 @@ extension Paywall: SKPaymentTransactionObserver {
             ],
             error: transaction.error
           )
-					self._transactionErrorDidOccur(paywallViewController: paywallViewController, error: nil, for: product)
+					self.transactionErrorDidOccur(paywallViewController: paywallViewController, error: nil, for: product)
 					onMain {
 						paywallViewController.presentAlert(
               title: "Something went wrong",
@@ -260,7 +288,7 @@ extension Paywall: SKPaymentTransactionObserver {
           info: ["paywall_vc": paywallViewController],
           error: nil
         )
-				_transactionDidBegin(paywallViewController: paywallViewController, for: product)
+				transactionDidBegin(paywallViewController: paywallViewController, for: product)
 			default:
 				paywallViewController.loadingState = .ready
 			}
