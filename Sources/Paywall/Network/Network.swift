@@ -231,6 +231,12 @@ extension Network {
     fromEvent event: EventData? = nil,
     completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void
   ) {
+    
+    if let id = withIdentifier {
+        self.paywallByIdentifier(identifier: id, completion: completion)
+        return
+    }
+    
     // swiftlint:disable:next force_unwrapping
     let components = URLComponents(string: "paywall")!
     // swiftlint:disable:next force_unwrapping
@@ -274,6 +280,50 @@ extension Network {
       }
     }
   }
+
+  func paywallByIdentifier(identifier: String, completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void) {
+        // WARNING: Do not modify anything about this request without considering our cache eviction code
+        // we must know all the exact urls we need to invalidate so chaning the order, inclusion, etc of any query
+        // parameters will cause issues
+        var components = URLComponents(string: "paywall/\(identifier)")!
+        let queryPk = URLQueryItem(name: "pk", value: Store.shared.apiKey ?? "")
+
+
+        // In the config endpoint we return all the locales, this code will check if:
+        // 1. The device locale (ex: en_US) exists in the locales list
+        // 2. The shortend device locale (ex: en) exists in the locale list
+        // If either exist (preferring the most specific) include the locale in the
+        // the url as a query param.
+        var queryLocale: URLQueryItem? = nil
+        if Store.shared.locales.contains(DeviceHelper.shared.locale) {
+            queryLocale = URLQueryItem(name: "locale", value: DeviceHelper.shared.locale)
+        } else {
+            let shortLocale = DeviceHelper.shared.locale.split(separator: "_")[0]
+            if (Store.shared.locales.contains(String(shortLocale))) {
+                queryLocale = URLQueryItem(name: "locale", value: String(shortLocale))
+            }
+        }
+        if queryLocale != nil {
+            components.queryItems = [queryPk, queryLocale!]
+        } else {
+            components.queryItems = [queryPk]
+        }
+
+        let requestURL = components.url(relativeTo: baseURL)!
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        send(request, completion: { (result: Result<PaywallResponse, Swift.Error>)  in
+            switch result {
+                case .failure(let error):
+                    Logger.debug(logLevel: .error, scope: .network, message: "Request Failed: /paywall/:identifier", info: nil, error: error)
+                    completion(.failure(error))
+                case .success(let response):
+                    completion(.success(response))
+            }
+        })
+    }
 }
 
 extension Network {

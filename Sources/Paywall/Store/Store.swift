@@ -17,6 +17,7 @@ final class Store {
   var aliasId: String?
 	var didTrackFirstSeen = false
 	var userAttributes = [String: Any]()
+  var locales: Set<String> = Set<String>()
 
   var userId: String? {
     return appUserId ?? aliasId
@@ -68,6 +69,12 @@ final class Store {
 	func add(config: ConfigResponse) {
     // swiftlint:disable:next array_constructor
     var data: [String: Bool] = [:]
+    
+     locales =  Set(
+        config.localization.locales.map {
+          (locale) in  return locale.locale
+        }
+     )
 
     config.triggers.filter { trigger in
       switch trigger.triggerVersion {
