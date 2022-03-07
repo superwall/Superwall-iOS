@@ -61,10 +61,10 @@
         <code><a href="#paywall.standarduserattribute.id">id</a></code>
     </h3>
     <div class="declaration">
-<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">id</span>(<span class="keyword">_</span> <span class="variable">s</span>: <span class="type">String</span>) </body></html></code></pre>
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">id</span>(<span class="keyword">_</span> <span class="variable">id</span>: <span class="type">String</span>) </body></html></code></pre>
 </div>
 <div class="summary" role="doc-abstract">
-    <p>Standard user attribute containing your user's internal identifier. This attribute is automatically added and you don't really need to include it.</p>
+    <p>Standard user attribute containing your user's identifier. This attribute is automatically added and you don't really need to include it.</p>
 
 </div>
 </div>
@@ -73,7 +73,7 @@
         <code><a href="#paywall.standarduserattribute.firstname">first​Name</a></code>
     </h3>
     <div class="declaration">
-<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">firstName</span>(<span class="keyword">_</span> <span class="variable">s</span>: <span class="type">String</span>) </body></html></code></pre>
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">firstName</span>(<span class="keyword">_</span> <span class="variable">firstName</span>: <span class="type">String</span>) </body></html></code></pre>
 </div>
 <div class="summary" role="doc-abstract">
     <p>Standard user attribute containing your user's first name.</p>
@@ -85,7 +85,7 @@
         <code><a href="#paywall.standarduserattribute.lastname">last​Name</a></code>
     </h3>
     <div class="declaration">
-<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">lastName</span>(<span class="keyword">_</span> <span class="variable">s</span>: <span class="type">String</span>) </body></html></code></pre>
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">lastName</span>(<span class="keyword">_</span> <span class="variable">lastName</span>: <span class="type">String</span>) </body></html></code></pre>
 </div>
 <div class="summary" role="doc-abstract">
     <p>Standard user attribute containing your user's last name.</p>
@@ -97,7 +97,7 @@
         <code><a href="#paywall.standarduserattribute.email">email</a></code>
     </h3>
     <div class="declaration">
-<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">email</span>(<span class="keyword">_</span> <span class="variable">s</span>: <span class="type">String</span>) </body></html></code></pre>
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">email</span>(<span class="keyword">_</span> <span class="variable">email</span>: <span class="type">String</span>) </body></html></code></pre>
 </div>
 <div class="summary" role="doc-abstract">
     <p>Standard user attribute containing your user's email address.</p>
@@ -109,7 +109,7 @@
         <code><a href="#paywall.standarduserattribute.phone">phone</a></code>
     </h3>
     <div class="declaration">
-<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">phone</span>(<span class="keyword">_</span> <span class="variable">s</span>: <span class="type">String</span>) </body></html></code></pre>
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">phone</span>(<span class="keyword">_</span> <span class="variable">phone</span>: <span class="type">String</span>) </body></html></code></pre>
 </div>
 <div class="summary" role="doc-abstract">
     <p>Standard user attribute containing your user's phone number, without a country code.</p>
@@ -121,7 +121,7 @@
         <code><a href="#paywall.standarduserattribute.fullphone">full​Phone</a></code>
     </h3>
     <div class="declaration">
-<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">fullPhone</span>(<span class="keyword">_</span> <span class="variable">s</span>: <span class="type">String</span>) </body></html></code></pre>
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">fullPhone</span>(<span class="keyword">_</span> <span class="variable">phone</span>: <span class="type">String</span>) </body></html></code></pre>
 </div>
 <div class="summary" role="doc-abstract">
     <p>Standard user attribute containing your user's full phone number, country code included.</p>
@@ -133,7 +133,7 @@
         <code><a href="#paywall.standarduserattribute.phonecountrycode">phone​Country​Code</a></code>
     </h3>
     <div class="declaration">
-<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">phoneCountryCode</span>(<span class="keyword">_</span> <span class="variable">s</span>: <span class="type">String</span>) </body></html></code></pre>
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">phoneCountryCode</span>(<span class="keyword">_</span> <span class="variable">countryCode</span>: <span class="type">String</span>) </body></html></code></pre>
 </div>
 <div class="summary" role="doc-abstract">
     <p>Standard user attribute containing your user's telephone country code.</p>
@@ -145,7 +145,7 @@
         <code><a href="#paywall.standarduserattribute.fcmtoken">fcm​Token</a></code>
     </h3>
     <div class="declaration">
-<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">fcmToken</span>(<span class="keyword">_</span> <span class="variable">s</span>: <span class="type">String</span>) </body></html></code></pre>
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">fcmToken</span>(<span class="keyword">_</span> <span class="variable">fcmToken</span>: <span class="type">String</span>) </body></html></code></pre>
 </div>
 <div class="summary" role="doc-abstract">
     <p>Standard user attribute containing your user's FCM token to send push notifications via Firebase.</p>
@@ -157,7 +157,7 @@
         <code><a href="#paywall.standarduserattribute.apnstoken">apns​Token</a></code>
     </h3>
     <div class="declaration">
-<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">apnsToken</span>(<span class="keyword">_</span> <span class="variable">s</span>: <span class="type">String</span>) </body></html></code></pre>
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">apnsToken</span>(<span class="keyword">_</span> <span class="variable">apnsToken</span>: <span class="type">String</span>) </body></html></code></pre>
 </div>
 <div class="summary" role="doc-abstract">
     <p>Standard user attribute containing your user's APNS token to send push notification via APNS.</p>
@@ -169,7 +169,7 @@
         <code><a href="#paywall.standarduserattribute.createdat">created​At</a></code>
     </h3>
     <div class="declaration">
-<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">createdAt</span>(<span class="keyword">_</span> <span class="variable">d</span>: <span class="type">Date</span>) </body></html></code></pre>
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">createdAt</span>(<span class="keyword">_</span> <span class="variable">date</span>: <span class="type">Date</span>) </body></html></code></pre>
 </div>
 <div class="summary" role="doc-abstract">
     <p>Standard user attribute containing your user's account creation date.</p>
@@ -185,7 +185,7 @@
 
     <footer>
         <p>
-    Generated on <time datetime="2021-12-23T22:16:35+0000">December 23, 2021</time> using <a href="https://github.com/SwiftDocOrg/swift-doc">swift-doc</a> <span class="version">1.0.0-rc.1</span>.
+    Generated on <time datetime="2022-03-07T22:15:30+0000">March 7, 2022</time> using <a href="https://github.com/SwiftDocOrg/swift-doc">swift-doc</a> <span class="version">1.0.0-rc.1</span>.
 </p>
     </footer>
 </body>
