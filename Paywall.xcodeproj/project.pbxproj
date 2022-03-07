@@ -100,7 +100,7 @@
 		88B848C127D240F200935AE4 /* WebEventHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848C027D240F200935AE4 /* WebEventHandler.swift */; };
 		88B848C327D24D5400935AE4 /* UIView+SpringAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848C227D24D5400935AE4 /* UIView+SpringAnimation.swift */; };
 		88B848C727D2821D00935AE4 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848C627D2821D00935AE4 /* Endpoint.swift */; };
-		88B848C927D282A300935AE4 /* Network2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848C827D282A300935AE4 /* Network2.swift */; };
+		88B848C927D282A300935AE4 /* URLSession+Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848C827D282A300935AE4 /* URLSession+Request.swift */; };
 		88B848CD27D28DE200935AE4 /* APIs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848CC27D28DE200935AE4 /* APIs.swift */; };
 		88B848CF27D295BD00935AE4 /* ModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848CE27D295BD00935AE4 /* ModelLoader.swift */; };
 		89C930F9AF3E78401DA75EBB /* InternalEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF54D10298EB2DAEBE67770 /* InternalEvents.swift */; };
@@ -211,7 +211,7 @@
 		88B848C027D240F200935AE4 /* WebEventHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEventHandler.swift; sourceTree = "<group>"; };
 		88B848C227D24D5400935AE4 /* UIView+SpringAnimation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+SpringAnimation.swift"; sourceTree = "<group>"; };
 		88B848C627D2821D00935AE4 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
-		88B848C827D282A300935AE4 /* Network2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network2.swift; sourceTree = "<group>"; };
+		88B848C827D282A300935AE4 /* URLSession+Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSession+Request.swift"; sourceTree = "<group>"; };
 		88B848CC27D28DE200935AE4 /* APIs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIs.swift; sourceTree = "<group>"; };
 		88B848CE27D295BD00935AE4 /* ModelLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelLoader.swift; sourceTree = "<group>"; };
 		A97FBE507568D7EB358372E0 /* SDKJS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKJS.swift; sourceTree = "<group>"; };
@@ -331,6 +331,7 @@
 				88B8482927CCF26000935AE4 /* UIViewController+TopVc.swift */,
 				88B848C227D24D5400935AE4 /* UIView+SpringAnimation.swift */,
 				88B8482727CCF16D00935AE4 /* UIWindow+Landscape.swift */,
+				88B848C827D282A300935AE4 /* URLSession+Request.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -602,7 +603,6 @@
 				88B848CC27D28DE200935AE4 /* APIs.swift */,
 				88B848C627D2821D00935AE4 /* Endpoint.swift */,
 				88B848CE27D295BD00935AE4 /* ModelLoader.swift */,
-				88B848C827D282A300935AE4 /* Network2.swift */,
 				FDFF57BA43FA58EBD97FE5B7 /* PaywallEvents.swift */,
 			);
 			path = Network;
@@ -688,7 +688,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "PATH=/opt/homebrew/bin:$PATH\nif [ -f ${PROJECT_DIR}/.swiftlint.yml ]; then\n  if which swiftlint >/dev/null; then\n    swiftlint --no-cache --config ${PROJECT_DIR}/.swiftlint.yml\n  fi\nfi\n";
+			shellScript = "PATH=/opt/homebrew/bin:$PATH\n\nif which swiftlint >/dev/null; then\n  swiftlint --no-cache --config ${PROJECT_DIR}/.swiftlint.yml\nfi\nelse\n    echo \"\n    Error: SwiftLint not installed!\n    Run brew install swiftlint\n    or download from https://github.com/realm/SwiftLint.\n    \"\n    exit 1\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -727,7 +727,7 @@
 				88B8486827CF99AD00935AE4 /* ConfirmAssignmentResponse.swift in Sources */,
 				88B8484327CD00C200935AE4 /* PaywallInfo.swift in Sources */,
 				26FCA273A8C9F4BE35C252EB /* LocalizationManager.swift in Sources */,
-				88B848C927D282A300935AE4 /* Network2.swift in Sources */,
+				88B848C927D282A300935AE4 /* URLSession+Request.swift in Sources */,
 				88B8488127CFA4E000935AE4 /* SWProductNumber.swift in Sources */,
 				88B8485527CF966400935AE4 /* TriggerV2.swift in Sources */,
 				88B8484527CD015300935AE4 /* PaywallResponse.swift in Sources */,

@@ -8,11 +8,14 @@
 import Foundation
 
 final class ModelLoader {
+  static let shared = ModelLoader()
+  private let urlSession = URLSession(configuration: .ephemeral)
+
   func getEvents(
     events: EventsRequest,
-    completion: @escaping (Result<EventsResponse, Swift.Error>) -> Void
+    completion: @escaping (Result<EventsResponse, Error>) -> Void
   ) {
-    Network2.shared.send(.events(eventsRequest: events)) { result in
+    urlSession.request(.events(eventsRequest: events)) { result in
       switch result {
       case .failure(let error):
         Logger.debug(
@@ -32,14 +35,17 @@ final class ModelLoader {
   func paywall(
     withIdentifier identifier: String? = nil,
     fromEvent event: EventData? = nil,
-    completion: @escaping (Result<PaywallResponse, Swift.Error>) -> Void
+    completion: @escaping (Result<PaywallResponse, Error>) -> Void
   ) {
-    Network2.shared.send(
+    urlSession.request(
       .paywall(
         withIdentifier: identifier,
-        fromEvent: event)
+        fromEvent: event
+      )
     ) { result in
       switch result {
+      case .success(let response):
+        completion(.success(response))
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -52,8 +58,6 @@ final class ModelLoader {
           error: error
         )
         completion(.failure(error))
-      case .success(let response):
-        completion(.success(response))
       }
     }
   }

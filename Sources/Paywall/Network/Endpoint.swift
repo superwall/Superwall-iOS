@@ -13,7 +13,7 @@ struct Endpoint<Response: Decodable> {
     case post = "POST"
   }
   struct Components {
-    let scheme: String?
+    var scheme: String? = Api.scheme
     let host: String?
     let path: String
     var queryItems: [URLQueryItem]?
@@ -95,13 +95,15 @@ struct Endpoint<Response: Decodable> {
     ]
 
     for header in headers {
-      request.setValue(header.value,
+      request.setValue(
+        header.value,
         forHTTPHeaderField: header.key
       )
     }
   }
 }
 
+// MARK: - EventsResponse
 extension Endpoint where Response == EventsResponse {
   static func events(eventsRequest: EventsRequest) -> Self {
     let encoder = JSONEncoder()
@@ -110,9 +112,8 @@ extension Endpoint where Response == EventsResponse {
 
     return Endpoint(
       components: Components(
-        scheme: AnalyticsApi.scheme,
-        host: AnalyticsApi.host,
-        path: AnalyticsApi.version1 + "events",
+        host: Api.Analytics.host,
+        path: Api.version1 + "events",
         bodyData: bodyData
       ),
       method: .post
@@ -120,6 +121,7 @@ extension Endpoint where Response == EventsResponse {
   }
 }
 
+// MARK: - PaywallResponse
 extension Endpoint where Response == PaywallResponse {
   static func paywall(
     withIdentifier: String? = nil,
@@ -141,9 +143,8 @@ extension Endpoint where Response == PaywallResponse {
     }
     return Endpoint(
       components: Components(
-        scheme: BaseApi.scheme,
-        host: BaseApi.host,
-        path: BaseApi.version1 + "paywall",
+        host: Api.Base.host,
+        path: Api.version1 + "paywall",
         bodyData: bodyData
       ),
       method: .post
@@ -151,44 +152,43 @@ extension Endpoint where Response == PaywallResponse {
   }
 }
 
-
+// MARK: - PaywallsResponse
 extension Endpoint where Response == PaywallsResponse {
   static func paywalls() -> Self {
     return Endpoint(
       components: Components(
-        scheme: BaseApi.scheme,
-        host: BaseApi.host,
-        path: BaseApi.version1 + "paywalls"
+        host: Api.Base.host,
+        path: Api.version1 + "paywalls"
       ),
       method: .get
     )
   }
 }
 
+// MARK: - ConfigResponse
 extension Endpoint where Response == ConfigResponse {
   static func config() -> Self {
     return Endpoint(
       components: Components(
-        scheme: BaseApi.scheme,
-        host: BaseApi.host,
-        path: BaseApi.version1 + "config"
+        host: Api.Base.host,
+        path: Api.version1 + "config"
       ),
       method: .get
     )
   }
 }
 
+// MARK: - ConfirmAssignmentResponse
 extension Endpoint where Response == ConfirmAssignmentResponse {
   static func confirmAssignment(_ confirmAssignments: ConfirmAssignments) -> Self {
     let encoder = JSONEncoder()
     encoder.keyEncodingStrategy = .convertToSnakeCase
     let bodyData = try? encoder.encode(confirmAssignments)
-    
+
     return Endpoint(
       components: Components(
-        scheme: BaseApi.scheme,
-        host: BaseApi.host,
-        path: BaseApi.version1 + "confirm_assignments",
+        host: Api.Base.host,
+        path: Api.version1 + "confirm_assignments",
         bodyData: bodyData
       ),
       method: .post
@@ -196,6 +196,7 @@ extension Endpoint where Response == ConfirmAssignmentResponse {
   }
 }
 
+// MARK: - PostbackResponse
 extension Endpoint where Response == PostBackResponse {
   static func postback(_ postback: Postback) -> Self {
     let encoder = JSONEncoder()
@@ -204,9 +205,8 @@ extension Endpoint where Response == PostBackResponse {
 
     return Endpoint(
       components: Components(
-        scheme: BaseApi.scheme,
-        host: BaseApi.host,
-        path: BaseApi.version1 + "postback",
+        host: Api.Base.host,
+        path: Api.version1 + "postback",
         bodyData: bodyData
       ),
       method: .post

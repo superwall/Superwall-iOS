@@ -61,7 +61,6 @@ extension Network {
     isDebugRequest: Bool = false,
     completion: @escaping (Result<ResponseType, Swift.Error>) -> Void
   ) {
-    
     var request = request
     Logger.debug(
       logLevel: .debug,
