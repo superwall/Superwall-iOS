@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 public extension Paywall {
-	/// Dismisses the presented paywall. Doesn't trigger a `PurchaseCompletionBlock` call if provided during `Paywall.present()`, since this action is developer initiated.
+  /// Dismisses the presented paywall. Doesn't trigger a `PurchaseCompletionBlock` call if provided during `Paywall.present()`, since this action is developer initiated.
 	/// - Parameter completion: A completion block of type `(()->())? = nil` that gets called after the paywall is dismissed.
 	@objc static func dismiss(_ completion: (() -> Void)? = nil) {
 		guard let paywallViewController = shared.paywallViewController else {

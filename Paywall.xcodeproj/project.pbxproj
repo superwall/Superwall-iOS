@@ -27,13 +27,14 @@
 		5E417214B1381CA60162E0D5 /* SWConsoleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39C933A6381DB152E672FCE9 /* SWConsoleViewController.swift */; };
 		626FB8EA1D4A1898A72F4F1C /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCF23E39CC3AE2642EB9FE3 /* Constants.swift */; };
 		67E3DBC1883F3965BA4DE938 /* Cache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FB351A84EEC5D8E5E8798FA /* Cache.swift */; };
-		6FBFE2509CC7A4ACE4068CAE /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = C387A7567FDEF78FDDE6DFC0 /* Store.swift */; };
+		6FBFE2509CC7A4ACE4068CAE /* CacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C387A7567FDEF78FDDE6DFC0 /* CacheManager.swift */; };
 		7691C1718BA95F3D9809521A /* PaywallResponseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08628840CDA0FD7E8B50D224 /* PaywallResponseManager.swift */; };
 		7AD13EAC110C54195DEAEFB1 /* ConvenienceFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD2A08A7B5B4D29500F34927 /* ConvenienceFunctions.swift */; };
 		824933BE91877E221F976014 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ECF855DE5D99DE526EAB147 /* SwiftyJSON.swift */; };
 		888F483F27D62EBB009C74A3 /* LocalizationOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F483E27D62EBB009C74A3 /* LocalizationOption.swift */; };
 		888F484127D62F39009C74A3 /* LocalizationGrouping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F484027D62F39009C74A3 /* LocalizationGrouping.swift */; };
 		888F484327D6330E009C74A3 /* LocalizationLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F484227D6330E009C74A3 /* LocalizationLogic.swift */; };
+		888F484627D67B46009C74A3 /* PaywallPresentationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F484527D67B46009C74A3 /* PaywallPresentationResult.swift */; };
 		88B8482627CCF15400935AE4 /* Date+IsoString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8482527CCF15400935AE4 /* Date+IsoString.swift */; };
 		88B8482827CCF16D00935AE4 /* UIWindow+Landscape.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8482727CCF16D00935AE4 /* UIWindow+Landscape.swift */; };
 		88B8482A27CCF26000935AE4 /* UIViewController+TopVc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8482927CCF26000935AE4 /* UIViewController+TopVc.swift */; };
@@ -78,7 +79,7 @@
 		88B8488127CFA4E000935AE4 /* SWProductNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8488027CFA4E000935AE4 /* SWProductNumber.swift */; };
 		88B8488327CFA4EF00935AE4 /* SWProductNumberGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8488227CFA4EF00935AE4 /* SWProductNumberGroup.swift */; };
 		88B8488527CFA51C00935AE4 /* SKProduct+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8488427CFA51C00935AE4 /* SKProduct+Helpers.swift */; };
-		88B8488827CFBFE000935AE4 /* StoreLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8488727CFBFE000935AE4 /* StoreLogic.swift */; };
+		88B8488827CFBFE000935AE4 /* CacheManagerLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8488727CFBFE000935AE4 /* CacheManagerLogic.swift */; };
 		88B8488C27CFCA2700935AE4 /* PaywallRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8488B27CFCA2700935AE4 /* PaywallRequest.swift */; };
 		88B8488E27CFCA3F00935AE4 /* PaywallPresentationStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8488D27CFCA3F00935AE4 /* PaywallPresentationStyle.swift */; };
 		88B8489027CFCA5300935AE4 /* ProductVariable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8488F27CFCA5300935AE4 /* ProductVariable.swift */; };
@@ -92,7 +93,7 @@
 		88B848A527D120B700935AE4 /* String+CamelCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848A427D120B700935AE4 /* String+CamelCase.swift */; };
 		88B848A727D1213100935AE4 /* UIDevice+ModelName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848A627D1213100935AE4 /* UIDevice+ModelName.swift */; };
 		88B848A927D1272900935AE4 /* SWWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848A827D1272900935AE4 /* SWWebView.swift */; };
-		88B848AC27D127BE00935AE4 /* LeakAvoider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848AB27D127BE00935AE4 /* LeakAvoider.swift */; };
+		88B848AC27D127BE00935AE4 /* PaywallMessageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848AB27D127BE00935AE4 /* PaywallMessageHandler.swift */; };
 		88B848AE27D12B8000935AE4 /* UIComponentFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848AD27D12B8000935AE4 /* UIComponentFactory.swift */; };
 		88B848B027D12F7600935AE4 /* PaywallDismissalResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848AF27D12F7600935AE4 /* PaywallDismissalResult.swift */; };
 		88B848B227D223D100935AE4 /* PaywallCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848B127D223D100935AE4 /* PaywallCache.swift */; };
@@ -146,6 +147,7 @@
 		888F483E27D62EBB009C74A3 /* LocalizationOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationOption.swift; sourceTree = "<group>"; };
 		888F484027D62F39009C74A3 /* LocalizationGrouping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationGrouping.swift; sourceTree = "<group>"; };
 		888F484227D6330E009C74A3 /* LocalizationLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationLogic.swift; sourceTree = "<group>"; };
+		888F484527D67B46009C74A3 /* PaywallPresentationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPresentationResult.swift; sourceTree = "<group>"; };
 		88B8482527CCF15400935AE4 /* Date+IsoString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+IsoString.swift"; sourceTree = "<group>"; };
 		88B8482727CCF16D00935AE4 /* UIWindow+Landscape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIWindow+Landscape.swift"; sourceTree = "<group>"; };
 		88B8482927CCF26000935AE4 /* UIViewController+TopVc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+TopVc.swift"; sourceTree = "<group>"; };
@@ -190,7 +192,7 @@
 		88B8488027CFA4E000935AE4 /* SWProductNumber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWProductNumber.swift; sourceTree = "<group>"; };
 		88B8488227CFA4EF00935AE4 /* SWProductNumberGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWProductNumberGroup.swift; sourceTree = "<group>"; };
 		88B8488427CFA51C00935AE4 /* SKProduct+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SKProduct+Helpers.swift"; sourceTree = "<group>"; };
-		88B8488727CFBFE000935AE4 /* StoreLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreLogic.swift; sourceTree = "<group>"; };
+		88B8488727CFBFE000935AE4 /* CacheManagerLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheManagerLogic.swift; sourceTree = "<group>"; };
 		88B8488B27CFCA2700935AE4 /* PaywallRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallRequest.swift; sourceTree = "<group>"; };
 		88B8488D27CFCA3F00935AE4 /* PaywallPresentationStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPresentationStyle.swift; sourceTree = "<group>"; };
 		88B8488F27CFCA5300935AE4 /* ProductVariable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductVariable.swift; sourceTree = "<group>"; };
@@ -204,7 +206,7 @@
 		88B848A427D120B700935AE4 /* String+CamelCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+CamelCase.swift"; sourceTree = "<group>"; };
 		88B848A627D1213100935AE4 /* UIDevice+ModelName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIDevice+ModelName.swift"; sourceTree = "<group>"; };
 		88B848A827D1272900935AE4 /* SWWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWWebView.swift; sourceTree = "<group>"; };
-		88B848AB27D127BE00935AE4 /* LeakAvoider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeakAvoider.swift; sourceTree = "<group>"; };
+		88B848AB27D127BE00935AE4 /* PaywallMessageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallMessageHandler.swift; sourceTree = "<group>"; };
 		88B848AD27D12B8000935AE4 /* UIComponentFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIComponentFactory.swift; sourceTree = "<group>"; };
 		88B848AF27D12F7600935AE4 /* PaywallDismissalResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallDismissalResult.swift; sourceTree = "<group>"; };
 		88B848B127D223D100935AE4 /* PaywallCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallCache.swift; sourceTree = "<group>"; };
@@ -224,7 +226,7 @@
 		BB7B553F877CB9EB9156D803 /* EventsQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsQueue.swift; sourceTree = "<group>"; };
 		BEECF871CEF5502F22C21CF6 /* PaywallTransactions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallTransactions.swift; sourceTree = "<group>"; };
 		C01D9C63C76AE79C2254DF1C /* Shimmer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shimmer.swift; sourceTree = "<group>"; };
-		C387A7567FDEF78FDDE6DFC0 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
+		C387A7567FDEF78FDDE6DFC0 /* CacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheManager.swift; sourceTree = "<group>"; };
 		C3EF821C1CFD440F2C10BD04 /* PublicPaywallPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicPaywallPresentation.swift; sourceTree = "<group>"; };
 		C569ACE92A91E56862D9BD9E /* ProductsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsManager.swift; sourceTree = "<group>"; };
 		CCA3CCA5BA8B08041A798297 /* SWPaywallViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWPaywallViewController.swift; sourceTree = "<group>"; };
@@ -284,7 +286,7 @@
 				E94164BCC934D771B5086786 /* Misc */,
 				F0BD6663A4F804281BD37F83 /* Network */,
 				1E5BDADC2208B7E8CB5B3801 /* Paywall */,
-				CE560ECE30C291C43F7AB54A /* Store */,
+				CE560ECE30C291C43F7AB54A /* Cache */,
 				099536CF6CA283F7D7818CFD /* StoreKit */,
 				D5BD2E7B9726A927AE62E960 /* Models */,
 			);
@@ -512,8 +514,10 @@
 				CCA3CCA5BA8B08041A798297 /* SWPaywallViewController.swift */,
 				88B848C027D240F200935AE4 /* WebEventHandler.swift */,
 				88B848AF27D12F7600935AE4 /* PaywallDismissalResult.swift */,
+				888F484527D67B46009C74A3 /* PaywallPresentationResult.swift */,
+				FDFF57BA43FA58EBD97FE5B7 /* PaywallEvents.swift */,
 				88B848A827D1272900935AE4 /* SWWebView.swift */,
-				88B848AB27D127BE00935AE4 /* LeakAvoider.swift */,
+				88B848AB27D127BE00935AE4 /* PaywallMessageHandler.swift */,
 			);
 			path = "Paywall View Controller";
 			sourceTree = "<group>";
@@ -566,15 +570,15 @@
 			path = ShimmerView;
 			sourceTree = "<group>";
 		};
-		CE560ECE30C291C43F7AB54A /* Store */ = {
+		CE560ECE30C291C43F7AB54A /* Cache */ = {
 			isa = PBXGroup;
 			children = (
-				C387A7567FDEF78FDDE6DFC0 /* Store.swift */,
-				88B8488727CFBFE000935AE4 /* StoreLogic.swift */,
+				C387A7567FDEF78FDDE6DFC0 /* CacheManager.swift */,
+				88B8488727CFBFE000935AE4 /* CacheManagerLogic.swift */,
 				3FB351A84EEC5D8E5E8798FA /* Cache.swift */,
 				BB7B553F877CB9EB9156D803 /* EventsQueue.swift */,
 			);
-			path = Store;
+			path = Cache;
 			sourceTree = "<group>";
 		};
 		D5BD2E7B9726A927AE62E960 /* Models */ = {
@@ -617,7 +621,6 @@
 				88B848C627D2821D00935AE4 /* Endpoint.swift */,
 				88B848CC27D28DE200935AE4 /* APIs.swift */,
 				B64A36AB939D7351F687712C /* Device.swift */,
-				FDFF57BA43FA58EBD97FE5B7 /* PaywallEvents.swift */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -767,9 +770,9 @@
 				7691C1718BA95F3D9809521A /* PaywallResponseManager.swift in Sources */,
 				22850AA7B711BA4CA3B689B0 /* PaywallTransactions.swift in Sources */,
 				88B8483D27CD005C00935AE4 /* TemplateDevice.swift in Sources */,
-				88B8488827CFBFE000935AE4 /* StoreLogic.swift in Sources */,
+				88B8488827CFBFE000935AE4 /* CacheManagerLogic.swift in Sources */,
 				88B8486327CF996D00935AE4 /* EventsRequest.swift in Sources */,
-				88B848AC27D127BE00935AE4 /* LeakAvoider.swift in Sources */,
+				88B848AC27D127BE00935AE4 /* PaywallMessageHandler.swift in Sources */,
 				88B8483427CCF40900935AE4 /* Dictionary+Merging.swift in Sources */,
 				88B8488C27CFCA2700935AE4 /* PaywallRequest.swift in Sources */,
 				30D35D245959F241F9A0B897 /* ProductsManager.swift in Sources */,
@@ -790,6 +793,7 @@
 				88B8484C27CF949A00935AE4 /* ConfigResponse.swift in Sources */,
 				44942B8B0ED4C6625D1130ED /* SWDebugViewController.swift in Sources */,
 				88B8484727CD023F00935AE4 /* TriggerInfo.swift in Sources */,
+				888F484627D67B46009C74A3 /* PaywallPresentationResult.swift in Sources */,
 				88B8487927CFA44700935AE4 /* SWProductPeriod.swift in Sources */,
 				126A65421711AE3DCDD0CE76 /* SWLocalizationViewController.swift in Sources */,
 				88B848B827D2325900935AE4 /* InternalPaywallPresentation.swift in Sources */,
@@ -802,7 +806,7 @@
 				88B8484927CE9B6200935AE4 /* Product.swift in Sources */,
 				88B848AE27D12B8000935AE4 /* UIComponentFactory.swift in Sources */,
 				56F6CAD55C77243E7677A605 /* ShimmeringView.swift in Sources */,
-				6FBFE2509CC7A4ACE4068CAE /* Store.swift in Sources */,
+				6FBFE2509CC7A4ACE4068CAE /* CacheManager.swift in Sources */,
 				88B8489427CFCB8800935AE4 /* PaywallLogic.swift in Sources */,
 				88B8486A27CF9C0500935AE4 /* ConfigResponseLogic.swift in Sources */,
 				88B8485927CF984800935AE4 /* Postback.swift in Sources */,

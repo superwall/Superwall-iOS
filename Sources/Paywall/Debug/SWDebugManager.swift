@@ -23,9 +23,9 @@ final class SWDebugManager {
 
     if let launchDebugger = getQueryStringParameter(url: deepLinkURLString, param: "superwall_debug") {
       if launchDebugger == "true" {
-        Store.shared.debugKey = getQueryStringParameter(url: deepLinkURLString, param: "token")
+        CacheManager.shared.debugKey = getQueryStringParameter(url: deepLinkURLString, param: "token")
 
-        if Store.shared.debugKey != nil {
+        if CacheManager.shared.debugKey != nil {
           SWDebugManager.shared.launchDebugger(
             toPaywall: getQueryStringParameter(url: deepLinkURLString, param: "paywall_id")
           )

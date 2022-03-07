@@ -63,7 +63,7 @@ public final class Paywall: NSObject {
 
 	/// Access properties stored on the user
 	public static var userAttributes: [String: Any] {
-		return Store.shared.userAttributes
+		return CacheManager.shared.userAttributes
 	}
 
   // MARK: - Private Properties
@@ -79,7 +79,7 @@ public final class Paywall: NSObject {
 	var paywallWasPresentedThisSession = false
 	var lastAppClose: Date?
 	var didTrackLaunch = false
-	var didFetchConfig = !Store.shared.triggers.isEmpty
+	var didFetchConfig = !CacheManager.shared.triggers.isEmpty
 
 	var paywallViewController: SWPaywallViewController? {
 		return PaywallManager.shared.presentedViewController
@@ -122,10 +122,10 @@ public final class Paywall: NSObject {
 	@discardableResult
 	@objc public static func identify(userId: String) -> Paywall {
     // refetch the paywall, we don't know if the alias was for an existing user
-    if Store.shared.userId != userId {
+    if CacheManager.shared.userId != userId {
 			PaywallManager.shared.clearCache()
 		}
-    Store.shared.appUserId = userId
+    CacheManager.shared.appUserId = userId
 
 		return shared
 	}
@@ -133,11 +133,11 @@ public final class Paywall: NSObject {
 	/// Resets the userId stored by Superwall. Call this when your user signs out.
 	@discardableResult
 	@objc public static func reset() -> Paywall {
-    guard Store.shared.appUserId != nil else {
+    guard CacheManager.shared.appUserId != nil else {
       return shared
     }
 
-    Store.shared.clear()
+    CacheManager.shared.clear()
     PaywallManager.shared.clearCache()
     shared.fetchConfiguration()
 
@@ -181,7 +181,7 @@ public final class Paywall: NSObject {
 		guard let apiKey = apiKey else {
 			return
 		}
-    Store.shared.configure(
+    CacheManager.shared.configure(
       appUserId: userId,
       apiKey: apiKey
     )
@@ -244,14 +244,14 @@ public final class Paywall: NSObject {
       didTrackLaunch = true
     }
 
-    Store.shared.recordFirstSeenTracked()
+    CacheManager.shared.recordFirstSeenTracked()
   }
 
 	private func fetchConfiguration() {
     Network.shared.getConfig { [weak self] result in
       switch result {
       case .success(let config):
-        Store.shared.addConfig(config)
+        CacheManager.shared.addConfig(config)
         self?.didFetchConfig = true
         config.cache()
         self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleTrigger(forEvent: $0) }
@@ -280,7 +280,7 @@ public final class Paywall: NSObject {
 
       let canTriggerPaywall = PaywallLogic.canTriggerPaywall(
         eventName: event.name,
-        triggers: Store.shared.triggers,
+        triggers: CacheManager.shared.triggers,
         isPaywallPresented: self.isPaywallPresented
       )
 

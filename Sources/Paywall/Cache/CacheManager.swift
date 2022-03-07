@@ -1,5 +1,5 @@
 //
-//  Store.swift
+//  CacheManager.swift
 //  
 //
 //  Created by Brian Anglin on 8/3/21.
@@ -7,8 +7,8 @@
 
 import Foundation
 
-final class Store {
-  static let shared = Store()
+final class CacheManager {
+  static let shared = CacheManager()
 
   var apiKey = ""
   var debugKey: String?
@@ -34,10 +34,10 @@ final class Store {
   private let cache = Cache(name: "Store")
 
   init() {
-    self.appUserId = cache.readString(forKey: "store.appUserId")
-    self.aliasId = cache.readString(forKey: "store.aliasId")
-    self.didTrackFirstSeen = cache.hasData(forKey: "store.didTrackFirstSeen")
-    self.userAttributes = (cache.readDictionary(forKey: "store.userAttributes") as? [String: Any]) ?? [String: Any]()
+    self.appUserId = cache.readString(forKey: .appUserId)
+    self.aliasId = cache.readString(forKey: .aliasId)
+    self.didTrackFirstSeen = cache.hasData(forKey: .didTrackFirstSeen)
+    self.userAttributes = (cache.readDictionary(forKey: .userAttributes) as? [String: Any]) ?? [String: Any]()
     self.setCachedTriggers()
   }
 
@@ -49,14 +49,14 @@ final class Store {
     self.apiKey = apiKey
 
     if aliasId == nil {
-      aliasId = StoreLogic.generateAlias()
+      aliasId = CacheManagerLogic.generateAlias()
     }
   }
 
   /// Call this when you log out
   func clear() {
     appUserId = nil
-    aliasId = StoreLogic.generateAlias()
+    aliasId = CacheManagerLogic.generateAlias()
     didTrackFirstSeen = false
     userAttributes = [:]
     triggers.removeAll()
@@ -67,11 +67,11 @@ final class Store {
 
   func save() {
     if let appUserId = appUserId {
-      cache.write(appUserId, forKey: "store.appUserId")
+      cache.write(appUserId, forKey: .appUserId)
     }
 
     if let aliasId = aliasId {
-      cache.write(aliasId, forKey: "store.aliasId")
+      cache.write(aliasId, forKey: .aliasId)
     }
 
     var standardUserAttributes: [String: Any] = [:]
@@ -88,19 +88,19 @@ final class Store {
   }
 
 	func addConfig(_ config: ConfigResponse) {
-    let v1TriggerDictionary = StoreLogic.getV1TriggerDictionary(from: config.triggers)
-    cache.write(v1TriggerDictionary, forKey: "store.config")
+    let v1TriggerDictionary = CacheManagerLogic.getV1TriggerDictionary(from: config.triggers)
+    cache.write(v1TriggerDictionary, forKey: .config)
     triggers = Set(v1TriggerDictionary.keys)
 
-    v2Triggers = StoreLogic.getV2TriggerDictionary(from: config.triggers)
+    v2Triggers = CacheManagerLogic.getV2TriggerDictionary(from: config.triggers)
 	}
 
 	func addUserAttributes(_ newAttributes: [String: Any]) {
-    let mergedAttributes = StoreLogic.mergeAttributes(
+    let mergedAttributes = CacheManagerLogic.mergeAttributes(
       newAttributes,
       with: userAttributes
     )
-		cache.write(mergedAttributes, forKey: "store.userAttributes")
+    cache.write(mergedAttributes, forKey: .userAttributes)
     userAttributes = mergedAttributes
 	}
 
@@ -110,12 +110,12 @@ final class Store {
     }
 
     Paywall.track(.firstSeen)
-		cache.write("true", forKey: "store.didTrackFirstSeen")
+    cache.write("true", forKey: .didTrackFirstSeen)
 		didTrackFirstSeen = true
 	}
 
 	private func setCachedTriggers() {
-    let cachedTriggers = cache.readDictionary(forKey: "store.config") as? [String: Bool]
+    let cachedTriggers = cache.readDictionary(forKey: .config) as? [String: Bool]
 		let triggerDict = cachedTriggers ?? [:]
 
     triggers = []

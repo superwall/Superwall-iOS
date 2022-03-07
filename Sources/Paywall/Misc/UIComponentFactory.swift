@@ -14,14 +14,14 @@ enum UIComponentFactory {
     action: Selector
   ) -> UIButton {
     let button = UIButton()
-    guard let exitImage = UIImage(
+    guard let image = UIImage(
       named: name,
       in: Bundle.module,
       compatibleWith: nil
     ) else {
       return UIButton()
     }
-    button.setImage(exitImage, for: .normal)
+    button.setImage(image, for: .normal)
     button.translatesAutoresizingMaskIntoConstraints = false
     button.addTarget(
       target,

@@ -17,10 +17,9 @@ import Foundation
 
 {
   "event_name": "open_url",
-  "url": "https://exmaple.com"
+  "url": "https://example.com"
 }
- 
- 
+
 */
 
 struct WrappedPaywallEvents: Decodable {
@@ -86,12 +85,14 @@ extension PaywallEvent {
         self = .restore
         return
       case .openUrl:
-        if let urlString = try? values.decode(String.self, forKey: .url), let url = URL(string: urlString) {
+        if let urlString = try? values.decode(String.self, forKey: .url),
+          let url = URL(string: urlString) {
           self = .openUrl(url: url)
           return
         }
       case .openDeepLink:
-        if let urlString = try? values.decode(String.self, forKey: .link), let url = URL(string: urlString) {
+        if let urlString = try? values.decode(String.self, forKey: .link),
+          let url = URL(string: urlString) {
           self = .openDeepLink(url: url)
           return
         }
@@ -105,13 +106,4 @@ extension PaywallEvent {
 
     throw PaywallEventError.decoding("Whoops! \(dump(values))")
   }
-}
-
-enum PaywallPresentationResult {
-  case closed
-  case initiatePurchase(productId: String)
-  case initiateRestore
-  case custom(string: String)
-  case openedURL(url: URL)
-  case openedDeepLink(url: URL)
 }

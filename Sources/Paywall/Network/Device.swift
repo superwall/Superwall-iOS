@@ -128,16 +128,16 @@ final class DeviceHelper {
 
   var templateDevice: TemplateDevice {
     let aliases: [String]
-    if let alias = Store.shared.aliasId {
+    if let alias = CacheManager.shared.aliasId {
       aliases = [alias]
     } else {
       aliases = []
     }
 
     return TemplateDevice(
-      publicApiKey: Store.shared.apiKey,
+      publicApiKey: CacheManager.shared.apiKey,
       platform: "iOS",
-      appUserId: Store.shared.appUserId ?? "",
+      appUserId: CacheManager.shared.appUserId ?? "",
       aliases: aliases,
       vendorId: DeviceHelper.shared.vendorId,
       appVersion: DeviceHelper.shared.appVersion,

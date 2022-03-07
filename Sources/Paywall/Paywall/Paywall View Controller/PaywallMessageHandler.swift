@@ -12,7 +12,7 @@ protocol WebEventDelegate: AnyObject {
   func handleEvent(_ event: PaywallEvent)
 }
 
-final class LeakAvoider: NSObject, WKScriptMessageHandler {
+final class PaywallMessageHandler: NSObject, WKScriptMessageHandler {
   weak var delegate: WebEventDelegate?
 
   init(delegate: WebEventDelegate) {

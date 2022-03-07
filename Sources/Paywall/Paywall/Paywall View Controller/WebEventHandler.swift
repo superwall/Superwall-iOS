@@ -129,7 +129,6 @@ final class WebEventHandler: WebEventDelegate {
         )
       }
       self?.delegate?.loadingState = .ready
-      // TODO: Should this return here?
     }
 
     // block selection

@@ -45,22 +45,20 @@ struct SWSubscriptionTemplateVariable: Codable {
         return
       }
     case .trial:
-      if #available(iOS 11.2, *) {
-        if let discount = swProduct.introductoryPrice {
-          self.identifier = discount.identifier
-          if discount.price != 0 {
-            self.price = SWPriceTemplateVariable(
-              value: discount.price,
-              locale: product.priceLocale,
-              period: discount.subscriptionPeriod
-            )
-          }
-          self.period = SWPeriodTemplateVariable(
-            period: discount.subscriptionPeriod,
-            locale: product.priceLocale
+      if let discount = swProduct.introductoryPrice {
+        self.identifier = discount.identifier
+        if discount.price != 0 {
+          self.price = SWPriceTemplateVariable(
+            value: discount.price,
+            locale: product.priceLocale,
+            period: discount.subscriptionPeriod
           )
-          return
         }
+        self.period = SWPeriodTemplateVariable(
+          period: discount.subscriptionPeriod,
+          locale: product.priceLocale
+        )
+        return
       }
     case .discount:
       break

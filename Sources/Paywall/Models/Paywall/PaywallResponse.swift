@@ -43,31 +43,6 @@ struct PaywallResponse: Decodable {
   var productsLoadStartTime: Date?
   var productsLoadCompleteTime: Date?
 
-  func getPaywallInfo(
-    fromEvent: EventData?,
-    calledByIdentifier: Bool = false,
-    includeExperiment: Bool = false
-  ) -> PaywallInfo {
-    return PaywallInfo(
-      id: id ?? "unknown",
-      identifier: identifier ?? "unknown",
-      name: name ?? "unknown",
-      slug: slug ?? "unknown",
-      url: URL(string: url),
-      productIds: productIds,
-      fromEventData: fromEvent,
-      calledByIdentifier: calledByIdentifier,
-      responseLoadStartTime: responseLoadStartTime,
-      responseLoadCompleteTime: responseLoadCompleteTime,
-      webViewLoadStartTime: webViewLoadStartTime,
-      webViewLoadCompleteTime: webViewLoadCompleteTime,
-      productsLoadStartTime: productsLoadStartTime,
-      productsLoadCompleteTime: productsLoadCompleteTime,
-      variantId: includeExperiment ? variantId : nil,
-      experimentId: includeExperiment ? experimentId : nil
-    )
-  }
-
   var paywallBackgroundColor: UIColor {
     if let hexString = backgroundColorHex {
       return UIColor(hexString: hexString)
@@ -82,7 +57,7 @@ struct PaywallResponse: Decodable {
 
   var templateVariables: JSON {
     var variables: [String: Any] = [
-      "user": Store.shared.userAttributes,
+      "user": CacheManager.shared.userAttributes,
       "device": DeviceHelper.shared.templateDevice.dictionary ?? [:]
     ]
 
@@ -132,6 +107,31 @@ struct PaywallResponse: Decodable {
     )
   }
 
+  func getPaywallInfo(
+    fromEvent: EventData?,
+    calledByIdentifier: Bool = false,
+    includeExperiment: Bool = false
+  ) -> PaywallInfo {
+    return PaywallInfo(
+      id: id ?? "unknown",
+      identifier: identifier ?? "unknown",
+      name: name ?? "unknown",
+      slug: slug ?? "unknown",
+      url: URL(string: url),
+      productIds: productIds,
+      fromEventData: fromEvent,
+      calledByIdentifier: calledByIdentifier,
+      responseLoadStartTime: responseLoadStartTime,
+      responseLoadCompleteTime: responseLoadCompleteTime,
+      webViewLoadStartTime: webViewLoadStartTime,
+      webViewLoadCompleteTime: webViewLoadCompleteTime,
+      productsLoadStartTime: productsLoadStartTime,
+      productsLoadCompleteTime: productsLoadCompleteTime,
+      variantId: includeExperiment ? variantId : nil,
+      experimentId: includeExperiment ? experimentId : nil
+    )
+  }
+
   func getBase64EventsString(params: JSON? = nil) -> String {
     var templateVariables = self.templateVariables
 
@@ -153,22 +153,6 @@ struct PaywallResponse: Decodable {
 
     let utf8str = string.data(using: .utf8)
     return utf8str?.base64EncodedString() ?? ""
-  }
-
-  func equals(_ response: PaywallResponse) -> Bool {
-    let sameIdentity = id == response.id
-      && identifier == response.identifier
-      && name == response.name
-      && slug == response.slug
-      && identifier == response.identifier
-      && url == response.url
-      && paywalljsEvent == response.paywalljsEvent
-      && presentationStyle == response.presentationStyle
-      && backgroundColorHex == response.backgroundColorHex
-
-    let sameProducts = response.productIds == productIds
-
-    return sameIdentity && sameProducts
   }
 
   private func encodedEventString<T: Codable>(_ input: T) -> String {

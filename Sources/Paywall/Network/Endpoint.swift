@@ -67,14 +67,14 @@ struct Endpoint<Response: Decodable> {
   ) {
     let requestId = UUID().uuidString
 
-    let apiKey = isForDebugging ? (Store.shared.debugKey ?? "") : Store.shared.apiKey
+    let apiKey = isForDebugging ? (CacheManager.shared.debugKey ?? "") : CacheManager.shared.apiKey
     let auth = "Bearer \(apiKey)"
     let headers = [
       "Authorization": auth,
       "X-Platform": "iOS",
       "X-Platform-Environment": "SDK",
-      "X-App-User-ID": Store.shared.appUserId ?? "",
-      "X-Alias-ID": Store.shared.aliasId ?? "",
+      "X-App-User-ID": CacheManager.shared.appUserId ?? "",
+      "X-Alias-ID": CacheManager.shared.aliasId ?? "",
       "X-Vendor-ID": DeviceHelper.shared.vendorId,
       "X-App-Version": DeviceHelper.shared.appVersion,
       "X-OS-Version": DeviceHelper.shared.osVersion,
@@ -138,7 +138,7 @@ extension Endpoint where Response == PaywallResponse {
       let bodyDict = ["event": event.jsonData]
       bodyData = try? encoder.encode(bodyDict)
     } else {
-      let bodyDict = PaywallRequest(appUserId: Store.shared.userId ?? "")
+      let bodyDict = PaywallRequest(appUserId: CacheManager.shared.userId ?? "")
       bodyData = try? encoder.encode(bodyDict)
     }
     return Endpoint(

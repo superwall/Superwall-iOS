@@ -15,8 +15,15 @@ final class Cache {
   static let cacheDirectoryPrefix = "com.superwall.cache."
   static let ioQueuePrefix = "com.superwall.queue."
   static let defaultMaxCachePeriodInSecond: TimeInterval = 60 * 60 * 24 * 7 // a week
-
   static let instance = Cache(name: "default")
+
+  enum CacheKey: String {
+    case appUserId = "store.appUserId"
+    case aliasId = "store.aliasId"
+    case didTrackFirstSeen = "store.didTrackFirstSeen"
+    case userAttributes = "store.userAttributes"
+    case config = "store.config"
+  }
 
   let cachePath: String
 
@@ -67,18 +74,14 @@ final class Cache {
       )
     #endif
   }
-
-  deinit {
-    NotificationCenter.default.removeObserver(self)
-  }
 }
 
 // MARK: - Store data
 extension Cache {
   /// Write data for key. This is an async operation.
-  func write(data: Data, forKey key: String) {
+  func write(data: Data, forKey key: CacheKey) {
     memCache.setObject(data as AnyObject, forKey: key as AnyObject)
-    writeDataToDisk(data: data, key: key)
+    writeDataToDisk(data: data, key: key.rawValue)
   }
 
   private func writeDataToDisk(data: Data, key: String) {
@@ -119,7 +122,7 @@ extension Cache {
   }
 
   // MARK: - Read & write Codable types
-  func write<T: Encodable>(codable: T, forKey key: String) throws {
+  func write<T: Encodable>(codable: T, forKey key: CacheKey) throws {
     let data = try JSONEncoder().encode(codable)
     write(data: data, forKey: key)
   }
@@ -134,23 +137,23 @@ extension Cache {
   /// Write an object for key. This object must inherit from `NSObject` and implement `NSCoding` protocol. `String`, `Array`, `Dictionary` conform to this method.
   ///
   /// NOTE: Can't write `UIImage` with this method. Please use `writeImage(_:forKey:)` to write an image
-  func write(object: NSCoding, forKey key: String) {
+  func write(object: NSCoding, forKey key: CacheKey) {
     let data = NSKeyedArchiver.archivedData(withRootObject: object)
     write(data: data, forKey: key)
   }
 
   /// Write a string for key
-  func write(_ string: String, forKey key: String) {
+  func write(_ string: String, forKey key: CacheKey) {
     write(object: string as NSCoding, forKey: key)
   }
 
   /// Write a dictionary for key
-  func write(_ dictionary: [AnyHashable: Any], forKey key: String) {
+  func write(_ dictionary: [AnyHashable: Any], forKey key: CacheKey) {
     write(object: dictionary as NSCoding, forKey: key)
   }
 
   /// Write an array for key
-  func write(array: [Any], forKey key: String) {
+  func write(array: [Any], forKey key: CacheKey) {
     write(object: array as NSCoding, forKey: key)
   }
 
@@ -166,58 +169,23 @@ extension Cache {
   }
 
   /// Read a string for key
-  func readString(forKey key: String) -> String? {
-    return readObject(forKey: key) as? String
-  }
-
-  /// Read an array for key
-  func readArray(forKey key: String) -> [Any]? {
-    return readObject(forKey: key) as? [Any]
+  func readString(forKey key: CacheKey) -> String? {
+    return readObject(forKey: key.rawValue) as? String
   }
 
   /// Read a dictionary for key
-  func readDictionary(forKey key: String) -> [AnyHashable: Any]? {
-    return readObject(forKey: key) as? [AnyHashable: Any]
-  }
-
-  // MARK: - Read & write image
-
-  /// Write image for key. Please use this method to write an image instead of `writeObject(_:forKey:)`
-  func write(image: UIImage, forKey key: String, format: ImageFormat? = nil) {
-    var data: Data?
-
-    if let format = format, format == .png {
-      data = image.pngData()
-    } else {
-      data = image.jpegData(compressionQuality: 0.9)
-    }
-
-    if let data = data {
-      write(data: data, forKey: key)
-    }
-  }
-
-  /// Read image for key. Please use this method to write an image instead of `readObject(forKey:)`
-  func readImage(forKey key: String) -> UIImage? {
-    let data = readData(forKey: key)
-    if let data = data {
-      return UIImage(data: data, scale: 1.0)
-    }
-
-    return nil
-  }
-
-  @available(*, deprecated, message: "Please use `readImage(forKey:)` instead. This will be removed in the future.")
-  func readImageForKey(key: String) -> UIImage? {
-    return readImage(forKey: key)
+  func readDictionary(forKey key: CacheKey) -> [AnyHashable: Any]? {
+    return readObject(forKey: key.rawValue) as? [AnyHashable: Any]
   }
 }
 
 // MARK: - Utils
 extension Cache {
   /// Check if has data for key
-  func hasData(forKey key: String) -> Bool {
-    return hasDataOnDisk(forKey: key) || hasDataOnMem(forKey: key)
+  func hasData(forKey key: CacheKey) -> Bool {
+    let isOnDisk = hasDataOnDisk(forKey: key.rawValue)
+    let isInMemory = hasDataOnMem(forKey: key.rawValue)
+    return isOnDisk || isInMemory
   }
 
   /// Check if has data on disk

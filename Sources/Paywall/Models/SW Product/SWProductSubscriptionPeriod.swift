@@ -63,7 +63,6 @@ struct SWProductSubscriptionPeriod: Codable {
     }
   }
 
-  @available(iOS 11.2, *)
   init(period: SKProductSubscriptionPeriod, numberOfPeriods: Int) {
     self.numberOfUnits = period.numberOfUnits * numberOfPeriods
     switch period.unit {

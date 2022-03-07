@@ -29,7 +29,7 @@ final class SWWebView: WKWebView {
 
   init(delegate: WebEventDelegate) {
     wkConfig.userContentController.add(
-      LeakAvoider(delegate: delegate),
+      PaywallMessageHandler(delegate: delegate),
       name: "paywallMessageHandler"
     )
     super.init(
