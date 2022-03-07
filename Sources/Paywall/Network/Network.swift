@@ -233,13 +233,13 @@ extension Network {
         if Store.shared.locales.contains(DeviceHelper.shared.locale) {
             queryLocale = URLQueryItem(name: "locale", value: DeviceHelper.shared.locale)
         } else {
-            let shortLocale = DeviceHelper.shared.locale.split("_")[0]
-            if (Store.shared.locales.contains(shortLocale)) {
-                queryLocale = URLQueryItem(name: "locale", value: shortLocale)
+            let shortLocale = DeviceHelper.shared.locale.split(separator: "_")[0]
+            if (Store.shared.locales.contains(String(shortLocale))) {
+                queryLocale = URLQueryItem(name: "locale", value: String(shortLocale))
             }
         }
         if queryLocale != nil {
-            components.queryItems = [queryPk, queryLocale]
+            components.queryItems = [queryPk, queryLocale!]
         } else {
             components.queryItems = [queryPk]
         }
