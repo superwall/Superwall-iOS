@@ -39,28 +39,28 @@ final class SWDebugManager {
   /// If you call `Paywall.track(.deepLinkOpen(deepLinkUrl: url))` from `application(_:, open:, options:)` in your `AppDelegate`, this function is called automatically after scanning your debug QR code in Superwall's web dashboard.
   ///
   /// Remember to add you URL scheme in settings for QR code scanning to work.
-	func launchDebugger(toPaywall paywallId: String? = nil) {
+	func launchDebugger(toPaywall paywallDatabaseId: String? = nil) {
 		if Paywall.shared.isPaywallPresented {
 			Paywall.dismiss { [weak self] in
-				self?.launchDebugger(toPaywall: paywallId)
+				self?.launchDebugger(toPaywall: paywallDatabaseId)
 			}
 		} else {
-			if viewController != nil {
-				closeDebugger { [weak self] in
-					self?.launchDebugger(toPaywall: paywallId)
-				}
+			if viewController == nil {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) { [weak self] in
+          self?.presentDebugger(toPaywall: paywallDatabaseId)
+        }
 			} else {
-				DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-					self?.presentDebugger(toPaywall: paywallId)
-				}
+        closeDebugger { [weak self] in
+          self?.launchDebugger(toPaywall: paywallDatabaseId)
+        }
 			}
 		}
 	}
 
-	func presentDebugger(toPaywall paywallId: String? = nil) {
+	func presentDebugger(toPaywall paywallDatabaseId: String? = nil) {
 		isDebuggerLaunched = true
 		if let viewController = viewController {
-			viewController.paywallId = paywallId
+			viewController.paywallDatabaseId = paywallDatabaseId
 			viewController.loadPreview()
 			UIViewController.topMostViewController?.present(
         viewController,
@@ -68,7 +68,7 @@ final class SWDebugManager {
       )
 		} else {
 			let viewController = SWDebugViewController()
-			viewController.paywallId = paywallId
+			viewController.paywallDatabaseId = paywallDatabaseId
 			viewController.modalPresentationStyle = .overFullScreen
 			UIViewController.topMostViewController?.present(
         viewController,
@@ -99,7 +99,10 @@ final class SWDebugManager {
 		}
 	}
 
-  func getQueryStringParameter(url: String, param: String) -> String? {
+  func getQueryStringParameter(
+    url: String,
+    param: String
+  ) -> String? {
     guard let url = URLComponents(string: url) else {
       return nil
     }

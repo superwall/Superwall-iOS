@@ -178,12 +178,12 @@ extension Endpoint where Response == ConfigResponse {
   }
 }
 
-// MARK: - ConfirmAssignmentResponse
-extension Endpoint where Response == ConfirmAssignmentResponse {
-  static func confirmAssignment(_ confirmAssignments: ConfirmAssignments) -> Self {
+// MARK: - ConfirmedAssignmentResponse
+extension Endpoint where Response == ConfirmedAssignmentResponse {
+  static func confirmedAssignment(_ confirmedAssignment: ConfirmedAssignments) -> Self {
     let encoder = JSONEncoder()
     encoder.keyEncodingStrategy = .convertToSnakeCase
-    let bodyData = try? encoder.encode(confirmAssignments)
+    let bodyData = try? encoder.encode(confirmedAssignment)
 
     return Endpoint(
       components: Components(

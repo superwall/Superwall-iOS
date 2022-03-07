@@ -66,11 +66,8 @@ final class SWBounceButton: UIButton {
   var offBackgroundColor: UIColor = secondaryButtonBackgroundColor
 
   weak var bounceButtonToggleDelegate: BounceButtonToggleDelegate?
-
   var shouldOnlyAnimateText = false
-
   var shouldAnimateLightly = false
-
   var didAddTargetForCustomAction = false
 
   var action: ((SWBounceButton) -> Void)? {
@@ -217,7 +214,9 @@ final class SWBounceButton: UIButton {
 
   override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
     // if the button is hidden/disabled/transparent it can’t be hit
-    if self.isHidden || !self.isUserInteractionEnabled || self.alpha < 0.01 { return nil }
+    if isHidden || !isUserInteractionEnabled || alpha < 0.01 {
+      return nil
+    }
 
     let inset: CGFloat = greedyTouches ? -15 : -10
 

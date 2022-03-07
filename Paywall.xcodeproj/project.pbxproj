@@ -31,6 +31,9 @@
 		7691C1718BA95F3D9809521A /* PaywallResponseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08628840CDA0FD7E8B50D224 /* PaywallResponseManager.swift */; };
 		7AD13EAC110C54195DEAEFB1 /* ConvenienceFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD2A08A7B5B4D29500F34927 /* ConvenienceFunctions.swift */; };
 		824933BE91877E221F976014 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ECF855DE5D99DE526EAB147 /* SwiftyJSON.swift */; };
+		888F483F27D62EBB009C74A3 /* LocalizationOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F483E27D62EBB009C74A3 /* LocalizationOption.swift */; };
+		888F484127D62F39009C74A3 /* LocalizationGrouping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F484027D62F39009C74A3 /* LocalizationGrouping.swift */; };
+		888F484327D6330E009C74A3 /* LocalizationLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F484227D6330E009C74A3 /* LocalizationLogic.swift */; };
 		88B8482627CCF15400935AE4 /* Date+IsoString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8482527CCF15400935AE4 /* Date+IsoString.swift */; };
 		88B8482827CCF16D00935AE4 /* UIWindow+Landscape.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8482727CCF16D00935AE4 /* UIWindow+Landscape.swift */; };
 		88B8482A27CCF26000935AE4 /* UIViewController+TopVc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8482927CCF26000935AE4 /* UIViewController+TopVc.swift */; };
@@ -53,14 +56,14 @@
 		88B8485127CF956F00935AE4 /* TriggerRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8485027CF956F00935AE4 /* TriggerRule.swift */; };
 		88B8485327CF95CC00935AE4 /* Trigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8485227CF95CC00935AE4 /* Trigger.swift */; };
 		88B8485527CF966400935AE4 /* TriggerV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8485427CF966400935AE4 /* TriggerV2.swift */; };
-		88B8485727CF97E500935AE4 /* ConfirmAssignments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8485627CF97E500935AE4 /* ConfirmAssignments.swift */; };
+		88B8485727CF97E500935AE4 /* ConfirmedAssignments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8485627CF97E500935AE4 /* ConfirmedAssignments.swift */; };
 		88B8485927CF984800935AE4 /* Postback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8485827CF984800935AE4 /* Postback.swift */; };
 		88B8485C27CF98B200935AE4 /* PostbackRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8485B27CF98B200935AE4 /* PostbackRequest.swift */; };
 		88B8485F27CF995800935AE4 /* EventData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8485E27CF995800935AE4 /* EventData.swift */; };
 		88B8486127CF996400935AE4 /* EventsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8486027CF996400935AE4 /* EventsResponse.swift */; };
 		88B8486327CF996D00935AE4 /* EventsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8486227CF996D00935AE4 /* EventsRequest.swift */; };
 		88B8486627CF999A00935AE4 /* Assignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8486527CF999A00935AE4 /* Assignment.swift */; };
-		88B8486827CF99AD00935AE4 /* ConfirmAssignmentResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8486727CF99AD00935AE4 /* ConfirmAssignmentResponse.swift */; };
+		88B8486827CF99AD00935AE4 /* ConfirmedAssignmentResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8486727CF99AD00935AE4 /* ConfirmedAssignmentResponse.swift */; };
 		88B8486A27CF9C0500935AE4 /* ConfigResponseLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8486927CF9C0500935AE4 /* ConfigResponseLogic.swift */; };
 		88B8486C27CFA01000935AE4 /* TriggerVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8486B27CFA01000935AE4 /* TriggerVersion.swift */; };
 		88B8486E27CFA0F900935AE4 /* Variant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8486D27CFA0F900935AE4 /* Variant.swift */; };
@@ -102,7 +105,7 @@
 		88B848C727D2821D00935AE4 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848C627D2821D00935AE4 /* Endpoint.swift */; };
 		88B848C927D282A300935AE4 /* URLSession+Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848C827D282A300935AE4 /* URLSession+Request.swift */; };
 		88B848CD27D28DE200935AE4 /* APIs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848CC27D28DE200935AE4 /* APIs.swift */; };
-		88B848CF27D295BD00935AE4 /* ModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848CE27D295BD00935AE4 /* ModelLoader.swift */; };
+		88B848CF27D295BD00935AE4 /* Network.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B848CE27D295BD00935AE4 /* Network.swift */; };
 		89C930F9AF3E78401DA75EBB /* InternalEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF54D10298EB2DAEBE67770 /* InternalEvents.swift */; };
 		8ED134478ED2308C222205C0 /* SWDebugManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0174F2F10C41C0E955B23457 /* SWDebugManager.swift */; };
 		969A24DBD53AD76F6F01BB66 /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = B64A36AB939D7351F687712C /* Device.swift */; };
@@ -116,7 +119,6 @@
 		DB5D4A75F57964597B02CD94 /* TPInAppReceipt in Frameworks */ = {isa = PBXBuildFile; productRef = F82B5A085AE5FBA1919CA8EF /* TPInAppReceipt */; };
 		E2C928F75405E84DEB0882B6 /* ShimmeringMaskLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172F9EA3F79A4A44E12F7BE /* ShimmeringMaskLayer.swift */; };
 		FE82C1853125202647F35D89 /* PaywallDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3120D4B1C19900CA6951E6F8 /* PaywallDelegate.swift */; };
-		FEB31F66186E30FDAF63D045 /* Network.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82C4F84E15DB7596C36F04DD /* Network.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -140,8 +142,10 @@
 		6F0DF5E8AC71E05726109BE5 /* SWDebugViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWDebugViewController.swift; sourceTree = "<group>"; };
 		7BCB92333070318FF40FD013 /* ShimmeringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringView.swift; sourceTree = "<group>"; };
 		819D90B0DA165B3040F87984 /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
-		82C4F84E15DB7596C36F04DD /* Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network.swift; sourceTree = "<group>"; };
 		84CB7F6F4F3438F00EC6D681 /* TriggerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerManager.swift; sourceTree = "<group>"; };
+		888F483E27D62EBB009C74A3 /* LocalizationOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationOption.swift; sourceTree = "<group>"; };
+		888F484027D62F39009C74A3 /* LocalizationGrouping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationGrouping.swift; sourceTree = "<group>"; };
+		888F484227D6330E009C74A3 /* LocalizationLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationLogic.swift; sourceTree = "<group>"; };
 		88B8482527CCF15400935AE4 /* Date+IsoString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+IsoString.swift"; sourceTree = "<group>"; };
 		88B8482727CCF16D00935AE4 /* UIWindow+Landscape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIWindow+Landscape.swift"; sourceTree = "<group>"; };
 		88B8482927CCF26000935AE4 /* UIViewController+TopVc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+TopVc.swift"; sourceTree = "<group>"; };
@@ -164,14 +168,14 @@
 		88B8485027CF956F00935AE4 /* TriggerRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerRule.swift; sourceTree = "<group>"; };
 		88B8485227CF95CC00935AE4 /* Trigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trigger.swift; sourceTree = "<group>"; };
 		88B8485427CF966400935AE4 /* TriggerV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerV2.swift; sourceTree = "<group>"; };
-		88B8485627CF97E500935AE4 /* ConfirmAssignments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmAssignments.swift; sourceTree = "<group>"; };
+		88B8485627CF97E500935AE4 /* ConfirmedAssignments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmedAssignments.swift; sourceTree = "<group>"; };
 		88B8485827CF984800935AE4 /* Postback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Postback.swift; sourceTree = "<group>"; };
 		88B8485B27CF98B200935AE4 /* PostbackRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostbackRequest.swift; sourceTree = "<group>"; };
 		88B8485E27CF995800935AE4 /* EventData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventData.swift; sourceTree = "<group>"; };
 		88B8486027CF996400935AE4 /* EventsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsResponse.swift; sourceTree = "<group>"; };
 		88B8486227CF996D00935AE4 /* EventsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsRequest.swift; sourceTree = "<group>"; };
 		88B8486527CF999A00935AE4 /* Assignment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assignment.swift; sourceTree = "<group>"; };
-		88B8486727CF99AD00935AE4 /* ConfirmAssignmentResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmAssignmentResponse.swift; sourceTree = "<group>"; };
+		88B8486727CF99AD00935AE4 /* ConfirmedAssignmentResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmedAssignmentResponse.swift; sourceTree = "<group>"; };
 		88B8486927CF9C0500935AE4 /* ConfigResponseLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigResponseLogic.swift; sourceTree = "<group>"; };
 		88B8486B27CFA01000935AE4 /* TriggerVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerVersion.swift; sourceTree = "<group>"; };
 		88B8486D27CFA0F900935AE4 /* Variant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Variant.swift; sourceTree = "<group>"; };
@@ -213,7 +217,7 @@
 		88B848C627D2821D00935AE4 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
 		88B848C827D282A300935AE4 /* URLSession+Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSession+Request.swift"; sourceTree = "<group>"; };
 		88B848CC27D28DE200935AE4 /* APIs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIs.swift; sourceTree = "<group>"; };
-		88B848CE27D295BD00935AE4 /* ModelLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelLoader.swift; sourceTree = "<group>"; };
+		88B848CE27D295BD00935AE4 /* Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network.swift; sourceTree = "<group>"; };
 		A97FBE507568D7EB358372E0 /* SDKJS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKJS.swift; sourceTree = "<group>"; };
 		AB9A6BAF6E54CA507528440E /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
 		B64A36AB939D7351F687712C /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
@@ -298,7 +302,7 @@
 		46E17D5502F50E6EBB6F171C /* Debug */ = {
 			isa = PBXGroup;
 			children = (
-				AB9A6BAF6E54CA507528440E /* LocalizationManager.swift */,
+				888F483D27D62EAE009C74A3 /* Localizations */,
 				271079AB0915D7C997940C95 /* SWBounceButton.swift */,
 				39C933A6381DB152E672FCE9 /* SWConsoleViewController.swift */,
 				0174F2F10C41C0E955B23457 /* SWDebugManager.swift */,
@@ -314,6 +318,17 @@
 				8DDE3A1F5D9EA72CC0A7E096 /* Sources */,
 				434E6413A5EE3CC94426BAF3 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		888F483D27D62EAE009C74A3 /* Localizations */ = {
+			isa = PBXGroup;
+			children = (
+				AB9A6BAF6E54CA507528440E /* LocalizationManager.swift */,
+				888F484227D6330E009C74A3 /* LocalizationLogic.swift */,
+				888F483E27D62EBB009C74A3 /* LocalizationOption.swift */,
+				888F484027D62F39009C74A3 /* LocalizationGrouping.swift */,
+			);
+			path = Localizations;
 			sourceTree = "<group>";
 		};
 		88B8482427CCF11700935AE4 /* Extensions */ = {
@@ -411,8 +426,8 @@
 		88B8486427CF998E00935AE4 /* Assignment */ = {
 			isa = PBXGroup;
 			children = (
-				88B8485627CF97E500935AE4 /* ConfirmAssignments.swift */,
-				88B8486727CF99AD00935AE4 /* ConfirmAssignmentResponse.swift */,
+				88B8485627CF97E500935AE4 /* ConfirmedAssignments.swift */,
+				88B8486727CF99AD00935AE4 /* ConfirmedAssignmentResponse.swift */,
 				88B8486527CF999A00935AE4 /* Assignment.swift */,
 			);
 			path = Assignment;
@@ -598,11 +613,10 @@
 			isa = PBXGroup;
 			children = (
 				88B848A227D0DEB300935AE4 /* Paywall Response */,
-				B64A36AB939D7351F687712C /* Device.swift */,
-				82C4F84E15DB7596C36F04DD /* Network.swift */,
-				88B848CC27D28DE200935AE4 /* APIs.swift */,
+				88B848CE27D295BD00935AE4 /* Network.swift */,
 				88B848C627D2821D00935AE4 /* Endpoint.swift */,
-				88B848CE27D295BD00935AE4 /* ModelLoader.swift */,
+				88B848CC27D28DE200935AE4 /* APIs.swift */,
+				B64A36AB939D7351F687712C /* Device.swift */,
 				FDFF57BA43FA58EBD97FE5B7 /* PaywallEvents.swift */,
 			);
 			path = Network;
@@ -688,7 +702,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "PATH=/opt/homebrew/bin:$PATH\n\nif which swiftlint >/dev/null; then\n  swiftlint --no-cache --config ${PROJECT_DIR}/.swiftlint.yml\nfi\nelse\n    echo \"\n    Error: SwiftLint not installed!\n    Run brew install swiftlint\n    or download from https://github.com/realm/SwiftLint.\n    \"\n    exit 1\nfi\n";
+			shellScript = "PATH=/opt/homebrew/bin:$PATH\n\nif which swiftlint >/dev/null; then\n  swiftlint --no-cache --config ${PROJECT_DIR}/.swiftlint.yml\nelse\n    echo \"\n    Error: SwiftLint not installed!\n    Run brew install swiftlint\n    or download from https://github.com/realm/SwiftLint.\n    \"\n    exit 1\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -697,7 +711,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				88B848CF27D295BD00935AE4 /* ModelLoader.swift in Sources */,
+				88B848CF27D295BD00935AE4 /* Network.swift in Sources */,
 				88B848BF27D235EE00935AE4 /* InternalEventTypes.swift in Sources */,
 				88B8488E27CFCA3F00935AE4 /* PaywallPresentationStyle.swift in Sources */,
 				88B848A727D1213100935AE4 /* UIDevice+ModelName.swift in Sources */,
@@ -724,7 +738,7 @@
 				88B848A127D0DEB000935AE4 /* PaywallResponseLogic.swift in Sources */,
 				88B8483027CCF35700935AE4 /* Decimal+Rounding.swift in Sources */,
 				0710F1429BA795E58A6461DB /* GameControllerManager.swift in Sources */,
-				88B8486827CF99AD00935AE4 /* ConfirmAssignmentResponse.swift in Sources */,
+				88B8486827CF99AD00935AE4 /* ConfirmedAssignmentResponse.swift in Sources */,
 				88B8484327CD00C200935AE4 /* PaywallInfo.swift in Sources */,
 				26FCA273A8C9F4BE35C252EB /* LocalizationManager.swift in Sources */,
 				88B848C927D282A300935AE4 /* URLSession+Request.swift in Sources */,
@@ -732,14 +746,13 @@
 				88B8485527CF966400935AE4 /* TriggerV2.swift in Sources */,
 				88B8484527CD015300935AE4 /* PaywallResponse.swift in Sources */,
 				88B8487327CFA3EB00935AE4 /* SWTemplateVariable.swift in Sources */,
-				FEB31F66186E30FDAF63D045 /* Network.swift in Sources */,
 				29735852190A0E7ADCA1134E /* Paywall.swift in Sources */,
 				88B8488527CFA51C00935AE4 /* SKProduct+Helpers.swift in Sources */,
 				88B8489227CFCA6200935AE4 /* Variable.swift in Sources */,
 				88B848B527D22C9D00935AE4 /* Bundle+Helpers.swift in Sources */,
 				FE82C1853125202647F35D89 /* PaywallDelegate.swift in Sources */,
 				88B8483627CCF44500935AE4 /* Dictionary+Filter.swift in Sources */,
-				88B8485727CF97E500935AE4 /* ConfirmAssignments.swift in Sources */,
+				88B8485727CF97E500935AE4 /* ConfirmedAssignments.swift in Sources */,
 				A2897495E7CF38F8AE8B3F15 /* PaywallEvents.swift in Sources */,
 				88B8485F27CF995800935AE4 /* EventData.swift in Sources */,
 				88B8483A27CCF52200935AE4 /* GameControllerEvent.swift in Sources */,
@@ -767,9 +780,11 @@
 				9A7F5ED970C8BC6658A0C604 /* SDKJS.swift in Sources */,
 				88B8489B27CFE61000935AE4 /* TriggerLogic.swift in Sources */,
 				88B8487027CFA3A900935AE4 /* EmptyResponse.swift in Sources */,
+				888F483F27D62EBB009C74A3 /* LocalizationOption.swift in Sources */,
 				88B8487B27CFA46F00935AE4 /* SWProduct.swift in Sources */,
 				88B8489627CFCBEC00935AE4 /* EventTypeConversion.swift in Sources */,
 				0FD23369D3FD47831A02E972 /* SWBounceButton.swift in Sources */,
+				888F484327D6330E009C74A3 /* LocalizationLogic.swift in Sources */,
 				5E417214B1381CA60162E0D5 /* SWConsoleViewController.swift in Sources */,
 				8ED134478ED2308C222205C0 /* SWDebugManager.swift in Sources */,
 				88B8484C27CF949A00935AE4 /* ConfigResponse.swift in Sources */,
@@ -795,6 +810,7 @@
 				88B848B227D223D100935AE4 /* PaywallCache.swift in Sources */,
 				07DE9F5B9BE44235B3A9330F /* StoreKitManager.swift in Sources */,
 				5E1738AAF67F8695B1A6A01F /* String+MD5.swift in Sources */,
+				888F484127D62F39009C74A3 /* LocalizationGrouping.swift in Sources */,
 				88B8484E27CF94B200935AE4 /* PaywallConfig.swift in Sources */,
 				824933BE91877E221F976014 /* SwiftyJSON.swift in Sources */,
 				88B8489027CFCA5300935AE4 /* ProductVariable.swift in Sources */,

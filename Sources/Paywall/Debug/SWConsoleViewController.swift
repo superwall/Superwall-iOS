@@ -80,9 +80,7 @@ final class SWConsoleViewController: UIViewController {
       action: #selector(addTapped)
     )
     navigationItem.rightBarButtonItem?.tintColor = primaryColor
-    if #available(iOS 11.0, *) {
-      navigationItem.largeTitleDisplayMode = .never
-    }
+    navigationItem.largeTitleDisplayMode = .never
 
     productPicker.reloadAllComponents()
     reloadTableView()

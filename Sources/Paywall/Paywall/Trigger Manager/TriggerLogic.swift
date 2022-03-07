@@ -9,7 +9,7 @@ import Foundation
 
 enum TriggerLogic {
   struct Outcome {
-    var confirmAssignments: ConfirmAssignments?
+    var confirmedAssignments: ConfirmedAssignments?
     var result: HandleEventResult
   }
 
@@ -24,17 +24,17 @@ enum TriggerLogic {
         in: eventData,
         v2Trigger: triggerV2
       ) {
-        let confirmAssignments = getConfirmAssignments(forRule: rule)
+        let confirmedAssignments = getConfirmedAssignments(forRule: rule)
 
         switch rule.variant {
         case .holdout(let holdout):
           return Outcome(
-            confirmAssignments: confirmAssignments,
+            confirmedAssignments: confirmedAssignments,
             result: .holdout(rule.experimentId, holdout.variantId)
           )
         case .treatment(let treatment):
           return Outcome(
-            confirmAssignments: confirmAssignments,
+            confirmedAssignments: confirmedAssignments,
             result: .presentIdentifier(
               rule.experimentId,
               treatment.variantId,
@@ -68,13 +68,13 @@ enum TriggerLogic {
     return nil
   }
 
-  private static func getConfirmAssignments(
+  private static func getConfirmedAssignments(
     forRule rule: TriggerRule
-  ) -> ConfirmAssignments? {
+  ) -> ConfirmedAssignments? {
     if rule.assigned {
       return nil
     } else {
-      let confirmAssignment = ConfirmAssignments(
+      let confirmedAssignments = ConfirmedAssignments(
         assignments: [
           Assignment(
             experimentId: rule.experimentId,
@@ -82,7 +82,7 @@ enum TriggerLogic {
           )
         ]
       )
-      return confirmAssignment
+      return confirmedAssignments
     }
   }
 }

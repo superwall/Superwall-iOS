@@ -76,7 +76,7 @@ struct ConfigResponse: Decodable {
       StoreKitManager.shared.getProducts(withIds: postback.productsToPostBack.map { $0.identifier }) { productsById in
         let products = productsById.values.map(PostbackProduct.init)
         let postback = Postback(products: products)
-        Network.shared.postback(postback) { _ in }
+        Network.shared.sendPostback(postback) { _ in }
       }
     }
   }

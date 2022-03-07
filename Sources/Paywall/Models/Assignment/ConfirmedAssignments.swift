@@ -1,5 +1,5 @@
 //
-//  ConfirmAssignments.swift
+//  ConfirmedAssignments.swift
 //  Paywall
 //
 //  Created by Yusuf Tör on 02/03/2022.
@@ -7,6 +7,6 @@
 
 import Foundation
 
-struct ConfirmAssignments: Codable {
+struct ConfirmedAssignments: Codable {
   var assignments: [Assignment]
 }

@@ -11,7 +11,7 @@ enum Api {
   static let version1 = "/api/v1/"
   static let scheme = "https"
 
-  private static var hostDomain: String {
+  static var hostDomain: String {
     switch Paywall.networkEnvironment {
     case .release:
       return "superwall.me"

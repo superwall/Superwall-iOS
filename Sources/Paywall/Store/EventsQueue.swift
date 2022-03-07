@@ -16,15 +16,15 @@ final class EventsQueue {
   private var timer: Timer?
 
   init() {
+    let timeInterval = Paywall.networkEnvironment == .release ? 20.0 : 1.0
     timer = Timer.scheduledTimer(
-      timeInterval: Paywall.networkEnvironment == .release ? 20.0 : 1.0,
+      timeInterval: timeInterval,
       target: self,
       selector: #selector(flush),
       userInfo: nil,
       repeats: true
     )
-    let notificationCenter = NotificationCenter.default
-    notificationCenter.addObserver(
+    NotificationCenter.default.addObserver(
       self,
       selector: #selector(flush),
       name: UIApplication.willResignActiveNotification,
@@ -56,7 +56,8 @@ final class EventsQueue {
     if !eventsToSend.isEmpty {
       // Send to network
       // Network.events(Network)
-      Network.shared.events(events: EventsRequest(events: eventsToSend)) { _ in
+      let events = EventsRequest(events: eventsToSend)
+      Network.shared.sendEvents(events: events) { _ in
         // Logger.superwallDebug("Events Queue:", result)
       }
     }

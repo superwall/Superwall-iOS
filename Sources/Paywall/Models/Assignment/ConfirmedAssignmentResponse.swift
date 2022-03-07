@@ -1,5 +1,5 @@
 //
-//  ConfirmAssignmentResponse.swift
+//  ConfirmedAssignmentResponse.swift
 //  Paywall
 //
 //  Created by Yusuf Tör on 02/03/2022.
@@ -7,6 +7,6 @@
 
 import Foundation
 
-struct ConfirmAssignmentResponse: Codable {
+struct ConfirmedAssignmentResponse: Codable {
   var status: String
 }

@@ -26,14 +26,14 @@ extension URLSession {
     }
   }
 
+  // swiftlint:disable:next function_body_length
   func request<Response>(
     _ endpoint: Endpoint<Response>,
     isForDebugging: Bool = false,
     completion: @escaping (Result<Response, Error>) -> Void
   ) {
     guard let request = endpoint.makeRequest(forDebugging: isForDebugging) else {
-      //TODO: Add logging here
-      return completion(.failure(NetworkError.invalidUrl))
+      return completion(.failure(NetworkError.unknown))
     }
     guard let auth = request.allHTTPHeaderFields?["Authorization"] else {
       return completion(.failure(NetworkError.notAuthenticated))

@@ -246,10 +246,10 @@ final class SWPaywallViewController: UIViewController {
 
 	override func viewWillDisappear(_ animated: Bool) {
 		super.viewWillDisappear(animated)
-		if isPresented && !isSafariVCPresented {
-			if !calledDismiss {
+		if isPresented,
+      !isSafariVCPresented,
+      !calledDismiss {
 				Paywall.delegate?.willDismissPaywall?()
-			}
 		}
 	}
 

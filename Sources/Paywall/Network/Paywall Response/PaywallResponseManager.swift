@@ -80,7 +80,7 @@ final class PaywallResponseManager: NSObject {
       let responseLoadStartTime = Date()
       Paywall.track(.paywallResponseLoadStart(fromEvent: isFromEvent, event: event))
 
-      Network.shared.paywall(
+      Network.shared.getPaywall(
         withIdentifier: triggerIdentifiers?.paywallId,
         fromEvent: event
       ) { result in

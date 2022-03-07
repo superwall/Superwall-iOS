@@ -248,7 +248,7 @@ public final class Paywall: NSObject {
   }
 
 	private func fetchConfiguration() {
-		Network.shared.config { [weak self] result in
+    Network.shared.getConfig { [weak self] result in
       switch result {
       case .success(let config):
         Store.shared.addConfig(config)
@@ -266,7 +266,7 @@ public final class Paywall: NSObject {
         )
         self?.didFetchConfig = true
       }
-		}
+    }
 	}
 
 	func handleTrigger(forEvent event: EventData) {

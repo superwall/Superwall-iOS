@@ -12,7 +12,7 @@ import CoreTelephony
 
 final class DeviceHelper {
   static let shared = DeviceHelper()
-	let reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, Network.shared.hostDomain)
+  let reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, Api.hostDomain)
   var appVersion: String {
     Bundle.main.releaseVersionNumber ?? ""
   }

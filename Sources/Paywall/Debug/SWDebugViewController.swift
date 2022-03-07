@@ -114,10 +114,11 @@ final class SWDebugViewController: UIViewController {
     return button
   }()
 
-  var paywallId: String?
+  var paywallDatabaseId: String?
 	var paywallIdentifier: String?
   var paywallResponse: PaywallResponse?
   var paywallResponses: [PaywallResponse] = []
+  var previewViewContent: UIView?
 
   init() {
     super.init(nibName: nil, bundle: nil)
@@ -133,6 +134,11 @@ final class SWDebugViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
+    addSubviews()
+    loadPreview()
+  }
+
+  private func addSubviews() {
     view.addSubview(previewContainerView)
     view.addSubview(activityIndicator)
     view.addSubview(logoImageView)
@@ -171,21 +177,16 @@ final class SWDebugViewController: UIViewController {
 
       previewPickerButton.centerXAnchor.constraint(equalTo: previewContainerView.centerXAnchor, constant: 0),
       previewPickerButton.heightAnchor.constraint(equalToConstant: 26),
-    //            previewPickerButton.widthAnchor.constraint(equalToConstant: 130),
       previewPickerButton.centerYAnchor.constraint(equalTo: previewContainerView.bottomAnchor)
     ])
-
-    loadPreview()
   }
-
-  var previewViewContent: UIView?
 
   func loadPreview() {
     activityIndicator.startAnimating()
     previewViewContent?.removeFromSuperview()
 
     if paywallResponses.isEmpty {
-      Network.shared.paywalls { [weak self] result in
+      Network.shared.getPaywalls { [weak self] result in
         switch result {
         case .success(let response):
           self?.paywallResponses = response.paywalls
@@ -195,7 +196,6 @@ final class SWDebugViewController: UIViewController {
             logLevel: .error,
             scope: .debugViewController,
             message: "Failed to Fetch Paywalls",
-            info: nil,
             error: error
           )
         }
@@ -206,17 +206,17 @@ final class SWDebugViewController: UIViewController {
   }
 
 	func finishLoadingPreview() {
-		var pid: String?
+		var paywallId: String?
 
 		if let paywallIdentifier = paywallIdentifier {
-			pid = paywallIdentifier
-		} else if let paywallId = paywallId {
-			pid = paywallResponses.first(where: { $0.id == paywallId })?.identifier
-			paywallIdentifier = pid
+			paywallId = paywallIdentifier
+		} else if let paywallDatabaseId = paywallDatabaseId {
+			paywallId = paywallResponses.first(where: { $0.id == paywallDatabaseId })?.identifier
+			paywallIdentifier = paywallId
 		}
 
 		PaywallResponseManager.shared.getResponse(
-      identifier: pid,
+      identifier: paywallId,
       event: nil
     ) { [weak self] result in
       guard let self = self else {
@@ -294,7 +294,7 @@ final class SWDebugViewController: UIViewController {
   }
 
   @objc func pressedPreview() {
-    guard let id = paywallId else { return }
+    guard let id = paywallDatabaseId else { return }
 
     let options: [AlertOption] = paywallResponses.map { response in
       var name = response.name ?? ""
@@ -306,7 +306,7 @@ final class SWDebugViewController: UIViewController {
       let alert = AlertOption(
         title: name,
         action: { [weak self] in
-          self?.paywallId = response.id
+          self?.paywallDatabaseId = response.id
           self?.paywallIdentifier = response.identifier
           self?.loadPreview()
         },

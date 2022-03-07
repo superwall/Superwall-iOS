@@ -201,7 +201,7 @@ enum PaywallResponseLogic {
   ) -> PaywallErrorResponse? {
     let isFromEvent = event != nil
 
-    if let error = error as? Network.Error,
+    if let error = error as? URLSession.NetworkError,
       error == .notFound {
       Paywall.track(
         .paywallResponseLoadNotFound(

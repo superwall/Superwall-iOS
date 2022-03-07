@@ -33,9 +33,9 @@ enum TriggerManager {
       v2Triggers: Store.shared.v2Triggers
     )
 
-    if let confirmation = outcome.confirmAssignments {
-      Network.shared.confirmAssignments(
-        confirmAssignments: confirmation,
+    if let confirmedAssignments = outcome.confirmedAssignments {
+      Network.shared.sendConfirmedAssignments(
+        confirmedAssignments,
         completion: nil
       )
     }
