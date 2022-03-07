@@ -163,6 +163,9 @@ extension Network {
         let response = try decoder.decode(ResponseType.self, from: unWrappedData)
         completion(.success(response))
       } catch {
+        
+        print(String(data: data!, encoding: .utf8)!)
+        
 				Logger.debug(
           logLevel: .error,
           scope: .network,
@@ -173,6 +176,7 @@ extension Network {
             "url": request.url?.absoluteString ?? "unkown",
             "message": "Unable to decode response to type \(ResponseType.self)",
             "info": String(decoding: data ?? Data(), as: UTF8.self),
+            "request_id": requestId,
             "request_duration": requestDuration
           ],
           error: error
