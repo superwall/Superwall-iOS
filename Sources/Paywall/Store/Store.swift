@@ -22,6 +22,7 @@ internal class Store {
     public var aliasId: String?
 	public var didTrackFirstSeen = false
 	public var userAttributes = [String: Any]()
+    public var locales: Set<String> = Set<String>()
     
     public var userId: String? {
         return appUserId ?? aliasId ?? nil
@@ -74,6 +75,11 @@ internal class Store {
     }
     
 	func add(config: ConfigResponse) {
+        locales =  Set(
+            config.localization.locales.map {
+                (locale) in  return locale.locale
+            }
+        )
 		var data = [String: Bool]()
         config.triggers.filter({ (trigger) in
             switch(trigger.triggerVersion) {
