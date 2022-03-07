@@ -164,8 +164,6 @@ extension Network {
         completion(.success(response))
       } catch {
         
-        print(String(data: data!, encoding: .utf8)!)
-        
 				Logger.debug(
           logLevel: .error,
           scope: .network,
