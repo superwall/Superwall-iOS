@@ -7,8 +7,8 @@
 
 import Foundation
 
-final class CacheManager {
-  static let shared = CacheManager()
+final class Storage {
+  static let shared = Storage()
 
   var apiKey = ""
   var debugKey: String?
@@ -23,7 +23,7 @@ final class CacheManager {
     }
   }
 	var didTrackFirstSeen = false
-	var userAttributes = [String: Any]()
+  var userAttributes: [String: Any] = [:]
 
   var userId: String? {
     return appUserId ?? aliasId
@@ -34,10 +34,10 @@ final class CacheManager {
   private let cache = Cache(name: "Store")
 
   init() {
-    self.appUserId = cache.readString(forKey: .appUserId)
-    self.aliasId = cache.readString(forKey: .aliasId)
-    self.didTrackFirstSeen = cache.hasData(forKey: .didTrackFirstSeen)
-    self.userAttributes = (cache.readDictionary(forKey: .userAttributes) as? [String: Any]) ?? [String: Any]()
+    self.appUserId = cache.read(AppUserId.self)
+    self.aliasId = cache.read(AliasId.self)
+    self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == "true"
+    self.userAttributes = cache.read(UserAttributes.self) ?? [:]
     self.setCachedTriggers()
   }
 
@@ -49,14 +49,14 @@ final class CacheManager {
     self.apiKey = apiKey
 
     if aliasId == nil {
-      aliasId = CacheManagerLogic.generateAlias()
+      aliasId = StorageLogic.generateAlias()
     }
   }
 
   /// Call this when you log out
   func clear() {
     appUserId = nil
-    aliasId = CacheManagerLogic.generateAlias()
+    aliasId = StorageLogic.generateAlias()
     didTrackFirstSeen = false
     userAttributes = [:]
     triggers.removeAll()
@@ -67,11 +67,11 @@ final class CacheManager {
 
   func save() {
     if let appUserId = appUserId {
-      cache.write(appUserId, forKey: .appUserId)
+      cache.write(appUserId, forType: AppUserId.self)
     }
 
     if let aliasId = aliasId {
-      cache.write(aliasId, forKey: .aliasId)
+      cache.write(aliasId, forType: AliasId.self)
     }
 
     var standardUserAttributes: [String: Any] = [:]
@@ -88,19 +88,19 @@ final class CacheManager {
   }
 
 	func addConfig(_ config: ConfigResponse) {
-    let v1TriggerDictionary = CacheManagerLogic.getV1TriggerDictionary(from: config.triggers)
-    cache.write(v1TriggerDictionary, forKey: .config)
+    let v1TriggerDictionary = StorageLogic.getV1TriggerDictionary(from: config.triggers)
+    cache.write(v1TriggerDictionary, forType: Config.self)
     triggers = Set(v1TriggerDictionary.keys)
 
-    v2Triggers = CacheManagerLogic.getV2TriggerDictionary(from: config.triggers)
+    v2Triggers = StorageLogic.getV2TriggerDictionary(from: config.triggers)
 	}
 
 	func addUserAttributes(_ newAttributes: [String: Any]) {
-    let mergedAttributes = CacheManagerLogic.mergeAttributes(
+    let mergedAttributes = StorageLogic.mergeAttributes(
       newAttributes,
       with: userAttributes
     )
-    cache.write(mergedAttributes, forKey: .userAttributes)
+    cache.write(mergedAttributes, forType: UserAttributes.self)
     userAttributes = mergedAttributes
 	}
 
@@ -110,16 +110,15 @@ final class CacheManager {
     }
 
     Paywall.track(.firstSeen)
-    cache.write("true", forKey: .didTrackFirstSeen)
+    cache.write("true", forType: DidTrackFirstSeen.self)
 		didTrackFirstSeen = true
 	}
 
 	private func setCachedTriggers() {
-    let cachedTriggers = cache.readDictionary(forKey: .config) as? [String: Bool]
-		let triggerDict = cachedTriggers ?? [:]
+    let cachedTriggers = cache.read(Config.self) ?? [:]
 
     triggers = []
-		for key in triggerDict.keys {
+		for key in cachedTriggers.keys {
 			triggers.insert(key)
 		}
 	}

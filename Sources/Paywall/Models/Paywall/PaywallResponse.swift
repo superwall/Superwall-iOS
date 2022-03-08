@@ -57,7 +57,7 @@ struct PaywallResponse: Decodable {
 
   var templateVariables: JSON {
     var variables: [String: Any] = [
-      "user": CacheManager.shared.userAttributes,
+      "user": Storage.shared.userAttributes,
       "device": DeviceHelper.shared.templateDevice.dictionary ?? [:]
     ]
 

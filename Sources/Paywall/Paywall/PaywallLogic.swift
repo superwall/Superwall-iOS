@@ -8,20 +8,25 @@
 import Foundation
 
 enum PaywallLogic {
+  enum Outcome {
+    case triggerPaywall
+    case internalEventAsTrigger
+    case dontTriggerPaywall
+  }
   static func canTriggerPaywall(
     eventName: String,
     triggers: Set<String>,
     isPaywallPresented: Bool
-  ) -> Bool {
+  ) -> Outcome {
     if isPaywallPresented {
-      return false
+      return .dontTriggerPaywall
     }
 
     let isV1Trigger = triggers.contains(eventName)
     let isV2Trigger = triggers.contains(eventName)
 
     guard isV1Trigger || isV2Trigger else {
-      return false
+      return .dontTriggerPaywall
     }
 
     let allowedInternalEvents = Set(["app_install", "session_start", "app_launch"])
@@ -29,9 +34,24 @@ enum PaywallLogic {
     let isNotInternalEvent = InternalEventName(rawValue: eventName) == nil
 
     if isAllowedTrigger || isNotInternalEvent {
-      return true
+      return .triggerPaywall
     } else {
-      return false
+      return .internalEventAsTrigger
     }
+  }
+
+  static func sessionDidStart(
+    _ lastAppClose: Date?
+  ) -> Bool {
+    let twoMinsAgo = 120.0
+    
+    let delta: TimeInterval
+    if let lastAppClose = lastAppClose {
+      delta = -lastAppClose.timeIntervalSinceNow
+    } else {
+      delta = twoMinsAgo + 1
+    }
+
+    return delta > twoMinsAgo
   }
 }

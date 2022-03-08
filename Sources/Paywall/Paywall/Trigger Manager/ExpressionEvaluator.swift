@@ -59,7 +59,7 @@ enum ExpressionEvaluator {
     let parameters = ExpressionEvaluatorParams(
       expression: expression,
       values: JSON([
-        "user": CacheManager.shared.userAttributes,
+        "user": Storage.shared.userAttributes,
         "device": DeviceHelper.shared.templateDevice.toDictionary(),
         "params": eventData?.parameters ?? [:]
       ])

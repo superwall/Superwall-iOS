@@ -63,7 +63,7 @@ public final class Paywall: NSObject {
 
 	/// Access properties stored on the user
 	public static var userAttributes: [String: Any] {
-		return CacheManager.shared.userAttributes
+		return Storage.shared.userAttributes
 	}
 
   // MARK: - Private Properties
@@ -79,7 +79,7 @@ public final class Paywall: NSObject {
 	var paywallWasPresentedThisSession = false
 	var lastAppClose: Date?
 	var didTrackLaunch = false
-	var didFetchConfig = !CacheManager.shared.triggers.isEmpty
+	var didFetchConfig = !Storage.shared.triggers.isEmpty
 
 	var paywallViewController: SWPaywallViewController? {
 		return PaywallManager.shared.presentedViewController
@@ -87,11 +87,12 @@ public final class Paywall: NSObject {
 
 	var recentlyPresented = false {
 		didSet {
-			if recentlyPresented {
-        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(700)) {
-          self.recentlyPresented = false
-        }
-			}
+      guard recentlyPresented else {
+        return
+      }
+      DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(700)) {
+        self.recentlyPresented = false
+      }
 		}
 	}
 
@@ -122,10 +123,10 @@ public final class Paywall: NSObject {
 	@discardableResult
 	@objc public static func identify(userId: String) -> Paywall {
     // refetch the paywall, we don't know if the alias was for an existing user
-    if CacheManager.shared.userId != userId {
+    if Storage.shared.userId != userId {
 			PaywallManager.shared.clearCache()
 		}
-    CacheManager.shared.appUserId = userId
+    Storage.shared.appUserId = userId
 
 		return shared
 	}
@@ -133,11 +134,11 @@ public final class Paywall: NSObject {
 	/// Resets the userId stored by Superwall. Call this when your user signs out.
 	@discardableResult
 	@objc public static func reset() -> Paywall {
-    guard CacheManager.shared.appUserId != nil else {
+    guard Storage.shared.appUserId != nil else {
       return shared
     }
 
-    CacheManager.shared.clear()
+    Storage.shared.clear()
     PaywallManager.shared.clearCache()
     shared.fetchConfiguration()
 
@@ -181,7 +182,7 @@ public final class Paywall: NSObject {
 		guard let apiKey = apiKey else {
 			return
 		}
-    CacheManager.shared.configure(
+    Storage.shared.configure(
       appUserId: userId,
       apiKey: apiKey
     )
@@ -232,10 +233,9 @@ public final class Paywall: NSObject {
   @objc private func applicationDidBecomeActive() {
     Paywall.track(.appOpen)
 
-    let twoMinsAgo = 120.0
-    let lastAppClose = -(lastAppClose?.timeIntervalSinceNow ?? 0)
+    let sessionDidStart = PaywallLogic.sessionDidStart(lastAppClose)
 
-    if lastAppClose > twoMinsAgo {
+    if sessionDidStart {
       Paywall.track(.sessionStart)
     }
 
@@ -244,14 +244,14 @@ public final class Paywall: NSObject {
       didTrackLaunch = true
     }
 
-    CacheManager.shared.recordFirstSeenTracked()
+    Storage.shared.recordFirstSeenTracked()
   }
 
 	private func fetchConfiguration() {
     Network.shared.getConfig { [weak self] result in
       switch result {
       case .success(let config):
-        CacheManager.shared.addConfig(config)
+        Storage.shared.addConfig(config)
         self?.didFetchConfig = true
         config.cache()
         self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleTrigger(forEvent: $0) }
@@ -278,18 +278,19 @@ public final class Paywall: NSObject {
         return self.eventsTrackedBeforeConfigWasFetched.append(event)
       }
 
-      let canTriggerPaywall = PaywallLogic.canTriggerPaywall(
+      let outcome = PaywallLogic.canTriggerPaywall(
         eventName: event.name,
-        triggers: CacheManager.shared.triggers,
+        triggers: Storage.shared.triggers,
         isPaywallPresented: self.isPaywallPresented
       )
 
-      if canTriggerPaywall {
+      switch outcome {
+      case .triggerPaywall:
         // delay in case they are presenting a view controller alongside an event they are calling
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
           Paywall.internallyPresent(fromEvent: event)
         }
-      } else {
+      case .internalEventAsTrigger:
         Logger.debug(
           logLevel: .warn,
           scope: .paywallCore,
@@ -297,6 +298,8 @@ public final class Paywall: NSObject {
           info: ["message": "You can't use events as triggers"],
           error: nil
         )
+      case .dontTriggerPaywall:
+        return
       }
 		}
 	}

@@ -29,8 +29,8 @@ enum TriggerManager {
     let outcome = TriggerLogic.outcome(
       forEventName: eventName,
       eventData: eventData,
-      v1Triggers: CacheManager.shared.triggers,
-      v2Triggers: CacheManager.shared.v2Triggers
+      v1Triggers: Storage.shared.triggers,
+      v2Triggers: Storage.shared.v2Triggers
     )
 
     if let confirmedAssignments = outcome.confirmedAssignments {

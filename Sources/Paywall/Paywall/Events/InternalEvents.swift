@@ -78,7 +78,7 @@ extension Paywall {
 
 		if let event = StandardEventName(rawValue: name),
       event == .userAttributes {
-      CacheManager.shared.addUserAttributes(eventParams)
+      Storage.shared.addUserAttributes(eventParams)
 		}
 
 		let eventData = EventData(

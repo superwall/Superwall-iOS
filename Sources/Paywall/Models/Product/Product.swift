@@ -16,4 +16,9 @@ enum ProductType: String, Codable {
 struct Product: Codable {
   var type: ProductType
   var id: String
+
+  enum CodingKeys: String, CodingKey {
+    case type = "product"
+    case id = "productId"
+  }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum CacheManagerLogic {
+enum StorageLogic {
   static func generateAlias() -> String {
     return "$SuperwallAlias:\(UUID().uuidString)"
   }

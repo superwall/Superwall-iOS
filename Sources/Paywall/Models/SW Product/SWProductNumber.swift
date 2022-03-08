@@ -13,7 +13,6 @@ struct SWProductNumber: Codable {
     case currency
     case percent
   }
-
   var format: Format
   var formatted: String?
   var value: Decimal

@@ -27,6 +27,7 @@ struct TriggerRule: Decodable, Hashable {
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
     assigned = try values.decode(Bool.self, forKey: .assigned)
     variant = try values.decode(Variant.self, forKey: .variant)
+
     switch variant {
     case .holdout(let holdout):
       variantId = holdout.variantId

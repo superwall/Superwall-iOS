@@ -7,51 +7,35 @@
 //
 import UIKit
 
-enum ImageFormat {
-  case unknown, png, jpeg
-}
-
 final class Cache {
-  static let cacheDirectoryPrefix = "com.superwall.cache."
-  static let ioQueuePrefix = "com.superwall.queue."
-  static let defaultMaxCachePeriodInSecond: TimeInterval = 60 * 60 * 24 * 7 // a week
-  static let instance = Cache(name: "default")
-
-  enum CacheKey: String {
-    case appUserId = "store.appUserId"
-    case aliasId = "store.aliasId"
-    case didTrackFirstSeen = "store.didTrackFirstSeen"
-    case userAttributes = "store.userAttributes"
-    case config = "store.config"
-  }
-
-  let cachePath: String
-
-  let memCache = NSCache<AnyObject, AnyObject>()
-  let ioQueue: DispatchQueue
-  let fileManager: FileManager
+  private static let cacheDirectoryPrefix = "com.superwall.cache."
+  private static let ioQueuePrefix = "com.superwall.queue."
+  private static let defaultMaxCachePeriodInSecond: TimeInterval = 60 * 60 * 24 * 7 // a week
+  private let cachePath: String
+  private let memCache = NSCache<AnyObject, AnyObject>()
+  private let ioQueue: DispatchQueue
+  private let fileManager: FileManager
 
   /// Name of cache
-  var name: String = ""
+  private var name: String = ""
 
   /// Life time of disk cache, in second. Default is a week
-  var maxCachePeriodInSecond = Cache.defaultMaxCachePeriodInSecond
+  private var maxCachePeriodInSecond = Cache.defaultMaxCachePeriodInSecond
 
   /// Size is allocated for disk cache, in byte. 0 mean no limit. Default is 0
-  var maxDiskCacheSize: UInt = 0
+  private var maxDiskCacheSize: UInt = 0
 
   /// Specify distinc name param, it represents folder name for disk cache
-  init(name: String, path: String? = nil) {
+  init(name: String) {
     self.name = name
 
-    let defaultCacheDirectory = NSSearchPathForDirectoriesInDomains(
+    var cachePath = NSSearchPathForDirectoriesInDomains(
       .cachesDirectory,
       FileManager.SearchPathDomainMask.userDomainMask,
       true
     ).first!
     // swiftlint:disable:previous force_unwrapping
 
-    var cachePath = path ?? defaultCacheDirectory
     cachePath = (cachePath as NSString).appendingPathComponent(Cache.cacheDirectoryPrefix + name)
     self.cachePath = cachePath
 
@@ -78,10 +62,37 @@ final class Cache {
 
 // MARK: - Store data
 extension Cache {
+  /// Read data for key
+  func read<Key: CachingType>(
+    _ keyType: Key.Type
+  ) -> Key.Value? {
+    var data = memCache.object(forKey: keyType.key as AnyObject) as? Data
+
+    if data == nil,
+      let dataFromDisk = fileManager.contents(atPath: cachePath(forKey: keyType.key)) {
+      data = dataFromDisk
+      memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
+    }
+
+    if let data = data {
+      return NSKeyedUnarchiver.unarchiveObject(with: data) as? Key.Value
+    }
+    return nil
+  }
+
   /// Write data for key. This is an async operation.
-  func write(data: Data, forKey key: CacheKey) {
-    memCache.setObject(data as AnyObject, forKey: key as AnyObject)
-    writeDataToDisk(data: data, key: key.rawValue)
+  func write<Key: CachingType>(
+    _ value: Key.Value,
+    forType keyType: Key.Type
+  ) {
+    guard let value = value as? NSCoding else {
+      print("error")
+      return
+    }
+    let data = NSKeyedArchiver.archivedData(withRootObject: value)
+
+    memCache.setObject(data as AnyObject, forKey: keyType.key as AnyObject)
+    writeDataToDisk(data: data, key: keyType.key)
   }
 
   private func writeDataToDisk(data: Data, key: String) {
@@ -101,102 +112,6 @@ extension Cache {
       self.fileManager.createFile(atPath: self.cachePath(forKey: key), contents: data, attributes: nil)
     }
   }
-
-  /// Read data for key
-  func readData(forKey key: String) -> Data? {
-    var data = memCache.object(forKey: key as AnyObject) as? Data
-
-    if data == nil {
-      if let dataFromDisk = readDataFromDisk(forKey: key) {
-        data = dataFromDisk
-        memCache.setObject(dataFromDisk as AnyObject, forKey: key as AnyObject)
-      }
-    }
-
-    return data
-  }
-
-  /// Read data from disk for key
-  func readDataFromDisk(forKey key: String) -> Data? {
-    return self.fileManager.contents(atPath: cachePath(forKey: key))
-  }
-
-  // MARK: - Read & write Codable types
-  func write<T: Encodable>(codable: T, forKey key: CacheKey) throws {
-    let data = try JSONEncoder().encode(codable)
-    write(data: data, forKey: key)
-  }
-
-  func readCodable<T: Decodable>(forKey key: String) throws -> T? {
-    guard let data = readData(forKey: key) else { return nil }
-    return try JSONDecoder().decode(T.self, from: data)
-  }
-
-  // MARK: - Read & write primitive types
-
-  /// Write an object for key. This object must inherit from `NSObject` and implement `NSCoding` protocol. `String`, `Array`, `Dictionary` conform to this method.
-  ///
-  /// NOTE: Can't write `UIImage` with this method. Please use `writeImage(_:forKey:)` to write an image
-  func write(object: NSCoding, forKey key: CacheKey) {
-    let data = NSKeyedArchiver.archivedData(withRootObject: object)
-    write(data: data, forKey: key)
-  }
-
-  /// Write a string for key
-  func write(_ string: String, forKey key: CacheKey) {
-    write(object: string as NSCoding, forKey: key)
-  }
-
-  /// Write a dictionary for key
-  func write(_ dictionary: [AnyHashable: Any], forKey key: CacheKey) {
-    write(object: dictionary as NSCoding, forKey: key)
-  }
-
-  /// Write an array for key
-  func write(array: [Any], forKey key: CacheKey) {
-    write(object: array as NSCoding, forKey: key)
-  }
-
-  /// Read an object for key. This object must inherit from `NSObject` and implement NSCoding protocol. `String`, `Array`, `Dictionary` conform to this method
-  func readObject(forKey key: String) -> NSObject? {
-    let data = readData(forKey: key)
-
-    if let data = data {
-      return NSKeyedUnarchiver.unarchiveObject(with: data) as? NSObject
-    }
-
-    return nil
-  }
-
-  /// Read a string for key
-  func readString(forKey key: CacheKey) -> String? {
-    return readObject(forKey: key.rawValue) as? String
-  }
-
-  /// Read a dictionary for key
-  func readDictionary(forKey key: CacheKey) -> [AnyHashable: Any]? {
-    return readObject(forKey: key.rawValue) as? [AnyHashable: Any]
-  }
-}
-
-// MARK: - Utils
-extension Cache {
-  /// Check if has data for key
-  func hasData(forKey key: CacheKey) -> Bool {
-    let isOnDisk = hasDataOnDisk(forKey: key.rawValue)
-    let isInMemory = hasDataOnMem(forKey: key.rawValue)
-    return isOnDisk || isInMemory
-  }
-
-  /// Check if has data on disk
-  func hasDataOnDisk(forKey key: String) -> Bool {
-    return self.fileManager.fileExists(atPath: self.cachePath(forKey: key))
-  }
-
-  /// Check if has data on mem
-  func hasDataOnMem(forKey key: String) -> Bool {
-    return (memCache.object(forKey: key as AnyObject) != nil)
-  }
 }
 
 // MARK: - Clean
@@ -207,24 +122,11 @@ extension Cache {
     cleanDiskCache()
   }
 
-  /// Clean cache by key. This is an async operation.
-  func clean(byKey key: String) {
-    memCache.removeObject(forKey: key as AnyObject)
-
-    ioQueue.async {
-      do {
-        try self.fileManager.removeItem(atPath: self.cachePath(forKey: key))
-      } catch {
-        print("Cache: Error while remove file: \(error.localizedDescription)")
-      }
-    }
-  }
-
-  func cleanMemCache() {
+  private func cleanMemCache() {
     memCache.removeAllObjects()
   }
 
-  func cleanDiskCache() {
+  private func cleanDiskCache() {
     ioQueue.async {
       do {
         try self.fileManager.removeItem(atPath: self.cachePath)
@@ -235,7 +137,7 @@ extension Cache {
   }
 
   /// Clean expired disk cache. This is an async operation.
-  @objc func cleanExpiredDiskCache() {
+  @objc private func cleanExpiredDiskCache() {
     cleanExpiredDiskCache(completion: nil)
   }
 
@@ -348,9 +250,4 @@ extension Cache {
     let fileName = key.md5
     return (cachePath as NSString).appendingPathComponent(fileName)
   }
-}
-
-
-protocol Cachable: Codable {
-  var cacheName: String { get }
 }
