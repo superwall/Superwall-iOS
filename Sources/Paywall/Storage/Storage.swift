@@ -24,6 +24,7 @@ final class Storage {
   }
 	var didTrackFirstSeen = false
   var userAttributes: [String: Any] = [:]
+  var locales: Set<String> = []
 
   var userId: String? {
     return appUserId ?? aliasId
@@ -91,6 +92,7 @@ final class Storage {
     let v1TriggerDictionary = StorageLogic.getV1TriggerDictionary(from: config.triggers)
     cache.write(v1TriggerDictionary, forType: Config.self)
     triggers = Set(v1TriggerDictionary.keys)
+    locales = Set(config.localization.locales.map { $0.locale })
 
     v2Triggers = StorageLogic.getV2TriggerDictionary(from: config.triggers)
 	}

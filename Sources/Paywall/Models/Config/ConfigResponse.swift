@@ -12,6 +12,7 @@ struct ConfigResponse: Decodable {
   var paywalls: Set<PaywallConfig>
   var logLevel: Int
   var postback: PostbackRequest
+  var localization: LocalizationConfig
 
   func cache() {
     preloadPaywallsAndProducts()

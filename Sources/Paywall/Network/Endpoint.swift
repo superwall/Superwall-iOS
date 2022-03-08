@@ -124,16 +124,15 @@ extension Endpoint where Response == EventsResponse {
 // MARK: - PaywallResponse
 extension Endpoint where Response == PaywallResponse {
   static func paywall(
-    withIdentifier: String? = nil,
+    withIdentifier identifier: String? = nil,
     fromEvent event: EventData? = nil
   ) -> Self {
     let encoder = JSONEncoder()
     encoder.keyEncodingStrategy = .convertToSnakeCase
     let bodyData: Data?
 
-    if let id = withIdentifier {
-      let bodyDict = ["identifier": id]
-      bodyData = try? encoder.encode(bodyDict)
+    if let identifier = identifier {
+      return paywall(byIdentifier: identifier)
     } else if let event = event {
       let bodyDict = ["event": event.jsonData]
       bodyData = try? encoder.encode(bodyDict)
@@ -148,6 +147,44 @@ extension Endpoint where Response == PaywallResponse {
         bodyData: bodyData
       ),
       method: .post
+    )
+  }
+
+  static private func paywall(byIdentifier identifier: String) -> Self {
+    // WARNING: Do not modify anything about this request without considering our cache eviction code
+    // we must know all the exact urls we need to invalidate so changing the order, inclusion, etc of any query
+    // parameters will cause issues
+    var queryItems = [URLQueryItem(name: "pk", value: Storage.shared.apiKey)]
+
+    // In the config endpoint we return all the locales, this code will check if:
+    // 1. The device locale (ex: en_US) exists in the locales list
+    // 2. The shortend device locale (ex: en) exists in the locale list
+    // If either exist (preferring the most specific) include the locale in the
+    // the url as a query param.
+    if Storage.shared.locales.contains(DeviceHelper.shared.locale) {
+      let localeQuery = URLQueryItem(
+        name: "locale",
+        value: DeviceHelper.shared.locale
+      )
+      queryItems.append(localeQuery)
+    } else {
+        let shortLocale = DeviceHelper.shared.locale.split(separator: "_")[0]
+        if (Storage.shared.locales.contains(String(shortLocale))) {
+          let localeQuery = URLQueryItem(
+            name: "locale",
+            value: String(shortLocale)
+          )
+          queryItems.append(localeQuery)
+        }
+    }
+
+    return Endpoint(
+      components: Components(
+        host: Api.Base.host,
+        path: Api.version1 + "paywall/\(identifier)",
+        queryItems: queryItems
+      ),
+      method: .get
     )
   }
 }

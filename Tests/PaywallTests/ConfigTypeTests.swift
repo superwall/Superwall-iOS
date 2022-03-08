@@ -57,39 +57,44 @@ final class ConfigTypeTests: XCTestCase {
     let parsedResponse = try! decoder.decode(ConfigResponse.self, from: response.data(using: .utf8)!)
     print(parsedResponse)
 
-    let firstTrigger = parsedResponse.triggers[0]
-    XCTAssertEqual(firstTrigger.eventName, "opened_application")
+    guard let firstTrigger = parsedResponse.triggers.filter({ $0.eventName == "opened_application" }).first
+    else {
+      return XCTFail("opened_application trigger not found")
+    }
 
     switch firstTrigger.triggerVersion {
-    case .V1:
+    case .v1:
       throw TestError.init("Expecting V2")
-    case .V2(let v2):
+    case .v2(let v2):
       let firstRule = v2.rules[0]
       XCTAssertEqual(firstRule.assigned, false)
       XCTAssertEqual(firstRule.expression, "name == jake")
       XCTAssertEqual(firstRule.experimentId, "2")
 
       switch firstRule.variant {
-      case .Treatment:
+      case .treatment:
         throw TestError.init("Expecting Holdout")
-      case .Holdout(let holdout):
+      case .holdout(let holdout):
         XCTAssertEqual(holdout.variantId, "7")
       }
       let secondRule = v2.rules[1]
 
       switch secondRule.variant {
-      case .Holdout:
+      case .holdout:
         throw TestError.init("Expecting holdout")
-      case .Treatment(let treatment):
+      case .treatment(let treatment):
         XCTAssertEqual(treatment.paywallIdentifier, "omnis-id-ab")
         XCTAssertEqual(treatment.variantId, "6")
       }
     }
-    let secondTrigger = parsedResponse.triggers[1]
-    XCTAssertEqual(secondTrigger.eventName, "other_event")
+
+    guard let secondTrigger = parsedResponse.triggers.filter({ $0.eventName == "other_event" }).first
+    else {
+      return XCTFail("opened_application trigger not found")
+    }
 
     switch secondTrigger.triggerVersion {
-    case .V2:
+    case .v2:
       throw TestError.init("Expecting V1")
     default:
       break

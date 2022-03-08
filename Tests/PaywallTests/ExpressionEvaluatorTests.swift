@@ -11,18 +11,24 @@ import XCTest
 
 final class ExpressionEvaluatorTests: XCTestCase {
   override class func setUp() {
-    Store.shared.clear()
+    Storage.shared.clear()
   }
 
   func testExpressionEvaluatorTrue() throws {
-    Store.shared.userAttributes = ["a": "b"]
-    let result = ExpressionEvaluator.evaluateExpression(expression: "a == \"b\"")
+    Storage.shared.userAttributes = ["a": "b"]
+    let result = ExpressionEvaluator.evaluateExpression(
+      expression: "a == \"b\"",
+      eventData: nil
+    )
     XCTAssertTrue(result)
   }
 
   func testExpressionEvaluatorFalse() throws {
-    Store.shared.userAttributes = [:]
-    let result = ExpressionEvaluator.evaluateExpression(expression: "a == \"b\"")
+    Storage.shared.userAttributes = [:]
+    let result = ExpressionEvaluator.evaluateExpression(
+      expression: "a == \"b\"",
+      eventData: nil
+    )
     XCTAssertFalse(result)
   }
 }
