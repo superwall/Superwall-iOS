@@ -44,7 +44,7 @@ enum PaywallLogic {
     _ lastAppClose: Date?
   ) -> Bool {
     let twoMinsAgo = 120.0
-    
+
     let delta: TimeInterval
     if let lastAppClose = lastAppClose {
       delta = -lastAppClose.timeIntervalSinceNow
