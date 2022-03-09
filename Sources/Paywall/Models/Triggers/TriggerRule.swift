@@ -10,14 +10,14 @@ import Foundation
 struct TriggerRule: Decodable, Hashable {
   var experimentId: String
   var expression: String?
-  var assigned: Bool
+  var isAssigned: Bool
   var variant: Variant
   var variantId: String
 
   enum Keys: String, CodingKey {
     case experimentId
     case expression
-    case assigned
+    case isAssigned = "assigned"
     case variant
   }
 
@@ -25,7 +25,7 @@ struct TriggerRule: Decodable, Hashable {
     let values = try decoder.container(keyedBy: TriggerRule.Keys.self)
     experimentId = try values.decode(String.self, forKey: .experimentId)
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
-    assigned = try values.decode(Bool.self, forKey: .assigned)
+    isAssigned = try values.decode(Bool.self, forKey: .isAssigned)
     variant = try values.decode(Variant.self, forKey: .variant)
 
     switch variant {
@@ -34,5 +34,40 @@ struct TriggerRule: Decodable, Hashable {
     case .treatment(let treatment):
       variantId = treatment.variantId
     }
+  }
+
+  init(
+    experimentId: String,
+    expression: String?,
+    isAssigned: Bool,
+    variant: Variant,
+    variantId: String
+  ) {
+    self.experimentId = experimentId
+    self.expression = expression
+    self.isAssigned = isAssigned
+    self.variant = variant
+    self.variantId = variantId
+  }
+}
+
+extension TriggerRule: Stubbable {
+  static func stub() -> TriggerRule {
+    let variant: Variant = .stub()
+    let variantId: String
+    switch variant {
+    case .holdout(let holdout):
+      variantId = holdout.variantId
+    case .treatment(let treatment):
+      variantId = treatment.variantId
+    }
+
+    return TriggerRule(
+      experimentId: "2",
+      expression: "name == jake",
+      isAssigned: false,
+      variant: variant,
+      variantId: variantId
+    )
   }
 }

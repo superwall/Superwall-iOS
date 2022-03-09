@@ -7,38 +7,55 @@
 
 import Foundation
 
+enum HandleEventResult {
+  case unknownEvent
+  case holdout(
+    experimentId: String,
+    variantId: String
+  )
+  case noRuleMatch
+  case presentV1
+  case presentIdentifier(
+    experimentId: String,
+    variantId: String,
+    paywallIdentifier: String
+  )
+}
+
 enum TriggerLogic {
   struct Outcome {
-    var confirmedAssignments: ConfirmedAssignments?
+    var confirmableAssignments: ConfirmableAssignments?
     var result: HandleEventResult
   }
 
   static func outcome(
-    forEventName eventName: String,
-    eventData: EventData?,
+    forEvent event: EventData,
     v1Triggers: Set<String>,
     v2Triggers: [String: TriggerV2]
   ) -> Outcome {
-    if let triggerV2 = v2Triggers[eventName] {
+    if let triggerV2 = v2Triggers[event.name] {
       if let rule = Self.findRule(
-        in: eventData,
+        in: event,
         v2Trigger: triggerV2
       ) {
-        let confirmedAssignments = getConfirmedAssignments(forRule: rule)
+        let confirmableAssignments = getConfirmableAssignments(forRule: rule)
 
         switch rule.variant {
         case .holdout(let holdout):
           return Outcome(
-            confirmedAssignments: confirmedAssignments,
-            result: .holdout(rule.experimentId, holdout.variantId)
+            confirmableAssignments: confirmableAssignments,
+            result: .holdout(
+              experimentId: rule.experimentId,
+              variantId: holdout.variantId
+            )
           )
         case .treatment(let treatment):
           return Outcome(
-            confirmedAssignments: confirmedAssignments,
+            confirmableAssignments: confirmableAssignments,
             result: .presentIdentifier(
-              rule.experimentId,
-              treatment.variantId,
-              treatment.paywallIdentifier
+              experimentId: rule.experimentId,
+              variantId: treatment.variantId,
+              paywallIdentifier: treatment.paywallIdentifier
             )
           )
         }
@@ -46,7 +63,7 @@ enum TriggerLogic {
         return Outcome(result: .noRuleMatch)
       }
     } else {
-      if v1Triggers.contains(eventName) {
+      if v1Triggers.contains(event.name) {
         return Outcome(result: .presentV1)
       }
       return Outcome(result: .unknownEvent)
@@ -54,13 +71,13 @@ enum TriggerLogic {
   }
 
   private static func findRule(
-    in eventData: EventData?,
+    in event: EventData,
     v2Trigger: TriggerV2
   ) -> TriggerRule? {
     for rule in v2Trigger.rules {
       if ExpressionEvaluator.evaluateExpression(
         expression: rule.expression,
-        eventData: eventData
+        eventData: event
       ) {
         return rule
       }
@@ -68,13 +85,13 @@ enum TriggerLogic {
     return nil
   }
 
-  private static func getConfirmedAssignments(
+  private static func getConfirmableAssignments(
     forRule rule: TriggerRule
-  ) -> ConfirmedAssignments? {
-    if rule.assigned {
+  ) -> ConfirmableAssignments? {
+    if rule.isAssigned {
       return nil
     } else {
-      let confirmedAssignments = ConfirmedAssignments(
+      let confirmableAssignments = ConfirmableAssignments(
         assignments: [
           Assignment(
             experimentId: rule.experimentId,
@@ -82,7 +99,7 @@ enum TriggerLogic {
           )
         ]
       )
-      return confirmedAssignments
+      return confirmableAssignments
     }
   }
 }

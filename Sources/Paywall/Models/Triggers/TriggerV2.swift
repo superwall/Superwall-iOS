@@ -12,3 +12,12 @@ struct TriggerV2: Decodable, Hashable {
   var eventName: String
   var rules: [TriggerRule]
 }
+
+extension TriggerV2: Stubbable {
+  static func stub() -> TriggerV2 {
+    return TriggerV2(
+      eventName: "opened_application",
+      rules: [.stub()]
+    )
+  }
+}

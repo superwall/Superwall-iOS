@@ -111,11 +111,11 @@ final class Network {
     }
   }
 
-  func sendConfirmedAssignments(
-    _ confirmedAssignments: ConfirmedAssignments,
+  func confirmAssignments(
+    _ confirmableAssignments: ConfirmableAssignments,
     completion: (((Result<ConfirmedAssignmentResponse, Error>)) -> Void)?
   ) {
-    urlSession.request(.confirmedAssignment(confirmedAssignments)) { result in
+    urlSession.request(.confirmAssignments(confirmableAssignments)) { result in
       switch result {
       case .success(let response):
         completion?(.success(response))
@@ -124,7 +124,7 @@ final class Network {
           logLevel: .error,
           scope: .network,
           message: "Request Failed: /confirm_assignments",
-          info: ["assignments": confirmedAssignments],
+          info: ["assignments": confirmableAssignments],
           error: error
         )
         completion?(.failure(error))

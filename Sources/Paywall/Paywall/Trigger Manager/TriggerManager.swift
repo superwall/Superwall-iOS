@@ -8,34 +8,20 @@
 import Foundation
 import UIKit
 
-enum HandleEventResult {
-  case unknownEvent
-  // experimentId, variantId
-  case holdout(String, String)
-  // None of the rules match
-  case noRuleMatch
-  // Present v1
-  case presentV1
-  // experimentId, variantId, paywallIdentifier
-  case presentIdentifier(String, String, String)
-}
-
 enum TriggerManager {
   static func handleEvent(
-    eventName: String,
-    eventData: EventData?
+    _ event: EventData
   ) -> HandleEventResult {
     // If we have the config response, all valid triggers should be in response
     let outcome = TriggerLogic.outcome(
-      forEventName: eventName,
-      eventData: eventData,
+      forEvent: event,
       v1Triggers: Storage.shared.triggers,
       v2Triggers: Storage.shared.v2Triggers
     )
 
-    if let confirmedAssignments = outcome.confirmedAssignments {
-      Network.shared.sendConfirmedAssignments(
-        confirmedAssignments,
+    if let confirmableAssignments = outcome.confirmableAssignments {
+      Network.shared.confirmAssignments(
+        confirmableAssignments,
         completion: nil
       )
     }

@@ -21,3 +21,13 @@ struct EventData: Codable {
     ]
   }
 }
+
+extension EventData: Stubbable {
+  static func stub() -> EventData {
+    return EventData(
+      name: "opened_application",
+      parameters: [:],
+      createdAt: "2022-03-09T11:45:38.016Z"
+    )
+  }
+}

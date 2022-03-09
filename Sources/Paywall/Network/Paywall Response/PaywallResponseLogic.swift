@@ -57,7 +57,7 @@ enum PaywallResponseLogic {
         variantId: nil
       )
     }
-    guard let eventName = event?.name else {
+    guard let event = event else {
       return TriggerResponseIdentifiers(
         paywallId: paywallId,
         experimentId: nil,
@@ -65,10 +65,7 @@ enum PaywallResponseLogic {
       )
     }
 
-    let triggerResponse = TriggerManager.handleEvent(
-      eventName: eventName,
-      eventData: event
-    )
+    let triggerResponse = TriggerManager.handleEvent(event)
 
     switch triggerResponse {
     case .presentV1:

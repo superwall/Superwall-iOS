@@ -74,7 +74,8 @@ struct ConfigResponse: Decodable {
   private func executePostback() {
     // TODO: Does this need to be on the main thread?
     DispatchQueue.main.asyncAfter(deadline: .now() + postback.postbackDelay) {
-      StoreKitManager.shared.getProducts(withIds: postback.productsToPostBack.map { $0.identifier }) { productsById in
+      let productIds = postback.productsToPostBack.map { $0.identifier }
+      StoreKitManager.shared.getProducts(withIds: productIds) { productsById in
         let products = productsById.values.map(PostbackProduct.init)
         let postback = Postback(products: products)
         Network.shared.sendPostback(postback) { _ in }

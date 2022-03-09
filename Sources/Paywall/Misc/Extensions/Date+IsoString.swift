@@ -13,10 +13,4 @@ extension Date {
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     return formatter.string(from: self)
   }
-
-  var isoStringFormatted: String {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    return formatter.string(from: self)
-  }
 }

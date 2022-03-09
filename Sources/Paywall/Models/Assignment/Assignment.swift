@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Assignment: Codable {
+struct Assignment: Codable, Equatable {
   var experimentId: String
   var variantId: String
 }

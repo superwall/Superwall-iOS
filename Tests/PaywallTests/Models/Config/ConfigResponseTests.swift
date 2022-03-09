@@ -6,47 +6,52 @@ import CoreMedia
 
 let response = #"""
 {
-    "triggers": [
+  "triggers": [
+    {
+      "trigger_version": "V2",
+      "event_name": "opened_application",
+      "rules": [
         {
-            "trigger_version": "V2",
-            "event_name": "opened_application",
-            "rules": [
-                {
-                    "experiment_id": "2",
-                    "expression": "name == jake",
-                    "assigned": false,
-                    "variant": {
-                        "variant_id": "7",
-                        "variant_type": "HOLDOUT"
-                    }
-                },
-                {
-                    "experiment_id": "2",
-                    "expression": null,
-                    "assigned": false,
-                    "variant": {
-                        "variant_id": "6",
-                        "variant_type": "TREATMENT",
-                        "paywall_identifier": "omnis-id-ab"
-                    }
-                }
-            ]
+          "experiment_id": "2",
+          "expression": "name == jake",
+          "assigned": false,
+          "variant": {
+            "variant_id": "7",
+            "variant_type": "HOLDOUT"
+          }
         },
-                {
-                        "trigger_version": "V1",
-                        "event_name": "other_event"
-                }
-    ],
-    "product_identifier_groups": [],
-    "paywalls": [],
-    "log_level": 10,
-    "postback": {
-        "delay": 5000,
-        "products": []
+        {
+          "experiment_id": "2",
+          "expression": null,
+          "assigned": false,
+          "variant": {
+            "variant_id": "6",
+            "variant_type": "TREATMENT",
+            "paywall_identifier": "omnis-id-ab"
+          }
+        }
+      ]
     },
-    "tests": {
-        "dns_resolution": []
+    {
+      "trigger_version": "V1",
+      "event_name": "other_event"
     }
+  ],
+  "product_identifier_groups": [],
+  "paywalls": [],
+  "log_level": 10,
+  "postback": {
+    "delay": 5000,
+    "products": []
+  },
+  "localization": {
+    "locales": [{
+      "locale": "en_US"
+    }]
+  },
+  "tests": {
+    "dns_resolution": []
+  }
 }
 """#
 
@@ -54,7 +59,10 @@ final class ConfigTypeTests: XCTestCase {
   func testParseConfig() throws {
     let decoder = JSONDecoder()
     decoder.keyDecodingStrategy = .convertFromSnakeCase
-    let parsedResponse = try! decoder.decode(ConfigResponse.self, from: response.data(using: .utf8)!)
+    let parsedResponse = try! decoder.decode(
+      ConfigResponse.self,
+      from: response.data(using: .utf8)!
+    )
     print(parsedResponse)
 
     guard let firstTrigger = parsedResponse.triggers.filter({ $0.eventName == "opened_application" }).first
@@ -67,7 +75,7 @@ final class ConfigTypeTests: XCTestCase {
       throw TestError.init("Expecting V2")
     case .v2(let v2):
       let firstRule = v2.rules[0]
-      XCTAssertEqual(firstRule.assigned, false)
+      XCTAssertEqual(firstRule.isAssigned, false)
       XCTAssertEqual(firstRule.expression, "name == jake")
       XCTAssertEqual(firstRule.experimentId, "2")
 

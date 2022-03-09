@@ -7,16 +7,16 @@
 
 import Foundation
 
+struct VariantTreatment: Decodable, Hashable {
+  var variantId: String
+  var paywallIdentifier: String
+}
+
+struct VariantHoldout: Decodable, Hashable {
+  var variantId: String
+}
+
 enum Variant: Decodable, Hashable {
-  struct VariantTreatment: Decodable, Hashable {
-    var variantId: String
-    var paywallIdentifier: String
-  }
-
-  struct VariantHoldout: Decodable, Hashable {
-    var variantId: String
-  }
-
   case treatment(VariantTreatment)
   case holdout(VariantHoldout)
 
@@ -39,5 +39,13 @@ enum Variant: Decodable, Hashable {
       let holdout = try VariantHoldout(from: decoder)
       self = .holdout(holdout)
     }
+  }
+}
+
+extension Variant: Stubbable {
+  static func stub() -> Variant {
+    return Variant.holdout(
+      VariantHoldout(variantId: "7")
+    )
   }
 }

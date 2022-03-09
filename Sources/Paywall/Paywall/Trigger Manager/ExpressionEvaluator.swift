@@ -24,7 +24,7 @@ struct ExpressionEvaluatorParams: Codable {
 enum ExpressionEvaluator {
   static func evaluateExpression(
     expression: String?,
-    eventData: EventData?
+    eventData: EventData
   ) -> Bool {
     // Expression matches all
     guard let expression = expression else {
@@ -61,7 +61,7 @@ enum ExpressionEvaluator {
       values: JSON([
         "user": Storage.shared.userAttributes,
         "device": DeviceHelper.shared.templateDevice.toDictionary(),
-        "params": eventData?.parameters ?? [:]
+        "params": eventData.parameters
       ])
     )
 
@@ -69,6 +69,7 @@ enum ExpressionEvaluator {
       let postfix = "\n SuperwallSDKJS.evaluate64('\(base64String)');"
       let result = jsCtx.evaluateScript(script + "\n " + postfix)
       if result?.isString != nil {
+        print("the result is!", result?.toString())
         return result?.toString() == "true"
       }
     }
