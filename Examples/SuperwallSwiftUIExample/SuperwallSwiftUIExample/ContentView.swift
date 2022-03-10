@@ -9,7 +9,7 @@ import SwiftUI
 import Paywall
 
 struct ContentView: View {
-  @State var showPaywall = true
+  @State var showPaywall = false
 
   var body: some View {
     VStack {

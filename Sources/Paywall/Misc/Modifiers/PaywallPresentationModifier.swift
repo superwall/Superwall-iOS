@@ -35,7 +35,7 @@ struct PaywallPresentationModifier: ViewModifier {
         onFail: onFail
       )
     } else {
-      // This prevents Paywall.dismiss() being called twice when onDismiss gets initiated.
+      // This prevents Paywall.dismiss() being called twice when onDismiss gets a callback.
       if userDidDismiss {
         userDidDismiss = false
         return
