@@ -86,7 +86,6 @@ extension Cache {
     forType keyType: Key.Type
   ) {
     guard let value = value as? NSCoding else {
-      print("error")
       return
     }
     let data = NSKeyedArchiver.archivedData(withRootObject: value)
@@ -105,7 +104,11 @@ extension Cache {
             attributes: nil
           )
         } catch {
-          print("Cache: Error while creating cache folder: \(error.localizedDescription)")
+          Logger.debug(
+            logLevel: .error,
+            scope: .cache,
+            message: "Error while creating cache folder: \(error.localizedDescription)"
+          )
         }
       }
 
@@ -131,7 +134,11 @@ extension Cache {
       do {
         try self.fileManager.removeItem(atPath: self.cachePath)
       } catch {
-        print("Cache: Error when clean disk: \(error.localizedDescription)")
+        Logger.debug(
+          logLevel: .error,
+          scope: .cache,
+          message: "Error when clean disk: \(error.localizedDescription)"
+        )
       }
     }
   }
@@ -156,7 +163,11 @@ extension Cache {
         do {
           try self.fileManager.removeItem(at: fileURL)
         } catch {
-          print("Cache: Error while removing files \(error.localizedDescription)")
+          Logger.debug(
+            logLevel: .error,
+            scope: .cache,
+            message: "Error while removing files \(error.localizedDescription)"
+          )
         }
       }
 
@@ -178,7 +189,11 @@ extension Cache {
           do {
             try self.fileManager.removeItem(at: fileURL)
           } catch {
-            print("Cache: Error while removing files \(error.localizedDescription)")
+            Logger.debug(
+              logLevel: .error,
+              scope: .cache,
+              message: "Error while removing files \(error.localizedDescription)"
+            )
           }
 
           URLsToDelete.append(fileURL)
@@ -239,7 +254,11 @@ extension Cache {
             }
           }
       } catch {
-        print("Cache: Error while iterating files \(error.localizedDescription)")
+        Logger.debug(
+          logLevel: .error,
+          scope: .cache,
+          message: "Error while iterating files \(error.localizedDescription)"
+        )
       }
     }
 

@@ -147,13 +147,20 @@ extension Paywall {
       "paywall_products_load_duration": paywallInfo.productsLoadDuration as Any
     ]
 
+    var loadingVars: [String: Any] = [:]
     for key in output.keys {
       if key.contains("_load_"),
         let output = output[key] {
-        print(key, output)
+        loadingVars[key] = output
       }
     }
-    print( "========== _load_ vars")
+
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallEvents,
+      message: "Paywall loading timestamps",
+      info: loadingVars
+    )
 
     let levels = ["primary", "secondary", "tertiary"]
 
