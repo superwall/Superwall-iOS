@@ -310,7 +310,6 @@
 		OBJ_194 /* Foundation+ASN1Coder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Foundation+ASN1Coder.swift"; sourceTree = "<group>"; };
 		OBJ_196 /* PKCS7.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKCS7.swift; sourceTree = "<group>"; };
 		OBJ_197 /* Package.swift */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; name = Package.swift; path = "/Users/yusuf/Documents/Work/Superwall/paywall-ios/.build/checkouts/ASN1Swift/Package.swift"; sourceTree = "<group>"; };
-		OBJ_203 /* build */ = {isa = PBXFileReference; lastKnownFileType = folder; path = build; sourceTree = SOURCE_ROOT; };
 		OBJ_204 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		OBJ_205 /* project.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = project.yml; sourceTree = "<group>"; };
 		OBJ_206 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -787,7 +786,7 @@
 			path = "Game Controller";
 			sourceTree = "<group>";
 		};
-		OBJ_5 /*  */ = {
+		OBJ_5 = {
 			isa = PBXGroup;
 			children = (
 				OBJ_6 /* Package.swift */,
@@ -795,14 +794,12 @@
 				OBJ_151 /* Tests */,
 				OBJ_165 /* Dependencies */,
 				OBJ_198 /* Products */,
-				OBJ_203 /* build */,
 				OBJ_204 /* LICENSE */,
 				OBJ_205 /* project.yml */,
 				OBJ_206 /* README.md */,
 				OBJ_207 /* xcode12.py */,
 				OBJ_208 /* Paywall.podspec */,
 			);
-			name = "";
 			sourceTree = "<group>";
 		};
 		OBJ_50 /* Models */ = {
@@ -1099,7 +1096,7 @@
 			knownRegions = (
 				en,
 			);
-			mainGroup = OBJ_5 /*  */;
+			mainGroup = OBJ_5;
 			productRefGroup = OBJ_198 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
