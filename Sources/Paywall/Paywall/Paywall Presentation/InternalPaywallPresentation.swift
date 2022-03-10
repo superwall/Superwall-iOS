@@ -17,7 +17,7 @@ extension Paywall {
     ignoreSubscriptionStatus: Bool = false,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: PaywallDismissalCompletionBlock? = nil,
-    onFail: ((NSError?) -> Void)? = nil
+    onFail: ((NSError) -> Void)? = nil
   ) {
     let debugInfo: [String: Any] = [
       "on": presentingViewController.debugDescription,

@@ -7,14 +7,14 @@
 
 import Foundation
 
-struct PaywallDismissalResult {
-  let paywallInfo: PaywallInfo?
-  enum DismissState {
+public struct PaywallDismissalResult {
+  public let paywallInfo: PaywallInfo?
+  public enum DismissState {
     case purchased(productId: String)
     case closed
     case restored
   }
-  let state: DismissState
+  public let state: DismissState
 
   static func withResult(
     paywallInfo: PaywallInfo?,

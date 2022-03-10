@@ -231,7 +231,8 @@ enum PaywallResponseLogic {
 
       return PaywallErrorResponse(
         handlers: handlers,
-        error: error)
+        error: error
+      )
     }
 
     return nil
