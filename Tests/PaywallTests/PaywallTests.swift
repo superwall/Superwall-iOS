@@ -1,6 +1,8 @@
 import XCTest
 @testable import Paywall
 
+// swiftlint:disable all
+
 final class PaywallTests: XCTestCase {
 	func testProductNumber() {
 		// This is an example of a functional test case.

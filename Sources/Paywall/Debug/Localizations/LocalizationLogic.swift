@@ -41,12 +41,6 @@ enum LocalizationLogic {
       localizations.append(localizationOption)
     }
 
-    //  let encoder = JSONEncoder()
-    //  encoder.outputFormatting = .prettyPrinted
-    //
-    //  let data = try! encoder.encode(items)
-    //  print(String(data: data, encoding: .utf8)!)
-
     // Sort in ascending manner
     localizations.sort {
       $0.sortDescription < $1.sortDescription
