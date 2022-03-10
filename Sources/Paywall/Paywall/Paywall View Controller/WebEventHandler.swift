@@ -132,7 +132,6 @@ final class WebEventHandler: WebEventDelegate {
     }
 
     // block selection
-    // swiftlint:disable:next line_length
     let selectionString = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none} .w-webflow-badge { display: none !important; }'; "
       + "var head = document.head || document.getElementsByTagName('head')[0]; "
       + "var style = document.createElement('style'); style.type = 'text/css'; "
