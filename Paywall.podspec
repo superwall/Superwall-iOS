@@ -35,7 +35,7 @@ Pod::Spec.new do |s|
 	s.author       = { "Jake Mor" => "jake@superwall.me" }
 	s.documentation_url = "https://docs.superwall.me/"
 	s.swift_versions = ['5.3']
-	s.ios.deployment_target = '10.0'
+	s.ios.deployment_target = '11.2'
 	s.requires_arc = true
 
   s.source_files  = "Sources/**/*.{swift}"

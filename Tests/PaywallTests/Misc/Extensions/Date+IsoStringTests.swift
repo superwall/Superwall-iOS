@@ -8,6 +8,8 @@
 import XCTest
 @testable import Paywall
 
+// swiftlint:disable all
+
 class Date_IsoStringTests: XCTestCase {
   func testIsoString() {
     // Given

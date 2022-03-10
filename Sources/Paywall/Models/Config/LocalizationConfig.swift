@@ -11,6 +11,6 @@ struct LocalizationConfig: Decodable {
   struct LocaleConfig: Decodable {
     var locale: String
   }
-  
+
   var locales: [LocaleConfig]
 }

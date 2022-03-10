@@ -69,7 +69,6 @@ enum ExpressionEvaluator {
       let postfix = "\n SuperwallSDKJS.evaluate64('\(base64String)');"
       let result = jsCtx.evaluateScript(script + "\n " + postfix)
       if result?.isString != nil {
-        print("the result is!", result?.toString())
         return result?.toString() == "true"
       }
     }

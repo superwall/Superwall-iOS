@@ -280,7 +280,8 @@ public final class Paywall: NSObject {
 
       let outcome = PaywallLogic.canTriggerPaywall(
         eventName: event.name,
-        triggers: Storage.shared.triggers,
+        v1Triggers: Storage.shared.triggers,
+        v2Triggers: Set(Storage.shared.v2Triggers.keys),
         isPaywallPresented: self.isPaywallPresented
       )
 

@@ -4,7 +4,6 @@
     <img src="https://repository-images.githubusercontent.com/388287766/ed5c47aa-491f-4d70-9ea7-ec09ad4a03fa" alt="logo" height="200px" align="center"/>
 </p>
 
-
 <br/>
 
 <h3 align="center">In-App Paywalls Made Easy 💸</h3>
@@ -45,6 +44,24 @@ Check out these example apps with Paywall-iOS installed.
 
 - [Swift 5](https://github.com/superwall-me/superwallQuickStart)
 - [Objective-C](https://github.com/superwall-me/SuperwallQuickstartObjectiveC)
+
+## Installation
+
+### Swift Package Manager
+
+The preferred installation method is with (Swift Package Manager)[https://swift.org/package-manager/]:
+
+- File > Swift Packages > Add Package Dependency
+- Add `https://github.com/superwall-me/paywall-ios`
+- Select "Up to Next Major" with "2.0.0"
+
+### Cocoapods
+
+For (Cocoapods)[https://cocoapods.org], add the following to your Podfile:
+
+```
+pod 'Paywall', '< 3.0.0'
+```
 
 ## Getting Started
 For more detailed information, you can view our complete documentation at [docs.superwall.me](https://docs.superwall.me/docs).

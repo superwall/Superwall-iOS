@@ -168,14 +168,14 @@ extension Endpoint where Response == PaywallResponse {
       )
       queryItems.append(localeQuery)
     } else {
-        let shortLocale = DeviceHelper.shared.locale.split(separator: "_")[0]
-        if (Storage.shared.locales.contains(String(shortLocale))) {
-          let localeQuery = URLQueryItem(
-            name: "locale",
-            value: String(shortLocale)
-          )
-          queryItems.append(localeQuery)
-        }
+      let shortLocale = DeviceHelper.shared.locale.split(separator: "_")[0]
+      if Storage.shared.locales.contains(String(shortLocale)) {
+        let localeQuery = URLQueryItem(
+          name: "locale",
+          value: String(shortLocale)
+        )
+        queryItems.append(localeQuery)
+      }
     }
 
     return Endpoint(

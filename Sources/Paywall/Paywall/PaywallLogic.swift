@@ -15,15 +15,16 @@ enum PaywallLogic {
   }
   static func canTriggerPaywall(
     eventName: String,
-    triggers: Set<String>,
+    v1Triggers: Set<String>,
+    v2Triggers: Set<String>,
     isPaywallPresented: Bool
   ) -> Outcome {
     if isPaywallPresented {
       return .dontTriggerPaywall
     }
 
-    let isV1Trigger = triggers.contains(eventName)
-    let isV2Trigger = triggers.contains(eventName)
+    let isV1Trigger = v1Triggers.contains(eventName)
+    let isV2Trigger = v2Triggers.contains(eventName)
 
     guard isV1Trigger || isV2Trigger else {
       return .dontTriggerPaywall

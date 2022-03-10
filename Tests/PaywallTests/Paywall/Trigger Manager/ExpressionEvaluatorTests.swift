@@ -15,17 +15,25 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   // TODO: Why is this failing?
-  /*
-  func testExpressionEvaluatorTrue() throws {
+
+  func testExpressionMatchesAll() {
+    let result = ExpressionEvaluator.evaluateExpression(
+      expression: nil,
+      eventData: .stub()
+    )
+    XCTAssertTrue(result)
+  }
+
+  /*func testExpressionEvaluatorTrue() {
     Storage.shared.userAttributes = ["a": "b"]
     let result = ExpressionEvaluator.evaluateExpression(
       expression: "a == \"b\"",
-      eventData: .stub()
+      eventData: EventData(name: "ss", parameters: ["a":"b"], createdAt: "")
     )
     XCTAssertTrue(result)
   }*/
 
-  func testExpressionEvaluatorFalse() throws {
+  func testExpressionEvaluatorFalse() {
     Storage.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
       expression: "a == \"b\"",

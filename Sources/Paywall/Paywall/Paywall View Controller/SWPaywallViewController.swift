@@ -675,5 +675,15 @@ extension SWPaywallViewController: GameControllerDelegate {
       )
     }
   }
+}
+
+// MARK: - Stubbable
+extension SWPaywallViewController: Stubbable {
+  static func stub() -> SWPaywallViewController {
+    return SWPaywallViewController(
+      paywallResponse: nil,
+      delegate: nil
+    )
+  }
   // swiftlint:disable:next file_length
 }

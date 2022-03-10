@@ -14,7 +14,8 @@ protocol Stubbable {
 extension Stubbable {
   func setting<T>(
     _ keyPath: WritableKeyPath<Self, T>,
-    to value: T) -> Self {
+    to value: T
+  ) -> Self {
     var stub = self
     stub[keyPath: keyPath] = value
     return stub

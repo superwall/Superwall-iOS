@@ -17,7 +17,7 @@ final class PaywallManager {
 		return vcs.first
 	}
   private var viewControllers: Set<SWPaywallViewController> {
-    return Set<SWPaywallViewController>(cache.values)
+    return Set<SWPaywallViewController>(cache.viewControllers)
   }
   private var cache = PaywallCache()
 
@@ -65,7 +65,7 @@ final class PaywallManager {
       case .success(let response):
         if cached,
           let identifier = response.identifier,
-          let viewController = self.cache.getPaywall(withKey: identifier + DeviceHelper.shared.locale) {
+          let viewController = self.cache.getPaywall(withKey: identifier) {
           completion?(.success(viewController))
           return
         }

@@ -71,7 +71,7 @@ final class Network {
       }
     }
   }
-  
+
   func getPaywalls(completion: @escaping (Result<PaywallsResponse, Error>) -> Void) {
     urlSession.request(
       .paywalls(),
