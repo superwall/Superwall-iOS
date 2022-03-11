@@ -32,11 +32,11 @@
 🎯 | Paywall conversion rate tracking - know whether a user converted after seeing a paywall
 🆓 | Trial Start rate tracking - know and measure your trial start rate out of the box
 📊 | Analytics - automatic calculation of metrics like conversion and views
-✏️ | A/B Testing - automaticly calculate metrics for different paywalls
+✏️ | A/B Testing - automatically calculate metrics for different paywalls
 📝 | [Online documentation](https://docs.superwall.me/docs) up to date
 🔀 | [Integrations](https://docs.superwall.me/docs) - over a dozen integrations to easily send conversion data where you need it
 💯 | Well maintained - [frequent releases](https://github.com/superwall-me/paywall-ios/releases)
-📮 | Great support - Email a Founder. justin@superwall.me
+📮 | Great support - email a founder: justin@superwall.me
 
 ## Examples
 
@@ -49,7 +49,7 @@ Check out these example apps with Paywall-iOS installed.
 
 ### Swift Package Manager
 
-The preferred installation method is with (Swift Package Manager)[https://swift.org/package-manager/]:
+The preferred installation method is with [Swift Package Manager](https://swift.org/package-manager/):
 
 - File > Swift Packages > Add Package Dependency
 - Add `https://github.com/superwall-me/paywall-ios`
