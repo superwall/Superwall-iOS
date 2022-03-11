@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 10/03/2022.
 //
+// swiftlint:disable all
 
 import XCTest
 @testable import SuperwallSwiftUIExample

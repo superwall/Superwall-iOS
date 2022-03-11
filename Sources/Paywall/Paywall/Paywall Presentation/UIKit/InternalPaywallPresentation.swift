@@ -12,7 +12,7 @@ extension Paywall {
   static func internallyPresent(
     withIdentifier identifier: String? = nil,
     on presentingViewController: UIViewController? = nil,
-    fromEvent: EventData? = nil,
+    fromEvent event: EventData? = nil,
     cached: Bool = true,
     ignoreSubscriptionStatus: Bool = false,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
@@ -21,7 +21,7 @@ extension Paywall {
   ) {
     let debugInfo: [String: Any] = [
       "on": presentingViewController.debugDescription,
-      "fromEvent": fromEvent.debugDescription,
+      "fromEvent": event.debugDescription,
       "cached": cached,
       "presentationCompletion": onPresent.debugDescription,
       "dismissalCompletion": onDismiss.debugDescription,
@@ -51,7 +51,7 @@ extension Paywall {
 
     PaywallManager.shared.getPaywallViewController(
       withIdentifier: identifier,
-      event: fromEvent,
+      event: event,
       cached: cached && !SWDebugManager.shared.isDebuggerLaunched
     ) { result in
       // if there's a paywall being presented, don't do anything
@@ -95,17 +95,17 @@ extension Paywall {
 
         paywallViewController.present(
           on: presenter,
-          fromEventData: fromEvent,
+          fromEventData: event,
           calledFromIdentifier: identifier != nil,
           dismissalBlock: onDismiss
         ) { success in
           if success {
             self.presentAgain = {
-              PaywallManager.shared.removePaywall(withIdentifier: identifier, forEvent: fromEvent)
+              PaywallManager.shared.removePaywall(withIdentifier: identifier, forEvent: event)
               internallyPresent(
                 withIdentifier: identifier,
                 on: presentingViewController,
-                fromEvent: fromEvent,
+                fromEvent: event,
                 cached: false,
                 onPresent: onPresent,
                 onDismiss: onDismiss,

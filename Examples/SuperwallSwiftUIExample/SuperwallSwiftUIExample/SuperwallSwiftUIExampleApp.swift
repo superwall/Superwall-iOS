@@ -10,10 +10,11 @@ import SwiftUI
 @main
 struct SuperwallSwiftUIExampleApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-  
+
   var body: some Scene {
     WindowGroup {
-      ContentView()
+      PaywallNavigationView()
+        .font(.rubik(.four))
     }
   }
 }

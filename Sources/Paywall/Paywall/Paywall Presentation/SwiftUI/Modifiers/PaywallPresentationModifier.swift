@@ -10,7 +10,7 @@ import SwiftUI
 @available(iOS 13.0, *)
 struct PaywallPresentationModifier: ViewModifier {
   @Binding var isPresented: Bool
-  @State private var userDidDismiss = false
+  @State private var manuallySetIsPresented = false
   var onPresent: ((PaywallInfo?) -> Void)?
   var onDismiss: ((PaywallDismissalResult) -> Void)?
   var onFail: ((NSError) -> Void)?
@@ -28,16 +28,20 @@ struct PaywallPresentationModifier: ViewModifier {
       Paywall.internallyPresent(
         onPresent: onPresent,
         onDismiss: { result in
-          self.userDidDismiss = true
+          self.manuallySetIsPresented = true
           self.isPresented = false
           onDismiss?(result)
         },
-        onFail: onFail
+        onFail: { error in
+          self.manuallySetIsPresented = true
+          self.isPresented = false
+          onFail?(error)
+        }
       )
     } else {
-      // This prevents Paywall.dismiss() being called twice when onDismiss gets a callback.
-      if userDidDismiss {
-        userDidDismiss = false
+      // This prevents Paywall.dismiss() being called twice when manually setting isPresented.
+      if manuallySetIsPresented {
+        manuallySetIsPresented = false
         return
       }
       Paywall.dismiss()
