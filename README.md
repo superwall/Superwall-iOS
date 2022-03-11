@@ -57,7 +57,7 @@ The preferred installation method is with [Swift Package Manager](https://swift.
 
 ### Cocoapods
 
-For (Cocoapods)[https://cocoapods.org], add the following to your Podfile:
+For [Cocoapods](https://cocoapods.org), add the following to your Podfile:
 
 ```
 pod 'Paywall', '< 3.0.0'
