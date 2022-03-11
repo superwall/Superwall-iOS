@@ -39,7 +39,7 @@ struct ConfigResponse: Decodable {
   }
 
   private func preloadTriggerPaywalls() {
-    let triggerPaywallIds = ConfigResponseLogic.getPaywallIds(from: triggers)
+    let triggerPaywallIds = ConfigResponseLogic.getPaywallIds(fromV2Triggers: triggers)
     // Pre-load all the paywalls from v2 triggers
     for id in triggerPaywallIds {
       PaywallManager.shared.getPaywallViewController(withIdentifier: id, event: nil, cached: true, completion: nil)

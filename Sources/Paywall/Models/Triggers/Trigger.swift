@@ -28,4 +28,21 @@ struct Trigger: Decodable, Hashable {
       triggerVersion = .v1
     }
   }
+
+  init(
+    eventName: String,
+    triggerVersion: TriggerVersion
+  ) {
+    self.eventName = eventName
+    self.triggerVersion = triggerVersion
+  }
+}
+
+extension Trigger: Stubbable {
+  static func stub() -> Trigger {
+    return Trigger(
+      eventName: "an_event",
+      triggerVersion: .v1
+    )
+  }
 }

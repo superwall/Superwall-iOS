@@ -7,15 +7,6 @@
 
 import Foundation
 
-struct VariantTreatment: Decodable, Hashable {
-  var variantId: String
-  var paywallIdentifier: String
-}
-
-struct VariantHoldout: Decodable, Hashable {
-  var variantId: String
-}
-
 enum Variant: Decodable, Hashable {
   case treatment(VariantTreatment)
   case holdout(VariantHoldout)
