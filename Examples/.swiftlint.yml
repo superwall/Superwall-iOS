@@ -62,6 +62,15 @@ custom_rules:
     message: "Use explicit type annotation when initializing empty arrays and dictionaries"
     severity: warning
 
+  disable_print:
+    included: ".*\\.swift"
+    name: "print usage"
+    regex: "((\\bprint)|(Swift\\.print))\\s*\\("
+    message: "Use Logger over print"
+    severity: error
+    match_kinds:
+      - identifier
+
 attributes:
   always_on_same_line:
     - "@IBSegueAction"

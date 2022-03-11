@@ -3,7 +3,7 @@ name: SwiftLint
 on:
   push:
     paths:
-      - '.github/workflows/swiftlint.yml'
+      - '.github/workflows/package-swiftlint.yml'
       - '.swiftlint.yml'
       - '**/*.swift'
 
