@@ -68,6 +68,8 @@ custom_rules:
     regex: "((\\bprint)|(Swift\\.print))\\s*\\("
     message: "Use Logger over print"
     severity: error
+    match_kinds:
+      - identifier
 
 attributes:
   always_on_same_line:
