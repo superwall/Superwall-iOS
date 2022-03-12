@@ -65,7 +65,7 @@ final class PaywallManager {
       case .success(let response):
         if cached,
           let identifier = response.identifier,
-          let viewController = self.cache.getPaywall(withKey: identifier) {
+          let viewController = self.cache.getPaywall(forIdentifier: identifier, event: nil) {
           completion?(.success(viewController))
           return
         }
