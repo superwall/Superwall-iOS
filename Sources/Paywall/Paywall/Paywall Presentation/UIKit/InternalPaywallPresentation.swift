@@ -101,7 +101,9 @@ extension Paywall {
         ) { success in
           if success {
             self.presentAgain = {
-              PaywallManager.shared.removePaywall(withIdentifier: identifier, forEvent: event)
+              if let presentingPaywallIdentifier = paywallViewController.paywallResponse?.identifier {
+                PaywallManager.shared.removePaywall(withIdentifier: presentingPaywallIdentifier)
+              }
               internallyPresent(
                 withIdentifier: identifier,
                 on: presentingViewController,

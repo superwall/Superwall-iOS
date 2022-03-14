@@ -14,12 +14,10 @@ final class PaywallCache {
   private var cache: [String: SWPaywallViewController] = [:]
 
   func getPaywall(
-    forIdentifier identifier: String?,
-    event: EventData?
+    withIdentifier identifier: String?
   ) -> SWPaywallViewController? {
     let key = PaywallCacheLogic.key(
-      forIdentifier: identifier,
-      event: event
+      forIdentifier: identifier
     )
     return cache[key]
   }
@@ -30,24 +28,19 @@ final class PaywallCache {
 
   func savePaywall(
     _ viewController: SWPaywallViewController,
-    withIdentifier identifier: String?,
-    forEvent event: EventData?
+    withIdentifier identifier: String?
   ) {
     let key = PaywallCacheLogic.key(
-      forIdentifier: identifier,
-      event: event
+      forIdentifier: identifier
     )
-
     self.cache[key] = viewController
   }
 
   func removePaywall(
-    withIdentifier identifier: String?,
-    forEvent event: EventData?
+    withIdentifier identifier: String?
   ) {
     let key = PaywallCacheLogic.key(
-      forIdentifier: identifier,
-      event: event
+      forIdentifier: identifier
     )
     cache[key] = nil
   }

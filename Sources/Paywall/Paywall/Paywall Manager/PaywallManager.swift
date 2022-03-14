@@ -22,12 +22,10 @@ final class PaywallManager {
   private var cache = PaywallCache()
 
 	func removePaywall(
-    withIdentifier identifier: String?,
-    forEvent event: EventData?
+    withIdentifier identifier: String?
   ) {
     cache.removePaywall(
-      withIdentifier: identifier,
-      forEvent: event
+      withIdentifier: identifier
     )
 	}
 
@@ -45,14 +43,6 @@ final class PaywallManager {
     cached: Bool,
     completion: ((Result<SWPaywallViewController, NSError>) -> Void)? = nil
   ) {
-    if cached,
-      let viewController = cache.getPaywall(
-        forIdentifier: identifier,
-        event: event
-      ) {
-      completion?(.success(viewController))
-      return
-    }
 
     PaywallResponseManager.shared.getResponse(
       identifier: identifier,
@@ -65,7 +55,7 @@ final class PaywallManager {
       case .success(let response):
         if cached,
           let identifier = response.identifier,
-          let viewController = self.cache.getPaywall(withKey: identifier) {
+          let viewController = self.cache.getPaywall(withIdentifier: identifier) {
           completion?(.success(viewController))
           return
         }
@@ -87,8 +77,7 @@ final class PaywallManager {
 
         self.cache.savePaywall(
           paywallViewController,
-          withIdentifier: response.identifier,
-          forEvent: event
+          withIdentifier: response.identifier
         )
 
         completion?(.success(paywallViewController))
