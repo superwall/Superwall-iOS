@@ -25,13 +25,11 @@ class PaywallCacheTests: XCTestCase {
     // When
     paywallCache.savePaywall(
       paywall,
-      withIdentifier: id,
-      forEvent: nil
+      withIdentifier: id
     )
 
     let key = PaywallCacheLogic.key(
-      forIdentifier: id,
-      event: nil
+      forIdentifier: id
     )
 
     let cachedPaywall = paywallCache.getPaywall(withKey: key)
@@ -48,13 +46,11 @@ class PaywallCacheTests: XCTestCase {
     // When
     paywallCache.savePaywall(
       paywall,
-      withIdentifier: id,
-      forEvent: nil
+      withIdentifier: id
     )
 
     let key = PaywallCacheLogic.key(
-      forIdentifier: id,
-      event: nil
+      forIdentifier: id
     )
 
     var cachedPaywall = paywallCache.getPaywall(withKey: key)
@@ -62,8 +58,7 @@ class PaywallCacheTests: XCTestCase {
     XCTAssertEqual(cachedPaywall, paywall)
 
     paywallCache.removePaywall(
-      withIdentifier: id,
-      forEvent: nil
+      withIdentifier: id
     )
 
     // Then
@@ -79,13 +74,11 @@ class PaywallCacheTests: XCTestCase {
     // When
     paywallCache.savePaywall(
       paywall,
-      withIdentifier: nil,
-      forEvent: nil
+      withIdentifier: nil
     )
 
     let key = PaywallCacheLogic.key(
-      forIdentifier: nil,
-      event: nil
+      forIdentifier: nil
     )
 
     var cachedPaywall = paywallCache.getPaywall(withKey: key)
@@ -111,24 +104,20 @@ class PaywallCacheTests: XCTestCase {
     // When
     paywallCache.savePaywall(
       paywall1,
-      withIdentifier: paywallId1,
-      forEvent: nil
+      withIdentifier: paywallId1
     )
 
     let key1 = PaywallCacheLogic.key(
-      forIdentifier: paywallId1,
-      event: nil
+      forIdentifier: paywallId1
     )
 
     paywallCache.savePaywall(
       paywall2,
-      withIdentifier: paywallId2,
-      forEvent: nil
+      withIdentifier: paywallId2
     )
 
     let key2 = PaywallCacheLogic.key(
-      forIdentifier: paywallId2,
-      event: nil
+      forIdentifier: paywallId2
     )
 
     let cachedPaywall1 = paywallCache.getPaywall(withKey: key1)
@@ -157,14 +146,12 @@ class PaywallCacheTests: XCTestCase {
     // When
     paywallCache.savePaywall(
       paywall1,
-      withIdentifier: paywallId1,
-      forEvent: nil
+      withIdentifier: paywallId1
     )
 
     paywallCache.savePaywall(
       paywall2,
-      withIdentifier: paywallId2,
-      forEvent: nil
+      withIdentifier: paywallId2
     )
 
     let viewControllers = Set(paywallCache.viewControllers)
