@@ -13,23 +13,27 @@ struct TriggerPaywallView: View {
 
   var body: some View {
     VStack {
-      Text("This button triggers a paywall for the event \"DidTriggerPaywall\". The paywall only shows when the event is tied to an active trigger on the Superwall Dashboard.")
-
-      Button(
-        action: {
-          showPaywall.toggle()
-        },
-        label: {
-          Text("Trigger Paywall")
-        }
+      Text("The button triggers a paywall for the event \"Upsell\".\n\nThe paywall only shows when the event is tied to an active trigger on the Superwall Dashboard."
       )
-      .padding()
+      .lineSpacing(5)
+      .padding(.horizontal)
+      .padding(.vertical, 48)
+      .multilineTextAlignment(.center)
+
+      BrandedButton(title: "Trigger Paywall") {
+        showPaywall.toggle()
+      }
+      .padding(.horizontal)
+
+      Spacer()
     }
+    .navigationTitle("Triggering a Paywall")
+    .frame(maxHeight: .infinity)
     .triggerPaywall(
-      forEvent: "DidTriggerPaywall",
+      forEvent: "Upsell",
       shouldPresent: $showPaywall,
       onPresent: { paywallInfo in
-        print("paywall info is", paywallInfo)
+        debugPrint("paywall info is", paywallInfo)
       },
       onDismiss: { result in
         switch result.state {
@@ -45,6 +49,8 @@ struct TriggerPaywallView: View {
         print("did fail", error)
       }
     )
+    .foregroundColor(.white)
+    .background(Color.neutral)
   }
 }
 

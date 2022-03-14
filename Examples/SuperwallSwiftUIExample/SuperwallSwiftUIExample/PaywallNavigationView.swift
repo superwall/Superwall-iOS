@@ -10,7 +10,7 @@ import SwiftUI
 struct PaywallNavigationView: View {
   init() {
     UITableView.appearance().backgroundColor = .neutral
-    UINavigationBar.appearance().largeTitleTextAttributes = [
+    UINavigationBar.appearance().titleTextAttributes = [
       .foregroundColor: UIColor.white,
       .font: UIFont.rubikBold(.five)
     ]
@@ -19,13 +19,8 @@ struct PaywallNavigationView: View {
   var body: some View {
     NavigationView {
       VStack {
-        Image("logo")
-          .resizable()
-          .scaledToFit()
-          .frame(width: 200)
-        Text("Demo app")
-          .foregroundColor(.white)
-          .italic()
+        logo()
+        title()
 
         List {
           NavigationLink(destination: PresentPaywallView()) {
@@ -43,10 +38,24 @@ struct PaywallNavigationView: View {
       }
       .background(Color.neutral)
       .navigationBarHidden(true)
+      .navigationBarTitleDisplayMode(.inline)
       .navigationTitle("")
     }
     .navigationViewStyle(.stack)
     .accentColor(.primaryTeal)
+  }
+
+  private func logo() -> some View {
+    Image("logo")
+      .resizable()
+      .scaledToFit()
+      .frame(width: 200)
+  }
+
+  private func title() -> some View {
+    Text("Demo app")
+      .foregroundColor(.white)
+      .italic()
   }
 }
 

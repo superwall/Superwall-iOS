@@ -26,7 +26,6 @@ struct PaywallTriggerModifier: ViewModifier {
   }
 
   private func updatePresentation(_ shouldPresent: Bool) {
-    // TODO: What happens when they try to trigger but it doesn't like it
     if shouldPresent {
       var eventData: EventData?
 

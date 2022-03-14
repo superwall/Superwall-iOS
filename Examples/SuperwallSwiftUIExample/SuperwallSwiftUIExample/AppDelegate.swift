@@ -13,6 +13,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
     PaywallService.initPaywall()
+    Task {
+      await StoreKitService.shared.loadSubscriptionState()
+    }
     return true
   }
 }

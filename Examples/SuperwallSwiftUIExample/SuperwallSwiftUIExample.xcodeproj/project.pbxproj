@@ -26,6 +26,7 @@
 		888F48D727DBA6B6009C74A3 /* Rubik-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 888F48D627DBA6B6009C74A3 /* Rubik-Regular.ttf */; };
 		888F48D927DBA751009C74A3 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48D827DBA751009C74A3 /* Colors.swift */; };
 		888F48DB27DBA8A9009C74A3 /* Rubik-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 888F48DA27DBA8A9009C74A3 /* Rubik-Bold.ttf */; };
+		88EE539327DF677900F1FFFB /* StoreKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EE539227DF677900F1FFFB /* StoreKitService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,8 @@
 		888F48D627DBA6B6009C74A3 /* Rubik-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rubik-Regular.ttf"; sourceTree = "<group>"; };
 		888F48D827DBA751009C74A3 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		888F48DA27DBA8A9009C74A3 /* Rubik-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rubik-Bold.ttf"; sourceTree = "<group>"; };
+		88EE539127DF64BB00F1FFFB /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
+		88EE539227DF677900F1FFFB /* StoreKitService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -126,14 +129,15 @@
 				888F48C627DBA46B009C74A3 /* Design */,
 				888F48C927DBA54A009C74A3 /* Components */,
 				888F488D27DA6B10009C74A3 /* Preview Content */,
+				88EE539427DF677C00F1FFFB /* Services */,
 				888F48CD27DBA5BA009C74A3 /* Info.plist */,
 				888F48CC27DBA598009C74A3 /* SuperwallSwiftUIExample.entitlements */,
+				88EE539127DF64BB00F1FFFB /* Products.storekit */,
 				888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */,
 				888F48BC27DA71EA009C74A3 /* AppDelegate.swift */,
 				888F48C427DB9F52009C74A3 /* PaywallNavigationView.swift */,
 				888F488927DA6B0F009C74A3 /* PresentPaywallView.swift */,
 				888F48C227DB8584009C74A3 /* TriggerPaywallView.swift */,
-				888F48BA27DA6FAF009C74A3 /* PaywallService.swift */,
 			);
 			path = SuperwallSwiftUIExample;
 			sourceTree = "<group>";
@@ -206,6 +210,15 @@
 				888F48DA27DBA8A9009C74A3 /* Rubik-Bold.ttf */,
 			);
 			path = Fonts;
+			sourceTree = "<group>";
+		};
+		88EE539427DF677C00F1FFFB /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				888F48BA27DA6FAF009C74A3 /* PaywallService.swift */,
+				88EE539227DF677900F1FFFB /* StoreKitService.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -371,6 +384,7 @@
 				888F48CB27DBA55E009C74A3 /* BrandedButton.swift in Sources */,
 				888F48D927DBA751009C74A3 /* Colors.swift in Sources */,
 				888F48C327DB8584009C74A3 /* TriggerPaywallView.swift in Sources */,
+				88EE539327DF677900F1FFFB /* StoreKitService.swift in Sources */,
 				888F48BD27DA71EA009C74A3 /* AppDelegate.swift in Sources */,
 				888F48D127DBA62D009C74A3 /* Font.swift in Sources */,
 				888F488A27DA6B0F009C74A3 /* PresentPaywallView.swift in Sources */,

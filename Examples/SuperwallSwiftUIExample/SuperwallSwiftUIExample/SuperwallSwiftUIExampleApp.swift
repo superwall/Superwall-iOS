@@ -15,6 +15,9 @@ struct SuperwallSwiftUIExampleApp: App {
     WindowGroup {
       PaywallNavigationView()
         .font(.rubik(.four))
+        .onOpenURL { url in
+          PaywallService.trackDeepLink(url: url)
+        }
     }
   }
 }
