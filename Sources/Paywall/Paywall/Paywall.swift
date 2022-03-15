@@ -187,7 +187,10 @@ public final class Paywall: NSObject {
       apiKey: apiKey
     )
 
-    Self.delegate = delegate
+    if delegate != nil {
+      Self.delegate = delegate
+    }
+    
     SKPaymentQueue.default().add(self)
 		addActiveStateObservers()
 		fetchConfiguration()
