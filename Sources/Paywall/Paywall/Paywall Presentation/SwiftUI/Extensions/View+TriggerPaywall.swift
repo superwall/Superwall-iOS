@@ -11,13 +11,13 @@ import SwiftUI
 extension View {
   /// Presents a paywall to the user when an analytics event you provide is tied to an active trigger in the [Superwall Dashboard](https://superwall.com/dashboard) and a binding to a Boolean value that you provide is true.
   ///
-  /// Triggers enable you to retroactively decide where or when to show a paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.
+  /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.
   ///
   /// The paywall shown to the user is determined by the trigger associated with the event in the [Superwall Dashboard](https://superwall.com/dashboard).
   ///
   /// If you don't want to use any completion handlers, consider using ``Paywall/Paywall/track(_:_:)-2vkwo`` to implicitly trigger a paywall.
   ///
-  /// The example below triggers a paywall when the user toggles the `showPaywall` variable by tapping on the “Collect Gems” button. The paywall will only show if the trigger for the `collectGems` event is active in the [Superwall Dashboard](https://superwall.com/dashboard):
+  /// The example below triggers a paywall when the user toggles the `showPaywall` variable by tapping on the “Collect Gems” button. The paywall will only show if the trigger for the `collectGems` event is active in the [Superwall Dashboard](https://superwall.com/dashboard) and the user doesn't have an active subscription:
   ///
   ///     struct ContentView: View {
   ///       @State private var showPaywall = false

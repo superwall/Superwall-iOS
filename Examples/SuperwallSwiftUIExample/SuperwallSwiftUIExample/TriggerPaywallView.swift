@@ -9,28 +9,34 @@ import SwiftUI
 import Paywall
 
 struct TriggerPaywallView: View {
+  @StateObject private var store = StoreKitService.shared
   @State private var showPaywall = false
 
   var body: some View {
     VStack {
-      Text("The button triggers a paywall for the event \"Upsell\".\n\nThe paywall only shows when the event is tied to an active trigger on the Superwall Dashboard."
+      Text("The button below triggers a specific paywall for the event \"MyEvent\".\n\nThe paywall only shows when the event is tied to an active trigger on the Superwall Dashboard."
       )
       .lineSpacing(5)
       .padding(.horizontal)
       .padding(.vertical, 48)
       .multilineTextAlignment(.center)
 
-      BrandedButton(title: "Trigger Paywall") {
-        showPaywall.toggle()
-      }
-      .padding(.horizontal)
 
       Spacer()
+
+      VStack {
+        BrandedButton(title: "Trigger Paywall") {
+          showPaywall.toggle()
+        }
+        .padding()
+
+        PaywallSubscriptionStatusView()
+      }
     }
     .navigationTitle("Triggering a Paywall")
     .frame(maxHeight: .infinity)
     .triggerPaywall(
-      forEvent: "Upsell",
+      forEvent: "MyEvent",
       shouldPresent: $showPaywall,
       onPresent: { paywallInfo in
         debugPrint("paywall info is", paywallInfo)

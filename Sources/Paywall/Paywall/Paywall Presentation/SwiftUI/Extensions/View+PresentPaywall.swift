@@ -15,6 +15,8 @@ extension View {
   ///
   /// The paywall assigned to the user is determined by your settings in the [Superwall Dashboard](https://superwall.com/dashboard). Once a user is assigned a paywall, they will continue to see the same paywall, even when the paywall is turned off, unless you reassign them to a new one.
   ///
+  /// Paywalls are not shown to users who have an active subscription.
+  ///
   /// The example below displays a paywall when the user toggles the `showPaywall` variable by tapping on the “Toggle Paywall” button:
   ///
   ///     struct ContentView: View {

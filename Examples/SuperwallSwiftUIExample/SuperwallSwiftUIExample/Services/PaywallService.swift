@@ -5,33 +5,36 @@
 //  Created by Yusuf Tör on 10/03/2022.
 //
 
-import Foundation
 import Paywall
 import StoreKit
 
 // swiftlint:disable:next convenience_type
 final class PaywallService {
-  #warning("Replace this with your own API key, available from the Superwall Dashboard:")
-  static let apiKey = "pk_9275c350783c8062dbd6a905b66915c00319c27d714a9272"
-
+  #warning("Replace the following with your own API key, available from the Superwall Dashboard:")
+  static let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
   static var shared = PaywallService()
-
+  static var name: String {
+    return Paywall.userAttributes["firstName"] as? String ?? ""
+  }
   static func initPaywall() {
     Paywall.configure(
-      apiKey: apiKey
+      apiKey: apiKey,
+      delegate: shared
     )
-    Paywall.delegate = shared
   }
 
   static func trackDeepLink(url: URL) {
     Paywall.track(.deepLinkOpen(deepLinkUrl: url))
+  }
+
+  static func setName(to name: String) {
+    Paywall.setUserAttributes(["firstName": name])
   }
 }
 
 // MARK: - Paywall Delegate
 extension PaywallService: PaywallDelegate {
   func purchase(product: SKProduct) {
-    print("purchase!")
     Task {
       try? await StoreKitService.shared.purchase(product)
     }

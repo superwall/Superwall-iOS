@@ -31,10 +31,11 @@
 /// THE SOFTWARE.
 
 import StoreKit
+import SwiftUI
 
-final class StoreKitService: NSObject {
+final class StoreKitService: NSObject, ObservableObject {
   static let shared = StoreKitService()
-  var isSubscribed = false
+  @Published var isSubscribed = false
   private(set) var purchasedIdentifiers = Set<String>()
   private var productIdsToName: [String: String] = [:]
   enum StoreError: Error {
