@@ -19,8 +19,8 @@ This sample uses:
 | Feature                             | Sample Project Location                   |
 | ----------------------------------- | ----------------------------------------- |
 | 🕹 Configuring the *Paywall* SDK    | [Services/PaywallService.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/Services/PaywallService.swift#L20) |
-| 💰 Presenting a paywall             | [PresentPaywallView.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/PresentPaywallView.swift#L36) |
-| 👉 Triggering a paywall             | [TriggerPaywallView.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/TriggerPaywallView.swift#L38) |
+| 💰 Presenting a paywall             | [PresentPaywallView.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/PresentPaywallView.swift#L35) |
+| 👉 Triggering a paywall             | [TriggerPaywallView.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/TriggerPaywallView.swift#L36) |
 | 👥 Identifying the user             | [Services/PaywallService.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/Services/PaywallService.swift#L31) |
 
 ## Getting Started
