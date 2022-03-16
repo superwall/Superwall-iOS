@@ -33,8 +33,8 @@ extension Paywall {
 
     for key in params.keys {
       if let value = clean(input: params[key]) {
-        let key = "$\(key)"
-        eventParams[key] = value
+        let keyWithDollar = "$\(key)"
+        eventParams[keyWithDollar] = value
         delegateParams[key] = value // no $ for delegate methods
       }
     }
