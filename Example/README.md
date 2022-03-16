@@ -35,7 +35,7 @@ You'll see a few different SwiftUI files that handle the layout of the app and p
 
 Build and run the app and you'll see the welcome screen:
 
-<img src="https://i.imgur.com/jKkBBNW.png" align="center" width="220px" />
+<img src="https://i.imgur.com/jKkBBNW.png" align="center" alt="The welcome screen" width="220px" />
 
 ## Configuring the SDK
 
@@ -47,7 +47,7 @@ On the welcome screen, enter your name in the **text field** and tap **Continue*
 
 You'll see an overview screen:
 
-<img src="https://i.imgur.com/4maP9Fh.png" align="center" width="220px" />
+<img src="https://i.imgur.com/4maP9Fh.png" align="center" alt="The overview screen" width="220px" />
 
 ## Showing a Paywall
 
@@ -61,10 +61,14 @@ The paywall assigned to the user is determined by the settings in the Superwall 
 
 Tap **Presenting a Paywall**. You'll see some explanatory text and a button that presents a paywall to the user:
 
-<img src="https://i.imgur.com/pRBHy0R.png" align="center" width="220px" />
+<img src="https://i.imgur.com/pRBHy0R.png" align="center" alt="Presenting a paywall" width="220px" />
 
 Then, tap **Present Paywall** to see your paywall. Have a tap around, you'll see delegate methods getting called
 
+### Triggering a Paywall
+
+When you 
+
 ## Support
 
-For more in depth explanations, check out our [documentation](https://docs.superwall.com).
+For an in-depth explanation of how to use the *Paywall* SDK, [check out our documentation](https://docs.superwall.com).

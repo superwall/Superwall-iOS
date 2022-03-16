@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
 	s.name         = "Paywall"
     s.version      = "2.2.10-rc.2"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
-	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. www.superwall.me"
+	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. superwall.com"
 
 	s.homepage     = "https://github.com/superwall-me/paywall-ios"
 	s.license      =  { :type => 'MIT', :text => <<-LICENSE
@@ -32,9 +32,9 @@ Pod::Spec.new do |s|
 	}
 	s.source       = { :git => "https://github.com/superwall-me/paywall-ios.git", :tag => "#{s.version}" }
 
-	s.author       = { "Jake Mor" => "jake@superwall.me" }
-	s.documentation_url = "https://docs.superwall.me/"
-	s.swift_versions = ['5.3']
+	s.author       = { "Jake Mor" => "jake@superwall.com" }
+	s.documentation_url = "https://docs.superwall.com/"
+	s.swift_versions = ['5.6']
 	s.ios.deployment_target = '11.2'
 	s.requires_arc = true
 
