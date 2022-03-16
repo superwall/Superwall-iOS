@@ -42,7 +42,6 @@ extension Paywall {
     for key in custom.keys {
       if let value = clean(input: custom[key]) {
         if key.starts(with: "$") {
-          delegateParams[key] = value // if they wanna use a dollar sign in their own events, let them
           Logger.debug(
             logLevel: .info,
             scope: .events,
@@ -51,6 +50,7 @@ extension Paywall {
             error: nil
           )
         } else {
+          delegateParams[key] = value
           eventParams[key] = value
         }
       } else {
