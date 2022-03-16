@@ -13,9 +13,9 @@ struct PaywallSubscriptionStatusView: View {
   var body: some View {
     Group {
       if store.isSubscribed {
-        Text("You currently have an active subscription. Therefore, the paywall will not present when clicking this button. For the purposes of this app, delete and reinstall the app to clear subscriptions.")
+        Text("You currently have an active subscription. Therefore, the paywall will not show when clicking this button. For the purposes of this app, delete and reinstall the app to clear subscriptions.")
       } else {
-        Text("You do not have an active subscription so the paywall will present when clicking this button.")
+        Text("You do not have an active subscription so the paywall will show when clicking this button.")
       }
     }
     .multilineTextAlignment(.center)

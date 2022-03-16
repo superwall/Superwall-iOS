@@ -6,12 +6,24 @@
 <h3 align="center">In-App Paywalls Made Easy 💸</h3>
 
 <p align="center">
-    [![License MIT](https://img.shields.io/badge/license-MIT-green/)](https://superwall.com/)
-    [![SwiftPM Compatible](https://img.shields.io/badge/SwiftPM-Compatible-orange)](https://superwall.com/)
-    [![Pod Compatible](https://img.shields.io/badge/pod-compatible-informational)](https://superwall.com/)
-    [![Community Active](https://img.shields.io/badge/community-active-9cf)](https://superwall.com/)
-    [![Version Number](https://img.shields.io/github/v/tag/superwall-me/paywall-ios)](https://superwall.com/)
-    [![Versions Supported](https://img.shields.io/badge/ios%20version-%3E%3D%2011-blueviolet)](https://superwall.com/)
+    <a href="https://github.com/superwall-me/paywall-ios/blob/master/LICENSE">
+        <img src="https://img.shields.io/badge/license-MIT-green/" alt="MIT License">
+    </a>
+    <a href="https://docs.superwall.com/docs/installation-via-spm">
+        <img src="https://img.shields.io/badge/SwiftPM-Compatible-orange" alt="SwiftPM Compatible">
+    </a>
+    <a href="https://docs.superwall.com/docs/installation-via-cocoapods">
+        <img src="https://img.shields.io/badge/pod-compatible-informational" alt="Cocoapods Compatible">
+    </a>
+    <a href="https://superwall.com/">
+        <img src="https://img.shields.io/badge/community-active-9cf" alt="Community Active">
+    </a>
+    <a href="https://superwall.com/">
+        <img src="https://img.shields.io/github/v/tag/superwall-me/paywall-ios" alt="Version Number">
+    </a>
+    <a href="https://superwall.com/">
+        <img src="https://img.shields.io/badge/ios%20version-%3E%3D%2011-blueviolet" alt="iOS Versions Supported">
+    </a>
 </p>
 
 ----------------
@@ -20,7 +32,7 @@
 
 ## Paywall.framework
 
-**Paywall** is the open source SDK for [Superwall](https://superwall.com/), providing a wrapper around `Webkit` for presenting and creating paywalls. The Superwall backend for implementing new paywalls lets you iterate on the fly in `Swift` or `Objective-C` easily!
+**Paywall** is the open source SDK for Superwall, providing a wrapper around `Webkit` for presenting and creating paywalls. It interacts with the Superwall backend letting you easily iterate paywalls on the fly in `Swift` or `Objective-C`!
 
 ## Features
 |   | Superwall |
@@ -57,7 +69,7 @@ The preferred installation method is with [Swift Package Manager](https://swift.
 ### Cocoapods
 
 [Cocoapods](https://cocoapods.org) is an alternative dependency manager for iOS projects. For usage and installation instructions, please visit their website.
-Add the following to your Podfile:
+To include the *Paywall* SDK in your app, add the following to your Podfile:
 
 ```
 pod 'Paywall', '< 3.0.0'
@@ -66,7 +78,7 @@ pod 'Paywall', '< 3.0.0'
 ## Getting Started
 For more detailed information, you can view our complete documentation at [docs.superwall.com](https://docs.superwall.com/docs).
 
-Check out our [SwiftUI example app](Examples/)
+Check out our [SwiftUI example app](Example)
 
 Or, get started with [an example app](https://github.com/superwall-me/superwallQuickStart). 
 
