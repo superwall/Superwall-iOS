@@ -6,13 +6,14 @@
 <h3 align="center">In-App Paywalls Made Easy 💸</h3>
 
 <p align="center">
-  [![License MIT](https://img.shields.io/badge/license-MIT-green/)](https://superwall.com/)
-  [![SwiftPM Compatible](https://img.shields.io/badge/SwiftPM-Compatible-orange)](https://superwall.com/)
-  [![Pod Compatible](https://img.shields.io/badge/pod-compatible-informational)](https://superwall.com/)
-  [![Community Active](https://img.shields.io/badge/community-active-9cf)](https://superwall.com/)
-  [![Version Number](https://img.shields.io/github/v/tag/superwall-me/paywall-ios)](https://superwall.com/)
-  [![Versions Supported](https://img.shields.io/badge/ios%20version-%3E%3D%2011-blueviolet)](https://superwall.com/)
+    [![License MIT](https://img.shields.io/badge/license-MIT-green/)](https://superwall.com/)
+    [![SwiftPM Compatible](https://img.shields.io/badge/SwiftPM-Compatible-orange)](https://superwall.com/)
+    [![Pod Compatible](https://img.shields.io/badge/pod-compatible-informational)](https://superwall.com/)
+    [![Community Active](https://img.shields.io/badge/community-active-9cf)](https://superwall.com/)
+    [![Version Number](https://img.shields.io/github/v/tag/superwall-me/paywall-ios)](https://superwall.com/)
+    [![Versions Supported](https://img.shields.io/badge/ios%20version-%3E%3D%2011-blueviolet)](https://superwall.com/)
 </p>
+
 ----------------
 
 [Superwall](https://superwall.com/) lets you remotely configure every aspect of your paywall — helping you find winners quickly.
