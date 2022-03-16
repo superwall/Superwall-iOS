@@ -190,7 +190,7 @@ public final class Paywall: NSObject {
     if delegate != nil {
       Self.delegate = delegate
     }
-    
+
     SKPaymentQueue.default().add(self)
 		addActiveStateObservers()
 		fetchConfiguration()

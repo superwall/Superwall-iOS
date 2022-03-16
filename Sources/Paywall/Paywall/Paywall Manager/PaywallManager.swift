@@ -43,7 +43,6 @@ final class PaywallManager {
     cached: Bool,
     completion: ((Result<SWPaywallViewController, NSError>) -> Void)? = nil
   ) {
-
     PaywallResponseManager.shared.getResponse(
       identifier: identifier,
       event: event

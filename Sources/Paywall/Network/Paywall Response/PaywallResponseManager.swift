@@ -23,7 +23,6 @@ final class PaywallResponseManager: NSObject {
     completion: @escaping PaywallResponseCompletionBlock
   ) {
     do {
-      
       // if event is nil, this returns a TriggerResponseIdentifiers object with the given identifier
       let triggerIdentifiers = try PaywallResponseLogic.handleTriggerResponse(
         withPaywallId: identifier,
