@@ -41,7 +41,7 @@ struct PaywallOptionsTableView: View {
         .resizable()
         .scaledToFit()
         .frame(width: 200)
-      Text("Demo app")
+      Text("Example app")
         .foregroundColor(.white)
         .italic()
     }
