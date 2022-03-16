@@ -4,8 +4,8 @@ on:
   push:
     paths:
       - '.github/workflows/example-project-swiftlint.yml'
-      - 'Examples/.swiftlint.yml'
-      - 'Examples/SuperwallSwiftUIExample/**/*.swift'
+      - 'Example/.swiftlint.yml'
+      - 'Example/SuperwallSwiftUIExample/**/*.swift'
 
 jobs:
   Example-Project-SwiftLint:
@@ -19,4 +19,4 @@ jobs:
         with:
           args: --config .swiftlint.yml
         env:
-          WORKING_DIRECTORY: Examples
+          WORKING_DIRECTORY: Example
