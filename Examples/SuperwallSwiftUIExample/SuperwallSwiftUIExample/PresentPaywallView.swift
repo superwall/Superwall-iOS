@@ -13,24 +13,23 @@ struct PresentPaywallView: View {
 
   var body: some View {
     VStack(spacing: 48) {
-      Text("The button below presents a paywall that has been set up on the Superwall dashboard.\n\nThe paywall assigned to the user is determined by your settings in the dashboard. Once a user is assigned a paywall, they will continue to see the same paywall, even when the paywall is turned off, unless you reassign them to a new one."
+      InfoView(
+        text: "The button below presents a paywall that has been set up on the Superwall dashboard.\n\nThe paywall assigned to the user is determined by your settings in the dashboard. Once a user is assigned a paywall, they will continue to see the same paywall, even when the paywall is turned off, unless you reassign them to a new one."
       )
-      .lineSpacing(5)
-      .multilineTextAlignment(.center)
-      .padding(.horizontal)
+
+      Divider()
+        .background(Color.primaryTeal)
+        .padding()
+
+      PaywallSubscriptionStatusView()
 
       Spacer()
 
-      VStack {
-        BrandedButton(title: "Present Paywall") {
-          showPaywall.toggle()
-        }
-        .padding()
-
-        PaywallSubscriptionStatusView()
+      BrandedButton(title: "Present Paywall") {
+        showPaywall.toggle()
       }
+      .padding()
     }
-    .padding(.top, 48)
     .navigationTitle("Paywall Presentation")
     .frame(maxHeight: .infinity)
     .presentPaywall(

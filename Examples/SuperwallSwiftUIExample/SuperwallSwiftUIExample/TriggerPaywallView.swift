@@ -13,25 +13,23 @@ struct TriggerPaywallView: View {
   @State private var showPaywall = false
 
   var body: some View {
-    VStack {
-      Text("The button below triggers a specific paywall for the event \"MyEvent\".\n\nThe paywall only shows when the event is tied to an active trigger on the Superwall Dashboard."
+    VStack(spacing: 48) {
+      InfoView(
+        text: "The button below triggers a specific paywall for the event \"MyEvent\".\n\nThe paywall only shows when the event is tied to an active trigger on the Superwall Dashboard."
       )
-      .lineSpacing(5)
-      .padding(.horizontal)
-      .padding(.vertical, 48)
-      .multilineTextAlignment(.center)
 
+      Divider()
+        .background(Color.primaryTeal)
+        .padding()
+
+      PaywallSubscriptionStatusView()
 
       Spacer()
 
-      VStack {
-        BrandedButton(title: "Trigger Paywall") {
-          showPaywall.toggle()
-        }
-        .padding()
-
-        PaywallSubscriptionStatusView()
+      BrandedButton(title: "Trigger Paywall") {
+        showPaywall.toggle()
       }
+      .padding()
     }
     .navigationTitle("Triggering a Paywall")
     .frame(maxHeight: .infinity)

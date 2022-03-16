@@ -10,7 +10,7 @@ import StoreKit
 
 // swiftlint:disable:next convenience_type
 final class PaywallService {
-  #warning("Replace the following with your own API key, available from the Superwall Dashboard:")
+  #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
   static let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
   static var shared = PaywallService()
   static var name: String {
@@ -47,5 +47,69 @@ extension PaywallService: PaywallDelegate {
 
   func isUserSubscribed() -> Bool {
     return StoreKitService.shared.isSubscribed
+  }
+
+  func trackAnalyticsEvent(
+    withName name: String,
+    params: [String: Any]
+  ) {
+    guard let event = Paywall.EventName(rawValue: name) else {
+      return
+    }
+    print("analytics event called", event, params)
+
+    // Uncomment the following if you want to track the different analytics
+    // events received from the paywall:
+
+    /*
+    switch event {
+    case .firstSeen:
+      <#code#>
+    case .appOpen:
+      <#code#>
+    case .appLaunch:
+      <#code#>
+    case .sessionStart:
+      <#code#>
+    case .appClose:
+      <#code#>
+    case .triggerFire:
+      <#code#>
+    case .paywallOpen:
+      <#code#>
+    case .paywallClose:
+      <#code#>
+    case .transactionStart:
+      <#code#>
+    case .transactionFail:
+      <#code#>
+    case .transactionAbandon:
+      <#code#>
+    case .transactionComplete:
+      <#code#>
+    case .subscriptionStart:
+      <#code#>
+    case .freeTrialStart:
+      <#code#>
+    case .transactionRestore:
+      <#code#>
+    case .nonRecurringProductPurchase:
+      <#code#>
+    case .paywallResponseLoadStart:
+      <#code#>
+    case .paywallResponseLoadNotFound:
+      <#code#>
+    case .paywallResponseLoadFail:
+      <#code#>
+    case .paywallResponseLoadComplete:
+      <#code#>
+    case .paywallWebviewLoadStart:
+      <#code#>
+    case .paywallWebviewLoadFail:
+      <#code#>
+    case .paywallWebviewLoadComplete:
+      <#code#>
+    }
+    */
   }
 }
