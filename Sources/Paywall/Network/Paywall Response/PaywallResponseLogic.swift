@@ -9,7 +9,7 @@ import Foundation
 import StoreKit
 import TPInAppReceipt
 
-struct TriggerResponseIdentifiers {
+struct TriggerResponseIdentifiers: Equatable {
   let paywallId: String?
   let experimentId: String?
   let variantId: String?
@@ -37,10 +37,10 @@ enum PaywallResponseLogic {
 
   static func requestHash(
     identifier: String? = nil,
-    event: EventData? = nil
+    event: EventData? = nil,
+    locale: String = DeviceHelper.shared.locale
   ) -> String {
     let id = identifier ?? event?.name ?? "$called_manually"
-    let locale = DeviceHelper.shared.locale
     return "\(id)_\(locale)"
   }
 
@@ -48,16 +48,13 @@ enum PaywallResponseLogic {
   static func handleTriggerResponse(
     withPaywallId paywallId: String?,
     fromEvent event: EventData?,
-    didFetchConfig: Bool
+    didFetchConfig: Bool,
+    handleEvent: (EventData) -> HandleEventResult = TriggerManager.handleEvent
   ) throws -> TriggerResponseIdentifiers {
-    guard didFetchConfig else {
-      return TriggerResponseIdentifiers(
-        paywallId: paywallId,
-        experimentId: nil,
-        variantId: nil
-      )
-    }
-    guard let event = event else {
+    guard
+      didFetchConfig,
+      let event = event
+    else {
       return TriggerResponseIdentifiers(
         paywallId: paywallId,
         experimentId: nil,
@@ -65,7 +62,7 @@ enum PaywallResponseLogic {
       )
     }
 
-    let triggerResponse = TriggerManager.handleEvent(event)
+    let triggerResponse = handleEvent(event)
 
     switch triggerResponse {
     case .presentV1:
@@ -74,7 +71,7 @@ enum PaywallResponseLogic {
         experimentId: nil,
         variantId: nil
       )
-    case let .presentIdentifier(experimentIdentifier, variantIdentifier, paywallIdentifier):
+    case let .presentV2(experimentIdentifier, variantIdentifier, paywallIdentifier):
       let outcome = TriggerResponseIdentifiers(
         paywallId: paywallIdentifier,
         experimentId: experimentIdentifier,

@@ -15,7 +15,7 @@ enum HandleEventResult {
   )
   case noRuleMatch
   case presentV1
-  case presentIdentifier(
+  case presentV2(
     experimentId: String,
     variantId: String,
     paywallIdentifier: String
@@ -52,7 +52,7 @@ enum TriggerLogic {
         case .treatment(let treatment):
           return Outcome(
             confirmableAssignments: confirmableAssignments,
-            result: .presentIdentifier(
+            result: .presentV2(
               experimentId: rule.experimentId,
               variantId: treatment.variantId,
               paywallIdentifier: treatment.paywallIdentifier
