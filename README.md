@@ -75,6 +75,6 @@ Check out our sample apps:
 - [Swift – UIKit](https://github.com/superwall-me/superwallQuickStart)
 - [Objective-C](https://github.com/superwall-me/SuperwallQuickstartObjectiveC)
 
-For more detailed information, you can view our complete documentation at [docs.superwall.com](https://docs.superwall.com/docs).
+Or, for detailed information, you can view our documentation at [docs.superwall.com](https://docs.superwall.com/docs).
 
 <!-- ➡️ | [Webhooks](https://docs.superwall.com/docs/webhooks) - enhanced server-to-server communication with events for purchases, renewals, cancellations, and more -->

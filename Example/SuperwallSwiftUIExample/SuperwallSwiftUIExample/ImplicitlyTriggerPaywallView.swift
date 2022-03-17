@@ -22,7 +22,7 @@ struct ImplicitlyTriggerPaywallView: View {
         .background(Color.primaryTeal)
         .padding()
 
-      PaywallSubscriptionStatusView()
+      PaywallSubscriptionStatusView(presentationType: .implicitlyTriggered)
 
       Spacer()
 

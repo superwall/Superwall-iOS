@@ -21,7 +21,7 @@ struct PresentPaywallView: View {
         .background(Color.primaryTeal)
         .padding()
 
-      PaywallSubscriptionStatusView()
+      PaywallSubscriptionStatusView(presentationType: .presented)
 
       Spacer()
 

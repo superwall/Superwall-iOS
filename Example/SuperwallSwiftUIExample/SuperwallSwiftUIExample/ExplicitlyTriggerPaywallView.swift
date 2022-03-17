@@ -22,11 +22,11 @@ struct ExplicitlyTriggerPaywallView: View {
         .background(Color.primaryTeal)
         .padding()
 
-      PaywallSubscriptionStatusView()
+      PaywallSubscriptionStatusView(presentationType: .explicitlyTriggered)
 
       Spacer()
 
-      BrandedButton(title: "Trigger Paywall") {
+      BrandedButton(title: "Explicitly Trigger Paywall") {
         showPaywall.toggle()
       }
       .padding()
