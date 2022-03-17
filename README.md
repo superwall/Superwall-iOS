@@ -13,7 +13,7 @@
     <img src="https://img.shields.io/badge/pod-compatible-informational" alt="Cocoapods Compatible">
   </a>
   <a href="https://superwall.com/">
-    <img src="https://img.shields.io/badge/ios%20version-%3E%3D%2011-blueviolet" alt="iOS Versions Supported">
+    <img src="https://img.shields.io/badge/ios%20version-%3E%3D%2011.2-blueviolet" alt="iOS Versions Supported">
   </a>
   <a href="https://github.com/superwall-me/paywall-ios/blob/master/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-green/" alt="MIT License">
