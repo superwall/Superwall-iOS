@@ -69,12 +69,12 @@ pod 'Paywall', '< 3.0.0'
 
 ## Getting Started
 
-Check out our sample apps:
+View our documentation at [docs.superwall.com](https://docs.superwall.com/docs).
+
+Or check out our sample apps:
 
 - [Swift - SwiftUI](Example)
 - [Swift – UIKit](https://github.com/superwall-me/superwallQuickStart)
 - [Objective-C](https://github.com/superwall-me/SuperwallQuickstartObjectiveC)
-
-Or, for detailed information, you can view our documentation at [docs.superwall.com](https://docs.superwall.com/docs).
 
 <!-- ➡️ | [Webhooks](https://docs.superwall.com/docs/webhooks) - enhanced server-to-server communication with events for purchases, renewals, cancellations, and more -->
