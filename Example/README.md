@@ -2,7 +2,7 @@
 
 This app demonstrates how to use Superwall's *Paywall* SDK in SwiftUI. We've written a mini tutorial below to help you understand what's going on in the app.
 
-Usually, to integrate the SDK into your app, you first need to have created a paywall to display using the [Superwall Dashboard](https://superwall.com/dashboard). However, with this example app, we have already done that for you and provided a sample API key to get you up and running. When you integrate the SDK into your own app, you'll need to use your own API key for your own Superwall account. To do that, [sign up for a free account on Superwall](https://superwall.com/sign-up).
+Usually, to integrate the SDK into your app, you first need to have configured and enabled a paywall using the [Superwall Dashboard](https://superwall.com/dashboard). However, with this example app, we have already done that for you and provided a sample API key to get you up and running. When you integrate the SDK into your own app, you'll need to use your own API key for your own Superwall account. To do that, [sign up for a free account on Superwall](https://superwall.com/sign-up).
 
 ## Features
 
@@ -54,7 +54,7 @@ You'll see an overview screen:
 
 ## Showing a Paywall
 
-Paywalls are created and enabled in the [Superwall Dashboard](https://superwall.com/dashboard) and are shown to users who don't have an active subscription. To show a paywall, you have two options: **presenting** or **triggering**.
+Paywalls are created and enabled in the [Superwall Dashboard](https://superwall.com/dashboard) and are shown to users who don't have an active subscription. To show a paywall, you have three options: **presenting**, **explicitly triggering**, or **implicitly triggering**.
 
 ### Presenting a Paywall 
 
@@ -96,7 +96,7 @@ Head back to the overview screen, and tap on **Implicitly Triggering a Paywall**
   <img src="https://i.imgur.com/iEL4qQs.png" alt="Implicitly triggering a paywall" width="220px" />
 </p>
 
-When the counter reaches 3, it will track an event. This will implicitly trigger a paywall, which happens to be the same paywall as before. 
+Tap on increment 3 times. When the counter reaches 3, it will track an event, which will implicitly trigger a paywall. 
 
 ## Purchasing a subscription
 

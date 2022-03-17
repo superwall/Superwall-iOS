@@ -2,6 +2,8 @@
     <img src="https://repository-images.githubusercontent.com/388287766/ed5c47aa-491f-4d70-9ea7-ec09ad4a03fa" alt="logo" height="200px" align="center" />
 </p>
 
+<h3>Double your revenue</h3>
+
 <p align="center">
     <a href="https://docs.superwall.com/docs/installation-via-spm">
         <img src="https://img.shields.io/badge/SwiftPM-Compatible-orange" alt="SwiftPM Compatible">
