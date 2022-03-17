@@ -65,7 +65,7 @@ The paywall assigned to the user is determined by the settings in the Superwall 
 Tap **Presenting a Paywall**. You'll see some explanatory text and a button that presents a paywall to the user:
 
 <p align="center">
-  <img src="https://i.imgur.com/pRBHy0R.png" alt="Presenting a paywall" width="220px" />
+  <img src="https://user-images.githubusercontent.com/3296904/158836825-2f95300e-f451-4820-872e-5e59bba32be2.png" alt="Presenting a paywall" width="220px" />
 </p>
 
 Then, tap **Present Paywall** and have a look around. You'll notice analytical delegate methods printing in the console and your name displayed in the paywall:
@@ -81,8 +81,9 @@ Triggers enable you to retroactively decide where or when to show a specific pay
 Head back to the overview screen, and tap on **Explicitly Triggering a Paywall**. You'll see some explanatory text and a button that triggers the paywall:
 
 <p align="center">
-  <img src="https://i.imgur.com/pVjkvWF.png" alt="Explicitly triggering a paywall" width="220px" />
+  <img src="https://user-images.githubusercontent.com/3296904/158836596-10d00960-50b8-4fd0-a36f-dd484a305d22.png" alt="Explicitly triggering a paywall" width="220px" />
 </p>
+
 
 Tap the **Trigger Paywall** button and you'll see the same paywall as before come up. If the trigger in the dashboard is disabled, this trigger would stop working.
 
@@ -93,7 +94,7 @@ If you don't need completion handlers for triggering a paywall, you can use `tra
 Head back to the overview screen, and tap on **Implicitly Triggering a Paywall**. You'll see some explanatory text, and two buttons that increment and reset a counter:
 
 <p align="center">
-  <img src="https://i.imgur.com/iEL4qQs.png" alt="Implicitly triggering a paywall" width="220px" />
+  <img src="https://user-images.githubusercontent.com/3296904/158837258-ad374697-ad0b-410d-90fc-638a8514d83f.png" alt="Implicitly triggering a paywall" width="220px" />
 </p>
 
 Tap on increment 3 times. When the counter reaches 3, it will track an event, which will implicitly trigger a paywall. 
