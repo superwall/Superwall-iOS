@@ -1,5 +1,5 @@
 //
-//  TriggerPaywallView.swift
+//  ExplicitlyTriggerPaywallView.swift
 //  SuperwallSwiftUIExample
 //
 //  Created by Yusuf Tör on 11/03/2022.
@@ -8,14 +8,14 @@
 import SwiftUI
 import Paywall
 
-struct TriggerPaywallView: View {
+struct ExplicitlyTriggerPaywallView: View {
   @StateObject private var store = StoreKitService.shared
   @State private var showPaywall = false
 
   var body: some View {
     VStack(spacing: 48) {
       InfoView(
-        text: "The button below triggers a specific paywall for the event \"MyEvent\".\n\nThe paywall only shows when the event is tied to an active trigger on the Superwall Dashboard."
+        text: "The button below explicitly triggers a specific paywall for the event \"MyEvent\".\n\nThis is because the event is tied to an active trigger on the Superwall Dashboard."
       )
 
       Divider()
@@ -31,7 +31,7 @@ struct TriggerPaywallView: View {
       }
       .padding()
     }
-    .navigationTitle("Triggering a Paywall")
+    .navigationTitle("Explicitly Triggering a Paywall")
     .frame(maxHeight: .infinity)
     .triggerPaywall(
       forEvent: "MyEvent",
@@ -60,6 +60,6 @@ struct TriggerPaywallView: View {
 
 struct TriggerPaywall_Previews: PreviewProvider {
   static var previews: some View {
-    TriggerPaywallView()
+    ExplicitlyTriggerPaywallView()
   }
 }
