@@ -1,5 +1,5 @@
 <p align="center" style="padding:20px">
-  <img src="https://repository-images.githubusercontent.com/388287766/ed5c47aa-491f-4d70-9ea7-ec09ad4a03fa" alt="logo" height="100px" align="center" />
+  <img src=https://user-images.githubusercontent.com/3296904/158817914-144c66d0-572d-43a4-9d47-d7d0b711c6d7.png alt="logo" height="100px" align="center" />
   <h2 align="center">Double your revenue 💸</h2>
 </p>
 
