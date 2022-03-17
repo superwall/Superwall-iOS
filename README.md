@@ -1,28 +1,27 @@
 <p align="center" style="padding:20px">
-    <img src="https://repository-images.githubusercontent.com/388287766/ed5c47aa-491f-4d70-9ea7-ec09ad4a03fa" alt="logo" height="200px" align="center" />
+  <img src="https://repository-images.githubusercontent.com/388287766/ed5c47aa-491f-4d70-9ea7-ec09ad4a03fa" alt="logo" height="200px" align="center" />
+  <h3 align="center">Double your revenue</h3>
 </p>
 
-<h3>Double your revenue</h3>
-
 <p align="center">
-    <a href="https://docs.superwall.com/docs/installation-via-spm">
-        <img src="https://img.shields.io/badge/SwiftPM-Compatible-orange" alt="SwiftPM Compatible">
-    </a>
-    <a href="https://docs.superwall.com/docs/installation-via-cocoapods">
-        <img src="https://img.shields.io/badge/pod-compatible-informational" alt="Cocoapods Compatible">
-    </a>
-    <a href="https://superwall.com/">
-        <img src="https://img.shields.io/badge/ios%20version-%3E%3D%2011-blueviolet" alt="iOS Versions Supported">
-    </a>
-    <a href="https://github.com/superwall-me/paywall-ios/blob/master/LICENSE">
-        <img src="https://img.shields.io/badge/license-MIT-green/" alt="MIT License">
-    </a>
-    <a href="https://superwall.com/">
-        <img src="https://img.shields.io/badge/community-active-9cf" alt="Community Active">
-    </a>
-    <a href="https://superwall.com/">
-        <img src="https://img.shields.io/github/v/tag/superwall-me/paywall-ios" alt="Version Number">
-    </a>
+  <a href="https://docs.superwall.com/docs/installation-via-spm">
+    <img src="https://img.shields.io/badge/SwiftPM-Compatible-orange" alt="SwiftPM Compatible">
+  </a>
+  <a href="https://docs.superwall.com/docs/installation-via-cocoapods">
+    <img src="https://img.shields.io/badge/pod-compatible-informational" alt="Cocoapods Compatible">
+  </a>
+  <a href="https://superwall.com/">
+    <img src="https://img.shields.io/badge/ios%20version-%3E%3D%2011-blueviolet" alt="iOS Versions Supported">
+  </a>
+  <a href="https://github.com/superwall-me/paywall-ios/blob/master/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green/" alt="MIT License">
+  </a>
+  <a href="https://superwall.com/">
+    <img src="https://img.shields.io/badge/community-active-9cf" alt="Community Active">
+  </a>
+  <a href="https://superwall.com/">
+    <img src="https://img.shields.io/github/v/tag/superwall-me/paywall-ios" alt="Version Number">
+  </a>
 </p>
 
 ----------------
@@ -49,7 +48,7 @@
 
 ## Examples
 
-Check out these example apps with the *Paywall* SDK installed.
+Check out our example apps with the *Paywall* SDK installed.
 
 - [Swift - SwiftUI](Example)
 - [Swift – UIKit](https://github.com/superwall-me/superwallQuickStart)
