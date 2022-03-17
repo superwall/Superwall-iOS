@@ -1,6 +1,6 @@
 <p align="center" style="padding:20px">
-  <img src="https://repository-images.githubusercontent.com/388287766/ed5c47aa-491f-4d70-9ea7-ec09ad4a03fa" alt="logo" height="200px" align="center" />
-  <h3 align="center">Double your revenue</h3>
+  <img src="https://repository-images.githubusercontent.com/388287766/ed5c47aa-491f-4d70-9ea7-ec09ad4a03fa" alt="logo" height="100px" align="center" />
+  <h2 align="center">Double your revenue 💸</h2>
 </p>
 
 <p align="center">
