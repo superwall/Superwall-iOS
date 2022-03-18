@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ProductVariable: Decodable {
+struct ProductVariable: Decodable, Equatable {
   var key: String
   var value: JSON
 }

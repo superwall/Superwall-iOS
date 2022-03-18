@@ -15,6 +15,18 @@ struct TriggerResponseIdentifiers: Equatable {
   let variantId: String?
 }
 
+struct PaywallErrorResponse {
+  let handlers: [PaywallResponseCompletionBlock]
+  let error: NSError
+}
+
+struct ProductProcessingOutcome {
+  var variables: [Variable]
+  var productVariables: [ProductVariable]
+  var isFreeTrialAvailable: Bool?
+  var resetFreeTrialOverride: Bool
+}
+
 enum PaywallResponseLogic {
   enum PaywallCachingOutcome {
     case cachedResult(Result<PaywallResponse, NSError>)
@@ -23,16 +35,6 @@ enum PaywallResponseLogic {
       completionBlocks: [PaywallResponseCompletionBlock]
     )
     case setCompletionBlock(hash: String)
-  }
-  struct PaywallErrorResponse {
-    let handlers: [PaywallResponseCompletionBlock]
-    let error: NSError
-  }
-  struct ProductProcessingOutcome {
-    var variables: [Variable]
-    var productVariables: [ProductVariable]
-    var isFreeTrialAvailable: Bool?
-    var resetFreeTrialOverride: Bool
   }
 
   static func requestHash(
@@ -49,7 +51,8 @@ enum PaywallResponseLogic {
     withPaywallId paywallId: String?,
     fromEvent event: EventData?,
     didFetchConfig: Bool,
-    handleEvent: (EventData) -> HandleEventResult = TriggerManager.handleEvent
+    handleEvent: (EventData) -> HandleEventResult = TriggerManager.handleEvent,
+    trackEvent: (InternalEvent, [String: Any]) -> Void = Paywall.track
   ) throws -> TriggerResponseIdentifiers {
     guard
       didFetchConfig,
@@ -78,7 +81,7 @@ enum PaywallResponseLogic {
         variantId: variantIdentifier
       )
 
-      Paywall.track(
+      trackEvent(
         .triggerFire(
           triggerInfo: TriggerInfo(
             result: "present",
@@ -86,7 +89,8 @@ enum PaywallResponseLogic {
             variantId: variantIdentifier,
             paywallIdentifier: paywallIdentifier
           )
-        )
+        ),
+        [:]
       )
       return outcome
     case let .holdout(experimentId, variantId):
@@ -104,7 +108,7 @@ enum PaywallResponseLogic {
         code: 4001,
         userInfo: userInfo
       )
-      Paywall.track(
+      trackEvent(
         .triggerFire(
           triggerInfo:
             TriggerInfo(
@@ -112,7 +116,8 @@ enum PaywallResponseLogic {
               experimentId: experimentId,
               variantId: variantId
             )
-        )
+        ),
+        [:]
       )
       throw error
     case .noRuleMatch:
@@ -123,10 +128,11 @@ enum PaywallResponseLogic {
           comment: ""
         )
       ]
-      Paywall.track(
+      trackEvent(
         .triggerFire(
           triggerInfo: TriggerInfo(result: "no_rule_match")
-        )
+        ),
+        [:]
       )
       let error = NSError(
         domain: "com.superwall",
@@ -191,24 +197,27 @@ enum PaywallResponseLogic {
     _ error: Error,
     forEvent event: EventData?,
     withHash hash: String,
-    handlersCache: [String: [PaywallResponseCompletionBlock]]
+    handlersCache: [String: [PaywallResponseCompletionBlock]],
+    trackEvent: (InternalEvent, [String: Any]) -> Void = Paywall.track
   ) -> PaywallErrorResponse? {
     let isFromEvent = event != nil
 
     if let error = error as? URLSession.NetworkError,
       error == .notFound {
-      Paywall.track(
+      trackEvent(
         .paywallResponseLoadNotFound(
           fromEvent: isFromEvent,
           event: event
-        )
+        ),
+        [:]
       )
     } else {
-      Paywall.track(
+      trackEvent(
         .paywallResponseLoadFail(
           fromEvent: isFromEvent,
           event: event
-        )
+        ),
+        [:]
       )
     }
 
@@ -238,40 +247,38 @@ enum PaywallResponseLogic {
   static func getVariablesAndFreeTrial(
     fromProducts products: [Product],
     productsById: [String: SKProduct],
-    isFreeTrialAvailableOverride: Bool?
+    isFreeTrialAvailableOverride: Bool?,
+    hasPurchased: @escaping (Product) -> Bool = hasPurchased(product:)
   ) -> ProductProcessingOutcome {
-    var variables: [Variable] = []
-    var productVariables: [ProductVariable] = []
+    var legacyVariables: [Variable] = []
+    var newVariables: [ProductVariable] = []
     var isFreeTrialAvailable: Bool?
     var resetFreeTrialOverride = false
 
     for product in products {
+      // Get skproduct
       guard let appleProduct = productsById[product.id] else {
         continue
       }
 
-      let eventDataVariable = Variable(
+      let legacyVariable = Variable(
         key: product.type.rawValue,
         value: appleProduct.eventData
       )
-      variables.append(eventDataVariable)
+      legacyVariables.append(legacyVariable)
 
       let productVariable = ProductVariable(
         key: product.type.rawValue,
         value: appleProduct.productVariables
       )
-      productVariables.append(productVariable)
+      newVariables.append(productVariable)
 
       if product.type == .primary {
         isFreeTrialAvailable = appleProduct.hasFreeTrial
-
-        if let receipt = try? InAppReceipt.localReceipt() {
-          let hasPurchased = receipt.containsPurchase(ofProductIdentifier: product.id)
-
-          if hasPurchased,
-            appleProduct.hasFreeTrial {
-            isFreeTrialAvailable = false
-          }
+        
+        if hasPurchased(product),
+          appleProduct.hasFreeTrial {
+          isFreeTrialAvailable = false
         }
         // use the override if it is set
         if let freeTrialOverride = isFreeTrialAvailableOverride {
@@ -282,10 +289,17 @@ enum PaywallResponseLogic {
     }
 
     return ProductProcessingOutcome(
-      variables: variables,
-      productVariables: productVariables,
+      variables: legacyVariables,
+      productVariables: newVariables,
       isFreeTrialAvailable: isFreeTrialAvailable,
       resetFreeTrialOverride: resetFreeTrialOverride
     )
+  }
+
+  private static func hasPurchased(product: Product) -> Bool {
+    guard let receipt = try? InAppReceipt.localReceipt() else {
+      return false
+    }
+    return receipt.containsPurchase(ofProductIdentifier: product.id)
   }
 }

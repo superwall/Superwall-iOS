@@ -76,7 +76,7 @@ struct PaywallResponse: Decodable {
   var templateProductVariables: JSON {
     var variables: [String: Any] = [:]
 
-    for variable in self.productVariables ?? [ProductVariable]() {
+    for variable in productVariables ?? [] {
       variables[variable.key] = variable.value
     }
 
@@ -161,5 +161,15 @@ struct PaywallResponse: Decodable {
     } else {
       return "{}"
     }
+  }
+}
+
+extension PaywallResponse: Stubbable {
+  static func stub() -> PaywallResponse {
+    return PaywallResponse(
+      url: "url",
+      paywalljsEvent: "event",
+      products: []
+    )
   }
 }
