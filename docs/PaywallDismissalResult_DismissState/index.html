@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paywall - PaywallDismissalResult.DismissState</title>
+    <link rel="stylesheet" type="text/css" href="all.css" media="all" />
+</head>
+<body>
+    <header>
+        <a href="">
+            <strong>
+                Paywall
+            </strong>
+            <span>Documentation</span>
+        </a>
+    </header>
+
+    <!--
+    <form class="search">
+        <input type="search" placeholder="Search" />
+    </form>
+    -->
+
+    <nav>
+        <div class="wrapper">
+            <h2>On This Page</h2>
+            <ol><li><a href="#relationships">Relationships</a><ul><li><a href="#relationships">Member Of</a></li></ul></li><li><a href="#enumeration cases">Enumeration Cases</a><ul><li class="case"><a href="#paywalldismissalresult.dismissstate.purchased">purchased</a></li><li class="case"><a href="#paywalldismissalresult.dismissstate.closed">closed</a></li><li class="case"><a href="#paywalldismissalresult.dismissstate.restored">restored</a></li></ul></li></ol>
+        </div>
+    </nav>
+
+    <main>
+        <article>
+            <h1>
+    <small>Enumeration</small>
+    <code class="name">Paywall​Dismissal​Result.​Dismiss​State</code>
+</h1>
+
+<div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">enum</span> <span class="type">DismissState</span>  </body></html></code></pre>
+</div>
+<section id="relationships">
+    <h2 hidden>Relationships</h2>
+        
+        <h3>Member Of</h3>
+<dl>
+    <dt class="structure"><code><a href="PaywallDismissalResult">PaywallDismissalResult</a></code></dt>
+<dd></dd>
+</dl>
+</section>
+    <section id="enumeration cases">
+        <h2>Enumeration Cases</h2>
+
+        <div role="article" class="case" id="paywalldismissalresult.dismissstate.purchased">
+    <h3>
+        <code><a href="#paywalldismissalresult.dismissstate.purchased">purchased</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">purchased</span>(<span class="variable">productId</span>: <span class="type">String</span>) </body></html></code></pre>
+</div>
+<div class="summary" role="doc-abstract">
+    <p>The paywall was dismissed because the user purchased a product</p>
+
+</div>
+<h4>Parameters</h4>
+
+<table class="parameters">
+  <thead hidden>
+  <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+    <th>product​Id</th>
+    <td></td>
+    <td><p>The identifier of the product.</p>
+</td>
+</tr>
+  </tbody>
+</table>
+</div>
+<div role="article" class="case" id="paywalldismissalresult.dismissstate.closed">
+    <h3>
+        <code><a href="#paywalldismissalresult.dismissstate.closed">closed</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">closed</span></body></html></code></pre>
+</div>
+<div class="summary" role="doc-abstract">
+    <p>The paywall was dismissed by the user manually pressing the close button.</p>
+
+</div>
+</div>
+<div role="article" class="case" id="paywalldismissalresult.dismissstate.restored">
+    <h3>
+        <code><a href="#paywalldismissalresult.dismissstate.restored">restored</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">case</span> <span class="variable">restored</span></body></html></code></pre>
+</div>
+<div class="summary" role="doc-abstract">
+    <p>The paywall was dismissed due to the user restoring their purchases.</p>
+
+</div>
+</div>
+    </section>
+
+
+
+        </article>
+    </main>
+
+    <footer>
+        <p>
+    Generated on <time datetime="2022-03-20T00:56:52+0000">March 20, 2022</time> using <a href="https://github.com/SwiftDocOrg/swift-doc">swift-doc</a> <span class="version">1.0.0-rc.1</span>.
+</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paywall - View</title>
+    <link rel="stylesheet" type="text/css" href="all.css" media="all" />
+</head>
+<body>
+    <header>
+        <a href="">
+            <strong>
+                Paywall
+            </strong>
+            <span>Documentation</span>
+        </a>
+    </header>
+
+    <!--
+    <form class="search">
+        <input type="search" placeholder="Search" />
+    </form>
+    -->
+
+    <nav>
+        <div class="wrapper">
+            <h2>On This Page</h2>
+            <ol><li><a href="#methods">Methods</a><ul><li class="function"><a href="#view.presentpaywall(ispresented:onpresent:ondismiss:onfail:)">present​Paywall(is​Presented:​on​Present:​on​Dismiss:​on​Fail:​)</a></li><li class="function"><a href="#view.triggerpaywall(forevent:withparams:shouldpresent:onpresent:ondismiss:onfail:)">trigger​Paywall(for​Event:​with​Params:​should​Present:​on​Present:​on​Dismiss:​on​Fail:​)</a></li></ul></li></ol>
+        </div>
+    </nav>
+
+    <main>
+        <article>
+            <h1>
+    <small>Extensions on</small>
+    <code class="name">View</code>
+</h1>
+    <section id="methods">
+        <h2>Methods</h2>
+
+        <div role="article" class="function" id="view.presentpaywall(ispresented:onpresent:ondismiss:onfail:)">
+    <h3>
+        <code><a href="#view.presentpaywall(ispresented:onpresent:ondismiss:onfail:)">present​Paywall(is​Presented:​on​Present:​on​Dismiss:​on​Fail:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">presentPaywall</span>(
+    <span class="variable">isPresented</span>: <span class="type">Binding</span>&lt;<span class="type">Bool</span>&gt;,
+    <span class="variable">onPresent</span>: ((<a href="PaywallInfo"><span class="type">PaywallInfo</span></a>?) -&gt; <span class="type">Void</span>)? = <span class="keyword">nil</span>,
+    <span class="variable">onDismiss</span>: ((<a href="PaywallDismissalResult"><span class="type">PaywallDismissalResult</span></a>) -&gt; <span class="type">Void</span>)? = <span class="keyword">nil</span>,
+    <span class="variable">onFail</span>: ((<span class="type">NSError</span>) -&gt; <span class="type">Void</span>)? = <span class="keyword">nil</span>
+  ) -&gt; <span class="keyword">some</span> <span class="type">View</span>  </body></html></code></pre>
+</div>
+<div class="summary" role="doc-abstract">
+    <p>Presents a paywall to the user when a binding to a Boolean value that you provide is true.</p>
+
+</div>
+<div class="discussion">
+    <p>Use this method to present a paywall to the user when a Boolean value you provide is <code>true</code>.</p>
+
+<p>The paywall assigned to the user is determined by your settings in the <a href="https://superwall.com/dashboard">Superwall Dashboard</a>. Once a user is assigned a paywall, they will continue to see the same paywall, even when the paywall is turned off, unless you reassign them to a new one.</p>
+
+<p>Paywalls are not shown to users who have an active subscription.</p>
+
+<p>The example below displays a paywall when the user toggles the <code>showPaywall</code> variable by tapping on the “Toggle Paywall” button:</p>
+
+<html><body><pre class="highlight"><code><span class="keyword">struct</span> <span class="type">ContentView</span>: <span class="type">View</span> {
+  <span class="attribute">@</span><span class="type">State</span> <span class="keyword">private</span> <span class="keyword">var</span> <span class="variable">showPaywall</span> = <span class="keyword">false</span>
+
+  <span class="keyword">var</span> <span class="variable">body</span>: <span class="keyword">some</span> <span class="type">View</span> {
+    <span class="variable">Button</span>(
+      <span class="variable">action</span>: {
+        <span class="variable">showPaywall</span>.<span class="variable">toggle</span>()
+      },
+      <span class="variable">label</span>: {
+        <span class="variable">Text</span>(<span class="string literal">"</span><span class="string literal">Toggle Paywall</span><span class="string literal">"</span>)
+      }
+    )
+    .<span class="variable">presentPaywall</span>(
+      <span class="variable">isPresented</span>: <span class="type">$showPaywall</span>,
+      <span class="variable">onPresent</span>: { <span class="variable">paywallInfo</span> <span class="keyword">in</span>
+        <span class="variable">print</span>(<span class="string literal">"</span><span class="string literal">paywall info is</span><span class="string literal">"</span>, <span class="variable">paywallInfo</span>)
+      },
+      <span class="variable">onDismiss</span>: { <span class="variable">result</span> <span class="keyword">in</span>
+        <span class="keyword">switch</span> <span class="variable">result</span>.<span class="variable">state</span> {
+        <span class="keyword">case</span> .<span class="variable">closed</span>:
+          <span class="type">print</span>(<span class="string literal">"</span><span class="string literal">User dismissed the paywall.</span><span class="string literal">"</span>)
+        <span class="keyword">case</span> .<span class="variable">purchased</span>(<span class="variable">productId</span>: <span class="keyword">let</span> <span class="variable">productId</span>):
+          <span class="type">print</span>(<span class="string literal">"</span><span class="string literal">Purchased a product with id </span>\<span class="string literal">(</span><span class="variable">productId</span><span class="string literal">)</span><span class="string literal">, then dismissed.</span><span class="string literal">"</span>)
+        <span class="keyword">case</span> .<span class="variable">restored</span>:
+          <span class="type">print</span>(<span class="string literal">"</span><span class="string literal">Restored purchases, then dismissed.</span><span class="string literal">"</span>)
+        }
+      },
+      <span class="variable">onFail</span>: { <span class="variable">error</span> <span class="keyword">in</span>
+        <span class="variable">print</span>(<span class="string literal">"</span><span class="string literal">did fail</span><span class="string literal">"</span>, <span class="variable">error</span>)
+      }
+    )
+  }
+}
+</code></pre></body></html>
+<p><strong>Please note</strong>:
+In order to present a paywall, the paywall must first be created and enabled in the <a href="https://superwall.com/dashboard">Superwall Dashboard</a> and the SDK configured using <code>Paywall/Paywall/configure(apiKey:userId:delegate:)</code>.</p>
+
+</div>
+<h4>Parameters</h4>
+
+<table class="parameters">
+  <thead hidden>
+  <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+    <th>is​Presented</th>
+    <td><code class="type">Binding&lt;Bool&gt;</code></td>
+    <td><p>When the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing, the system sets <code>isPresented</code> to <code>false</code>.</p>
+</td>
+</tr>
+<tr>
+    <th>on​Present</th>
+    <td><code class="type">((Paywall​Info?) -&gt; Void)?</code></td>
+    <td><p>A closure that's called after the paywall is presented. Accepts a <code>PaywallInfo?</code> object containing information about the paywall. Defaults to <code>nil</code>.</p>
+</td>
+</tr>
+<tr>
+    <th>on​Dismiss</th>
+    <td><code class="type">((Paywall​Dismissal​Result) -&gt; Void)?</code></td>
+    <td><p>Accepts a <code>PaywallDismissalResult</code> object. This has a <code>paywallInfo</code> property containing information about the paywall and a <code>state</code> that tells you why the paywall was dismissed.
+This closure will not be called if you programmatically set <code>isPresented</code> to <code>false</code> to dismiss the paywall.</p>
+<p>Defaults to <code>nil</code>.</p>
+</td>
+</tr>
+<tr>
+    <th>on​Fail</th>
+    <td><code class="type">((NSError) -&gt; Void)?</code></td>
+    <td><p>A closure that's called when the paywall fails to present, either because an error occured or because all paywalls are off in the Superwall Dashboard. Accepts an <code>NSError?</code> with more details. Defaults to <code>nil</code>.</p>
+</td>
+</tr>
+  </tbody>
+</table>
+</div>
+<div role="article" class="function" id="view.triggerpaywall(forevent:withparams:shouldpresent:onpresent:ondismiss:onfail:)">
+    <h3>
+        <code><a href="#view.triggerpaywall(forevent:withparams:shouldpresent:onpresent:ondismiss:onfail:)">trigger​Paywall(for​Event:​with​Params:​should​Present:​on​Present:​on​Dismiss:​on​Fail:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">triggerPaywall</span>(
+    <span class="variable">forEvent</span> <span class="variable">event</span>: <span class="type">String</span>,
+    <span class="variable">withParams</span> <span class="variable">params</span>: [<span class="type">String</span>: <span class="keyword">Any</span>]? = <span class="keyword">nil</span>,
+    <span class="variable">shouldPresent</span>: <span class="type">Binding</span>&lt;<span class="type">Bool</span>&gt;,
+    <span class="variable">onPresent</span>: ((<a href="PaywallInfo"><span class="type">PaywallInfo</span></a>?) -&gt; <span class="type">Void</span>)? = <span class="keyword">nil</span>,
+    <span class="variable">onDismiss</span>: ((<a href="PaywallDismissalResult"><span class="type">PaywallDismissalResult</span></a>) -&gt; <span class="type">Void</span>)? = <span class="keyword">nil</span>,
+    <span class="variable">onFail</span>: ((<span class="type">NSError</span>) -&gt; <span class="type">Void</span>)? = <span class="keyword">nil</span>
+  ) -&gt; <span class="keyword">some</span> <span class="type">View</span>  </body></html></code></pre>
+</div>
+<div class="summary" role="doc-abstract">
+    <p>Presents a paywall to the user when an analytics event you provide is tied to an active trigger in the <a href="https://superwall.com/dashboard">Superwall Dashboard</a> and a binding to a Boolean value that you provide is true.</p>
+
+</div>
+<div class="discussion">
+    <p>Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.</p>
+
+<p>The paywall shown to the user is determined by the trigger associated with the event in the <a href="https://superwall.com/dashboard">Superwall Dashboard</a>.</p>
+
+<p>If you don't want to use any completion handlers, consider using <code>Paywall/Paywall/track(_:_:)-2vkwo</code> to implicitly trigger a paywall.</p>
+
+<p>The example below triggers a paywall when the user toggles the <code>showPaywall</code> variable by tapping on the “Collect Gems” button. The paywall will only show if the trigger for the <code>collectGems</code> event is active in the <a href="https://superwall.com/dashboard">Superwall Dashboard</a> and the user doesn't have an active subscription:</p>
+
+<html><body><pre class="highlight"><code><span class="keyword">struct</span> <span class="type">ContentView</span>: <span class="type">View</span> {
+  <span class="attribute">@</span><span class="type">State</span> <span class="keyword">private</span> <span class="keyword">var</span> <span class="variable">showPaywall</span> = <span class="keyword">false</span>
+
+  <span class="keyword">var</span> <span class="variable">body</span>: <span class="keyword">some</span> <span class="type">View</span> {
+    <span class="variable">Button</span>(
+      <span class="variable">action</span>: {
+        <span class="variable">showPaywall</span>.<span class="variable">toggle</span>()
+      },
+      <span class="variable">label</span>: {
+        <span class="variable">Text</span>(<span class="string literal">"</span><span class="string literal">Collect Gems</span><span class="string literal">"</span>)
+      }
+    )
+    .<span class="variable">triggerPaywall</span>(
+      <span class="variable">forEvent</span>: <span class="string literal">"</span><span class="string literal">DidCollectGems</span><span class="string literal">"</span>,
+      <span class="variable">withParams</span>: [<span class="string literal">"</span><span class="string literal">gemCount</span><span class="string literal">"</span>: <span class="number literal">30</span>],
+      <span class="variable">shouldPresent</span>: <span class="type">$showPaywall</span>,
+      <span class="variable">onPresent</span>: { <span class="variable">paywallInfo</span> <span class="keyword">in</span>
+        <span class="variable">print</span>(<span class="string literal">"</span><span class="string literal">paywall info is</span><span class="string literal">"</span>, <span class="variable">paywallInfo</span>)
+      },
+      <span class="variable">onDismiss</span>: { <span class="variable">result</span> <span class="keyword">in</span>
+        <span class="keyword">switch</span> <span class="variable">result</span>.<span class="variable">state</span> {
+        <span class="keyword">case</span> .<span class="variable">closed</span>:
+          <span class="type">print</span>(<span class="string literal">"</span><span class="string literal">User dismissed the paywall.</span><span class="string literal">"</span>)
+        <span class="keyword">case</span> .<span class="variable">purchased</span>(<span class="variable">productId</span>: <span class="keyword">let</span> <span class="variable">productId</span>):
+          <span class="type">print</span>(<span class="string literal">"</span><span class="string literal">Purchased a product with id </span>\<span class="string literal">(</span><span class="variable">productId</span><span class="string literal">)</span><span class="string literal">, then dismissed.</span><span class="string literal">"</span>)
+        <span class="keyword">case</span> .<span class="variable">restored</span>:
+          <span class="type">print</span>(<span class="string literal">"</span><span class="string literal">Restored purchases, then dismissed.</span><span class="string literal">"</span>)
+        }
+      },
+      <span class="variable">onFail</span>: { <span class="variable">error</span> <span class="keyword">in</span>
+        <span class="variable">print</span>(<span class="string literal">"</span><span class="string literal">did fail</span><span class="string literal">"</span>, <span class="variable">error</span>)
+      }
+    )
+  }
+}
+</code></pre></body></html>
+<p><strong>Please note</strong>:
+In order to trigger a paywall, the SDK must have been configured using <code>Paywall/Paywall/configure(apiKey:userId:delegate:)</code>.</p>
+
+</div>
+<h4>Parameters</h4>
+
+<table class="parameters">
+  <thead hidden>
+  <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+    <th>event</th>
+    <td><code class="type">String</code></td>
+    <td><p>The name of the event you wish to trigger.</p>
+</td>
+</tr>
+<tr>
+    <th>params</th>
+    <td><code class="type">[String:​ Any]?</code></td>
+    <td><p>Parameters you wish to pass along to the trigger. These are tracked under the event that a user has performed in the Users tab of the <a href="https://superwall.com/dashboard">Superwall Dashboard</a>.</p>
+</td>
+</tr>
+<tr>
+    <th>should​Present</th>
+    <td><code class="type">Binding&lt;Bool&gt;</code></td>
+    <td><p>The system sets <code>shouldPresent</code> to false if the trigger is not active or when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.</p>
+</td>
+</tr>
+<tr>
+    <th>on​Present</th>
+    <td><code class="type">((Paywall​Info?) -&gt; Void)?</code></td>
+    <td><p>A closure that's called after the paywall is presented. Accepts a <code>PaywallInfo?</code> object containing information about the paywall. Defaults to <code>nil</code>.</p>
+</td>
+</tr>
+<tr>
+    <th>on​Dismiss</th>
+    <td><code class="type">((Paywall​Dismissal​Result) -&gt; Void)?</code></td>
+    <td><p>Accepts a <code>PaywallDismissalResult</code> object. This has a <code>paywallInfo</code> property containing information about the paywall and a <code>state</code> that tells you why the paywall was dismissed.
+This closure will not be called if you programmatically set <code>isPresented</code> to <code>false</code> to dismiss the paywall.</p>
+<p>Defaults to <code>nil</code>.</p>
+</td>
+</tr>
+<tr>
+    <th>on​Fail</th>
+    <td><code class="type">((NSError) -&gt; Void)?</code></td>
+    <td><p>A closure that's called when the paywall fails to present, either because an error occured or because all paywalls are off in the Superwall Dashboard. Accepts an <code>NSError?</code> with more details. Defaults to <code>nil</code>.</p>
+</td>
+</tr>
+  </tbody>
+</table>
+</div>
+    </section>
+        </article>
+    </main>
+
+    <footer>
+        <p>
+    Generated on <time datetime="2022-03-20T00:56:53+0000">March 20, 2022</time> using <a href="https://github.com/SwiftDocOrg/swift-doc">swift-doc</a> <span class="version">1.0.0-rc.1</span>.
+</p>
+    </footer>
+</body>
+</html>
