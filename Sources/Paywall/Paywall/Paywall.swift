@@ -4,7 +4,7 @@ import StoreKit
 import TPInAppReceipt
 import GameController
 
-/// `Paywall` is the primary class for integrating Superwall into your application. To learn more, read our iOS getting started guide: https://docs.superwall.me/docs/ios
+/// `Paywall` is the primary class for integrating Superwall into your application. To learn more, read our iOS getting started guide: https://docs.superwall.com/docs/ios
 public final class Paywall: NSObject {
   // MARK: - Public Properties
   /// The object that acts as the delegate of Paywall.
@@ -102,7 +102,7 @@ public final class Paywall: NSObject {
 
   // MARK: - Public Functions
 	/// Configures an instance of Superwall's Paywall SDK with a specified API key. If you don't pass through a userId, we'll create one for you. Calling `Paywall.identify(userId: String)` in the future will automatically alias these two for simple reporting.
-	///  - Parameter apiKey: Your Public API Key from: https://superwall.me/applications/1/settings/keys
+	///  - Parameter apiKey: Your Public API Key from: https://superwall.com/applications/1/settings/keys
 	///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
 	@discardableResult
 	@objc public static func configure(

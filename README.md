@@ -1,74 +1,80 @@
-
-<p align="center" style="background-color: #0D1116; padding: 40px; corner-radius: 15px;">
-    <br>
-    <img src="https://repository-images.githubusercontent.com/388287766/ed5c47aa-491f-4d70-9ea7-ec09ad4a03fa" alt="logo" height="200px" align="center"/>
+<p align="center">
+  <br />
+  <img src=https://user-images.githubusercontent.com/3296904/158817914-144c66d0-572d-43a4-9d47-d7d0b711c6d7.png alt="logo" height="100px" />
+  <h3 style="font-size:26" align="center">In-App Paywalls Made Easy 💸</h3>
+  <br />
 </p>
 
-<br/>
+<p align="center">
+  <a href="https://docs.superwall.com/docs/installation-via-spm">
+    <img src="https://img.shields.io/badge/SwiftPM-Compatible-orange" alt="SwiftPM Compatible">
+  </a>
+  <a href="https://docs.superwall.com/docs/installation-via-cocoapods">
+    <img src="https://img.shields.io/badge/pod-compatible-informational" alt="Cocoapods Compatible">
+  </a>
+  <a href="https://superwall.com/">
+    <img src="https://img.shields.io/badge/ios%20version-%3E%3D%2011.2-blueviolet" alt="iOS Versions Supported">
+  </a>
+  <a href="https://github.com/superwall-me/paywall-ios/blob/master/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green/" alt="MIT License">
+  </a>
+  <a href="https://superwall.com/">
+    <img src="https://img.shields.io/badge/community-active-9cf" alt="Community Active">
+  </a>
+  <a href="https://superwall.com/">
+    <img src="https://img.shields.io/github/v/tag/superwall-me/paywall-ios" alt="Version Number">
+  </a>
+</p>
 
-<h3 align="center">In-App Paywalls Made Easy 💸</h3>
+----------------
 
-[![License MIT](https://img.shields.io/badge/license-MIT-green/)](https://superwall.me/)
-[![Pod Compatible](https://img.shields.io/badge/pod-compatible-informational)](https://superwall.me/)
-[![SwiftPM Compatible](https://img.shields.io/badge/SwiftPM-Compatible-orange)](https://superwall.me/)
-[![Community Active](https://img.shields.io/badge/community-active-9cf)](https://superwall.me/)
-[![Version Number](https://img.shields.io/github/v/tag/superwall-me/paywall-ios)](https://superwall.me/)
-[![Open issues](https://img.shields.io/github/issues/superwall-me/paywall-ios)](https://superwall.me/)
-[![PRs Open](https://img.shields.io/github/issues-pr/superwall-me/paywall-ios)](https://superwall.me/)
-[![Versions Supported](https://img.shields.io/badge/ios%20version-%3E%3D%2011-blueviolet)](https://superwall.me/)
+[Superwall](https://superwall.com/) lets you remotely configure every aspect of your paywall — helping you find winners quickly.
 
+## Paywall.framework
 
-
-
-## Paywalls.framework
-
-**Paywall** is a client for the [Superwall](https://superwall.me/) paywall iteration and event tracking system. It is an open source framework that provides a wrapper around `Webkit` for presenting and creating paywalls. The Superwall backend for implementing new paywalls lets you iterate on the fly in `Swift` or `Objective-C` easy!
+**Paywall** is the open source SDK for Superwall, providing a wrapper around `Webkit` for presenting and creating paywalls. It interacts with the Superwall backend letting you easily iterate paywalls on the fly in `Swift` or `Objective-C`!
 
 ## Features
 |   | Superwall |
 | --- | --- |
-✅ | Server-side Paywall Iteration
-🖥 | macOS support
+✅ | Server-side paywall iteration
 🎯 | Paywall conversion rate tracking - know whether a user converted after seeing a paywall
-🆓 | Trial Start rate tracking - know and measure your trial start rate out of the box
+🆓 | Trial start rate tracking - know and measure your trial start rate out of the box
 📊 | Analytics - automatic calculation of metrics like conversion and views
-✏️ | A/B Testing - automaticly calculate metrics for different paywalls
-📝 | [Online documentation](https://docs.superwall.me/docs) up to date
-🔀 | [Integrations](https://docs.superwall.me/docs) - over a dozen integrations to easily send conversion data where you need it
+✏️ | A/B Testing - automatically calculate metrics for different paywalls
+📝 | [Online documentation](https://docs.superwall.com/docs) up to date
+🔀 | [Integrations](https://docs.superwall.com/docs) - over a dozen integrations to easily send conversion data where you need it
+🖥 | macOS support
 💯 | Well maintained - [frequent releases](https://github.com/superwall-me/paywall-ios/releases)
-📮 | Great support - Email a Founder. justin@superwall.me
-
-## Examples
-
-Check out these example apps with Paywall-iOS installed. 
-
-- [Swift 5](https://github.com/superwall-me/superwallQuickStart)
-- [Objective-C](https://github.com/superwall-me/SuperwallQuickstartObjectiveC)
+📮 | Great support - email a founder: justin@superwall.com
 
 ## Installation
 
 ### Swift Package Manager
 
-The preferred installation method is with (Swift Package Manager)[https://swift.org/package-manager/]:
+The preferred installation method is with [Swift Package Manager](https://swift.org/package-manager/). This is a tool for automating the distribution of Swift code and is integrated into the swift compiler. In Xcode, do the following:
 
-- File > Swift Packages > Add Package Dependency
+- **File ▸ Swift Packages ▸ Add Package Dependency**
 - Add `https://github.com/superwall-me/paywall-ios`
-- Select "Up to Next Major" with "2.0.0"
+- Select **Up to Next Major** with **2.0.0**
 
 ### Cocoapods
 
-For (Cocoapods)[https://cocoapods.org], add the following to your Podfile:
+[Cocoapods](https://cocoapods.org) is an alternative dependency manager for iOS projects. For usage and installation instructions, please visit their website.
+To include the *Paywall* SDK in your app, add the following to your Podfile:
 
 ```
 pod 'Paywall', '< 3.0.0'
 ```
 
 ## Getting Started
-For more detailed information, you can view our complete documentation at [docs.superwall.me](https://docs.superwall.me/docs).
 
-Or, get started with [an example app](https://github.com/superwall-me/superwallQuickStart). 
+View our documentation at [docs.superwall.com](https://docs.superwall.com/docs).
 
-<!-- Or browse our iOS sample apps:
-- [Example Repos](github.com/re) -->
+Or check out our sample apps:
 
-<!-- ➡️ | [Webhooks](https://docs.superwall.me/docs/webhooks) - enhanced server-to-server communication with events for purchases, renewals, cancellations, and more -->
+- [Swift - SwiftUI](Example)
+- [Swift – UIKit](https://github.com/superwall-me/superwallQuickStart)
+- [Objective-C](https://github.com/superwall-me/SuperwallQuickstartObjectiveC)
+
+<!-- ➡️ | [Webhooks](https://docs.superwall.com/docs/webhooks) - enhanced server-to-server communication with events for purchases, renewals, cancellations, and more -->

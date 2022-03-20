@@ -114,12 +114,12 @@ class TriggerLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case let .presentIdentifier(
+    guard case let .presentV2(
       experimentId: outputExperimentId,
       variantId: outputVariantId,
       paywallIdentifier: outputPaywallId
     ) = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentIdentifier")
+      return XCTFail("Incorrect outcome. Expected presentV2")
     }
     XCTAssertEqual(outputPaywallId, paywallId)
     XCTAssertEqual(outputExperimentId, experimentId)
@@ -187,7 +187,7 @@ class TriggerLogicTests: XCTestCase {
 
     // MARK: Then
     guard case let .noRuleMatch = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentIdentifier")
+      return XCTFail("Incorrect outcome. Expected presentV2")
     }
     let confirmableAssignments = outcome.confirmableAssignments
     XCTAssertNil(confirmableAssignments)
@@ -238,7 +238,7 @@ class TriggerLogicTests: XCTestCase {
 
     // MARK: Then
     guard case .unknownEvent = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentIdentifier")
+      return XCTFail("Incorrect outcome. Expected presentV2")
     }
 
     let confirmableAssignments = outcome.confirmableAssignments
@@ -268,7 +268,7 @@ class TriggerLogicTests: XCTestCase {
 
     // MARK: Then
     guard case .presentV1 = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentIdentifier")
+      return XCTFail("Incorrect outcome. Expected presentV2")
     }
 
     let confirmableAssignments = outcome.confirmableAssignments

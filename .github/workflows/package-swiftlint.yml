@@ -1,14 +1,15 @@
-name: SwiftLint
+name: Swift Package SwiftLint
 
 on:
   push:
     paths:
-      - '.github/workflows/swiftlint.yml'
+      - '.github/workflows/package-swiftlint.yml'
       - '.swiftlint.yml'
       - '**/*.swift'
+      - '!Example/**'
 
 jobs:
-  SwiftLint:
+  Package-SwiftLint:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 

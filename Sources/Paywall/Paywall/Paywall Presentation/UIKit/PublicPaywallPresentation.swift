@@ -31,7 +31,7 @@ public extension Paywall {
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil,
     onFail: ((NSError?) -> Void)? = nil
   ) {
-		internallyPresent(
+    internallyPresent(
       onPresent: onPresent,
       onDismiss: { result in
         if let onDismiss = onDismiss {
@@ -53,7 +53,7 @@ public extension Paywall {
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil,
     onFail: ((NSError?) -> Void)? = nil
   ) {
-		internallyPresent(
+    internallyPresent(
       on: viewController,
       onPresent: onPresent,
       onDismiss: { result in

@@ -633,7 +633,7 @@ extension SWPaywallViewController {
         message: "Set Paywall.delegate to handle purchases, restores and more!",
         actionTitle: "Docs →",
         action: {
-          if let url = URL(string: "https://docs.superwall.me/docs/configuring-the-sdk-1") {
+          if let url = URL(string: "https://docs.superwall.com/docs/configuring-the-sdk-1") {
             UIApplication.shared.open(url, options: [:], completionHandler: nil)
           }
         },
