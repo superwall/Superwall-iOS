@@ -119,6 +119,9 @@ public extension Paywall {
     case paywallWebviewLoadStart = "paywallWebviewLoad_start"
     case paywallWebviewLoadFail = "paywallWebviewLoad_fail"
     case paywallWebviewLoadComplete = "paywallWebviewLoad_complete"
+    case paywallProductsLoadStart = "paywallProductsLoad_start"
+    case paywallProductsLoadFail = "paywallProductsLoad_fail"
+    case paywallProductsLoadComplete = "paywallProductsLoad_complete"
   }
 
   /// Tracks a standard event with properties (See `Paywall.StandardEvent` for options). Properties are optional and can be added only if needed. You'll be able to reference properties when creating rules for when paywalls show up.
