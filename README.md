@@ -54,9 +54,11 @@
 
 The preferred installation method is with [Swift Package Manager](https://swift.org/package-manager/). This is a tool for automating the distribution of Swift code and is integrated into the swift compiler. In Xcode, do the following:
 
-- **File ▸ Swift Packages ▸ Add Package Dependency**
-- Add `https://github.com/superwall-me/paywall-ios`
-- Select **Up to Next Major** with **2.0.0**
+- Select **File ▸ Add Packages...**
+- Search for `https://github.com/superwall-me/paywall-ios` in the search bar.
+- Set the **Dependency Rule** to **Up to Next Major Version** with the lower bound set to **2.0.0**.
+- Make sure your project name is selected in **Add to Project**.
+- Then, **Add Package**.
 
 ### Cocoapods
 
@@ -66,6 +68,8 @@ To include the *Paywall* SDK in your app, add the following to your Podfile:
 ```
 pod 'Paywall', '< 3.0.0'
 ```
+
+Then, run `pod install`.
 
 ## Getting Started
 
