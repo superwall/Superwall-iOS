@@ -177,14 +177,14 @@ class TriggerLogicTests: XCTestCase {
     // MARK: When
 
     let outcome = TriggerLogic.outcome(
-        forEvent: eventData,
+      forEvent: eventData,
       v1Triggers: v1Triggers,
       v2Triggers: v2Triggers
     )
 
     // MARK: Then
     guard case .noRuleMatch = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentV2")
+      return XCTFail("Incorrect outcome. Expected noRuleMatch")
     }
     let confirmableAssignments = outcome.confirmableAssignments
     XCTAssertNil(confirmableAssignments)
@@ -235,7 +235,7 @@ class TriggerLogicTests: XCTestCase {
 
     // MARK: Then
     guard case .unknownEvent = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentV2")
+      return XCTFail("Incorrect outcome. Expected unknown event")
     }
 
     let confirmableAssignments = outcome.confirmableAssignments
@@ -265,7 +265,7 @@ class TriggerLogicTests: XCTestCase {
 
     // MARK: Then
     guard case .presentV1 = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentV2")
+      return XCTFail("Incorrect outcome. Expected presentV1")
     }
 
     let confirmableAssignments = outcome.confirmableAssignments
