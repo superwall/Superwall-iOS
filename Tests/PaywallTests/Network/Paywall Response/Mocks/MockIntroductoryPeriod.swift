@@ -11,9 +11,7 @@ final class MockIntroductoryPeriod: SKProductDiscount {
   var testSubscriptionPeriod: MockSubscriptionPeriod
 
   override var subscriptionPeriod: SKProductSubscriptionPeriod {
-    get {
-      return testSubscriptionPeriod
-    }
+    return testSubscriptionPeriod
   }
 
   override var priceLocale: Locale {

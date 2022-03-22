@@ -275,7 +275,7 @@ enum PaywallResponseLogic {
 
       if product.type == .primary {
         isFreeTrialAvailable = appleProduct.hasFreeTrial
-        
+
         if hasPurchased(product),
           appleProduct.hasFreeTrial {
           isFreeTrialAvailable = false
