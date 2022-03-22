@@ -14,7 +14,6 @@ final class ExpressionEvaluatorTests: XCTestCase {
     Storage.shared.clear()
   }
 
-  // TODO: Why is this failing?
 
   func testExpressionMatchesAll() {
     let result = ExpressionEvaluator.evaluateExpression(
@@ -24,14 +23,41 @@ final class ExpressionEvaluatorTests: XCTestCase {
     XCTAssertTrue(result)
   }
 
-  /*func testExpressionEvaluatorTrue() {
+  func testExpressionEvaluatorTrue() {
     Storage.shared.userAttributes = ["a": "b"]
     let result = ExpressionEvaluator.evaluateExpression(
-      expression: "a == \"b\"",
-      eventData: EventData(name: "ss", parameters: ["a":"b"], createdAt: "")
+      expression: "user.a == \"b\"",
+      eventData: EventData(name: "ss", parameters: [:], createdAt: "")
     )
     XCTAssertTrue(result)
-  }*/
+  }
+
+  func testExpressionEvaluatorParams() {
+    Storage.shared.userAttributes = [:]
+    let result = ExpressionEvaluator.evaluateExpression(
+      expression: "params.a == \"b\"",
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: "")
+    )
+    XCTAssertTrue(result)
+  }
+
+  func testExpressionEvaluatorDeviceTrue() {
+    Storage.shared.userAttributes = [:]
+    let result = ExpressionEvaluator.evaluateExpression(
+      expression: "device.platform == \"iOS\"",
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: "")
+    )
+    XCTAssertTrue(result)
+  }
+
+  func testExpressionEvaluatorDeviceFalse() {
+    Storage.shared.userAttributes = [:]
+    let result = ExpressionEvaluator.evaluateExpression(
+      expression: "device.platform == \"Android\"",
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: "")
+    )
+    XCTAssertFalse(result)
+  }
 
   func testExpressionEvaluatorFalse() {
     Storage.shared.userAttributes = [:]
