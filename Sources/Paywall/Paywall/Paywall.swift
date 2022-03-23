@@ -173,6 +173,8 @@ public final class Paywall: NSObject {
 	}
 
   // MARK: - Private Functions
+  private override init() {}
+
 	private init(
     apiKey: String?,
     userId: String? = nil,
