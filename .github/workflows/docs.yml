@@ -21,7 +21,7 @@ jobs:
           xcodebuild docbuild -scheme Paywall-Package -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 Pro' > build_output.txt
       - name: Push new documentation to docs folder ⬆️
         run: |
-          DOCC_DIR=`find ./docbuild -type d -iname "Paywall.doccarchive"`
+          DOCC_DIR=`find ./docbuild -type d -iname "Paywall-Package.doccarchive"`
           # we get the last commit message for this library and add current date
           echo "$DOCC_DIR"
 
