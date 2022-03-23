@@ -18,22 +18,34 @@ please open an issue on GitHub.
 ### Xcode Preferences
 In Xcode, you'll need to set your indentation spacing to 2 spaces. You can do that by going to **Xcode ▸ Preferences...**, then choose the **Text Editing** tab. Inside the **Display** tab, set **Indent wrapped lines by:** to **2 spaces**:
 
+<p align="center">
+  <img width="830" alt="Indent wrapped lines by 2 spaces" src="https://user-images.githubusercontent.com/3296904/159707444-c3524fef-b31f-4495-b8ca-2ecd8fc7f698.png">
+</p>
+
 In the **Editing** tab, select **Automatically trim trailing whitespace**:
+
+<p align="center">
+  <img width="830" alt="Automatically trim trailing whitespace" src="https://user-images.githubusercontent.com/3296904/159707570-5e38f179-7568-4a49-89b5-25158686e439.png">
+</p>
 
 In the **Indentation** tab, set **Tab Width** and **Indent Width** to **2 spaces**:
 
+<p align="center">
+  <img width="830" alt="2 space indent and tab width" src="https://user-images.githubusercontent.com/3296904/159707661-46e1eed0-d90e-4912-af8c-28e987d5ab60.png">
+</p>
+
 ### SwiftLint
 To maintain readability and achieve code consistency, we follow the [Raywenderlich Swift Style Guide](https://github.com/raywenderlich/swift-style-guide).
-Every time a commit is pushed to GitHub, a GitHub action automatically runs [SwiftLint](https://github.com/realm/SwiftLint) to check for style errors. Warnings and errors will show up as Annotations under the GitHub action telling you what needs to change. Please fix these linting issues before creating a pull request.
+Every time a commit is pushed to GitHub, a GitHub Action automatically runs [SwiftLint](https://github.com/realm/SwiftLint) to check for style errors. Warnings and errors will show up as Annotations under the GitHub Action telling you what needs to change. Please fix these linting issues before creating a pull request.
 
 ### Documentation
-- Public classes and methods must contain detailed documentation.
+Public classes and methods must contain detailed documentation.
 
 ## Editing the code
 
 Open the workspace from: `.swiftpm/xcode/package.xcworkspace`.
 
-If you are editing the example app, open the `xcodeproj` directly. The advantage of this is that you can fix linting errors before committing the code. You'll need to install SwiftLint on your computer before you can do that.
+If you are editing the example app, open the example app's `xcodeproj` in `Example/SuperwallSwiftUIExample`SuperwallSwiftUIExample.xcodeproj` directly. The advantage of this is that you can see linting issues on build. You'll need to install SwiftLint on your computer before you can do that.
 
 ## Git Workflow
 
