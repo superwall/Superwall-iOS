@@ -45,7 +45,7 @@ Public classes and methods must contain detailed documentation.
 
 Open the workspace from: `.swiftpm/xcode/package.xcworkspace`.
 
-If you are editing the example app, open the example app's `xcodeproj` in `Example/SuperwallSwiftUIExample`SuperwallSwiftUIExample.xcodeproj` directly. The advantage of this is that you can see linting issues on build. You'll need to install SwiftLint on your computer before you can do that.
+If you are editing the example app, open the example app's `xcodeproj` in `Example/SuperwallSwiftUIExample/SuperwallSwiftUIExample.xcodeproj` directly. The advantage of this is that you can see linting issues on build. You'll need to install SwiftLint on your computer before you can do that.
 
 ## Git Workflow
 
