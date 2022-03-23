@@ -4,7 +4,6 @@ on:
   push:
     #branches: [ develop, master ]
     paths:
-      - '**/*.swift'
       - '!Example/**'
 
   # Allows you to run this workflow manually from the Actions tab
