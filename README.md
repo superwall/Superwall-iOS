@@ -82,3 +82,7 @@ Or check out our sample apps:
 - [Objective-C](https://github.com/superwall-me/SuperwallQuickstartObjectiveC)
 
 <!-- ➡️ | [Webhooks](https://docs.superwall.com/docs/webhooks) - enhanced server-to-server communication with events for purchases, renewals, cancellations, and more -->
+
+## Contributing
+
+Please see the [CONTRIBUTING](CONTRIBUTING.md) file for how to help.
