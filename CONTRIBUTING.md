@@ -53,6 +53,8 @@ We have two branches: `master` and `develop`.
 
 All pull requests are set to merge into `develop`, with the exception of a hotfix on `master`.
 
+Name your branch `feature/<feature name>` for consistency.
+
 When we're ready to cut a new release, we update the `sdkVersion` in [Constants.swift](/Sources/Paywall/Misc/Constants.swift) and merge `develop` into `master`. This runs some GitHub actions to tag the release, build the docs, and push to cocoapods.
 
 ## Testing
