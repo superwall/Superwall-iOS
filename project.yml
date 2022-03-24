@@ -1,13 +1,10 @@
 name: Paywall
 options:
   bundleIdentifer: me.superwall
-packages:
-  TPInAppReceipt:
-    url: https://github.com/tikhop/TPInAppReceipt
-    from: 3.0.0
 
 targets:
   Paywall:
+    scheme: {}
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: "me.superwall.Paywall"
     info:
@@ -27,8 +24,6 @@ targets:
     platform: iOS
     deploymentTarget: "11.2"
     sources: [Sources/]
-    dependencies:
-      - package: TPInAppReceipt
   #Paywall_Paywall:
   #   type: bundle
   #  platform: iOS

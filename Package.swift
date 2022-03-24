@@ -34,9 +34,7 @@ let package = Package(
           package: "ASN1Swift"
         )
       ],
-      path: "Sources/Paywall",
-      resources: [.process("Assets.xcassets")]
-      //exclude: ["BundleHelper.swift"]
+      exclude: ["BundleHelper.swift"]
     ),
     .testTarget(
       name: "PaywallTests",
