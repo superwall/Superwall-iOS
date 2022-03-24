@@ -14,13 +14,24 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
+       - name: Cache DocC
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-docc
+        with:
+          path: swift-docc
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
       - name: Install DocC
         run: |
           git clone https://github.com/apple/swift-docc.git
           cd swift-docc
           swift build
           cd ..
-          ./swift-docc/docc --help
+          swift run docc --help
       - name: xcodegen
         uses: xavierLowmiller/xcodegen-action@1.1.2
       - name: Build Doc Bundle 📗
@@ -33,7 +44,7 @@ jobs:
           # we get the last commit message for this library and add current date
           echo "$DOCC_DIR"
 
-          ./swift-docc/docc process-archive transform-for-static-hosting "$DOCC_DIR"
+          swift run docc process-archive transform-for-static-hosting "$DOCC_DIR"
 
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
