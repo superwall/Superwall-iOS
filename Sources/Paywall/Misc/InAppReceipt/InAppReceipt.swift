@@ -49,7 +49,6 @@ final class InAppReceipt {
     guard let payload = payload else {
       return false
     }
-    print("**** pruchases", payload.purchases)
     let purchasedProduct = payload.purchases.filter { $0.productIdentifier == productId }
     return purchasedProduct.first != nil
   }

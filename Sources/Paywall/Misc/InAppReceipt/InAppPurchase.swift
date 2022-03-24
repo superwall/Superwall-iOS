@@ -14,15 +14,18 @@ struct InAppPurchase: ASN1Decodable {
   static let productIdentifierType: Int32 = 1702
 
   init(from decoder: Decoder) throws {
+    // swiftlint:disable:next force_cast
     var container = try decoder.unkeyedContainer() as! ASN1UnkeyedDecodingContainerProtocol
 
     var productIdentifier = ""
 
     while !container.isAtEnd {
       do {
+        // swiftlint:disable:next force_cast line_length
         var attributeContainer = try container.nestedUnkeyedContainer(for: InAppReceiptAttribute.template) as! ASN1UnkeyedDecodingContainerProtocol
         let type: Int32 = try attributeContainer.decode(Int32.self)
-        let _ = try attributeContainer.skip(template: .universal(ASN1Identifier.Tag.integer))
+        _ = try attributeContainer.skip(template: .universal(ASN1Identifier.Tag.integer))
+        // swiftlint:disable:next force_cast line_length
         var valueContainer = try attributeContainer.nestedUnkeyedContainer(for: .universal(ASN1Identifier.Tag.octetString)) as! ASN1UnkeyedDecodingContainerProtocol
 
         switch type {

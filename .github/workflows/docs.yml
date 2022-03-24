@@ -19,7 +19,7 @@ jobs:
           echo "🚀 Starting to build documentation"
           swift package generate-xcodeproj
           xcodebuild -version
-          xcodebuild docbuild -scheme Paywall-Package -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=15.4,name=iPhone 13 Pro'
+          xcodebuild docbuild -scheme Paywall-Package -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 Pro'
       - name: Push new documentation to docs folder ⬆️
         run: |
           DOCC_DIR=`find ./docbuild -type d -iname "Paywall.doccarchive"`

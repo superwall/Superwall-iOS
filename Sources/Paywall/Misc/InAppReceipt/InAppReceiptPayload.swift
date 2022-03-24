@@ -25,16 +25,19 @@ struct InAppReceiptPayload: ASN1Decodable  {
   }
 
   init(from decoder: Decoder) throws {
-    var purchases = [InAppPurchase]()
+    var purchases: [InAppPurchase] = []
 
     let firstContainer = try decoder.container(keyedBy: CodingKeys.self)
+    // swiftlint:disable:next force_cast
     var secondContainer = try firstContainer.nestedUnkeyedContainer(forKey: .set) as! ASN1UnkeyedDecodingContainerProtocol
 
     while !secondContainer.isAtEnd {
       do {
+        // swiftlint:disable:next force_cast
         var attributeContainer = try secondContainer.nestedUnkeyedContainer(for: InAppReceiptAttribute.template) as! ASN1UnkeyedDecodingContainerProtocol
         let type: Int32 = try attributeContainer.decode(Int32.self)
         let _ = try attributeContainer.skip(template: .universal(ASN1Identifier.Tag.integer))
+        // swiftlint:disable:next force_cast
         var valueContainer = try attributeContainer.nestedUnkeyedContainer(for: .universal(ASN1Identifier.Tag.octetString)) as! ASN1UnkeyedDecodingContainerProtocol
 
         switch type {
