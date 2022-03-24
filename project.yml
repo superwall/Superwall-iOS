@@ -1,6 +1,10 @@
 name: Paywall
 options:
   bundleIdentifer: me.superwall
+packages:
+  ASN1Swift:
+    url: https://github.com/tikhop/ASN1Swift
+    from: 1.2.4
 
 targets:
   Paywall:
@@ -24,6 +28,8 @@ targets:
     platform: iOS
     deploymentTarget: "11.2"
     sources: [Sources/]
+    dependencies:
+      - package: ASN1Swift
   #Paywall_Paywall:
   #   type: bundle
   #  platform: iOS
