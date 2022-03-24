@@ -25,7 +25,7 @@ jobs:
           DOCC_DIR=`find ./docbuild -type d -iname "Paywall.doccarchive"`
           # we get the last commit message for this library and add current date
           echo "$DOCC_DIR"
-          $(xcrun --find docc) process-archive transform-for-static-hosting "$DOCC_DIR" --hosting-base-path sdk.superwall.me
+          $(xcrun --find docc) process-archive transform-for-static-hosting "$DOCC_DIR"
 
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
