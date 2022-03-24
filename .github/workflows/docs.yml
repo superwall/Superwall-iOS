@@ -25,13 +25,13 @@ jobs:
           DOCC_DIR=`find ./docbuild -type d -iname "Paywall.doccarchive"`
           # we get the last commit message for this library and add current date
           echo "$DOCC_DIR"
-          $(xcrun --find docc) process-archive transform-for-static-hosting "$DOCC_DIR" --output-path ./webdocs --hosting-base-path sdk.superwall.me
+          $(xcrun --find docc) process-archive transform-for-static-hosting "$DOCC_DIR" --hosting-base-path sdk.superwall.me
 
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           git fetch --all
           git checkout --track origin/gh-pages
-          sudo cp -r ./webdocs docs/
+          sudo cp -r "$DOCC_DIR" docs/
           sudo git add -A docs/
           sudo git commit -m "Generated Docs"
           sudo git push
