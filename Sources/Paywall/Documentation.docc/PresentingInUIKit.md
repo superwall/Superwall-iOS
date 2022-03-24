@@ -1,6 +1,6 @@
-# Presenting Your Paywall
+# Presenting a Paywall with UIKit
 
-<!--@START_MENU_TOKEN@-->Summary<!--@END_MENU_TOKEN@-->
+Call a UIKit function to present a paywall and receive callbacks associated with the paywall presentation state.
 
 ## Overview
 

@@ -19,7 +19,8 @@
 
 ### Presenting and Dismissing a Paywall
 
-- <doc:Presenting>
+- <doc:PresentingInSwiftUI>
+- <doc:PresentingInUIKit>
 - ``present(onPresent:onDismiss:onFail:)``
 - ``present(on:onPresent:onDismiss:onFail:)``
 - ``present(identifier:on:ignoreSubscriptionStatus:onPresent:onDismiss:onFail:)``
