@@ -1,6 +1,5 @@
 import Foundation
 import StoreKit
-import TPInAppReceipt
 
 final class StoreKitManager: NSObject {
 	static var shared = StoreKitManager()

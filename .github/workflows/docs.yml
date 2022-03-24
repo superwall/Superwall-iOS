@@ -17,19 +17,21 @@ jobs:
       - name: Build Doc Bundle 📗
         run: |
           echo "🚀 Starting to build documentation"
+          swift package generate-xcodeproj
           xcodebuild -version
-          xcodebuild docbuild > build_output.txt
+          xcodebuild docbuild -scheme Paywall-Package -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=15.4,name=iPhone 13 Pro'
       - name: Push new documentation to docs folder ⬆️
         run: |
           DOCC_DIR=`find ./docbuild -type d -iname "Paywall.doccarchive"`
           # we get the last commit message for this library and add current date
           echo "$DOCC_DIR"
+          $(xcrun --find docc) process-archive transform-for-static-hosting "$DOCC_DIR" --output-path ./webdocs --hosting-base-path sdk.superwall.me
 
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           git fetch --all
           git checkout --track origin/gh-pages
-          sudo cp -r "$DOCC_DIR" docs/
+          sudo cp -r ./webdocs docs/
           sudo git add -A docs/
           sudo git commit -m "Generated Docs"
           sudo git push

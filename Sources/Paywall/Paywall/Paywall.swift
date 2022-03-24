@@ -1,7 +1,6 @@
 import UIKit
 import Foundation
 import StoreKit
-import TPInAppReceipt
 import GameController
 
 /// `Paywall` is the primary class for integrating Superwall into your application. To learn more, read our iOS getting started guide: https://docs.superwall.com/docs/ios

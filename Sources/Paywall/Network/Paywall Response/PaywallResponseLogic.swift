@@ -7,7 +7,6 @@
 
 import Foundation
 import StoreKit
-import TPInAppReceipt
 
 struct TriggerResponseIdentifiers: Equatable {
   let paywallId: String?
@@ -244,11 +243,15 @@ enum PaywallResponseLogic {
     return nil
   }
 
+  private static func hi(productId: String) -> Bool {
+    return true
+  }
+
   static func getVariablesAndFreeTrial(
     fromProducts products: [Product],
     productsById: [String: SKProduct],
     isFreeTrialAvailableOverride: Bool?,
-    hasPurchased: @escaping (Product) -> Bool = hasPurchased(product:)
+    hasPurchased: @escaping (String) -> Bool = hi(productId:)
   ) -> ProductProcessingOutcome {
     var legacyVariables: [Variable] = []
     var newVariables: [ProductVariable] = []
@@ -276,7 +279,7 @@ enum PaywallResponseLogic {
       if product.type == .primary {
         isFreeTrialAvailable = appleProduct.hasFreeTrial
 
-        if hasPurchased(product),
+        if hasPurchased(product.id),
           appleProduct.hasFreeTrial {
           isFreeTrialAvailable = false
         }
@@ -294,12 +297,5 @@ enum PaywallResponseLogic {
       isFreeTrialAvailable: isFreeTrialAvailable,
       resetFreeTrialOverride: resetFreeTrialOverride
     )
-  }
-
-  private static func hasPurchased(product: Product) -> Bool {
-    guard let receipt = try? InAppReceipt.localReceipt() else {
-      return false
-    }
-    return receipt.containsPurchase(ofProductIdentifier: product.id)
   }
 }
