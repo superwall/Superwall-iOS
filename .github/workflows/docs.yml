@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
-      - Install DocC
+      - name: Install DocC
         run: |
           git clone https://github.com/apple/swift-docc.git
           cd swift-docc
