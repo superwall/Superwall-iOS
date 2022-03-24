@@ -14,6 +14,13 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
+      - Install DocC
+        run: |
+          git clone https://github.com/apple/swift-docc.git
+          cd swift-docc
+          swift build
+          cd ..
+          ./swift-docc/docc --help
       - name: xcodegen
         uses: xavierLowmiller/xcodegen-action@1.1.2
       - name: Build Doc Bundle 📗
@@ -25,8 +32,8 @@ jobs:
           DOCC_DIR=`find ./docbuild -type d -iname "Paywall.doccarchive"`
           # we get the last commit message for this library and add current date
           echo "$DOCC_DIR"
-          xcrun docc --help
-          xcrun docc process-archive transform-for-static-hosting "$DOCC_DIR"
+
+          ./swift-docc/docc process-archive transform-for-static-hosting "$DOCC_DIR"
 
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
