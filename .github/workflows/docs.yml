@@ -14,10 +14,6 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
-      - name: Write Docc Renderer
-        run: |
-          echo "DOCC_HTML_DIR=$(dirname $(xcrun --find docc))/../share/docc/render" >> $GITHUB_ENV
-          echo "$DOCC_HTML_DIR"
       - name: Cache DocC
         uses: actions/cache@v3
         env:
@@ -36,6 +32,14 @@ jobs:
           swift build
           swift run docc --help
           cd ..
+      - name: Install DocC Renderer
+      run: |
+        git clone https://github.com/apple/swift-docc-render.git
+        cd swift-docc-render
+        npm install
+        cd ..
+        echo "DOCC_HTML_DIR=./swift-docc-render >> $GITHUB_ENV
+        echo "$DOCC_HTML_DIR"
       - name: xcodegen
         uses: xavierLowmiller/xcodegen-action@1.1.2
       - name: Build Doc Bundle 📗
@@ -46,8 +50,8 @@ jobs:
         run: |
           # we get the last commit message for this library and add current date
           cd swift-docc
-          swift run docc process-archive transform-for-static-hosting ../docbuild/Build/Products/Debug-iphonesimulator/Paywall.doccarchive --output-path ./web
-
+          swift run docc process-archive transform-for-static-hosting ../docbuild/Build/Products/Debug-iphonesimulator/Paywall.doccarchive --output-path ../web
+          cd ..
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           git fetch --all
