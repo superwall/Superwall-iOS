@@ -6,7 +6,7 @@ Configuring the SDK and its delegate.
 
 To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. You pass this function a class that conforms to ``Paywall/PaywallDelegate``, which handles actions taken on the paywall. You can then present your paywall.
 
-### Getting your API Key
+## Getting your API Key
 
 As soon as the app is launched, you need to configure the SDK with your **Public API Key**. You can retrieve this from the Superwall settings page.
 If you haven't already, [sign up for a free Superwall account](https://superwall.com/sign-up). Then, when you're through to the **Dashboard**, click the **Settings icon** in the top right corner, and select **Keys**:
@@ -42,7 +42,7 @@ If you have a unique ID of your user, you can enter it in `userId`. Otherwise we
 
 Later on, you can identify a user using ``Paywall/Paywall/identify(userId:)``. Superwall will then alias the userId you provide to the random userId we generated on your behalf.
 
-### Setting the delegate
+## Setting the delegate
 
 To conform to ``PaywallDelegate``, extend PaywallService:
 
@@ -75,7 +75,7 @@ These delegate methods are mandatory and receive callbacks from the SDK in respo
 2. Restoring purchases. Make sure to call the completion block after you attempt to restore purchases to let the SDK know whether the restoration was successful or not.
 3. Telling the SDK whether the user has an active subscription. Replace this with a boolean indicating the user's subscription status.
 
-### Configuring From the App Delegate
+## Configuring From the App Delegate
 
 Next, call `initPaywall()` from `application(_:didFinishLaunchingWithOptions:)` in your App Delegate:
 

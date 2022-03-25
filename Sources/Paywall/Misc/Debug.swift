@@ -12,12 +12,14 @@ import CloudKit
 @objc public enum LogLevel: Int, CustomStringConvertible {
   /// Prints all logs from the SDK to the console. Useful for debugging your app if something isn't working as expected.
   case debug = 10
-  /// Prints errors, warnings, and info
+  /// Prints errors, warnings, and useful information from the SDK to the console.
 	case info = 20
+  /// Prints errors and warnings from the SDK to the console.
 	case warn = 30
-  /// Only print
+  /// Only prints errors from the SDK to the console.
 	case error = 40
 
+  /// The string value of the log level
 	public var description: String {
 		switch self {
 		case .debug: return "DEBUG"
@@ -28,6 +30,7 @@ import CloudKit
 	}
 }
 
+/// The possible scope of logs to print to the console.
 public enum LogScope: String {
 	case localizationManager
 	case bounceButton

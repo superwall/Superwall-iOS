@@ -39,23 +39,6 @@ public extension Paywall {
   }
 
   /// Used internally, please ignore.
-  enum StandardEventName: String { //  add defs
-    case deepLinkOpen = "deepLink_open"
-    case onboardingStart = "onboarding_start"
-    case onboardingComplete = "onboarding_complete"
-    case pushNotificationReceive = "pushNotification_receive"
-    case pushNotificationOpen = "pushNotification_open"
-    case coreSessionStart = "coreSession_start" // i.e. call this on "workout_started"
-    case coreSessionAbandon = "coreSession_abandon" // i.e. call this on "workout_cancelled"
-    case coreSessionComplete = "coreSession_complete" // i.e. call this on "workout_complete"
-    case signUp = "sign_up"
-    case logIn = "log_in"
-    case logOut = "log_out"
-    case userAttributes = "user_attributes"
-    case base = "base"
-  }
-
-  /// Used internally, please ignore.
   enum StandardUserAttributeKey: String { //  add defs
     case id = "id"
     case applicationInstalledAt = "application_installed_at"
