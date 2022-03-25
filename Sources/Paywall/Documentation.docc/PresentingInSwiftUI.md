@@ -7,7 +7,7 @@ Attach a view modifier to present a paywall and receive callbacks associated wit
 
 To present a paywall in SwiftUI, you attach the `.presentPaywall(isPresented:onPresent:onDismiss:onFail:)` view modifier to a view. It shows the paywall when the Boolean value you provide is `true` and the user doesn't have an active subscription. You can then receive callbacks associated with the paywall presentation state.
 
-The paywall assigned to the user is determined by your settings in the [Superwall Dashboard](https://superwall.com/dashboard). Once a user is assigned a paywall, they will continue to see the same paywall, even when the paywall is turned off, unless you reassign them to a new one.
+> Important: The paywall assigned to the user is determined by your settings in the [Superwall Dashboard](https://superwall.com/dashboard). Presented paywalls are **sticky**. This means that once a user is assigned a paywall, they will continue to see the same paywall, even when the paywall is turned off, unless you reassign them to a new one.
 
 ### Attaching the View Modifier
 
