@@ -33,16 +33,21 @@ jobs:
           swift run docc --help
           cd ..
       - name: Install DocC Renderer
+        run: |
+          git clone https://github.com/apple/swift-docc-render.git
+          cd swift-docc-render
+      - name: Setup Node
         uses: actions/setup-node@v2
         with:
           node-version: '14'
           cache: 'npm'
+      - name: Install DocC Renderer
         run: |
           git clone https://github.com/apple/swift-docc-render.git
           cd swift-docc-render
           npm install
           cd ..
-          echo "DOCC_HTML_DIR=./swift-docc-render >> $GITHUB_ENV
+          echo "DOCC_HTML_DIR=${GITHUB_WORKSPACE}/swift-docc-render >> $GITHUB_ENV
           echo "$DOCC_HTML_DIR"
       - name: xcodegen
         uses: xavierLowmiller/xcodegen-action@1.1.2
