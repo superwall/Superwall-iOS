@@ -3,10 +3,10 @@ import Foundation
 import StoreKit
 import GameController
 
-/// `Paywall` is the primary class for integrating Superwall into your application. To learn more, read our iOS getting started guide: https://docs.superwall.com/docs/ios
+/// `Paywall` is the primary class for integrating Superwall into your application. It provides access to all its featured via static functions and variables.
 public final class Paywall: NSObject {
   // MARK: - Public Properties
-  /// The object that acts as the delegate of Paywall.
+  /// The delegate of the Paywall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
 	@objc public static var delegate: PaywallDelegate?
 
   /// WARNING: Only use this enum to set `Paywall.networkEnvironment` if told so explicitly by the Superwall team.

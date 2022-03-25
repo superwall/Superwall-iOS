@@ -8,11 +8,14 @@
 import Foundation
 import CloudKit
 
-
+/// Specifies the detail of the logs returned from the SDK to the console.
 @objc public enum LogLevel: Int, CustomStringConvertible {
-	case debug = 10
+  /// Prints all logs from the SDK to the console. Useful for debugging your app if something isn't working as expected.
+  case debug = 10
+  /// Prints errors, warnings, and info
 	case info = 20
 	case warn = 30
+  /// Only print
 	case error = 40
 
 	public var description: String {

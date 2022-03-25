@@ -25,13 +25,6 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-      - name: Install DocC
-        run: |
-          git clone https://github.com/apple/swift-docc.git
-          cd swift-docc
-          swift build
-          swift run docc --help
-          cd ..
       - name: Install DocC Renderer
         run: |
           git clone https://github.com/apple/swift-docc-render.git
@@ -41,14 +34,20 @@ jobs:
         with:
           node-version: '14'
           cache: 'npm'
+          cache-dependency-path: swift-docc-render/package-lock.json
       - name: Install DocC Renderer
         run: |
-          git clone https://github.com/apple/swift-docc-render.git
-          cd swift-docc-render
           npm install
           cd ..
           echo "DOCC_HTML_DIR=${GITHUB_WORKSPACE}/swift-docc-render >> $GITHUB_ENV
           echo "$DOCC_HTML_DIR"
+      - name: Install DocC
+        run: |
+          git clone https://github.com/apple/swift-docc.git
+          cd swift-docc
+          swift build
+          swift run docc --help
+          cd ..
       - name: xcodegen
         uses: xavierLowmiller/xcodegen-action@1.1.2
       - name: Build Doc Bundle 📗

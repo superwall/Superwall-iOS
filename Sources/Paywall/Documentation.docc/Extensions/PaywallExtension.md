@@ -1,5 +1,9 @@
 # ``Paywall/Paywall``
 
+## Overview
+
+The ``Paywall/Paywall`` class is used to access all the features of the SDK. Before using any of the features, you must first configure the SDK.
+
 ## Topics
 
 ### Configuring the SDK
