@@ -14,11 +14,6 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
-      - name: Pick Node Version
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14'
-          cache: 'npm'
       - name: Cache DocC
         uses: actions/cache@v3
         env:
@@ -38,6 +33,10 @@ jobs:
           swift run docc --help
           cd ..
       - name: Install DocC Renderer
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          cache: 'npm'
         run: |
           git clone https://github.com/apple/swift-docc-render.git
           cd swift-docc-render
