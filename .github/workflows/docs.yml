@@ -7,9 +7,6 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-env:
-  DOCC_HTML_DIR: "$(dirname $(xcrun --find docc))/../share/docc/render"
-
 jobs:
   build-docs:
     runs-on: macos-latest
@@ -17,6 +14,10 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
+      - name: Write Docc Renderer
+        run: |
+          echo "DOCC_HTML_DIR=$(dirname $(xcrun --find docc))/../share/docc/render" >> $GITHUB_ENV
+          echo "$DOCC_HTML_DIR"
       - name: Cache DocC
         uses: actions/cache@v3
         env:
@@ -30,7 +31,6 @@ jobs:
             ${{ runner.os }}-
       - name: Install DocC
         run: |
-          echo "$DOCC_HTML_DIR"
           git clone https://github.com/apple/swift-docc.git
           cd swift-docc
           swift build
