@@ -40,17 +40,17 @@ jobs:
           xcodebuild docbuild -scheme Paywall -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 Pro'
       - name: Push new documentation to docs folder ⬆️
         run: |
-          DOCC_DIR=`find ./docbuild -type d -iname "Paywall.doccarchive"`
           # we get the last commit message for this library and add current date
-          echo "$DOCC_DIR"
           cd swift-docc
-          swift run docc process-archive transform-for-static-hosting "$DOCC_DIR"
+          ls
+          ls ${{ github.workspace }}
+          swift run docc process-archive transform-for-static-hosting ../docbuild/Build/Products/Debug-iphonesimulator/Paywall.doccarchive
 
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           git fetch --all
           git checkout --track origin/gh-pages
-          sudo cp -r "$DOCC_DIR" docs/
+          sudo cp -r ../docbuild/Build/Products/Debug-iphonesimulator/Paywall.doccarchive docs/
           sudo git add -A docs/
           sudo git commit -m "Generated Docs"
           sudo git push
