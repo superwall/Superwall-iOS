@@ -7,6 +7,9 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  DOCC_HTML_DIR: "$(dirname $(xcrun --find docc))/../share/docc/render"
+
 jobs:
   build-docs:
     runs-on: macos-latest
@@ -27,6 +30,7 @@ jobs:
             ${{ runner.os }}-
       - name: Install DocC
         run: |
+          echo "$DOCC_HTML_DIR"
           git clone https://github.com/apple/swift-docc.git
           cd swift-docc
           swift build
@@ -42,15 +46,13 @@ jobs:
         run: |
           # we get the last commit message for this library and add current date
           cd swift-docc
-          ls
-          ls ${{ github.workspace }}
-          swift run docc process-archive transform-for-static-hosting ../docbuild/Build/Products/Debug-iphonesimulator/Paywall.doccarchive
+          swift run docc process-archive transform-for-static-hosting ../docbuild/Build/Products/Debug-iphonesimulator/Paywall.doccarchive --output-path ./web
 
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           git fetch --all
           git checkout --track origin/gh-pages
-          sudo cp -r ../docbuild/Build/Products/Debug-iphonesimulator/Paywall.doccarchive docs/
+          sudo cp -r ./web docs/
           sudo git add -A docs/
           sudo git commit -m "Generated Docs"
           sudo git push
