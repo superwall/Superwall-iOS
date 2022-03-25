@@ -33,13 +33,13 @@ jobs:
           swift run docc --help
           cd ..
       - name: Install DocC Renderer
-      run: |
-        git clone https://github.com/apple/swift-docc-render.git
-        cd swift-docc-render
-        npm install
-        cd ..
-        echo "DOCC_HTML_DIR=./swift-docc-render >> $GITHUB_ENV
-        echo "$DOCC_HTML_DIR"
+        run: |
+          git clone https://github.com/apple/swift-docc-render.git
+          cd swift-docc-render
+          npm install
+          cd ..
+          echo "DOCC_HTML_DIR=./swift-docc-render >> $GITHUB_ENV
+          echo "$DOCC_HTML_DIR"
       - name: xcodegen
         uses: xavierLowmiller/xcodegen-action@1.1.2
       - name: Build Doc Bundle 📗
