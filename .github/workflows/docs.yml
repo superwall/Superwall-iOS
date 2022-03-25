@@ -28,6 +28,7 @@ jobs:
       - name: Install DocC Renderer
         run: |
           git clone https://github.com/apple/swift-docc-render.git
+          ls ${{ github.workspace }}
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
@@ -36,6 +37,7 @@ jobs:
           cache-dependency-path: swift-docc-render/package-lock.json
       - name: Install DocC Renderer
         run: |
+          ls ${{ github.workspace }}
           cd swift-docc-render
           npm install
           cd ..
