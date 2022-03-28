@@ -15,3 +15,8 @@ Paywall makes it easy to show paywalls in your app using UIKit or SwiftUI. If yo
 - <doc:PresentingInUIKit>
 - <doc:Triggering>
 - ``Paywall/Paywall``
+
+### The Delegate
+- ``PaywallDelegate``
+- <doc:CustomPaywallButtons>
+- <doc:ThirdPartyAnalytics>

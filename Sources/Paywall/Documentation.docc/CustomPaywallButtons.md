@@ -19,9 +19,3 @@ extension PaywallService: PaywallDelegate {
   }
 }
 ```
-
-## Topics
-
-### Configuring the SDK
-
-- <doc:AutomaticallyTrackedEvents>

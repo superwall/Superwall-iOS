@@ -93,3 +93,11 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 ```
 
 You're now ready to present or trigger your paywall.
+
+## Topics
+
+### The Delegate
+
+- ``PaywallDelegate``
+- <doc:CustomPaywallButtons>
+- <doc:ThirdPartyAnalytics>
