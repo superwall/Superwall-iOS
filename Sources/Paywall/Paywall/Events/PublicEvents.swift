@@ -245,7 +245,7 @@ public extension Paywall {
     track(.userAttributes(standard: map, custom: custom))
   }
 
-  /// *Note* Please use `setUserAttributes` if you're using Swift.
+  /// *Note*: Please use ``Paywall/Paywall/setUserAttributes(_:)`` if you're using Swift.
   /// Set user attributes for use in your paywalls and the dashboard.
   ///
   /// Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.

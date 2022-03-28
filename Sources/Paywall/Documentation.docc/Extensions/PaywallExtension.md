@@ -19,6 +19,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - <doc:SettingUserAttributes>
 - ``identify(userId:)``
 - ``setUserAttributes(_:)``
+- ``setUserAttributesDictionary(attributes:)``
 - ``reset()``
 - ``userAttributes``
 
@@ -43,6 +44,12 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 ### Game Controller
 
+- <doc:GameControllerSupport>
 - ``gamepadValueChanged(gamepad:element:)``
 - ``isGameControllerEnabled``
 
+### Logging
+
+- ``PaywallDelegate/handleLog(level:scope:message:info:error:)``
+- ``Paywall/Paywall/logLevel``
+- ``Paywall/Paywall/logScopes``
