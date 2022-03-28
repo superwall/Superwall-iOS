@@ -25,6 +25,12 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}
             ${{ runner.os }}-build-
             ${{ runner.os }}-
+      - name: xcodegen
+        uses: xavierLowmiller/xcodegen-action@1.1.2
+      - name: Build Doc Bundle 📗
+        run: |
+          echo "🚀 Starting to build documentation"
+          xcodebuild docbuild -scheme Paywall -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 Pro'
       - name: Install DocC Renderer
         run: |
           git clone https://github.com/apple/swift-docc-render.git
@@ -48,12 +54,6 @@ jobs:
           swift build
           swift run docc --help
           cd ..
-      - name: xcodegen
-        uses: xavierLowmiller/xcodegen-action@1.1.2
-      - name: Build Doc Bundle 📗
-        run: |
-          echo "🚀 Starting to build documentation"
-          xcodebuild docbuild -scheme Paywall -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 Pro'
       - name: Push new documentation to docs folder ⬆️
         run: |
           # we get the last commit message for this library and add current date
