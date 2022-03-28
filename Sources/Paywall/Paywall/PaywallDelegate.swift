@@ -8,7 +8,11 @@
 import Foundation
 import StoreKit
 
-/// Methods for managing important Paywall lifecycle events. For example, telling the developer when to initiate checkout on a specific `SKProduct` and when to try to restore a transaction. Also includes hooks for you to log important analytics events to your product analytics tool.
+/// Methods for managing important Paywall lifecycle events.
+///
+/// The delegate methods receive callbacks from the SDK in response to certain events that happen on the paywall. It contains some mandatory and some optional methods. To learn how to conform to the delegate in your app see <doc:GettingStarted>.
+/// To handle log
+/// For example, telling the developer when to initiate checkout on a specific `SKProduct` and when to try to restore a transaction. Also includes hooks for you to log important analytics events to your product analytics tool.
 @objc public protocol PaywallDelegate: AnyObject {
 	/// Called when the user initiates checkout for a product. Add your purchase logic here by either calling `Purchases.shared.purchaseProduct()` (if you use RevenueCat: https://sdk.revenuecat.com/ios/Classes/RCPurchases.html#/c:objc(cs)RCPurchases(im)purchaseProduct:withCompletionBlock:) or by using Apple's StoreKit APIs
 	/// - Parameter product: The `SKProduct` the user would like to purchase
@@ -42,9 +46,8 @@ import StoreKit
 	/// Called when the user taps a deep link in your HTML paywall.
 	@objc optional func willOpenDeepLink(url: URL)
 
-	/// Called when you should track a standard internal analytics event to your own system. If you want the event's name as an enum, do this:`let e = Paywall.EventName(rawValue: name)`
+	/// Called when you should track a standard internal analytics event to your own system. If you want the event's name as an enum, do this: `let event = Paywall.EventName(rawValue: name)`
 	///
-
 	/// Possible Values:
 	///  ```swift
 	/// // App Lifecycle Events
@@ -78,7 +81,6 @@ import StoreKit
 	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallWebviewLoad_fail", params: ['paywall_id': 'someid'])
 	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallWebviewLoad_complete", params: ['paywall_id': 'someid'])
 	/// ```
-
 	@objc optional func trackAnalyticsEvent(
     withName name: String,
     params: [String: Any]
