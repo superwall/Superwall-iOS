@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Cache DocC
         uses: actions/cache@v3
+        id: cache-docc
         env:
           cache-name: cache-docc
         with:
@@ -35,6 +36,7 @@ jobs:
           echo "DOCC_HTML_DIR=${GITHUB_WORKSPACE}/swift-docc-render-artifact/dist" >> $GITHUB_ENV
           echo "$DOCC_HTML_DIR"
       - name: Install DocC
+        if: steps.cache-docc.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/apple/swift-docc.git
           cd swift-docc
