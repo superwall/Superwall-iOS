@@ -8,20 +8,29 @@
 import Foundation
 import StoreKit
 
-/// Methods for managing important Paywall lifecycle events.
+/// The protocol that handles Paywall lifecycle events.
 ///
-/// The delegate methods receive callbacks from the SDK in response to certain events that happen on the paywall. It contains some mandatory and some optional methods. To learn how to conform to the delegate in your app see <doc:GettingStarted>.
-/// To handle log
-/// For example, telling the developer when to initiate checkout on a specific `SKProduct` and when to try to restore a transaction. Also includes hooks for you to log important analytics events to your product analytics tool.
+/// The delegate methods receive callbacks from the SDK in response to certain events that happen on the paywall. It contains some required and some optional methods. To learn how to conform to the delegate in your app and best practices, see <doc:GettingStarted>.
 @objc public protocol PaywallDelegate: AnyObject {
-	/// Called when the user initiates checkout for a product. Add your purchase logic here by either calling `Purchases.shared.purchaseProduct()` (if you use RevenueCat: https://sdk.revenuecat.com/ios/Classes/RCPurchases.html#/c:objc(cs)RCPurchases(im)purchaseProduct:withCompletionBlock:) or by using Apple's StoreKit APIs
-	/// - Parameter product: The `SKProduct` the user would like to purchase
+	/// Called when the user initiates checkout for a product.
+  ///
+  /// Add your purchase logic here. You can use Apple's StoreKit APIs, or if you use RevenueCat, you can call [`Purchases.shared.purchaseProduct()`]( https://sdk.revenuecat.com/ios/Classes/RCPurchases.html#/c:objc(cs)RCPurchases(im)purchaseProduct:withCompletionBlock:).
+	/// - Parameter product: The `SKProduct` the user would like to purchase.
 	@objc func purchase(product: SKProduct)
 
-	/// Called when the user initiates a restore. Add your restore logic here. Call the completion with `true` if the user's transactions were restored or `false` if they weren't.
+	/// Called when the user initiates a restore.
+  ///
+  /// Add your restore logic here.
+  ///
+  /// - Parameters:
+  ///   - completion: Call the completion with `true` if the user's transactions were restored or `false` if they weren't.
 	@objc func restorePurchases(completion: @escaping (Bool) -> Void)
 
-	/// Decides whether a paywall should be presented programatically or by way of a trigger. A paywall will never be shown if this function returns `true`. Return `true` if the user has active entitlements and `false` if the user does not.
+	/// Decides whether a paywall should be presented based on the user's subscription status.
+  ///
+  /// A paywall will never be shown if this function returns `true`.
+  ///
+  /// - Returns: A boolean that indicates whether or not the user has an active subscription.
 	@objc func isUserSubscribed() -> Bool
 
 	/// Called when the user taps a button with a custom `data-pw-custom` tag in your HTML paywall. See paywall.js for further documentation

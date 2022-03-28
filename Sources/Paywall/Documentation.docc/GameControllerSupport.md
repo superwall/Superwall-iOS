@@ -6,7 +6,7 @@ Sending values from the game controller to the SDK
 
 The Paywall SDK supports Game Controller input.
 
-To forward events to your web paywall, simply call `gamepadValueChanged(gamepad:element:)` from your own gamepad's valueChanged handler:
+To forward events to your paywall, simply call `gamepadValueChanged(gamepad:element:)` from your own gamepad's valueChanged handler:
 
 ```swift
 controller.extendedGamepad?.valueChangedHandler = { gamepad, element in

@@ -8,6 +8,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 ### Configuring the SDK
 
+- <doc:GettingStarted>
 - ``configure(apiKey:userId:delegate:)``
 - ``PaywallDelegate``
 - ``debugMode``
@@ -15,11 +16,11 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 ### Identifying a User
 
+- <doc:SettingUserAttributes>
 - ``identify(userId:)``
 - ``setUserAttributes(_:)``
 - ``reset()``
 - ``userAttributes``
-
 
 ### Presenting and Dismissing a Paywall
 
@@ -35,6 +36,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 ### Triggering a Paywall
 
+- <doc:Triggering>
 - ``trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)``
 - ``track(_:_:)-2vkwo``
 - ``TriggerInfo``

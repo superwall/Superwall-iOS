@@ -219,13 +219,26 @@ public extension Paywall {
     }
   }
 
-  /// Sets additional information on the user object in Superwall. Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.
+  /// Set user attributes for use in your paywalls and the dashboard.
+  ///
+  /// Useful for analytics and conditional paywall rules you may define in the Superwall Dashboard. Attributes are write-only by the SDK. They should **not** be used as a source of truth for sensitive information.
+  ///
+  /// Here's how you might set user attributes after retrieving your user's data:
+  ///  ```swift
+  ///  var attributes: [String: Any] = [
+  ///   "name": user.name,
+  ///   "apnsToken": user.apnsTokenString,
+  ///   "email": user.email,
+  ///   "username": user.username,
+  ///   "profilePic": user.profilePicUrl
+  ///  ]
+  /// Paywall.setUserAttributes(attributes)
+  ///  ```
+  /// See <doc:SettingUserAttributes> for more.
+  ///
+  ///
   /// - Parameter custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///
-  ///  Example:
-  ///  ```swift
-  ///  Superwall.setUserAttributes(properties)
-  ///  ```
   static func setUserAttributes(_ custom: [String: Any?] = [:]) {
     var map: [StandardUserAttributeKey: Any] = [:]
     map[.applicationInstalledAt] = DeviceHelper.shared.appInstallDate
@@ -233,7 +246,9 @@ public extension Paywall {
   }
 
   /// *Note* Please use `setUserAttributes` if you're using Swift.
-  /// Sets additional information on the user object in Superwall. Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.
+  /// Set user attributes for use in your paywalls and the dashboard.
+  ///
+  /// Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.
   /// - Parameter attributes: A `NSDictionary` used to describe user attributes and any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///
   /// We make our best effort to pick out "known" user attributes and set them to our names. For exampe `{"first_name": "..." }` and `{"firstName": "..."}` will both be translated into `$first_name` for use in Superwall where we require a first name.
@@ -284,7 +299,9 @@ public extension Paywall {
 
   // MARK: - Deprecated Functions
 
-  /// Sets additional information on the user object in Superwall. Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.
+  /// Set user attributes for use in your paywalls and the dashboard.
+  ///
+  /// Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.
   /// - Parameter standard: Zero or more `SubscriberUserAttribute` enums describing standard user attributes.
   /// - Parameter custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///

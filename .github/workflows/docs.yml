@@ -45,7 +45,7 @@ jobs:
         run: |
           # we get the last commit message for this library and add current date
           cd swift-docc
-          swift run docc process-archive transform-for-static-hosting ../docbuild/Build/Products/Debug-iphonesimulator/Paywall.doccarchive --output-path ../web
+          swift run docc process-archive transform-for-static-hosting ../docbuild/Build/Products/Debug-iphonesimulator/Paywall.doccarchive --output-path ../docs --hosting-base-path sdk.superwall.me
           cd ..
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'

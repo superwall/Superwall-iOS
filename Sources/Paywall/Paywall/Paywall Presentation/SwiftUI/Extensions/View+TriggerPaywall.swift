@@ -9,7 +9,7 @@ import SwiftUI
 
 @available(iOS 13.0, *)
 extension View {
-  /// Presents a paywall to the user when an analytics event you provide is tied to an active trigger in the [Superwall Dashboard](https://superwall.com/dashboard) and a binding to a Boolean value that you provide is true.
+  /// Shows a specific paywall to the user when an analytics event you provide is tied to an active trigger in the [Superwall Dashboard](https://superwall.com/dashboard) and a binding to a Boolean value that you provide is true.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.
   ///
@@ -54,6 +54,8 @@ extension View {
   ///         )
   ///       }
   ///     }
+  ///
+  /// For more information, see <doc:Triggering>.
   ///
   /// **Please note**:
   /// In order to trigger a paywall, the SDK must have been configured using ``Paywall/Paywall/configure(apiKey:userId:delegate:)``.
