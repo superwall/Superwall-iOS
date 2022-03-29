@@ -83,12 +83,7 @@ enum PaywallResponseLogic {
 
       trackEvent(
         .triggerFire(
-          triggerInfo: TriggerInfo(
-            result: "present",
-            experimentId: experimentIdentifier,
-            variantId: variantIdentifier,
-            paywallIdentifier: paywallIdentifier
-          )
+            triggerResult: TriggerResult.paywall(experimentInfo: .init(experimentId: experimentIdentifier, variantId: variantIdentifier), paywallIdentifier: paywallIdentifier)
         ),
         [:]
       )
@@ -110,13 +105,10 @@ enum PaywallResponseLogic {
       )
       trackEvent(
         .triggerFire(
-          triggerInfo:
-            TriggerInfo(
-              result: "holdout",
-              experimentId: experimentId,
-              variantId: variantId
-            )
-        ),
+          triggerResult:
+            TriggerResult.holdout(experimentInfo: .init(experimentId: experimentId, variantId: variantId))
+            ),
+
         [:]
       )
       throw error
@@ -130,7 +122,7 @@ enum PaywallResponseLogic {
       ]
       trackEvent(
         .triggerFire(
-          triggerInfo: TriggerInfo(result: "no_rule_match")
+            triggerResult: TriggerResult.noRuleMatch
         ),
         [:]
       )
@@ -275,7 +267,7 @@ enum PaywallResponseLogic {
 
       if product.type == .primary {
         isFreeTrialAvailable = appleProduct.hasFreeTrial
-        
+
         if hasPurchased(product),
           appleProduct.hasFreeTrial {
           isFreeTrialAvailable = false

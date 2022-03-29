@@ -30,7 +30,7 @@ enum InternalEvent {
 
   case paywallOpen(paywallInfo: PaywallInfo)
   case paywallClose(paywallInfo: PaywallInfo)
-  case triggerFire(triggerInfo: TriggerInfo)
+  case triggerFire(triggerResult: TriggerResult)
 
   case transactionStart(paywallInfo: PaywallInfo, product: SKProduct)
   case transactionComplete(paywallInfo: PaywallInfo, product: SKProduct)

@@ -215,13 +215,18 @@ class PaywallResponseLogicTests: XCTestCase {
       )
     }
     let trackEvent : (InternalEvent, [String: Any]) -> Void = { event, _ in
-      guard case let .triggerFire(triggerInfo: info)  = event else {
+      guard case let .triggerFire(triggerResult: result)  = event else {
         return XCTFail()
       }
-      XCTAssertEqual(info.experimentId, experimentId)
-      XCTAssertEqual(info.result, "present")
-      XCTAssertEqual(info.variantId, variantId)
-      XCTAssertEqual(info.paywallIdentifier, paywallId)
+        switch(result) {
+        case .paywall(experimentInfo: let experimentInfo, paywallIdentifier: let paywallIdentifier):
+            XCTAssertEqual(experimentInfo.experimentId, experimentId)
+            XCTAssertEqual(experimentInfo.variantId, variantId)
+            XCTAssertEqual(paywallIdentifier, paywallId)
+            break;
+        default:
+            XCTFail()
+        }
     }
 
     // When
@@ -254,14 +259,18 @@ class PaywallResponseLogicTests: XCTestCase {
         variantId: variantId
       )
     }
-    let trackEvent : (InternalEvent, [String: Any]) -> Void = { event, _ in
-      guard case let .triggerFire(triggerInfo: info)  = event else {
+      let trackEvent : (InternalEvent, [String: Any]) -> Void = { event, _ in
+    guard case let .triggerFire(triggerResult: result)  = event else {
         return XCTFail()
       }
-      XCTAssertEqual(info.experimentId, experimentId)
-      XCTAssertEqual(info.result, "holdout")
-      XCTAssertEqual(info.variantId, variantId)
-      XCTAssertNil(info.paywallIdentifier)
+        switch(result) {
+        case .holdout(experimentInfo: let experimentInfo):
+            XCTAssertEqual(experimentInfo.experimentId, experimentId)
+            XCTAssertEqual(experimentInfo.variantId, variantId)
+            break;
+        default:
+            XCTFail()
+        }
     }
 
     // When
@@ -298,14 +307,16 @@ class PaywallResponseLogicTests: XCTestCase {
     let getTriggerResponse: (EventData) -> HandleEventResult = { _ in
       return .noRuleMatch
     }
-    let trackEvent : (InternalEvent, [String: Any]) -> Void = { event, _ in
-      guard case let .triggerFire(triggerInfo: info) = event else {
+      let trackEvent : (InternalEvent, [String: Any]) -> Void = { event, _ in
+    guard case let .triggerFire(triggerResult: result)  = event else {
         return XCTFail()
       }
-      XCTAssertNil(info.experimentId)
-      XCTAssertEqual(info.result, "no_rule_match")
-      XCTAssertNil(info.variantId)
-      XCTAssertNil(info.paywallIdentifier)
+        switch(result) {
+        case .noRuleMatch:
+            break;
+        default:
+            XCTFail()
+        }
     }
 
     // When
