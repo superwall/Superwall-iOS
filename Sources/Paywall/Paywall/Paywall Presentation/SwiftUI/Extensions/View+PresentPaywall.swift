@@ -53,6 +53,8 @@ extension View {
   ///       }
   ///     }
   ///
+  /// For more information, see <doc:PresentingInSwiftUI>.
+  ///
   /// **Please note**:
   /// In order to present a paywall, the paywall must first be created and enabled in the [Superwall Dashboard](https://superwall.com/dashboard) and the SDK configured using ``Paywall/Paywall/configure(apiKey:userId:delegate:)``.
   ///

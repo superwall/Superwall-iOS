@@ -1,0 +1,59 @@
+name: Build Documentation
+
+on:
+  push:
+    #branches: [ develop, master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-docs:
+    runs-on: macos-latest
+
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - name: Cache DocC
+        uses: actions/cache@v3
+        id: cache-docc
+        env:
+          cache-name: cache-docc
+        with:
+          path: swift-docc
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Build Doc Bundle 📗
+        run: |
+          echo "🚀 Starting to build documentation"
+          xcodebuild docbuild -scheme Paywall -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 Pro'
+      - name: Install DocC Renderer
+        run: |
+          git clone https://github.com/apple/swift-docc-render-artifact.git
+          echo "DOCC_HTML_DIR=${GITHUB_WORKSPACE}/swift-docc-render-artifact/dist" >> $GITHUB_ENV
+          echo "$DOCC_HTML_DIR"
+      - name: Install DocC
+        if: steps.cache-docc.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/apple/swift-docc.git
+          cd swift-docc
+          swift build
+          swift run docc --help
+          cd ..
+      - name: Push new documentation to docs folder ⬆️
+        run: |
+          # we get the last commit message for this library and add current date
+          cd swift-docc
+          swift run docc process-archive transform-for-static-hosting ../docbuild/Build/Products/Debug-iphonesimulator/Paywall.doccarchive --output-path ../web
+          cd ..
+          sudo git config --global user.name 'Jake'
+          sudo git config --global user.email 'jakemor@users.noreply.github.com'
+          git fetch --all
+          git checkout --track origin/gh-pages
+          sudo cp -a ./web/. ./docs
+          sudo git add -A docs/
+          sudo git commit -m "Generated Docs"
+          sudo git push
