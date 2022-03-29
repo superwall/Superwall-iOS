@@ -53,6 +53,7 @@ jobs:
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           git fetch --all
           git checkout --track origin/gh-pages
+          sed -i '' 's#<head>#<head><meta http-equiv = "refresh" content = "1; url = https://sdk.superwall.me/documentation/paywall/" />#' ./web/index.html
           sudo cp -a ./web/. ./docs
           sudo git add -A docs/
           sudo git commit -m "Generated Docs"
