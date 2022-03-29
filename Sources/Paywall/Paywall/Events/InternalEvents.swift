@@ -275,34 +275,24 @@ extension Paywall {
         customParams: customParams
       )
     case .triggerFire(let triggerInfo):
-        var params: [String: Any] = [:]
-        switch triggerInfo {
-        case .noRuleMatch:
-
-
-            params = [
-                "result": "no_rule_match"
-            ]
-            break
-        case .holdout(experimentInfo: let experimentInfo):
-            params = [
-                "variant_id": experimentInfo.variantId as Any,
-                "experiment_id": experimentInfo.experimentId as Any,
-                "result": "holdout"
-            ]
-            break
-
-        case .paywall(experimentInfo: let experimentInfo, paywallIdentifier: let paywallIdentifier):
-            params = [
-                "variant_id": experimentInfo.variantId as Any,
-                "experiment_id": experimentInfo.experimentId as Any,
-                "paywall_identifier": paywallIdentifier,
-                "result": "present"
-            ]
-            break
-        }
-
-
+      var params: [String: Any] = [:]
+      switch triggerInfo {
+      case .noRuleMatch:
+        params = ["result": "no_rule_match"]
+      case .holdout(let experimentInfo):
+        params = [
+          "variant_id": experimentInfo.variantId as Any,
+          "experiment_id": experimentInfo.experimentId as Any,
+          "result": "holdout"
+        ]
+      case let .paywall(experimentInfo, paywallIdentifier):
+        params = [
+          "variant_id": experimentInfo.variantId as Any,
+          "experiment_id": experimentInfo.experimentId as Any,
+          "paywall_identifier": paywallIdentifier,
+          "result": "present"
+        ]
+      }
       track(
         eventName: EventTypeConversion.name(for: event),
         params: params
