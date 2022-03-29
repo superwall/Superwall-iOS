@@ -8,33 +8,33 @@
 import Foundation
 
 public extension Paywall {
-  /// Standard events for use in conjunction with `Paywall.track(_ event: StandardEvent, _ params: [String: Any] = [:])`.
+  /// Standard events for use in conjunction with  ``Paywall/Paywall/track(_:_:)-7gc4r``.
   enum StandardEvent {
-    /// Standard even used to track when a user opens your application by way of a deep link.
+    /// Standard event used to track when a user opens your application via a deep link.
     case deepLinkOpen(deepLinkUrl: URL)
-    /// Standard even used to track when a user begins onboarding.
+    /// Standard event used to track when a user begins onboarding.
     case onboardingStart
-    /// Standard even used to track when a user completes onboarding.
+    /// Standard event used to track when a user completes onboarding.
     case onboardingComplete
-    /// Standard even used to track when a user receives a push notification.
+    /// Standard event used to track when a user receives a push notification.
     case pushNotificationReceive(superwallId: String? = nil)
-    /// Standard even used to track when a user launches your application by way of a push notification.
+    /// Standard event used to track when a user launches your application by way of a push notification.
     case pushNotificationOpen(superwallId: String? = nil)
-    /// Standard even used to track when a user completes a 'Core Session' of your app. For example, if your app is a workout app, you should call this when a workout begins.
+    /// Standard event used to track when a user completes a 'Core Session' of your app. For example, if your app is a workout app, you should call this when a workout begins.
     case coreSessionStart // i.e. call this on "workout_started"
-    /// Standard even used to track when a user completes a 'Core Session' of your app. For example, if your app is a workout app, you should call this when a workout is cancelled or aborted.
+    /// Standard event used to track when a user completes a 'Core Session' of your app. For example, if your app is a workout app, you should call this when a workout is cancelled or aborted.
     case coreSessionAbandon // i.e. call this on "workout_cancelled"
-    /// Standard even used to track when a user completes a 'Core Session' of your app. For example, if your app is a workout app, you should call this when a workout is completed.
+    /// Standard event used to track when a user completes a 'Core Session' of your app. For example, if your app is a workout app, you should call this when a workout is completed.
     case coreSessionComplete // i.e. call this on "workout_complete"
-    /// Standard even used to track when a user signs up.
+    /// Standard event used to track when a user signs up.
     case signUp
-    /// Standard even used to track when a user logs in to your application.
+    /// Standard event used to track when a user logs in to your application.
     case logIn
-    /// Standard even used to track when a user logs out of your application. Not to be confused with `Paywall.reset()` — this event is strictly for analytical purposes.
+    /// Standard event used to track when a user logs out of your application. Not to be confused with `Paywall.reset()` — this event is strictly for analytical purposes.
     case logOut
-    /// WARNING: Use `setUserAttributes(_ standard: StandardUserAttribute..., custom: [String: Any?] = [:])` instead.
+    /// **WARNING**: Use ``Paywall/Paywall/setUserAttributes(_:custom:)`` instead.
     case userAttributes(standard: [StandardUserAttributeKey: Any?], custom: [String: Any?])
-    /// WARNING: This is used internally, ignore please
+    /// **WARNING**: This is used internally, ignore please
     case base(name: String, params: [String: Any])
   }
 
@@ -53,7 +53,7 @@ public extension Paywall {
     case createdAt = "created_at"
   }
 
-  /// Standard user attributes to be used in conjunction with `setUserAttributes(_ standard: StandardUserAttribute..., custom: [String: Any?] = [:])`.
+  /// Standard user attributes to be used in conjunction with ``Paywall/Paywall/setUserAttributes(_:custom:)``.
   enum StandardUserAttribute { //  add defs
     /// Standard user attribute containing your user's identifier. This attribute is automatically added and you don't really need to include it.
     case id(_ id: String)
@@ -77,7 +77,7 @@ public extension Paywall {
     case createdAt(_ date: Date)
   }
 
-  /// These are the types of events we send to Paywall's delegate `shouldTrack` method
+  /// The events that are sent to ``Paywall/PaywallDelegate/trackAnalyticsEvent(withName:params:)``.
   enum EventName: String {
     case firstSeen = "first_seen"
     case appOpen = "app_open"
@@ -107,11 +107,13 @@ public extension Paywall {
     case paywallProductsLoadComplete = "paywallProductsLoad_complete"
   }
 
-  /// Tracks a standard event with properties (See `Paywall.StandardEvent` for options). Properties are optional and can be added only if needed. You'll be able to reference properties when creating rules for when paywalls show up.
+  /// Tracks a standard analytical event with optional parameters (See ``Paywall/Paywall/StandardEvent`` for the types of events available).
+  ///
+  /// Properties are optional and can be added only if needed. You'll be able to reference properties when creating rules for when paywalls show up.
   /// - Parameter event: A `StandardEvent` enum, which takes default parameters as inputs.
   /// - Parameter params: Custom parameters you'd like to include in your event. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///
-  /// Example:
+  /// Here's how you might track a deep link or a sign-up event:
   /// ```swift
   /// Paywall.track(.deepLinkOpen(url: someURL))
   /// Paywall.track(.signUp, ["campaignId": "12312341", "source": "Facebook Ads"]
@@ -184,28 +186,43 @@ public extension Paywall {
     }
   }
 
-  /// Tracks a custom event with properties. Remember to check `Paywall.StandardEvent` to determine if you should be tracking a standard event instead. Properties are optional and can be added only if needed. You'll be able to reference properties when creating rules for when paywalls show up.
-  /// - Parameter event: The name of your custom event
-  /// - Parameter params: Custom parameters you'd like to include in your event. Remember, keys begining with `$` are reserved for Superwall and will be dropped. They will however be included in `PaywallDelegate.shouldTrack(event: String, params: [String: Any])` for your own records. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+  /// Tracks a custom analytical event with optional parameters.
   ///
-  /// Example:
+  /// Any event you track is recorded in the Superwall Dashboard. You can use these events to create implicit triggers. See <doc:Triggering> for more info.
+  ///
+  /// There are a list of ``Paywall/Paywall/StandardEvent``s that can be tracked  to determine if you should be tracking a standard event instead. You'll be able to reference properties when creating rules for when paywalls show up.
+  /// - Parameter name: The name of your event
+  /// - Parameter params: Custom parameters you'd like to include in your event. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+  ///
+  /// Here's how you might track an event:
   /// ```swift
-  /// Paywall.track("onboarding_skip", ["steps_completed": 4])
+  /// Paywall.track(
+  ///   "onboarding_skip",
+  ///   ["steps_completed": 4]
+  /// )
   /// ```
-  @objc static func track(_ name: String, _ params: [String: Any]) {
+  @objc static func track(
+    _ name: String,
+    _ params: [String: Any]
+  ) {
     track(.base(name: name, params: params))
   }
 
-  /// Warning: Should prefer `track` if using Swift
-  /// Tracks a event with properties. Remember to check `Paywall.StandardEvent` to determine if you should use a string which maps to standard event name. Properties are optional and can be added only if needed. You'll be able to reference properties when creating rules for when paywalls show up.
+  /// Warning: Should prefer ``track(_:_:)-2vkwo`` if using Swift.
+  /// Tracks a event with properties.
+  ///
+  /// Remember to check ``Paywall/Paywall/StandardEvent`` to determine if you should use a string which maps to standard event name. Properties are optional and can be added only if needed. You'll be able to reference properties when creating rules for when paywalls show up.
   /// - Parameter event: The name of your custom event
   /// - Parameter params: Custom parameters you'd like to include in your event. Remember, keys begining with `$` are reserved for Superwall and will be dropped. They will however be included in `PaywallDelegate.shouldTrack(event: String, params: [String: Any])` for your own records. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///
-  /// Example:
+  /// Here's how you might track an event:
   /// ```objective-c
   /// [Paywall trackWithName:@"onboarding_skip" params:NSDictionary()];
   /// ```
-  @objc static func track(name: String, params: NSDictionary? = [:]) {
+  @objc static func track(
+    name: String,
+    params: NSDictionary? = [:]
+  ) {
     if let stringParameterMap = params as? [String: Any] {
       track(.base(name: name, params: stringParameterMap))
     } else {
@@ -221,7 +238,7 @@ public extension Paywall {
 
   /// Set user attributes for use in your paywalls and the dashboard.
   ///
-  /// Useful for analytics and conditional paywall rules you may define in the Superwall Dashboard. Attributes are write-only by the SDK. They should **not** be used as a source of truth for sensitive information.
+  /// Useful for analytics and conditional paywall rules you may define in the Superwall Dashboard. They should **not** be used as a source of truth for sensitive information.
   ///
   /// Here's how you might set user attributes after retrieving your user's data:
   ///  ```swift
@@ -248,7 +265,8 @@ public extension Paywall {
   /// *Note*: Please use ``Paywall/Paywall/setUserAttributes(_:)`` if you're using Swift.
   /// Set user attributes for use in your paywalls and the dashboard.
   ///
-  /// Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.
+  /// Useful for analytics and conditional paywall rules you may define in the web dashboard. They should not be used as a source of truth for sensitive information.
+  ///
   /// - Parameter attributes: A `NSDictionary` used to describe user attributes and any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///
   /// We make our best effort to pick out "known" user attributes and set them to our names. For exampe `{"first_name": "..." }` and `{"firstName": "..."}` will both be translated into `$first_name` for use in Superwall where we require a first name.
@@ -301,7 +319,8 @@ public extension Paywall {
 
   /// Set user attributes for use in your paywalls and the dashboard.
   ///
-  /// Useful for analytics and conditional paywall rules you may define in the web dashboard. Remember, attributes are write-only by the SDK, and only require your public key. They should not be used as a source of truth for sensitive information.
+  /// Useful for analytics and conditional paywall rules you may define in the web dashboard. They should not be used as a source of truth for sensitive information.
+  ///
   /// - Parameter standard: Zero or more `SubscriberUserAttribute` enums describing standard user attributes.
   /// - Parameter custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///

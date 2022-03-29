@@ -109,7 +109,7 @@ Paywall.track(
 
 To provide your team with ultimate flexibility, we recommend sending all your analytical events to Superwall via ``Paywall/Paywall/track(_:_:)-2vkwo``. That way you can retroactively add a paywall to any of your analytical events, should you decide to do so.
 
-### Integrating with Existing Analytics
+## Integrating with Existing Analytics
 
 If you're already set up with an analytics provider, you'll typically have an `Analytics.swift` singleton (or similar) to disperse all your events from. Here's how that file might look:
 
@@ -119,7 +119,7 @@ import Mixpanel
 import Firebase
 
 final class Analytics {
-  static var shared = Analytics()
+  static let shared = Analytics()
   
   func track(
     event: String,

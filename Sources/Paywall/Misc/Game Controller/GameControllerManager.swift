@@ -14,7 +14,7 @@ protocol GameControllerDelegate: NSObject {
 }
 
 final class GameControllerManager: NSObject {
-	static var shared = GameControllerManager()
+	static let shared = GameControllerManager()
 	weak var delegate: GameControllerDelegate?
 
 	func valueChanged(

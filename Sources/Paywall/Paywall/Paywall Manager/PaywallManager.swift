@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 final class PaywallManager {
-	static var shared = PaywallManager()
+	static let shared = PaywallManager()
 	var presentedViewController: SWPaywallViewController? {
 		let vcs = viewControllers.filter {
 			$0.isActive

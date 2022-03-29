@@ -12,7 +12,7 @@ import StoreKit
 final class PaywallService {
   #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
   static let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
-  static var shared = PaywallService()
+  static let shared = PaywallService()
   static var name: String {
     return Paywall.userAttributes["firstName"] as? String ?? ""
   }

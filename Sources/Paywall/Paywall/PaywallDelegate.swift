@@ -34,7 +34,7 @@ import StoreKit
 	@objc func isUserSubscribed() -> Bool
 
 	/// Called when the user taps a button with a custom `data-pw-custom` tag in your HTML paywall. See paywall.js for further documentation
-	///  - Parameter withName: The value of the `data-pw-custom` tag in your HTML element that the user selected.
+	///  - Parameter name: The value of the `data-pw-custom` tag in your HTML element that the user selected.
 	@objc optional func handleCustomPaywallAction(withName name: String)
 
 	/// Called right before the paywall is dismissed.
@@ -55,40 +55,107 @@ import StoreKit
 	/// Called when the user taps a deep link in your HTML paywall.
 	@objc optional func willOpenDeepLink(url: URL)
 
-	/// Called when you should track a standard internal analytics event to your own system. If you want the event's name as an enum, do this: `let event = Paywall.EventName(rawValue: name)`
+	/// Called whenever an internal analytics event is tracked. See <doc:AutomaticallyTrackedEvents> for more.
+  ///
+  /// Use this method when you want to track internal analytics events in your own analytics.
+  ///
+  /// If you want the event's name as an enum, do this:
+  ///
+  /// ```swift
+  /// let event = Paywall.EventName(
+  ///   rawValue: name
+  /// )
+  /// ```
 	///
 	/// Possible Values:
 	///  ```swift
 	/// // App Lifecycle Events
-	/// Paywall.delegate.trackAnalyticsEvent(name: "app_install", params: nil)
-	/// Paywall.delegate.trackAnalyticsEvent(name: "app_open", params: nil)
-	/// Paywall.delegate.trackAnalyticsEvent(name: "app_close", params: nil)
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "app_install",
+  ///   params: nil
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "app_open",
+  ///   params: nil
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "app_close",
+  ///   params: nil
+  /// )
 	///
 	/// // Paywall Events
-	/// Paywall.delegate.trackAnalyticsEvent(name: "paywall_open", params: ['paywall_id': 'someid'])
-	/// Paywall.delegate.trackAnalyticsEvent(name: "paywall_close", params: ['paywall_id': 'someid'])
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "paywall_open",
+  ///   params: ['paywall_id': 'someid']
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "paywall_close",
+  ///   params: ['paywall_id': 'someid']
+  /// )
 	///
 	/// // Transaction Events
-	/// Paywall.delegate.trackAnalyticsEvent(name: "transaction_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.trackAnalyticsEvent(name: "transaction_fail", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.trackAnalyticsEvent(name: "transaction_abandon", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.trackAnalyticsEvent(name: "transaction_complete", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.trackAnalyticsEvent(name: "transaction_restore", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "transaction_start",
+  ///   params: ['paywall_id': 'someid', 'product_id': 'someskid']
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "transaction_fail",
+  ///   params: ['paywall_id': 'someid', 'product_id': 'someskid']
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "transaction_abandon",
+  ///   params: ['paywall_id': 'someid', 'product_id': 'someskid']
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "transaction_complete",
+  ///   params: ['paywall_id': 'someid', 'product_id': 'someskid']
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "transaction_restore",
+  ///   params: ['paywall_id': 'someid', 'product_id': 'someskid']
+  /// )
 	///
 	/// // Purchase Events
-	/// Paywall.delegate.trackAnalyticsEvent(name: "subscription_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.trackAnalyticsEvent(name: "freeTrial_start", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
-	/// Paywall.delegate.trackAnalyticsEvent(name: "nonRecurringProduct_purchase", params: ['paywall_id': 'someid', 'product_id': 'someskid'])
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "subscription_start",
+  ///   params: ['paywall_id': 'someid', 'product_id': 'someskid']
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "freeTrial_start",
+  ///   params: ['paywall_id': 'someid', 'product_id': 'someskid']
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "nonRecurringProduct_purchase",
+  ///   params: ['paywall_id': 'someid', 'product_id': 'someskid']
+  /// )
 	///
 	/// // Superwall API Request Events
-	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallResponseLoad_start", params: ['paywall_id': 'someid'])
-	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallResponseLoad_fail", params: ['paywall_id': 'someid'])
-	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallResponseLoad_complete", params: ['paywall_id': 'someid'])
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "paywallResponseLoad_start",
+  ///   params: ['paywall_id': 'someid']
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "paywallResponseLoad_fail",
+  ///   params: ['paywall_id': 'someid']
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "paywallResponseLoad_complete",
+  ///   params: ['paywall_id': 'someid']
+  /// )
 	///
 	/// // Webview Reqeuest Events
-	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallWebviewLoad_start", params: ['paywall_id': 'someid'])
-	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallWebviewLoad_fail", params: ['paywall_id': 'someid'])
-	/// Paywall.delegate.trackAnalyticsEvent(name: "paywallWebviewLoad_complete", params: ['paywall_id': 'someid'])
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "paywallWebviewLoad_start",
+  ///   params: ['paywall_id': 'someid']
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "paywallWebviewLoad_fail",
+  ///   params: ['paywall_id': 'someid']
+  /// )
+	/// Paywall.delegate.trackAnalyticsEvent(
+  ///   name: "paywallWebviewLoad_complete",
+  ///   params: ['paywall_id': 'someid']
+  /// )
 	/// ```
 	@objc optional func trackAnalyticsEvent(
     withName name: String,

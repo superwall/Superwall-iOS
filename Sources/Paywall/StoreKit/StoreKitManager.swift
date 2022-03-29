@@ -2,7 +2,7 @@ import Foundation
 import StoreKit
 
 final class StoreKitManager: NSObject {
-	static var shared = StoreKitManager()
+	static let shared = StoreKitManager()
   var productsById: [String: SKProduct] = [:]
 
 	private let productsManager = ProductsManager()

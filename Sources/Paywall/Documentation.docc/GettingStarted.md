@@ -24,7 +24,7 @@ import Paywall
 
 final class PaywallService {
   static let apiKey = "MYAPIKEY" // Replace this with your API Key
-  static var shared = PaywallService()
+  static let shared = PaywallService()
 
   static func initPaywall() {
     Paywall.configure(

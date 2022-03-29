@@ -4,7 +4,7 @@ Events that are automatically tracked via the SDK and power the charts in the Su
 
 ## Overview
 
-The SDK automatically tracks the below events. Some of these can trigger paywalls. We encourage you to track them in your own analytics and use them to trigger paywalls if supported, as described in [Triggering a Paywall](<doc:Triggering>).
+The SDK automatically tracks the below events. Some of these can trigger paywalls. We encourage you to track them in your own analytics and use them to trigger paywalls on the dashboard if supported, as described in [Triggering a Paywall](<doc:Triggering>).
 
 Event Name | Action | Can Trigger Paywalls
 --- | --- | ---
