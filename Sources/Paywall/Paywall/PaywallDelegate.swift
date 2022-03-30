@@ -33,7 +33,10 @@ import StoreKit
   /// - Returns: A boolean that indicates whether or not the user has an active subscription.
 	@objc func isUserSubscribed() -> Bool
 
-	/// Called when the user taps a button with a custom `data-pw-custom` tag in your HTML paywall. See paywall.js for further documentation
+	/// Called when the user taps a button on your paywall that has a `data-pw-custom` tag attached.
+  ///
+  /// To learn more about using this function, see <doc:CustomPaywallButtons>. To learn about the types of tags that can be attached to elements on your paywall, see [paywall.js](https://docs.superwall.com/docs/paywalljs#data-tag-reference).
+  ///
 	///  - Parameter name: The value of the `data-pw-custom` tag in your HTML element that the user selected.
 	@objc optional func handleCustomPaywallAction(withName name: String)
 
@@ -49,10 +52,14 @@ import StoreKit
 	/// Called right after the paywall is presented.
 	@objc optional func didPresentPaywall()
 
-	/// Called when the user opens a URL by selecting an element with the `data-pw-open-url` tag in your HTML paywall.
+	/// Called when the user opens a URL by selecting an element on your paywall that has a `data-pw-open-url` tag.
+  ///
+  /// - Parameter url: The URL to open
 	@objc optional func willOpenURL(url: URL)
 
-	/// Called when the user taps a deep link in your HTML paywall.
+	/// Called when the user taps a deep link in your paywall.
+  ///
+  /// - Parameter url: The deep link URL to open
 	@objc optional func willOpenDeepLink(url: URL)
 
 	/// Called whenever an internal analytics event is tracked. See <doc:AutomaticallyTrackedEvents> for more.

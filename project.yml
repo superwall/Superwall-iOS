@@ -8,7 +8,9 @@ packages:
 
 targets:
   Paywall:
-    scheme: {}
+    scheme:
+      testTargets:
+        - PaywallTests
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: "me.superwall.Paywall"
     info:
@@ -30,6 +32,29 @@ targets:
     sources: [Sources/]
     dependencies:
       - package: ASN1Swift
+  PaywallTests:
+    scheme: {}
+    sources: [Tests/]
+    type: bundle.unit-test
+    platform: iOS
+    dependencies:
+      - package: ASN1Swift
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: "me.superwall.PaywallTests"
+    info:
+      path: Paywall.xcodeproj/PaywallTests_Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleExecutable: "$(EXECUTABLE_NAME)"
+        CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: "$(PRODUCT_NAME)"
+        CFBundlePackageType: "FMWK"
+        CFBundleShortVersionString: "1.0"
+        CFBundleSignature: ????
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSPrincipalClass: ""
+
   #Paywall_Paywall:
   #   type: bundle
   #  platform: iOS
