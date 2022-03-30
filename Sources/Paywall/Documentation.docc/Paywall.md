@@ -10,6 +10,7 @@ Paywall makes it easy to show paywalls in your app using UIKit or SwiftUI. If yo
 
 ### Essentials
 
+- <doc:Ecosystem>
 - <doc:GettingStarted>
 - <doc:PresentingInSwiftUI>
 - <doc:PresentingInUIKit>

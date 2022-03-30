@@ -9,6 +9,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 ### Configuring the SDK
 
 - <doc:GettingStarted>
+- <doc:Ecosystem>
 - ``configure(apiKey:userId:delegate:)``
 - ``PaywallDelegate``
 - ``debugMode``
