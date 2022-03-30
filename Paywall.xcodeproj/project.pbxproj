@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0049EE38693A044F4A60086C /* PaywallManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA036A6F17812810D420467B /* PaywallManager.swift */; };
+		015AD797431E17A19EF4C622 /* Paywall.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 46323AB736A8AD9C4DFB8F16 /* Paywall.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		02504856B5BDAF4F196F6A51 /* PaywallCacheLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D0C6D8519DAF53CCB687146 /* PaywallCacheLogicTests.swift */; };
 		0273372348EFFC1DB900BCEA /* Postback.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3EC15C00A978DCDF1B41AE7 /* Postback.swift */; };
 		02EC2B3EA46E49B985865BE8 /* PaywallLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90B1BA788343D4AC0857BF0 /* PaywallLogic.swift */; };
@@ -128,6 +129,7 @@
 		CFF3F37688ECD07D7B0B5BBB /* SWProductDiscount.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB29FF92CEC6C7BC46C57B6 /* SWProductDiscount.swift */; };
 		D0E57CC9AFBC2E4915DA07E6 /* ConvenienceFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 288D515270F38B730EA9C7D2 /* ConvenienceFunctions.swift */; };
 		D2DA85B8D5307BC848939CB2 /* ConfirmableAssignments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BFD2FDB60F3D5CE0C9B9B87 /* ConfirmableAssignments.swift */; };
+		D9B2BCBF6ADEE41F60ED0F3F /* Paywall.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46323AB736A8AD9C4DFB8F16 /* Paywall.framework */; };
 		DB5D4A75F57964597B02CD94 /* ASN1Swift in Frameworks */ = {isa = PBXBuildFile; productRef = A3A558AC670B930AFA9FF1FD /* ASN1Swift */; };
 		DB93980FA08C7F1B31568664 /* ProductVariable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4279CB3CF3FA89FDCA6AABC0 /* ProductVariable.swift */; };
 		DC2D80F662713E0AD97BF90B /* PaywallCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71B5B1C684D0BCEF740B5EAA /* PaywallCacheTests.swift */; };
@@ -154,6 +156,30 @@
 		FE82C1853125202647F35D89 /* PaywallDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3120D4B1C19900CA6951E6F8 /* PaywallDelegate.swift */; };
 		FEB31F66186E30FDAF63D045 /* Network.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82C4F84E15DB7596C36F04DD /* Network.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8C49871876600D534C88965F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FC6A155FC7F8B4F1C84F6629 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 91B775A13CD6409786DBDA8D;
+			remoteInfo = Paywall;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F43CCD4ED5C45012E20FE48A /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				015AD797431E17A19EF4C622 /* Paywall.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		000BBD9E6D4D9D5FDB017755 /* URLSession+Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSession+Request.swift"; sourceTree = "<group>"; };
@@ -310,6 +336,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D9B2BCBF6ADEE41F60ED0F3F /* Paywall.framework in Frameworks */,
 				189631A14DF510A0BAB23A83 /* ASN1Swift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -907,10 +934,12 @@
 			buildPhases = (
 				8F61DAB9509D0E78A4D56286 /* Sources */,
 				3996D3A2C2625A15E29F458B /* Frameworks */,
+				F43CCD4ED5C45012E20FE48A /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				1D173C65EBE50C3433B5AFA4 /* PBXTargetDependency */,
 			);
 			name = PaywallTests;
 			packageProductDependencies = (
@@ -1121,6 +1150,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1D173C65EBE50C3433B5AFA4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 91B775A13CD6409786DBDA8D /* Paywall */;
+			targetProxy = 8C49871876600D534C88965F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		0A0E8D4C90DDCE18DAEE2C95 /* Debug */ = {

@@ -38,6 +38,7 @@ targets:
     type: bundle.unit-test
     platform: iOS
     dependencies:
+      - target: Paywall
       - package: ASN1Swift
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: "me.superwall.PaywallTests"
