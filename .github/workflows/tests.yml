@@ -6,7 +6,7 @@ on:
       - '.github/workflows/tests.yml'
       - '**/*.swift'
       - '!Example/**'
-  workflow_dispatch
+  workflow_dispatch:
 
 jobs:
   build-docs:
