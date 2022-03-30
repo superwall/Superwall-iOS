@@ -82,10 +82,11 @@ enum PaywallResponseLogic {
 
       trackEvent(
         .triggerFire(
-          triggerInfo: TriggerInfo(
-            result: "present",
-            experimentId: experimentIdentifier,
-            variantId: variantIdentifier,
+          triggerResult: TriggerResult.paywall(
+            experiment: Experiment(
+              id: experimentIdentifier,
+              variantId: variantIdentifier
+            ),
             paywallIdentifier: paywallIdentifier
           )
         ),
@@ -109,13 +110,14 @@ enum PaywallResponseLogic {
       )
       trackEvent(
         .triggerFire(
-          triggerInfo:
-            TriggerInfo(
-              result: "holdout",
-              experimentId: experimentId,
-              variantId: variantId
+          triggerResult:
+            TriggerResult.holdout(
+              experiment: Experiment(
+                id: experimentId,
+                variantId: variantId
+              )
             )
-        ),
+          ),
         [:]
       )
       throw error
@@ -129,7 +131,7 @@ enum PaywallResponseLogic {
       ]
       trackEvent(
         .triggerFire(
-          triggerInfo: TriggerInfo(result: "no_rule_match")
+            triggerResult: TriggerResult.noRuleMatch
         ),
         [:]
       )
