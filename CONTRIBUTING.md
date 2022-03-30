@@ -11,7 +11,7 @@ please open an issue on GitHub.
 3. If you've changed APIs, update the documentation.
 4. Ensure the test suite passes.
 5. Make sure your code lints (see below).
-6. Tag @jakemore, @anglinb, and @yusuftor in the pull request.
+6. Tag @yusuftor, @jakemore, and @anglinb in the pull request.
 
 ## Coding Style
 
@@ -61,15 +61,16 @@ When we're ready to cut a new release, we update the `sdkVersion` in [Constants.
 
 If you add new code, please make sure it gets tested! When fixing bugs, try to reproduce the bug in a unit test and then fix the test. This makes sure we never regress that issue again.
 Before creating a pull request, run all unit tests by pressing **Cmd + U**. Make sure they all pass and fix any broken tests.
+We also have a GitHub Action that runs the tests on push.
 
 ## Issues
 
-We use GitHub issues to track public bugs. Please ensure your description is
-clear and has sufficient instructions to be able to reproduce the issue.
+We use GitHub issues to track public bugs. Please ensure your description is clear and has sufficient instructions to be able to reproduce the issue.
 
 ## Example app
+
 When editing the sample app, you can run swiftlint 
 
 ## License
 
-By contributing to `IGListKit`, you agree that your contributions will be licensed under the LICENSE file in the root directory of this source tree.
+By contributing to `Paywall`, you agree that your contributions will be licensed under the LICENSE file in the root directory of this source tree.
