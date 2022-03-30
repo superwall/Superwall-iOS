@@ -279,16 +279,16 @@ extension Paywall {
       switch triggerInfo {
       case .noRuleMatch:
         params = ["result": "no_rule_match"]
-      case .holdout(let experimentInfo):
+      case .holdout(let experiment):
         params = [
-          "variant_id": experimentInfo.variantId as Any,
-          "experiment_id": experimentInfo.experimentId as Any,
+          "variant_id": experiment.variantId as Any,
+          "experiment_id": experiment.id as Any,
           "result": "holdout"
         ]
-      case let .paywall(experimentInfo, paywallIdentifier):
+      case let .paywall(experiment, paywallIdentifier):
         params = [
-          "variant_id": experimentInfo.variantId as Any,
-          "experiment_id": experimentInfo.experimentId as Any,
+          "variant_id": experiment.variantId as Any,
+          "experiment_id": experiment.id as Any,
           "paywall_identifier": paywallIdentifier,
           "result": "present"
         ]

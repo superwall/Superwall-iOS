@@ -7,23 +7,33 @@
 
 import Foundation
 
-/// `ExperimentInfo` contains information describing the experiment and variant a given user was assigned. An experiment is a set of variants determined by probabilities. Currently experiements can only result in a user seeing a paywall or a user not seeing a paywall, known as a holdout.
-internal struct ExperimentInfo {
-  /// What experiement was found as a result of this trigger.
-  internal let experimentId: String
-  /// What variant of that experiment was shown to a user.
-  internal let variantId: String
+/// A trigger experiment that was assigned to a user.
+///
+/// An experiment is a set of variants determined by probabilities. Experiments can only result in a user seeing a paywall or a user not seeing a paywall, known as a holdout.
+struct Experiment {
+  /// The id of the experiment.
+  let id: String
+  /// The id of the experiment variant.
+  let variantId: String
 }
 
-/// `TriggerResult` contains infromation for tracking the result of a trigger fire event. Triggers act as entrypoints in your applicaiton where you can conditionally show a paywall. This object contains infromation to tell you about what the result of that trigger was.
-internal enum TriggerResult {
-  /// No matching rule was found for this trigger, so nothing happened.
+/// The result of a trigger.
+///
+/// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
+enum TriggerResult {
+  /// No matching rule was found for this trigger, so nothing happens.
   case noRuleMatch
+
   /// A matching rule was found and this user was shown a paywall
-  /// `experimentInfo` Information about the experiment that resulted in showing this paywall
-  /// `paywallIdentifier` The identifier of the paywall that was shown to the user
-  case paywall(experimentInfo: ExperimentInfo, paywallIdentifier: String)
-  /// A matching rule was found and this user was assigned to a holdout group and was not shown a paywall
-  /// `experimentInfo` Information about the experiment that resulted in not showing a paywall
-  case holdout(experimentInfo: ExperimentInfo)
+  ///
+  /// - Parameters:
+  ///   - experiment: The experiment associated with the trigger
+  ///   - paywallIdentifier: The identifier of the paywall that was shown to the user
+  case paywall(experiment: Experiment, paywallIdentifier: String)
+
+  /// A matching rule was found and this user was assigned to a holdout group so was not shown a paywall.
+  ///
+  /// - Parameters:
+  ///   - experiment: The experiment  associated with the trigger
+  case holdout(experiment: Experiment)
 }

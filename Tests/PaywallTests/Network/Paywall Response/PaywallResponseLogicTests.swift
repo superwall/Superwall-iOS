@@ -219,9 +219,9 @@ class PaywallResponseLogicTests: XCTestCase {
         return XCTFail()
       }
         switch(result) {
-        case .paywall(experimentInfo: let experimentInfo, paywallIdentifier: let paywallIdentifier):
-            XCTAssertEqual(experimentInfo.experimentId, experimentId)
-            XCTAssertEqual(experimentInfo.variantId, variantId)
+        case let .paywall(experiment, paywallIdentifier):
+            XCTAssertEqual(experiment.id, experimentId)
+            XCTAssertEqual(experiment.variantId, variantId)
             XCTAssertEqual(paywallIdentifier, paywallId)
             break;
         default:
@@ -264,9 +264,9 @@ class PaywallResponseLogicTests: XCTestCase {
         return XCTFail()
       }
         switch(result) {
-        case .holdout(experimentInfo: let experimentInfo):
-            XCTAssertEqual(experimentInfo.experimentId, experimentId)
-            XCTAssertEqual(experimentInfo.variantId, variantId)
+        case .holdout(let experiment):
+            XCTAssertEqual(experiment.id, experimentId)
+            XCTAssertEqual(experiment.variantId, variantId)
             break;
         default:
             XCTFail()
