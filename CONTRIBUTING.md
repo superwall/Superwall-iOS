@@ -67,10 +67,6 @@ We also have a GitHub Action that runs the tests on push.
 
 We use GitHub issues to track public bugs. Please ensure your description is clear and has sufficient instructions to be able to reproduce the issue.
 
-## Example app
-
-When editing the sample app, you can run swiftlint 
-
 ## License
 
 By contributing to `Paywall`, you agree that your contributions will be licensed under the LICENSE file in the root directory of this source tree.
