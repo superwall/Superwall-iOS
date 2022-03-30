@@ -245,15 +245,11 @@ enum PaywallResponseLogic {
     return nil
   }
 
-  private static func hi(productId: String) -> Bool {
-    return true
-  }
-
   static func getVariablesAndFreeTrial(
     fromProducts products: [Product],
     productsById: [String: SKProduct],
     isFreeTrialAvailableOverride: Bool?,
-    hasPurchased: @escaping (String) -> Bool = hi(productId:)
+    hasPurchased: @escaping (String) -> Bool = InAppReceipt().hasPurchased(productId:)
   ) -> ProductProcessingOutcome {
     var legacyVariables: [Variable] = []
     var newVariables: [ProductVariable] = []
