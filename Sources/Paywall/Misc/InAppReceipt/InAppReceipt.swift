@@ -16,7 +16,7 @@ final class InAppReceipt {
   }
 
   /// This checks to see whether a product has been purchased by looking through receipts on device.
-  /// If  the receipt has expired/is invalid but contains the productID it'll still say it has been purchased
+  /// If the receipt has expired/is invalid but contains the productID it'll still say it has been purchased
   /// However, it's okay use this method when checking whether to display a free trial or not
   func hasPurchased(productId: String) -> Bool {
     guard let data = getReceiptData() else {
