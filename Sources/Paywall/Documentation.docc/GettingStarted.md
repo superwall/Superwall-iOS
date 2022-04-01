@@ -8,7 +8,7 @@ To get up and running, you need to get your **API Key** from the Superwall Dashb
 
 ## Getting your API Key
 
-As soon as the app is launched, you need to configure the SDK with your **Public API Key**. You can retrieve this from the [Superwall settings page](https://superwall.com/applications/1/settings/keys).
+As soon as the app is launched, you need to configure the SDK with your **Public API Key**. You can retrieve this from the Superwall settings page.
 If you haven't already, [sign up for a free Superwall account](https://superwall.com/sign-up). Then, when you're through to the **Dashboard**, click the **Settings icon** in the top right corner, and select **Keys**:
 
 ![Retrieving your API key from the Superwall Dashboard](apiKey.png)

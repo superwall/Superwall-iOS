@@ -73,7 +73,7 @@ extension View {
   ///     This closure will not be called if you programmatically set `isPresented` to `false` to dismiss the paywall.
   ///
   ///     Defaults to `nil`.
-  ///   - onFail: A closure that's called when the paywall fails to present, either because an error occured or because all paywalls are off in the Superwall Dashboard.
+  ///   - onFail: A closure that's called when the paywall fails to present, either because an error occurred or because all paywalls are off in the Superwall Dashboard.
   ///     Accepts an `NSError?` with more details. Defaults to `nil`.
   public func triggerPaywall(
     forEvent event: String,

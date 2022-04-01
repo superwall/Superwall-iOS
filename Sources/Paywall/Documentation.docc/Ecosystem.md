@@ -14,7 +14,7 @@ The [Superwall Dashboard](https://superwall.com/dashboard) is your control cente
 
 ## Superwall API
 
-The API is the go-between that all our services use to communicate with each other. When you configure the SDK, you pass it your Public API Key, which you retrieve from the [dashboard settings](https://superwall.com/applications/1/settings/keys). The SDK uses this to be able to communicate with the API to load your paywalls and triggers, ready for presentation. You can also send user variables and events to the API that will appear in the dashboard.
+The API is the go-between that all our services use to communicate with each other. When you configure the SDK, you pass it your Public API Key, which you retrieve from the dashboard settings. The SDK uses this to be able to communicate with the API to load your paywalls and triggers, ready for presentation. You can also send user variables and events to the API that will appear in the dashboard.
 
 ## Paywall Template
 

@@ -104,7 +104,7 @@ public final class Paywall: NSObject {
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. For a tutorial on the best practices for implementing the delegate, we recommend checking out our <doc:GettingStarted> article.
 	/// - Parameters:
-  ///   - apiKey: Your Public API Key that you can get from the [Superwall dashboard settings](https://superwall.com/applications/1/settings/keys). If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
+  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
 	///   - userId: Your user's unique identifier, as defined by your backend system. If you don't specify a `userId`, we'll create one for you. Calling ``Paywall/Paywall/identify(userId:)`` later on will automatically alias these two for simple reporting.
   ///   - delegate: A class that conforms to ``PaywallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   /// - Returns: The newly configured ``Paywall/Paywall`` instance.
