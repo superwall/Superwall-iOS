@@ -6,7 +6,7 @@ please open an issue on GitHub.
 
 ## Setup
 
-Please make sure you have run `./scripts/setup.sh` from the root folder.
+Please make sure you have run `scripts/setup.sh`.
 
 ## Pull Requests
 
