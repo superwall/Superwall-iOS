@@ -76,7 +76,7 @@ Then, run `pod install`.
 Clone the repository and then run the setup script:
 
 ```
-$ git clone https://github.com/Instagram/IGListKit.git
+$ git clone https://github.com/superwall-me/paywall-ios.git
 $ cd paywall-ios
 $ ./scripts/setup.sh
 ```
