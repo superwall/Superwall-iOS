@@ -5,21 +5,14 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.superwall.SuperwallSwiftUIExample</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>exampleapp</string>
 			</array>
-			<key>CFBundleURLName</key>
-			<string>com.superwall.SuperwallSwiftUIExample</string>
 		</dict>
 	</array>
-	<key>UILaunchScreen</key>
-	<dict>
-		<key>UIImageName</key>
-		<string>logo</string>
-		<key>UIColorName</key>
-		<string>Neutral</string>
-	</dict>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Rubik-Regular.ttf</string>
@@ -29,6 +22,15 @@
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
+	</dict>
+	<key>UIBackgroundModes</key>
+	<array/>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>Neutral</string>
+		<key>UIImageName</key>
+		<string>logo</string>
 	</dict>
 </dict>
 </plist>

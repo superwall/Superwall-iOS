@@ -1,32 +1,16 @@
 {
-  "pins" : [
-    {
-      "identity" : "asn1swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/tikhop/ASN1Swift",
-      "state" : {
-        "revision" : "b53bee03a942623db25afc5bfb80227b2cb3b425",
-        "version" : "1.2.4"
+  "object": {
+    "pins": [
+      {
+        "package": "ASN1Swift",
+        "repositoryURL": "https://github.com/tikhop/ASN1Swift",
+        "state": {
+          "branch": null,
+          "revision": "b53bee03a942623db25afc5bfb80227b2cb3b425",
+          "version": "1.2.4"
+        }
       }
-    },
-    {
-      "identity" : "paywall-ios",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/superwall-me/paywall-ios",
-      "state" : {
-        "revision" : "1ccd01db30b63740b04a664def57f13194e1d9f9",
-        "version" : "2.2.10"
-      }
-    },
-    {
-      "identity" : "tpinappreceipt",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/tikhop/TPInAppReceipt.git",
-      "state" : {
-        "revision" : "2b9946f8fe2dd74ed87dfcb5dbedc3be06c5ccab",
-        "version" : "3.3.3"
-      }
-    }
-  ],
-  "version" : 2
+    ]
+  },
+  "version": 1
 }

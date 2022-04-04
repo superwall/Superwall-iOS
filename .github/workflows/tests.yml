@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-docs:
+  run-tests:
     runs-on: macos-latest
 
     steps:

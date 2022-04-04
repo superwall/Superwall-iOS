@@ -4,6 +4,10 @@ We want to make contributing to this project as easy and transparent as
 possible, and actively welcome your pull requests. If you run into problems,
 please open an issue on GitHub.
 
+## Setup
+
+Please make sure you have run `./scripts/setup.sh` from the root folder.
+
 ## Pull Requests
 
 1. Fork the repo and create your branch from `develop`.
@@ -36,16 +40,23 @@ In the **Indentation** tab, set **Tab Width** and **Indent Width** to **2 spaces
 
 ### SwiftLint
 To maintain readability and achieve code consistency, we follow the [Raywenderlich Swift Style Guide](https://github.com/raywenderlich/swift-style-guide).
-Every time a commit is pushed to GitHub, a GitHub Action automatically runs [SwiftLint](https://github.com/realm/SwiftLint) to check for style errors. Warnings and errors will show up as Annotations under the GitHub Action telling you what needs to change. Please fix these linting issues before creating a pull request.
+We use [SwiftLint](https://github.com/realm/SwiftLint) to check for style errors.
+
+To do this locally, you can run `swiftlint` from the root folder.
+
+Unfortunately, SwiftLint can't be run on build in Xcode for Swift Packages, so we use GitHub actions instead.
+Every time a commit that has a change in swift code is pushed to GitHub, a GitHub Action automatically runs SwiftLint. Warnings and errors will show up as Annotations under the GitHub Action telling you what needs to change. Please fix these linting issues before creating a pull request.
 
 ### Documentation
 Public classes and methods must contain detailed documentation.
+
+All documentation is compiled using [DocC](https://github.com/apple/swift-docc) and hosted on [GitHub-Pages](https://pages.github.com). This is then accessible via our [iOS SDK documentation](https://sdk.superwall.me/documentation/paywall/). You can also view this in Xcode by selecting **Product ▸ Build Documentation**.
 
 ## Editing the code
 
 Open the workspace from: `.swiftpm/xcode/package.xcworkspace`.
 
-If you are editing the example app, open the example app's `xcodeproj` in `Example/SuperwallSwiftUIExample/SuperwallSwiftUIExample.xcodeproj` directly. The advantage of this is that you can see linting issues on build. You'll need to install SwiftLint on your computer before you can do that.
+If you are editing the example app, open the example app's `xcodeproj` in `Example/SuperwallSwiftUIExample/SuperwallSwiftUIExample.xcodeproj` directly. The advantage of this is that you can see linting issues on build.
 
 ## Git Workflow
 
