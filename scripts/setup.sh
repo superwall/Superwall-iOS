@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 echo 'Installing githooks...'
-cp ./scripts/pre-commit ./.git/hooks
+ln -s -f ../../scripts/pre-commit .git/hooks
 
 echo 'Checking for SwiftLint...'
 if which swiftlint >/dev/null; then

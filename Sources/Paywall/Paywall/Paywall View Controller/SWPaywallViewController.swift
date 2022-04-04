@@ -55,8 +55,7 @@ final class SWPaywallViewController: UIViewController {
 	var paywallInfo: PaywallInfo? {
 		return paywallResponse?.getPaywallInfo(
       fromEvent: eventData,
-      calledByIdentifier: calledByIdentifier,
-      includeExperiment: true
+      calledByIdentifier: calledByIdentifier
     )
 	}
 
