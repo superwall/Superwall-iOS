@@ -4,18 +4,15 @@ We want to make contributing to this project as easy and transparent as
 possible, and actively welcome your pull requests. If you run into problems,
 please open an issue on GitHub.
 
-## Setup
-
-Please make sure you have run `scripts/setup.sh`.
-
 ## Pull Requests
 
 1. Fork the repo and create your branch from `develop`.
-2. If you've added code that should be tested, add tests.
-3. If you've changed APIs, update the documentation.
-4. Ensure the test suite passes.
-5. Make sure your code lints (see below).
-6. Tag @yusuftor, @jakemore, and @anglinb in the pull request.
+2. Run the setup script `./scripts/setup.sh`
+3. If you've added code that should be tested, add tests.
+4. If you've changed APIs, update the documentation.
+5. Ensure the test suite passes.
+6. Make sure your code lints (see below).
+7. Tag @yusuftor, @jakemore, and @anglinb in the pull request.
 
 ## Coding Style
 

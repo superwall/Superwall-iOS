@@ -73,15 +73,6 @@ Then, run `pod install`.
 
 ## Getting Started
 
-Clone the repository and then run the setup script:
-
-```
-$ git clone https://github.com/superwall-me/paywall-ios.git
-$ cd paywall-ios
-$ ./scripts/setup.sh
-```
-
-
 You can [view our iOS SDK documentation](https://sdk.superwall.me/documentation/paywall/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
 
 For general docs that include how to use the Superwall Dashboard, visit [docs.superwall.com](https://docs.superwall.com/docs).
