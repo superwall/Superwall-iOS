@@ -79,11 +79,8 @@ For general docs that include how to use the Superwall Dashboard, visit [docs.su
 
 Check out our sample apps for a hands-on demonstration of the SDK:
 
-- [Swift - SwiftUI](Example)
-- [Swift – UIKit](https://github.com/superwall-me/superwallQuickStart)
-- [Objective-C](https://github.com/superwall-me/SuperwallQuickstartObjectiveC)
-
-<!-- ➡️ | [Webhooks](https://docs.superwall.com/docs/webhooks) - enhanced server-to-server communication with events for purchases, renewals, cancellations, and more -->
+- [Swift - SwiftUI](Examples/SuperwallSwiftUIExample)
+- [Swift – UIKit](Examples/SuperwallUIKitExample)
 
 ## Contributing
 
