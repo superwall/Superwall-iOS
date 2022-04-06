@@ -4,8 +4,8 @@ We have two example apps – one built in SwiftUI and another built using UIKit.
 
 Please select which app you'd like to use:
 
-- [SwiftUI Example App](Examples/SuperwallSwiftUIExample)
-- [UIKit Example App](Examples/SuperwallUIKitExample)
+- [SwiftUI Example App](SuperwallSwiftUIExample)
+- [UIKit Example App](SuperwallUIKitExample)
 
 ## Support
 
