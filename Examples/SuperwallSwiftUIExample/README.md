@@ -6,12 +6,13 @@ Usually, to integrate the SDK into your app, you first need to have configured a
 
 ## Features
 
-| Feature                             | Sample Project Location                   |
-| ----------------------------------- | ----------------------------------------- |
-| 🕹 Configuring the *Paywall* SDK    | [Services/PaywallService.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/Services/PaywallService.swift#L20) |
-| 💰 Presenting a paywall             | [PresentPaywallView.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/PresentPaywallView.swift#L35) |
-| 👉 Triggering a paywall             | [TriggerPaywallView.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/TriggerPaywallView.swift#L36) |
-| 👥 Identifying the user             | [Services/PaywallService.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/Services/PaywallService.swift#L31) |
+Feature | Sample Project Location
+--- | ---
+🕹 Configuring the *Paywall* SDK | [Services/PaywallService.swift](SuperwallSwiftUIExample/Services/PaywallService.swift#L20)
+💰 Presenting a paywall | [PresentPaywallView.swift](SuperwallSwiftUIExample/PresentPaywallView.swift#L35)
+👉 Explicitly Triggering a paywall | [ExplicitlyTriggerPaywallView.swift](SuperwallSwiftUIExample/ExplicitlyTriggerPaywallView.swift#L36)
+👉 Explicitly Triggering a paywall | [ImplicitlyTriggerPaywallView.swift](SuperwallSwiftUIExample/ImplicitlyTriggerPaywallView.swift#L36)
+👥 Identifying the user | [Services/PaywallService.swift](SuperwallSwiftUIExample/Services/PaywallService.swift#L31)
 
 ## Requirements
 
@@ -24,11 +25,11 @@ This example app uses:
 
 ## Getting Started
 
-Clone or download the *Paywall* SDK from the [project home page](https://github.com/superwall-me/paywall-ios). Then, open **SuperwallSwiftUIExample.xcodeproj** in Xcode and take a look at the code inside the [SuperwallSwiftUIExample](SuperwallSwiftUIExample/SuperwallSwiftUIExample) folder.
+Clone or download the *Paywall* SDK from the [project home page](https://github.com/superwall-me/paywall-ios). Then, open **SuperwallSwiftUIExample.xcodeproj** in Xcode and take a look at the code inside the [SuperwallSwiftUIExample](SuperwallSwiftUIExample) folder.
 
-Inside the [Services](SuperwallSwiftUIExample/SuperwallSwiftUIExample/Services) folder, you'll see some helper classes. [PaywallService.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/Services/PaywallService.swift) handles the setup and delegate methods of the SDK, and [StoreKitService.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/Services/StoreKitService.swift) handles the purchasing of in-app subscriptions.
+Inside the [Services](SuperwallSwiftUIExample/Services) folder, you'll see some helper classes. [PaywallService.swift](SuperwallSwiftUIExample/Services/PaywallService.swift) handles the setup and delegate methods of the SDK, and [StoreKitService.swift](SuperwallSwiftUIExample/Services/StoreKitService.swift) handles the purchasing of in-app subscriptions.
 
-[Products.storekit](SuperwallSwiftUIExample/SuperwallSwiftUIExample/Products.storekit) is a StoreKit configuration file that is used to mimic the setup of real products on App Store Connect. This is so you can make test purchases within the sample app without having to set up App Store Connect. In a production app, you will need real products configured in App Store Connect but you can also use a StoreKit configuration file for testing purposes if you wish.
+[Products.storekit](SuperwallSwiftUIExample/Products.storekit) is a StoreKit configuration file that is used to mimic the setup of real products on App Store Connect. This is so you can make test purchases within the sample app without having to set up App Store Connect. In a production app, you will need real products configured in App Store Connect but you can also use a StoreKit configuration file for testing purposes if you wish.
 
 You'll see a few different SwiftUI files that handle the layout of the app and presenting of Paywalls.
 
@@ -38,13 +39,13 @@ Build and run the app and you'll see the welcome screen:
   <img src="https://i.imgur.com/jKkBBNW.png" alt="The welcome screen" width="220px" />
 </p>
 
-The *Paywall* SDK is [configured](SuperwallSwiftUIExample/SuperwallSwiftUIExample/Services/PaywallService.swift#L20) on app launch, setting an `apiKey` and `delegate`.
+The *Paywall* SDK is [configured](SuperwallSwiftUIExample/Services/PaywallService.swift#L20) on app launch, setting an `apiKey` and `delegate`.
 
-The SDK sends back events received from the paywall via the delegate methods in [PaywallService.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/Services/PaywallService.swift). You use these methods to make and restore purchases, react to analytical events, as well as tell the SDK whether the user has an active subscription. 
+The SDK sends back events received from the paywall via the delegate methods in [PaywallService.swift](SuperwallSwiftUIExample/Services/PaywallService.swift). You use these methods to make and restore purchases, react to analytical events, as well as tell the SDK whether the user has an active subscription. 
 
 ## Identifying a user
 
-On the welcome screen, enter your name in the **text field** and tap **Continue**. This saves to the Paywall user attributes using   [Paywall.setUserAttributes(_:)](SuperwallSwiftUIExample/SuperwallSwiftUIExample/Services/PaywallService.swift#L31). You don't need to set user attributes, but it can be useful if you want to recall information about the user on your paywall.
+On the welcome screen, enter your name in the **text field** and tap **Continue**. This saves to the Paywall user attributes using   [Paywall.setUserAttributes(_:)](SuperwallSwiftUIExample/Services/PaywallService.swift#L31). You don't need to set user attributes, but it can be useful if you want to recall information about the user on your paywall.
 
 You'll see an overview screen:
 
@@ -58,7 +59,7 @@ Paywalls are created and enabled in the [Superwall Dashboard](https://superwall.
 
 ### Presenting a Paywall 
 
-A paywall is presented by using the `presentPaywall(isPresented:onPresent:onDismiss:onFail)` view modifier in [PresentPaywallView.swift](SuperwallSwiftUIExample/SuperwallSwiftUIExample/PresentPaywallView.swift#L36). 
+A paywall is presented by using the `presentPaywall(isPresented:onPresent:onDismiss:onFail)` view modifier in [PresentPaywallView.swift](SuperwallSwiftUIExample/PresentPaywallView.swift#L35). 
 
 The paywall assigned to the user is determined by the settings in the Superwall Dashboard. Once a user is assigned a paywall, they will continue to see the same paywall, even when the paywall is turned off, unless you reassign them to a new one.
 
