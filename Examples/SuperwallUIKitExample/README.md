@@ -25,7 +25,7 @@ This example app uses:
 
 ## Getting Started
 
-Clone or download the *Paywall* SDK from the [project home page](https://github.com/superwall-me/paywall-ios). Then, open **SuperwallUIKitExample.xcodeproj** in Xcode and take a look at the code inside the [SuperwallSwiftUIExample]() folder.
+Clone or download the *Paywall* SDK from the [project home page](https://github.com/superwall-me/paywall-ios). Then, open **SuperwallUIKitExample.xcodeproj** in Xcode and take a look at the code inside the [SuperwallUIKitExample]() folder.
 
 Inside the [Services](SuperwallUIKitExample/Services) folder, you'll see some helper classes. [PaywallService.swift](SuperwallUIKitExample/Services/PaywallService.swift) handles the setup and delegate methods of the SDK, and [StoreKitService.swift](SuperwallUIKitExample/Services/StoreKitService.swift) handles the purchasing of in-app subscriptions.
 
