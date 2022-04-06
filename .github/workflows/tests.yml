@@ -5,7 +5,7 @@ on:
     paths:
       - '.github/workflows/tests.yml'
       - '**/*.swift'
-      - '!Example/**'
+      - '!Examples/**'
   workflow_dispatch:
 
 jobs:

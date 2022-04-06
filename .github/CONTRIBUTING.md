@@ -13,6 +13,7 @@ please open an issue on GitHub.
 5. Ensure the test suite passes.
 6. Make sure your code lints (see below).
 7. Tag @yusuftor, @jakemore, and @anglinb in the pull request.
+8. Add an entry to the [CHANGELOG.md](../CHANGELOG.md) for any breaking changes, enhancements, or bug fixes.
 
 ## Coding Style
 

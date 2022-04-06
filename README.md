@@ -75,15 +75,12 @@ Then, run `pod install`.
 
 You can [view our iOS SDK documentation](https://sdk.superwall.me/documentation/paywall/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
 
-For general docs that include how to use the Superwall Dashboard, visit [docs.superwall.com](https://docs.superwall.com/docs).
+For general docs including how to use the Superwall Dashboard, visit [docs.superwall.com](https://docs.superwall.com/docs).
 
 Check out our sample apps for a hands-on demonstration of the SDK:
 
-- [Swift - SwiftUI](Example)
-- [Swift – UIKit](https://github.com/superwall-me/superwallQuickStart)
-- [Objective-C](https://github.com/superwall-me/SuperwallQuickstartObjectiveC)
-
-<!-- ➡️ | [Webhooks](https://docs.superwall.com/docs/webhooks) - enhanced server-to-server communication with events for purchases, renewals, cancellations, and more -->
+- [SwiftUI Example App](Examples/SuperwallSwiftUIExample)
+- [UIKit Example App](Examples/SuperwallUIKitExample)
 
 ## Contributing
 

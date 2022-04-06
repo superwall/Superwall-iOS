@@ -5,8 +5,8 @@ on:
     paths:
       - '.github/workflows/package-swiftlint.yml'
       - '.swiftlint.yml'
+      - '!Examples/**'
       - '**/*.swift'
-      - '!Example/**'
 
 jobs:
   Package-SwiftLint:

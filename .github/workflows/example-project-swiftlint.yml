@@ -1,14 +1,14 @@
-name: Example Project SwiftLint
+name: Example Projects SwiftLint
 
 on:
   push:
     paths:
       - '.github/workflows/example-project-swiftlint.yml'
-      - 'Example/.swiftlint.yml'
-      - 'Example/SuperwallSwiftUIExample/**/*.swift'
+      - 'Examples/.swiftlint.yml'
+      - 'Examples/**/*.swift'
 
 jobs:
-  Example-Project-SwiftLint:
+  Example-Projects-SwiftLint:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -19,4 +19,4 @@ jobs:
         with:
           args: --config .swiftlint.yml
         env:
-          WORKING_DIRECTORY: Example
+          WORKING_DIRECTORY: Examples
