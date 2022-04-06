@@ -10,13 +10,13 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - New [UIKit Example App](Examples/SuperwallUIKitExample).
 - Better [SDK documentation](https://sdk.superwall.me/documentation/paywall/). This is built from the ground up using DocC which means you view it directly in Xcode by selecting **Product ▸ Build Documentation**.
 - New Pull Request and Bug Report templates for the repo.
-- Added a setup file that installs GitHooks as well as swiftlint if you don't already have it.
+- Added a setup file that installs GitHooks as well as SwiftLint if you don't already have it. This is located at `scripts/setup.sh` and can be run from anywhere.
 - Added a [CONTIBUTING.md](CONTRIBUTING.md) file for detailed instructions on how to get set up and contribute to the codebase.
 - Added a [Code of Conduct](CODE_OF_CONDUCT.md) file to the repo.
-- Removed the `TPInnAppReceipt` dependency.
 - Added a CHANGELOG.md file.
+- Removed the `TPInnAppReceipt` dependency for the SDK.
 
 
 ### Fixes
-- Readme links for the UIKit example app now work.
-- Exposes all experiment/variant IDs whenever PaywallInfo is returned in SDK callbacks. This will be useful in the next version of Triggers.
+- All readme links for the UIKit example app now work.
+- Exposes `experimentId` and `variantId` whenever `PaywallInfo` is returned in SDK callbacks. This will be useful in the next version of Triggers.
