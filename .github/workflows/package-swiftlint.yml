@@ -6,7 +6,7 @@ on:
       - '.github/workflows/package-swiftlint.yml'
       - '.swiftlint.yml'
       - '**/*.swift'
-      - '!Example/**'
+      - '!Examples/**'
 
 jobs:
   Package-SwiftLint:
