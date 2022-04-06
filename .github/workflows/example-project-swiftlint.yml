@@ -8,7 +8,7 @@ on:
       - 'Examples/**/*.swift'
 
 jobs:
-  Example-Projects-SwiftLint:
+  SwiftUI-Example-Project-SwiftLint:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -17,6 +17,19 @@ jobs:
       - name: GitHub Action for SwiftLint
         uses: norio-nomura/action-swiftlint@3.2.1
         with:
-          args: --config .swiftlint.yml
+          args: --config ../.swiftlint.yml
         env:
-          WORKING_DIRECTORY: Examples
+          WORKING_DIRECTORY: Examples/SuperwallSwiftUIExample
+
+  UIKit-Example-Project-SwiftLint:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: GitHub Action for SwiftLint
+        uses: norio-nomura/action-swiftlint@3.2.1
+        with:
+          args: --config ../.swiftlint.yml
+        env:
+          WORKING_DIRECTORY: Examples/SuperwallUIKitExample
