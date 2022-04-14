@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 @available(iOS 13.0, *)
 struct PaywallPresentationModifier: ViewModifier {
@@ -17,10 +18,9 @@ struct PaywallPresentationModifier: ViewModifier {
 
   func body(content: Content) -> some View {
     content
-      .valueChanged(
-        value: isPresented,
-        onChange: updatePresentation
-      )
+      .onReceive(Just(isPresented)) { value in
+        updatePresentation(isPresented)
+      }
   }
 
   private func updatePresentation(_ isPresented: Bool) {

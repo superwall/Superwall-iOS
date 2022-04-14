@@ -20,3 +20,4 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ### Fixes
 - All readme links for the UIKit example app now work.
 - Exposes `experimentId` and `variantId` whenever `PaywallInfo` is returned in SDK callbacks. This will be useful in the next version of Triggers.
+- When triggering or presenting a paywall, if the default value for `isPresented` was `true`, the paywall would not present/trigger. It now works as expected.
