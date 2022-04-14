@@ -15,7 +15,7 @@ extension Paywall {
     fromEvent event: EventData? = nil,
     cached: Bool = true,
     ignoreSubscriptionStatus: Bool = false,
-    onPresent: ((PaywallInfo?) -> Void)? = nil,
+    onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: PaywallDismissalCompletionBlock? = nil,
     onFail: ((NSError) -> Void)? = nil
   ) {
@@ -101,7 +101,7 @@ extension Paywall {
         ) { success in
           if success {
             self.presentAgain = {
-              if let presentingPaywallIdentifier = paywallViewController.paywallResponse?.identifier {
+              if let presentingPaywallIdentifier = paywallViewController.paywallResponse.identifier {
                 PaywallManager.shared.removePaywall(withIdentifier: presentingPaywallIdentifier)
               }
               internallyPresent(
@@ -160,9 +160,7 @@ extension Paywall {
     completion: (() -> Void)? = nil
   ) {
     onMain {
-      guard let paywallInfo = paywallViewController.paywallInfo else {
-        return
-      }
+      let paywallInfo = paywallViewController.paywallInfo
       paywallViewController.dismiss(
         .withResult(
           paywallInfo: paywallInfo,
