@@ -94,7 +94,7 @@ final class Network {
   }
 
   func getConfig(completion: @escaping (Result<ConfigResponse, Error>) -> Void) {
-    urlSession.request(.config()) { result in
+    urlSession.request(.config) { result in
       switch result {
       case .success(let response):
         completion(.success(response))
@@ -132,14 +132,11 @@ final class Network {
     }
   }
 
-  func sendPostback(
-    _ postback: Postback,
-    completion: @escaping (Result<PostBackResponse, Error>) -> Void
-  ) {
+  func sendPostback(_ postback: Postback) {
     urlSession.request(.postback(postback)) { result in
       switch result {
-      case .success(let response):
-        completion(.success(response))
+      case .success:
+        break
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -148,7 +145,6 @@ final class Network {
           info: ["payload": postback],
           error: error
         )
-        completion(.failure(error))
       }
     }
   }
