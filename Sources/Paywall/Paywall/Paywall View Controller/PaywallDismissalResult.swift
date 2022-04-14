@@ -10,7 +10,7 @@ import Foundation
 /// Returned as a result of a paywall dismissing. It contains information about the paywall and the reason it was dismissed.
 public struct PaywallDismissalResult {
   /// Contains information about the dismissed paywall
-  public let paywallInfo: PaywallInfo?
+  public let paywallInfo: PaywallInfo
 
   /// Contains the possible reasons for the dismissal of a paywall.
   public enum DismissState {
@@ -31,7 +31,7 @@ public struct PaywallDismissalResult {
   public let state: DismissState
 
   static func withResult(
-    paywallInfo: PaywallInfo?,
+    paywallInfo: PaywallInfo,
     state: DismissState
   ) -> Self {
     return PaywallDismissalResult(

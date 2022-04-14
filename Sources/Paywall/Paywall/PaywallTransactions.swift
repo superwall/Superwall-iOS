@@ -62,9 +62,8 @@ extension Paywall {
     paywallViewController: SWPaywallViewController,
     for product: SKProduct
   ) {
-		if let paywallInfo = paywallViewController.paywallInfo {
-			Paywall.track(.transactionStart(paywallInfo: paywallInfo, product: product))
-		}
+    let paywallInfo = paywallViewController.paywallInfo
+    Paywall.track(.transactionStart(paywallInfo: paywallInfo, product: product))
 
 		paywallViewController.loadingState = .loadingPurchase
 
@@ -77,16 +76,15 @@ extension Paywall {
     paywallViewController: SWPaywallViewController,
     for product: SKProduct
   ) {
-    if let paywallInfo = paywallViewController.paywallInfo {
-			Paywall.track(.transactionComplete(paywallInfo: paywallInfo, product: product))
-			if let freeTrialAvailable = paywallViewController.paywallResponse?.isFreeTrialAvailable {
-				if freeTrialAvailable {
-					Paywall.track(.freeTrialStart(paywallInfo: paywallInfo, product: product))
-				} else {
-					Paywall.track(.subscriptionStart(paywallInfo: paywallInfo, product: product))
-				}
-			}
-		}
+    let paywallInfo = paywallViewController.paywallInfo
+    Paywall.track(.transactionComplete(paywallInfo: paywallInfo, product: product))
+    if let freeTrialAvailable = paywallViewController.paywallResponse.isFreeTrialAvailable {
+      if freeTrialAvailable {
+        Paywall.track(.freeTrialStart(paywallInfo: paywallInfo, product: product))
+      } else {
+        Paywall.track(.subscriptionStart(paywallInfo: paywallInfo, product: product))
+      }
+    }
     dismiss(
       paywallViewController,
       state: .purchased(productId: product.productIdentifier)
@@ -106,17 +104,15 @@ extension Paywall {
 			paywallViewController.loadingState = .ready
 
 			if self.didTryToAutoRestore {
-				paywallViewController.loadingState = .ready
-
-				if let paywallInfo = paywallViewController.paywallInfo {
-					Paywall.track(
-            .transactionFail(
-              paywallInfo: paywallInfo,
-              product: product,
-              message: error?.localizedDescription ?? ""
-            )
+        let paywallInfo = paywallViewController.paywallInfo
+        paywallViewController.loadingState = .ready
+        Paywall.track(
+          .transactionFail(
+            paywallInfo: paywallInfo,
+            product: product,
+            message: error?.localizedDescription ?? ""
           )
-				}
+        )
 
 				self.paywallViewController?.presentAlert(
           title: "Please try again",
@@ -136,17 +132,14 @@ extension Paywall {
     paywallViewController: SWPaywallViewController,
     for product: SKProduct
   ) {
-		if let paywallInfo = paywallViewController.paywallInfo {
-			Paywall.track(.transactionAbandon(paywallInfo: paywallInfo, product: product))
-		}
-
+    let paywallInfo = paywallViewController.paywallInfo
+    Paywall.track(.transactionAbandon(paywallInfo: paywallInfo, product: product))
 		paywallViewController.loadingState = .ready
 	}
 
 	private func transactionWasRestored(paywallViewController: SWPaywallViewController) {
-		if let paywallInfo = paywallViewController.paywallInfo {
-			Paywall.track(.transactionRestore(paywallInfo: paywallInfo, product: nil))
-		}
+    let paywallInfo = paywallViewController.paywallInfo
+    Paywall.track(.transactionRestore(paywallInfo: paywallInfo, product: nil))
     dismiss(paywallViewController, state: .restored)
 	}
 
@@ -157,15 +150,14 @@ extension Paywall {
       message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved."
     )
 
-		if let paywallInfo = paywallViewController.paywallInfo {
-			Paywall.track(
-        .transactionFail(
-          paywallInfo: paywallInfo,
-          product: nil,
-          message: "Needs parental approval"
-        )
+		let paywallInfo = paywallViewController.paywallInfo
+    Paywall.track(
+      .transactionFail(
+        paywallInfo: paywallInfo,
+        product: nil,
+        message: "Needs parental approval"
       )
-		}
+    )
 	}
 }
 

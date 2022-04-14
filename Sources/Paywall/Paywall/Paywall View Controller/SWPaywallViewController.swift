@@ -33,7 +33,7 @@ final class SWPaywallViewController: UIViewController {
 	var dismissalCompletion: PaywallDismissalCompletionBlock?
 	var isPresented = false
 	var calledDismiss = false
-  var paywallResponse: PaywallResponse?
+  var paywallResponse: PaywallResponse
 	var eventData: EventData?
   var calledByIdentifier = false
 	var readyForEventTracking = false
@@ -52,15 +52,15 @@ final class SWPaywallViewController: UIViewController {
   private lazy var eventHandler = WebEventHandler(delegate: self)
   lazy var webView = SWWebView(delegate: eventHandler)
 
-	var paywallInfo: PaywallInfo? {
-		return paywallResponse?.getPaywallInfo(
+	var paywallInfo: PaywallInfo {
+		return paywallResponse.getPaywallInfo(
       fromEvent: eventData,
       calledByIdentifier: calledByIdentifier
     )
 	}
 
   var presentationStyle: PaywallPresentationStyle {
-    return paywallResponse?.presentationStyle ?? .sheet
+    return paywallResponse.presentationStyle
   }
 
   private var purchaseLoadingIndicatorContainer: UIView = {
@@ -121,14 +121,14 @@ final class SWPaywallViewController: UIViewController {
 	// MARK: - View Lifecycle
 
 	init(
-    paywallResponse: PaywallResponse?,
+    paywallResponse: PaywallResponse,
     delegate: SWPaywallViewControllerDelegate? = nil
   ) {
 		self.delegate = delegate
+    self.paywallResponse = paywallResponse
     super.init(nibName: nil, bundle: nil)
-		if let paywallResponse = paywallResponse {
-			setPaywallResponse(paywallResponse)
-		}
+    configureUI()
+    loadPaywallWebpage()
 	}
 
 	required init?(coder: NSCoder) {
@@ -381,7 +381,7 @@ final class SWPaywallViewController: UIViewController {
 	@objc func pressedRefreshPaywall() {
     dismiss(
       .withResult(
-        paywallInfo: nil,
+        paywallInfo: paywallInfo,
         state: .closed
       ),
       shouldCallCompletion: false
@@ -393,7 +393,7 @@ final class SWPaywallViewController: UIViewController {
 	@objc func pressedExitPaywall() {
     dismiss(
       .withResult(
-        paywallInfo: nil,
+        paywallInfo: paywallInfo,
         state: .closed
       ),
       shouldCallCompletion: true
@@ -402,35 +402,19 @@ final class SWPaywallViewController: UIViewController {
     }
 	}
 
-	func setPaywallResponse(_ paywallResponse: PaywallResponse) {
-    self.paywallResponse = paywallResponse
-
+	private func configureUI() {
     DispatchQueue.main.async { [weak self] in
       guard let self = self else {
         return
       }
 
       self.webView.alpha = 0.0
-      self.view.backgroundColor = paywallResponse.paywallBackgroundColor
-      let loadingColor = paywallResponse.paywallBackgroundColor.readableOverlayColor
+      self.view.backgroundColor = self.paywallResponse.paywallBackgroundColor
+      let loadingColor = self.paywallResponse.paywallBackgroundColor.readableOverlayColor
       self.purchaseLoadingIndicator.color = loadingColor
       self.refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.contentPlaceholderImageView.tintColor = loadingColor.withAlphaComponent(0.5)
-
-      if let urlString = self.paywallResponse?.url,
-        let url = URL(string: urlString) {
-        if let paywallInfo = self.paywallInfo {
-          Paywall.track(.paywallWebviewLoadStart(paywallInfo: paywallInfo))
-        }
-
-        self.webView.load(URLRequest(url: url))
-        if self.paywallResponse?.webViewLoadStartTime == nil,
-          self.paywallResponse != nil {
-          self.paywallResponse?.webViewLoadStartTime = Date()
-        }
-        self.loadingState = .loadingResponse
-      }
     }
 
     switch presentationStyle {
@@ -440,6 +424,20 @@ final class SWPaywallViewController: UIViewController {
       modalPresentationStyle = .formSheet
     case .fullscreen:
       modalPresentationStyle = .overFullScreen
+    }
+  }
+
+  private func loadPaywallWebpage() {
+    let urlString = self.paywallResponse.url
+
+    if let url = URL(string: urlString) {
+      Paywall.track(.paywallWebviewLoadStart(paywallInfo: self.paywallInfo))
+
+      self.webView.load(URLRequest(url: url))
+      if self.paywallResponse.webViewLoadStartTime == nil {
+        self.paywallResponse.webViewLoadStartTime = Date()
+      }
+      self.loadingState = .loadingResponse
     }
   }
 
@@ -454,15 +452,11 @@ final class SWPaywallViewController: UIViewController {
 	}
 
 	func trackOpen() {
-		if let i = paywallInfo {
-			Paywall.track(.paywallOpen(paywallInfo: i))
-		}
+		Paywall.track(.paywallOpen(paywallInfo: paywallInfo))
 	}
 
 	func trackClose() {
-		if let i = paywallInfo {
-			Paywall.track(.paywallClose(paywallInfo: i))
-		}
+		Paywall.track(.paywallClose(paywallInfo: paywallInfo))
 	}
 
 	func presentAlert(
@@ -680,7 +674,7 @@ extension SWPaywallViewController: GameControllerDelegate {
 extension SWPaywallViewController: Stubbable {
   static func stub() -> SWPaywallViewController {
     return SWPaywallViewController(
-      paywallResponse: nil,
+      paywallResponse: .stub(),
       delegate: nil
     )
   }

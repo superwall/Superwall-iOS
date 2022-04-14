@@ -29,8 +29,8 @@ The `onPresent`, `onFail`, and `onDismiss` callbacks are optional. They provide 
 
 Parameter  | Type | Functionality
 --- | --- | ---
-`onPresent` | `(PaywallInfo?) -> Void` | A closure that’s called after the paywall is presented. Accepts an optional ``Paywall/PaywallInfo`` object containing information about the paywall. Defaults to `nil`.
-`onDismiss` | `(didPurchase: Bool, productId: String?, info: PaywallInfo?) → Void` | The closure to execute after the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Called when the paywall is dismissed (either by the user or because a purchase occurred). If `didPurchase` is `true`, `productId` contains the id of the purchased product. Defaults to `nil`.
+`onPresent` | `(PaywallInfo) -> Void` | A closure that’s called after the paywall is presented. Accepts an optional ``Paywall/PaywallInfo`` object containing information about the paywall. Defaults to `nil`.
+`onDismiss` | `(didPurchase: Bool, productId: String?, info: PaywallInfo) → Void` | The closure to execute after the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Called when the paywall is dismissed (either by the user or because a purchase occurred). If `didPurchase` is `true`, `productId` contains the id of the purchased product. Defaults to `nil`.
 `onFail` | `(NSError?) -> Void` | Called if an error occurs while showing your paywall, either because something is misconfigured, all paywalls are off, or if an unexpected response is received from our server. You should typically fallback to your previous paywall if this happens. Defaults to nil.
 
 Occasionally you may want to specify a paywall or view controller to present the paywall on. These two parameters are also included in ``Paywall/Paywall/present(identifier:on:ignoreSubscriptionStatus:onPresent:onDismiss:onFail:)`` for these special occasions:

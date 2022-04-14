@@ -12,7 +12,7 @@ import Combine
 struct PaywallPresentationModifier: ViewModifier {
   @Binding var isPresented: Bool
   @State private var manuallySetIsPresented = false
-  var onPresent: ((PaywallInfo?) -> Void)?
+  var onPresent: ((PaywallInfo) -> Void)?
   var onDismiss: ((PaywallDismissalResult) -> Void)?
   var onFail: ((NSError) -> Void)?
 

@@ -10,8 +10,8 @@ import WebKit
 
 protocol WebEventHandlerDelegate: AnyObject {
   var eventData: EventData? { get }
-  var paywallResponse: PaywallResponse? { get set }
-  var paywallInfo: PaywallInfo? { get }
+  var paywallResponse: PaywallResponse { get set }
+  var paywallInfo: PaywallInfo { get }
   var webView: SWWebView { get }
   var loadingState: PaywallLoadingState { get set }
   var isPresentedViewController: Bool { get }
@@ -95,7 +95,7 @@ final class WebEventHandler: WebEventDelegate {
   private func didLoadWebView(from paywallResponse: PaywallResponse) {
     if let paywallInfo = delegate?.paywallInfo {
       if paywallResponse.webViewLoadCompleteTime == nil {
-        delegate?.paywallResponse?.webViewLoadCompleteTime = Date()
+        delegate?.paywallResponse.webViewLoadCompleteTime = Date()
       }
 
       Paywall.track(.paywallWebviewLoadComplete(paywallInfo: paywallInfo))
