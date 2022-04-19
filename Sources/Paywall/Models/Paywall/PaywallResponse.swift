@@ -109,8 +109,7 @@ struct PaywallResponse: Decodable {
 
   func getPaywallInfo(
     fromEvent: EventData?,
-    calledByIdentifier: Bool = false,
-    includeExperiment: Bool = false
+    calledByIdentifier: Bool = false
   ) -> PaywallInfo {
     return PaywallInfo(
       id: id ?? "unknown",
@@ -127,8 +126,8 @@ struct PaywallResponse: Decodable {
       webViewLoadCompleteTime: webViewLoadCompleteTime,
       productsLoadStartTime: productsLoadStartTime,
       productsLoadCompleteTime: productsLoadCompleteTime,
-      variantId: includeExperiment ? variantId : nil,
-      experimentId: includeExperiment ? experimentId : nil
+      variantId: variantId,
+      experimentId: experimentId
     )
   }
 

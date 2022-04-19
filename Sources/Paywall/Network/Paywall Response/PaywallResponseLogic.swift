@@ -7,7 +7,6 @@
 
 import Foundation
 import StoreKit
-import TPInAppReceipt
 
 struct TriggerResponseIdentifiers: Equatable {
   let paywallId: String?
@@ -83,10 +82,11 @@ enum PaywallResponseLogic {
 
       trackEvent(
         .triggerFire(
-          triggerInfo: TriggerInfo(
-            result: "present",
-            experimentId: experimentIdentifier,
-            variantId: variantIdentifier,
+          triggerResult: TriggerResult.paywall(
+            experiment: Experiment(
+              id: experimentIdentifier,
+              variantId: variantIdentifier
+            ),
             paywallIdentifier: paywallIdentifier
           )
         ),
@@ -110,13 +110,14 @@ enum PaywallResponseLogic {
       )
       trackEvent(
         .triggerFire(
-          triggerInfo:
-            TriggerInfo(
-              result: "holdout",
-              experimentId: experimentId,
-              variantId: variantId
+          triggerResult:
+            TriggerResult.holdout(
+              experiment: Experiment(
+                id: experimentId,
+                variantId: variantId
+              )
             )
-        ),
+          ),
         [:]
       )
       throw error
@@ -130,7 +131,7 @@ enum PaywallResponseLogic {
       ]
       trackEvent(
         .triggerFire(
-          triggerInfo: TriggerInfo(result: "no_rule_match")
+          triggerResult: TriggerResult.noRuleMatch
         ),
         [:]
       )
@@ -248,7 +249,7 @@ enum PaywallResponseLogic {
     fromProducts products: [Product],
     productsById: [String: SKProduct],
     isFreeTrialAvailableOverride: Bool?,
-    hasPurchased: @escaping (Product) -> Bool = hasPurchased(product:)
+    hasPurchased: @escaping (String) -> Bool = InAppReceipt().hasPurchased(productId:)
   ) -> ProductProcessingOutcome {
     var legacyVariables: [Variable] = []
     var newVariables: [ProductVariable] = []
@@ -275,8 +276,8 @@ enum PaywallResponseLogic {
 
       if product.type == .primary {
         isFreeTrialAvailable = appleProduct.hasFreeTrial
-        
-        if hasPurchased(product),
+
+        if hasPurchased(product.id),
           appleProduct.hasFreeTrial {
           isFreeTrialAvailable = false
         }
@@ -294,12 +295,5 @@ enum PaywallResponseLogic {
       isFreeTrialAvailable: isFreeTrialAvailable,
       resetFreeTrialOverride: resetFreeTrialOverride
     )
-  }
-
-  private static func hasPurchased(product: Product) -> Bool {
-    guard let receipt = try? InAppReceipt.localReceipt() else {
-      return false
-    }
-    return receipt.containsPurchase(ofProductIdentifier: product.id)
   }
 }

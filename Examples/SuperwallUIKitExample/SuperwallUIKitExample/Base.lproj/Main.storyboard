@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Q5H-aZ-jXR">
+    <device id="retina6_5" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
+        <capability name="Named colors" minToolsVersion="9.0"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <customFonts key="customFonts">
+        <array key="Rubik-Bold.ttf">
+            <string>Rubik-Bold</string>
+        </array>
+        <array key="Rubik-Regular.ttf">
+            <string>Rubik-Regular</string>
+        </array>
+    </customFonts>
+    <scenes>
+        <!--Welcome View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="WelcomeViewController" customModule="SuperwallUIKitExample" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="logo" translatesAutoresizingMaskIntoConstraints="NO" id="VBQ-ne-E3j">
+                                <rect key="frame" x="107" y="44" width="200" height="25"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="200" id="1s5-vz-rkK"/>
+                                    <constraint firstAttribute="height" constant="25" id="JTD-Pl-2Uo"/>
+                                </constraints>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Example App" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Z5M-EP-22h">
+                                <rect key="frame" x="164.66666666666666" y="74" width="85" height="17"/>
+                                <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="14"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="xQO-aa-IDD">
+                                <rect key="frame" x="0.0" y="369.66666666666669" width="414" height="157.00000000000006"/>
+                                <subviews>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JiM-l3-bQZ">
+                                        <rect key="frame" x="20" y="0.0" width="374" height="76"/>
+                                        <string key="text">Welcome! Enter your name to get started. Your name will be added to the Paywall user attributes, which can then be accessed and displayed within your paywall.</string>
+                                        <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="2bQ-Dk-qZ1">
+                                        <rect key="frame" x="20" y="106" width="374" height="70"/>
+                                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                    </view>
+                                    <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Enter your name" textAlignment="natural" minimumFontSize="16" translatesAutoresizingMaskIntoConstraints="NO" id="L0h-Wi-MX8">
+                                        <rect key="frame" x="30" y="116" width="354" height="50"/>
+                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <color key="tintColor" name="PrimaryTeal"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" relation="lessThanOrEqual" priority="999" constant="500" id="2mj-56-BRR"/>
+                                            <constraint firstAttribute="height" constant="50" id="nwh-87-pHv"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                        <textInputTraits key="textInputTraits" textContentType="name"/>
+                                    </textField>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="L0h-Wi-MX8" firstAttribute="centerX" secondItem="xQO-aa-IDD" secondAttribute="centerX" id="0Gf-Jx-jZQ"/>
+                                    <constraint firstItem="2bQ-Dk-qZ1" firstAttribute="top" secondItem="L0h-Wi-MX8" secondAttribute="top" constant="-10" id="0sw-c0-yFF"/>
+                                    <constraint firstItem="2bQ-Dk-qZ1" firstAttribute="trailing" secondItem="L0h-Wi-MX8" secondAttribute="trailing" constant="10" id="7DP-Bx-eLw"/>
+                                    <constraint firstItem="L0h-Wi-MX8" firstAttribute="top" secondItem="JiM-l3-bQZ" secondAttribute="bottom" constant="40" id="OUb-f8-auW"/>
+                                    <constraint firstItem="2bQ-Dk-qZ1" firstAttribute="leading" secondItem="L0h-Wi-MX8" secondAttribute="leading" constant="-10" id="QbU-e0-Fji"/>
+                                    <constraint firstItem="L0h-Wi-MX8" firstAttribute="leading" secondItem="xQO-aa-IDD" secondAttribute="leading" priority="998" constant="30" id="dQw-cl-Ked"/>
+                                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="L0h-Wi-MX8" secondAttribute="trailing" priority="998" constant="30" id="g6h-0a-MPo"/>
+                                    <constraint firstItem="JiM-l3-bQZ" firstAttribute="top" secondItem="xQO-aa-IDD" secondAttribute="top" id="grT-KV-Pel"/>
+                                    <constraint firstAttribute="trailing" secondItem="JiM-l3-bQZ" secondAttribute="trailing" constant="20" id="mJy-Fq-MBC"/>
+                                    <constraint firstItem="2bQ-Dk-qZ1" firstAttribute="bottom" secondItem="L0h-Wi-MX8" secondAttribute="bottom" constant="10" id="sZt-4N-c5O"/>
+                                    <constraint firstAttribute="bottom" secondItem="L0h-Wi-MX8" secondAttribute="bottom" constant="-9" id="wYl-ce-TQ5"/>
+                                    <constraint firstItem="JiM-l3-bQZ" firstAttribute="leading" secondItem="xQO-aa-IDD" secondAttribute="leading" constant="20" id="xhl-yI-ueC"/>
+                                </constraints>
+                            </view>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1it-N4-I9a">
+                                <rect key="frame" x="20" y="792" width="374" height="50"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" priority="998" constant="500" id="sPs-Kn-rGN"/>
+                                    <constraint firstAttribute="height" constant="50" id="uEe-TV-kRb"/>
+                                </constraints>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="Continue" cornerStyle="capsule">
+                                    <backgroundConfiguration key="background">
+                                        <color key="backgroundColor" name="PrimaryTeal"/>
+                                    </backgroundConfiguration>
+                                    <fontDescription key="titleFontDescription" name="Rubik-Bold" family="Rubik" pointSize="18"/>
+                                    <color key="baseForegroundColor" name="Neutral"/>
+                                </buttonConfiguration>
+                                <connections>
+                                    <action selector="showOptionsView" destination="BYZ-38-t0r" eventType="touchUpInside" id="ZV4-1h-Lhy"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="s4Y-CQ-74s"/>
+                        <color key="backgroundColor" name="Neutral"/>
+                        <constraints>
+                            <constraint firstItem="xQO-aa-IDD" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="Ci5-k2-cwb"/>
+                            <constraint firstItem="VBQ-ne-E3j" firstAttribute="centerX" secondItem="s4Y-CQ-74s" secondAttribute="centerX" id="JVh-bc-AcM"/>
+                            <constraint firstItem="s4Y-CQ-74s" firstAttribute="trailing" secondItem="xQO-aa-IDD" secondAttribute="trailing" id="MXW-D0-EiM"/>
+                            <constraint firstItem="1it-N4-I9a" firstAttribute="bottom" secondItem="s4Y-CQ-74s" secondAttribute="bottom" constant="-20" id="P0P-GZ-av2"/>
+                            <constraint firstItem="Z5M-EP-22h" firstAttribute="top" secondItem="VBQ-ne-E3j" secondAttribute="bottom" constant="5" id="Ptm-Af-NdZ"/>
+                            <constraint firstItem="s4Y-CQ-74s" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="1it-N4-I9a" secondAttribute="trailing" priority="999" constant="20" id="XmB-wl-hyl"/>
+                            <constraint firstItem="1it-N4-I9a" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="s4Y-CQ-74s" secondAttribute="leading" priority="999" constant="20" id="bLk-Zy-aas"/>
+                            <constraint firstItem="xQO-aa-IDD" firstAttribute="leading" secondItem="s4Y-CQ-74s" secondAttribute="leading" id="hoJ-Dn-u2I"/>
+                            <constraint firstItem="Z5M-EP-22h" firstAttribute="centerX" secondItem="VBQ-ne-E3j" secondAttribute="centerX" id="k1A-YX-U3E"/>
+                            <constraint firstItem="1it-N4-I9a" firstAttribute="centerX" secondItem="s4Y-CQ-74s" secondAttribute="centerX" id="pYo-Fu-bya"/>
+                            <constraint firstItem="VBQ-ne-E3j" firstAttribute="top" secondItem="s4Y-CQ-74s" secondAttribute="top" id="zMd-B4-e2b"/>
+                        </constraints>
+                    </view>
+                    <navigationItem key="navigationItem" id="6Xy-MA-uHe">
+                        <barButtonItem key="backBarButtonItem" title=" " id="77w-5a-UBW"/>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="textField" destination="L0h-Wi-MX8" id="W40-pq-VPP"/>
+                        <outlet property="textFieldBackgroundView" destination="2bQ-Dk-qZ1" id="EKX-7s-Dcx"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="302.89855072463769" y="128.57142857142856"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="OG3-Cw-cJd">
+            <objects>
+                <navigationController navigationBarHidden="YES" id="Q5H-aZ-jXR" sceneMemberID="viewController">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" barStyle="black" id="ARc-Lh-SDn">
+                        <autoresizingMask key="autoresizingMask"/>
+                        <color key="tintColor" name="PrimaryTeal"/>
+                        <color key="barTintColor" name="PrimaryTeal"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="BYZ-38-t0r" kind="relationship" relationship="rootViewController" id="82P-R2-rxt"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="7p4-A7-nT5" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-475" y="129"/>
+        </scene>
+        <!-- -->
+        <scene sceneID="llM-jc-Bmz">
+            <objects>
+                <viewController storyboardIdentifier="PaywallOptionsViewController" title=" " id="1GY-th-Q8O" customClass="PaywallOptionsViewController" customModule="SuperwallUIKitExample" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="wXb-JL-VCM">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Hi &lt;name&gt;!" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Mez-l0-hBU">
+                                <rect key="frame" x="20" y="108" width="374" height="19"/>
+                                <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <containerView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="lRK-Qt-NUb">
+                                <rect key="frame" x="0.0" y="147" width="414" height="200"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="200" id="qLZ-MM-7FG"/>
+                                </constraints>
+                                <connections>
+                                    <segue destination="NxP-42-c72" kind="embed" id="dzz-f1-jdP"/>
+                                </connections>
+                            </containerView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="YZA-oe-i4w"/>
+                        <color key="backgroundColor" name="Neutral"/>
+                        <constraints>
+                            <constraint firstItem="YZA-oe-i4w" firstAttribute="trailing" secondItem="Mez-l0-hBU" secondAttribute="trailing" constant="20" id="10c-K9-hik"/>
+                            <constraint firstItem="Mez-l0-hBU" firstAttribute="leading" secondItem="YZA-oe-i4w" secondAttribute="leading" constant="20" id="3w4-rn-TSU"/>
+                            <constraint firstItem="lRK-Qt-NUb" firstAttribute="top" secondItem="Mez-l0-hBU" secondAttribute="bottom" constant="20" id="LlO-lk-4RI"/>
+                            <constraint firstItem="Mez-l0-hBU" firstAttribute="top" secondItem="YZA-oe-i4w" secondAttribute="top" constant="20" id="PPW-w7-6qw"/>
+                            <constraint firstItem="YZA-oe-i4w" firstAttribute="trailing" secondItem="lRK-Qt-NUb" secondAttribute="trailing" id="eHA-d9-Pmj"/>
+                            <constraint firstItem="lRK-Qt-NUb" firstAttribute="leading" secondItem="YZA-oe-i4w" secondAttribute="leading" id="geG-Oi-Jyx"/>
+                            <constraint firstItem="Mez-l0-hBU" firstAttribute="centerX" secondItem="YZA-oe-i4w" secondAttribute="centerX" id="zxR-Tv-tef"/>
+                        </constraints>
+                    </view>
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
+                    <connections>
+                        <outlet property="name" destination="Mez-l0-hBU" id="L5C-UE-uVN"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Oai-N3-Yoh" sceneMemberID="firstResponder"/>
+                <navigationItem id="Hcn-R3-jDJ">
+                    <barButtonItem key="backBarButtonItem" title=" " id="8He-L7-SKV"/>
+                </navigationItem>
+            </objects>
+            <point key="canvasLocation" x="1128.985507246377" y="128.57142857142856"/>
+        </scene>
+        <!--Options Table View Controller-->
+        <scene sceneID="VDF-xZ-d3L">
+            <objects>
+                <tableViewController id="NxP-42-c72" customClass="OptionsTableViewController" customModule="SuperwallUIKitExample" customModuleProvider="target" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" bounces="NO" scrollEnabled="NO" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" bouncesZoom="NO" dataMode="static" style="insetGrouped" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="18" estimatedSectionHeaderHeight="-1" sectionFooterHeight="18" estimatedSectionFooterHeight="-1" id="LP5-9w-Ii8">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="200"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" name="Neutral"/>
+                        <color key="tintColor" name="PrimaryTeal"/>
+                        <color key="sectionIndexColor" name="Neutral"/>
+                        <color key="sectionIndexBackgroundColor" name="Neutral"/>
+                        <sections>
+                            <tableViewSection id="ZP5-qh-P7F">
+                                <cells>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" rowHeight="60" id="7fr-LD-Q4Q">
+                                        <rect key="frame" x="20" y="18" width="374" height="60"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="7fr-LD-Q4Q" id="GNz-i2-eu3">
+                                            <rect key="frame" x="0.0" y="0.0" width="345.33333333333331" height="60"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Presenting a Paywall" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sl1-mX-Gpr">
+                                                    <rect key="frame" x="20" y="20.666666666666668" width="155" height="19.000000000000004"/>
+                                                    <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                                    <color key="textColor" name="Neutral"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstItem="sl1-mX-Gpr" firstAttribute="leading" secondItem="GNz-i2-eu3" secondAttribute="leading" constant="20" id="Mkv-6A-DHm"/>
+                                                <constraint firstItem="sl1-mX-Gpr" firstAttribute="centerY" secondItem="GNz-i2-eu3" secondAttribute="centerY" id="PJe-R3-gy6"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" rowHeight="60" id="NcK-qN-lVL">
+                                        <rect key="frame" x="20" y="78" width="374" height="60"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="NcK-qN-lVL" id="b0a-Uy-1rh">
+                                            <rect key="frame" x="0.0" y="0.0" width="345.33333333333331" height="60"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Explicitly Triggering a Paywall" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="9en-pY-MCD">
+                                                    <rect key="frame" x="19.999999999999986" y="20.666666666666668" width="219.66666666666663" height="19.000000000000004"/>
+                                                    <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                                    <color key="textColor" name="Neutral"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstItem="9en-pY-MCD" firstAttribute="leading" secondItem="b0a-Uy-1rh" secondAttribute="leading" constant="20" id="aSi-wB-Kzn"/>
+                                                <constraint firstItem="9en-pY-MCD" firstAttribute="centerY" secondItem="b0a-Uy-1rh" secondAttribute="centerY" id="tEL-8G-WoP"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" rowHeight="60" id="WoO-8u-rVF">
+                                        <rect key="frame" x="20" y="138" width="374" height="60"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="WoO-8u-rVF" id="lWE-FR-R5u">
+                                            <rect key="frame" x="0.0" y="0.0" width="345.33333333333331" height="60"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Implicitly Triggering a Paywall" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="evp-CS-Srg">
+                                                    <rect key="frame" x="19.999999999999986" y="20.666666666666668" width="219.66666666666663" height="19.000000000000004"/>
+                                                    <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                                    <color key="textColor" name="Neutral"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstItem="evp-CS-Srg" firstAttribute="leading" secondItem="lWE-FR-R5u" secondAttribute="leading" constant="20" id="WJi-2v-APk"/>
+                                                <constraint firstItem="evp-CS-Srg" firstAttribute="centerY" secondItem="lWE-FR-R5u" secondAttribute="centerY" id="ZKG-YT-o1P"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                </cells>
+                            </tableViewSection>
+                        </sections>
+                        <connections>
+                            <outlet property="dataSource" destination="NxP-42-c72" id="ElU-xe-SDL"/>
+                            <outlet property="delegate" destination="NxP-42-c72" id="1QB-JM-IZW"/>
+                        </connections>
+                    </tableView>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="84n-px-Lnd" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1852" y="129"/>
+        </scene>
+        <!--Presenting a Paywall-->
+        <scene sceneID="ekh-J8-zck">
+            <objects>
+                <viewController storyboardIdentifier="PresentPaywallViewController" title="Presenting a Paywall" id="mIZ-dP-6y0" customClass="PresentPaywallViewController" customModule="SuperwallUIKitExample" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="zW5-3Y-qxv">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MjC-0m-6SH">
+                                <rect key="frame" x="20" y="64" width="374" height="152"/>
+                                <mutableString key="text">The button below presents a paywall that has been set up on the Superwall dashboard.
+
+The paywall assigned to the user is determined by your settings in the dashboard. Once a user is assigned a paywall, they will continue to see the same paywall, even when the paywall is turned off, unless you reassign them to a new one.</mutableString>
+                                <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You do not have an active subscription so the paywall will show when clicking the button." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YHG-f1-sti">
+                                <rect key="frame" x="20" y="313" width="374" height="38"/>
+                                <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="OEU-8F-1vj">
+                                <rect key="frame" x="20" y="264" width="374" height="1"/>
+                                <color key="backgroundColor" systemColor="systemGray2Color"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="1" id="WEm-K6-IF4"/>
+                                </constraints>
+                            </view>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="9dR-ym-Dy5">
+                                <rect key="frame" x="20" y="792" width="374" height="50"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" priority="998" constant="500" id="Ehj-0S-1wy"/>
+                                    <constraint firstAttribute="height" constant="50" id="Qh8-Ye-t0t"/>
+                                </constraints>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="Present Paywall" cornerStyle="capsule">
+                                    <backgroundConfiguration key="background">
+                                        <color key="backgroundColor" name="PrimaryTeal"/>
+                                    </backgroundConfiguration>
+                                    <fontDescription key="titleFontDescription" name="Rubik-Bold" family="Rubik" pointSize="18"/>
+                                    <color key="baseForegroundColor" name="Neutral"/>
+                                </buttonConfiguration>
+                                <connections>
+                                    <action selector="presentPaywall" destination="mIZ-dP-6y0" eventType="touchUpInside" id="a07-UM-zxB"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="5WE-zu-pem"/>
+                        <color key="backgroundColor" name="Neutral"/>
+                        <constraints>
+                            <constraint firstItem="YHG-f1-sti" firstAttribute="top" secondItem="OEU-8F-1vj" secondAttribute="bottom" constant="48" id="1y5-V1-SMY"/>
+                            <constraint firstItem="5WE-zu-pem" firstAttribute="trailing" secondItem="MjC-0m-6SH" secondAttribute="trailing" constant="20" id="3df-Wu-Nmc"/>
+                            <constraint firstItem="OEU-8F-1vj" firstAttribute="leading" secondItem="5WE-zu-pem" secondAttribute="leading" constant="20" id="82G-mf-BQ3"/>
+                            <constraint firstItem="9dR-ym-Dy5" firstAttribute="centerX" secondItem="5WE-zu-pem" secondAttribute="centerX" id="8c3-rX-65E"/>
+                            <constraint firstItem="5WE-zu-pem" firstAttribute="trailing" secondItem="OEU-8F-1vj" secondAttribute="trailing" constant="20" id="HfR-EJ-3YW"/>
+                            <constraint firstItem="5WE-zu-pem" firstAttribute="bottom" secondItem="9dR-ym-Dy5" secondAttribute="bottom" constant="20" id="Hra-oz-vaw"/>
+                            <constraint firstItem="5WE-zu-pem" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="9dR-ym-Dy5" secondAttribute="trailing" priority="999" constant="20" id="K9v-mt-FQU"/>
+                            <constraint firstItem="MjC-0m-6SH" firstAttribute="top" secondItem="5WE-zu-pem" secondAttribute="top" constant="20" id="NfI-sU-89f"/>
+                            <constraint firstItem="OEU-8F-1vj" firstAttribute="centerX" secondItem="5WE-zu-pem" secondAttribute="centerX" id="ewb-be-O1F"/>
+                            <constraint firstItem="YHG-f1-sti" firstAttribute="leading" secondItem="5WE-zu-pem" secondAttribute="leading" constant="20" id="iP4-J9-74o"/>
+                            <constraint firstItem="9dR-ym-Dy5" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="5WE-zu-pem" secondAttribute="leading" priority="999" constant="20" id="j2E-u6-hsJ"/>
+                            <constraint firstItem="MjC-0m-6SH" firstAttribute="leading" secondItem="5WE-zu-pem" secondAttribute="leading" constant="20" id="noW-rx-MFh"/>
+                            <constraint firstItem="5WE-zu-pem" firstAttribute="trailing" secondItem="YHG-f1-sti" secondAttribute="trailing" constant="20" id="vBb-qF-xLc"/>
+                            <constraint firstItem="OEU-8F-1vj" firstAttribute="top" secondItem="MjC-0m-6SH" secondAttribute="bottom" constant="48" id="wmv-W2-haO"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="subscriptionLabel" destination="YHG-f1-sti" id="2M7-xZ-WSs"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="YoY-0R-UsR" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2597" y="129"/>
+        </scene>
+        <!--Explicitly Triggering a Paywall-->
+        <scene sceneID="Pji-Lw-NYB">
+            <objects>
+                <viewController storyboardIdentifier="ExplicitlyTriggerPaywallViewController" title="Explicitly Triggering a Paywall" id="gix-OZ-Ey9" customClass="ExplicitlyTriggerPaywallViewController" customModule="SuperwallUIKitExample" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Tfc-EG-83N">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JHi-ua-mAu">
+                                <rect key="frame" x="20" y="64" width="374" height="95"/>
+                                <string key="text">The button below explicitly triggers a specific paywall for the event "MyEvent".
+
+This is because the event is tied to an active trigger on the Superwall Dashboard.</string>
+                                <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You do not have an active subscription so the paywall will show when clicking the button." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yY5-8L-kgo">
+                                <rect key="frame" x="20" y="256" width="374" height="38"/>
+                                <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="gFw-H8-1gc">
+                                <rect key="frame" x="20" y="207" width="374" height="1"/>
+                                <color key="backgroundColor" systemColor="systemGray2Color"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="1" id="Gti-31-pJd"/>
+                                </constraints>
+                            </view>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tZ5-ih-G51">
+                                <rect key="frame" x="20" y="792" width="374" height="50"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="50" id="XtR-mZ-9VF"/>
+                                    <constraint firstAttribute="width" priority="998" constant="500" id="jGn-xw-W7Z"/>
+                                </constraints>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="Explicitly Trigger Paywall" cornerStyle="capsule">
+                                    <backgroundConfiguration key="background">
+                                        <color key="backgroundColor" name="PrimaryTeal"/>
+                                    </backgroundConfiguration>
+                                    <fontDescription key="titleFontDescription" name="Rubik-Bold" family="Rubik" pointSize="18"/>
+                                    <color key="baseForegroundColor" name="Neutral"/>
+                                </buttonConfiguration>
+                                <connections>
+                                    <action selector="explicitlyTriggerPaywall" destination="gix-OZ-Ey9" eventType="touchUpInside" id="Zi6-Jf-Tea"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="QDw-P3-DQY"/>
+                        <color key="backgroundColor" name="Neutral"/>
+                        <constraints>
+                            <constraint firstItem="gFw-H8-1gc" firstAttribute="centerX" secondItem="QDw-P3-DQY" secondAttribute="centerX" id="0HV-Ra-0b3"/>
+                            <constraint firstItem="tZ5-ih-G51" firstAttribute="centerX" secondItem="QDw-P3-DQY" secondAttribute="centerX" id="13G-Yw-nKy"/>
+                            <constraint firstItem="JHi-ua-mAu" firstAttribute="leading" secondItem="QDw-P3-DQY" secondAttribute="leading" constant="20" id="19H-nU-0sc"/>
+                            <constraint firstItem="QDw-P3-DQY" firstAttribute="trailing" secondItem="JHi-ua-mAu" secondAttribute="trailing" constant="20" id="DlN-qR-Tay"/>
+                            <constraint firstItem="gFw-H8-1gc" firstAttribute="top" secondItem="JHi-ua-mAu" secondAttribute="bottom" constant="48" id="KDO-QE-deB"/>
+                            <constraint firstItem="QDw-P3-DQY" firstAttribute="bottom" secondItem="tZ5-ih-G51" secondAttribute="bottom" constant="20" id="QqU-lC-flE"/>
+                            <constraint firstItem="yY5-8L-kgo" firstAttribute="top" secondItem="gFw-H8-1gc" secondAttribute="bottom" constant="48" id="RtI-Dj-c4E"/>
+                            <constraint firstItem="QDw-P3-DQY" firstAttribute="trailing" secondItem="gFw-H8-1gc" secondAttribute="trailing" constant="20" id="k62-WQ-Hep"/>
+                            <constraint firstItem="gFw-H8-1gc" firstAttribute="leading" secondItem="QDw-P3-DQY" secondAttribute="leading" constant="20" id="mj7-w1-jFq"/>
+                            <constraint firstItem="JHi-ua-mAu" firstAttribute="top" secondItem="QDw-P3-DQY" secondAttribute="top" constant="20" id="qjM-os-5St"/>
+                            <constraint firstItem="QDw-P3-DQY" firstAttribute="trailing" secondItem="yY5-8L-kgo" secondAttribute="trailing" constant="20" id="rnz-bA-5tm"/>
+                            <constraint firstItem="yY5-8L-kgo" firstAttribute="leading" secondItem="QDw-P3-DQY" secondAttribute="leading" constant="20" id="sj5-im-DWM"/>
+                            <constraint firstItem="QDw-P3-DQY" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="tZ5-ih-G51" secondAttribute="trailing" priority="999" constant="20" id="xBZ-eK-cvV"/>
+                            <constraint firstItem="tZ5-ih-G51" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="QDw-P3-DQY" secondAttribute="leading" priority="999" constant="20" id="xCv-hS-WDV"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="subscriptionLabel" destination="yY5-8L-kgo" id="Ztv-Uc-q3h"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="1ry-AC-v7r" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3359" y="129"/>
+        </scene>
+        <!--Explicitly Triggering a Paywall-->
+        <scene sceneID="oZN-ef-xvt">
+            <objects>
+                <viewController storyboardIdentifier="ImplicitlyTriggerPaywallViewController" title="Explicitly Triggering a Paywall" id="4gu-hl-DGk" customClass="ImplicitlyTriggerPaywallViewController" customModule="SuperwallUIKitExample" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="rsu-O9-BcI">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SGl-eh-tPd">
+                                <rect key="frame" x="20" y="64" width="374" height="133"/>
+                                <string key="text">The button below increments a counter. When the counter hits 3, it will track the event "MyEvent", which will implicitly trigger a specific paywall for the event.
+
+This is because the event is tied to an active trigger on the Superwall Dashboard.</string>
+                                <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You do not have an active subscription so the paywall will show when the counter reaches 3." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4IT-zo-gAo">
+                                <rect key="frame" x="20" y="294" width="374" height="38"/>
+                                <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Count: 0" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="drJ-wh-iiw">
+                                <rect key="frame" x="164.66666666666666" y="718" width="85" height="24"/>
+                                <fontDescription key="fontDescription" name="Rubik-Bold" family="Rubik" pointSize="20"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="7sX-yX-RMh">
+                                <rect key="frame" x="20" y="245" width="374" height="1"/>
+                                <color key="backgroundColor" systemColor="systemGray2Color"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="1" id="YVS-LD-vL6"/>
+                                </constraints>
+                            </view>
+                            <stackView opaque="NO" contentMode="scaleToFill" spacing="10" translatesAutoresizingMaskIntoConstraints="NO" id="0gR-N3-8i1">
+                                <rect key="frame" x="20" y="792" width="374" height="50"/>
+                                <subviews>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Oht-Ro-eWy">
+                                        <rect key="frame" x="0.0" y="0.0" width="182" height="50"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="50" id="e0Q-Jv-LHO"/>
+                                        </constraints>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="plain" title="Increment" cornerStyle="capsule">
+                                            <backgroundConfiguration key="background">
+                                                <color key="backgroundColor" name="PrimaryTeal"/>
+                                            </backgroundConfiguration>
+                                            <fontDescription key="titleFontDescription" name="Rubik-Bold" family="Rubik" pointSize="18"/>
+                                            <color key="baseForegroundColor" name="Neutral"/>
+                                        </buttonConfiguration>
+                                        <connections>
+                                            <action selector="incrementCount" destination="4gu-hl-DGk" eventType="touchUpInside" id="VQ1-Ap-LxP"/>
+                                        </connections>
+                                    </button>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fqN-6m-Wo7">
+                                        <rect key="frame" x="192" y="0.0" width="182" height="50"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="50" id="9NY-v8-eHq"/>
+                                        </constraints>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="plain" title="Reset" cornerStyle="capsule">
+                                            <backgroundConfiguration key="background">
+                                                <color key="backgroundColor" name="PrimaryTeal"/>
+                                            </backgroundConfiguration>
+                                            <fontDescription key="titleFontDescription" name="Rubik-Bold" family="Rubik" pointSize="18"/>
+                                            <color key="baseForegroundColor" name="Neutral"/>
+                                        </buttonConfiguration>
+                                        <connections>
+                                            <action selector="resetCount" destination="4gu-hl-DGk" eventType="touchUpInside" id="3AF-0n-iOK"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
+                            </stackView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="gcu-JQ-JtZ"/>
+                        <color key="backgroundColor" name="Neutral"/>
+                        <constraints>
+                            <constraint firstItem="gcu-JQ-JtZ" firstAttribute="trailing" secondItem="SGl-eh-tPd" secondAttribute="trailing" constant="20" id="1jf-n8-Cpq"/>
+                            <constraint firstItem="0gR-N3-8i1" firstAttribute="top" secondItem="drJ-wh-iiw" secondAttribute="bottom" constant="50" id="5cV-v6-7Kh"/>
+                            <constraint firstItem="7sX-yX-RMh" firstAttribute="top" secondItem="SGl-eh-tPd" secondAttribute="bottom" constant="48" id="9A5-wK-t0T"/>
+                            <constraint firstItem="0gR-N3-8i1" firstAttribute="leading" secondItem="gcu-JQ-JtZ" secondAttribute="leading" constant="20" id="Cz5-CF-gbe"/>
+                            <constraint firstItem="4IT-zo-gAo" firstAttribute="top" secondItem="7sX-yX-RMh" secondAttribute="bottom" constant="48" id="LIW-Fx-FfG"/>
+                            <constraint firstItem="gcu-JQ-JtZ" firstAttribute="trailing" secondItem="7sX-yX-RMh" secondAttribute="trailing" constant="20" id="Mh4-6a-3Mh"/>
+                            <constraint firstItem="7sX-yX-RMh" firstAttribute="leading" secondItem="gcu-JQ-JtZ" secondAttribute="leading" constant="20" id="W5v-aB-M3A"/>
+                            <constraint firstItem="gcu-JQ-JtZ" firstAttribute="trailing" secondItem="0gR-N3-8i1" secondAttribute="trailing" constant="20" id="XTJ-jZ-4iR"/>
+                            <constraint firstItem="SGl-eh-tPd" firstAttribute="leading" secondItem="gcu-JQ-JtZ" secondAttribute="leading" constant="20" id="YJv-b8-TAW"/>
+                            <constraint firstItem="4IT-zo-gAo" firstAttribute="leading" secondItem="gcu-JQ-JtZ" secondAttribute="leading" constant="20" id="bOS-2b-3s5"/>
+                            <constraint firstItem="SGl-eh-tPd" firstAttribute="top" secondItem="gcu-JQ-JtZ" secondAttribute="top" constant="20" id="dLc-1R-O7h"/>
+                            <constraint firstItem="gcu-JQ-JtZ" firstAttribute="trailing" secondItem="4IT-zo-gAo" secondAttribute="trailing" constant="20" id="iW7-pw-q5h"/>
+                            <constraint firstItem="drJ-wh-iiw" firstAttribute="centerX" secondItem="gcu-JQ-JtZ" secondAttribute="centerX" id="nXM-Lr-1df"/>
+                            <constraint firstItem="7sX-yX-RMh" firstAttribute="centerX" secondItem="gcu-JQ-JtZ" secondAttribute="centerX" id="ocg-AP-int"/>
+                            <constraint firstItem="gcu-JQ-JtZ" firstAttribute="bottom" secondItem="0gR-N3-8i1" secondAttribute="bottom" constant="20" id="wE6-dY-SGC"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="countLabel" destination="drJ-wh-iiw" id="xkb-a5-6jP"/>
+                        <outlet property="subscriptionLabel" destination="4IT-zo-gAo" id="J6e-o7-77v"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="agS-UK-n5V" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="4109" y="129"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="logo" width="115" height="17"/>
+        <namedColor name="Neutral">
+            <color red="0.054999999701976776" green="0.059000000357627869" blue="0.071000002324581146" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
+        <namedColor name="PrimaryTeal">
+            <color red="0.60399997234344482" green="0.98799997568130493" blue="0.94499999284744263" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+        <systemColor name="systemGray2Color">
+            <color red="0.68235294117647061" green="0.68235294117647061" blue="0.69803921568627447" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+    </resources>
+</document>

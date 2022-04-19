@@ -55,8 +55,7 @@ final class SWPaywallViewController: UIViewController {
 	var paywallInfo: PaywallInfo? {
 		return paywallResponse?.getPaywallInfo(
       fromEvent: eventData,
-      calledByIdentifier: calledByIdentifier,
-      includeExperiment: true
+      calledByIdentifier: calledByIdentifier
     )
 	}
 
@@ -633,7 +632,7 @@ extension SWPaywallViewController {
         message: "Set Paywall.delegate to handle purchases, restores and more!",
         actionTitle: "Docs →",
         action: {
-          if let url = URL(string: "https://docs.superwall.com/docs/configuring-the-sdk-1") {
+          if let url = URL(string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate") {
             UIApplication.shared.open(url, options: [:], completionHandler: nil)
           }
         },

@@ -204,7 +204,7 @@ extension Endpoint where Response == PaywallsResponse {
 
 // MARK: - ConfigResponse
 extension Endpoint where Response == ConfigResponse {
-  static func config() -> Self {
+  static var config: Self {
     return Endpoint(
       components: Components(
         host: Api.Base.host,

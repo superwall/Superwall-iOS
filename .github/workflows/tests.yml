@@ -1,0 +1,22 @@
+name: Run Tests
+
+on:
+  push:
+    paths:
+      - '.github/workflows/tests.yml'
+      - '**/*.swift'
+      - '!Examples/**'
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+    runs-on: macos-latest
+
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - name: xcodegen
+        uses: xavierLowmiller/xcodegen-action@1.1.2
+      - name: Run Tests
+        run: |
+          xcodebuild -project Paywall.xcodeproj -scheme Paywall -sdk iphonesimulator -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 Pro' test

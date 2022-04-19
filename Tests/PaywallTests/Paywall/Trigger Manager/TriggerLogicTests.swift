@@ -137,8 +137,6 @@ class TriggerLogicTests: XCTestCase {
     XCTAssertEqual(confirmableAssignments, expectedConfirmableAssignments)
   }
 
-  // TODO: Fix this one: Why is the rule still matching when expression and params are diff?
-  /*
   func testEventTriggerOutcome_noRuleMatch() throws {
     // MARK: Given
 
@@ -155,7 +153,7 @@ class TriggerLogicTests: XCTestCase {
     )
     let triggerRule = TriggerRule(
       experimentId: experimentId,
-      expression: "a == c",
+      expression: "params.a == c",
       isAssigned: false,
       variant: variant,
       variantId: variantId
@@ -168,7 +166,7 @@ class TriggerLogicTests: XCTestCase {
     // EventData
     let eventData = EventData(
       name: eventName,
-      parameters: ["a":"b"],
+      parameters: ["a": "b"],
       createdAt: "2022-03-09T11:45:38.016Z"
     )
 
@@ -179,19 +177,18 @@ class TriggerLogicTests: XCTestCase {
     // MARK: When
 
     let outcome = TriggerLogic.outcome(
-      forEventName: eventName,
-      eventData: eventData,
+      forEvent: eventData,
       v1Triggers: v1Triggers,
       v2Triggers: v2Triggers
     )
 
     // MARK: Then
-    guard case let .noRuleMatch = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentV2")
+    guard case .noRuleMatch = outcome.result else {
+      return XCTFail("Incorrect outcome. Expected noRuleMatch")
     }
     let confirmableAssignments = outcome.confirmableAssignments
     XCTAssertNil(confirmableAssignments)
-  }*/
+  }
 
   func testEventTriggerOutcome_unknownEvent() throws {
     // MARK: Given
@@ -238,7 +235,7 @@ class TriggerLogicTests: XCTestCase {
 
     // MARK: Then
     guard case .unknownEvent = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentV2")
+      return XCTFail("Incorrect outcome. Expected unknown event")
     }
 
     let confirmableAssignments = outcome.confirmableAssignments
@@ -268,7 +265,7 @@ class TriggerLogicTests: XCTestCase {
 
     // MARK: Then
     guard case .presentV1 = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentV2")
+      return XCTFail("Incorrect outcome. Expected presentV1")
     }
 
     let confirmableAssignments = outcome.confirmableAssignments

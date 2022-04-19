@@ -1,9 +1,8 @@
 import Foundation
 import StoreKit
-import TPInAppReceipt
 
 final class StoreKitManager: NSObject {
-	static var shared = StoreKitManager()
+	static let shared = StoreKitManager()
   var productsById: [String: SKProduct] = [:]
 
 	private let productsManager = ProductsManager()

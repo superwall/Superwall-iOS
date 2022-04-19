@@ -7,23 +7,33 @@
 
 import Foundation
 
-public final class TriggerInfo: NSObject {
-  public let experimentId: String?
-  public let variantId: String?
+/// A trigger experiment that was assigned to a user.
+///
+/// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
+public struct Experiment {
+  /// The id of the experiment.
+  let id: String
+  /// The id of the experiment variant.
+  let variantId: String
+}
 
-  // "holdout", "no_rule_match", "present"
-  public let result: String
-  public let paywallIdentifier: String?
+/// The result of a trigger.
+///
+/// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
+enum TriggerResult {
+  /// No matching rule was found for this trigger, so nothing happens.
+  case noRuleMatch
 
-  init(
-    result: String,
-    experimentId: String? = nil,
-    variantId: String? = nil,
-    paywallIdentifier: String? = nil
-  ) {
-    self.result = result
-    self.experimentId = experimentId
-    self.variantId = variantId
-    self.paywallIdentifier = paywallIdentifier
-  }
+  /// A matching rule was found and this user was shown a paywall
+  ///
+  /// - Parameters:
+  ///   - experiment: The experiment associated with the trigger
+  ///   - paywallIdentifier: The identifier of the paywall that was shown to the user
+  case paywall(experiment: Experiment, paywallIdentifier: String)
+
+  /// A matching rule was found and this user was assigned to a holdout group so was not shown a paywall.
+  ///
+  /// - Parameters:
+  ///   - experiment: The experiment  associated with the trigger
+  case holdout(experiment: Experiment)
 }

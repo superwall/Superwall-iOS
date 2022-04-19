@@ -8,7 +8,7 @@
 import Foundation
 
 enum ConfigResponseLogic {
-  static func getPaywallIds(fromV2Triggers triggers: Set<Trigger>) -> Set<String> {
+  static func getPaywallIds(fromTriggers triggers: Set<Trigger>) -> Set<String> {
     var identifiers: Set<String> = []
 
     triggers.forEach { trigger in

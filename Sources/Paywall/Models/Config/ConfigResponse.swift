@@ -22,6 +22,7 @@ struct ConfigResponse: Decodable {
     executePostback()
   }
 
+  /// Preloads paywalls and their products.
   private func preloadPaywallsAndProducts() {
     for paywall in paywalls {
       // cache paywall's products
@@ -32,25 +33,34 @@ struct ConfigResponse: Decodable {
       PaywallManager.shared.getPaywallViewController(
         withIdentifier: paywall.identifier,
         event: nil,
-        cached: true,
-        completion: nil
+        cached: true
       )
     }
   }
 
+  /// Pre-loads all the paywalls referenced by v2 triggers.
   private func preloadTriggerPaywalls() {
-    let triggerPaywallIds = ConfigResponseLogic.getPaywallIds(fromV2Triggers: triggers)
-    // Pre-load all the paywalls from v2 triggers
+    let triggerPaywallIds = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
+
     for id in triggerPaywallIds {
-      PaywallManager.shared.getPaywallViewController(withIdentifier: id, event: nil, cached: true, completion: nil)
+      PaywallManager.shared.getPaywallViewController(
+        withIdentifier: id,
+        event: nil,
+        cached: true
+      )
     }
   }
 
+  /// Preloads the default paywall for the user. This is the paywall shown when calling paywall.present().
   private func preloadDefaultPaywall() {
-    // cache paywall.present(), when identifier and event is nil
-    PaywallManager.shared.getPaywallViewController(withIdentifier: nil, event: nil, cached: true, completion: nil)
+    PaywallManager.shared.getPaywallViewController(
+      withIdentifier: nil,
+      event: nil,
+      cached: true
+    )
   }
 
+  /// This preloads and caches the responses and associated products for each trigger.
   private func preloadTriggerResponses() {
     guard Paywall.shouldPreloadTriggers else {
       return
@@ -71,6 +81,7 @@ struct ConfigResponse: Decodable {
     }
   }
 
+  /// This sends product data back to the dashboard
   private func executePostback() {
     // TODO: Does this need to be on the main thread?
     DispatchQueue.main.asyncAfter(deadline: .now() + postback.postbackDelay) {
@@ -78,7 +89,7 @@ struct ConfigResponse: Decodable {
       StoreKitManager.shared.getProducts(withIds: productIds) { productsById in
         let products = productsById.values.map(PostbackProduct.init)
         let postback = Postback(products: products)
-        Network.shared.sendPostback(postback) { _ in }
+        Network.shared.sendPostback(postback)
       }
     }
   }

@@ -6,7 +6,8 @@ import PackageDescription
 let package = Package(
   name: "Paywall",
   platforms: [
-    .iOS("11.2")
+    .iOS("11.2"),
+    .macOS(.v10_12)
   ],
   products: [
     // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -18,8 +19,8 @@ let package = Package(
   dependencies: [
     // Dependencies declare other packages that this package depends on.
     .package(
-      url: "https://github.com/tikhop/TPInAppReceipt.git",
-      .upToNextMajor(from: "3.0.0")
+      url: "https://github.com/tikhop/ASN1Swift",
+      .upToNextMajor(from: "1.2.4")
     )
   ],
   targets: [
@@ -29,11 +30,10 @@ let package = Package(
       name: "Paywall",
       dependencies: [
         .product(
-          name: "TPInAppReceipt",
-          package: "TPInAppReceipt"
+          name: "ASN1Swift",
+          package: "ASN1Swift"
         )
       ],
-      path: "Sources/Paywall",
       exclude: ["BundleHelper.swift"]
     ),
     .testTarget(

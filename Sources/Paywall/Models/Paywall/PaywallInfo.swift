@@ -12,14 +12,13 @@ public final class PaywallInfo: NSObject {
   /// Superwall's internal identifier for this paywall.
   let id: String
 
-  /// The identifier set for this paywall in Superwall's web dashboard.
+  /// The identifier set for this paywall in the Superwall dashboard.
   public let identifier: String
 
-  /// What experiment this paywall presentation is a party of
-  public let experimentId: String?
-
-  /// What variant this user saw
-  public let variantId: String?
+  /// The trigger experiment that caused the paywall to present.
+  ///
+  /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
+  public let experiment: Experiment?
 
   /// The name set for this paywall in Superwall's web dashboard.
   public let name: String
@@ -82,8 +81,17 @@ public final class PaywallInfo: NSObject {
     self.presentedByEventWithName = fromEventData?.name
     self.presentedByEventAt = fromEventData?.createdAt
     self.presentedByEventWithId = fromEventData?.id.lowercased()
-    self.variantId = variantId
-    self.experimentId = experimentId
+
+    if
+      let experimentId = experimentId,
+      let variantId = variantId {
+      self.experiment = Experiment(
+        id: experimentId,
+        variantId: variantId
+      )
+    } else {
+      self.experiment = nil
+    }
 
     if fromEventData != nil {
       self.presentedBy = "event"

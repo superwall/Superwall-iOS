@@ -1,13 +1,12 @@
 import UIKit
 import Foundation
 import StoreKit
-import TPInAppReceipt
 import GameController
 
-/// `Paywall` is the primary class for integrating Superwall into your application. To learn more, read our iOS getting started guide: https://docs.superwall.com/docs/ios
+/// The primary class for integrating Superwall into your application. It provides access to all its featured via static functions and variables.
 public final class Paywall: NSObject {
   // MARK: - Public Properties
-  /// The object that acts as the delegate of Paywall.
+  /// The delegate of the Paywall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
 	@objc public static var delegate: PaywallDelegate?
 
   /// WARNING: Only use this enum to set `Paywall.networkEnvironment` if told so explicitly by the Superwall team.
@@ -41,7 +40,9 @@ public final class Paywall: NSObject {
 	/// Set this to `false` to globally disable paywall dismissal animations (passed  to `paywallVC.dismiss(animated:)`) `
 	public static var shouldAnimatePaywallDismissal = true
 
-	/// Set this to `true` to pre-load and cache triggers (and all associated paywalls / products) upon initializing the SDK instead of loading and caching triggers in a just-in-time fashion. Defaults to `true`
+	/// Set this to `false` to load and cache triggers in a just-in-time fashion.
+  ///
+  /// This defaults to `true`. This pre-loads and caches triggers and their associated paywalls and products upon initialization of the SDK.
 	public static var shouldPreloadTriggers = true
 
 	/// Prints logs to the console if set to `true`. Default is `false`
@@ -101,9 +102,14 @@ public final class Paywall: NSObject {
 	}
 
   // MARK: - Public Functions
-	/// Configures an instance of Superwall's Paywall SDK with a specified API key. If you don't pass through a userId, we'll create one for you. Calling `Paywall.identify(userId: String)` in the future will automatically alias these two for simple reporting.
-	///  - Parameter apiKey: Your Public API Key from: https://superwall.com/applications/1/settings/keys
-	///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
+	/// Configures a shared instance of ``Paywall/Paywall`` for use throughout your app.
+  ///
+  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. For a tutorial on the best practices for implementing the delegate, we recommend checking out our <doc:GettingStarted> article.
+	/// - Parameters:
+  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
+	///   - userId: Your user's unique identifier, as defined by your backend system. If you don't specify a `userId`, we'll create one for you. Calling ``Paywall/Paywall/identify(userId:)`` later on will automatically alias these two for simple reporting.
+  ///   - delegate: A class that conforms to ``PaywallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
+  /// - Returns: The newly configured ``Paywall/Paywall`` instance.
 	@discardableResult
 	@objc public static func configure(
     apiKey: String,
@@ -118,8 +124,9 @@ public final class Paywall: NSObject {
 		return shared
 	}
 
-	/// Links your userId to Superwall's automatically generated Alias. Call this as soon as you have a userId.
+	/// Links your `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId.
 	///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
+  ///  - Returns: The shared Paywall instance.
 	@discardableResult
 	@objc public static func identify(userId: String) -> Paywall {
     // refetch the paywall, we don't know if the alias was for an existing user
@@ -131,7 +138,9 @@ public final class Paywall: NSObject {
 		return shared
 	}
 
-	/// Resets the userId stored by Superwall. Call this when your user signs out.
+	/// Resets the `userId` stored by Superwall.
+  ///
+  /// Call this when your user signs out.
 	@discardableResult
 	@objc public static func reset() -> Paywall {
     guard Storage.shared.appUserId != nil else {
@@ -145,7 +154,15 @@ public final class Paywall: NSObject {
     return shared
 	}
 
-	/// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`
+	/// Forwards Game controller events to the paywall.
+  ///
+  /// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`
+  ///
+  /// See <doc:GameControllerSupport> for more information.
+  ///
+  /// - Parameters:
+  ///   - gamepad: The extended Gamepad controller profile.
+  ///   - element: The game controller element.
 	public static func gamepadValueChanged(
     gamepad: GCExtendedGamepad,
     element: GCControllerElement
@@ -155,13 +172,17 @@ public final class Paywall: NSObject {
 
 	// TODO: create debugger manager class
 
-	/// Overrides the default device locale for testing purposes. You can also use the in app debugger by scanning a QR code inside of a paywall
-	///  - Parameter localeIdentifier: The locale identifier for the language you would like to test
+	/// Overrides the default device locale for testing purposes.
+  ///
+  /// You can also use the in-app debugger by scanning the QR code of a paywall from the Superwall Dashboard. See <doc:InAppPreviews> for more.
+	///  - Parameter localeIdentifier: The locale identifier for the language you would like to test.
 	public static func localizationOverride(localeIdentifier: String? = nil) {
 		LocalizationManager.shared.selectedLocale = localeIdentifier
 	}
 
-	/// Use this to preload a paywall before presenting it. Only necessary if you are manually specifying which paywall to present later — Superwall automatically does this otherwise.
+	/// Preloads a paywall, for use before calling ``Paywall/Paywall/present(identifier:on:ignoreSubscriptionStatus:onPresent:onDismiss:onFail:)``.
+  ///
+  /// Only call this if you are manually specifying which paywall to present later — Superwall automatically does this otherwise.
 	///  - Parameter identifier: The identifier of the paywall you would like to load in the background, as found in your paywall's settings in the dashboard.
 	@objc public static func load(identifier: String) {
 		PaywallManager.shared.getPaywallViewController(
@@ -173,6 +194,8 @@ public final class Paywall: NSObject {
 	}
 
   // MARK: - Private Functions
+  private override init() {}
+
 	private init(
     apiKey: String?,
     userId: String? = nil,
