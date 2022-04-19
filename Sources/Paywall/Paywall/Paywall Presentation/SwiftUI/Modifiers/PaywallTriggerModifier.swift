@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 @available(iOS 13.0, *)
 struct PaywallTriggerModifier: ViewModifier {
@@ -19,10 +20,9 @@ struct PaywallTriggerModifier: ViewModifier {
 
   func body(content: Content) -> some View {
     content
-      .valueChanged(
-        value: shouldPresent,
-        onChange: updatePresentation
-      )
+      .onReceive(Just(shouldPresent)) { _ in
+        updatePresentation(shouldPresent)
+      }
   }
 
   private func updatePresentation(_ shouldPresent: Bool) {

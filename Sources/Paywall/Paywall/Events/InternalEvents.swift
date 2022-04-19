@@ -27,7 +27,7 @@ extension Paywall {
     case userAttributes = "user_attributes"
     case base = "base"
   }
-  
+
 	@discardableResult
   static func track(
     _ name: String,

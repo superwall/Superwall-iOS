@@ -23,7 +23,7 @@ struct Trigger: Decodable, Hashable {
     let triggerVersionString = try values.decode(String.self, forKey: .triggerVersion)
     switch triggerVersionString {
     case "V2":
-      triggerVersion = .v2(try TriggerV2.init(from: decoder))
+      triggerVersion = .v2(try TriggerV2(from: decoder))
     default:
       triggerVersion = .v1
     }

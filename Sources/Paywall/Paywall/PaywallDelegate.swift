@@ -35,7 +35,7 @@ import StoreKit
 
 	/// Called when the user taps a button on your paywall that has a `data-pw-custom` tag attached.
   ///
-  /// To learn more about using this function, see <doc:CustomPaywallButtons>. To learn about the types of tags that can be attached to elements on your paywall, see [paywall.js](https://docs.superwall.com/docs/paywalljs#data-tag-reference).
+  /// To learn more about using this function, see <doc:CustomPaywallButtons>. To learn about the types of tags that can be attached to elements on your paywall, see [Data Tags](https://docs.superwall.com/docs/data-tags).
   ///
 	///  - Parameter name: The value of the `data-pw-custom` tag in your HTML element that the user selected.
 	@objc optional func handleCustomPaywallAction(withName name: String)

@@ -16,7 +16,7 @@ class ConfigResponseLogicTests: XCTestCase {
 
     let triggers = Set([v1Trigger])
 
-    let outcome = ConfigResponseLogic.getPaywallIds(fromV2Triggers: triggers)
+    let outcome = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
 
     XCTAssertTrue(outcome.isEmpty)
   }
@@ -34,7 +34,7 @@ class ConfigResponseLogicTests: XCTestCase {
 
     let triggers = Set([trigger])
 
-    let outcome = ConfigResponseLogic.getPaywallIds(fromV2Triggers: triggers)
+    let outcome = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
 
     XCTAssertTrue(outcome.contains(paywallId))
   }
@@ -51,7 +51,7 @@ class ConfigResponseLogicTests: XCTestCase {
 
     let triggers = Set([trigger])
 
-    let outcome = ConfigResponseLogic.getPaywallIds(fromV2Triggers: triggers)
+    let outcome = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
 
     XCTAssertTrue(outcome.isEmpty)
   }

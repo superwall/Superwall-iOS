@@ -20,7 +20,7 @@ The API is the go-between that all our services use to communicate with each oth
 
 All paywalls are webpages that act as templates for you to configure in the dashboard. The easiest way to create a paywall webpage is with [Webflow](https://webflow.com). We have created a Webflow project with dozens of common paywall elements for you to quickly get up and running. For more info on how to build a paywall with Webflow, [see here](https://docs.superwall.com/docs/building-paywalls-with-webflow).
 
-In the header of the paywall, you add a link to a script we provide called Paywall.js. Then, you tag elements on the webpage, such as text or buttons, with [data tags](https://docs.superwall.com/docs/paywalljs#data-tags). These allow Paywall.js to interpret feedback and transmit information to and from the SDK.
+In the header of the paywall, you add a link to a script we provide called Paywall.js. Then, you tag elements on the webpage, such as text or buttons, with [data tags](https://docs.superwall.com/docs/data-tags). These allow Paywall.js to interpret feedback and transmit information to and from the SDK.
 
 In addition, when you configure a paywall on the dashboard, you input its URL and the dashboard instantly recognizes the data tags you've provided. From there, you can edit the text of all tagged items. This allows for quick iteration of paywall text. For example, you could create one paywall webpage but run an A/B test with two different configurations of the paywall in your app.
 

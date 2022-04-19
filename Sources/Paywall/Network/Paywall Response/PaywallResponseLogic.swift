@@ -131,7 +131,7 @@ enum PaywallResponseLogic {
       ]
       trackEvent(
         .triggerFire(
-            triggerResult: TriggerResult.noRuleMatch
+          triggerResult: TriggerResult.noRuleMatch
         ),
         [:]
       )
