@@ -12,7 +12,7 @@ public final class PaywallInfo: NSObject {
   /// Superwall's internal identifier for this paywall.
   let id: String
 
-  /// The identifier set for this paywall in Superwall's web dashboard.
+  /// The identifier set for this paywall in the Superwall dashboard.
   public let identifier: String
 
   /// What experiment this paywall presentation is a party of
