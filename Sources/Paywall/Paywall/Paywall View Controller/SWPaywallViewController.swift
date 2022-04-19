@@ -224,7 +224,7 @@ final class SWPaywallViewController: UIViewController {
 
     if #available(iOS 15.0, *),
       !DeviceHelper.shared.isMac {
-      webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
+//       webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
     }
 
     if UIWindow.isLandscape {
@@ -266,7 +266,7 @@ final class SWPaywallViewController: UIViewController {
     }
     if #available(iOS 15.0, *),
       !DeviceHelper.shared.isMac {
-      webView.setAllMediaPlaybackSuspended(true) // ignore-xcode-12
+//       webView.setAllMediaPlaybackSuspended(true) // ignore-xcode-12
     }
 
     if !calledDismiss {
