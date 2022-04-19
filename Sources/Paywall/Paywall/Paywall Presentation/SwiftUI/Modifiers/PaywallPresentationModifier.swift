@@ -18,7 +18,7 @@ struct PaywallPresentationModifier: ViewModifier {
 
   func body(content: Content) -> some View {
     content
-      .onReceive(Just(isPresented)) { value in
+      .onReceive(Just(isPresented)) { _ in
         updatePresentation(isPresented)
       }
   }

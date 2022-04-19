@@ -20,7 +20,7 @@ struct PaywallTriggerModifier: ViewModifier {
 
   func body(content: Content) -> some View {
     content
-      .onReceive(Just(shouldPresent)) { value in
+      .onReceive(Just(shouldPresent)) { _ in
         updatePresentation(shouldPresent)
       }
   }
