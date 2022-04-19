@@ -9,8 +9,8 @@ import Foundation
 
 /// A trigger experiment that was assigned to a user.
 ///
-/// An experiment is a set of variants determined by probabilities. Experiments can only result in a user seeing a paywall or a user not seeing a paywall, known as a holdout.
-struct Experiment {
+/// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
+public struct Experiment {
   /// The id of the experiment.
   let id: String
   /// The id of the experiment variant.

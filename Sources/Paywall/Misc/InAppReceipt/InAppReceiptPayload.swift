@@ -36,7 +36,7 @@ struct InAppReceiptPayload: ASN1Decodable  {
         // swiftlint:disable:next force_cast
         var attributeContainer = try secondContainer.nestedUnkeyedContainer(for: InAppReceiptAttribute.template) as! ASN1UnkeyedDecodingContainerProtocol
         let type: Int32 = try attributeContainer.decode(Int32.self)
-        let _ = try attributeContainer.skip(template: .universal(ASN1Identifier.Tag.integer))
+        _ = try attributeContainer.skip(template: .universal(ASN1Identifier.Tag.integer))
         // swiftlint:disable:next force_cast
         var valueContainer = try attributeContainer.nestedUnkeyedContainer(for: .universal(ASN1Identifier.Tag.octetString)) as! ASN1UnkeyedDecodingContainerProtocol
 
@@ -50,7 +50,7 @@ struct InAppReceiptPayload: ASN1Decodable  {
         assertionFailure("Something wrong here")
       }
     }
-    
+
     self.purchases = purchases
   }
 }
