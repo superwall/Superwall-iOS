@@ -215,7 +215,7 @@ class PaywallResponseLogicTests: XCTestCase {
       )
     }
     let trackEvent : (InternalEvent, [String: Any]) -> Void = { event, _ in
-      guard case let .triggerFire(triggerResult: result)  = event else {
+      guard case let .triggerFire(triggerResult: result, _) = event else {
         return XCTFail()
       }
         switch(result) {
@@ -260,7 +260,7 @@ class PaywallResponseLogicTests: XCTestCase {
       )
     }
       let trackEvent : (InternalEvent, [String: Any]) -> Void = { event, _ in
-    guard case let .triggerFire(triggerResult: result)  = event else {
+        guard case let .triggerFire(triggerResult: result, _) = event else {
         return XCTFail()
       }
         switch(result) {
@@ -308,7 +308,7 @@ class PaywallResponseLogicTests: XCTestCase {
       return .noRuleMatch
     }
       let trackEvent : (InternalEvent, [String: Any]) -> Void = { event, _ in
-    guard case let .triggerFire(triggerResult: result)  = event else {
+    guard case let .triggerFire(triggerResult: result, _)  = event else {
         return XCTFail()
       }
         switch(result) {

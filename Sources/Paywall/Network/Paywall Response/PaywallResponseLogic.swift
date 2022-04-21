@@ -88,7 +88,8 @@ enum PaywallResponseLogic {
               variantId: variantIdentifier
             ),
             paywallIdentifier: paywallIdentifier
-          )
+          ),
+          event: event
         ),
         [:]
       )
@@ -116,7 +117,8 @@ enum PaywallResponseLogic {
                 id: experimentId,
                 variantId: variantId
               )
-            )
+            ),
+          event: event
           ),
         [:]
       )
@@ -131,7 +133,8 @@ enum PaywallResponseLogic {
       ]
       trackEvent(
         .triggerFire(
-          triggerResult: TriggerResult.noRuleMatch
+          triggerResult: TriggerResult.noRuleMatch,
+          event: event
         ),
         [:]
       )
