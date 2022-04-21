@@ -129,7 +129,7 @@ public extension Paywall {
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped, either because the trigger is disabled or an error has occurred. Defaults to `nil`.  Accepts an `NSError?` with more details.
   @objc static func trigger(
     event: String? = nil,
-    params: [String: Any]? = nil,
+    params: [String: Any] = [:],
     on viewController: UIViewController? = nil,
     ignoreSubscriptionStatus: Bool = false,
     onSkip: ((NSError?) -> Void)? = nil,
@@ -139,7 +139,11 @@ public extension Paywall {
     var eventData: EventData?
 
     if let name = event {
-      eventData = Paywall.track(name, [:], params ?? [:], handleTrigger: false)
+      let result = Paywall.track(
+        UserInitiatedEvent.Track(name: name, canTriggerPaywall: false),
+        customParameters: params
+      )
+      eventData = result.data
     }
 
     internallyPresent(

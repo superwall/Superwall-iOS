@@ -11,14 +11,11 @@ final class Network {
   static let shared = Network()
   private let urlSession = URLSession(configuration: .ephemeral)
 
-  func sendEvents(
-    events: EventsRequest,
-    completion: @escaping (Result<EventsResponse, Error>) -> Void
-  ) {
+  func sendEvents(events: EventsRequest) {
     urlSession.request(.events(eventsRequest: events)) { result in
       switch result {
-      case .success(let response):
-        completion(.success(response))
+      case .success:
+        break
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -27,7 +24,6 @@ final class Network {
           info: ["payload": events],
           error: error
         )
-        completion(.failure(error))
       }
     }
   }

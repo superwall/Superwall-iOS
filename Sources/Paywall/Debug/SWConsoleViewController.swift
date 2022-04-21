@@ -145,10 +145,10 @@ extension SWConsoleViewController: UITableViewDelegate, UITableViewDataSource {
 
     let productLevels = ["primary", "secondary", "tertiary"]
     var selectedProduct: String?
-    let i = productPicker.selectedRow(inComponent: 0)
+    let row = productPicker.selectedRow(inComponent: 0)
 
-    if i < productLevels.count {
-      selectedProduct = productLevels[i]
+    if row < productLevels.count {
+      selectedProduct = productLevels[row]
     }
 
     let (key, value) = tableViewCellData[indexPath.row]

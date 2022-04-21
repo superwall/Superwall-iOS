@@ -111,7 +111,7 @@ final class Storage {
       return
     }
 
-    Paywall.track(.firstSeen)
+    Paywall.track(SuperwallEvent.FirstSeen())
     cache.write("true", forType: DidTrackFirstSeen.self)
 		didTrackFirstSeen = true
 	}

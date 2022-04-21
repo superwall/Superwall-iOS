@@ -63,7 +63,12 @@ extension Paywall {
     for product: SKProduct
   ) {
 		if let paywallInfo = paywallViewController.paywallInfo {
-			Paywall.track(.transactionStart(paywallInfo: paywallInfo, product: product))
+      let trackedEvent = SuperwallEvent.Transaction(
+        state: .start,
+        paywallInfo: paywallInfo,
+        product: product
+      )
+			Paywall.track(trackedEvent)
 		}
 
 		paywallViewController.loadingState = .loadingPurchase
@@ -78,12 +83,26 @@ extension Paywall {
     for product: SKProduct
   ) {
     if let paywallInfo = paywallViewController.paywallInfo {
-			Paywall.track(.transactionComplete(paywallInfo: paywallInfo, product: product))
+      let trackedEvent = SuperwallEvent.Transaction(
+        state: .complete,
+        paywallInfo: paywallInfo,
+        product: product
+      )
+      Paywall.track(trackedEvent)
+
 			if let freeTrialAvailable = paywallViewController.paywallResponse?.isFreeTrialAvailable {
 				if freeTrialAvailable {
-					Paywall.track(.freeTrialStart(paywallInfo: paywallInfo, product: product))
+          let trackedEvent = SuperwallEvent.FreeTrialStart(
+            paywallInfo: paywallInfo,
+            product: product
+          )
+          Paywall.track(trackedEvent)
 				} else {
-					Paywall.track(.subscriptionStart(paywallInfo: paywallInfo, product: product))
+          let trackedEvent = SuperwallEvent.SubscriptionStart(
+            paywallInfo: paywallInfo,
+            product: product
+          )
+          Paywall.track(trackedEvent)
 				}
 			}
 		}
@@ -109,13 +128,12 @@ extension Paywall {
 				paywallViewController.loadingState = .ready
 
 				if let paywallInfo = paywallViewController.paywallInfo {
-					Paywall.track(
-            .transactionFail(
-              paywallInfo: paywallInfo,
-              product: product,
-              message: error?.localizedDescription ?? ""
-            )
+          let trackedEvent = SuperwallEvent.Transaction(
+            state: .fail(message: error?.localizedDescription ?? ""),
+            paywallInfo: paywallInfo,
+            product: product
           )
+					Paywall.track(trackedEvent)
 				}
 
 				self.paywallViewController?.presentAlert(
@@ -137,7 +155,12 @@ extension Paywall {
     for product: SKProduct
   ) {
 		if let paywallInfo = paywallViewController.paywallInfo {
-			Paywall.track(.transactionAbandon(paywallInfo: paywallInfo, product: product))
+      let trackedEvent = SuperwallEvent.Transaction(
+        state: .abandon,
+        paywallInfo: paywallInfo,
+        product: product
+      )
+      Paywall.track(trackedEvent)
 		}
 
 		paywallViewController.loadingState = .ready
@@ -145,7 +168,12 @@ extension Paywall {
 
 	private func transactionWasRestored(paywallViewController: SWPaywallViewController) {
 		if let paywallInfo = paywallViewController.paywallInfo {
-			Paywall.track(.transactionRestore(paywallInfo: paywallInfo, product: nil))
+      let trackedEvent = SuperwallEvent.Transaction(
+        state: .restore,
+        paywallInfo: paywallInfo,
+        product: nil
+      )
+			Paywall.track(trackedEvent)
 		}
     dismiss(paywallViewController, state: .restored)
 	}
@@ -158,13 +186,12 @@ extension Paywall {
     )
 
 		if let paywallInfo = paywallViewController.paywallInfo {
-			Paywall.track(
-        .transactionFail(
-          paywallInfo: paywallInfo,
-          product: nil,
-          message: "Needs parental approval"
-        )
+      let trackedEvent = SuperwallEvent.Transaction(
+        state: .fail(message: "Needs parental approval"),
+        paywallInfo: paywallInfo,
+        product: nil
       )
+      Paywall.track(trackedEvent)
 		}
 	}
 }

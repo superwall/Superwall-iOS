@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import StoreKit
 
 /// `PaywallInfo` is the primary class used to distinguish one paywall from another. Used primarily in `Paywall.present(onPresent:onDismiss)`'s completion handlers.
 public final class PaywallInfo: NSObject {
@@ -128,5 +129,76 @@ public final class PaywallInfo: NSObject {
     } else {
       self.productsLoadDuration = nil
     }
+  }
+
+  func eventParams(
+    forProduct product: SKProduct? = nil,
+    otherParams: [String: Any]? = nil
+  ) -> [String: Any] {
+    var output: [String: Any] = [
+      "paywall_id": id,
+      "paywall_identifier": identifier,
+      "paywall_slug": slug,
+      "paywall_name": name,
+      "paywall_url": url?.absoluteString ?? "unknown",
+      "presented_by_event_name": presentedByEventWithName as Any,
+      "presented_by_event_id": presentedByEventWithId as Any,
+      "presented_by_event_timestamp": presentedByEventAt as Any,
+      "presented_by": presentedBy as Any,
+      "paywall_product_ids": productIds.joined(separator: ","),
+      "paywall_response_load_start_time": responseLoadStartTime as Any,
+      "paywall_response_load_complete_time": responseLoadCompleteTime as Any,
+      "paywall_response_load_duration": responseLoadDuration as Any,
+      "paywall_webview_load_start_time": webViewLoadStartTime as Any,
+      "paywall_webview_load_complete_time": webViewLoadCompleteTime as Any,
+      "paywall_webview_load_duration": webViewLoadDuration as Any,
+      "paywall_products_load_start_time": productsLoadStartTime as Any,
+      "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
+      "paywall_products_load_duration": productsLoadDuration as Any
+    ]
+
+    var loadingVars: [String: Any] = [:]
+    for key in output.keys {
+      if key.contains("_load_"),
+        let output = output[key] {
+        loadingVars[key] = output
+      }
+    }
+
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallEvents,
+      message: "Paywall loading timestamps",
+      info: loadingVars
+    )
+
+    let levels = ["primary", "secondary", "tertiary"]
+
+    for (id, level) in levels.enumerated() {
+      let key = "\(level)_product_id"
+      output[key] = ""
+      if id < productIds.count {
+        output[key] = productIds[id]
+      }
+    }
+
+    if let product = product {
+      output["product_id"] = product.productIdentifier
+      for key in product.legacyEventData.keys {
+        if let value = product.legacyEventData[key] {
+          output["product_\(key.camelCaseToSnakeCase())"] = value
+        }
+      }
+    }
+
+    if let otherParams = otherParams {
+      for key in otherParams.keys {
+        if let value = otherParams[key] {
+          output[key] = value
+        }
+      }
+    }
+
+    return output
   }
 }

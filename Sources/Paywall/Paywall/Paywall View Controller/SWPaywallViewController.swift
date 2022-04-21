@@ -421,7 +421,11 @@ final class SWPaywallViewController: UIViewController {
       if let urlString = self.paywallResponse?.url,
         let url = URL(string: urlString) {
         if let paywallInfo = self.paywallInfo {
-          Paywall.track(.paywallWebviewLoadStart(paywallInfo: paywallInfo))
+          let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+            state: .start,
+            paywallInfo: paywallInfo
+          )
+          Paywall.track(trackedEvent)
         }
 
         self.webView.load(URLRequest(url: url))
@@ -454,15 +458,19 @@ final class SWPaywallViewController: UIViewController {
 	}
 
 	func trackOpen() {
-		if let i = paywallInfo {
-			Paywall.track(.paywallOpen(paywallInfo: i))
-		}
+		guard let paywallInfo = paywallInfo else {
+      return
+    }
+    let trackedEvent = SuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
+    Paywall.track(trackedEvent)
 	}
 
 	func trackClose() {
-		if let i = paywallInfo {
-			Paywall.track(.paywallClose(paywallInfo: i))
-		}
+    guard let paywallInfo = paywallInfo else {
+      return
+    }
+    let trackedEvent = SuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
+    Paywall.track(trackedEvent)
 	}
 
 	func presentAlert(

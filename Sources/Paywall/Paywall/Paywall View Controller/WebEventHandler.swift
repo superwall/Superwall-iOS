@@ -98,7 +98,11 @@ final class WebEventHandler: WebEventDelegate {
         delegate?.paywallResponse?.webViewLoadCompleteTime = Date()
       }
 
-      Paywall.track(.paywallWebviewLoadComplete(paywallInfo: paywallInfo))
+      let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+        state: .complete,
+        paywallInfo: paywallInfo
+      )
+      Paywall.track(trackedEvent)
     }
 
     let params = paywallResponse.getBase64EventsString(

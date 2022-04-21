@@ -10,7 +10,7 @@ import Foundation
 enum PaywallLogic {
   enum Outcome {
     case triggerPaywall
-    case internalEventAsTrigger
+    case disallowedEventAsTrigger
     case dontTriggerPaywall
   }
   static func canTriggerPaywall(
@@ -30,14 +30,14 @@ enum PaywallLogic {
       return .dontTriggerPaywall
     }
 
-    let allowedInternalEvents = Set(["app_install", "session_start", "app_launch"])
-    let isAllowedTrigger = allowedInternalEvents.contains(eventName)
-    let isNotInternalEvent = InternalEventName(rawValue: eventName) == nil
+    let allowedSuperwallEvents = Set(["app_install", "session_start", "app_launch"])
+    let isAllowedTrigger = allowedSuperwallEvents.contains(eventName)
+    let isNotSuperwallEvent = Paywall.EventName(rawValue: eventName) == nil
 
-    if isAllowedTrigger || isNotInternalEvent {
+    if isAllowedTrigger || isNotSuperwallEvent {
       return .triggerPaywall
     } else {
-      return .internalEventAsTrigger
+      return .disallowedEventAsTrigger
     }
   }
 

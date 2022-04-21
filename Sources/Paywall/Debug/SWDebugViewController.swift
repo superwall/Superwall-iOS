@@ -319,7 +319,7 @@ final class SWDebugViewController: UIViewController {
   }
 
   @objc func pressedExitButton() {
-    SWDebugManager.shared.closeDebugger(completion: nil)
+    SWDebugManager.shared.closeDebugger()
   }
 
   @objc func pressedConsoleButton() {
