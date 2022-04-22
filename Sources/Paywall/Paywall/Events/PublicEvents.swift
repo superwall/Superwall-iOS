@@ -27,13 +27,12 @@ public extension Paywall {
     _ name: String,
     _ params: [String: Any]
   ) {
-    track(
-      UserInitiatedEvent.Track(
-        rawName: name,
-        canTriggerPaywall: true
-      ),
+    let trackableEvent = UserInitiatedEvent.Track(
+      rawName: name,
+      canTriggerPaywall: true,
       customParameters: params
     )
+    Paywall.track(trackableEvent)
   }
 
   /// Set user attributes for use in your paywalls and the dashboard.
@@ -70,10 +69,11 @@ public extension Paywall {
       }
     }
 
-    let result = track(
-      UserInitiatedEvent.Attributes(),
+    let trackableEvent = UserInitiatedEvent.Attributes(
       customParameters: customAttributes
     )
+    let result = track(trackableEvent)
+    
     let eventParams = result.parameters.eventParams
     Storage.shared.addUserAttributes(eventParams)
   }
@@ -311,15 +311,17 @@ public extension Paywall {
     case .pushNotificationReceive(let pushNotificationId):
       let trackedEvent = UserInitiatedEvent.PushNotification(
         state: .receive,
-        pushNotificationId: pushNotificationId
+        pushNotificationId: pushNotificationId,
+        customParameters: params
       )
-      Paywall.track(trackedEvent, customParameters: params)
+      Paywall.track(trackedEvent)
     case .pushNotificationOpen(let pushNotificationId):
       let trackedEvent = UserInitiatedEvent.PushNotification(
         state: .open,
-        pushNotificationId: pushNotificationId
+        pushNotificationId: pushNotificationId,
+        customParameters: params
       )
-      Paywall.track(trackedEvent, customParameters: params)
+      Paywall.track(trackedEvent)
     case let .userAttributes(standardAttributes, customAttributes):
       var standard: [String: Any] = [:]
       for key in standardAttributes.keys {
@@ -337,21 +339,19 @@ public extension Paywall {
           }
         }
       }
-
-      let result = Paywall.track(
-        UserInitiatedEvent.Attributes(),
+      let trackedEvent = UserInitiatedEvent.Attributes(
         customParameters: custom
       )
+      let result = Paywall.track(trackedEvent)
       let eventParams = result.parameters.eventParams
       Storage.shared.addUserAttributes(eventParams)
     case let .base(name, params):
-      Paywall.track(
-        UserInitiatedEvent.Track(
-          rawName: name,
-          canTriggerPaywall: true
-        ),
+      let trackedEvent = UserInitiatedEvent.Track(
+        rawName: name,
+        canTriggerPaywall: true,
         customParameters: params
       )
+      Paywall.track(trackedEvent)
     default:
       let name = EventTypeConversion.name(for: event).rawValue
       Paywall.track(

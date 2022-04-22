@@ -11,21 +11,22 @@ import StoreKit
 extension Paywall {
   private static var queue = EventsQueue()
 
+  /// Tracks an analytical event by sending it to the server and, for internal Superwall events, the delegate.
+  ///
+  /// - Parameters:
+  ///   - trackableEvent: The event you want to track.
+  ///   - customParameters: Any extra non-Superwall parameters that you want to track.
 	@discardableResult
-  static func track(
-    _ trackableEvent: Trackable,
-    customParameters: [String: Any] = [:]
-  ) -> (data: EventData, parameters: TrackingParameters) {
+  static func track(_ event: Trackable) -> TrackingResult {
     // Get parameters to be sent to the delegate and stored in an event.
-    let parameters = InternalEventLogic.processParameters(
-      fromTrackableEvent: trackableEvent,
-      customParameters: customParameters
+    let parameters = TrackingLogic.processParameters(
+      fromTrackableEvent: event
     )
 
     // For a trackable superwall event, send params to delegate
-    if trackableEvent is TrackableSuperwallEvent {
+    if event is TrackableSuperwallEvent {
       Paywall.delegate?.trackAnalyticsEvent?(
-        withName: trackableEvent.rawName,
+        withName: event.rawName,
         params: parameters.delegateParams
       )
       Logger.debug(
@@ -37,17 +38,21 @@ extension Paywall {
     }
 
 		let eventData = EventData(
-      name: trackableEvent.rawName,
+      name: event.rawName,
       parameters: JSON(parameters.eventParams),
       createdAt: Date().isoString
     )
 		queue.enqueue(event: eventData.jsonData)
 
-    if trackableEvent.canTriggerPaywall {
+    if event.canTriggerPaywall {
 			Paywall.shared.handleTrigger(forEvent: eventData)
 		}
 
-		return (eventData, parameters)
+    let result = TrackingResult(
+      data: eventData,
+      parameters: parameters
+    )
+		return result
   }
 
   // MARK: - Deprecated

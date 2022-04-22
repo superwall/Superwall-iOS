@@ -14,7 +14,7 @@ final class InternalEventLogicTests: XCTestCase {
     let event = SuperwallEvent.AppLaunch()
 
     // When
-    let parameters = InternalEventLogic.processParameters(
+    let parameters = TrackingLogic.processParameters(
       fromTrackableEvent: event
     )
 
@@ -30,7 +30,7 @@ final class InternalEventLogicTests: XCTestCase {
     )
 
     // When
-    let parameters = InternalEventLogic.processParameters(
+    let parameters = TrackingLogic.processParameters(
       fromTrackableEvent: event
     )
 

@@ -51,7 +51,7 @@ enum PaywallResponseLogic {
     fromEvent event: EventData?,
     didFetchConfig: Bool,
     handleEvent: (EventData) -> HandleEventResult = TriggerManager.handleEvent,
-    trackEvent: (Trackable, [String: Any]) -> (EventData, TrackingParameters) = Paywall.track
+    trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) throws -> TriggerResponseIdentifiers {
     guard
       didFetchConfig,
@@ -91,7 +91,7 @@ enum PaywallResponseLogic {
         triggerResult: triggerResult,
         triggerName: event.name
       )
-      _ = trackEvent(trackedEvent, [:])
+      _ = trackEvent(trackedEvent)
 
       return outcome
     case let .holdout(experimentId, variantId):
@@ -119,7 +119,7 @@ enum PaywallResponseLogic {
         triggerResult: triggerResult,
         triggerName: event.name
       )
-      _ = trackEvent(trackedEvent, [:])
+      _ = trackEvent(trackedEvent)
       throw error
     case .noRuleMatch:
       let userInfo: [String: Any] = [
@@ -133,7 +133,7 @@ enum PaywallResponseLogic {
         triggerResult: TriggerResult.noRuleMatch,
         triggerName: event.name
       )
-      _ = trackEvent(trackedEvent, [:])
+      _ = trackEvent(trackedEvent)
       let error = NSError(
         domain: "com.superwall",
         code: 4000,
@@ -198,7 +198,7 @@ enum PaywallResponseLogic {
     forEvent event: EventData?,
     withHash hash: String,
     handlersCache: [String: [PaywallResponseCompletionBlock]],
-    trackEvent: (Trackable, [String: Any]) -> (EventData, TrackingParameters) = Paywall.track
+    trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) -> PaywallErrorResponse? {
     if let error = error as? URLSession.NetworkError,
       error == .notFound {
@@ -206,13 +206,13 @@ enum PaywallResponseLogic {
         state: .notFound,
         eventData: event
       )
-      _ = trackEvent(trackedEvent, [:])
+      _ = trackEvent(trackedEvent)
     } else {
       let trackedEvent = SuperwallEvent.PaywallResponseLoad(
         state: .fail,
         eventData: event
       )
-      _ = trackEvent(trackedEvent, [:])
+      _ = trackEvent(trackedEvent)
     }
 
     if let handlers = handlersCache[hash] {

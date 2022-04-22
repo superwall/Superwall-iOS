@@ -17,12 +17,14 @@ enum UserInitiatedEvent {
       "application_installed_at": DeviceHelper.shared.appInstallDate
     ]
     let canTriggerPaywall = false
+    var customParameters: [String : Any] = [:]
   }
 
   struct Track: TrackableUserInitiatedEvent {
     let rawName: String
     let superwallParameters: [String : Any]? = nil
     let canTriggerPaywall: Bool
+    var customParameters: [String : Any] = [:]
   }
 
   struct DeepLink: TrackableUserInitiatedEvent {
@@ -31,6 +33,7 @@ enum UserInitiatedEvent {
     var superwallParameters: [String : Any]? {
       return ["url": url.absoluteString]
     }
+    var customParameters: [String : Any] = [:]
   }
 
   // MARK: - To be deprecated/deleted
@@ -55,5 +58,6 @@ enum UserInitiatedEvent {
     }
     let state: State
     let pushNotificationId: String?
+    var customParameters: [String : Any] = [:]
   }
 }

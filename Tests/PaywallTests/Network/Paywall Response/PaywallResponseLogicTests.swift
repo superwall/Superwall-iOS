@@ -215,7 +215,7 @@ class PaywallResponseLogicTests: XCTestCase {
         paywallIdentifier: paywallId
       )
     }
-    let trackEvent: (Trackable, [String: Any]) -> (EventData, TrackingParameters) = { event, _ in
+    let trackEvent: (Trackable) -> TrackingResult = { event in
       let triggerFire = event as! SuperwallEvent.TriggerFire
       XCTAssertEqual(triggerFire.triggerName, eventName)
 
@@ -228,7 +228,7 @@ class PaywallResponseLogicTests: XCTestCase {
       default:
         XCTFail()
       }
-      return (.stub() , .stub())
+      return .stub()
     }
 
     // When
@@ -262,7 +262,7 @@ class PaywallResponseLogicTests: XCTestCase {
         variantId: variantId
       )
     }
-    let trackEvent: (Trackable, [String: Any]) -> (EventData, TrackingParameters) = { event, _ in
+    let trackEvent: (Trackable) -> TrackingResult = { event in
       let triggerFire = event as! SuperwallEvent.TriggerFire
       XCTAssertEqual(triggerFire.triggerName, eventName)
 
@@ -274,7 +274,7 @@ class PaywallResponseLogicTests: XCTestCase {
       default:
         XCTFail()
       }
-      return (.stub() , .stub())
+      return .stub()
     }
 
     // When
@@ -313,7 +313,7 @@ class PaywallResponseLogicTests: XCTestCase {
       return .noRuleMatch
     }
 
-    let trackEvent: (Trackable, [String: Any]) -> (EventData, TrackingParameters) = { event, _ in
+    let trackEvent: (Trackable) -> TrackingResult = { event in
       let triggerFire = event as! SuperwallEvent.TriggerFire
       XCTAssertEqual(triggerFire.triggerName, eventName)
 
@@ -323,7 +323,7 @@ class PaywallResponseLogicTests: XCTestCase {
       default:
         XCTFail()
       }
-      return (.stub(), .stub())
+      return .stub()
     }
 
     // When
@@ -360,9 +360,9 @@ class PaywallResponseLogicTests: XCTestCase {
       return .unknownEvent
     }
     
-    let trackEvent: (Trackable, [String: Any]) -> (EventData, TrackingParameters) = { event, _ in
+    let trackEvent: (Trackable) -> TrackingResult = { event in
       XCTFail()
-      return (.stub(), .stub())
+      return .stub()
     }
 
     // When
@@ -535,14 +535,14 @@ class PaywallResponseLogicTests: XCTestCase {
     // Given
     let error = URLSession.NetworkError.notFound
     
-    let trackEvent: (Trackable, [String: Any]) -> (EventData, TrackingParameters) = { event, _ in
+    let trackEvent: (Trackable) -> TrackingResult = { event in
       let response = event as! SuperwallEvent.PaywallResponseLoad
       guard case .notFound = response.state else {
         XCTFail()
-        return (.stub() , .stub())
+        return .stub()
       }
       XCTAssertNil(response.eventData)
-      return (.stub() , .stub())
+      return .stub()
     }
 
     // When
@@ -561,14 +561,14 @@ class PaywallResponseLogicTests: XCTestCase {
   func testHandlePaywallError_paywallResponseLoadFail() {
     // Given
     let error = URLSession.NetworkError.unknown
-    let trackEvent: (Trackable, [String: Any]) -> (EventData, TrackingParameters) = { event, _ in
+    let trackEvent: (Trackable) -> TrackingResult = { event in
       let response = event as! SuperwallEvent.PaywallResponseLoad
       guard case .fail = response.state else {
         XCTFail()
-        return (.stub() , .stub())
+        return .stub()
       }
       XCTAssertNil(response.eventData)
-      return (.stub() , .stub())
+      return .stub()
     }
 
     // When
