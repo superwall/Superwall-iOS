@@ -280,14 +280,14 @@ extension Paywall {
       case .noRuleMatch:
         params = [
           "result": "no_rule_match",
-          "triggerName": eventData.name
+          "trigger_name": eventData.name
         ]
       case .holdout(let experiment):
         params = [
           "variant_id": experiment.variantId as Any,
           "experiment_id": experiment.id as Any,
           "result": "holdout",
-          "triggerName": eventData.name
+          "trigger_name": eventData.name
         ]
       case let .paywall(experiment, paywallIdentifier):
         params = [
@@ -295,7 +295,7 @@ extension Paywall {
           "experiment_id": experiment.id as Any,
           "paywall_identifier": paywallIdentifier,
           "result": "present",
-          "triggerName": eventData.name
+          "trigger_name": eventData.name
         ]
       }
       track(
