@@ -9,6 +9,7 @@ import Foundation
 import StoreKit
 
 protocol TrackableSuperwallEvent: Trackable {
+  /// The Superwall ``Paywall/Paywall/EventName`` to be tracked by this event.
   var name: Paywall.EventName { get }
 }
 
@@ -18,6 +19,7 @@ extension TrackableSuperwallEvent {
   }
 }
 
+/// These are events that tracked internally and sent back to the user via the delegate.
 enum SuperwallEvent {
   struct AppOpen: TrackableSuperwallEvent {
     let name: Paywall.EventName = .appOpen

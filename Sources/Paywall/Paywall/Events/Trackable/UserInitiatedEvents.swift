@@ -9,6 +9,7 @@ import Foundation
 
 protocol TrackableUserInitiatedEvent: Trackable {}
 
+/// These are events that are initiated by the user. Unlike `SuperwallTrackableEvents`, they are not sent back to the delegate.
 enum UserInitiatedEvent {
   struct Attributes: TrackableUserInitiatedEvent {
     let rawName = "user_attributes"
