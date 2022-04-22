@@ -140,7 +140,7 @@ public extension Paywall {
 
     if let name = event {
       let result = Paywall.track(
-        UserInitiatedEvent.Track(name: name, canTriggerPaywall: false),
+        UserInitiatedEvent.Track(rawName: name, canTriggerPaywall: false),
         customParameters: params
       )
       eventData = result.data

@@ -11,23 +11,23 @@ protocol TrackableUserInitiatedEvent: Trackable {}
 
 enum UserInitiatedEvent {
   struct Attributes: TrackableUserInitiatedEvent {
-    let name = "user_attributes"
-    let parameters: [String : Any]? = [
+    let rawName = "user_attributes"
+    let superwallParameters: [String : Any]? = [
       "application_installed_at": DeviceHelper.shared.appInstallDate
     ]
     let canTriggerPaywall = false
   }
 
   struct Track: TrackableUserInitiatedEvent {
-    let name: String
-    let parameters: [String : Any]? = nil
+    let rawName: String
+    let superwallParameters: [String : Any]? = nil
     let canTriggerPaywall: Bool
   }
 
   struct DeepLink: TrackableUserInitiatedEvent {
-    let name = "deepLink_open"
+    let rawName = "deepLink_open"
     let url: URL
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       return ["url": url.absoluteString]
     }
   }
@@ -38,7 +38,7 @@ enum UserInitiatedEvent {
       case receive
       case open
     }
-    var name: String {
+    var rawName: String {
       switch state {
       case .open:
         return "pushNotification_open"
@@ -46,7 +46,7 @@ enum UserInitiatedEvent {
         return "pushNotification_receive"
       }
     }
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       if let pushNotificationId = pushNotificationId {
         return ["push_notification_id": pushNotificationId]
       }

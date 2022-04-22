@@ -25,7 +25,7 @@ extension Paywall {
     // For a trackable superwall event, send params to delegate
     if trackableEvent is TrackableSuperwallEvent {
       Paywall.delegate?.trackAnalyticsEvent?(
-        withName: trackableEvent.name,
+        withName: trackableEvent.rawName,
         params: parameters.delegateParams
       )
       Logger.debug(
@@ -37,11 +37,10 @@ extension Paywall {
     }
 
 		let eventData = EventData(
-      name: trackableEvent.name,
+      name: trackableEvent.rawName,
       parameters: JSON(parameters.eventParams),
       createdAt: Date().isoString
     )
-
 		queue.enqueue(event: eventData.jsonData)
 
     if trackableEvent.canTriggerPaywall {

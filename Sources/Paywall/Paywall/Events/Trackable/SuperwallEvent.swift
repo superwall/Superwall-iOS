@@ -8,23 +8,31 @@
 import Foundation
 import StoreKit
 
-protocol TrackableSuperwallEvent: Trackable {}
+protocol TrackableSuperwallEvent: Trackable {
+  var name: Paywall.EventName { get }
+}
+
+extension TrackableSuperwallEvent {
+  var rawName: String {
+    return name.rawValue
+  }
+}
 
 enum SuperwallEvent {
   struct AppOpen: TrackableSuperwallEvent {
-    let name = Paywall.EventName.appOpen.rawValue
+    let name: Paywall.EventName = .appOpen
   }
   struct AppLaunch: TrackableSuperwallEvent {
-    let name = Paywall.EventName.appLaunch.rawValue
+    let name: Paywall.EventName = .appLaunch
   }
   struct FirstSeen: TrackableSuperwallEvent {
-    let name = Paywall.EventName.firstSeen.rawValue
+    let name: Paywall.EventName = .firstSeen
   }
   struct AppClose: TrackableSuperwallEvent {
-    let name = Paywall.EventName.appClose.rawValue
+    let name: Paywall.EventName = .appClose
   }
   struct SessionStart: TrackableSuperwallEvent {
-    let name = Paywall.EventName.sessionStart.rawValue
+    let name: Paywall.EventName = .sessionStart
   }
 
   struct PaywallResponseLoad: TrackableSuperwallEvent {
@@ -36,21 +44,21 @@ enum SuperwallEvent {
     }
     let state: State
 
-    var name: String {
+    var name: Paywall.EventName {
       switch state {
       case .start:
-        return Paywall.EventName.paywallResponseLoadStart.rawValue
+        return .paywallResponseLoadStart
       case .notFound:
-        return Paywall.EventName.paywallResponseLoadNotFound.rawValue
+        return .paywallResponseLoadNotFound
       case .fail:
-        return Paywall.EventName.paywallResponseLoadFail.rawValue
+        return .paywallResponseLoadFail
       case .complete:
-        return Paywall.EventName.paywallResponseLoadComplete.rawValue
+        return .paywallResponseLoadComplete
       }
     }
     let eventData: EventData?
 
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       let fromEvent = eventData != nil
       let params: [String: Any] = [
         "isTriggeredFromEvent": fromEvent,
@@ -70,40 +78,46 @@ enum SuperwallEvent {
 
   struct TriggerFire: TrackableSuperwallEvent {
     let triggerResult: TriggerResult
-    let name = Paywall.EventName.triggerFire.rawValue
+    let name: Paywall.EventName = .triggerFire
+    let triggerName: String
 
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       switch triggerResult {
       case .noRuleMatch:
-        return ["result": "no_rule_match"]
+        return [
+          "result": "no_rule_match",
+          "trigger_name": triggerName
+        ]
       case .holdout(let experiment):
         return [
           "variant_id": experiment.variantId as Any,
           "experiment_id": experiment.id as Any,
-          "result": "holdout"
+          "result": "holdout",
+          "trigger_name": triggerName
         ]
       case let .paywall(experiment, paywallIdentifier):
         return [
           "variant_id": experiment.variantId as Any,
           "experiment_id": experiment.id as Any,
           "paywall_identifier": paywallIdentifier,
-          "result": "present"
+          "result": "present",
+          "trigger_name": triggerName
         ]
       }
     }
   }
 
   struct PaywallOpen: TrackableSuperwallEvent {
-    let name = Paywall.EventName.paywallOpen.rawValue
+    let name: Paywall.EventName = .paywallOpen
     let paywallInfo: PaywallInfo
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       return paywallInfo.eventParams()
     }
   }
   struct PaywallClose: TrackableSuperwallEvent {
-    let name = Paywall.EventName.paywallClose.rawValue
+    let name: Paywall.EventName = .paywallClose
     let paywallInfo: PaywallInfo
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       return paywallInfo.eventParams()
     }
   }
@@ -118,24 +132,24 @@ enum SuperwallEvent {
     }
     let state: State
 
-    var name: String {
+    var name: Paywall.EventName {
       switch state {
       case .start:
-        return Paywall.EventName.transactionStart.rawValue
+        return .transactionStart
       case .fail:
-        return Paywall.EventName.transactionFail.rawValue
+        return .transactionFail
       case .abandon:
-        return Paywall.EventName.transactionAbandon.rawValue
+        return .transactionAbandon
       case .complete:
-        return Paywall.EventName.transactionComplete.rawValue
+        return .transactionComplete
       case .restore:
-        return Paywall.EventName.transactionRestore.rawValue
+        return .transactionRestore
       }
     }
     let paywallInfo: PaywallInfo
     let product: SKProduct?
 
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       switch state {
       case .start,
         .abandon,
@@ -152,31 +166,31 @@ enum SuperwallEvent {
   }
 
   struct SubscriptionStart: TrackableSuperwallEvent {
-    let name = Paywall.EventName.subscriptionStart.rawValue
+    let name: Paywall.EventName = .subscriptionStart
     let paywallInfo: PaywallInfo
     let product: SKProduct
 
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       return paywallInfo.eventParams(forProduct: product)
     }
   }
 
   struct FreeTrialStart: TrackableSuperwallEvent {
-    let name = Paywall.EventName.freeTrialStart.rawValue
+    let name: Paywall.EventName = .freeTrialStart
     let paywallInfo: PaywallInfo
     let product: SKProduct
 
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       return paywallInfo.eventParams(forProduct: product)
     }
   }
 
   struct NonRecurringProductPurchase: TrackableSuperwallEvent {
-    let name = Paywall.EventName.nonRecurringProductPurchase.rawValue
+    let name: Paywall.EventName = .nonRecurringProductPurchase
     let paywallInfo: PaywallInfo
     let product: SKProduct
 
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       return paywallInfo.eventParams(forProduct: product)
     }
   }
@@ -189,19 +203,19 @@ enum SuperwallEvent {
     }
     let state: State
 
-    var name: String {
+    var name: Paywall.EventName {
       switch state {
       case .start:
-        return Paywall.EventName.paywallWebviewLoadStart.rawValue
+        return .paywallWebviewLoadStart
       case .fail:
-        return Paywall.EventName.paywallWebviewLoadFail.rawValue
+        return .paywallWebviewLoadFail
       case .complete:
-        return Paywall.EventName.paywallWebviewLoadComplete.rawValue
+        return .paywallWebviewLoadComplete
       }
     }
     let paywallInfo: PaywallInfo
 
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       switch state {
       case .start,
         .fail,
@@ -219,20 +233,20 @@ enum SuperwallEvent {
     }
     let state: State
 
-    var name: String {
+    var name: Paywall.EventName {
       switch state {
       case .start:
-        return Paywall.EventName.paywallProductsLoadStart.rawValue
+        return .paywallProductsLoadStart
       case .fail:
-        return Paywall.EventName.paywallProductsLoadFail.rawValue
+        return .paywallProductsLoadFail
       case .complete:
-        return Paywall.EventName.paywallProductsLoadComplete.rawValue
+        return .paywallProductsLoadComplete
       }
     }
     let paywallInfo: PaywallInfo
     let eventData: EventData?
 
-    var parameters: [String : Any]? {
+    var superwallParameters: [String : Any]? {
       let fromEvent = eventData != nil
       let params: [String: Any] = [
         "isTriggeredFromEvent": fromEvent,

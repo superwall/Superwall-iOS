@@ -13,13 +13,22 @@ struct TrackingParameters {
   let eventParams: [String: Any]
 }
 
+extension TrackingParameters: Stubbable {
+  static func stub() -> TrackingParameters {
+    return TrackingParameters(
+      delegateParams: [:],
+      eventParams: [:]
+    )
+  }
+}
+
 enum InternalEventLogic {
   static func processParameters(
     fromTrackableEvent trackableEvent: Trackable,
     customParameters: [String: Any] = [:]
   ) -> TrackingParameters {
-    let superwallParameters = trackableEvent.parameters ?? [:]
-    let eventName = trackableEvent.name
+    let superwallParameters = trackableEvent.superwallParameters ?? [:]
+    let eventName = trackableEvent.rawName
 
     var eventParams: [String: Any] = [:]
     var delegateParams: [String: Any] = [

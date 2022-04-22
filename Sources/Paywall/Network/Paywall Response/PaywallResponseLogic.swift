@@ -88,7 +88,8 @@ enum PaywallResponseLogic {
         paywallIdentifier: paywallIdentifier
       )
       let trackedEvent = SuperwallEvent.TriggerFire(
-        triggerResult: triggerResult
+        triggerResult: triggerResult,
+        triggerName: event.name
       )
       _ = trackEvent(trackedEvent, [:])
 
@@ -115,7 +116,8 @@ enum PaywallResponseLogic {
         )
       )
       let trackedEvent = SuperwallEvent.TriggerFire(
-        triggerResult: triggerResult
+        triggerResult: triggerResult,
+        triggerName: event.name
       )
       _ = trackEvent(trackedEvent, [:])
       throw error
@@ -128,7 +130,8 @@ enum PaywallResponseLogic {
         )
       ]
       let trackedEvent = SuperwallEvent.TriggerFire(
-        triggerResult: TriggerResult.noRuleMatch
+        triggerResult: TriggerResult.noRuleMatch,
+        triggerName: event.name
       )
       _ = trackEvent(trackedEvent, [:])
       let error = NSError(
