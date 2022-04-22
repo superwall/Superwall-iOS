@@ -7,7 +7,8 @@ let package = Package(
   name: "Paywall",
   platforms: [
     .iOS("11.2"),
-    .macOS(.v10_12)
+    .macOS(.v10_12),
+    .watchOS("6.2")
   ],
   products: [
     // Products define the executables and libraries a package produces, and make them visible to other packages.
