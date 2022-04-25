@@ -1,8 +1,17 @@
-## New issue checklist
+---
+name: Bug report
+about: Create a report to help us improve
+title: "[BUG]"
+labels: ''
+assignees: ''
 
+---
+
+## New issue checklist
 - [ ] I have reviewed the [`README`](https://github.com/superwall-me/paywall-ios/blob/master/README.md) and [documentation](https://docs.superwall.com/docs)
 - [ ] I have searched [existing issues](https://github.com/superwall-me/paywall-ios/issues) and this is not a duplicate
 - [ ] I have attempted to reproduce the issue and include an example project.
+
 
 ### General information
 

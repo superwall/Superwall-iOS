@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🚥 Superwall system status
+    url: https://superwall.statuspage.io/
+    about: Check Superwall's API status
