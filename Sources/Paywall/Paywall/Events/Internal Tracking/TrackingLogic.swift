@@ -67,28 +67,27 @@ enum TrackingLogic {
     )
   }
 
-  static func clean(input: Any?) -> Any? {
+  private static func clean(input: Any?) -> Any? {
+    guard let input = input else {
+      return nil
+    }
     if input is NSArray {
       return nil
     } else if input is NSDictionary {
       return nil
     } else {
-      if let input = input {
-        let json = JSON(input)
-        if json.error == nil {
-          return input
+      let json = JSON(input)
+      if json.error == nil {
+        return input
+      } else {
+        if let date = input as? Date {
+          return date.isoString
+        } else if let url = input as? URL {
+          return url.absoluteString
         } else {
-          if let date = input as? Date {
-            return date.isoString
-          } else if let url = input as? URL {
-            return url.absoluteString
-          } else {
-            return nil
-          }
+          return nil
         }
       }
     }
-
-    return nil
   }
 }

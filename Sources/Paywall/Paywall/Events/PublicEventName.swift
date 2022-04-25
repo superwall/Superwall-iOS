@@ -15,6 +15,7 @@ public extension Paywall {
     case firstSeen = "first_seen"
     case appOpen = "app_open"
     case appLaunch = "app_launch"
+    case appInstall = "app_install"
     case sessionStart = "session_start"
     case appClose = "app_close"
     case triggerFire = "trigger_fire"

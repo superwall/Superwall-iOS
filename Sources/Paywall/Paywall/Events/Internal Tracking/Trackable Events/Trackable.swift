@@ -20,14 +20,3 @@ protocol Trackable {
   /// Determines whether the event has the potential to trigger a paywall. Defaults to true.
   var canTriggerPaywall: Bool { get }
 }
-
-// The default Trackable implementation, that has no parameters and can trigger a paywall.
-extension Trackable {
-  var superwallParameters: [String: Any] {
-    return [:]
-  }
-
-  var canTriggerPaywall: Bool {
-    return true
-  }
-}

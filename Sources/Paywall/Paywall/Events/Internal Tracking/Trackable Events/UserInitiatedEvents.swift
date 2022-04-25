@@ -13,27 +13,28 @@ protocol TrackableUserInitiatedEvent: Trackable {}
 enum UserInitiatedEvent {
   struct Attributes: TrackableUserInitiatedEvent {
     let rawName = "user_attributes"
-    let superwallParameters: [String : Any]? = [
+    let superwallParameters: [String: Any] = [
       "application_installed_at": DeviceHelper.shared.appInstallDate
     ]
     let canTriggerPaywall = false
-    var customParameters: [String : Any] = [:]
+    var customParameters: [String: Any] = [:]
   }
 
   struct Track: TrackableUserInitiatedEvent {
     let rawName: String
-    let superwallParameters: [String : Any]? = nil
+    let superwallParameters: [String: Any] = [:]
     let canTriggerPaywall: Bool
-    var customParameters: [String : Any] = [:]
+    var customParameters: [String: Any] = [:]
   }
 
   struct DeepLink: TrackableUserInitiatedEvent {
     let rawName = "deepLink_open"
     let url: URL
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       return ["url": url.absoluteString]
     }
-    var customParameters: [String : Any] = [:]
+    let canTriggerPaywall = true
+    let customParameters: [String: Any] = [:]
   }
 
   // MARK: - To be deprecated/deleted
@@ -50,14 +51,15 @@ enum UserInitiatedEvent {
         return "pushNotification_receive"
       }
     }
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       if let pushNotificationId = pushNotificationId {
         return ["push_notification_id": pushNotificationId]
       }
-      return nil
+      return [:]
     }
     let state: State
     let pushNotificationId: String?
-    var customParameters: [String : Any] = [:]
+    let canTriggerPaywall = true
+    var customParameters: [String: Any] = [:]
   }
 }

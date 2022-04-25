@@ -17,6 +17,10 @@ extension TrackableSuperwallEvent {
   var rawName: String {
     return name.rawValue
   }
+
+  var canTriggerPaywall: Bool {
+    return true
+  }
 }
 
 /// These are events that tracked internally and sent back to the user via the delegate.
@@ -24,22 +28,32 @@ enum SuperwallEvent {
   struct AppOpen: TrackableSuperwallEvent {
     let name: Paywall.EventName = .appOpen
     var customParameters: [String: Any] = [:]
+    var superwallParameters: [String: Any] = [:]
+  }
+  struct AppInstall: TrackableSuperwallEvent {
+    let name: Paywall.EventName = .appInstall
+    var customParameters: [String: Any] = [:]
+    var superwallParameters: [String: Any] = [:]
   }
   struct AppLaunch: TrackableSuperwallEvent {
     let name: Paywall.EventName = .appLaunch
     var customParameters: [String: Any] = [:]
+    var superwallParameters: [String: Any] = [:]
   }
   struct FirstSeen: TrackableSuperwallEvent {
     let name: Paywall.EventName = .firstSeen
     var customParameters: [String: Any] = [:]
+    var superwallParameters: [String: Any] = [:]
   }
   struct AppClose: TrackableSuperwallEvent {
     let name: Paywall.EventName = .appClose
     var customParameters: [String: Any] = [:]
+    var superwallParameters: [String: Any] = [:]
   }
   struct SessionStart: TrackableSuperwallEvent {
     let name: Paywall.EventName = .sessionStart
     var customParameters: [String: Any] = [:]
+    var superwallParameters: [String: Any] = [:]
   }
 
   struct PaywallResponseLoad: TrackableSuperwallEvent {
@@ -66,7 +80,7 @@ enum SuperwallEvent {
     let eventData: EventData?
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       let fromEvent = eventData != nil
       let params: [String: Any] = [
         "isTriggeredFromEvent": fromEvent,
@@ -90,7 +104,7 @@ enum SuperwallEvent {
     let triggerName: String
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       switch triggerResult {
       case .noRuleMatch:
         return [
@@ -119,7 +133,7 @@ enum SuperwallEvent {
   struct PaywallOpen: TrackableSuperwallEvent {
     let name: Paywall.EventName = .paywallOpen
     let paywallInfo: PaywallInfo
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       return paywallInfo.eventParams()
     }
     var customParameters: [String: Any] = [:]
@@ -127,7 +141,7 @@ enum SuperwallEvent {
   struct PaywallClose: TrackableSuperwallEvent {
     let name: Paywall.EventName = .paywallClose
     let paywallInfo: PaywallInfo
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       return paywallInfo.eventParams()
     }
     var customParameters: [String: Any] = [:]
@@ -161,7 +175,7 @@ enum SuperwallEvent {
     let product: SKProduct?
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       switch state {
       case .start,
         .abandon,
@@ -183,7 +197,7 @@ enum SuperwallEvent {
     let product: SKProduct
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       return paywallInfo.eventParams(forProduct: product)
     }
   }
@@ -194,7 +208,7 @@ enum SuperwallEvent {
     let product: SKProduct
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       return paywallInfo.eventParams(forProduct: product)
     }
   }
@@ -205,7 +219,7 @@ enum SuperwallEvent {
     let product: SKProduct
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       return paywallInfo.eventParams(forProduct: product)
     }
   }
@@ -230,7 +244,7 @@ enum SuperwallEvent {
     }
     let paywallInfo: PaywallInfo
 
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       switch state {
       case .start,
         .fail,
@@ -263,7 +277,7 @@ enum SuperwallEvent {
     let paywallInfo: PaywallInfo
     let eventData: EventData?
 
-    var superwallParameters: [String : Any]? {
+    var superwallParameters: [String: Any] {
       let fromEvent = eventData != nil
       let params: [String: Any] = [
         "isTriggeredFromEvent": fromEvent,
