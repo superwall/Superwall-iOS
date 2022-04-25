@@ -3,7 +3,7 @@
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
 
-2.3.0 (upcoming release)
+2.3.0
 -----
 
 ### Enhancements
