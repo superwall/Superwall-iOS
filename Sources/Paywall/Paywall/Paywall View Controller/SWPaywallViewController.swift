@@ -27,7 +27,7 @@ enum PaywallLoadingState {
 typealias PaywallDismissalCompletionBlock = (PaywallDismissalResult) -> Void
 
 // swiftlint:disable:next type_body_length
-final class SWPaywallViewController: UIViewController {
+final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   // MARK: - Properties
 	weak var delegate: SWPaywallViewControllerDelegate?
 	var dismissalCompletion: PaywallDismissalCompletionBlock?
@@ -49,8 +49,7 @@ final class SWPaywallViewController: UIViewController {
 
   // Views
 	lazy var shimmerView = ShimmeringView(frame: self.view.bounds)
-  private lazy var eventHandler = WebEventHandler(delegate: self)
-  lazy var webView = SWWebView(delegate: eventHandler)
+  lazy var webView = SWWebView(delegate: self)
 
 	var paywallInfo: PaywallInfo? {
 		return paywallResponse?.getPaywallInfo(
@@ -238,8 +237,8 @@ final class SWPaywallViewController: UIViewController {
     }
 
     // if the loading state is ready, re template user attributes
-    if self.loadingState == .ready {
-      eventHandler.handleEvent(.templateParamsAndUserAttributes)
+    if loadingState == .ready {
+      webView.eventHandler.handleEvent(.templateParamsAndUserAttributes)
     }
 	}
 

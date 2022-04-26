@@ -23,7 +23,7 @@ protocol WebEventHandlerDelegate: AnyObject {
 final class WebEventHandler: WebEventDelegate {
   weak var delegate: WebEventHandlerDelegate?
 
-  init(delegate: WebEventHandlerDelegate) {
+  init(delegate: WebEventHandlerDelegate?) {
     self.delegate = delegate
   }
 

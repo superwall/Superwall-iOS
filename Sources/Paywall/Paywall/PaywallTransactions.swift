@@ -90,6 +90,14 @@ extension Paywall {
       )
       Paywall.track(trackedEvent)
 
+      if product.subscriptionPeriod == nil {
+        let trackedEvent = SuperwallEvent.NonRecurringProductPurchase(
+          paywallInfo: paywallInfo,
+          product: product
+        )
+        Paywall.track(trackedEvent)
+      }
+
 			if let freeTrialAvailable = paywallViewController.paywallResponse?.isFreeTrialAvailable {
 				if freeTrialAvailable {
           let trackedEvent = SuperwallEvent.FreeTrialStart(
