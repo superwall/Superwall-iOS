@@ -41,6 +41,17 @@ enum PaywallLogic {
     }
   }
 
+  static func trackAppInstall(
+    trackEvent: (Trackable) -> TrackingResult = Paywall.track
+  ) {
+    let appInstall = SuperwallEvent.AppInstall()
+    guard UserDefaults.standard.bool(forKey: appInstall.rawName) == false else {
+      return
+    }
+    _ = trackEvent(appInstall)
+    UserDefaults.standard.set(true, forKey: appInstall.rawName)
+  }
+
   static func sessionDidStart(
     _ lastAppClose: Date?
   ) -> Bool {
