@@ -79,22 +79,31 @@ extension SWWebView: WKNavigationDelegate {
     decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
   ) {
     guard let statusCode = (navigationResponse.response as? HTTPURLResponse)?.statusCode else {
-        // if there's no http status code to act on, exit and allow navigation
+      // if there's no http status code to act on, exit and allow navigation
       return decisionHandler(.allow)
     }
 
+    // Track paywall errors
     if statusCode >= 400 {
+      trackPaywallError()
       return decisionHandler(.cancel)
     }
 
-    return decisionHandler(.allow)
+    decisionHandler(.allow)
   }
 
   func webView(
     _ webView: WKWebView,
-    didFailProvisionalNavigation navigation: WKNavigation!,
-    withError error: Error
+    decidePolicyFor navigationAction: WKNavigationAction,
+    decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
   ) {
+    if navigationAction.navigationType == .linkActivated {
+      return decisionHandler(.cancel)
+    }
+    decisionHandler(.allow)
+  }
+
+  func trackPaywallError() {
     guard let paywallInfo = delegate?.paywallInfo else {
       return
     }
