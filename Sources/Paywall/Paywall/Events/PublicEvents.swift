@@ -25,7 +25,7 @@ public extension Paywall {
   /// ```
   @objc static func track(
     _ name: String,
-    _ params: [String: Any]
+    _ params: [String: Any] = [:]
   ) {
     let trackableEvent = UserInitiatedEvent.Track(
       rawName: name,

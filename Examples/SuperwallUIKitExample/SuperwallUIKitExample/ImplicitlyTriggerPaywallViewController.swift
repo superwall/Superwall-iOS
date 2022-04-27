@@ -16,7 +16,7 @@ final class ImplicitlyTriggerPaywallViewController: UIViewController {
     didSet {
       countLabel.text = "Count: \(count)"
       if count == 3 {
-        Paywall.track("MyEvent", [:])
+        Paywall.track("MyEvent")
       }
     }
   }

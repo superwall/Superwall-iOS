@@ -2,6 +2,16 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
+2.4.0 (upcoming release)
+-----
+
+### Enhancements
+- New dedicated function for handling deeplinks: `Paywall.handleDeepLink(url)`
+- Deprecates old `track` functions. The only one you should use is `Paywall.track(_:_:)`, to which you pass an event name and a dictionary of parameters.
+
+### Fixes
+- Adds the missing Superwall events `app_install`, `paywallWebviewLoad_fail` and `nonRecurringProduct_purchase`.
+- Adds `trigger_name` to a `triggerFire` Superwall event, which can be accessed in the parameters sent back to the `trackAnalyticsEvent(name:params:)` delegate function.
 
 2.3.0
 -----

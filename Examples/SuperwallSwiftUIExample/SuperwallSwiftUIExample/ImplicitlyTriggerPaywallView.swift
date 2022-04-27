@@ -33,7 +33,7 @@ struct ImplicitlyTriggerPaywallView: View {
         BrandedButton(title: "Increment") {
           count += 1
           if count == 3 {
-            Paywall.track("MyEvent", [:])
+            Paywall.track("MyEvent")
           }
         }
         BrandedButton(title: "Reset") {
