@@ -71,7 +71,7 @@ enum StorageLogic {
     }
 
     // we want camel case
-    mergedAttributes["applicationInstalledAt"] = DeviceHelper.shared.appInstallDate
+    mergedAttributes["applicationInstalledAt"] = DeviceHelper.shared.appInstalledAtString
 
     return mergedAttributes
   }

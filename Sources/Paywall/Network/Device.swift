@@ -109,22 +109,26 @@ final class DeviceHelper {
 		return Bundle.main.bundleIdentifier ?? ""
 	}
 
-  var appInstallDate: String = {
+  var appInstallDate: Date? = {
     guard let urlToDocumentsFolder = FileManager.default.urls(
       for: .documentDirectory,
       in: .userDomainMask
     ).last else {
-      return ""
+      return nil
     }
 
     guard let installDate = try? FileManager.default.attributesOfItem(
       atPath: urlToDocumentsFolder.path
     )[FileAttributeKey.creationDate] as? Date else {
-      return ""
+      return nil
     }
 
-    return installDate.isoString
+    return installDate
   }()
+
+  var appInstalledAtString: String {
+    return appInstallDate?.isoString ?? ""
+  }
 
   var templateDevice: TemplateDevice {
     let aliases: [String]

@@ -84,7 +84,7 @@ struct Endpoint<Response: Decodable> {
       "X-Device-Currency-Code": DeviceHelper.shared.currencyCode,
       "X-Device-Currency-Symbol": DeviceHelper.shared.currencySymbol,
       "X-Device-Timezone-Offset": DeviceHelper.shared.secondsFromGMT,
-      "X-App-Install-Date": DeviceHelper.shared.appInstallDate,
+      "X-App-Install-Date": DeviceHelper.shared.appInstalledAtString,
       "X-Radio-Type": DeviceHelper.shared.radioType,
       "X-Device-Interface-Style": DeviceHelper.shared.interfaceStyle,
       "X-SDK-Version": sdkVersion,

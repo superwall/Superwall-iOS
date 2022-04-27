@@ -9,4 +9,5 @@ import Foundation
 
 struct EventsRequest: Codable {
   var events: [JSON]
+  var sessions: [PaywallSession]
 }

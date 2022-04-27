@@ -207,7 +207,7 @@ public extension Paywall {
   @available(*, deprecated, renamed: "setUserAttributes(_:)")
   @objc static func setUserAttributesDictionary(attributes: NSDictionary = [:]) {
     var map: [StandardUserAttributeKey: Any] = [:]
-    map[.applicationInstalledAt] = DeviceHelper.shared.appInstallDate
+    map[.applicationInstalledAt] = DeviceHelper.shared.appInstalledAtString
     for (anyKey, value) in attributes {
       if let key = anyKey as? String {
         switch key {
@@ -260,7 +260,7 @@ public extension Paywall {
     custom: [String: Any?] = [:]
   ) {
     var map: [StandardUserAttributeKey: Any] = [:]
-    map[.applicationInstalledAt] = DeviceHelper.shared.appInstallDate
+    map[.applicationInstalledAt] = DeviceHelper.shared.appInstalledAtString
     standard.forEach {
       switch $0 {
       case .id(let id):

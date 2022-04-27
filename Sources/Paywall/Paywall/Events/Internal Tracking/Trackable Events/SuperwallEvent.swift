@@ -34,7 +34,9 @@ enum SuperwallEvent {
   struct AppInstall: TrackableSuperwallEvent {
     let name: Paywall.EventName = .appInstall
     var customParameters: [String: Any] = [:]
-    var superwallParameters: [String: Any] = [:]
+    let superwallParameters: [String: Any] = [
+      "application_installed_at": DeviceHelper.shared.appInstalledAtString
+    ]
   }
   struct AppLaunch: TrackableSuperwallEvent {
     let name: Paywall.EventName = .appLaunch

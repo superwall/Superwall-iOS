@@ -15,7 +15,7 @@ enum UserInitiatedEvent {
   struct Attributes: TrackableUserInitiatedEvent {
     let rawName = "user_attributes"
     let superwallParameters: [String: Any] = [
-      "application_installed_at": DeviceHelper.shared.appInstallDate
+      "application_installed_at": DeviceHelper.shared.appInstalledAtString
     ]
     let canTriggerPaywall = false
     var customParameters: [String: Any] = [:]
