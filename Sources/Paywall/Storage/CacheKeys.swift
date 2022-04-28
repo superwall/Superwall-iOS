@@ -26,6 +26,13 @@ enum AliasId: CachingType {
   typealias Value = String
 }
 
+enum DidTrackAppInstall: CachingType {
+  static var key: String {
+    "store.didTrackAppInstall"
+  }
+  typealias Value = Bool
+}
+
 enum DidTrackFirstSeen: CachingType {
   static var key: String {
     "store.didTrackFirstSeen"

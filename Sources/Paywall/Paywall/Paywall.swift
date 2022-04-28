@@ -216,7 +216,7 @@ public final class Paywall: NSObject {
 
     SKPaymentQueue.default().add(self)
 		addActiveStateObservers()
-    PaywallLogic.trackAppInstall()
+    Storage.shared.recordAppInstall()
 		fetchConfiguration()
 	}
 
