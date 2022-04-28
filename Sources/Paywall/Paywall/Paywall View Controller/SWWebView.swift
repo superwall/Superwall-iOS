@@ -97,10 +97,13 @@ extension SWWebView: WKNavigationDelegate {
     decidePolicyFor navigationAction: WKNavigationAction,
     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
   ) {
-    if navigationAction.navigationType == .linkActivated {
-      return decisionHandler(.cancel)
+    if webView.isLoading {
+      return decisionHandler(.allow)
     }
-    decisionHandler(.allow)
+    if navigationAction.navigationType == . .reload {
+      return decisionHandler(.allow)
+    }
+    decisionHandler(.cancel)
   }
 
   func trackPaywallError() {
