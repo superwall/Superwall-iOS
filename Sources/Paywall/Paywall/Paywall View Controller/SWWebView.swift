@@ -100,7 +100,7 @@ extension SWWebView: WKNavigationDelegate {
     if webView.isLoading {
       return decisionHandler(.allow)
     }
-    if navigationAction.navigationType == . .reload {
+    if navigationAction.navigationType == .reload {
       return decisionHandler(.allow)
     }
     decisionHandler(.cancel)
