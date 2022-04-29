@@ -15,7 +15,7 @@ extension Paywall {
     fromEvent event: EventData? = nil,
     cached: Bool = true,
     ignoreSubscriptionStatus: Bool = false,
-    onPresent: ((PaywallInfo) -> Void)? = nil,
+    onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: PaywallDismissalCompletionBlock? = nil,
     onFail: ((NSError) -> Void)? = nil
   ) {

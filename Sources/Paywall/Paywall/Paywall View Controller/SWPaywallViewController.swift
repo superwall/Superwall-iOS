@@ -415,20 +415,17 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       self.exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.contentPlaceholderImageView.tintColor = loadingColor.withAlphaComponent(0.5)
 
-      if let urlString = self.paywallResponse?.url,
-        let url = URL(string: urlString) {
-        if let paywallInfo = self.paywallInfo {
-          let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
-            state: .start,
-            paywallInfo: paywallInfo
-          )
-          Paywall.track(trackedEvent)
-        }
+      let urlString = self.paywallResponse.url
+      if let url = URL(string: urlString) {
+        let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+          state: .start,
+          paywallInfo: self.paywallInfo
+        )
+        Paywall.track(trackedEvent)
 
         self.webView.load(URLRequest(url: url))
-        if self.paywallResponse?.webViewLoadStartTime == nil,
-          self.paywallResponse != nil {
-          self.paywallResponse?.webViewLoadStartTime = Date()
+        if self.paywallResponse.webViewLoadStartTime == nil {
+          self.paywallResponse.webViewLoadStartTime = Date()
         }
         self.loadingState = .loadingResponse
       }
@@ -445,17 +442,24 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   }
 
   private func loadPaywallWebpage() {
-    let urlString = self.paywallResponse.url
-
-    if let url = URL(string: urlString) {
-      Paywall.track(.paywallWebviewLoadStart(paywallInfo: self.paywallInfo))
-
-      self.webView.load(URLRequest(url: url))
-      if self.paywallResponse.webViewLoadStartTime == nil {
-        self.paywallResponse.webViewLoadStartTime = Date()
-      }
-      self.loadingState = .loadingResponse
+    let urlString = paywallResponse.url
+    guard let url = URL(string: urlString) else {
+      return
     }
+
+    let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+      state: .start,
+      paywallInfo: paywallInfo
+    )
+    Paywall.track(trackedEvent)
+
+    webView.load(URLRequest(url: url))
+
+    if paywallResponse.webViewLoadStartTime == nil {
+      paywallResponse.webViewLoadStartTime = Date()
+    }
+
+    loadingState = .loadingResponse
   }
 
 	func set(
@@ -469,18 +473,11 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	}
 
 	func trackOpen() {
-		guard let paywallInfo = paywallInfo else {
-      return
-    }
-
     let trackedEvent = SuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}
 
 	func trackClose() {
-    guard let paywallInfo = paywallInfo else {
-      return
-    }
     let trackedEvent = SuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}

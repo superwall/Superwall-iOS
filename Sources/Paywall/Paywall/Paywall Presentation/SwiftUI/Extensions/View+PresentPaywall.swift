@@ -62,7 +62,7 @@ extension View {
   ///   - isPresented: A binding to a Boolean value that determines whether to present a paywall that's determined by the SDK.
   ///
   ///     When the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing, the system sets `isPresented` to `false`.
-  ///   - onPresent: A closure that's called after the paywall is presented. Accepts a `PaywallInfo` object containing information about the paywall. Defaults to `nil`.
+  ///   - onPresent: A closure that's called after the paywall is presented. Accepts a `PaywallInfo?` object containing information about the paywall. Defaults to `nil`.
   ///   - onDismiss: The closure to execute after the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
   ///
   ///     Accepts a `PaywallDismissalResult` object. This has a `paywallInfo` property containing information about the paywall and a `state` that tells you why the paywall was dismissed.
@@ -73,7 +73,7 @@ extension View {
   ///     Accepts an `NSError?` with more details. Defaults to `nil`.
   public func presentPaywall(
     isPresented: Binding<Bool>,
-    onPresent: ((PaywallInfo) -> Void)? = nil,
+    onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((PaywallDismissalResult) -> Void)? = nil,
     onFail: ((NSError) -> Void)? = nil
   ) -> some View {

@@ -9,7 +9,7 @@ import Foundation
 import WebKit
 
 protocol SWWebViewDelegate: AnyObject {
-  var paywallInfo: PaywallInfo? { get }
+  var paywallInfo: PaywallInfo { get }
 }
 
 final class SWWebView: WKWebView {

@@ -56,6 +56,6 @@ The `onPresent`, `onDismiss`, and `onFail` callbacks are optional. They provide 
 
 |   Parameter  | Type                             | Functionality   |
 | ------------ | -------------------------------- | --------------- |
-| `onPresent`  | `(PaywallInfo) -> Void`           | A closure that’s called after the paywall is presented. Accepts an optional ``Paywall/PaywallInfo`` object containing information about the paywall. Defaults to `nil`.   |
+| `onPresent`  | `(PaywallInfo?) -> Void`           | A closure that’s called after the paywall is presented. Accepts an optional ``Paywall/PaywallInfo`` object containing information about the paywall. Defaults to `nil`.   |
 | `onDismiss`  | `(PaywallDismissalResult) -> Void` | The closure to execute after the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a ``PaywallDismissalResult`` object. This has a ``PaywallDismissalResult/paywallInfo`` property containing information about the paywall and a state that tells you why the paywall was dismissed. This closure will not be called if you programmatically set isPresented to false to dismiss the paywall. Defaults to nil.                |
 | `onFail`     | `(NSError) -> Void`                | A closure that’s called when the paywall fails to present, either because an error occurred or because all paywalls are off in the Superwall Dashboard. You should typically fallback to your previous paywall if this happens. Accepts an `NSError` with more details. Defaults to nil. |   

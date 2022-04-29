@@ -62,14 +62,13 @@ extension Paywall {
     paywallViewController: SWPaywallViewController,
     for product: SKProduct
   ) {
-		if let paywallInfo = paywallViewController.paywallInfo {
-      let trackedEvent = SuperwallEvent.Transaction(
-        state: .start,
-        paywallInfo: paywallInfo,
-        product: product
-      )
-			Paywall.track(trackedEvent)
-		}
+		let paywallInfo = paywallViewController.paywallInfo
+    let trackedEvent = SuperwallEvent.Transaction(
+      state: .start,
+      paywallInfo: paywallInfo,
+      product: product
+    )
+    Paywall.track(trackedEvent)
 
 		paywallViewController.loadingState = .loadingPurchase
 
@@ -82,38 +81,37 @@ extension Paywall {
     paywallViewController: SWPaywallViewController,
     for product: SKProduct
   ) {
-    if let paywallInfo = paywallViewController.paywallInfo {
-      let trackedEvent = SuperwallEvent.Transaction(
-        state: .complete,
+    let paywallInfo = paywallViewController.paywallInfo
+    let trackedEvent = SuperwallEvent.Transaction(
+      state: .complete,
+      paywallInfo: paywallInfo,
+      product: product
+    )
+    Paywall.track(trackedEvent)
+
+    if product.subscriptionPeriod == nil {
+      let trackedEvent = SuperwallEvent.NonRecurringProductPurchase(
         paywallInfo: paywallInfo,
         product: product
       )
       Paywall.track(trackedEvent)
+    }
 
-      if product.subscriptionPeriod == nil {
-        let trackedEvent = SuperwallEvent.NonRecurringProductPurchase(
+    if let freeTrialAvailable = paywallViewController.paywallResponse.isFreeTrialAvailable {
+      if freeTrialAvailable {
+        let trackedEvent = SuperwallEvent.FreeTrialStart(
+          paywallInfo: paywallInfo,
+          product: product
+        )
+        Paywall.track(trackedEvent)
+      } else {
+        let trackedEvent = SuperwallEvent.SubscriptionStart(
           paywallInfo: paywallInfo,
           product: product
         )
         Paywall.track(trackedEvent)
       }
-
-			if let freeTrialAvailable = paywallViewController.paywallResponse?.isFreeTrialAvailable {
-				if freeTrialAvailable {
-          let trackedEvent = SuperwallEvent.FreeTrialStart(
-            paywallInfo: paywallInfo,
-            product: product
-          )
-          Paywall.track(trackedEvent)
-				} else {
-          let trackedEvent = SuperwallEvent.SubscriptionStart(
-            paywallInfo: paywallInfo,
-            product: product
-          )
-          Paywall.track(trackedEvent)
-				}
-			}
-		}
+    }
     dismiss(
       paywallViewController,
       state: .purchased(productId: product.productIdentifier)
@@ -135,14 +133,13 @@ extension Paywall {
 			if self.didTryToAutoRestore {
 				paywallViewController.loadingState = .ready
 
-				if let paywallInfo = paywallViewController.paywallInfo {
-          let trackedEvent = SuperwallEvent.Transaction(
-            state: .fail(message: error?.localizedDescription ?? ""),
-            paywallInfo: paywallInfo,
-            product: product
-          )
-					Paywall.track(trackedEvent)
-				}
+        let paywallInfo = paywallViewController.paywallInfo
+        let trackedEvent = SuperwallEvent.Transaction(
+          state: .fail(message: error?.localizedDescription ?? ""),
+          paywallInfo: paywallInfo,
+          product: product
+        )
+        Paywall.track(trackedEvent)
 
 				self.paywallViewController?.presentAlert(
           title: "Please try again",
@@ -162,27 +159,25 @@ extension Paywall {
     paywallViewController: SWPaywallViewController,
     for product: SKProduct
   ) {
-		if let paywallInfo = paywallViewController.paywallInfo {
-      let trackedEvent = SuperwallEvent.Transaction(
-        state: .abandon,
-        paywallInfo: paywallInfo,
-        product: product
-      )
-      Paywall.track(trackedEvent)
-		}
+		let paywallInfo = paywallViewController.paywallInfo
+    let trackedEvent = SuperwallEvent.Transaction(
+      state: .abandon,
+      paywallInfo: paywallInfo,
+      product: product
+    )
+    Paywall.track(trackedEvent)
 
 		paywallViewController.loadingState = .ready
 	}
 
 	private func transactionWasRestored(paywallViewController: SWPaywallViewController) {
-		if let paywallInfo = paywallViewController.paywallInfo {
-      let trackedEvent = SuperwallEvent.Transaction(
-        state: .restore,
-        paywallInfo: paywallInfo,
-        product: nil
-      )
-			Paywall.track(trackedEvent)
-		}
+		let paywallInfo = paywallViewController.paywallInfo
+    let trackedEvent = SuperwallEvent.Transaction(
+      state: .restore,
+      paywallInfo: paywallInfo,
+      product: nil
+    )
+    Paywall.track(trackedEvent)
     dismiss(paywallViewController, state: .restored)
 	}
 
@@ -193,14 +188,13 @@ extension Paywall {
       message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved."
     )
 
-		if let paywallInfo = paywallViewController.paywallInfo {
-      let trackedEvent = SuperwallEvent.Transaction(
-        state: .fail(message: "Needs parental approval"),
-        paywallInfo: paywallInfo,
-        product: nil
-      )
-      Paywall.track(trackedEvent)
-		}
+		let paywallInfo = paywallViewController.paywallInfo
+    let trackedEvent = SuperwallEvent.Transaction(
+      state: .fail(message: "Needs parental approval"),
+      paywallInfo: paywallInfo,
+      product: nil
+    )
+    Paywall.track(trackedEvent)
 	}
 }
 
