@@ -8,6 +8,7 @@
 import Foundation
 
 struct TriggerRule: Decodable, Hashable {
+  var experimentGroupId: String
   var experimentId: String
   var expression: String?
   var isAssigned: Bool
@@ -15,7 +16,8 @@ struct TriggerRule: Decodable, Hashable {
   var variantId: String
 
   enum Keys: String, CodingKey {
-    case experimentId
+    case experimentGroupId = "experiment_group_id"
+    case experimentId = "experiment_id"
     case expression
     case isAssigned = "assigned"
     case variant
@@ -27,6 +29,7 @@ struct TriggerRule: Decodable, Hashable {
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
     isAssigned = try values.decode(Bool.self, forKey: .isAssigned)
     variant = try values.decode(Variant.self, forKey: .variant)
+    experimentGroupId = try values.decode(String.self, forKey: .experimentGroupId)
 
     switch variant {
     case .holdout(let holdout):
@@ -37,12 +40,14 @@ struct TriggerRule: Decodable, Hashable {
   }
 
   init(
+    experimentGroupId: String,
     experimentId: String,
     expression: String?,
     isAssigned: Bool,
     variant: Variant,
     variantId: String
   ) {
+    self.experimentGroupId = experimentGroupId
     self.experimentId = experimentId
     self.expression = expression
     self.isAssigned = isAssigned
@@ -63,6 +68,7 @@ extension TriggerRule: Stubbable {
     }
 
     return TriggerRule(
+      experimentGroupId: "1",
       experimentId: "2",
       expression: "name == jake",
       isAssigned: false,

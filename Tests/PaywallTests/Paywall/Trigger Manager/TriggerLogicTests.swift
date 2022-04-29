@@ -18,6 +18,7 @@ class TriggerLogicTests: XCTestCase {
       VariantHoldout(variantId: variantId)
     )
     let triggerRule = TriggerRule(
+      experimentGroupId: "1",
       experimentId: "2",
       expression: "name == jake",
       isAssigned: false,
@@ -84,6 +85,7 @@ class TriggerLogicTests: XCTestCase {
       )
     )
     let triggerRule = TriggerRule(
+      experimentGroupId: "1",
       experimentId: experimentId,
       expression: nil,
       isAssigned: false,
@@ -152,6 +154,7 @@ class TriggerLogicTests: XCTestCase {
       )
     )
     let triggerRule = TriggerRule(
+      experimentGroupId: "1",
       experimentId: experimentId,
       expression: "params.a == c",
       isAssigned: false,

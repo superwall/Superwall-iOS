@@ -8,7 +8,7 @@
 import Foundation
 
 struct TriggerV2: Decodable, Hashable {
-  // Just for convience, should be captured in the "Trigger" struct
+  // Just for convience, eventName should also be captured in the `Trigger` struct
   var eventName: String
   var rules: [TriggerRule]
 }

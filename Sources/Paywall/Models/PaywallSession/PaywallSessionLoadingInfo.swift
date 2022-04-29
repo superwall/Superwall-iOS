@@ -10,10 +10,10 @@ import Foundation
 extension PaywallSession {
   struct LoadingInfo: Encodable {
     /// The loading start time.
-    let startAt: Date
+    var startAt: Date
     /// The loading end time.
-    let endAt: Date
+    var endAt: Date?
     /// The time it took to load.
-    let duration: TimeInterval
+    var duration: TimeInterval?
   }
 }

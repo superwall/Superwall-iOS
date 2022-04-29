@@ -21,9 +21,7 @@ final class PaywallManager {
   }
   private var cache = PaywallCache()
 
-	func removePaywall(
-    withIdentifier identifier: String?
-  ) {
+	func removePaywall(withIdentifier identifier: String?) {
     cache.removePaywall(
       withIdentifier: identifier
     )

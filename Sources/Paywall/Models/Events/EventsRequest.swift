@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct EventsRequest: Codable {
+struct EventsRequest: Encodable {
   var events: [JSON]
-  var sessions: [PaywallSession]
+  //var sessions: [PaywallSession]
 }

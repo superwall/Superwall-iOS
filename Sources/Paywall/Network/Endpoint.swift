@@ -106,9 +106,7 @@ struct Endpoint<Response: Decodable> {
 // MARK: - EventsResponse
 extension Endpoint where Response == EventsResponse {
   static func events(eventsRequest: EventsRequest) -> Self {
-    let encoder = JSONEncoder()
-    encoder.keyEncodingStrategy = .convertToSnakeCase
-    let bodyData = try? encoder.encode(eventsRequest)
+    let bodyData = try? JSONEncoder.superwall.encode(eventsRequest)
 
     return Endpoint(
       components: Components(
@@ -127,18 +125,16 @@ extension Endpoint where Response == PaywallResponse {
     withIdentifier identifier: String? = nil,
     fromEvent event: EventData? = nil
   ) -> Self {
-    let encoder = JSONEncoder()
-    encoder.keyEncodingStrategy = .convertToSnakeCase
     let bodyData: Data?
 
     if let identifier = identifier {
       return paywall(byIdentifier: identifier)
     } else if let event = event {
       let bodyDict = ["event": event.jsonData]
-      bodyData = try? encoder.encode(bodyDict)
+      bodyData = try? JSONEncoder.superwall.encode(bodyDict)
     } else {
       let bodyDict = PaywallRequest(appUserId: Storage.shared.userId ?? "")
-      bodyData = try? encoder.encode(bodyDict)
+      bodyData = try? JSONEncoder.superwall.encode(bodyDict)
     }
     return Endpoint(
       components: Components(
@@ -218,9 +214,7 @@ extension Endpoint where Response == ConfigResponse {
 // MARK: - ConfirmedAssignmentResponse
 extension Endpoint where Response == ConfirmedAssignmentResponse {
   static func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) -> Self {
-    let encoder = JSONEncoder()
-    encoder.keyEncodingStrategy = .convertToSnakeCase
-    let bodyData = try? encoder.encode(confirmableAssignments)
+    let bodyData = try? JSONEncoder.superwall.encode(confirmableAssignments)
 
     return Endpoint(
       components: Components(
@@ -236,9 +230,7 @@ extension Endpoint where Response == ConfirmedAssignmentResponse {
 // MARK: - PostbackResponse
 extension Endpoint where Response == PostBackResponse {
   static func postback(_ postback: Postback) -> Self {
-    let encoder = JSONEncoder()
-    encoder.keyEncodingStrategy = .convertToSnakeCase
-    let bodyData = try? encoder.encode(postback)
+    let bodyData = try? JSONEncoder.superwall.encode(postback)
 
     return Endpoint(
       components: Components(

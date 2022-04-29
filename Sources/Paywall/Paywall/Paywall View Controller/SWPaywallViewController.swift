@@ -460,6 +460,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 		guard let paywallInfo = paywallInfo else {
       return
     }
+
     let trackedEvent = SuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}
