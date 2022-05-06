@@ -81,7 +81,7 @@ final class PaywallResponseManager: NSObject {
       let responseLoadStartTime = Date()
 
       if !isPreloading {
-        TriggerSessionManager.shared.trackPaywallResponseLoadStart()
+        TriggerSessionManager.shared.trackPaywallResponseLoad(state: .start)
       }
 
       let trackedEvent = SuperwallEvent.PaywallResponseLoad(
@@ -111,7 +111,7 @@ final class PaywallResponseManager: NSObject {
             Paywall.track(responseLoadEvent)
 
             if !isPreloading {
-              TriggerSessionManager.shared.trackPaywallResponseLoadComplete()
+              TriggerSessionManager.shared.trackPaywallResponseLoad(state: .end)
             }
 
             self.getProducts(
@@ -123,7 +123,7 @@ final class PaywallResponseManager: NSObject {
             )
           case .failure(let error):
             if !isPreloading {
-              TriggerSessionManager.shared.trackPaywallResponseLoadFail()
+              TriggerSessionManager.shared.trackPaywallResponseLoad(state: .fail)
             }
             guard let errorResponse = PaywallResponseLogic.handlePaywallError(
               error,
@@ -166,57 +166,75 @@ final class PaywallResponseManager: NSObject {
     Paywall.track(productLoadEvent)
 
     if !isPreloading {
-      TriggerSessionManager.shared.trackProductsLoadStart()
+      TriggerSessionManager.shared.trackProductsLoad(state: .start)
     }
 
     // add its products
-    StoreKitManager.shared.getProducts(withIds: response.productIds) { [weak self] productsById in
-      guard let self = self else {
-        return
-      }
+    StoreKitManager.shared.getProducts(withIds: response.productIds) { [weak self] result in
+      switch result {
+      case .success(let productsById):
+        guard let self = self else {
+          return
+        }
 
-      let outcome = PaywallResponseLogic.getVariablesAndFreeTrial(
-        fromProducts: response.products,
-        productsById: productsById,
-        isFreeTrialAvailableOverride: Paywall.isFreeTrialAvailableOverride
-      )
+        let outcome = PaywallResponseLogic.getVariablesAndFreeTrial(
+          fromProducts: response.products,
+          productsById: productsById,
+          isFreeTrialAvailableOverride: Paywall.isFreeTrialAvailableOverride
+        )
 
-      response.variables = outcome.variables
-      response.productVariables = outcome.productVariables
-      response.isFreeTrialAvailable = outcome.isFreeTrialAvailable
+        response.variables = outcome.variables
+        response.productVariables = outcome.productVariables
+        response.isFreeTrialAvailable = outcome.isFreeTrialAvailable
 
-      if outcome.resetFreeTrialOverride {
-        Paywall.isFreeTrialAvailableOverride = nil
-      }
+        if outcome.resetFreeTrialOverride {
+          Paywall.isFreeTrialAvailableOverride = nil
+        }
 
-      // cache the response for later
-      self.responsesByHash[paywallRequestHash] = .success(response)
+        // cache the response for later
+        self.responsesByHash[paywallRequestHash] = .success(response)
 
-      // execute all the cached handlers
-      if let handlers = self.handlersByHash[paywallRequestHash] {
-        onMain {
-          for handler in handlers {
-            handler(.success(response))
+        // execute all the cached handlers
+        if let handlers = self.handlersByHash[paywallRequestHash] {
+          onMain {
+            for handler in handlers {
+              handler(.success(response))
+            }
           }
         }
+
+        // reset the handler cache
+        self.handlersByHash.removeValue(forKey: paywallRequestHash)
+
+        response.productsLoadCompleteTime = Date()
+
+        if !isPreloading {
+          TriggerSessionManager.shared.trackProductsLoad(state: .end)
+        }
+
+        let paywallInfo = response.getPaywallInfo(fromEvent: event)
+        let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+          state: .complete,
+          paywallInfo: paywallInfo,
+          eventData: event
+        )
+        Paywall.track(productLoadEvent)
+      case .failure:
+        /*
+         TODO: Are we going to include this
+        response.productsLoadFailTime = Date()
+        let paywallInfo = response.getPaywallInfo(fromEvent: event)
+        let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+          state: .fail,
+          paywallInfo: paywallInfo,
+          eventData: event
+        )
+        Paywall.track(productLoadEvent)*/
+
+        if !isPreloading {
+          TriggerSessionManager.shared.trackProductsLoad(state: .fail)
+        }
       }
-
-      // reset the handler cache
-      self.handlersByHash.removeValue(forKey: paywallRequestHash)
-
-      response.productsLoadCompleteTime = Date()
-
-      if !isPreloading {
-        TriggerSessionManager.shared.trackProductsLoadComplete()
-      }
-
-      let paywallInfo = response.getPaywallInfo(fromEvent: event)
-      let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
-        state: .complete,
-        paywallInfo: paywallInfo,
-        eventData: event
-      )
-      Paywall.track(productLoadEvent)
     }
   }
 }

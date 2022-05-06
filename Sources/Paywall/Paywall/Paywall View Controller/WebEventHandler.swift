@@ -107,7 +107,7 @@ final class WebEventHandler: WebEventDelegate {
     }
 
     if delegate?.isPreloading == false {
-      TriggerSessionManager.shared.trackWebViewLoadComplete()
+      TriggerSessionManager.shared.trackWebViewLoad(state: .end)
     }
 
     let params = paywallResponse.getBase64EventsString(

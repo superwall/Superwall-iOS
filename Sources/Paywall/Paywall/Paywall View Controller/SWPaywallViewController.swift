@@ -446,9 +446,9 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     if paywallResponse.webViewLoadStartTime == nil {
       paywallResponse.webViewLoadStartTime = Date()
     }
-    
+
     if !self.isPreloading {
-      TriggerSessionManager.shared.trackWebViewLoadStart()
+      TriggerSessionManager.shared.trackWebViewLoad(state: .start)
     }
 
     loadingState = .loadingResponse

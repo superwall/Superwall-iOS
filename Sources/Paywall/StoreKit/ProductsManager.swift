@@ -19,7 +19,8 @@ class ProductsManager: NSObject {
 	private var cachedProductsByIdentifier: [String: SKProduct] = [:]
 	private let queue = DispatchQueue(label: "ProductsManager")
 	private var productsByRequests: [SKRequest: Set<String>] = [:]
-	private var completionHandlers: [Set<String>: [(Set<SKProduct>) -> Void]] = [:]
+  typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
+	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
 
 	init(productsRequestFactory: ProductsRequestFactory = ProductsRequestFactory()) {
 		self.productsRequestFactory = productsRequestFactory
@@ -27,14 +28,16 @@ class ProductsManager: NSObject {
 
 	func products(
     withIdentifiers identifiers: Set<String>,
-    completion: @escaping (Set<SKProduct>) -> Void
+    completion: @escaping ProductRequestCompletionBlock
   ) {
+    // Return if there aren't any product IDs.
 		if identifiers.isEmpty {
-			completion([])
+      completion(.success([]))
 			return
 		}
 
 		queue.async { [self] in
+      // If products already cached, return them
 			let productsAlreadyCached = self.cachedProductsByIdentifier.filter { key, _ in identifiers.contains(key) }
 			if productsAlreadyCached.count == identifiers.count {
 				let productsAlreadyCachedSet = Set(productsAlreadyCached.values)
@@ -45,10 +48,11 @@ class ProductsManager: NSObject {
           info: ["product_ids": identifiers],
           error: nil
         )
-				completion(productsAlreadyCachedSet)
+        completion(.success(productsAlreadyCachedSet))
 				return
 			}
 
+      // If there are any existing completion handlers, it means there have already been some requests for products but they haven't loaded. Queue up this request's completion handler.
 			if let existingHandlers = self.completionHandlers[identifiers] {
 				Logger.debug(
           logLevel: .debug,
@@ -61,6 +65,8 @@ class ProductsManager: NSObject {
 				return
 			}
 
+      // Otherwise request products and enqueue the completion handler.
+      // When the request finishes, all completion handlers will get called with the products.
 			Logger.debug(
         logLevel: .debug,
         scope: .productsManager,
@@ -120,7 +126,7 @@ extension ProductsManager: SKProductsRequestDelegate {
 
 			self.cacheProducts(response.products)
 			for completion in completionBlocks {
-				completion(Set(response.products))
+        completion(.success(Set(response.products)))
 			}
 		}
 	}
@@ -169,7 +175,7 @@ extension ProductsManager: SKProductsRequestDelegate {
 			self.completionHandlers.removeValue(forKey: products)
 			self.productsByRequests.removeValue(forKey: request)
 			for completion in completionBlocks {
-				completion(Set())
+        completion(.failure(error))
 			}
 		}
 		request.cancel()

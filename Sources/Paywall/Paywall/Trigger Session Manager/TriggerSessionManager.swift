@@ -17,6 +17,11 @@ final class TriggerSessionManager {
   private let queue = SessionEventsQueue()
   private var triggerSession: TriggerSession?
   private var transactionCount: TriggerSession.Transaction.Count?
+  enum LoadState {
+    case start
+    case end
+    case fail
+  }
 
   private init() {
     NotificationCenter.default.addObserver(
@@ -100,7 +105,6 @@ final class TriggerSessionManager {
     } else {
       enqueueTriggerSession()
     }
-    print("hiiii**", self.triggerSession)
   }
 
   /// Ends the session and resets it to nil
@@ -126,7 +130,6 @@ final class TriggerSessionManager {
   /// Tracks when the paywall was opened
   func trackPaywallOpen() {
     triggerSession?.paywall?.action.openAt = Date()
-    print("**** sss", self.triggerSession)
     enqueueTriggerSession()
   }
 
@@ -138,83 +141,74 @@ final class TriggerSessionManager {
 
   // MARK: - WebView Load
   /// Tracks when a webview started to load
-  func trackWebViewLoadStart() {
-    triggerSession?
-      .paywall?
-      .webViewLoading
-      .startAt = Date()
-    enqueueTriggerSession()
-  }
+  func trackWebViewLoad(state: LoadState) {
+    switch state {
+    case .start:
+      triggerSession?
+        .paywall?
+        .webViewLoading
+        .startAt = Date()
+    case .end:
+      triggerSession?
+        .paywall?
+        .webViewLoading
+        .endAt = Date()
+    case .fail:
+      triggerSession?
+        .paywall?
+        .webViewLoading
+        .failAt = Date()
+    }
 
-  /// Tracks when a webview completed loading
-  func trackWebViewLoadComplete() {
-    triggerSession?
-      .paywall?
-      .webViewLoading
-      .endAt = Date()
-    enqueueTriggerSession()
-  }
-
-  /// Tracks when a webview failed to load
-  func trackWebViewLoadFail() {
-    // TODO: This stil gets called when preloading
-    triggerSession?
-      .paywall?
-      .webViewLoading
-      .failAt = Date()
     enqueueTriggerSession()
   }
 
   // MARK: - Paywall Response Load
 
-  func trackPaywallResponseLoadStart() {
-    triggerSession?
-      .paywall?
-      .responseLoading
-      .startAt = Date()
-    enqueueTriggerSession()
-  }
+  func trackPaywallResponseLoad(state: LoadState) {
+    switch state {
+    case .start:
+      triggerSession?
+        .paywall?
+        .responseLoading
+        .startAt = Date()
+    case .end:
+      triggerSession?
+        .paywall?
+        .responseLoading
+        .endAt = Date()
+    case .fail:
+      triggerSession?
+        .paywall?
+        .responseLoading
+        .failAt = Date()
+    }
 
-  func trackPaywallResponseLoadComplete() {
-    triggerSession?
-      .paywall?
-      .responseLoading
-      .endAt = Date()
-    enqueueTriggerSession()
-  }
-
-  func trackPaywallResponseLoadFail() {
-    triggerSession?
-      .paywall?
-      .responseLoading
-      .failAt = Date()
     enqueueTriggerSession()
   }
 
   // MARK: - Products
 
-  func trackProductsLoadStart() {
-    triggerSession?
-      .products
-      .loadingInfo
-      .startAt = Date()
-    enqueueTriggerSession()
-  }
+  func trackProductsLoad(state: LoadState) {
+    switch state {
+    case .start:
+      triggerSession?
+        .products
+        .loadingInfo
+        .startAt = Date()
+    case .end:
+      triggerSession?
+        .products
+        .loadingInfo
+        .endAt = Date()
+    case .fail:
+      // TODO: THIS DOESN'T GET CALLED YET
+      triggerSession?
+        .products
+        .loadingInfo
+        .failAt = Date()
+    }
 
-  func trackProductsLoadComplete() {
-    triggerSession?
-      .products
-      .loadingInfo
-      .endAt = Date()
-    enqueueTriggerSession()
-  }
-
-  func trackProductsLoadFail() {
-    // TODO: THIS DOESN'T GET CALLED YET
-    triggerSession?
-      .products
-      .loadingInfo
-      .failAt = Date()
     enqueueTriggerSession()
   }
 

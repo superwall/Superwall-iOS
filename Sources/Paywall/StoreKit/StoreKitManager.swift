@@ -31,34 +31,39 @@ final class StoreKitManager: NSObject {
 
 	func getProducts(
     withIds ids: [String],
-    completion: (([String: SKProduct]) -> Void)? = nil
+    completion: ((Result<[String: SKProduct], Error>) -> Void)? = nil
   ) {
 		let idSet = Set(ids)
 
-		productsManager.products(withIdentifiers: idSet) { [weak self] productsSet in
-      guard let self = self else {
-        return
-      }
-      var output: [String: SKProduct] = [:]
-
-			for product in productsSet {
-				output[product.productIdentifier] = product
-				self.productsById[product.productIdentifier] = product
-			}
-
-      var swProducts: [SWProduct] = []
-
-      for id in ids {
-        guard let product = self.productsById[id] else {
-          continue
+		productsManager.products(withIdentifiers: idSet) { [weak self] result in
+      switch result {
+      case .success(let productsSet):
+        guard let self = self else {
+          return
         }
-        let swProduct = SWProduct(product: product)
-        swProducts.append(swProduct)
-      }
-      TriggerSessionManager.shared.storeAllProducts(swProducts)
-      self.swProducts = swProducts
+        var output: [String: SKProduct] = [:]
 
-			completion?(output)
+        for product in productsSet {
+          output[product.productIdentifier] = product
+          self.productsById[product.productIdentifier] = product
+        }
+
+        // Loop through all the product ids and store, in order.
+        var swProducts: [SWProduct] = []
+        for id in ids {
+          guard let product = self.productsById[id] else {
+            continue
+          }
+          let swProduct = SWProduct(product: product)
+          swProducts.append(swProduct)
+        }
+        TriggerSessionManager.shared.storeAllProducts(swProducts)
+        self.swProducts = swProducts
+
+        completion?(.success(output))
+      case .failure(let error):
+        completion?(.failure(error))
+      }
 		}
 	}
 }

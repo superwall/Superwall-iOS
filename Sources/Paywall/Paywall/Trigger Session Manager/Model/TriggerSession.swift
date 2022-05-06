@@ -63,9 +63,9 @@ struct TriggerSession: Encodable {
     try container.encode(presentationOutcome, forKey: .presentationOutcome)
 
     try trigger.encode(to: encoder)
-    try paywall.encode(to: encoder)
+    try paywall?.encode(to: encoder)
     try products.encode(to: encoder)
-    try transaction.encode(to: encoder)
+    try transaction?.encode(to: encoder)
     try appSession.encode(to: encoder)
   }
 }

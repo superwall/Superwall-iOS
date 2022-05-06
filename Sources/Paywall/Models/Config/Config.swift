@@ -88,10 +88,15 @@ struct Config: Decodable {
     // TODO: Does this need to be on the main thread?
     DispatchQueue.main.asyncAfter(deadline: .now() + postback.postbackDelay) {
       let productIds = postback.productsToPostBack.map { $0.identifier }
-      StoreKitManager.shared.getProducts(withIds: productIds) { productsById in
-        let products = productsById.values.map(PostbackProduct.init)
-        let postback = Postback(products: products)
-        Network.shared.sendPostback(postback)
+      StoreKitManager.shared.getProducts(withIds: productIds) { result in
+        switch result {
+        case .success(let productsById):
+          let products = productsById.values.map(PostbackProduct.init)
+          let postback = Postback(products: products)
+          Network.shared.sendPostback(postback)
+        case .failure:
+          break
+        }
       }
     }
   }

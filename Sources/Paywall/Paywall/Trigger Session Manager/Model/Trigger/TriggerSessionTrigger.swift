@@ -35,7 +35,6 @@ extension TriggerSession {
     }
 
     func encode(to encoder: Encoder) throws {
-      // TODO: There's no trigger_id here, do we actually have that or is that on server?
       var container = encoder.container(keyedBy: CodingKeys.self)
       try container.encode(eventData.id, forKey: .eventId)
       try container.encode(eventData.name, forKey: .name)
@@ -44,7 +43,7 @@ extension TriggerSession {
       try container.encode(type, forKey: .type)
       try container.encodeIfPresent(presentedOn, forKey: .presentedOn)
 
-      try experiment.encode(to: encoder)
+      try experiment?.encode(to: encoder)
     }
   }
 }

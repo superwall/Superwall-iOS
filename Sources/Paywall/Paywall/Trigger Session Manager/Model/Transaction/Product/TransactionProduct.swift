@@ -137,7 +137,7 @@ extension TriggerSession.Transaction {
       var container = encoder.container(keyedBy: CodingKeys.self)
 
       try price.encode(to: encoder)
-      try trial.encode(to: encoder)
+      try trial?.encode(to: encoder)
 
       try container.encode(index, forKey: .index)
       try container.encode(identifier, forKey: .identifier)

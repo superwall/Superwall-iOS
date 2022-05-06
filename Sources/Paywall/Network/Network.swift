@@ -135,8 +135,10 @@ final class Network {
     urlSession.request(.sessionEvents(session)) { result in
       switch result {
       case .success:
+        print("**SUCESS")
         break
       case .failure(let error):
+        print("**ERRORR", error)
         Logger.debug(
           logLevel: .error,
           scope: .network,
