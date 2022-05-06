@@ -72,7 +72,7 @@ enum TriggerSessionManagerLogic {
             groupId: groupId,
             variant: TriggerSession.Trigger.Experiment.Variant(
               id: variantId,
-              type: .holdout
+              type: .treatment
             )
           )
         )

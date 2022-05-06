@@ -99,6 +99,7 @@ final class Storage {
     v1Triggers = Set(v1TriggerDictionary.keys)
     locales = Set(config.localization.locales.map { $0.locale })
     configRequestId = requestId
+    print("*** ", config.triggers)
     v2Triggers = StorageLogic.getV2TriggerDictionary(from: config.triggers)
 	}
 

@@ -17,7 +17,8 @@ final class PaywallService {
     return Paywall.userAttributes["firstName"] as? String ?? ""
   }
   static func initPaywall() {
-    // Paywall.networkEnvironment = .developer
+    Paywall.networkEnvironment = .developer
+    Paywall.debugMode = true
     Paywall.configure(
       apiKey: apiKey,
       delegate: shared

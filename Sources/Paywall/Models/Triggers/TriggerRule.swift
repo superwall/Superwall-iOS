@@ -16,8 +16,8 @@ struct TriggerRule: Decodable, Hashable {
   var variantId: String
 
   enum Keys: String, CodingKey {
-    case experimentGroupId = "experiment_group_id"
-    case experimentId = "experiment_id"
+    case experimentGroupId
+    case experimentId
     case expression
     case isAssigned = "assigned"
     case variant
@@ -25,6 +25,7 @@ struct TriggerRule: Decodable, Hashable {
 
   init(from decoder: Decoder) throws {
     let values = try decoder.container(keyedBy: TriggerRule.Keys.self)
+    
     experimentId = try values.decode(String.self, forKey: .experimentId)
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
     isAssigned = try values.decode(Bool.self, forKey: .isAssigned)
