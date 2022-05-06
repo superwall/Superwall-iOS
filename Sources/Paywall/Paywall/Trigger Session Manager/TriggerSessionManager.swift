@@ -202,7 +202,6 @@ final class TriggerSessionManager {
         .loadingInfo
         .endAt = Date()
     case .fail:
-      // TODO: THIS DOESN'T GET CALLED YET
       triggerSession?
         .products
         .loadingInfo

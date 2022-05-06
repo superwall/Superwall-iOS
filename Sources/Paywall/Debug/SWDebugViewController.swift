@@ -351,21 +351,26 @@ final class SWDebugViewController: UIViewController {
 
 	func showConsole() {
 		if let paywallResponse = paywallResponse {
-			StoreKitManager.shared.getProducts(withIds: paywallResponse.productIds) { [weak self] productsById in
-				onMain {
-          var products: [SKProduct] = []
+			StoreKitManager.shared.getProducts(withIds: paywallResponse.productIds) { [weak self] result in
+        switch result {
+        case .success(let productsById):
+          onMain {
+            var products: [SKProduct] = []
 
-					for id in paywallResponse.productIds {
-						if let product = productsById[id] {
-							products.append(product)
-						}
-					}
+            for id in paywallResponse.productIds {
+              if let product = productsById[id] {
+                products.append(product)
+              }
+            }
 
-					let viewController = SWConsoleViewController(products: products)
-					let navController = UINavigationController(rootViewController: viewController)
-					navController.modalPresentationStyle = .overFullScreen
-					self?.present(navController, animated: true)
-				}
+            let viewController = SWConsoleViewController(products: products)
+            let navController = UINavigationController(rootViewController: viewController)
+            navController.modalPresentationStyle = .overFullScreen
+            self?.present(navController, animated: true)
+          }
+        case .failure:
+          break
+        }
 			}
 		} else {
 			Logger.debug(

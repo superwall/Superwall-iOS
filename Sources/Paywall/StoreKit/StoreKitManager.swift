@@ -12,20 +12,25 @@ final class StoreKitManager: NSObject {
     forResponse response: PaywallResponse,
     completion: @escaping ([Variable]) -> Void
   ) {
-		getProducts(withIds: response.productIds) { productsById in
-      var variables: [Variable] = []
+		getProducts(withIds: response.productIds) { result in
+      switch result {
+      case .success(let productsById):
+        var variables: [Variable] = []
 
-			for product in response.products {
-				if let skProduct = productsById[product.id] {
-          let variable = Variable(
-            key: product.type.rawValue,
-            value: JSON(skProduct.legacyEventData)
-          )
-					variables.append(variable)
-				}
-			}
+        for product in response.products {
+          if let skProduct = productsById[product.id] {
+            let variable = Variable(
+              key: product.type.rawValue,
+              value: JSON(skProduct.legacyEventData)
+            )
+            variables.append(variable)
+          }
+        }
 
-			completion(variables)
+        completion(variables)
+      case .failure:
+        break
+      }
 		}
 	}
 
