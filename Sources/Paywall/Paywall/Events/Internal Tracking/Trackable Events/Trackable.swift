@@ -18,5 +18,5 @@ protocol Trackable {
   /// Any non-superwall parameters that you want to track. Do not include $ signs in parameter names as they will be dropped.
   var customParameters: [String: Any] { get }
   /// Determines whether the event has the potential to trigger a paywall. Defaults to true.
-  var canTriggerPaywall: Bool { get }
+  var canImplicitlyTriggerPaywall: Bool { get }
 }

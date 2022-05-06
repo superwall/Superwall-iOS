@@ -10,7 +10,7 @@ import StoreKit
 
 /// `PaywallInfo` is the primary class used to distinguish one paywall from another. Used primarily in `Paywall.present(onPresent:onDismiss)`'s completion handlers.
 public final class PaywallInfo: NSObject {
-  /// Superwall's internal identifier for this paywall.
+  /// Superwall's internal ID for this paywall.
   let id: String
 
   /// The identifier set for this paywall in the Superwall dashboard.
@@ -45,15 +45,15 @@ public final class PaywallInfo: NSObject {
 
   public let responseLoadStartTime: String?
   public let responseLoadCompleteTime: String?
-  public let responseLoadDuration: Double?
+  public let responseLoadDuration: TimeInterval?
 
   public let webViewLoadStartTime: String?
   public let webViewLoadCompleteTime: String?
-  public let webViewLoadDuration: Double?
+  public let webViewLoadDuration: TimeInterval?
 
   public let productsLoadStartTime: String?
   public let productsLoadCompleteTime: String?
-  public let productsLoadDuration: Double?
+  public let productsLoadDuration: TimeInterval?
 
   init(
     id: String,

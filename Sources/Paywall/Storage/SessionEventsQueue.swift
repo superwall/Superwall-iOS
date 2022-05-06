@@ -2,18 +2,30 @@
 //  File.swift
 //  
 //
-//  Created by brian on 8/16/21.
+//  Created by Yusuf Tör on 06/05/2022.
 //
 
 import UIKit
 
+/*
+ Enqueue a 1. App Session, 2. Trigger Session, or 3. Transaction Session.
+
+ It adds it to the appropriate array.
+
+ On flush, it groups them all together and sends them off.
+
+
+ */
+
+
+
 /// Sends n analytical events to the Superwall servers every 20 seconds, where n is defined by `maxEventCount`.
 ///
 /// **Note**: this currently has a limit of 500 events per flush.
-final class EventsQueue {
-  private let serialQueue = DispatchQueue(label: "me.superwall.eventQueue")
+final class SessionEventsQueue {
+  private let serialQueue = DispatchQueue(label: "me.superwall.sessionEventQueue")
   private let maxEventCount = 50
-  private var elements: [JSON] = []
+  private var triggerSessions: [TriggerSession] = []
   private var timer: Timer?
 
   deinit {
@@ -39,9 +51,9 @@ final class EventsQueue {
     )
   }
 
-  func enqueue(event: JSON) {
+  func enqueue(_ triggerSession: TriggerSession) {
     serialQueue.async {
-      self.elements.append(event)
+      self.triggerSessions.append(triggerSession)
     }
   }
 
@@ -52,21 +64,23 @@ final class EventsQueue {
   }
 
   private func flushInternal(depth: Int = 10) {
-    var eventsToSend: [JSON] = []
+    var triggerSessionsToSend: [TriggerSession] = []
 
     var i = 0
-    while i < maxEventCount && !elements.isEmpty {
-      eventsToSend.append(elements.removeFirst())
+    while i < maxEventCount && !triggerSessions.isEmpty {
+      triggerSessionsToSend.append(triggerSessions.removeFirst())
       i += 1
     }
 
-    if !eventsToSend.isEmpty {
+    if !triggerSessionsToSend.isEmpty {
       // Send to network
-      let events = EventsRequest(events: eventsToSend)
-      Network.shared.sendEvents(events: events)
+      let sessionEvents = SessionEventsRequest(
+        triggerSessions: triggerSessionsToSend
+      )
+      Network.shared.sendSessionEvents(sessionEvents)
     }
 
-    if !elements.isEmpty && depth > 0 {
+    if !triggerSessions.isEmpty && depth > 0 {
       return flushInternal(depth: depth - 1)
     }
   }

@@ -7,11 +7,21 @@
 
 import Foundation
 
-struct EventData: Codable {
+/// Data associated with an event. This could be any sort of event (user initiated, superwall), which may or may not trigger a paywall.
+struct EventData: Codable, Equatable {
+  /// SDK generated ID for event
   var id = UUID().uuidString
+
+  /// The name of the event
   var name: String
+
+  /// Parameters associated with the event
   var parameters: JSON
+
+  /// When the event was created
   var createdAt: String
+
+  /// A `JSON` version of `EventData`
   var jsonData: JSON {
     return [
       "event_id": JSON(id),

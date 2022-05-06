@@ -48,7 +48,7 @@ enum UserAttributes: CachingType {
   typealias Value = [String: Any]
 }
 
-enum Config: CachingType {
+enum V1Triggers: CachingType {
   static var key: String {
     "store.config"
   }

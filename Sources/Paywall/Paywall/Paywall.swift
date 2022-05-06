@@ -74,13 +74,10 @@ public final class Paywall: NSObject {
 	static var isFreeTrialAvailableOverride: Bool?
 
 	var presentingWindow: UIWindow?
-  var productsById: [String: SKProduct] = [:]
 	var didTryToAutoRestore = false
   var eventsTrackedBeforeConfigWasFetched: [EventData] = []
 	var paywallWasPresentedThisSession = false
-	var lastAppClose: Date?
-	var didTrackLaunch = false
-	var didFetchConfig = !Storage.shared.triggers.isEmpty
+  var didFetchConfig = !Storage.shared.v1Triggers.isEmpty
 
 	var paywallViewController: SWPaywallViewController? {
 		return PaywallManager.shared.presentedViewController
@@ -186,8 +183,8 @@ public final class Paywall: NSObject {
 	///  - Parameter identifier: The identifier of the paywall you would like to load in the background, as found in your paywall's settings in the dashboard.
 	@objc public static func load(identifier: String) {
 		PaywallManager.shared.getPaywallViewController(
-      withIdentifier: identifier,
-      event: nil,
+      .fromIdentifier(identifier),
+      isPreloading: true,
       cached: true,
       completion: nil
     )
@@ -215,73 +212,19 @@ public final class Paywall: NSObject {
     }
 
     SKPaymentQueue.default().add(self)
-		addActiveStateObservers()
     Storage.shared.recordAppInstall()
 		fetchConfiguration()
 	}
 
-  deinit {
-    removeActiveStateObservers()
-  }
-
-  private func removeActiveStateObservers() {
-    NotificationCenter.default.removeObserver(
-      self,
-      name: UIApplication.willResignActiveNotification,
-      object: nil
-    )
-    NotificationCenter.default.removeObserver(
-      self,
-      name: UIApplication.didBecomeActiveNotification,
-      object: nil
-    )
-  }
-
-  private func addActiveStateObservers() {
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(applicationWillResignActive),
-      name: UIApplication.willResignActiveNotification,
-      object: nil
-    )
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(applicationDidBecomeActive),
-      name: UIApplication.didBecomeActiveNotification,
-      object: nil
-    )
-  }
-
-  @objc private func applicationWillResignActive() {
-    Paywall.track(SuperwallEvent.AppClose())
-    lastAppClose = Date()
-  }
-
-  @objc private func applicationDidBecomeActive() {
-    Paywall.track(SuperwallEvent.AppOpen())
-
-    let sessionDidStart = PaywallLogic.sessionDidStart(lastAppClose)
-
-    if sessionDidStart {
-      Paywall.track(SuperwallEvent.SessionStart())
-    }
-
-    if !didTrackLaunch {
-      Paywall.track(SuperwallEvent.AppLaunch())
-      didTrackLaunch = true
-    }
-
-    Storage.shared.recordFirstSeenTracked()
-  }
-
 	private func fetchConfiguration() {
-    Network.shared.getConfig { [weak self] result in
+    let requestId = UUID().uuidString
+    Network.shared.getConfig(withRequestId: requestId) { [weak self] result in
       switch result {
       case .success(let config):
-        Storage.shared.addConfig(config)
+        Storage.shared.addConfig(config, withRequestId: requestId)
         self?.didFetchConfig = true
         config.cache()
-        self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleTrigger(forEvent: $0) }
+        self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleImplicitTrigger(forEvent: $0) }
         self?.eventsTrackedBeforeConfigWasFetched.removeAll()
       case .failure(let error):
         Logger.debug(
@@ -296,11 +239,11 @@ public final class Paywall: NSObject {
     }
 	}
 
-  /// Attemps to trigger a paywall for a given analytical event.
+  /// Attemps to implicitly trigger a paywall for a given analytical event.
   ///
   ///  - Parameters:
   ///     - event: The data of an analytical event data that could trigger a paywall.
-	func handleTrigger(forEvent event: EventData) {
+	func handleImplicitTrigger(forEvent event: EventData) {
 		onMain { [weak self] in
 			guard let self = self else {
         return
@@ -311,7 +254,7 @@ public final class Paywall: NSObject {
 
       let outcome = PaywallLogic.canTriggerPaywall(
         eventName: event.name,
-        v1Triggers: Storage.shared.triggers,
+        v1Triggers: Storage.shared.v1Triggers,
         v2Triggers: Set(Storage.shared.v2Triggers.keys),
         isPaywallPresented: self.isPaywallPresented
       )
@@ -320,7 +263,7 @@ public final class Paywall: NSObject {
       case .triggerPaywall:
         // delay in case they are presenting a view controller alongside an event they are calling
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
-          Paywall.internallyPresent(fromEvent: event)
+          Paywall.internallyPresent(.implicitTrigger(event))
         }
       case .disallowedEventAsTrigger:
         Logger.debug(

@@ -16,18 +16,28 @@ struct PaywallResponse: Decodable {
   var name: String?
   var slug: String?
 
+  /// The ID of the paywall variant
   var variantId: String?
+
+  /// The ID of the paywall experiment
   var experimentId: String?
 
+  /// The identifier of the paywall
   var identifier: String?
+
+  /// The URL of the paywall webpage
   var url: String
   var paywalljsEvent: String
 
   var presentationStyle: PaywallPresentationStyle = .sheet
   var backgroundColorHex: String?
 
+  /// The products associated with the paywall.
   var products: [Product]
+
+  /// The variables associated with the paywall
   var variables: [Variable]? = []
+
   var productVariables: [ProductVariable]? = []
 
   var idNonOptional: String {
@@ -36,12 +46,15 @@ struct PaywallResponse: Decodable {
 
   var responseLoadStartTime: Date?
   var responseLoadCompleteTime: Date?
+  var responseLoadFailTime: Date?
 
   var webViewLoadStartTime: Date?
   var webViewLoadCompleteTime: Date?
+  var webViewLoadFailTime: Date?
 
   var productsLoadStartTime: Date?
   var productsLoadCompleteTime: Date?
+  var productsLoadFailTime: Date?
 
   var paywallBackgroundColor: UIColor {
     if let hexString = backgroundColorHex {

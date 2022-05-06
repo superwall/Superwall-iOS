@@ -10,18 +10,18 @@ import UIKit
 extension Paywall {
   // swiftlint:disable:next function_body_length
   static func internallyPresent(
-    withIdentifier identifier: String? = nil,
+    _ presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
-    fromEvent event: EventData? = nil,
     cached: Bool = true,
     ignoreSubscriptionStatus: Bool = false,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: PaywallDismissalCompletionBlock? = nil,
     onFail: ((NSError) -> Void)? = nil
   ) {
+    let eventData = presentationInfo.eventData
     let debugInfo: [String: Any] = [
       "on": presentingViewController.debugDescription,
-      "fromEvent": event.debugDescription,
+      "fromEvent": eventData.debugDescription as Any,
       "cached": cached,
       "presentationCompletion": onPresent.debugDescription,
       "dismissalCompletion": onDismiss.debugDescription,
@@ -50,8 +50,8 @@ extension Paywall {
     }
 
     PaywallManager.shared.getPaywallViewController(
-      withIdentifier: identifier,
-      event: event,
+      presentationInfo,
+      isPreloading: false,
       cached: cached && !SWDebugManager.shared.isDebuggerLaunched
     ) { result in
       // if there's a paywall being presented, don't do anything
@@ -67,6 +67,12 @@ extension Paywall {
 
       switch result {
       case .success(let paywallViewController):
+        TriggerSessionManager.shared.createSession(
+          from: presentationInfo,
+          on: presentingViewController,
+          paywallResponse: paywallViewController.paywallResponse
+        )
+
         if presentingViewController == nil {
           shared.createPresentingWindowIfNeeded()
         }
@@ -95,8 +101,7 @@ extension Paywall {
 
         paywallViewController.present(
           on: presenter,
-          fromEventData: event,
-          calledFromIdentifier: identifier != nil,
+          presentationInfo: presentationInfo,
           dismissalBlock: onDismiss
         ) { success in
           if success {
@@ -105,9 +110,8 @@ extension Paywall {
                 PaywallManager.shared.removePaywall(withIdentifier: presentingPaywallIdentifier)
               }
               internallyPresent(
-                withIdentifier: identifier,
+                presentationInfo,
                 on: presentingViewController,
-                fromEvent: event,
                 cached: false,
                 onPresent: onPresent,
                 onDismiss: onDismiss,
@@ -126,6 +130,18 @@ extension Paywall {
           }
         }
       case .failure(let error):
+        // TODO: CREATE TRIGGER SESSION FOR HOLDOUT HERE
+        let nsError = error as NSError
+        if nsError.code == 4000 || nsError.code == 4001 {
+          // NoRuleMatch or Holdout, sending ended session.
+          TriggerSessionManager.shared.createSession(
+            from: presentationInfo,
+            on: presentingViewController,
+            paywallResponse: nil,
+            immediatelyEndSession: true
+          )
+        }
+
         Logger.debug(
           logLevel: .error,
           scope: .paywallPresentation,

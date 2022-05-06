@@ -1,5 +1,5 @@
 //
-//  ConfigResponse.swift
+//  Config.swift
 //  Paywall
 //
 //  Created by Yusuf Tör on 02/03/2022.
@@ -7,13 +7,14 @@
 
 import Foundation
 
-struct ConfigResponse: Decodable {
+struct Config: Decodable {
   var triggers: Set<Trigger>
   var paywalls: Set<PaywallConfig>
   var logLevel: Int
   var postback: PostbackRequest
   var localization: LocalizationConfig
 
+  /// Preloads paywalls, products, trigger paywalls, and trigger responses. It then sends the products back to the server.
   func cache() {
     preloadPaywallsAndProducts()
     preloadTriggerPaywalls()
@@ -31,8 +32,8 @@ struct ConfigResponse: Decodable {
 
       // cache the view controller
       PaywallManager.shared.getPaywallViewController(
-        withIdentifier: paywall.identifier,
-        event: nil,
+        .fromIdentifier(paywall.identifier),
+        isPreloading: true,
         cached: true
       )
     }
@@ -40,12 +41,12 @@ struct ConfigResponse: Decodable {
 
   /// Pre-loads all the paywalls referenced by v2 triggers.
   private func preloadTriggerPaywalls() {
-    let triggerPaywallIds = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
+    let triggerPaywallIdentifiers = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
 
-    for id in triggerPaywallIds {
+    for identifier in triggerPaywallIdentifiers {
       PaywallManager.shared.getPaywallViewController(
-        withIdentifier: id,
-        event: nil,
+        .fromIdentifier(identifier),
+        isPreloading: true,
         cached: true
       )
     }
@@ -54,8 +55,8 @@ struct ConfigResponse: Decodable {
   /// Preloads the default paywall for the user. This is the paywall shown when calling paywall.present().
   private func preloadDefaultPaywall() {
     PaywallManager.shared.getPaywallViewController(
-      withIdentifier: nil,
-      event: nil,
+      .defaultPaywall,
+      isPreloading: true,
       cached: true
     )
   }
@@ -76,7 +77,8 @@ struct ConfigResponse: Decodable {
       )
       // Preload the response for that trigger
       PaywallResponseManager.shared.getResponse(
-        event: eventData
+        .explicitTrigger(eventData),
+        isPreloading: true
       ) { _ in }
     }
   }

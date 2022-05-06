@@ -57,10 +57,8 @@ let response = #"""
 
 final class ConfigTypeTests: XCTestCase {
   func testParseConfig() throws {
-    let decoder = JSONDecoder()
-    decoder.keyDecodingStrategy = .convertFromSnakeCase
-    let parsedResponse = try! decoder.decode(
-      ConfigResponse.self,
+    let parsedResponse = try! JSONDecoder.superwall.decode(
+      Config.self,
       from: response.data(using: .utf8)!
     )
     print(parsedResponse)

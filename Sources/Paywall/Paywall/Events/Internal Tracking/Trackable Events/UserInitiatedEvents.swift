@@ -17,14 +17,14 @@ enum UserInitiatedEvent {
     let superwallParameters: [String: Any] = [
       "application_installed_at": DeviceHelper.shared.appInstalledAtString
     ]
-    let canTriggerPaywall = false
+    let canImplicitlyTriggerPaywall = false
     var customParameters: [String: Any] = [:]
   }
 
   struct Track: TrackableUserInitiatedEvent {
     let rawName: String
     let superwallParameters: [String: Any] = [:]
-    let canTriggerPaywall: Bool
+    let canImplicitlyTriggerPaywall: Bool
     var customParameters: [String: Any] = [:]
   }
 
@@ -34,7 +34,7 @@ enum UserInitiatedEvent {
     var superwallParameters: [String: Any] {
       return ["url": url.absoluteString]
     }
-    let canTriggerPaywall = true
+    let canImplicitlyTriggerPaywall = true
     let customParameters: [String: Any] = [:]
   }
 
@@ -60,7 +60,7 @@ enum UserInitiatedEvent {
     }
     let state: State
     let pushNotificationId: String?
-    let canTriggerPaywall = true
+    let canImplicitlyTriggerPaywall = true
     var customParameters: [String: Any] = [:]
   }
 }

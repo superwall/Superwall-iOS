@@ -215,9 +215,14 @@ final class SWDebugViewController: UIViewController {
 			paywallIdentifier = paywallId
 		}
 
-		PaywallResponseManager.shared.getResponse(
-      identifier: paywallId,
-      event: nil
+    // TODO: Can PaywallId actually be nil here or just a state error?
+    guard let paywallId = paywallId else {
+      return
+    }
+
+    PaywallResponseManager.shared.getResponse(
+      .fromIdentifier(paywallId),
+      isPreloading: false
     ) { [weak self] result in
       guard let self = self else {
         return
@@ -255,7 +260,8 @@ final class SWDebugViewController: UIViewController {
     }
 
     let child = SWPaywallViewController(
-      paywallResponse: paywallResponse
+      paywallResponse: paywallResponse,
+      isPreloading: false
     )
     addChild(child)
     previewContainerView.insertSubview(child.view, at: 0)

@@ -25,11 +25,12 @@ final class Storage {
 	var didTrackFirstSeen = false
   var userAttributes: [String: Any] = [:]
   var locales: Set<String> = []
+  var configRequestId: String = ""
 
   var userId: String? {
     return appUserId ?? aliasId
   }
-	var triggers: Set<String> = Set<String>()
+	var v1Triggers: Set<String> = Set<String>()
   // swiftlint:disable:next array_constructor
   var v2Triggers: [String: TriggerV2] = [:]
   private let cache: Cache
@@ -61,7 +62,7 @@ final class Storage {
     aliasId = StorageLogic.generateAlias()
     didTrackFirstSeen = false
     userAttributes = [:]
-    triggers.removeAll()
+    v1Triggers.removeAll()
     v2Triggers.removeAll()
     cache.cleanAll()
     recordFirstSeenTracked()
@@ -89,12 +90,15 @@ final class Storage {
     addUserAttributes(standardUserAttributes)
   }
 
-	func addConfig(_ config: ConfigResponse) {
+	func addConfig(
+    _ config: Config,
+    withRequestId requestId: String
+  ) {
     let v1TriggerDictionary = StorageLogic.getV1TriggerDictionary(from: config.triggers)
-    cache.write(v1TriggerDictionary, forType: Config.self)
-    triggers = Set(v1TriggerDictionary.keys)
+    cache.write(v1TriggerDictionary, forType: V1Triggers.self)
+    v1Triggers = Set(v1TriggerDictionary.keys)
     locales = Set(config.localization.locales.map { $0.locale })
-
+    configRequestId = requestId
     v2Triggers = StorageLogic.getV2TriggerDictionary(from: config.triggers)
 	}
 
@@ -130,11 +134,11 @@ final class Storage {
   }
 
 	private func setCachedTriggers() {
-    let cachedTriggers = cache.read(Config.self) ?? [:]
+    let cachedTriggers = cache.read(V1Triggers.self) ?? [:]
 
-    triggers = []
+    v1Triggers = []
 		for key in cachedTriggers.keys {
-			triggers.insert(key)
+			v1Triggers.insert(key)
 		}
 	}
 }

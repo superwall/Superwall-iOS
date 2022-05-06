@@ -9,5 +9,4 @@ import Foundation
 
 struct EventsRequest: Encodable {
   var events: [JSON]
-  //var sessions: [PaywallSession]
 }

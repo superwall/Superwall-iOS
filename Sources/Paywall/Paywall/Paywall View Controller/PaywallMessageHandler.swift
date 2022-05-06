@@ -52,10 +52,10 @@ final class PaywallMessageHandler: NSObject, WKScriptMessageHandler {
       return
     }
 
-    let decoder = JSONDecoder()
-    decoder.keyDecodingStrategy = .convertFromSnakeCase
-
-    guard let wrappedPaywallEvents = try? decoder.decode(WrappedPaywallEvents.self, from: bodyData) else {
+    guard let wrappedPaywallEvents = try? JSONDecoder.superwall.decode(
+      WrappedPaywallEvents.self,
+      from: bodyData
+    ) else {
       Logger.debug(
         logLevel: .warn,
         scope: .paywallViewController,

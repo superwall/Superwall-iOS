@@ -106,7 +106,22 @@ extension SWWebView: WKNavigationDelegate {
     decisionHandler(.cancel)
   }
 
+  func webView(
+    _ webView: WKWebView,
+    didFail navigation: WKNavigation!,
+    withError error: Error
+  ) {
+    // TODO: Check this doesnt call fail twice with above decisionHandler
+    trackPaywallError()
+  }
+
   func trackPaywallError() {
+    delegate?.paywallResponse.webViewLoadFailTime = Date()
+
+    if delegate?.isPreloading == false {
+      TriggerSessionManager.shared.trackWebViewLoadFail()
+    }
+
     guard let paywallInfo = delegate?.paywallInfo else {
       return
     }

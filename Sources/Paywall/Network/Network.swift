@@ -28,8 +28,8 @@ final class Network {
     }
   }
 
-  func getPaywall(
-    withIdentifier identifier: String? = nil,
+  func getPaywallResponse(
+    withPaywallId identifier: String? = nil,
     fromEvent event: EventData? = nil,
     completion: @escaping (Result<PaywallResponse, Error>) -> Void
   ) {
@@ -89,8 +89,11 @@ final class Network {
     }
   }
 
-  func getConfig(completion: @escaping (Result<ConfigResponse, Error>) -> Void) {
-    urlSession.request(.config) { result in
+  func getConfig(
+    withRequestId requestId: String,
+    completion: @escaping (Result<Config, Error>) -> Void
+  ) {
+    urlSession.request(.config(requestId: requestId)) { result in
       switch result {
       case .success(let response):
         completion(.success(response))
@@ -124,6 +127,23 @@ final class Network {
           error: error
         )
         completion?(.failure(error))
+      }
+    }
+  }
+
+  func sendSessionEvents(_ session: SessionEventsRequest) {
+    urlSession.request(.sessionEvents(session)) { result in
+      switch result {
+      case .success:
+        break
+      case .failure(let error):
+        Logger.debug(
+          logLevel: .error,
+          scope: .network,
+          message: "Request Failed: /session_events",
+          info: ["payload": session],
+          error: error
+        )
       }
     }
   }

@@ -31,7 +31,7 @@ class PaywallLogicTests: XCTestCase {
     XCTAssertTrue(sessionDidStart)
   }
 
-  // MARK: - canTriggerPaywall
+  // MARK: - canImplicitlyTriggerPaywall
   func testSessionDidStart_canTriggerPaywall_paywallAlreadyPresented() {
     let outcome = PaywallLogic.canTriggerPaywall(
       eventName: "app_install",

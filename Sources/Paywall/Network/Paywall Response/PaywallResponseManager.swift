@@ -18,25 +18,25 @@ final class PaywallResponseManager: NSObject {
 	private var handlersByHash: [String: [PaywallResponseCompletionBlock]] = [:]
 
 	func getResponse(
-    identifier: String? = nil,
-    event: EventData? = nil,
+    _ presentationInfo: PresentationInfo,
+    isPreloading: Bool,
     completion: @escaping PaywallResponseCompletionBlock
   ) {
     do {
-      // if event is nil, this returns a TriggerResponseIdentifiers object with the given identifier
       let triggerIdentifiers = try PaywallResponseLogic.handleTriggerResponse(
-        withPaywallId: identifier,
-        fromEvent: event,
+        withPresentationInfo: presentationInfo,
         didFetchConfig: Paywall.shared.didFetchConfig
       )
 
+      let eventData = presentationInfo.eventData
+
       let paywallRequestHash = PaywallResponseLogic.requestHash(
-        identifier: triggerIdentifiers.paywallId,
-        event: event
+        identifier: triggerIdentifiers?.paywallId,
+        event: eventData
       )
 
       let paywallResponseCachingOutcome = PaywallResponseLogic.searchForPaywallResponse(
-        forEvent: event,
+        forEvent: eventData,
         withHash: paywallRequestHash,
         identifiers: triggerIdentifiers,
         inResultsCache: responsesByHash,
@@ -58,9 +58,10 @@ final class PaywallResponseManager: NSObject {
       }
 
       loadPaywall(
-        forEvent: event,
+        forEvent: eventData,
         withHash: paywallRequestHash,
-        triggerIdentifiers: triggerIdentifiers
+        triggerIdentifiers: triggerIdentifiers,
+        isPreloading: isPreloading
       )
     } catch let error as NSError {
       return completion(.failure(error))
@@ -70,7 +71,8 @@ final class PaywallResponseManager: NSObject {
   private func loadPaywall(
     forEvent event: EventData?,
     withHash paywallRequestHash: String,
-    triggerIdentifiers: TriggerResponseIdentifiers?
+    triggerIdentifiers: TriggerResponseIdentifiers?,
+    isPreloading: Bool
   ) {
     queue.async { [weak self] in
       guard let self = self else {
@@ -78,14 +80,18 @@ final class PaywallResponseManager: NSObject {
       }
       let responseLoadStartTime = Date()
 
+      if !isPreloading {
+        TriggerSessionManager.shared.trackPaywallResponseLoadStart()
+      }
+
       let trackedEvent = SuperwallEvent.PaywallResponseLoad(
         state: .start,
         eventData: event
       )
       Paywall.track(trackedEvent)
 
-      Network.shared.getPaywall(
-        withIdentifier: triggerIdentifiers?.paywallId,
+      Network.shared.getPaywallResponse(
+        withPaywallId: triggerIdentifiers?.paywallId,
         fromEvent: event
       ) { result in
         self.queue.async {
@@ -95,7 +101,6 @@ final class PaywallResponseManager: NSObject {
             response.variantId = triggerIdentifiers?.variantId
             response.responseLoadStartTime = responseLoadStartTime
             response.responseLoadCompleteTime = Date()
-            response.productsLoadStartTime = Date()
 
             let paywallInfo = response.getPaywallInfo(fromEvent: event)
 
@@ -105,19 +110,21 @@ final class PaywallResponseManager: NSObject {
             )
             Paywall.track(responseLoadEvent)
 
-            let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
-              state: .start,
-              paywallInfo: paywallInfo,
-              eventData: event
-            )
-            Paywall.track(productLoadEvent)
+            if !isPreloading {
+              TriggerSessionManager.shared.trackPaywallResponseLoadComplete()
+            }
 
             self.getProducts(
               from: response,
               withHash: paywallRequestHash,
-              event: event
+              paywallInfo: paywallInfo,
+              event: event,
+              isPreloading: isPreloading
             )
           case .failure(let error):
+            if !isPreloading {
+              TriggerSessionManager.shared.trackPaywallResponseLoadFail()
+            }
             guard let errorResponse = PaywallResponseLogic.handlePaywallError(
               error,
               forEvent: event,
@@ -144,9 +151,23 @@ final class PaywallResponseManager: NSObject {
   private func getProducts(
     from response: PaywallResponse,
     withHash paywallRequestHash: String,
-    event: EventData?
+    paywallInfo: PaywallInfo,
+    event: EventData?,
+    isPreloading: Bool
   ) {
     var response = response
+    response.productsLoadStartTime = Date()
+
+    let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+      state: .start,
+      paywallInfo: paywallInfo,
+      eventData: event
+    )
+    Paywall.track(productLoadEvent)
+
+    if !isPreloading {
+      TriggerSessionManager.shared.trackProductsLoadStart()
+    }
 
     // add its products
     StoreKitManager.shared.getProducts(withIds: response.productIds) { [weak self] productsById in
@@ -184,6 +205,10 @@ final class PaywallResponseManager: NSObject {
       self.handlersByHash.removeValue(forKey: paywallRequestHash)
 
       response.productsLoadCompleteTime = Date()
+
+      if !isPreloading {
+        TriggerSessionManager.shared.trackProductsLoadComplete()
+      }
 
       let paywallInfo = response.getPaywallInfo(fromEvent: event)
       let productLoadEvent = SuperwallEvent.PaywallProductsLoad(

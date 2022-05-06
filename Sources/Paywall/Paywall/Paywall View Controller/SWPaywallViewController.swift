@@ -33,8 +33,9 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	var dismissalCompletion: PaywallDismissalCompletionBlock?
 	var isPresented = false
 	var calledDismiss = false
+  var isPreloading: Bool
   var paywallResponse: PaywallResponse
-	var eventData: EventData?
+  var presentationInfo: PresentationInfo?
   var calledByIdentifier = false
 	var readyForEventTracking = false
 	var showRefreshTimer: Timer?
@@ -53,7 +54,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	var paywallInfo: PaywallInfo {
 		return paywallResponse.getPaywallInfo(
-      fromEvent: eventData,
+      fromEvent: presentationInfo?.eventData,
       calledByIdentifier: calledByIdentifier
     )
 	}
@@ -121,10 +122,12 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	init(
     paywallResponse: PaywallResponse,
+    isPreloading: Bool,
     delegate: SWPaywallViewControllerDelegate? = nil
   ) {
 		self.delegate = delegate
     self.paywallResponse = paywallResponse
+    self.isPreloading = isPreloading
     super.init(nibName: nil, bundle: nil)
     configureUI()
     loadPaywallWebpage()
@@ -414,21 +417,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       self.refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.contentPlaceholderImageView.tintColor = loadingColor.withAlphaComponent(0.5)
-
-      let urlString = self.paywallResponse.url
-      if let url = URL(string: urlString) {
-        let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
-          state: .start,
-          paywallInfo: self.paywallInfo
-        )
-        Paywall.track(trackedEvent)
-
-        self.webView.load(URLRequest(url: url))
-        if self.paywallResponse.webViewLoadStartTime == nil {
-          self.paywallResponse.webViewLoadStartTime = Date()
-        }
-        self.loadingState = .loadingResponse
-      }
     }
 
     switch presentationStyle {
@@ -458,26 +446,32 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     if paywallResponse.webViewLoadStartTime == nil {
       paywallResponse.webViewLoadStartTime = Date()
     }
+    
+    if !self.isPreloading {
+      TriggerSessionManager.shared.trackWebViewLoadStart()
+    }
 
     loadingState = .loadingResponse
   }
 
 	func set(
-    eventData: EventData?,
-    calledFromIdentifier: Bool,
+    _ presentationInfo: PresentationInfo,
     dismissalBlock: PaywallDismissalCompletionBlock?
   ) {
-		self.eventData = eventData
-		self.calledByIdentifier = calledFromIdentifier
+		self.presentationInfo = presentationInfo
 		self.dismissalCompletion = dismissalBlock
 	}
 
 	func trackOpen() {
+    TriggerSessionManager.shared.trackPaywallOpen()
+
     let trackedEvent = SuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}
 
 	func trackClose() {
+    TriggerSessionManager.shared.trackPaywallClose()
+
     let trackedEvent = SuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}
@@ -486,8 +480,9 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     title: String? = nil,
     message: String? = nil,
     actionTitle: String? = nil,
+    closeActionTitle: String = "Done",
     action: (() -> Void)? = nil,
-    closeActionTitle: String = "Done"
+    onCancel: (() -> Void)? = nil
   ) {
     guard presentedViewController == nil else {
       return
@@ -501,7 +496,9 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       alertController.addAction(alertAction)
     }
 
-    let action = UIAlertAction(title: closeActionTitle, style: .cancel)
+    let action = UIAlertAction(title: closeActionTitle, style: .cancel) { _ in
+      onCancel?()
+    }
     alertController.addAction(action)
 
     present(alertController, animated: true) { [weak self] in
@@ -560,12 +557,11 @@ extension SWPaywallViewController: WebEventHandlerDelegate {
   }
 }
 
-// presentation logic
+// MARK: - presentation logic
 extension SWPaywallViewController {
 	func present(
     on presenter: UIViewController,
-    fromEventData: EventData?,
-    calledFromIdentifier: Bool,
+    presentationInfo: PresentationInfo,
     dismissalBlock: PaywallDismissalCompletionBlock?,
     completion: @escaping (Bool) -> Void
   ) {
@@ -574,7 +570,7 @@ extension SWPaywallViewController {
 			return
 		} else {
 			prepareForPresentation()
-			set(eventData: fromEventData, calledFromIdentifier: calledFromIdentifier, dismissalBlock: dismissalBlock)
+      set(presentationInfo, dismissalBlock: dismissalBlock)
       presenter.present(
         self,
         animated: Paywall.shouldAnimatePaywallPresentation
@@ -648,12 +644,12 @@ extension SWPaywallViewController {
         title: "Almost Done...",
         message: "Set Paywall.delegate to handle purchases, restores and more!",
         actionTitle: "Docs →",
+        closeActionTitle: "Done",
         action: {
           if let url = URL(string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate") {
             UIApplication.shared.open(url, options: [:], completionHandler: nil)
           }
-        },
-        closeActionTitle: "Done"
+        }
       )
 		}
 	}
@@ -698,6 +694,7 @@ extension SWPaywallViewController: Stubbable {
   static func stub() -> SWPaywallViewController {
     return SWPaywallViewController(
       paywallResponse: .stub(),
+      isPreloading: false,
       delegate: nil
     )
   }

@@ -60,11 +60,11 @@ extension URLSession {
         }
         var requestId = "unknown"
 
-
         if let response = response as? HTTPURLResponse {
           if let id = response.allHeaderFields["x-request-id"] as? String {
             requestId = id
           }
+          
           if response.statusCode == 401 {
             Logger.debug(
               logLevel: .error,
@@ -113,9 +113,11 @@ extension URLSession {
           ]
         )
 
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        let response = try decoder.decode(Response.self, from: data)
+        let response = try JSONDecoder.superwall.decode(
+          Response.self,
+          from: data
+        )
+
         completion(.success(response))
       } catch {
         Logger.debug(

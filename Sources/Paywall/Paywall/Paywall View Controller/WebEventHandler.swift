@@ -9,12 +9,13 @@ import UIKit
 import WebKit
 
 protocol WebEventHandlerDelegate: AnyObject {
-  var eventData: EventData? { get }
+  var presentationInfo: PresentationInfo? { get }
   var paywallResponse: PaywallResponse { get set }
   var paywallInfo: PaywallInfo { get }
   var webView: SWWebView { get }
   var loadingState: PaywallLoadingState { get set }
   var isPresentedViewController: Bool { get }
+  var isPreloading: Bool { get }
 
   func eventDidOccur(_ paywallPresentationResult: PaywallPresentationResult)
   func presentSafari(_ url: URL)
@@ -66,7 +67,7 @@ final class WebEventHandler: WebEventDelegate {
 
   private func templateParams(from paywallResponse: PaywallResponse) {
     let params = paywallResponse.getBase64EventsString(
-      params: delegate?.eventData?.parameters
+      params: delegate?.presentationInfo?.eventData?.parameters
     )
     let scriptSrc = """
       window.paywall.accept64('\(params)');
@@ -105,8 +106,12 @@ final class WebEventHandler: WebEventDelegate {
       Paywall.track(trackedEvent)
     }
 
+    if delegate?.isPreloading == false {
+      TriggerSessionManager.shared.trackWebViewLoadComplete()
+    }
+
     let params = paywallResponse.getBase64EventsString(
-      params: delegate?.eventData?.parameters
+      params: delegate?.presentationInfo?.eventData?.parameters
     )
     let jsEvent = paywallResponse.paywalljsEvent
     let scriptSrc = """

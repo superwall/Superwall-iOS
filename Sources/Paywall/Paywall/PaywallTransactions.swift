@@ -39,6 +39,7 @@ extension Paywall {
             )
             self?.transactionWasRestored(paywallViewController: paywallViewController)
           } else {
+            // TODO: We're not tracking restoration failures?
             Logger.debug(
               logLevel: .debug,
               scope: .paywallTransactions,
@@ -62,6 +63,8 @@ extension Paywall {
     paywallViewController: SWPaywallViewController,
     for product: SKProduct
   ) {
+    TriggerSessionManager.shared.trackBeginTransaction(of: product)
+
 		let paywallInfo = paywallViewController.paywallInfo
     let trackedEvent = SuperwallEvent.Transaction(
       state: .start,
@@ -78,9 +81,18 @@ extension Paywall {
 	}
 
 	private func transactionDidSucceed(
+    withId id: String?,
     paywallViewController: SWPaywallViewController,
     for product: SKProduct
   ) {
+    let isFreeTrialAvailable = paywallViewController.paywallResponse.isFreeTrialAvailable == true
+
+    TriggerSessionManager.shared.trackTransactionSucceeded(
+      withId: id,
+      for: product,
+      isFreeTrialAvailable: isFreeTrialAvailable
+    )
+
     let paywallInfo = paywallViewController.paywallInfo
     let trackedEvent = SuperwallEvent.Transaction(
       state: .complete,
@@ -97,21 +109,20 @@ extension Paywall {
       Paywall.track(trackedEvent)
     }
 
-    if let freeTrialAvailable = paywallViewController.paywallResponse.isFreeTrialAvailable {
-      if freeTrialAvailable {
-        let trackedEvent = SuperwallEvent.FreeTrialStart(
-          paywallInfo: paywallInfo,
-          product: product
-        )
-        Paywall.track(trackedEvent)
-      } else {
-        let trackedEvent = SuperwallEvent.SubscriptionStart(
-          paywallInfo: paywallInfo,
-          product: product
-        )
-        Paywall.track(trackedEvent)
-      }
+    if isFreeTrialAvailable {
+      let trackedEvent = SuperwallEvent.FreeTrialStart(
+        paywallInfo: paywallInfo,
+        product: product
+      )
+      Paywall.track(trackedEvent)
+    } else {
+      let trackedEvent = SuperwallEvent.SubscriptionStart(
+        paywallInfo: paywallInfo,
+        product: product
+      )
+      Paywall.track(trackedEvent)
     }
+
     dismiss(
       paywallViewController,
       state: .purchased(productId: product.productIdentifier)
@@ -141,13 +152,16 @@ extension Paywall {
         )
         Paywall.track(trackedEvent)
 
+        TriggerSessionManager.shared.trackTransactionError()
+
 				self.paywallViewController?.presentAlert(
           title: "Please try again",
           message: error?.localizedDescription ?? "",
-          actionTitle: "Restore Purchase"
-        ) {
-					Paywall.shared.tryToRestore(paywallViewController)
-				}
+          actionTitle: "Restore Purchase",
+          action: {
+            Paywall.shared.tryToRestore(paywallViewController)
+          }
+        )
       } else {
         Paywall.shared.tryToRestore(paywallViewController)
         self.didTryToAutoRestore = true
@@ -167,6 +181,8 @@ extension Paywall {
     )
     Paywall.track(trackedEvent)
 
+    TriggerSessionManager.shared.trackTransactionAbandon()
+
 		paywallViewController.loadingState = .ready
 	}
 
@@ -178,6 +194,7 @@ extension Paywall {
       product: nil
     )
     Paywall.track(trackedEvent)
+
     dismiss(paywallViewController, state: .restored)
 	}
 
@@ -195,6 +212,8 @@ extension Paywall {
       product: nil
     )
     Paywall.track(trackedEvent)
+
+    TriggerSessionManager.shared.trackDeferredTransaction()
 	}
 }
 
@@ -248,7 +267,11 @@ extension Paywall: SKPaymentTransactionObserver {
           ],
           error: nil
         )
-				transactionDidSucceed(paywallViewController: paywallViewController, for: product)
+				transactionDidSucceed(
+          withId: transaction.transactionIdentifier,
+          paywallViewController: paywallViewController,
+          for: product
+        )
 			case .failed:
 				if let error = transaction.error as? SKError {
 					var userCancelled = error.code == .paymentCancelled
@@ -305,7 +328,12 @@ extension Paywall: SKPaymentTransactionObserver {
 					}
 				}
 			case .restored:
-				break
+        let isFreeTrialAvailable = paywallViewController.paywallResponse.isFreeTrialAvailable == true
+        TriggerSessionManager.shared.trackTransactionRestoration(
+          withId: transaction.transactionIdentifier,
+          product: product,
+          isFreeTrialAvailable: isFreeTrialAvailable
+        )
 			case .deferred:
 				Logger.debug(
           logLevel: .debug,

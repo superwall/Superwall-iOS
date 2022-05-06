@@ -10,12 +10,13 @@ import Foundation
 enum HandleEventResult {
   case unknownEvent
   case holdout(
+    experimentGroupId: String,
     experimentId: String,
     variantId: String
   )
   case noRuleMatch
-  case presentV1
   case presentV2(
+    experimentGroupId: String,
     experimentId: String,
     variantId: String,
     paywallIdentifier: String
@@ -45,6 +46,7 @@ enum TriggerLogic {
           return Outcome(
             confirmableAssignments: confirmableAssignments,
             result: .holdout(
+              experimentGroupId: rule.experimentGroupId,
               experimentId: rule.experimentId,
               variantId: holdout.variantId
             )
@@ -53,6 +55,7 @@ enum TriggerLogic {
           return Outcome(
             confirmableAssignments: confirmableAssignments,
             result: .presentV2(
+              experimentGroupId: rule.experimentGroupId,
               experimentId: rule.experimentId,
               variantId: treatment.variantId,
               paywallIdentifier: treatment.paywallIdentifier
@@ -63,9 +66,6 @@ enum TriggerLogic {
         return Outcome(result: .noRuleMatch)
       }
     } else {
-      if v1Triggers.contains(event.name) {
-        return Outcome(result: .presentV1)
-      }
       return Outcome(result: .unknownEvent)
     }
   }

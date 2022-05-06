@@ -44,8 +44,8 @@ extension Paywall {
     )
 		queue.enqueue(event: eventData.jsonData)
 
-    if event.canTriggerPaywall {
-			Paywall.shared.handleTrigger(forEvent: eventData)
+    if event.canImplicitlyTriggerPaywall {
+			Paywall.shared.handleImplicitTrigger(forEvent: eventData)
 		}
 
     let result = TrackingResult(

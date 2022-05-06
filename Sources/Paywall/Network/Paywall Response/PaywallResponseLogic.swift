@@ -10,8 +10,8 @@ import StoreKit
 
 struct TriggerResponseIdentifiers: Equatable {
   let paywallId: String?
-  let experimentId: String?
-  let variantId: String?
+  var experimentId: String?
+  var variantId: String?
 }
 
 struct PaywallErrorResponse {
@@ -47,33 +47,34 @@ enum PaywallResponseLogic {
 
   // swiftlint:disable:next function_body_length
   static func handleTriggerResponse(
-    withPaywallId paywallId: String?,
-    fromEvent event: EventData?,
+    withPresentationInfo presentationInfo: PresentationInfo,
     didFetchConfig: Bool,
     handleEvent: (EventData) -> HandleEventResult = TriggerManager.handleEvent,
     trackEvent: (Trackable) -> TrackingResult = Paywall.track
-  ) throws -> TriggerResponseIdentifiers {
-    guard
-      didFetchConfig,
-      let event = event
-    else {
-      return TriggerResponseIdentifiers(
-        paywallId: paywallId,
-        experimentId: nil,
-        variantId: nil
-      )
+  ) throws -> TriggerResponseIdentifiers? {
+    guard didFetchConfig else {
+      // TODO: Why do we return identifier here exactly? This could influence paywall session start.
+      // Also, this is before config has been fetched. Looks like we're totally ignoring an explicit trigger in this instance?
+      return TriggerResponseIdentifiers(paywallId: presentationInfo.identifier)
+    }
+
+    // swiftlint:disable:next force_unwrapping
+    var event: EventData!
+
+    switch presentationInfo {
+    case let .implicitTrigger(eventData),
+      .explicitTrigger(let eventData):
+      event = eventData
+    case .fromIdentifier(let paywallId):
+      return TriggerResponseIdentifiers(paywallId: paywallId)
+    case .defaultPaywall:
+      return nil
     }
 
     let triggerResponse = handleEvent(event)
 
     switch triggerResponse {
-    case .presentV1:
-      return TriggerResponseIdentifiers(
-        paywallId: paywallId,
-        experimentId: nil,
-        variantId: nil
-      )
-    case let .presentV2(experimentIdentifier, variantIdentifier, paywallIdentifier):
+    case let .presentV2(_, experimentIdentifier, variantIdentifier, paywallIdentifier):
       let outcome = TriggerResponseIdentifiers(
         paywallId: paywallIdentifier,
         experimentId: experimentIdentifier,
@@ -94,7 +95,7 @@ enum PaywallResponseLogic {
       _ = trackEvent(trackedEvent)
 
       return outcome
-    case let .holdout(experimentId, variantId):
+    case let .holdout(_, experimentId, variantId):
       let userInfo: [String: Any] = [
         "experimentId": experimentId,
         "variantId": variantId,

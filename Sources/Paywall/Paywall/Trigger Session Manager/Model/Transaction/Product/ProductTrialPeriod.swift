@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension PaywallSession.Transaction.Product {
+extension TriggerSession.Transaction.Product {
   struct TrialPeriod: Encodable {
     /// The days in the trial period, e.g. "2"
     let days: String

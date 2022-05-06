@@ -19,7 +19,7 @@ extension TrackableSuperwallEvent {
     return name.rawValue
   }
 
-  var canTriggerPaywall: Bool {
+  var canImplicitlyTriggerPaywall: Bool {
     return true
   }
 }
@@ -294,5 +294,11 @@ enum SuperwallEvent {
         return paywallInfo.eventParams(otherParams: params)
       }
     }
+  }
+
+  struct ManualPresent: TrackableSuperwallEvent {
+    let name: Paywall.EventName = .manualPresent
+    var customParameters: [String: Any] = [:]
+    var superwallParameters: [String: Any] = [:]
   }
 }

@@ -29,7 +29,7 @@ public extension Paywall {
   ) {
     let trackableEvent = UserInitiatedEvent.Track(
       rawName: name,
-      canTriggerPaywall: true,
+      canImplicitlyTriggerPaywall: true,
       customParameters: params
     )
     Paywall.track(trackableEvent)
@@ -348,7 +348,7 @@ public extension Paywall {
     case let .base(name, params):
       let trackedEvent = UserInitiatedEvent.Track(
         rawName: name,
-        canTriggerPaywall: true,
+        canImplicitlyTriggerPaywall: true,
         customParameters: params
       )
       Paywall.track(trackedEvent)
@@ -357,7 +357,7 @@ public extension Paywall {
       Paywall.track(
         UserInitiatedEvent.Track(
           rawName: name,
-          canTriggerPaywall: true
+          canImplicitlyTriggerPaywall: true
         )
       )
     }

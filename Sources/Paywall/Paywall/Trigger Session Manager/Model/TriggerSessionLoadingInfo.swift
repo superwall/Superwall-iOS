@@ -7,13 +7,13 @@
 
 import Foundation
 
-extension PaywallSession {
+extension TriggerSession {
   struct LoadingInfo: Encodable {
     /// The loading start time.
-    var startAt: Date
+    var startAt: Date?
     /// The loading end time.
     var endAt: Date?
-    /// The time it took to load.
-    var duration: TimeInterval?
+    /// When it failed.
+    var failAt: Date?
   }
 }

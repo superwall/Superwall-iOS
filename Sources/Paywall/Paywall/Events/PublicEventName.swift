@@ -28,6 +28,7 @@ public extension Paywall {
     case subscriptionStart = "subscription_start"
     case freeTrialStart = "freeTrial_start"
     case transactionRestore = "transaction_restore"
+    case manualPresent = "manual_present"
     case nonRecurringProductPurchase = "nonRecurringProduct_purchase"
     case paywallResponseLoadStart = "paywallResponseLoad_start"
     case paywallResponseLoadNotFound = "paywallResponseLoad_notFound"

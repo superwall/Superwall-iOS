@@ -26,6 +26,7 @@ struct PaywallPresentationModifier: ViewModifier {
   private func updatePresentation(_ isPresented: Bool) {
     if isPresented {
       Paywall.internallyPresent(
+        .defaultPaywall,
         onPresent: onPresent,
         onDismiss: { result in
           self.manuallySetIsPresented = true

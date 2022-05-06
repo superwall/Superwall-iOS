@@ -39,6 +39,7 @@ public extension Paywall {
     onFail: ((NSError?) -> Void)? = nil
   ) {
     internallyPresent(
+      .defaultPaywall,
       onPresent: onPresent,
       onDismiss: { result in
         if let onDismiss = onDismiss {
@@ -65,6 +66,7 @@ public extension Paywall {
     onFail: ((NSError?) -> Void)? = nil
   ) {
     internallyPresent(
+      .defaultPaywall,
       on: viewController,
       onPresent: onPresent,
       onDismiss: { result in
@@ -95,8 +97,14 @@ public extension Paywall {
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil,
     onFail: ((NSError?) -> Void)? = nil
   ) {
+    let presentationInfo: PresentationInfo
+    if let identifier = identifier {
+      presentationInfo = .fromIdentifier(identifier)
+    } else {
+      presentationInfo = .defaultPaywall
+    }
     internallyPresent(
-      withIdentifier: identifier,
+      presentationInfo,
       on: viewController,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
       onPresent: onPresent,
@@ -136,21 +144,21 @@ public extension Paywall {
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil
   ) {
-    var eventData: EventData?
+    var presentationInfo: PresentationInfo = .defaultPaywall
 
     if let name = event {
       let trackableEvent = UserInitiatedEvent.Track(
         rawName: name,
-        canTriggerPaywall: false,
+        canImplicitlyTriggerPaywall: false,
         customParameters: params
       )
       let result = track(trackableEvent)
-      eventData = result.data
+      presentationInfo = .explicitTrigger(result.data)
     }
 
     internallyPresent(
+      presentationInfo,
       on: viewController,
-      fromEvent: eventData,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
       onPresent: onPresent,
       onDismiss: { result in

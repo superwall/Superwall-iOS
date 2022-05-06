@@ -27,20 +27,22 @@ struct PaywallTriggerModifier: ViewModifier {
 
   private func updatePresentation(_ shouldPresent: Bool) {
     if shouldPresent {
-      var eventData: EventData?
+      // TODO: We are showing the default paywall here if no event name provided to trigger.
+      // Double check that this is correct
+      var eventInfo: PresentationInfo = .defaultPaywall
 
       if let name = event {
         let trackableEvent = UserInitiatedEvent.Track(
           rawName: name,
-          canTriggerPaywall: false,
+          canImplicitlyTriggerPaywall: false,
           customParameters: params
         )
         let result = Paywall.track(trackableEvent)
-        eventData = result.data
+        eventInfo = .explicitTrigger(result.data)
       }
 
       Paywall.internallyPresent(
-        fromEvent: eventData,
+        eventInfo,
         onPresent: onPresent,
         onDismiss: { result in
           self.manuallySetShouldPresent = true

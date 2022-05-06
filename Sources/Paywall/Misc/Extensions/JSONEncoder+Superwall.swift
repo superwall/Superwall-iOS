@@ -15,3 +15,12 @@ extension JSONEncoder {
     return encoder
   }()
 }
+
+extension JSONDecoder {
+  static let superwall: JSONDecoder = {
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .formatted(Date.isoFormatter)
+    decoder.keyDecodingStrategy = .convertFromSnakeCase
+    return decoder
+  }()
+}

@@ -23,6 +23,7 @@ struct Endpoint<Response: Decodable> {
   var components: Components?
   var url: URL?
   var method: HttpMethod = .get
+  var requestId: String = UUID().uuidString
 
   func makeRequest(forDebugging isForDebugging: Bool) -> URLRequest? {
     let url: URL
@@ -55,6 +56,7 @@ struct Endpoint<Response: Decodable> {
 
     addHeaders(
       to: &request,
+      requestId: requestId,
       forDebugging: isForDebugging
     )
 
@@ -63,10 +65,9 @@ struct Endpoint<Response: Decodable> {
 
   private func addHeaders(
     to request: inout URLRequest,
+    requestId: String,
     forDebugging isForDebugging: Bool
   ) {
-    let requestId = UUID().uuidString
-
     let apiKey = isForDebugging ? (Storage.shared.debugKey ?? "") : Storage.shared.apiKey
     let auth = "Bearer \(apiKey)"
     let headers = [
@@ -112,6 +113,19 @@ extension Endpoint where Response == EventsResponse {
       components: Components(
         host: Api.Analytics.host,
         path: Api.version1 + "events",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+
+  static func sessionEvents(_ session: SessionEventsRequest) -> Self {
+    let bodyData = try? JSONEncoder.superwall.encode(session)
+
+    return Endpoint(
+      components: Components(
+        host: Api.Base.host,
+        path: Api.version1 + "session_events",
         bodyData: bodyData
       ),
       method: .post
@@ -199,14 +213,15 @@ extension Endpoint where Response == PaywallsResponse {
 }
 
 // MARK: - ConfigResponse
-extension Endpoint where Response == ConfigResponse {
-  static var config: Self {
+extension Endpoint where Response == Config {
+  static func config(requestId: String) -> Self {
     return Endpoint(
       components: Components(
         host: Api.Base.host,
         path: Api.version1 + "config"
       ),
-      method: .get
+      method: .get,
+      requestId: requestId
     )
   }
 }
