@@ -9,4 +9,5 @@ import Foundation
 
 struct EventsResponse: Codable {
   var status: String
+  var invalidIndexes: [Int]?
 }

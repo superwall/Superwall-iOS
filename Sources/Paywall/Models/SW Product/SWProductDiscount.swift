@@ -15,7 +15,7 @@ struct SWProductDiscount: Codable {
     case unknown
   }
 
-  enum `Type`: String, Codable {
+  enum DiscountType: String, Codable {
     case introductory
     case subscription
     case unknown
@@ -27,7 +27,7 @@ struct SWProductDiscount: Codable {
   var subscriptionPeriod: SWProductSubscriptionPeriod
   var numberOfPeriods: Int
   var paymentMode: SWProductDiscount.PaymentMode
-  var type: SWProductDiscount.`Type`
+  var type: SWProductDiscount.DiscountType
 
   @available(iOS 12.2, *)
   init(discount: SKProductDiscount) {

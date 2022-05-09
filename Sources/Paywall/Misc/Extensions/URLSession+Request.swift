@@ -113,7 +113,7 @@ extension URLSession {
           ]
         )
 
-        let response = try JSONDecoder.superwall.decode(
+        let response = try JSONDecoder.endpoint.decode(
           Response.self,
           from: data
         )

@@ -9,7 +9,7 @@ import Foundation
 import StoreKit
 
 extension TriggerSession.Transaction {
-  struct Product: Encodable {
+  struct Product: Codable {
     /// The index of the product, primary = 0, secondary = 1, tertiary = 2.
     let index: Int
 
@@ -38,7 +38,7 @@ extension TriggerSession.Transaction {
       let priceDescription: String
 
       /// Equivalent to SKProductDiscount.Type
-      let type: SWProductDiscount.`Type`?
+      let type: SWProductDiscount.DiscountType?
     }
     var discount: Discount?
 
@@ -115,8 +115,43 @@ extension TriggerSession.Transaction {
       }
     }
 
+    init(from decoder: Decoder) throws {
+      let values = try decoder.container(keyedBy: CodingKeys.self)
+      index = try values.decode(Int.self, forKey: .index)
+      identifier = try values.decode(String.self, forKey: .identifier)
+      language = try values.decodeIfPresent(String.self, forKey: .language)
+      currency = try values.decodeIfPresent(String.self, forKey: .currency)
+      region = try values.decodeIfPresent(String.self, forKey: .region)
+      hasIntroductoryOffer = try values.decode(Bool.self, forKey: .hasIntroductoryOffer)
+      introductoryRedeemable = try values.decode(Bool.self, forKey: .introductoryRedeemable)
+
+      let unit = try values.decodeIfPresent(SWProductSubscriptionPeriod.Unit.self, forKey: .periodUnit)
+      let count = try values.decodeIfPresent(Int.self, forKey: .periodCount)
+      let days = try values.decodeIfPresent(Int.self, forKey: .periodDays)
+
+      if let unit = unit,
+        let count = count,
+        let days = days {
+        period = Period(unit: unit, count: count, days: days)
+      }
+
+      let discountPrice = try values.decodeIfPresent(String.self, forKey: .discountPrice)
+      let discountType = try values.decodeIfPresent(SWProductDiscount.DiscountType.self, forKey: .discountType)
+
+      if let discountPrice = discountPrice,
+        let discountType = discountType {
+        discount = Discount(
+          priceDescription: discountPrice,
+          type: discountType
+        )
+      }
+
+      price = try Price(from: decoder)
+      trial = try? Trial(from: decoder)
+    }
+
     enum CodingKeys: String, CodingKey {
-      case index = "transacting_product_index"
+      case index = "transaction_product_index"
       case identifier = "transacting_product_identifier"
       case language = "transacting_product_language"
       case currency = "transacting_product_currency"

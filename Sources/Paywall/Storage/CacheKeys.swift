@@ -54,3 +54,10 @@ enum V1Triggers: CachingType {
   }
   typealias Value = [String: Bool]
 }
+
+enum TriggerSessions: CachingType {
+  static var key: String {
+    "store.triggerSessions"
+  }
+  typealias Value = [TriggerSession]
+}

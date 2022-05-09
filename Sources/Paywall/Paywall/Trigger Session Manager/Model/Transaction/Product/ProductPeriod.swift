@@ -9,7 +9,7 @@ import Foundation
 import StoreKit
 
 extension TriggerSession.Transaction.Product {
-  struct Period: Encodable {
+  struct Period: Codable {
     /// Matches SKProduct.PeriodUnit
     let unit: SWProductSubscriptionPeriod.Unit
 

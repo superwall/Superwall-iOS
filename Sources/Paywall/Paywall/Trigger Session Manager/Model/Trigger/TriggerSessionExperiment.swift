@@ -8,18 +8,18 @@
 import Foundation
 
 extension TriggerSession.Trigger {
-  struct Experiment: Encodable {
+  struct Experiment: Codable {
     /// The ID of the experiment in the database.
     var id: String
 
     /// The database ID of the group the trigger is in
     let groupId: String
 
-    struct Variant: Encodable {
+    struct Variant: Codable {
       /// The variant id
       let id: String
 
-      enum VariantType: String, Encodable {
+      enum VariantType: String, Codable {
         case holdout = "HOLDOUT"
         case treatment = "TREATMENT"
       }
@@ -34,6 +34,26 @@ extension TriggerSession.Trigger {
       case groupId = "trigger_experiment_group_id"
       case variantId = "variant_id"
       case variantType = "variant_type"
+    }
+
+    init(
+      id: String,
+      groupId: String,
+      variant: Variant
+    ) {
+      self.id = id
+      self.groupId = groupId
+      self.variant = variant
+    }
+
+    init(from decoder: Decoder) throws {
+      let values = try decoder.container(keyedBy: CodingKeys.self)
+      id = try values.decode(String.self, forKey: .id)
+      groupId = try values.decode(String.self, forKey: .groupId)
+
+      let id = try values.decode(String.self, forKey: .variantId)
+      let type = try values.decode(Variant.VariantType.self, forKey: .variantType)
+      variant = Variant(id: id, type: type)
     }
 
     func encode(to encoder: Encoder) throws {

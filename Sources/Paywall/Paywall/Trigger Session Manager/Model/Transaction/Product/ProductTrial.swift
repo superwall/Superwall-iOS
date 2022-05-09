@@ -9,7 +9,7 @@ import Foundation
 
 
 extension TriggerSession.Transaction.Product {
-  struct Trial: Encodable {
+  struct Trial: Codable {
     /// Info about the period of the product
     let period: Period?
 
@@ -27,6 +27,40 @@ extension TriggerSession.Transaction.Product {
       case periodUnit = "transacting_product_trial_period_unit"
       case periodCount = "transacting_product_trial_period_count"
       case periodDays = "transacting_product_trial_period_days"
+    }
+
+    init(
+      period: Period?,
+      dailyPrice: String?,
+      weeklyPrice: String?,
+      monthlyPrice: String?,
+      yearlyPrice: String?
+    ) {
+      self.period = period
+      self.dailyPrice = dailyPrice
+      self.weeklyPrice = weeklyPrice
+      self.monthlyPrice = monthlyPrice
+      self.yearlyPrice = yearlyPrice
+    }
+
+    init(from decoder: Decoder) throws {
+      let values = try decoder.container(keyedBy: CodingKeys.self)
+      dailyPrice = try values.decodeIfPresent(String.self, forKey: .daily)
+      weeklyPrice = try values.decodeIfPresent(String.self, forKey: .daily)
+      monthlyPrice = try values.decodeIfPresent(String.self, forKey: .daily)
+      yearlyPrice = try values.decodeIfPresent(String.self, forKey: .daily)
+
+      let unit = try values.decodeIfPresent(SWProductSubscriptionPeriod.Unit.self, forKey: .periodUnit)
+      let count = try values.decodeIfPresent(Int.self, forKey: .periodCount)
+      let days = try values.decodeIfPresent(Int.self, forKey: .periodDays)
+
+      if let unit = unit,
+        let count = count,
+        let days = days {
+        period = Period(unit: unit, count: count, days: days)
+      } else {
+        period = nil
+      }
     }
 
     func encode(to encoder: Encoder) throws {

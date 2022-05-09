@@ -68,28 +68,6 @@ final class Storage {
     recordFirstSeenTracked()
   }
 
-  func save() {
-    if let appUserId = appUserId {
-      cache.write(appUserId, forType: AppUserId.self)
-    }
-
-    if let aliasId = aliasId {
-      cache.write(aliasId, forType: AliasId.self)
-    }
-
-    var standardUserAttributes: [String: Any] = [:]
-
-    if let aliasId = aliasId {
-      standardUserAttributes["aliasId"] = aliasId
-    }
-
-    if let appUserId = appUserId {
-      standardUserAttributes["appUserId"] = appUserId
-    }
-
-    addUserAttributes(standardUserAttributes)
-  }
-
 	func addConfig(
     _ config: Config,
     withRequestId requestId: String
@@ -99,7 +77,6 @@ final class Storage {
     v1Triggers = Set(v1TriggerDictionary.keys)
     locales = Set(config.localization.locales.map { $0.locale })
     configRequestId = requestId
-    print("*** ", config.triggers)
     v2Triggers = StorageLogic.getV2TriggerDictionary(from: config.triggers)
 	}
 
@@ -132,6 +109,40 @@ final class Storage {
 
     _ = trackEvent(SuperwallEvent.AppInstall())
     cache.write(true, forType: DidTrackAppInstall.self)
+  }
+
+  private func save() {
+    if let appUserId = appUserId {
+      cache.write(appUserId, forType: AppUserId.self)
+    }
+
+    if let aliasId = aliasId {
+      cache.write(aliasId, forType: AliasId.self)
+    }
+
+    var standardUserAttributes: [String: Any] = [:]
+
+    if let aliasId = aliasId {
+      standardUserAttributes["aliasId"] = aliasId
+    }
+
+    if let appUserId = appUserId {
+      standardUserAttributes["appUserId"] = appUserId
+    }
+
+    addUserAttributes(standardUserAttributes)
+  }
+
+  func clearCachedTriggerSessions() {
+    cache.delete(TriggerSessions.self)
+  }
+
+  func getCachedTriggerSessions() -> [TriggerSession] {
+    return cache.read(TriggerSessions.self) ?? []
+  }
+
+  func saveSessionQueue(_ sessionQueue: LimitedQueue<TriggerSession>) {
+    cache.write(sessionQueue.getArray(), forType: TriggerSessions.self)
   }
 
 	private func setCachedTriggers() {

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct TriggerSession: Encodable {
+struct TriggerSession: Codable {
   /// Trigger session ID
   var id = UUID().uuidString
 
@@ -15,7 +15,7 @@ struct TriggerSession: Encodable {
   let configRequestId: String
 
   /// The start time of the trigger session
-  let startAt: Date = Date()
+  var startAt: Date = Date()
 
   ///  The end time of the trigger session
   var endAt: Date?
@@ -23,7 +23,7 @@ struct TriggerSession: Encodable {
   /// The most on device user attributes
   var userAttributes: JSON?
 
-  enum PresentationOutcome: String, Encodable {
+  enum PresentationOutcome: String, Codable {
     case paywall = "PAYWALL"
     case holdout = "HOLDOUT"
     case noRuleMatch = "NO_RULE_MATCH"
@@ -51,6 +51,40 @@ struct TriggerSession: Encodable {
     case endAt = "trigger_session_end_ts"
     case presentationOutcome = "trigger_session_presentation_outcome"
     case userAttributes = "user_attributes"
+  }
+
+  init(
+    configRequestId: String,
+    userAttributes: JSON?,
+    presentationOutcome: PresentationOutcome,
+    trigger: Trigger,
+    paywall: Paywall?,
+    products: Products,
+    appSession: AppSession
+  ) {
+    self.configRequestId = configRequestId
+    self.userAttributes = userAttributes
+    self.presentationOutcome = presentationOutcome
+    self.trigger = trigger
+    self.paywall = paywall
+    self.products = products
+    self.appSession = appSession
+  }
+
+  init(from decoder: Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    id = try values.decode(String.self, forKey: .id)
+    configRequestId = try values.decode(String.self, forKey: .configRequestId)
+    startAt = try values.decode(Date.self, forKey: .startAt)
+    endAt = try values.decodeIfPresent(Date.self, forKey: .endAt)
+    userAttributes = try values.decodeIfPresent(JSON.self, forKey: .userAttributes)
+    presentationOutcome = try values.decode(PresentationOutcome.self, forKey: .presentationOutcome)
+
+    trigger = try Trigger(from: decoder)
+    paywall = try? Paywall(from: decoder)
+    products = try Products(from: decoder)
+    transaction = try? Transaction(from: decoder)
+    appSession = try AppSession(from: decoder)
   }
 
   func encode(to encoder: Encoder) throws {

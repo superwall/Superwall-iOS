@@ -46,7 +46,7 @@
 🔀 | [Integrations](https://docs.superwall.com/docs) - over a dozen integrations to easily send conversion data where you need it
 🖥 | macOS support
 💯 | Well maintained - [frequent releases](https://github.com/superwall-me/paywall-ios/releases)
-📮 | Great support - email a founder: justin@superwall.com
+📮 | Great support - email a founder: jake@superwall.com
 
 ## Installation
 

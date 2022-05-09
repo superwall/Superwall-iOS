@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AppSession: Encodable {
+struct AppSession: Codable {
   /// The ID of the session.
   let id: String = UUID().uuidString
 

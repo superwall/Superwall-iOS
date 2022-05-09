@@ -7,18 +7,6 @@
 
 import UIKit
 
-/*
- Enqueue a 1. App Session, 2. Trigger Session, or 3. Transaction Session.
-
- It adds it to the appropriate array.
-
- On flush, it groups them all together and sends them off.
-
-
- */
-
-
-
 /// Sends n analytical events to the Superwall servers every 20 seconds, where n is defined by `maxEventCount`.
 ///
 /// **Note**: this currently has a limit of 500 events per flush.
@@ -27,6 +15,7 @@ final class SessionEventsQueue {
   private let maxEventCount = 50
   private var triggerSessions: [TriggerSession] = []
   private var timer: Timer?
+  private lazy var lastTwentySessions = LimitedQueue<TriggerSession>(limit: 20)
 
   deinit {
     timer?.invalidate()
@@ -54,6 +43,8 @@ final class SessionEventsQueue {
   func enqueue(_ triggerSession: TriggerSession) {
     serialQueue.async {
       self.triggerSessions.append(triggerSession)
+      self.lastTwentySessions.enqueue(triggerSession)
+      Storage.shared.saveSessionQueue(self.lastTwentySessions)
     }
   }
 

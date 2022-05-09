@@ -8,7 +8,7 @@
 import Foundation
 
 extension TriggerSession {
-  struct Transaction: Encodable {
+  struct Transaction: Codable {
     /// The id of the transaction
     var id: String?
 
@@ -18,7 +18,7 @@ extension TriggerSession {
     /// When the transaction ended.
     var endAt: Date?
 
-    enum Outcome: String, Encodable {
+    enum Outcome: String, Codable {
       case subscriptionStart = "SUBSCRIPTION_START"
       case trialStart = "TRIAL_START"
       case nonRecurringProductPurchase = "NON_RECURRING_PRODUCT_PURCHASE"
@@ -26,7 +26,7 @@ extension TriggerSession {
     /// The outcome of the transaction
     var outcome: Outcome?
 
-    struct Count: Encodable {
+    struct Count: Codable {
       var start: Int = 0
       var complete: Int = 0
       var fail: Int = 0
@@ -36,7 +36,7 @@ extension TriggerSession {
     /// The count for certain transaction actions.
     var count: Count?
 
-    enum Status: String, Encodable {
+    enum Status: String, Codable {
       case complete = "TRANSACTION_COMPLETE"
       case fail = "TRANSACTION_FAIL"
       case abandon = "TRANSACTION_ABANDON"
@@ -45,6 +45,55 @@ extension TriggerSession {
 
     /// The product from the transaction
     let product: Product
+
+    init(
+      id: String? = nil,
+      startAt: Date?,
+      endAt: Date? = nil,
+      outcome: Outcome? = nil,
+      count: Count?,
+      status: Status? = nil,
+      product: Product
+    ) {
+      self.id = id
+      self.startAt = startAt
+      self.endAt = endAt
+      self.outcome = outcome
+      self.count = count
+      self.status = status
+      self.product = product
+    }
+
+    init(from decoder: Decoder) throws {
+      let values = try decoder.container(keyedBy: CodingKeys.self)
+      id = try values.decodeIfPresent(String.self, forKey: .id)
+      startAt = try values.decodeIfPresent(Date.self, forKey: .startAt)
+      endAt = try values.decodeIfPresent(Date.self, forKey: .endAt)
+      outcome = try values.decodeIfPresent(Outcome.self, forKey: .outcome)
+
+      let start = try values.decodeIfPresent(Int.self, forKey: .startCount)
+      let complete = try values.decodeIfPresent(Int.self, forKey: .completeCount)
+      let fail = try values.decodeIfPresent(Int.self, forKey: .failCount)
+      let abandon = try values.decodeIfPresent(Int.self, forKey: .abandonCount)
+      let restore = try values.decodeIfPresent(Int.self, forKey: .restoreCount)
+
+      if let start = start,
+        let complete = complete,
+        let fail = fail,
+        let abandon = abandon,
+        let restore = restore {
+        self.count = Count(
+          start: start,
+          complete: complete,
+          fail: fail,
+          abandon: abandon,
+          restore: restore
+        )
+      }
+      status = try values.decodeIfPresent(Status.self, forKey: .status)
+
+      product = try Product(from: decoder)
+    }
 
     enum CodingKeys: String, CodingKey {
       case id = "transaction_id"

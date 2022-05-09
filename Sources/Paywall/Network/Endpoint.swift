@@ -107,7 +107,7 @@ struct Endpoint<Response: Decodable> {
 // MARK: - EventsResponse
 extension Endpoint where Response == EventsResponse {
   static func events(eventsRequest: EventsRequest) -> Self {
-    let bodyData = try? JSONEncoder.superwall.encode(eventsRequest)
+    let bodyData = try? JSONEncoder.endpoint.encode(eventsRequest)
 
     return Endpoint(
       components: Components(
@@ -120,7 +120,7 @@ extension Endpoint where Response == EventsResponse {
   }
 
   static func sessionEvents(_ session: SessionEventsRequest) -> Self {
-    let bodyData = try? JSONEncoder.superwall.encode(session)
+    let bodyData = try? JSONEncoder.endpoint.encode(session)
 
     return Endpoint(
       components: Components(
@@ -145,10 +145,10 @@ extension Endpoint where Response == PaywallResponse {
       return paywall(byIdentifier: identifier)
     } else if let event = event {
       let bodyDict = ["event": event.jsonData]
-      bodyData = try? JSONEncoder.superwall.encode(bodyDict)
+      bodyData = try? JSONEncoder.endpoint.encode(bodyDict)
     } else {
       let bodyDict = PaywallRequest(appUserId: Storage.shared.userId ?? "")
-      bodyData = try? JSONEncoder.superwall.encode(bodyDict)
+      bodyData = try? JSONEncoder.endpoint.encode(bodyDict)
     }
     return Endpoint(
       components: Components(
@@ -229,7 +229,7 @@ extension Endpoint where Response == Config {
 // MARK: - ConfirmedAssignmentResponse
 extension Endpoint where Response == ConfirmedAssignmentResponse {
   static func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) -> Self {
-    let bodyData = try? JSONEncoder.superwall.encode(confirmableAssignments)
+    let bodyData = try? JSONEncoder.endpoint.encode(confirmableAssignments)
 
     return Endpoint(
       components: Components(
@@ -245,7 +245,7 @@ extension Endpoint where Response == ConfirmedAssignmentResponse {
 // MARK: - PostbackResponse
 extension Endpoint where Response == PostBackResponse {
   static func postback(_ postback: Postback) -> Self {
-    let bodyData = try? JSONEncoder.superwall.encode(postback)
+    let bodyData = try? JSONEncoder.endpoint.encode(postback)
 
     return Endpoint(
       components: Components(

@@ -8,7 +8,7 @@
 import Foundation
 
 extension TriggerSession {
-  struct Products: Encodable {
+  struct Products: Codable {
     /// The available products, with their order mapped to primary, secondary and tertiary.
     var allProducts: [SWProduct]
 
@@ -21,6 +21,28 @@ extension TriggerSession {
       case loadStartAt = "paywall_products_load_start_ts"
       case loadFail = "paywall_products_load_fail_ts"
       case loadEndAt = "paywall_products_load_end_ts"
+    }
+
+    init(
+      allProducts: [SWProduct],
+      loadingInfo: LoadingInfo
+    ) {
+      self.allProducts = allProducts
+      self.loadingInfo = loadingInfo
+    }
+
+    init(from decoder: Decoder) throws {
+      let values = try decoder.container(keyedBy: CodingKeys.self)
+      allProducts = try values.decode([SWProduct].self, forKey: .allProducts)
+
+      let startAt = try values.decodeIfPresent(Date.self, forKey: .loadStartAt)
+      let endAt = try values.decodeIfPresent(Date.self, forKey: .loadEndAt)
+      let failAt = try values.decodeIfPresent(Date.self, forKey: .loadFail)
+      loadingInfo = LoadingInfo(
+        startAt: startAt,
+        endAt: endAt,
+        failAt: failAt
+      )
     }
 
     func encode(to encoder: Encoder) throws {

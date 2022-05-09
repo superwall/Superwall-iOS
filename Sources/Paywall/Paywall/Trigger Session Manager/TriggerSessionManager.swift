@@ -11,7 +11,6 @@ import StoreKit
 final class TriggerSessionManager {
   // TODO: Store last 20 triggersessions on disk.
   // TODO: On holdout, send a completed triggersession back.
-  // TODO: If no rules matched then send completed triggersession back
 
   static let shared = TriggerSessionManager()
   private let queue = SessionEventsQueue()
@@ -24,6 +23,24 @@ final class TriggerSessionManager {
   }
 
   private init() {
+    postCachedTriggerSessions()
+    addObservers()
+  }
+
+  /// Gets the cached trigger sessions from the last time the app was terminated and sends them back to the server.
+  private func postCachedTriggerSessions() {
+    let cachedTriggerSessions = Storage.shared.getCachedTriggerSessions()
+    if cachedTriggerSessions.isEmpty {
+      return
+    }
+    let sessionEvents = SessionEventsRequest(
+      triggerSessions: cachedTriggerSessions
+    )
+    Network.shared.sendSessionEvents(sessionEvents)
+    Storage.shared.clearCachedTriggerSessions()
+  }
+
+  private func addObservers() {
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(applicationDidEnterBackground),
@@ -51,7 +68,6 @@ final class TriggerSessionManager {
    *     1. on app close, add paywall_session to QUEUE and treat app close as paywall session end
    *     2. on paywall close, regardless of what paywall_session_end_at is currently set at, update it to the paywall close time
    *     3. TODO: be sure to test what happens during a transaction, as app leaves foreground in that scenario
-   *     4. new paywall_session id gets created every paywall_open
    */
 
   @objc private func applicationDidEnterBackground() {
@@ -116,7 +132,6 @@ final class TriggerSessionManager {
     triggerSession = nil
   }
   
-
   // MARK: - App Session
 
   /// Adds the latest app session to the trigger

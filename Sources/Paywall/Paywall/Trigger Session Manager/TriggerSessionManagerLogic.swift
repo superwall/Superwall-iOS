@@ -93,7 +93,7 @@ enum TriggerSessionManagerLogic {
 
       paywall = TriggerSession.Paywall(
         databaseId: paywallInfo.id,
-        substitutionPostfix: paywallResponse.templateSubstitutionsPrefix,
+        substitutionPrefix: paywallResponse.templateSubstitutionsPrefix.prefix,
         webViewLoading: .init(
           startAt: paywallResponse.webViewLoadStartTime,
           endAt: paywallResponse.webViewLoadCompleteTime,

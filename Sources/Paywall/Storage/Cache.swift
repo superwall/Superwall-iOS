@@ -61,6 +61,37 @@ extension Cache {
   /// Read data for key
   func read<Key: CachingType>(
     _ keyType: Key.Type
+  ) -> Key.Value? where Key.Value: Decodable {
+    var data = memCache.object(forKey: keyType.key as AnyObject) as? Data
+    if data == nil,
+      let dataFromDisk = fileManager.contents(atPath: cachePath(forKey: keyType.key)) {
+      data = dataFromDisk
+      memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
+    }
+    guard let data = data else {
+      return nil
+    }
+
+    guard let data = NSKeyedUnarchiver.unarchiveObject(with: data) as? Data else {
+      return nil
+    }
+    do {
+      return try JSONDecoder().decode(Key.Value.self, from: data)
+    } catch {
+      return nil
+    }
+  }
+
+  func delete<Key: CachingType>(
+    _ keyType: Key.Type
+  ) {
+    memCache.removeObject(forKey: keyType.key as AnyObject)
+    deleteDataFromDisk(withKey: keyType.key)
+  }
+
+  /// Read data for key
+  func read<Key: CachingType>(
+    _ keyType: Key.Type
   ) -> Key.Value? {
     var data = memCache.object(forKey: keyType.key as AnyObject) as? Data
     if data == nil,
@@ -89,6 +120,21 @@ extension Cache {
     writeDataToDisk(data: data, key: keyType.key)
   }
 
+  /// Write data for key. This is an async operation.
+  func write<Key: CachingType>(
+    _ value: Key.Value,
+    forType keyType: Key.Type
+  ) where Key.Value: Codable {
+    guard let data = try? JSONEncoder().encode(value) else {
+      return
+    }
+
+    let archivedData = NSKeyedArchiver.archivedData(withRootObject: data)
+
+    memCache.setObject(archivedData as AnyObject, forKey: keyType.key as AnyObject)
+    writeDataToDisk(data: archivedData, key: keyType.key)
+  }
+
   private func writeDataToDisk(data: Data, key: String) {
     ioQueue.async {
       if self.fileManager.fileExists(atPath: self.cachePath) == false {
@@ -108,6 +154,20 @@ extension Cache {
       }
 
       self.fileManager.createFile(atPath: self.cachePath(forKey: key), contents: data, attributes: nil)
+    }
+  }
+
+  private func deleteDataFromDisk(withKey key: String) {
+    ioQueue.async {
+      do {
+        try self.fileManager.removeItem(atPath: self.cachePath(forKey: key))
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .cache,
+          message: "Error while deleting file: \(error.localizedDescription)"
+        )
+      }
     }
   }
 }

@@ -8,13 +8,13 @@
 import Foundation
 
 extension TriggerSession {
-  struct Trigger: Encodable {
+  struct Trigger: Codable {
     /// The trigger event data
     let eventData: EventData
 
-    enum TriggerType: String, Encodable {
-      case implicit
-      case explicit
+    enum TriggerType: String, Codable {
+      case implicit = "IMPLICIT"
+      case explicit = "EXPLICIT"
     }
     /// The type of the trigger
     let type: TriggerType
@@ -31,7 +31,37 @@ extension TriggerSession {
       case name = "paywall_trigger_event_name"
       case createdAt = "paywall_trigger_event_ts"
       case type = "paywall_trigger_trigger_type"
-      case presentedOn = "paywall_trigger_presented_on"
+      case presentedOn = "paywall_trigger_presented_on_description"
+    }
+
+    init(
+      eventData: EventData,
+      type: TriggerType,
+      presentedOn: String?,
+      experiment: Experiment? = nil
+    ) {
+      self.eventData = eventData
+      self.type = type
+      self.presentedOn = presentedOn
+      self.experiment = experiment
+    }
+
+    init(from decoder: Decoder) throws {
+      let values = try decoder.container(keyedBy: CodingKeys.self)
+      let eventId = try values.decode(String.self, forKey: .eventId)
+      let name = try values.decode(String.self, forKey: .name)
+      let params = try values.decode(JSON.self, forKey: .params)
+      let createdAt = try values.decode(String.self, forKey: .createdAt)
+      eventData = EventData(
+        id: eventId,
+        name: name,
+        parameters: params,
+        createdAt: createdAt
+      )
+      type = try values.decode(TriggerType.self, forKey: .type)
+      presentedOn = try values.decodeIfPresent(String.self, forKey: .presentedOn)
+
+      experiment = try? Experiment(from: decoder)
     }
 
     func encode(to encoder: Encoder) throws {

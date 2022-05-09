@@ -8,12 +8,12 @@
 import Foundation
 
 extension TriggerSession {
-  struct Paywall: Encodable {
+  struct Paywall: Codable {
     /// Database ID of the paywall.
     let databaseId: String
 
     /// Indicates whether there's a free trial or not.
-    let substitutionPostfix: TemplateSubstitutionsPrefix
+    let substitutionPrefix: String?
 
     struct Action: Encodable {
       /// When the paywall was opened.
@@ -35,6 +35,51 @@ extension TriggerSession {
     /// Loading info of the paywall response.
     var responseLoading: LoadingInfo
 
+    init(
+      databaseId: String,
+      substitutionPrefix: String?,
+      webViewLoading: LoadingInfo,
+      responseLoading: LoadingInfo
+    ) {
+      self.databaseId = databaseId
+      self.substitutionPrefix = substitutionPrefix
+      self.webViewLoading = webViewLoading
+      self.responseLoading = responseLoading
+    }
+
+    init(from decoder: Decoder) throws {
+      let values = try decoder.container(keyedBy: CodingKeys.self)
+      databaseId = try values.decode(String.self, forKey: .databaseId)
+      substitutionPrefix = try values.decodeIfPresent(String.self, forKey: .substitutionPrefix)
+
+      let openAt = try values.decodeIfPresent(Date.self, forKey: .paywallOpened)
+      let closeAt = try values.decodeIfPresent(Date.self, forKey: .paywallClosed)
+      let convertedAt = try values.decodeIfPresent(Date.self, forKey: .paywallConverted)
+      action = Action(
+        openAt: openAt,
+        closeAt: closeAt,
+        convertedAt: convertedAt
+      )
+
+      let webStartAt = try values.decodeIfPresent(Date.self, forKey: .webViewLoadStartAt)
+      let webEndAt = try values.decodeIfPresent(Date.self, forKey: .webViewLoadEndAt)
+      let webFailAt = try values.decodeIfPresent(Date.self, forKey: .webViewLoadFailAt)
+      webViewLoading = LoadingInfo(
+        startAt: webStartAt,
+        endAt: webEndAt,
+        failAt: webFailAt
+      )
+
+      let responseStartAt = try values.decodeIfPresent(Date.self, forKey: .responseLoadStartAt)
+      let responseEndAt = try values.decodeIfPresent(Date.self, forKey: .responseLoadEndAt)
+      let responseFailAt = try values.decodeIfPresent(Date.self, forKey: .responseLoadFailAt)
+      responseLoading = LoadingInfo(
+        startAt: responseStartAt,
+        endAt: responseEndAt,
+        failAt: responseFailAt
+      )
+    }
+
     enum CodingKeys: String, CodingKey {
       case databaseId = "paywall_id"
 
@@ -42,7 +87,7 @@ extension TriggerSession {
       case paywallClosed = "paywall_close_ts"
       case paywallConverted = "paywall_converted_ts"
 
-      case substitutionPostfix = "paywall_substitution_postfix"
+      case substitutionPrefix = "paywall_substitution_prefix"
 
       case responseLoadStartAt = "paywall_response_load_start_ts"
       case responseLoadEndAt = "paywall_response_load_end_ts"
@@ -57,7 +102,7 @@ extension TriggerSession {
       var container = encoder.container(keyedBy: CodingKeys.self)
 
       try container.encode(databaseId, forKey: .databaseId)
-      try container.encode(substitutionPostfix, forKey: .substitutionPostfix)
+      try container.encode(substitutionPrefix, forKey: .substitutionPrefix)
 
       try container.encodeIfPresent(action.openAt, forKey: .paywallOpened)
       try container.encodeIfPresent(action.closeAt, forKey: .paywallClosed)

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Price: Encodable {
+struct Price: Codable {
   let description: String
 
   let daily: String

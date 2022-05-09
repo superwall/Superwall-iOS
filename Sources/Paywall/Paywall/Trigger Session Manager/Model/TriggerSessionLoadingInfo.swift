@@ -8,7 +8,7 @@
 import Foundation
 
 extension TriggerSession {
-  struct LoadingInfo: Encodable {
+  struct LoadingInfo: Codable {
     /// The loading start time.
     var startAt: Date?
     /// The loading end time.
