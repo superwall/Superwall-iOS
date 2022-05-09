@@ -53,6 +53,7 @@ public final class PaywallInfo: NSObject {
 
   public let productsLoadStartTime: String?
   public let productsLoadCompleteTime: String?
+  public let productsLoadFailTime: String?
   public let productsLoadDuration: TimeInterval?
 
   init(
@@ -69,6 +70,7 @@ public final class PaywallInfo: NSObject {
     webViewLoadStartTime: Date?,
     webViewLoadCompleteTime: Date?,
     productsLoadStartTime: Date?,
+    productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
     variantId: String? = nil,
     experimentId: String? = nil
@@ -123,6 +125,7 @@ public final class PaywallInfo: NSObject {
 
     self.productsLoadStartTime = productsLoadStartTime?.isoString ?? ""
     self.productsLoadCompleteTime = productsLoadCompleteTime?.isoString ?? ""
+    self.productsLoadFailTime = productsLoadFailTime?.isoString ?? ""
     if let startTime = productsLoadStartTime,
       let endTime = productsLoadCompleteTime {
       self.productsLoadDuration = endTime.timeIntervalSince1970 - startTime.timeIntervalSince1970
@@ -154,6 +157,7 @@ public final class PaywallInfo: NSObject {
       "paywall_webview_load_duration": webViewLoadDuration as Any,
       "paywall_products_load_start_time": productsLoadStartTime as Any,
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
+      "paywall_products_load_fail_time": productsLoadCompleteTime as Any,
       "paywall_products_load_duration": productsLoadDuration as Any
     ]
 

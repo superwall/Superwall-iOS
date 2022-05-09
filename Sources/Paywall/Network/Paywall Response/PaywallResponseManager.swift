@@ -220,8 +220,6 @@ final class PaywallResponseManager: NSObject {
         )
         Paywall.track(productLoadEvent)
       case .failure:
-        /*
-         TODO: Are we going to include this
         response.productsLoadFailTime = Date()
         let paywallInfo = response.getPaywallInfo(fromEvent: event)
         let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
@@ -229,7 +227,7 @@ final class PaywallResponseManager: NSObject {
           paywallInfo: paywallInfo,
           eventData: event
         )
-        Paywall.track(productLoadEvent)*/
+        Paywall.track(productLoadEvent)
 
         if !isPreloading {
           TriggerSessionManager.shared.trackProductsLoad(state: .fail)

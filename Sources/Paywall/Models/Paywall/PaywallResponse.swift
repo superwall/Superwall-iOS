@@ -138,6 +138,7 @@ struct PaywallResponse: Decodable {
       webViewLoadStartTime: webViewLoadStartTime,
       webViewLoadCompleteTime: webViewLoadCompleteTime,
       productsLoadStartTime: productsLoadStartTime,
+      productsLoadFailTime: productsLoadFailTime,
       productsLoadCompleteTime: productsLoadCompleteTime,
       variantId: variantId,
       experimentId: experimentId

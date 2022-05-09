@@ -70,7 +70,7 @@ final class TriggerSessionManager {
   func createSession(
     from presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController?,
-    paywallResponse: PaywallResponse?,
+    paywallResponse: PaywallResponse? = nil,
     immediatelyEndSession: Bool = false
   ) {
     guard let outcome = TriggerSessionManagerLogic.outcome(
