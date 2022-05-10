@@ -9,6 +9,8 @@ import UIKit
 
 final class AppSessionManager {
   static let shared = AppSessionManager()
+  var appSessionTimeout: Milliseconds?
+
   private(set) var appSession = AppSession() {
     didSet {
       TriggerSessionManager.shared.updateAppSession()
@@ -20,12 +22,6 @@ final class AppSessionManager {
   private init() {
     addActiveStateObservers()
   }
- /* Context for how to end a paywall session
-  *     1. on app close, add paywall_session to QUEUE and treat app close as paywall session end
-  *     2. on paywall close, regardless of what paywall_session_end_at is currently set at, update it to the paywall close time
-  *     3. be sure to test what happens during a transaction, as app leaves foreground in that scenario
-  *     4. new paywall_session id gets created every paywall_open
-  */
 
   private func addActiveStateObservers() {
     NotificationCenter.default.addObserver(
@@ -51,7 +47,7 @@ final class AppSessionManager {
   @objc private func applicationWillResignActive() {
     Paywall.track(SuperwallEvent.AppClose())
     lastAppClose = Date()
-    // appSession.endAt = Date()
+    appSession.endAt = Date()
   }
 
   @objc private func applicationWillTerminate() {
@@ -61,16 +57,17 @@ final class AppSessionManager {
   @objc private func applicationDidBecomeActive() {
     Paywall.track(SuperwallEvent.AppOpen())
 
-    // TODO: default session end to infinity, but in config people can set the avg session length.
-    let sessionDidStart = AppSessionLogic.sessionDidStart(lastAppClose)
+    let didStartNewSession = AppSessionLogic.didStartNewSession(
+      lastAppClose,
+      withSessionTimeout: appSessionTimeout
+    )
 
-    if sessionDidStart {
-      // appSession.startAt = Date()
-      // appSession.endAt = nil
+    if didStartNewSession {
+      appSession = AppSession()
       Paywall.track(SuperwallEvent.SessionStart())
-    }/* else {
+    } else {
       appSession.endAt = nil
-    }*/
+    }
 
     if !didTrackLaunch {
       Paywall.track(SuperwallEvent.AppLaunch())

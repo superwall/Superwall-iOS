@@ -75,11 +75,10 @@ class PaywallResponseLogicTests: XCTestCase {
   }
 
   // MARK: - Request Hash
-  func testHandleTriggerResponse_didNotFetchConfig_noPaywallId() {
+  func testHandleTriggerResponse_didNotFetchConfig_defaultPaywall() {
     // When
     let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPaywallId: nil,
-      fromEvent: nil,
+      withPresentationInfo: .defaultPaywall,
       didFetchConfig: false
     )
 
@@ -93,14 +92,24 @@ class PaywallResponseLogicTests: XCTestCase {
     XCTAssertEqual(outcome, expectedOutcome)
   }
 
-  func testHandleTriggerResponse_didNotFetchConfig_hasPaywallId() {
+  func testHandleTriggerResponse_didFetchConfig_defaultPaywall() {
+    // When
+    let outcome = try? PaywallResponseLogic.handleTriggerResponse(
+      withPresentationInfo: .defaultPaywall,
+      didFetchConfig: true
+    )
+
+    // Then
+    XCTAssertNil(outcome)
+  }
+
+  func testHandleTriggerResponse_didNotFetchConfig_fromIdentifier() {
     // Given
     let paywallId = "myid"
 
     // When
     let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPaywallId: paywallId,
-      fromEvent: nil,
+      withPresentationInfo: .fromIdentifier(paywallId),
       didFetchConfig: false
     )
 
@@ -114,87 +123,19 @@ class PaywallResponseLogicTests: XCTestCase {
     XCTAssertEqual(outcome, expectedOutcome)
   }
 
-  func testHandleTriggerResponse_didFetchConfig_noEvent_noPaywallId() {
-    // When
-    let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPaywallId: nil,
-      fromEvent: nil,
-      didFetchConfig: true
-    )
-
-    // Then
-    let expectedOutcome = TriggerResponseIdentifiers(
-      paywallId: nil,
-      experimentId: nil,
-      variantId: nil
-    )
-
-    XCTAssertEqual(outcome, expectedOutcome)
-  }
-
-  func testHandleTriggerResponse_didFetchConfig_noEvent_hasPaywallId() {
+  func testHandleTriggerResponse_didFetchConfig_fromIdentifier() {
     // Given
     let paywallId = "myid"
 
     // When
     let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPaywallId: paywallId,
-      fromEvent: nil,
+      withPresentationInfo: .fromIdentifier(paywallId),
       didFetchConfig: true
     )
 
     // Then
     let expectedOutcome = TriggerResponseIdentifiers(
       paywallId: paywallId,
-      experimentId: nil,
-      variantId: nil
-    )
-
-    XCTAssertEqual(outcome, expectedOutcome)
-  }
-
-  func testHandleTriggerResponse_v1Trigger_hasPaywallId() {
-    // Given
-    let paywallId = "myid"
-    let getTriggerResponse: (EventData) -> HandleEventResult = { _ in
-      return .presentV1
-    }
-
-    // When
-    let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPaywallId: paywallId,
-      fromEvent: .stub(),
-      didFetchConfig: true,
-      handleEvent: getTriggerResponse
-    )
-
-    // Then
-    let expectedOutcome = TriggerResponseIdentifiers(
-      paywallId: paywallId,
-      experimentId: nil,
-      variantId: nil
-    )
-
-    XCTAssertEqual(outcome, expectedOutcome)
-  }
-
-  func testHandleTriggerResponse_v1Trigger_noPaywallId() {
-    // Given
-    let getTriggerResponse: (EventData) -> HandleEventResult = { _ in
-      return .presentV1
-    }
-
-    // When
-    let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPaywallId: nil,
-      fromEvent: .stub(),
-      didFetchConfig: true,
-      handleEvent: getTriggerResponse
-    )
-
-    // Then
-    let expectedOutcome = TriggerResponseIdentifiers(
-      paywallId: nil,
       experimentId: nil,
       variantId: nil
     )
@@ -205,11 +146,13 @@ class PaywallResponseLogicTests: XCTestCase {
   func testHandleTriggerResponse_presentV2() {
     // Given
     let experimentId = "expId"
+    let experimentGroupId = "groupId"
     let variantId = "varId"
     let paywallId = "paywallId"
     let eventName = "opened_application"
     let getTriggerResponse: (EventData) -> HandleEventResult = { _ in
       return .presentV2(
+        experimentGroupId: experimentGroupId,
         experimentId: experimentId,
         variantId: variantId,
         paywallIdentifier: paywallId
@@ -233,8 +176,7 @@ class PaywallResponseLogicTests: XCTestCase {
 
     // When
     let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPaywallId: paywallId,
-      fromEvent: .stub(),
+      withPresentationInfo: .explicitTrigger(.stub()),
       didFetchConfig: true,
       handleEvent: getTriggerResponse,
       trackEvent: trackEvent
@@ -253,11 +195,12 @@ class PaywallResponseLogicTests: XCTestCase {
   func testHandleTriggerResponse_holdout() {
     // Given
     let experimentId = "expId"
+    let experimentGroupId = "groupId"
     let variantId = "varId"
-    let paywallId = "paywallId"
     let eventName = "opened_application"
     let getTriggerResponse: (EventData) -> HandleEventResult = { _ in
       return .holdout(
+        experimentGroupId: experimentGroupId,
         experimentId: experimentId,
         variantId: variantId
       )
@@ -280,8 +223,7 @@ class PaywallResponseLogicTests: XCTestCase {
     // When
     do {
       _ = try PaywallResponseLogic.handleTriggerResponse(
-        withPaywallId: paywallId,
-        fromEvent: .stub(),
+        withPresentationInfo: .explicitTrigger(.stub()),
         didFetchConfig: true,
         handleEvent: getTriggerResponse,
         trackEvent: trackEvent
@@ -329,8 +271,7 @@ class PaywallResponseLogicTests: XCTestCase {
     // When
     do {
       _ = try PaywallResponseLogic.handleTriggerResponse(
-        withPaywallId: nil,
-        fromEvent: .stub(),
+        withPresentationInfo: .explicitTrigger(.stub()),
         didFetchConfig: true,
         handleEvent: getTriggerResponse,
         trackEvent: trackEvent
@@ -368,8 +309,7 @@ class PaywallResponseLogicTests: XCTestCase {
     // When
     do {
       _ = try PaywallResponseLogic.handleTriggerResponse(
-        withPaywallId: nil,
-        fromEvent: .stub(),
+        withPresentationInfo: .explicitTrigger(.stub()),
         didFetchConfig: true,
         handleEvent: getTriggerResponse,
         trackEvent: trackEvent

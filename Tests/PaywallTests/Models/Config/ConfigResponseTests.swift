@@ -12,6 +12,7 @@ let response = #"""
       "event_name": "opened_application",
       "rules": [
         {
+          "experiment_group_id": "1",
           "experiment_id": "2",
           "expression": "name == jake",
           "assigned": false,
@@ -21,6 +22,7 @@ let response = #"""
           }
         },
         {
+          "experiment_group_id": "1",
           "experiment_id": "2",
           "expression": null,
           "assigned": false,
@@ -49,6 +51,7 @@ let response = #"""
       "locale": "en_US"
     }]
   },
+  "app_session_timeout_ms": 36000000,
   "tests": {
     "dns_resolution": []
   }

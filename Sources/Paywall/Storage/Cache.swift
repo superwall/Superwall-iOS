@@ -128,7 +128,6 @@ extension Cache {
     guard let data = try? JSONEncoder().encode(value) else {
       return
     }
-
     let archivedData = NSKeyedArchiver.archivedData(withRootObject: data)
 
     memCache.setObject(archivedData as AnyObject, forKey: keyType.key as AnyObject)

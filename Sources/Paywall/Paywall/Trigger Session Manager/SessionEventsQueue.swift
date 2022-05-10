@@ -38,13 +38,21 @@ final class SessionEventsQueue {
       name: UIApplication.willResignActiveNotification,
       object: nil
     )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(saveLatestSessionsToDisk),
+      name: UIApplication.willResignActiveNotification,
+      object: nil
+    )
   }
 
   func enqueue(_ triggerSession: TriggerSession) {
-    serialQueue.async {
+    serialQueue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
       self.triggerSessions.append(triggerSession)
       self.lastTwentySessions.enqueue(triggerSession)
-      Storage.shared.saveSessionQueue(self.lastTwentySessions)
     }
   }
 
@@ -74,5 +82,10 @@ final class SessionEventsQueue {
     if !triggerSessions.isEmpty && depth > 0 {
       return flushInternal(depth: depth - 1)
     }
+  }
+
+  @objc private func saveLatestSessionsToDisk() {
+    let sessions = lastTwentySessions.getArray()
+    Storage.shared.saveTriggerSessions(sessions)
   }
 }

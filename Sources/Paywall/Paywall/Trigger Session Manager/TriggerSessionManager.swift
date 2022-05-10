@@ -27,7 +27,7 @@ final class TriggerSessionManager {
     addObservers()
   }
 
-  /// Gets the cached trigger sessions from the last time the app was terminated and sends them back to the server.
+  /// Gets the last 20 cached trigger sessions from the last time the app was terminated, sends them back to the server, then clears cache.
   private func postCachedTriggerSessions() {
     let cachedTriggerSessions = Storage.shared.getCachedTriggerSessions()
     if cachedTriggerSessions.isEmpty {

@@ -50,12 +50,14 @@ class TriggerLogicTests: XCTestCase {
 
     // MARK: Then
     guard case let .holdout(
+      experimentGroupId: outputExperimentGroupId,
       experimentId: outputExperimentId,
       variantId: outputVariantId
     ) = outcome.result else {
       return XCTFail("Incorrect outcome. Expected a holdout")
     }
 
+    XCTAssertEqual(outputExperimentGroupId, triggerRule.experimentGroupId)
     XCTAssertEqual(outputExperimentId, triggerRule.experimentId)
     XCTAssertEqual(outputVariantId, variantId)
 
@@ -77,6 +79,7 @@ class TriggerLogicTests: XCTestCase {
     let eventName = "opened_application"
     let variantId = "6"
     let experimentId = "2"
+    let experimentGroupId = "1"
     let paywallId = "omnis-id-ab"
     let variant = Variant.treatment(
       VariantTreatment(
@@ -85,7 +88,7 @@ class TriggerLogicTests: XCTestCase {
       )
     )
     let triggerRule = TriggerRule(
-      experimentGroupId: "1",
+      experimentGroupId: experimentGroupId,
       experimentId: experimentId,
       expression: nil,
       isAssigned: false,
@@ -117,12 +120,14 @@ class TriggerLogicTests: XCTestCase {
 
     // MARK: Then
     guard case let .presentV2(
+      experimentGroupId: outputExperimentGroupId,
       experimentId: outputExperimentId,
       variantId: outputVariantId,
       paywallIdentifier: outputPaywallId
     ) = outcome.result else {
       return XCTFail("Incorrect outcome. Expected presentV2")
     }
+    XCTAssertEqual(outputExperimentGroupId, experimentGroupId)
     XCTAssertEqual(outputPaywallId, paywallId)
     XCTAssertEqual(outputExperimentId, experimentId)
     XCTAssertEqual(outputVariantId, variantId)
@@ -199,6 +204,7 @@ class TriggerLogicTests: XCTestCase {
     let eventName = "opened_application"
     let variantId = "6"
     let experimentId = "2"
+    let experimentGroupId = "1"
     let paywallId = "omnis-id-ab"
     let variant = Variant.treatment(
       VariantTreatment(
@@ -207,6 +213,7 @@ class TriggerLogicTests: XCTestCase {
       )
     )
     let triggerRule = TriggerRule(
+      experimentGroupId: experimentGroupId,
       experimentId: experimentId,
       expression: nil,
       isAssigned: false,
@@ -239,36 +246,6 @@ class TriggerLogicTests: XCTestCase {
     // MARK: Then
     guard case .unknownEvent = outcome.result else {
       return XCTFail("Incorrect outcome. Expected unknown event")
-    }
-
-    let confirmableAssignments = outcome.confirmableAssignments
-    XCTAssertNil(confirmableAssignments)
-  }
-
-  func testEventTriggerOutcome_presentV1() throws {
-    // MARK: Given
-    let eventName = "open_application"
-    let v1Triggers: Set<String> = [eventName]
-    let v2Triggers: [String: TriggerV2] = [:]
-
-    // EventData
-    let eventData = EventData(
-      name: eventName,
-      parameters: [:],
-      createdAt: "2022-03-09T11:45:38.016Z"
-    )
-
-
-    // MARK: When
-    let outcome = TriggerLogic.outcome(
-      forEvent: eventData,
-      v1Triggers: v1Triggers,
-      v2Triggers: v2Triggers
-    )
-
-    // MARK: Then
-    guard case .presentV1 = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentV1")
     }
 
     let confirmableAssignments = outcome.confirmableAssignments

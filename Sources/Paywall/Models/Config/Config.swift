@@ -13,6 +13,16 @@ struct Config: Decodable {
   var logLevel: Int
   var postback: PostbackRequest
   var localization: LocalizationConfig
+  var appSessionTimeout: Milliseconds
+
+  enum CodingKeys: String, CodingKey {
+    case triggers
+    case paywalls
+    case logLevel
+    case postback
+    case localization
+    case appSessionTimeout = "appSessionTimeoutMs"
+  }
 
   /// Preloads paywalls, products, trigger paywalls, and trigger responses. It then sends the products back to the server.
   func cache() {

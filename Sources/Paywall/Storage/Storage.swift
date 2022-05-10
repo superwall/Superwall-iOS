@@ -77,6 +77,7 @@ final class Storage {
     v1Triggers = Set(v1TriggerDictionary.keys)
     locales = Set(config.localization.locales.map { $0.locale })
     configRequestId = requestId
+    AppSessionManager.shared.appSessionTimeout = config.appSessionTimeout
     v2Triggers = StorageLogic.getV2TriggerDictionary(from: config.triggers)
 	}
 
@@ -141,8 +142,11 @@ final class Storage {
     return cache.read(TriggerSessions.self) ?? []
   }
 
-  func saveSessionQueue(_ sessionQueue: LimitedQueue<TriggerSession>) {
-    cache.write(sessionQueue.getArray(), forType: TriggerSessions.self)
+  func saveTriggerSessions(_ sessions: [TriggerSession]) {
+    cache.write(
+      sessions,
+      forType: TriggerSessions.self
+    )
   }
 
 	private func setCachedTriggers() {

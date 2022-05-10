@@ -8,19 +8,25 @@
 import Foundation
 
 enum AppSessionLogic {
-  /// Session started if app was closed more than 2 mins ago.
-  static func sessionDidStart(
-    _ lastAppClose: Date?
+  /// Tells you if the session started depending on when the app was last closed and the specified session timeout.
+  ///
+  /// - Parameters:
+  ///   - lastAppClose: The date when the app was last closed.
+  ///   - timeout: The timeout for the session, as defined by the config, in milliseconds.
+  static func didStartNewSession(
+    _ lastAppClose: Date?,
+    withSessionTimeout timeout: Milliseconds?
   ) -> Bool {
-    let twoMinsAgo = 120.0
+    let anHourAgo = 3600000.0
+    let timeout = timeout ?? anHourAgo
 
     let delta: TimeInterval
     if let lastAppClose = lastAppClose {
       delta = -lastAppClose.timeIntervalSinceNow
     } else {
-      delta = twoMinsAgo + 1
+      delta = timeout + 1
     }
 
-    return delta > twoMinsAgo
+    return delta > timeout
   }
 }

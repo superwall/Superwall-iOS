@@ -27,7 +27,7 @@ final class TrackingLogicTests: XCTestCase {
     // Given
     let event = UserInitiatedEvent.Track(
       rawName: "test",
-      canTriggerPaywall: false
+      canImplicitlyTriggerPaywall: false
     )
 
     // When
