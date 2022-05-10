@@ -45,7 +45,7 @@ final class SWWebView: WKWebView {
       name: "paywallMessageHandler"
     )
     self.navigationDelegate = self
-    
+
     translatesAutoresizingMaskIntoConstraints = false
     allowsBackForwardNavigationGestures = true
     allowsLinkPreview = false

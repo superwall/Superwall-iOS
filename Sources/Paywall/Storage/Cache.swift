@@ -24,7 +24,6 @@ final class Cache {
 
   /// Specify distinc name param, it represents folder name for disk cache
   init(ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix)) {
-
     var cachePath = NSSearchPathForDirectoriesInDomains(
       .cachesDirectory,
       FileManager.SearchPathDomainMask.userDomainMask,
