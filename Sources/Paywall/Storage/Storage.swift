@@ -32,9 +32,10 @@ final class Storage {
 	var triggers: Set<String> = Set<String>()
   // swiftlint:disable:next array_constructor
   var v2Triggers: [String: TriggerV2] = [:]
-  private let cache = Cache(name: "Store")
+  private let cache: Cache
 
-  init() {
+  init(cache: Cache = Cache()) {
+    self.cache = cache
     self.appUserId = cache.read(AppUserId.self)
     self.aliasId = cache.read(AliasId.self)
     self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == "true"
@@ -111,10 +112,22 @@ final class Storage {
       return
     }
 
-    Paywall.track(.firstSeen)
+    Paywall.track(SuperwallEvent.FirstSeen())
     cache.write("true", forType: DidTrackFirstSeen.self)
 		didTrackFirstSeen = true
 	}
+
+  func recordAppInstall(
+    trackEvent: (Trackable) -> TrackingResult = Paywall.track
+  ) {
+    let didTrackAppInstall = cache.read(DidTrackAppInstall.self) ?? false
+    if didTrackAppInstall {
+      return
+    }
+
+    _ = trackEvent(SuperwallEvent.AppInstall())
+    cache.write(true, forType: DidTrackAppInstall.self)
+  }
 
 	private func setCachedTriggers() {
     let cachedTriggers = cache.read(Config.self) ?? [:]

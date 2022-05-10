@@ -79,6 +79,6 @@ class PaywallLogicTests: XCTestCase {
       v2Triggers: ["app_open"],
       isPaywallPresented: false
     )
-    XCTAssertEqual(outcome, .internalEventAsTrigger)
+    XCTAssertEqual(outcome, .disallowedEventAsTrigger)
   }
 }

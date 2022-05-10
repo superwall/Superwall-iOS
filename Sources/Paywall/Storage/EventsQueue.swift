@@ -5,15 +5,22 @@
 //  Created by brian on 8/16/21.
 //
 
-import Foundation
 import UIKit
 
-let serialQueue = DispatchQueue(label: "me.superwall.eventQueue")
-let maxEventCount = 50
-
+/// Sends n analytical events to the Superwall servers every 20 seconds, where n is defined by `maxEventCount`.
+///
+/// **Note**: this currently has a limit of 500 events.
 final class EventsQueue {
+  private let serialQueue = DispatchQueue(label: "me.superwall.eventQueue")
+  private let maxEventCount = 50
   private var elements: [JSON] = []
   private var timer: Timer?
+
+  deinit {
+    timer?.invalidate()
+    timer = nil
+    NotificationCenter.default.removeObserver(self)
+  }
 
   init() {
     let timeInterval = Paywall.networkEnvironment == .release ? 20.0 : 1.0
@@ -32,13 +39,13 @@ final class EventsQueue {
     )
   }
 
-  func addEvent(event: JSON) {
+  func enqueue(event: JSON) {
     serialQueue.async {
       self.elements.append(event)
     }
   }
 
-  @objc func flush() {
+  @objc private func flush() {
     serialQueue.async {
       self.flushInternal()
     }
@@ -55,21 +62,12 @@ final class EventsQueue {
 
     if !eventsToSend.isEmpty {
       // Send to network
-      // Network.events(Network)
       let events = EventsRequest(events: eventsToSend)
-      Network.shared.sendEvents(events: events) { _ in
-        // Logger.superwallDebug("Events Queue:", result)
-      }
+      Network.shared.sendEvents(events: events)
     }
 
     if !elements.isEmpty && depth > 0 {
       return flushInternal(depth: depth - 1)
     }
-  }
-
-  deinit {
-    timer?.invalidate()
-    timer = nil
-    NotificationCenter.default.removeObserver(self)
   }
 }

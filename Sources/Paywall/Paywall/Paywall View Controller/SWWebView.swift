@@ -8,7 +8,14 @@
 import Foundation
 import WebKit
 
+protocol SWWebViewDelegate: AnyObject {
+  var paywallInfo: PaywallInfo? { get }
+}
+
 final class SWWebView: WKWebView {
+  lazy var eventHandler = WebEventHandler(delegate: delegate)
+  weak var delegate: (SWWebViewDelegate & WebEventHandlerDelegate)?
+
   private var wkConfig: WKWebViewConfiguration = {
     let config = WKWebViewConfiguration()
     config.allowsInlineMediaPlayback = true
@@ -27,15 +34,17 @@ final class SWWebView: WKWebView {
     return config
   }()
 
-  init(delegate: WebEventDelegate) {
-    wkConfig.userContentController.add(
-      PaywallMessageHandler(delegate: delegate),
-      name: "paywallMessageHandler"
-    )
+  init(delegate: SWWebViewDelegate & WebEventHandlerDelegate) {
+    self.delegate = delegate
     super.init(
       frame: .zero,
       configuration: wkConfig
     )
+    wkConfig.userContentController.add(
+      PaywallMessageHandler(delegate: eventHandler),
+      name: "paywallMessageHandler"
+    )
+    self.navigationDelegate = self
 
     translatesAutoresizingMaskIntoConstraints = false
     allowsBackForwardNavigationGestures = true
@@ -59,5 +68,53 @@ final class SWWebView: WKWebView {
 
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
+  }
+}
+
+// MARK: - WKNavigationDelegate
+extension SWWebView: WKNavigationDelegate {
+  func webView(
+    _ webView: WKWebView,
+    decidePolicyFor navigationResponse: WKNavigationResponse,
+    decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+  ) {
+    guard let statusCode = (navigationResponse.response as? HTTPURLResponse)?.statusCode else {
+      // if there's no http status code to act on, exit and allow navigation
+      return decisionHandler(.allow)
+    }
+
+    // Track paywall errors
+    if statusCode >= 400 {
+      trackPaywallError()
+      return decisionHandler(.cancel)
+    }
+
+    decisionHandler(.allow)
+  }
+
+  func webView(
+    _ webView: WKWebView,
+    decidePolicyFor navigationAction: WKNavigationAction,
+    decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+  ) {
+    if webView.isLoading {
+      return decisionHandler(.allow)
+    }
+    if navigationAction.navigationType == .reload {
+      return decisionHandler(.allow)
+    }
+    decisionHandler(.cancel)
+  }
+
+  func trackPaywallError() {
+    guard let paywallInfo = delegate?.paywallInfo else {
+      return
+    }
+
+    let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+      state: .fail,
+      paywallInfo: paywallInfo
+    )
+    Paywall.track(trackedEvent)
   }
 }

@@ -18,46 +18,57 @@ final class SWDebugManager {
   static let shared = SWDebugManager()
 	var isDebuggerLaunched = false
 
-  func handle(deepLink: URL) {
-    let deepLinkURLString = deepLink.absoluteString
-
-    if let launchDebugger = getQueryStringParameter(url: deepLinkURLString, param: "superwall_debug") {
-      if launchDebugger == "true" {
-        Storage.shared.debugKey = getQueryStringParameter(url: deepLinkURLString, param: "token")
-
-        if Storage.shared.debugKey != nil {
-          SWDebugManager.shared.launchDebugger(
-            toPaywall: getQueryStringParameter(url: deepLinkURLString, param: "paywall_id")
-          )
-        }
-      }
+  func handle(deepLinkUrl: URL) {
+    guard let launchDebugger = SWDebugManagerLogic.getQueryItemValue(
+      fromUrl: deepLinkUrl,
+      withName: .superwallDebug
+    ) else {
+      return
     }
+    guard Bool(launchDebugger) == true else {
+      return
+    }
+    guard let debugKey = SWDebugManagerLogic.getQueryItemValue(
+      fromUrl: deepLinkUrl,
+      withName: .token
+    ) else {
+      return
+    }
+
+    Storage.shared.debugKey = debugKey
+
+    let paywallId = SWDebugManagerLogic.getQueryItemValue(
+      fromUrl: deepLinkUrl,
+      withName: .paywallId
+    )
+
+    SWDebugManager.shared.launchDebugger(withPaywallId: paywallId)
   }
 
 	/// Launches the debugger for you to preview paywalls.
   ///
-  /// If you call `Paywall.track(.deepLinkOpen(deepLinkUrl: url))` from `application(_:, open:, options:)` in your `AppDelegate`, this function is called automatically after scanning your debug QR code in Superwall's web dashboard.
+  /// If you call `Paywall.handleDeepLink(url)` from `application(_:, open:, options:)` in your `AppDelegate`, this function is called automatically after scanning your debug QR code in Superwall's web dashboard.
   ///
-  /// Remember to add you URL scheme in settings for QR code scanning to work.
-	func launchDebugger(toPaywall paywallDatabaseId: String? = nil) {
-		if Paywall.shared.isPaywallPresented {
+  /// Remember to add your URL scheme in settings for QR code scanning to work.
+	func launchDebugger(withPaywallId paywallDatabaseId: String? = nil) {
+    if Paywall.shared.isPaywallPresented {
 			Paywall.dismiss { [weak self] in
-				self?.launchDebugger(toPaywall: paywallDatabaseId)
+				self?.launchDebugger(withPaywallId: paywallDatabaseId)
 			}
 		} else {
 			if viewController == nil {
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) { [weak self] in
-          self?.presentDebugger(toPaywall: paywallDatabaseId)
+          self?.presentDebugger(withPaywallId: paywallDatabaseId)
         }
 			} else {
         closeDebugger { [weak self] in
-          self?.launchDebugger(toPaywall: paywallDatabaseId)
+          self?.launchDebugger(withPaywallId: paywallDatabaseId)
         }
 			}
 		}
 	}
 
-	func presentDebugger(toPaywall paywallDatabaseId: String? = nil) {
+	func presentDebugger(withPaywallId paywallDatabaseId: String? = nil) {
 		isDebuggerLaunched = true
 		if let viewController = viewController {
 			viewController.paywallDatabaseId = paywallDatabaseId
@@ -79,33 +90,23 @@ final class SWDebugManager {
 		}
 	}
 
-	func closeDebugger(completion: (() -> Void)?) {
+	func closeDebugger(completion: (() -> Void)? = nil) {
 		let animate = completion == nil
 
-		if viewController?.presentedViewController != nil {
-			viewController?.presentedViewController?.dismiss(animated: animate) { [weak self] in
-				self?.viewController?.dismiss(animated: animate) { [weak self] in
-					self?.viewController = nil
-					self?.isDebuggerLaunched = false
-					completion?()
-				}
+    func dismissViewController() {
+      viewController?.dismiss(animated: animate) { [weak self] in
+        self?.viewController = nil
+        self?.isDebuggerLaunched = false
+        completion?()
+      }
+    }
+
+    if let presentedViewController = viewController?.presentedViewController {
+			presentedViewController.dismiss(animated: animate) {
+        dismissViewController()
 			}
 		} else {
-			viewController?.dismiss(animated: animate) { [weak self] in
-				self?.viewController = nil
-				self?.isDebuggerLaunched = false
-				completion?()
-			}
+      dismissViewController()
 		}
 	}
-
-  func getQueryStringParameter(
-    url: String,
-    param: String
-  ) -> String? {
-    guard let url = URLComponents(string: url) else {
-      return nil
-    }
-    return url.queryItems?.first { $0.name == param }?.value
-  }
 }

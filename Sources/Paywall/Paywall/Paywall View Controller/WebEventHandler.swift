@@ -23,7 +23,7 @@ protocol WebEventHandlerDelegate: AnyObject {
 final class WebEventHandler: WebEventDelegate {
   weak var delegate: WebEventHandlerDelegate?
 
-  init(delegate: WebEventHandlerDelegate) {
+  init(delegate: WebEventHandlerDelegate?) {
     self.delegate = delegate
   }
 
@@ -98,7 +98,11 @@ final class WebEventHandler: WebEventDelegate {
         delegate?.paywallResponse?.webViewLoadCompleteTime = Date()
       }
 
-      Paywall.track(.paywallWebviewLoadComplete(paywallInfo: paywallInfo))
+      let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+        state: .complete,
+        paywallInfo: paywallInfo
+      )
+      Paywall.track(trackedEvent)
     }
 
     let params = paywallResponse.getBase64EventsString(

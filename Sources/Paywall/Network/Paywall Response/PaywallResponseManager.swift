@@ -76,10 +76,13 @@ final class PaywallResponseManager: NSObject {
       guard let self = self else {
         return
       }
-      let isFromEvent = event != nil
-
       let responseLoadStartTime = Date()
-      Paywall.track(.paywallResponseLoadStart(fromEvent: isFromEvent, event: event))
+
+      let trackedEvent = SuperwallEvent.PaywallResponseLoad(
+        state: .start,
+        eventData: event
+      )
+      Paywall.track(trackedEvent)
 
       Network.shared.getPaywall(
         withIdentifier: triggerIdentifiers?.paywallId,
@@ -94,20 +97,20 @@ final class PaywallResponseManager: NSObject {
             response.responseLoadCompleteTime = Date()
             response.productsLoadStartTime = Date()
 
-            Paywall.track(
-              .paywallResponseLoadComplete(
-                fromEvent: isFromEvent,
-                event: event,
-                paywallInfo: response.getPaywallInfo(fromEvent: event)
-              )
+            let paywallInfo = response.getPaywallInfo(fromEvent: event)
+
+            let responseLoadEvent = SuperwallEvent.PaywallResponseLoad(
+              state: .complete(paywallInfo: paywallInfo),
+              eventData: event
             )
-            Paywall.track(
-              .paywallProductsLoadStart(
-                fromEvent: isFromEvent,
-                event: event,
-                paywallInfo: response.getPaywallInfo(fromEvent: event)
-              )
+            Paywall.track(responseLoadEvent)
+
+            let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+              state: .start,
+              paywallInfo: paywallInfo,
+              eventData: event
             )
+            Paywall.track(productLoadEvent)
 
             self.getProducts(
               from: response,
@@ -181,13 +184,14 @@ final class PaywallResponseManager: NSObject {
       self.handlersByHash.removeValue(forKey: paywallRequestHash)
 
       response.productsLoadCompleteTime = Date()
-      Paywall.track(
-        .paywallProductsLoadComplete(
-          fromEvent: event != nil,
-          event: event,
-          paywallInfo: response.getPaywallInfo(fromEvent: event)
-        )
+
+      let paywallInfo = response.getPaywallInfo(fromEvent: event)
+      let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+        state: .complete,
+        paywallInfo: paywallInfo,
+        eventData: event
       )
+      Paywall.track(productLoadEvent)
     }
   }
 }

@@ -27,7 +27,7 @@ enum PaywallLoadingState {
 typealias PaywallDismissalCompletionBlock = (PaywallDismissalResult) -> Void
 
 // swiftlint:disable:next type_body_length
-final class SWPaywallViewController: UIViewController {
+final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   // MARK: - Properties
 	weak var delegate: SWPaywallViewControllerDelegate?
 	var dismissalCompletion: PaywallDismissalCompletionBlock?
@@ -49,8 +49,7 @@ final class SWPaywallViewController: UIViewController {
 
   // Views
 	lazy var shimmerView = ShimmeringView(frame: self.view.bounds)
-  private lazy var eventHandler = WebEventHandler(delegate: self)
-  lazy var webView = SWWebView(delegate: eventHandler)
+  lazy var webView = SWWebView(delegate: self)
 
 	var paywallInfo: PaywallInfo? {
 		return paywallResponse?.getPaywallInfo(
@@ -238,8 +237,8 @@ final class SWPaywallViewController: UIViewController {
     }
 
     // if the loading state is ready, re template user attributes
-    if self.loadingState == .ready {
-      eventHandler.handleEvent(.templateParamsAndUserAttributes)
+    if loadingState == .ready {
+      webView.eventHandler.handleEvent(.templateParamsAndUserAttributes)
     }
 	}
 
@@ -421,7 +420,11 @@ final class SWPaywallViewController: UIViewController {
       if let urlString = self.paywallResponse?.url,
         let url = URL(string: urlString) {
         if let paywallInfo = self.paywallInfo {
-          Paywall.track(.paywallWebviewLoadStart(paywallInfo: paywallInfo))
+          let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+            state: .start,
+            paywallInfo: paywallInfo
+          )
+          Paywall.track(trackedEvent)
         }
 
         self.webView.load(URLRequest(url: url))
@@ -454,15 +457,19 @@ final class SWPaywallViewController: UIViewController {
 	}
 
 	func trackOpen() {
-		if let i = paywallInfo {
-			Paywall.track(.paywallOpen(paywallInfo: i))
-		}
+		guard let paywallInfo = paywallInfo else {
+      return
+    }
+    let trackedEvent = SuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
+    Paywall.track(trackedEvent)
 	}
 
 	func trackClose() {
-		if let i = paywallInfo {
-			Paywall.track(.paywallClose(paywallInfo: i))
-		}
+    guard let paywallInfo = paywallInfo else {
+      return
+    }
+    let trackedEvent = SuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
+    Paywall.track(trackedEvent)
 	}
 
 	func presentAlert(

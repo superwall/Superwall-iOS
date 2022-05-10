@@ -13,7 +13,7 @@ struct PaywallTriggerModifier: ViewModifier {
   @Binding var shouldPresent: Bool
   @State private var manuallySetShouldPresent = false
   var event: String?
-  var params: [String: Any]?
+  var params: [String: Any]
   var onPresent: ((PaywallInfo?) -> Void)?
   var onDismiss: ((PaywallDismissalResult) -> Void)?
   var onFail: ((NSError) -> Void)?
@@ -30,7 +30,13 @@ struct PaywallTriggerModifier: ViewModifier {
       var eventData: EventData?
 
       if let name = event {
-        eventData = Paywall.track(name, [:], params ?? [:], handleTrigger: false)
+        let trackableEvent = UserInitiatedEvent.Track(
+          rawName: name,
+          canTriggerPaywall: false,
+          customParameters: params
+        )
+        let result = Paywall.track(trackableEvent)
+        eventData = result.data
       }
 
       Paywall.internallyPresent(

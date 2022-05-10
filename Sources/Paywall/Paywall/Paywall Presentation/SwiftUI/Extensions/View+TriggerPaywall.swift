@@ -87,7 +87,7 @@ extension View {
       PaywallTriggerModifier(
         shouldPresent: shouldPresent,
         event: event,
-        params: params,
+        params: params ?? [:],
         onPresent: onPresent,
         onDismiss: onDismiss,
         onFail: onFail

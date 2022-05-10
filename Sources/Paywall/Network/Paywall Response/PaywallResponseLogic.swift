@@ -51,7 +51,7 @@ enum PaywallResponseLogic {
     fromEvent event: EventData?,
     didFetchConfig: Bool,
     handleEvent: (EventData) -> HandleEventResult = TriggerManager.handleEvent,
-    trackEvent: (InternalEvent, [String: Any]) -> Void = Paywall.track
+    trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) throws -> TriggerResponseIdentifiers {
     guard
       didFetchConfig,
@@ -80,18 +80,19 @@ enum PaywallResponseLogic {
         variantId: variantIdentifier
       )
 
-      trackEvent(
-        .triggerFire(
-          triggerResult: TriggerResult.paywall(
-            experiment: Experiment(
-              id: experimentIdentifier,
-              variantId: variantIdentifier
-            ),
-            paywallIdentifier: paywallIdentifier
-          )
+      let triggerResult = TriggerResult.paywall(
+        experiment: Experiment(
+          id: experimentIdentifier,
+          variantId: variantIdentifier
         ),
-        [:]
+        paywallIdentifier: paywallIdentifier
       )
+      let trackedEvent = SuperwallEvent.TriggerFire(
+        triggerResult: triggerResult,
+        triggerName: event.name
+      )
+      _ = trackEvent(trackedEvent)
+
       return outcome
     case let .holdout(experimentId, variantId):
       let userInfo: [String: Any] = [
@@ -108,18 +109,17 @@ enum PaywallResponseLogic {
         code: 4001,
         userInfo: userInfo
       )
-      trackEvent(
-        .triggerFire(
-          triggerResult:
-            TriggerResult.holdout(
-              experiment: Experiment(
-                id: experimentId,
-                variantId: variantId
-              )
-            )
-          ),
-        [:]
+      let triggerResult = TriggerResult.holdout(
+        experiment: Experiment(
+          id: experimentId,
+          variantId: variantId
+        )
       )
+      let trackedEvent = SuperwallEvent.TriggerFire(
+        triggerResult: triggerResult,
+        triggerName: event.name
+      )
+      _ = trackEvent(trackedEvent)
       throw error
     case .noRuleMatch:
       let userInfo: [String: Any] = [
@@ -129,12 +129,11 @@ enum PaywallResponseLogic {
           comment: ""
         )
       ]
-      trackEvent(
-        .triggerFire(
-          triggerResult: TriggerResult.noRuleMatch
-        ),
-        [:]
+      let trackedEvent = SuperwallEvent.TriggerFire(
+        triggerResult: TriggerResult.noRuleMatch,
+        triggerName: event.name
       )
+      _ = trackEvent(trackedEvent)
       let error = NSError(
         domain: "com.superwall",
         code: 4000,
@@ -199,27 +198,21 @@ enum PaywallResponseLogic {
     forEvent event: EventData?,
     withHash hash: String,
     handlersCache: [String: [PaywallResponseCompletionBlock]],
-    trackEvent: (InternalEvent, [String: Any]) -> Void = Paywall.track
+    trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) -> PaywallErrorResponse? {
-    let isFromEvent = event != nil
-
     if let error = error as? URLSession.NetworkError,
       error == .notFound {
-      trackEvent(
-        .paywallResponseLoadNotFound(
-          fromEvent: isFromEvent,
-          event: event
-        ),
-        [:]
+      let trackedEvent = SuperwallEvent.PaywallResponseLoad(
+        state: .notFound,
+        eventData: event
       )
+      _ = trackEvent(trackedEvent)
     } else {
-      trackEvent(
-        .paywallResponseLoadFail(
-          fromEvent: isFromEvent,
-          event: event
-        ),
-        [:]
+      let trackedEvent = SuperwallEvent.PaywallResponseLoad(
+        state: .fail,
+        eventData: event
       )
+      _ = trackEvent(trackedEvent)
     }
 
     if let handlers = handlersCache[hash] {

@@ -8,16 +8,13 @@
 import UIKit
 
 final class Cache {
-  private static let cacheDirectoryPrefix = "com.superwall.cache."
-  private static let ioQueuePrefix = "com.superwall.queue."
+  private static let cacheDirectoryPrefix = "com.superwall.cache.Store"
+  private static let ioQueuePrefix = "com.superwall.queue.Store"
   private static let defaultMaxCachePeriodInSecond: TimeInterval = 60 * 60 * 24 * 7 // a week
   private let cachePath: String
   private let memCache = NSCache<AnyObject, AnyObject>()
   private let ioQueue: DispatchQueue
   private let fileManager: FileManager
-
-  /// Name of cache
-  private var name: String = ""
 
   /// Life time of disk cache, in second. Default is a week
   private var maxCachePeriodInSecond = Cache.defaultMaxCachePeriodInSecond
@@ -26,9 +23,7 @@ final class Cache {
   private var maxDiskCacheSize: UInt = 0
 
   /// Specify distinc name param, it represents folder name for disk cache
-  init(name: String) {
-    self.name = name
-
+  init(ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix)) {
     var cachePath = NSSearchPathForDirectoriesInDomains(
       .cachesDirectory,
       FileManager.SearchPathDomainMask.userDomainMask,
@@ -36,10 +31,10 @@ final class Cache {
     ).first!
     // swiftlint:disable:previous force_unwrapping
 
-    cachePath = (cachePath as NSString).appendingPathComponent(Cache.cacheDirectoryPrefix + name)
+    cachePath = (cachePath as NSString).appendingPathComponent(Cache.cacheDirectoryPrefix)
     self.cachePath = cachePath
 
-    ioQueue = DispatchQueue(label: Cache.ioQueuePrefix + name)
+    self.ioQueue = ioQueue
 
     self.fileManager = FileManager()
 
@@ -67,7 +62,6 @@ extension Cache {
     _ keyType: Key.Type
   ) -> Key.Value? {
     var data = memCache.object(forKey: keyType.key as AnyObject) as? Data
-
     if data == nil,
       let dataFromDisk = fileManager.contents(atPath: cachePath(forKey: keyType.key)) {
       data = dataFromDisk
@@ -143,21 +137,16 @@ extension Cache {
     }
   }
 
-  /// Clean expired disk cache. This is an async operation.
-  @objc private func cleanExpiredDiskCache() {
-    cleanExpiredDiskCache(completion: nil)
-  }
-
   // This method is from Kingfisher
   /**
     Clean expired disk cache. This is an async operation.
 
     - parameter completionHandler: Called after the operation completes.
   */
-  func cleanExpiredDiskCache(completion handler: (() -> Void)? = nil) {
+  @objc private func cleanExpiredDiskCache() {
     // Do things in cocurrent io queue
     ioQueue.async {
-      var (URLsToDelete, diskCacheSize, cachedFiles) = self.travelCachedFiles(onlyForCacheSize: false)
+      var (URLsToDelete, diskCacheSize, cachedFiles) = self.travelCachedFiles()
 
       for fileURL in URLsToDelete {
         do {
@@ -207,10 +196,6 @@ extension Cache {
           }
         }
       }
-
-      DispatchQueue.main.async {
-        handler?()
-      }
     }
   }
 }
@@ -219,9 +204,7 @@ extension Cache {
 extension Cache {
   // This method is from Kingfisher
   // swiftlint:disable all
-  fileprivate func travelCachedFiles(
-    onlyForCacheSize: Bool
-  ) -> (urlsToDelete: [URL], diskCacheSize: UInt, cachedFiles: [URL: URLResourceValues]) {
+  fileprivate func travelCachedFiles() -> (urlsToDelete: [URL], diskCacheSize: UInt, cachedFiles: [URL: URLResourceValues]) {
     let diskCacheURL = URL(fileURLWithPath: cachePath)
     let resourceKeys: Set<URLResourceKey> = [.isDirectoryKey, .contentAccessDateKey, .totalFileAllocatedSizeKey]
     let expiredDate: Date? = (maxCachePeriodInSecond < 0) ? nil : Date(timeIntervalSinceNow: -maxCachePeriodInSecond)
@@ -239,8 +222,7 @@ extension Cache {
           }
 
           // If this file is expired, add it to URLsToDelete
-          if !onlyForCacheSize,
-            let expiredDate = expiredDate,
+          if let expiredDate = expiredDate,
             let lastAccessData = resourceValues.contentAccessDate,
             (lastAccessData as NSDate).laterDate(expiredDate) == expiredDate {
             urlsToDelete.append(fileUrl)
@@ -249,9 +231,7 @@ extension Cache {
 
           if let fileSize = resourceValues.totalFileAllocatedSize {
             diskCacheSize += UInt(fileSize)
-            if !onlyForCacheSize {
-              cachedFiles[fileUrl] = resourceValues
-            }
+            cachedFiles[fileUrl] = resourceValues
           }
       } catch {
         Logger.debug(

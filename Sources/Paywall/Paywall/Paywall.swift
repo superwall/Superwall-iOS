@@ -174,7 +174,7 @@ public final class Paywall: NSObject {
 
 	/// Overrides the default device locale for testing purposes.
   ///
-  /// You can also use the in-app debugger by scanning the QR code of a paywall from the Superwall Dashboard. See <doc:InAppPreviews> for more.
+  /// You can also preview your paywall in different locales using the in-app debugger. See <doc:InAppPreviews> for more.
 	///  - Parameter localeIdentifier: The locale identifier for the language you would like to test.
 	public static func localizationOverride(localeIdentifier: String? = nil) {
 		LocalizationManager.shared.selectedLocale = localeIdentifier
@@ -216,6 +216,7 @@ public final class Paywall: NSObject {
 
     SKPaymentQueue.default().add(self)
 		addActiveStateObservers()
+    Storage.shared.recordAppInstall()
 		fetchConfiguration()
 	}
 
@@ -252,21 +253,21 @@ public final class Paywall: NSObject {
   }
 
   @objc private func applicationWillResignActive() {
-    Paywall.track(.appClose)
+    Paywall.track(SuperwallEvent.AppClose())
     lastAppClose = Date()
   }
 
   @objc private func applicationDidBecomeActive() {
-    Paywall.track(.appOpen)
+    Paywall.track(SuperwallEvent.AppOpen())
 
     let sessionDidStart = PaywallLogic.sessionDidStart(lastAppClose)
 
     if sessionDidStart {
-      Paywall.track(.sessionStart)
+      Paywall.track(SuperwallEvent.SessionStart())
     }
 
     if !didTrackLaunch {
-      Paywall.track(.appLaunch)
+      Paywall.track(SuperwallEvent.AppLaunch())
       didTrackLaunch = true
     }
 
@@ -295,6 +296,10 @@ public final class Paywall: NSObject {
     }
 	}
 
+  /// Attemps to trigger a paywall for a given analytical event.
+  ///
+  ///  - Parameters:
+  ///     - event: The data of an analytical event data that could trigger a paywall.
 	func handleTrigger(forEvent event: EventData) {
 		onMain { [weak self] in
 			guard let self = self else {
@@ -317,7 +322,7 @@ public final class Paywall: NSObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
           Paywall.internallyPresent(fromEvent: event)
         }
-      case .internalEventAsTrigger:
+      case .disallowedEventAsTrigger:
         Logger.debug(
           logLevel: .warn,
           scope: .paywallCore,

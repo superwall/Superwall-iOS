@@ -4,7 +4,7 @@ Previewing a paywall on device from the Superwall dashboard.
 
 ## Overview
 
-You can preview your paywall on-device before going live by utilizing paywall previews. First, you need to add a custom URL scheme to your app. Then you need to track the deep link when your app is opened via deep link using ``Paywall/Paywall/track(_:_:)-7gc4r``. You can then preview your paywall by accessing your paywall from the dashboard, clicking the preview button, and scanning the QR code that appears.
+You can preview your paywall on-device before going live by utilizing paywall previews. First, you need to add a custom URL scheme to your app. Then you need to handle the deep link when your app is opened via deep link using ``Paywall/Paywall/handleDeepLink(_:)``. You can then preview your paywall by accessing your paywall from the dashboard, clicking the preview button, and scanning the QR code that appears.
 
 ## Adding a Custom URL Scheme
 
@@ -14,21 +14,21 @@ In your `info.plist`, you'll need to add a custom URL scheme for your app:
 
 You can view [Apple's documentation](https://developer.apple.com/documentation/xcode/defining-a-custom-url-scheme-for-your-app) to learn more about how to do that.
 
-Then, you'll need to track the deep link within your app using ``Paywall/Paywall/track(_:_:)-7gc4r``. We recommend adding this to your `PaywallService.swift` file that handles all Paywall related functions:
+Then, you'll need to handle the deep link within your app using ``Paywall/Paywall/handleDeepLink(_:)``. We recommend adding this to your `PaywallService.swift` file that handles all Paywall related functions:
 
 ```swift
 extension PaywallService {
-  static func trackDeepLink(url: URL) {
-    Paywall.track(.deepLinkOpen(deepLinkUrl: url))
+  static func handleDeepLink(_ url: URL) {
+    Paywall.handleDeepLink(url)
   }
 }
 ```
 
 Then, you'll need to call this when your app is opened via a deep link. There are different ways to do this, depending on whether you're using a SceneDelegate, AppDelegate, or writing an app in SwiftUI.
 
-### Tracking a Deep Link in SwiftUI
+### Handling a Deep Link in SwiftUI
 
-Inside your main App file, attach `onOpenURL(perform:)` to a view then track your deep link. Your file might look something like this:
+Inside your main App file, attach `onOpenURL(perform:)` to a view then handle your deep link. Your file might look something like this:
 
 ```swift
 @main
@@ -39,7 +39,7 @@ struct MyApp: App {
     WindowGroup {
       ContentView()
         .onOpenURL { url in
-          PaywallService.trackDeepLink(url: url)
+          PaywallService.handleDeepLink(url)
         }
     }
   }
@@ -48,7 +48,7 @@ struct MyApp: App {
 
 Then, build and run your app on your phone.
 
-### Tracking a Deep Link from the AppDelegate
+### Handling a Deep Link from the AppDelegate
 
 Inside `AppDelegate.swift`, add:
 
@@ -57,14 +57,14 @@ func application(
   _ app: UIApplication, 
   open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]
 ) -> Bool {
-  PaywallService.trackDeepLink(url: url)
+  PaywallService.handleDeepLink(url)
   return true
 }
 ```
 
 Then, build and run your app on your phone.
 
-### Tracking a Deep Link from the Scene Delegate
+### Handling a Deep Link from the Scene Delegate
 
 Inside `SceneDelegate.swift`, add:
 
@@ -78,7 +78,7 @@ func scene(
   ...
   
   for context in connectionOptions.urlContexts {
-    PaywallService.trackDeepLink(url: context.url)
+    PaywallService.handleDeepLink(context.url)
   }
 }
 
@@ -88,7 +88,7 @@ func scene(
   openURLContexts URLContexts: Set<UIOpenURLContext>
 ) {
   for context in URLContexts {
-    PaywallService.trackDeepLink(url: context.url)
+    PaywallService.handleDeepLink(context.url)
   }
 }
 ```
