@@ -101,7 +101,7 @@ final class Storage {
 	}
 
   func recordAppInstall(
-      trackEvent: (Trackable) -> TrackingResult = Paywall.track
+    trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) {
     let didTrackAppInstall = cache.read(DidTrackAppInstall.self) ?? false
     if didTrackAppInstall {

@@ -77,7 +77,7 @@ extension View {
   ///     Accepts an `NSError?` with more details. Defaults to `nil`.
   public func triggerPaywall(
     forEvent event: String,
-    withParams params: [String: Any] = [:],
+    withParams params: [String: Any]? = nil,
     shouldPresent: Binding<Bool>,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((PaywallDismissalResult) -> Void)? = nil,
@@ -87,7 +87,7 @@ extension View {
       PaywallTriggerModifier(
         shouldPresent: shouldPresent,
         event: event,
-        params: params,
+        params: params ?? [:],
         onPresent: onPresent,
         onDismiss: onDismiss,
         onFail: onFail

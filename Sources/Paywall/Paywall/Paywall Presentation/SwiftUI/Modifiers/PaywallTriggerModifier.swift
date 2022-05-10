@@ -13,7 +13,7 @@ struct PaywallTriggerModifier: ViewModifier {
   @Binding var shouldPresent: Bool
   @State private var manuallySetShouldPresent = false
   var event: String?
-  var params: [String: Any] = [:]
+  var params: [String: Any]
   var onPresent: ((PaywallInfo?) -> Void)?
   var onDismiss: ((PaywallDismissalResult) -> Void)?
   var onFail: ((NSError) -> Void)?
