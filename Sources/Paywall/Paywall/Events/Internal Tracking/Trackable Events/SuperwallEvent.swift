@@ -20,7 +20,7 @@ extension TrackableSuperwallEvent {
   }
 
   var canImplicitlyTriggerPaywall: Bool {
-    return true
+    return name.canImplicitlyTriggerPaywall
   }
 }
 
@@ -31,6 +31,7 @@ enum SuperwallEvent {
     var customParameters: [String: Any] = [:]
     var superwallParameters: [String: Any] = [:]
   }
+
   struct AppInstall: TrackableSuperwallEvent {
     let name: Paywall.EventName = .appInstall
     var customParameters: [String: Any] = [:]
@@ -38,21 +39,25 @@ enum SuperwallEvent {
       "application_installed_at": DeviceHelper.shared.appInstalledAtString
     ]
   }
+
   struct AppLaunch: TrackableSuperwallEvent {
     let name: Paywall.EventName = .appLaunch
     var customParameters: [String: Any] = [:]
     var superwallParameters: [String: Any] = [:]
   }
+
   struct FirstSeen: TrackableSuperwallEvent {
     let name: Paywall.EventName = .firstSeen
     var customParameters: [String: Any] = [:]
     var superwallParameters: [String: Any] = [:]
   }
+
   struct AppClose: TrackableSuperwallEvent {
     let name: Paywall.EventName = .appClose
     var customParameters: [String: Any] = [:]
     var superwallParameters: [String: Any] = [:]
   }
+
   struct SessionStart: TrackableSuperwallEvent {
     let name: Paywall.EventName = .sessionStart
     var customParameters: [String: Any] = [:]

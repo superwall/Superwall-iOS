@@ -29,7 +29,6 @@ struct Config: Decodable {
     preloadPaywallsAndProducts()
     preloadTriggerPaywalls()
     preloadDefaultPaywall()
-    preloadTriggerResponses()
     executePostback()
   }
 
@@ -49,7 +48,7 @@ struct Config: Decodable {
     }
   }
 
-  /// Pre-loads all the paywalls referenced by v2 triggers.
+  /// Pre-loads all the paywalls referenced by triggers.
   private func preloadTriggerPaywalls() {
     let triggerPaywallIdentifiers = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
 
@@ -69,28 +68,6 @@ struct Config: Decodable {
       isPreloading: true,
       cached: true
     )
-  }
-
-  /// This preloads and caches the responses and associated products for each trigger.
-  private func preloadTriggerResponses() {
-    guard Paywall.shouldPreloadTriggers else {
-      return
-    }
-
-    let triggerNames = ConfigResponseLogic.getNames(of: triggers)
-
-    for triggerName in triggerNames {
-      let eventData = EventData(
-        name: triggerName,
-        parameters: JSON(["caching": true]),
-        createdAt: Date().isoString
-      )
-      // Preload the response for that trigger
-      PaywallResponseManager.shared.getResponse(
-        .explicitTrigger(eventData),
-        isPreloading: true
-      ) { _ in }
-    }
   }
 
   /// This sends product data back to the dashboard

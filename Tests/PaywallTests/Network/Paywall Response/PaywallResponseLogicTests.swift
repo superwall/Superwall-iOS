@@ -151,7 +151,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let paywallId = "paywallId"
     let eventName = "opened_application"
     let getTriggerResponse: (EventData) -> HandleEventResult = { _ in
-      return .presentV2(
+      return .presentTriggerPaywall(
         experimentGroupId: experimentGroupId,
         experimentId: experimentId,
         variantId: variantId,

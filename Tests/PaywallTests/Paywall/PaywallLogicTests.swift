@@ -12,8 +12,7 @@ class PaywallLogicTests: XCTestCase {
   func testDidStartNewSession_canTriggerPaywall_paywallAlreadyPresented() {
     let outcome = PaywallLogic.canTriggerPaywall(
       eventName: "app_install",
-      v1Triggers: Set(["app_install"]),
-      v2Triggers: [],
+      triggers: Set(["app_install"]),
       isPaywallPresented: true
     )
     XCTAssertEqual(outcome, .dontTriggerPaywall)
@@ -22,8 +21,7 @@ class PaywallLogicTests: XCTestCase {
   func testDidStartNewSession_canTriggerPaywall_isntTrigger() {
     let outcome = PaywallLogic.canTriggerPaywall(
       eventName: "app_install",
-      v1Triggers: [],
-      v2Triggers: [],
+      triggers: [],
       isPaywallPresented: false
     )
     XCTAssertEqual(outcome, .dontTriggerPaywall)
@@ -32,8 +30,7 @@ class PaywallLogicTests: XCTestCase {
   func testDidStartNewSession_canTriggerPaywall_isAllowedInternalEvent() {
     let outcome = PaywallLogic.canTriggerPaywall(
       eventName: "app_install",
-      v1Triggers: ["app_install"],
-      v2Triggers: [],
+      triggers: ["app_install"],
       isPaywallPresented: false
     )
     XCTAssertEqual(outcome, .triggerPaywall)
@@ -42,8 +39,7 @@ class PaywallLogicTests: XCTestCase {
   func testDidStartNewSession_canTriggerPaywall_isNotInternalEvent() {
     let outcome = PaywallLogic.canTriggerPaywall(
       eventName: "random_event",
-      v1Triggers: [],
-      v2Triggers: ["random_event"],
+      triggers: ["random_event"],
       isPaywallPresented: false
     )
     XCTAssertEqual(outcome, .triggerPaywall)
@@ -52,8 +48,7 @@ class PaywallLogicTests: XCTestCase {
   func testDidStartNewSession_canTriggerPaywall_isInternalEvent() {
     let outcome = PaywallLogic.canTriggerPaywall(
       eventName: "app_open",
-      v1Triggers: [],
-      v2Triggers: ["app_open"],
+      triggers: ["app_open"],
       isPaywallPresented: false
     )
     XCTAssertEqual(outcome, .disallowedEventAsTrigger)

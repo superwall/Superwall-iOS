@@ -33,10 +33,6 @@ let response = #"""
           }
         }
       ]
-    },
-    {
-      "trigger_version": "V1",
-      "event_name": "other_event"
     }
   ],
   "product_identifier_groups": [],
@@ -66,47 +62,30 @@ final class ConfigTypeTests: XCTestCase {
     )
     print(parsedResponse)
 
-    guard let firstTrigger = parsedResponse.triggers.filter({ $0.eventName == "opened_application" }).first
+    guard let trigger = parsedResponse.triggers.filter({ $0.eventName == "opened_application" }).first
     else {
       return XCTFail("opened_application trigger not found")
     }
 
-    switch firstTrigger.triggerVersion {
-    case .v1:
-      throw TestError.init("Expecting V2")
-    case .v2(let v2):
-      let firstRule = v2.rules[0]
-      XCTAssertEqual(firstRule.isAssigned, false)
-      XCTAssertEqual(firstRule.expression, "name == jake")
-      XCTAssertEqual(firstRule.experimentId, "2")
+    let firstRule = trigger.rules[0]
+    XCTAssertEqual(firstRule.isAssigned, false)
+    XCTAssertEqual(firstRule.expression, "name == jake")
+    XCTAssertEqual(firstRule.experimentId, "2")
 
-      switch firstRule.variant {
-      case .treatment:
-        throw TestError.init("Expecting Holdout")
-      case .holdout(let holdout):
-        XCTAssertEqual(holdout.variantId, "7")
-      }
-      let secondRule = v2.rules[1]
-
-      switch secondRule.variant {
-      case .holdout:
-        throw TestError.init("Expecting holdout")
-      case .treatment(let treatment):
-        XCTAssertEqual(treatment.paywallIdentifier, "omnis-id-ab")
-        XCTAssertEqual(treatment.variantId, "6")
-      }
+    switch firstRule.variant {
+    case .treatment:
+      throw TestError.init("Expecting Holdout")
+    case .holdout(let holdout):
+      XCTAssertEqual(holdout.variantId, "7")
     }
+    let secondRule = trigger.rules[1]
 
-    guard let secondTrigger = parsedResponse.triggers.filter({ $0.eventName == "other_event" }).first
-    else {
-      return XCTFail("opened_application trigger not found")
-    }
-
-    switch secondTrigger.triggerVersion {
-    case .v2:
-      throw TestError.init("Expecting V1")
-    default:
-      break
+    switch secondRule.variant {
+    case .holdout:
+      throw TestError.init("Expecting holdout")
+    case .treatment(let treatment):
+      XCTAssertEqual(treatment.paywallIdentifier, "omnis-id-ab")
+      XCTAssertEqual(treatment.variantId, "6")
     }
   }
 }

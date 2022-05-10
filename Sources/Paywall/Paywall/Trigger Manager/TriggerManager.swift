@@ -15,8 +15,7 @@ enum TriggerManager {
     // If we have the config response, all valid triggers should be in response
     let outcome = TriggerLogic.outcome(
       forEvent: event,
-      v1Triggers: Storage.shared.v1Triggers,
-      v2Triggers: Storage.shared.v2Triggers
+      triggers: Storage.shared.triggers
     )
 
     if let confirmableAssignments = outcome.confirmableAssignments {

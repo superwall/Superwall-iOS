@@ -40,5 +40,16 @@ public extension Paywall {
     case paywallProductsLoadStart = "paywallProductsLoad_start"
     case paywallProductsLoadFail = "paywallProductsLoad_fail"
     case paywallProductsLoadComplete = "paywallProductsLoad_complete"
+
+    var canImplicitlyTriggerPaywall: Bool {
+      switch self {
+      case .appInstall,
+        .sessionStart,
+        .appLaunch:
+        return true
+      default:
+        return false
+      }
+    }
   }
 }

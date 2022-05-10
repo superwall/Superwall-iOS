@@ -12,35 +12,13 @@ enum StorageLogic {
     return "$SuperwallAlias:\(UUID().uuidString)"
   }
 
-  static func getV1TriggerDictionary(from triggers: Set<Trigger>) -> [String: Bool] {
-    // swiftlint:disable:next array_constructor
-    var output: [String: Bool] = [:]
-    let triggers = triggers.filter { $0.triggerVersion == .v1 }
-
-    for trigger in triggers {
-      output[trigger.eventName] = true
+  static func getTriggerDictionary(from triggers: Set<Trigger>) -> [String: Trigger] {
+    let triggersDictionary = triggers.reduce([String: Trigger]()) { (result, trigger) in
+      var result = result
+      result[trigger.eventName] = trigger
+      return result
     }
-
-    return output
-  }
-
-  static func getV2TriggerDictionary(from triggers: Set<Trigger>) -> [String: TriggerV2] {
-    let v2TriggersDictionary = triggers
-      .compactMap { trigger in
-        switch trigger.triggerVersion {
-        case .v1:
-          return nil
-        case .v2(let triggerV2):
-          return triggerV2
-        }
-      }
-      .reduce([String: TriggerV2]()) { (result, trigger: TriggerV2) in
-        var result = result
-        result[trigger.eventName] = trigger
-        return result
-      }
-
-    return v2TriggersDictionary
+    return triggersDictionary
   }
 
   static func mergeAttributes(

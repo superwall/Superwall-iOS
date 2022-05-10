@@ -74,7 +74,7 @@ enum PaywallResponseLogic {
     let triggerResponse = handleEvent(event)
     
     switch triggerResponse {
-    case let .presentV2(_, experimentIdentifier, variantIdentifier, paywallIdentifier):
+    case let .presentTriggerPaywall(_, experimentIdentifier, variantIdentifier, paywallIdentifier):
       let outcome = TriggerResponseIdentifiers(
         paywallId: paywallIdentifier,
         experimentId: experimentIdentifier,

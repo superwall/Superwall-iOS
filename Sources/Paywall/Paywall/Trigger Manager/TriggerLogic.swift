@@ -15,7 +15,7 @@ enum HandleEventResult {
     variantId: String
   )
   case noRuleMatch
-  case presentV2(
+  case presentTriggerPaywall(
     experimentGroupId: String,
     experimentId: String,
     variantId: String,
@@ -31,13 +31,12 @@ enum TriggerLogic {
 
   static func outcome(
     forEvent event: EventData,
-    v1Triggers: Set<String>,
-    v2Triggers: [String: TriggerV2]
+    triggers: [String: Trigger]
   ) -> Outcome {
-    if let triggerV2 = v2Triggers[event.name] {
+    if let trigger = triggers[event.name] {
       if let rule = Self.findRule(
         in: event,
-        v2Trigger: triggerV2
+        trigger: trigger
       ) {
         let confirmableAssignments = getConfirmableAssignments(forRule: rule)
 
@@ -54,7 +53,7 @@ enum TriggerLogic {
         case .treatment(let treatment):
           return Outcome(
             confirmableAssignments: confirmableAssignments,
-            result: .presentV2(
+            result: .presentTriggerPaywall(
               experimentGroupId: rule.experimentGroupId,
               experimentId: rule.experimentId,
               variantId: treatment.variantId,
@@ -72,9 +71,9 @@ enum TriggerLogic {
 
   private static func findRule(
     in event: EventData,
-    v2Trigger: TriggerV2
+    trigger: Trigger
   ) -> TriggerRule? {
-    for rule in v2Trigger.rules {
+    for rule in trigger.rules {
       if ExpressionEvaluator.evaluateExpression(
         expression: rule.expression,
         eventData: event

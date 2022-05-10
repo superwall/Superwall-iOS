@@ -30,9 +30,8 @@ final class Storage {
   var userId: String? {
     return appUserId ?? aliasId
   }
-	var v1Triggers: Set<String> = Set<String>()
   // swiftlint:disable:next array_constructor
-  var v2Triggers: [String: TriggerV2] = [:]
+  var triggers: [String: Trigger] = [:]
   private let cache: Cache
 
   init(cache: Cache = Cache()) {
@@ -41,7 +40,6 @@ final class Storage {
     self.aliasId = cache.read(AliasId.self)
     self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == "true"
     self.userAttributes = cache.read(UserAttributes.self) ?? [:]
-    self.setCachedTriggers()
   }
 
   func configure(
@@ -62,8 +60,7 @@ final class Storage {
     aliasId = StorageLogic.generateAlias()
     didTrackFirstSeen = false
     userAttributes = [:]
-    v1Triggers.removeAll()
-    v2Triggers.removeAll()
+    triggers.removeAll()
     cache.cleanAll()
     recordFirstSeenTracked()
   }
@@ -72,13 +69,10 @@ final class Storage {
     _ config: Config,
     withRequestId requestId: String
   ) {
-    let v1TriggerDictionary = StorageLogic.getV1TriggerDictionary(from: config.triggers)
-    cache.write(v1TriggerDictionary, forType: V1Triggers.self)
-    v1Triggers = Set(v1TriggerDictionary.keys)
     locales = Set(config.localization.locales.map { $0.locale })
     configRequestId = requestId
     AppSessionManager.shared.appSessionTimeout = config.appSessionTimeout
-    v2Triggers = StorageLogic.getV2TriggerDictionary(from: config.triggers)
+    triggers = StorageLogic.getTriggerDictionary(from: config.triggers)
 	}
 
 	func addUserAttributes(_ newAttributes: [String: Any]) {
@@ -148,13 +142,4 @@ final class Storage {
       forType: TriggerSessions.self
     )
   }
-
-	private func setCachedTriggers() {
-    let cachedTriggers = cache.read(V1Triggers.self) ?? [:]
-
-    v1Triggers = []
-		for key in cachedTriggers.keys {
-			v1Triggers.insert(key)
-		}
-	}
 }

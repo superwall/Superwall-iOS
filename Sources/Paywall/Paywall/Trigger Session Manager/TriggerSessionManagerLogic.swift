@@ -61,7 +61,7 @@ enum TriggerSessionManagerLogic {
           type: presentationInfo.triggerType,
           presentedOn: nil
         )
-      case let .presentV2(groupId, experimentId, variantId, _):
+      case let .presentTriggerPaywall(groupId, experimentId, variantId, _):
         presentationOutcome = .paywall
         trigger = TriggerSession.Trigger(
           eventData: eventData,

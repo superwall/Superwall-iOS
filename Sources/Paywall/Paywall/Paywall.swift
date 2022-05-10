@@ -77,7 +77,7 @@ public final class Paywall: NSObject {
 	var didTryToAutoRestore = false
   var eventsTrackedBeforeConfigWasFetched: [EventData] = []
 	var paywallWasPresentedThisSession = false
-  var didFetchConfig = !Storage.shared.v1Triggers.isEmpty
+  var didFetchConfig = !Storage.shared.configRequestId.isEmpty
 
 	var paywallViewController: SWPaywallViewController? {
 		return PaywallManager.shared.presentedViewController
@@ -257,8 +257,7 @@ public final class Paywall: NSObject {
 
       let outcome = PaywallLogic.canTriggerPaywall(
         eventName: event.name,
-        v1Triggers: Storage.shared.v1Triggers,
-        v2Triggers: Set(Storage.shared.v2Triggers.keys),
+        triggers: Set(Storage.shared.triggers.keys),
         isPaywallPresented: self.isPaywallPresented
       )
 

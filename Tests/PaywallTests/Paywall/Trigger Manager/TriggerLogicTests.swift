@@ -25,7 +25,7 @@ class TriggerLogicTests: XCTestCase {
       variant: variant,
       variantId: variantId
     )
-    let v2Trigger = TriggerV2(
+    let trigger = Trigger(
       eventName: eventName,
       rules: [triggerRule]
     )
@@ -38,14 +38,12 @@ class TriggerLogicTests: XCTestCase {
     )
 
     // Triggers
-    let v1Triggers: Set<String> = []
-    let v2Triggers = [eventName: v2Trigger]
+    let triggers = [eventName: trigger]
 
     // MARK: When
     let outcome = TriggerLogic.outcome(
       forEvent: eventData,
-      v1Triggers: v1Triggers,
-      v2Triggers: v2Triggers
+      triggers: triggers
     )
 
     // MARK: Then
@@ -95,7 +93,7 @@ class TriggerLogicTests: XCTestCase {
       variant: variant,
       variantId: variantId
     )
-    let v2Trigger = TriggerV2(
+    let trigger = Trigger(
       eventName: eventName,
       rules: [triggerRule]
     )
@@ -108,24 +106,22 @@ class TriggerLogicTests: XCTestCase {
     )
 
     // Triggers
-    let v1Triggers: Set<String> = []
-    let v2Triggers = [eventName: v2Trigger]
+    let triggers = [eventName: trigger]
 
     // MARK: When
     let outcome = TriggerLogic.outcome(
       forEvent: eventData,
-      v1Triggers: v1Triggers,
-      v2Triggers: v2Triggers
+      triggers: triggers
     )
 
     // MARK: Then
-    guard case let .presentV2(
+    guard case let .presentTriggerPaywall(
       experimentGroupId: outputExperimentGroupId,
       experimentId: outputExperimentId,
       variantId: outputVariantId,
       paywallIdentifier: outputPaywallId
     ) = outcome.result else {
-      return XCTFail("Incorrect outcome. Expected presentV2")
+      return XCTFail("Incorrect outcome. Expected presentTriggerPaywall")
     }
     XCTAssertEqual(outputExperimentGroupId, experimentGroupId)
     XCTAssertEqual(outputPaywallId, paywallId)
@@ -166,7 +162,7 @@ class TriggerLogicTests: XCTestCase {
       variant: variant,
       variantId: variantId
     )
-    let v2Trigger = TriggerV2(
+    let v2Trigger = Trigger(
       eventName: eventName,
       rules: [triggerRule]
     )
@@ -179,15 +175,13 @@ class TriggerLogicTests: XCTestCase {
     )
 
     // Triggers
-    let v1Triggers: Set<String> = []
-    let v2Triggers = [eventName: v2Trigger]
+    let triggers = [eventName: v2Trigger]
 
     // MARK: When
 
     let outcome = TriggerLogic.outcome(
       forEvent: eventData,
-      v1Triggers: v1Triggers,
-      v2Triggers: v2Triggers
+      triggers: triggers
     )
 
     // MARK: Then
@@ -220,7 +214,7 @@ class TriggerLogicTests: XCTestCase {
       variant: variant,
       variantId: variantId
     )
-    let v2Trigger = TriggerV2(
+    let trigger = Trigger(
       eventName: eventName,
       rules: [triggerRule]
     )
@@ -233,14 +227,12 @@ class TriggerLogicTests: XCTestCase {
     )
 
     // Triggers
-    let v1Triggers: Set<String> = []
-    let v2Triggers = [eventName: v2Trigger]
+    let triggers = [eventName: trigger]
 
     // MARK: When
     let outcome = TriggerLogic.outcome(
       forEvent: eventData,
-      v1Triggers: v1Triggers,
-      v2Triggers: v2Triggers
+      triggers: triggers
     )
 
     // MARK: Then
