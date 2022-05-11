@@ -40,7 +40,7 @@ extension Paywall {
 		let eventData = EventData(
       name: event.rawName,
       parameters: JSON(parameters.eventParams),
-      createdAt: Date().isoString
+      createdAt: Date()
     )
 		queue.enqueue(event: eventData.jsonData)
 

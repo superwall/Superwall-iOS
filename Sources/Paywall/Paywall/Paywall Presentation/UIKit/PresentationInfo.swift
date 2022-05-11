@@ -23,6 +23,18 @@ enum PresentationInfo {
     }
   }
 
+  var eventName: String? {
+    switch self {
+    case let .implicitTrigger(eventData),
+      let .explicitTrigger(eventData):
+      return eventData.name
+    case .defaultPaywall:
+      return Paywall.EventName.manualPresent.rawValue
+    case .fromIdentifier:
+      return nil
+    }
+  }
+
   var identifier: String? {
     switch self {
     case .fromIdentifier(let identifier):

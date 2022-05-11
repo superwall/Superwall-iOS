@@ -13,7 +13,7 @@ extension TriggerSession {
     var allProducts: [SWProduct]
 
     /// The loading start, end and fail times.
-    var loadingInfo: LoadingInfo
+    var loadingInfo: LoadingInfo?
 
     enum CodingKeys: String, CodingKey {
       case allProducts = "paywall_products"
@@ -25,7 +25,7 @@ extension TriggerSession {
 
     init(
       allProducts: [SWProduct],
-      loadingInfo: LoadingInfo
+      loadingInfo: LoadingInfo? = nil
     ) {
       self.allProducts = allProducts
       self.loadingInfo = loadingInfo
@@ -38,19 +38,24 @@ extension TriggerSession {
       let startAt = try values.decodeIfPresent(Date.self, forKey: .loadStartAt)
       let endAt = try values.decodeIfPresent(Date.self, forKey: .loadEndAt)
       let failAt = try values.decodeIfPresent(Date.self, forKey: .loadFail)
-      loadingInfo = LoadingInfo(
-        startAt: startAt,
-        endAt: endAt,
-        failAt: failAt
-      )
+
+      if startAt != nil || endAt != nil  || failAt != nil {
+        loadingInfo = LoadingInfo(
+          startAt: startAt,
+          endAt: endAt,
+          failAt: failAt
+        )
+      } else {
+        loadingInfo = nil
+      }
     }
 
     func encode(to encoder: Encoder) throws {
       var container = encoder.container(keyedBy: CodingKeys.self)
       try container.encode(allProducts, forKey: .allProducts)
-      try container.encodeIfPresent(loadingInfo.startAt, forKey: .loadStartAt)
-      try container.encodeIfPresent(loadingInfo.endAt, forKey: .loadEndAt)
-      try container.encodeIfPresent(loadingInfo.failAt, forKey: .loadFail)
+      try container.encodeIfPresent(loadingInfo?.startAt, forKey: .loadStartAt)
+      try container.encodeIfPresent(loadingInfo?.endAt, forKey: .loadEndAt)
+      try container.encodeIfPresent(loadingInfo?.failAt, forKey: .loadFail)
     }
   }
 }

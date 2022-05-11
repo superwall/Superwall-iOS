@@ -121,19 +121,21 @@ enum SuperwallEvent {
         ]
       case .holdout(let experiment):
         return [
-          "variant_id": experiment.variantId as Any,
+          "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
           "result": "holdout",
           "trigger_name": triggerName
         ]
-      case let .paywall(experiment, paywallIdentifier):
+      case let .paywall(experiment):
         return [
-          "variant_id": experiment.variantId as Any,
+          "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
-          "paywall_identifier": paywallIdentifier,
+          "paywall_identifier": experiment.variant.paywallId as Any,
           "result": "present",
           "trigger_name": triggerName
         ]
+      case .unknownEvent:
+        return [:]
       }
     }
   }

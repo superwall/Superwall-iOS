@@ -13,9 +13,12 @@ enum ConfigResponseLogic {
 
     triggers.forEach { trigger in
       trigger.rules.forEach { rule in
-        switch rule.variant {
-        case .treatment(let treatment):
-          identifiers.insert(treatment.paywallIdentifier)
+        switch rule.experiment.variant.type {
+        case .treatment:
+          guard let paywallId = rule.experiment.variant.paywallId else {
+            return
+          }
+          identifiers.insert(paywallId)
         default:
           break
         }

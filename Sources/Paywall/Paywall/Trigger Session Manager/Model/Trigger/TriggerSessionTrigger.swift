@@ -10,14 +10,23 @@ import Foundation
 extension TriggerSession {
   struct Trigger: Codable {
     /// The trigger event data
-    let eventData: EventData
+    var eventId: String?
+
+    /// The name of the event
+    var eventName: String
+
+    /// Parameters associated with the event
+    var eventParameters: JSON?
+
+    /// When the event was created
+    var eventCreatedAt: Date?
 
     enum TriggerType: String, Codable {
       case implicit = "IMPLICIT"
       case explicit = "EXPLICIT"
     }
     /// The type of the trigger
-    let type: TriggerType
+    var type: TriggerType?
 
     /// Information about the object that the paywall is being presented on, if any.
     let presentedOn: String?
@@ -35,12 +44,18 @@ extension TriggerSession {
     }
 
     init(
-      eventData: EventData,
-      type: TriggerType,
-      presentedOn: String?,
+      eventId: String? = nil,
+      eventName: String,
+      eventParameters: JSON? = nil,
+      eventCreatedAt: Date? = nil,
+      type: TriggerType? = nil,
+      presentedOn: String? = nil,
       experiment: Experiment? = nil
     ) {
-      self.eventData = eventData
+      self.eventId = eventId
+      self.eventName = eventName
+      self.eventParameters = eventParameters
+      self.eventCreatedAt = eventCreatedAt
       self.type = type
       self.presentedOn = presentedOn
       self.experiment = experiment
@@ -48,17 +63,12 @@ extension TriggerSession {
 
     init(from decoder: Decoder) throws {
       let values = try decoder.container(keyedBy: CodingKeys.self)
-      let eventId = try values.decode(String.self, forKey: .eventId)
-      let name = try values.decode(String.self, forKey: .name)
-      let params = try values.decode(JSON.self, forKey: .params)
-      let createdAt = try values.decode(String.self, forKey: .createdAt)
-      eventData = EventData(
-        id: eventId,
-        name: name,
-        parameters: params,
-        createdAt: createdAt
-      )
-      type = try values.decode(TriggerType.self, forKey: .type)
+      eventName = try values.decode(String.self, forKey: .name)
+
+      eventId = try values.decodeIfPresent(String.self, forKey: .eventId)
+      eventParameters = try values.decodeIfPresent(JSON.self, forKey: .params)
+      eventCreatedAt = try values.decodeIfPresent(Date.self, forKey: .createdAt)
+      type = try values.decodeIfPresent(TriggerType.self, forKey: .type)
       presentedOn = try values.decodeIfPresent(String.self, forKey: .presentedOn)
 
       experiment = try? Experiment(from: decoder)
@@ -66,11 +76,12 @@ extension TriggerSession {
 
     func encode(to encoder: Encoder) throws {
       var container = encoder.container(keyedBy: CodingKeys.self)
-      try container.encode(eventData.id, forKey: .eventId)
-      try container.encode(eventData.name, forKey: .name)
-      try container.encode(eventData.parameters, forKey: .params)
-      try container.encode(eventData.createdAt, forKey: .createdAt)
-      try container.encode(type, forKey: .type)
+      try container.encode(eventName, forKey: .name)
+
+      try container.encodeIfPresent(eventId, forKey: .eventId)
+      try container.encodeIfPresent(eventParameters, forKey: .params)
+      try container.encodeIfPresent(eventCreatedAt, forKey: .createdAt)
+      try container.encodeIfPresent(type, forKey: .type)
       try container.encodeIfPresent(presentedOn, forKey: .presentedOn)
 
       try experiment?.encode(to: encoder)

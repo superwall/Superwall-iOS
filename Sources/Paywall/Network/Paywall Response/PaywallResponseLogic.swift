@@ -10,8 +10,7 @@ import StoreKit
 
 struct TriggerResponseIdentifiers: Equatable {
   let paywallId: String?
-  var experimentId: String?
-  var variantId: String?
+  var experiment: Experiment?
 }
 
 struct PaywallErrorResponse {
@@ -46,63 +45,37 @@ enum PaywallResponseLogic {
   }
 
   // swiftlint:disable:next function_body_length
-  static func handleTriggerResponse(
-    withPresentationInfo presentationInfo: PresentationInfo,
-    didFetchConfig: Bool,
-    handleEvent: (EventData) -> HandleEventResult = TriggerManager.handleEvent,
+  static func getTriggerIdentifiers(
+    forResult triggerResult: TriggerResult,
+    eventData: EventData,
     trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) throws -> TriggerResponseIdentifiers? {
-    guard didFetchConfig else {
-      // TODO: Why do we return identifier here exactly? This could influence paywall session start.
-      // Also, this is before config has been fetched. Looks like we're totally ignoring an explicit trigger in this instance?
-      return TriggerResponseIdentifiers(paywallId: presentationInfo.identifier)
-    }
-
-    // swiftlint:disable:next force_unwrapping
-    var event: EventData!
-
-    switch presentationInfo {
-    case let .implicitTrigger(eventData),
-      .explicitTrigger(let eventData):
-      event = eventData
-    case .fromIdentifier(let paywallId):
-      return TriggerResponseIdentifiers(paywallId: paywallId)
-    case .defaultPaywall:
-      return nil
-    }
-
-    let triggerResponse = handleEvent(event)
-    
-    switch triggerResponse {
-    case let .presentTriggerPaywall(_, experimentIdentifier, variantIdentifier, paywallIdentifier):
-      let outcome = TriggerResponseIdentifiers(
-        paywallId: paywallIdentifier,
-        experimentId: experimentIdentifier,
-        variantId: variantIdentifier
-      )
-
-      let triggerResult = TriggerResult.paywall(
-        experiment: Experiment(
-          id: experimentIdentifier,
-          variantId: variantIdentifier
-        ),
-        paywallIdentifier: paywallIdentifier
-      )
+    switch triggerResult {
+    case .unknownEvent:
+      break
+    default:
       let trackedEvent = SuperwallEvent.TriggerFire(
         triggerResult: triggerResult,
-        triggerName: event.name
+        triggerName: eventData.name
       )
       _ = trackEvent(trackedEvent)
+    }
 
+    switch triggerResult {
+    case let .paywall(experiment):
+      let outcome = TriggerResponseIdentifiers(
+        paywallId: experiment.variant.paywallId,
+        experiment: experiment
+      )
       return outcome
-    case let .holdout(_, experimentId, variantId):
+    case let .holdout(experiment):
       let userInfo: [String: Any] = [
-        "experimentId": experimentId,
-        "variantId": variantId,
+        "experimentId": experiment.id,
+        "variantId": experiment.variant.id,
         NSLocalizedDescriptionKey: NSLocalizedString(
           "Trigger Holdout",
           value: "This user was assigned to a holdout in a trigger experiment",
-          comment: "ExperimentId: \(experimentId), VariantId: \(variantId)"
+          comment: "ExperimentId: \(experiment.id), VariantId: \(experiment.variant.id)"
         )
       ]
       let error = NSError(
@@ -110,17 +83,6 @@ enum PaywallResponseLogic {
         code: 4001,
         userInfo: userInfo
       )
-      let triggerResult = TriggerResult.holdout(
-        experiment: Experiment(
-          id: experimentId,
-          variantId: variantId
-        )
-      )
-      let trackedEvent = SuperwallEvent.TriggerFire(
-        triggerResult: triggerResult,
-        triggerName: event.name
-      )
-      _ = trackEvent(trackedEvent)
       throw error
     case .noRuleMatch:
       let userInfo: [String: Any] = [
@@ -130,11 +92,6 @@ enum PaywallResponseLogic {
           comment: ""
         )
       ]
-      let trackedEvent = SuperwallEvent.TriggerFire(
-        triggerResult: TriggerResult.noRuleMatch,
-        triggerName: event.name
-      )
-      _ = trackEvent(trackedEvent)
       let error = NSError(
         domain: "com.superwall",
         code: 4000,
@@ -173,10 +130,9 @@ enum PaywallResponseLogic {
       !isDebuggerLaunched {
         switch result {
         case .success(let response):
-          var updatedResponse = response
-          updatedResponse.experimentId = triggerResponseIds?.experimentId
-          updatedResponse.variantId = triggerResponseIds?.variantId
-          return .cachedResult(.success(updatedResponse))
+          var response = response
+          response.experiment = triggerResponseIds?.experiment
+          return .cachedResult(.success(response))
         case .failure:
           return .cachedResult(result)
         }

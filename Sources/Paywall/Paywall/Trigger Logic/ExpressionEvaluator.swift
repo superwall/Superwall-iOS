@@ -8,20 +8,20 @@
 import Foundation
 import JavaScriptCore
 
-struct ExpressionEvaluatorParams: Codable {
-  var expression: String
-  var values: JSON
-
-  func toBase64Input() -> String? {
-    let encoder = JSONEncoder()
-    if let data = try? encoder.encode(self) {
-      return data.base64EncodedString()
-    }
-    return nil
-  }
-}
-
 enum ExpressionEvaluator {
+  struct ExpressionEvaluatorParams: Codable {
+    var expression: String
+    var values: JSON
+
+    func toBase64Input() -> String? {
+      let encoder = JSONEncoder()
+      if let data = try? encoder.encode(self) {
+        return data.base64EncodedString()
+      }
+      return nil
+    }
+  }
+
   static func evaluateExpression(
     expression: String?,
     eventData: EventData

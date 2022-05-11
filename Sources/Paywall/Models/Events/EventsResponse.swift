@@ -8,6 +8,10 @@
 import Foundation
 
 struct EventsResponse: Codable {
-  var status: String
+  enum Status: String, Codable {
+    case ok
+    case partialSuccess
+  }
+  var status: Status
   var invalidIndexes: [Int]?
 }

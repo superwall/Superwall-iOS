@@ -8,14 +8,11 @@
 import Foundation
 
 struct TriggerRule: Decodable, Hashable {
-  var experimentGroupId: String
-  var experimentId: String
+  var experiment: Experiment
   var expression: String?
   var isAssigned: Bool
-  var variant: Variant
-  var variantId: String
 
-  enum Keys: String, CodingKey {
+  enum CodingKeys: String, CodingKey {
     case experimentGroupId
     case experimentId
     case expression
@@ -23,58 +20,62 @@ struct TriggerRule: Decodable, Hashable {
     case variant
   }
 
+  enum VariantKeys: String, CodingKey {
+    case variantType
+    case variantId
+    case paywallIdentifier
+  }
+
   init(from decoder: Decoder) throws {
-    let values = try decoder.container(keyedBy: TriggerRule.Keys.self)
+    let values = try decoder.container(keyedBy: CodingKeys.self)
     
-    experimentId = try values.decode(String.self, forKey: .experimentId)
+    let experimentId = try values.decode(String.self, forKey: .experimentId)
+    let experimentGroupId = try values.decode(String.self, forKey: .experimentGroupId)
+
+    let variant = try values.nestedContainer(keyedBy: VariantKeys.self, forKey: .variant)
+    let variantId = try variant.decode(String.self, forKey: .variantId)
+    let paywallIdentifier = try variant.decodeIfPresent(String.self, forKey: .paywallIdentifier)
+    let variantType = try variant.decode(Experiment.Variant.VariantType.self, forKey: .variantType)
+
+    experiment = Experiment(
+      id: experimentId,
+      groupId: experimentGroupId,
+      variant: .init(
+        id: variantId,
+        type: variantType,
+        paywallId: paywallIdentifier
+      )
+    )
+
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
     isAssigned = try values.decode(Bool.self, forKey: .isAssigned)
-    variant = try values.decode(Variant.self, forKey: .variant)
-    experimentGroupId = try values.decode(String.self, forKey: .experimentGroupId)
-
-    switch variant {
-    case .holdout(let holdout):
-      variantId = holdout.variantId
-    case .treatment(let treatment):
-      variantId = treatment.variantId
-    }
   }
 
   init(
-    experimentGroupId: String,
-    experimentId: String,
+    experiment: Experiment,
     expression: String?,
-    isAssigned: Bool,
-    variant: Variant,
-    variantId: String
+    isAssigned: Bool
   ) {
-    self.experimentGroupId = experimentGroupId
-    self.experimentId = experimentId
+    self.experiment = experiment
     self.expression = expression
     self.isAssigned = isAssigned
-    self.variant = variant
-    self.variantId = variantId
   }
 }
 
 extension TriggerRule: Stubbable {
   static func stub() -> TriggerRule {
-    let variant: Variant = .stub()
-    let variantId: String
-    switch variant {
-    case .holdout(let holdout):
-      variantId = holdout.variantId
-    case .treatment(let treatment):
-      variantId = treatment.variantId
-    }
-
     return TriggerRule(
-      experimentGroupId: "1",
-      experimentId: "2",
+      experiment: Experiment(
+        id: "1",
+        groupId: "2",
+        variant: .init(
+          id: "3",
+          type: .holdout,
+          paywallId: nil
+        )
+      ),
       expression: "name == jake",
-      isAssigned: false,
-      variant: variant,
-      variantId: variantId
+      isAssigned: false
     )
   }
 }

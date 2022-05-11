@@ -19,7 +19,7 @@ struct EventData: Codable, Equatable {
   var parameters: JSON
 
   /// When the event was created
-  var createdAt: String
+  var createdAt: Date
 
   /// A `JSON` version of `EventData`
   var jsonData: JSON {
@@ -27,7 +27,7 @@ struct EventData: Codable, Equatable {
       "event_id": JSON(id),
       "event_name": JSON(name),
       "parameters": parameters,
-      "created_at": JSON(createdAt)
+      "created_at": JSON(createdAt.isoString)
     ]
   }
 }
@@ -37,7 +37,7 @@ extension EventData: Stubbable {
     return EventData(
       name: "opened_application",
       parameters: [:],
-      createdAt: "2022-03-09T11:45:38.016Z"
+      createdAt: Date()
     )
   }
 }

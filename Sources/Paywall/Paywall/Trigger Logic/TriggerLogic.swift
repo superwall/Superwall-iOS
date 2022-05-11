@@ -7,26 +7,10 @@
 
 import Foundation
 
-enum HandleEventResult {
-  case unknownEvent
-  case holdout(
-    experimentGroupId: String,
-    experimentId: String,
-    variantId: String
-  )
-  case noRuleMatch
-  case presentTriggerPaywall(
-    experimentGroupId: String,
-    experimentId: String,
-    variantId: String,
-    paywallIdentifier: String
-  )
-}
-
 enum TriggerLogic {
   struct Outcome {
     var confirmableAssignments: ConfirmableAssignments?
-    var result: HandleEventResult
+    var result: TriggerResult
   }
 
   static func outcome(
@@ -40,25 +24,17 @@ enum TriggerLogic {
       ) {
         let confirmableAssignments = getConfirmableAssignments(forRule: rule)
 
-        switch rule.variant {
-        case .holdout(let holdout):
+
+        switch rule.experiment.variant.type {
+        case .holdout:
           return Outcome(
             confirmableAssignments: confirmableAssignments,
-            result: .holdout(
-              experimentGroupId: rule.experimentGroupId,
-              experimentId: rule.experimentId,
-              variantId: holdout.variantId
-            )
+            result: .holdout(experiment: rule.experiment)
           )
-        case .treatment(let treatment):
+        case .treatment:
           return Outcome(
             confirmableAssignments: confirmableAssignments,
-            result: .presentTriggerPaywall(
-              experimentGroupId: rule.experimentGroupId,
-              experimentId: rule.experimentId,
-              variantId: treatment.variantId,
-              paywallIdentifier: treatment.paywallIdentifier
-            )
+            result: .paywall(experiment: rule.experiment)
           )
         }
       } else {
@@ -93,8 +69,8 @@ enum TriggerLogic {
       let confirmableAssignments = ConfirmableAssignments(
         assignments: [
           Assignment(
-            experimentId: rule.experimentId,
-            variantId: rule.variantId
+            experimentId: rule.experiment.id,
+            variantId: rule.experiment.variant.id
           )
         ]
       )

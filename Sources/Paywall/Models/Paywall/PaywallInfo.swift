@@ -63,7 +63,7 @@ public final class PaywallInfo: NSObject {
     slug: String,
     url: URL?,
     productIds: [String],
-    fromEventData: EventData?,
+    fromEventData eventData: EventData?,
     calledByIdentifier: Bool = false,
     responseLoadStartTime: Date?,
     responseLoadCompleteTime: Date?,
@@ -72,8 +72,7 @@ public final class PaywallInfo: NSObject {
     productsLoadStartTime: Date?,
     productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
-    variantId: String? = nil,
-    experimentId: String? = nil
+    experiment: Experiment? = nil
   ) {
     self.id = id
     self.identifier = identifier
@@ -81,22 +80,12 @@ public final class PaywallInfo: NSObject {
     self.slug = slug
     self.url = url
     self.productIds = productIds
-    self.presentedByEventWithName = fromEventData?.name
-    self.presentedByEventAt = fromEventData?.createdAt
-    self.presentedByEventWithId = fromEventData?.id.lowercased()
+    self.presentedByEventWithName = eventData?.name
+    self.presentedByEventAt = eventData?.createdAt.isoString
+    self.presentedByEventWithId = eventData?.id.lowercased()
+    self.experiment = experiment
 
-    if
-      let experimentId = experimentId,
-      let variantId = variantId {
-      self.experiment = Experiment(
-        id: experimentId,
-        variantId: variantId
-      )
-    } else {
-      self.experiment = nil
-    }
-
-    if fromEventData != nil {
+    if eventData != nil {
       self.presentedBy = "event"
     } else if calledByIdentifier {
       self.presentedBy = "identifier"

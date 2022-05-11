@@ -14,8 +14,18 @@ final class Network {
   func sendEvents(events: EventsRequest) {
     urlSession.request(.events(eventsRequest: events)) { result in
       switch result {
-      case .success:
-        break
+      case .success(let response):
+        switch response.status {
+        case .ok:
+          break
+        case .partialSuccess:
+          Logger.debug(
+            logLevel: .warn,
+            scope: .network,
+            message: "Request had partial success: /events",
+            info: ["payload": response.invalidIndexes as Any]
+          )
+        }
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -110,14 +120,11 @@ final class Network {
     }
   }
 
-  func confirmAssignments(
-    _ confirmableAssignments: ConfirmableAssignments,
-    completion: (((Result<ConfirmedAssignmentResponse, Error>)) -> Void)?
-  ) {
+  func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) {
     urlSession.request(.confirmAssignments(confirmableAssignments)) { result in
       switch result {
-      case .success(let response):
-        completion?(.success(response))
+      case .success:
+        break
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -126,7 +133,6 @@ final class Network {
           info: ["assignments": confirmableAssignments],
           error: error
         )
-        completion?(.failure(error))
       }
     }
   }
@@ -134,8 +140,18 @@ final class Network {
   func sendSessionEvents(_ session: SessionEventsRequest) {
     urlSession.request(.sessionEvents(session)) { result in
       switch result {
-      case .success:
-        break
+      case .success(let response):
+        switch response.status {
+        case .ok:
+          break
+        case .partialSuccess:
+          Logger.debug(
+            logLevel: .warn,
+            scope: .network,
+            message: "Request had partial success: /session_events",
+            info: ["payload": response.invalidIndexes as Any]
+          )
+        }
       case .failure(let error):
         Logger.debug(
           logLevel: .error,

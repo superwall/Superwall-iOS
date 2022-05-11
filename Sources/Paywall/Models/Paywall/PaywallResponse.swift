@@ -16,11 +16,8 @@ struct PaywallResponse: Decodable {
   var name: String?
   var slug: String?
 
-  /// The ID of the paywall variant
-  var variantId: String?
-
-  /// The ID of the paywall experiment
-  var experimentId: String?
+  /// The experiment associated with the paywall.
+  var experiment: Experiment?
 
   /// The identifier of the paywall
   var identifier: String?
@@ -140,8 +137,7 @@ struct PaywallResponse: Decodable {
       productsLoadStartTime: productsLoadStartTime,
       productsLoadFailTime: productsLoadFailTime,
       productsLoadCompleteTime: productsLoadCompleteTime,
-      variantId: variantId,
-      experimentId: experimentId
+      experiment: experiment
     )
   }
 

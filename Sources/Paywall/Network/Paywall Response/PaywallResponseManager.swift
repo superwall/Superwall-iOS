@@ -23,12 +23,29 @@ final class PaywallResponseManager: NSObject {
     completion: @escaping PaywallResponseCompletionBlock
   ) {
     do {
-      let triggerIdentifiers = try PaywallResponseLogic.handleTriggerResponse(
-        withPresentationInfo: presentationInfo,
-        didFetchConfig: Paywall.shared.didFetchConfig
-      )
-
       let eventData = presentationInfo.eventData
+
+      var triggerIdentifiers: TriggerResponseIdentifiers?
+
+      if let eventData = eventData,
+         Paywall.shared.didFetchConfig {
+        let triggerOutcome = TriggerLogic.outcome(
+          forEvent: eventData,
+          triggers: Storage.shared.triggers
+        )
+
+        // Confirm any triggers that the user is assigned
+        if let confirmableAssignments = triggerOutcome.confirmableAssignments {
+          Network.shared.confirmAssignments(confirmableAssignments)
+        }
+        
+        triggerIdentifiers = try PaywallResponseLogic.getTriggerIdentifiers(
+          forResult: triggerOutcome.result,
+          eventData: eventData
+        )
+      } else {
+        triggerIdentifiers = TriggerResponseIdentifiers(paywallId: presentationInfo.identifier)
+      }
 
       let paywallRequestHash = PaywallResponseLogic.requestHash(
         identifier: triggerIdentifiers?.paywallId,
@@ -97,8 +114,7 @@ final class PaywallResponseManager: NSObject {
         self.queue.async {
           switch result {
           case .success(var response):
-            response.experimentId = triggerIdentifiers?.experimentId
-            response.variantId = triggerIdentifiers?.variantId
+            response.experiment = triggerIdentifiers?.experiment
             response.responseLoadStartTime = responseLoadStartTime
             response.responseLoadCompleteTime = Date()
 

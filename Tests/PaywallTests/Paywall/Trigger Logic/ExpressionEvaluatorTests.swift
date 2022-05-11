@@ -27,7 +27,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
     Storage.shared.userAttributes = ["a": "b"]
     let result = ExpressionEvaluator.evaluateExpression(
       expression: "user.a == \"b\"",
-      eventData: EventData(name: "ss", parameters: [:], createdAt: "")
+      eventData: EventData(name: "ss", parameters: [:], createdAt: Date())
     )
     XCTAssertTrue(result)
   }
@@ -36,7 +36,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
     Storage.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
       expression: "params.a == \"b\"",
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: "")
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
     XCTAssertTrue(result)
   }
@@ -45,7 +45,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
     Storage.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
       expression: "device.platform == \"iOS\"",
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: "")
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
     XCTAssertTrue(result)
   }
@@ -54,7 +54,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
     Storage.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
       expression: "device.platform == \"Android\"",
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: "")
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
     XCTAssertFalse(result)
   }

@@ -70,22 +70,22 @@ final class ConfigTypeTests: XCTestCase {
     let firstRule = trigger.rules[0]
     XCTAssertEqual(firstRule.isAssigned, false)
     XCTAssertEqual(firstRule.expression, "name == jake")
-    XCTAssertEqual(firstRule.experimentId, "2")
+    XCTAssertEqual(firstRule.experiment.id, "2")
 
-    switch firstRule.variant {
+    switch firstRule.experiment.variant.type {
     case .treatment:
       throw TestError.init("Expecting Holdout")
-    case .holdout(let holdout):
-      XCTAssertEqual(holdout.variantId, "7")
+    case .holdout:
+      XCTAssertEqual(firstRule.experiment.variant.id, "7")
     }
     let secondRule = trigger.rules[1]
 
-    switch secondRule.variant {
+    switch secondRule.experiment.variant.type {
     case .holdout:
       throw TestError.init("Expecting holdout")
-    case .treatment(let treatment):
-      XCTAssertEqual(treatment.paywallIdentifier, "omnis-id-ab")
-      XCTAssertEqual(treatment.variantId, "6")
+    case .treatment:
+      XCTAssertEqual(secondRule.experiment.variant.paywallId, "omnis-id-ab")
+      XCTAssertEqual(secondRule.experiment.variant.id, "6")
     }
   }
 }

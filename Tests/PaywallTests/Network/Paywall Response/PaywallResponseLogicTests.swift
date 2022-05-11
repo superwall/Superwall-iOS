@@ -74,137 +74,64 @@ class PaywallResponseLogicTests: XCTestCase {
     XCTAssertEqual(hash, "$called_manually_\(locale)")
   }
 
-  // MARK: - Request Hash
-  func testHandleTriggerResponse_didNotFetchConfig_defaultPaywall() {
-    // When
-    let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPresentationInfo: .defaultPaywall,
-      didFetchConfig: false
-    )
-
-    // Then
-    let expectedOutcome = TriggerResponseIdentifiers(
-      paywallId: nil,
-      experimentId: nil,
-      variantId: nil
-    )
-
-    XCTAssertEqual(outcome, expectedOutcome)
-  }
-
-  func testHandleTriggerResponse_didFetchConfig_defaultPaywall() {
-    // When
-    let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPresentationInfo: .defaultPaywall,
-      didFetchConfig: true
-    )
-
-    // Then
-    XCTAssertNil(outcome)
-  }
-
-  func testHandleTriggerResponse_didNotFetchConfig_fromIdentifier() {
-    // Given
-    let paywallId = "myid"
-
-    // When
-    let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPresentationInfo: .fromIdentifier(paywallId),
-      didFetchConfig: false
-    )
-
-    // Then
-    let expectedOutcome = TriggerResponseIdentifiers(
-      paywallId: paywallId,
-      experimentId: nil,
-      variantId: nil
-    )
-
-    XCTAssertEqual(outcome, expectedOutcome)
-  }
-
-  func testHandleTriggerResponse_didFetchConfig_fromIdentifier() {
-    // Given
-    let paywallId = "myid"
-
-    // When
-    let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPresentationInfo: .fromIdentifier(paywallId),
-      didFetchConfig: true
-    )
-
-    // Then
-    let expectedOutcome = TriggerResponseIdentifiers(
-      paywallId: paywallId,
-      experimentId: nil,
-      variantId: nil
-    )
-
-    XCTAssertEqual(outcome, expectedOutcome)
-  }
-
-  func testHandleTriggerResponse_presentV2() {
+  // MARK: - getTriggerIdentifiers
+  func testGetTriggerIdentifiers_presentPaywall() {
     // Given
     let experimentId = "expId"
     let experimentGroupId = "groupId"
     let variantId = "varId"
     let paywallId = "paywallId"
     let eventName = "opened_application"
-    let getTriggerResponse: (EventData) -> HandleEventResult = { _ in
-      return .presentTriggerPaywall(
-        experimentGroupId: experimentGroupId,
-        experimentId: experimentId,
-        variantId: variantId,
-        paywallIdentifier: paywallId
-      )
-    }
+
     let trackEvent: (Trackable) -> TrackingResult = { event in
       let triggerFire = event as! SuperwallEvent.TriggerFire
       XCTAssertEqual(triggerFire.triggerName, eventName)
 
       switch(triggerFire.triggerResult) {
-      case let .paywall(experiment, paywallIdentifier):
+      case let .paywall(experiment):
         XCTAssertEqual(experiment.id, experimentId)
-        XCTAssertEqual(experiment.variantId, variantId)
-        XCTAssertEqual(paywallIdentifier, paywallId)
+        XCTAssertEqual(experiment.variant.id, variantId)
+        XCTAssertEqual(experiment.groupId, experimentGroupId)
+        XCTAssertEqual(experiment.variant.paywallId, paywallId)
         break
       default:
         XCTFail()
       }
       return .stub()
     }
+    let experiment = Experiment(
+      id: experimentId,
+      groupId: experimentGroupId,
+      variant: .init(
+        id: variantId,
+        type: .treatment,
+        paywallId: paywallId
+      )
+    )
 
     // When
-    let outcome = try? PaywallResponseLogic.handleTriggerResponse(
-      withPresentationInfo: .explicitTrigger(.stub()),
-      didFetchConfig: true,
-      handleEvent: getTriggerResponse,
+    let outcome = try? PaywallResponseLogic.getTriggerIdentifiers(
+      forResult: .paywall(experiment: experiment),
+      eventData: .stub(),
       trackEvent: trackEvent
     )
 
     // Then
     let expectedOutcome = TriggerResponseIdentifiers(
       paywallId: paywallId,
-      experimentId: experimentId,
-      variantId: variantId
+      experiment: experiment
     )
 
     XCTAssertEqual(outcome, expectedOutcome)
   }
 
-  func testHandleTriggerResponse_holdout() {
+  func testGetTriggerIdentifiers_holdout() {
     // Given
     let experimentId = "expId"
     let experimentGroupId = "groupId"
     let variantId = "varId"
     let eventName = "opened_application"
-    let getTriggerResponse: (EventData) -> HandleEventResult = { _ in
-      return .holdout(
-        experimentGroupId: experimentGroupId,
-        experimentId: experimentId,
-        variantId: variantId
-      )
-    }
+
     let trackEvent: (Trackable) -> TrackingResult = { event in
       let triggerFire = event as! SuperwallEvent.TriggerFire
       XCTAssertEqual(triggerFire.triggerName, eventName)
@@ -212,7 +139,7 @@ class PaywallResponseLogicTests: XCTestCase {
       switch(triggerFire.triggerResult) {
       case .holdout(let experiment):
         XCTAssertEqual(experiment.id, experimentId)
-        XCTAssertEqual(experiment.variantId, variantId)
+        XCTAssertEqual(experiment.variant.id, variantId)
         break
       default:
         XCTFail()
@@ -222,10 +149,19 @@ class PaywallResponseLogicTests: XCTestCase {
 
     // When
     do {
-      _ = try PaywallResponseLogic.handleTriggerResponse(
-        withPresentationInfo: .explicitTrigger(.stub()),
-        didFetchConfig: true,
-        handleEvent: getTriggerResponse,
+      _ = try PaywallResponseLogic.getTriggerIdentifiers(
+        forResult: .holdout(
+          experiment: Experiment(
+            id: experimentId,
+            groupId: experimentGroupId,
+            variant: .init(
+              id: variantId,
+              type: .holdout,
+              paywallId: nil
+            )
+          )
+        ),
+        eventData: .stub(),
         trackEvent: trackEvent
       )
     } catch let error as NSError {
@@ -248,13 +184,9 @@ class PaywallResponseLogicTests: XCTestCase {
     }
   }
 
-  func testHandleTriggerResponse_noRuleMatch() {
+  func testGetTriggerIdentifiers_noRuleMatch() {
     // Given
     let eventName = "opened_application"
-    let getTriggerResponse: (EventData) -> HandleEventResult = { _ in
-      return .noRuleMatch
-    }
-
     let trackEvent: (Trackable) -> TrackingResult = { event in
       let triggerFire = event as! SuperwallEvent.TriggerFire
       XCTAssertEqual(triggerFire.triggerName, eventName)
@@ -270,15 +202,13 @@ class PaywallResponseLogicTests: XCTestCase {
 
     // When
     do {
-      _ = try PaywallResponseLogic.handleTriggerResponse(
-        withPresentationInfo: .explicitTrigger(.stub()),
-        didFetchConfig: true,
-        handleEvent: getTriggerResponse,
+      _ = try PaywallResponseLogic.getTriggerIdentifiers(
+        forResult: .noRuleMatch,
+        eventData: .stub(),
         trackEvent: trackEvent
       )
     } catch let error as NSError {
       // Then
-
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(
           "No rule match",
@@ -295,12 +225,8 @@ class PaywallResponseLogicTests: XCTestCase {
     }
   }
 
-  func testHandleTriggerResponse_unknownEvent() {
+  func testGetTriggerIdentifiers_unknownEvent() {
     // Given
-    let getTriggerResponse: (EventData) -> HandleEventResult = { _ in
-      return .unknownEvent
-    }
-    
     let trackEvent: (Trackable) -> TrackingResult = { event in
       XCTFail()
       return .stub()
@@ -308,10 +234,9 @@ class PaywallResponseLogicTests: XCTestCase {
 
     // When
     do {
-      _ = try PaywallResponseLogic.handleTriggerResponse(
-        withPresentationInfo: .explicitTrigger(.stub()),
-        didFetchConfig: true,
-        handleEvent: getTriggerResponse,
+      _ = try PaywallResponseLogic.getTriggerIdentifiers(
+        forResult: .unknownEvent,
+        eventData: .stub(),
         trackEvent: trackEvent
       )
     } catch let error as NSError {
@@ -336,11 +261,18 @@ class PaywallResponseLogicTests: XCTestCase {
   func testSearchForPaywallResponse_cachedResultSuccess() {
     // Given
     let hash = "hash"
-    let experimentId = "experimentId"
-    let variantId = "variantId"
+
+    let experiment = Experiment(
+      id: "experimentId",
+      groupId: "groupId",
+      variant: .init(
+        id: "variantId",
+        type: .holdout,
+        paywallId: nil
+      )
+    )
     let paywallResponse: PaywallResponse = .stub()
-      .setting(\.experimentId, to: experimentId)
-      .setting(\.variantId, to: variantId)
+
     let results: [String: Result<PaywallResponse, NSError>] = [
       hash: .success(paywallResponse)
     ]
@@ -348,8 +280,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let triggerVariantId = "triggerVariantId"
     let triggerIdentifiers = TriggerResponseIdentifiers(
       paywallId: "yo",
-      experimentId: triggerExperimentId,
-      variantId: triggerVariantId
+      experiment: experiment
     )
 
     // When
@@ -368,8 +299,7 @@ class PaywallResponseLogicTests: XCTestCase {
     }
     switch result {
     case .success(let response):
-      XCTAssertEqual(response.variantId, triggerVariantId)
-      XCTAssertEqual(response.experimentId, triggerExperimentId)
+      XCTAssertEqual(response.experiment, experiment)
     case .failure:
       XCTFail()
     }

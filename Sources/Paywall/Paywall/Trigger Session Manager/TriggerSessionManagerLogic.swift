@@ -18,7 +18,8 @@ enum TriggerSessionManagerLogic {
   static func outcome(
     presentationInfo: PresentationInfo,
     presentingViewController: UIViewController?,
-    paywallResponse: PaywallResponse?
+    paywallResponse: PaywallResponse?,
+    triggers: [String: Trigger] = Storage.shared.triggers
   ) -> Outcome? {
     let presentationOutcome: TriggerSession.PresentationOutcome
     let trigger: TriggerSession.Trigger
@@ -34,45 +35,60 @@ enum TriggerSessionManagerLogic {
     switch presentationInfo {
     case let .implicitTrigger(eventData),
       let .explicitTrigger(eventData):
-      let outcome = TriggerManager.handleEvent(eventData)
+      
+      let outcome = TriggerLogic.outcome(
+        forEvent: eventData,
+        triggers: triggers
+      ).result
       switch outcome {
       case .unknownEvent:
         // Error
         return nil
-      case let .holdout(groupId, experimentId, variantId):
+      case let .holdout(experiment):
         presentationOutcome = .holdout
         trigger = TriggerSession.Trigger(
-          eventData: eventData,
+          eventId: eventData.id,
+          eventName: eventData.name,
+          eventParameters: eventData.parameters,
+          eventCreatedAt: eventData.createdAt,
           type: presentationInfo.triggerType,
           presentedOn: nil,
-          experiment: TriggerSession.Trigger.Experiment(
-            id: experimentId,
-            groupId: groupId,
-            variant: TriggerSession.Trigger.Experiment.Variant(
-              id: variantId,
-              type: .holdout
+          experiment: Experiment(
+            id: experiment.id,
+            groupId: experiment.groupId,
+            variant: Experiment.Variant(
+              id: experiment.variant.id,
+              type: .holdout,
+              paywallId: nil
             )
           )
         )
       case .noRuleMatch:
         presentationOutcome = .noRuleMatch
         trigger = TriggerSession.Trigger(
-          eventData: eventData,
+          eventId: eventData.id,
+          eventName: eventData.name,
+          eventParameters: eventData.parameters,
+          eventCreatedAt: eventData.createdAt,
           type: presentationInfo.triggerType,
           presentedOn: nil
         )
-      case let .presentTriggerPaywall(groupId, experimentId, variantId, _):
+      case let .paywall(experiment):
         presentationOutcome = .paywall
         trigger = TriggerSession.Trigger(
-          eventData: eventData,
+          eventId: eventData.id,
+          eventName: eventData.name,
+          eventParameters: eventData.parameters,
+          eventCreatedAt: eventData.createdAt,
           type: presentationInfo.triggerType,
           presentedOn: presentedOn,
-          experiment: TriggerSession.Trigger.Experiment(
-            id: experimentId,
-            groupId: groupId,
-            variant: TriggerSession.Trigger.Experiment.Variant(
-              id: variantId,
-              type: .treatment
+          experiment: Experiment(
+            id: experiment.id,
+            groupId: experiment.groupId,
+            variant: Experiment.Variant(
+              id: experiment.variant.id,
+              type: .treatment,
+              paywallId: nil
             )
           )
         )
@@ -82,7 +98,10 @@ enum TriggerSessionManagerLogic {
       presentationOutcome = .paywall
       let eventData = Paywall.track(SuperwallEvent.ManualPresent()).data
       trigger = TriggerSession.Trigger(
-        eventData: eventData,
+        eventId: eventData.id,
+        eventName: eventData.name,
+        eventParameters: eventData.parameters,
+        eventCreatedAt: eventData.createdAt,
         type: presentationInfo.triggerType,
         presentedOn: presentedOn
       )
@@ -127,5 +146,27 @@ enum TriggerSessionManagerLogic {
     } else {
       return .subscriptionStart
     }
+  }
+
+  static func createPendingTriggerSession(
+    configRequestId: String,
+    userAttributes: [String: Any],
+    isSubscribed: Bool,
+    eventName: String,
+    products: [SWProduct],
+    appSession: AppSession
+  ) -> TriggerSession {
+    return TriggerSession(
+      configRequestId: configRequestId,
+      userAttributes: JSON(userAttributes),
+      isSubscribed: isSubscribed,
+      trigger: TriggerSession.Trigger(
+        eventName: eventName
+      ),
+      products: TriggerSession.Products(
+        allProducts: products
+      ),
+      appSession: appSession
+    )
   }
 }

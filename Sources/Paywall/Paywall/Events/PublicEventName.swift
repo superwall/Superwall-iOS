@@ -41,7 +41,7 @@ public extension Paywall {
     case paywallProductsLoadFail = "paywallProductsLoad_fail"
     case paywallProductsLoadComplete = "paywallProductsLoad_complete"
 
-    var canImplicitlyTriggerPaywall: Bool {
+    internal var canImplicitlyTriggerPaywall: Bool {
       switch self {
       case .appInstall,
         .sessionStart,

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct VariantHoldout: Decodable, Hashable {
+public struct VariantHoldout: Decodable, Hashable {
   var variantId: String
 }
 

@@ -225,6 +225,7 @@ public final class Paywall: NSObject {
       switch result {
       case .success(let config):
         Storage.shared.addConfig(config, withRequestId: requestId)
+        TriggerSessionManager.shared.createSessions(from: config)
         self?.didFetchConfig = true
         config.cache()
         self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleImplicitTrigger(forEvent: $0) }

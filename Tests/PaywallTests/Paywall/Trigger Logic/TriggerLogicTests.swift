@@ -14,16 +14,18 @@ class TriggerLogicTests: XCTestCase {
     // V2 Trigger
     let eventName = "opened_application"
     let variantId = "7"
-    let variant = Variant.holdout(
-      VariantHoldout(variantId: variantId)
-    )
     let triggerRule = TriggerRule(
-      experimentGroupId: "1",
-      experimentId: "2",
+      experiment: Experiment(
+        id: "1",
+        groupId: "2",
+        variant: .init(
+          id: variantId,
+          type: .holdout,
+          paywallId: nil
+        )
+      ),
       expression: "name == jake",
-      isAssigned: false,
-      variant: variant,
-      variantId: variantId
+      isAssigned: false
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -34,7 +36,7 @@ class TriggerLogicTests: XCTestCase {
     let eventData = EventData(
       name: eventName,
       parameters: [:],
-      createdAt: "2022-03-09T11:45:38.016Z"
+      createdAt: Date()
     )
 
     // Triggers
@@ -47,22 +49,16 @@ class TriggerLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case let .holdout(
-      experimentGroupId: outputExperimentGroupId,
-      experimentId: outputExperimentId,
-      variantId: outputVariantId
-    ) = outcome.result else {
+    guard case let .holdout(experiment) = outcome.result else {
       return XCTFail("Incorrect outcome. Expected a holdout")
     }
 
-    XCTAssertEqual(outputExperimentGroupId, triggerRule.experimentGroupId)
-    XCTAssertEqual(outputExperimentId, triggerRule.experimentId)
-    XCTAssertEqual(outputVariantId, variantId)
+    XCTAssertEqual(experiment, triggerRule.experiment)
 
     let expectedConfirmableAssignments = ConfirmableAssignments(
       assignments: [
         Assignment(
-          experimentId: triggerRule.experimentId,
+          experimentId: triggerRule.experiment.id,
           variantId: variantId
         )
       ]
@@ -79,19 +75,18 @@ class TriggerLogicTests: XCTestCase {
     let experimentId = "2"
     let experimentGroupId = "1"
     let paywallId = "omnis-id-ab"
-    let variant = Variant.treatment(
-      VariantTreatment(
-        variantId: variantId,
-        paywallIdentifier: paywallId
-      )
-    )
     let triggerRule = TriggerRule(
-      experimentGroupId: experimentGroupId,
-      experimentId: experimentId,
+      experiment: Experiment(
+        id: experimentId,
+        groupId: experimentGroupId,
+        variant: .init(
+          id: variantId,
+          type: .treatment,
+          paywallId: paywallId
+        )
+      ),
       expression: nil,
-      isAssigned: false,
-      variant: variant,
-      variantId: variantId
+      isAssigned: false
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -102,7 +97,7 @@ class TriggerLogicTests: XCTestCase {
     let eventData = EventData(
       name: eventName,
       parameters: [:],
-      createdAt: "2022-03-09T11:45:38.016Z"
+      createdAt: Date()
     )
 
     // Triggers
@@ -115,23 +110,18 @@ class TriggerLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case let .presentTriggerPaywall(
-      experimentGroupId: outputExperimentGroupId,
-      experimentId: outputExperimentId,
-      variantId: outputVariantId,
-      paywallIdentifier: outputPaywallId
-    ) = outcome.result else {
+    guard case let .paywall(experiment) = outcome.result else {
       return XCTFail("Incorrect outcome. Expected presentTriggerPaywall")
     }
-    XCTAssertEqual(outputExperimentGroupId, experimentGroupId)
-    XCTAssertEqual(outputPaywallId, paywallId)
-    XCTAssertEqual(outputExperimentId, experimentId)
-    XCTAssertEqual(outputVariantId, variantId)
+    XCTAssertEqual(experiment.groupId, experimentGroupId)
+    XCTAssertEqual(experiment.variant.paywallId, paywallId)
+    XCTAssertEqual(experiment.id, experimentId)
+    XCTAssertEqual(experiment.variant.id, variantId)
 
     let expectedConfirmableAssignments = ConfirmableAssignments(
       assignments: [
         Assignment(
-          experimentId: triggerRule.experimentId,
+          experimentId: triggerRule.experiment.id,
           variantId: variantId
         )
       ]
@@ -148,20 +138,20 @@ class TriggerLogicTests: XCTestCase {
     let variantId = "6"
     let experimentId = "2"
     let paywallId = "omnis-id-ab"
-    let variant = Variant.treatment(
-      VariantTreatment(
-        variantId: variantId,
-        paywallIdentifier: paywallId
-      )
-    )
     let triggerRule = TriggerRule(
-      experimentGroupId: "1",
-      experimentId: experimentId,
+      experiment: Experiment(
+        id: experimentId,
+        groupId: "1",
+        variant: .init(
+          id: variantId,
+          type: .treatment,
+          paywallId: paywallId
+        )
+      ),
       expression: "params.a == c",
-      isAssigned: false,
-      variant: variant,
-      variantId: variantId
+      isAssigned: false
     )
+
     let v2Trigger = Trigger(
       eventName: eventName,
       rules: [triggerRule]
@@ -171,7 +161,7 @@ class TriggerLogicTests: XCTestCase {
     let eventData = EventData(
       name: eventName,
       parameters: ["a": "b"],
-      createdAt: "2022-03-09T11:45:38.016Z"
+      createdAt: Date()
     )
 
     // Triggers
@@ -200,19 +190,18 @@ class TriggerLogicTests: XCTestCase {
     let experimentId = "2"
     let experimentGroupId = "1"
     let paywallId = "omnis-id-ab"
-    let variant = Variant.treatment(
-      VariantTreatment(
-        variantId: variantId,
-        paywallIdentifier: paywallId
-      )
-    )
     let triggerRule = TriggerRule(
-      experimentGroupId: experimentGroupId,
-      experimentId: experimentId,
+      experiment: Experiment(
+        id: experimentId,
+        groupId: experimentGroupId,
+        variant: .init(
+          id: variantId,
+          type: .treatment,
+          paywallId: paywallId
+        )
+      ),
       expression: nil,
-      isAssigned: false,
-      variant: variant,
-      variantId: variantId
+      isAssigned: false
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -223,7 +212,7 @@ class TriggerLogicTests: XCTestCase {
     let eventData = EventData(
       name: "other event",
       parameters: [:],
-      createdAt: "2022-03-09T11:45:38.016Z"
+      createdAt: Date()
     )
 
     // Triggers

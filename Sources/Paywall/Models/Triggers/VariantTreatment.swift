@@ -7,16 +7,14 @@
 
 import Foundation
 
-struct VariantTreatment: Decodable, Hashable {
-  var variantId: String
+public struct VariantTreatment: Decodable, Hashable {
   var paywallIdentifier: String
 }
 
 extension VariantTreatment: Stubbable {
   static func stub() -> VariantTreatment {
     return VariantTreatment(
-      variantId: "1",
-      paywallIdentifier: "2"
+      paywallIdentifier: "1"
     )
   }
 }

@@ -56,6 +56,19 @@ final class SessionEventsQueue {
     }
   }
 
+  func enqueue(_ triggerSessions: [TriggerSession]) {
+    serialQueue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      self.triggerSessions += triggerSessions
+
+      for session in triggerSessions {
+        self.lastTwentySessions.enqueue(session)
+      }
+    }
+  }
+
   @objc private func flush() {
     serialQueue.async {
       self.flushInternal()

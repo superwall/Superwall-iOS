@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// This represents the possibilty of a trigger being fired.
 struct TriggerSession: Codable {
   /// Trigger session ID
   var id = UUID().uuidString
@@ -23,12 +24,15 @@ struct TriggerSession: Codable {
   /// The most on device user attributes
   var userAttributes: JSON?
 
+  /// Indicates whether the user has an active subscription or not.
+  var isSubscribed: Bool
+
   enum PresentationOutcome: String, Codable {
     case paywall = "PAYWALL"
     case holdout = "HOLDOUT"
     case noRuleMatch = "NO_RULE_MATCH"
   }
-  let presentationOutcome: PresentationOutcome
+  var presentationOutcome: PresentationOutcome?
 
   /// Info about the trigger for the trigger session
   var trigger: Trigger
@@ -51,14 +55,16 @@ struct TriggerSession: Codable {
     case endAt = "trigger_session_end_ts"
     case presentationOutcome = "trigger_session_presentation_outcome"
     case userAttributes = "user_attributes"
+    case isSubscribed = "user_is_subscribed"
   }
 
   init(
     configRequestId: String,
     userAttributes: JSON?,
-    presentationOutcome: PresentationOutcome,
+    isSubscribed: Bool,
+    presentationOutcome: PresentationOutcome? = nil,
     trigger: Trigger,
-    paywall: Paywall?,
+    paywall: Paywall? = nil,
     products: Products,
     appSession: AppSession
   ) {
@@ -69,6 +75,7 @@ struct TriggerSession: Codable {
     self.paywall = paywall
     self.products = products
     self.appSession = appSession
+    self.isSubscribed = isSubscribed
   }
 
   init(from decoder: Decoder) throws {
@@ -78,7 +85,8 @@ struct TriggerSession: Codable {
     startAt = try values.decode(Date.self, forKey: .startAt)
     endAt = try values.decodeIfPresent(Date.self, forKey: .endAt)
     userAttributes = try values.decodeIfPresent(JSON.self, forKey: .userAttributes)
-    presentationOutcome = try values.decode(PresentationOutcome.self, forKey: .presentationOutcome)
+    presentationOutcome = try values.decodeIfPresent(PresentationOutcome.self, forKey: .presentationOutcome)
+    isSubscribed = try values.decode(Bool.self, forKey: .isSubscribed)
 
     trigger = try Trigger(from: decoder)
     paywall = try? Paywall(from: decoder)
@@ -92,9 +100,10 @@ struct TriggerSession: Codable {
     try container.encode(id, forKey: .id)
     try container.encode(configRequestId, forKey: .configRequestId)
     try container.encode(startAt, forKey: .startAt)
+    try container.encode(isSubscribed, forKey: .isSubscribed)
     try container.encodeIfPresent(endAt, forKey: .endAt)
     try container.encodeIfPresent(userAttributes, forKey: .userAttributes)
-    try container.encode(presentationOutcome, forKey: .presentationOutcome)
+    try container.encodeIfPresent(presentationOutcome, forKey: .presentationOutcome)
 
     try trigger.encode(to: encoder)
     try paywall?.encode(to: encoder)
