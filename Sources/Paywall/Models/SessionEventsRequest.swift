@@ -9,7 +9,5 @@ import Foundation
 
 struct SessionEventsRequest: Encodable {
   var triggerSessions: [TriggerSession]
-  //var appSessions: [JSON]
-  //var transactions: [JSON]
+  // var transactions: [JSON]
 }
-

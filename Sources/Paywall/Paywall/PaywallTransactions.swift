@@ -157,11 +157,10 @@ extension Paywall {
 				self.paywallViewController?.presentAlert(
           title: "Please try again",
           message: error?.localizedDescription ?? "",
-          actionTitle: "Restore Purchase",
-          action: {
-            Paywall.shared.tryToRestore(paywallViewController)
-          }
-        )
+          actionTitle: "Restore Purchase"
+        ) {
+          Paywall.shared.tryToRestore(paywallViewController)
+        }
       } else {
         Paywall.shared.tryToRestore(paywallViewController)
         self.didTryToAutoRestore = true

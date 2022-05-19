@@ -251,7 +251,7 @@ final class SWDebugViewController: UIViewController {
           error: error
         )
       }
-		}
+    }
 	}
 
   func addPaywallPreview() {

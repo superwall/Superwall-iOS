@@ -206,7 +206,7 @@ public final class Paywall: NSObject {
       appUserId: userId,
       apiKey: apiKey
     )
-    
+
     // Initialise trigger session manager on main thread
     _ = TriggerSessionManager.shared
 

@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
+// swiftlint:disable line_length
 
 import UIKit
 import WebKit
@@ -107,7 +108,7 @@ final class WebEventHandler: WebEventDelegate {
     }
 
     if delegate?.isPreloading == false {
-      TriggerSessionManager.shared.trackWebViewLoad(state: .end)
+      TriggerSessionManager.shared.trackWebviewLoad(state: .end)
     }
 
     let params = paywallResponse.getBase64EventsString(

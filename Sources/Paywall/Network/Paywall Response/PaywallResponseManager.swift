@@ -28,7 +28,7 @@ final class PaywallResponseManager: NSObject {
       var triggerIdentifiers: TriggerResponseIdentifiers?
 
       if let eventData = eventData,
-         Paywall.shared.didFetchConfig {
+        Paywall.shared.didFetchConfig {
         let triggerOutcome = TriggerLogic.outcome(
           forEvent: eventData,
           triggers: Storage.shared.triggers
@@ -38,7 +38,7 @@ final class PaywallResponseManager: NSObject {
         if let confirmableAssignments = triggerOutcome.confirmableAssignments {
           Network.shared.confirmAssignments(confirmableAssignments)
         }
-        
+
         triggerIdentifiers = try PaywallResponseLogic.getTriggerIdentifiers(
           forResult: triggerOutcome.result,
           eventData: eventData

@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Contains information about the presentation of a paywall.
 enum PresentationInfo {
   case implicitTrigger(EventData)
   case explicitTrigger(EventData)
@@ -53,7 +54,6 @@ enum PresentationInfo {
     }
   }
 
-  // TODO: CHECK THAT THIS IS CORRECT FOR IDENTIFIER/DEFAULT PAYWALL
   var triggerType: TriggerSession.Trigger.TriggerType {
     switch self {
     case .implicitTrigger:

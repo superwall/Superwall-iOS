@@ -4,13 +4,14 @@
 //
 //  Created by Yusuf Tör on 11/05/2022.
 //
+// swiftlint:disable all
 
 import XCTest
 import StoreKit
 @testable import Paywall
 
 final class TriggerSessionManagerLogicTests: XCTestCase {
-  // MARK: - outcome
+  // MARK: - Outcome
   func testTrigger_unknownEvent() {
     let eventData = EventData(
       name: "fakeevent",
@@ -27,7 +28,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertNil(outcome)
   }
 
-  func testTrigger_holdout_noPresentingViewController_noPaywallResponse() {
+  func testTrigger_holdout_noPaywallResponse() {
     let experiment = Experiment(
       id: "1",
       groupId: "2",
@@ -50,10 +51,11 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       parameters: [:],
       createdAt: Date()
     )
+    let viewController = SWDebugViewController()
 
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .explicitTrigger(eventData),
-      presentingViewController: nil,
+      presentingViewController: viewController,
       paywallResponse: nil,
       triggers: triggers
     )
@@ -66,7 +68,217 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventData.createdAt)
     XCTAssertEqual(outcome?.trigger.type, .explicit)
     XCTAssertNil(outcome?.trigger.presentedOn)
-    XCTAssertEqual(outcome?.trigger.experiment?.id, rule.experiment.id)
+    XCTAssertEqual(outcome?.trigger.experiment, rule.experiment)
+    XCTAssertNil(outcome?.paywall)
+  }
+
+  // Only need to test this paywall response once.
+  func testPaywallResponse() {
+    let experiment = Experiment(
+      id: "1",
+      groupId: "2",
+      variant: .init(
+        id: "3",
+        type: .holdout,
+        paywallId: nil
+      )
+    )
+    let time = Date()
+    let rule: TriggerRule = .stub()
+      .setting(\.experiment, to: experiment)
+    let eventName = "MyTrigger"
+    let trigger = Trigger(
+      eventName: eventName,
+      rules: [rule]
+    )
+    let triggers = [eventName: trigger]
+    let eventData = EventData(
+      name: eventName,
+      parameters: [:],
+      createdAt: Date()
+    )
+    let paywallId = "abc"
+    let paywallResponse: PaywallResponse = .stub()
+      .setting(\.id, to: paywallId)
+      .setting(\.responseLoadStartTime, to: time)
+      .setting(\.responseLoadCompleteTime, to: time)
+      .setting(\.webViewLoadStartTime, to: time)
+      .setting(\.webViewLoadCompleteTime, to: time)
+
+
+    let outcome = TriggerSessionManagerLogic.outcome(
+      presentationInfo: .explicitTrigger(eventData),
+      presentingViewController: nil,
+      paywallResponse: paywallResponse,
+      triggers: triggers
+    )
+
+    XCTAssertEqual(outcome?.presentationOutcome, .holdout)
+
+    XCTAssertEqual(outcome?.trigger.eventId, eventData.id)
+    XCTAssertEqual(outcome?.trigger.eventName, eventData.name)
+    XCTAssertEqual(outcome?.trigger.eventParameters, eventData.parameters)
+    XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventData.createdAt)
+    XCTAssertEqual(outcome?.trigger.type, .explicit)
+    XCTAssertNil(outcome?.trigger.presentedOn)
+    XCTAssertEqual(outcome?.trigger.experiment, rule.experiment)
+    XCTAssertEqual(outcome?.paywall?.databaseId, paywallResponse.id)
+    XCTAssertEqual(outcome?.paywall?.substitutionPrefix, paywallResponse.templateSubstitutionsPrefix.prefix)
+    XCTAssertEqual(outcome?.paywall?.responseLoading.startAt, paywallResponse.responseLoadStartTime)
+    XCTAssertEqual(outcome?.paywall?.responseLoading.endAt, paywallResponse.responseLoadCompleteTime)
+    XCTAssertEqual(outcome?.paywall?.webviewLoading.startAt, paywallResponse.webViewLoadStartTime)
+    XCTAssertEqual(outcome?.paywall?.webviewLoading.endAt, paywallResponse.webViewLoadCompleteTime)
+  }
+
+  func testTrigger_noRuleMatch_noPaywallResponse() {
+    let experiment = Experiment(
+      id: "1",
+      groupId: "2",
+      variant: .init(
+        id: "3",
+        type: .holdout,
+        paywallId: nil
+      )
+    )
+    let rule: TriggerRule = .stub()
+      .setting(\.experiment, to: experiment)
+      .setting(\.expression, to: "")
+    let eventName = "MyTrigger"
+    let trigger = Trigger(
+      eventName: eventName,
+      rules: [rule]
+    )
+    let triggers = [eventName: trigger]
+    let eventData = EventData(
+      name: eventName,
+      parameters: [:],
+      createdAt: Date()
+    )
+
+    let outcome = TriggerSessionManagerLogic.outcome(
+      presentationInfo: .explicitTrigger(eventData),
+      presentingViewController: nil,
+      paywallResponse: nil,
+      triggers: triggers
+    )
+
+    XCTAssertEqual(outcome?.presentationOutcome, .noRuleMatch)
+
+    XCTAssertEqual(outcome?.trigger.eventId, eventData.id)
+    XCTAssertEqual(outcome?.trigger.eventName, eventData.name)
+    XCTAssertEqual(outcome?.trigger.eventParameters, eventData.parameters)
+    XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventData.createdAt)
+    XCTAssertEqual(outcome?.trigger.type, .explicit)
+    XCTAssertNil(outcome?.trigger.presentedOn)
+    XCTAssertNil(outcome?.trigger.experiment)
+    XCTAssertNil(outcome?.paywall)
+  }
+
+  func testTrigger_Paywall_noPaywallResponse() {
+    let experiment = Experiment(
+      id: "1",
+      groupId: "2",
+      variant: .init(
+        id: "3",
+        type: .treatment,
+        paywallId: nil
+      )
+    )
+    let rule: TriggerRule = .stub()
+      .setting(\.experiment, to: experiment)
+    let eventName = "MyTrigger"
+    let trigger = Trigger(
+      eventName: eventName,
+      rules: [rule]
+    )
+    let triggers = [eventName: trigger]
+    let eventData = EventData(
+      name: eventName,
+      parameters: [:],
+      createdAt: Date()
+    )
+    let viewController = SWDebugViewController()
+    let outcome = TriggerSessionManagerLogic.outcome(
+      presentationInfo: .explicitTrigger(eventData),
+      presentingViewController: viewController,
+      paywallResponse: nil,
+      triggers: triggers
+    )
+
+    XCTAssertEqual(outcome?.presentationOutcome, .paywall)
+
+    XCTAssertEqual(outcome?.trigger.eventId, eventData.id)
+    XCTAssertEqual(outcome?.trigger.eventName, eventData.name)
+    XCTAssertEqual(outcome?.trigger.eventParameters, eventData.parameters)
+    XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventData.createdAt)
+    XCTAssertEqual(outcome?.trigger.type, .explicit)
+    XCTAssertEqual(outcome?.trigger.presentedOn, "SWDebugViewController")
+    XCTAssertEqual(outcome?.trigger.experiment, rule.experiment)
+    XCTAssertNil(outcome?.paywall)
+  }
+
+  func testDefaultPaywall_noPaywallResponse() {
+    let eventName = "eventName"
+    let eventId = "eventId"
+    let eventCreatedAt = Date()
+
+    let trackEvent: (Trackable) -> TrackingResult = { event in
+      return .stub()
+        .setting(\.data.name, to: eventName)
+        .setting(\.data.id, to: eventId)
+        .setting(\.data.createdAt, to: eventCreatedAt)
+    }
+
+    let viewController = SWDebugViewController()
+    let outcome = TriggerSessionManagerLogic.outcome(
+      presentationInfo: .defaultPaywall,
+      presentingViewController: viewController,
+      paywallResponse: nil,
+      triggers: [:],
+      trackEvent: trackEvent
+    )
+
+    XCTAssertEqual(outcome?.presentationOutcome, .paywall)
+
+    XCTAssertEqual(outcome?.trigger.eventId, eventId)
+    XCTAssertEqual(outcome?.trigger.eventName, eventName)
+    XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventCreatedAt)
+    XCTAssertEqual(outcome?.trigger.type, .explicit)
+    XCTAssertEqual(outcome?.trigger.presentedOn, "SWDebugViewController")
+    XCTAssertNil(outcome?.trigger.experiment)
+    XCTAssertNil(outcome?.paywall)
+  }
+
+  func testIdentifierPaywall_noPaywallResponse() {
+    let eventName = "eventName"
+    let eventId = "eventId"
+    let eventCreatedAt = Date()
+
+    let trackEvent: (Trackable) -> TrackingResult = { event in
+      return .stub()
+        .setting(\.data.name, to: eventName)
+        .setting(\.data.id, to: eventId)
+        .setting(\.data.createdAt, to: eventCreatedAt)
+    }
+
+    let viewController = SWDebugViewController()
+    let outcome = TriggerSessionManagerLogic.outcome(
+      presentationInfo: .fromIdentifier("identifier"),
+      presentingViewController: viewController,
+      paywallResponse: nil,
+      triggers: [:],
+      trackEvent: trackEvent
+    )
+
+    XCTAssertEqual(outcome?.presentationOutcome, .paywall)
+
+    XCTAssertEqual(outcome?.trigger.eventId, eventId)
+    XCTAssertEqual(outcome?.trigger.eventName, eventName)
+    XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventCreatedAt)
+    XCTAssertEqual(outcome?.trigger.type, .explicit)
+    XCTAssertEqual(outcome?.trigger.presentedOn, "SWDebugViewController")
+    XCTAssertNil(outcome?.trigger.experiment)
+    XCTAssertNil(outcome?.paywall)
   }
 
   // MARK: - getTransactionOutcome

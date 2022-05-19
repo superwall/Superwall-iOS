@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 27/04/2022.
 //
+// swiftlint:disable nesting
 
 import Foundation
 
@@ -25,12 +26,12 @@ extension TriggerSession {
       /// When a user purchased a product.
       var convertedAt: Date?
     }
-    
+
     /// Timestamps to do with paywall actions
     var action = Action()
 
     /// Loading info of the paywall webview.
-    var webViewLoading: LoadingInfo
+    var webviewLoading: LoadingInfo
 
     /// Loading info of the paywall response.
     var responseLoading: LoadingInfo
@@ -38,12 +39,12 @@ extension TriggerSession {
     init(
       databaseId: String,
       substitutionPrefix: String?,
-      webViewLoading: LoadingInfo,
+      webviewLoading: LoadingInfo,
       responseLoading: LoadingInfo
     ) {
       self.databaseId = databaseId
       self.substitutionPrefix = substitutionPrefix
-      self.webViewLoading = webViewLoading
+      self.webviewLoading = webviewLoading
       self.responseLoading = responseLoading
     }
 
@@ -61,10 +62,10 @@ extension TriggerSession {
         convertedAt: convertedAt
       )
 
-      let webStartAt = try values.decodeIfPresent(Date.self, forKey: .webViewLoadStartAt)
-      let webEndAt = try values.decodeIfPresent(Date.self, forKey: .webViewLoadEndAt)
-      let webFailAt = try values.decodeIfPresent(Date.self, forKey: .webViewLoadFailAt)
-      webViewLoading = LoadingInfo(
+      let webStartAt = try values.decodeIfPresent(Date.self, forKey: .webviewLoadStartAt)
+      let webEndAt = try values.decodeIfPresent(Date.self, forKey: .webviewLoadEndAt)
+      let webFailAt = try values.decodeIfPresent(Date.self, forKey: .webviewLoadFailAt)
+      webviewLoading = LoadingInfo(
         startAt: webStartAt,
         endAt: webEndAt,
         failAt: webFailAt
@@ -93,9 +94,9 @@ extension TriggerSession {
       case responseLoadEndAt = "paywall_response_load_end_ts"
       case responseLoadFailAt = "paywall_response_load_fail_ts"
 
-      case webViewLoadStartAt = "paywall_webview_load_start_ts"
-      case webViewLoadEndAt = "paywall_webview_load_end_ts"
-      case webViewLoadFailAt = "paywall_webview_load_fail_ts"
+      case webviewLoadStartAt = "paywall_webview_load_start_ts"
+      case webviewLoadEndAt = "paywall_webview_load_end_ts"
+      case webviewLoadFailAt = "paywall_webview_load_fail_ts"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -108,9 +109,9 @@ extension TriggerSession {
       try container.encodeIfPresent(action.closeAt, forKey: .paywallClosed)
       try container.encodeIfPresent(action.convertedAt, forKey: .paywallConverted)
 
-      try container.encodeIfPresent(webViewLoading.startAt, forKey: .webViewLoadStartAt)
-      try container.encodeIfPresent(webViewLoading.endAt, forKey: .webViewLoadEndAt)
-      try container.encodeIfPresent(webViewLoading.failAt, forKey: .webViewLoadFailAt)
+      try container.encodeIfPresent(webviewLoading.startAt, forKey: .webviewLoadStartAt)
+      try container.encodeIfPresent(webviewLoading.endAt, forKey: .webviewLoadEndAt)
+      try container.encodeIfPresent(webviewLoading.failAt, forKey: .webviewLoadFailAt)
 
       try container.encodeIfPresent(responseLoading.startAt, forKey: .responseLoadStartAt)
       try container.encodeIfPresent(responseLoading.endAt, forKey: .responseLoadEndAt)

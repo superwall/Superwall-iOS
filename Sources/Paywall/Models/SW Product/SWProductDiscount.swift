@@ -15,7 +15,7 @@ struct SWProductDiscount: Codable {
     case unknown
   }
 
-  enum DiscountType: String, Codable {
+  enum DiscountType: String, Codable, Equatable {
     case introductory
     case subscription
     case unknown

@@ -8,7 +8,7 @@
 import Foundation
 
 struct TrackingResult {
-  let data: EventData
+  var data: EventData
   let parameters: TrackingParameters
 }
 extension TrackingResult: Stubbable {

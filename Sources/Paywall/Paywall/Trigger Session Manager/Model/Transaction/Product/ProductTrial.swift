@@ -4,12 +4,13 @@
 //
 //  Created by Yusuf Tör on 03/05/2022.
 //
+// swiftlint:disable nesting
 
 import Foundation
 
 
 extension TriggerSession.Transaction.Product {
-  struct Trial: Codable {
+  struct Trial: Codable, Equatable {
     /// Info about the period of the product
     let period: Period?
 

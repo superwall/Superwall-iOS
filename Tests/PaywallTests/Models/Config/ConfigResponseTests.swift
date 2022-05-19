@@ -47,7 +47,7 @@ let response = #"""
       "locale": "en_US"
     }]
   },
-  "app_session_timeout_ms": 36000000,
+  "app_session_timeout_ms": 3600000,
   "tests": {
     "dns_resolution": []
   }

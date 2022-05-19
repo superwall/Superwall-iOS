@@ -8,7 +8,7 @@
 import Foundation
 
 extension TriggerSession {
-  struct Transaction: Codable {
+  struct Transaction: Codable, Equatable {
     /// The id of the transaction
     var id: String?
 
@@ -26,7 +26,7 @@ extension TriggerSession {
     /// The outcome of the transaction
     var outcome: Outcome?
 
-    struct Count: Codable {
+    struct Count: Codable, Equatable {
       var start: Int = 0
       var complete: Int = 0
       var fail: Int = 0

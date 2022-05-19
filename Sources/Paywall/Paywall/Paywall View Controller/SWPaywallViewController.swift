@@ -448,7 +448,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     }
 
     if !self.isPreloading {
-      TriggerSessionManager.shared.trackWebViewLoad(state: .start)
+      TriggerSessionManager.shared.trackWebviewLoad(state: .start)
     }
 
     loadingState = .loadingResponse
@@ -644,13 +644,12 @@ extension SWPaywallViewController {
         title: "Almost Done...",
         message: "Set Paywall.delegate to handle purchases, restores and more!",
         actionTitle: "Docs →",
-        closeActionTitle: "Done",
-        action: {
-          if let url = URL(string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate") {
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
-          }
+        closeActionTitle: "Done"
+      ) {
+        if let url = URL(string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate") {
+          UIApplication.shared.open(url, options: [:], completionHandler: nil)
         }
-      )
+      }
 		}
 	}
 }

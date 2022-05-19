@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 29/04/2022.
 //
+// swiftlint:disable function_body_length
 
 import UIKit
 import StoreKit
@@ -19,7 +20,8 @@ enum TriggerSessionManagerLogic {
     presentationInfo: PresentationInfo,
     presentingViewController: UIViewController?,
     paywallResponse: PaywallResponse?,
-    triggers: [String: Trigger] = Storage.shared.triggers
+    triggers: [String: Trigger] = Storage.shared.triggers,
+    trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) -> Outcome? {
     let presentationOutcome: TriggerSession.PresentationOutcome
     let trigger: TriggerSession.Trigger
@@ -35,7 +37,6 @@ enum TriggerSessionManagerLogic {
     switch presentationInfo {
     case let .implicitTrigger(eventData),
       let .explicitTrigger(eventData):
-      
       let outcome = TriggerLogic.outcome(
         forEvent: eventData,
         triggers: triggers
@@ -53,15 +54,7 @@ enum TriggerSessionManagerLogic {
           eventCreatedAt: eventData.createdAt,
           type: presentationInfo.triggerType,
           presentedOn: nil,
-          experiment: Experiment(
-            id: experiment.id,
-            groupId: experiment.groupId,
-            variant: Experiment.Variant(
-              id: experiment.variant.id,
-              type: .holdout,
-              paywallId: nil
-            )
-          )
+          experiment: experiment
         )
       case .noRuleMatch:
         presentationOutcome = .noRuleMatch
@@ -82,21 +75,13 @@ enum TriggerSessionManagerLogic {
           eventCreatedAt: eventData.createdAt,
           type: presentationInfo.triggerType,
           presentedOn: presentedOn,
-          experiment: Experiment(
-            id: experiment.id,
-            groupId: experiment.groupId,
-            variant: Experiment.Variant(
-              id: experiment.variant.id,
-              type: .treatment,
-              paywallId: nil
-            )
-          )
+          experiment: experiment
         )
       }
     case .fromIdentifier,
       .defaultPaywall:
       presentationOutcome = .paywall
-      let eventData = Paywall.track(SuperwallEvent.ManualPresent()).data
+      let eventData = trackEvent(SuperwallEvent.ManualPresent()).data
       trigger = TriggerSession.Trigger(
         eventId: eventData.id,
         eventName: eventData.name,
@@ -113,7 +98,7 @@ enum TriggerSessionManagerLogic {
       paywall = TriggerSession.Paywall(
         databaseId: paywallInfo.id,
         substitutionPrefix: paywallResponse.templateSubstitutionsPrefix.prefix,
-        webViewLoading: .init(
+        webviewLoading: .init(
           startAt: paywallResponse.webViewLoadStartTime,
           endAt: paywallResponse.webViewLoadCompleteTime,
           failAt: paywallResponse.webViewLoadFailTime

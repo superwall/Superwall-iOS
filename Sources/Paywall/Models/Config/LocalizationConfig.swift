@@ -14,3 +14,11 @@ struct LocalizationConfig: Decodable {
 
   var locales: [LocaleConfig]
 }
+
+extension LocalizationConfig: Stubbable {
+  static func stub() -> LocalizationConfig {
+    return LocalizationConfig(
+      locales: [LocaleConfig(locale: "en_US")]
+    )
+  }
+}

@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 27/04/2022.
 //
+// swiftlint:disable nesting
 
 import Foundation
 
@@ -39,7 +40,7 @@ extension TriggerSession {
       let endAt = try values.decodeIfPresent(Date.self, forKey: .loadEndAt)
       let failAt = try values.decodeIfPresent(Date.self, forKey: .loadFail)
 
-      if startAt != nil || endAt != nil  || failAt != nil {
+      if startAt != nil || endAt != nil || failAt != nil {
         loadingInfo = LoadingInfo(
           startAt: startAt,
           endAt: endAt,

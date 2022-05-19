@@ -88,3 +88,16 @@ struct Config: Decodable {
     }
   }
 }
+
+extension Config: Stubbable {
+  static func stub() -> Config {
+    return Config(
+      triggers: [.stub()],
+      paywalls: [.stub()],
+      logLevel: 0,
+      postback: .stub(),
+      localization: .stub(),
+      appSessionTimeout: 3600000
+    )
+  }
+}

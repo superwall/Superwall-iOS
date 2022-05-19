@@ -16,7 +16,7 @@ struct TriggerSession: Codable {
   let configRequestId: String
 
   /// The start time of the trigger session
-  var startAt: Date = Date()
+  var startAt = Date()
 
   ///  The end time of the trigger session
   var endAt: Date?

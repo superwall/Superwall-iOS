@@ -44,7 +44,6 @@ enum PaywallResponseLogic {
     return "\(id)_\(locale)"
   }
 
-  // swiftlint:disable:next function_body_length
   static func getTriggerIdentifiers(
     forResult triggerResult: TriggerResult,
     eventData: EventData,

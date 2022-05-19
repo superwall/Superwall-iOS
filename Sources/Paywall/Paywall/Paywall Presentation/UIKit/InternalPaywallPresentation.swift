@@ -124,21 +124,17 @@ extension Paywall {
               logLevel: .info,
               scope: .paywallPresentation,
               message: "Paywall Already Presented",
-              info: debugInfo,
-              error: nil
+              info: debugInfo
             )
           }
         }
       case .failure(let error):
-        // TODO: CREATE TRIGGER SESSION FOR HOLDOUT HERE
         let nsError = error as NSError
         if nsError.code == 4000 || nsError.code == 4001 {
           // NoRuleMatch or Holdout, sending ended session.
           TriggerSessionManager.shared.activateSession(
             for: presentationInfo,
-            on: presentingViewController,
-            paywallResponse: nil,
-            immediatelyEndSession: true
+            on: presentingViewController
           )
         }
 

@@ -64,7 +64,7 @@ extension URLSession {
           if let id = response.allHeaderFields["x-request-id"] as? String {
             requestId = id
           }
-          
+
           if response.statusCode == 401 {
             Logger.debug(
               logLevel: .error,

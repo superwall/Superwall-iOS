@@ -9,7 +9,7 @@ import Foundation
 import StoreKit
 
 extension TriggerSession.Transaction {
-  struct Product: Codable {
+  struct Product: Codable, Equatable {
     /// The index of the product, primary = 0, secondary = 1, tertiary = 2.
     let index: Int
 
@@ -34,7 +34,7 @@ extension TriggerSession.Transaction {
     /// The trial product, if it exists
     var trial: Trial?
 
-    struct Discount {
+    struct Discount: Equatable {
       let priceDescription: String
 
       /// Equivalent to SKProductDiscount.Type

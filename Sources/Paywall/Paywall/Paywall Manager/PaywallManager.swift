@@ -20,7 +20,7 @@ final class PaywallManager {
     return Set<SWPaywallViewController>(cache.viewControllers)
   }
   private var cache = PaywallCache()
-  
+
   private init() {}
 
 	func removePaywall(withIdentifier identifier: String?) {

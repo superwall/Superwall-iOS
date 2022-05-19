@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 03/03/2022.
 //
+// swiftlint:disable implicitly_unwrapped_optional
 
 import Foundation
 import WebKit
@@ -119,7 +120,7 @@ extension SWWebView: WKNavigationDelegate {
     delegate?.paywallResponse.webViewLoadFailTime = Date()
 
     if delegate?.isPreloading == false {
-      TriggerSessionManager.shared.trackWebViewLoad(state: .fail)
+      TriggerSessionManager.shared.trackWebviewLoad(state: .fail)
     }
 
     guard let paywallInfo = delegate?.paywallInfo else {

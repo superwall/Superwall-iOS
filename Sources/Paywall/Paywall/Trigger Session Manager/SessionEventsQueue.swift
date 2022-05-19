@@ -10,7 +10,7 @@ import UIKit
 /// Sends n analytical events to the Superwall servers every 20 seconds, where n is defined by `maxEventCount`.
 ///
 /// **Note**: this currently has a limit of 500 events per flush.
-final class SessionEventsQueue {
+class SessionEventsQueue {
   private let serialQueue = DispatchQueue(label: "me.superwall.sessionEventQueue")
   private let maxEventCount = 50
   private var triggerSessions: [TriggerSession] = []

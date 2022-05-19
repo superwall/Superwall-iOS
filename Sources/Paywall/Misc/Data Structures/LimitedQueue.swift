@@ -13,7 +13,7 @@ import Foundation
   New elements are added to the end of the queue. Dequeuing pulls elements from
   the front of the queue.
 
- Enqueuing and dequeuing are O(1) operations.
+  Enqueuing and dequeuing are O(1) operations.
 */
 struct LimitedQueue<T> {
   /// The queue that we add our elements to.

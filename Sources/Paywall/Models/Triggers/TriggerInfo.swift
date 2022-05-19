@@ -23,7 +23,7 @@ public struct Experiment: Equatable, Hashable, Codable {
     /// The type of variant: holdout or treatment.
     public let type: VariantType
 
-    /// The id of the paywall variant. Only valid when the variant `type` is `treatment`.
+    /// The identifier of the paywall variant. Only valid when the variant `type` is `treatment`.
     public let paywallId: String?
   }
   /// The id of the experiment.
@@ -40,6 +40,7 @@ public struct Experiment: Equatable, Hashable, Codable {
     case groupId = "trigger_experiment_group_id"
     case variantId = "variant_id"
     case variantType = "variant_type"
+    case paywallId = "paywall_identifier"
   }
 
   init(
@@ -59,12 +60,12 @@ public struct Experiment: Equatable, Hashable, Codable {
 
     let id = try values.decode(String.self, forKey: .variantId)
     let type = try values.decode(Variant.VariantType.self, forKey: .variantType)
+    let paywallId = try values.decode(String.self, forKey: .paywallId)
 
-    // Ignore paywall id, that's set elsewhere within the Trigger struct
     variant = Variant(
       id: id,
       type: type,
-      paywallId: nil
+      paywallId: paywallId
     )
   }
 
@@ -74,6 +75,7 @@ public struct Experiment: Equatable, Hashable, Codable {
     try container.encode(groupId, forKey: .groupId)
     try container.encode(variant.id, forKey: .variantId)
     try container.encode(variant.type, forKey: .variantType)
+    try container.encodeIfPresent(variant.paywallId, forKey: .paywallId)
   }
 }
 

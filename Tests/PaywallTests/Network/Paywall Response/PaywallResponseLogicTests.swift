@@ -276,8 +276,6 @@ class PaywallResponseLogicTests: XCTestCase {
     let results: [String: Result<PaywallResponse, NSError>] = [
       hash: .success(paywallResponse)
     ]
-    let triggerExperimentId = "triggerExperimentId"
-    let triggerVariantId = "triggerVariantId"
     let triggerIdentifiers = TriggerResponseIdentifiers(
       paywallId: "yo",
       experiment: experiment

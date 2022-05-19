@@ -7,12 +7,12 @@
 
 import Foundation
 
-struct AppSession: Codable {
+struct AppSession: Codable, Equatable {
   /// The ID of the session.
-  let id: String = UUID().uuidString
+  let id = UUID().uuidString
 
   /// When the app session started.
-  var startAt: Date = Date()
+  var startAt = Date()
 
   /// When the app session ended.
   var endAt: Date?
@@ -28,5 +28,11 @@ struct AppSession: Codable {
     try container.encode(id, forKey: .id)
     try container.encode(startAt, forKey: .startAt)
     try container.encodeIfPresent(endAt, forKey: .endAt)
+  }
+}
+
+extension AppSession: Stubbable {
+  static func stub() -> AppSession {
+    return AppSession()
   }
 }

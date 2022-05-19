@@ -34,3 +34,16 @@ struct PostbackRequest: Codable {
     return products.filter { $0.isiOS }
   }
 }
+
+extension PostbackRequest: Stubbable {
+  static func stub() -> PostbackRequest {
+    return PostbackRequest(
+      products: [
+        PostbackProductIdentifier(
+          identifier: "123",
+          platform: "ios"
+        )
+      ]
+    )
+  }
+}

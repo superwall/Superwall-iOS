@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 29/04/2022.
 //
+// swiftlint:disable type_body_length file_length
 
 import UIKit
 import StoreKit
@@ -13,7 +14,7 @@ final class TriggerSessionManager {
   static let shared = TriggerSessionManager()
 
   /// A queue of trigger session events that get sent to the server.
-  private let queue = SessionEventsQueue()
+  private let queue: SessionEventsQueue
 
   /// The list of all potential trigger sessions, keyed by the trigger event name, created after receiving the config.
   private var pendingTriggerSessions: [String: TriggerSession] = [:]
@@ -30,7 +31,9 @@ final class TriggerSessionManager {
     case fail
   }
 
-  private init() {
+  /// Only instantiate this if you're testing. Otherwise use `TriggerSessionManager.shared`
+  init(queue: SessionEventsQueue = SessionEventsQueue()) {
+    self.queue = queue
     postCachedTriggerSessions()
     addObservers()
   }
@@ -66,17 +69,13 @@ final class TriggerSessionManager {
 
   // MARK: - App Lifecycle
 
-  /* Context for how to end a paywall session
-   *     1. on app close, add paywall_session to QUEUE and treat app close as paywall session end
-   *     2. on paywall close, regardless of what paywall_session_end_at is currently set at, update it to the paywall close time
-   *     3. TODO: be sure to test what happens during a transaction, as app leaves foreground in that scenario
-   */
 
+  // TODO: be sure to test what happens during a transaction, as app leaves foreground in that scenario
   @objc private func applicationDidEnterBackground() {
     activeTriggerSession?.endAt = Date()
     enqueueCurrentTriggerSession()
   }
-  // TODO: Trigger session updates need to fire once after all relevant updates completed
+
   @objc private func applicationWillEnterForeground() {
     activeTriggerSession?.id = UUID().uuidString
     activeTriggerSession?.endAt = nil
@@ -116,11 +115,17 @@ final class TriggerSessionManager {
     enqueuePendingTriggerSessions()
   }
 
+  /// Active a pending trigger session.
+  ///
+  /// - Parameters:
+  ///   - presentationInfo: Information about the paywall presentation.
+  ///   - presentingViewController: What view the paywall will be presented on, if any.
+  ///   - paywallResponse: The response from the server associated with the paywall
   func activateSession(
     for presentationInfo: PresentationInfo,
-    on presentingViewController: UIViewController?,
+    on presentingViewController: UIViewController? = nil,
     paywallResponse: PaywallResponse? = nil,
-    immediatelyEndSession: Bool = false
+    triggers: [String: Trigger] = Storage.shared.triggers
   ) {
     guard let eventName = presentationInfo.eventName else {
       // The paywall is being presented by identifier and that's not supported.
@@ -132,7 +137,8 @@ final class TriggerSessionManager {
     guard let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: presentationInfo,
       presentingViewController: presentingViewController,
-      paywallResponse: paywallResponse
+      paywallResponse: paywallResponse,
+      triggers: triggers
     ) else {
       return
     }
@@ -155,14 +161,16 @@ final class TriggerSessionManager {
     self.activeTriggerSession = session
     pendingTriggerSessions[eventName] = nil
 
-    if immediatelyEndSession {
+    switch outcome.presentationOutcome {
+    case .holdout,
+      .noRuleMatch:
       endSession()
-    } else {
+    case .paywall:
       enqueueCurrentTriggerSession()
     }
   }
 
-  /// Ends the session and resets it to nil
+  /// Ends the active trigger session and resets it to `nil`.
   func endSession() {
     guard var currentTriggerSession = activeTriggerSession else {
       return
@@ -186,7 +194,7 @@ final class TriggerSessionManager {
 
     // Reset state of current trigger session
     transactionCount = nil
-    self.activeTriggerSession = nil
+    activeTriggerSession = nil
   }
 
   /// Queues the trigger session to be sent back to the server.
@@ -200,34 +208,33 @@ final class TriggerSessionManager {
 
   /// Queues all the pending trigger sessions to be sent back to the server.
   private func enqueuePendingTriggerSessions() {
-    var triggerSessionArray: [TriggerSession] = []
-
     for eventName in pendingTriggerSessions.keys {
       guard var pendingTriggerSession = pendingTriggerSessions[eventName] else {
         continue
       }
       pendingTriggerSession.isSubscribed = Paywall.delegate?.isUserSubscribed() ?? false
-
-      triggerSessionArray.append(pendingTriggerSession)
       pendingTriggerSessions[eventName] = pendingTriggerSession
     }
 
     let triggerSessionsArray = Array(pendingTriggerSessions.values)
     queue.enqueue(triggerSessionsArray)
   }
-  
+
   // MARK: - App Session
 
   /// Adds the latest app session to the trigger
-  func updateAppSession() {
-    activeTriggerSession?.appSession = AppSessionManager.shared.appSession
+  func updateAppSession(
+    _ appSession: AppSession = AppSessionManager.shared.appSession
+  ) {
+    activeTriggerSession?.appSession = appSession
 
     for eventName in pendingTriggerSessions.keys {
       var pendingTriggerSession = pendingTriggerSessions[eventName]
-      pendingTriggerSession?.appSession = AppSessionManager.shared.appSession
+      pendingTriggerSession?.appSession = appSession
       pendingTriggerSessions[eventName] = pendingTriggerSession
     }
 
+    enqueuePendingTriggerSessions()
     enqueueCurrentTriggerSession()
   }
 
@@ -245,25 +252,25 @@ final class TriggerSessionManager {
     endSession()
   }
 
-  // MARK: - WebView Load
+  // MARK: - Webview Load
 
   /// Tracks when a webview started to load
-  func trackWebViewLoad(state: LoadState) {
+  func trackWebviewLoad(state: LoadState) {
     switch state {
     case .start:
       activeTriggerSession?
         .paywall?
-        .webViewLoading
+        .webviewLoading
         .startAt = Date()
     case .end:
       activeTriggerSession?
         .paywall?
-        .webViewLoading
+        .webviewLoading
         .endAt = Date()
     case .fail:
       activeTriggerSession?
         .paywall?
-        .webViewLoading
+        .webviewLoading
         .failAt = Date()
     }
 
@@ -327,15 +334,18 @@ final class TriggerSessionManager {
 
   // MARK: - Transactions
 
-  func trackBeginTransaction(of product: SKProduct) {
-    // Need a local transaction count, per trigger session.
+  func trackBeginTransaction(
+    of product: SKProduct,
+    allProducts: [SWProduct] = StoreKitManager.shared.swProducts
+  ) {
+    // Determine local transaction count, per trigger session.
     if transactionCount != nil {
       transactionCount?.start += 1
     } else {
       transactionCount = .init(start: 1)
     }
 
-    let productIndex = StoreKitManager.shared.swProducts.firstIndex {
+    let productIndex = allProducts.firstIndex {
       $0.productIdentifier == product.productIdentifier
     } ?? 0
     activeTriggerSession?.transaction = .init(
@@ -363,6 +373,9 @@ final class TriggerSessionManager {
       .status = .fail
 
     enqueueCurrentTriggerSession()
+
+    activeTriggerSession?
+      .transaction = nil
   }
 
   /// When a transaction has been abandoned.
@@ -382,13 +395,17 @@ final class TriggerSessionManager {
       .endAt = Date()
 
     enqueueCurrentTriggerSession()
+
+    activeTriggerSession?
+      .transaction = nil
   }
 
-  /// When a transaction is restored. A restore could have been triggered without any other transaction occurring.
+  /// When a transaction is restored. A restore is triggered without any other transaction occurring.
   func trackTransactionRestoration(
     withId id: String?,
     product: SKProduct,
-    isFreeTrialAvailable: Bool
+    isFreeTrialAvailable: Bool,
+    allProducts: [SWProduct] = StoreKitManager.shared.swProducts
   ) {
     if transactionCount != nil {
       transactionCount?.restore += 1
@@ -397,32 +414,33 @@ final class TriggerSessionManager {
     }
 
     var transaction: TriggerSession.Transaction
-    if var existingTransaction = activeTriggerSession?.transaction {
-      existingTransaction.status = .complete
-      existingTransaction.endAt = Date()
-      transaction = existingTransaction
-    } else {
-      let transactionOutcome = TriggerSessionManagerLogic.getTransactionOutcome(
-        for: product,
-        isFreeTrialAvailable: isFreeTrialAvailable
-      )
-      let productIndex = StoreKitManager.shared.swProducts.firstIndex {
-        $0.productIdentifier == product.productIdentifier
-      } ?? 0
-      transaction = .init(
-        id: id,
-        startAt: Date(),
-        endAt: Date(),
-        outcome: transactionOutcome,
-        count: transactionCount,
-        status: .complete,
-        product: .init(from: product, index: productIndex)
-      )
-    }
+
+    // TODO: If the free trial is available, what happens in a transaction restoration? Can you restore a free trial?
+    // TODO: Or if it's not available, but on another device there was a free trial, what happens?
+    let transactionOutcome = TriggerSessionManagerLogic.getTransactionOutcome(
+      for: product,
+      isFreeTrialAvailable: isFreeTrialAvailable
+    )
+    let productIndex = allProducts.firstIndex {
+      $0.productIdentifier == product.productIdentifier
+    } ?? 0
+    transaction = .init(
+      id: id,
+      startAt: Date(),
+      endAt: Date(),
+      outcome: transactionOutcome,
+      count: transactionCount,
+      status: .complete,
+      product: .init(from: product, index: productIndex)
+    )
+
     activeTriggerSession?
       .transaction = transaction
 
     enqueueCurrentTriggerSession()
+
+    activeTriggerSession?
+      .transaction = nil
   }
 
   func trackDeferredTransaction() {
@@ -440,6 +458,9 @@ final class TriggerSessionManager {
       .transaction?
       .endAt = Date()
     enqueueCurrentTriggerSession()
+
+    activeTriggerSession?
+      .transaction = nil
   }
 
   func trackTransactionSucceeded(
@@ -470,21 +491,17 @@ final class TriggerSessionManager {
       .action
       .convertedAt = Date()
 
-    if product.subscriptionPeriod == nil {
-      activeTriggerSession?
-        .transaction?
-        .outcome = .nonRecurringProductPurchase
-    }
+    let transactionOutcome = TriggerSessionManagerLogic.getTransactionOutcome(
+      for: product,
+      isFreeTrialAvailable: isFreeTrialAvailable
+    )
+    activeTriggerSession?
+      .transaction?
+      .outcome = transactionOutcome
 
-    if isFreeTrialAvailable {
-      activeTriggerSession?
-        .transaction?
-        .outcome = .trialStart
-    } else {
-      activeTriggerSession?
-        .transaction?
-        .outcome = .subscriptionStart
-    }
     enqueueCurrentTriggerSession()
+
+    activeTriggerSession?
+      .transaction = nil
   }
 }
