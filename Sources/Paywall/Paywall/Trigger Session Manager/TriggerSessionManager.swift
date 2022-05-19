@@ -415,12 +415,6 @@ final class TriggerSessionManager {
 
     var transaction: TriggerSession.Transaction
 
-    // TODO: If the free trial is available, what happens in a transaction restoration? Can you restore a free trial?
-    // TODO: Or if it's not available, but on another device there was a free trial, what happens?
-    let transactionOutcome = TriggerSessionManagerLogic.getTransactionOutcome(
-      for: product,
-      isFreeTrialAvailable: isFreeTrialAvailable
-    )
     let productIndex = allProducts.firstIndex {
       $0.productIdentifier == product.productIdentifier
     } ?? 0
@@ -428,7 +422,6 @@ final class TriggerSessionManager {
       id: id,
       startAt: Date(),
       endAt: Date(),
-      outcome: transactionOutcome,
       count: transactionCount,
       status: .complete,
       product: .init(from: product, index: productIndex)
