@@ -614,7 +614,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     )
     XCTAssertEqual(queue.triggerSessions.last!.transaction?.status, .complete)
     XCTAssertEqual(queue.triggerSessions.last!.transaction?.count, expectedTransactionCount)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.outcome, .nonRecurringProductPurchase)
+    XCTAssertNil(queue.triggerSessions.last!.transaction?.outcome)
     XCTAssertEqual(queue.triggerSessions.last!.transaction?.product, .init(from: primaryProduct, index: 0))
   }
 
@@ -654,7 +654,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     )
     XCTAssertEqual(queue.triggerSessions.last!.transaction?.status, .complete)
     XCTAssertEqual(queue.triggerSessions.last!.transaction?.count, expectedTransactionCount)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.outcome, .nonRecurringProductPurchase)
+    XCTAssertNil(queue.triggerSessions.last!.transaction?.outcome)
     XCTAssertEqual(queue.triggerSessions.last!.transaction?.product, .init(from: primaryProduct, index: 0))
   }
 
