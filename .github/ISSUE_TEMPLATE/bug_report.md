@@ -12,7 +12,6 @@ assignees: ''
 - [ ] I have searched [existing issues](https://github.com/superwall-me/paywall-ios/issues) and this is not a duplicate
 - [ ] I have attempted to reproduce the issue and include an example project.
 
-
 ### General information
 
 - `Paywall` version:
