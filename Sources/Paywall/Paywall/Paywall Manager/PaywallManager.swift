@@ -48,14 +48,10 @@ final class PaywallManager {
   ///   - completion: A completion block called with the resulting paywall view controller.
 	func getPaywallViewController(
     _ presentationInfo: PresentationInfo,
-    isPreloading: Bool,
     cached: Bool,
     completion: ((Result<SWPaywallViewController, NSError>) -> Void)? = nil
   ) {
-    PaywallResponseManager.shared.getResponse(
-      presentationInfo,
-      isPreloading: isPreloading
-    ) { [weak self] result in
+    PaywallResponseManager.shared.getResponse(presentationInfo) { [weak self] result in
       guard let self = self else {
         return
       }
@@ -70,7 +66,6 @@ final class PaywallManager {
 
         let paywallViewController = SWPaywallViewController(
           paywallResponse: response,
-          isPreloading: isPreloading,
           delegate: Paywall.shared
         )
 

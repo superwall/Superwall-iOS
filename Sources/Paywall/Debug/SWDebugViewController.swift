@@ -220,10 +220,7 @@ final class SWDebugViewController: UIViewController {
       return
     }
 
-    PaywallResponseManager.shared.getResponse(
-      .fromIdentifier(paywallId),
-      isPreloading: false
-    ) { [weak self] result in
+    PaywallResponseManager.shared.getResponse(.fromIdentifier(paywallId)) { [weak self] result in
       guard let self = self else {
         return
       }
@@ -259,10 +256,7 @@ final class SWDebugViewController: UIViewController {
       return
     }
 
-    let child = SWPaywallViewController(
-      paywallResponse: paywallResponse,
-      isPreloading: false
-    )
+    let child = SWPaywallViewController(paywallResponse: paywallResponse)
     addChild(child)
     previewContainerView.insertSubview(child.view, at: 0)
     previewViewContent = child.view

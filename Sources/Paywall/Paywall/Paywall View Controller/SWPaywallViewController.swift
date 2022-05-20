@@ -33,7 +33,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	var dismissalCompletion: PaywallDismissalCompletionBlock?
 	var isPresented = false
 	var calledDismiss = false
-  var isPreloading: Bool
   var paywallResponse: PaywallResponse
   var presentationInfo: PresentationInfo?
   var calledByIdentifier = false
@@ -122,12 +121,10 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	init(
     paywallResponse: PaywallResponse,
-    isPreloading: Bool,
     delegate: SWPaywallViewControllerDelegate? = nil
   ) {
 		self.delegate = delegate
     self.paywallResponse = paywallResponse
-    self.isPreloading = isPreloading
     super.init(nibName: nil, bundle: nil)
     configureUI()
     loadPaywallWebpage()
@@ -447,9 +444,10 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       paywallResponse.webViewLoadStartTime = Date()
     }
 
-    if !self.isPreloading {
-      TriggerSessionManager.shared.trackWebviewLoad(state: .start)
-    }
+    TriggerSessionManager.shared.trackWebviewLoad(
+      forPaywallId: paywallInfo.id,
+      state: .start
+    )
 
     loadingState = .loadingResponse
   }
@@ -587,8 +585,7 @@ extension SWPaywallViewController {
     shouldCallCompletion: Bool = true,
     completion: (() -> Void)? = nil
   ) {
-		calledDismiss = true
-		Paywall.delegate?.willDismissPaywall?()
+    prepareToDismiss()
 		dismiss(animated: Paywall.shouldAnimatePaywallDismissal) { [weak self] in
       self?.didDismiss(
         dismissalResult,
@@ -597,6 +594,11 @@ extension SWPaywallViewController {
       )
 		}
 	}
+
+  private func prepareToDismiss() {
+    calledDismiss = true
+    Paywall.delegate?.willDismissPaywall?()
+  }
 
 	func didDismiss(
     _ dismissalResult: PaywallDismissalResult,
@@ -644,12 +646,13 @@ extension SWPaywallViewController {
         title: "Almost Done...",
         message: "Set Paywall.delegate to handle purchases, restores and more!",
         actionTitle: "Docs →",
-        closeActionTitle: "Done"
-      ) {
-        if let url = URL(string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate") {
-          UIApplication.shared.open(url, options: [:], completionHandler: nil)
+        closeActionTitle: "Done",
+        onCancel:  {
+          if let url = URL(string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate") {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+          }
         }
-      }
+      )
 		}
 	}
 }
@@ -693,7 +696,6 @@ extension SWPaywallViewController: Stubbable {
   static func stub() -> SWPaywallViewController {
     return SWPaywallViewController(
       paywallResponse: .stub(),
-      isPreloading: false,
       delegate: nil
     )
   }

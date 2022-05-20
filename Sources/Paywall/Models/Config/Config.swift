@@ -42,7 +42,6 @@ struct Config: Decodable {
       // cache the view controller
       PaywallManager.shared.getPaywallViewController(
         .fromIdentifier(paywall.identifier),
-        isPreloading: true,
         cached: true
       )
     }
@@ -55,7 +54,6 @@ struct Config: Decodable {
     for identifier in triggerPaywallIdentifiers {
       PaywallManager.shared.getPaywallViewController(
         .fromIdentifier(identifier),
-        isPreloading: true,
         cached: true
       )
     }
@@ -65,7 +63,6 @@ struct Config: Decodable {
   private func preloadDefaultPaywall() {
     PaywallManager.shared.getPaywallViewController(
       .defaultPaywall,
-      isPreloading: true,
       cached: true
     )
   }

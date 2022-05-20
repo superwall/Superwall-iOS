@@ -144,7 +144,7 @@ final class TriggerSessionManagerTests: XCTestCase {
       for: .explicitTrigger(eventData),
       triggers: triggers
     )
-    print(queue.triggerSessions)
+    
     XCTAssertEqual(queue.triggerSessions.count, 3)
     XCTAssertNotNil(queue.triggerSessions.last!.endAt)
     XCTAssertEqual(queue.triggerSessions.last!.presentationOutcome, .holdout)
@@ -168,7 +168,7 @@ final class TriggerSessionManagerTests: XCTestCase {
       for: .explicitTrigger(eventData),
       triggers: [eventName: trigger]
     )
-    print(queue.triggerSessions)
+
     XCTAssertEqual(queue.triggerSessions.count, 3)
     XCTAssertNotNil(queue.triggerSessions.last!.endAt)
     XCTAssertEqual(queue.triggerSessions.last!.presentationOutcome, .noRuleMatch)

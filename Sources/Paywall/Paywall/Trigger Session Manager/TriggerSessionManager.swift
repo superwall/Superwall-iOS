@@ -69,7 +69,6 @@ final class TriggerSessionManager {
 
   // MARK: - App Lifecycle
 
-
   // TODO: be sure to test what happens during a transaction, as app leaves foreground in that scenario
   @objc private func applicationDidEnterBackground() {
     activeTriggerSession?.endAt = Date()
@@ -254,8 +253,16 @@ final class TriggerSessionManager {
 
   // MARK: - Webview Load
 
-  /// Tracks when a webview started to load
-  func trackWebviewLoad(state: LoadState) {
+  /// Tracks when a webview started to load.
+  func trackWebviewLoad(
+    forPaywallId paywallId: String,
+    state: LoadState
+  ) {
+    // Check the webview that's loading is for the active trigger session paywall.
+    // Without this check preloading paywalls could intefere.
+    guard paywallId == activeTriggerSession?.paywall?.databaseId else {
+      return
+    }
     switch state {
     case .start:
       activeTriggerSession?
@@ -279,7 +286,25 @@ final class TriggerSessionManager {
 
   // MARK: - Paywall Response Load
 
-  func trackPaywallResponseLoad(state: LoadState) {
+  /// Tracks when a paywall started to load.
+  func trackPaywallResponseLoad(
+    forPaywallId paywallId: String?,
+    state: LoadState
+  ) {
+    if paywallId == nil {
+      // If there isn't a paywallId, it means it's started loading the default paywall.
+      // The only way we can check that is via checking the eventName.
+      let eventName = SuperwallEvent.ManualPresent().rawName
+      guard activeTriggerSession?.trigger.eventName == eventName else {
+        return
+      }
+    } else {
+      // Otherwise, we check against the databaseId of the paywall
+      guard paywallId == activeTriggerSession?.paywall?.databaseId else {
+        return
+      }
+    }
+    
     switch state {
     case .start:
       activeTriggerSession?
@@ -303,7 +328,14 @@ final class TriggerSessionManager {
 
   // MARK: - Products
 
-  func trackProductsLoad(state: LoadState) {
+  /// Tracks when products started to load.
+  func trackProductsLoad(
+    forPaywallId paywallId: String,
+    state: LoadState
+  ) {
+    guard paywallId == activeTriggerSession?.paywall?.databaseId else {
+      return
+    }
     switch state {
     case .start:
       activeTriggerSession?

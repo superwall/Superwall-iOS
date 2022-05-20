@@ -119,13 +119,14 @@ extension SWWebView: WKNavigationDelegate {
   func trackPaywallError() {
     delegate?.paywallResponse.webViewLoadFailTime = Date()
 
-    if delegate?.isPreloading == false {
-      TriggerSessionManager.shared.trackWebviewLoad(state: .fail)
-    }
-
     guard let paywallInfo = delegate?.paywallInfo else {
       return
     }
+
+    TriggerSessionManager.shared.trackWebviewLoad(
+      forPaywallId: paywallInfo.id,
+      state: .fail
+    )
 
     let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
       state: .fail,

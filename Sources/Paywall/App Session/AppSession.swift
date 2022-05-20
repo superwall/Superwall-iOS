@@ -31,6 +31,7 @@ struct AppSession: Codable, Equatable {
   }
 }
 
+// MARK: - Stubbable
 extension AppSession: Stubbable {
   static func stub() -> AppSession {
     return AppSession()

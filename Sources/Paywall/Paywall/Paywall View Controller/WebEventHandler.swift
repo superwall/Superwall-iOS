@@ -15,7 +15,6 @@ protocol WebEventHandlerDelegate: AnyObject {
   var webView: SWWebView { get }
   var loadingState: PaywallLoadingState { get set }
   var isPresentedViewController: Bool { get }
-  var isPreloading: Bool { get }
 
   func eventDidOccur(_ paywallPresentationResult: PaywallPresentationResult)
   func presentSafari(_ url: URL)
@@ -104,10 +103,11 @@ final class WebEventHandler: WebEventDelegate {
         paywallInfo: paywallInfo
       )
       Paywall.track(trackedEvent)
-    }
 
-    if delegate?.isPreloading == false {
-      TriggerSessionManager.shared.trackWebviewLoad(state: .end)
+      TriggerSessionManager.shared.trackWebviewLoad(
+        forPaywallId: paywallInfo.id,
+        state: .end
+      )
     }
 
     let params = paywallResponse.getBase64EventsString(

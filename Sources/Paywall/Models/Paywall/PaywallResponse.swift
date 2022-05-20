@@ -103,7 +103,6 @@ struct PaywallResponse: Decodable {
 
   var templateSubstitutionsPrefix: TemplateSubstitutionsPrefix {
     let isFreeTrialAvailable = isFreeTrialAvailable ?? false
-    // TODO: Jake decide if we should send `freeTrial` or `null`
     return TemplateSubstitutionsPrefix(
       eventName: "template_substitutions_prefix",
       prefix: isFreeTrialAvailable ? "freeTrial" : nil

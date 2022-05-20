@@ -48,7 +48,7 @@ enum PaywallResponseLogic {
     forResult triggerResult: TriggerResult,
     eventData: EventData,
     trackEvent: (Trackable) -> TrackingResult = Paywall.track
-  ) throws -> TriggerResponseIdentifiers? {
+  ) throws -> TriggerResponseIdentifiers {
     switch triggerResult {
     case .unknownEvent:
       break

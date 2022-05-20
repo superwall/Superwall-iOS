@@ -184,7 +184,6 @@ public final class Paywall: NSObject {
 	@objc public static func load(identifier: String) {
 		PaywallManager.shared.getPaywallViewController(
       .fromIdentifier(identifier),
-      isPreloading: true,
       cached: true,
       completion: nil
     )
@@ -207,8 +206,9 @@ public final class Paywall: NSObject {
       apiKey: apiKey
     )
 
-    // Initialise trigger session manager on main thread
+    // Initialise trigger session and app session manager on main thread
     _ = TriggerSessionManager.shared
+    _ = AppSessionManager.shared
 
     if delegate != nil {
       Self.delegate = delegate

@@ -51,7 +51,6 @@ extension Paywall {
 
     PaywallManager.shared.getPaywallViewController(
       presentationInfo,
-      isPreloading: false,
       cached: cached && !SWDebugManager.shared.isDebuggerLaunched
     ) { result in
       // if there's a paywall being presented, don't do anything
