@@ -246,7 +246,8 @@ final class TriggerSessionManagerTests: XCTestCase {
   func testUpdateAppSession() {
     let appSession: AppSession = AppSession()
 
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     XCTAssertEqual(queue.triggerSessions.count, 3)
     XCTAssertNotEqual(queue.triggerSessions[0].appSession, appSession)
@@ -294,7 +295,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertNotNil(queue.triggerSessions.first!.paywall?.action.closeAt)
   }
 
-  private func activateSession() {
+  private func activateSession(withPaywallId paywallId: String = "123") {
     let eventName = "MyTrigger"
     let config = createConfig(forEventName: eventName)
     sessionManager.createSessions(from: config)
@@ -306,6 +307,7 @@ final class TriggerSessionManagerTests: XCTestCase {
       variantType: .treatment
     )
     let paywallResponse: PaywallResponse = .stub()
+      .setting(\.id, to: paywallId)
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       paywallResponse: paywallResponse,
@@ -316,13 +318,17 @@ final class TriggerSessionManagerTests: XCTestCase {
   // MARK: - Webview Load
   func testWebviewLoad_start() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     XCTAssertNil(queue.triggerSessions.last!.paywall?.webviewLoading.startAt)
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.trackWebviewLoad(state: .start)
+    sessionManager.trackWebviewLoad(
+      forPaywallId: paywallId,
+      state: .start
+    )
 
     // Then
     XCTAssertEqual(queue.triggerSessions.count, 1)
@@ -331,13 +337,17 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testWebviewLoad_end() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     XCTAssertNil(queue.triggerSessions.last!.paywall?.webviewLoading.endAt)
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.trackWebviewLoad(state: .end)
+    sessionManager.trackWebviewLoad(
+      forPaywallId: paywallId,
+      state: .end
+    )
 
     // Then
     XCTAssertEqual(queue.triggerSessions.count, 1)
@@ -346,13 +356,17 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testWebviewLoad_fail() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     XCTAssertNil(queue.triggerSessions.last!.paywall?.webviewLoading.failAt)
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.trackWebviewLoad(state: .fail)
+    sessionManager.trackWebviewLoad(
+      forPaywallId: paywallId,
+      state: .fail
+    )
 
     // Then
     XCTAssertEqual(queue.triggerSessions.count, 1)
@@ -363,13 +377,17 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testPaywallResponseLoad_start() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     XCTAssertNil(queue.triggerSessions.last!.paywall?.responseLoading.startAt)
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.trackPaywallResponseLoad(state: .start)
+    sessionManager.trackPaywallResponseLoad(
+      forPaywallId: paywallId,
+      state: .start
+    )
 
     // Then
     XCTAssertEqual(queue.triggerSessions.count, 1)
@@ -378,13 +396,17 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testPaywallResponseLoad_end() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     XCTAssertNil(queue.triggerSessions.last!.paywall?.responseLoading.endAt)
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.trackPaywallResponseLoad(state: .end)
+    sessionManager.trackPaywallResponseLoad(
+      forPaywallId: paywallId,
+      state: .end
+    )
 
     // Then
     XCTAssertEqual(queue.triggerSessions.count, 1)
@@ -393,13 +415,17 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testPaywallResponseLoad_fail() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     XCTAssertNil(queue.triggerSessions.last!.paywall?.responseLoading.failAt)
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.trackPaywallResponseLoad(state: .fail)
+    sessionManager.trackPaywallResponseLoad(
+      forPaywallId: paywallId,
+      state: .fail
+    )
 
     // Then
     XCTAssertEqual(queue.triggerSessions.count, 1)
@@ -410,13 +436,17 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testProductsLoad_start() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     XCTAssertNil(queue.triggerSessions.last!.products.loadingInfo?.startAt)
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.trackProductsLoad(state: .start)
+    sessionManager.trackProductsLoad(
+      forPaywallId: paywallId,
+      state: .start
+    )
 
     // Then
     XCTAssertEqual(queue.triggerSessions.count, 1)
@@ -425,13 +455,17 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testProductsLoad_end() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     XCTAssertNil(queue.triggerSessions.last!.products.loadingInfo?.endAt)
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.trackProductsLoad(state: .end)
+    sessionManager.trackProductsLoad(
+      forPaywallId: paywallId,
+      state: .end
+    )
 
     // Then
     XCTAssertEqual(queue.triggerSessions.count, 1)
@@ -440,13 +474,17 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testProductsLoad_fail() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     XCTAssertNil(queue.triggerSessions.last!.products.loadingInfo?.failAt)
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.trackProductsLoad(state: .fail)
+    sessionManager.trackProductsLoad(
+      forPaywallId: paywallId,
+      state: .fail
+    )
 
     // Then
     XCTAssertEqual(queue.triggerSessions.count, 1)
@@ -455,7 +493,8 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testStoreAllProducts() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     XCTAssertTrue(queue.triggerSessions.last!.products.allProducts.isEmpty)
     queue.triggerSessions.removeAll()
@@ -493,7 +532,8 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   private func beginTransactionOf(primaryProduct product: MockSkProduct) {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     let products = [
       SWProduct(product: product),
@@ -585,7 +625,8 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testTransactionRestoration_noPreviousTransactionActions() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
 
     let primaryProduct = MockSkProduct(productIdentifier: "primary")
     let products = [
@@ -709,7 +750,8 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testAppDidEnterBackground() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
     let lastTriggerSession = queue.triggerSessions.last!
     XCTAssertNil(lastTriggerSession.endAt)
     queue.triggerSessions.removeAll()
@@ -725,7 +767,8 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testAppDidEnterForeground() {
     // Given
-    activateSession()
+    let paywallId = "abc"
+    activateSession(withPaywallId: paywallId)
     let lastTriggerSession = queue.triggerSessions.last!
     NotificationCenter.default.post(Notification(name: UIApplication.didEnterBackgroundNotification))
     queue.triggerSessions.removeAll()
