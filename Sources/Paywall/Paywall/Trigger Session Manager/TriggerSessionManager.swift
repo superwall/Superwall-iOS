@@ -16,6 +16,12 @@ final class TriggerSessionManager {
   /// A queue of trigger session events that get sent to the server.
   private let queue: SessionEventsQueue
 
+  /// Storage class. Can be injected via init for testing.
+  private let storage: Storage
+
+  /// Network class. Can be injected via init for testing.
+  private let network: Network
+
   /// The list of all potential trigger sessions, keyed by the trigger event name, created after receiving the config.
   private var pendingTriggerSessions: [String: TriggerSession] = [:]
 
@@ -31,9 +37,15 @@ final class TriggerSessionManager {
     case fail
   }
 
-  /// Only instantiate this if you're testing. Otherwise use `TriggerSessionManager.shared`
-  init(queue: SessionEventsQueue = SessionEventsQueue()) {
+  /// Only instantiate this if you're testing. Otherwise use `TriggerSessionManager.shared`.
+  init(
+    queue: SessionEventsQueue = SessionEventsQueue(),
+    storage: Storage = Storage.shared,
+    network: Network = Network.shared
+  ) {
     self.queue = queue
+    self.storage = storage
+    self.network = network
     postCachedTriggerSessions()
     addObservers()
   }
@@ -41,15 +53,15 @@ final class TriggerSessionManager {
   /// Gets the last 20 cached trigger sessions from the last time the app was terminated,
   /// sends them back to the server, then clears cache.
   private func postCachedTriggerSessions() {
-    let cachedTriggerSessions = Storage.shared.getCachedTriggerSessions()
+    let cachedTriggerSessions = storage.getCachedTriggerSessions()
     if cachedTriggerSessions.isEmpty {
       return
     }
     let sessionEvents = SessionEventsRequest(
       triggerSessions: cachedTriggerSessions
     )
-    Network.shared.sendSessionEvents(sessionEvents)
-    Storage.shared.clearCachedTriggerSessions()
+    network.sendSessionEvents(sessionEvents)
+    storage.clearCachedTriggerSessions()
   }
 
   private func addObservers() {
@@ -88,8 +100,8 @@ final class TriggerSessionManager {
     // Loop through triggers and create a session for each.
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-        configRequestId: Storage.shared.configRequestId,
-        userAttributes: Storage.shared.userAttributes,
+        configRequestId: storage.configRequestId,
+        userAttributes: storage.userAttributes,
         isSubscribed: Paywall.delegate?.isUserSubscribed() ?? false,
         eventName: trigger.eventName,
         products: StoreKitManager.shared.swProducts,
@@ -101,8 +113,8 @@ final class TriggerSessionManager {
     // Add in the default paywall session.
     let defaultEventName = SuperwallEvent.ManualPresent().rawName
     let defaultPaywallSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-      configRequestId: Storage.shared.configRequestId,
-      userAttributes: Storage.shared.userAttributes,
+      configRequestId: storage.configRequestId,
+      userAttributes: storage.userAttributes,
       isSubscribed: Paywall.delegate?.isUserSubscribed() ?? false,
       eventName: defaultEventName,
       products: StoreKitManager.shared.swProducts,
@@ -143,7 +155,7 @@ final class TriggerSessionManager {
     }
 
     // Update trigger session
-    session.userAttributes = JSON(Storage.shared.userAttributes)
+    session.userAttributes = JSON(storage.userAttributes)
     session.presentationOutcome = outcome.presentationOutcome
     session.trigger = outcome.trigger
     session.paywall = outcome.paywall
@@ -182,8 +194,8 @@ final class TriggerSessionManager {
     // Recreate a pending trigger session
     let eventName = currentTriggerSession.trigger.eventName
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-      configRequestId: Storage.shared.configRequestId,
-      userAttributes: Storage.shared.userAttributes,
+      configRequestId: storage.configRequestId,
+      userAttributes: storage.userAttributes,
       isSubscribed: Paywall.delegate?.isUserSubscribed() ?? false,
       eventName: eventName,
       products: StoreKitManager.shared.swProducts,

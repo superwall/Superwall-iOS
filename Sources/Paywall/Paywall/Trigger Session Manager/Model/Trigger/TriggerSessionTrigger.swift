@@ -89,3 +89,9 @@ extension TriggerSession {
     }
   }
 }
+
+extension TriggerSession.Trigger: Stubbable {
+  static func stub() -> TriggerSession.Trigger {
+    return TriggerSession.Trigger(eventName: "abc")
+  }
+}

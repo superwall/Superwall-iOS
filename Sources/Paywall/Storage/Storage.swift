@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class Storage {
+class Storage {
   static let shared = Storage()
 
   var apiKey = ""

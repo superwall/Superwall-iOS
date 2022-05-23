@@ -18,6 +18,32 @@ final class TriggerSessionManagerTests: XCTestCase {
     sessionManager = TriggerSessionManager(queue: queue)
   }
 
+  // MARK: - Init
+
+  func testPostingCachedTriggerSessions_noneAvailable() {
+    let storage = StorageMock(internalCachedTriggerSessions: [])
+    let network = NetworkMock()
+    _ = TriggerSessionManager(
+      queue: queue,
+      storage: storage,
+      network: network
+    )
+    XCTAssertFalse(network.didSendSessionEvents)
+    XCTAssertFalse(storage.didClearCachedTriggerSessions)
+  }
+
+  func testPostingCachedTriggerSessions() {
+    let storage = StorageMock(internalCachedTriggerSessions: [.stub()])
+    let network = NetworkMock()
+    _ = TriggerSessionManager(
+      queue: queue,
+      storage: storage,
+      network: network
+    )
+    XCTAssertTrue(network.didSendSessionEvents)
+    XCTAssertTrue(storage.didClearCachedTriggerSessions)
+  }
+
   // MARK: - Create Config
 
   func testCreatePendingSessionsFromConfig() {

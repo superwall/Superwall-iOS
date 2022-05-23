@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class Network {
+class Network {
   static let shared = Network()
   private let urlSession = URLSession(configuration: .ephemeral)
 

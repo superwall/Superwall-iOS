@@ -112,3 +112,16 @@ struct TriggerSession: Codable {
     try appSession.encode(to: encoder)
   }
 }
+
+extension TriggerSession: Stubbable {
+  static func stub() -> TriggerSession {
+    return TriggerSession(
+      configRequestId: "abc",
+      userAttributes: nil,
+      isSubscribed: false,
+      trigger: .stub(),
+      products: .stub(),
+      appSession: .stub()
+    )
+  }
+}

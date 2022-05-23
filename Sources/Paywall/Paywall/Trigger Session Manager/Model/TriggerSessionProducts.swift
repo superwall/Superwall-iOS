@@ -60,3 +60,9 @@ extension TriggerSession {
     }
   }
 }
+
+extension TriggerSession.Products: Stubbable {
+  static func stub() -> TriggerSession.Products {
+    return TriggerSession.Products(allProducts: [])
+  }
+}
