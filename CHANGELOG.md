@@ -13,6 +13,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ### Fixes
 - Adds the missing Superwall events `app_install`, `paywallWebviewLoad_fail` and `nonRecurringProduct_purchase`.
 - Adds `trigger_name` to a `triggerFire` Superwall event, which can be accessed in the parameters sent back to the `trackAnalyticsEvent(name:params:)` delegate function.
+- Product prices were being sent back to the dashboard with weird values like 89.999998. We fixed that.
 
 2.3.0
 -----
