@@ -10,7 +10,7 @@ import StoreKit
 struct SWProduct: Codable {
   var localizedDescription: String
   var localizedTitle: String
-  var price: Double
+  var price: Decimal
   var priceLocale: String
   var productIdentifier: String
   var isDownloadable: Bool
@@ -26,7 +26,7 @@ struct SWProduct: Codable {
   init(product: SKProduct) {
     localizedDescription = product.localizedDescription
     localizedTitle = product.localizedTitle
-    price = product.price.doubleValue
+    price = product.price as Decimal
     priceLocale = product.priceLocale.identifier
     productIdentifier = product.productIdentifier
     isDownloadable = product.isDownloadable

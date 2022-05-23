@@ -158,6 +158,21 @@ struct SWProductSubscriptionPeriod: Codable {
     }
   }
 
+  func numberOfUnits(in cUnit: ColloquialUnit) -> Decimal {
+    switch cUnit {
+    case .days:
+      return Decimal(daysPerUnit * numberOfUnitsDouble)
+    case .weeks:
+      return Decimal(weeksPerUnit * numberOfUnitsDouble)
+    case .months:
+      return Decimal(monthsPerUnit * numberOfUnitsDouble)
+    case .quarters:
+      return Decimal(quartersPerUnit * numberOfUnitsDouble)
+    case .years:
+      return Decimal(yearsPerUnit * numberOfUnitsDouble)
+    }
+  }
+
   func numberOfUnits(in cUnit: ColloquialUnit) -> Double {
     switch cUnit {
     case .days:
@@ -172,7 +187,7 @@ struct SWProductSubscriptionPeriod: Codable {
       return yearsPerUnit * numberOfUnitsDouble
     }
   }
-
+  
   func numberOfUnits(in cUnit: ColloquialUnit) -> Int {
     switch cUnit {
     case .days:
@@ -188,8 +203,8 @@ struct SWProductSubscriptionPeriod: Codable {
     }
   }
 
-  func price(for value: Double, in cUnit: ColloquialUnit) -> Double {
-    let units: Double = numberOfUnits(in: cUnit)
+  func price(for value: Decimal, in cUnit: ColloquialUnit) -> Decimal {
+    let units: Decimal = numberOfUnits(in: cUnit)
     return value / units
   }
 

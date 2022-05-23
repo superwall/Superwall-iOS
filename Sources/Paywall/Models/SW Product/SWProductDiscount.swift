@@ -21,7 +21,7 @@ struct SWProductDiscount: Codable {
     case unknown
   }
 
-  var price: Double
+  var price: Decimal
   var priceLocale: String
   var identifier: String?
   var subscriptionPeriod: SWProductSubscriptionPeriod
@@ -31,7 +31,7 @@ struct SWProductDiscount: Codable {
 
   @available(iOS 12.2, *)
   init(discount: SKProductDiscount) {
-    price = discount.price.doubleValue
+    price = discount.price as Decimal
     priceLocale = discount.priceLocale.identifier
     identifier = discount.identifier
     subscriptionPeriod = SWProductSubscriptionPeriod(
