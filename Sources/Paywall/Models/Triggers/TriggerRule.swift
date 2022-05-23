@@ -10,6 +10,7 @@ import Foundation
 struct TriggerRule: Decodable, Hashable {
   var experiment: Experiment
   var expression: String?
+  var expressionJs: String?
   var isAssigned: Bool
 
   enum CodingKeys: String, CodingKey {
@@ -18,6 +19,7 @@ struct TriggerRule: Decodable, Hashable {
     case expression
     case isAssigned = "assigned"
     case variant
+    case expressionJs
   }
 
   enum VariantKeys: String, CodingKey {
@@ -48,16 +50,19 @@ struct TriggerRule: Decodable, Hashable {
     )
 
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
+    expressionJs = try values.decodeIfPresent(String.self, forKey: .expressionJs)
     isAssigned = try values.decode(Bool.self, forKey: .isAssigned)
   }
 
   init(
     experiment: Experiment,
     expression: String?,
+    expressionJs: String?,
     isAssigned: Bool
   ) {
     self.experiment = experiment
     self.expression = expression
+    self.expressionJs = expressionJs
     self.isAssigned = isAssigned
   }
 }
@@ -75,6 +80,7 @@ extension TriggerRule: Stubbable {
         )
       ),
       expression: "name == jake",
+      expressionJs: nil,
       isAssigned: false
     )
   }

@@ -51,7 +51,7 @@ enum TriggerLogic {
   ) -> TriggerRule? {
     for rule in trigger.rules {
       if ExpressionEvaluator.evaluateExpression(
-        expression: rule.expression,
+        fromRule: rule,
         eventData: event
       ) {
         return rule
