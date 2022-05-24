@@ -10,7 +10,7 @@ A trigger is an analytics event you can wire up to specific rules in a Campaign 
 
 Paywalls are **sticky**, in that when a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
 
-You can attach a trigger to your own analytical events that you send with ``Paywall/Paywall/track(_:_:)-2vkwo``, or you can attach a trigger to some of the [automatically tracked events](<doc:AutomaticallyTrackedEvents>). Specifically: `app_install`, `app_launch`, and `session_start`.
+You can attach a trigger to your own analytical events that you send or you can attach a trigger to some of the [automatically tracked events](<doc:AutomaticallyTrackedEvents>). Specifically: `app_install`, `app_launch`, and `session_start`.
 
 ## Triggering a Paywall
 
@@ -18,6 +18,22 @@ First, [create a campaign and add a trigger](https://docs.superwall.com/docs/cam
 
 Once you've done that, you need to send a trigger event from your app.
 There are two ways to do this via the SDK: **explicitly** and **implicitly**:
+
+### Explicit Triggers in UIKit
+
+If you're using UIKit and you need completion handlers for a trigger, you need to use an explicit trigger by calling ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)``:
+
+```swift
+Paywall.trigger(
+  event: "workout_complete", 
+  params: ["total_workouts": 17], 
+  onSkip: { error in }, 
+  onPresent: { paywallInfo in }, 
+  onDismiss: { didPurchase, productId, paywallInfo in }
+)
+```
+
+In this example, you're sending the event `workout_complete` to the dashboard along with some parameters. You can then utilize the completion handlers associated with the paywall presentation state.
 
 ### Explicit Triggers in SwiftUI
 
@@ -64,22 +80,6 @@ struct ContentView: View {
 ```
 
 > Sometimes, state changes can cause your SwiftUI views to redraw and have unexpected consequences. We recommend attaching the `triggerPaywall` view modifier to a top-level view to prevent this.
-
-### Explicit Triggers in UIKit
-
-If you're using UIKit and you need completion handlers for a trigger, you need to use an explicit trigger by calling ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)``:
-
-```swift
-Paywall.trigger(
-  event: "workout_complete", 
-  params: ["total_workouts": 17], 
-  onSkip: { error in }, 
-  onPresent: { paywallInfo in }, 
-  onDismiss: { didPurchase, productId, paywallInfo in }
-)
-```
-
-In this example, you're sending the event `workout_complete` to the dashboard along with some parameters. You can then utilize the completion handlers associated with the paywall presentation state.
 
 ### Implicit Triggers
 
