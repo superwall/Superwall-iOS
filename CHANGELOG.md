@@ -9,6 +9,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - New dedicated function for handling deeplinks: `Paywall.handleDeepLink(url)`
 - Deprecates old `track` functions. The only one you should use is `Paywall.track(_:_:)`, to which you pass an event name and a dictionary of parameters.
 - Adds a new way of internally tracking analytics associated with a paywall and the app session. This will greatly improve the Superwall dashboad analytics.
+- Adds support for javascript expressions defined in rules on the Superwall dashboard.
 
 ### Fixes
 - Adds the missing Superwall events `app_install`, `paywallWebviewLoad_fail` and `nonRecurringProduct_purchase`.

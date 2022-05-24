@@ -25,6 +25,7 @@ class TriggerLogicTests: XCTestCase {
         )
       ),
       expression: "name == jake",
+      expressionJs: nil,
       isAssigned: false
     )
     let trigger = Trigger(
@@ -86,6 +87,7 @@ class TriggerLogicTests: XCTestCase {
         )
       ),
       expression: nil,
+      expressionJs: nil,
       isAssigned: false
     )
     let trigger = Trigger(
@@ -149,6 +151,7 @@ class TriggerLogicTests: XCTestCase {
         )
       ),
       expression: "params.a == c",
+      expressionJs: nil,
       isAssigned: false
     )
 
@@ -201,6 +204,7 @@ class TriggerLogicTests: XCTestCase {
         )
       ),
       expression: nil,
+      expressionJs: nil,
       isAssigned: false
     )
     let trigger = Trigger(
