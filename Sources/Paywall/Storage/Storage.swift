@@ -25,7 +25,7 @@ class Storage {
 	var didTrackFirstSeen = false
   var userAttributes: [String: Any] = [:]
   var locales: Set<String> = []
-  var configRequestId: String = ""
+  var configRequestId = ""
 
   var userId: String? {
     return appUserId ?? aliasId

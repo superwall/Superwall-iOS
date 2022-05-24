@@ -14,55 +14,110 @@ final class ExpressionEvaluatorTests: XCTestCase {
     Storage.shared.clear()
   }
 
-
   func testExpressionMatchesAll() {
     let result = ExpressionEvaluator.evaluateExpression(
-      expression: nil,
+      fromRule: .stub()
+        .setting(\.expression, to: nil)
+        .setting(\.expressionJs, to: nil),
       eventData: .stub()
     )
     XCTAssertTrue(result)
   }
 
-  func testExpressionEvaluatorTrue() {
+  // MARK: - Expression
+
+  func testExpressionEvaluator_expressionTrue() {
     Storage.shared.userAttributes = ["a": "b"]
     let result = ExpressionEvaluator.evaluateExpression(
-      expression: "user.a == \"b\"",
+      fromRule: .stub()
+        .setting(\.expression, to: "user.a == \"b\""),
       eventData: EventData(name: "ss", parameters: [:], createdAt: Date())
     )
     XCTAssertTrue(result)
   }
 
-  func testExpressionEvaluatorParams() {
+  func testExpressionEvaluator_expressionParams() {
     Storage.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
-      expression: "params.a == \"b\"",
+      fromRule: .stub()
+        .setting(\.expression, to: "params.a == \"b\""),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
     XCTAssertTrue(result)
   }
 
-  func testExpressionEvaluatorDeviceTrue() {
+  func testExpressionEvaluator_expressionDeviceTrue() {
     Storage.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
-      expression: "device.platform == \"iOS\"",
+      fromRule: .stub()
+        .setting(\.expression, to: "device.platform == \"iOS\""),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
     XCTAssertTrue(result)
   }
 
-  func testExpressionEvaluatorDeviceFalse() {
+  func testExpressionEvaluator_expressionDeviceFalse() {
     Storage.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
-      expression: "device.platform == \"Android\"",
+        fromRule: .stub()
+          .setting(\.expression, to: "device.platform == \"Android\""),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
     XCTAssertFalse(result)
   }
 
-  func testExpressionEvaluatorFalse() {
+  func testExpressionEvaluator_expressionFalse() {
     Storage.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
-      expression: "a == \"b\"",
+      fromRule: .stub()
+        .setting(\.expression, to: "a == \"b\""),
+      eventData: .stub()
+    )
+    XCTAssertFalse(result)
+  }
+
+  // MARK: - ExpressionJS
+
+  func testExpressionEvaluator_expressionJSTrue() {
+    let result = ExpressionEvaluator.evaluateExpression(
+      fromRule: .stub()
+        .setting(\.expressionJs, to: "function superwallEvaluator(){ return true }; superwallEvaluator"),
+      eventData: .stub()
+    )
+    XCTAssertTrue(result)
+  }
+
+  func testExpressionEvaluator_expressionJSValues_true() {
+    let result = ExpressionEvaluator.evaluateExpression(
+      fromRule: .stub()
+        .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator"),
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+    )
+    XCTAssertTrue(result)
+  }
+
+  func testExpressionEvaluator_expressionJSValues_false() {
+    let result = ExpressionEvaluator.evaluateExpression(
+      fromRule: .stub()
+        .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator"),
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+    )
+    XCTAssertTrue(result)
+  }
+
+  func testExpressionEvaluator_expressionJSNumbers() {
+    let result = ExpressionEvaluator.evaluateExpression(
+      fromRule: .stub()
+        .setting(\.expressionJs, to: "function superwallEvaluator(values) { return 1 == 1 }; superwallEvaluator"),
+      eventData: .stub()
+    )
+    XCTAssertTrue(result)
+  }
+
+  func testExpressionEvaluator_expressionJSEmpty() {
+    let result = ExpressionEvaluator.evaluateExpression(
+      fromRule: .stub()
+        .setting(\.expressionJs, to: ""),
       eventData: .stub()
     )
     XCTAssertFalse(result)

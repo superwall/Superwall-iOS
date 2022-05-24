@@ -69,7 +69,6 @@ class Network {
             logLevel: .error,
             scope: .network,
             message: "Request Failed: /paywall/:identifier",
-            info: nil,
             error: error
           )
         }
@@ -91,7 +90,6 @@ class Network {
           logLevel: .error,
           scope: .network,
           message: "Request Failed: /paywalls",
-          info: nil,
           error: error
         )
         completion(.failure(error))
@@ -112,7 +110,6 @@ class Network {
           logLevel: .error,
           scope: .network,
           message: "Request Failed: /config",
-          info: nil,
           error: error
         )
         completion(.failure(error))

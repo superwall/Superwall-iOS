@@ -9,25 +9,12 @@ import Foundation
 import JavaScriptCore
 
 enum ExpressionEvaluator {
-  struct ExpressionEvaluatorParams: Codable {
-    var expression: String
-    var values: JSON
-
-    func toBase64Input() -> String? {
-      let encoder = JSONEncoder()
-      if let data = try? encoder.encode(self) {
-        return data.base64EncodedString()
-      }
-      return nil
-    }
-  }
-
   static func evaluateExpression(
-    expression: String?,
+    fromRule rule: TriggerRule,
     eventData: EventData
   ) -> Bool {
     // Expression matches all
-    guard let expression = expression else {
+    if rule.expressionJs == nil && rule.expression == nil {
       return true
     }
 
@@ -56,22 +43,46 @@ enum ExpressionEvaluator {
       )
     }
 
-    let parameters = ExpressionEvaluatorParams(
-      expression: expression,
-      values: JSON([
-        "user": Storage.shared.userAttributes,
-        "device": DeviceHelper.shared.templateDevice.toDictionary(),
-        "params": eventData.parameters
-      ])
-    )
-
-    if let base64String = parameters.toBase64Input() {
-      let postfix = "\n SuperwallSDKJS.evaluate64('\(base64String)');"
+    if let postfix = getPostfix(
+      forRule: rule,
+      withEventData: eventData
+    ) {
       let result = jsCtx.evaluateScript(script + "\n " + postfix)
       if result?.isString != nil {
         return result?.toString() == "true"
       }
     }
     return false
+  }
+
+  private static func getPostfix(
+    forRule rule: TriggerRule,
+    withEventData eventData: EventData
+  ) -> String? {
+    let values = JSON([
+      "user": Storage.shared.userAttributes,
+      "device": DeviceHelper.shared.templateDevice.toDictionary(),
+      "params": eventData.parameters
+    ])
+    if let expressionJs = rule.expressionJs {
+      if let base64Params = JavascriptExpressionEvaluatorParams(
+        expressionJs: expressionJs,
+        values: values
+      ).toBase64Input() {
+        let postfix = "\n SuperwallSDKJS.evaluateJS64('\(base64Params)');"
+        return postfix
+      }
+      return nil
+    } else if let expression = rule.expression {
+      if let base64Params = LiquidExpressionEvaluatorParams(
+        expression: expression,
+        values: values
+      ).toBase64Input() {
+        let postfix = "\n SuperwallSDKJS.evaluate64('\(base64Params)');"
+        return postfix
+      }
+      return nil
+    }
+    return nil
   }
 }
