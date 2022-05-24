@@ -1,41 +1,22 @@
 # Triggering a Paywall
 
-Show a specific paywall in your app in response to an analytical event.
+Show a paywall in your app in response to an analytical event.
 
 ## Overview
 
-Triggers enable you to retroactively decide where and when to show a specific paywall in your app.
+Triggers enable you to retroactively decide where and when to show a paywall in your app.
 
-You configure a trigger via the dashboard, specifying which paywall will show in response to an analytical event sent via the SDK.
+A trigger is an analytics event you can wire up to specific rules in a Campaign on the [Superwall Dashboard](https://superwall.com/dashboard). The Paywall SDK listens for these analytics events and evaluates their rules to determine whether or not to show a paywall when the trigger is fired.
+
+Paywalls are **sticky**, in that when a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
 
 You can attach a trigger to your own analytical events that you send with ``Paywall/Paywall/track(_:_:)-2vkwo``, or you can attach a trigger to some of the [automatically tracked events](<doc:AutomaticallyTrackedEvents>). Specifically: `app_install`, `app_launch`, and `session_start`.
 
-The SDK recognizes when it is sending an event that's tied to an active trigger in the dashboard and will display the corresponding paywall.
+## Triggering a Paywall
 
-> Important: Triggered paywalls are  **not sticky**. The paywall shown to the user is determined by the trigger associated with the event in the dashboard. This means that if the trigger is turned off, the user will no longer see it.
+First, [create a campaign and add a trigger](https://docs.superwall.com/docs/campaigns) on the Superwall dashboard. 
 
-
-## Configuring a Trigger on the Dashboard
-
-First, you'll need to configure your trigger on the [Superwall Dashboard](https://superwall.com/dashboard).
-
-On the dashboard, go to the **Triggers** section and click the **+ button** to create a new trigger:
-
-![Adding a Trigger on the Superwall Dashboard](addATrigger.png)
-
-Select a **paywall**, type a new **event name** or select one from the drop down, then click **Create**:
-
-![Configuring a Trigger on the Superwall Dashboard](configureTrigger.png)
-
-Then, enable the trigger:
-
-![Enabling a Trigger on the Superwall Dashboard](enableTrigger.png)
-
-Your trigger is now enabled! The above example shows the paywall **Test** when the SDK sends an event named `workout_complete`.
-
-## Triggering a Paywall via the SDK
-
-Once you have your trigger configured in the dashboard, you need send its event from your app.
+Once you've done that, you need to send a trigger event from your app.
 There are two ways to do this via the SDK: **explicitly** and **implicitly**:
 
 ### Explicit Triggers in SwiftUI
@@ -81,6 +62,8 @@ struct ContentView: View {
   }
 }
 ```
+
+> Sometimes, state changes can cause your SwiftUI views to redraw and have unexpected consequences. We recommend attaching the `triggerPaywall` view modifier to a top-level view to prevent this.
 
 ### Explicit Triggers in UIKit
 

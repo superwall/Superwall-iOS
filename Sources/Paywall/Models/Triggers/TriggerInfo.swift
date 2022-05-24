@@ -7,9 +7,11 @@
 
 import Foundation
 
-/// A trigger experiment that was assigned to a user.
+/// A campaign experiment that was assigned to a user.
 ///
-/// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
+/// An experiment is part of a [Campaign Rule](https://docs.superwall.com/docs/campaign-rules) defined in the Superwall dashboard. When a rule is matched, the user is assigned to an experiment, which  is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
+///
+/// To learn more, read <doc:Ecosystem>.
 public struct Experiment: Equatable, Hashable, Codable {
   public struct Variant: Equatable, Hashable, Codable {
     public enum VariantType: String, Codable, Hashable {

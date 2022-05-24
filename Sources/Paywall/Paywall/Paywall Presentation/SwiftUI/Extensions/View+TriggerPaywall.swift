@@ -9,11 +9,13 @@ import SwiftUI
 
 @available(iOS 13.0, *)
 extension View {
-  /// Shows a specific paywall to the user when an analytics event you provide is tied to an active trigger in the [Superwall Dashboard](https://superwall.com/dashboard) and a binding to a Boolean value that you provide is true.
+  /// Shows a paywall to the user when: An analytics event you provide is tied to an active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and a binding to a Boolean value that you provide is true.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.
   ///
-  /// The paywall shown to the user is determined by the trigger associated with the event in the [Superwall Dashboard](https://superwall.com/dashboard).
+  /// Before using this method, you'll first need to create a campaign and add a trigger associated with the event name on the [Superwall Dashboard](https://superwall.com/dashboard).
+  ///
+  /// The paywall shown to the user is determined by the rules defined in the campaign. Paywalls are sticky, in that when a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
   ///
   /// If you don't want to use any completion handlers, consider using ``Paywall/Paywall/track(_:_:)-2vkwo`` to implicitly trigger a paywall.
   ///
@@ -62,7 +64,7 @@ extension View {
   ///
   /// - Parameters:
   ///   - event: The name of the event you wish to trigger.
-  ///   - params: Parameters you wish to pass along to the trigger. These are tracked under the event that a user has performed in the Users tab of the [Superwall Dashboard](https://superwall.com/dashboard).
+  ///   - params: Parameters you wish to pass along to the trigger.  You can refer to these parameters in the rules you define in your campaign.
   ///   - shouldPresent: A binding to a Boolean value that determines whether to present a paywall determined by the trigger.
   ///
   ///     The system sets `shouldPresent` to false if the trigger is not active or when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
@@ -73,8 +75,7 @@ extension View {
   ///     This closure will not be called if you programmatically set `isPresented` to `false` to dismiss the paywall.
   ///
   ///     Defaults to `nil`.
-  ///   - onFail: A closure that's called when the paywall fails to present, either because an error occurred or because all paywalls are off in the Superwall Dashboard.
-  ///     Accepts an `NSError?` with more details. Defaults to `nil`.
+  ///   - onFail: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts an `NSError?` with more details. It is recommended to check the error code to handle the onFail callback. If the error code is `4000`, it means the user didn't match any rules. If the error code is `4001` it means the user is in a holdout group. Any other code means an error occurred.
   public func triggerPaywall(
     forEvent event: String,
     withParams params: [String: Any]? = nil,

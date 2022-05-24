@@ -36,7 +36,7 @@ final class PaywallService {
 }
 ```
 
-This configures a shared instance of ``Paywall/Paywall`` for use throughout your app and sets the delegate to the PaywallService shared instance. Make sure to replace the `apiKey` with your Public API key that you just retrieved.
+This configures a shared instance of ``Paywall/Paywall`` for use throughout your app and sets the delegate to the `PaywallService` shared instance. Make sure to replace the `apiKey` with your Public API key that you just retrieved.
 
 If you have a unique ID of your user, you can enter it in `userId`. Otherwise we will generate a random id that will persist internally until you call ``Paywall/Paywall/reset()`` or the user deletes/reinstalls your app.
 
@@ -92,7 +92,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 }
 ```
 
-You're now ready to present or trigger your paywall.
+You're now ready to trigger a paywall.
 
 ## Topics
 

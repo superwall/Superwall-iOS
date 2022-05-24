@@ -18,8 +18,6 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 ### Presenting and Dismissing a Paywall
 
-- <doc:PresentingInSwiftUI>
-- <doc:PresentingInUIKit>
 - ``present(onPresent:onDismiss:onFail:)``
 - ``present(on:onPresent:onDismiss:onFail:)``
 - ``present(identifier:on:ignoreSubscriptionStatus:onPresent:onDismiss:onFail:)``
@@ -29,7 +27,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``shouldAnimatePaywallDismissal``
 - ``load(identifier:)``
 
-### Triggering a Paywall
+### Triggering and Dismissing a Paywall
 
 - <doc:Triggering>
 - ``trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)``
