@@ -33,7 +33,9 @@ Paywall.trigger(
 )
 ```
 
-In this example, you're sending the event `workout_complete` to the dashboard along with some parameters. You can then utilize the completion handlers associated with the paywall presentation state.
+In this example, you're sending the event `workout_complete` to the dashboard along with some parameters. You can refer to these parameters in the rules you define in your campaign. You can then utilize the completion handlers associated with the paywall presentation state.
+
+> `onSkip` is a completion block that gets called when the paywall's presentation is skipped. This accepts an `NSError?` with more details. It is recommended to check the error code to handle the onSkip callback. If the error code is `4000`, it means the user didn't match any rules. If the error code is `4001` it means the user is in a holdout group. Any other code means an error occurred.
 
 ### Explicit Triggers in SwiftUI
 
@@ -78,6 +80,9 @@ struct ContentView: View {
   }
 }
 ```
+
+> `onFail` is a completion block that gets called when the paywall's presentation fails. This accepts an `NSError?` with more details. It is recommended to check the error code to handle the onFail callback. If the error code is `4000`, it means the user didn't match any rules. If the error code is `4001` it means the user is in a holdout group. Any other code means an error occurred.
+
 
 > Sometimes, state changes can cause your SwiftUI views to redraw and have unexpected consequences. We recommend attaching the `triggerPaywall` view modifier to a top-level view to prevent this.
 

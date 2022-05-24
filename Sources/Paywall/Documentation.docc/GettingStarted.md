@@ -92,7 +92,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 }
 ```
 
-You're now ready to trigger a paywall.
+You're now ready to trigger a paywall. See <doc:Triggering> for next steps.
 
 ## Topics
 
