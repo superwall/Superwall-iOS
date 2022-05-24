@@ -15,10 +15,6 @@ struct PaywallOptionsListView: View {
 
   var body: some View {
     List {
-      NavigationLink(destination: PresentPaywallView()) {
-        Text("Presenting a Paywall")
-          .padding()
-      }
       NavigationLink(destination: ExplicitlyTriggerPaywallView()) {
         Text("Explicitly Triggering a Paywall")
           .padding()

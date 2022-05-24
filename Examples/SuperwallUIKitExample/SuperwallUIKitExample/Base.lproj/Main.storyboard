@@ -205,28 +205,8 @@
                         <sections>
                             <tableViewSection id="ZP5-qh-P7F">
                                 <cells>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" rowHeight="60" id="7fr-LD-Q4Q">
-                                        <rect key="frame" x="20" y="18" width="374" height="60"/>
-                                        <autoresizingMask key="autoresizingMask"/>
-                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="7fr-LD-Q4Q" id="GNz-i2-eu3">
-                                            <rect key="frame" x="0.0" y="0.0" width="345.33333333333331" height="60"/>
-                                            <autoresizingMask key="autoresizingMask"/>
-                                            <subviews>
-                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Presenting a Paywall" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sl1-mX-Gpr">
-                                                    <rect key="frame" x="20" y="20.666666666666668" width="155" height="19.000000000000004"/>
-                                                    <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
-                                                    <color key="textColor" name="Neutral"/>
-                                                    <nil key="highlightedColor"/>
-                                                </label>
-                                            </subviews>
-                                            <constraints>
-                                                <constraint firstItem="sl1-mX-Gpr" firstAttribute="leading" secondItem="GNz-i2-eu3" secondAttribute="leading" constant="20" id="Mkv-6A-DHm"/>
-                                                <constraint firstItem="sl1-mX-Gpr" firstAttribute="centerY" secondItem="GNz-i2-eu3" secondAttribute="centerY" id="PJe-R3-gy6"/>
-                                            </constraints>
-                                        </tableViewCellContentView>
-                                    </tableViewCell>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" rowHeight="60" id="NcK-qN-lVL">
-                                        <rect key="frame" x="20" y="78" width="374" height="60"/>
+                                        <rect key="frame" x="20" y="18" width="374" height="60"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="NcK-qN-lVL" id="b0a-Uy-1rh">
                                             <rect key="frame" x="0.0" y="0.0" width="345.33333333333331" height="60"/>
@@ -246,7 +226,7 @@
                                         </tableViewCellContentView>
                                     </tableViewCell>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" rowHeight="60" id="WoO-8u-rVF">
-                                        <rect key="frame" x="20" y="138" width="374" height="60"/>
+                                        <rect key="frame" x="20" y="78" width="374" height="60"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="WoO-8u-rVF" id="lWE-FR-R5u">
                                             <rect key="frame" x="0.0" y="0.0" width="345.33333333333331" height="60"/>
@@ -288,9 +268,9 @@
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MjC-0m-6SH">
                                 <rect key="frame" x="20" y="64" width="374" height="152"/>
-                                <mutableString key="text">The button below presents a paywall that has been set up on the Superwall dashboard.
+                                <string key="text">The button below presents a paywall that has been set up on the Superwall dashboard.
 
-The paywall assigned to the user is determined by your settings in the dashboard. Once a user is assigned a paywall, they will continue to see the same paywall, even when the paywall is turned off, unless you reassign them to a new one.</mutableString>
+The paywall assigned to the user is determined by your settings in the dashboard. Once a user is assigned a paywall, they will continue to see the same paywall, even when the paywall is turned off, unless you reassign them to a new one.</string>
                                 <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
@@ -363,22 +343,22 @@ The paywall assigned to the user is determined by your settings in the dashboard
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JHi-ua-mAu">
-                                <rect key="frame" x="20" y="64" width="374" height="95"/>
+                                <rect key="frame" x="20" y="64" width="374" height="114"/>
                                 <string key="text">The button below explicitly triggers a specific paywall for the event "MyEvent".
 
-This is because the event is tied to an active trigger on the Superwall Dashboard.</string>
+This is because the event is tied to an active trigger inside a Campaign on the Superwall Dashboard.</string>
                                 <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You do not have an active subscription so the paywall will show when clicking the button." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yY5-8L-kgo">
-                                <rect key="frame" x="20" y="256" width="374" height="38"/>
+                                <rect key="frame" x="20" y="275" width="374" height="38"/>
                                 <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="gFw-H8-1gc">
-                                <rect key="frame" x="20" y="207" width="374" height="1"/>
+                                <rect key="frame" x="20" y="226" width="374" height="1"/>
                                 <color key="backgroundColor" systemColor="systemGray2Color"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="1" id="Gti-31-pJd"/>
@@ -439,16 +419,16 @@ This is because the event is tied to an active trigger on the Superwall Dashboar
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SGl-eh-tPd">
-                                <rect key="frame" x="20" y="64" width="374" height="133"/>
+                                <rect key="frame" x="20" y="64" width="374" height="152"/>
                                 <string key="text">The button below increments a counter. When the counter hits 3, it will track the event "MyEvent", which will implicitly trigger a specific paywall for the event.
 
-This is because the event is tied to an active trigger on the Superwall Dashboard.</string>
+This is because the event is tied to an active trigger inside a Campaign on the Superwall Dashboard.</string>
                                 <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You do not have an active subscription so the paywall will show when the counter reaches 3." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4IT-zo-gAo">
-                                <rect key="frame" x="20" y="294" width="374" height="38"/>
+                                <rect key="frame" x="20" y="313" width="374" height="38"/>
                                 <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
@@ -460,7 +440,7 @@ This is because the event is tied to an active trigger on the Superwall Dashboar
                                 <nil key="highlightedColor"/>
                             </label>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="7sX-yX-RMh">
-                                <rect key="frame" x="20" y="245" width="374" height="1"/>
+                                <rect key="frame" x="20" y="264" width="374" height="1"/>
                                 <color key="backgroundColor" systemColor="systemGray2Color"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="1" id="YVS-LD-vL6"/>
@@ -539,7 +519,7 @@ This is because the event is tied to an active trigger on the Superwall Dashboar
     <resources>
         <image name="logo" width="115" height="17"/>
         <namedColor name="Neutral">
-            <color red="0.054999999701976776" green="0.059000000357627869" blue="0.071000002324581146" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.054901960784313725" green="0.058823529411764705" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
         <namedColor name="PrimaryTeal">
             <color red="0.60399997234344482" green="0.98799997568130493" blue="0.94499999284744263" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

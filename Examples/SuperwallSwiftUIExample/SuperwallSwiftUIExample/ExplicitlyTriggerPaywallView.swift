@@ -15,7 +15,7 @@ struct ExplicitlyTriggerPaywallView: View {
   var body: some View {
     VStack(spacing: 48) {
       InfoView(
-        text: "The button below explicitly triggers a specific paywall for the event \"MyEvent\".\n\nThis is because the event is tied to an active trigger on the Superwall Dashboard."
+        text: "The button below explicitly triggers a paywall for the event \"MyEvent\".\n\nThis is because the event is tied to an active trigger inside a Campaign on the Superwall Dashboard."
       )
 
       Divider()

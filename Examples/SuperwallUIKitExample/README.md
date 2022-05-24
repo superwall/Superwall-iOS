@@ -9,7 +9,6 @@ Usually, to integrate the SDK into your app, you first need to have configured a
 Feature | Sample Project Location 
 --- | ---
 🕹 Configuring the *Paywall* SDK | [Services/PaywallService.swift](SuperwallUIKitExample/Services/PaywallService.swift#L20)
-💰 Presenting a paywall             | [PresentPaywallViewController.swift](SuperwallUIKitExample/PresentPaywallViewController.swift#L43) |
 👉 Explicitly Triggering a paywall | [ExplicitlyTriggerPaywallViewController.swift](SuperwallUIKitExample/ExplicitlyTriggerPaywallViewController.swift#L43)
 👉 Implicitly Triggering a paywall | [ImplicitlyTriggerPaywallViewController.swift](SuperwallUIKitExample/ImplicitlyTriggerPaywallViewController.swift#L19)
 👥 Identifying the user | [Services/PaywallService.swift](SuperwallUIKitExample/Services/PaywallService.swift#L31)
@@ -55,29 +54,15 @@ You'll see an overview screen:
 
 ## Showing a Paywall
 
-Paywalls are created and enabled in the [Superwall Dashboard](https://superwall.com/dashboard) and are shown to users who don't have an active subscription. To show a paywall, you have three options: **presenting**, **explicitly triggering**, or **implicitly triggering**.
-
-### Presenting a Paywall 
-
-A paywall is presented by calling `Paywall.present(onPresent:onDismiss:onFail:)` in [PresentPaywallViewController.swift](SuperwallUIKitExample/PresentPaywallViewController.swift#L43). 
-
-The paywall assigned to the user is determined by the settings in the Superwall Dashboard. Once a user is assigned a paywall, they will continue to see the same paywall, even when the paywall is turned off, unless you reassign them to a new one.
-
-Tap **Presenting a Paywall**. You'll see some explanatory text and a button that presents a paywall to the user:
-
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/3296904/161961286-ccb228f3-4e5f-4d49-8924-93f1ca2e7185.png" alt="Presenting a paywall" width="220px" />
-</p>
-
-Then, tap **Present Paywall** and have a look around. You'll notice analytical delegate methods printing in the console and your name displayed in the paywall:
-
-<p align="center">
-  <img src="https://i.imgur.com/oTmRQ8s.png" alt="Presenting a paywall" width="220px" />
-</p>
+Paywalls are created and enabled in the [Superwall Dashboard](https://superwall.com/dashboard) and are shown to users who don't have an active subscription. To show a paywall, you have two options: **explicitly triggering**, or **implicitly triggering**.
 
 ### Triggering a Paywall Explicitly
 
-Triggers enable you to retroactively decide where or when to show a specific paywall in your app. By calling [Paywall.trigger(event:onSkip:onPresent:onDismiss:)](SuperwallUIKitExample/ExplicitlyTriggerPaywallViewController.swift#L43), you explicitly trigger a paywall in response to an analytical event. This event is tied to a trigger that's set up on the Superwall dashboard. In this app, we have tied an active trigger on the dashboard to the event "MyEvent". 
+Triggers enable you to retroactively decide where or when to show a paywall in your app.
+
+A trigger is an analytics event you can wire up to specific rules in a Campaign on the [Superwall Dashboard](https://superwall.com/dashboard). The Paywall SDK listens for these analytics events and evaluates their rules to determine whether or not to show a paywall when the trigger is fired.
+
+By calling [Paywall.trigger(event:onSkip:onPresent:onDismiss:)](SuperwallUIKitExample/ExplicitlyTriggerPaywallViewController.swift#L43), you explicitly trigger a paywall in response to an analytical event. In this app, we have tied an active trigger on the dashboard to the event "MyEvent". 
 
 Head back to the overview screen, and tap on **Explicitly Triggering a Paywall**. You'll see some explanatory text and a button that triggers the paywall:
 
@@ -89,7 +74,7 @@ Tap the **Trigger Paywall** button and you'll see the same paywall as before com
 
 ### Triggering a Paywall Implicitly
 
-If you don't need completion handlers for triggering a paywall, you can use `track(_:_:)` to track an event which can be tied to an active trigger in the Superwall Dashboard.
+If you don't need completion handlers for triggering a paywall, you can use [Paywall.track(_:_:)](SuperwallUIKitExample/ImplicitlyTriggerPaywallViewController.swift#L19).
 
 Head back to the overview screen, and tap on **Implicitly Triggering a Paywall**. You'll see some explanatory text, and two buttons that increment and reset a counter:
 
@@ -101,7 +86,7 @@ Tap on increment 3 times. When the counter reaches 3, it will track an event, wh
 
 ## Purchasing a subscription
 
-Tap the **Continue** button in the paywall and "purchase" a subscription. When the paywall dismisses, try triggering or presenting a paywall. You'll notice the buttons no longer show the paywall. The paywalls are only presented to users who haven't got an active subscription. To cancel the active subscription for an app that's using a storekit configuration file for testing, delete and reinstall the app.
+Tap the **Continue** button in the paywall and "purchase" a subscription. When the paywall dismisses, try triggering a paywall. You'll notice the buttons no longer show the paywall. The paywalls are only presented to users who haven't got an active subscription. To cancel the active subscription for an app that's using a storekit configuration file for testing, delete and reinstall the app.
 
 ## Support
 
