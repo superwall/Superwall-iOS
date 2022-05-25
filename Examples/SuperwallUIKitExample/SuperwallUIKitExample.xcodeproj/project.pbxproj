@@ -24,7 +24,6 @@
 		889FAA8F27FC596700CB6EF5 /* StoreKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA8E27FC596700CB6EF5 /* StoreKitService.swift */; };
 		889FAA9327FC620C00CB6EF5 /* PaywallOptionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA9227FC620C00CB6EF5 /* PaywallOptionsViewController.swift */; };
 		889FAA9527FC6AD000CB6EF5 /* OptionsTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA9427FC6AD000CB6EF5 /* OptionsTableViewController.swift */; };
-		889FAA9727FC6C2900CB6EF5 /* PresentPaywallViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA9627FC6C2900CB6EF5 /* PresentPaywallViewController.swift */; };
 		889FAA9927FC939400CB6EF5 /* ExplicitlyTriggerPaywallViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA9827FC939400CB6EF5 /* ExplicitlyTriggerPaywallViewController.swift */; };
 		889FAA9B27FC98C300CB6EF5 /* ImplicitlyTriggerPaywallViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA9A27FC98C300CB6EF5 /* ImplicitlyTriggerPaywallViewController.swift */; };
 /* End PBXBuildFile section */
@@ -49,7 +48,6 @@
 		889FAA8E27FC596700CB6EF5 /* StoreKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitService.swift; sourceTree = "<group>"; };
 		889FAA9227FC620C00CB6EF5 /* PaywallOptionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallOptionsViewController.swift; sourceTree = "<group>"; };
 		889FAA9427FC6AD000CB6EF5 /* OptionsTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionsTableViewController.swift; sourceTree = "<group>"; };
-		889FAA9627FC6C2900CB6EF5 /* PresentPaywallViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentPaywallViewController.swift; sourceTree = "<group>"; };
 		889FAA9827FC939400CB6EF5 /* ExplicitlyTriggerPaywallViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplicitlyTriggerPaywallViewController.swift; sourceTree = "<group>"; };
 		889FAA9A27FC98C300CB6EF5 /* ImplicitlyTriggerPaywallViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImplicitlyTriggerPaywallViewController.swift; sourceTree = "<group>"; };
 		889FAA9C27FDADD000CB6EF5 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
@@ -96,7 +94,6 @@
 				889FAA6727FC530200CB6EF5 /* WelcomeViewController.swift */,
 				889FAA9227FC620C00CB6EF5 /* PaywallOptionsViewController.swift */,
 				889FAA9427FC6AD000CB6EF5 /* OptionsTableViewController.swift */,
-				889FAA9627FC6C2900CB6EF5 /* PresentPaywallViewController.swift */,
 				889FAA9827FC939400CB6EF5 /* ExplicitlyTriggerPaywallViewController.swift */,
 				889FAA9A27FC98C300CB6EF5 /* ImplicitlyTriggerPaywallViewController.swift */,
 				889FAA6927FC530200CB6EF5 /* Main.storyboard */,
@@ -251,7 +248,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				889FAA9727FC6C2900CB6EF5 /* PresentPaywallViewController.swift in Sources */,
 				889FAA9527FC6AD000CB6EF5 /* OptionsTableViewController.swift in Sources */,
 				889FAA7927FC532E00CB6EF5 /* Font.swift in Sources */,
 				889FAA8327FC53FF00CB6EF5 /* Colors.swift in Sources */,

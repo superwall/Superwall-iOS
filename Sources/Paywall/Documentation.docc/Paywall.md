@@ -4,7 +4,7 @@ The client SDK for [Superwall](https://superwall.com), a service that lets you r
 
 ## Overview
 
-Paywall makes it easy to show paywalls in your app using UIKit or SwiftUI. If you haven't already, [sign up for a free Superwall account](https://superwall.com/sign-up) to get your API key. You can then configure the SDK and present paywalls that you've set up in the Superwall dashboard. You can also trigger paywalls in response to in-app analytical events, and display information about the user on the paywall by setting ``Paywall/Paywall/userAttributes``.
+Paywall makes it easy to show paywalls in your app using UIKit or SwiftUI. If you haven't already, [sign up for a free Superwall account](https://superwall.com/sign-up). On the Superwall dashboard, create a Campaign to define conditions for when paywalls are shown to users. Then, configure the SDK with your API key and trigger paywalls in response to in-app analytical events. You can also display information about the user on the paywall by setting ``Paywall/Paywall/userAttributes``.
 
 ## Topics
 
@@ -12,8 +12,6 @@ Paywall makes it easy to show paywalls in your app using UIKit or SwiftUI. If yo
 
 - <doc:Ecosystem>
 - <doc:GettingStarted>
-- <doc:PresentingInSwiftUI>
-- <doc:PresentingInUIKit>
 - <doc:Triggering>
 - ``Paywall/Paywall``
 
