@@ -15,7 +15,7 @@ struct ExplicitlyTriggerPaywallView: View {
   var body: some View {
     VStack(spacing: 48) {
       InfoView(
-        text: "The button below explicitly triggers a specific paywall for the event \"MyEvent\".\n\nThis is because the event is tied to an active trigger on the Superwall Dashboard."
+        text: "The button below explicitly triggers a paywall for the event \"MyEvent\".\n\nThis is because the event is tied to an active trigger inside a Campaign on the Superwall Dashboard."
       )
 
       Divider()
@@ -50,7 +50,13 @@ struct ExplicitlyTriggerPaywallView: View {
         }
       },
       onFail: { error in
-        print("did fail", error)
+        if error.code == 4000 {
+          print("The user did not match any rules")
+        } else if error.code == 4001 {
+          print("The user is in a holdout group")
+        } else {
+          print("did fail", error)
+        }
       }
     )
     .foregroundColor(.white)

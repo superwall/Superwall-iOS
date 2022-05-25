@@ -27,6 +27,6 @@ struct PaywallSubscriptionStatusView: View {
 
 struct PaywallSubscriptionStatusView_Previews: PreviewProvider {
   static var previews: some View {
-    PaywallSubscriptionStatusView(presentationType: .presented)
+    PaywallSubscriptionStatusView(presentationType: .implicitlyTriggered)
   }
 }

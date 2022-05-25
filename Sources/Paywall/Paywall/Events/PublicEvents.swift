@@ -13,7 +13,6 @@ public extension Paywall {
   ///
   /// Any event you track is recorded in the Superwall Dashboard. You can use these events to create implicit triggers. See <doc:Triggering> for more info.
   ///
-  /// There are a list of ``Paywall/Paywall/StandardEvent``s that can be tracked  to determine if you should be tracking a standard event instead. You'll be able to reference properties when creating rules for when paywalls show up.
   /// - Parameter name: The name of your event
   /// - Parameter params: Custom parameters you'd like to include in your event. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///
