@@ -462,10 +462,12 @@ final class TriggerSessionManager {
     let productIndex = allProducts.firstIndex {
       $0.productIdentifier == product.productIdentifier
     } ?? 0
+    
+    let date = Date()
     transaction = .init(
       id: id,
-      startAt: Date(),
-      endAt: Date(),
+      startAt: date,
+      endAt: date,
       count: transactionCount,
       status: .complete,
       product: .init(from: product, index: productIndex)

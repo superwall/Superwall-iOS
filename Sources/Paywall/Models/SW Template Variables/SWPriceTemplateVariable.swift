@@ -20,7 +20,7 @@ struct SWPriceTemplateVariable: Codable {
   var rounded: SWProductNumber?
 
   init(
-    value: Double,
+    value: Decimal,
     locale: Locale,
     period: SWProductSubscriptionPeriod?
   ) {
