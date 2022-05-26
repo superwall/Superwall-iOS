@@ -57,7 +57,7 @@ extension View {
   /// In order to present a paywall, the paywall must first be created and enabled in the [Superwall Dashboard](https://superwall.com/dashboard) and the SDK configured using ``Paywall/Paywall/configure(apiKey:userId:delegate:)``.
   ///
   /// - Parameters:
-  ///   - isPresented: A binding to a Boolean value that determines whether to present a paywall that's determined by the SDK.
+  ///   - isPresented: A binding to a Boolean value that determines whether to present a paywall.
   ///
   ///     When the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing, the system sets `isPresented` to `false`.
   ///   - onPresent: A closure that's called after the paywall is presented. Accepts a `PaywallInfo?` object containing information about the paywall. Defaults to `nil`.

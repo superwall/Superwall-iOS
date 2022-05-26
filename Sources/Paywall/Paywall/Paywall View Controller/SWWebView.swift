@@ -112,7 +112,6 @@ extension SWWebView: WKNavigationDelegate {
     didFail navigation: WKNavigation!,
     withError error: Error
   ) {
-    // TODO: Check this doesnt call fail twice with above decisionHandler
     trackPaywallError()
   }
 
