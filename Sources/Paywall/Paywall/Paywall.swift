@@ -206,8 +206,8 @@ public final class Paywall: NSObject {
       apiKey: apiKey
     )
 
-    // Initialise trigger session and app session manager on main thread
-    _ = TriggerSessionManager.shared
+    // Initialise session events manager and app session manager on main thread
+    _ = SessionEventsManager.shared
     _ = AppSessionManager.shared
 
     if delegate != nil {
@@ -225,7 +225,7 @@ public final class Paywall: NSObject {
       switch result {
       case .success(let config):
         Storage.shared.addConfig(config, withRequestId: requestId)
-        TriggerSessionManager.shared.createSessions(from: config)
+        SessionEventsManager.shared.triggerSession.createSessions(from: config)
         self?.didFetchConfig = true
         config.cache()
         self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleImplicitTrigger(forEvent: $0) }

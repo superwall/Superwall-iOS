@@ -13,16 +13,16 @@ final class AppSessionManager {
 
   private(set) var appSession = AppSession() {
     didSet {
-      triggerSessionManager.updateAppSession()
+      SessionEventsManager.shared.updateAppSession()
     }
   }
-  private let triggerSessionManager: TriggerSessionManager
+  private let sessionEventsManager: SessionEventsManager
   private var lastAppClose: Date?
   private var didTrackLaunch = false
 
   /// Only directly initialise if testing otherwise use `AppSessionManager.shared`.
-  init(triggerSessionManager: TriggerSessionManager = TriggerSessionManager.shared) {
-    self.triggerSessionManager = triggerSessionManager
+  init(sessionEventsManager: SessionEventsManager = SessionEventsManager.shared) {
+    self.sessionEventsManager = sessionEventsManager
     addActiveStateObservers()
   }
 

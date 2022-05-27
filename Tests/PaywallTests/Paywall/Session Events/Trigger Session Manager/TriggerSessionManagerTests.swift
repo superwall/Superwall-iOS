@@ -15,33 +15,7 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   override func setUp() {
     queue = SessionEventsQueueMock()
-    sessionManager = TriggerSessionManager(queue: queue)
-  }
-
-  // MARK: - Init
-
-  func testPostingCachedTriggerSessions_noneAvailable() {
-    let storage = StorageMock(internalCachedTriggerSessions: [])
-    let network = NetworkMock()
-    _ = TriggerSessionManager(
-      queue: queue,
-      storage: storage,
-      network: network
-    )
-    XCTAssertFalse(network.didSendSessionEvents)
-    XCTAssertFalse(storage.didClearCachedTriggerSessions)
-  }
-
-  func testPostingCachedTriggerSessions() {
-    let storage = StorageMock(internalCachedTriggerSessions: [.stub()])
-    let network = NetworkMock()
-    _ = TriggerSessionManager(
-      queue: queue,
-      storage: storage,
-      network: network
-    )
-    XCTAssertTrue(network.didSendSessionEvents)
-    XCTAssertTrue(storage.didClearCachedTriggerSessions)
+    sessionManager = TriggerSessionManager(delegate: nil)
   }
 
   // MARK: - Create Config
@@ -283,7 +257,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.updateAppSession(appSession)
+    sessionManager.updateAppSession(to: appSession)
 
     XCTAssertEqual(queue.triggerSessions.count, 2)
     XCTAssertEqual(queue.triggerSessions[0].appSession, appSession)

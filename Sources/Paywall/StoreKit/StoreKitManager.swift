@@ -62,7 +62,7 @@ final class StoreKitManager: NSObject {
           let swProduct = SWProduct(product: product)
           swProducts.append(swProduct)
         }
-        TriggerSessionManager.shared.storeAllProducts(swProducts)
+        SessionEventsManager.shared.triggerSession.storeAllProducts(swProducts)
         self.swProducts = swProducts
 
         completion?(.success(output))

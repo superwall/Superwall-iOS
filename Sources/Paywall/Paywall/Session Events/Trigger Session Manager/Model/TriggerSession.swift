@@ -12,7 +12,7 @@ struct TriggerSession: Codable {
   /// Trigger session ID
   var id = UUID().uuidString
 
-  /// The id of the request
+  /// The id of the config request
   let configRequestId: String
 
   /// The start time of the trigger session

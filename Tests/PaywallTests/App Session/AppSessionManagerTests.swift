@@ -11,9 +11,9 @@ import XCTest
 class AppSessionManagerTests: XCTestCase {
   func testAppWillResignActive() {
     let queue = SessionEventsQueueMock()
-    let sessionManager = TriggerSessionManager(queue: queue)
+    let sessionEvents = SessionEventsManager(queue: queue)
     let appManager = AppSessionManager(
-      triggerSessionManager: sessionManager
+      sessionEventsManager: sessionEvents
     )
     XCTAssertNil(appManager.appSession.endAt)
 
@@ -26,9 +26,9 @@ class AppSessionManagerTests: XCTestCase {
 
   func testAppWillTerminate() {
     let queue = SessionEventsQueueMock()
-    let sessionManager = TriggerSessionManager(queue: queue)
+    let sessionEvents = SessionEventsManager(queue: queue)
     let appManager = AppSessionManager(
-      triggerSessionManager: sessionManager
+      sessionEventsManager: sessionEvents
     )
     XCTAssertNil(appManager.appSession.endAt)
 
@@ -41,9 +41,9 @@ class AppSessionManagerTests: XCTestCase {
 
   func testAppWillBecomeActive_newSession() {
     let queue = SessionEventsQueueMock()
-    let sessionManager = TriggerSessionManager(queue: queue)
+    let sessionEvents = SessionEventsManager(queue: queue)
     let appManager = AppSessionManager(
-      triggerSessionManager: sessionManager
+      sessionEventsManager: sessionEvents
     )
     let oldAppSession = appManager.appSession
 
@@ -56,9 +56,9 @@ class AppSessionManagerTests: XCTestCase {
 
   func testAppWillBecomeActive_closeAndOpen() {
     let queue = SessionEventsQueueMock()
-    let sessionManager = TriggerSessionManager(queue: queue)
+    let sessionEvents = SessionEventsManager(queue: queue)
     let appManager = AppSessionManager(
-      triggerSessionManager: sessionManager
+      sessionEventsManager: sessionEvents
     )
     let oldAppSession = appManager.appSession
 

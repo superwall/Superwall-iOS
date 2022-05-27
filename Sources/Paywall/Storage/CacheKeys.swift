@@ -54,3 +54,10 @@ enum TriggerSessions: CachingType {
   }
   typealias Value = [TriggerSession]
 }
+
+enum Transactions: CachingType {
+  static var key: String {
+    "store.transactions"
+  }
+  typealias Value = [TransactionModel]
+}

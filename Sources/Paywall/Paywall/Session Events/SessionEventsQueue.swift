@@ -14,8 +14,10 @@ class SessionEventsQueue {
   private let serialQueue = DispatchQueue(label: "me.superwall.sessionEventQueue")
   private let maxEventCount = 50
   private var triggerSessions: [TriggerSession] = []
+  private var transactions: [TransactionModel] = []
   private var timer: Timer?
   private lazy var lastTwentySessions = LimitedQueue<TriggerSession>(limit: 20)
+  private lazy var lastTwentyTransactions = LimitedQueue<TransactionModel>(limit: 20)
 
   deinit {
     timer?.invalidate()
@@ -40,7 +42,7 @@ class SessionEventsQueue {
     )
     NotificationCenter.default.addObserver(
       self,
-      selector: #selector(saveLatestSessionsToDisk),
+      selector: #selector(saveCacheToDisk),
       name: UIApplication.willResignActiveNotification,
       object: nil
     )
@@ -53,6 +55,16 @@ class SessionEventsQueue {
       }
       self.triggerSessions.append(triggerSession)
       self.lastTwentySessions.enqueue(triggerSession)
+    }
+  }
+
+  func enqueue(_ transaction: TransactionModel) {
+    serialQueue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      self.transactions.append(transaction)
+      self.lastTwentyTransactions.enqueue(transaction)
     }
   }
 
@@ -77,6 +89,7 @@ class SessionEventsQueue {
 
   private func flushInternal(depth: Int = 10) {
     var triggerSessionsToSend: [TriggerSession] = []
+    var transactionsToSend: [TransactionModel] = []
 
     var i = 0
     while i < maxEventCount && !triggerSessions.isEmpty {
@@ -84,21 +97,38 @@ class SessionEventsQueue {
       i += 1
     }
 
-    if !triggerSessionsToSend.isEmpty {
+    i = 0
+    while i < maxEventCount && !transactions.isEmpty {
+      transactionsToSend.append(transactions.removeFirst())
+      i += 1
+    }
+
+    if !triggerSessionsToSend.isEmpty || !transactionsToSend.isEmpty {
       // Send to network
       let sessionEvents = SessionEventsRequest(
-        triggerSessions: triggerSessionsToSend
+        triggerSessions: triggerSessionsToSend,
+        transactions: transactionsToSend
       )
       Network.shared.sendSessionEvents(sessionEvents)
     }
 
-    if !triggerSessions.isEmpty && depth > 0 {
+    if (!triggerSessions.isEmpty || !transactions.isEmpty) && depth > 0 {
       return flushInternal(depth: depth - 1)
     }
   }
 
-  @objc private func saveLatestSessionsToDisk() {
+  @objc private func saveCacheToDisk() {
+    saveLatestSessionsToDisk()
+    saveLatestTransactionsToDisk()
+  }
+
+  private func saveLatestSessionsToDisk() {
     let sessions = lastTwentySessions.getArray()
     Storage.shared.saveTriggerSessions(sessions)
+  }
+
+  private func saveLatestTransactionsToDisk() {
+    let transactions = lastTwentyTransactions.getArray()
+    Storage.shared.saveTransactions(transactions)
   }
 }

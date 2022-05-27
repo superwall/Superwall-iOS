@@ -444,7 +444,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       paywallResponse.webViewLoadStartTime = Date()
     }
 
-    TriggerSessionManager.shared.trackWebviewLoad(
+    SessionEventsManager.shared.triggerSession.trackWebviewLoad(
       forPaywallId: paywallInfo.id,
       state: .start
     )
@@ -461,14 +461,14 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	}
 
 	func trackOpen() {
-    TriggerSessionManager.shared.trackPaywallOpen()
+    SessionEventsManager.shared.triggerSession.trackPaywallOpen()
 
     let trackedEvent = SuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}
 
 	func trackClose() {
-    TriggerSessionManager.shared.trackPaywallClose()
+    SessionEventsManager.shared.triggerSession.trackPaywallClose()
 
     let trackedEvent = SuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)

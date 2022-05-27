@@ -122,7 +122,7 @@ extension SWWebView: WKNavigationDelegate {
       return
     }
 
-    TriggerSessionManager.shared.trackWebviewLoad(
+    SessionEventsManager.shared.triggerSession.trackWebviewLoad(
       forPaywallId: paywallInfo.id,
       state: .fail
     )

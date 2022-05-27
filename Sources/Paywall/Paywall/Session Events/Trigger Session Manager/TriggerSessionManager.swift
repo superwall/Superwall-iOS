@@ -10,23 +10,16 @@ import UIKit
 import StoreKit
 
 final class TriggerSessionManager {
-  /// The shared instance of the class
-  static let shared = TriggerSessionManager()
-
-  /// A queue of trigger session events that get sent to the server.
-  private let queue: SessionEventsQueue
+  weak var delegate: SessionEventsDelegate?
 
   /// Storage class. Can be injected via init for testing.
   private let storage: Storage
-
-  /// Network class. Can be injected via init for testing.
-  private let network: Network
 
   /// The list of all potential trigger sessions, keyed by the trigger event name, created after receiving the config.
   private var pendingTriggerSessions: [String: TriggerSession] = [:]
 
   /// The active trigger session.
-  private var activeTriggerSession: TriggerSession?
+  var activeTriggerSession: TriggerSession?
 
   /// A local count for transactions used within the trigger session.
   private var transactionCount: TriggerSession.Transaction.Count?
@@ -37,31 +30,14 @@ final class TriggerSessionManager {
     case fail
   }
 
-  /// Only instantiate this if you're testing. Otherwise use `TriggerSessionManager.shared`.
+  /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
   init(
-    queue: SessionEventsQueue = SessionEventsQueue(),
-    storage: Storage = Storage.shared,
-    network: Network = Network.shared
+    delegate: SessionEventsDelegate,
+    storage: Storage = Storage.shared
   ) {
-    self.queue = queue
+    self.delegate = delegate
     self.storage = storage
-    self.network = network
-    postCachedTriggerSessions()
     addObservers()
-  }
-
-  /// Gets the last 20 cached trigger sessions from the last time the app was terminated,
-  /// sends them back to the server, then clears cache.
-  private func postCachedTriggerSessions() {
-    let cachedTriggerSessions = storage.getCachedTriggerSessions()
-    if cachedTriggerSessions.isEmpty {
-      return
-    }
-    let sessionEvents = SessionEventsRequest(
-      triggerSessions: cachedTriggerSessions
-    )
-    network.sendSessionEvents(sessionEvents)
-    storage.clearCachedTriggerSessions()
   }
 
   private func addObservers() {
@@ -214,7 +190,7 @@ final class TriggerSessionManager {
       return
     }
     triggerSession.isSubscribed = Paywall.delegate?.isUserSubscribed() ?? false
-    queue.enqueue(triggerSession)
+    delegate?.enqueue(triggerSession)
   }
 
   /// Queues all the pending trigger sessions to be sent back to the server.
@@ -228,15 +204,13 @@ final class TriggerSessionManager {
     }
 
     let triggerSessionsArray = Array(pendingTriggerSessions.values)
-    queue.enqueue(triggerSessionsArray)
+    delegate?.enqueue(triggerSessionsArray)
   }
 
   // MARK: - App Session
 
   /// Adds the latest app session to the trigger
-  func updateAppSession(
-    _ appSession: AppSession = AppSessionManager.shared.appSession
-  ) {
+  func updateAppSession(to appSession: AppSession) {
     activeTriggerSession?.appSession = appSession
 
     for eventName in pendingTriggerSessions.keys {

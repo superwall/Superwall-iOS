@@ -104,7 +104,7 @@ final class WebEventHandler: WebEventDelegate {
       )
       Paywall.track(trackedEvent)
 
-      TriggerSessionManager.shared.trackWebviewLoad(
+      SessionEventsManager.shared.triggerSession.trackWebviewLoad(
         forPaywallId: paywallInfo.id,
         state: .end
       )

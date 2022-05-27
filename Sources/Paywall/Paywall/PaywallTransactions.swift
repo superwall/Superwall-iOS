@@ -63,7 +63,7 @@ extension Paywall {
     paywallViewController: SWPaywallViewController,
     for product: SKProduct
   ) {
-    TriggerSessionManager.shared.trackBeginTransaction(of: product)
+    SessionEventsManager.shared.triggerSession.trackBeginTransaction(of: product)
 
 		let paywallInfo = paywallViewController.paywallInfo
     let trackedEvent = SuperwallEvent.Transaction(
@@ -87,7 +87,7 @@ extension Paywall {
   ) {
     let isFreeTrialAvailable = paywallViewController.paywallResponse.isFreeTrialAvailable == true
 
-    TriggerSessionManager.shared.trackTransactionSucceeded(
+    SessionEventsManager.shared.triggerSession.trackTransactionSucceeded(
       withId: id,
       for: product,
       isFreeTrialAvailable: isFreeTrialAvailable
@@ -152,7 +152,7 @@ extension Paywall {
         )
         Paywall.track(trackedEvent)
 
-        TriggerSessionManager.shared.trackTransactionError()
+        SessionEventsManager.shared.triggerSession.trackTransactionError()
 
 				self.paywallViewController?.presentAlert(
           title: "Please try again",
@@ -181,7 +181,7 @@ extension Paywall {
     )
     Paywall.track(trackedEvent)
 
-    TriggerSessionManager.shared.trackTransactionAbandon()
+    SessionEventsManager.shared.triggerSession.trackTransactionAbandon()
 
 		paywallViewController.loadingState = .ready
 	}
@@ -213,7 +213,7 @@ extension Paywall {
     )
     Paywall.track(trackedEvent)
 
-    TriggerSessionManager.shared.trackDeferredTransaction()
+    SessionEventsManager.shared.triggerSession.trackDeferredTransaction()
 	}
 }
 
@@ -229,7 +229,10 @@ extension Paywall: SKPaymentTransactionObserver {
     )
 	}
 
-	public func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
+	public func paymentQueue(
+    _ queue: SKPaymentQueue,
+    restoreCompletedTransactionsFailedWithError error: Error
+  ) {
 		Logger.debug(
       logLevel: .debug,
       scope: .paywallTransactions,
@@ -245,6 +248,8 @@ extension Paywall: SKPaymentTransactionObserver {
     updatedTransactions transactions: [SKPaymentTransaction]
   ) {
 		for transaction in transactions {
+      SessionEventsManager.shared.transactions.record(transaction)
+
 			guard paywallWasPresentedThisSession else {
         return
       }
@@ -329,7 +334,7 @@ extension Paywall: SKPaymentTransactionObserver {
 				}
 			case .restored:
         let isFreeTrialAvailable = paywallViewController.paywallResponse.isFreeTrialAvailable == true
-        TriggerSessionManager.shared.trackTransactionRestoration(
+        SessionEventsManager.shared.triggerSession.trackTransactionRestoration(
           withId: transaction.transactionIdentifier,
           product: product,
           isFreeTrialAvailable: isFreeTrialAvailable

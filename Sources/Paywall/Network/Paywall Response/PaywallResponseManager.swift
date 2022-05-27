@@ -94,7 +94,7 @@ final class PaywallResponseManager: NSObject {
       }
       let responseLoadStartTime = Date()
 
-      TriggerSessionManager.shared.trackPaywallResponseLoad(
+      SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
         forPaywallId: triggerIdentifiers.paywallId,
         state: .start
       )
@@ -124,7 +124,7 @@ final class PaywallResponseManager: NSObject {
             )
             Paywall.track(responseLoadEvent)
 
-            TriggerSessionManager.shared.trackPaywallResponseLoad(
+            SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
               forPaywallId: paywallInfo.id,
               state: .end
             )
@@ -136,7 +136,7 @@ final class PaywallResponseManager: NSObject {
               event: event
             )
           case .failure(let error):
-            TriggerSessionManager.shared.trackPaywallResponseLoad(
+            SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
               forPaywallId: triggerIdentifiers.paywallId,
               state: .fail
             )
@@ -179,7 +179,7 @@ final class PaywallResponseManager: NSObject {
     )
     Paywall.track(productLoadEvent)
 
-    TriggerSessionManager.shared.trackProductsLoad(
+    SessionEventsManager.shared.triggerSession.trackProductsLoad(
       forPaywallId: paywallInfo.id,
       state: .start
     )
@@ -224,7 +224,7 @@ final class PaywallResponseManager: NSObject {
         response.productsLoadCompleteTime = Date()
 
         let paywallInfo = response.getPaywallInfo(fromEvent: event)
-        TriggerSessionManager.shared.trackProductsLoad(
+        SessionEventsManager.shared.triggerSession.trackProductsLoad(
           forPaywallId: paywallInfo.id,
           state: .end
         )
@@ -244,7 +244,7 @@ final class PaywallResponseManager: NSObject {
         )
         Paywall.track(productLoadEvent)
 
-        TriggerSessionManager.shared.trackProductsLoad(
+        SessionEventsManager.shared.triggerSession.trackProductsLoad(
           forPaywallId: paywallInfo.id,
           state: .fail
         )

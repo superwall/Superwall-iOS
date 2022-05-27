@@ -142,4 +142,15 @@ class Storage {
       forType: TriggerSessions.self
     )
   }
+
+  func getCachedTransactions() -> [TransactionModel] {
+    return cache.read(Transactions.self) ?? []
+  }
+
+  func saveTransactions(_ transactions: [TransactionModel]) {
+    cache.write(
+      transactions,
+      forType: Transactions.self
+    )
+  }
 }

@@ -66,7 +66,7 @@ extension Paywall {
 
       switch result {
       case .success(let paywallViewController):
-        TriggerSessionManager.shared.activateSession(
+        SessionEventsManager.shared.triggerSession.activateSession(
           for: presentationInfo,
           on: presentingViewController,
           paywallResponse: paywallViewController.paywallResponse
@@ -131,7 +131,7 @@ extension Paywall {
         let nsError = error as NSError
         if nsError.code == 4000 || nsError.code == 4001 {
           // NoRuleMatch or Holdout, sending ended session.
-          TriggerSessionManager.shared.activateSession(
+          SessionEventsManager.shared.triggerSession.activateSession(
             for: presentationInfo,
             on: presentingViewController
           )
