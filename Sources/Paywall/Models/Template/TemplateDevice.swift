@@ -20,6 +20,14 @@ struct TemplateDevice: Codable {
   var deviceLanguageCode: String
   var deviceCurrencyCode: String
   var deviceCurrencySymbol: String
+  var timezoneOffset: Int
+  var radioType: String
+  var interfaceStyle: String
+  var isLowPowerModeEnabled: Bool
+  var bundleId: String
+  var appInstallDate: String
+  var isMac: Bool
+
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

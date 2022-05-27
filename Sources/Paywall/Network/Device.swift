@@ -140,7 +140,7 @@ final class DeviceHelper {
 
     return TemplateDevice(
       publicApiKey: Storage.shared.apiKey,
-      platform: "iOS",
+      platform: DeviceHelper.shared.isMac ? "macOS" : "iOS",
       appUserId: Storage.shared.appUserId ?? "",
       aliases: aliases,
       vendorId: DeviceHelper.shared.vendorId,
@@ -150,7 +150,15 @@ final class DeviceHelper {
       deviceLocale: DeviceHelper.shared.locale,
       deviceLanguageCode: DeviceHelper.shared.languageCode,
       deviceCurrencyCode: DeviceHelper.shared.currencyCode,
-      deviceCurrencySymbol: DeviceHelper.shared.currencySymbol
+      deviceCurrencySymbol: DeviceHelper.shared.currencySymbol,
+      timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
+      radioType:  DeviceHelper.shared.radioType,
+      interfaceStyle: DeviceHelper.shared.interfaceStyle,
+      isLowPowerModeEnabled: DeviceHelper.shared.isLowPowerModeEnabled == "true",
+      bundleId: DeviceHelper.shared.bundleId,
+      appInstallDate: DeviceHelper.shared.appInstalledAtString,
+      isMac: DeviceHelper.shared.isMac
     )
+
   }
 }
