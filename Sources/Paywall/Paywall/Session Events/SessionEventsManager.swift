@@ -46,16 +46,20 @@ final class SessionEventsManager {
     postCachedSessionEvents()
   }
 
-  /// Gets the last 20 cached trigger sessions from the last time the app was terminated,
+  /// Gets the last 20 cached trigger sessions and transactions from the last time the app was terminated,
   /// sends them back to the server, then clears cache.
   private func postCachedSessionEvents() {
     let cachedTriggerSessions = storage.getCachedTriggerSessions()
-    if cachedTriggerSessions.isEmpty {
+    let cachedTransactions = storage.getCachedTransactions()
+
+    if cachedTriggerSessions.isEmpty,
+      cachedTransactions.isEmpty {
       return
     }
+
     let sessionEvents = SessionEventsRequest(
       triggerSessions: cachedTriggerSessions,
-      transactions: [] // TODO: cachedTransactions
+      transactions: cachedTransactions
     )
     network.sendSessionEvents(sessionEvents)
     storage.clearCachedTriggerSessions()
