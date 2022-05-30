@@ -647,7 +647,7 @@ extension SWPaywallViewController {
         message: "Set Paywall.delegate to handle purchases, restores and more!",
         actionTitle: "Docs →",
         closeActionTitle: "Done",
-        onCancel:  {
+        onCancel: {
           if let url = URL(string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate") {
             UIApplication.shared.open(url, options: [:], completionHandler: nil)
           }

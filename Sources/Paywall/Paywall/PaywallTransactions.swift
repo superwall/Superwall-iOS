@@ -158,7 +158,7 @@ extension Paywall {
           title: "Please try again",
           message: error?.localizedDescription ?? "",
           actionTitle: "Restore Purchase",
-          onCancel:  {
+          onCancel: {
             Paywall.shared.tryToRestore(paywallViewController)
           }
         )

@@ -56,7 +56,7 @@ extension PaywallService: PaywallDelegate {
     guard let event = Paywall.EventName(rawValue: name) else {
       return
     }
-    //print("analytics event called", event, params)
+    // print("analytics event called", event, params)
 
     // Uncomment the following if you want to track the different analytics
     // events received from the paywall:

@@ -4,6 +4,7 @@
 //
 //  Created by Brian Anglin on 2/21/22.
 //
+// swiftlint:disable all
 
 import Foundation
 import XCTest

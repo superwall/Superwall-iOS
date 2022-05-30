@@ -316,7 +316,7 @@ final class TriggerSessionManager {
         return
       }
     }
-    
+
     switch state {
     case .start:
       activeTriggerSession?
@@ -462,7 +462,7 @@ final class TriggerSessionManager {
     let productIndex = allProducts.firstIndex {
       $0.productIdentifier == product.productIdentifier
     } ?? 0
-    
+
     let date = Date()
     transaction = .init(
       id: id,
