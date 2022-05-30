@@ -24,12 +24,19 @@ final class TransactionManager {
   }
 
   func record(_ transaction: SKPaymentTransaction) {
+    let triggerSession = delegate?.triggerSession.activeTriggerSession
+    let triggerSessionId = TransactionManagerLogic.getTriggerSessionId(
+      transaction: transaction,
+      activeTriggerSession: triggerSession
+    )
+
     let transaction = TransactionModel(
       from: transaction,
       configRequestId: storage.configRequestId,
       appSessionId: AppSessionManager.shared.appSession.id,
-      triggerSessionId: delegate?.triggerSession.activeTriggerSession?.id
+      triggerSessionId: triggerSessionId
     )
+
     delegate?.enqueue(transaction)
   }
 }
