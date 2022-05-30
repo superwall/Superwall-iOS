@@ -187,7 +187,7 @@ struct SWProductSubscriptionPeriod: Codable {
       return yearsPerUnit * numberOfUnitsDouble
     }
   }
-  
+
   func numberOfUnits(in cUnit: ColloquialUnit) -> Int {
     switch cUnit {
     case .days:

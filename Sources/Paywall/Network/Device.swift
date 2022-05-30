@@ -9,7 +9,6 @@ import Foundation
 import SystemConfiguration
 import CoreTelephony
 
-
 final class DeviceHelper {
   static let shared = DeviceHelper()
   let reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, Api.hostDomain)
@@ -152,13 +151,12 @@ final class DeviceHelper {
       deviceCurrencyCode: DeviceHelper.shared.currencyCode,
       deviceCurrencySymbol: DeviceHelper.shared.currencySymbol,
       timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
-      radioType:  DeviceHelper.shared.radioType,
+      radioType: DeviceHelper.shared.radioType,
       interfaceStyle: DeviceHelper.shared.interfaceStyle,
       isLowPowerModeEnabled: DeviceHelper.shared.isLowPowerModeEnabled == "true",
       bundleId: DeviceHelper.shared.bundleId,
       appInstallDate: DeviceHelper.shared.appInstalledAtString,
       isMac: DeviceHelper.shared.isMac
     )
-
   }
 }

@@ -81,7 +81,7 @@ extension View {
   ///     This closure will not be called if you programmatically set `isPresented` to `false` to dismiss the paywall.
   ///
   ///     Defaults to `nil`.
-  ///   - onFail: A completion block that gets called when the paywall's presentation fails. Defaults to `nil`. Accepts an `NSError` with more details. It is recommended to check the error code to handle the onFail callback. If the error code is `4000`, it means the user didn't match any rules. If the error code is `4001` it means the user is in a holdout group. Any other code means an error occurred.
+  ///   - onFail: A completion block that gets called when the paywall's presentation fails. Defaults to `nil`. Accepts an `NSError` with more details. It is recommended to check the error code to handle the onFail callback. If the error code is `4000`, it means the user didn't match any rules. If the error code is `4001` it means the user is in a holdout group. Otherwise, a `404` error code means an error occurred.
   public func triggerPaywall(
     forEvent event: String,
     withParams params: [String: Any]? = nil,
