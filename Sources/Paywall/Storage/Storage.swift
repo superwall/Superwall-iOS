@@ -128,8 +128,9 @@ class Storage {
     addUserAttributes(standardUserAttributes)
   }
 
-  func clearCachedTriggerSessions() {
+  func clearCachedSessionEvents() {
     cache.delete(TriggerSessions.self)
+    cache.delete(Transactions.self)
   }
 
   func getCachedTriggerSessions() -> [TriggerSession] {

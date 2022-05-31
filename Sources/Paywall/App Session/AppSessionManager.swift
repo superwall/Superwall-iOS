@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class AppSessionManager {
+class AppSessionManager {
   static let shared = AppSessionManager()
   var appSessionTimeout: Milliseconds?
 

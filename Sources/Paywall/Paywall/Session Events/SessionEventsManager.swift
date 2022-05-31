@@ -62,7 +62,7 @@ final class SessionEventsManager {
       transactions: cachedTransactions
     )
     network.sendSessionEvents(sessionEvents)
-    storage.clearCachedTriggerSessions()
+    storage.clearCachedSessionEvents()
   }
 
   func updateAppSession(

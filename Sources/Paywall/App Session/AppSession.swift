@@ -9,7 +9,7 @@ import Foundation
 
 struct AppSession: Codable, Equatable {
   /// The ID of the session.
-  let id = UUID().uuidString
+  var id = UUID().uuidString
 
   /// When the app session started.
   var startAt = Date()

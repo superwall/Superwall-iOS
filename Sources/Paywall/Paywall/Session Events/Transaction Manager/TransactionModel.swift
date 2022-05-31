@@ -73,3 +73,14 @@ struct TransactionModel: Codable {
     payment = Payment(from: transaction.payment)
   }
 }
+
+extension TransactionModel: Stubbable {
+  static func stub() -> TransactionModel {
+    return TransactionModel(
+      from: SKPaymentTransaction(),
+      configRequestId: "abc",
+      appSessionId: "123",
+      triggerSessionId: nil
+    )
+  }
+}

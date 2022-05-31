@@ -14,13 +14,18 @@ final class TransactionManager {
   /// Storage class. Can be injected via init for testing.
   private let storage: Storage
 
+  /// App session manager that can be injected via init for testing.
+  private let appSessionManager: AppSessionManager
+
   /// Only instantiate this if you're testing. Otherwise use `TriggerSessionManager.shared`.
   init(
     delegate: SessionEventsDelegate,
-    storage: Storage = Storage.shared
+    storage: Storage = Storage.shared,
+    appSessionManager: AppSessionManager = AppSessionManager.shared
   ) {
     self.delegate = delegate
     self.storage = storage
+    self.appSessionManager = appSessionManager
   }
 
   func record(_ transaction: SKPaymentTransaction) {
@@ -33,7 +38,7 @@ final class TransactionManager {
     let transaction = TransactionModel(
       from: transaction,
       configRequestId: storage.configRequestId,
-      appSessionId: AppSessionManager.shared.appSession.id,
+      appSessionId: appSessionManager.appSession.id,
       triggerSessionId: triggerSessionId
     )
 

@@ -9,9 +9,9 @@ import Foundation
 @testable import Paywall
 
 final class NetworkMock: Network {
-  var didSendSessionEvents = false
+  var sentSessionEvents: SessionEventsRequest?
 
   override func sendSessionEvents(_ session: SessionEventsRequest) {
-    didSendSessionEvents = true
+    sentSessionEvents = session
   }
 }
