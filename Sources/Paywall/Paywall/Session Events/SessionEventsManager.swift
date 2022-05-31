@@ -65,6 +65,8 @@ final class SessionEventsManager {
     storage.clearCachedSessionEvents()
   }
 
+  /// This only updates the app session in the trigger sessions.
+  /// For transactions, the latest app session id is grabbed when the next transaction occurs.
   func updateAppSession(
     _ appSession: AppSession = AppSessionManager.shared.appSession
   ) {
