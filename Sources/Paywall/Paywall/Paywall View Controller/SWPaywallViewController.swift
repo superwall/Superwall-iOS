@@ -418,9 +418,9 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
     switch presentationStyle {
     case .sheet:
-      modalPresentationStyle = .formSheet
+      modalPresentationStyle = .pageSheet
     case .modal:
-      modalPresentationStyle = .formSheet
+      modalPresentationStyle = .pageSheet
     case .fullscreen:
       modalPresentationStyle = .overFullScreen
     }
