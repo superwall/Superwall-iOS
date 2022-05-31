@@ -12,10 +12,12 @@ import XCTest
 final class TriggerSessionManagerTests: XCTestCase {
   var queue: SessionEventsQueueMock!
   var sessionManager: TriggerSessionManager!
+  var sessionEventsDelegate: SessionEventsDelegateMock!
 
   override func setUp() {
     queue = SessionEventsQueueMock()
-    sessionManager = TriggerSessionManager(delegate: nil)
+    sessionEventsDelegate = SessionEventsDelegateMock(queue: queue)
+    sessionManager = TriggerSessionManager(delegate: sessionEventsDelegate)
   }
 
   // MARK: - Create Config

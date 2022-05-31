@@ -15,12 +15,14 @@ enum TransactionManagerLogic {
   ) -> String? {
     switch transaction.transactionState {
     case .purchasing,
-        .restored:
+      .restored:
+      // Purchasing and restoration only happens via Superwall.
+      // So we send back the trigger session id, if the session exists
       return activeTriggerSession?.id
     case .purchased,
         .deferred,
         .failed:
-      // Only return trigger session id if a transaction exists in the active session.
+      // Only return the trigger session id if a transaction exists in the active session.
       // Otherwise these states may have occurred via renewal/purchasing outside of the app.
       if activeTriggerSession?.transaction != nil {
         return activeTriggerSession?.id

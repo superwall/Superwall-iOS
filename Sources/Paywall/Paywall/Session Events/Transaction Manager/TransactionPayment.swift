@@ -10,7 +10,7 @@ import StoreKit
 
 extension TransactionModel {
   struct Payment: Codable {
-    ///The ID of a product being bought.
+    /// The ID of a product being bought.
     let productIdentifier: String
 
     /// The number of items the user wants to purchase.

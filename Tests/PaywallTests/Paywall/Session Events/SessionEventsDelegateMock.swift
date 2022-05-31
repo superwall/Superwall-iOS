@@ -9,21 +9,22 @@ import Foundation
 @testable import Paywall
 
 final class SessionEventsDelegateMock: SessionEventsDelegate {
-  func enqueue(_ triggerSession: TriggerSession) {
+  var triggerSession: TriggerSessionManager = TriggerSessionManager(delegate: nil)
+  var queue: SessionEventsQueue
 
+  init(queue: SessionEventsQueue) {
+    self.queue = queue
+  }
+  
+  func enqueue(_ triggerSession: TriggerSession) {
+    queue.enqueue(triggerSession)
   }
 
   func enqueue(_ triggerSessions: [TriggerSession]) {
-
+    queue.enqueue(triggerSessions)
   }
 
   func enqueue(_ transaction: TransactionModel) {
-
-  }
-
-  var triggerSession: TriggerSessionManager {
-    didSet {
-      
-    }
+    queue.enqueue(transaction)
   }
 }

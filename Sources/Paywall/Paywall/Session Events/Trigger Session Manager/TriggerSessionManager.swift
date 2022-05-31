@@ -32,7 +32,7 @@ final class TriggerSessionManager {
 
   /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
   init(
-    delegate: SessionEventsDelegate,
+    delegate: SessionEventsDelegate?,
     storage: Storage = Storage.shared
   ) {
     self.delegate = delegate
