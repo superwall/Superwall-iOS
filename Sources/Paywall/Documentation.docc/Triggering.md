@@ -83,9 +83,6 @@ struct ContentView: View {
 
 > `onFail` is a completion block that gets called when the paywall's presentation fails. This accepts an `NSError?` with more details. It is recommended to check the error code to handle the onFail callback. If the error code is `4000`, it means the user didn't match any rules. If the error code is `4001` it means the user is in a holdout group. Otherwise, a `404` error code means an error occurred.
 
-
-> Sometimes, state changes can cause your SwiftUI views to redraw and have unexpected consequences. We recommend attaching the `triggerPaywall` view modifier to a top-level view to prevent this.
-
 ### Implicit Triggers
 
 ```swift
