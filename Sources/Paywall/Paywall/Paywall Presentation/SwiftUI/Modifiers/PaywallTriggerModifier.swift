@@ -11,7 +11,8 @@ import Combine
 @available(iOS 13.0, *)
 struct PaywallTriggerModifier: ViewModifier {
   @Binding var shouldPresent: Bool
-  @State private var manuallySetShouldPresent = false
+  @State private var programmaticallySetShouldPresent = false
+  @State private var isInternallyPresenting = false
   var event: String?
   var params: [String: Any]
   var onPresent: ((PaywallInfo?) -> Void)?
@@ -27,8 +28,10 @@ struct PaywallTriggerModifier: ViewModifier {
 
   private func updatePresentation(_ shouldPresent: Bool) {
     if shouldPresent {
-      // TODO: We are showing the default paywall here if no event name provided to trigger.
-      // Double check that this is correct
+      // Stops internallyPresent from being called twice due to state changes.
+      if isInternallyPresenting {
+        return
+      }
       var eventInfo: PresentationInfo = .defaultPaywall
 
       if let name = event {
@@ -40,27 +43,39 @@ struct PaywallTriggerModifier: ViewModifier {
         let result = Paywall.track(trackableEvent)
         eventInfo = .explicitTrigger(result.data)
       }
+      isInternallyPresenting = true
 
       Paywall.internallyPresent(
         eventInfo,
         onPresent: onPresent,
         onDismiss: { result in
-          self.manuallySetShouldPresent = true
+          self.programmaticallySetShouldPresent = true
           self.shouldPresent = false
+          self.isInternallyPresenting = false
           onDismiss?(result)
         },
         onFail: { error in
-          self.manuallySetShouldPresent = true
+          self.programmaticallySetShouldPresent = true
           self.shouldPresent = false
+          self.isInternallyPresenting = false
           onFail?(error)
         }
       )
     } else {
-      // This prevents Paywall.dismiss() being called twice when manually setting shouldPresent.
-      if manuallySetShouldPresent {
-        manuallySetShouldPresent = false
+      // When states change in SwiftUI views, the shouldPresent state seems to get temporarily
+      // reset to false as it rerenders the view. This incorrectly calls Paywall.dismiss().
+      // Also, when views get set up for the first time, Paywall.dismiss() was being called.
+      // This guards against that.
+      guard isInternallyPresenting else {
+        // This prevents Paywall.dismiss() being called when programmatically setting shouldPresent
+        // to false.
+        if programmaticallySetShouldPresent {
+          programmaticallySetShouldPresent = false
+          return
+        }
         return
       }
+
       Paywall.dismiss()
     }
   }
