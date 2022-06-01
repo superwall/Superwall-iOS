@@ -123,11 +123,13 @@ extension Paywall {
       Paywall.track(trackedEvent)
     }
 
-    if automaticallyDismiss {
+    if Self.automaticallyDismiss {
       dismiss(
         paywallViewController,
         state: .purchased(productId: product.productIdentifier)
       )
+    } else {
+      paywallViewController.loadingState = .ready
     }
 	}
 
@@ -197,8 +199,10 @@ extension Paywall {
     )
     Paywall.track(trackedEvent)
 
-    if automaticallyDismiss {
+    if Self.automaticallyDismiss {
       dismiss(paywallViewController, state: .restored)
+    } else {
+      paywallViewController.loadingState = .ready
     }
 	}
 
