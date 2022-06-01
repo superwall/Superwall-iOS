@@ -11,7 +11,8 @@ import Combine
 @available(iOS 13.0, *)
 struct PaywallPresentationModifier: ViewModifier {
   @Binding var isPresented: Bool
-  @State private var manuallySetIsPresented = false
+  @State private var programmaticallySetIsPresented = false
+  @State private var isInternallyPresenting = false
   var onPresent: ((PaywallInfo?) -> Void)?
   var onDismiss: ((PaywallDismissalResult) -> Void)?
   var onFail: ((NSError) -> Void)?
@@ -25,24 +26,39 @@ struct PaywallPresentationModifier: ViewModifier {
 
   private func updatePresentation(_ isPresented: Bool) {
     if isPresented {
+      // Stops internallyPresent from being called twice due to state changes.
+      if isInternallyPresenting {
+        return
+      }
+      isInternallyPresenting = true
       Paywall.internallyPresent(
         .defaultPaywall,
         onPresent: onPresent,
         onDismiss: { result in
-          self.manuallySetIsPresented = true
+          self.programmaticallySetIsPresented = true
           self.isPresented = false
+          self.isInternallyPresenting = false
           onDismiss?(result)
         },
         onFail: { error in
-          self.manuallySetIsPresented = true
+          self.programmaticallySetIsPresented = true
           self.isPresented = false
+          self.isInternallyPresenting = false
           onFail?(error)
         }
       )
     } else {
-      // This prevents Paywall.dismiss() being called twice when manually setting isPresented.
-      if manuallySetIsPresented {
-        manuallySetIsPresented = false
+      // When states change in SwiftUI views, the isPresented state seems to get temporarily
+      // reset to false as it rerenders the view. This incorrectly calls Paywall.dismiss().
+      // Also, when views get set up for the first time, Paywall.dismiss() was being called.
+      // This guards against that.
+      guard isInternallyPresenting else {
+        // This prevents Paywall.dismiss() being called when programmatically setting isPresented
+        // to false.
+        if programmaticallySetIsPresented {
+          programmaticallySetIsPresented = false
+          return
+        }
         return
       }
       Paywall.dismiss()
