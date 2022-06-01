@@ -67,6 +67,9 @@ public final class Paywall: NSObject {
 		return Storage.shared.userAttributes
 	}
 
+  /// Automatically dismisses the paywall when a product is purchased or restored. Defaults to `true`.
+  public static var automaticallyDismiss = true
+
   // MARK: - Private Properties
   /// Used as the reload function if a paywall takes to long to load. set in paywall.present
 	static var presentAgain = {}

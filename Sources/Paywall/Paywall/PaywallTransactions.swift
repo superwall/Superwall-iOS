@@ -123,10 +123,12 @@ extension Paywall {
       Paywall.track(trackedEvent)
     }
 
-    dismiss(
-      paywallViewController,
-      state: .purchased(productId: product.productIdentifier)
-    )
+    if automaticallyDismiss {
+      dismiss(
+        paywallViewController,
+        state: .purchased(productId: product.productIdentifier)
+      )
+    }
 	}
 
 	private func transactionErrorDidOccur(
@@ -195,7 +197,9 @@ extension Paywall {
     )
     Paywall.track(trackedEvent)
 
-    dismiss(paywallViewController, state: .restored)
+    if automaticallyDismiss {
+      dismiss(paywallViewController, state: .restored)
+    }
 	}
 
 	// if a parent needs to approve the purchase
