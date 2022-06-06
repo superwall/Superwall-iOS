@@ -18,6 +18,18 @@ extension Paywall {
     onDismiss: PaywallDismissalCompletionBlock? = nil,
     onFail: ((NSError) -> Void)? = nil
   ) {
+    guard Paywall.shared.didFetchConfig else {
+      let trigger = PreConfigTrigger(
+        presentationInfo: presentationInfo,
+        viewController: presentingViewController,
+        ignoreSubscriptionStatus: ignoreSubscriptionStatus,
+        onFail: onFail,
+        onPresent: onPresent,
+        onDismiss: onDismiss
+      )
+      return Storage.shared.cachePreConfigTrigger(trigger)
+    }
+
     let eventData = presentationInfo.eventData
     let debugInfo: [String: Any] = [
       "on": presentingViewController.debugDescription,
@@ -183,7 +195,7 @@ extension Paywall {
     }
   }
 
-  func createPresentingWindowIfNeeded() {
+  private func createPresentingWindowIfNeeded() {
     if presentingWindow == nil {
       if #available(iOS 13.0, *) {
         let scenes = UIApplication.shared.connectedScenes

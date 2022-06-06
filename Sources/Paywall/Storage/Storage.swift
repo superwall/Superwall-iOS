@@ -32,6 +32,7 @@ class Storage {
   }
   // swiftlint:disable:next array_constructor
   var triggers: [String: Trigger] = [:]
+  private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
   private let cache: Cache
 
   init(cache: Cache = Cache()) {
@@ -104,6 +105,14 @@ class Storage {
 
     _ = trackEvent(SuperwallEvent.AppInstall())
     cache.write(true, forType: DidTrackAppInstall.self)
+  }
+
+  func cachePreConfigTrigger(_ trigger: PreConfigTrigger) {
+    triggersFiredPreConfig.append(trigger)
+  }
+
+  func clearPreConfigTriggers() {
+    triggersFiredPreConfig.removeAll()
   }
 
   private func save() {
