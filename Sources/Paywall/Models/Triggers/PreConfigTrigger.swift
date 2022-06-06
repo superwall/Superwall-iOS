@@ -10,7 +10,7 @@ import UIKit
 struct PreConfigTrigger {
   let presentationInfo: PresentationInfo
   var viewController: UIViewController?
-  var ignoreSubscriptionStatus: Bool = false
+  var ignoreSubscriptionStatus = false
   var onFail: ((NSError) -> Void)?
   var onPresent: ((PaywallInfo?) -> Void)?
   var onDismiss: PaywallDismissalCompletionBlock?
