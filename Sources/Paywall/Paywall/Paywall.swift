@@ -75,7 +75,6 @@ public final class Paywall: NSObject {
 
 	var presentingWindow: UIWindow?
 	var didTryToAutoRestore = false
-  var eventsTrackedBeforeConfigWasFetched: [EventData] = []
 	var paywallWasPresentedThisSession = false
   var didFetchConfig = !Storage.shared.configRequestId.isEmpty
 
@@ -222,14 +221,35 @@ public final class Paywall: NSObject {
 	private func fetchConfiguration() {
     let requestId = UUID().uuidString
     Network.shared.getConfig(withRequestId: requestId) { [weak self] result in
+      guard let self = self else {
+        return
+      }
       switch result {
       case .success(let config):
         Storage.shared.addConfig(config, withRequestId: requestId)
         SessionEventsManager.shared.triggerSession.createSessions(from: config)
-        self?.didFetchConfig = true
+        self.didFetchConfig = true
         config.cache()
-        self?.eventsTrackedBeforeConfigWasFetched.forEach { self?.handleImplicitTrigger(forEvent: $0) }
-        self?.eventsTrackedBeforeConfigWasFetched.removeAll()
+
+        Storage.shared.triggersFiredPreConfig.forEach { trigger in
+          switch trigger.presentationInfo.triggerType {
+          case .implicit:
+            guard let eventData = trigger.presentationInfo.eventData else {
+              return
+            }
+            self.handleImplicitTrigger(forEvent: eventData)
+          case .explicit:
+            Self.internallyPresent(
+              trigger.presentationInfo,
+              on: trigger.viewController,
+              ignoreSubscriptionStatus: trigger.ignoreSubscriptionStatus,
+              onPresent: trigger.onPresent,
+              onDismiss: trigger.onDismiss,
+              onFail: trigger.onFail
+            )
+          }
+        }
+        Storage.shared.clearPreConfigTriggers()
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -238,7 +258,7 @@ public final class Paywall: NSObject {
           info: nil,
           error: error
         )
-        self?.didFetchConfig = true
+        self.didFetchConfig = true
       }
     }
 	}
@@ -252,9 +272,6 @@ public final class Paywall: NSObject {
 			guard let self = self else {
         return
       }
-      guard self.didFetchConfig else {
-        return self.eventsTrackedBeforeConfigWasFetched.append(event)
-      }
 
       let outcome = PaywallLogic.canTriggerPaywall(
         eventName: event.name,
@@ -264,9 +281,11 @@ public final class Paywall: NSObject {
 
       switch outcome {
       case .triggerPaywall:
+        let presentationInfo: PresentationInfo = .implicitTrigger(event)
+
         // delay in case they are presenting a view controller alongside an event they are calling
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
-          Paywall.internallyPresent(.implicitTrigger(event))
+          Paywall.internallyPresent(presentationInfo)
         }
       case .disallowedEventAsTrigger:
         Logger.debug(
