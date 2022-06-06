@@ -16,35 +16,36 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``delegate``
 - ``EventName``
 
+### Triggering and Dismissing a Paywall
+
+- <doc:Triggering>
+- ``trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)``
+- ``track(_:_:)-2vkwo``
+- ``dismiss(_:)``
+- ``track(_:_:)-7gc4r``
+- ``track(name:params:)``
+- ``StandardEvent``
+
+### In-App Previews
+- <doc:InAppPreviews>
+- ``handleDeepLink(_:)``
+
 ### Presenting and Dismissing a Paywall
 
 - ``present(onPresent:onDismiss:onFail:)``
 - ``present(on:onPresent:onDismiss:onFail:)``
 - ``present(identifier:on:ignoreSubscriptionStatus:onPresent:onDismiss:onFail:)``
 - ``PaywallInfo``
-- ``shouldAnimatePaywallPresentation``
-- ``dismiss(_:)``
-- ``shouldAnimatePaywallDismissal``
 - ``load(identifier:)``
-
-### Triggering and Dismissing a Paywall
-
-- <doc:Triggering>
-- ``trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)``
-- ``track(_:_:)-2vkwo``
-- ``track(_:_:)-7gc4r``
-- ``track(name:params:)``
-- ``StandardEvent``
-- ``TriggerInfo``
 
 ### Identifying a User
 
 - <doc:SettingUserAttributes>
 - ``identify(userId:)``
 - ``setUserAttributes(_:)``
-- ``setUserAttributesDictionary(attributes:)``
 - ``userAttributes``
 - ``reset()``
+- ``setUserAttributesDictionary(attributes:)``
 - ``StandardUserAttribute``
 - ``StandardUserAttributeKey``
 - ``setUserAttributes(_:custom:)``
@@ -61,8 +62,9 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``Paywall/Paywall/logLevel``
 - ``Paywall/Paywall/logScopes``
 
-### Customisation
+### Customization
 
+- ``automaticallyDismiss``
 - ``restoreFailedTitleString``
 - ``restoreFailedMessageString``
 - ``restoreFailedCloseButtonString``

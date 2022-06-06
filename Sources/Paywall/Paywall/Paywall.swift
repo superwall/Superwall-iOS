@@ -22,33 +22,39 @@ public final class Paywall: NSObject {
 	/// WARNING: Determines which network environment your SDK should use. Defaults to latest. You should under no circumstance change this unless you received the go-ahead from the Superwall team.
 	public static var networkEnvironment: PaywallNetworkEnvironment = .release
 
-	/// Defines the `title` of the alert presented to the end user when restoring transactions fails. Defaults to `No Subscription Found`
+	/// Defines the title of the alert presented to the end user when restoring transactions fails. Defaults to `No Subscription Found`.
 	public static var restoreFailedTitleString = "No Subscription Found"
 
-	/// Defines the `message` of the alert presented to the end user when restoring transactions fails. Defaults to `We couldn't find an active subscription for your account.`
+	/// Defines the message of the alert presented to the end user when restoring transactions fails. Defaults to `We couldn't find an active subscription for your account.`
 	public static var restoreFailedMessageString = "We couldn't find an active subscription for your account."
 
-	/// Defines the `close button title` of the alert presented to the end user when restoring transactions fails. Defaults to `Okay`
+	/// Defines the close button title of the alert presented to the end user when restoring transactions fails. Defaults to `Okay`.
 	public static var restoreFailedCloseButtonString = "Okay"
 
-	/// Set this to `true` to forward events from the Game Controller to the Paywall via `Paywall.gamepadValueChanged(gamepad:element:)`
+	/// Forwards events from the game controller to the paywall. Defaults to `false`.
+  ///
+  /// Set this to `true` to forward events from the Game Controller to the Paywall via ``Paywall/Paywall/gamepadValueChanged(gamepad:element:)``.
 	public static var isGameControllerEnabled = false
 
-	/// Set this to `false` to globally disable paywall presentation animations (passed  to `paywallPresentor.present(animated:)`) `
+	/// Animates paywall presentation. Defaults to `true`.
+  ///
+  /// Set this to `false` to globally disable paywall presentation animations.
 	public static var shouldAnimatePaywallPresentation = true
 
-	/// Set this to `false` to globally disable paywall dismissal animations (passed  to `paywallVC.dismiss(animated:)`) `
+  /// Animates paywall dismissal. Defaults to `true`.
+  ///
+  /// Set this to `false` to globally disable paywall dismissal animations.
 	public static var shouldAnimatePaywallDismissal = true
 
-	/// Set this to `false` to load and cache triggers in a just-in-time fashion.
+	/// Pre-loads and caches triggers and their associated paywalls and products upon initialization of the SDK. Defaults to `true`.
   ///
-  /// This defaults to `true`. This pre-loads and caches triggers and their associated paywalls and products upon initialization of the SDK.
+  /// Set this to `false` to load and cache triggers in a just-in-time fashion.
 	public static var shouldPreloadTriggers = true
 
-	/// Prints logs to the console if set to `true`. Default is `false`
+	/// Prints logs to the console if set to `true`. Default is `false`.
 	@objc public static var debugMode = false
 
-	/// Defines the minimum log level to print to the console. Defaults to nil (none)
+	/// Defines the minimum log level to print to the console. Defaults to `nil` (none).
 	public static var logLevel: LogLevel? = .debug {
 		didSet {
 			debugMode = logLevel != nil
@@ -62,12 +68,14 @@ public final class Paywall: NSObject {
 		}
 	}
 
-	/// Access properties stored on the user
+	/// Properties stored about the user, set using ``Paywall/Paywall/setUserAttributes(_:)``.
 	public static var userAttributes: [String: Any] {
 		return Storage.shared.userAttributes
 	}
 
   /// Automatically dismisses the paywall when a product is purchased or restored. Defaults to `true`.
+  ///
+  /// Set this to `false` to prevent the paywall from dismissing on purchase/restore.
   public static var automaticallyDismiss = true
 
   // MARK: - Private Properties
