@@ -245,7 +245,7 @@ public final class Paywall: NSObject {
               ignoreSubscriptionStatus: trigger.ignoreSubscriptionStatus,
               onPresent: trigger.onPresent,
               onDismiss: trigger.onDismiss,
-              onFail: trigger.onSkip
+              onFail: trigger.onFail
             )
           }
         }
@@ -283,10 +283,6 @@ public final class Paywall: NSObject {
       case .triggerPaywall:
         let presentationInfo: PresentationInfo = .implicitTrigger(event)
 
-        guard self.didFetchConfig else {
-          let trigger = PreConfigTrigger(presentationInfo: presentationInfo)
-          return Storage.shared.cachePreConfigTrigger(trigger)
-        }
         // delay in case they are presenting a view controller alongside an event they are calling
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
           Paywall.internallyPresent(presentationInfo)

@@ -152,22 +152,6 @@ public extension Paywall {
       presentationInfo = .explicitTrigger(result.data)
     }
 
-    guard Paywall.shared.didFetchConfig else {
-      let trigger = PreConfigTrigger(
-        presentationInfo: presentationInfo,
-        viewController: viewController,
-        ignoreSubscriptionStatus: ignoreSubscriptionStatus,
-        onSkip: onSkip,
-        onPresent: onPresent,
-        onDismiss: { result in
-          if let onDismiss = onDismiss {
-            onDismissConverter(result, completion: onDismiss)
-          }
-        }
-      )
-      return Storage.shared.cachePreConfigTrigger(trigger)
-    }
-
     internallyPresent(
       presentationInfo,
       on: viewController,
