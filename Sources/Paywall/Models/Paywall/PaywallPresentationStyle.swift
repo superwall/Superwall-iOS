@@ -11,4 +11,5 @@ enum PaywallPresentationStyle: String, Decodable {
   case sheet = "SHEET"
   case modal = "MODAL"
   case fullscreen = "FULLSCREEN"
+  case push = "PUSH"
 }
