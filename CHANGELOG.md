@@ -6,6 +6,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 -----
 
 ### Enhancements
+- New push presentation style. By selecting Push on the superwall dashboard, your paywall will push and pop in as if it's being pushed/popped from a navigation controller. If you are using UIKit, you can provide a view controller to `Paywall.trigger` like this: `Paywall.trigger(event: "MyEvent", on: self)`. This will make the push transition more realistic, by moving its view in the transition. 
 - New dedicated function for handling deeplinks: `Paywall.handleDeepLink(url)`
 - Deprecates old `track` functions. The only one you should use is `Paywall.track(_:_:)`, to which you pass an event name and a dictionary of parameters.
 - Adds a new way of internally tracking analytics associated with a paywall and the app session. This will greatly improve the Superwall dashboard analytics.
