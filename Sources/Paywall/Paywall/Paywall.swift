@@ -304,6 +304,14 @@ public final class Paywall: NSObject {
 			guard let self = self else {
         return
       }
+      
+      let presentationInfo: PresentationInfo = .implicitTrigger(event)
+      
+      guard Paywall.shared.didFetchConfig else {
+        let trigger = PreConfigTrigger(presentationInfo: presentationInfo)
+        Storage.shared.cachePreConfigTrigger(trigger)
+        return
+      }
 
       let outcome = PaywallLogic.canTriggerPaywall(
         eventName: event.name,
@@ -313,8 +321,6 @@ public final class Paywall: NSObject {
 
       switch outcome {
       case .triggerPaywall:
-        let presentationInfo: PresentationInfo = .implicitTrigger(event)
-
         // delay in case they are presenting a view controller alongside an event they are calling
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
           Paywall.internallyPresent(presentationInfo)

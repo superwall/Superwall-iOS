@@ -199,6 +199,7 @@
 		E9AD6F3E186ED156A32E6A26 /* TriggerInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A9DFC74F896EF492E2B1840 /* TriggerInfo.swift */; };
 		E9D3AE8E69C6825A90CD3D97 /* TriggerSessionPaywall.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDFA8380EA99AFC7AC0CF26A /* TriggerSessionPaywall.swift */; };
 		EAEFCB5408B4BE00F2AF3428 /* ConfigResponseLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE079A0E71B6D91D57235A63 /* ConfigResponseLogic.swift */; };
+		EC5BBD8C63FDDC94FAC00744 /* PreConfigTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 168EB63B7737A985B0B26E79 /* PreConfigTrigger.swift */; };
 		EE49E81EDF98FFF84C9F8137 /* TriggerSessionLoadingInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7349F058D81DBEFE1A7B1214 /* TriggerSessionLoadingInfo.swift */; };
 		EF2D8EE19F4C3A3C05A5A0F5 /* TriggerSessionTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E5C3EAF5867A5437AEDE94 /* TriggerSessionTransaction.swift */; };
 		F0D3903193E5ED3F2B7C1D40 /* LocalizationGrouping.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE3C7B7AEBB1A754B10C8357 /* LocalizationGrouping.swift */; };
@@ -254,6 +255,7 @@
 		10981E067436E13F06E5A58C /* SWLocalizationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWLocalizationViewController.swift; sourceTree = "<group>"; };
 		1172F9EA3F79A4A44E12F7BE /* ShimmeringMaskLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringMaskLayer.swift; sourceTree = "<group>"; };
 		1519882963E83455C4BB6CA9 /* ConfigResponseLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigResponseLogicTests.swift; sourceTree = "<group>"; };
+		168EB63B7737A985B0B26E79 /* PreConfigTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreConfigTrigger.swift; sourceTree = "<group>"; };
 		1711C36C3946336AB63D0A35 /* GameControllerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameControllerManager.swift; sourceTree = "<group>"; };
 		18145711AB256473A81C9879 /* SWProductPeriod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWProductPeriod.swift; sourceTree = "<group>"; };
 		181BD406A1B0436F4F543092 /* Triggering.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Triggering.md; sourceTree = "<group>"; };
@@ -750,6 +752,7 @@
 		4C99AFE85F77914CACFF0C2C /* Triggers */ = {
 			isa = PBXGroup;
 			children = (
+				168EB63B7737A985B0B26E79 /* PreConfigTrigger.swift */,
 				009905E60A20A3109B2F1207 /* Trigger.swift */,
 				1A9DFC74F896EF492E2B1840 /* TriggerInfo.swift */,
 				4A21DF34ABC9BFEE15F983B6 /* TriggerRule.swift */,
@@ -1452,6 +1455,7 @@
 				92F5870D9DD4731787DD19AB /* PaywallTriggerModifier.swift in Sources */,
 				0273372348EFFC1DB900BCEA /* Postback.swift in Sources */,
 				3E9D81980E343FC478EA9A8E /* PostbackRequest.swift in Sources */,
+				EC5BBD8C63FDDC94FAC00744 /* PreConfigTrigger.swift in Sources */,
 				6084BCD5B3407FA2BA30365A /* PresentationInfo.swift in Sources */,
 				5D46778A8CF0259CD13D8791 /* Product.swift in Sources */,
 				0C44FC989D39DEE5C2D785E1 /* ProductPeriod.swift in Sources */,
