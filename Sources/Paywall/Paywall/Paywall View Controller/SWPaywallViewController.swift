@@ -417,7 +417,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       self.contentPlaceholderImageView.tintColor = loadingColor.withAlphaComponent(0.5)
     }
 
-
     switch presentationStyle {
     case .sheet:
       modalPresentationStyle = .pageSheet
