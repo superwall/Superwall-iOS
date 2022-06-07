@@ -27,7 +27,8 @@ extension Paywall {
         onPresent: onPresent,
         onDismiss: onDismiss
       )
-      return Storage.shared.cachePreConfigTrigger(trigger)
+      Storage.shared.cachePreConfigTrigger(trigger)
+      return 
     }
 
     let eventData = presentationInfo.eventData
@@ -55,7 +56,7 @@ extension Paywall {
     }
 
     if let delegate = delegate,
-      delegate.isUserSubscribed(),
+       Paywall.shared.isUserSubscribed(),
       !SWDebugManager.shared.isDebuggerLaunched,
       !ignoreSubscriptionStatus {
       return

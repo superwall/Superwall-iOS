@@ -274,6 +274,27 @@ public final class Paywall: NSObject {
     }
 	}
 
+  internal func isUserSubscribed() -> Bool {
+    
+    // prevents deadlock when calling from main thread
+    if Thread.isMainThread {
+      return Paywall.delegate?.isUserSubscribed() ?? false
+    }
+    
+    var isSubscribed = false
+    // create a dispatchGroup and enter it
+    let dispatchGroup = DispatchGroup()
+    dispatchGroup.enter()
+    onMain {
+      // switch to main thread
+      isSubscribed = Paywall.delegate?.isUserSubscribed() ?? false
+      dispatchGroup.leave()
+    }
+    // wont get called until dispatchGroup.leave() is called
+    dispatchGroup.wait()
+    return isSubscribed
+  }
+  
   /// Attemps to implicitly trigger a paywall for a given analytical event.
   ///
   ///  - Parameters:
@@ -281,6 +302,14 @@ public final class Paywall: NSObject {
 	func handleImplicitTrigger(forEvent event: EventData) {
 		onMain { [weak self] in
 			guard let self = self else {
+        return
+      }
+      
+      let presentationInfo: PresentationInfo = .implicitTrigger(event)
+      
+      guard Paywall.shared.didFetchConfig else {
+        let trigger = PreConfigTrigger(presentationInfo: presentationInfo)
+        Storage.shared.cachePreConfigTrigger(trigger)
         return
       }
 
@@ -292,8 +321,6 @@ public final class Paywall: NSObject {
 
       switch outcome {
       case .triggerPaywall:
-        let presentationInfo: PresentationInfo = .implicitTrigger(event)
-
         // delay in case they are presenting a view controller alongside an event they are calling
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
           Paywall.internallyPresent(presentationInfo)
