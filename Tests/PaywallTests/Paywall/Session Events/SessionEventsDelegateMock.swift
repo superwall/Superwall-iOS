@@ -9,7 +9,7 @@ import Foundation
 @testable import Paywall
 
 final class SessionEventsDelegateMock: SessionEventsDelegate {
-  var triggerSession: TriggerSessionManager = TriggerSessionManager(delegate: nil)
+  var triggerSession = TriggerSessionManager(delegate: nil)
   var queue: SessionEventsQueue
 
   init(queue: SessionEventsQueue) {

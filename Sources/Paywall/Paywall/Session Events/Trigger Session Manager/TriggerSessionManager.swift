@@ -78,7 +78,7 @@ final class TriggerSessionManager {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
         configRequestId: storage.configRequestId,
         userAttributes: storage.userAttributes,
-        isSubscribed: Paywall.shared.isUserSubscribed(),
+        isSubscribed: Paywall.shared.isUserSubscribed,
         eventName: trigger.eventName,
         products: StoreKitManager.shared.swProducts,
         appSession: AppSessionManager.shared.appSession
@@ -91,7 +91,7 @@ final class TriggerSessionManager {
     let defaultPaywallSession = TriggerSessionManagerLogic.createPendingTriggerSession(
       configRequestId: storage.configRequestId,
       userAttributes: storage.userAttributes,
-      isSubscribed: Paywall.shared.isUserSubscribed(),
+      isSubscribed: Paywall.shared.isUserSubscribed,
       eventName: defaultEventName,
       products: StoreKitManager.shared.swProducts,
       appSession: AppSessionManager.shared.appSession
@@ -172,7 +172,7 @@ final class TriggerSessionManager {
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
       configRequestId: storage.configRequestId,
       userAttributes: storage.userAttributes,
-      isSubscribed: Paywall.shared.isUserSubscribed(),
+      isSubscribed: Paywall.shared.isUserSubscribed,
       eventName: eventName,
       products: StoreKitManager.shared.swProducts,
       appSession: AppSessionManager.shared.appSession
@@ -190,7 +190,7 @@ final class TriggerSessionManager {
       return
     }
 
-    triggerSession.isSubscribed = Paywall.shared.isUserSubscribed()
+    triggerSession.isSubscribed = Paywall.shared.isUserSubscribed
     delegate?.enqueue(triggerSession)
   }
 
@@ -200,7 +200,7 @@ final class TriggerSessionManager {
       guard var pendingTriggerSession = pendingTriggerSessions[eventName] else {
         continue
       }
-      pendingTriggerSession.isSubscribed = Paywall.shared.isUserSubscribed()
+      pendingTriggerSession.isSubscribed = Paywall.shared.isUserSubscribed
       pendingTriggerSessions[eventName] = pendingTriggerSession
     }
 
