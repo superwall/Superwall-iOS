@@ -102,7 +102,7 @@ final class TriggerSessionManager {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
         configRequestId: storage.configRequestId,
         userAttributes: storage.userAttributes,
-        isSubscribed: Paywall.delegate?.isUserSubscribed() ?? false,
+        isSubscribed: Paywall.shared.isUserSubscribed(),
         eventName: trigger.eventName,
         products: StoreKitManager.shared.swProducts,
         appSession: AppSessionManager.shared.appSession
@@ -115,7 +115,7 @@ final class TriggerSessionManager {
     let defaultPaywallSession = TriggerSessionManagerLogic.createPendingTriggerSession(
       configRequestId: storage.configRequestId,
       userAttributes: storage.userAttributes,
-      isSubscribed: Paywall.delegate?.isUserSubscribed() ?? false,
+      isSubscribed: Paywall.shared.isUserSubscribed(),
       eventName: defaultEventName,
       products: StoreKitManager.shared.swProducts,
       appSession: AppSessionManager.shared.appSession
@@ -196,7 +196,7 @@ final class TriggerSessionManager {
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
       configRequestId: storage.configRequestId,
       userAttributes: storage.userAttributes,
-      isSubscribed: Paywall.delegate?.isUserSubscribed() ?? false,
+      isSubscribed: Paywall.shared.isUserSubscribed(),
       eventName: eventName,
       products: StoreKitManager.shared.swProducts,
       appSession: AppSessionManager.shared.appSession
@@ -213,7 +213,7 @@ final class TriggerSessionManager {
     guard var triggerSession = activeTriggerSession else {
       return
     }
-    triggerSession.isSubscribed = Paywall.delegate?.isUserSubscribed() ?? false
+    triggerSession.isSubscribed = Paywall.shared.isUserSubscribed()
     queue.enqueue(triggerSession)
   }
 
@@ -223,7 +223,7 @@ final class TriggerSessionManager {
       guard var pendingTriggerSession = pendingTriggerSessions[eventName] else {
         continue
       }
-      pendingTriggerSession.isSubscribed = Paywall.delegate?.isUserSubscribed() ?? false
+      pendingTriggerSession.isSubscribed = Paywall.shared.isUserSubscribed()
       pendingTriggerSessions[eventName] = pendingTriggerSession
     }
 

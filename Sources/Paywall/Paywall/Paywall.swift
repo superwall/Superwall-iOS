@@ -274,6 +274,27 @@ public final class Paywall: NSObject {
     }
 	}
 
+  internal func isUserSubscribed() -> Bool {
+    
+    // prevents deadlock when calling from main thread
+    if Thread.isMainThread {
+      return Paywall.delegate?.isUserSubscribed() ?? false
+    }
+    
+    var isSubscribed = false
+    // create a dispatchGroup and enter it
+    let dispatchGroup = DispatchGroup()
+    dispatchGroup.enter()
+    onMain {
+      // switch to main thread
+      isSubscribed = Paywall.delegate?.isUserSubscribed() ?? false
+      dispatchGroup.leave()
+    }
+    // wont get called until dispatchGroup.leave() is called
+    dispatchGroup.wait()
+    return isSubscribed
+  }
+  
   /// Attemps to implicitly trigger a paywall for a given analytical event.
   ///
   ///  - Parameters:
