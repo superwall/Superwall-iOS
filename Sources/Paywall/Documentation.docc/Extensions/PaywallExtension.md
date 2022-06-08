@@ -70,7 +70,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``restoreFailedCloseButtonString``
 - ``localizationOverride(localeIdentifier:)``
 - ``shouldPreloadTriggers``
-- ``shouldAnimatePaywallDismissal``
-- ``shouldAnimatePaywallPresentation``
 - ``networkEnvironment``
 - ``PaywallNetworkEnvironment``
+- ``shouldAnimatePaywallDismissal``
+- ``shouldAnimatePaywallPresentation``
