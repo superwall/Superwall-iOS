@@ -25,10 +25,14 @@ struct Config: Decodable {
   }
 
   /// Preloads paywalls, products, trigger paywalls, and trigger responses. It then sends the products back to the server.
+  ///
+  /// A developer can disable preloading of paywalls by setting ``Paywall/Paywall/shouldPreloadPaywalls``
   func cache() {
-    preloadPaywallsAndProducts()
-    preloadTriggerPaywalls()
-    preloadDefaultPaywall()
+    if Paywall.shouldPreloadPaywalls {
+      preloadPaywallsAndProducts()
+      preloadTriggerPaywalls()
+      preloadDefaultPaywall()
+    }
     executePostback()
   }
 
@@ -86,6 +90,7 @@ struct Config: Decodable {
   }
 }
 
+// MARK: - Stubbable
 extension Config: Stubbable {
   static func stub() -> Config {
     return Config(

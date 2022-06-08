@@ -427,8 +427,8 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     case .push:
       modalPresentationStyle = .custom
       transitioningDelegate = self
-    case .noAnimation:
-      break
+    case .fullscreenNoAnimation:
+      modalPresentationStyle = .overFullScreen
     }
   }
 
@@ -577,7 +577,7 @@ extension SWPaywallViewController {
       set(presentationInfo, dismissalBlock: dismissalBlock)
 
       let isAnimated: Bool
-      if presentationStyle == .noAnimation {
+      if presentationStyle == .fullscreenNoAnimation {
         isAnimated = false
       } else {
         isAnimated = Paywall.shouldAnimatePaywallPresentation
@@ -602,7 +602,7 @@ extension SWPaywallViewController {
     prepareToDismiss()
 
     let isAnimated: Bool
-    if presentationStyle == .noAnimation {
+    if presentationStyle == .fullscreenNoAnimation {
       isAnimated = false
     } else {
       isAnimated = Paywall.shouldAnimatePaywallDismissal

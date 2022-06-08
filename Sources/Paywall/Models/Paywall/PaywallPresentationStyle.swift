@@ -11,8 +11,8 @@ enum PaywallPresentationStyle: String, Decodable {
   case sheet = "SHEET"
   case modal = "MODAL"
   case fullscreen = "FULLSCREEN"
+  case fullscreenNoAnimation = "NO_ANIMATION"
   case push = "PUSH"
-  case noAnimation = "NO_ANIMATION"
 
   init(from decoder: Decoder) throws {
     let container = try decoder.singleValueContainer()
