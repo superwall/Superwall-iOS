@@ -55,10 +55,18 @@ struct SWProductNumber: Codable {
   func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
 
-    try container.encode(formatted, forKey: .formatted)
-    // Note: price is encoded price as `String` (using `NSDecimalNumber.description`)
+    try container.encodeIfPresent(formatted, forKey: .formatted)
+    // Note: value is price encoded as `String` (using `NSDecimalNumber.description`)
     // to preserve precision and avoid values like "1.89999999"
     try container.encode(self.value.description, forKey: .value)
     try container.encode(self.format, forKey: .format)
+  }
+
+  init(from decoder: Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    format = try values.decode(Format.self, forKey: .format)
+    formatted = try values.decodeIfPresent(String.self, forKey: .formatted)
+    let stringValue = try values.decode(String.self, forKey: .value)
+    value = Decimal(string: stringValue) ?? 0
   }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SWProductPeriod: Codable {
+struct SWProductPeriod: Encodable {
   var full: String?
   var short: String?
   var abbreviated: String?
@@ -25,7 +25,7 @@ struct SWProductPeriod: Codable {
   }
 }
 
-struct SWPeriodTemplateVariable: Codable {
+struct SWPeriodTemplateVariable: Encodable {
   var `default`: SWProductPeriod
   var daily: SWProductPeriod
   var weekly: SWProductPeriod
