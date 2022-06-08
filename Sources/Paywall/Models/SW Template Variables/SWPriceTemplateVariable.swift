@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SWPriceTemplateVariable: Codable {
+struct SWPriceTemplateVariable: Encodable {
   var `default`: SWProductNumberGroup?
   var daily: SWProductNumberGroup?
   var weekly: SWProductNumberGroup?

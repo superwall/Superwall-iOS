@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SWProductNumberGroup: Codable {
+struct SWProductNumberGroup: Encodable {
   var raw: SWProductNumber?
   var pretty: SWProductNumber?
   var rounded: SWProductNumber?

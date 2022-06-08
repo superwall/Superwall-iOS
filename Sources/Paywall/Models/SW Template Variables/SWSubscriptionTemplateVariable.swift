@@ -8,8 +8,8 @@
 import Foundation
 import StoreKit
 
-struct SWSubscriptionTemplateVariable: Codable {
-  enum TemplateType: String, Codable {
+struct SWSubscriptionTemplateVariable: Encodable {
+  enum TemplateType: String, Encodable {
     case subscription
     case trial
     case discount
