@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 27/05/2022.
 //
+// swiftlint:disable all
 
 import Foundation
 @testable import Paywall
@@ -15,7 +16,7 @@ final class SessionEventsDelegateMock: SessionEventsDelegate {
   init(queue: SessionEventsQueue) {
     self.queue = queue
   }
-  
+
   func enqueue(_ triggerSession: TriggerSession) {
     queue.enqueue(triggerSession)
   }

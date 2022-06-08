@@ -4,6 +4,7 @@
 //
 //  Created by brian on 7/21/21.
 //
+// swiftlint:disable file_length
 
 import WebKit
 import UIKit
@@ -423,6 +424,11 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       modalPresentationStyle = .pageSheet
     case .fullscreen:
       modalPresentationStyle = .overFullScreen
+    case .push:
+      modalPresentationStyle = .custom
+      transitioningDelegate = self
+    case .noAnimation:
+      break
     }
   }
 
@@ -569,9 +575,17 @@ extension SWPaywallViewController {
 		} else {
 			prepareForPresentation()
       set(presentationInfo, dismissalBlock: dismissalBlock)
+
+      let isAnimated: Bool
+      if presentationStyle == .noAnimation {
+        isAnimated = false
+      } else {
+        isAnimated = Paywall.shouldAnimatePaywallPresentation
+      }
+
       presenter.present(
         self,
-        animated: Paywall.shouldAnimatePaywallPresentation
+        animated: isAnimated
       ) { [weak self] in
         self?.isPresented = true
         self?.presentationDidFinish()
@@ -586,7 +600,15 @@ extension SWPaywallViewController {
     completion: (() -> Void)? = nil
   ) {
     prepareToDismiss()
-		dismiss(animated: Paywall.shouldAnimatePaywallDismissal) { [weak self] in
+
+    let isAnimated: Bool
+    if presentationStyle == .noAnimation {
+      isAnimated = false
+    } else {
+      isAnimated = Paywall.shouldAnimatePaywallDismissal
+    }
+
+		dismiss(animated: isAnimated) { [weak self] in
       self?.didDismiss(
         dismissalResult,
         shouldCallCompletion: shouldCallCompletion,
@@ -699,5 +721,21 @@ extension SWPaywallViewController: Stubbable {
       delegate: nil
     )
   }
-  // swiftlint:disable:next file_length
+}
+
+// MARK: - UIViewControllerTransitioningDelegate
+extension SWPaywallViewController: UIViewControllerTransitioningDelegate {
+  func animationController(
+    forPresented presented: UIViewController,
+    presenting: UIViewController,
+    source: UIViewController
+  ) -> UIViewControllerAnimatedTransitioning? {
+    return PushTransition(state: .presenting)
+  }
+
+  func animationController(
+    forDismissed dismissed: UIViewController
+  ) -> UIViewControllerAnimatedTransitioning? {
+    return PushTransition(state: .dismissing)
+  }
 }
