@@ -17,6 +17,12 @@ public struct Experiment: Equatable, Hashable, Codable {
     public enum VariantType: String, Codable, Hashable {
       case treatment = "TREATMENT"
       case holdout = "HOLDOUT"
+
+      public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(RawValue.self)
+        self = VariantType(rawValue: rawValue) ?? .treatment
+      }
     }
 
     /// The id of the experiment variant.
