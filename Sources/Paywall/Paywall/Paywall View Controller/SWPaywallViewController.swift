@@ -427,6 +427,8 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     case .push:
       modalPresentationStyle = .custom
       transitioningDelegate = self
+    case .noAnimation:
+      break
     }
   }
 
@@ -573,9 +575,17 @@ extension SWPaywallViewController {
 		} else {
 			prepareForPresentation()
       set(presentationInfo, dismissalBlock: dismissalBlock)
+
+      let isAnimated: Bool
+      if presentationStyle == .noAnimation {
+        isAnimated = false
+      } else {
+        isAnimated = Paywall.shouldAnimatePaywallPresentation
+      }
+
       presenter.present(
         self,
-        animated: Paywall.shouldAnimatePaywallPresentation
+        animated: isAnimated
       ) { [weak self] in
         self?.isPresented = true
         self?.presentationDidFinish()
@@ -590,7 +600,15 @@ extension SWPaywallViewController {
     completion: (() -> Void)? = nil
   ) {
     prepareToDismiss()
-		dismiss(animated: Paywall.shouldAnimatePaywallDismissal) { [weak self] in
+
+    let isAnimated: Bool
+    if presentationStyle == .noAnimation {
+      isAnimated = false
+    } else {
+      isAnimated = Paywall.shouldAnimatePaywallDismissal
+    }
+
+		dismiss(animated: isAnimated) { [weak self] in
       self?.didDismiss(
         dismissalResult,
         shouldCallCompletion: shouldCallCompletion,

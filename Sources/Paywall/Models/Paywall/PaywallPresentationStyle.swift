@@ -12,4 +12,11 @@ enum PaywallPresentationStyle: String, Decodable {
   case modal = "MODAL"
   case fullscreen = "FULLSCREEN"
   case push = "PUSH"
+  case noAnimation = "NO_ANIMATION"
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    let rawValue = try container.decode(RawValue.self)
+    self = PaywallPresentationStyle(rawValue: rawValue) ?? .fullscreen
+  }
 }
