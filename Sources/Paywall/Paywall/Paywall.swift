@@ -39,19 +39,25 @@ public final class Paywall: NSObject {
 	/// Animates paywall presentation. Defaults to `true`.
   ///
   /// Set this to `false` to globally disable paywall presentation animations.
-  @available(*, deprecated, message: "Set the Presentation Style to No Animation on the Superwall dashboard instead.")
+  @available(*, deprecated, message: "Set the Presentation Style on the Superwall dashboard to No Animation instead of using this boolean.")
 	public static var shouldAnimatePaywallPresentation = true
 
   /// Animates paywall dismissal. Defaults to `true`.
   ///
   /// Set this to `false` to globally disable paywall dismissal animations.
-  @available(*, deprecated, message: "Set the Presentation Style to No Animation on the Superwall dashboard instead.")
+  @available(*, deprecated, message: "Set the Presentation Style on the Superwall dashboard to No Animation instead of using this boolean.")
 	public static var shouldAnimatePaywallDismissal = true
 
-	/// Pre-loads and caches triggers and their associated paywalls and products upon initialization of the SDK. Defaults to `true`.
+	/// Pre-loads and caches triggers and their associated paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache triggers in a just-in-time fashion.
+  @available(*, deprecated, renamed: "shouldPreloadPaywalls")
 	public static var shouldPreloadTriggers = true
+
+  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. Defaults to `true`.
+  ///
+  /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
+  public static var shouldPreloadPaywalls = true
 
 	/// Prints logs to the console if set to `true`. Default is `false`.
 	@objc public static var debugMode = false
