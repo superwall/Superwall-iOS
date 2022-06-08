@@ -51,7 +51,7 @@ public final class Paywall: NSObject {
 	/// Pre-loads and caches triggers and their associated paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache triggers in a just-in-time fashion.
-  @available(*, deprecated, renamed: "shouldPreloadPaywalls")
+  @available(*, deprecated, renamed: "shouldPreloadPaywalls", message: "This boolean no longer works and should be replaced with shouldPreloadPaywalls.")
 	public static var shouldPreloadTriggers = true
 
   /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. Defaults to `true`.
