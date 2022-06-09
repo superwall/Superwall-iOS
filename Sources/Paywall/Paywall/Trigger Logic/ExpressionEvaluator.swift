@@ -63,6 +63,7 @@ enum ExpressionEvaluator {
       "user": Storage.shared.userAttributes,
       "device": DeviceHelper.shared.templateDevice.toDictionary(),
       "params": eventData.parameters
+      // TODO: add events where events.workout_start.$count_24hr etc (ALL events, not just the one that is the trigger) https://www.notion.so/superwall/event-counts-11a2fa7b47774eabbf501a647da1ea65
     ])
     if let expressionJs = rule.expressionJs {
       if let base64Params = JavascriptExpressionEvaluatorParams(
