@@ -142,7 +142,7 @@ class Storage {
     cache.delete(Transactions.self)
   }
 
-  func getCachedTriggerSessions() -> [TriggerSession] {
+  func getCachedTriggerSessions() -> TriggerSessions.Value {
     return cache.read(TriggerSessions.self) ?? []
   }
 
@@ -153,7 +153,7 @@ class Storage {
     )
   }
 
-  func getCachedTransactions() -> [TransactionModel] {
+  func getCachedTransactions() -> Transactions.Value {
     return cache.read(Transactions.self) ?? []
   }
 
@@ -162,5 +162,27 @@ class Storage {
       transactions,
       forType: Transactions.self
     )
+  }
+
+  /// Saves event data to a dictionary that stores all events ever triggered.
+  ///
+  /// - Parameters:
+  ///   - eventData: The event to be stored.
+  func saveTriggeredEvent(_ eventData: EventData) {
+    var triggeredEvents = cache.read(TriggeredEvents.self) ?? [:]
+
+    var eventArray = triggeredEvents[eventData.name] ?? []
+    eventArray.append(eventData)
+    triggeredEvents[eventData.name] = eventArray
+
+    cache.write(triggeredEvents, forType: TriggeredEvents.self)
+  }
+
+  /// Saves event data to a dictionary that stores all events ever triggered.
+  ///
+  /// - Parameters:
+  ///   - eventData: The event to be stored.
+  func getTriggeredEvents() -> TriggeredEvents.Value {
+    return cache.read(TriggeredEvents.self) ?? [:]
   }
 }

@@ -61,3 +61,10 @@ enum Transactions: CachingType {
   }
   typealias Value = [TransactionModel]
 }
+
+enum TriggeredEvents: CachingType {
+  static var key: String {
+    "store.triggeredEvents"
+  }
+  typealias Value = [String: [EventData]]
+}

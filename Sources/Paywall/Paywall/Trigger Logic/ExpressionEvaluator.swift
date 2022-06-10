@@ -55,15 +55,35 @@ enum ExpressionEvaluator {
     return false
   }
 
+
   private static func getPostfix(
     forRule rule: TriggerRule,
     withEventData eventData: EventData
   ) -> String? {
+    /*
+     [
+      "events": [
+        "eventName": [
+          "$count_24hr": 3
+        ]
+      ]
+    ]
+     */
+
+    var eventOccurrences: [String: [String: Any]] = [:]
+    let events = Storage.shared.getTriggeredEvents()
+    for event in events {
+      eventOccurrences[event.key] = OccurrenceLogic.getEventOccurrences(
+        of: event.key,
+        isPreemptive: false
+      )
+    }
+
     let values = JSON([
       "user": Storage.shared.userAttributes,
       "device": DeviceHelper.shared.templateDevice.toDictionary(),
-      "params": eventData.parameters
-      // TODO: add events where events.workout_start.$count_24hr etc (ALL events, not just the one that is the trigger) https://www.notion.so/superwall/event-counts-11a2fa7b47774eabbf501a647da1ea65
+      "params": eventData.parameters,
+      "events": eventOccurrences
     ])
     if let expressionJs = rule.expressionJs {
       if let base64Params = JavascriptExpressionEvaluatorParams(
