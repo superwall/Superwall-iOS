@@ -46,7 +46,9 @@ struct TransactionModel: Codable {
   let triggerSessionId: String?
 
   /// A string that uniquely identifies a successful payment transaction.
-  let id: String?
+  let id: String? // change this to storeTransactionId
+  
+  // TODO: add a regular id param that is literally just a uuid4() string :)
 
   /// When the transaction state is restored, this contains the restored transaction id, otherwise it's nil.
   let originalTransactionIdentifier: String?

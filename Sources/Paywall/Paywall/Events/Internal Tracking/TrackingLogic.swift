@@ -22,6 +22,9 @@ enum TrackingLogic {
     // Add a special property if it's an automatically tracked event
     let isStandardEvent = Paywall.EventName(rawValue: eventName) != nil
     eventParams["$is_standard_event"] = isStandardEvent
+    eventParams["$event_name"] = eventName
+    
+    // TODO: Add event counts: https://www.notion.so/superwall/event-counts-11a2fa7b47774eabbf501a647da1ea65
 
     // Filter then assign Superwall parameters
     for key in superwallParameters.keys {
