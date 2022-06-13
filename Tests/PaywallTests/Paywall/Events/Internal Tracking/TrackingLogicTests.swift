@@ -13,14 +13,35 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_noParams() {
     // Given
     let event = SuperwallEvent.AppLaunch()
+    let storage = StorageMock()
 
     // When
     let parameters = TrackingLogic.processParameters(
-      fromTrackableEvent: event
+      fromTrackableEvent: event,
+      storage: storage
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$count_24h"] as! Int, 1)
+  }
+
+  func testProcessParameters_superwallEvent_noParams_firedTwice() {
+    // Given
+    let event = SuperwallEvent.AppLaunch()
+    let storage = StorageMock(internalTriggeredEvents: [
+      event.rawName: [.stub()]
+    ])
+
+    // When
+    let parameters = TrackingLogic.processParameters(
+      fromTrackableEvent: event,
+      storage: storage
+    )
+
+    XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$count_24h"] as! Int, 2)
   }
 
   func testProcessParameters_userEvent_noParams() {
@@ -29,14 +50,38 @@ final class TrackingLogicTests: XCTestCase {
       rawName: "test",
       canImplicitlyTriggerPaywall: false
     )
+    let storage = StorageMock()
 
     // When
     let parameters = TrackingLogic.processParameters(
-      fromTrackableEvent: event
+      fromTrackableEvent: event,
+      storage: storage
     )
 
     XCTAssertFalse(parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$count_24h"] as! Int, 1)
+  }
+
+  func testProcessParameters_userEvent_noParams_firedTwice() {
+    // Given
+    let event = UserInitiatedEvent.Track(
+      rawName: "test",
+      canImplicitlyTriggerPaywall: false
+    )
+    let storage = StorageMock(internalTriggeredEvents: [
+      "test": [.stub()]
+    ])
+
+    // When
+    let parameters = TrackingLogic.processParameters(
+      fromTrackableEvent: event,
+      storage: storage
+    )
+
+    XCTAssertFalse(parameters.eventParams["$is_standard_event"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$count_24h"] as! Int, 2)
   }
 
   func testProcessParameters_superwallEvent_noCustomParams() {

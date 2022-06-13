@@ -10,7 +10,7 @@ import XCTest
 
 @available(iOS 13.0, *)
 final class OccurrableTests: XCTestCase {
-  func test_sinceInstall_preemptive() {
+  func test_sinceInstall_inPostfix() {
     // Given
     let type = Occurrence.SinceInstall.self
     let eventArray: [EventData] = [.stub(), .stub()]
@@ -18,13 +18,13 @@ final class OccurrableTests: XCTestCase {
     // When
     let occurrences = type.getOccurrence(
       from: eventArray,
-      isPostfix: true
+      isInPostfix: false
     )
 
     XCTAssertEqual(occurrences, 3)
   }
 
-  func test_sinceInstall_notPreemptive() {
+  func test_sinceInstall_notInPostfix() {
     // Given
     let type = Occurrence.SinceInstall.self
     let eventArray: [EventData] = [.stub(), .stub()]
@@ -32,13 +32,13 @@ final class OccurrableTests: XCTestCase {
     // When
     let occurrences = type.getOccurrence(
       from: eventArray,
-      isPostfix: false
+      isInPostfix: true
     )
 
     XCTAssertEqual(occurrences, 2)
   }
 
-  func test_last30Days_preemptive() {
+  func test_last30Days_inPostfix() {
     // Given
     let type = Occurrence.Last30Days.self
     let thirtyOneDaysAgo = Date().advanced(by: -31*24*60*60)
@@ -55,12 +55,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: false
+    )
 
     XCTAssertEqual(occurrences, 4)
   }
 
-  func test_last30Days_notPreemptive() {
+  func test_last30Days_notInPostfix() {
     // Given
     let type = Occurrence.Last30Days.self
     let thirtyOneDaysAgo = Date().advanced(by: -31*24*60*60)
@@ -77,12 +80,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: true
+    )
 
     XCTAssertEqual(occurrences, 3)
   }
 
-  func test_last7Days_preemptive() {
+  func test_last7Days_inPostfix() {
     // Given
     let type = Occurrence.Last7Days.self
     let thirtyOneDaysAgo = Date().advanced(by: -31*24*60*60)
@@ -99,12 +105,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: false
+    )
 
     XCTAssertEqual(occurrences, 3)
   }
 
-  func test_last7Days_notPreemptive() {
+  func test_last7Days_notInPostfix() {
     // Given
     let type = Occurrence.Last7Days.self
     let thirtyOneDaysAgo = Date().advanced(by: -31*24*60*60)
@@ -121,12 +130,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: true
+    )
 
     XCTAssertEqual(occurrences, 2)
   }
 
-  func test_last24Hours_preemptive() {
+  func test_last24Hours_inPostfix() {
     // Given
     let type = Occurrence.Last24Hours.self
     let thirtyOneDaysAgo = Date().advanced(by: -31*24*60*60)
@@ -143,12 +155,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: false
+    )
 
     XCTAssertEqual(occurrences, 2)
   }
 
-  func test_last24Hours_notPreemptive() {
+  func test_last24Hours_notInPostfix() {
     // Given
     let type = Occurrence.Last24Hours.self
     let thirtyOneDaysAgo = Date().advanced(by: -31*24*60*60)
@@ -165,12 +180,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: true
+    )
 
     XCTAssertEqual(occurrences, 1)
   }
 
-  func test_latestSession_preemptive() {
+  func test_latestSession_inPostfix() {
     // Given
     let appSessionStartAt = AppSessionManager.shared.appSession.startAt
     let oneMinuteAhead = appSessionStartAt.advanced(by: 60*60)
@@ -185,12 +203,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: false
+    )
 
     XCTAssertEqual(occurrences, 2)
   }
 
-  func test_latestSession_notPreemptive() {
+  func test_latestSession_notInPostfix() {
     // Given
     let appSessionStartAt = AppSessionManager.shared.appSession.startAt
     let oneMinuteAhead = appSessionStartAt.advanced(by: 60*60)
@@ -205,12 +226,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: true
+    )
 
     XCTAssertEqual(occurrences, 1)
   }
 
-  func test_today_preemptive() {
+  func test_today_inPostfix() {
     // Given
     let startOfDay = Calendar.current.startOfDay(for: Date())
     let oneMinuteAhead = startOfDay.advanced(by: 60*60)
@@ -225,12 +249,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: false
+    )
 
     XCTAssertEqual(occurrences, 2)
   }
 
-  func test_today_notPreemptive() {
+  func test_today_notInPostfix() {
     // Given
     let startOfDay = Calendar.current.startOfDay(for: Date())
     let oneMinuteAhead = startOfDay.advanced(by: 60*60)
@@ -245,12 +272,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: true
+    )
 
     XCTAssertEqual(occurrences, 1)
   }
 
-  func test_firstTime_preemptive() {
+  func test_firstTime_inPostfix() {
     // Given
     let startOfDay = Calendar.current.startOfDay(for: Date())
     let oneMinuteAhead = startOfDay.advanced(by: 60*60)
@@ -265,12 +295,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: false
+    )
 
     XCTAssertEqual(occurrences, oneMinuteAhead)
   }
 
-  func test_firstTime_notPreemptive() {
+  func test_firstTime_notInPostfix() {
     // Given
     let startOfDay = Calendar.current.startOfDay(for: Date())
     let oneMinuteAhead = startOfDay.advanced(by: 60*60)
@@ -285,12 +318,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: true
+    )
 
     XCTAssertEqual(occurrences, oneMinuteAhead)
   }
 
-  func test_lastTime_preemptive() {
+  func test_lastTime_inPostfix() {
     // Given
     let startOfDay = Calendar.current.startOfDay(for: Date())
     let oneMinuteAhead = startOfDay.advanced(by: 60*60)
@@ -305,12 +341,15 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: false
+    )
 
     XCTAssertGreaterThan(occurrences, Date().advanced(by: -50))
   }
 
-  func test_lastTime_notPreemptive() {
+  func test_lastTime_notInPostfix() {
     // Given
     let startOfDay = Calendar.current.startOfDay(for: Date())
     let oneMinuteAhead = startOfDay.advanced(by: 60*60)
@@ -325,7 +364,10 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
+    let occurrences = type.getOccurrence(
+      from: eventArray,
+      isInPostfix: true
+    )
 
     XCTAssertEqual(occurrences, oneMinuteBehind)
   }

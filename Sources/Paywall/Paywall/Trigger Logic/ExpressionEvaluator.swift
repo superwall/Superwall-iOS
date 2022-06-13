@@ -68,7 +68,7 @@ enum ExpressionEvaluator {
     for event in events {
       eventOccurrences[event.key] = OccurrenceLogic.getEventOccurrences(
         of: event.key,
-        isPostfix: false,
+        isInPostfix: true,
         storage: storage
       )
     }
