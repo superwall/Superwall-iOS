@@ -20,7 +20,7 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isSuperwall"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
   }
 
   func testProcessParameters_userEvent_noParams() {
@@ -36,7 +36,7 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     XCTAssertFalse(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isSuperwall"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
   }
 
   func testProcessParameters_superwallEvent_noCustomParams() {
@@ -54,11 +54,11 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$eventName"] as! String, "TestName")
-    XCTAssertTrue(parameters.delegateParams["isSuperwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "TestName")
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["event_name"] as! String, "TestName")
   }
 
   func testProcessParameters_superwallEvent_withCustomParams() {
@@ -80,13 +80,13 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "TestName")
     XCTAssertEqual(parameters.eventParams["myCustomParam"] as! String, "hello")
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isSuperwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["event_name"] as! String, "TestName")
     XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! String, "hello")
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -110,13 +110,13 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "TestName")
     XCTAssertNil(parameters.eventParams["$myCustomParam"])
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isSuperwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["event_name"] as! String, "TestName")
     XCTAssertNil(parameters.delegateParams["$myCustomParam"])
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -140,13 +140,13 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "TestName")
     XCTAssertNil(parameters.eventParams["myCustomParam"])
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isSuperwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["event_name"] as! String, "TestName")
     XCTAssertNil(parameters.delegateParams["myCustomParam"])
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -170,13 +170,13 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "TestName")
     XCTAssertNil(parameters.eventParams["myCustomParam"])
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isSuperwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["event_name"] as! String, "TestName")
     XCTAssertNil(parameters.delegateParams["myCustomParam"])
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -201,13 +201,13 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "TestName")
     XCTAssertEqual(parameters.eventParams["myCustomParam"] as! String, date.isoString)
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isSuperwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["event_name"] as! String, "TestName")
     XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! String, date.isoString)
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -232,13 +232,13 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "TestName")
     XCTAssertEqual(parameters.eventParams["myCustomParam"] as! String, url.absoluteString)
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isSuperwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["event_name"] as! String, "TestName")
     XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! String, url.absoluteString)
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -262,13 +262,13 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "TestName")
     XCTAssertNil(parameters.eventParams["myCustomParam"])
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isSuperwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["isTriggeredFromEvent"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["eventName"] as! String, "TestName")
+    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["event_name"] as! String, "TestName")
     XCTAssertNil(parameters.delegateParams["myCustomParam"])
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }

@@ -11,48 +11,58 @@ enum OccurrenceLogic {
   /// Called in advance of an event being tracked. Therefore we return values as if the event is already tracked.
   static func getEventOccurrences(
     of eventName: String,
-    isPreemptive: Bool
+    isPostfix: Bool,
+    storage: Storage = Storage.shared
   ) -> [String: Any] {
+    let dollarSign = isPostfix ? "$" : ""
     return [
-      "$count_since_install": calculate(
+      "\(dollarSign)count_since_install": calculate(
         Occurrence.SinceInstall.self,
         of: eventName,
-        isPreemptive: isPreemptive
+        isPostfix: isPostfix,
+        storage: storage
       ),
-      "$count_30d": calculate(
+      "\(dollarSign)count_30d": calculate(
         Occurrence.Last30Days.self,
         of: eventName,
-        isPreemptive: isPreemptive
+        isPostfix: isPostfix,
+        storage: storage
       ),
-      "$count_7d": calculate(
+      "\(dollarSign)count_7d": calculate(
         Occurrence.Last7Days.self,
         of: eventName,
-        isPreemptive: isPreemptive
+        isPostfix: isPostfix,
+        storage: storage
       ),
-      "$count_24h": calculate(
+      "\(dollarSign)count_24h": calculate(
         Occurrence.Last24Hours.self,
         of: eventName,
-        isPreemptive: isPreemptive
+        isPostfix: isPostfix,
+        storage: storage
       ),
-      "$count_session": calculate(
+      "\(dollarSign)count_session": calculate(
         Occurrence.InLatestSession.self,
         of: eventName,
-        isPreemptive: isPreemptive
+        isPostfix: isPostfix,
+        storage: storage
       ),
-      "$count_today": calculate(
+      "\(dollarSign)count_today": calculate(
         Occurrence.Today.self,
         of: eventName,
-        isPreemptive: isPreemptive
+        isPostfix: isPostfix,
+        storage: storage
       ),
-      "$first_occurred_at": calculate(
+      "\(dollarSign)first_occurred_at": calculate(
         Occurrence.FirstTime.self,
         of: eventName,
-        isPreemptive: isPreemptive
+        isPostfix: isPostfix,
+        storage: storage
       ),
-      "$last_occurred_at": calculate(
+      "\(dollarSign)last_occurred_at": calculate(
         Occurrence.LastTime.self,
         of: eventName,
-        isPreemptive: isPreemptive
+        isPostfix: isPostfix,
+        storage: storage
       )
     ]
   }
@@ -60,13 +70,14 @@ enum OccurrenceLogic {
   static func calculate<T: Occurrable>(
     _ type: T.Type,
     of eventName: String,
-    isPreemptive: Bool
+    isPostfix: Bool,
+    storage: Storage
   ) -> T.Value {
-    let triggeredEvents = Storage.shared.getTriggeredEvents()
+    let triggeredEvents = storage.getTriggeredEvents()
     let eventArray = triggeredEvents[eventName] ?? []
     return type.getOccurrence(
       from: eventArray,
-      isPreemptive: isPreemptive
+      isPostfix: isPostfix
     )
   }
 }

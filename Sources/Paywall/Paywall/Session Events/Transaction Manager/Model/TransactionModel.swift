@@ -10,7 +10,7 @@ import StoreKit
 
 struct TransactionModel: Codable {
   /// A string that uniquely identifies the transaction.
-  private let id = UUID().uuidString
+  private var id = UUID().uuidString
 
   enum TransactionState: String, Codable {
     case purchasing = "PURCHASING"

@@ -10,7 +10,7 @@ import Foundation
 protocol Occurrable {
   static func getOccurrence(
     from eventArray: [EventData],
-    isPreemptive: Bool
+    isPostfix: Bool
   ) -> Value
   associatedtype Value
 }
@@ -19,10 +19,10 @@ enum Occurrence {
   enum SinceInstall: Occurrable {
     static func getOccurrence(
       from eventArray: [EventData],
-      isPreemptive: Bool
+      isPostfix: Bool
     ) -> Value {
       let count = eventArray.count
-      if isPreemptive {
+      if isPostfix {
         return count + 1
       } else {
         return count
@@ -35,7 +35,7 @@ enum Occurrence {
   enum Last30Days: Occurrable {
     static func getOccurrence(
       from eventArray: [EventData],
-      isPreemptive: Bool
+      isPostfix: Bool
     ) -> Value {
       guard let thirtyDaysBeforeToday = Calendar.current.date(
         byAdding: .day,
@@ -45,7 +45,7 @@ enum Occurrence {
         return 0
       }
       let eventsInLast30d = eventArray.filter { $0.createdAt >= thirtyDaysBeforeToday }
-      if isPreemptive {
+      if isPostfix {
         return eventsInLast30d.count + 1
       } else {
         return eventsInLast30d.count
@@ -58,7 +58,7 @@ enum Occurrence {
   enum Last7Days: Occurrable {
     static func getOccurrence(
       from eventArray: [EventData],
-      isPreemptive: Bool
+      isPostfix: Bool
     ) -> Value {
       guard let sevenDaysBeforeToday = Calendar.current.date(
         byAdding: .day,
@@ -69,7 +69,7 @@ enum Occurrence {
       }
       let eventsInLast7d = eventArray.filter { $0.createdAt >= sevenDaysBeforeToday }
 
-      if isPreemptive {
+      if isPostfix {
         return eventsInLast7d.count + 1
       } else {
         return eventsInLast7d.count
@@ -82,7 +82,7 @@ enum Occurrence {
   enum Last24Hours: Occurrable {
     static func getOccurrence(
       from eventArray: [EventData],
-      isPreemptive: Bool
+      isPostfix: Bool
     ) -> Value {
       guard let twentyFourHoursAgo = Calendar.current.date(
         byAdding: .hour,
@@ -93,7 +93,7 @@ enum Occurrence {
       }
       let eventsInLast24h = eventArray.filter { $0.createdAt >= twentyFourHoursAgo }
 
-      if isPreemptive {
+      if isPostfix {
         return eventsInLast24h.count + 1
       } else {
         return eventsInLast24h.count
@@ -106,12 +106,12 @@ enum Occurrence {
   enum InLatestSession: Occurrable {
     static func getOccurrence(
       from eventArray: [EventData],
-      isPreemptive: Bool
+      isPostfix: Bool
     ) -> Value {
       let appSessionStart = AppSessionManager.shared.appSession.startAt
       let eventsInAppSession = eventArray.filter { $0.createdAt >= appSessionStart }
 
-      if isPreemptive {
+      if isPostfix {
         return eventsInAppSession.count + 1
       } else {
         return eventsInAppSession.count
@@ -124,12 +124,12 @@ enum Occurrence {
   enum Today: Occurrable {
     static func getOccurrence(
       from eventArray: [EventData],
-      isPreemptive: Bool
+      isPostfix: Bool
     ) -> Value {
       let startOfDay = Calendar.current.startOfDay(for: Date())
       let eventsInAppSession = eventArray.filter { $0.createdAt >= startOfDay }
 
-      if isPreemptive {
+      if isPostfix {
         return eventsInAppSession.count + 1
       } else {
         return eventsInAppSession.count
@@ -142,7 +142,7 @@ enum Occurrence {
   enum FirstTime: Occurrable {
     static func getOccurrence(
       from eventArray: [EventData],
-      isPreemptive: Bool
+      isPostfix: Bool
     ) -> Value {
       return eventArray.first?.createdAt ?? Date()
     }
@@ -153,9 +153,9 @@ enum Occurrence {
   enum LastTime: Occurrable {
     static func getOccurrence(
       from eventArray: [EventData],
-      isPreemptive: Bool
+      isPostfix: Bool
     ) -> Value {
-      if isPreemptive {
+      if isPostfix {
         return Date()
       } else {
         return eventArray.last?.createdAt ?? Date()

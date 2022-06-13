@@ -15,7 +15,7 @@ enum TrackingLogic {
     let eventName = trackableEvent.rawName
 
     var delegateParams: [String: Any] = [
-      "isSuperwall": true
+      "is_superwall": true
     ]
 
     // Add a special property if it's an automatically tracked event
@@ -27,7 +27,7 @@ enum TrackingLogic {
 
     let preemptiveEventOccurrences = OccurrenceLogic.getEventOccurrences(
       of: eventName,
-      isPreemptive: true
+      isPostfix: true
     )
     eventParams = eventParams + preemptiveEventOccurrences
 

@@ -18,7 +18,7 @@ final class OccurrableTests: XCTestCase {
     // When
     let occurrences = type.getOccurrence(
       from: eventArray,
-      isPreemptive: true
+      isPostfix: true
     )
 
     XCTAssertEqual(occurrences, 3)
@@ -32,7 +32,7 @@ final class OccurrableTests: XCTestCase {
     // When
     let occurrences = type.getOccurrence(
       from: eventArray,
-      isPreemptive: false
+      isPostfix: false
     )
 
     XCTAssertEqual(occurrences, 2)
@@ -55,7 +55,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: true)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
 
     XCTAssertEqual(occurrences, 4)
   }
@@ -77,7 +77,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: false)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
 
     XCTAssertEqual(occurrences, 3)
   }
@@ -99,7 +99,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: true)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
 
     XCTAssertEqual(occurrences, 3)
   }
@@ -121,7 +121,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: false)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
 
     XCTAssertEqual(occurrences, 2)
   }
@@ -143,7 +143,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: true)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
 
     XCTAssertEqual(occurrences, 2)
   }
@@ -165,7 +165,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: false)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
 
     XCTAssertEqual(occurrences, 1)
   }
@@ -185,7 +185,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: true)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
 
     XCTAssertEqual(occurrences, 2)
   }
@@ -205,7 +205,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: false)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
 
     XCTAssertEqual(occurrences, 1)
   }
@@ -225,7 +225,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: true)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
 
     XCTAssertEqual(occurrences, 2)
   }
@@ -245,7 +245,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: false)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
 
     XCTAssertEqual(occurrences, 1)
   }
@@ -265,7 +265,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: true)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
 
     XCTAssertEqual(occurrences, oneMinuteAhead)
   }
@@ -285,7 +285,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: false)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
 
     XCTAssertEqual(occurrences, oneMinuteAhead)
   }
@@ -305,7 +305,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: true)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: true)
 
     XCTAssertGreaterThan(occurrences, Date().advanced(by: -50))
   }
@@ -325,7 +325,7 @@ final class OccurrableTests: XCTestCase {
     ]
 
     // When
-    let occurrences = type.getOccurrence(from: eventArray, isPreemptive: false)
+    let occurrences = type.getOccurrence(from: eventArray, isPostfix: false)
 
     XCTAssertEqual(occurrences, oneMinuteBehind)
   }

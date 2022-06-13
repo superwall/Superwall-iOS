@@ -11,7 +11,8 @@ import JavaScriptCore
 enum ExpressionEvaluator {
   static func evaluateExpression(
     fromRule rule: TriggerRule,
-    eventData: EventData
+    eventData: EventData,
+    storage: Storage = Storage.shared
   ) -> Bool {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
@@ -45,7 +46,8 @@ enum ExpressionEvaluator {
 
     if let postfix = getPostfix(
       forRule: rule,
-      withEventData: eventData
+      withEventData: eventData,
+      storage: storage
     ) {
       let result = jsCtx.evaluateScript(script + "\n " + postfix)
       if result?.isString != nil {
@@ -58,24 +60,16 @@ enum ExpressionEvaluator {
 
   private static func getPostfix(
     forRule rule: TriggerRule,
-    withEventData eventData: EventData
+    withEventData eventData: EventData,
+    storage: Storage
   ) -> String? {
-    /*
-     [
-      "events": [
-        "eventName": [
-          "$count_24hr": 3
-        ]
-      ]
-    ]
-     */
-
     var eventOccurrences: [String: [String: Any]] = [:]
-    let events = Storage.shared.getTriggeredEvents()
+    let events = storage.getTriggeredEvents()
     for event in events {
       eventOccurrences[event.key] = OccurrenceLogic.getEventOccurrences(
         of: event.key,
-        isPreemptive: false
+        isPostfix: false,
+        storage: storage
       )
     }
 
@@ -85,6 +79,7 @@ enum ExpressionEvaluator {
       "params": eventData.parameters,
       "events": eventOccurrences
     ])
+
     if let expressionJs = rule.expressionJs {
       if let base64Params = JavascriptExpressionEvaluatorParams(
         expressionJs: expressionJs,
