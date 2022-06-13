@@ -26,7 +26,7 @@ struct PaywallResponse: Decodable {
   var url: String
   var paywalljsEvent: String
 
-  var presentationStyle: PaywallPresentationStyle = .sheet
+  var presentationStyleV2: PaywallPresentationStyle = .sheet
   var backgroundColorHex: String?
 
   /// The products associated with the paywall.
