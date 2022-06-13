@@ -61,7 +61,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	}
 
   var presentationStyle: PaywallPresentationStyle {
-    return paywallResponse.presentationStyle
+    return paywallResponse.presentationStyleV2
   }
 
   private var purchaseLoadingIndicatorContainer: UIView = {
