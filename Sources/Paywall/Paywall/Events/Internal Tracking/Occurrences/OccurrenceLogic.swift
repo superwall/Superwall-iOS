@@ -66,7 +66,7 @@ enum OccurrenceLogic {
     ]
   }
 
-  static func calculate<T: Occurrable>(
+  private static func calculate<T: Occurrable>(
     _ type: T.Type,
     of eventName: String,
     isInPostfix: Bool,
