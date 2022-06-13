@@ -43,7 +43,7 @@ extension Paywall {
       createdAt: Date()
     )
 		queue.enqueue(event: eventData.jsonData)
-    
+
     Storage.shared.saveTriggeredEvent(eventData)
 
     if event.canImplicitlyTriggerPaywall {

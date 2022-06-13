@@ -33,7 +33,7 @@ enum TrackingLogic {
       isInPostfix: false,
       storage: storage
     )
-    eventParams = eventParams + preemptiveEventOccurrences
+    eventParams += preemptiveEventOccurrences
 
     // Filter then assign Superwall parameters
     for key in superwallParameters.keys {

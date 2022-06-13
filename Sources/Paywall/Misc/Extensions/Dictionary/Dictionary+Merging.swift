@@ -53,4 +53,16 @@ extension Dictionary {
   static func + (lhs: [Key: Value], rhs: [Key: Value]) -> [Key: Value] {
     lhs.merging(rhs)
   }
+
+  /// Merge the keys/values of two dictionaries.
+  ///
+  /// The merge strategy used is `overwriteValue`.
+  ///
+  /// - Parameters:
+  ///   - lhs: A dictionary to merge.
+  ///   - rhs: Another dictionary to merge.
+  /// - Returns: An dictionary with keys and values from both.
+  static func += (lhs: inout [Key: Value], rhs: [Key: Value]) {
+    lhs = lhs.merging(rhs)
+  }
 }

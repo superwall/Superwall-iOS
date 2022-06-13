@@ -5,6 +5,7 @@
 //  Created by brian on 7/21/21.
 //
 // swiftlint:disable file_length
+// swiftlint:disable trailing_closure
 
 import WebKit
 import UIKit
