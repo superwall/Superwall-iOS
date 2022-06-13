@@ -84,7 +84,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let storage = StorageMock(internalTriggeredEvents: triggeredEvents)
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
-        .setting(\.expression, to: "events.a.count_24h == 1"),
+        .setting(\.expression, to: "events[\"a\"][\"$count_24h\"] == 1"),
       eventData: .stub(),
       storage: storage
     )
@@ -136,7 +136,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let storage = StorageMock(internalTriggeredEvents: triggeredEvents)
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
-        .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.events.a.count_24h == 1 }; superwallEvaluator"),
+        .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.events.a.$count_24h == 1 }; superwallEvaluator"),
       eventData: .stub(),
       storage: storage
     )
