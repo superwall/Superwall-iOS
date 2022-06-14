@@ -8,7 +8,7 @@
 import Foundation
 import StoreKit
 
-struct SWTemplateVariable: Codable {
+struct SWTemplateVariable: Encodable {
   var raw: SWProduct?
   var subscription: SWSubscriptionTemplateVariable?
   var trial: SWSubscriptionTemplateVariable?

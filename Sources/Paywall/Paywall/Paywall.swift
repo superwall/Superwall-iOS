@@ -1,3 +1,5 @@
+// swiftlint:disable line_length
+
 import UIKit
 import Foundation
 import StoreKit
@@ -39,17 +41,25 @@ public final class Paywall: NSObject {
 	/// Animates paywall presentation. Defaults to `true`.
   ///
   /// Set this to `false` to globally disable paywall presentation animations.
+  @available(*, deprecated, message: "Set the Presentation Style on the Superwall dashboard to No Animation instead of using this boolean.")
 	public static var shouldAnimatePaywallPresentation = true
 
   /// Animates paywall dismissal. Defaults to `true`.
   ///
   /// Set this to `false` to globally disable paywall dismissal animations.
+  @available(*, deprecated, message: "Set the Presentation Style on the Superwall dashboard to No Animation instead of using this boolean.")
 	public static var shouldAnimatePaywallDismissal = true
 
-	/// Pre-loads and caches triggers and their associated paywalls and products upon initialization of the SDK. Defaults to `true`.
+	/// Pre-loads and caches triggers and their associated paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache triggers in a just-in-time fashion.
+  @available(*, deprecated, renamed: "shouldPreloadPaywalls", message: "This boolean no longer works and should be replaced with shouldPreloadPaywalls.")
 	public static var shouldPreloadTriggers = true
+
+  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. Defaults to `true`.
+  ///
+  /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
+  public static var shouldPreloadPaywalls = true
 
 	/// Prints logs to the console if set to `true`. Default is `false`.
 	@objc public static var debugMode = false
@@ -107,6 +117,27 @@ public final class Paywall: NSObject {
 	var isPaywallPresented: Bool {
 		return paywallViewController != nil
 	}
+
+  /// Indicates whether the user has an active subscription. Performed on the main thread.
+  var isUserSubscribed: Bool {
+    // Prevents deadlock when calling from main thread
+    if Thread.isMainThread {
+      return Paywall.delegate?.isUserSubscribed() ?? false
+    }
+
+    var isSubscribed = false
+
+    let dispatchGroup = DispatchGroup()
+    dispatchGroup.enter()
+
+    onMain {
+      isSubscribed = Paywall.delegate?.isUserSubscribed() ?? false
+      dispatchGroup.leave()
+    }
+
+    dispatchGroup.wait()
+    return isSubscribed
+  }
 
   // MARK: - Public Functions
 	/// Configures a shared instance of ``Paywall/Paywall`` for use throughout your app.
@@ -274,27 +305,6 @@ public final class Paywall: NSObject {
     }
 	}
 
-  internal func isUserSubscribed() -> Bool {
-    
-    // prevents deadlock when calling from main thread
-    if Thread.isMainThread {
-      return Paywall.delegate?.isUserSubscribed() ?? false
-    }
-    
-    var isSubscribed = false
-    // create a dispatchGroup and enter it
-    let dispatchGroup = DispatchGroup()
-    dispatchGroup.enter()
-    onMain {
-      // switch to main thread
-      isSubscribed = Paywall.delegate?.isUserSubscribed() ?? false
-      dispatchGroup.leave()
-    }
-    // wont get called until dispatchGroup.leave() is called
-    dispatchGroup.wait()
-    return isSubscribed
-  }
-  
   /// Attemps to implicitly trigger a paywall for a given analytical event.
   ///
   ///  - Parameters:
@@ -304,9 +314,9 @@ public final class Paywall: NSObject {
 			guard let self = self else {
         return
       }
-      
+
       let presentationInfo: PresentationInfo = .implicitTrigger(event)
-      
+
       guard Paywall.shared.didFetchConfig else {
         let trigger = PreConfigTrigger(presentationInfo: presentationInfo)
         Storage.shared.cachePreConfigTrigger(trigger)

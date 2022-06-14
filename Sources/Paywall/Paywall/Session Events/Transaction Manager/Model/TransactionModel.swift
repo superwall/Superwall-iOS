@@ -9,6 +9,9 @@ import Foundation
 import StoreKit
 
 struct TransactionModel: Codable {
+  /// A string that uniquely identifies the transaction.
+  private var id = UUID().uuidString
+
   enum TransactionState: String, Codable {
     case purchasing = "PURCHASING"
     case purchased = "PURCHASED"
@@ -46,7 +49,7 @@ struct TransactionModel: Codable {
   let triggerSessionId: String?
 
   /// A string that uniquely identifies a successful payment transaction.
-  let id: String?
+  let storeTransactionId: String?
 
   /// When the transaction state is restored, this contains the restored transaction id, otherwise it's nil.
   let originalTransactionIdentifier: String?
@@ -67,7 +70,7 @@ struct TransactionModel: Codable {
     self.configRequestId = configRequestId
     self.appSessionId = appSessionId
     self.triggerSessionId = triggerSessionId
-    id = transaction.transactionIdentifier
+    self.storeTransactionId = transaction.transactionIdentifier
     originalTransactionIdentifier = transaction.original?.transactionIdentifier
     transactionDate = transaction.transactionDate
     payment = Payment(from: transaction.payment)

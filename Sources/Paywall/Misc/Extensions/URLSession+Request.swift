@@ -113,7 +113,7 @@ extension URLSession {
           ]
         )
 
-        let response = try JSONDecoder.endpoint.decode(
+        let response = try JSONDecoder.fromSnakeCase.decode(
           Response.self,
           from: data
         )

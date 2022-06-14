@@ -9,19 +9,31 @@ import Foundation
 import StoreKit
 
 enum TrackingLogic {
-  static func processParameters(fromTrackableEvent trackableEvent: Trackable) -> TrackingParameters {
+  static func processParameters(
+    fromTrackableEvent trackableEvent: Trackable,
+    storage: Storage = Storage.shared
+  ) -> TrackingParameters {
     let superwallParameters = trackableEvent.superwallParameters
     let customParameters = trackableEvent.customParameters
     let eventName = trackableEvent.rawName
 
-    var eventParams: [String: Any] = [:]
     var delegateParams: [String: Any] = [
-      "isSuperwall": true
+      "is_superwall": true
     ]
 
     // Add a special property if it's an automatically tracked event
     let isStandardEvent = Paywall.EventName(rawValue: eventName) != nil
-    eventParams["$is_standard_event"] = isStandardEvent
+    var eventParams: [String: Any] = [
+      "$is_standard_event": isStandardEvent,
+      "$event_name": eventName
+    ]
+
+    let preemptiveEventOccurrences = OccurrenceLogic.getEventOccurrences(
+      of: eventName,
+      isInPostfix: false,
+      storage: storage
+    )
+    eventParams += preemptiveEventOccurrences
 
     // Filter then assign Superwall parameters
     for key in superwallParameters.keys {

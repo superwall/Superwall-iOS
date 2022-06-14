@@ -4,6 +4,8 @@
 //
 //  Created by brian on 7/21/21.
 //
+// swiftlint:disable file_length
+// swiftlint:disable trailing_closure
 
 import WebKit
 import UIKit
@@ -59,7 +61,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	}
 
   var presentationStyle: PaywallPresentationStyle {
-    return paywallResponse.presentationStyle
+    return paywallResponse.presentationStyleV2
   }
 
   private var purchaseLoadingIndicatorContainer: UIView = {
@@ -423,6 +425,11 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       modalPresentationStyle = .pageSheet
     case .fullscreen:
       modalPresentationStyle = .overFullScreen
+    case .push:
+      modalPresentationStyle = .custom
+      transitioningDelegate = self
+    case .fullscreenNoAnimation:
+      modalPresentationStyle = .overFullScreen
     }
   }
 
@@ -569,9 +576,17 @@ extension SWPaywallViewController {
 		} else {
 			prepareForPresentation()
       set(presentationInfo, dismissalBlock: dismissalBlock)
+
+      let isAnimated: Bool
+      if presentationStyle == .fullscreenNoAnimation {
+        isAnimated = false
+      } else {
+        isAnimated = Paywall.shouldAnimatePaywallPresentation
+      }
+
       presenter.present(
         self,
-        animated: Paywall.shouldAnimatePaywallPresentation
+        animated: isAnimated
       ) { [weak self] in
         self?.isPresented = true
         self?.presentationDidFinish()
@@ -586,7 +601,15 @@ extension SWPaywallViewController {
     completion: (() -> Void)? = nil
   ) {
     prepareToDismiss()
-		dismiss(animated: Paywall.shouldAnimatePaywallDismissal) { [weak self] in
+
+    let isAnimated: Bool
+    if presentationStyle == .fullscreenNoAnimation {
+      isAnimated = false
+    } else {
+      isAnimated = Paywall.shouldAnimatePaywallDismissal
+    }
+
+		dismiss(animated: isAnimated) { [weak self] in
       self?.didDismiss(
         dismissalResult,
         shouldCallCompletion: shouldCallCompletion,
@@ -699,5 +722,21 @@ extension SWPaywallViewController: Stubbable {
       delegate: nil
     )
   }
-  // swiftlint:disable:next file_length
+}
+
+// MARK: - UIViewControllerTransitioningDelegate
+extension SWPaywallViewController: UIViewControllerTransitioningDelegate {
+  func animationController(
+    forPresented presented: UIViewController,
+    presenting: UIViewController,
+    source: UIViewController
+  ) -> UIViewControllerAnimatedTransitioning? {
+    return PushTransition(state: .presenting)
+  }
+
+  func animationController(
+    forDismissed dismissed: UIViewController
+  ) -> UIViewControllerAnimatedTransitioning? {
+    return PushTransition(state: .dismissing)
+  }
 }
