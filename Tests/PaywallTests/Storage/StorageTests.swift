@@ -5,11 +5,25 @@
 //  Created by Yusuf Tör on 28/04/2022.
 //
 // swiftlint:disable all
-/*
+
 import XCTest
 @testable import Paywall
 
 class StorageTests: XCTestCase {
+  func test_saveAndRetrieveTriggeredEvent() {
+    Storage.shared.clear()
+    let eventName = "blahblah"
+    let retrievedEvents2 = Storage.shared.getTriggeredEvents()
+    XCTAssertNil(retrievedEvents2[eventName])
+    let event: EventData = .stub()
+      .setting(\.name, to: eventName)
+    Storage.shared.saveTriggeredEvent(event)
+    let retrievedEvents = Storage.shared.getTriggeredEvents()
+    XCTAssertEqual(event, retrievedEvents[event.name]!.first)
+    sleep(2)
+  }
+}
+/*
   let queue = DispatchQueue.main
   var storage: Storage!
 

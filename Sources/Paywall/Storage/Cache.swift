@@ -5,13 +5,17 @@
 //  Created by Nguyen Cong Huy on 7/4/16.
 //  Copyright © 2016 Nguyen Cong Huy. All rights reserved.
 //
+// swiftlint:disable force_unwrapping
+
 import UIKit
 
 final class Cache {
+  private static let documentDirectoryPrefix = "com.superwall.document.Store"
   private static let cacheDirectoryPrefix = "com.superwall.cache.Store"
   private static let ioQueuePrefix = "com.superwall.queue.Store"
   private static let defaultMaxCachePeriodInSecond: TimeInterval = 60 * 60 * 24 * 7 // a week
-  private let cachePath: String
+  private let cacheUrl: URL
+  private let documentUrl: URL
   private let memCache = NSCache<AnyObject, AnyObject>()
   private let ioQueue: DispatchQueue
   private let fileManager: FileManager
@@ -24,19 +28,17 @@ final class Cache {
 
   /// Specify distinc name param, it represents folder name for disk cache
   init(ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix)) {
-    var cachePath = NSSearchPathForDirectoriesInDomains(
-      .cachesDirectory,
-      FileManager.SearchPathDomainMask.userDomainMask,
-      true
-    ).first!
-    // swiftlint:disable:previous force_unwrapping
-
-    cachePath = (cachePath as NSString).appendingPathComponent(Cache.cacheDirectoryPrefix)
-    self.cachePath = cachePath
+    fileManager = FileManager()
+    cacheUrl = fileManager
+      .urls(for: .cachesDirectory, in: .userDomainMask)
+      .first!
+      .appendingPathComponent(Cache.cacheDirectoryPrefix)
+    documentUrl = fileManager
+      .urls(for: .documentDirectory, in: .userDomainMask)
+      .first!
+      .appendingPathComponent(Cache.documentDirectoryPrefix)
 
     self.ioQueue = ioQueue
-
-    self.fileManager = FileManager()
 
     #if !os(OSX) && !os(watchOS)
       NotificationCenter.default.addObserver(
@@ -58,7 +60,7 @@ final class Cache {
 // MARK: - Store data
 extension Cache {
   /// Read data for key
-  func read<Key: CachingType>(
+  func read<Key: Storable>(
     _ keyType: Key.Type
   ) -> Key.Value? where Key.Value: Decodable {
     var data = memCache.object(forKey: keyType.key as AnyObject) as? Data
@@ -81,7 +83,7 @@ extension Cache {
     }
   }
 
-  func delete<Key: CachingType>(
+  func delete<Key: Storable>(
     _ keyType: Key.Type
   ) {
     memCache.removeObject(forKey: keyType.key as AnyObject)
@@ -89,7 +91,7 @@ extension Cache {
   }
 
   /// Read data for key
-  func read<Key: CachingType>(
+  func read<Key: Storable>(
     _ keyType: Key.Type
   ) -> Key.Value? {
     var data = memCache.object(forKey: keyType.key as AnyObject) as? Data
@@ -106,7 +108,7 @@ extension Cache {
   }
 
   /// Write data for key. This is an async operation.
-  func write<Key: CachingType>(
+  func write<Key: Storable>(
     _ value: Key.Value,
     forType keyType: Key.Type
   ) {
@@ -120,7 +122,7 @@ extension Cache {
   }
 
   /// Write data for key. This is an async operation.
-  func write<Key: CachingType>(
+  func write<Key: Storable>(
     _ value: Key.Value,
     forType keyType: Key.Type
   ) where Key.Value: Codable {
@@ -135,10 +137,10 @@ extension Cache {
 
   private func writeDataToDisk(data: Data, key: String) {
     ioQueue.async {
-      if self.fileManager.fileExists(atPath: self.cachePath) == false {
+      if self.fileManager.fileExists(atPath: self.cacheUrl.path) == false {
         do {
           try self.fileManager.createDirectory(
-            atPath: self.cachePath,
+            atPath: self.cacheUrl.path,
             withIntermediateDirectories: true,
             attributes: nil
           )
@@ -185,7 +187,7 @@ extension Cache {
   private func cleanDiskCache() {
     ioQueue.async {
       do {
-        try self.fileManager.removeItem(atPath: self.cachePath)
+        try self.fileManager.removeItem(atPath: self.cacheUrl.path)
       } catch {
         Logger.debug(
           logLevel: .error,
@@ -264,7 +266,7 @@ extension Cache {
   // This method is from Kingfisher
   // swiftlint:disable all
   fileprivate func travelCachedFiles() -> (urlsToDelete: [URL], diskCacheSize: UInt, cachedFiles: [URL: URLResourceValues]) {
-    let diskCacheURL = URL(fileURLWithPath: cachePath)
+    let diskCacheURL = cacheUrl
     let resourceKeys: Set<URLResourceKey> = [.isDirectoryKey, .contentAccessDateKey, .totalFileAllocatedSizeKey]
     let expiredDate: Date? = (maxCachePeriodInSecond < 0) ? nil : Date(timeIntervalSinceNow: -maxCachePeriodInSecond)
 
@@ -306,6 +308,6 @@ extension Cache {
 
   func cachePath(forKey key: String) -> String {
     let fileName = key.md5
-    return (cachePath as NSString).appendingPathComponent(fileName)
+    return cacheUrl.appendingPathComponent(fileName).path
   }
 }
