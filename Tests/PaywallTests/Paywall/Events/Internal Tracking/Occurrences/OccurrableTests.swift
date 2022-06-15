@@ -300,7 +300,7 @@ final class OccurrableTests: XCTestCase {
       isInPostfix: false
     )
 
-    XCTAssertEqual(occurrences, oneMinuteAhead)
+    XCTAssertEqual(occurrences, oneMinuteAhead.isoString)
   }
 
   func test_firstTime_notInPostfix() {
@@ -323,7 +323,7 @@ final class OccurrableTests: XCTestCase {
       isInPostfix: true
     )
 
-    XCTAssertEqual(occurrences, oneMinuteAhead)
+    XCTAssertEqual(occurrences, oneMinuteAhead.isoString)
   }
 
   func test_lastTime_inPostfix() {
@@ -346,7 +346,7 @@ final class OccurrableTests: XCTestCase {
       isInPostfix: false
     )
 
-    XCTAssertGreaterThan(occurrences, Date().advanced(by: -50))
+    XCTAssertGreaterThan(occurrences, Date().advanced(by: -50).isoString)
   }
 
   func test_lastTime_notInPostfix() {
@@ -369,6 +369,6 @@ final class OccurrableTests: XCTestCase {
       isInPostfix: true
     )
 
-    XCTAssertEqual(occurrences, oneMinuteBehind)
+    XCTAssertEqual(occurrences, oneMinuteBehind.isoString)
   }
 }

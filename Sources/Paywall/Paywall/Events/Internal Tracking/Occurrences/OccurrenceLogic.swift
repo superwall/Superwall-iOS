@@ -14,54 +14,56 @@ enum OccurrenceLogic {
     isInPostfix: Bool,
     storage: Storage = Storage.shared
   ) -> [String: Any] {
+    let triggeredEvents = storage.getTriggeredEvents()
+
     return [
       "$count_since_install": calculate(
         Occurrence.SinceInstall.self,
         of: eventName,
         isInPostfix: isInPostfix,
-        storage: storage
+        triggeredEvents: triggeredEvents
       ),
       "$count_30d": calculate(
         Occurrence.Last30Days.self,
         of: eventName,
         isInPostfix: isInPostfix,
-        storage: storage
+        triggeredEvents: triggeredEvents
       ),
       "$count_7d": calculate(
         Occurrence.Last7Days.self,
         of: eventName,
         isInPostfix: isInPostfix,
-        storage: storage
+        triggeredEvents: triggeredEvents
       ),
       "$count_24h": calculate(
         Occurrence.Last24Hours.self,
         of: eventName,
         isInPostfix: isInPostfix,
-        storage: storage
+        triggeredEvents: triggeredEvents
       ),
       "$count_session": calculate(
         Occurrence.InLatestSession.self,
         of: eventName,
         isInPostfix: isInPostfix,
-        storage: storage
+        triggeredEvents: triggeredEvents
       ),
       "$count_today": calculate(
         Occurrence.Today.self,
         of: eventName,
         isInPostfix: isInPostfix,
-        storage: storage
+        triggeredEvents: triggeredEvents
       ),
       "$first_occurred_at": calculate(
         Occurrence.FirstTime.self,
         of: eventName,
         isInPostfix: isInPostfix,
-        storage: storage
+        triggeredEvents: triggeredEvents
       ),
       "$last_occurred_at": calculate(
         Occurrence.LastTime.self,
         of: eventName,
         isInPostfix: isInPostfix,
-        storage: storage
+        triggeredEvents: triggeredEvents
       )
     ]
   }
@@ -70,9 +72,8 @@ enum OccurrenceLogic {
     _ type: T.Type,
     of eventName: String,
     isInPostfix: Bool,
-    storage: Storage
+    triggeredEvents: TriggeredEvents.Value
   ) -> T.Value {
-    let triggeredEvents = storage.getTriggeredEvents()
     let eventArray = triggeredEvents[eventName] ?? []
     return type.getOccurrence(
       from: eventArray,

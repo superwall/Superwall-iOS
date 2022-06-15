@@ -129,6 +129,38 @@ final class DeviceHelper {
     return appInstallDate?.isoString ?? ""
   }
 
+  var daysSinceInstall: Int {
+    let fromDate = appInstallDate ?? Date()
+    let toDate = Date()
+    let numberOfDays = Calendar.current.dateComponents([.day], from: fromDate, to: toDate)
+    return numberOfDays.day ?? 0
+  }
+
+  var minutesSinceInstall: Int {
+    let fromDate = appInstallDate ?? Date()
+    let toDate = Date()
+    let numberOfMinutes = Calendar.current.dateComponents([.minute], from: fromDate, to: toDate)
+    return numberOfMinutes.minute ?? 0
+  }
+
+  func sinceLastPaywallView(
+  retrieve component: Calendar.Component,
+  triggeredEvents: TriggeredEvents.Value
+  ) -> Int? {
+    guard let lastPaywallOpen = triggeredEvents[Paywall.EventName.paywallOpen.rawValue]?.last else {
+      return nil
+    }
+
+    let fromDate = lastPaywallOpen.createdAt
+    let toDate = Date()
+    let components = Calendar.current.dateComponents([component], from: fromDate, to: toDate)
+    if component == .minute {
+      return components.minute
+    } else {
+      return components.day
+    }
+  }
+
   var templateDevice: TemplateDevice {
     let aliases: [String]
     if let alias = Storage.shared.aliasId {
@@ -136,6 +168,8 @@ final class DeviceHelper {
     } else {
       aliases = []
     }
+    let triggerEvents = Storage.shared.getTriggeredEvents()
+    
 
     return TemplateDevice(
       publicApiKey: Storage.shared.apiKey,
@@ -156,7 +190,11 @@ final class DeviceHelper {
       isLowPowerModeEnabled: DeviceHelper.shared.isLowPowerModeEnabled == "true",
       bundleId: DeviceHelper.shared.bundleId,
       appInstallDate: DeviceHelper.shared.appInstalledAtString,
-      isMac: DeviceHelper.shared.isMac
+      isMac: DeviceHelper.shared.isMac,
+      daysSinceInstall: DeviceHelper.shared.daysSinceInstall,
+      minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall,
+      daysSinceLastPaywallView: DeviceHelper.shared.sinceLastPaywallView(retrieve: .day, triggeredEvents: triggerEvents),
+      minutesSinceLastPaywallView: DeviceHelper.shared.sinceLastPaywallView(retrieve: .minute, triggeredEvents: triggerEvents)
     )
   }
 }

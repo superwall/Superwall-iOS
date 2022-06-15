@@ -64,15 +64,17 @@ class Cache {
     fromDirectory directory: SearchPathDirectory? = nil
   ) -> Key.Value? where Key.Value: Decodable {
     var data = memCache.object(forKey: keyType.key as AnyObject) as? Data
-    let directory = directory ?? keyType.directory
-    let path = cachePath(
-      forKey: keyType.key,
-      directory: directory
-    )
-    if data == nil,
-      let dataFromDisk = fileManager.contents(atPath: path) {
-      data = dataFromDisk
-      memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
+
+    if data == nil {
+      let directory = directory ?? keyType.directory
+      let path = cachePath(
+        forKey: keyType.key,
+        directory: directory
+      )
+      if  let dataFromDisk = fileManager.contents(atPath: path) {
+        data = dataFromDisk
+        memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
+      }
     }
     guard let data = data else {
       return nil
@@ -184,7 +186,7 @@ class Cache {
       if self.fileManager.fileExists(atPath: directoryUrl.path) == false {
         do {
           try self.fileManager.createDirectory(
-            atPath: self.cacheUrl.path,
+            atPath: directoryUrl.path,
             withIntermediateDirectories: true,
             attributes: nil
           )

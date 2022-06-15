@@ -144,10 +144,11 @@ enum Occurrence {
       from eventArray: [EventData],
       isInPostfix: Bool
     ) -> Value {
-      return eventArray.first?.createdAt ?? Date()
+      let date = eventArray.first?.createdAt ?? Date()
+      return date.isoString
     }
 
-    typealias Value = Date
+    typealias Value = String
   }
 
   enum LastTime: Occurrable {
@@ -156,12 +157,13 @@ enum Occurrence {
       isInPostfix: Bool
     ) -> Value {
       if isInPostfix {
-        return eventArray.last?.createdAt ?? Date()
+        let date = eventArray.last?.createdAt ?? Date()
+        return date.isoString
       } else {
-        return Date()
+        return Date().isoString
       }
     }
 
-    typealias Value = Date
+    typealias Value = String
   }
 }

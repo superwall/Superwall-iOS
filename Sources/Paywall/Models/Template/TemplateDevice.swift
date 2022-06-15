@@ -27,7 +27,10 @@ struct TemplateDevice: Codable {
   var bundleId: String
   var appInstallDate: String
   var isMac: Bool
-
+  var daysSinceInstall: Int
+  var minutesSinceInstall: Int
+  var daysSinceLastPaywallView: Int?
+  var minutesSinceLastPaywallView: Int?
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

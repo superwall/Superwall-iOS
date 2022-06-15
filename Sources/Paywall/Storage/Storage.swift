@@ -35,6 +35,9 @@ class Storage {
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
   private let cache: Cache
 
+  /// A local cache of the triggered events.
+  private var localTriggeredEvents: TriggeredEvents.Value?
+
   init(cache: Cache = Cache()) {
     self.cache = cache
     self.appUserId = cache.read(AppUserId.self)
@@ -172,26 +175,30 @@ class Storage {
       forType: Transactions.self
     )
   }
-
+  
   /// Saves event data to a dictionary that stores all events ever triggered.
   ///
   /// - Parameters:
   ///   - eventData: The event to be stored.
   func saveTriggeredEvent(_ eventData: EventData) {
-    var triggeredEvents = cache.read(TriggeredEvents.self) ?? [:]
-
+    var triggeredEvents = localTriggeredEvents ?? cache.read(TriggeredEvents.self) ?? [:]
     var eventArray = triggeredEvents[eventData.name] ?? []
     eventArray.append(eventData)
     triggeredEvents[eventData.name] = eventArray
-
     cache.write(triggeredEvents, forType: TriggeredEvents.self)
+    localTriggeredEvents = triggeredEvents
   }
 
-  /// Saves event data to a dictionary that stores all events ever triggered.
+  /// Gets event data for all triggered events.
   ///
   /// - Parameters:
   ///   - eventData: The event to be stored.
   func getTriggeredEvents() -> TriggeredEvents.Value {
-    return cache.read(TriggeredEvents.self) ?? [:]
+    if let localTriggeredEvents = localTriggeredEvents {
+      return localTriggeredEvents
+    }
+    let triggeredEvents = cache.read(TriggeredEvents.self) ?? [:]
+    localTriggeredEvents = triggeredEvents
+    return triggeredEvents
   }
 }
