@@ -7,64 +7,84 @@
 
 import Foundation
 
-protocol CachingType {
+enum SearchPathDirectory {
+  case cache
+  case documents
+}
+protocol Storable {
   static var key: String { get }
+  static var directory: SearchPathDirectory { get }
   associatedtype Value
 }
 
-enum AppUserId: CachingType {
+enum AppUserId: Storable {
   static var key: String {
     "store.appUserId"
   }
+  static var directory: SearchPathDirectory = .documents
   typealias Value = String
 }
 
-enum AliasId: CachingType {
+enum AliasId: Storable {
   static var key: String {
     "store.aliasId"
   }
+  static var directory: SearchPathDirectory = .documents
   typealias Value = String
 }
 
-enum DidTrackAppInstall: CachingType {
+enum DidTrackAppInstall: Storable {
   static var key: String {
     "store.didTrackAppInstall"
   }
+  static var directory: SearchPathDirectory = .documents
   typealias Value = Bool
 }
 
-enum DidTrackFirstSeen: CachingType {
+enum DidTrackFirstSeen: Storable {
   static var key: String {
-    "store.didTrackFirstSeen"
+    "store.didTrackFirstSeen.v2"
   }
-  // This really should be a Bool, but for some reason it's a String.
-  typealias Value = String
+  static var directory: SearchPathDirectory = .documents
+  typealias Value = Bool
 }
 
-enum UserAttributes: CachingType {
+enum UserAttributes: Storable {
   static var key: String {
     "store.userAttributes"
   }
+  static var directory: SearchPathDirectory = .documents
   typealias Value = [String: Any]
 }
 
-enum TriggerSessions: CachingType {
+enum TriggerSessions: Storable {
   static var key: String {
     "store.triggerSessions"
   }
+  static var directory: SearchPathDirectory = .cache
   typealias Value = [TriggerSession]
 }
 
-enum Transactions: CachingType {
+enum Transactions: Storable {
   static var key: String {
     "store.transactions"
   }
+  static var directory: SearchPathDirectory = .cache
   typealias Value = [TransactionModel]
 }
 
-enum TriggeredEvents: CachingType {
+enum TriggeredEvents: Storable {
   static var key: String {
     "store.triggeredEvents"
   }
+  static var directory: SearchPathDirectory = .documents
   typealias Value = [String: [EventData]]
+}
+
+enum Version: Storable {
+  static var key: String {
+    "store.version"
+  }
+  static var directory: SearchPathDirectory = .documents
+  typealias Value = DataStoreVersion
 }

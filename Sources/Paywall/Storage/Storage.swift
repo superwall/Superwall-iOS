@@ -39,14 +39,23 @@ class Storage {
     self.cache = cache
     self.appUserId = cache.read(AppUserId.self)
     self.aliasId = cache.read(AliasId.self)
-    self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == "true"
+    self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true
     self.userAttributes = cache.read(UserAttributes.self) ?? [:]
+  }
+
+  func migrateData() {
+    let version = cache.read(Version.self) ?? .v1
+    FileManagerMigrator.migrate(
+      fromVersion: version,
+      cache: cache
+    )
   }
 
   func configure(
     appUserId: String?,
     apiKey: String
   ) {
+    migrateData()
     self.appUserId = appUserId
     self.apiKey = apiKey
 
@@ -91,7 +100,7 @@ class Storage {
     }
 
     Paywall.track(SuperwallEvent.FirstSeen())
-    cache.write("true", forType: DidTrackFirstSeen.self)
+    cache.write(true, forType: DidTrackFirstSeen.self)
 		didTrackFirstSeen = true
 	}
 
