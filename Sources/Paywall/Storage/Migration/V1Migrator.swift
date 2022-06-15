@@ -77,7 +77,6 @@ enum V1Migrator: Migratable {
       type.self,
       fromDirectory: .cache
     ) {
-      print("MIGRATING!", type.key)
       cache.delete(type.self, fromDirectory: .cache)
       cache.write(data, forType: type.self)
     }
