@@ -7,35 +7,38 @@
 
 import Foundation
 
-enum FileManagerMigrator {
-  enum Version: Int, CaseIterable {
-    case v1
-    case v2
-  }
+enum DataStoreVersion: Int, CaseIterable, Codable {
+  case v1
+  case v2
+}
 
-  static func migrate(fromVersion version: Version) {
+enum FileManagerMigrator {
+  static func migrate(
+    fromVersion version: DataStoreVersion,
+    cache: Cache
+  ) {
     let rawCurrentVersion = version.rawValue
-    let rawMaxVersion = Version.allCases.count
+    let rawMaxVersion = DataStoreVersion.allCases.count - 1
 
     if rawCurrentVersion == rawMaxVersion {
       return
     }
 
-
-
-    for rawVersion in rawCurrentVersion..<rawMaxVersion {
-
+    switch version {
+    case .v1:
+      V1Migrator.migrateToNextVersion(cache: cache)
+    case .v2:
+      break
     }
-  }
 
-  private static func migrate(
-    fromVersion: Version,
-    to toVersion: Version
-  ) {
-    // Take
-  }
+    let newRawVersion = rawCurrentVersion + 1
+    guard let newVersion = DataStoreVersion(rawValue: newRawVersion) else {
+      return
+    }
 
-  func versionOneToTwoMigrator() {
-    Storage.shared.
+    migrate(
+      fromVersion: newVersion,
+      cache: cache
+    )
   }
 }

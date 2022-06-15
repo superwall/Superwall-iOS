@@ -43,11 +43,10 @@ enum DidTrackAppInstall: Storable {
 
 enum DidTrackFirstSeen: Storable {
   static var key: String {
-    "store.didTrackFirstSeen"
+    "store.didTrackFirstSeen.v2"
   }
   static var directory: SearchPathDirectory = .documents
-  // This really should be a Bool, but for some reason it's a String.
-  typealias Value = String
+  typealias Value = Bool
 }
 
 enum UserAttributes: Storable {
@@ -80,4 +79,12 @@ enum TriggeredEvents: Storable {
   }
   static var directory: SearchPathDirectory = .documents
   typealias Value = [String: [EventData]]
+}
+
+enum Version: Storable {
+  static var key: String {
+    "store.version"
+  }
+  static var directory: SearchPathDirectory = .documents
+  typealias Value = DataStoreVersion
 }
