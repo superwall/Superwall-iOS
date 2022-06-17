@@ -18,7 +18,7 @@ final class CoreDataStackMock: CoreDataStack {
     )
 
     let persistentStoreDescription = NSPersistentStoreDescription()
-    persistentStoreDescription.type = NSInMemoryStoreType
+    persistentStoreDescription.type = NSSQLiteStoreType
     container.persistentStoreDescriptions = [persistentStoreDescription]
 
     container.loadPersistentStores { _, error in

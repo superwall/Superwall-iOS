@@ -30,12 +30,12 @@ class CoreDataStack {
     let dispatchGroup = DispatchGroup()
     dispatchGroup.enter()
 
-    container.loadPersistentStores(completionHandler: { (storeDescription, error) in
+    container.loadPersistentStores { _, error in
       if let error = error as NSError? {
         print("Unresolved error \(error), \(error.userInfo)")
       }
       dispatchGroup.leave()
-    })
+    }
 
     dispatchGroup.wait()
 
