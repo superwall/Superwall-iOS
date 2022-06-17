@@ -17,13 +17,12 @@ final class FileManagerMigratorTests: XCTestCase {
     cache.write("aliasId", forType: AliasId.self, inDirectory: .cache)
     cache.write(["a": "b"], forType: UserAttributes.self, inDirectory: .cache)
     cache.write(true, forType: DidTrackAppInstall.self, inDirectory: .cache)
-    cache.write(["event": [.stub()]], forType: TriggeredEvents.self, inDirectory: .cache)
     cache.write("true", forType: LegacyDidTrackFirstSeen.self)
     cache.write([.stub()], forType: TriggerSessions.self)
     cache.write([.stub()], forType: Transactions.self)
 
     // Check that they're in the cache and not in documents
-    XCTAssertEqual(cache.internalCache.count, 8)
+    XCTAssertEqual(cache.internalCache.count, 7)
     XCTAssertEqual(cache.internalDocuments.count, 0)
 
     // Migrate
@@ -31,7 +30,7 @@ final class FileManagerMigratorTests: XCTestCase {
 
     // Check they're all in the documents, except trigger sessions and transactions.
     XCTAssertEqual(cache.internalCache.count, 2)
-    XCTAssertEqual(cache.internalDocuments.count, 7)
+    XCTAssertEqual(cache.internalDocuments.count, 6)
 
     // Check that the old firstseen has gone
     let legacyFirstSeen = cache.read(LegacyDidTrackFirstSeen.self)

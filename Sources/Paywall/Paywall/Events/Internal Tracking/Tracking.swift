@@ -19,8 +19,10 @@ extension Paywall {
 	@discardableResult
   static func track(_ event: Trackable) -> TrackingResult {
     // Get parameters to be sent to the delegate and stored in an event.
+    let eventCreatedAt = Date()
     let parameters = TrackingLogic.processParameters(
-      fromTrackableEvent: event
+      fromTrackableEvent: event,
+      eventCreatedAt: eventCreatedAt
     )
 
     // For a trackable superwall event, send params to delegate
@@ -40,11 +42,11 @@ extension Paywall {
 		let eventData = EventData(
       name: event.rawName,
       parameters: JSON(parameters.eventParams),
-      createdAt: Date()
+      createdAt: eventCreatedAt
     )
 		queue.enqueue(event: eventData.jsonData)
 
-    Storage.shared.saveTriggeredEvent(eventData)
+    Storage.shared.coreDataManager.saveEventData(eventData)
 
     if event.canImplicitlyTriggerPaywall {
 			Paywall.shared.handleImplicitTrigger(forEvent: eventData)

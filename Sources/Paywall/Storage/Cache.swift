@@ -57,7 +57,6 @@ class Cache {
   }
 
   // MARK: - Store data
-  
   /// Read data for key
   func read<Key: Storable>(
     _ keyType: Key.Type,

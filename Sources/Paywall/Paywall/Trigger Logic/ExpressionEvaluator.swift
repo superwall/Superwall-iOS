@@ -64,11 +64,12 @@ enum ExpressionEvaluator {
     storage: Storage
   ) -> String? {
     var eventOccurrences: [String: [String: Any]] = [:]
-    let events = storage.getTriggeredEvents()
-    for event in events {
-      eventOccurrences[event.key] = OccurrenceLogic.getEventOccurrences(
-        of: event.key,
-        isInPostfix: true,
+    let eventNames = storage.coreDataManager.getAllEventNames()
+    // For each e
+    for eventName in eventNames {
+      eventOccurrences[eventName] = OccurrenceLogic.getEventOccurrences(
+        of: eventName,
+        isPreemptive: false,
         storage: storage
       )
     }

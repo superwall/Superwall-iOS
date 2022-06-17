@@ -144,14 +144,11 @@ final class DeviceHelper {
   }
 
   func sinceLastPaywallView(
-  retrieve component: Calendar.Component,
-  triggeredEvents: TriggeredEvents.Value
+  retrieve component: Calendar.Component
   ) -> Int? {
-    guard let lastPaywallOpen = triggeredEvents[Paywall.EventName.paywallOpen.rawValue]?.last else {
+    guard let fromDate = Storage.shared.coreDataManager.getLastPaywallOpen() else {
       return nil
     }
-
-    let fromDate = lastPaywallOpen.createdAt
     let toDate = Date()
     let components = Calendar.current.dateComponents([component], from: fromDate, to: toDate)
     if component == .minute {
@@ -168,7 +165,6 @@ final class DeviceHelper {
     } else {
       aliases = []
     }
-    let triggerEvents = Storage.shared.getTriggeredEvents()
     
 
     return TemplateDevice(
@@ -193,8 +189,8 @@ final class DeviceHelper {
       isMac: DeviceHelper.shared.isMac,
       daysSinceInstall: DeviceHelper.shared.daysSinceInstall,
       minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall,
-      daysSinceLastPaywallView: DeviceHelper.shared.sinceLastPaywallView(retrieve: .day, triggeredEvents: triggerEvents),
-      minutesSinceLastPaywallView: DeviceHelper.shared.sinceLastPaywallView(retrieve: .minute, triggeredEvents: triggerEvents)
+      daysSinceLastPaywallView: DeviceHelper.shared.sinceLastPaywallView(retrieve: .day),
+      minutesSinceLastPaywallView: DeviceHelper.shared.sinceLastPaywallView(retrieve: .minute)
     )
   }
 }

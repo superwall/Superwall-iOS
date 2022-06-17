@@ -12,18 +12,16 @@ final class StorageMock: Storage {
   var internalCachedTriggerSessions: [TriggerSession]
   var internalCachedTransactions: [TransactionModel]
   var didClearCachedSessionEvents = false
-  var internalTriggeredEvents: [String: [EventData]]
-
+  
   init(
     internalCachedTriggerSessions: [TriggerSession] = [],
     internalCachedTransactions: [TransactionModel] = [],
     configRequestId: String = "abc",
-    internalTriggeredEvents: [String: [EventData]] = [:]
+    coreDataManager: CoreDataManager = CoreDataManager(coreDataStack: CoreDataStackMock())
   ) {
     self.internalCachedTriggerSessions = internalCachedTriggerSessions
     self.internalCachedTransactions = internalCachedTransactions
-    self.internalTriggeredEvents = internalTriggeredEvents
-    super.init()
+    super.init(coreDataManager: coreDataManager)
     self.configRequestId = configRequestId
   }
 
@@ -37,9 +35,5 @@ final class StorageMock: Storage {
 
   override func clearCachedSessionEvents() {
     didClearCachedSessionEvents = true
-  }
-
-  override func getTriggeredEvents() -> TriggeredEvents.Value {
-    return internalTriggeredEvents
   }
 }

@@ -73,14 +73,6 @@ enum Transactions: Storable {
   typealias Value = [TransactionModel]
 }
 
-enum TriggeredEvents: Storable {
-  static var key: String {
-    "store.triggeredEvents"
-  }
-  static var directory: SearchPathDirectory = .documents
-  typealias Value = [String: [EventData]]
-}
-
 enum Version: Storable {
   static var key: String {
     "store.version"

@@ -41,10 +41,6 @@ enum V1Migrator: Migratable {
       DidTrackAppInstall.self,
       cache: cache
     )
-    moveFromCacheDirectory(
-      TriggeredEvents.self,
-      cache: cache
-    )
 
     // Convert DidTrackFirstSeen to a bool and move from cache to documents directory
     if let data = cache.read(LegacyDidTrackFirstSeen.self) {

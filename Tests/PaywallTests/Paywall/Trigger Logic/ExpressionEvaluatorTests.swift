@@ -76,7 +76,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
     )
     XCTAssertFalse(result)
   }
-
+/*
   func testExpressionEvaluator_events() {
     let triggeredEvents: [String: [EventData]] = [
       "a": [.stub()]
@@ -89,7 +89,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       storage: storage
     )
     XCTAssertTrue(result)
-  }
+  }*/
 
   // MARK: - ExpressionJS
 
@@ -128,7 +128,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
     )
     XCTAssertTrue(result)
   }
-
+/*
   func testExpressionEvaluator_expressionJSValues_events() {
     let triggeredEvents: [String: [EventData]] = [
       "a": [.stub()]
@@ -141,7 +141,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       storage: storage
     )
     XCTAssertTrue(result)
-  }
+  }*/
 
   func testExpressionEvaluator_expressionJSEmpty() {
     let result = ExpressionEvaluator.evaluateExpression(

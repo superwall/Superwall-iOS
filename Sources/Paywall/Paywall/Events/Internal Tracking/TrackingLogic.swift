@@ -11,6 +11,7 @@ import StoreKit
 enum TrackingLogic {
   static func processParameters(
     fromTrackableEvent trackableEvent: Trackable,
+    eventCreatedAt: Date,
     storage: Storage = Storage.shared
   ) -> TrackingParameters {
     let superwallParameters = trackableEvent.superwallParameters
@@ -30,7 +31,8 @@ enum TrackingLogic {
 
     let preemptiveEventOccurrences = OccurrenceLogic.getEventOccurrences(
       of: eventName,
-      isInPostfix: false,
+      isPreemptive: true,
+      eventCreatedAt: eventCreatedAt,
       storage: storage
     )
     eventParams += preemptiveEventOccurrences
