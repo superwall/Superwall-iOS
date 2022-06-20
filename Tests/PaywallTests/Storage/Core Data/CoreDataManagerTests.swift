@@ -85,31 +85,32 @@ class CoreDataManagerTests: XCTestCase {
   }
 
   func test_getAllEventNames() {
-    let eventName1 = "Event1"
-    let eventData1: EventData = .stub()
-      .setting(\.name, to: eventName1)
-
-    coreDataManager.saveEventData(eventData1)
-
-    let eventName2 = "Event2"
-    let eventData2: EventData = .stub()
-      .setting(\.name, to: eventName2)
-    coreDataManager.saveEventData(eventData2)
+    var arrayOfNames: Set<String> = []
+    for i in 0..<500 {
+      let eventName = "Event\(i)"
+      arrayOfNames.insert(eventName)
+      let eventData: EventData = .stub()
+        .setting(\.name, to: eventName)
+      coreDataManager.saveEventData(eventData)
+    }
 
     let expectation = expectation(
       forNotification: .NSManagedObjectContextDidSave,
       object: coreDataStack.backgroundContext) { _ in
         return true
     }
-    expectation.expectedFulfillmentCount = 2
+    expectation.expectedFulfillmentCount = 500
 
     waitForExpectations(timeout: 2.0) { error in
       XCTAssertNil(error, "Save did not occur")
     }
 
-    let allEventNames = coreDataManager.getAllEventNames()
-    XCTAssertTrue(allEventNames.contains(eventName1))
-    XCTAssertTrue(allEventNames.contains(eventName2))
+    var allEventNames: [String] = []
+    measure {
+      allEventNames = coreDataManager.getAllEventNames()
+    }
+
+    XCTAssertEqual(Set(allEventNames).subtracting(arrayOfNames), [])
   }
 
   // MARK: - Count Since

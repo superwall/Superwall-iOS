@@ -2,16 +2,17 @@
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="20086" systemVersion="21F79" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
     <entity name="Event" representedClassName="Paywall.ManagedEvent" syncable="YES">
         <attribute name="name" attributeType="String"/>
-        <relationship name="data" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="EventData"/>
+        <relationship name="data" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="EventData" inverseName="event" inverseEntity="EventData"/>
     </entity>
     <entity name="EventData" representedClassName="Paywall.ManagedEventData" syncable="YES">
         <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" attributeType="String"/>
         <attribute name="name" attributeType="String"/>
         <attribute name="parameters" attributeType="Binary" valueTransformerName="NSSecureUnarchiveFromData" customClassName="."/>
+        <relationship name="event" maxCount="1" deletionRule="Nullify" destinationEntity="Event" inverseName="data" inverseEntity="Event"/>
     </entity>
     <elements>
-        <element name="EventData" positionX="359.08203125" positionY="73.0390625" width="128" height="103"/>
-        <element name="Event" positionX="109.77734375" positionY="58.93359375" width="128" height="73"/>
+        <element name="Event" positionX="109.77734375" positionY="58.93359375" width="128" height="59"/>
+        <element name="EventData" positionX="359.08203125" positionY="73.0390625" width="128" height="104"/>
     </elements>
 </model>

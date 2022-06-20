@@ -82,6 +82,7 @@ final class CoreDataManager {
       request.predicate = NSPredicate(format: "name == %@", eventData.name)
 
       if let event = self.coreDataStack.fetch(request, context: context).first {
+        managedEventData.event = event
         event.addToData(managedEventData)
         self.coreDataStack.saveContext(context)
         completion?(event)
@@ -91,6 +92,7 @@ final class CoreDataManager {
           name: eventData.name,
           data: [managedEventData]
         )
+        managedEventData.event = event
         self.coreDataStack.saveContext(context)
         completion?(event)
       }
@@ -101,11 +103,9 @@ final class CoreDataManager {
     ofEvent eventName: String,
     isPreemptive: Bool
   ) -> Int {
-    let fetchRequest = ManagedEvent.fetchRequest()
+    let fetchRequest = ManagedEventData.fetchRequest()
     fetchRequest.predicate = NSPredicate(format: "name == %@", eventName)
-    guard let count = coreDataStack.fetch(fetchRequest).first?.data?.count else {
-      return isPreemptive ? 1 : 0
-    }
+    let count = coreDataStack.count(for: fetchRequest)
     return isPreemptive ? count + 1 : count
   }
 
@@ -118,7 +118,7 @@ final class CoreDataManager {
       return 0
     }
     let fetchRequest = ManagedEventData.fetchRequest()
-    fetchRequest.predicate = NSPredicate(format: "name == %@ AND createdAt >= %@", eventName, date)
+    fetchRequest.predicate = NSPredicate(format: "createdAt >= %@ AND name == %@", date, eventName)
     fetchRequest.resultType = .countResultType
 
     let count = coreDataStack.count(for: fetchRequest)

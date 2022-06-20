@@ -6,13 +6,16 @@
 //
 // swiftlint:disable all
 
+// ONLY TEST THIS MANUALLY, DON'T PUSH TO SERVER AS IT TAKES A LONG TIME:
+/*
 import XCTest
 @testable import Paywall
 
 @available(iOS 13.0, *)
 class OccurrenceLogicTests: XCTestCase {
   var coreDataManager: CoreDataManager!
-  var coreDataStack: CoreDataStack!
+  var coreDataStack: CoreDataStackMock!
+  let eventName = "Event"
 
   override func setUp() {
     super.setUp()
@@ -22,6 +25,7 @@ class OccurrenceLogicTests: XCTestCase {
 
   override func tearDown() {
     super.tearDown()
+    coreDataStack.deleteAllEntities(named: eventName)
     coreDataManager = nil
     coreDataStack = nil
   }
@@ -32,7 +36,6 @@ class OccurrenceLogicTests: XCTestCase {
     let appSession = AppSession(id: "abc", startAt: sessionDate)
     let appSessionManager = AppSessionManagerMock(appSession: appSession)
     let storage = StorageMock(coreDataManager: coreDataManager)
-    let eventName = "Event"
 
     let twoMinsAgo: TimeInterval = -120
     let firstEventDate = Date().advanced(by: twoMinsAgo)
@@ -46,12 +49,6 @@ class OccurrenceLogicTests: XCTestCase {
         .setting(\.name, to: eventName)
       coreDataManager.saveEventData(eventData)
     }
-/*
-    for _ in 0..<10998 {
-      let eventData: EventData = .stub()
-        .setting(\.name, to: UUID().uuidString)
-      coreDataManager.saveEventData(eventData)
-    }*/
 
     let twoMinsAhead: TimeInterval = 120
     let lastEventDate = Date().advanced(by: twoMinsAhead)
@@ -80,7 +77,6 @@ class OccurrenceLogicTests: XCTestCase {
       )
     }
 
-
     XCTAssertEqual(count["$count_since_install"] as? Int, 11000)
     XCTAssertEqual(count["$count_30d"] as? Int, 11000)
     XCTAssertEqual(count["$count_7d"] as? Int, 11000)
@@ -91,3 +87,4 @@ class OccurrenceLogicTests: XCTestCase {
     XCTAssertEqual(count["$last_occurred_at"] as? String, lastEventData.createdAt.isoString)
   }
 }
+*/

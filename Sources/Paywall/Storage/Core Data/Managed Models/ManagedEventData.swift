@@ -19,6 +19,7 @@ final class ManagedEventData: NSManagedObject {
   @NSManaged private(set) var createdAt: Date
   @NSManaged private(set) var name: String
   @NSManaged private(set) var parameters: Data
+  @NSManaged public var event: ManagedEvent?
 
   init(
     context: NSManagedObjectContext,

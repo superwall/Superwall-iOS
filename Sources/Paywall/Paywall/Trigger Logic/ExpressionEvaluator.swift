@@ -57,7 +57,6 @@ enum ExpressionEvaluator {
     return false
   }
 
-
   private static func getPostfix(
     forRule rule: TriggerRule,
     withEventData eventData: EventData,
@@ -65,7 +64,7 @@ enum ExpressionEvaluator {
   ) -> String? {
     var eventOccurrences: [String: [String: Any]] = [:]
     let eventNames = storage.coreDataManager.getAllEventNames()
-    // For each e
+
     for eventName in eventNames {
       eventOccurrences[eventName] = OccurrenceLogic.getEventOccurrences(
         of: eventName,
