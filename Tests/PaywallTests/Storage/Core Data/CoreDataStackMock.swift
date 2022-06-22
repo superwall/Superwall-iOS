@@ -9,6 +9,7 @@ import XCTest
 import CoreData
 @testable import Paywall
 
+@available(iOS 14.0, *)
 final class CoreDataStackMock: CoreDataStack {
   override init() {
     super.init()
@@ -39,6 +40,43 @@ final class CoreDataStackMock: CoreDataStack {
       print("Deleted entities")
     } catch let error as NSError {
       print("Error deleting!", error)
+    }
+  }
+
+  func batchInsertEventData(
+    eventName: String,
+    count: Int,
+    completion: @escaping () -> Void
+  ) {
+    var index = 0
+
+    let batchInsert = NSBatchInsertRequest(
+      entity: ManagedEventData.entity()
+    ) { (managedObject: NSManagedObject) -> Bool in
+      guard index < count else {
+        return true
+      }
+
+      if let eventData = managedObject as? ManagedEventData {
+        let stub = EventData.stub()
+          .setting(\.name, to: eventName)
+        eventData.createdAt = stub.createdAt
+        eventData.id = stub.id
+        eventData.name = stub.name
+        let params = try! JSONEncoder().encode(stub.parameters)
+        eventData.parameters = params
+      }
+      index += 1
+      return false
+    }
+
+    persistentContainer.performBackgroundTask { context in
+      do {
+        try context.execute(batchInsert)
+        completion()
+      } catch {
+        print("ERROR!", error)
+      }
     }
   }
 }

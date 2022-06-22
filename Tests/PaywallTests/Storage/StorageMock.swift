@@ -8,6 +8,7 @@
 import Foundation
 @testable import Paywall
 
+@available(iOS 14.0, *)
 final class StorageMock: Storage {
   var internalCachedTriggerSessions: [TriggerSession]
   var internalCachedTransactions: [TransactionModel]

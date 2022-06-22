@@ -15,11 +15,10 @@ final class ManagedEventData: NSManagedObject {
     return NSFetchRequest<ManagedEventData>(entityName: "EventData")
   }
 
-  @NSManaged private(set) var id: String
-  @NSManaged private(set) var createdAt: Date
-  @NSManaged private(set) var name: String
-  @NSManaged private(set) var parameters: Data
-  @NSManaged public var event: ManagedEvent?
+  @NSManaged var id: String
+  @NSManaged var createdAt: Date
+  @NSManaged var name: String
+  @NSManaged var parameters: Data
 
   init(
     context: NSManagedObjectContext,

@@ -63,11 +63,12 @@ final class CoreDataManager {
 
   func saveEventData(
     _ eventData: EventData,
-    completion: ((ManagedEvent) -> Void)? = nil
+    completion: ((ManagedEventData) -> Void)? = nil
   ) {
-    let context = coreDataStack.backgroundContext
+    let container = coreDataStack.persistentContainer
 
-    context.perform {
+    // TODO: THIS CAUSES A CONFLICT. NEED TO ONLY ADD FIRST TIME EVENT ONCE.
+    container.performBackgroundTask { context in
       let data = try? JSONEncoder().encode(eventData.parameters)
 
       let managedEventData = ManagedEventData(
@@ -77,24 +78,10 @@ final class CoreDataManager {
         name: eventData.name,
         parameters: data ?? Data()
       )
-
-      let request = ManagedEvent.fetchRequest()
-      request.predicate = NSPredicate(format: "name == %@", eventData.name)
-
-      if let event = self.coreDataStack.fetch(request, context: context).first {
-        managedEventData.event = event
-        event.addToData(managedEventData)
-        self.coreDataStack.saveContext(context)
-        completion?(event)
-      } else {
-        let event = ManagedEvent(
-          context: context,
-          name: eventData.name,
-          data: [managedEventData]
-        )
-        managedEventData.event = event
-        self.coreDataStack.saveContext(context)
-        completion?(event)
+      print("**** SAVE", eventData.name)
+      self.coreDataStack.saveContext(context) {
+        print("**** SAVED", eventData.name)
+        completion?(managedEventData)
       }
     }
   }
@@ -107,6 +94,19 @@ final class CoreDataManager {
     fetchRequest.predicate = NSPredicate(format: "name == %@", eventName)
     let count = coreDataStack.count(for: fetchRequest)
     return isPreemptive ? count + 1 : count
+  }
+
+  func countSinceInstall(
+    ofEvent eventName: String,
+    isPreemptive: Bool,
+    completion: @escaping (Int) -> Void
+  ) {
+    let fetchRequest = ManagedEventData.fetchRequest()
+    fetchRequest.predicate = NSPredicate(format: "name == %@", eventName)
+    coreDataStack.count(for: fetchRequest) { count in
+      let count = isPreemptive ? count + 1 : count
+      completion(count)
+    }
   }
 
   func count(
@@ -125,6 +125,25 @@ final class CoreDataManager {
     return isPreemptive ? count + 1 : count
   }
 
+  func count(
+    ofEvent eventName: String,
+    in since: SinceOption,
+    isPreemptive: Bool,
+    completion: @escaping (Int) -> Void
+  ) {
+    guard let date = since.date else {
+      return completion(0)
+    }
+    let fetchRequest = ManagedEventData.fetchRequest()
+    fetchRequest.predicate = NSPredicate(format: "createdAt >= %@ AND name == %@", date, eventName)
+    fetchRequest.resultType = .countResultType
+
+    coreDataStack.count(for: fetchRequest) { count in
+      let count = isPreemptive ? count + 1 : count
+      completion(count)
+    }
+  }
+
   func getIsoDateOfEventOccurrence(
     withName name: Paywall.EventName.RawValue,
     position: Position,
@@ -141,6 +160,29 @@ final class CoreDataManager {
       return eventData.createdAt.isoString
     } else {
       return newEventDate?.isoString ?? ""
+    }
+  }
+
+  func getIsoDateOfEventOccurrence(
+    withName name: Paywall.EventName.RawValue,
+    position: Position,
+    newEventDate: Date? = nil,
+    completion: @escaping (String) -> Void
+  ) {
+    let fetchRequest = ManagedEventData.fetchRequest()
+    fetchRequest.predicate = NSPredicate(format: "name == %@", name)
+    let ascending = position == .first ? true : false
+    fetchRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: ascending)]
+    fetchRequest.propertiesToFetch = ["createdAt"]
+    fetchRequest.fetchLimit = 1
+
+    // If first/last occurrence then return date. If paywall, then return optional date
+    coreDataStack.fetch(fetchRequest) { items in
+      if let eventData = items.first {
+        completion(eventData.createdAt.isoString)
+      } else {
+        completion(newEventDate?.isoString ?? "")
+      }
     }
   }
 
@@ -171,9 +213,16 @@ final class CoreDataManager {
   }
 
   func getAllEventNames() -> [String] {
-    let fetchRequest = ManagedEvent.fetchRequest()
-    let eventData = coreDataStack.fetch(fetchRequest)
-    let names = eventData.map { $0.name }
-    return names
+    let request = NSFetchRequest<NSDictionary>(entityName: "EventData")
+
+    let column = "name"
+    request.propertiesToFetch = [column]
+    request.returnsDistinctResults = true
+    request.resultType = .dictionaryResultType
+
+    guard let result = coreDataStack.fetch(request) as? [[String: String]] else {
+      return []
+    }
+    return result.compactMap { $0[column] }
   }
 }

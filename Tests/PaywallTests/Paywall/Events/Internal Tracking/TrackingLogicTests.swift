@@ -9,6 +9,7 @@
 import XCTest
 @testable import Paywall
 
+@available(iOS 14.0, *)
 final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_noParams() {
     // Given

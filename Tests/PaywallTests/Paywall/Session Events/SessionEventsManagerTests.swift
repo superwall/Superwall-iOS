@@ -9,6 +9,7 @@
 import XCTest
 @testable import Paywall
 
+@available(iOS 14.0, *)
 final class SessionEventsManagerTests: XCTestCase {
   // MARK: - PostCachedSessionEvents
   func testPostCachedSessionEvents_noneAvailable() {

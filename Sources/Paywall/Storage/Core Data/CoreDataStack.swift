@@ -43,12 +43,12 @@ class CoreDataStack {
 
   lazy var mainContext: NSManagedObjectContext = {
     let mainContext = persistentContainer.viewContext
-    mainContext.automaticallyMergesChangesFromParent = true
+   // mainContext.automaticallyMergesChangesFromParent = true
     mainContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
     return mainContext
   }()
 
-  func fetch<Item: NSManagedObject>(
+  func fetch<Item: NSFetchRequestResult>(
     _ request: NSFetchRequest<Item>,
     context: NSManagedObjectContext? = nil
   ) -> [Item] {
@@ -62,10 +62,29 @@ class CoreDataStack {
     }
   }
 
-  func saveContext(_ context: NSManagedObjectContext) {
+  func fetch<Item: NSManagedObject>(
+    _ request: NSFetchRequest<Item>,
+    completion: @escaping ([Item]) -> Void
+  ) {
+    persistentContainer.performBackgroundTask { context in
+      do {
+        let items = try context.fetch(request)
+        completion(items)
+      } catch let error as NSError {
+        print("Unresolved error \(error), \(error.userInfo)")
+        completion([])
+      }
+    }
+  }
+
+  func saveContext(
+    _ context: NSManagedObjectContext,
+    completion: (() -> Void)? = nil
+  ) {
     context.perform {
       do {
         try context.save()
+        completion?()
       } catch let error as NSError {
         print("Unresolved error \(error), \(error.userInfo)")
       }
@@ -89,6 +108,21 @@ class CoreDataStack {
     } catch let error as NSError {
       print("Unresolved error \(error), \(error.userInfo)")
       return 0
+    }
+  }
+
+  func count<T: NSFetchRequestResult>(
+    for fetchRequest: NSFetchRequest<T>,
+    completion: @escaping (Int) -> ()
+  ) {
+    persistentContainer.performBackgroundTask { context in
+      do {
+        let count = try context.count(for: fetchRequest)
+        return completion(count)
+      } catch let error as NSError {
+        print("Unresolved error \(error), \(error.userInfo)")
+        return completion(0)
+      }
     }
   }
 }

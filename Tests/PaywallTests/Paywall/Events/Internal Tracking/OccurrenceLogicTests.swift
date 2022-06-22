@@ -7,15 +7,15 @@
 // swiftlint:disable all
 
 // ONLY TEST THIS MANUALLY, DON'T PUSH TO SERVER AS IT TAKES A LONG TIME:
-/*
+
 import XCTest
 @testable import Paywall
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 class OccurrenceLogicTests: XCTestCase {
   var coreDataManager: CoreDataManager!
   var coreDataStack: CoreDataStackMock!
-  let eventName = "Event"
+  let eventName = "EventName"
 
   override func setUp() {
     super.setUp()
@@ -25,7 +25,7 @@ class OccurrenceLogicTests: XCTestCase {
 
   override func tearDown() {
     super.tearDown()
-    coreDataStack.deleteAllEntities(named: eventName)
+    coreDataStack.deleteAllEntities(named: "EventData")
     coreDataManager = nil
     coreDataStack = nil
   }
@@ -37,54 +37,77 @@ class OccurrenceLogicTests: XCTestCase {
     let appSessionManager = AppSessionManagerMock(appSession: appSession)
     let storage = StorageMock(coreDataManager: coreDataManager)
 
+
+    let arrayOfNames = ["Event", "Bob", "jim", "mate", "yo"]
+
+    let expectation = expectation(description: "Saved Event")
+    expectation.expectedFulfillmentCount = arrayOfNames.count
+/*
     let twoMinsAgo: TimeInterval = -120
     let firstEventDate = Date().advanced(by: twoMinsAgo)
     let firstEventData: EventData = .stub()
       .setting(\.name, to: eventName)
       .setting(\.createdAt, to: firstEventDate)
-    coreDataManager.saveEventData(firstEventData)
+    coreDataManager.saveEventData(firstEventData) { _ in
+      expectation.fulfill()
+    }*/
 
-    for _ in 0..<10998 {
-      let eventData: EventData = .stub()
-        .setting(\.name, to: eventName)
-      coreDataManager.saveEventData(eventData)
+    for name in arrayOfNames {
+      coreDataStack.batchInsertEventData(eventName: name, count: 1000) {
+        expectation.fulfill()
+      }
     }
-
+/*
     let twoMinsAhead: TimeInterval = 120
     let lastEventDate = Date().advanced(by: twoMinsAhead)
     let lastEventData: EventData = .stub()
       .setting(\.name, to: eventName)
       .setting(\.createdAt, to: lastEventDate)
-    coreDataManager.saveEventData(lastEventData)
+    coreDataManager.saveEventData(lastEventData) { _ in
+      expectation.fulfill()
+    }*/
 
-    let expectation = expectation(
-      forNotification: .NSManagedObjectContextDidSave,
-      object: coreDataStack.backgroundContext) { _ in
-        return true
+    waitForExpectations(timeout: 10.0) { error in
+      XCTAssertNil(error)
     }
-    expectation.expectedFulfillmentCount = 11000
-    waitForExpectations(timeout: 40.0) { error in
-      XCTAssertNil(error, "Save did not occur")
-    }
-
+    print("************")
     var count: [String: Any] = [:]
-    measure {
+    let options = XCTMeasureOptions()
+    options.iterationCount = 1
+    measure(options: options) {
       count = OccurrenceLogic.getEventOccurrences(
-        of: eventName,
+        of: arrayOfNames[0],
         isPreemptive: false,
         storage: storage,
         appSessionManager: appSessionManager
       )
     }
 
+    print("************")
     XCTAssertEqual(count["$count_since_install"] as? Int, 11000)
     XCTAssertEqual(count["$count_30d"] as? Int, 11000)
     XCTAssertEqual(count["$count_7d"] as? Int, 11000)
     XCTAssertEqual(count["$count_24h"] as? Int, 11000)
     XCTAssertEqual(count["$count_session"] as? Int, 11000)
     XCTAssertEqual(count["$count_today"] as? Int, 11000)
-    XCTAssertEqual(count["$first_occurred_at"] as? String, firstEventData.createdAt.isoString)
-    XCTAssertEqual(count["$last_occurred_at"] as? String, lastEventData.createdAt.isoString)
+   // XCTAssertEqual(count["$first_occurred_at"] as? String, firstEventData.createdAt.isoString)
+   // XCTAssertEqual(count["$last_occurred_at"] as? String, lastEventData.createdAt.isoString)
   }
 }
+
+
+/*
+ Results for 5M entries (all of same name) to get eventOccurrences
+
+ Total:
+ 5M = 1.96s (avg. of ten: 1.9246s)
+
+ 
+
+
+ Just firstOccurred:
+ 5M = 0.242 (avg. of ten: 0.210s)
+
+ Just lastOccurred:
+ 5M = 0.243 (avg. of ten: 0.209s)
 */

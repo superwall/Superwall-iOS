@@ -9,10 +9,10 @@
 import XCTest
 @testable import Paywall
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 class CoreDataManagerTests: XCTestCase {
   var coreDataManager: CoreDataManager!
-  var coreDataStack: CoreDataStack!
+  var coreDataStack: CoreDataStackMock!
 
   override func setUp() {
     super.setUp()
@@ -32,11 +32,8 @@ class CoreDataManagerTests: XCTestCase {
       .setting(\.name, to: eventName)
       .setting(\.parameters, to: ["def": "ghi"])
 
-    coreDataManager.saveEventData(eventData) { savedEvent in
-      XCTAssertEqual(savedEvent.name, eventName)
-      let savedEventData = savedEvent.data?.firstObject as! ManagedEventData
-
-      XCTAssertEqual(savedEventData.id, eventData.id)
+    coreDataManager.saveEventData(eventData) { savedEventData in
+      XCTAssertEqual(savedEventData.name, eventName)
       XCTAssertEqual(savedEventData.name, eventName)
       XCTAssertEqual(savedEventData.createdAt, eventData.createdAt)
 
@@ -61,11 +58,8 @@ class CoreDataManagerTests: XCTestCase {
       .setting(\.name, to: eventName)
       .setting(\.parameters, to: [:])
 
-    coreDataManager.saveEventData(eventData) { savedEvent in
-      XCTAssertEqual(savedEvent.name, eventName)
-      let savedEventData = savedEvent.data?.firstObject as! ManagedEventData
-
-      XCTAssertEqual(savedEventData.id, eventData.id)
+    coreDataManager.saveEventData(eventData) { savedEventData in
+      XCTAssertEqual(savedEventData.name, eventName)
       XCTAssertEqual(savedEventData.name, eventName)
       XCTAssertEqual(savedEventData.createdAt, eventData.createdAt)
 
@@ -85,24 +79,19 @@ class CoreDataManagerTests: XCTestCase {
   }
 
   func test_getAllEventNames() {
-    var arrayOfNames: Set<String> = []
-    for i in 0..<500 {
-      let eventName = "Event\(i)"
-      arrayOfNames.insert(eventName)
-      let eventData: EventData = .stub()
-        .setting(\.name, to: eventName)
-      coreDataManager.saveEventData(eventData)
+    let arrayOfNames = ["Event", "Bob", "jim", "mate", "yo"]
+
+    let expectation = expectation(description: "Saved Event")
+    expectation.expectedFulfillmentCount = arrayOfNames.count
+
+    for name in arrayOfNames {
+      coreDataStack.batchInsertEventData(eventName: name, count: 1000) {
+        expectation.fulfill()
+      }
     }
 
-    let expectation = expectation(
-      forNotification: .NSManagedObjectContextDidSave,
-      object: coreDataStack.backgroundContext) { _ in
-        return true
-    }
-    expectation.expectedFulfillmentCount = 500
-
-    waitForExpectations(timeout: 2.0) { error in
-      XCTAssertNil(error, "Save did not occur")
+    waitForExpectations(timeout: 50.0) { error in
+      XCTAssertNil(error)
     }
 
     var allEventNames: [String] = []
