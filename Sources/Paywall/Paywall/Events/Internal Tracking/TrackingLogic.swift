@@ -29,14 +29,6 @@ enum TrackingLogic {
       "$event_name": eventName
     ]
 
-    let preemptiveEventOccurrences = OccurrenceLogic.getEventOccurrences(
-      of: eventName,
-      isPreemptive: true,
-      eventCreatedAt: eventCreatedAt,
-      storage: storage
-    )
-    eventParams += preemptiveEventOccurrences
-
     // Filter then assign Superwall parameters
     for key in superwallParameters.keys {
       guard let value = clean(input: superwallParameters[key]) else {

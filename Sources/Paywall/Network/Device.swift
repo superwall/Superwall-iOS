@@ -143,21 +143,6 @@ final class DeviceHelper {
     return numberOfMinutes.minute ?? 0
   }
 
-  func sinceLastPaywallView(
-  retrieve component: Calendar.Component
-  ) -> Int? {
-    guard let fromDate = Storage.shared.coreDataManager.getLastPaywallOpen() else {
-      return nil
-    }
-    let toDate = Date()
-    let components = Calendar.current.dateComponents([component], from: fromDate, to: toDate)
-    if component == .minute {
-      return components.minute
-    } else {
-      return components.day
-    }
-  }
-
   var templateDevice: TemplateDevice {
     let aliases: [String]
     if let alias = Storage.shared.aliasId {
@@ -188,9 +173,7 @@ final class DeviceHelper {
       appInstallDate: DeviceHelper.shared.appInstalledAtString,
       isMac: DeviceHelper.shared.isMac,
       daysSinceInstall: DeviceHelper.shared.daysSinceInstall,
-      minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall,
-      daysSinceLastPaywallView: DeviceHelper.shared.sinceLastPaywallView(retrieve: .day),
-      minutesSinceLastPaywallView: DeviceHelper.shared.sinceLastPaywallView(retrieve: .minute)
+      minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall
     )
   }
 }

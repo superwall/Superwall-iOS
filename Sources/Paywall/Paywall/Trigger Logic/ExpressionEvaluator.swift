@@ -62,22 +62,10 @@ enum ExpressionEvaluator {
     withEventData eventData: EventData,
     storage: Storage
   ) -> String? {
-    var eventOccurrences: [String: [String: Any]] = [:]
-    let eventNames = storage.coreDataManager.getAllEventNames()
-
-    for eventName in eventNames {
-      eventOccurrences[eventName] = OccurrenceLogic.getEventOccurrences(
-        of: eventName,
-        isPreemptive: false,
-        storage: storage
-      )
-    }
-
     let values = JSON([
       "user": Storage.shared.userAttributes,
       "device": DeviceHelper.shared.templateDevice.toDictionary(),
-      "params": eventData.parameters,
-      "events": eventOccurrences
+      "params": eventData.parameters
     ])
 
     if let expressionJs = rule.expressionJs {
