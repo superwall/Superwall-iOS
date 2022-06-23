@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 23/05/2022.
 //
+// swiftlint:disable all
 
 import Foundation
 @testable import Paywall

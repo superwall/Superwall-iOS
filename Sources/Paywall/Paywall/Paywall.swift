@@ -98,7 +98,7 @@ public final class Paywall: NSObject {
 	var didTryToAutoRestore = false
 	var paywallWasPresentedThisSession = false
   lazy var configManager = ConfigManager()
-  
+
 	var paywallViewController: SWPaywallViewController? {
 		return PaywallManager.shared.presentedViewController
 	}

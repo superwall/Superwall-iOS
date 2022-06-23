@@ -150,7 +150,6 @@ final class DeviceHelper {
     } else {
       aliases = []
     }
-    
 
     return TemplateDevice(
       publicApiKey: Storage.shared.apiKey,

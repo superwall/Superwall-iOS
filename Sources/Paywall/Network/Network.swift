@@ -122,7 +122,7 @@ class Network {
       )
       return
     }
-    
+
     urlSession.request(.config(requestId: requestId)) { result in
       switch result {
       case .success(let response):
