@@ -11,7 +11,6 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - New dedicated function for handling deeplinks: `Paywall.handleDeepLink(url)`
 - New `Paywall.shouldPreloadPaywalls` flag. Set this to `false` to make paywalls load and cache in a just-in-time fashion. This deprecates the old `Paywall.shouldPreloadTriggers` flag.
 - Deprecates old `track` functions. The only one you should use is `Paywall.track(_:_:)`, to which you pass an event name and a dictionary of parameters. Note: This is not backwards compatible with previous versions of the SDK.
-- When defining rules for your campaign, you can access the following properties on `events`: `count_since_install`, `count_30d`, `count_7d`, `count_24h`, `count_session`, `count_today`, `first_occurred_at`, `last_occurred_at`.
 - Adds a new way of internally tracking analytics associated with a paywall and the app session. This will greatly improve the Superwall dashboard analytics.
 - Adds support for javascript expressions defined in rules on the Superwall dashboard.
 - Updates the SDK documentation.
@@ -25,6 +24,8 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Fixes an issue where the wrong paywall was shown if a trigger was fired before the config was fetched from the server. Thanks to Zac from Blue Candy for help with finding that :)
 - Future proofs enums internally to increase backwards compatibility.
 - Fixes a bug where long term data was being stored in the cache directory. This update migrates that to the document directory. This means the data stays around until we tell it to delete, rather than the system deleting it at random.
+- Prevents Paywall.configure from being called twice and logs a warning if this occurs.
+- Prevents Paywall.configure from being called in the background.
 
 2.3.0
 -----
