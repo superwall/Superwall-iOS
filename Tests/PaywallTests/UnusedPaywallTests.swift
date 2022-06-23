@@ -1,3 +1,4 @@
+/*
 import XCTest
 @testable import Paywall
 
@@ -82,3 +83,4 @@ final class PaywallTests: XCTestCase {
     print(formatter.string(from: DateComponents(day: 390)))
 	}
 }
+*/
