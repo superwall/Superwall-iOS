@@ -2,7 +2,6 @@
 import XCTest
 @testable import Paywall
 
-// swiftlint:disable all
 
 final class PaywallTests: XCTestCase {
 	func testProductNumber() {

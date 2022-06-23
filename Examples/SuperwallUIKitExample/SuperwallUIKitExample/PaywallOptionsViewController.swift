@@ -19,7 +19,6 @@ final class PaywallOptionsViewController: UIViewController {
       withIdentifier: "PaywallOptionsViewController"
     ) as! PaywallOptionsViewController
     // swiftlint:disable:previous force_cast
-    
     return controller
   }
 

@@ -26,6 +26,8 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Fixes a bug where long term data was being stored in the cache directory. This update migrates that to the document directory. This means the data stays around until we tell it to delete, rather than the system deleting it at random.
 - Prevents Paywall.configure from being called twice and logs a warning if this occurs.
 - Prevents Paywall.configure from being called in the background.
+- Fixes an issue where the keyboard couldn't be dismissed in the UIKit sample app.
+- Mentions SwiftLint as a requirement to run the sample apps.
 
 2.3.0
 -----
