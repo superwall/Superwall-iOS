@@ -401,7 +401,7 @@ class PaywallResponseLogicTests: XCTestCase {
   // MARK: - handlePaywallError
   func testHandlePaywallError_notFoundNetworkError() {
     // Given
-    let error = URLSession.NetworkError.notFound
+    let error = CustomURLSession.NetworkError.notFound
     
     let trackEvent: (Trackable) -> TrackingResult = { event in
       let response = event as! SuperwallEvent.PaywallResponseLoad
@@ -428,7 +428,7 @@ class PaywallResponseLogicTests: XCTestCase {
 
   func testHandlePaywallError_paywallResponseLoadFail() {
     // Given
-    let error = URLSession.NetworkError.unknown
+    let error = CustomURLSession.NetworkError.unknown
     let trackEvent: (Trackable) -> TrackingResult = { event in
       let response = event as! SuperwallEvent.PaywallResponseLoad
       guard case .fail = response.state else {

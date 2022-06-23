@@ -22,6 +22,12 @@ This example app uses:
 - iOS 15
 - Swift 5
 
+You'll need to have SwiftLint installed. If you use Homebrew to install packages on your computer you run the following in the command line:
+
+`brew install swiftlint`
+
+Otherwise, you can download it from [https://github.com/realm/SwiftLint](https://github.com/realm/SwiftLint).
+
 ## Getting Started
 
 Clone or download the *Paywall* SDK from the [project home page](https://github.com/superwall-me/paywall-ios). Then, open **SuperwallSwiftUIExample.xcodeproj** in Xcode and take a look at the code inside the [SuperwallSwiftUIExample](SuperwallSwiftUIExample) folder.

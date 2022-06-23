@@ -156,7 +156,7 @@ enum PaywallResponseLogic {
     handlersCache: [String: [PaywallResponseCompletionBlock]],
     trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) -> PaywallErrorResponse? {
-    if let error = error as? URLSession.NetworkError,
+    if let error = error as? CustomURLSession.NetworkError,
       error == .notFound {
       let trackedEvent = SuperwallEvent.PaywallResponseLoad(
         state: .notFound,

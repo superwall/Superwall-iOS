@@ -32,6 +32,8 @@ class Storage {
   var userId: String? {
     return appUserId ?? aliasId
   }
+  /// Used to store the config request if it occurred in the background.
+  var configRequest: ConfigRequest?
   // swiftlint:disable:next array_constructor
   var triggers: [String: Trigger] = [:]
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []

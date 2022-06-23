@@ -27,7 +27,7 @@ final class PaywallResponseManager: NSObject {
       var triggerIdentifiers: TriggerResponseIdentifiers
 
       if let eventData = eventData,
-        Paywall.shared.didFetchConfig {
+        Paywall.shared.configManager.didFetchConfig {
         let triggerOutcome = TriggerLogic.outcome(
           forEvent: eventData,
           triggers: Storage.shared.triggers

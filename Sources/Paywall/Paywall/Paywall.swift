@@ -97,7 +97,7 @@ public final class Paywall: NSObject {
 	var presentingWindow: UIWindow?
 	var didTryToAutoRestore = false
 	var paywallWasPresentedThisSession = false
-  var didFetchConfig = !Storage.shared.configRequestId.isEmpty
+  lazy var configManager = ConfigManager()
 
 	var paywallViewController: SWPaywallViewController? {
 		return PaywallManager.shared.presentedViewController
@@ -138,6 +138,7 @@ public final class Paywall: NSObject {
     dispatchGroup.wait()
     return isSubscribed
   }
+  private static var hasCalledConfig = false
 
   // MARK: - Public Functions
 	/// Configures a shared instance of ``Paywall/Paywall`` for use throughout your app.
@@ -154,6 +155,15 @@ public final class Paywall: NSObject {
     userId: String? = nil,
     delegate: PaywallDelegate? = nil
   ) -> Paywall {
+    if hasCalledConfig {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .paywallCore,
+        message: "Paywall.configure called multiple times. Please make sure you only call this once on app launch. Use Paywall.reset() and Paywall.identify(userId:) if you're looking to reset the userId when a user logs out."
+      )
+      return shared
+    }
+    hasCalledConfig = true
 		shared = Paywall(
       apiKey: apiKey,
       userId: userId,
@@ -181,13 +191,13 @@ public final class Paywall: NSObject {
   /// Call this when your user signs out.
 	@discardableResult
 	@objc public static func reset() -> Paywall {
-    guard Storage.shared.appUserId != nil else {
+    if Storage.shared.appUserId == nil {
       return shared
     }
 
     Storage.shared.clear()
     PaywallManager.shared.clearCache()
-    shared.fetchConfiguration()
+    shared.configManager.fetchConfiguration()
 
     return shared
 	}
@@ -257,52 +267,7 @@ public final class Paywall: NSObject {
 
     SKPaymentQueue.default().add(self)
     Storage.shared.recordAppInstall()
-		fetchConfiguration()
-	}
-
-	private func fetchConfiguration() {
-    let requestId = UUID().uuidString
-    Network.shared.getConfig(withRequestId: requestId) { [weak self] result in
-      guard let self = self else {
-        return
-      }
-      switch result {
-      case .success(let config):
-        Storage.shared.addConfig(config, withRequestId: requestId)
-        SessionEventsManager.shared.triggerSession.createSessions(from: config)
-        self.didFetchConfig = true
-        config.cache()
-
-        Storage.shared.triggersFiredPreConfig.forEach { trigger in
-          switch trigger.presentationInfo.triggerType {
-          case .implicit:
-            guard let eventData = trigger.presentationInfo.eventData else {
-              return
-            }
-            self.handleImplicitTrigger(forEvent: eventData)
-          case .explicit:
-            Self.internallyPresent(
-              trigger.presentationInfo,
-              on: trigger.viewController,
-              ignoreSubscriptionStatus: trigger.ignoreSubscriptionStatus,
-              onPresent: trigger.onPresent,
-              onDismiss: trigger.onDismiss,
-              onFail: trigger.onFail
-            )
-          }
-        }
-        Storage.shared.clearPreConfigTriggers()
-      case .failure(let error):
-        Logger.debug(
-          logLevel: .error,
-          scope: .paywallCore,
-          message: "Failed to Fetch Configuration",
-          info: nil,
-          error: error
-        )
-        self.didFetchConfig = true
-      }
-    }
+    configManager.fetchConfiguration()
 	}
 
   /// Attemps to implicitly trigger a paywall for a given analytical event.
@@ -317,7 +282,7 @@ public final class Paywall: NSObject {
 
       let presentationInfo: PresentationInfo = .implicitTrigger(event)
 
-      guard Paywall.shared.didFetchConfig else {
+      guard self.configManager.didFetchConfig else {
         let trigger = PreConfigTrigger(presentationInfo: presentationInfo)
         Storage.shared.cachePreConfigTrigger(trigger)
         return
@@ -358,9 +323,12 @@ extension Paywall: SWPaywallViewControllerDelegate {
   ) {
 		// TODO: log this
 		onMain { [weak self] in
+      guard let self = self else {
+        return
+      }
 			switch result {
 			case .closed:
-        self?.dismiss(
+        self.dismiss(
           paywallViewController,
           state: .closed
         )
@@ -371,7 +339,7 @@ extension Paywall: SWPaywallViewControllerDelegate {
 				paywallViewController.loadingState = .loadingPurchase
 				Paywall.delegate?.purchase(product: product)
 			case .initiateRestore:
-				Paywall.shared.tryToRestore(
+        self.tryToRestore(
           paywallViewController,
           userInitiated: true
         )

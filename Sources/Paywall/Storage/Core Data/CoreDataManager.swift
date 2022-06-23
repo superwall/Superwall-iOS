@@ -67,7 +67,6 @@ final class CoreDataManager {
   ) {
     let container = coreDataStack.persistentContainer
 
-    // TODO: THIS CAUSES A CONFLICT. NEED TO ONLY ADD FIRST TIME EVENT ONCE.
     container.performBackgroundTask { context in
       let data = try? JSONEncoder().encode(eventData.parameters)
 
