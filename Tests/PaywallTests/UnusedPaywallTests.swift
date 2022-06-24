@@ -1,7 +1,7 @@
+/*
 import XCTest
 @testable import Paywall
 
-// swiftlint:disable all
 
 final class PaywallTests: XCTestCase {
 	func testProductNumber() {
@@ -82,3 +82,4 @@ final class PaywallTests: XCTestCase {
     print(formatter.string(from: DateComponents(day: 390)))
 	}
 }
+*/

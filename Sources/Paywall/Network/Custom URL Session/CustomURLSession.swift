@@ -5,9 +5,11 @@
 //  Created by Yusuf Tör on 04/03/2022.
 //
 
-import Foundation
+import UIKit
 
-extension URLSession {
+class CustomURLSession {
+  private let urlSession = URLSession(configuration: .ephemeral)
+
   enum NetworkError: LocalizedError {
     case unknown
     case notAuthenticated
@@ -30,7 +32,8 @@ extension URLSession {
   func request<Response>(
     _ endpoint: Endpoint<Response>,
     isForDebugging: Bool = false,
-    completion: @escaping (Result<Response, Error>) -> Void
+    completion: @escaping (Result<Response, Error>) -> Void,
+    attempt: Double = 1
   ) {
     guard let request = endpoint.makeRequest(forDebugging: isForDebugging) else {
       return completion(.failure(NetworkError.unknown))
@@ -51,7 +54,20 @@ extension URLSession {
 
     let startTime = Date().timeIntervalSince1970
 
-    let task = dataTask(with: request) { data, response, error in
+    let task = urlSession.dataTask(with: request) { data, response, error in
+      if error != nil,
+        let delay = URLSessionRetryLogic.delay(forAttempt: attempt) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delay)) {
+          self.request(
+            endpoint,
+            isForDebugging: isForDebugging,
+            completion: completion,
+            attempt: attempt + 1
+          )
+        }
+        return
+      }
+
       let requestDuration = Date().timeIntervalSince1970 - startTime
 
       do {

@@ -11,7 +11,8 @@ import JavaScriptCore
 enum ExpressionEvaluator {
   static func evaluateExpression(
     fromRule rule: TriggerRule,
-    eventData: EventData
+    eventData: EventData,
+    storage: Storage = Storage.shared
   ) -> Bool {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
@@ -45,7 +46,8 @@ enum ExpressionEvaluator {
 
     if let postfix = getPostfix(
       forRule: rule,
-      withEventData: eventData
+      withEventData: eventData,
+      storage: storage
     ) {
       let result = jsCtx.evaluateScript(script + "\n " + postfix)
       if result?.isString != nil {
@@ -57,14 +59,15 @@ enum ExpressionEvaluator {
 
   private static func getPostfix(
     forRule rule: TriggerRule,
-    withEventData eventData: EventData
+    withEventData eventData: EventData,
+    storage: Storage
   ) -> String? {
     let values = JSON([
       "user": Storage.shared.userAttributes,
       "device": DeviceHelper.shared.templateDevice.toDictionary(),
       "params": eventData.parameters
-      // TODO: add events where events.workout_start.$count_24hr etc (ALL events, not just the one that is the trigger) https://www.notion.so/superwall/event-counts-11a2fa7b47774eabbf501a647da1ea65
     ])
+
     if let expressionJs = rule.expressionJs {
       if let base64Params = JavascriptExpressionEvaluatorParams(
         expressionJs: expressionJs,

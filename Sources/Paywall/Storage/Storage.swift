@@ -30,6 +30,8 @@ class Storage {
   var userId: String? {
     return appUserId ?? aliasId
   }
+  /// Used to store the config request if it occurred in the background.
+  var configRequest: ConfigRequest?
   // swiftlint:disable:next array_constructor
   var triggers: [String: Trigger] = [:]
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
@@ -39,14 +41,23 @@ class Storage {
     self.cache = cache
     self.appUserId = cache.read(AppUserId.self)
     self.aliasId = cache.read(AliasId.self)
-    self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == "true"
+    self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true
     self.userAttributes = cache.read(UserAttributes.self) ?? [:]
+  }
+
+  func migrateData() {
+    let version = cache.read(Version.self) ?? .v1
+    FileManagerMigrator.migrate(
+      fromVersion: version,
+      cache: cache
+    )
   }
 
   func configure(
     appUserId: String?,
     apiKey: String
   ) {
+    migrateData()
     self.appUserId = appUserId
     self.apiKey = apiKey
 
@@ -91,7 +102,7 @@ class Storage {
     }
 
     Paywall.track(SuperwallEvent.FirstSeen())
-    cache.write("true", forType: DidTrackFirstSeen.self)
+    cache.write(true, forType: DidTrackFirstSeen.self)
 		didTrackFirstSeen = true
 	}
 
@@ -142,7 +153,7 @@ class Storage {
     cache.delete(Transactions.self)
   }
 
-  func getCachedTriggerSessions() -> [TriggerSession] {
+  func getCachedTriggerSessions() -> TriggerSessions.Value {
     return cache.read(TriggerSessions.self) ?? []
   }
 
@@ -153,7 +164,7 @@ class Storage {
     )
   }
 
-  func getCachedTransactions() -> [TransactionModel] {
+  func getCachedTransactions() -> Transactions.Value {
     return cache.read(Transactions.self) ?? []
   }
 

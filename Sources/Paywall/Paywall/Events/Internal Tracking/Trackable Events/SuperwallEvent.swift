@@ -92,8 +92,8 @@ enum SuperwallEvent {
     var superwallParameters: [String: Any] {
       let fromEvent = eventData != nil
       let params: [String: Any] = [
-        "isTriggeredFromEvent": fromEvent,
-        "eventName": eventData?.name ?? ""
+        "is_triggered_from_event": fromEvent,
+        "event_name": eventData?.name ?? ""
       ]
 
       switch state {
@@ -291,8 +291,8 @@ enum SuperwallEvent {
     var superwallParameters: [String: Any] {
       let fromEvent = eventData != nil
       let params: [String: Any] = [
-        "isTriggeredFromEvent": fromEvent,
-        "eventName": eventData?.name ?? ""
+        "is_triggered_from_event": fromEvent,
+        "event_name": eventData?.name ?? ""
       ]
 
       switch state {

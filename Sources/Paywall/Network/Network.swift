@@ -6,10 +6,16 @@
 //
 
 import Foundation
+import UIKit
 
 class Network {
   static let shared = Network()
-  private let urlSession = URLSession(configuration: .ephemeral)
+  private let urlSession: CustomURLSession
+
+  /// Only use init when testing, for all other times use `Network.shared`.
+  init(urlSession: CustomURLSession = CustomURLSession()) {
+    self.urlSession = urlSession
+  }
 
   func sendEvents(events: EventsRequest) {
     urlSession.request(.events(eventsRequest: events)) { result in
@@ -99,8 +105,19 @@ class Network {
 
   func getConfig(
     withRequestId requestId: String,
-    completion: @escaping (Result<Config, Error>) -> Void
+    completion: @escaping (Result<Config, Error>) -> Void,
+    applicationState: UIApplication.State = UIApplication.shared.applicationState,
+    storage: Storage = Storage.shared
   ) {
+    if applicationState == .background {
+      let configRequest = ConfigRequest(
+        id: requestId,
+        completion: completion
+      )
+      storage.configRequest = configRequest
+      return
+    }
+
     urlSession.request(.config(requestId: requestId)) { result in
       switch result {
       case .success(let response):

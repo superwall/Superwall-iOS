@@ -12,7 +12,6 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - <doc:Ecosystem>
 - ``configure(apiKey:userId:delegate:)``
 - ``PaywallDelegate``
-- ``debugMode``
 - ``delegate``
 - ``EventName``
 
@@ -58,9 +57,10 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 ### Logging
 
-- ``PaywallDelegate/handleLog(level:scope:message:info:error:)``
 - ``Paywall/Paywall/logLevel``
 - ``Paywall/Paywall/logScopes``
+- ``PaywallDelegate/handleLog(level:scope:message:info:error:)``
+- ``debugMode``
 
 ### Customization
 

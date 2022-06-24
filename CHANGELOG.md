@@ -14,6 +14,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Adds a new way of internally tracking analytics associated with a paywall and the app session. This will greatly improve the Superwall dashboard analytics.
 - Adds support for javascript expressions defined in rules on the Superwall dashboard.
 - Updates the SDK documentation.
+- Adds `trialPeriodEndDate` as a product variable. This means you can tell your users when their trial period will end, e.g. `Start your trial today — you won't be billed until {{primary.trialPeriodEndDate}}` will print out `Start your trial today — you won't be billed until June 21, 2023`.
 
 ### Fixes
 - Adds the missing Superwall events `app_install`, `paywallWebviewLoad_fail` and `nonRecurringProduct_purchase`.
@@ -23,6 +24,12 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - For SwiftUI users, we've fixed an issue where the explicitly triggered paywalls and presented paywalls would sometimes randomly dismiss. We found that state changes within the presenting view caused a rerendering of the view which temporarily reset the state of the binding that controlled the presentation of the paywall. This was causing the Paywall to dismiss.
 - Fixes an issue where the wrong paywall was shown if a trigger was fired before the config was fetched from the server. Thanks to Zac from Blue Candy for help with finding that :)
 - Future proofs enums internally to increase backwards compatibility.
+- Fixes a bug where long term data was being stored in the cache directory. This update migrates that to the document directory. This means the data stays around until we tell it to delete, rather than the system deleting it at random.
+- Prevents Paywall.configure from being called twice and logs a warning if this occurs.
+- Prevents Paywall.configure from being called in the background.
+- Fixes an issue where the keyboard couldn't be dismissed in the UIKit sample app.
+- Mentions SwiftLint as a requirement to run the sample apps.
+- Deprecates `Paywall.debugMode`. All logs are now controlled by setting `Paywall.logLevel`. The default `logLevel` is now `.warn`.
 
 2.3.0
 -----

@@ -76,6 +76,20 @@ final class ExpressionEvaluatorTests: XCTestCase {
     )
     XCTAssertFalse(result)
   }
+/*
+  func testExpressionEvaluator_events() {
+    let triggeredEvents: [String: [EventData]] = [
+      "a": [.stub()]
+    ]
+    let storage = StorageMock(internalTriggeredEvents: triggeredEvents)
+    let result = ExpressionEvaluator.evaluateExpression(
+      fromRule: .stub()
+        .setting(\.expression, to: "events[\"a\"][\"$count_24h\"] == 1"),
+      eventData: .stub(),
+      storage: storage
+    )
+    XCTAssertTrue(result)
+  }*/
 
   // MARK: - ExpressionJS
 
@@ -114,6 +128,20 @@ final class ExpressionEvaluatorTests: XCTestCase {
     )
     XCTAssertTrue(result)
   }
+/*
+  func testExpressionEvaluator_expressionJSValues_events() {
+    let triggeredEvents: [String: [EventData]] = [
+      "a": [.stub()]
+    ]
+    let storage = StorageMock(internalTriggeredEvents: triggeredEvents)
+    let result = ExpressionEvaluator.evaluateExpression(
+      fromRule: .stub()
+        .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.events.a.$count_24h == 1 }; superwallEvaluator"),
+      eventData: .stub(),
+      storage: storage
+    )
+    XCTAssertTrue(result)
+  }*/
 
   func testExpressionEvaluator_expressionJSEmpty() {
     let result = ExpressionEvaluator.evaluateExpression(

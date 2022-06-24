@@ -19,6 +19,7 @@ final class WelcomeViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     textFieldBackgroundView.layer.cornerRadius = textFieldBackgroundView.frame.height / 2
+    textField.delegate = self
     UINavigationBar.appearance().titleTextAttributes = [
       .foregroundColor: UIColor.white,
       .font: UIFont.rubikBold(.five)
@@ -31,5 +32,13 @@ final class WelcomeViewController: UIViewController {
     }
     let optionsViewController = PaywallOptionsViewController.fromStoryboard()
     navigationController?.pushViewController(optionsViewController, animated: true)
+  }
+}
+
+// MARK: - UITextFieldDelegate
+extension WelcomeViewController: UITextFieldDelegate {
+  func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+    textField.resignFirstResponder()
+    return true
   }
 }

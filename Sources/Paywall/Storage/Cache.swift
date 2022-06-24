@@ -5,13 +5,17 @@
 //  Created by Nguyen Cong Huy on 7/4/16.
 //  Copyright © 2016 Nguyen Cong Huy. All rights reserved.
 //
+// swiftlint:disable force_unwrapping
+
 import UIKit
 
-final class Cache {
+class Cache {
+  private static let documentDirectoryPrefix = "com.superwall.document.Store"
   private static let cacheDirectoryPrefix = "com.superwall.cache.Store"
   private static let ioQueuePrefix = "com.superwall.queue.Store"
   private static let defaultMaxCachePeriodInSecond: TimeInterval = 60 * 60 * 24 * 7 // a week
-  private let cachePath: String
+  private let cacheUrl: URL
+  private let documentUrl: URL
   private let memCache = NSCache<AnyObject, AnyObject>()
   private let ioQueue: DispatchQueue
   private let fileManager: FileManager
@@ -24,19 +28,17 @@ final class Cache {
 
   /// Specify distinc name param, it represents folder name for disk cache
   init(ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix)) {
-    var cachePath = NSSearchPathForDirectoriesInDomains(
-      .cachesDirectory,
-      FileManager.SearchPathDomainMask.userDomainMask,
-      true
-    ).first!
-    // swiftlint:disable:previous force_unwrapping
-
-    cachePath = (cachePath as NSString).appendingPathComponent(Cache.cacheDirectoryPrefix)
-    self.cachePath = cachePath
+    fileManager = FileManager()
+    cacheUrl = fileManager
+      .urls(for: .cachesDirectory, in: .userDomainMask)
+      .first!
+      .appendingPathComponent(Cache.cacheDirectoryPrefix)
+    documentUrl = fileManager
+      .urls(for: .documentDirectory, in: .userDomainMask)
+      .first!
+      .appendingPathComponent(Cache.documentDirectoryPrefix)
 
     self.ioQueue = ioQueue
-
-    self.fileManager = FileManager()
 
     #if !os(OSX) && !os(watchOS)
       NotificationCenter.default.addObserver(
@@ -53,19 +55,25 @@ final class Cache {
       )
     #endif
   }
-}
 
-// MARK: - Store data
-extension Cache {
+  // MARK: - Store data
   /// Read data for key
-  func read<Key: CachingType>(
-    _ keyType: Key.Type
+  func read<Key: Storable>(
+    _ keyType: Key.Type,
+    fromDirectory directory: SearchPathDirectory? = nil
   ) -> Key.Value? where Key.Value: Decodable {
     var data = memCache.object(forKey: keyType.key as AnyObject) as? Data
-    if data == nil,
-      let dataFromDisk = fileManager.contents(atPath: cachePath(forKey: keyType.key)) {
-      data = dataFromDisk
-      memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
+
+    if data == nil {
+      let directory = directory ?? keyType.directory
+      let path = cachePath(
+        forKey: keyType.key,
+        directory: directory
+      )
+      if  let dataFromDisk = fileManager.contents(atPath: path) {
+        data = dataFromDisk
+        memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
+      }
     }
     guard let data = data else {
       return nil
@@ -81,20 +89,19 @@ extension Cache {
     }
   }
 
-  func delete<Key: CachingType>(
-    _ keyType: Key.Type
-  ) {
-    memCache.removeObject(forKey: keyType.key as AnyObject)
-    deleteDataFromDisk(withKey: keyType.key)
-  }
-
   /// Read data for key
-  func read<Key: CachingType>(
-    _ keyType: Key.Type
+  func read<Key: Storable>(
+    _ keyType: Key.Type,
+    fromDirectory directory: SearchPathDirectory? = nil
   ) -> Key.Value? {
     var data = memCache.object(forKey: keyType.key as AnyObject) as? Data
+    let directory = directory ?? keyType.directory
+    let path = cachePath(
+      forKey: keyType.key,
+      directory: directory
+    )
     if data == nil,
-      let dataFromDisk = fileManager.contents(atPath: cachePath(forKey: keyType.key)) {
+      let dataFromDisk = fileManager.contents(atPath: path) {
       data = dataFromDisk
       memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
     }
@@ -105,40 +112,80 @@ extension Cache {
     return nil
   }
 
+  func delete<Key: Storable>(
+    _ keyType: Key.Type,
+    fromDirectory directory: SearchPathDirectory? = nil
+  ) {
+    memCache.removeObject(forKey: keyType.key as AnyObject)
+    deleteDataFromDisk(
+      withKey: keyType.key,
+      fromDirectory: directory ?? keyType.directory
+    )
+  }
+
   /// Write data for key. This is an async operation.
-  func write<Key: CachingType>(
+  ///
+  /// - Parameters:
+  ///   - value: The data to write.
+  ///   - keyType: The `Storable` type that you want to store.
+  ///   - directory: The directory that you want to save to. This should only be used when migrating data, for all other instances, leave this as `nil` to fallback to the directory specified by the type.
+  func write<Key: Storable>(
     _ value: Key.Value,
-    forType keyType: Key.Type
+    forType keyType: Key.Type,
+    inDirectory directory: SearchPathDirectory? = nil
   ) {
     guard let value = value as? NSCoding else {
       return
     }
-    let data = NSKeyedArchiver.archivedData(withRootObject: value)
 
+    let data = NSKeyedArchiver.archivedData(withRootObject: value)
     memCache.setObject(data as AnyObject, forKey: keyType.key as AnyObject)
-    writeDataToDisk(data: data, key: keyType.key)
+
+    writeDataToDisk(
+      data: data,
+      key: keyType.key,
+      toDirectory: directory ?? keyType.directory
+    )
   }
 
   /// Write data for key. This is an async operation.
-  func write<Key: CachingType>(
+  /// - Parameters:
+  ///   - value: The data to write.
+  ///   - keyType: The `Storable` type that you want to store.
+  ///   - directory: The directory that you want to save to. This should only be used when migrating data, for all other instances, leave this as `nil` to fallback to the directory specified by the type.
+  func write<Key: Storable>(
     _ value: Key.Value,
-    forType keyType: Key.Type
-  ) where Key.Value: Codable {
+    forType keyType: Key.Type,
+    inDirectory directory: SearchPathDirectory? = nil
+  ) where Key.Value: Encodable {
     guard let data = try? JSONEncoder().encode(value) else {
       return
     }
-    let archivedData = NSKeyedArchiver.archivedData(withRootObject: data)
 
+    let archivedData = NSKeyedArchiver.archivedData(withRootObject: data)
     memCache.setObject(archivedData as AnyObject, forKey: keyType.key as AnyObject)
-    writeDataToDisk(data: archivedData, key: keyType.key)
+
+    writeDataToDisk(
+      data: archivedData,
+      key: keyType.key,
+      toDirectory: directory ?? keyType.directory
+    )
   }
 
-  private func writeDataToDisk(data: Data, key: String) {
-    ioQueue.async {
-      if self.fileManager.fileExists(atPath: self.cachePath) == false {
+  private func writeDataToDisk(
+    data: Data,
+    key: String,
+    toDirectory directory: SearchPathDirectory
+  ) {
+    ioQueue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      let directoryUrl = self.getDirectoryUrl(from: directory)
+      if self.fileManager.fileExists(atPath: directoryUrl.path) == false {
         do {
           try self.fileManager.createDirectory(
-            atPath: self.cachePath,
+            atPath: directoryUrl.path,
             withIntermediateDirectories: true,
             attributes: nil
           )
@@ -151,14 +198,31 @@ extension Cache {
         }
       }
 
-      self.fileManager.createFile(atPath: self.cachePath(forKey: key), contents: data, attributes: nil)
+      let path = self.cachePath(
+        forKey: key,
+        directory: directory
+      )
+      self.fileManager.createFile(
+        atPath: path,
+        contents: data
+      )
     }
   }
 
-  private func deleteDataFromDisk(withKey key: String) {
-    ioQueue.async {
+  private func deleteDataFromDisk(
+    withKey key: String,
+    fromDirectory directory: SearchPathDirectory
+  ) {
+    ioQueue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
       do {
-        try self.fileManager.removeItem(atPath: self.cachePath(forKey: key))
+        let path = self.cachePath(
+          forKey: key,
+          directory: directory
+        )
+        try self.fileManager.removeItem(atPath: path)
       } catch {
         Logger.debug(
           logLevel: .error,
@@ -183,9 +247,13 @@ extension Cache {
   }
 
   private func cleanDiskCache() {
-    ioQueue.async {
+    ioQueue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
       do {
-        try self.fileManager.removeItem(atPath: self.cachePath)
+        try self.fileManager.removeItem(atPath: self.cacheUrl.path)
+        try self.fileManager.removeItem(atPath: self.documentUrl.path)
       } catch {
         Logger.debug(
           logLevel: .error,
@@ -204,7 +272,10 @@ extension Cache {
   */
   @objc private func cleanExpiredDiskCache() {
     // Do things in cocurrent io queue
-    ioQueue.async {
+    ioQueue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
       var (URLsToDelete, diskCacheSize, cachedFiles) = self.travelCachedFiles()
 
       for fileURL in URLsToDelete {
@@ -264,7 +335,6 @@ extension Cache {
   // This method is from Kingfisher
   // swiftlint:disable all
   fileprivate func travelCachedFiles() -> (urlsToDelete: [URL], diskCacheSize: UInt, cachedFiles: [URL: URLResourceValues]) {
-    let diskCacheURL = URL(fileURLWithPath: cachePath)
     let resourceKeys: Set<URLResourceKey> = [.isDirectoryKey, .contentAccessDateKey, .totalFileAllocatedSizeKey]
     let expiredDate: Date? = (maxCachePeriodInSecond < 0) ? nil : Date(timeIntervalSinceNow: -maxCachePeriodInSecond)
 
@@ -272,40 +342,58 @@ extension Cache {
     var urlsToDelete: [URL] = []
     var diskCacheSize: UInt = 0
 
-    for fileUrl in (try? fileManager.contentsOfDirectory(at: diskCacheURL, includingPropertiesForKeys: Array(resourceKeys), options: .skipsHiddenFiles)) ?? [] {
-        do {
-          let resourceValues = try fileUrl.resourceValues(forKeys: resourceKeys)
-          // If it is a Directory. Continue to next file URL.
-          if resourceValues.isDirectory == true {
+    func traverse(url: URL) {
+      for fileUrl in (try? fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: Array(resourceKeys), options: .skipsHiddenFiles)) ?? [] {
+          do {
+            let resourceValues = try fileUrl.resourceValues(forKeys: resourceKeys)
+            // If it is a Directory. Continue to next file URL.
+            if resourceValues.isDirectory == true {
+                continue
+            }
+
+            // If this file is expired, add it to URLsToDelete
+            if let expiredDate = expiredDate,
+              let lastAccessData = resourceValues.contentAccessDate,
+              (lastAccessData as NSDate).laterDate(expiredDate) == expiredDate {
+              urlsToDelete.append(fileUrl)
               continue
-          }
+            }
 
-          // If this file is expired, add it to URLsToDelete
-          if let expiredDate = expiredDate,
-            let lastAccessData = resourceValues.contentAccessDate,
-            (lastAccessData as NSDate).laterDate(expiredDate) == expiredDate {
-            urlsToDelete.append(fileUrl)
-            continue
-          }
-
-          if let fileSize = resourceValues.totalFileAllocatedSize {
-            diskCacheSize += UInt(fileSize)
-            cachedFiles[fileUrl] = resourceValues
-          }
-      } catch {
-        Logger.debug(
-          logLevel: .error,
-          scope: .cache,
-          message: "Error while iterating files \(error.localizedDescription)"
-        )
+            if let fileSize = resourceValues.totalFileAllocatedSize {
+              diskCacheSize += UInt(fileSize)
+              cachedFiles[fileUrl] = resourceValues
+            }
+        } catch {
+          Logger.debug(
+            logLevel: .error,
+            scope: .cache,
+            message: "Error while iterating files \(error.localizedDescription)"
+          )
+        }
       }
     }
+
+    traverse(url: cacheUrl)
+    traverse(url: documentUrl)
 
     return (urlsToDelete, diskCacheSize, cachedFiles)
   }
 
-  func cachePath(forKey key: String) -> String {
+  func cachePath(
+    forKey key: String,
+    directory: SearchPathDirectory
+  ) -> String {
     let fileName = key.md5
-    return (cachePath as NSString).appendingPathComponent(fileName)
+    let directoryUrl = getDirectoryUrl(from: directory)
+    return directoryUrl.appendingPathComponent(fileName).path
+  }
+
+  private func getDirectoryUrl(from directory: SearchPathDirectory) -> URL {
+    switch directory {
+    case .cache:
+      return cacheUrl
+    case .documents:
+      return documentUrl
+    }
   }
 }

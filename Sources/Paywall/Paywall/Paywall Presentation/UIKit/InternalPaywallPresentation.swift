@@ -8,7 +8,7 @@
 import UIKit
 
 extension Paywall {
-  // swiftlint:disable:next function_body_length
+  // swiftlint:disable:next function_body_length cyclomatic_complexity
   static func internallyPresent(
     _ presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
@@ -18,7 +18,7 @@ extension Paywall {
     onDismiss: PaywallDismissalCompletionBlock? = nil,
     onFail: ((NSError) -> Void)? = nil
   ) {
-    guard Paywall.shared.didFetchConfig else {
+    guard shared.configManager.didFetchConfig else {
       let trigger = PreConfigTrigger(
         presentationInfo: presentationInfo,
         viewController: presentingViewController,
@@ -55,7 +55,7 @@ extension Paywall {
       }
     }
 
-    if Paywall.shared.isUserSubscribed,
+    if shared.isUserSubscribed,
       !SWDebugManager.shared.isDebuggerLaunched,
       !ignoreSubscriptionStatus {
       return
@@ -66,7 +66,7 @@ extension Paywall {
       cached: cached && !SWDebugManager.shared.isDebuggerLaunched
     ) { result in
       // if there's a paywall being presented, don't do anything
-      if Paywall.shared.isPaywallPresented {
+      if shared.isPaywallPresented {
         Logger.debug(
           logLevel: .error,
           scope: .paywallPresentation,
@@ -97,9 +97,9 @@ extension Paywall {
             info: debugInfo,
             error: nil
           )
-          if !Paywall.shared.isPaywallPresented {
+          if !shared.isPaywallPresented {
             onFail?(
-              Paywall.shared.presentationError(
+              shared.presentationError(
                 domain: "SWPresentationError",
                 code: 101,
                 title: "No UIViewController to present paywall on",

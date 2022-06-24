@@ -58,8 +58,6 @@ class AppSessionManager {
   }
 
   @objc private func applicationDidBecomeActive() {
-    Paywall.track(SuperwallEvent.AppOpen())
-
     let didStartNewSession = AppSessionLogic.didStartNewSession(
       lastAppClose,
       withSessionTimeout: appSessionTimeout
@@ -71,6 +69,7 @@ class AppSessionManager {
     } else {
       appSession.endAt = nil
     }
+    Paywall.track(SuperwallEvent.AppOpen())
 
     if !didTrackLaunch {
       Paywall.track(SuperwallEvent.AppLaunch())

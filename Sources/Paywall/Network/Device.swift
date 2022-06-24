@@ -129,6 +129,20 @@ final class DeviceHelper {
     return appInstallDate?.isoString ?? ""
   }
 
+  var daysSinceInstall: Int {
+    let fromDate = appInstallDate ?? Date()
+    let toDate = Date()
+    let numberOfDays = Calendar.current.dateComponents([.day], from: fromDate, to: toDate)
+    return numberOfDays.day ?? 0
+  }
+
+  var minutesSinceInstall: Int {
+    let fromDate = appInstallDate ?? Date()
+    let toDate = Date()
+    let numberOfMinutes = Calendar.current.dateComponents([.minute], from: fromDate, to: toDate)
+    return numberOfMinutes.minute ?? 0
+  }
+
   var templateDevice: TemplateDevice {
     let aliases: [String]
     if let alias = Storage.shared.aliasId {
@@ -156,7 +170,9 @@ final class DeviceHelper {
       isLowPowerModeEnabled: DeviceHelper.shared.isLowPowerModeEnabled == "true",
       bundleId: DeviceHelper.shared.bundleId,
       appInstallDate: DeviceHelper.shared.appInstalledAtString,
-      isMac: DeviceHelper.shared.isMac
+      isMac: DeviceHelper.shared.isMac,
+      daysSinceInstall: DeviceHelper.shared.daysSinceInstall,
+      minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall
     )
   }
 }

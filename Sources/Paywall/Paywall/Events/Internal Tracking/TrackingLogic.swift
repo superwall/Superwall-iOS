@@ -9,22 +9,25 @@ import Foundation
 import StoreKit
 
 enum TrackingLogic {
-  static func processParameters(fromTrackableEvent trackableEvent: Trackable) -> TrackingParameters {
+  static func processParameters(
+    fromTrackableEvent trackableEvent: Trackable,
+    eventCreatedAt: Date,
+    storage: Storage = Storage.shared
+  ) -> TrackingParameters {
     let superwallParameters = trackableEvent.superwallParameters
     let customParameters = trackableEvent.customParameters
     let eventName = trackableEvent.rawName
 
-    var eventParams: [String: Any] = [:]
     var delegateParams: [String: Any] = [
-      "isSuperwall": true
+      "is_superwall": true
     ]
 
     // Add a special property if it's an automatically tracked event
     let isStandardEvent = Paywall.EventName(rawValue: eventName) != nil
-    eventParams["$is_standard_event"] = isStandardEvent
-    eventParams["$event_name"] = eventName
-    
-    // TODO: Add event counts: https://www.notion.so/superwall/event-counts-11a2fa7b47774eabbf501a647da1ea65
+    var eventParams: [String: Any] = [
+      "$is_standard_event": isStandardEvent,
+      "$event_name": eventName
+    ]
 
     // Filter then assign Superwall parameters
     for key in superwallParameters.keys {
