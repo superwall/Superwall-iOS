@@ -7,7 +7,7 @@
 // swiftlint:disable all
 
 // ONLY TEST THIS MANUALLY, DON'T PUSH TO SERVER AS IT TAKES A LONG TIME:
-
+/*
 import XCTest
 @testable import Paywall
 
@@ -38,7 +38,12 @@ class OccurrenceLogicTests: XCTestCase {
     let storage = StorageMock(coreDataManager: coreDataManager)
 
 
-    let arrayOfNames = ["Event", "Bob", "jim", "mate", "yo"]
+    var arrayOfNames: [String] = []
+    for _ in 0..<200 {
+      let randomString = UUID().uuidString
+      arrayOfNames.append(randomString)
+    }
+    print(arrayOfNames)
 
     let expectation = expectation(description: "Saved Event")
     expectation.expectedFulfillmentCount = arrayOfNames.count
@@ -51,12 +56,17 @@ class OccurrenceLogicTests: XCTestCase {
     coreDataManager.saveEventData(firstEventData) { _ in
       expectation.fulfill()
     }*/
-
+    var percentage: Double = 1 / 2
+    var total = 0
     for name in arrayOfNames {
-      coreDataStack.batchInsertEventData(eventName: name, count: 1000) {
+      let count = Int(5000000 * percentage)
+      total += count
+      coreDataStack.batchInsertEventData(eventName: name, count: count) {
         expectation.fulfill()
       }
+      percentage = percentage / 2
     }
+    print(total)
 /*
     let twoMinsAhead: TimeInterval = 120
     let lastEventDate = Date().advanced(by: twoMinsAhead)
@@ -67,7 +77,7 @@ class OccurrenceLogicTests: XCTestCase {
       expectation.fulfill()
     }*/
 
-    waitForExpectations(timeout: 10.0) { error in
+    waitForExpectations(timeout: 80.0) { error in
       XCTAssertNil(error)
     }
     print("************")
@@ -75,12 +85,24 @@ class OccurrenceLogicTests: XCTestCase {
     let options = XCTMeasureOptions()
     options.iterationCount = 1
     measure(options: options) {
+      var eventOccurrences: [String: [String: Any]] = [:]
+      let eventNames = storage.coreDataManager.getAllEventNames()
+
+      for eventName in eventNames {
+        eventOccurrences[eventName] = OccurrenceLogic.getEventOccurrences(
+          of: eventName,
+          isPreemptive: false,
+          storage: storage,
+          appSessionManager: appSessionManager
+        )
+      }
+      /*
       count = OccurrenceLogic.getEventOccurrences(
         of: arrayOfNames[0],
         isPreemptive: false,
         storage: storage,
         appSessionManager: appSessionManager
-      )
+      )*/
     }
 
     print("************")
@@ -110,4 +132,5 @@ class OccurrenceLogicTests: XCTestCase {
 
  Just lastOccurred:
  5M = 0.243 (avg. of ten: 0.209s)
+*/
 */
