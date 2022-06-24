@@ -29,6 +29,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Prevents Paywall.configure from being called in the background.
 - Fixes an issue where the keyboard couldn't be dismissed in the UIKit sample app.
 - Mentions SwiftLint as a requirement to run the sample apps.
+- Deprecates `Paywall.debugMode`. All logs are now controlled by setting `Paywall.logLevel`. The default `logLevel` is now `.warn`.
 
 2.3.0
 -----
