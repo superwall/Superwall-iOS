@@ -14,6 +14,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Adds a new way of internally tracking analytics associated with a paywall and the app session. This will greatly improve the Superwall dashboard analytics.
 - Adds support for javascript expressions defined in rules on the Superwall dashboard.
 - Updates the SDK documentation.
+- Adds `trialPeriodEndDate` as a product variable. This means you can tell your users when their trial period will end, e.g. `Start your trial today — you won't be billed until {{primary.trialPeriodEndDate}}` will print out `Start your trial today — you won't be billed until June 21, 2023`.
 
 ### Fixes
 - Adds the missing Superwall events `app_install`, `paywallWebviewLoad_fail` and `nonRecurringProduct_purchase`.
