@@ -43,7 +43,6 @@ class OccurrenceLogicTests: XCTestCase {
       let randomString = UUID().uuidString
       arrayOfNames.append(randomString)
     }
-    print(arrayOfNames)
 
     let expectation = expectation(description: "Saved Event")
     expectation.expectedFulfillmentCount = arrayOfNames.count
@@ -59,7 +58,7 @@ class OccurrenceLogicTests: XCTestCase {
     var percentage: Double = 1 / 2
     var total = 0
     for name in arrayOfNames {
-      let count = Int(5000000 * percentage)
+      let count = Int(1000000 * percentage)
       total += count
       coreDataStack.batchInsertEventData(eventName: name, count: count) {
         expectation.fulfill()
