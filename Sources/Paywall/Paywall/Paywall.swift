@@ -187,7 +187,7 @@ public final class Paywall: NSObject {
     if Storage.shared.appUserId == nil {
       return shared
     }
-
+    Paywall.presentAgain = {}
     Storage.shared.clear()
     PaywallManager.shared.clearCache()
     shared.configManager.fetchConfiguration()

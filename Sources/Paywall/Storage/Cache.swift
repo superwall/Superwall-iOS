@@ -10,12 +10,14 @@
 import UIKit
 
 class Cache {
-  private static let documentDirectoryPrefix = "com.superwall.document.Store"
+  private static let userSpecificDocumentDirectoryPrefix = "com.superwall.document.userSpecific.Store"
+  private static let appSpecificDocumentDirectoryPrefix = "com.superwall.document.appSpecific.Store"
   private static let cacheDirectoryPrefix = "com.superwall.cache.Store"
   private static let ioQueuePrefix = "com.superwall.queue.Store"
   private static let defaultMaxCachePeriodInSecond: TimeInterval = 60 * 60 * 24 * 7 // a week
   private let cacheUrl: URL
-  private let documentUrl: URL
+  private let userSpecificDocumentUrl: URL
+  private let appSpecificDocumentUrl: URL
   private let memCache = NSCache<AnyObject, AnyObject>()
   private let ioQueue: DispatchQueue
   private let fileManager: FileManager
@@ -33,10 +35,14 @@ class Cache {
       .urls(for: .cachesDirectory, in: .userDomainMask)
       .first!
       .appendingPathComponent(Cache.cacheDirectoryPrefix)
-    documentUrl = fileManager
+    userSpecificDocumentUrl = fileManager
       .urls(for: .documentDirectory, in: .userDomainMask)
       .first!
-      .appendingPathComponent(Cache.documentDirectoryPrefix)
+      .appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
+    appSpecificDocumentUrl = fileManager
+      .urls(for: .documentDirectory, in: .userDomainMask)
+      .first!
+      .appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
 
     self.ioQueue = ioQueue
 
@@ -237,7 +243,7 @@ class Cache {
 // MARK: - Clean
 extension Cache {
   /// Clean all mem cache and disk cache. This is an async operation.
-  func cleanAll() {
+  func cleanUserFiles() {
     cleanMemCache()
     cleanDiskCache()
   }
@@ -252,8 +258,12 @@ extension Cache {
         return
       }
       do {
-        try self.fileManager.removeItem(atPath: self.cacheUrl.path)
-        try self.fileManager.removeItem(atPath: self.documentUrl.path)
+        if self.fileManager.fileExists(atPath: self.cacheUrl.path) {
+          try self.fileManager.removeItem(atPath: self.cacheUrl.path)
+        }
+        if self.fileManager.fileExists(atPath: self.userSpecificDocumentUrl.path) {
+          try self.fileManager.removeItem(atPath: self.userSpecificDocumentUrl.path)
+        }
       } catch {
         Logger.debug(
           logLevel: .error,
@@ -348,7 +358,6 @@ extension Cache {
     var urlsToDelete: [URL] = []
     var diskCacheSize: UInt = 0
 
-
     let directoryContents = try? fileManager.contentsOfDirectory(
       at: cacheUrl,
       includingPropertiesForKeys: Array(resourceKeys),
@@ -400,8 +409,10 @@ extension Cache {
     switch directory {
     case .cache:
       return cacheUrl
-    case .documents:
-      return documentUrl
+    case .userSpecificDocuments:
+      return userSpecificDocumentUrl
+    case .appSpecificDocuments:
+      return appSpecificDocumentUrl
     }
   }
 }

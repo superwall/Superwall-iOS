@@ -68,12 +68,12 @@ class Storage {
 
   /// Call this when you log out
   func clear() {
+    cache.cleanUserFiles()
     appUserId = nil
     aliasId = StorageLogic.generateAlias()
-    didTrackFirstSeen = false
     userAttributes = [:]
     triggers.removeAll()
-    cache.cleanAll()
+    didTrackFirstSeen = false
     recordFirstSeenTracked()
   }
 
