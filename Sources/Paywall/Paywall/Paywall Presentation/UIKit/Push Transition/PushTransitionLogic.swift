@@ -68,8 +68,8 @@ enum PushTransitionLogic {
 
     let animator = UIViewPropertyAnimator(
       duration: duration,
-      controlPoint1: CGPoint(x: 0, y: 0.5),
-      controlPoint2: CGPoint(x: 0.38, y: 0.9)
+      controlPoint1: CGPoint(x: 0.28, y: 0.28),
+      controlPoint2: CGPoint(x: 0.0, y: 1.0)
     ) {
       toView.frame = fromViewInitialFrame
       fromView.frame = fromViewFinalFrame
@@ -102,8 +102,8 @@ enum PushTransitionLogic {
 
     let animator = UIViewPropertyAnimator(
       duration: duration,
-      controlPoint1: CGPoint(x: 0.28, y: 0.2),
-      controlPoint2: CGPoint(x: 0.77, y: 0.76)
+      controlPoint1: CGPoint(x: 0.12, y: 0.12),
+      controlPoint2: CGPoint(x: 0.22, y: 1.0)
     ) {
       toView.frame = fromViewInitialFrame
       fromView.frame = fromViewFinalFrame
