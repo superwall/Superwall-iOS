@@ -81,6 +81,11 @@ public final class Paywall: NSObject {
   /// Set this to `false` to prevent the paywall from dismissing on purchase/restore.
   public static var automaticallyDismiss = true
 
+  /// The presented paywall view controller.
+  public static var presentedViewController: UIViewController? {
+    return PaywallManager.shared.presentedViewController
+  }
+
   // MARK: - Private Properties
   /// Used as the reload function if a paywall takes to long to load. set in paywall.present
 	static var presentAgain = {}
