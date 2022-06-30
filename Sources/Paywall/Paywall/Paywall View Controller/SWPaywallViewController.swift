@@ -474,7 +474,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	func trackOpen() {
     SessionEventsManager.shared.triggerSession.trackPaywallOpen()
-
+    Storage.shared.saveLastPaywallView()
     let trackedEvent = SuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}
