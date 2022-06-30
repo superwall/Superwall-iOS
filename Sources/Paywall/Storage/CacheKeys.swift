@@ -82,3 +82,11 @@ enum Version: Storable {
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = DataStoreVersion
 }
+
+enum LastPaywallView: Storable {
+  static var key: String {
+    "store.lastPaywallView"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = Date
+}
