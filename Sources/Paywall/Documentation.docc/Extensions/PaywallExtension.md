@@ -75,3 +75,4 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``shouldPreloadTriggers``
 - ``shouldAnimatePaywallDismissal``
 - ``shouldAnimatePaywallPresentation``
+- ``presentedViewController``
