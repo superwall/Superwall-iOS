@@ -90,3 +90,11 @@ enum LastPaywallView: Storable {
   static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = Date
 }
+
+enum TotalPaywallViews: Storable {
+  static var key: String {
+    "store.totalPaywallViews"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = Int
+}

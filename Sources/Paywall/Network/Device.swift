@@ -161,6 +161,10 @@ final class DeviceHelper {
     return numberOfMinutes.minute
   }
 
+  var totalPaywallViews: Int {
+    return Storage.shared.getTotalPaywallViews() ?? 0
+  }
+
   var templateDevice: TemplateDevice {
     let aliases: [String]
     if let alias = Storage.shared.aliasId {
@@ -192,7 +196,8 @@ final class DeviceHelper {
       daysSinceInstall: DeviceHelper.shared.daysSinceInstall,
       minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall,
       daysSinceLastPaywallView: DeviceHelper.shared.daysSinceLastPaywallView,
-      minutesSinceLastPaywallView: DeviceHelper.shared.minutesSinceLastPaywallView
+      minutesSinceLastPaywallView: DeviceHelper.shared.minutesSinceLastPaywallView,
+      totalPaywallViews: DeviceHelper.shared.totalPaywallViews
     )
   }
 }

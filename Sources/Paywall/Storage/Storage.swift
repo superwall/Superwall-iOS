@@ -185,4 +185,15 @@ class Storage {
   func getLastPaywallView() -> LastPaywallView.Value? {
     return cache.read(LastPaywallView.self)
   }
+
+  func incrementTotalPaywallViews() {
+    cache.write(
+      (getTotalPaywallViews() ?? 0) + 1,
+      forType: TotalPaywallViews.self
+    )
+  }
+
+  func getTotalPaywallViews() -> TotalPaywallViews.Value? {
+    return cache.read(TotalPaywallViews.self)
+  }
 }
