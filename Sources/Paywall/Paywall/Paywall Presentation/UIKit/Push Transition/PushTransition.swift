@@ -26,7 +26,7 @@ final class PushTransition: NSObject, UIViewControllerAnimatedTransitioning {
     case .presenting:
       return 0.54
     case .dismissing:
-        return 0.54 * 0.618
+      return 0.54 * 0.618
     }
   }
 
