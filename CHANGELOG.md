@@ -15,6 +15,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Adds support for javascript expressions defined in rules on the Superwall dashboard.
 - Updates the SDK documentation.
 - Adds `trialPeriodEndDate` as a product variable. This means you can tell your users when their trial period will end, e.g. `Start your trial today — you won't be billed until {{primary.trialPeriodEndDate}}` will print out `Start your trial today — you won't be billed until June 21, 2023`.
+- Adds `daysSinceInstall`, `minutesSinceInstall`, `daysSinceLastPaywallView` and `minutesSinceLastPaywallView` as `device` parameters. These can be references in your rules and paywalls with `{{ device.paramName }}`.
 
 ### Fixes
 - Adds the missing Superwall events `app_install`, `paywallWebviewLoad_fail` and `nonRecurringProduct_purchase`.

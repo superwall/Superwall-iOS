@@ -174,4 +174,15 @@ class Storage {
       forType: Transactions.self
     )
   }
+
+  func saveLastPaywallView() {
+    cache.write(
+      Date(),
+      forType: LastPaywallView.self
+    )
+  }
+
+  func getLastPaywallView() -> LastPaywallView.Value? {
+    return cache.read(LastPaywallView.self)
+  }
 }
