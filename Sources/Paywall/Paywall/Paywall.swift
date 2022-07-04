@@ -41,7 +41,7 @@ public final class Paywall: NSObject {
 	/// Animates paywall presentation. Defaults to `true`.
   ///
   /// Set this to `false` to globally disable paywall presentation animations.
-  @available(*, deprecated, message: "Set the Presentation Style on the Superwall dashboard to No Animation instead of using this boolean.")
+  @available(*, deprecated, message: "Either set the Presentation Style on the Superwall dashboard to No Animation or, for a trigger-specific override, set presentationStyleOverride on Paywall.trigger().")
 	public static var shouldAnimatePaywallPresentation = true
 
   /// Animates paywall dismissal. Defaults to `true`.
