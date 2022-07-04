@@ -15,6 +15,7 @@ struct PaywallTriggerModifier: ViewModifier {
   @State private var isInternallyPresenting = false
   var event: String?
   var params: [String: Any]
+  var presentationStyleOverride: PaywallPresentationStyle?
   var onPresent: ((PaywallInfo?) -> Void)?
   var onDismiss: ((PaywallDismissalResult) -> Void)?
   var onFail: ((NSError) -> Void)?
@@ -47,6 +48,7 @@ struct PaywallTriggerModifier: ViewModifier {
 
       Paywall.internallyPresent(
         eventInfo,
+        presentationStyleOverride: presentationStyleOverride ?? .none,
         onPresent: onPresent,
         onDismiss: { result in
           self.programmaticallySetShouldPresent = true

@@ -14,13 +14,16 @@ extension Paywall {
     on presentingViewController: UIViewController? = nil,
     cached: Bool = true,
     ignoreSubscriptionStatus: Bool = false,
+    presentationStyleOverride: PaywallPresentationStyle = .none,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: PaywallDismissalCompletionBlock? = nil,
     onFail: ((NSError) -> Void)? = nil
   ) {
+    let presentationStyleOverride = presentationStyleOverride == .none ? nil : presentationStyleOverride
     guard shared.configManager.didFetchConfig else {
       let trigger = PreConfigTrigger(
         presentationInfo: presentationInfo,
+        presentationStyleOverride: presentationStyleOverride,
         viewController: presentingViewController,
         ignoreSubscriptionStatus: ignoreSubscriptionStatus,
         onFail: onFail,
@@ -113,6 +116,7 @@ extension Paywall {
         paywallViewController.present(
           on: presenter,
           presentationInfo: presentationInfo,
+          presentationStyleOverride: presentationStyleOverride,
           dismissalBlock: onDismiss
         ) { success in
           if success {
@@ -124,6 +128,7 @@ extension Paywall {
                 presentationInfo,
                 on: presentingViewController,
                 cached: false,
+                presentationStyleOverride: presentationStyleOverride ?? .none,
                 onPresent: onPresent,
                 onDismiss: onDismiss,
                 onFail: onFail

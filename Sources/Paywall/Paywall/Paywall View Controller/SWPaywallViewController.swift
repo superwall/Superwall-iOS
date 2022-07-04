@@ -41,6 +41,14 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	var readyForEventTracking = false
 	var showRefreshTimer: Timer?
 	var isSafariVCPresented = false
+  var presentationStyle: PaywallPresentationStyle
+  var presentationIsAnimated: Bool {
+    if presentationStyle == .fullscreenNoAnimation {
+      return false
+    } else {
+      return Paywall.shouldAnimatePaywallPresentation
+    }
+  }
 
 	var isActive: Bool {
 		return isPresented || isBeingPresented
@@ -59,10 +67,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       calledByIdentifier: calledByIdentifier
     )
 	}
-
-  var presentationStyle: PaywallPresentationStyle {
-    return paywallResponse.presentationStyleV2
-  }
 
   private var purchaseLoadingIndicatorContainer: UIView = {
     let view = UIView()
@@ -127,6 +131,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   ) {
 		self.delegate = delegate
     self.paywallResponse = paywallResponse
+    presentationStyle = paywallResponse.presentationStyleV2
     super.init(nibName: nil, bundle: nil)
     configureUI()
     loadPaywallWebpage()
@@ -422,20 +427,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       self.exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.contentPlaceholderImageView.tintColor = loadingColor.withAlphaComponent(0.5)
     }
-
-    switch presentationStyle {
-    case .sheet:
-      modalPresentationStyle = .pageSheet
-    case .modal:
-      modalPresentationStyle = .pageSheet
-    case .fullscreen:
-      modalPresentationStyle = .overFullScreen
-    case .push:
-      modalPresentationStyle = .custom
-      transitioningDelegate = self
-    case .fullscreenNoAnimation:
-      modalPresentationStyle = .overFullScreen
-    }
   }
 
   private func loadPaywallWebpage() {
@@ -568,11 +559,21 @@ extension SWPaywallViewController: WebEventHandlerDelegate {
   }
 }
 
+/**
+Set presentation style override.
+ First check override.
+ Then check if presentation style is fullscreen.
+ Then
+
+ Presentation style ->
+ */
+
 // MARK: - presentation logic
 extension SWPaywallViewController {
 	func present(
     on presenter: UIViewController,
     presentationInfo: PresentationInfo,
+    presentationStyleOverride: PaywallPresentationStyle?,
     dismissalBlock: PaywallDismissalCompletionBlock?,
     completion: @escaping (Bool) -> Void
   ) {
@@ -582,17 +583,11 @@ extension SWPaywallViewController {
 		} else {
 			prepareForPresentation()
       set(presentationInfo, dismissalBlock: dismissalBlock)
-
-      let isAnimated: Bool
-      if presentationStyle == .fullscreenNoAnimation {
-        isAnimated = false
-      } else {
-        isAnimated = Paywall.shouldAnimatePaywallPresentation
-      }
+      setPresentationStyle(withOverride: presentationStyleOverride)
 
       presenter.present(
         self,
-        animated: isAnimated
+        animated: presentationIsAnimated
       ) { [weak self] in
         self?.isPresented = true
         self?.presentationDidFinish()
@@ -608,14 +603,7 @@ extension SWPaywallViewController {
   ) {
     prepareToDismiss()
 
-    let isAnimated: Bool
-    if presentationStyle == .fullscreenNoAnimation {
-      isAnimated = false
-    } else {
-      isAnimated = Paywall.shouldAnimatePaywallDismissal
-    }
-
-		dismiss(animated: isAnimated) { [weak self] in
+		dismiss(animated: presentationIsAnimated) { [weak self] in
       self?.didDismiss(
         dismissalResult,
         shouldCallCompletion: shouldCallCompletion,
@@ -627,6 +615,26 @@ extension SWPaywallViewController {
   private func prepareToDismiss() {
     calledDismiss = true
     Paywall.delegate?.willDismissPaywall?()
+  }
+
+  private func setPresentationStyle(withOverride presentationStyleOverride: PaywallPresentationStyle?) {
+    presentationStyle = presentationStyleOverride ?? paywallResponse.presentationStyleV2
+
+    switch presentationStyle {
+    case .sheet:
+      modalPresentationStyle = .pageSheet
+    case .modal:
+      modalPresentationStyle = .pageSheet
+    case .fullscreen:
+      modalPresentationStyle = .overFullScreen
+    case .push:
+      modalPresentationStyle = .custom
+      transitioningDelegate = self
+    case .fullscreenNoAnimation:
+      modalPresentationStyle = .overFullScreen
+    case .none:
+      break
+    }
   }
 
 	func didDismiss(
