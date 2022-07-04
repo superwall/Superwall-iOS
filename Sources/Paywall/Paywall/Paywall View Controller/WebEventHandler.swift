@@ -18,6 +18,7 @@ protocol WebEventHandlerDelegate: AnyObject {
   var isPresentedViewController: Bool { get }
 
   func eventDidOccur(_ paywallPresentationResult: PaywallPresentationResult)
+  func openDeepLink(_ url: URL)
   func presentSafari(_ url: URL)
 }
 
@@ -51,6 +52,8 @@ final class WebEventHandler: WebEventDelegate {
       delegate?.eventDidOccur(.closed)
     case .openUrl(let url):
       openUrl(url)
+    case .openUrlInSafari(let url):
+      openUrlInSafari(url)
     case .openDeepLink(let url):
       openDeepLink(url)
     case .restore:
@@ -173,14 +176,23 @@ final class WebEventHandler: WebEventDelegate {
     delegate?.presentSafari(url)
   }
 
+  private func openUrlInSafari(_ url: URL) {
+    detectHiddenPaywallEvent(
+      "openUrlInSafari",
+      userInfo: ["url": url]
+    )
+    hapticFeedback()
+    delegate?.eventDidOccur(.openedUrlInSafari(url))
+    UIApplication.shared.open(url)
+  }
+
   private func openDeepLink(_ url: URL) {
     detectHiddenPaywallEvent(
       "openDeepLink",
       userInfo: ["url": url]
     )
     hapticFeedback()
-    delegate?.eventDidOccur(.openedDeepLink(url: url))
-    // TODO: Handle deep linking
+    delegate?.openDeepLink(url)
   }
 
   private func restorePurchases() {
