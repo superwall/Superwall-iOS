@@ -99,7 +99,6 @@ extension PaywallEvent {
           return
         }
       case .openDeepLink:
-        print("*** open it")
         if let urlString = try? values.decode(String.self, forKey: .link),
           let url = URL(string: urlString) {
           self = .openDeepLink(url: url)
