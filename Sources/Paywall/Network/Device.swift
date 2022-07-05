@@ -136,9 +136,58 @@ final class DeviceHelper {
     return numberOfDays.day ?? 0
   }
 
-  var todayString: String {
-    let date = Calendar.current.startOfDay(for: Date())
-    return date.isoString
+  var localDateString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = Calendar.current.timeZone
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter.string(from: Date())
+  }
+
+  var utcDateString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter.string(from: Date())
+  }
+
+  var localTimeString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = Calendar.current.timeZone
+    formatter.dateFormat = "HH:mm:ss"
+    return formatter.string(from: Date())
+  }
+
+  var utcTimeString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "HH:mm:ss"
+    return formatter.string(from: Date())
+  }
+
+  var localDateTimeString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = Calendar.current.timeZone
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+    return formatter.string(from: Date())
+  }
+
+  var utcDateTimeString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+    return formatter.string(from: Date())
   }
 
 
@@ -204,7 +253,12 @@ final class DeviceHelper {
       daysSinceLastPaywallView: DeviceHelper.shared.daysSinceLastPaywallView,
       minutesSinceLastPaywallView: DeviceHelper.shared.minutesSinceLastPaywallView,
       totalPaywallViews: DeviceHelper.shared.totalPaywallViews,
-      today: DeviceHelper.shared.todayString
+      utcDate: DeviceHelper.shared.utcDateString,
+      localDate: DeviceHelper.shared.localDateString,
+      utcTime: DeviceHelper.shared.utcTimeString,
+      localTime: DeviceHelper.shared.localTimeString,
+      utcDateTime: DeviceHelper.shared.utcDateTimeString,
+      localDateTime: DeviceHelper.shared.localDateTimeString
     )
   }
 }
