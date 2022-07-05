@@ -246,11 +246,16 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	override func viewWillDisappear(_ animated: Bool) {
 		super.viewWillDisappear(animated)
-		if isPresented,
-      !isSafariVCPresented,
-      !calledDismiss {
-				Paywall.delegate?.willDismissPaywall?()
-		}
+    guard isPresented else {
+      return
+    }
+    if isSafariVCPresented {
+      return
+    }
+    if calledDismiss {
+      return
+    }
+    Paywall.delegate?.willDismissPaywall?()
 	}
 
 	override func viewDidDisappear(_ animated: Bool) {
@@ -469,7 +474,8 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	func trackOpen() {
     SessionEventsManager.shared.triggerSession.trackPaywallOpen()
-
+    Storage.shared.saveLastPaywallView()
+    Storage.shared.incrementTotalPaywallViews()
     let trackedEvent = SuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}

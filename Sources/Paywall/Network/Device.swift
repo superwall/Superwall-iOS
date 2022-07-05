@@ -136,11 +136,39 @@ final class DeviceHelper {
     return numberOfDays.day ?? 0
   }
 
+  var todayString: String {
+    let date = Calendar.current.startOfDay(for: Date())
+    return date.isoString
+  }
+
+
   var minutesSinceInstall: Int {
     let fromDate = appInstallDate ?? Date()
     let toDate = Date()
     let numberOfMinutes = Calendar.current.dateComponents([.minute], from: fromDate, to: toDate)
     return numberOfMinutes.minute ?? 0
+  }
+
+  var daysSinceLastPaywallView: Int? {
+    guard let fromDate = Storage.shared.getLastPaywallView() else {
+      return nil
+    }
+    let toDate = Date()
+    let numberOfDays = Calendar.current.dateComponents([.day], from: fromDate, to: toDate)
+    return numberOfDays.day
+  }
+
+  var minutesSinceLastPaywallView: Int? {
+    guard let fromDate = Storage.shared.getLastPaywallView() else {
+      return nil
+    }
+    let toDate = Date()
+    let numberOfMinutes = Calendar.current.dateComponents([.minute], from: fromDate, to: toDate)
+    return numberOfMinutes.minute
+  }
+
+  var totalPaywallViews: Int {
+    return Storage.shared.getTotalPaywallViews() ?? 0
   }
 
   var templateDevice: TemplateDevice {
@@ -172,7 +200,11 @@ final class DeviceHelper {
       appInstallDate: DeviceHelper.shared.appInstalledAtString,
       isMac: DeviceHelper.shared.isMac,
       daysSinceInstall: DeviceHelper.shared.daysSinceInstall,
-      minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall
+      minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall,
+      daysSinceLastPaywallView: DeviceHelper.shared.daysSinceLastPaywallView,
+      minutesSinceLastPaywallView: DeviceHelper.shared.minutesSinceLastPaywallView,
+      totalPaywallViews: DeviceHelper.shared.totalPaywallViews,
+      today: DeviceHelper.shared.todayString
     )
   }
 }
