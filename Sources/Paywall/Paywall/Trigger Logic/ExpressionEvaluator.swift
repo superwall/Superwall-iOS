@@ -60,6 +60,11 @@ enum ExpressionEvaluator {
     let isMatched = result?.toString() == "true"
 
     if isMatched {
+      guard let maxCount = rule.occurrence.maxCount else {
+        storage.coreDataManager.save(triggerRuleOccurrence: rule.occurrence)
+        return true
+      }
+
       let count = storage
         .coreDataManager
         .countTriggerRuleOccurrences(
@@ -68,9 +73,7 @@ enum ExpressionEvaluator {
 
       storage.coreDataManager.save(triggerRuleOccurrence: rule.occurrence)
 
-      if let maxCount = rule.occurrence.maxCount {
-        return count < maxCount
-      }
+      return count < maxCount
     }
     return false
   }
