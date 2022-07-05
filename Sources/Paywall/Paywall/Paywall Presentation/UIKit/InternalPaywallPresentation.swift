@@ -58,12 +58,6 @@ extension Paywall {
       }
     }
 
-    if shared.isUserSubscribed,
-      !SWDebugManager.shared.isDebuggerLaunched,
-      !ignoreSubscriptionStatus {
-      return
-    }
-
     PaywallManager.shared.getPaywallViewController(
       presentationInfo,
       cached: cached && !SWDebugManager.shared.isDebuggerLaunched
@@ -81,6 +75,15 @@ extension Paywall {
 
       switch result {
       case .success(let paywallViewController):
+        if InternalPresentationLogic.shouldNotDisplayPaywall(
+          isUserSubscribed: shared.isUserSubscribed,
+          isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
+          shouldIgnoreSubscriptionStatus: ignoreSubscriptionStatus,
+          presentationCondition: paywallViewController.paywallResponse.presentationCondition
+        ) {
+          return
+        }
+
         SessionEventsManager.shared.triggerSession.activateSession(
           for: presentationInfo,
           on: presentingViewController,
@@ -145,6 +148,14 @@ extension Paywall {
           }
         }
       case .failure(let error):
+        if InternalPresentationLogic.shouldNotDisplayPaywall(
+          isUserSubscribed: shared.isUserSubscribed,
+          isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
+          shouldIgnoreSubscriptionStatus: ignoreSubscriptionStatus
+        ) {
+          return
+        }
+
         let nsError = error as NSError
         if nsError.code == 4000 || nsError.code == 4001 {
           // NoRuleMatch or Holdout, sending ended session.
