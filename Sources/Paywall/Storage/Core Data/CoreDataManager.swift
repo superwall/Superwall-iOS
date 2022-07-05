@@ -67,7 +67,7 @@ final class CoreDataManager {
   ) {
     let container = coreDataStack.persistentContainer
 
-    container.performBackgroundTask { context in
+    container.performBackgroundTask { [weak self] context in
       let data = try? JSONEncoder().encode(eventData.parameters)
 
       let managedEventData = ManagedEventData(
@@ -77,14 +77,54 @@ final class CoreDataManager {
         name: eventData.name,
         parameters: data ?? Data()
       )
-      print("**** SAVE", eventData.name)
-      self.coreDataStack.saveContext(context) {
-        print("**** SAVED", eventData.name)
+
+      self?.coreDataStack.saveContext(context) {
         completion?(managedEventData)
       }
     }
   }
 
+  func save(
+    triggerRuleOccurrence ruleOccurence: TriggerRuleOccurrence
+  ) {
+    let container = coreDataStack.persistentContainer
+
+    container.performBackgroundTask { [weak self] context in
+      let managedRuleOccurrence = ManagedTriggerRuleOccurence(
+        context: context,
+        createdAt: Date(),
+        occurrenceKey: ruleOccurence.key
+      )
+
+      self?.coreDataStack.saveContext(context)
+    }
+  }
+
+  func countTriggerRuleOccurrences(
+    for ruleOccurrence: TriggerRuleOccurrence
+  ) -> Int {
+    let fetchRequest = ManagedTriggerRuleOccurence.fetchRequest()
+    fetchRequest.fetchLimit = ruleOccurrence.maxCount ?? 0
+
+    switch ruleOccurrence.interval {
+    case .minutes(let minutes):
+      let date = Calendar.current.date(
+        byAdding: .minute,
+        value: -minutes,
+        to: Date()
+      ) ?? Date()
+      fetchRequest.predicate = NSPredicate(
+        format: "createdAt >= %@ AND occurrenceKey == %@",
+        date as NSDate,
+        ruleOccurrence.key
+      )
+      return coreDataStack.count(for: fetchRequest)
+    case .infinity:
+      fetchRequest.predicate = NSPredicate(format: "occurrenceKey == %@", ruleOccurrence.key)
+      return coreDataStack.count(for: fetchRequest)
+    }
+  }
+/*
   func countSinceInstall(
     ofEvent eventName: String,
     isPreemptive: Bool
@@ -223,5 +263,5 @@ final class CoreDataManager {
       return []
     }
     return result.compactMap { $0[column] }
-  }
+  }*/
 }

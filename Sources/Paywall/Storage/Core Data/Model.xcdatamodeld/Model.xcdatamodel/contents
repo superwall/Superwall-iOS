@@ -13,7 +13,19 @@
             <fetchIndexElement property="name" type="Binary" order="ascending"/>
         </fetchIndex>
     </entity>
+    <entity name="TriggerRuleOccurence" representedClassName="TriggerRuleOccurence" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="occurrenceKey" attributeType="String"/>
+        <fetchIndex name="byCreatedAtAndOccuranceKey">
+            <fetchIndexElement property="createdAt" type="Binary" order="descending"/>
+            <fetchIndexElement property="occurrenceKey" type="Binary" order="ascending"/>
+        </fetchIndex>
+        <fetchIndex name="byOccurrenceKey">
+            <fetchIndexElement property="occurrenceKey" type="Binary" order="ascending"/>
+        </fetchIndex>
+    </entity>
     <elements>
         <element name="EventData" positionX="91.83203125" positionY="-129.44140625" width="128" height="89"/>
+        <element name="TriggerRuleOccurence" positionX="90" positionY="-99" width="128" height="59"/>
     </elements>
 </model>

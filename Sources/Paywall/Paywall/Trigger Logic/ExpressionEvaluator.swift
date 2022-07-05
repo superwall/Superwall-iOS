@@ -44,14 +44,32 @@ enum ExpressionEvaluator {
       )
     }
 
-    if let postfix = getPostfix(
+    guard let postfix = getPostfix(
       forRule: rule,
       withEventData: eventData,
       storage: storage
-    ) {
-      let result = jsCtx.evaluateScript(script + "\n " + postfix)
-      if result?.isString != nil {
-        return result?.toString() == "true"
+    ) else {
+      return false
+    }
+
+    let result = jsCtx.evaluateScript(script + "\n " + postfix)
+    if result?.isString == nil {
+      return false
+    }
+
+    let isMatched = result?.toString() == "true"
+
+    if isMatched {
+      let count = storage
+        .coreDataManager
+        .countTriggerRuleOccurrences(
+          for: rule.occurrence
+        ) + 1
+
+      storage.coreDataManager.save(triggerRuleOccurrence: rule.occurrence)
+
+      if let maxCount = rule.occurrence.maxCount {
+        return count < maxCount
       }
     }
     return false

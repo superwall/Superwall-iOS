@@ -9,6 +9,7 @@ import Foundation
 
 class Storage {
   static let shared = Storage()
+  let coreDataManager: CoreDataManager
 
   var apiKey = ""
   var debugKey: String?
@@ -37,8 +38,12 @@ class Storage {
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
   private let cache: Cache
 
-  init(cache: Cache = Cache()) {
+  init(
+    cache: Cache = Cache(),
+    coreDataManager: CoreDataManager = CoreDataManager()
+  ) {
     self.cache = cache
+    self.coreDataManager = coreDataManager
     self.appUserId = cache.read(AppUserId.self)
     self.aliasId = cache.read(AliasId.self)
     self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true

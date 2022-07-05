@@ -26,7 +26,11 @@ class TriggerLogicTests: XCTestCase {
       ),
       expression: "name == jake",
       expressionJs: nil,
-      isAssigned: false
+      isAssigned: false,
+      occurrence: .init(
+        key: "abc",
+        interval: .infinity
+      )
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -88,7 +92,11 @@ class TriggerLogicTests: XCTestCase {
       ),
       expression: nil,
       expressionJs: nil,
-      isAssigned: false
+      isAssigned: false,
+      occurrence: .init(
+        key: "abc",
+        interval: .infinity
+      )
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -152,7 +160,11 @@ class TriggerLogicTests: XCTestCase {
       ),
       expression: "params.a == c",
       expressionJs: nil,
-      isAssigned: false
+      isAssigned: false,
+      occurrence: .init(
+        key: "abc",
+        interval: .infinity
+      )
     )
 
     let v2Trigger = Trigger(
@@ -205,7 +217,11 @@ class TriggerLogicTests: XCTestCase {
       ),
       expression: nil,
       expressionJs: nil,
-      isAssigned: false
+      isAssigned: false,
+      occurrence: .init(
+        key: "abc",
+        interval: .infinity
+      )
     )
     let trigger = Trigger(
       eventName: eventName,
