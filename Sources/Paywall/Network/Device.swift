@@ -136,6 +136,12 @@ final class DeviceHelper {
     return numberOfDays.day ?? 0
   }
 
+  var todayString: String {
+    let date = Calendar.current.startOfDay(for: Date())
+    return date.isoString
+  }
+
+
   var minutesSinceInstall: Int {
     let fromDate = appInstallDate ?? Date()
     let toDate = Date()
@@ -197,7 +203,8 @@ final class DeviceHelper {
       minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall,
       daysSinceLastPaywallView: DeviceHelper.shared.daysSinceLastPaywallView,
       minutesSinceLastPaywallView: DeviceHelper.shared.minutesSinceLastPaywallView,
-      totalPaywallViews: DeviceHelper.shared.totalPaywallViews
+      totalPaywallViews: DeviceHelper.shared.totalPaywallViews,
+      today: DeviceHelper.shared.todayString
     )
   }
 }

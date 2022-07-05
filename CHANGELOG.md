@@ -2,10 +2,10 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
-2.4.0 (upcoming release)
------
+## 2.4.0 (upcoming release)
 
 ### Enhancements
+
 - New _push_ presentation style. By selecting Push on the superwall dashboard, your paywall will push and pop in as if it's being pushed/popped from a navigation controller. If you are using UIKit, you can provide a view controller to `Paywall.trigger` like this: `Paywall.trigger(event: "MyEvent", on: self)`. This will make the push transition more realistic, by moving its view in the transition. Note: This is not backwards compatible with previous versions of the SDK.
 - New _no animation_ presentation style. By selecting No Animation in the superwall dashboard, you can disable presentation/dismissal animation. This release deprecates `Paywall.shouldAnimatePaywallDismissal` and `Paywall.shouldAnimatePaywallPresentation`.
 - New dedicated function for handling deeplinks: `Paywall.handleDeepLink(url)`
@@ -16,10 +16,11 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Updates the SDK documentation.
 - Adds `trialPeriodEndDate` as a product variable. This means you can tell your users when their trial period will end, e.g. `Start your trial today — you won't be billed until {{primary.trialPeriodEndDate}}` will print out `Start your trial today — you won't be billed until June 21, 2023`.
 - Exposes `Paywall.presentedViewController`. This gives you access to the `UIViewController` of the paywall incase you need to present a view controller on top of it.
-- Adds `daysSinceInstall`, `minutesSinceInstall`, `daysSinceLastPaywallView`, `minutesSinceLastPaywallView` and `totalPaywallViews` as `device` parameters. These can be references in your rules and paywalls with `{{ device.paramName }}`.
+- Adds `today`, `daysSinceInstall`, `minutesSinceInstall`, `daysSinceLastPaywallView`, `minutesSinceLastPaywallView` and `totalPaywallViews` as `device` parameters. These can be references in your rules and paywalls with `{{ device.paramName }}`.
 - Adds a `presentationStyleOverride` parameter to `Paywall.trigger()` and `Paywall.present()`. By setting this, you can override the configured presentation style on a per-trigger basis.
 
 ### Fixes
+
 - Adds the missing Superwall events `app_install`, `paywallWebviewLoad_fail` and `nonRecurringProduct_purchase`.
 - Adds `trigger_name` to a `triggerFire` Superwall event, which can be accessed in the parameters sent back to the `trackAnalyticsEvent(name:params:)` delegate function.
 - Product prices were being sent back to the dashboard with weird values like 89.999998. We fixed that.
@@ -34,10 +35,12 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Mentions SwiftLint as a requirement to run the sample apps.
 - Deprecates `Paywall.debugMode`. All logs are now controlled by setting `Paywall.logLevel`. The default `logLevel` is now `.warn`.
 
-2.3.0
------
+  2.3.0
+
+---
 
 ### Enhancements
+
 - New [UIKit Example App](Examples/SuperwallUIKitExample).
 - Better [SDK documentation](https://sdk.superwall.me/documentation/paywall/). This is built from the ground up using DocC which means you view it directly in Xcode by selecting **Product ▸ Build Documentation**.
 - New Pull Request and Bug Report templates for the repo.
@@ -47,8 +50,8 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Added a CHANGELOG.md file.
 - Removed the `TPInnAppReceipt` dependency for the SDK.
 
-
 ### Fixes
+
 - All readme links for the UIKit example app now work.
 - Adds an `experiment` parameter to `PaywallInfo`. This will be useful in the next version of Triggers, where you can see details about the experiment that triggered the presentation of the paywall.
 - When triggering or presenting a paywall, if the default value for `isPresented` was `true`, the paywall would not present/trigger. It now works as expected.
