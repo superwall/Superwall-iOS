@@ -49,7 +49,7 @@ extension PaywallEvent {
     case close
     case restore
     case openUrl = "open_url"
-    case openUrlInSafari = "open_url_in_safari"
+    case openUrlInSafari = "open_url_external"
     case openDeepLink = "open_deep_link"
     case purchase
     case custom
