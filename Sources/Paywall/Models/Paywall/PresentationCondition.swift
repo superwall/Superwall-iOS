@@ -9,11 +9,11 @@ import Foundation
 
 enum PresentationCondition: String, Decodable {
   case always = "ALWAYS"
-  case checkPrimarySubscription = "CHECK_PRIMARY_SUBSCRIPTION"
+  case checkUserSubscription = "CHECK_USER_SUBSCRIPTION"
 
   init(from decoder: Decoder) throws {
     let container = try decoder.singleValueContainer()
     let rawValue = try container.decode(RawValue.self)
-    self = PresentationCondition(rawValue: rawValue) ?? .checkPrimarySubscription
+    self = PresentationCondition(rawValue: rawValue) ?? .checkUserSubscription
   }
 }

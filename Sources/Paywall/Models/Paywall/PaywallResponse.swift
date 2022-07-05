@@ -178,7 +178,7 @@ extension PaywallResponse: Stubbable {
     return PaywallResponse(
       url: "url",
       paywalljsEvent: "event",
-      presentationCondition: .checkPrimarySubscription,
+      presentationCondition: .checkUserSubscription,
       products: []
     )
   }

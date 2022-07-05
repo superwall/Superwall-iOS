@@ -80,7 +80,7 @@ extension Paywall {
         ) {
           return
         }
-        
+
         SessionEventsManager.shared.triggerSession.activateSession(
           for: presentationInfo,
           on: presentingViewController,

@@ -14,7 +14,7 @@ final class InternalPresentationLogicTests: XCTestCase {
       isUserSubscribed: true,
       isDebuggerLaunched: true,
       shouldIgnoreSubscriptionStatus: false,
-      presentationCondition: .checkPrimarySubscription
+      presentationCondition: .checkUserSubscription
     )
     XCTAssertFalse(outcome)
   }
@@ -64,7 +64,7 @@ final class InternalPresentationLogicTests: XCTestCase {
       isUserSubscribed: true,
       isDebuggerLaunched: false,
       shouldIgnoreSubscriptionStatus: false,
-      presentationCondition: .checkPrimarySubscription
+      presentationCondition: .checkUserSubscription
     )
     XCTAssertTrue(outcome)
   }
