@@ -136,6 +136,12 @@ final class DeviceHelper {
     return numberOfDays.day ?? 0
   }
 
+  var todayString: String {
+    let date = Calendar.current.startOfDay(for: Date())
+    return date.isoString
+  }
+
+
   var minutesSinceInstall: Int {
     let fromDate = appInstallDate ?? Date()
     let toDate = Date()
@@ -143,19 +149,26 @@ final class DeviceHelper {
     return numberOfMinutes.minute ?? 0
   }
 
-  func sinceLastPaywallView(
-  retrieve component: Calendar.Component
-  ) -> Int? {
-    guard let fromDate = Storage.shared.coreDataManager.getLastPaywallOpen() else {
+  var daysSinceLastPaywallView: Int? {
+    guard let fromDate = Storage.shared.getLastPaywallView() else {
       return nil
     }
     let toDate = Date()
-    let components = Calendar.current.dateComponents([component], from: fromDate, to: toDate)
-    if component == .minute {
-      return components.minute
-    } else {
-      return components.day
+    let numberOfDays = Calendar.current.dateComponents([.day], from: fromDate, to: toDate)
+    return numberOfDays.day
+  }
+
+  var minutesSinceLastPaywallView: Int? {
+    guard let fromDate = Storage.shared.getLastPaywallView() else {
+      return nil
     }
+    let toDate = Date()
+    let numberOfMinutes = Calendar.current.dateComponents([.minute], from: fromDate, to: toDate)
+    return numberOfMinutes.minute
+  }
+
+  var totalPaywallViews: Int {
+    return Storage.shared.getTotalPaywallViews() ?? 0
   }
 
   var templateDevice: TemplateDevice {
@@ -165,7 +178,6 @@ final class DeviceHelper {
     } else {
       aliases = []
     }
-    
 
     return TemplateDevice(
       publicApiKey: Storage.shared.apiKey,
@@ -189,8 +201,10 @@ final class DeviceHelper {
       isMac: DeviceHelper.shared.isMac,
       daysSinceInstall: DeviceHelper.shared.daysSinceInstall,
       minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall,
-      daysSinceLastPaywallView: DeviceHelper.shared.sinceLastPaywallView(retrieve: .day),
-      minutesSinceLastPaywallView: DeviceHelper.shared.sinceLastPaywallView(retrieve: .minute)
+      daysSinceLastPaywallView: DeviceHelper.shared.daysSinceLastPaywallView,
+      minutesSinceLastPaywallView: DeviceHelper.shared.minutesSinceLastPaywallView,
+      totalPaywallViews: DeviceHelper.shared.totalPaywallViews,
+      today: DeviceHelper.shared.todayString
     )
   }
 }

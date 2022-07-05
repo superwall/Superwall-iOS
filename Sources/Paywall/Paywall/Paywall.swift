@@ -61,22 +61,15 @@ public final class Paywall: NSObject {
   /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
   public static var shouldPreloadPaywalls = true
 
-	/// Prints logs to the console if set to `true`. Default is `false`.
-	@objc public static var debugMode = false
+	/// This is no longer used to control log levels. Please use `Paywall.logLevel` to determine the amount of logging you need.`
+  @available(*, deprecated)
+  @objc public static var debugMode = false
 
-	/// Defines the minimum log level to print to the console. Defaults to `nil` (none).
-	public static var logLevel: LogLevel? = .debug {
-		didSet {
-			debugMode = logLevel != nil
-		}
-	}
+	/// Defines the minimum log level to print to the console. Defaults to `warn`.
+	public static var logLevel: LogLevel? = .warn
 
 	/// Defines the scope of logs to print to the console. Defaults to .all
-	public static var logScopes: Set<LogScope> = [.all] {
-		didSet {
-			debugMode = !logScopes.isEmpty
-		}
-	}
+	public static var logScopes: Set<LogScope> = [.all]
 
 	/// Properties stored about the user, set using ``Paywall/Paywall/setUserAttributes(_:)``.
 	public static var userAttributes: [String: Any] {
@@ -87,6 +80,11 @@ public final class Paywall: NSObject {
   ///
   /// Set this to `false` to prevent the paywall from dismissing on purchase/restore.
   public static var automaticallyDismiss = true
+
+  /// The presented paywall view controller.
+  public static var presentedViewController: UIViewController? {
+    return PaywallManager.shared.presentedViewController
+  }
 
   // MARK: - Private Properties
   /// Used as the reload function if a paywall takes to long to load. set in paywall.present
@@ -194,7 +192,7 @@ public final class Paywall: NSObject {
     if Storage.shared.appUserId == nil {
       return shared
     }
-
+    Paywall.presentAgain = {}
     Storage.shared.clear()
     PaywallManager.shared.clearCache()
     shared.configManager.fetchConfiguration()

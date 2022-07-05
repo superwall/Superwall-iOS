@@ -6,11 +6,9 @@
 //
 
 import Foundation
-import CoreData
 
 class Storage {
   static let shared = Storage()
-  let coreDataManager: CoreDataManager
 
   var apiKey = ""
   var debugKey: String?
@@ -39,12 +37,8 @@ class Storage {
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
   private let cache: Cache
 
-  init(
-    cache: Cache = Cache(),
-    coreDataManager: CoreDataManager = CoreDataManager()
-  ) {
+  init(cache: Cache = Cache()) {
     self.cache = cache
-    self.coreDataManager = coreDataManager
     self.appUserId = cache.read(AppUserId.self)
     self.aliasId = cache.read(AliasId.self)
     self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true
@@ -74,12 +68,12 @@ class Storage {
 
   /// Call this when you log out
   func clear() {
+    cache.cleanUserFiles()
     appUserId = nil
     aliasId = StorageLogic.generateAlias()
-    didTrackFirstSeen = false
     userAttributes = [:]
     triggers.removeAll()
-    cache.cleanAll()
+    didTrackFirstSeen = false
     recordFirstSeenTracked()
   }
 
@@ -179,5 +173,27 @@ class Storage {
       transactions,
       forType: Transactions.self
     )
+  }
+
+  func saveLastPaywallView() {
+    cache.write(
+      Date(),
+      forType: LastPaywallView.self
+    )
+  }
+
+  func getLastPaywallView() -> LastPaywallView.Value? {
+    return cache.read(LastPaywallView.self)
+  }
+
+  func incrementTotalPaywallViews() {
+    cache.write(
+      (getTotalPaywallViews() ?? 0) + 1,
+      forType: TotalPaywallViews.self
+    )
+  }
+
+  func getTotalPaywallViews() -> TotalPaywallViews.Value? {
+    return cache.read(TotalPaywallViews.self)
   }
 }

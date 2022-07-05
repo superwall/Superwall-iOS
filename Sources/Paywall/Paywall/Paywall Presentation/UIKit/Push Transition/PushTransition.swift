@@ -24,9 +24,9 @@ final class PushTransition: NSObject, UIViewControllerAnimatedTransitioning {
   func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
     switch state {
     case .presenting:
-      return 0.35
+      return 0.54
     case .dismissing:
-      return 0.2
+        return 0.54 * 0.618
     }
   }
 

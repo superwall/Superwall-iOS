@@ -18,12 +18,11 @@ final class StorageMock: Storage {
   init(
     internalCachedTriggerSessions: [TriggerSession] = [],
     internalCachedTransactions: [TransactionModel] = [],
-    configRequestId: String = "abc",
-    coreDataManager: CoreDataManager = CoreDataManager(coreDataStack: CoreDataStackMock())
+    configRequestId: String = "abc"
   ) {
     self.internalCachedTriggerSessions = internalCachedTriggerSessions
     self.internalCachedTransactions = internalCachedTransactions
-    super.init(coreDataManager: coreDataManager)
+    super.init()
     self.configRequestId = configRequestId
   }
 

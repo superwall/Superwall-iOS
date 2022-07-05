@@ -11,10 +11,12 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - New dedicated function for handling deeplinks: `Paywall.handleDeepLink(url)`
 - New `Paywall.shouldPreloadPaywalls` flag. Set this to `false` to make paywalls load and cache in a just-in-time fashion. This deprecates the old `Paywall.shouldPreloadTriggers` flag.
 - Deprecates old `track` functions. The only one you should use is `Paywall.track(_:_:)`, to which you pass an event name and a dictionary of parameters. Note: This is not backwards compatible with previous versions of the SDK.
-- When defining rules for your campaign, you can access the following properties on `events`: `count_since_install`, `count_30d`, `count_7d`, `count_24h`, `count_session`, `count_today`, `first_occurred_at`, `last_occurred_at`.
 - Adds a new way of internally tracking analytics associated with a paywall and the app session. This will greatly improve the Superwall dashboard analytics.
 - Adds support for javascript expressions defined in rules on the Superwall dashboard.
 - Updates the SDK documentation.
+- Adds `trialPeriodEndDate` as a product variable. This means you can tell your users when their trial period will end, e.g. `Start your trial today — you won't be billed until {{primary.trialPeriodEndDate}}` will print out `Start your trial today — you won't be billed until June 21, 2023`.
+- Exposes `Paywall.presentedViewController`. This gives you access to the `UIViewController` of the paywall incase you need to present a view controller on top of it.
+- Adds `today`, `daysSinceInstall`, `minutesSinceInstall`, `daysSinceLastPaywallView`, `minutesSinceLastPaywallView` and `totalPaywallViews` as `device` parameters. These can be references in your rules and paywalls with `{{ device.paramName }}`.
 
 ### Fixes
 
@@ -30,6 +32,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Prevents Paywall.configure from being called in the background.
 - Fixes an issue where the keyboard couldn't be dismissed in the UIKit sample app.
 - Mentions SwiftLint as a requirement to run the sample apps.
+- Deprecates `Paywall.debugMode`. All logs are now controlled by setting `Paywall.logLevel`. The default `logLevel` is now `.warn`.
 
   2.3.0
 

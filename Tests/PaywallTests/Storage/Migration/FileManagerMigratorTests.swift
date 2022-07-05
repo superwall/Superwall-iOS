@@ -24,14 +24,16 @@ final class FileManagerMigratorTests: XCTestCase {
 
     // Check that they're in the cache and not in documents
     XCTAssertEqual(cache.internalCache.count, 7)
-    XCTAssertEqual(cache.internalDocuments.count, 0)
+    XCTAssertEqual(cache.internalUserDocuments.count, 0)
+    XCTAssertEqual(cache.internalAppDocuments.count, 0)
 
     // Migrate
     FileManagerMigrator.migrate(fromVersion: .v1, cache: cache)
-
+    
     // Check they're all in the documents, except trigger sessions and transactions.
     XCTAssertEqual(cache.internalCache.count, 2)
-    XCTAssertEqual(cache.internalDocuments.count, 6)
+    XCTAssertEqual(cache.internalAppDocuments.count, 2)
+    XCTAssertEqual(cache.internalUserDocuments.count, 4)
 
     // Check that the old firstseen has gone
     let legacyFirstSeen = cache.read(LegacyDidTrackFirstSeen.self)

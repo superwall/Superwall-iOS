@@ -11,14 +11,17 @@ import Foundation
 
 final class CacheMock: Cache {
   var internalCache: [String: Data] = [:]
-  var internalDocuments: [String: Data] = [:]
+  var internalUserDocuments: [String: Data] = [:]
+  var internalAppDocuments: [String: Data] = [:]
 
   init(
     cacheInternalValue: [String: Data] = [:],
-    documentsInternalValue: [String: Data] = [:]
+    userDocumentsInternalValue: [String: Data] = [:],
+    appDocumentsInternalValue: [String: Data] = [:]
   ) {
     self.internalCache = cacheInternalValue
-    self.internalDocuments = documentsInternalValue
+    self.internalUserDocuments = userDocumentsInternalValue
+    self.internalAppDocuments = appDocumentsInternalValue
   }
 
   override func read<Key>(
@@ -30,8 +33,10 @@ final class CacheMock: Cache {
     switch directory {
     case .cache:
       internalValue = internalCache
-    case .documents:
-      internalValue = internalDocuments
+    case .userSpecificDocuments:
+      internalValue = internalUserDocuments
+    case .appSpecificDocuments:
+      internalValue = internalAppDocuments
     }
 
     guard let data = internalValue[keyType.key] else {
@@ -52,8 +57,10 @@ final class CacheMock: Cache {
     switch directory {
     case .cache:
       internalValue = internalCache
-    case .documents:
-      internalValue = internalDocuments
+    case .userSpecificDocuments:
+      internalValue = internalUserDocuments
+    case .appSpecificDocuments:
+      internalValue = internalAppDocuments
     }
 
     guard let data = internalValue[keyType.key] else {
@@ -78,8 +85,10 @@ final class CacheMock: Cache {
     switch directory {
     case .cache:
       internalValue = internalCache
-    case .documents:
-      internalValue = internalDocuments
+    case .userSpecificDocuments:
+      internalValue = internalUserDocuments
+    case .appSpecificDocuments:
+      internalValue = internalAppDocuments
     }
 
     internalValue[keyType.key] = data
@@ -87,8 +96,10 @@ final class CacheMock: Cache {
     switch directory {
     case .cache:
       internalCache = internalValue
-    case .documents:
-      internalDocuments = internalValue
+    case .userSpecificDocuments:
+      internalUserDocuments = internalValue
+    case .appSpecificDocuments:
+      internalAppDocuments = internalValue
     }
   }
 
@@ -107,8 +118,10 @@ final class CacheMock: Cache {
     switch directory {
     case .cache:
       internalValue = internalCache
-    case .documents:
-      internalValue = internalDocuments
+    case .userSpecificDocuments:
+      internalValue = internalUserDocuments
+    case .appSpecificDocuments:
+      internalValue = internalAppDocuments
     }
 
     internalValue[keyType.key] = data
@@ -116,8 +129,10 @@ final class CacheMock: Cache {
     switch directory {
     case .cache:
       internalCache = internalValue
-    case .documents:
-      internalDocuments = internalValue
+    case .userSpecificDocuments:
+      internalUserDocuments = internalValue
+    case .appSpecificDocuments:
+      internalAppDocuments = internalValue
     }
   }
 
@@ -131,8 +146,10 @@ final class CacheMock: Cache {
     switch directory {
     case .cache:
       internalValue = internalCache
-    case .documents:
-      internalValue = internalDocuments
+    case .userSpecificDocuments:
+      internalValue = internalUserDocuments
+    case .appSpecificDocuments:
+      internalValue = internalAppDocuments
     }
 
     internalValue[keyType.key] = nil
@@ -140,8 +157,10 @@ final class CacheMock: Cache {
     switch directory {
     case .cache:
       internalCache = internalValue
-    case .documents:
-      internalDocuments = internalValue
+    case .userSpecificDocuments:
+      internalUserDocuments = internalValue
+    case .appSpecificDocuments:
+      internalAppDocuments = internalValue
     }
   }
 }

@@ -10,12 +10,14 @@
 import UIKit
 
 class Cache {
-  private static let documentDirectoryPrefix = "com.superwall.document.Store"
+  private static let userSpecificDocumentDirectoryPrefix = "com.superwall.document.userSpecific.Store"
+  private static let appSpecificDocumentDirectoryPrefix = "com.superwall.document.appSpecific.Store"
   private static let cacheDirectoryPrefix = "com.superwall.cache.Store"
   private static let ioQueuePrefix = "com.superwall.queue.Store"
   private static let defaultMaxCachePeriodInSecond: TimeInterval = 60 * 60 * 24 * 7 // a week
   private let cacheUrl: URL
-  private let documentUrl: URL
+  private let userSpecificDocumentUrl: URL
+  private let appSpecificDocumentUrl: URL
   private let memCache = NSCache<AnyObject, AnyObject>()
   private let ioQueue: DispatchQueue
   private let fileManager: FileManager
@@ -33,10 +35,14 @@ class Cache {
       .urls(for: .cachesDirectory, in: .userDomainMask)
       .first!
       .appendingPathComponent(Cache.cacheDirectoryPrefix)
-    documentUrl = fileManager
+    userSpecificDocumentUrl = fileManager
       .urls(for: .documentDirectory, in: .userDomainMask)
       .first!
-      .appendingPathComponent(Cache.documentDirectoryPrefix)
+      .appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
+    appSpecificDocumentUrl = fileManager
+      .urls(for: .documentDirectory, in: .userDomainMask)
+      .first!
+      .appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
 
     self.ioQueue = ioQueue
 
@@ -237,7 +243,7 @@ class Cache {
 // MARK: - Clean
 extension Cache {
   /// Clean all mem cache and disk cache. This is an async operation.
-  func cleanAll() {
+  func cleanUserFiles() {
     cleanMemCache()
     cleanDiskCache()
   }
@@ -252,8 +258,12 @@ extension Cache {
         return
       }
       do {
-        try self.fileManager.removeItem(atPath: self.cacheUrl.path)
-        try self.fileManager.removeItem(atPath: self.documentUrl.path)
+        if self.fileManager.fileExists(atPath: self.cacheUrl.path) {
+          try self.fileManager.removeItem(atPath: self.cacheUrl.path)
+        }
+        if self.fileManager.fileExists(atPath: self.userSpecificDocumentUrl.path) {
+          try self.fileManager.removeItem(atPath: self.userSpecificDocumentUrl.path)
+        }
       } catch {
         Logger.debug(
           logLevel: .error,
@@ -334,47 +344,54 @@ extension Cache {
 extension Cache {
   // This method is from Kingfisher
   // swiftlint:disable all
-  fileprivate func travelCachedFiles() -> (urlsToDelete: [URL], diskCacheSize: UInt, cachedFiles: [URL: URLResourceValues]) {
-    let resourceKeys: Set<URLResourceKey> = [.isDirectoryKey, .contentAccessDateKey, .totalFileAllocatedSizeKey]
-    let expiredDate: Date? = (maxCachePeriodInSecond < 0) ? nil : Date(timeIntervalSinceNow: -maxCachePeriodInSecond)
+  private func travelCachedFiles() -> (urlsToDelete: [URL], diskCacheSize: UInt, cachedFiles: [URL: URLResourceValues]) {
+    let resourceKeys: Set<URLResourceKey> = [
+      .isDirectoryKey,
+      .contentAccessDateKey,
+      .totalFileAllocatedSizeKey
+    ]
+
+    let maxCachePeriodIsInPast = maxCachePeriodInSecond < 0
+    let expiredDate = maxCachePeriodIsInPast ? nil : Date(timeIntervalSinceNow: -maxCachePeriodInSecond)
 
     var cachedFiles: [URL: URLResourceValues] = [:]
     var urlsToDelete: [URL] = []
     var diskCacheSize: UInt = 0
 
-    func traverse(url: URL) {
-      for fileUrl in (try? fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: Array(resourceKeys), options: .skipsHiddenFiles)) ?? [] {
-          do {
-            let resourceValues = try fileUrl.resourceValues(forKeys: resourceKeys)
-            // If it is a Directory. Continue to next file URL.
-            if resourceValues.isDirectory == true {
-                continue
-            }
+    let directoryContents = try? fileManager.contentsOfDirectory(
+      at: cacheUrl,
+      includingPropertiesForKeys: Array(resourceKeys),
+      options: .skipsHiddenFiles
+    )
 
-            // If this file is expired, add it to URLsToDelete
-            if let expiredDate = expiredDate,
-              let lastAccessData = resourceValues.contentAccessDate,
-              (lastAccessData as NSDate).laterDate(expiredDate) == expiredDate {
-              urlsToDelete.append(fileUrl)
+    for fileUrl in directoryContents ?? [] {
+        do {
+          let resourceValues = try fileUrl.resourceValues(forKeys: resourceKeys)
+          // If it is a Directory. Continue to next file URL.
+          if resourceValues.isDirectory == true {
               continue
-            }
+          }
 
-            if let fileSize = resourceValues.totalFileAllocatedSize {
-              diskCacheSize += UInt(fileSize)
-              cachedFiles[fileUrl] = resourceValues
-            }
-        } catch {
-          Logger.debug(
-            logLevel: .error,
-            scope: .cache,
-            message: "Error while iterating files \(error.localizedDescription)"
-          )
-        }
+          // If this file is expired and not recently accessed, add it to URLsToDelete
+          if let expiredDate = expiredDate,
+            let lastAccessData = resourceValues.contentAccessDate,
+            (lastAccessData as NSDate).laterDate(expiredDate) == expiredDate {
+            urlsToDelete.append(fileUrl)
+            continue
+          }
+
+          if let fileSize = resourceValues.totalFileAllocatedSize {
+            diskCacheSize += UInt(fileSize)
+            cachedFiles[fileUrl] = resourceValues
+          }
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .cache,
+          message: "Error while iterating files \(error.localizedDescription)"
+        )
       }
     }
-
-    traverse(url: cacheUrl)
-    traverse(url: documentUrl)
 
     return (urlsToDelete, diskCacheSize, cachedFiles)
   }
@@ -392,8 +409,10 @@ extension Cache {
     switch directory {
     case .cache:
       return cacheUrl
-    case .documents:
-      return documentUrl
+    case .userSpecificDocuments:
+      return userSpecificDocumentUrl
+    case .appSpecificDocuments:
+      return appSpecificDocumentUrl
     }
   }
 }

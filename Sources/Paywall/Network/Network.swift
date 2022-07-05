@@ -115,11 +115,6 @@ class Network {
         completion: completion
       )
       storage.configRequest = configRequest
-      Logger.debug(
-        logLevel: .error,
-        scope: .network,
-        message: "/config request called from a background state. This will fire when the app enters an active state."
-      )
       return
     }
 

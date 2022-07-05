@@ -25,7 +25,6 @@ final class TrackingLogicTests: XCTestCase {
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$count_24h"] as! Int, 1)
   }
 /*
   func testProcessParameters_superwallEvent_noParams_firedTwice() {
@@ -63,7 +62,6 @@ final class TrackingLogicTests: XCTestCase {
 
     XCTAssertFalse(parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$count_24h"] as! Int, 1)
   }
 /*
   func testProcessParameters_userEvent_noParams_firedTwice() {
