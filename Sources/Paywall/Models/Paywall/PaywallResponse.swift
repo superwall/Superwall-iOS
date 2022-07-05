@@ -27,6 +27,7 @@ struct PaywallResponse: Decodable {
   var paywalljsEvent: String
 
   var presentationStyleV2: PaywallPresentationStyle = .sheet
+  var presentationCondition: PresentationCondition
   var backgroundColorHex: String?
 
   /// The products associated with the paywall.
@@ -177,6 +178,7 @@ extension PaywallResponse: Stubbable {
     return PaywallResponse(
       url: "url",
       paywalljsEvent: "event",
+      presentationCondition: .checkPrimarySubscription,
       products: []
     )
   }

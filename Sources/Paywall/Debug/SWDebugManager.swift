@@ -42,7 +42,7 @@ final class SWDebugManager {
       withName: .paywallId
     )
 
-    SWDebugManager.shared.launchDebugger(withPaywallId: paywallId)
+    self.launchDebugger(withPaywallId: paywallId)
   }
 
 	/// Launches the debugger for you to preview paywalls.
