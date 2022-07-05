@@ -32,7 +32,12 @@ struct TemplateDevice: Codable {
   var daysSinceLastPaywallView: Int?
   var minutesSinceLastPaywallView: Int?
   var totalPaywallViews: Int
-  var today: String
+  var utcDate: String
+  var localDate: String
+  var utcTime: String
+  var localTime: String
+  var utcDateTime: String
+  var localDateTime: String
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {
