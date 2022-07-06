@@ -9,6 +9,7 @@ import UIKit
 
 struct PreConfigTrigger {
   let presentationInfo: PresentationInfo
+  var presentationStyleOverride: PaywallPresentationStyle?
   var viewController: UIViewController?
   var ignoreSubscriptionStatus = false
   var onFail: ((NSError) -> Void)?

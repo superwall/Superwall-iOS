@@ -10,7 +10,7 @@ import StoreKit
 
 extension TriggerSession.Transaction {
   struct Product: Codable, Equatable {
-    /// The index of the product, primary = 0, secondary = 1, tertiary = 2.
+    /// The index of the product, primary = 0, secondary = 1, tertiary = 2 etc.
     let index: Int
 
     /// Product identifier

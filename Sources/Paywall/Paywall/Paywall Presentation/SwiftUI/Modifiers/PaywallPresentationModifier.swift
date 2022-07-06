@@ -13,6 +13,7 @@ struct PaywallPresentationModifier: ViewModifier {
   @Binding var isPresented: Bool
   @State private var programmaticallySetIsPresented = false
   @State private var isInternallyPresenting = false
+  var presentationStyleOverride: PaywallPresentationStyle?
   var onPresent: ((PaywallInfo?) -> Void)?
   var onDismiss: ((PaywallDismissalResult) -> Void)?
   var onFail: ((NSError) -> Void)?
@@ -33,6 +34,7 @@ struct PaywallPresentationModifier: ViewModifier {
       isInternallyPresenting = true
       Paywall.internallyPresent(
         .defaultPaywall,
+        presentationStyleOverride: presentationStyleOverride ?? .none,
         onPresent: onPresent,
         onDismiss: { result in
           self.programmaticallySetIsPresented = true

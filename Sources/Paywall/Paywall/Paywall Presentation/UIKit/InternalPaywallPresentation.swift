@@ -14,13 +14,16 @@ extension Paywall {
     on presentingViewController: UIViewController? = nil,
     cached: Bool = true,
     ignoreSubscriptionStatus: Bool = false,
+    presentationStyleOverride: PaywallPresentationStyle = .none,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: PaywallDismissalCompletionBlock? = nil,
     onFail: ((NSError) -> Void)? = nil
   ) {
+    let presentationStyleOverride = presentationStyleOverride == .none ? nil : presentationStyleOverride
     guard shared.configManager.didFetchConfig else {
       let trigger = PreConfigTrigger(
         presentationInfo: presentationInfo,
+        presentationStyleOverride: presentationStyleOverride,
         viewController: presentingViewController,
         ignoreSubscriptionStatus: ignoreSubscriptionStatus,
         onFail: onFail,
@@ -109,6 +112,15 @@ extension Paywall {
 
       switch result {
       case .success(let paywallViewController):
+        if InternalPresentationLogic.shouldNotDisplayPaywall(
+          isUserSubscribed: shared.isUserSubscribed,
+          isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
+          shouldIgnoreSubscriptionStatus: ignoreSubscriptionStatus,
+          presentationCondition: paywallViewController.paywallResponse.presentationCondition
+        ) {
+          return
+        }
+
         SessionEventsManager.shared.triggerSession.activateSession(
           for: presentationInfo,
           on: presentingViewController,
@@ -145,6 +157,7 @@ extension Paywall {
         paywallViewController.present(
           on: presenter,
           presentationInfo: presentationInfo,
+          presentationStyleOverride: presentationStyleOverride,
           dismissalBlock: onDismiss
         ) { success in
           if success {
@@ -156,6 +169,7 @@ extension Paywall {
                 presentationInfo,
                 on: presentingViewController,
                 cached: false,
+                presentationStyleOverride: presentationStyleOverride ?? .none,
                 onPresent: onPresent,
                 onDismiss: onDismiss,
                 onFail: onFail
@@ -172,6 +186,24 @@ extension Paywall {
           }
         }
       case .failure(let error):
+        if InternalPresentationLogic.shouldNotDisplayPaywall(
+          isUserSubscribed: shared.isUserSubscribed,
+          isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
+          shouldIgnoreSubscriptionStatus: ignoreSubscriptionStatus
+        ) {
+          return
+        }
+
+        let nsError = error as NSError
+        if nsError.code == 4000 || nsError.code == 4001 {
+          // NoRuleMatch or Holdout, sending ended session.
+          SessionEventsManager.shared.triggerSession.activateSession(
+            for: presentationInfo,
+            on: presentingViewController,
+            triggerResult: triggerOutcome.result
+          )
+        }
+
         Logger.debug(
           logLevel: .error,
           scope: .paywallPresentation,

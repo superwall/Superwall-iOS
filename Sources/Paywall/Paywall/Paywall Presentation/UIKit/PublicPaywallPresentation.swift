@@ -80,6 +80,7 @@ public extension Paywall {
   ///   - identifier: The identifier of the paywall you wish to present.
   ///   - on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
   ///   - ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
+  ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
   ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
   ///   - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo``? object containing information about the paywall.
   ///   - onFail: A completion block that gets called when the paywall fails to present, either because an error occurred or because all paywalls are off. Defaults to `nil`.  Accepts an `NSError?` with more details.
@@ -87,6 +88,7 @@ public extension Paywall {
     identifier: String? = nil,
     on viewController: UIViewController? = nil,
     ignoreSubscriptionStatus: Bool = false,
+    presentationStyleOverride: PaywallPresentationStyle = .none,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil,
     onFail: ((NSError?) -> Void)? = nil
@@ -101,6 +103,7 @@ public extension Paywall {
       presentationInfo,
       on: viewController,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
+      presentationStyleOverride: presentationStyleOverride,
       onPresent: onPresent,
       onDismiss: { result in
         if let onDismiss = onDismiss {
@@ -128,6 +131,7 @@ public extension Paywall {
   ///   - params: Parameters you wish to pass along to the trigger (equivalent to params in ``Paywall/Paywall/track(_:_:)-2vkwo``). You can refer to these parameters in the rules you define in your campaign.
   ///   - on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
   ///   - ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
+  ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
   ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
   ///   - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo``? object containing information about the paywall.
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts an `NSError?` with more details. It is recommended to check the error code to handle the onSkip callback. If the error code is `4000`, it means the user didn't match any rules. If the error code is `4001` it means the user is in a holdout group. Otherwise, a `404` error code means an error occurred.
@@ -136,6 +140,7 @@ public extension Paywall {
     params: [String: Any]? = nil,
     on viewController: UIViewController? = nil,
     ignoreSubscriptionStatus: Bool = false,
+    presentationStyleOverride: PaywallPresentationStyle = .none,
     onSkip: ((NSError?) -> Void)? = nil,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil
@@ -156,6 +161,7 @@ public extension Paywall {
       presentationInfo,
       on: viewController,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
+      presentationStyleOverride: presentationStyleOverride,
       onPresent: onPresent,
       onDismiss: { result in
         if let onDismiss = onDismiss {
