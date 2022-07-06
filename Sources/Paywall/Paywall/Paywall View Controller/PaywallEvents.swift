@@ -56,7 +56,7 @@ extension PaywallEvent {
   // Everyone write to eventName, other may use the remaining keys
   private enum CodingKeys: String, CodingKey {
     case eventName
-    case productId = "product_identifier"
+    case productId = "productIdentifier"
     case url
     case link
     case data
