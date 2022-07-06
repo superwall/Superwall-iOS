@@ -80,7 +80,7 @@ final class WebEventHandler: WebEventDelegate {
       if let error = error {
         Logger.debug(
           logLevel: .error,
-          scope: .paywallViewControl“ler,
+          scope: .paywallViewController,
           message: "Error Evaluating JS",
           info: ["message": scriptSrc],
           error: error
