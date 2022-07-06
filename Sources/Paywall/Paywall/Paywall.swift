@@ -343,6 +343,9 @@ extension Paywall: SWPaywallViewControllerDelegate {
         )
 			case .openedURL(let url):
 				Paywall.delegate?.willOpenURL?(url: url)
+      case .openedUrlInSafari(let url):
+        // TODO: Is this the right delegate call? Should we create a new one?
+        Paywall.delegate?.willOpenURL?(url: url)
 			case .openedDeepLink(let url):
 				Paywall.delegate?.willOpenDeepLink?(url: url)
 			case .custom(let string):

@@ -13,5 +13,6 @@ enum PaywallPresentationResult {
   case initiateRestore
   case custom(string: String)
   case openedURL(url: URL)
+  case openedUrlInSafari(_ url: URL)
   case openedDeepLink(url: URL)
 }

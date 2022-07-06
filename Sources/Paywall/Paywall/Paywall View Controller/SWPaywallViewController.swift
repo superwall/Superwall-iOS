@@ -557,6 +557,18 @@ extension SWPaywallViewController: WebEventHandlerDelegate {
     self.isSafariVCPresented = true
     present(safariVC, animated: true)
   }
+
+  func openDeepLink(_ url: URL) {
+    dismiss(
+      .withResult(
+        paywallInfo: paywallInfo,
+        state: .closed
+      ),
+      shouldCallCompletion: true
+    ) { [weak self] in
+      self?.eventDidOccur(.openedDeepLink(url: url))
+    }
+  }
 }
 
 /**
