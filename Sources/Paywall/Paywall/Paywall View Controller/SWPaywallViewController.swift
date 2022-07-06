@@ -551,11 +551,15 @@ extension SWPaywallViewController: WebEventHandlerDelegate {
     )
   }
 
-  func presentSafari(_ url: URL) {
+  func presentSafariInApp(_ url: URL) {
     let safariVC = SFSafariViewController(url: url)
     safariVC.delegate = self
     self.isSafariVCPresented = true
     present(safariVC, animated: true)
+  }
+
+  func presentSafariExternal(_ url: URL) {
+    UIApplication.shared.open(url)
   }
 
   func openDeepLink(_ url: URL) {
@@ -567,6 +571,7 @@ extension SWPaywallViewController: WebEventHandlerDelegate {
       shouldCallCompletion: true
     ) { [weak self] in
       self?.eventDidOccur(.openedDeepLink(url: url))
+      UIApplication.shared.open(url)
     }
   }
 }

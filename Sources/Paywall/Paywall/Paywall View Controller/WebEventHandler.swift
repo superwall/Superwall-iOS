@@ -19,7 +19,8 @@ protocol WebEventHandlerDelegate: AnyObject {
 
   func eventDidOccur(_ paywallPresentationResult: PaywallPresentationResult)
   func openDeepLink(_ url: URL)
-  func presentSafari(_ url: URL)
+  func presentSafariInApp(_ url: URL)
+  func presentSafariExternal(_ url: URL)
 }
 
 final class WebEventHandler: WebEventDelegate {
@@ -79,7 +80,7 @@ final class WebEventHandler: WebEventDelegate {
       if let error = error {
         Logger.debug(
           logLevel: .error,
-          scope: .paywallViewController,
+          scope: .paywallViewControl“ler,
           message: "Error Evaluating JS",
           info: ["message": scriptSrc],
           error: error
@@ -171,7 +172,7 @@ final class WebEventHandler: WebEventDelegate {
     )
     hapticFeedback()
     delegate?.eventDidOccur(.openedURL(url: url))
-    delegate?.presentSafari(url)
+    delegate?.presentSafariInApp(url)
   }
 
   private func openUrlInSafari(_ url: URL) {
@@ -181,7 +182,7 @@ final class WebEventHandler: WebEventDelegate {
     )
     hapticFeedback()
     delegate?.eventDidOccur(.openedUrlInSafari(url))
-    UIApplication.shared.open(url)
+    delegate?.presentSafariExternal(url)
   }
 
   private func openDeepLink(_ url: URL) {
