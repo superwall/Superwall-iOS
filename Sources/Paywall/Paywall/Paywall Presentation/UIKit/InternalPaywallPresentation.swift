@@ -61,8 +61,46 @@ extension Paywall {
       return
     }
 
+
+    let triggerOutcome = PaywallResponseLogic.getTriggerResultOutcome(
+      presentationInfo: presentationInfo,
+      triggers: Storage.shared.triggers
+    )
+    let identifiers: ResponseIdentifiers
+
+    switch triggerOutcome.info {
+    case .paywall(let responseIdentifiers):
+      identifiers = responseIdentifiers
+    case let .holdout(error),
+        let .noRuleMatch(error):
+      SessionEventsManager.shared.triggerSession.activateSession(
+        for: presentationInfo,
+        on: presentingViewController,
+        triggerResult: triggerOutcome.result
+      )
+      fallthrough
+    case let .unknownEvent(error):
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallPresentation,
+        message: "Error Getting Paywall View Controller",
+        info: debugInfo,
+        error: error
+      )
+      onFail?(error)
+      return
+    }
+
+    //TODO: ADD THIS SOMEWHERE WHERE TRIGGERS ARE FIRED APART FROM UNKNOWN EVENT
+    /*let trackedEvent = SuperwallEvent.TriggerFire(
+      triggerResult: triggerResult,
+      triggerName: eventData.name
+    )
+    _ = trackEvent(trackedEvent)*/
+
     PaywallManager.shared.getPaywallViewController(
-      presentationInfo,
+      from: eventData,
+      responseIdentifiers: identifiers,
       cached: cached && !SWDebugManager.shared.isDebuggerLaunched
     ) { result in
       // if there's a paywall being presented, don't do anything
@@ -81,7 +119,8 @@ extension Paywall {
         SessionEventsManager.shared.triggerSession.activateSession(
           for: presentationInfo,
           on: presentingViewController,
-          paywallResponse: paywallViewController.paywallResponse
+          paywallResponse: paywallViewController.paywallResponse,
+          triggerResult: triggerOutcome.result
         )
 
         if presentingViewController == nil {
@@ -140,15 +179,6 @@ extension Paywall {
           }
         }
       case .failure(let error):
-        let nsError = error as NSError
-        if nsError.code == 4000 || nsError.code == 4001 {
-          // NoRuleMatch or Holdout, sending ended session.
-          SessionEventsManager.shared.triggerSession.activateSession(
-            for: presentationInfo,
-            on: presentingViewController
-          )
-        }
-
         Logger.debug(
           logLevel: .error,
           scope: .paywallPresentation,

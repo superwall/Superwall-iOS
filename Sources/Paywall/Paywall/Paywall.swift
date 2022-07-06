@@ -232,7 +232,7 @@ public final class Paywall: NSObject {
 	///  - Parameter identifier: The identifier of the paywall you would like to load in the background, as found in your paywall's settings in the dashboard.
 	@objc public static func load(identifier: String) {
 		PaywallManager.shared.getPaywallViewController(
-      .fromIdentifier(identifier),
+      responseIdentifiers: .init(paywallId: identifier),
       cached: true,
       completion: nil
     )

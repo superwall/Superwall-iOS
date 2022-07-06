@@ -20,7 +20,7 @@ enum TriggerSessionManagerLogic {
     presentationInfo: PresentationInfo,
     presentingViewController: UIViewController?,
     paywallResponse: PaywallResponse?,
-    triggers: [String: Trigger] = Storage.shared.triggers,
+    triggerResult: TriggerResult?,
     trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) -> Outcome? {
     let presentationOutcome: TriggerSession.PresentationOutcome
@@ -37,11 +37,10 @@ enum TriggerSessionManagerLogic {
     switch presentationInfo {
     case let .implicitTrigger(eventData),
       let .explicitTrigger(eventData):
-      let outcome = TriggerLogic.outcome(
-        forEvent: eventData,
-        triggers: triggers
-      ).result
-      switch outcome {
+      guard let triggerResult = triggerResult else {
+        return nil
+      }
+      switch triggerResult {
       case .unknownEvent:
         // Error
         return nil

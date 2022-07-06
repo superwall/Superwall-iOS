@@ -16,7 +16,12 @@ enum ExpressionEvaluator {
   ) -> Bool {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
-      return true
+      let shouldFire = ExpressionEvaluatorLogic.shouldFire(
+        basedOn: rule.occurrence,
+        ruleMatched: true,
+        storage: storage
+      )
+      return shouldFire
     }
 
     // swiftlint:disable:next force_unwrapping
@@ -59,23 +64,13 @@ enum ExpressionEvaluator {
 
     let isMatched = result?.toString() == "true"
 
-    if isMatched {
-      guard let maxCount = rule.occurrence.maxCount else {
-        storage.coreDataManager.save(triggerRuleOccurrence: rule.occurrence)
-        return true
-      }
+    let shouldFire = ExpressionEvaluatorLogic.shouldFire(
+      basedOn: rule.occurrence,
+      ruleMatched: isMatched,
+      storage: storage
+    )
 
-      let count = storage
-        .coreDataManager
-        .countTriggerRuleOccurrences(
-          for: rule.occurrence
-        ) + 1
-
-      storage.coreDataManager.save(triggerRuleOccurrence: rule.occurrence)
-
-      return count < maxCount
-    }
-    return false
+    return shouldFire
   }
 
   private static func getPostfix(

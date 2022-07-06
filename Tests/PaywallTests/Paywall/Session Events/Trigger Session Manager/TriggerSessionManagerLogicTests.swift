@@ -22,7 +22,8 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .implicitTrigger(eventData),
       presentingViewController: nil,
-      paywallResponse: nil
+      paywallResponse: nil,
+      triggerResult: .unknownEvent
     )
 
     XCTAssertNil(outcome)
@@ -41,11 +42,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.experiment, to: experiment)
     let eventName = "MyTrigger"
-    let trigger = Trigger(
-      eventName: eventName,
-      rules: [rule]
-    )
-    let triggers = [eventName: trigger]
+    
     let eventData = EventData(
       name: eventName,
       parameters: [:],
@@ -57,7 +54,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: viewController,
       paywallResponse: nil,
-      triggers: triggers
+      triggerResult: .holdout(experiment: experiment)
     )
 
     XCTAssertEqual(outcome?.presentationOutcome, .holdout)
@@ -87,11 +84,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.experiment, to: experiment)
     let eventName = "MyTrigger"
-    let trigger = Trigger(
-      eventName: eventName,
-      rules: [rule]
-    )
-    let triggers = [eventName: trigger]
+
     let eventData = EventData(
       name: eventName,
       parameters: [:],
@@ -105,12 +98,11 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       .setting(\.webViewLoadStartTime, to: time)
       .setting(\.webViewLoadCompleteTime, to: time)
 
-
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: nil,
       paywallResponse: paywallResponse,
-      triggers: triggers
+      triggerResult: .holdout(experiment: experiment)
     )
 
     XCTAssertEqual(outcome?.presentationOutcome, .holdout)
@@ -159,7 +151,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: nil,
       paywallResponse: nil,
-      triggers: triggers
+      triggerResult: .noRuleMatch
     )
 
     XCTAssertEqual(outcome?.presentationOutcome, .noRuleMatch)
@@ -202,7 +194,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: viewController,
       paywallResponse: nil,
-      triggers: triggers
+      triggerResult: .paywall(experiment: experiment)
     )
 
     XCTAssertEqual(outcome?.presentationOutcome, .paywall)
@@ -234,7 +226,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       presentationInfo: .defaultPaywall,
       presentingViewController: viewController,
       paywallResponse: nil,
-      triggers: [:],
+      triggerResult: nil,
       trackEvent: trackEvent
     )
 
@@ -266,7 +258,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       presentationInfo: .fromIdentifier("identifier"),
       presentingViewController: viewController,
       paywallResponse: nil,
-      triggers: [:],
+      triggerResult: nil,
       trackEvent: trackEvent
     )
 

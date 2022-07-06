@@ -47,11 +47,15 @@ final class PaywallManager {
   ///   - cached: Whether or not the paywall is cached.
   ///   - completion: A completion block called with the resulting paywall view controller.
 	func getPaywallViewController(
-    _ presentationInfo: PresentationInfo,
+    from eventData: EventData? = nil,
+    responseIdentifiers: ResponseIdentifiers,
     cached: Bool,
     completion: ((Result<SWPaywallViewController, NSError>) -> Void)? = nil
   ) {
-    PaywallResponseManager.shared.getResponse(presentationInfo) { [weak self] result in
+    PaywallResponseManager.shared.getResponse(
+      from: eventData,
+      withIdentifiers: responseIdentifiers
+    ) { [weak self] result in
       guard let self = self else {
         return
       }

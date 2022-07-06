@@ -18,75 +18,48 @@ final class PaywallResponseManager: NSObject {
 	private var handlersByHash: [String: [PaywallResponseCompletionBlock]] = [:]
 
 	func getResponse(
-    _ presentationInfo: PresentationInfo,
+    from eventData: EventData? = nil,
+    withIdentifiers responseIdentifiers: ResponseIdentifiers,
     completion: @escaping PaywallResponseCompletionBlock
   ) {
-    do {
-      let eventData = presentationInfo.eventData
+    let paywallRequestHash = PaywallResponseLogic.requestHash(
+      identifier: responseIdentifiers.paywallId,
+      event: eventData
+    )
 
-      var triggerIdentifiers: TriggerResponseIdentifiers
+    let paywallResponseCachingOutcome = PaywallResponseLogic.searchForPaywallResponse(
+      forEvent: eventData,
+      withHash: paywallRequestHash,
+      identifiers: responseIdentifiers,
+      inResultsCache: responsesByHash,
+      handlersCache: handlersByHash,
+      isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched
+    )
 
-      if let eventData = eventData,
-        Paywall.shared.configManager.didFetchConfig {
-        let triggerOutcome = TriggerLogic.outcome(
-          forEvent: eventData,
-          triggers: Storage.shared.triggers
-        )
-
-        // Confirm any triggers that the user is assigned
-        if let confirmableAssignments = triggerOutcome.confirmableAssignments {
-          Network.shared.confirmAssignments(confirmableAssignments)
-        }
-
-        triggerIdentifiers = try PaywallResponseLogic.getTriggerIdentifiers(
-          forResult: triggerOutcome.result,
-          eventData: eventData
-        )
-      } else {
-        triggerIdentifiers = TriggerResponseIdentifiers(paywallId: presentationInfo.identifier)
+    switch paywallResponseCachingOutcome {
+    case .cachedResult(let result):
+      onMain {
+        completion(result)
       }
-
-      let paywallRequestHash = PaywallResponseLogic.requestHash(
-        identifier: triggerIdentifiers.paywallId,
-        event: eventData
-      )
-
-      let paywallResponseCachingOutcome = PaywallResponseLogic.searchForPaywallResponse(
-        forEvent: eventData,
-        withHash: paywallRequestHash,
-        identifiers: triggerIdentifiers,
-        inResultsCache: responsesByHash,
-        handlersCache: handlersByHash,
-        isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched
-      )
-
-      switch paywallResponseCachingOutcome {
-      case .cachedResult(let result):
-        onMain {
-          completion(result)
-        }
-        return
-      case let .enqueCompletionBlock(hash, completionBlocks):
-        handlersByHash[hash] = completionBlocks + [completion]
-        return
-      case .setCompletionBlock(let hash):
-        handlersByHash[hash] = [completion]
-      }
-
-      loadPaywall(
-        forEvent: eventData,
-        withHash: paywallRequestHash,
-        triggerIdentifiers: triggerIdentifiers
-      )
-    } catch let error as NSError {
-      return completion(.failure(error))
+      return
+    case let .enqueCompletionBlock(hash, completionBlocks):
+      handlersByHash[hash] = completionBlocks + [completion]
+      return
+    case .setCompletionBlock(let hash):
+      handlersByHash[hash] = [completion]
     }
+
+    loadPaywall(
+      forEvent: eventData,
+      withHash: paywallRequestHash,
+      responseIdentifiers: responseIdentifiers
+    )
 	}
 
   private func loadPaywall(
     forEvent event: EventData?,
     withHash paywallRequestHash: String,
-    triggerIdentifiers: TriggerResponseIdentifiers
+    responseIdentifiers: ResponseIdentifiers
   ) {
     queue.async { [weak self] in
       guard let self = self else {
@@ -95,7 +68,7 @@ final class PaywallResponseManager: NSObject {
       let responseLoadStartTime = Date()
 
       SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
-        forPaywallId: triggerIdentifiers.paywallId,
+        forPaywallId: responseIdentifiers.paywallId,
         state: .start
       )
 
@@ -106,13 +79,13 @@ final class PaywallResponseManager: NSObject {
       Paywall.track(trackedEvent)
 
       Network.shared.getPaywallResponse(
-        withPaywallId: triggerIdentifiers.paywallId,
+        withPaywallId: responseIdentifiers.paywallId,
         fromEvent: event
       ) { result in
         self.queue.async {
           switch result {
           case .success(var response):
-            response.experiment = triggerIdentifiers.experiment
+            response.experiment = responseIdentifiers.experiment
             response.responseLoadStartTime = responseLoadStartTime
             response.responseLoadCompleteTime = Date()
 
@@ -137,7 +110,7 @@ final class PaywallResponseManager: NSObject {
             )
           case .failure(let error):
             SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
-              forPaywallId: triggerIdentifiers.paywallId,
+              forPaywallId: responseIdentifiers.paywallId,
               state: .fail
             )
             guard let errorResponse = PaywallResponseLogic.handlePaywallError(

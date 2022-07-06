@@ -36,46 +36,15 @@ class CoreDataStack {
 
   lazy var backgroundContext: NSManagedObjectContext = {
     let context = persistentContainer.newBackgroundContext()
-    // context.automaticallyMergesChangesFromParent = true
     context.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
     return context
   }()
 
   lazy var mainContext: NSManagedObjectContext = {
     let mainContext = persistentContainer.viewContext
-   // mainContext.automaticallyMergesChangesFromParent = true
     mainContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
     return mainContext
   }()
-
-  func fetch<Item: NSFetchRequestResult>(
-    _ request: NSFetchRequest<Item>,
-    context: NSManagedObjectContext? = nil
-  ) -> [Item] {
-    let context = context ?? mainContext
-    do {
-      let items = try context.fetch(request)
-      return items
-    } catch let error as NSError {
-      print("Unresolved error \(error), \(error.userInfo)")
-      return []
-    }
-  }
-
-  func fetch<Item: NSManagedObject>(
-    _ request: NSFetchRequest<Item>,
-    completion: @escaping ([Item]) -> Void
-  ) {
-    persistentContainer.performBackgroundTask { context in
-      do {
-        let items = try context.fetch(request)
-        completion(items)
-      } catch let error as NSError {
-        print("Unresolved error \(error), \(error.userInfo)")
-        completion([])
-      }
-    }
-  }
 
   func saveContext(
     _ context: NSManagedObjectContext,
@@ -108,21 +77,6 @@ class CoreDataStack {
     } catch let error as NSError {
       print("Unresolved error \(error), \(error.userInfo)")
       return 0
-    }
-  }
-
-  func count<T: NSFetchRequestResult>(
-    for fetchRequest: NSFetchRequest<T>,
-    completion: @escaping (Int) -> ()
-  ) {
-    persistentContainer.performBackgroundTask { context in
-      do {
-        let count = try context.count(for: fetchRequest)
-        return completion(count)
-      } catch let error as NSError {
-        print("Unresolved error \(error), \(error.userInfo)")
-        return completion(0)
-      }
     }
   }
 }

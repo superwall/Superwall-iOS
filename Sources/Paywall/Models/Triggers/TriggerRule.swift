@@ -12,7 +12,7 @@ struct TriggerRule: Decodable, Hashable {
   var expression: String?
   var expressionJs: String?
   var isAssigned: Bool
-  var occurrence: TriggerRuleOccurrence
+  var occurrence: TriggerRuleOccurrence?
 
   enum CodingKeys: String, CodingKey {
     case experimentGroupId
@@ -54,7 +54,7 @@ struct TriggerRule: Decodable, Hashable {
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
     expressionJs = try values.decodeIfPresent(String.self, forKey: .expressionJs)
     isAssigned = try values.decode(Bool.self, forKey: .isAssigned)
-    occurrence = try values.decode(TriggerRuleOccurrence.self, forKey: .occurrence)
+    occurrence = try values.decodeIfPresent(TriggerRuleOccurrence.self, forKey: .occurrence)
   }
 
   init(
@@ -62,7 +62,7 @@ struct TriggerRule: Decodable, Hashable {
     expression: String?,
     expressionJs: String?,
     isAssigned: Bool,
-    occurrence: TriggerRuleOccurrence
+    occurrence: TriggerRuleOccurrence? = nil
   ) {
     self.experiment = experiment
     self.expression = expression
@@ -84,10 +84,10 @@ extension TriggerRule: Stubbable {
           paywallId: nil
         )
       ),
-      expression: "name == jake",
+      expression: nil,
       expressionJs: nil,
       isAssigned: false,
-      occurrence: .init(key: "abc", interval: .infinity)
+      occurrence: nil
     )
   }
 }

@@ -112,7 +112,7 @@ final class TriggerSessionManager {
     for presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
     paywallResponse: PaywallResponse? = nil,
-    triggers: [String: Trigger] = Storage.shared.triggers
+    triggerResult: TriggerResult?
   ) {
     guard let eventName = presentationInfo.eventName else {
       // The paywall is being presented by identifier and that's not supported.
@@ -125,7 +125,7 @@ final class TriggerSessionManager {
       presentationInfo: presentationInfo,
       presentingViewController: presentingViewController,
       paywallResponse: paywallResponse,
-      triggers: triggers
+      triggerResult: triggerResult
     ) else {
       return
     }

@@ -28,7 +28,7 @@ struct TriggerRuleOccurrence: Decodable, Hashable {
     case minutes(Int)
   }
   let key: String
-  var maxCount: Int?
+  var maxCount: Int
   let interval: Interval
 
   enum CodingKeys: String, CodingKey {
@@ -41,7 +41,7 @@ struct TriggerRuleOccurrence: Decodable, Hashable {
     let values = try decoder.container(keyedBy: CodingKeys.self)
 
     key = try values.decode(String.self, forKey: .key)
-    maxCount = try values.decodeIfPresent(Int.self, forKey: .maxCount)
+    maxCount = try values.decode(Int.self, forKey: .maxCount)
 
     let interval = try values.decode(RawInterval.self, forKey: .interval)
     if interval.type == .minutes,
@@ -50,11 +50,15 @@ struct TriggerRuleOccurrence: Decodable, Hashable {
     } else {
       self.interval = .infinity
     }
+
+    print("infinity??", interval)
+
+    print("*** HMM", key, maxCount, interval)
   }
 
   init(
     key: String,
-    maxCount: Int? = nil,
+    maxCount: Int,
     interval: Interval
   ) {
     self.key = key

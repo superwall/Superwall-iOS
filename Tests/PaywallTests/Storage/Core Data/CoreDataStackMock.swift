@@ -12,25 +12,25 @@ import CoreData
 @available(iOS 14.0, *)
 final class CoreDataStackMock: CoreDataStack {
   override init() {
-    super.init()
-    let container = NSPersistentContainer(
-      name: CoreDataStack.modelName,
-      managedObjectModel: CoreDataStack.managedObject
-    )
+      super.init()
+      let container = NSPersistentContainer(
+        name: CoreDataStack.modelName,
+        managedObjectModel: CoreDataStack.managedObject
+      )
 
-    let persistentStoreDescription = NSPersistentStoreDescription()
-    persistentStoreDescription.type = NSSQLiteStoreType
-    container.persistentStoreDescriptions = [persistentStoreDescription]
+      let persistentStoreDescription = NSPersistentStoreDescription()
+      persistentStoreDescription.type = NSSQLiteStoreType
+      container.persistentStoreDescriptions = [persistentStoreDescription]
 
-    container.loadPersistentStores { _, error in
-      if let error = error as NSError? {
-        fatalError("Unresolved error \(error), \(error.userInfo)")
+      container.loadPersistentStores { _, error in
+        if let error = error as NSError? {
+          fatalError("Unresolved error \(error), \(error.userInfo)")
+        }
       }
+
+      persistentContainer = container
     }
-
-    persistentContainer = container
-  }
-
+  
   func deleteAllEntities(named entityName: String) {
     let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: entityName)
     let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
@@ -65,6 +65,38 @@ final class CoreDataStackMock: CoreDataStack {
         eventData.name = stub.name
         let params = try! JSONEncoder().encode(stub.parameters)
         eventData.parameters = params
+      }
+      index += 1
+      return false
+    }
+
+    persistentContainer.performBackgroundTask { context in
+      do {
+        try context.execute(batchInsert)
+        completion()
+      } catch {
+        print("ERROR!", error)
+      }
+    }
+  }
+
+  func batchInsertTriggerOccurrences(
+    key: String,
+    count: Int,
+    completion: @escaping () -> Void
+  ) {
+    var index = 0
+
+    let batchInsert = NSBatchInsertRequest(
+      entity: ManagedTriggerRuleOccurrence.entity()
+    ) { (managedObject: NSManagedObject) -> Bool in
+      guard index < count else {
+        return true
+      }
+
+      if let occurrence = managedObject as? ManagedTriggerRuleOccurrence {
+        occurrence.createdAt = Date()
+        occurrence.occurrenceKey = key
       }
       index += 1
       return false

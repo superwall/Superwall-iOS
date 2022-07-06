@@ -74,31 +74,15 @@ class PaywallResponseLogicTests: XCTestCase {
     XCTAssertEqual(hash, "$called_manually_\(locale)")
   }
 
-  // MARK: - getTriggerIdentifiers
-  func testGetTriggerIdentifiers_presentPaywall() {
+  // MARK: - TriggerResultOutcome
+  func testTriggerResultOutcome_presentPaywall() {
     // Given
     let experimentId = "expId"
     let experimentGroupId = "groupId"
     let variantId = "varId"
     let paywallId = "paywallId"
-    let eventName = "opened_application"
+    let eventName = "blah"
 
-    let trackEvent: (Trackable) -> TrackingResult = { event in
-      let triggerFire = event as! SuperwallEvent.TriggerFire
-      XCTAssertEqual(triggerFire.triggerName, eventName)
-
-      switch(triggerFire.triggerResult) {
-      case let .paywall(experiment):
-        XCTAssertEqual(experiment.id, experimentId)
-        XCTAssertEqual(experiment.variant.id, variantId)
-        XCTAssertEqual(experiment.groupId, experimentGroupId)
-        XCTAssertEqual(experiment.variant.paywallId, paywallId)
-        break
-      default:
-        XCTFail()
-      }
-      return .stub()
-    }
     let experiment = Experiment(
       id: experimentId,
       groupId: experimentGroupId,
@@ -108,152 +92,198 @@ class PaywallResponseLogicTests: XCTestCase {
         paywallId: paywallId
       )
     )
+    let rule: TriggerRule = .stub()
+      .setting(\.experiment, to: experiment)
 
     // When
-    let outcome = try? PaywallResponseLogic.getTriggerIdentifiers(
-      forResult: .paywall(experiment: experiment),
-      eventData: .stub(),
-      trackEvent: trackEvent
+    let outcome = PaywallResponseLogic.getTriggerResultOutcome(
+      presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
+      triggers: [eventName: .stub()
+        .setting(\.eventName, to: eventName)
+        .setting(\.rules, to: [
+          rule
+        ])
+      ]
     )
 
     // Then
-    let expectedOutcome = TriggerResponseIdentifiers(
+    let expectedIdentifiers = ResponseIdentifiers(
       paywallId: paywallId,
       experiment: experiment
     )
 
-    XCTAssertEqual(outcome, expectedOutcome)
+    guard case let .paywall(identifiers) = outcome.info else {
+      return XCTFail()
+    }
+
+    XCTAssertEqual(identifiers, expectedIdentifiers)
+
+    guard case let .paywall(experiment: returnedExperiment) = outcome.result else {
+      return XCTFail()
+    }
+    XCTAssertEqual(experiment, returnedExperiment)
   }
 
-  func testGetTriggerIdentifiers_holdout() {
+  func testTriggerResultOutcome_holdout() {
     // Given
     let experimentId = "expId"
     let experimentGroupId = "groupId"
     let variantId = "varId"
     let eventName = "opened_application"
+    let experiment = Experiment(
+      id: experimentId,
+      groupId: experimentGroupId,
+      variant: .init(
+        id: variantId,
+        type: .holdout,
+        paywallId: nil
+      )
+    )
 
-    let trackEvent: (Trackable) -> TrackingResult = { event in
-      let triggerFire = event as! SuperwallEvent.TriggerFire
-      XCTAssertEqual(triggerFire.triggerName, eventName)
-
-      switch(triggerFire.triggerResult) {
-      case .holdout(let experiment):
-        XCTAssertEqual(experiment.id, experimentId)
-        XCTAssertEqual(experiment.variant.id, variantId)
-        break
-      default:
-        XCTFail()
-      }
-      return .stub()
-    }
+    let holdout: Trigger = .stub()
+      .setting(\.eventName, to: eventName)
+      .setting(\.rules, to: [
+        .stub()
+        .setting(\.experiment, to: experiment)
+      ])
 
     // When
-    do {
-      _ = try PaywallResponseLogic.getTriggerIdentifiers(
-        forResult: .holdout(
-          experiment: Experiment(
-            id: experimentId,
-            groupId: experimentGroupId,
-            variant: .init(
-              id: variantId,
-              type: .holdout,
-              paywallId: nil
-            )
-          )
-        ),
-        eventData: .stub(),
-        trackEvent: trackEvent
-      )
-    } catch let error as NSError {
-      // Then
-      let userInfo: [String: Any] = [
-        "experimentId": experimentId,
-        "variantId": variantId,
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Trigger Holdout",
-          value: "This user was assigned to a holdout in a trigger experiment",
-          comment: "ExperimentId: \(experimentId), VariantId: \(variantId)"
-        )
-      ]
-      let expectedError = NSError(
-        domain: "com.superwall",
-        code: 4001,
-        userInfo: userInfo
-      )
-      XCTAssertEqual(error, expectedError)
+    let outcome = PaywallResponseLogic.getTriggerResultOutcome(
+      presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
+      triggers: [eventName: holdout]
+    )
+
+    // Then
+    guard case let .holdout(error) = outcome.info else {
+      return XCTFail()
     }
+
+    let userInfo: [String: Any] = [
+      "experimentId": experimentId,
+      "variantId": variantId,
+      NSLocalizedDescriptionKey: NSLocalizedString(
+        "Trigger Holdout",
+        value: "This user was assigned to a holdout in a trigger experiment",
+        comment: "ExperimentId: \(experimentId), VariantId: \(variantId)"
+      )
+    ]
+    let expectedError = NSError(
+      domain: "com.superwall",
+      code: 4001,
+      userInfo: userInfo
+    )
+    XCTAssertEqual(error, expectedError)
+
+    guard case let .holdout(experiment: returnedExperiment) = outcome.result else {
+      return XCTFail()
+    }
+    XCTAssertEqual(experiment, returnedExperiment)
   }
 
   func testGetTriggerIdentifiers_noRuleMatch() {
     // Given
+    let experimentId = "expId"
+    let experimentGroupId = "groupId"
+    let variantId = "varId"
     let eventName = "opened_application"
-    let trackEvent: (Trackable) -> TrackingResult = { event in
-      let triggerFire = event as! SuperwallEvent.TriggerFire
-      XCTAssertEqual(triggerFire.triggerName, eventName)
+    let experiment = Experiment(
+      id: experimentId,
+      groupId: experimentGroupId,
+      variant: .init(
+        id: variantId,
+        type: .treatment,
+        paywallId: nil
+      )
+    )
 
-      switch(triggerFire.triggerResult) {
-      case .noRuleMatch:
-        break
-      default:
-        XCTFail()
-      }
-      return .stub()
-    }
+    let trigger: Trigger = .stub()
+      .setting(\.eventName, to: eventName)
+      .setting(\.rules, to: [
+        .stub()
+        .setting(\.experiment, to: experiment)
+        .setting(\.expression, to: "user.abc == xyz")
+      ])
 
     // When
-    do {
-      _ = try PaywallResponseLogic.getTriggerIdentifiers(
-        forResult: .noRuleMatch,
-        eventData: .stub(),
-        trackEvent: trackEvent
+    let outcome = PaywallResponseLogic.getTriggerResultOutcome(
+      presentationInfo: .explicitTrigger(.stub()),
+      triggers: [eventName: trigger]
+    )
+
+    // Then
+    guard case let .noRuleMatch(error) = outcome.info else {
+      return XCTFail()
+    }
+
+    let userInfo: [String: Any] = [
+      NSLocalizedDescriptionKey: NSLocalizedString(
+        "No rule match",
+        value: "The user did not match any rules configured for this trigger",
+        comment: ""
       )
-    } catch let error as NSError {
-      // Then
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "No rule match",
-          value: "The user did not match any rules configured for this trigger",
-          comment: ""
-        )
-      ]
-      let expectedError = NSError(
-        domain: "com.superwall",
-        code: 4000,
-        userInfo: userInfo
-      )
-      XCTAssertEqual(error, expectedError)
+    ]
+    let expectedError = NSError(
+      domain: "com.superwall",
+      code: 4000,
+      userInfo: userInfo
+    )
+    XCTAssertEqual(error, expectedError)
+
+    guard case .noRuleMatch = outcome.result else {
+      return XCTFail()
     }
   }
 
   func testGetTriggerIdentifiers_unknownEvent() {
     // Given
-    let trackEvent: (Trackable) -> TrackingResult = { event in
-      XCTFail()
-      return .stub()
-    }
+    let experimentId = "expId"
+    let experimentGroupId = "groupId"
+    let variantId = "varId"
+    let eventName = "opened_application"
+    let experiment = Experiment(
+      id: experimentId,
+      groupId: experimentGroupId,
+      variant: .init(
+        id: variantId,
+        type: .holdout,
+        paywallId: nil
+      )
+    )
+
+    let trigger: Trigger = .stub()
+      .setting(\.eventName, to: "other")
+      .setting(\.rules, to: [
+        .stub()
+        .setting(\.experiment, to: experiment)
+      ])
 
     // When
-    do {
-      _ = try PaywallResponseLogic.getTriggerIdentifiers(
-        forResult: .unknownEvent,
-        eventData: .stub(),
-        trackEvent: trackEvent
+    let outcome = PaywallResponseLogic.getTriggerResultOutcome(
+      presentationInfo: .explicitTrigger(.stub().setting(\.name, to: "other")),
+      triggers: [eventName: trigger]
+    )
+
+    // Then
+    guard case let .unknownEvent(error) = outcome.info else {
+      return XCTFail()
+    }
+
+    let userInfo: [String: Any] = [
+      NSLocalizedDescriptionKey: NSLocalizedString(
+        "Trigger Disabled",
+        value: "There isn't a paywall configured to show in this context",
+        comment: ""
       )
-    } catch let error as NSError {
-      // Then
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Trigger Disabled",
-          value: "There isn't a paywall configured to show in this context",
-          comment: ""
-        )
-      ]
-      let expectedError = NSError(
-        domain: "SWTriggerDisabled",
-        code: 404,
-        userInfo: userInfo
-      )
-      XCTAssertEqual(error, expectedError)
+    ]
+    let expectedError = NSError(
+      domain: "SWTriggerDisabled",
+      code: 404,
+      userInfo: userInfo
+    )
+    XCTAssertEqual(error, expectedError)
+
+    guard case .unknownEvent = outcome.result else {
+      return XCTFail()
     }
   }
 
@@ -276,7 +306,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let results: [String: Result<PaywallResponse, NSError>] = [
       hash: .success(paywallResponse)
     ]
-    let triggerIdentifiers = TriggerResponseIdentifiers(
+    let triggerIdentifiers = ResponseIdentifiers(
       paywallId: "yo",
       experiment: experiment
     )

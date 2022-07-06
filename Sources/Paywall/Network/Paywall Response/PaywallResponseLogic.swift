@@ -8,9 +8,13 @@
 import Foundation
 import StoreKit
 
-struct TriggerResponseIdentifiers: Equatable {
+struct ResponseIdentifiers: Equatable {
   let paywallId: String?
   var experiment: Experiment?
+
+  static var none: ResponseIdentifiers {
+    return  .init(paywallId: nil)
+  }
 }
 
 struct PaywallErrorResponse {
@@ -35,6 +39,17 @@ enum PaywallResponseLogic {
     case setCompletionBlock(hash: String)
   }
 
+  struct TriggerResultOutcome {
+    enum Info {
+      case paywall(ResponseIdentifiers)
+      case holdout(NSError)
+      case unknownEvent(NSError)
+      case noRuleMatch(NSError)
+    }
+    let info: Info
+    var result: TriggerResult? = nil
+  }
+
   static func requestHash(
     identifier: String? = nil,
     event: EventData? = nil,
@@ -44,29 +59,45 @@ enum PaywallResponseLogic {
     return "\(id)_\(locale)"
   }
 
-  static func getTriggerIdentifiers(
-    forResult triggerResult: TriggerResult,
-    eventData: EventData,
-    trackEvent: (Trackable) -> TrackingResult = Paywall.track
-  ) throws -> TriggerResponseIdentifiers {
-    switch triggerResult {
-    case .unknownEvent:
-      break
-    default:
-      let trackedEvent = SuperwallEvent.TriggerFire(
-        triggerResult: triggerResult,
-        triggerName: eventData.name
+  static func getTriggerResultOutcome(
+    presentationInfo: PresentationInfo,
+    network: Network = Network.shared,
+    triggers: [String: Trigger]
+  ) -> TriggerResultOutcome {
+    if let eventData = presentationInfo.eventData {
+      let triggerAssignmentOutcome = TriggerLogic.assignmentOutcome(
+        forEvent: eventData,
+        triggers: triggers
       )
-      _ = trackEvent(trackedEvent)
-    }
 
+      // TODO: SHould this be moved so that this happens in preloading too??
+      // Confirm any triggers that the user is assigned
+      if let confirmableAssignments = triggerAssignmentOutcome.confirmableAssignments {
+        network.confirmAssignments(confirmableAssignments)
+      }
+
+      return getOutcome(forResult: triggerAssignmentOutcome.result)
+    } else {
+      let identifiers = ResponseIdentifiers(paywallId: presentationInfo.identifier)
+      return TriggerResultOutcome(
+        info: .paywall(identifiers)
+      )
+    }
+  }
+
+  private static func getOutcome(
+    forResult triggerResult: TriggerResult
+  ) -> TriggerResultOutcome {
     switch triggerResult {
-    case let .paywall(experiment):
-      let outcome = TriggerResponseIdentifiers(
+    case .paywall(let experiment):
+      let identifiers = ResponseIdentifiers(
         paywallId: experiment.variant.paywallId,
         experiment: experiment
       )
-      return outcome
+      return TriggerResultOutcome(
+        info: .paywall(identifiers),
+        result: triggerResult
+      )
     case let .holdout(experiment):
       let userInfo: [String: Any] = [
         "experimentId": experiment.id,
@@ -82,7 +113,10 @@ enum PaywallResponseLogic {
         code: 4001,
         userInfo: userInfo
       )
-      throw error
+      return TriggerResultOutcome(
+        info: .holdout(error),
+        result: triggerResult
+      )
     case .noRuleMatch:
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(
@@ -96,7 +130,10 @@ enum PaywallResponseLogic {
         code: 4000,
         userInfo: userInfo
       )
-      throw error
+      return TriggerResultOutcome(
+        info: .noRuleMatch(error),
+        result: triggerResult
+      )
     case .unknownEvent:
       // create the error
       let userInfo: [String: Any] = [
@@ -111,7 +148,10 @@ enum PaywallResponseLogic {
         code: 404,
         userInfo: userInfo
       )
-      throw error
+      return TriggerResultOutcome(
+        info: .unknownEvent(error),
+        result: triggerResult
+      )
     }
   }
 
@@ -119,7 +159,7 @@ enum PaywallResponseLogic {
   static func searchForPaywallResponse(
     forEvent event: EventData?,
     withHash hash: String,
-    identifiers triggerResponseIds: TriggerResponseIdentifiers?,
+    identifiers triggerResponseIds: ResponseIdentifiers?,
     inResultsCache resultsCache: [String: Result<PaywallResponse, NSError>],
     handlersCache: [String: [PaywallResponseCompletionBlock]],
     isDebuggerLaunched: Bool

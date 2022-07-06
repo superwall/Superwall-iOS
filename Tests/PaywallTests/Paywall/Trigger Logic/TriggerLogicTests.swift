@@ -26,11 +26,7 @@ class TriggerLogicTests: XCTestCase {
       ),
       expression: "name == jake",
       expressionJs: nil,
-      isAssigned: false,
-      occurrence: .init(
-        key: "abc",
-        interval: .infinity
-      )
+      isAssigned: false
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -48,7 +44,7 @@ class TriggerLogicTests: XCTestCase {
     let triggers = [eventName: trigger]
 
     // MARK: When
-    let outcome = TriggerLogic.outcome(
+    let outcome = TriggerLogic.assignmentOutcome(
       forEvent: eventData,
       triggers: triggers
     )
@@ -92,11 +88,7 @@ class TriggerLogicTests: XCTestCase {
       ),
       expression: nil,
       expressionJs: nil,
-      isAssigned: false,
-      occurrence: .init(
-        key: "abc",
-        interval: .infinity
-      )
+      isAssigned: false
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -114,7 +106,7 @@ class TriggerLogicTests: XCTestCase {
     let triggers = [eventName: trigger]
 
     // MARK: When
-    let outcome = TriggerLogic.outcome(
+    let outcome = TriggerLogic.assignmentOutcome(
       forEvent: eventData,
       triggers: triggers
     )
@@ -160,11 +152,7 @@ class TriggerLogicTests: XCTestCase {
       ),
       expression: "params.a == c",
       expressionJs: nil,
-      isAssigned: false,
-      occurrence: .init(
-        key: "abc",
-        interval: .infinity
-      )
+      isAssigned: false
     )
 
     let v2Trigger = Trigger(
@@ -184,7 +172,7 @@ class TriggerLogicTests: XCTestCase {
 
     // MARK: When
 
-    let outcome = TriggerLogic.outcome(
+    let outcome = TriggerLogic.assignmentOutcome(
       forEvent: eventData,
       triggers: triggers
     )
@@ -217,11 +205,7 @@ class TriggerLogicTests: XCTestCase {
       ),
       expression: nil,
       expressionJs: nil,
-      isAssigned: false,
-      occurrence: .init(
-        key: "abc",
-        interval: .infinity
-      )
+      isAssigned: false
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -239,7 +223,7 @@ class TriggerLogicTests: XCTestCase {
     let triggers = [eventName: trigger]
 
     // MARK: When
-    let outcome = TriggerLogic.outcome(
+    let outcome = TriggerLogic.assignmentOutcome(
       forEvent: eventData,
       triggers: triggers
     )

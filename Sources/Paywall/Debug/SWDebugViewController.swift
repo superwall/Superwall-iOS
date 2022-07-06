@@ -220,7 +220,9 @@ final class SWDebugViewController: UIViewController {
       return
     }
 
-    PaywallResponseManager.shared.getResponse(.fromIdentifier(paywallId)) { [weak self] result in
+    PaywallResponseManager.shared.getResponse(
+      withIdentifiers: .init(paywallId: paywallId)
+    ) { [weak self] result in
       guard let self = self else {
         return
       }

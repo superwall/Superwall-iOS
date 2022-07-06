@@ -13,7 +13,7 @@ enum TriggerLogic {
     var result: TriggerResult
   }
 
-  static func outcome(
+  static func assignmentOutcome(
     forEvent event: EventData,
     triggers: [String: Trigger]
   ) -> Outcome {
@@ -23,7 +23,6 @@ enum TriggerLogic {
         trigger: trigger
       ) {
         let confirmableAssignments = getConfirmableAssignments(forRule: rule)
-
 
         switch rule.experiment.variant.type {
         case .holdout:
@@ -45,6 +44,7 @@ enum TriggerLogic {
     }
   }
 
+  
   private static func findRule(
     in event: EventData,
     trigger: Trigger

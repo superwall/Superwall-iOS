@@ -74,7 +74,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     sessionManager.activateSession(
       for: .fromIdentifier("123"),
-      triggers: triggers
+      triggerResult: nil
     )
 
     XCTAssertNil(queue.triggerSessions.last!.presentationOutcome)
@@ -97,7 +97,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      triggers: triggers
+      triggerResult: .unknownEvent
     )
 
     XCTAssertNil(queue.triggerSessions.last!.presentationOutcome)
@@ -116,11 +116,12 @@ final class TriggerSessionManagerTests: XCTestCase {
       withName: eventName,
       variantType: .treatment
     )
+    let experiment = triggers[eventName]!.rules.first!.experiment
 
     // When
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      triggers: triggers
+      triggerResult: .paywall(experiment: experiment)
     )
 
     XCTAssertEqual(queue.triggerSessions.count, 3)
@@ -138,13 +139,14 @@ final class TriggerSessionManagerTests: XCTestCase {
       withName: eventName,
       variantType: .holdout
     )
+    let experiment = triggers[eventName]!.rules.first!.experiment
     let eventData: EventData = .stub()
       .setting(\.name, to: eventName)
 
     // When
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      triggers: triggers
+      triggerResult: .holdout(experiment: experiment)
     )
     
     XCTAssertEqual(queue.triggerSessions.count, 3)
@@ -168,7 +170,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      triggers: [eventName: trigger]
+      triggerResult: .noRuleMatch
     )
 
     XCTAssertEqual(queue.triggerSessions.count, 3)
@@ -228,9 +230,10 @@ final class TriggerSessionManagerTests: XCTestCase {
       withName: eventName,
       variantType: .treatment
     )
+    let experiment = triggers[eventName]!.rules.first!.experiment
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      triggers: triggers
+      triggerResult: .paywall(experiment: experiment)
     )
 
     // When
@@ -308,12 +311,13 @@ final class TriggerSessionManagerTests: XCTestCase {
       withName: eventName,
       variantType: .treatment
     )
+    let experiment = triggers[eventName]!.rules.first!.experiment
     let paywallResponse: PaywallResponse = .stub()
       .setting(\.id, to: paywallId)
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       paywallResponse: paywallResponse,
-      triggers: triggers
+      triggerResult: .paywall(experiment: experiment)
     )
   }
 
