@@ -55,9 +55,9 @@ final class WebEventHandler: WebEventDelegate {
       openDeepLink(url)
     case .restore:
       restorePurchases()
-    case .purchase(product: let type):
+    case .purchase(productId: let id):
       purchaseProduct(
-        withType: type,
+        withId: id,
         from: paywallResponse
       )
     case .custom(data: let customEvent):
@@ -154,11 +154,9 @@ final class WebEventHandler: WebEventDelegate {
     )
     delegate?.webView.configuration.userContentController.addUserScript(selectionScript)
 
-    // swiftlint:disable:next line_length
     let preventSelection = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
     delegate?.webView.evaluateJavaScript(preventSelection)
 
-    // swiftlint:disable:next line_length
     let preventZoom: String = "var meta = document.createElement('meta');" + "meta.name = 'viewport';" + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';" + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
     delegate?.webView.evaluateJavaScript(preventZoom)
   }
@@ -190,15 +188,12 @@ final class WebEventHandler: WebEventDelegate {
   }
 
   private func purchaseProduct(
-    withType productType: ProductType,
+    withId id: String,
     from paywallResponse: PaywallResponse
   ) {
     detectHiddenPaywallEvent("purchase")
     hapticFeedback()
-    let product = paywallResponse.products.first { $0.type == productType }
-    if let product = product {
-      delegate?.eventDidOccur(.initiatePurchase(productId: product.id))
-    }
+    delegate?.eventDidOccur(.initiatePurchase(productId: id))
   }
 
   private func handleCustomEvent(_ customEvent: String) {

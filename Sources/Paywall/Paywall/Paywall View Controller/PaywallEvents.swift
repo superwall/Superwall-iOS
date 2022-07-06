@@ -38,7 +38,7 @@ enum PaywallEvent: Decodable {
   case restore
   case openUrl(url: URL)
   case openDeepLink(url: URL)
-  case purchase(product: ProductType)
+  case purchase(productId: String)
   case custom(data: String)
 }
 
@@ -56,7 +56,7 @@ extension PaywallEvent {
   // Everyone write to eventName, other may use the remaining keys
   private enum CodingKeys: String, CodingKey {
     case eventName
-    case product
+    case productId = "product_identifier"
     case url
     case link
     case data
@@ -77,8 +77,8 @@ extension PaywallEvent {
         self = .onReady
         return
       case .purchase:
-        if let product = try? values.decode(ProductType.self, forKey: .product) {
-          self = .purchase(product: product)
+        if let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .purchase(productId: productId)
           return
         }
       case .restore:
