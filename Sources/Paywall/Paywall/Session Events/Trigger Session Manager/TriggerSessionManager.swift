@@ -112,12 +112,22 @@ final class TriggerSessionManager {
     for presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
     paywallResponse: PaywallResponse? = nil,
-    triggerResult: TriggerResult?
+    triggerResult: TriggerResult?,
+    trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) {
     guard let eventName = presentationInfo.eventName else {
       // The paywall is being presented by identifier and that's not supported.
       return
     }
+
+    if let triggerResult = triggerResult {
+      let trackedEvent = SuperwallEvent.TriggerFire(
+        triggerResult: triggerResult,
+        triggerName: eventName
+      )
+      _ = trackEvent(trackedEvent)
+    }
+
     guard var session = pendingTriggerSessions[eventName] else {
       return
     }

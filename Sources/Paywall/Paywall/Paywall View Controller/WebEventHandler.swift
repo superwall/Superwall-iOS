@@ -241,6 +241,6 @@ final class WebEventHandler: WebEventDelegate {
     } else {
       UIImpactFeedbackGenerator().impactOccurred()
     }
-  
+
   }
 }

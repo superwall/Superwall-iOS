@@ -22,12 +22,12 @@ enum ExpressionEvaluatorLogic {
         .countTriggerRuleOccurrences(
           for: occurrence
         ) + 1
-      print("*** counted", count, "maxCount", occurrence.maxCount, "Returning: \(count < occurrence.maxCount)")
+
       storage.coreDataManager.save(triggerRuleOccurrence: occurrence)
 
       return count <= occurrence.maxCount
     }
-    if let occurrence = occurrence  {
+    if let occurrence = occurrence {
       storage.coreDataManager.save(triggerRuleOccurrence: occurrence)
     }
     return false

@@ -28,7 +28,13 @@ class CoreDataStack {
     )
     container.loadPersistentStores { _, error in
       if let error = error as NSError? {
-        print("Unresolved error \(error), \(error.userInfo)")
+        Logger.debug(
+          logLevel: .debug,
+          scope: .paywallCore,
+          message: "Error loading Core Data persistent stores.",
+          info: error.userInfo,
+          error: error
+        )
       }
     }
     return container
@@ -55,27 +61,30 @@ class CoreDataStack {
         try context.save()
         completion?()
       } catch let error as NSError {
-        print("Unresolved error \(error), \(error.userInfo)")
+        Logger.debug(
+          logLevel: .debug,
+          scope: .paywallCore,
+          message: "Error saving to Core Data.",
+          info: error.userInfo,
+          error: error
+        )
       }
     }
   }
 
-  func saveContext() {
-    backgroundContext.perform {
-      do {
-        try self.backgroundContext.save()
-      } catch let error as NSError {
-        print("Unresolved error \(error), \(error.userInfo)")
-      }
-    }
-  }
 
   func count<T: NSFetchRequestResult>(for fetchRequest: NSFetchRequest<T>) -> Int {
     do {
       let count = try mainContext.count(for: fetchRequest)
       return count
     } catch let error as NSError {
-      print("Unresolved error \(error), \(error.userInfo)")
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallCore,
+        message: "Error counting from Core Data.",
+        info: error.userInfo,
+        error: error
+      )
       return 0
     }
   }

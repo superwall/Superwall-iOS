@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 05/07/2022.
 //
+// swiftlint:disable force_unwrapping
 
 import Foundation
 import CoreData

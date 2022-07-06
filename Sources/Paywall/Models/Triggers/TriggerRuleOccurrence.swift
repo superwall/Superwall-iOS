@@ -50,10 +50,6 @@ struct TriggerRuleOccurrence: Decodable, Hashable {
     } else {
       self.interval = .infinity
     }
-
-    print("infinity??", interval)
-
-    print("*** HMM", key, maxCount, interval)
   }
 
   init(

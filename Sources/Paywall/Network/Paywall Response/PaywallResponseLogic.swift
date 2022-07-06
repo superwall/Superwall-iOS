@@ -47,7 +47,7 @@ enum PaywallResponseLogic {
       case noRuleMatch(NSError)
     }
     let info: Info
-    var result: TriggerResult? = nil
+    var result: TriggerResult?
   }
 
   static func requestHash(
@@ -70,7 +70,6 @@ enum PaywallResponseLogic {
         triggers: triggers
       )
 
-      // TODO: SHould this be moved so that this happens in preloading too??
       // Confirm any triggers that the user is assigned
       if let confirmableAssignments = triggerAssignmentOutcome.confirmableAssignments {
         network.confirmAssignments(confirmableAssignments)

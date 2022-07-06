@@ -8,7 +8,7 @@
 import UIKit
 
 extension Paywall {
-  // swiftlint:disable:next function_body_length cyclomatic_complexity
+  // swiftlint:disable:next function_body_length
   static func internallyPresent(
     _ presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
@@ -90,13 +90,6 @@ extension Paywall {
       onFail?(error)
       return
     }
-
-    //TODO: ADD THIS SOMEWHERE WHERE TRIGGERS ARE FIRED APART FROM UNKNOWN EVENT
-    /*let trackedEvent = SuperwallEvent.TriggerFire(
-      triggerResult: triggerResult,
-      triggerName: eventData.name
-    )
-    _ = trackEvent(trackedEvent)*/
 
     PaywallManager.shared.getPaywallViewController(
       from: eventData,
