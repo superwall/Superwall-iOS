@@ -359,20 +359,23 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         withTimeInterval: 4.0,
         repeats: false
       ) { [weak self] _ in
-        self?.refreshPaywallButton.isHidden = false
-        self?.refreshPaywallButton.alpha = 0.0
-        self?.exitButton.isHidden = false
-        self?.exitButton.alpha = 0.0
+        guard let self = self else {
+          return
+        }
+        self.refreshPaywallButton.isHidden = false
+        self.refreshPaywallButton.alpha = 0.0
+        self.exitButton.isHidden = false
+        self.exitButton.alpha = 0.0
 
         let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
           state: .timeout,
-          paywallInfo: paywallInfo
+          paywallInfo: self.paywallInfo
         )
         Paywall.track(trackedEvent)
 
         UIView.springAnimate(withDuration: 2) {
-          self?.refreshPaywallButton.alpha = 1.0
-          self?.exitButton.alpha = 1.0
+          self.refreshPaywallButton.alpha = 1.0
+          self.exitButton.alpha = 1.0
         }
       }
 		} else {
