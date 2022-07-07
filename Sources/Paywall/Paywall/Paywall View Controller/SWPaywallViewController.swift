@@ -303,7 +303,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 				break
 			case .loadingPurchase:
 				self?.shimmerView.isShimmering = false
-				self?.showRefreshButtonAfterTimeout(show: true)
+				self?.showRefreshButtonAfterTimeout(true)
 				self?.shimmerView.alpha = 0.0
 				self?.shimmerView.transform = .identity
 				self?.purchaseLoadingIndicator.alpha = 0.0
@@ -318,7 +318,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 				self?.shimmerView.isShimmering = true
 				self?.shimmerView.alpha = 0.0
 				self?.shimmerView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
-				self?.showRefreshButtonAfterTimeout(show: true)
+				self?.showRefreshButtonAfterTimeout(true)
         UIView.springAnimate {
           self?.webView.alpha = 0.0
           self?.shimmerView.alpha = 1.0
@@ -331,7 +331,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         let translation = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
         let scaling = CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97)
 				self?.webView.transform = oldValue == .loadingPurchase ? scaling : translation
-				self?.showRefreshButtonAfterTimeout(show: false)
+				self?.showRefreshButtonAfterTimeout(false)
         UIView.springAnimate(
           withDuration: 1,
           delay: 0.25,
@@ -350,22 +350,32 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 		}
 	}
 
-	func showRefreshButtonAfterTimeout(show: Bool) {
+	func showRefreshButtonAfterTimeout(_ isVisible: Bool) {
 		showRefreshTimer?.invalidate()
 		showRefreshTimer = nil
 
-		if show {
+		if isVisible {
       showRefreshTimer = Timer.scheduledTimer(
         withTimeInterval: 4.0,
         repeats: false
       ) { [weak self] _ in
-        self?.refreshPaywallButton.isHidden = false
-        self?.refreshPaywallButton.alpha = 0.0
-        self?.exitButton.isHidden = false
-        self?.exitButton.alpha = 0.0
+        guard let self = self else {
+          return
+        }
+        self.refreshPaywallButton.isHidden = false
+        self.refreshPaywallButton.alpha = 0.0
+        self.exitButton.isHidden = false
+        self.exitButton.alpha = 0.0
+
+        let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+          state: .timeout,
+          paywallInfo: self.paywallInfo
+        )
+        Paywall.track(trackedEvent)
+
         UIView.springAnimate(withDuration: 2) {
-          self?.refreshPaywallButton.alpha = 1.0
-          self?.exitButton.alpha = 1.0
+          self.refreshPaywallButton.alpha = 1.0
+          self.exitButton.alpha = 1.0
         }
       }
 		} else {

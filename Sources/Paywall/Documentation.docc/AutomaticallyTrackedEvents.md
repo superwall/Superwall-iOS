@@ -26,6 +26,7 @@ Event Name | Action | Can Trigger Paywalls
 `paywallResponseLoad_start` | When a paywall's request to Superwall's servers has started | *no*
 `paywallResponseLoad_fail` | When a paywall's request to Superwall's servers has failed | *no*
 `paywallResponseLoad_complete` | When a paywall's request to Superwall's servers is complete | *no*
-`paywallWebviewLoad_start` | When a paywall's URL begins to load | *no*
-`paywallWebviewLoad_fail` | When a paywall's URL fails to load | *no*
-`paywallWebviewLoad_complete` | When a paywall's URL completes loading | *no*
+`paywallWebviewLoad_start` | When a paywall's website begins to load | *no*
+`paywallWebviewLoad_fail` | When a paywall's website fails to load | *no*
+`paywallWebviewLoad_timeout` | When the loading of a paywall's website times out | *no*
+`paywallWebviewLoad_complete` | When a paywall's website completes loading | *no*

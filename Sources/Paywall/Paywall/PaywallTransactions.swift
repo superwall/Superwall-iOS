@@ -77,7 +77,7 @@ extension Paywall {
 		paywallViewController.loadingState = .loadingPurchase
 
 		onMain {
-			paywallViewController.showRefreshButtonAfterTimeout(show: false)
+			paywallViewController.showRefreshButtonAfterTimeout(false)
 		}
 	}
 

@@ -37,6 +37,7 @@ public extension Paywall {
     case paywallWebviewLoadStart = "paywallWebviewLoad_start"
     case paywallWebviewLoadFail = "paywallWebviewLoad_fail"
     case paywallWebviewLoadComplete = "paywallWebviewLoad_complete"
+    case paywallWebviewLoadTimeout = "paywallWebviewLoad_timeout"
     case paywallProductsLoadStart = "paywallProductsLoad_start"
     case paywallProductsLoadFail = "paywallProductsLoad_fail"
     case paywallProductsLoadComplete = "paywallProductsLoad_complete"
