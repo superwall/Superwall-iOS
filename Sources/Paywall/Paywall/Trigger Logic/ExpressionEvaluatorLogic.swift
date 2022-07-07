@@ -23,13 +23,18 @@ enum ExpressionEvaluatorLogic {
           for: occurrence
         ) + 1
 
-      storage.coreDataManager.save(triggerRuleOccurrence: occurrence)
+      let firing = count <= occurrence.maxCount
 
-      return count <= occurrence.maxCount
+      if firing {
+        storage.coreDataManager.save(triggerRuleOccurrence: occurrence)
+      }
+
+      return firing
+
     }
-    if let occurrence = occurrence {
-      storage.coreDataManager.save(triggerRuleOccurrence: occurrence)
-    }
+//    if let occurrence = occurrence {
+//      storage.coreDataManager.save(triggerRuleOccurrence: occurrence)
+//    }
     return false
   }
 }
