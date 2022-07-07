@@ -123,24 +123,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
   }
 
   func testTrigger_noRuleMatch_noPaywallResponse() {
-    let experiment = Experiment(
-      id: "1",
-      groupId: "2",
-      variant: .init(
-        id: "3",
-        type: .holdout,
-        paywallId: nil
-      )
-    )
-    let rule: TriggerRule = .stub()
-      .setting(\.experiment, to: experiment)
-      .setting(\.expression, to: "")
     let eventName = "MyTrigger"
-    let trigger = Trigger(
-      eventName: eventName,
-      rules: [rule]
-    )
-    let triggers = [eventName: trigger]
     let eventData = EventData(
       name: eventName,
       parameters: [:],
@@ -179,11 +162,6 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.experiment, to: experiment)
     let eventName = "MyTrigger"
-    let trigger = Trigger(
-      eventName: eventName,
-      rules: [rule]
-    )
-    let triggers = [eventName: trigger]
     let eventData = EventData(
       name: eventName,
       parameters: [:],

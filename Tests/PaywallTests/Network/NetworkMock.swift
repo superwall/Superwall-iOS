@@ -11,6 +11,7 @@ import UIKit
 final class NetworkMock: Network {
   var sentSessionEvents: SessionEventsRequest?
   var getConfigCalled = false
+  var assigmentsConfirmed = false
 
   override func sendSessionEvents(_ session: SessionEventsRequest) {
     sentSessionEvents = session
@@ -23,5 +24,9 @@ final class NetworkMock: Network {
     storage: Storage = Storage.shared
   ) {
     getConfigCalled = true
+  }
+
+  override func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) {
+    assigmentsConfirmed = true
   }
 }

@@ -94,10 +94,12 @@ class PaywallResponseLogicTests: XCTestCase {
     )
     let rule: TriggerRule = .stub()
       .setting(\.experiment, to: experiment)
+    let network = NetworkMock()
 
     // When
     let outcome = PaywallResponseLogic.getTriggerResultOutcome(
       presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
+      network: network,
       triggers: [eventName: .stub()
         .setting(\.eventName, to: eventName)
         .setting(\.rules, to: [
@@ -121,6 +123,7 @@ class PaywallResponseLogicTests: XCTestCase {
     guard case let .paywall(experiment: returnedExperiment) = outcome.result else {
       return XCTFail()
     }
+    XCTAssertTrue(network.assigmentsConfirmed)
     XCTAssertEqual(experiment, returnedExperiment)
   }
 
@@ -146,10 +149,12 @@ class PaywallResponseLogicTests: XCTestCase {
         .stub()
         .setting(\.experiment, to: experiment)
       ])
+    let network = NetworkMock()
 
     // When
     let outcome = PaywallResponseLogic.getTriggerResultOutcome(
       presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
+      network: network,
       triggers: [eventName: holdout]
     )
 
@@ -178,6 +183,7 @@ class PaywallResponseLogicTests: XCTestCase {
       return XCTFail()
     }
     XCTAssertEqual(experiment, returnedExperiment)
+    XCTAssertTrue(network.assigmentsConfirmed)
   }
 
   func testGetTriggerIdentifiers_noRuleMatch() {
@@ -201,15 +207,22 @@ class PaywallResponseLogicTests: XCTestCase {
       .setting(\.rules, to: [
         .stub()
         .setting(\.experiment, to: experiment)
-        .setting(\.expression, to: "user.abc == xyz")
+        .setting(\.expression, to: "params.a == c")
+      ])
+    let network = NetworkMock()
+    let eventData: EventData = .stub()
+      .setting(\.parameters, to: [
+        "a": "b"
       ])
 
     // When
     let outcome = PaywallResponseLogic.getTriggerResultOutcome(
-      presentationInfo: .explicitTrigger(.stub()),
+      presentationInfo: .explicitTrigger(eventData),
+      network: network,
       triggers: [eventName: trigger]
     )
 
+    print("*** ds", outcome.info)
     // Then
     guard case let .noRuleMatch(error) = outcome.info else {
       return XCTFail()
@@ -232,6 +245,7 @@ class PaywallResponseLogicTests: XCTestCase {
     guard case .noRuleMatch = outcome.result else {
       return XCTFail()
     }
+    XCTAssertFalse(network.assigmentsConfirmed)
   }
 
   func testGetTriggerIdentifiers_unknownEvent() {
@@ -256,10 +270,12 @@ class PaywallResponseLogicTests: XCTestCase {
         .stub()
         .setting(\.experiment, to: experiment)
       ])
+    let network = NetworkMock()
 
     // When
     let outcome = PaywallResponseLogic.getTriggerResultOutcome(
       presentationInfo: .explicitTrigger(.stub().setting(\.name, to: "other")),
+      network: network,
       triggers: [eventName: trigger]
     )
 
@@ -285,6 +301,7 @@ class PaywallResponseLogicTests: XCTestCase {
     guard case .unknownEvent = outcome.result else {
       return XCTFail()
     }
+    XCTAssertFalse(network.assigmentsConfirmed)
   }
 
   // MARK: - searchForPaywallResponse
