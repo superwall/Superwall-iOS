@@ -91,7 +91,7 @@ class CoreDataManagerTests: XCTestCase {
       expectation.fulfill()
     }
 
-    waitForExpectations(timeout: 2.0) { error in
+    waitForExpectations(timeout: 20.0) { error in
       XCTAssertNil(error, "Save did not occur")
     }
   }
@@ -108,14 +108,14 @@ class CoreDataManagerTests: XCTestCase {
     for key in keys {
       coreDataStack.batchInsertTriggerOccurrences(
         key: key,
-        count: 1000,
+        count: 10,
         completion: {
           expectation.fulfill()
         }
       )
     }
 
-    waitForExpectations(timeout: 2.0) { error in
+    waitForExpectations(timeout: 10.0) { error in
       XCTAssertNil(error, "Save did not occur")
     }
 
