@@ -20,6 +20,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Adds `today`, `daysSinceInstall`, `minutesSinceInstall`, `daysSinceLastPaywallView`, `minutesSinceLastPaywallView` and `totalPaywallViews` as `device` parameters. These can be references in your rules and paywalls with `{{ device.paramName }}`.
 - Paywalls can now be configured via the dashboard to always present, regardless of the subscription status of the user.
 - Adds a `presentationStyleOverride` parameter to `Paywall.trigger()` and `Paywall.present()`. By setting this, you can override the configured presentation style on case by case basis.
+- Rules can now be limited by occurrence and date. For example, you could set a rule to only match 10 times within the last 5 hours.
 
 ### Fixes
 

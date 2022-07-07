@@ -576,15 +576,6 @@ extension SWPaywallViewController: WebEventHandlerDelegate {
   }
 }
 
-/**
-Set presentation style override.
- First check override.
- Then check if presentation style is fullscreen.
- Then
-
- Presentation style ->
- */
-
 // MARK: - presentation logic
 extension SWPaywallViewController {
 	func present(

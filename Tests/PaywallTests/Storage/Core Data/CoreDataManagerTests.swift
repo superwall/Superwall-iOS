@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 05/07/2022.
 //
+// swiftlint:disable all
 
 import XCTest
 @testable import Paywall

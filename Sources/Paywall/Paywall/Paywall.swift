@@ -324,31 +324,30 @@ extension Paywall: SWPaywallViewControllerDelegate {
       guard let self = self else {
         return
       }
-			switch result {
-			case .closed:
+      switch result {
+      case .closed:
         self.dismiss(
           paywallViewController,
           state: .closed
         )
-			case .initiatePurchase(let productId):
+      case .initiatePurchase(let productId):
 				guard let product = StoreKitManager.shared.productsById[productId] else {
           return
         }
 				paywallViewController.loadingState = .loadingPurchase
 				Paywall.delegate?.purchase(product: product)
-			case .initiateRestore:
+      case .initiateRestore:
         self.tryToRestore(
           paywallViewController,
           userInitiated: true
         )
-			case .openedURL(let url):
+      case .openedURL(let url):
 				Paywall.delegate?.willOpenURL?(url: url)
       case .openedUrlInSafari(let url):
-        // TODO: Is this the right delegate call? Should we create a new one?
         Paywall.delegate?.willOpenURL?(url: url)
-			case .openedDeepLink(let url):
+      case .openedDeepLink(let url):
 				Paywall.delegate?.willOpenDeepLink?(url: url)
-			case .custom(let string):
+      case .custom(let string):
 				Paywall.delegate?.handleCustomPaywallAction?(withName: string)
 			}
 		}

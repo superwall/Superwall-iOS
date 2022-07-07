@@ -44,7 +44,6 @@ enum TriggerLogic {
     }
   }
 
-  
   private static func findRule(
     in event: EventData,
     trigger: Trigger

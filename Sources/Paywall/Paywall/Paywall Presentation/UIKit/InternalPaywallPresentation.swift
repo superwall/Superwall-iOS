@@ -8,7 +8,7 @@
 import UIKit
 
 extension Paywall {
-  // swiftlint:disable:next function_body_length
+  // swiftlint:disable:next function_body_length cyclomatic_complexity
   static func internallyPresent(
     _ presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
@@ -64,7 +64,6 @@ extension Paywall {
       return
     }
 
-
     let triggerOutcome = PaywallResponseLogic.getTriggerResultOutcome(
       presentationInfo: presentationInfo,
       triggers: Storage.shared.triggers
@@ -75,7 +74,7 @@ extension Paywall {
     case .paywall(let responseIdentifiers):
       identifiers = responseIdentifiers
     case let .holdout(error),
-        let .noRuleMatch(error):
+      let .noRuleMatch(error):
       SessionEventsManager.shared.triggerSession.activateSession(
         for: presentationInfo,
         on: presentingViewController,
@@ -192,16 +191,6 @@ extension Paywall {
           shouldIgnoreSubscriptionStatus: ignoreSubscriptionStatus
         ) {
           return
-        }
-
-        let nsError = error as NSError
-        if nsError.code == 4000 || nsError.code == 4001 {
-          // NoRuleMatch or Holdout, sending ended session.
-          SessionEventsManager.shared.triggerSession.activateSession(
-            for: presentationInfo,
-            on: presentingViewController,
-            triggerResult: triggerOutcome.result
-          )
         }
 
         Logger.debug(
