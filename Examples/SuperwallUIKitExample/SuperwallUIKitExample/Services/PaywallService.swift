@@ -64,51 +64,63 @@ extension PaywallService: PaywallDelegate {
     /*
     switch event {
     case .firstSeen:
-      <#code#>
+     <#code#>
     case .appOpen:
-      <#code#>
+     <#code#>
     case .appLaunch:
-      <#code#>
+     <#code#>
+    case .appInstall:
+     <#code#>
     case .sessionStart:
-      <#code#>
+     <#code#>
     case .appClose:
-      <#code#>
+     <#code#>
     case .triggerFire:
-      <#code#>
+     <#code#>
     case .paywallOpen:
-      <#code#>
+     <#code#>
     case .paywallClose:
-      <#code#>
+     <#code#>
     case .transactionStart:
-      <#code#>
+     <#code#>
     case .transactionFail:
-      <#code#>
+     <#code#>
     case .transactionAbandon:
-      <#code#>
+     <#code#>
     case .transactionComplete:
-      <#code#>
+     <#code#>
     case .subscriptionStart:
-      <#code#>
+     <#code#>
     case .freeTrialStart:
-      <#code#>
+     <#code#>
     case .transactionRestore:
-      <#code#>
+     <#code#>
+    case .manualPresent:
+     <#code#>
     case .nonRecurringProductPurchase:
-      <#code#>
+     <#code#>
     case .paywallResponseLoadStart:
-      <#code#>
+     <#code#>
     case .paywallResponseLoadNotFound:
-      <#code#>
+     <#code#>
     case .paywallResponseLoadFail:
-      <#code#>
+     <#code#>
     case .paywallResponseLoadComplete:
-      <#code#>
+     <#code#>
     case .paywallWebviewLoadStart:
-      <#code#>
+     <#code#>
     case .paywallWebviewLoadFail:
-      <#code#>
+     <#code#>
     case .paywallWebviewLoadComplete:
-      <#code#>
+     <#code#>
+    case .paywallWebviewLoadTimeout:
+     <#code#>
+    case .paywallProductsLoadStart:
+     <#code#>
+    case .paywallProductsLoadFail:
+     <#code#>
+    case .paywallProductsLoadComplete:
+     <#code#>
     }
     */
   }

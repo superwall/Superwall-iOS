@@ -239,6 +239,7 @@ enum SuperwallEvent {
     enum State {
       case start
       case fail
+      case timeout
       case complete
     }
     let state: State
@@ -249,6 +250,8 @@ enum SuperwallEvent {
         return .paywallWebviewLoadStart
       case .fail:
         return .paywallWebviewLoadFail
+      case .timeout:
+        return .paywallWebviewLoadTimeout
       case .complete:
         return .paywallWebviewLoadComplete
       }
@@ -256,12 +259,7 @@ enum SuperwallEvent {
     let paywallInfo: PaywallInfo
 
     var superwallParameters: [String: Any] {
-      switch state {
-      case .start,
-        .fail,
-        .complete:
-        return paywallInfo.eventParams()
-      }
+      return paywallInfo.eventParams()
     }
     var customParameters: [String: Any] = [:]
   }
