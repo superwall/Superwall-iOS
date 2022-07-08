@@ -58,12 +58,6 @@ extension Paywall {
       }
     }
 
-    if shared.isUserSubscribed,
-      !SWDebugManager.shared.isDebuggerLaunched,
-      !ignoreSubscriptionStatus {
-      return
-    }
-
     let triggerOutcome = PaywallResponseLogic.getTriggerResultOutcome(
       presentationInfo: presentationInfo,
       triggers: Storage.shared.triggers
