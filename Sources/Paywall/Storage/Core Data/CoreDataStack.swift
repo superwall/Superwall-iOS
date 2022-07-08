@@ -26,6 +26,9 @@ class CoreDataStack {
       name: Self.modelName,
       managedObjectModel: Self.managedObject
     )
+
+    let dispatchGroup = DispatchGroup()
+    dispatchGroup.enter()
     container.loadPersistentStores { _, error in
       if let error = error as NSError? {
         Logger.debug(
@@ -36,7 +39,9 @@ class CoreDataStack {
           error: error
         )
       }
+      dispatchGroup.leave()
     }
+    dispatchGroup.wait()
     return container
   }()
 

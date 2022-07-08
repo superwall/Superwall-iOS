@@ -20,17 +20,19 @@ final class ManagedEventData: NSManagedObject {
   @NSManaged var name: String
   @NSManaged var parameters: Data
 
-  init(
+  init?(
     context: NSManagedObjectContext,
     id: String,
     createdAt: Date,
     name: String,
     parameters: Data
   ) {
-    let entity = NSEntityDescription.entity(
+    guard let entity = NSEntityDescription.entity(
       forEntityName: "EventData",
       in: context
-    )!
+    ) else {
+      return nil
+    }
     super.init(entity: entity, insertInto: context)
 
     self.id = id

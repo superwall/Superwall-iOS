@@ -69,14 +69,20 @@ final class CoreDataManager {
 
     container.performBackgroundTask { [weak self] context in
       let data = try? JSONEncoder().encode(eventData.parameters)
-
-      let managedEventData = ManagedEventData(
+      guard let managedEventData = ManagedEventData(
         context: context,
         id: eventData.id,
         createdAt: eventData.createdAt,
         name: eventData.name,
         parameters: data ?? Data()
-      )
+      ) else {
+        Logger.debug(
+          logLevel: .debug,
+          scope: .paywallCore,
+          message: "Failed to create managed event data for event \(eventData.name)"
+        )
+        return
+      }
 
       self?.coreDataStack.saveContext(context) {
         completion?(managedEventData)
@@ -91,11 +97,18 @@ final class CoreDataManager {
     let container = coreDataStack.persistentContainer
 
     container.performBackgroundTask { [weak self] context in
-      let managedRuleOccurrence = ManagedTriggerRuleOccurrence(
+      guard let managedRuleOccurrence = ManagedTriggerRuleOccurrence(
         context: context,
         createdAt: Date(),
         occurrenceKey: ruleOccurence.key
-      )
+      ) else {
+        Logger.debug(
+          logLevel: .debug,
+          scope: .paywallCore,
+          message: "Failed to create managed trigger rule occurrence for key: \(ruleOccurence.key)"
+        )
+        return
+      }
 
       self?.coreDataStack.saveContext(context) {
         completion?(managedRuleOccurrence)

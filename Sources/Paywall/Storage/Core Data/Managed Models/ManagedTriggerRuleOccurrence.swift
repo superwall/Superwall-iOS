@@ -19,15 +19,17 @@ final class ManagedTriggerRuleOccurrence: NSManagedObject {
   @NSManaged var createdAt: Date
   @NSManaged var occurrenceKey: String
 
-  init(
+  init?(
     context: NSManagedObjectContext,
     createdAt: Date,
     occurrenceKey: String
   ) {
-    let entity = NSEntityDescription.entity(
+    guard let entity = NSEntityDescription.entity(
       forEntityName: Self.entityName,
       in: context
-    )!
+    ) else {
+      return nil
+    }
     super.init(entity: entity, insertInto: context)
 
     self.createdAt = createdAt
