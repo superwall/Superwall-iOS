@@ -46,7 +46,7 @@ public class PaywallOptions: NSObject {
   /// Set this to `true` to forward events from the Game Controller to the Paywall via ``Paywall/Paywall/gamepadValueChanged(gamepad:element:)``.
   public var isGameControllerEnabled = false
 
-  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. Defaults to `true`.
+  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
   public var shouldPreloadPaywalls = true

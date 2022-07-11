@@ -54,7 +54,7 @@ extension View {
   ///     }
   ///
   /// **Please note**:
-  /// In order to present a paywall, the paywall must first be created and enabled in the [Superwall Dashboard](https://superwall.com/dashboard) and the SDK configured using ``Paywall/Paywall/configure(apiKey:userId:delegate:)``.
+  /// In order to present a paywall, the paywall must first be created and enabled in the [Superwall Dashboard](https://superwall.com/dashboard) and the SDK configured using ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)``.
   ///
   /// - Parameters:
   ///   - isPresented: A binding to a Boolean value that determines whether to present a paywall.

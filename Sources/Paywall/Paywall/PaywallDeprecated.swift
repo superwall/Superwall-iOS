@@ -62,23 +62,13 @@ public extension Paywall {
   @available(*, deprecated, message: "Either set the Presentation Style on the Superwall dashboard to No Animation or, for a trigger-specific override, set presentationStyleOverride on Paywall.trigger().")
   static var shouldAnimatePaywallDismissal = true
 
-  /// Pre-loads and caches triggers and their associated paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. Defaults to `true`.
+  /// Pre-loads and caches triggers and their associated paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache triggers in a just-in-time fashion.
-  @available(*, deprecated, message: "Please define shouldPreloadPaywalls in a PaywallOptions object and pass it to Paywall.configure(apiKey:userId:delegate:options:)")
+  @available(*, deprecated, message: "Please instead define shouldPreloadPaywalls in a PaywallOptions object and pass it to Paywall.configure(apiKey:userId:delegate:options:)")
   static var shouldPreloadTriggers = true {
     didSet {
       Paywall.options.shouldPreloadPaywalls = Paywall.shouldPreloadTriggers
-    }
-  }
-
-  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. Defaults to `true`.
-  ///
-  /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
-  @available(*, deprecated, message: "Please define this in a PaywallOptions object and pass it to Paywall.configure(apiKey:userId:delegate:options:)")
-  static var shouldPreloadPaywalls = true {
-    didSet {
-      Paywall.options.shouldPreloadPaywalls = Paywall.shouldPreloadPaywalls
     }
   }
 

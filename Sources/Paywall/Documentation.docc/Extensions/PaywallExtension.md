@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ``Paywall/Paywall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Paywall/Paywall/configure(apiKey:userId:delegate:)`` to configure the SDK.
+The ``Paywall/Paywall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)`` to configure the SDK.
 
 ## Topics
 
