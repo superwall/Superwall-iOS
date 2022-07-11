@@ -66,4 +66,15 @@ public class PaywallOptions: NSObject {
   ///
   /// Set this to `false` to prevent the paywall from dismissing on purchase/restore.
   public var automaticallyDismiss = true
+
+
+  /// Defines the different types of views that can appear behind Apple's payment sheet during a transaction.
+  public enum TransactionBackgroundView {
+    /// This shows your paywall background color overlayed with an activity indicator.
+    case spinner
+  }
+  /// The view that appears behind Apple's payment sheet during a transaction. Defaults to `.spinner`.
+  ///
+  /// Set this to `nil` to remove any background view during the transaction.
+  public var transactionBackgroundView: TransactionBackgroundView? = .spinner
 }

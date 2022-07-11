@@ -306,13 +306,17 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 				self?.showRefreshButtonAfterTimeout(true)
 				self?.shimmerView.alpha = 0.0
 				self?.shimmerView.transform = .identity
-				self?.purchaseLoadingIndicator.alpha = 0.0
-				self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
-        UIView.springAnimate {
-          self?.webView.alpha = 0.0
-          self?.webView.transform = CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97)
-          self?.purchaseLoadingIndicator.alpha = 1.0
-          self?.purchaseLoadingIndicator.transform = .identity
+
+        if let background = Paywall.options.transactionBackgroundView,
+          background == .spinner {
+          self?.purchaseLoadingIndicator.alpha = 0.0
+          self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
+          UIView.springAnimate {
+            self?.webView.alpha = 0.0
+            self?.webView.transform = CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97)
+            self?.purchaseLoadingIndicator.alpha = 1.0
+            self?.purchaseLoadingIndicator.transform = .identity
+          }
         }
 			case .loadingResponse:
 				self?.shimmerView.isShimmering = true
@@ -322,14 +326,20 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         UIView.springAnimate {
           self?.webView.alpha = 0.0
           self?.shimmerView.alpha = 1.0
-          self?.webView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)// .scaledBy(x: 0.97, y: 0.97)
+          self?.webView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)
           self?.shimmerView.transform = .identity
           self?.purchaseLoadingIndicator.alpha = 0.0
           self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
         }
 			case .ready:
         let translation = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
-        let scaling = CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97)
+        let scaling: CGAffineTransform
+        if let background = Paywall.options.transactionBackgroundView,
+          background == .spinner {
+          scaling = CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97)
+        } else {
+          scaling = .identity
+        }
 				self?.webView.transform = oldValue == .loadingPurchase ? scaling : translation
 				self?.showRefreshButtonAfterTimeout(false)
         UIView.springAnimate(
@@ -339,8 +349,12 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
             self?.webView.alpha = 1.0
             self?.webView.transform = .identity
             self?.shimmerView.alpha = 0.0
-            self?.purchaseLoadingIndicator.alpha = 0.0
-            self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
+
+            if let background = Paywall.options.transactionBackgroundView,
+              background == .spinner {
+              self?.purchaseLoadingIndicator.alpha = 0.0
+              self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
+            }
           },
           completion: { _ in
             self?.shimmerView.isShimmering = false
