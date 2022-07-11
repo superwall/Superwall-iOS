@@ -62,3 +62,13 @@ struct TriggerRuleOccurrence: Decodable, Hashable {
     self.interval = interval
   }
 }
+
+extension TriggerRuleOccurrence: Stubbable {
+  static func stub() -> TriggerRuleOccurrence {
+    return TriggerRuleOccurrence(
+      key: "abc",
+      maxCount: 10,
+      interval: .infinity
+    )
+  }
+}
