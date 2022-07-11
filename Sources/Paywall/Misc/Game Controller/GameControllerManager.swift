@@ -60,7 +60,7 @@ final class GameControllerManager: NSObject {
     gamepad: GCExtendedGamepad,
     element: GCControllerElement
   ) {
-		guard Paywall.isGameControllerEnabled else {
+    guard Paywall.options.isGameControllerEnabled else {
       return
     }
     guard #available(iOS 13.0, *) else {

@@ -661,7 +661,7 @@ extension SWPaywallViewController {
     completion: (() -> Void)? = nil
   ) {
 		isPresented = false
-		if Paywall.isGameControllerEnabled && GameControllerManager.shared.delegate == self {
+    if Paywall.options.isGameControllerEnabled && GameControllerManager.shared.delegate == self {
 			GameControllerManager.shared.delegate = nil
 		}
 		Paywall.delegate?.didDismissPaywall?()
@@ -692,7 +692,7 @@ extension SWPaywallViewController {
 		readyForEventTracking = true
 		trackOpen()
 
-		if Paywall.isGameControllerEnabled {
+    if Paywall.options.isGameControllerEnabled {
 			GameControllerManager.shared.delegate = self
 		}
 
