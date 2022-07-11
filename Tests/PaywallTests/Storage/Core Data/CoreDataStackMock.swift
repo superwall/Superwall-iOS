@@ -6,7 +6,6 @@
 //
 // swiftlint:disable all
 
-import XCTest
 import CoreData
 @testable import Paywall
 

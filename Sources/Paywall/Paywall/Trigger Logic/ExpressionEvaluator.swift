@@ -17,7 +17,7 @@ enum ExpressionEvaluator {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
       let shouldFire = ExpressionEvaluatorLogic.shouldFire(
-        basedOn: rule.occurrence,
+        forOccurrence: rule.occurrence,
         ruleMatched: true,
         storage: storage
       )
@@ -33,9 +33,7 @@ enum ExpressionEvaluator {
       let stackTraceString = value
         .objectForKeyedSubscript("stack")
         .toString()
-
       let lineNumber = value.objectForKeyedSubscript("line")
-
       let columnNumber = value.objectForKeyedSubscript("column")
 
       // swiftlint:disable:next line_length
@@ -65,7 +63,7 @@ enum ExpressionEvaluator {
     let isMatched = result?.toString() == "true"
 
     let shouldFire = ExpressionEvaluatorLogic.shouldFire(
-      basedOn: rule.occurrence,
+      forOccurrence: rule.occurrence,
       ruleMatched: isMatched,
       storage: storage
     )

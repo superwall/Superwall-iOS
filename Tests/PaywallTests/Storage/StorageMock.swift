@@ -14,15 +14,16 @@ final class StorageMock: Storage {
   var internalCachedTriggerSessions: [TriggerSession]
   var internalCachedTransactions: [TransactionModel]
   var didClearCachedSessionEvents = false
-  
+
   init(
     internalCachedTriggerSessions: [TriggerSession] = [],
     internalCachedTransactions: [TransactionModel] = [],
-    configRequestId: String = "abc"
+    configRequestId: String = "abc",
+    coreDataManager: CoreDataManagerMock = CoreDataManagerMock()
   ) {
     self.internalCachedTriggerSessions = internalCachedTriggerSessions
     self.internalCachedTransactions = internalCachedTransactions
-    super.init()
+    super.init(coreDataManager: coreDataManager)
     self.configRequestId = configRequestId
   }
 
@@ -33,6 +34,7 @@ final class StorageMock: Storage {
   override func getCachedTransactions() -> [TransactionModel] {
     return internalCachedTransactions
   }
+  
 
   override func clearCachedSessionEvents() {
     didClearCachedSessionEvents = true
