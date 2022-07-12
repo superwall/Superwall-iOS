@@ -28,7 +28,7 @@ struct Config: Decodable {
   ///
   /// A developer can disable preloading of paywalls by setting ``Paywall/Paywall/shouldPreloadPaywalls``
   func cache() {
-    if Paywall.shouldPreloadPaywalls {
+    if Paywall.options.shouldPreloadPaywalls {
       preloadPaywallsAndProducts()
       preloadTriggerPaywalls()
       preloadDefaultPaywall()

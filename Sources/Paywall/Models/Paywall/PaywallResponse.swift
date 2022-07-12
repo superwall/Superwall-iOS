@@ -26,7 +26,7 @@ struct PaywallResponse: Decodable {
   var url: String
   var paywalljsEvent: String
 
-  var presentationStyleV2: PaywallPresentationStyle = .sheet
+  var presentationStyleV2: PaywallPresentationStyle = .modal
   var presentationCondition: PresentationCondition
   var backgroundColorHex: String?
 

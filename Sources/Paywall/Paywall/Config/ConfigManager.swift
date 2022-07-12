@@ -9,13 +9,16 @@ import UIKit
 
 final class ConfigManager {
   var didFetchConfig = !Storage.shared.configRequestId.isEmpty
+  var options: PaywallOptions
   private let storage: Storage
   private let network: Network
 
   init(
+    options: PaywallOptions = PaywallOptions(),
     storage: Storage = Storage.shared,
     network: Network = Network.shared
   ) {
+    self.options = options
     self.storage = storage
     self.network = network
 

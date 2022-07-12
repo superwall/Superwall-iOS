@@ -11,75 +11,10 @@ public final class Paywall: NSObject {
   /// The delegate of the Paywall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
 	@objc public static var delegate: PaywallDelegate?
 
-  /// WARNING: Only use this enum to set `Paywall.networkEnvironment` if told so explicitly by the Superwall team.
-  public enum PaywallNetworkEnvironment {
-    /// Default: Use the standard latest environment
-    case release
-    /// WARNING: Use a release candidate environment
-    case releaseCandidate
-    /// WARNING: Use the nightly build environment
-    case developer
-  }
-
-	/// WARNING: Determines which network environment your SDK should use. Defaults to latest. You should under no circumstance change this unless you received the go-ahead from the Superwall team.
-	public static var networkEnvironment: PaywallNetworkEnvironment = .release
-
-	/// Defines the title of the alert presented to the end user when restoring transactions fails. Defaults to `No Subscription Found`.
-	public static var restoreFailedTitleString = "No Subscription Found"
-
-	/// Defines the message of the alert presented to the end user when restoring transactions fails. Defaults to `We couldn't find an active subscription for your account.`
-	public static var restoreFailedMessageString = "We couldn't find an active subscription for your account."
-
-	/// Defines the close button title of the alert presented to the end user when restoring transactions fails. Defaults to `Okay`.
-	public static var restoreFailedCloseButtonString = "Okay"
-
-	/// Forwards events from the game controller to the paywall. Defaults to `false`.
-  ///
-  /// Set this to `true` to forward events from the Game Controller to the Paywall via ``Paywall/Paywall/gamepadValueChanged(gamepad:element:)``.
-	public static var isGameControllerEnabled = false
-
-	/// Animates paywall presentation. Defaults to `true`.
-  ///
-  /// Set this to `false` to globally disable paywall presentation animations.
-  @available(*, deprecated, message: "Either set the Presentation Style on the Superwall dashboard to No Animation or, for a trigger-specific override, set presentationStyleOverride on Paywall.trigger().")
-	public static var shouldAnimatePaywallPresentation = true
-
-  /// Animates paywall dismissal. Defaults to `true`.
-  ///
-  /// Set this to `false` to globally disable paywall dismissal animations.
-  @available(*, deprecated, message: "Set the Presentation Style on the Superwall dashboard to No Animation instead of using this boolean.")
-	public static var shouldAnimatePaywallDismissal = true
-
-	/// Pre-loads and caches triggers and their associated paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. Defaults to `true`.
-  ///
-  /// Set this to `false` to load and cache triggers in a just-in-time fashion.
-  @available(*, deprecated, renamed: "shouldPreloadPaywalls", message: "This boolean no longer works and should be replaced with shouldPreloadPaywalls.")
-	public static var shouldPreloadTriggers = true
-
-  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. Defaults to `true`.
-  ///
-  /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
-  public static var shouldPreloadPaywalls = true
-
-	/// This is no longer used to control log levels. Please use `Paywall.logLevel` to determine the amount of logging you need.`
-  @available(*, deprecated)
-  @objc public static var debugMode = false
-
-	/// Defines the minimum log level to print to the console. Defaults to `warn`.
-	public static var logLevel: LogLevel? = .warn
-
-	/// Defines the scope of logs to print to the console. Defaults to .all
-	public static var logScopes: Set<LogScope> = [.all]
-
 	/// Properties stored about the user, set using ``Paywall/Paywall/setUserAttributes(_:)``.
 	public static var userAttributes: [String: Any] {
 		return Storage.shared.userAttributes
 	}
-
-  /// Automatically dismisses the paywall when a product is purchased or restored. Defaults to `true`.
-  ///
-  /// Set this to `false` to prevent the paywall from dismissing on purchase/restore.
-  public static var automaticallyDismiss = true
 
   /// The presented paywall view controller.
   public static var presentedViewController: UIViewController? {
@@ -97,6 +32,10 @@ public final class Paywall: NSObject {
 	var paywallWasPresentedThisSession = false
   lazy var configManager = ConfigManager()
 
+  /// A convenience variable to access and change the paywall options that you passed to ``configure(apiKey:userId:delegate:options:)``.
+  public static var options: PaywallOptions {
+    return shared.configManager.options
+  }
 	var paywallViewController: SWPaywallViewController? {
 		return PaywallManager.shared.presentedViewController
 	}
@@ -146,12 +85,14 @@ public final class Paywall: NSObject {
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
 	///   - userId: Your user's unique identifier, as defined by your backend system. If you don't specify a `userId`, we'll create one for you. Calling ``Paywall/Paywall/identify(userId:)`` later on will automatically alias these two for simple reporting.
   ///   - delegate: A class that conforms to ``PaywallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
+  ///   - options: A ``PaywallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   /// - Returns: The newly configured ``Paywall/Paywall`` instance.
 	@discardableResult
 	@objc public static func configure(
     apiKey: String,
     userId: String? = nil,
-    delegate: PaywallDelegate? = nil
+    delegate: PaywallDelegate? = nil,
+    options: PaywallOptions = PaywallOptions()
   ) -> Paywall {
     if hasCalledConfig {
       Logger.debug(
@@ -165,7 +106,8 @@ public final class Paywall: NSObject {
 		shared = Paywall(
       apiKey: apiKey,
       userId: userId,
-      delegate: delegate
+      delegate: delegate,
+      options: options
     )
 		return shared
 	}
@@ -226,7 +168,7 @@ public final class Paywall: NSObject {
 		LocalizationManager.shared.selectedLocale = localeIdentifier
 	}
 
-	/// Preloads a paywall, for use before calling ``Paywall/Paywall/present(identifier:on:ignoreSubscriptionStatus:onPresent:onDismiss:onFail:)``.
+	/// Preloads a paywall, for use before calling ``Paywall/Paywall/present(identifier:on:ignoreSubscriptionStatus:presentationStyleOverride:onPresent:onDismiss:onFail:)``.
   ///
   /// Only call this if you are manually specifying which paywall to present later — Superwall automatically does this otherwise.
 	///  - Parameter identifier: The identifier of the paywall you would like to load in the background, as found in your paywall's settings in the dashboard.
@@ -244,9 +186,11 @@ public final class Paywall: NSObject {
 	private init(
     apiKey: String?,
     userId: String? = nil,
-    delegate: PaywallDelegate? = nil
+    delegate: PaywallDelegate? = nil,
+    options: PaywallOptions = PaywallOptions()
   ) {
 		super.init()
+    self.configManager = ConfigManager(options: options)
 		guard let apiKey = apiKey else {
 			return
 		}

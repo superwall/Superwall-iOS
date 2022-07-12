@@ -66,7 +66,7 @@ extension View {
   /// For more information, see <doc:Triggering>.
   ///
   /// **Please note**:
-  /// In order to trigger a paywall, the SDK must have been configured using ``Paywall/Paywall/configure(apiKey:userId:delegate:)``.
+  /// In order to trigger a paywall, the SDK must have been configured using ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)``.
   ///
   /// - Parameters:
   ///   - event: The name of the event you wish to trigger.
