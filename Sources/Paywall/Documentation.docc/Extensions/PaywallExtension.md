@@ -13,7 +13,9 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``configure(apiKey:userId:delegate:options:)``
 - ``PaywallDelegate``
 - ``delegate``
-- ``EventName``
+- ``PaywallOptions``
+- ``options``
+- ``PaywallOptions/PaywallNetworkEnvironment``
 
 ### Triggering and Dismissing a Paywall
 
@@ -21,6 +23,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``track(_:_:)-2vkwo``
 - ``dismiss(_:)``
+- ``EventName``
 - ``track(_:_:)-7gc4r``
 - ``track(name:params:)``
 - ``StandardEvent``
@@ -64,9 +67,6 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 ### Customization
 
-- ``PaywallOptions``
-- ``options``
-- ``PaywallOptions/PaywallNetworkEnvironment``
 - ``localizationOverride(localeIdentifier:)``
 - ``presentedViewController``
 - ``automaticallyDismiss``
