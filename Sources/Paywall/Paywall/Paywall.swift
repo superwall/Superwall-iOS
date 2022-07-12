@@ -32,6 +32,7 @@ public final class Paywall: NSObject {
 	var paywallWasPresentedThisSession = false
   lazy var configManager = ConfigManager()
 
+  /// A convenience variable to access and change the paywall options that you passed to ``configure(apiKey:userId:delegate:options:)``.
   public static var options: PaywallOptions {
     return shared.configManager.options
   }

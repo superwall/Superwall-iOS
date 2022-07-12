@@ -10,7 +10,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 - <doc:GettingStarted>
 - <doc:Ecosystem>
-- ``configure(apiKey:userId:delegate:)``
+- ``configure(apiKey:userId:delegate:options:)``
 - ``PaywallDelegate``
 - ``delegate``
 - ``EventName``
@@ -18,7 +18,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 ### Triggering and Dismissing a Paywall
 
 - <doc:Triggering>
-- ``trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)``
+- ``trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``track(_:_:)-2vkwo``
 - ``dismiss(_:)``
 - ``track(_:_:)-7gc4r``
@@ -33,7 +33,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 - ``present(onPresent:onDismiss:onFail:)``
 - ``present(on:onPresent:onDismiss:onFail:)``
-- ``present(identifier:on:ignoreSubscriptionStatus:onPresent:onDismiss:onFail:)``
+- ``present(identifier:on:ignoreSubscriptionStatus:presentationStyleOverride:onPresent:onDismiss:onFail:)``
 - ``PaywallInfo``
 - ``load(identifier:)``
 
@@ -57,22 +57,23 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 ### Logging
 
+- ``PaywallDelegate/handleLog(level:scope:message:info:error:)``
 - ``Paywall/Paywall/logLevel``
 - ``Paywall/Paywall/logScopes``
-- ``PaywallDelegate/handleLog(level:scope:message:info:error:)``
 - ``debugMode``
 
 ### Customization
 
+- ``PaywallOptions``
+- ``options``
+- ``PaywallOptions/PaywallNetworkEnvironment``
+- ``localizationOverride(localeIdentifier:)``
+- ``presentedViewController``
 - ``automaticallyDismiss``
 - ``restoreFailedTitleString``
 - ``restoreFailedMessageString``
 - ``restoreFailedCloseButtonString``
-- ``localizationOverride(localeIdentifier:)``
-- ``shouldPreloadPaywalls``
 - ``networkEnvironment``
-- ``PaywallNetworkEnvironment``
 - ``shouldPreloadTriggers``
 - ``shouldAnimatePaywallDismissal``
 - ``shouldAnimatePaywallPresentation``
-- ``presentedViewController``
