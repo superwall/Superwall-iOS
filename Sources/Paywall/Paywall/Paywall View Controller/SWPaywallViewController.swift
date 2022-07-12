@@ -653,8 +653,6 @@ extension SWPaywallViewController {
     presentationStyle = presentationStyleOverride ?? paywallResponse.presentationStyleV2
 
     switch presentationStyle {
-    case .sheet:
-      modalPresentationStyle = .pageSheet
     case .modal:
       modalPresentationStyle = .pageSheet
     case .fullscreen:

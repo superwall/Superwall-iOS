@@ -7,16 +7,20 @@
 
 import Foundation
 
+/// Used to override the presentation style of the paywall set on the dashboard.
 @objc public enum PaywallPresentationStyle: Int, Decodable {
-  case sheet
+  /// A view presentation style that uses the modal presentation style`.pageSheet`.
   case modal
+  /// A view presentation style in which the presented paywall slides up to cover the screen.
   case fullscreen
+  /// A view presentation style in which the presented paywall covers the screen without animation.
   case fullscreenNoAnimation
+  /// A view presentation style in which the presented paywall pushes on screen, as if pushed on to a navigation stack.
   case push
+  /// Indicates that the presentation style to be used is the one set on the dashboard.
   case none
 
   enum InternalPresentationStyle: String {
-    case sheet = "SHEET"
     case modal = "MODAL"
     case fullscreen = "FULLSCREEN"
     case fullscreenNoAnimation = "NO_ANIMATION"
@@ -30,8 +34,6 @@ import Foundation
 
     let presentationStyle: PaywallPresentationStyle
     switch internalPresentationStyle {
-    case .sheet:
-      presentationStyle = .sheet
     case .modal:
       presentationStyle = .modal
     case .fullscreen:

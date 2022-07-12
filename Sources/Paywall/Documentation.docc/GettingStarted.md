@@ -97,7 +97,9 @@ You're now ready to trigger a paywall. See <doc:Triggering> for next steps.
 ## Topics
 
 ### The Delegate
-
 - ``PaywallDelegate``
 - <doc:CustomPaywallButtons>
 - <doc:ThirdPartyAnalytics>
+
+### Setting the Paywall Options
+- ``PaywallOptions``

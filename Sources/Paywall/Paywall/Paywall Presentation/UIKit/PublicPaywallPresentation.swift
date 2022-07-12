@@ -25,7 +25,7 @@ public extension Paywall {
     )
 	}
 
-	/// Presents a paywall to the user. This method will be deprecated soon, we recommend using ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)`` for greater flexibility.
+	/// Presents a paywall to the user. This method will be deprecated soon, we recommend using ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` for greater flexibility.
   ///
 	/// - Parameters:
 ///     - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
@@ -48,7 +48,7 @@ public extension Paywall {
     )
 	}
 
-	/// Presents a paywall to the user. This method will be deprecated soon, we recommend using ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)`` for greater flexibility.
+	/// Presents a paywall to the user. This method will be deprecated soon, we recommend using ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` for greater flexibility.
   ///
 	/// - Parameters:
 ///     - on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
@@ -74,7 +74,7 @@ public extension Paywall {
     )
 	}
 
-  /// Presents a paywall to the user. This method will be deprecated soon, we recommend using ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)`` for greater flexibility.
+  /// Presents a paywall to the user. This method will be deprecated soon, we recommend using ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` for greater flexibility.
   ///
   /// - Parameters:
   ///   - identifier: The identifier of the paywall you wish to present.

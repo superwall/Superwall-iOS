@@ -84,7 +84,7 @@ public final class Paywall: NSObject {
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
 	///   - userId: Your user's unique identifier, as defined by your backend system. If you don't specify a `userId`, we'll create one for you. Calling ``Paywall/Paywall/identify(userId:)`` later on will automatically alias these two for simple reporting.
   ///   - delegate: A class that conforms to ``PaywallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
-  ///   - options: A `PaywallOptions` object which allows you to customise the appearance and behaviour of the paywall.
+  ///   - options: A ``PaywallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   /// - Returns: The newly configured ``Paywall/Paywall`` instance.
 	@discardableResult
 	@objc public static func configure(
@@ -167,7 +167,7 @@ public final class Paywall: NSObject {
 		LocalizationManager.shared.selectedLocale = localeIdentifier
 	}
 
-	/// Preloads a paywall, for use before calling ``Paywall/Paywall/present(identifier:on:ignoreSubscriptionStatus:onPresent:onDismiss:onFail:)``.
+	/// Preloads a paywall, for use before calling ``Paywall/Paywall/present(identifier:on:ignoreSubscriptionStatus:presentationStyleOverride:onPresent:onDismiss:onFail:)``.
   ///
   /// Only call this if you are manually specifying which paywall to present later — Superwall automatically does this otherwise.
 	///  - Parameter identifier: The identifier of the paywall you would like to load in the background, as found in your paywall's settings in the dashboard.
