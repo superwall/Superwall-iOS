@@ -15,7 +15,7 @@ public class PaywallOptions: NSObject {
   /// Determines whether the paywall should use haptic feedback. Defaults to true.
   ///
   /// Haptic feedback occurs when a user purchases or restores a product, opens a URL from the paywall, or closes the paywall.
-  public var isHapticFeedbackEnabled: Bool = true
+  public var isHapticFeedbackEnabled = true
 
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
   public struct RestoreFailed {

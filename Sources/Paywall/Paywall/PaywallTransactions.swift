@@ -50,7 +50,7 @@ extension Paywall {
               paywallViewController.presentAlert(
                 title: Paywall.options.restoreFailed.title,
                 message: Paywall.options.restoreFailed.message,
-                closeActionTitle:  Paywall.options.restoreFailed.closeButtonTitle
+                closeActionTitle: Paywall.options.restoreFailed.closeButtonTitle
               )
             }
           }
