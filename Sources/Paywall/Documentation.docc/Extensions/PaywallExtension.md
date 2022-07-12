@@ -23,6 +23,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``track(_:_:)-2vkwo``
 - ``dismiss(_:)``
+- ``PaywallInfo``
 - ``EventName``
 - ``track(_:_:)-7gc4r``
 - ``track(name:params:)``
@@ -37,7 +38,6 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``present(onPresent:onDismiss:onFail:)``
 - ``present(on:onPresent:onDismiss:onFail:)``
 - ``present(identifier:on:ignoreSubscriptionStatus:presentationStyleOverride:onPresent:onDismiss:onFail:)``
-- ``PaywallInfo``
 - ``load(identifier:)``
 
 ### Identifying a User
