@@ -215,9 +215,13 @@ final class SWDebugViewController: UIViewController {
 			paywallIdentifier = paywallId
 		}
 
-		PaywallResponseManager.shared.getResponse(
-      identifier: paywallId,
-      event: nil
+    // TODO: Can PaywallId actually be nil here or just a state error?
+    guard let paywallId = paywallId else {
+      return
+    }
+
+    PaywallResponseManager.shared.getResponse(
+      withIdentifiers: .init(paywallId: paywallId)
     ) { [weak self] result in
       guard let self = self else {
         return
@@ -246,7 +250,7 @@ final class SWDebugViewController: UIViewController {
           error: error
         )
       }
-		}
+    }
 	}
 
   func addPaywallPreview() {
@@ -254,9 +258,7 @@ final class SWDebugViewController: UIViewController {
       return
     }
 
-    let child = SWPaywallViewController(
-      paywallResponse: paywallResponse
-    )
+    let child = SWPaywallViewController(paywallResponse: paywallResponse)
     addChild(child)
     previewContainerView.insertSubview(child.view, at: 0)
     previewViewContent = child.view
@@ -323,7 +325,7 @@ final class SWDebugViewController: UIViewController {
   }
 
   @objc func pressedExitButton() {
-    SWDebugManager.shared.closeDebugger(completion: nil)
+    SWDebugManager.shared.closeDebugger()
   }
 
   @objc func pressedConsoleButton() {
@@ -345,21 +347,26 @@ final class SWDebugViewController: UIViewController {
 
 	func showConsole() {
 		if let paywallResponse = paywallResponse {
-			StoreKitManager.shared.getProducts(withIds: paywallResponse.productIds) { [weak self] productsById in
-				onMain {
-          var products: [SKProduct] = []
+			StoreKitManager.shared.getProducts(withIds: paywallResponse.productIds) { [weak self] result in
+        switch result {
+        case .success(let productsById):
+          onMain {
+            var products: [SKProduct] = []
 
-					for id in paywallResponse.productIds {
-						if let product = productsById[id] {
-							products.append(product)
-						}
-					}
+            for id in paywallResponse.productIds {
+              if let product = productsById[id] {
+                products.append(product)
+              }
+            }
 
-					let viewController = SWConsoleViewController(products: products)
-					let navController = UINavigationController(rootViewController: viewController)
-					navController.modalPresentationStyle = .overFullScreen
-					self?.present(navController, animated: true)
-				}
+            let viewController = SWConsoleViewController(products: products)
+            let navController = UINavigationController(rootViewController: viewController)
+            navController.modalPresentationStyle = .overFullScreen
+            self?.present(navController, animated: true)
+          }
+        case .failure:
+          break
+        }
 			}
 		} else {
 			Logger.debug(

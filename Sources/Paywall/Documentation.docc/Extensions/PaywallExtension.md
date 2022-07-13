@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ``Paywall/Paywall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Paywall/Paywall/configure(apiKey:userId:delegate:)`` to configure the SDK.
+The ``Paywall/Paywall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)`` to configure the SDK.
 
 ## Topics
 
@@ -10,43 +10,44 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 - <doc:GettingStarted>
 - <doc:Ecosystem>
-- ``configure(apiKey:userId:delegate:)``
+- ``configure(apiKey:userId:delegate:options:)``
 - ``PaywallDelegate``
-- ``debugMode``
 - ``delegate``
-- ``EventName``
+- ``PaywallOptions``
+- ``options``
+- ``PaywallOptions/PaywallNetworkEnvironment``
 
-### Presenting and Dismissing a Paywall
-
-- <doc:PresentingInSwiftUI>
-- <doc:PresentingInUIKit>
-- ``present(onPresent:onDismiss:onFail:)``
-- ``present(on:onPresent:onDismiss:onFail:)``
-- ``present(identifier:on:ignoreSubscriptionStatus:onPresent:onDismiss:onFail:)``
-- ``PaywallInfo``
-- ``shouldAnimatePaywallPresentation``
-- ``dismiss(_:)``
-- ``shouldAnimatePaywallDismissal``
-- ``load(identifier:)``
-
-### Triggering a Paywall
+### Triggering and Dismissing a Paywall
 
 - <doc:Triggering>
-- ``trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)``
+- ``trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``track(_:_:)-2vkwo``
+- ``dismiss(_:)``
+- ``PaywallInfo``
+- ``EventName``
 - ``track(_:_:)-7gc4r``
 - ``track(name:params:)``
 - ``StandardEvent``
-- ``TriggerInfo``
+
+### In-App Previews
+- <doc:InAppPreviews>
+- ``handleDeepLink(_:)``
+
+### Presenting and Dismissing a Paywall
+
+- ``present(onPresent:onDismiss:onFail:)``
+- ``present(on:onPresent:onDismiss:onFail:)``
+- ``present(identifier:on:ignoreSubscriptionStatus:presentationStyleOverride:onPresent:onDismiss:onFail:)``
+- ``load(identifier:)``
 
 ### Identifying a User
 
 - <doc:SettingUserAttributes>
 - ``identify(userId:)``
 - ``setUserAttributes(_:)``
-- ``setUserAttributesDictionary(attributes:)``
 - ``userAttributes``
 - ``reset()``
+- ``setUserAttributesDictionary(attributes:)``
 - ``StandardUserAttribute``
 - ``StandardUserAttributeKey``
 - ``setUserAttributes(_:custom:)``
@@ -62,15 +63,17 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``PaywallDelegate/handleLog(level:scope:message:info:error:)``
 - ``Paywall/Paywall/logLevel``
 - ``Paywall/Paywall/logScopes``
+- ``debugMode``
 
-### Customisation
+### Customization
 
+- ``localizationOverride(localeIdentifier:)``
+- ``presentedViewController``
+- ``automaticallyDismiss``
 - ``restoreFailedTitleString``
 - ``restoreFailedMessageString``
 - ``restoreFailedCloseButtonString``
-- ``localizationOverride(localeIdentifier:)``
+- ``networkEnvironment``
 - ``shouldPreloadTriggers``
 - ``shouldAnimatePaywallDismissal``
 - ``shouldAnimatePaywallPresentation``
-- ``networkEnvironment``
-- ``PaywallNetworkEnvironment``

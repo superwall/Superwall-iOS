@@ -23,6 +23,7 @@ struct Endpoint<Response: Decodable> {
   var components: Components?
   var url: URL?
   var method: HttpMethod = .get
+  var requestId: String = UUID().uuidString
 
   func makeRequest(forDebugging isForDebugging: Bool) -> URLRequest? {
     let url: URL
@@ -55,6 +56,7 @@ struct Endpoint<Response: Decodable> {
 
     addHeaders(
       to: &request,
+      requestId: requestId,
       forDebugging: isForDebugging
     )
 
@@ -63,10 +65,9 @@ struct Endpoint<Response: Decodable> {
 
   private func addHeaders(
     to request: inout URLRequest,
+    requestId: String,
     forDebugging isForDebugging: Bool
   ) {
-    let requestId = UUID().uuidString
-
     let apiKey = isForDebugging ? (Storage.shared.debugKey ?? "") : Storage.shared.apiKey
     let auth = "Bearer \(apiKey)"
     let headers = [
@@ -84,7 +85,7 @@ struct Endpoint<Response: Decodable> {
       "X-Device-Currency-Code": DeviceHelper.shared.currencyCode,
       "X-Device-Currency-Symbol": DeviceHelper.shared.currencySymbol,
       "X-Device-Timezone-Offset": DeviceHelper.shared.secondsFromGMT,
-      "X-App-Install-Date": DeviceHelper.shared.appInstallDate,
+      "X-App-Install-Date": DeviceHelper.shared.appInstalledAtString,
       "X-Radio-Type": DeviceHelper.shared.radioType,
       "X-Device-Interface-Style": DeviceHelper.shared.interfaceStyle,
       "X-SDK-Version": sdkVersion,
@@ -106,14 +107,25 @@ struct Endpoint<Response: Decodable> {
 // MARK: - EventsResponse
 extension Endpoint where Response == EventsResponse {
   static func events(eventsRequest: EventsRequest) -> Self {
-    let encoder = JSONEncoder()
-    encoder.keyEncodingStrategy = .convertToSnakeCase
-    let bodyData = try? encoder.encode(eventsRequest)
+    let bodyData = try? JSONEncoder.toSnakeCase.encode(eventsRequest)
 
     return Endpoint(
       components: Components(
         host: Api.Analytics.host,
         path: Api.version1 + "events",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+
+  static func sessionEvents(_ session: SessionEventsRequest) -> Self {
+    let bodyData = try? JSONEncoder.toSnakeCase.encode(session)
+
+    return Endpoint(
+      components: Components(
+        host: Api.Base.host,
+        path: Api.version1 + "session_events",
         bodyData: bodyData
       ),
       method: .post
@@ -127,18 +139,16 @@ extension Endpoint where Response == PaywallResponse {
     withIdentifier identifier: String? = nil,
     fromEvent event: EventData? = nil
   ) -> Self {
-    let encoder = JSONEncoder()
-    encoder.keyEncodingStrategy = .convertToSnakeCase
     let bodyData: Data?
 
     if let identifier = identifier {
       return paywall(byIdentifier: identifier)
     } else if let event = event {
       let bodyDict = ["event": event.jsonData]
-      bodyData = try? encoder.encode(bodyDict)
+      bodyData = try? JSONEncoder.toSnakeCase.encode(bodyDict)
     } else {
       let bodyDict = PaywallRequest(appUserId: Storage.shared.userId ?? "")
-      bodyData = try? encoder.encode(bodyDict)
+      bodyData = try? JSONEncoder.toSnakeCase.encode(bodyDict)
     }
     return Endpoint(
       components: Components(
@@ -203,14 +213,15 @@ extension Endpoint where Response == PaywallsResponse {
 }
 
 // MARK: - ConfigResponse
-extension Endpoint where Response == ConfigResponse {
-  static var config: Self {
+extension Endpoint where Response == Config {
+  static func config(requestId: String) -> Self {
     return Endpoint(
       components: Components(
         host: Api.Base.host,
         path: Api.version1 + "config"
       ),
-      method: .get
+      method: .get,
+      requestId: requestId
     )
   }
 }
@@ -218,9 +229,7 @@ extension Endpoint where Response == ConfigResponse {
 // MARK: - ConfirmedAssignmentResponse
 extension Endpoint where Response == ConfirmedAssignmentResponse {
   static func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) -> Self {
-    let encoder = JSONEncoder()
-    encoder.keyEncodingStrategy = .convertToSnakeCase
-    let bodyData = try? encoder.encode(confirmableAssignments)
+    let bodyData = try? JSONEncoder.toSnakeCase.encode(confirmableAssignments)
 
     return Endpoint(
       components: Components(
@@ -236,9 +245,7 @@ extension Endpoint where Response == ConfirmedAssignmentResponse {
 // MARK: - PostbackResponse
 extension Endpoint where Response == PostBackResponse {
   static func postback(_ postback: Postback) -> Self {
-    let encoder = JSONEncoder()
-    encoder.keyEncodingStrategy = .convertToSnakeCase
-    let bodyData = try? encoder.encode(postback)
+    let bodyData = try? JSONEncoder.toSnakeCase.encode(postback)
 
     return Endpoint(
       components: Components(

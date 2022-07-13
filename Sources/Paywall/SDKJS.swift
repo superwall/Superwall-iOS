@@ -1,114 +1,2469 @@
 // swiftlint:disable all
 
 let script = #"""
-/*
- * ATTENTION: The "eval" devtool has been used (maybe by default in mode: "development").
- * This devtool is neither made for production nor for readable output files.
- * It uses "eval()" calls to create a separate source file in the browser devtools.
- * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
- * or disable the default devtool with "devtool: false".
- * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
- */
-var SuperwallSDKJS;
-/******/ (() => { // webpackBootstrap
-/******/     "use strict";
-/******/     var __webpack_modules__ = ({
+/*! For license information please see main.js.LICENSE.txt */
+var SuperwallSDKJS
+;(() => {
+  "use strict"
+  var __webpack_modules__ = {
+      276: (e, t, r) => {
+        r.d(t, { Jx: () => m })
+        const s = "function" == typeof atob,
+          n = "function" == typeof Buffer,
+          i = "function" == typeof TextDecoder ? new TextDecoder() : void 0,
+          o = ((e) => {
+            let t = {}
+            return e.forEach((e, r) => (t[e] = r)), t
+          })(
+            ("function" == typeof TextEncoder && new TextEncoder(),
+            [..."ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="])
+          ),
+          a = /^(?:[A-Za-z\d+\/]{4})*?(?:[A-Za-z\d+\/]{2}(?:==)?|[A-Za-z\d+\/]{3}=?)?$/,
+          l = String.fromCharCode.bind(String),
+          h =
+            "function" == typeof Uint8Array.from
+              ? Uint8Array.from.bind(Uint8Array)
+              : (e, t = (e) => e) => new Uint8Array(Array.prototype.slice.call(e, 0).map(t)),
+          c = (e) => e.replace(/[^A-Za-z0-9\+\/]/g, ""),
+          u = /[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3}/g,
+          p = (e) => {
+            switch (e.length) {
+              case 4:
+                var t =
+                  (((7 & e.charCodeAt(0)) << 18) |
+                    ((63 & e.charCodeAt(1)) << 12) |
+                    ((63 & e.charCodeAt(2)) << 6) |
+                    (63 & e.charCodeAt(3))) -
+                  65536
+                return l(55296 + (t >>> 10)) + l(56320 + (1023 & t))
+              case 3:
+                return l(
+                  ((15 & e.charCodeAt(0)) << 12) |
+                    ((63 & e.charCodeAt(1)) << 6) |
+                    (63 & e.charCodeAt(2))
+                )
+              default:
+                return l(((31 & e.charCodeAt(0)) << 6) | (63 & e.charCodeAt(1)))
+            }
+          },
+          d = s
+            ? (e) => atob(c(e))
+            : n
+            ? (e) => Buffer.from(e, "base64").toString("binary")
+            : (e) => {
+                if (((e = e.replace(/\s+/g, "")), !a.test(e)))
+                  throw new TypeError("malformed base64.")
+                e += "==".slice(2 - (3 & e.length))
+                let t,
+                  r,
+                  s,
+                  n = ""
+                for (let i = 0; i < e.length; )
+                  (t =
+                    (o[e.charAt(i++)] << 18) |
+                    (o[e.charAt(i++)] << 12) |
+                    ((r = o[e.charAt(i++)]) << 6) |
+                    (s = o[e.charAt(i++)])),
+                    (n +=
+                      64 === r
+                        ? l((t >> 16) & 255)
+                        : 64 === s
+                        ? l((t >> 16) & 255, (t >> 8) & 255)
+                        : l((t >> 16) & 255, (t >> 8) & 255, 255 & t))
+                return n
+              },
+          f = n ? (e) => h(Buffer.from(e, "base64")) : (e) => h(d(e), (e) => e.charCodeAt(0)),
+          g = n
+            ? (e) => Buffer.from(e, "base64").toString("utf8")
+            : i
+            ? (e) => i.decode(f(e))
+            : (e) => d(e).replace(u, p),
+          m = (e) => g(c(e.replace(/[-_]/g, (e) => ("-" == e ? "+" : "/"))))
+      },
+      620: (e, t, r) => {
+        r.d(t, { Kj: () => Ct })
+        class s {
+          valueOf() {}
+          liquidMethodMissing(e) {}
+        }
+        var n = function () {
+          return (n =
+            Object.assign ||
+            function (e) {
+              for (var t, r = 1, s = arguments.length; r < s; r++)
+                for (var n in (t = arguments[r]))
+                  Object.prototype.hasOwnProperty.call(t, n) && (e[n] = t[n])
+              return e
+            }).apply(this, arguments)
+        }
+        const i = Object.prototype.toString,
+          o = String.prototype.toLowerCase
+        function a(e) {
+          return "[object String]" === i.call(e)
+        }
+        function l(e) {
+          return "function" == typeof e
+        }
+        function h(e) {
+          return d((e = c(e))) ? "" : String(e)
+        }
+        function c(e) {
+          return e instanceof s ? e.valueOf() : e
+        }
+        function u(e) {
+          return "number" == typeof e
+        }
+        function p(e) {
+          return e && l(e.toLiquid) ? p(e.toLiquid()) : e
+        }
+        function d(e) {
+          return null == e
+        }
+        function f(e) {
+          return "[object Array]" === i.call(e)
+        }
+        function g(e, t) {
+          e = e || {}
+          for (const r in e) if (e.hasOwnProperty(r) && !1 === t(e[r], r, e)) break
+          return e
+        }
+        function m(e) {
+          return e[e.length - 1]
+        }
+        function w(e) {
+          const t = typeof e
+          return null !== e && ("object" === t || "function" === t)
+        }
+        function T(e, t, r = 1) {
+          const s = []
+          for (let n = e; n < t; n += r) s.push(n)
+          return s
+        }
+        function y(e, t, r = " ") {
+          return b(e, t, r, (e, t) => t + e)
+        }
+        function b(e, t, r, s) {
+          let n = t - (e = String(e)).length
+          for (; n-- > 0; ) e = s(e, r)
+          return e
+        }
+        function k(e) {
+          return e
+        }
+        function v(e) {
+          return e.replace(/(\w?)([A-Z])/g, (e, t, r) => (t ? t + "_" : "") + r.toLowerCase())
+        }
+        function _(e, t) {
+          return null == e && null == t
+            ? 0
+            : null == e
+            ? 1
+            : null == t || (e = o.call(e)) < (t = o.call(t))
+            ? -1
+            : e > t
+            ? 1
+            : 0
+        }
+        class x {
+          constructor(e, t, r, s) {
+            ;(this.key = e), (this.value = t), (this.next = r), (this.prev = s)
+          }
+        }
+        class O {
+          constructor(e, t = 0) {
+            ;(this.limit = e),
+              (this.size = t),
+              (this.cache = {}),
+              (this.head = new x("HEAD", null, null, null)),
+              (this.tail = new x("TAIL", null, null, null)),
+              (this.head.next = this.tail),
+              (this.tail.prev = this.head)
+          }
+          write(e, t) {
+            if (this.cache[e]) this.cache[e].value = t
+            else {
+              const r = new x(e, t, this.head.next, this.head)
+              ;(this.head.next.prev = r),
+                (this.head.next = r),
+                (this.cache[e] = r),
+                this.size++,
+                this.ensureLimit()
+            }
+          }
+          read(e) {
+            if (!this.cache[e]) return
+            const { value: t } = this.cache[e]
+            return this.remove(e), this.write(e, t), t
+          }
+          remove(e) {
+            const t = this.cache[e]
+            ;(t.prev.next = t.next), (t.next.prev = t.prev), delete this.cache[e], this.size--
+          }
+          clear() {
+            ;(this.head.next = this.tail),
+              (this.tail.prev = this.head),
+              (this.size = 0),
+              (this.cache = {})
+          }
+          ensureLimit() {
+            this.size > this.limit && this.remove(this.tail.prev.key)
+          }
+        }
+        var S = Object.freeze({
+          resolve: function (e, t, r) {
+            return (
+              e.length && "/" !== m(e) && (e += "/"),
+              (function (e, t) {
+                const r = document.createElement("base")
+                r.href = e
+                const s = document.getElementsByTagName("head")[0]
+                s.insertBefore(r, s.firstChild)
+                const n = document.createElement("a")
+                n.href = t
+                const i = n.href
+                return s.removeChild(r), i
+              })(e, t).replace(/^(\w+:\/\/[^/]+)(\/[^?]+)/, (e, t, s) => {
+                const n = s.split("/").pop()
+                return /\.\w+$/.test(n) ? e : t + s + r
+              })
+            )
+          },
+          readFile: async function (e) {
+            return new Promise((t, r) => {
+              const s = new XMLHttpRequest()
+              ;(s.onload = () => {
+                s.status >= 200 && s.status < 300 ? t(s.responseText) : r(new Error(s.statusText))
+              }),
+                (s.onerror = () => {
+                  r(new Error("An error occurred whilst receiving the response."))
+                }),
+                s.open("GET", e),
+                s.send()
+            })
+          },
+          readFileSync: function (e) {
+            const t = new XMLHttpRequest()
+            if ((t.open("GET", e, !1), t.send(), t.status < 200 || t.status >= 300))
+              throw new Error(t.statusText)
+            return t.responseText
+          },
+          exists: async function (e) {
+            return !0
+          },
+          existsSync: function (e) {
+            return !0
+          },
+        })
+        function q(e) {
+          return e && l(e.equals)
+        }
+        function E(e, t) {
+          return !R(e, t)
+        }
+        function R(e, t) {
+          return t.opts.jsTruthy ? !e : !1 === e || null == e
+        }
+        const A = {
+            "==": (e, t) => (q(e) ? e.equals(t) : q(t) ? t.equals(e) : e === t),
+            "!=": (e, t) => (q(e) ? !e.equals(t) : q(t) ? !t.equals(e) : e !== t),
+            ">": (e, t) => (q(e) ? e.gt(t) : q(t) ? t.lt(e) : e > t),
+            "<": (e, t) => (q(e) ? e.lt(t) : q(t) ? t.gt(e) : e < t),
+            ">=": (e, t) => (q(e) ? e.geq(t) : q(t) ? t.leq(e) : e >= t),
+            "<=": (e, t) => (q(e) ? e.leq(t) : q(t) ? t.geq(e) : e <= t),
+            contains: (e, t) => !(!e || !l(e.indexOf)) && e.indexOf(t) > -1,
+            and: (e, t, r) => E(e, r) && E(t, r),
+            or: (e, t, r) => E(e, r) || E(t, r),
+          },
+          D = [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 4, 4, 4, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 20, 2, 8, 0, 0, 0, 0, 8, 0, 0, 0, 64, 0, 65, 0, 0, 33, 33, 33, 33, 33, 33, 33,
+            33, 33, 33, 0, 0, 2, 2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+          ]
+        function F(e) {
+          const t = {}
+          for (const [r, s] of Object.entries(e)) {
+            let e = t
+            for (let t = 0; t < r.length; t++) {
+              const s = r[t]
+              ;(e[s] = e[s] || {}),
+                t === r.length - 1 && 1 & D[r.charCodeAt(t)] && (e[s].needBoundary = !0),
+                (e = e[s])
+            }
+            ;(e.handler = s), (e.end = !0)
+          }
+          return t
+        }
+        D[160] =
+          D[5760] =
+          D[6158] =
+          D[8192] =
+          D[8193] =
+          D[8194] =
+          D[8195] =
+          D[8196] =
+          D[8197] =
+          D[8198] =
+          D[8199] =
+          D[8200] =
+          D[8201] =
+          D[8202] =
+          D[8232] =
+          D[8233] =
+          D[8239] =
+          D[8287] =
+          D[12288] =
+            4
+        const M = {
+          root: ["."],
+          cache: void 0,
+          extname: "",
+          fs: S,
+          dynamicPartials: !0,
+          jsTruthy: !1,
+          trimTagRight: !1,
+          trimTagLeft: !1,
+          trimOutputRight: !1,
+          trimOutputLeft: !1,
+          greedy: !0,
+          tagDelimiterLeft: "{%",
+          tagDelimiterRight: "%}",
+          outputDelimiterLeft: "{{",
+          outputDelimiterRight: "}}",
+          preserveTimezones: !1,
+          strictFilters: !1,
+          strictVariables: !1,
+          lenientIf: !1,
+          globals: {},
+          keepOutputType: !1,
+          operators: A,
+          operatorsTrie: F(A),
+        }
+        function L(e) {
+          if (
+            ((e = e || {}).hasOwnProperty("root") && (e.root = P(e.root)),
+            e.hasOwnProperty("cache"))
+          ) {
+            let t
+            ;(t =
+              "number" == typeof e.cache
+                ? e.cache > 0
+                  ? new O(e.cache)
+                  : void 0
+                : "object" == typeof e.cache
+                ? e.cache
+                : e.cache
+                ? new O(1024)
+                : void 0),
+              (e.cache = t)
+          }
+          return e.hasOwnProperty("operators") && (e.operatorsTrie = F(e.operators)), e
+        }
+        function P(e) {
+          return f(e) ? e : a(e) ? [e] : []
+        }
+        class N extends Error {
+          constructor(e, t) {
+            super(e.message), (this.originalError = e), (this.token = t), (this.context = "")
+          }
+          update() {
+            const e = this.originalError
+            ;(this.context = (function (e) {
+              const [t] = e.getPosition(),
+                r = e.input.split("\n"),
+                s = Math.max(t - 2, 1),
+                n = Math.min(t + 3, r.length)
+              return T(s, n + 1)
+                .map(
+                  (e) => `${e === t ? ">> " : "   "}${y(String(e), String(n).length)}| ${r[e - 1]}`
+                )
+                .join("\n")
+            })(this.token)),
+              (this.message = (function (e, t) {
+                t.file && (e += `, file:${t.file}`)
+                const [r, s] = t.getPosition()
+                return e + `, line:${r}, col:${s}`
+              })(e.message, this.token)),
+              (this.stack =
+                this.message + "\n" + this.context + "\n" + this.stack + "\nFrom " + e.stack)
+          }
+        }
+        class $ extends N {
+          constructor(e, t) {
+            super(new Error(e), t), (this.name = "TokenizationError"), super.update()
+          }
+        }
+        class C extends N {
+          constructor(e, t) {
+            super(e, t), (this.name = "ParseError"), (this.message = e.message), super.update()
+          }
+        }
+        class I extends N {
+          constructor(e, t) {
+            super(e, t.token),
+              (this.name = "RenderError"),
+              (this.message = e.message),
+              super.update()
+          }
+          static is(e) {
+            return "RenderError" === e.name
+          }
+        }
+        class B extends N {
+          constructor(e, t) {
+            super(e, t),
+              (this.name = "UndefinedVariableError"),
+              (this.message = e.message),
+              super.update()
+          }
+        }
+        class j extends Error {
+          constructor(e) {
+            super(`undefined variable: ${e}`),
+              (this.name = "InternalUndefinedVariableError"),
+              (this.variableName = e)
+          }
+        }
+        class V extends Error {
+          constructor(e) {
+            super(e), (this.name = "AssertionError"), (this.message = e + "")
+          }
+        }
+        class z {
+          constructor(e = {}, t = M, r = !1) {
+            ;(this.scopes = [{}]),
+              (this.registers = {}),
+              (this.sync = r),
+              (this.opts = t),
+              (this.globals = t.globals),
+              (this.environments = e)
+          }
+          getRegister(e, t = {}) {
+            return (this.registers[e] = this.registers[e] || t)
+          }
+          setRegister(e, t) {
+            return (this.registers[e] = t)
+          }
+          saveRegister(...e) {
+            return e.map((e) => [e, this.getRegister(e)])
+          }
+          restoreRegister(e) {
+            return e.forEach(([e, t]) => this.setRegister(e, t))
+          }
+          getAll() {
+            return [this.globals, this.environments, ...this.scopes].reduce((e, t) => n(e, t), {})
+          }
+          get(e) {
+            const t = this.findScope(e[0])
+            return this.getFromScope(t, e)
+          }
+          getFromScope(e, t) {
+            return (
+              "string" == typeof t && (t = t.split(".")),
+              t.reduce((e, t) => {
+                if (
+                  ((n = t),
+                  (e = d((r = e))
+                    ? r
+                    : l((r = p(r))[n])
+                    ? r[n]()
+                    : r instanceof s
+                    ? r.hasOwnProperty(n)
+                      ? r[n]
+                      : r.liquidMethodMissing(n)
+                    : "size" === n
+                    ? (function (e) {
+                        return f(e) || a(e) ? e.length : e.size
+                      })(r)
+                    : "first" === n
+                    ? (function (e) {
+                        return f(e) ? e[0] : e.first
+                      })(r)
+                    : "last" === n
+                    ? (function (e) {
+                        return f(e) ? e[e.length - 1] : e.last
+                      })(r)
+                    : r[n]),
+                  d(e) && this.opts.strictVariables)
+                )
+                  throw new j(t)
+                var r, n
+                return e
+              }, e)
+            )
+          }
+          push(e) {
+            return this.scopes.push(e)
+          }
+          pop() {
+            return this.scopes.pop()
+          }
+          bottom() {
+            return this.scopes[0]
+          }
+          findScope(e) {
+            for (let t = this.scopes.length - 1; t >= 0; t--) {
+              const r = this.scopes[t]
+              if (e in r) return r
+            }
+            return e in this.environments ? this.environments : this.globals
+          }
+        }
+        var U
+        function H(e) {
+          return Q(e) === U.Operator
+        }
+        function J(e) {
+          return Q(e) === U.HTML
+        }
+        function W(e) {
+          return Q(e) === U.Tag
+        }
+        function K(e) {
+          return Q(e) === U.Quoted
+        }
+        function Q(e) {
+          return e ? e.kind : -1
+        }
+        function Z(e, t) {
+          if (!e || !J(e)) return
+          const r = t ? 4 : 16
+          for (; D[e.input.charCodeAt(e.end - 1 - e.trimRight)] & r; ) e.trimRight++
+        }
+        function Y(e, t) {
+          if (!e || !J(e)) return
+          const r = t ? 4 : 16
+          for (; D[e.input.charCodeAt(e.begin + e.trimLeft)] & r; ) e.trimLeft++
+          "\n" === e.input.charAt(e.begin + e.trimLeft) && e.trimLeft++
+        }
+        !(function (e) {
+          ;(e[(e.Number = 1)] = "Number"),
+            (e[(e.Literal = 2)] = "Literal"),
+            (e[(e.Tag = 4)] = "Tag"),
+            (e[(e.Output = 8)] = "Output"),
+            (e[(e.HTML = 16)] = "HTML"),
+            (e[(e.Filter = 32)] = "Filter"),
+            (e[(e.Hash = 64)] = "Hash"),
+            (e[(e.PropertyAccess = 128)] = "PropertyAccess"),
+            (e[(e.Word = 256)] = "Word"),
+            (e[(e.Range = 512)] = "Range"),
+            (e[(e.Quoted = 1024)] = "Quoted"),
+            (e[(e.Operator = 2048)] = "Operator"),
+            (e[(e.Delimited = 12)] = "Delimited")
+        })(U || (U = {}))
+        class X {
+          constructor(e, t, r, s, n) {
+            ;(this.kind = e), (this.input = t), (this.begin = r), (this.end = s), (this.file = n)
+          }
+          getText() {
+            return this.input.slice(this.begin, this.end)
+          }
+          getPosition() {
+            let [e, t] = [1, 1]
+            for (let r = 0; r < this.begin; r++) "\n" === this.input[r] ? (e++, (t = 1)) : t++
+            return [e, t]
+          }
+          size() {
+            return this.end - this.begin
+          }
+        }
+        class G extends X {
+          constructor(e, t) {
+            super(U.Number, e.input, e.begin, t ? t.end : e.end, e.file),
+              (this.whole = e),
+              (this.decimal = t)
+          }
+        }
+        class ee extends X {
+          constructor(e, t, r, s) {
+            super(U.Word, e, t, r, s),
+              (this.input = e),
+              (this.begin = t),
+              (this.end = r),
+              (this.file = s),
+              (this.content = this.getText())
+          }
+          isNumber(e = !1) {
+            for (
+              let t = e && 64 & D[this.input.charCodeAt(this.begin)] ? this.begin + 1 : this.begin;
+              t < this.end;
+              t++
+            )
+              if (!(32 & D[this.input.charCodeAt(t)])) return !1
+            return !0
+          }
+        }
+        class te extends s {
+          equals(e) {
+            return !(
+              e instanceof te ||
+              (a((e = c(e))) || f(e) ? 0 !== e.length : !w(e) || 0 !== Object.keys(e).length)
+            )
+          }
+          gt() {
+            return !1
+          }
+          geq() {
+            return !1
+          }
+          lt() {
+            return !1
+          }
+          leq() {
+            return !1
+          }
+          valueOf() {
+            return ""
+          }
+        }
+        const re = new (class extends s {
+            equals(e) {
+              return d(c(e))
+            }
+            gt() {
+              return !1
+            }
+            geq() {
+              return !1
+            }
+            lt() {
+              return !1
+            }
+            leq() {
+              return !1
+            }
+            valueOf() {
+              return null
+            }
+          })(),
+          se = {
+            true: !0,
+            false: !1,
+            nil: re,
+            null: re,
+            empty: new te(),
+            blank: new (class extends te {
+              equals(e) {
+                return !1 === e || !!d(c(e)) || (a(e) ? /^\s*$/.test(e) : super.equals(e))
+              }
+            })(),
+          }
+        class ne extends X {
+          constructor(e, t, r, s) {
+            super(U.Literal, e, t, r, s),
+              (this.input = e),
+              (this.begin = t),
+              (this.end = r),
+              (this.file = s),
+              (this.literal = this.getText())
+          }
+        }
+        const ie = {
+          "==": 1,
+          "!=": 1,
+          ">": 1,
+          "<": 1,
+          ">=": 1,
+          "<=": 1,
+          contains: 1,
+          and: 0,
+          or: 0,
+        }
+        class oe extends X {
+          constructor(e, t, r, s) {
+            super(U.Operator, e, t, r, s),
+              (this.input = e),
+              (this.begin = t),
+              (this.end = r),
+              (this.file = s),
+              (this.operator = this.getText())
+          }
+          getPrecedence() {
+            const e = this.getText()
+            return e in ie ? ie[e] : 1
+          }
+        }
+        const ae = /[\da-fA-F]/,
+          le = /[0-7]/,
+          he = { b: "\b", f: "\f", n: "\n", r: "\r", t: "\t", v: "\v" }
+        function ce(e) {
+          const t = e.charCodeAt(0)
+          return t >= 97 ? t - 87 : t >= 65 ? t - 55 : t - 48
+        }
+        function ue(e) {
+          let t = ""
+          for (let r = 1; r < e.length - 1; r++)
+            if ("\\" === e[r])
+              if (void 0 !== he[e[r + 1]]) t += he[e[++r]]
+              else if ("u" === e[r + 1]) {
+                let s = 0,
+                  n = r + 2
+                for (; n <= r + 5 && ae.test(e[n]); ) s = 16 * s + ce(e[n++])
+                ;(r = n - 1), (t += String.fromCharCode(s))
+              } else if (le.test(e[r + 1])) {
+                let s = r + 1,
+                  n = 0
+                for (; s <= r + 3 && le.test(e[s]); ) n = 8 * n + ce(e[s++])
+                ;(r = s - 1), (t += String.fromCharCode(n))
+              } else t += e[++r]
+            else t += e[r]
+          return t
+        }
+        class pe extends X {
+          constructor(e, t, r) {
+            super(U.PropertyAccess, e.input, e.begin, r, e.file),
+              (this.variable = e),
+              (this.props = t)
+          }
+          getVariableAsText() {
+            return this.variable instanceof ee
+              ? this.variable.getText()
+              : ue(this.variable.getText())
+          }
+        }
+        function de(e, t) {
+          if (!e) {
+            const r = t ? t() : `expect ${e} to be true`
+            throw new V(r)
+          }
+        }
+        class fe extends X {
+          constructor(e, t, r, s, n, i) {
+            super(U.Filter, r, s, n, i), (this.name = e), (this.args = t)
+          }
+        }
+        class ge extends X {
+          constructor(e, t, r, s, n, i) {
+            super(U.Hash, e, t, r, i),
+              (this.input = e),
+              (this.begin = t),
+              (this.end = r),
+              (this.name = s),
+              (this.value = n),
+              (this.file = i)
+          }
+        }
+        class me extends X {
+          constructor(e, t, r, s) {
+            super(U.Quoted, e, t, r, s),
+              (this.input = e),
+              (this.begin = t),
+              (this.end = r),
+              (this.file = s)
+          }
+        }
+        class we extends X {
+          constructor(e, t, r, s) {
+            super(U.HTML, e, t, r, s),
+              (this.input = e),
+              (this.begin = t),
+              (this.end = r),
+              (this.file = s),
+              (this.trimLeft = 0),
+              (this.trimRight = 0)
+          }
+          getContent() {
+            return this.input.slice(this.begin + this.trimLeft, this.end - this.trimRight)
+          }
+        }
+        class Te extends X {
+          constructor(e, t, r, s, n, i, o, a) {
+            super(e, r, s, n, a),
+              (this.trimLeft = !1),
+              (this.trimRight = !1),
+              (this.content = this.getText())
+            const l = "-" === t[0],
+              h = "-" === m(t)
+            ;(this.content = t.slice(l ? 1 : 0, h ? -1 : t.length).trim()),
+              (this.trimLeft = l || i),
+              (this.trimRight = h || o)
+          }
+        }
+        class ye extends Te {
+          constructor(e, t, r, s, n) {
+            const {
+                trimTagLeft: i,
+                trimTagRight: o,
+                tagDelimiterLeft: a,
+                tagDelimiterRight: l,
+              } = s,
+              h = e.slice(t + a.length, r - l.length)
+            super(U.Tag, h, e, t, r, i, o, n)
+            const c = new qe(this.content, s.operatorsTrie)
+            if (((this.name = c.readIdentifier().getText()), !this.name))
+              throw new $("illegal tag syntax", this)
+            c.skipBlank(), (this.args = c.remaining())
+          }
+        }
+        class be extends X {
+          constructor(e, t, r, s, n, i) {
+            super(U.Range, e, t, r, i),
+              (this.input = e),
+              (this.begin = t),
+              (this.end = r),
+              (this.lhs = s),
+              (this.rhs = n),
+              (this.file = i)
+          }
+        }
+        class ke extends Te {
+          constructor(e, t, r, s, n) {
+            const {
+                trimOutputLeft: i,
+                trimOutputRight: o,
+                outputDelimiterLeft: a,
+                outputDelimiterRight: l,
+              } = s,
+              h = e.slice(t + a.length, r - l.length)
+            super(U.Output, h, e, t, r, i, o, n)
+          }
+        }
+        class ve {
+          constructor(e) {
+            this.postfix = [...Se(e)]
+          }
+          *evaluate(e, t) {
+            de(e, () => "unable to evaluate: context not defined")
+            const r = []
+            for (const s of this.postfix)
+              if (H(s)) {
+                const t = yield r.pop(),
+                  n = yield r.pop(),
+                  i = Oe(e.opts.operators, s, n, t, e)
+                r.push(i)
+              } else r.push(yield _e(s, e, t && 1 === this.postfix.length))
+            return r[0]
+          }
+        }
+        function _e(e, t, r = !1) {
+          return Q(e) === U.PropertyAccess
+            ? (function (e, t, r) {
+                const s = e.getVariableAsText(),
+                  n = e.props.map((e) => _e(e, t, !1))
+                try {
+                  return t.get([s, ...n])
+                } catch (t) {
+                  if (r && "InternalUndefinedVariableError" === t.name) return null
+                  throw new B(t, e)
+                }
+              })(e, t, r)
+            : (function (e) {
+                return Q(e) === U.Range
+              })(e)
+            ? (function (e, t) {
+                return T(+_e(e.lhs, t), +_e(e.rhs, t) + 1)
+              })(e, t)
+            : (function (e) {
+                return Q(e) === U.Literal
+              })(e)
+            ? (function (e) {
+                return se[e.literal]
+              })(e)
+            : (function (e) {
+                return Q(e) === U.Number
+              })(e)
+            ? (function (e) {
+                const t = e.whole.content + "." + (e.decimal ? e.decimal.content : "")
+                return Number(t)
+              })(e)
+            : (function (e) {
+                return Q(e) === U.Word
+              })(e)
+            ? e.getText()
+            : K(e)
+            ? xe(e)
+            : void 0
+        }
+        function xe(e) {
+          return ue(e.getText())
+        }
+        function Oe(e, t, r, s, n) {
+          return (0, e[t.operator])(r, s, n)
+        }
+        function* Se(e) {
+          const t = []
+          for (const r of e)
+            if (H(r)) {
+              for (; t.length && t[t.length - 1].getPrecedence() > r.getPrecedence(); )
+                yield t.pop()
+              t.push(r)
+            } else yield r
+          for (; t.length; ) yield t.pop()
+        }
+        class qe {
+          constructor(e, t, r = "") {
+            ;(this.input = e),
+              (this.trie = t),
+              (this.file = r),
+              (this.p = 0),
+              (this.rawBeginAt = -1),
+              (this.N = e.length)
+          }
+          readExpression() {
+            return new ve(this.readExpressionTokens())
+          }
+          *readExpressionTokens() {
+            const e = this.readValue()
+            if (e)
+              for (yield e; this.p < this.N; ) {
+                const e = this.readOperator()
+                if (!e) return
+                const t = this.readValue()
+                if (!t) return
+                yield e, yield t
+              }
+          }
+          readOperator() {
+            this.skipBlank()
+            const e = (function (e, t, r, s = e.length) {
+              let n,
+                i = r,
+                o = t
+              for (; i[e[o]] && o < s; ) (i = i[e[o++]]), i.end && (n = i)
+              return n ? (n.needBoundary && 1 & D[e.charCodeAt(o)] ? -1 : o) : -1
+            })(this.input, this.p, this.trie, this.p + 8)
+            if (-1 !== e) return new oe(this.input, this.p, (this.p = e), this.file)
+          }
+          readFilters() {
+            const e = []
+            for (;;) {
+              const t = this.readFilter()
+              if (!t) return e
+              e.push(t)
+            }
+          }
+          readFilter() {
+            if ((this.skipBlank(), this.end())) return null
+            de("|" === this.peek(), () => `unexpected token at ${this.snapshot()}`), this.p++
+            const e = this.p,
+              t = this.readIdentifier()
+            if (!t.size()) return null
+            const r = []
+            if ((this.skipBlank(), ":" === this.peek()))
+              do {
+                ++this.p
+                const e = this.readFilterArg()
+                for (
+                  e && r.push(e);
+                  this.p < this.N && "," !== this.peek() && "|" !== this.peek();
 
-/***/ "./node_modules/js-base64/base64.mjs":
-/*!*******************************************!*\
-  !*** ./node_modules/js-base64/base64.mjs ***!
-  \*******************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+                )
+                  ++this.p
+              } while ("," === this.peek())
+            return new fe(t.getText(), r, this.input, e, this.p, this.file)
+          }
+          readFilterArg() {
+            const e = this.readValue()
+            if (!e) return
+            if ((this.skipBlank(), ":" !== this.peek())) return e
+            ++this.p
+            const t = this.readValue()
+            return [e.getText(), t]
+          }
+          readTopLevelTokens(e = M) {
+            const t = []
+            for (; this.p < this.N; ) {
+              const r = this.readTopLevelToken(e)
+              t.push(r)
+            }
+            return (
+              (function (e, t) {
+                let r = !1
+                for (let s = 0; s < e.length; s++) {
+                  const n = e[s]
+                  Q(n) & U.Delimited &&
+                    (!r && n.trimLeft && Z(e[s - 1], t.greedy),
+                    W(n) && ("raw" === n.name ? (r = !0) : "endraw" === n.name && (r = !1)),
+                    !r && n.trimRight && Y(e[s + 1], t.greedy))
+                }
+              })(t, e),
+              t
+            )
+          }
+          readTopLevelToken(e) {
+            const { tagDelimiterLeft: t, outputDelimiterLeft: r } = e
+            return this.rawBeginAt > -1
+              ? this.readEndrawOrRawContent(e)
+              : this.match(t)
+              ? this.readTagToken(e)
+              : this.match(r)
+              ? this.readOutputToken(e)
+              : this.readHTMLToken(e)
+          }
+          readHTMLToken(e) {
+            const t = this.p
+            for (; this.p < this.N; ) {
+              const { tagDelimiterLeft: t, outputDelimiterLeft: r } = e
+              if (this.match(t)) break
+              if (this.match(r)) break
+              ++this.p
+            }
+            return new we(this.input, t, this.p, this.file)
+          }
+          readTagToken(e = M) {
+            const { file: t, input: r } = this,
+              s = this.p
+            if (-1 === this.readToDelimiter(e.tagDelimiterRight))
+              throw this.mkError(`tag ${this.snapshot(s)} not closed`, s)
+            const n = new ye(r, s, this.p, e, t)
+            return "raw" === n.name && (this.rawBeginAt = s), n
+          }
+          readToDelimiter(e) {
+            for (; this.p < this.N; )
+              if (8 & this.peekType()) this.readQuoted()
+              else if ((++this.p, this.rmatch(e))) return this.p
+            return -1
+          }
+          readOutputToken(e = M) {
+            const { file: t, input: r } = this,
+              { outputDelimiterRight: s } = e,
+              n = this.p
+            if (-1 === this.readToDelimiter(s))
+              throw this.mkError(`output ${this.snapshot(n)} not closed`, n)
+            return new ke(r, n, this.p, e, t)
+          }
+          readEndrawOrRawContent(e) {
+            const { tagDelimiterLeft: t, tagDelimiterRight: r } = e,
+              s = this.p
+            let n = this.readTo(t) - t.length
+            for (; this.p < this.N; )
+              if ("endraw" === this.readIdentifier().getText())
+                for (; this.p <= this.N; ) {
+                  if (this.rmatch(r)) {
+                    const t = this.p
+                    return s === n
+                      ? ((this.rawBeginAt = -1), new ye(this.input, s, t, e, this.file))
+                      : ((this.p = n), new we(this.input, s, n, this.file))
+                  }
+                  if (this.rmatch(t)) break
+                  this.p++
+                }
+              else n = this.readTo(t) - t.length
+            throw this.mkError(`raw ${this.snapshot(this.rawBeginAt)} not closed`, s)
+          }
+          mkError(e, t) {
+            return new $(e, new ee(this.input, t, this.N, this.file))
+          }
+          snapshot(e = this.p) {
+            return JSON.stringify(
+              (16, (t = this.input.slice(e)).length > 16 ? t.substr(0, 13) + "..." : t)
+            )
+            var t
+          }
+          readWord() {
+            return (
+              console.warn("Tokenizer#readWord() will be removed, use #readIdentifier instead"),
+              this.readIdentifier()
+            )
+          }
+          readIdentifier() {
+            this.skipBlank()
+            const e = this.p
+            for (; 1 & this.peekType(); ) ++this.p
+            return new ee(this.input, e, this.p, this.file)
+          }
+          readHashes() {
+            const e = []
+            for (;;) {
+              const t = this.readHash()
+              if (!t) return e
+              e.push(t)
+            }
+          }
+          readHash() {
+            this.skipBlank(), "," === this.peek() && ++this.p
+            const e = this.p,
+              t = this.readIdentifier()
+            if (!t.size()) return
+            let r
+            return (
+              this.skipBlank(),
+              ":" === this.peek() && (++this.p, (r = this.readValue())),
+              new ge(this.input, e, this.p, t, r, this.file)
+            )
+          }
+          remaining() {
+            return this.input.slice(this.p)
+          }
+          advance(e = 1) {
+            this.p += e
+          }
+          end() {
+            return this.p >= this.N
+          }
+          readTo(e) {
+            for (; this.p < this.N; ) if ((++this.p, this.rmatch(e))) return this.p
+            return -1
+          }
+          readValue() {
+            const e = this.readQuoted() || this.readRange()
+            if (e) return e
+            if ("[" === this.peek()) {
+              this.p++
+              const e = this.readQuoted()
+              if (!e) return
+              if ("]" !== this.peek()) return
+              return this.p++, new pe(e, [], this.p)
+            }
+            const t = this.readIdentifier()
+            if (!t.size()) return
+            let r = t.isNumber(!0)
+            const s = []
+            for (;;)
+              if ("[" === this.peek()) {
+                ;(r = !1), this.p++
+                const e = this.readValue() || new ee(this.input, this.p, this.p, this.file)
+                this.readTo("]"), s.push(e)
+              } else {
+                if ("." !== this.peek() || "." === this.peek(1)) break
+                {
+                  this.p++
+                  const e = this.readIdentifier()
+                  if (!e.size()) break
+                  e.isNumber() || (r = !1), s.push(e)
+                }
+              }
+            return !s.length && se.hasOwnProperty(t.content)
+              ? new ne(this.input, t.begin, t.end, this.file)
+              : r
+              ? new G(t, s[0])
+              : new pe(t, s, this.p)
+          }
+          readRange() {
+            this.skipBlank()
+            const e = this.p
+            if ("(" !== this.peek()) return
+            ++this.p
+            const t = this.readValueOrThrow()
+            this.p += 2
+            const r = this.readValueOrThrow()
+            return ++this.p, new be(this.input, e, this.p, t, r, this.file)
+          }
+          readValueOrThrow() {
+            const e = this.readValue()
+            return de(e, () => `unexpected token ${this.snapshot()}, value expected`), e
+          }
+          readQuoted() {
+            this.skipBlank()
+            const e = this.p
+            if (!(8 & this.peekType())) return
+            ++this.p
+            let t = !1
+            for (; this.p < this.N && (++this.p, this.input[this.p - 1] !== this.input[e] || t); )
+              t ? (t = !1) : "\\" === this.input[this.p - 1] && (t = !0)
+            return new me(this.input, e, this.p, this.file)
+          }
+          readFileName() {
+            const e = this.p
+            for (; !(4 & this.peekType()) && "," !== this.peek() && this.p < this.N; ) this.p++
+            return new ee(this.input, e, this.p, this.file)
+          }
+          match(e) {
+            for (let t = 0; t < e.length; t++) if (e[t] !== this.input[this.p + t]) return !1
+            return !0
+          }
+          rmatch(e) {
+            for (let t = 0; t < e.length; t++)
+              if (e[e.length - 1 - t] !== this.input[this.p - 1 - t]) return !1
+            return !0
+          }
+          peekType(e = 0) {
+            return D[this.input.charCodeAt(this.p + e)]
+          }
+          peek(e = 0) {
+            return this.input[this.p + e]
+          }
+          skipBlank() {
+            for (; 4 & this.peekType(); ) ++this.p
+          }
+        }
+        class Ee {
+          constructor(e) {
+            ;(this.html = ""),
+              (this.break = !1),
+              (this.continue = !1),
+              (this.keepOutputType = !1),
+              (this.keepOutputType = e)
+          }
+          write(e) {
+            ;(e = !0 === this.keepOutputType ? c(e) : h(c(e))),
+              !0 === this.keepOutputType && "string" != typeof e && "" === this.html
+                ? (this.html = e)
+                : (this.html = h(this.html) + h(e))
+          }
+        }
+        class Re {
+          *renderTemplates(e, t, r) {
+            r || (r = new Ee(t.opts.keepOutputType))
+            for (const s of e)
+              try {
+                const e = yield s.render(t, r)
+                if ((e && r.write(e), r.break || r.continue)) break
+              } catch (e) {
+                throw I.is(e) ? e : new I(e, s)
+              }
+            return r.html
+          }
+        }
+        class Ae {
+          constructor(e, t) {
+            ;(this.handlers = {}),
+              (this.stopRequested = !1),
+              (this.tokens = e),
+              (this.parseToken = t)
+          }
+          on(e, t) {
+            return (this.handlers[e] = t), this
+          }
+          trigger(e, t) {
+            const r = this.handlers[e]
+            return !!r && (r(t), !0)
+          }
+          start() {
+            let e
+            for (this.trigger("start"); !this.stopRequested && (e = this.tokens.shift()); ) {
+              if (this.trigger("token", e)) continue
+              if (W(e) && this.trigger(`tag:${e.name}`, e)) continue
+              const t = this.parseToken(e, this.tokens)
+              this.trigger("template", t)
+            }
+            return this.stopRequested || this.trigger("end"), this
+          }
+          stop() {
+            return (this.stopRequested = !0), this
+          }
+        }
+        class De {
+          constructor(e) {
+            this.token = e
+          }
+        }
+        class Fe {
+          constructor(e) {
+            this.hash = {}
+            const t = new qe(e, {})
+            for (const e of t.readHashes()) this.hash[e.name.content] = e.value
+          }
+          *render(e) {
+            const t = {}
+            for (const r of Object.keys(this.hash)) t[r] = yield _e(this.hash[r], e)
+            return t
+          }
+        }
+        class Me {
+          constructor(e, t, r, s) {
+            ;(this.name = e), (this.impl = t || k), (this.args = r), (this.liquid = s)
+          }
+          render(e, t) {
+            const r = []
+            for (const e of this.args) f(e) ? r.push([e[0], _e(e[1], t)]) : r.push(_e(e, t))
+            return this.impl.apply({ context: t, liquid: this.liquid }, [e, ...r])
+          }
+        }
+        class Le {
+          constructor(e, t) {
+            this.filters = []
+            const r = new qe(e, t.options.operatorsTrie)
+            ;(this.initial = r.readExpression()),
+              (this.filters = r
+                .readFilters()
+                .map(({ name: e, args: r }) => new Me(e, t.filters.get(e), r, t)))
+          }
+          *value(e, t) {
+            t =
+              t ||
+              (e.opts.lenientIf && this.filters.length > 0 && "default" === this.filters[0].name)
+            let r = yield this.initial.evaluate(e, t)
+            for (const t of this.filters) r = yield t.render(r, e)
+            return r
+          }
+        }
+        function Pe(e) {
+          const t = { then: (t) => t(e), catch: () => t }
+          return t
+        }
+        function Ne(e) {
+          const t = { then: (r, s) => (s ? s(e) : t), catch: (t) => t(e) }
+          return t
+        }
+        function $e(e) {
+          return (function (e) {
+            return e && l(e.then)
+          })(e)
+            ? e
+            : (function (e) {
+                return e && l(e.next) && l(e.throw) && l(e.return)
+              })(e)
+            ? (function t(r) {
+                let s
+                try {
+                  s = e.next(r)
+                } catch (e) {
+                  return Ne(e)
+                }
+                return s.done
+                  ? Pe(s.value)
+                  : $e(s.value).then(t, (r) => {
+                      let s
+                      try {
+                        s = e.throw(r)
+                      } catch (e) {
+                        return Ne(e)
+                      }
+                      return s.done ? Pe(s.value) : t(s.value)
+                    })
+              })()
+            : Pe(e)
+        }
+        function Ce(e) {
+          return Promise.resolve($e(e))
+        }
+        function Ie(e) {
+          let t
+          return (
+            $e(e)
+              .then((e) => ((t = e), Pe(t)))
+              .catch((e) => {
+                throw e
+              }),
+            t
+          )
+        }
+        class Be extends De {
+          constructor(e, t, r) {
+            super(e), (this.name = e.name)
+            const s = r.tags.get(e.name)
+            ;(this.impl = Object.create(s)),
+              (this.impl.liquid = r),
+              this.impl.parse && this.impl.parse(e, t)
+          }
+          *render(e, t) {
+            const r = yield new Fe(this.token.args).render(e),
+              s = this.impl
+            if (l(s.render)) return yield s.render(e, t, r)
+          }
+        }
+        class je extends De {
+          constructor(e, t) {
+            super(e), (this.value = new Le(e.content, t))
+          }
+          *render(e, t) {
+            const r = yield this.value.value(e, !1)
+            t.write(r)
+          }
+        }
+        class Ve extends De {
+          constructor(e) {
+            super(e), (this.str = e.getContent())
+          }
+          *render(e, t) {
+            t.write(this.str)
+          }
+        }
+        class ze {
+          constructor(e) {
+            this.liquid = e
+          }
+          parse(e) {
+            let t
+            const r = []
+            for (; (t = e.shift()); ) r.push(this.parseToken(t, e))
+            return r
+          }
+          parseToken(e, t) {
+            try {
+              return W(e)
+                ? new Be(e, t, this.liquid)
+                : Q(e) === U.Output
+                ? new je(e, this.liquid)
+                : new Ve(e)
+            } catch (t) {
+              throw new C(t, e)
+            }
+          }
+          parseStream(e) {
+            return new Ae(e, (e, t) => this.parseToken(e, t))
+          }
+        }
+        var Ue = {
+          parse: function (e) {
+            const t = new qe(e.args, this.liquid.options.operatorsTrie)
+            ;(this.key = t.readIdentifier().content),
+              t.skipBlank(),
+              de("=" === t.peek(), () => `illegal token ${e.getText()}`),
+              t.advance(),
+              (this.value = t.remaining())
+          },
+          render: function* (e) {
+            e.bottom()[this.key] = yield this.liquid._evalValue(this.value, e)
+          },
+        }
+        function He(e) {
+          return f(e)
+            ? e
+            : a(e) && e.length > 0
+            ? [e]
+            : w(e)
+            ? Object.keys(e).map((t) => [t, e[t]])
+            : []
+        }
+        function Je(e) {
+          return f(e) ? e : [e]
+        }
+        class We extends s {
+          constructor(e) {
+            super(), (this.i = 0), (this.length = e)
+          }
+          next() {
+            this.i++
+          }
+          index0() {
+            return this.i
+          }
+          index() {
+            return this.i + 1
+          }
+          first() {
+            return 0 === this.i
+          }
+          last() {
+            return this.i === this.length - 1
+          }
+          rindex() {
+            return this.length - this.i
+          }
+          rindex0() {
+            return this.length - this.i - 1
+          }
+          valueOf() {
+            return JSON.stringify(this)
+          }
+        }
+        var Ke,
+          Qe = {
+            type: "block",
+            parse: function (e, t) {
+              const r = new qe(e.args, this.liquid.options.operatorsTrie),
+                s = r.readIdentifier(),
+                n = r.readIdentifier(),
+                i = r.readValue()
+              let o
+              de(s.size() && "in" === n.content && i, () => `illegal tag: ${e.getText()}`),
+                (this.variable = s.content),
+                (this.collection = i),
+                (this.hash = new Fe(r.remaining())),
+                (this.templates = []),
+                (this.elseTemplates = [])
+              const a = this.liquid.parser
+                .parseStream(t)
+                .on("start", () => (o = this.templates))
+                .on("tag:else", () => (o = this.elseTemplates))
+                .on("tag:endfor", () => a.stop())
+                .on("template", (e) => o.push(e))
+                .on("end", () => {
+                  throw new Error(`tag ${e.getText()} not closed`)
+                })
+              a.start()
+            },
+            render: function* (e, t) {
+              const r = this.liquid.renderer
+              let s = He(yield _e(this.collection, e))
+              if (!s.length) return void (yield r.renderTemplates(this.elseTemplates, e, t))
+              const n = yield this.hash.render(e),
+                i = n.offset || 0,
+                o = void 0 === n.limit ? s.length : n.limit
+              ;(s = s.slice(i, i + o)), "reversed" in n && s.reverse()
+              const a = { forloop: new We(s.length) }
+              e.push(a)
+              for (const n of s) {
+                if (
+                  ((a[this.variable] = n), yield r.renderTemplates(this.templates, e, t), t.break)
+                ) {
+                  t.break = !1
+                  break
+                }
+                ;(t.continue = !1), a.forloop.next()
+              }
+              e.pop()
+            },
+          },
+          Ze = {
+            parse: function (e, t) {
+              const r = new qe(e.args, this.liquid.options.operatorsTrie)
+              ;(this.variable = (function (e) {
+                const t = e.readIdentifier().content
+                if (t) return t
+                const r = e.readQuoted()
+                return r ? xe(r) : void 0
+              })(r)),
+                de(this.variable, () => `${e.args} not valid identifier`),
+                (this.templates = [])
+              const s = this.liquid.parser.parseStream(t)
+              s
+                .on("tag:endcapture", () => s.stop())
+                .on("template", (e) => this.templates.push(e))
+                .on("end", () => {
+                  throw new Error(`tag ${e.getText()} not closed`)
+                }),
+                s.start()
+            },
+            render: function* (e) {
+              const t = this.liquid.renderer,
+                r = yield t.renderTemplates(this.templates, e)
+              e.bottom()[this.variable] = r
+            },
+          },
+          Ye = {
+            parse: function (e, t) {
+              ;(this.cond = new Le(e.args, this.liquid)),
+                (this.cases = []),
+                (this.elseTemplates = [])
+              let r = []
+              const s = this.liquid.parser
+                .parseStream(t)
+                .on("tag:when", (e) => {
+                  r = []
+                  const t = new qe(e.args, this.liquid.options.operatorsTrie)
+                  for (; !t.end(); ) {
+                    const e = t.readValue()
+                    e && this.cases.push({ val: e, templates: r }), t.readTo(",")
+                  }
+                })
+                .on("tag:else", () => (r = this.elseTemplates))
+                .on("tag:endcase", () => s.stop())
+                .on("template", (e) => r.push(e))
+                .on("end", () => {
+                  throw new Error(`tag ${e.getText()} not closed`)
+                })
+              s.start()
+            },
+            render: function* (e, t) {
+              const r = this.liquid.renderer,
+                s = c(yield this.cond.value(e, e.opts.lenientIf))
+              for (const n of this.cases)
+                if (_e(n.val, e, e.opts.lenientIf) === s)
+                  return void (yield r.renderTemplates(n.templates, e, t))
+              yield r.renderTemplates(this.elseTemplates, e, t)
+            },
+          },
+          Xe = {
+            parse: function (e, t) {
+              const r = this.liquid.parser.parseStream(t)
+              r
+                .on("token", (e) => {
+                  "endcomment" === e.name && r.stop()
+                })
+                .on("end", () => {
+                  throw new Error(`tag ${e.getText()} not closed`)
+                }),
+                r.start()
+            },
+          }
+        !(function (e) {
+          ;(e[(e.OUTPUT = 0)] = "OUTPUT"), (e[(e.STORE = 1)] = "STORE")
+        })(Ke || (Ke = {}))
+        var Ge = Ke,
+          et = {
+            parse: function (e) {
+              const t = e.args,
+                r = new qe(t, this.liquid.options.operatorsTrie)
+              ;(this.file = this.liquid.options.dynamicPartials ? r.readValue() : r.readFileName()),
+                de(this.file, () => `illegal argument "${e.args}"`)
+              const s = r.p
+              "with" === r.readIdentifier().content
+                ? (r.skipBlank(), ":" !== r.peek() ? (this.withVar = r.readValue()) : (r.p = s))
+                : (r.p = s),
+                (this.hash = new Fe(r.remaining()))
+            },
+            render: function* (e, t) {
+              const { liquid: r, hash: s, withVar: n, file: i } = this,
+                { renderer: o } = r,
+                a = e.opts.dynamicPartials
+                  ? K(i)
+                    ? yield o.renderTemplates(r.parse(xe(i)), e)
+                    : yield _e(i, e)
+                  : i.getText()
+              de(a, () => `illegal filename "${i.getText()}":"${a}"`)
+              const l = e.saveRegister("blocks", "blockMode")
+              e.setRegister("blocks", {}), e.setRegister("blockMode", Ge.OUTPUT)
+              const h = yield s.render(e)
+              n && (h[a] = _e(n, e))
+              const c = yield r._parseFile(a, e.opts, e.sync)
+              e.push(h), yield o.renderTemplates(c, e, t), e.pop(), e.restoreRegister(l)
+            },
+          },
+          tt = {
+            parse: function (e) {
+              const t = e.args,
+                r = new qe(t, this.liquid.options.operatorsTrie)
+              for (
+                this.file = this.liquid.options.dynamicPartials ? r.readValue() : r.readFileName(),
+                  de(this.file, () => `illegal argument "${e.args}"`);
+                !r.end();
 
-eval("/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"decode\": () => (/* binding */ decode)\n/* harmony export */ });\n/* unused harmony exports version, VERSION, atob, atobPolyfill, btoa, btoaPolyfill, fromBase64, toBase64, utob, encode, encodeURI, encodeURL, btou, isValid, fromUint8Array, toUint8Array, extendString, extendUint8Array, extendBuiltins, Base64 */\n/**\n *  base64.ts\n *\n *  Licensed under the BSD 3-Clause License.\n *    http://opensource.org/licenses/BSD-3-Clause\n *\n *  References:\n *    http://en.wikipedia.org/wiki/Base64\n *\n * @author Dan Kogai (https://github.com/dankogai)\n */\nconst version = '3.6.1';\n/**\n * @deprecated use lowercase `version`.\n */\nconst VERSION = version;\nconst _hasatob = typeof atob === 'function';\nconst _hasbtoa = typeof btoa === 'function';\nconst _hasBuffer = typeof Buffer === 'function';\nconst _TD = typeof TextDecoder === 'function' ? new TextDecoder() : undefined;\nconst _TE = typeof TextEncoder === 'function' ? new TextEncoder() : undefined;\nconst b64ch = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';\nconst b64chs = [...b64ch];\nconst b64tab = ((a) => {\n    let tab = {};\n    a.forEach((c, i) => tab[c] = i);\n    return tab;\n})(b64chs);\nconst b64re = /^(?:[A-Za-z\\d+\\/]{4})*?(?:[A-Za-z\\d+\\/]{2}(?:==)?|[A-Za-z\\d+\\/]{3}=?)?$/;\nconst _fromCC = String.fromCharCode.bind(String);\nconst _U8Afrom = typeof Uint8Array.from === 'function'\n    ? Uint8Array.from.bind(Uint8Array)\n    : (it, fn = (x) => x) => new Uint8Array(Array.prototype.slice.call(it, 0).map(fn));\nconst _mkUriSafe = (src) => src\n    .replace(/[+\\/]/g, (m0) => m0 == '+' ? '-' : '_')\n    .replace(/=+$/m, '');\nconst _tidyB64 = (s) => s.replace(/[^A-Za-z0-9\\+\\/]/g, '');\n/**\n * polyfill version of `btoa`\n */\nconst btoaPolyfill = (bin) => {\n    // console.log('polyfilled');\n    let u32, c0, c1, c2, asc = '';\n    const pad = bin.length % 3;\n    for (let i = 0; i < bin.length;) {\n        if ((c0 = bin.charCodeAt(i++)) > 255 ||\n            (c1 = bin.charCodeAt(i++)) > 255 ||\n            (c2 = bin.charCodeAt(i++)) > 255)\n            throw new TypeError('invalid character found');\n        u32 = (c0 << 16) | (c1 << 8) | c2;\n        asc += b64chs[u32 >> 18 & 63]\n            + b64chs[u32 >> 12 & 63]\n            + b64chs[u32 >> 6 & 63]\n            + b64chs[u32 & 63];\n    }\n    return pad ? asc.slice(0, pad - 3) + \"===\".substring(pad) : asc;\n};\n/**\n * does what `window.btoa` of web browsers do.\n * @param {String} bin binary string\n * @returns {string} Base64-encoded string\n */\nconst _btoa = _hasbtoa ? (bin) => btoa(bin)\n    : _hasBuffer ? (bin) => Buffer.from(bin, 'binary').toString('base64')\n        : btoaPolyfill;\nconst _fromUint8Array = _hasBuffer\n    ? (u8a) => Buffer.from(u8a).toString('base64')\n    : (u8a) => {\n        // cf. https://stackoverflow.com/questions/12710001/how-to-convert-uint8-array-to-base64-encoded-string/12713326#12713326\n        const maxargs = 0x1000;\n        let strs = [];\n        for (let i = 0, l = u8a.length; i < l; i += maxargs) {\n            strs.push(_fromCC.apply(null, u8a.subarray(i, i + maxargs)));\n        }\n        return _btoa(strs.join(''));\n    };\n/**\n * converts a Uint8Array to a Base64 string.\n * @param {boolean} [urlsafe] URL-and-filename-safe a la RFC4648 §5\n * @returns {string} Base64 string\n */\nconst fromUint8Array = (u8a, urlsafe = false) => urlsafe ? _mkUriSafe(_fromUint8Array(u8a)) : _fromUint8Array(u8a);\n// This trick is found broken https://github.com/dankogai/js-base64/issues/130\n// const utob = (src: string) => unescape(encodeURIComponent(src));\n// reverting good old fationed regexp\nconst cb_utob = (c) => {\n    if (c.length < 2) {\n        var cc = c.charCodeAt(0);\n        return cc < 0x80 ? c\n            : cc < 0x800 ? (_fromCC(0xc0 | (cc >>> 6))\n                + _fromCC(0x80 | (cc & 0x3f)))\n                : (_fromCC(0xe0 | ((cc >>> 12) & 0x0f))\n                    + _fromCC(0x80 | ((cc >>> 6) & 0x3f))\n                    + _fromCC(0x80 | (cc & 0x3f)));\n    }\n    else {\n        var cc = 0x10000\n            + (c.charCodeAt(0) - 0xD800) * 0x400\n            + (c.charCodeAt(1) - 0xDC00);\n        return (_fromCC(0xf0 | ((cc >>> 18) & 0x07))\n            + _fromCC(0x80 | ((cc >>> 12) & 0x3f))\n            + _fromCC(0x80 | ((cc >>> 6) & 0x3f))\n            + _fromCC(0x80 | (cc & 0x3f)));\n    }\n};\nconst re_utob = /[\\uD800-\\uDBFF][\\uDC00-\\uDFFFF]|[^\\x00-\\x7F]/g;\n/**\n * @deprecated should have been internal use only.\n * @param {string} src UTF-8 string\n * @returns {string} UTF-16 string\n */\nconst utob = (u) => u.replace(re_utob, cb_utob);\n//\nconst _encode = _hasBuffer\n    ? (s) => Buffer.from(s, 'utf8').toString('base64')\n    : _TE\n        ? (s) => _fromUint8Array(_TE.encode(s))\n        : (s) => _btoa(utob(s));\n/**\n * converts a UTF-8-encoded string to a Base64 string.\n * @param {boolean} [urlsafe] if `true` make the result URL-safe\n * @returns {string} Base64 string\n */\nconst encode = (src, urlsafe = false) => urlsafe\n    ? _mkUriSafe(_encode(src))\n    : _encode(src);\n/**\n * converts a UTF-8-encoded string to URL-safe Base64 RFC4648 §5.\n * @returns {string} Base64 string\n */\nconst encodeURI = (src) => encode(src, true);\n// This trick is found broken https://github.com/dankogai/js-base64/issues/130\n// const btou = (src: string) => decodeURIComponent(escape(src));\n// reverting good old fationed regexp\nconst re_btou = /[\\xC0-\\xDF][\\x80-\\xBF]|[\\xE0-\\xEF][\\x80-\\xBF]{2}|[\\xF0-\\xF7][\\x80-\\xBF]{3}/g;\nconst cb_btou = (cccc) => {\n    switch (cccc.length) {\n        case 4:\n            var cp = ((0x07 & cccc.charCodeAt(0)) << 18)\n                | ((0x3f & cccc.charCodeAt(1)) << 12)\n                | ((0x3f & cccc.charCodeAt(2)) << 6)\n                | (0x3f & cccc.charCodeAt(3)), offset = cp - 0x10000;\n            return (_fromCC((offset >>> 10) + 0xD800)\n                + _fromCC((offset & 0x3FF) + 0xDC00));\n        case 3:\n            return _fromCC(((0x0f & cccc.charCodeAt(0)) << 12)\n                | ((0x3f & cccc.charCodeAt(1)) << 6)\n                | (0x3f & cccc.charCodeAt(2)));\n        default:\n            return _fromCC(((0x1f & cccc.charCodeAt(0)) << 6)\n                | (0x3f & cccc.charCodeAt(1)));\n    }\n};\n/**\n * @deprecated should have been internal use only.\n * @param {string} src UTF-16 string\n * @returns {string} UTF-8 string\n */\nconst btou = (b) => b.replace(re_btou, cb_btou);\n/**\n * polyfill version of `atob`\n */\nconst atobPolyfill = (asc) => {\n    // console.log('polyfilled');\n    asc = asc.replace(/\\s+/g, '');\n    if (!b64re.test(asc))\n        throw new TypeError('malformed base64.');\n    asc += '=='.slice(2 - (asc.length & 3));\n    let u24, bin = '', r1, r2;\n    for (let i = 0; i < asc.length;) {\n        u24 = b64tab[asc.charAt(i++)] << 18\n            | b64tab[asc.charAt(i++)] << 12\n            | (r1 = b64tab[asc.charAt(i++)]) << 6\n            | (r2 = b64tab[asc.charAt(i++)]);\n        bin += r1 === 64 ? _fromCC(u24 >> 16 & 255)\n            : r2 === 64 ? _fromCC(u24 >> 16 & 255, u24 >> 8 & 255)\n                : _fromCC(u24 >> 16 & 255, u24 >> 8 & 255, u24 & 255);\n    }\n    return bin;\n};\n/**\n * does what `window.atob` of web browsers do.\n * @param {String} asc Base64-encoded string\n * @returns {string} binary string\n */\nconst _atob = _hasatob ? (asc) => atob(_tidyB64(asc))\n    : _hasBuffer ? (asc) => Buffer.from(asc, 'base64').toString('binary')\n        : atobPolyfill;\n//\nconst _toUint8Array = _hasBuffer\n    ? (a) => _U8Afrom(Buffer.from(a, 'base64'))\n    : (a) => _U8Afrom(_atob(a), c => c.charCodeAt(0));\n/**\n * converts a Base64 string to a Uint8Array.\n */\nconst toUint8Array = (a) => _toUint8Array(_unURI(a));\n//\nconst _decode = _hasBuffer\n    ? (a) => Buffer.from(a, 'base64').toString('utf8')\n    : _TD\n        ? (a) => _TD.decode(_toUint8Array(a))\n        : (a) => btou(_atob(a));\nconst _unURI = (a) => _tidyB64(a.replace(/[-_]/g, (m0) => m0 == '-' ? '+' : '/'));\n/**\n * converts a Base64 string to a UTF-8 string.\n * @param {String} src Base64 string.  Both normal and URL-safe are supported\n * @returns {string} UTF-8 string\n */\nconst decode = (src) => _decode(_unURI(src));\n/**\n * check if a value is a valid Base64 string\n * @param {String} src a value to check\n  */\nconst isValid = (src) => {\n    if (typeof src !== 'string')\n        return false;\n    const s = src.replace(/\\s+/g, '').replace(/=+$/, '');\n    return !/[^\\s0-9a-zA-Z\\+/]/.test(s) || !/[^\\s0-9a-zA-Z\\-_]/.test(s);\n};\n//\nconst _noEnum = (v) => {\n    return {\n        value: v, enumerable: false, writable: true, configurable: true\n    };\n};\n/**\n * extend String.prototype with relevant methods\n */\nconst extendString = function () {\n    const _add = (name, body) => Object.defineProperty(String.prototype, name, _noEnum(body));\n    _add('fromBase64', function () { return decode(this); });\n    _add('toBase64', function (urlsafe) { return encode(this, urlsafe); });\n    _add('toBase64URI', function () { return encode(this, true); });\n    _add('toBase64URL', function () { return encode(this, true); });\n    _add('toUint8Array', function () { return toUint8Array(this); });\n};\n/**\n * extend Uint8Array.prototype with relevant methods\n */\nconst extendUint8Array = function () {\n    const _add = (name, body) => Object.defineProperty(Uint8Array.prototype, name, _noEnum(body));\n    _add('toBase64', function (urlsafe) { return fromUint8Array(this, urlsafe); });\n    _add('toBase64URI', function () { return fromUint8Array(this, true); });\n    _add('toBase64URL', function () { return fromUint8Array(this, true); });\n};\n/**\n * extend Builtin prototypes with relevant methods\n */\nconst extendBuiltins = () => {\n    extendString();\n    extendUint8Array();\n};\nconst gBase64 = {\n    version: version,\n    VERSION: VERSION,\n    atob: _atob,\n    atobPolyfill: atobPolyfill,\n    btoa: _btoa,\n    btoaPolyfill: btoaPolyfill,\n    fromBase64: decode,\n    toBase64: encode,\n    encode: encode,\n    encodeURI: encodeURI,\n    encodeURL: encodeURI,\n    utob: utob,\n    btou: btou,\n    decode: decode,\n    isValid: isValid,\n    fromUint8Array: fromUint8Array,\n    toUint8Array: toUint8Array,\n    extendString: extendString,\n    extendUint8Array: extendUint8Array,\n    extendBuiltins: extendBuiltins,\n};\n// makecjs:CUT //\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n// and finally,\n\n\n\n//# sourceURL=webpack://SuperwallSDKJS/./node_modules/js-base64/base64.mjs?");
+              ) {
+                r.skipBlank()
+                const e = r.p,
+                  t = r.readIdentifier()
+                if (
+                  ("with" === t.content || "for" === t.content) &&
+                  (r.skipBlank(), ":" !== r.peek())
+                ) {
+                  const e = r.readValue()
+                  if (e) {
+                    const s = r.p
+                    let n
+                    "as" === r.readIdentifier().content ? (n = r.readIdentifier()) : (r.p = s),
+                      (this[t.content] = { value: e, alias: n && n.content }),
+                      r.skipBlank(),
+                      "," === r.peek() && r.advance()
+                    continue
+                  }
+                }
+                r.p = e
+                break
+              }
+              this.hash = new Fe(r.remaining())
+            },
+            render: function* (e, t) {
+              const { liquid: r, file: s, hash: n } = this,
+                { renderer: i } = r,
+                o = e.opts.dynamicPartials
+                  ? K(s)
+                    ? yield i.renderTemplates(r.parse(xe(s)), e)
+                    : _e(s, e)
+                  : s.getText()
+              de(o, () => `illegal filename "${s.getText()}":"${o}"`)
+              const a = new z({}, e.opts, e.sync),
+                l = yield n.render(e)
+              if (this.with) {
+                const { value: t, alias: r } = this.with
+                l[r || o] = _e(t, e)
+              }
+              if ((a.push(l), this.for)) {
+                const { value: s, alias: n } = this.for
+                let h = _e(s, e)
+                ;(h = He(h)), (l.forloop = new We(h.length))
+                for (const e of h) {
+                  l[n] = e
+                  const s = yield r._parseFile(o, a.opts, a.sync)
+                  yield i.renderTemplates(s, a, t), l.forloop.next()
+                }
+              } else {
+                const e = yield r._parseFile(o, a.opts, a.sync)
+                yield i.renderTemplates(e, a, t)
+              }
+            },
+          },
+          rt = {
+            parse: function (e) {
+              const t = new qe(e.args, this.liquid.options.operatorsTrie)
+              this.variable = t.readIdentifier().content
+            },
+            render: function (e, t) {
+              const r = e.environments
+              u(r[this.variable]) || (r[this.variable] = 0), t.write(h(--r[this.variable]))
+            },
+          },
+          st = {
+            parse: function (e) {
+              const t = new qe(e.args, this.liquid.options.operatorsTrie),
+                r = t.readValue()
+              for (
+                t.skipBlank(),
+                  this.candidates = [],
+                  r &&
+                    (":" === t.peek() ? ((this.group = r), t.advance()) : this.candidates.push(r));
+                !t.end();
 
-/***/ }),
-
-/***/ "./node_modules/liquidjs/dist/liquid.browser.esm.js":
-/*!**********************************************************!*\
-  !*** ./node_modules/liquidjs/dist/liquid.browser.esm.js ***!
-  \**********************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-eval("/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"Liquid\": () => (/* binding */ Liquid)\n/* harmony export */ });\n/* unused harmony exports AssertionError, Context, Drop, Emitter, Expression, Hash, InternalUndefinedVariableError, LiquidError, ParseError, ParseStream, RenderError, TagToken, Token, TokenKind, TokenizationError, Tokenizer, TypeGuards, UndefinedVariableError, Value, assert, createTrie, defaultOperators, evalQuotedToken, evalToken, isFalsy, isTruthy, toPromise, toThenable, toValue */\n/*\n * liquidjs@9.25.0, https://github.com/harttle/liquidjs\n * (c) 2016-2021 harttle\n * Released under the MIT License.\n */\nclass Drop {\r\n    valueOf() {\r\n        return undefined;\r\n    }\r\n    liquidMethodMissing(key) {\r\n        return undefined;\r\n    }\r\n}\n\n/*! *****************************************************************************\r\nCopyright (c) Microsoft Corporation. All rights reserved.\r\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use\r\nthis file except in compliance with the License. You may obtain a copy of the\r\nLicense at http://www.apache.org/licenses/LICENSE-2.0\r\n\r\nTHIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\r\nKIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED\r\nWARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,\r\nMERCHANTABLITY OR NON-INFRINGEMENT.\r\n\r\nSee the Apache Version 2.0 License for specific language governing permissions\r\nand limitations under the License.\r\n***************************************************************************** */\r\n\r\nvar __assign = function() {\r\n    __assign = Object.assign || function __assign(t) {\r\n        for (var s, i = 1, n = arguments.length; i < n; i++) {\r\n            s = arguments[i];\r\n            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];\r\n        }\r\n        return t;\r\n    };\r\n    return __assign.apply(this, arguments);\r\n};\n\nconst toStr = Object.prototype.toString;\r\nconst toLowerCase = String.prototype.toLowerCase;\r\n/*\r\n * Checks if value is classified as a String primitive or object.\r\n * @param {any} value The value to check.\r\n * @return {Boolean} Returns true if value is a string, else false.\r\n */\r\nfunction isString(value) {\r\n    return toStr.call(value) === '[object String]';\r\n}\r\nfunction isFunction(value) {\r\n    return typeof value === 'function';\r\n}\r\nfunction stringify(value) {\r\n    value = toValue(value);\r\n    return isNil(value) ? '' : String(value);\r\n}\r\nfunction toValue(value) {\r\n    return value instanceof Drop ? value.valueOf() : value;\r\n}\r\nfunction isNumber(value) {\r\n    return typeof value === 'number';\r\n}\r\nfunction toLiquid(value) {\r\n    if (value && isFunction(value.toLiquid))\r\n        return toLiquid(value.toLiquid());\r\n    return value;\r\n}\r\nfunction isNil(value) {\r\n    return value === null || value === undefined;\r\n}\r\nfunction isArray(value) {\r\n    // be compatible with IE 8\r\n    return toStr.call(value) === '[object Array]';\r\n}\r\n/*\r\n * Iterates over own enumerable string keyed properties of an object and invokes iteratee for each property.\r\n * The iteratee is invoked with three arguments: (value, key, object).\r\n * Iteratee functions may exit iteration early by explicitly returning false.\r\n * @param {Object} object The object to iterate over.\r\n * @param {Function} iteratee The function invoked per iteration.\r\n * @return {Object} Returns object.\r\n */\r\nfunction forOwn(object, iteratee) {\r\n    object = object || {};\r\n    for (const k in object) {\r\n        if (object.hasOwnProperty(k)) {\r\n            if (iteratee(object[k], k, object) === false)\r\n                break;\r\n        }\r\n    }\r\n    return object;\r\n}\r\nfunction last(arr) {\r\n    return arr[arr.length - 1];\r\n}\r\n/*\r\n * Checks if value is the language type of Object.\r\n * (e.g. arrays, functions, objects, regexes, new Number(0), and new String(''))\r\n * @param {any} value The value to check.\r\n * @return {Boolean} Returns true if value is an object, else false.\r\n */\r\nfunction isObject(value) {\r\n    const type = typeof value;\r\n    return value !== null && (type === 'object' || type === 'function');\r\n}\r\nfunction range(start, stop, step = 1) {\r\n    const arr = [];\r\n    for (let i = start; i < stop; i += step) {\r\n        arr.push(i);\r\n    }\r\n    return arr;\r\n}\r\nfunction padStart(str, length, ch = ' ') {\r\n    return pad(str, length, ch, (str, ch) => ch + str);\r\n}\r\nfunction padEnd(str, length, ch = ' ') {\r\n    return pad(str, length, ch, (str, ch) => str + ch);\r\n}\r\nfunction pad(str, length, ch, add) {\r\n    str = String(str);\r\n    let n = length - str.length;\r\n    while (n-- > 0)\r\n        str = add(str, ch);\r\n    return str;\r\n}\r\nfunction identify(val) {\r\n    return val;\r\n}\r\nfunction snakeCase(str) {\r\n    return str.replace(/(\\w?)([A-Z])/g, (_, a, b) => (a ? a + '_' : '') + b.toLowerCase());\r\n}\r\nfunction changeCase(str) {\r\n    const hasLowerCase = [...str].some(ch => ch >= 'a' && ch <= 'z');\r\n    return hasLowerCase ? str.toUpperCase() : str.toLowerCase();\r\n}\r\nfunction ellipsis(str, N) {\r\n    return str.length > N ? str.substr(0, N - 3) + '...' : str;\r\n}\r\n// compare string in case-insensitive way, undefined values to the tail\r\nfunction caseInsensitiveCompare(a, b) {\r\n    if (a == null && b == null)\r\n        return 0;\r\n    if (a == null)\r\n        return 1;\r\n    if (b == null)\r\n        return -1;\r\n    a = toLowerCase.call(a);\r\n    b = toLowerCase.call(b);\r\n    if (a < b)\r\n        return -1;\r\n    if (a > b)\r\n        return 1;\r\n    return 0;\r\n}\n\nclass Node {\r\n    constructor(key, value, next, prev) {\r\n        this.key = key;\r\n        this.value = value;\r\n        this.next = next;\r\n        this.prev = prev;\r\n    }\r\n}\r\nclass LRU {\r\n    constructor(limit, size = 0) {\r\n        this.limit = limit;\r\n        this.size = size;\r\n        this.cache = {};\r\n        this.head = new Node('HEAD', null, null, null);\r\n        this.tail = new Node('TAIL', null, null, null);\r\n        this.head.next = this.tail;\r\n        this.tail.prev = this.head;\r\n    }\r\n    write(key, value) {\r\n        if (this.cache[key]) {\r\n            this.cache[key].value = value;\r\n        }\r\n        else {\r\n            const node = new Node(key, value, this.head.next, this.head);\r\n            this.head.next.prev = node;\r\n            this.head.next = node;\r\n            this.cache[key] = node;\r\n            this.size++;\r\n            this.ensureLimit();\r\n        }\r\n    }\r\n    read(key) {\r\n        if (!this.cache[key])\r\n            return;\r\n        const { value } = this.cache[key];\r\n        this.remove(key);\r\n        this.write(key, value);\r\n        return value;\r\n    }\r\n    remove(key) {\r\n        const node = this.cache[key];\r\n        node.prev.next = node.next;\r\n        node.next.prev = node.prev;\r\n        delete this.cache[key];\r\n        this.size--;\r\n    }\r\n    clear() {\r\n        this.head.next = this.tail;\r\n        this.tail.prev = this.head;\r\n        this.size = 0;\r\n        this.cache = {};\r\n    }\r\n    ensureLimit() {\r\n        if (this.size > this.limit)\r\n            this.remove(this.tail.prev.key);\r\n    }\r\n}\n\nfunction domResolve(root, path) {\r\n    const base = document.createElement('base');\r\n    base.href = root;\r\n    const head = document.getElementsByTagName('head')[0];\r\n    head.insertBefore(base, head.firstChild);\r\n    const a = document.createElement('a');\r\n    a.href = path;\r\n    const resolved = a.href;\r\n    head.removeChild(base);\r\n    return resolved;\r\n}\r\nfunction resolve(root, filepath, ext) {\r\n    if (root.length && last(root) !== '/')\r\n        root += '/';\r\n    const url = domResolve(root, filepath);\r\n    return url.replace(/^(\\w+:\\/\\/[^/]+)(\\/[^?]+)/, (str, origin, path) => {\r\n        const last = path.split('/').pop();\r\n        if (/\\.\\w+$/.test(last))\r\n            return str;\r\n        return origin + path + ext;\r\n    });\r\n}\r\nasync function readFile(url) {\r\n    return new Promise((resolve, reject) => {\r\n        const xhr = new XMLHttpRequest();\r\n        xhr.onload = () => {\r\n            if (xhr.status >= 200 && xhr.status < 300) {\r\n                resolve(xhr.responseText);\r\n            }\r\n            else {\r\n                reject(new Error(xhr.statusText));\r\n            }\r\n        };\r\n        xhr.onerror = () => {\r\n            reject(new Error('An error occurred whilst receiving the response.'));\r\n        };\r\n        xhr.open('GET', url);\r\n        xhr.send();\r\n    });\r\n}\r\nfunction readFileSync(url) {\r\n    const xhr = new XMLHttpRequest();\r\n    xhr.open('GET', url, false);\r\n    xhr.send();\r\n    if (xhr.status < 200 || xhr.status >= 300) {\r\n        throw new Error(xhr.statusText);\r\n    }\r\n    return xhr.responseText;\r\n}\r\nasync function exists(filepath) {\r\n    return true;\r\n}\r\nfunction existsSync(filepath) {\r\n    return true;\r\n}\n\nvar fs = /*#__PURE__*/Object.freeze({\n  resolve: resolve,\n  readFile: readFile,\n  readFileSync: readFileSync,\n  exists: exists,\n  existsSync: existsSync\n});\n\nfunction isComparable(arg) {\r\n    return arg && isFunction(arg.equals);\r\n}\n\nfunction isTruthy(val, ctx) {\r\n    return !isFalsy(val, ctx);\r\n}\r\nfunction isFalsy(val, ctx) {\r\n    if (ctx.opts.jsTruthy) {\r\n        return !val;\r\n    }\r\n    else {\r\n        return val === false || undefined === val || val === null;\r\n    }\r\n}\n\nconst defaultOperators = {\r\n    '==': (l, r) => {\r\n        if (isComparable(l))\r\n            return l.equals(r);\r\n        if (isComparable(r))\r\n            return r.equals(l);\r\n        return l === r;\r\n    },\r\n    '!=': (l, r) => {\r\n        if (isComparable(l))\r\n            return !l.equals(r);\r\n        if (isComparable(r))\r\n            return !r.equals(l);\r\n        return l !== r;\r\n    },\r\n    '>': (l, r) => {\r\n        if (isComparable(l))\r\n            return l.gt(r);\r\n        if (isComparable(r))\r\n            return r.lt(l);\r\n        return l > r;\r\n    },\r\n    '<': (l, r) => {\r\n        if (isComparable(l))\r\n            return l.lt(r);\r\n        if (isComparable(r))\r\n            return r.gt(l);\r\n        return l < r;\r\n    },\r\n    '>=': (l, r) => {\r\n        if (isComparable(l))\r\n            return l.geq(r);\r\n        if (isComparable(r))\r\n            return r.leq(l);\r\n        return l >= r;\r\n    },\r\n    '<=': (l, r) => {\r\n        if (isComparable(l))\r\n            return l.leq(r);\r\n        if (isComparable(r))\r\n            return r.geq(l);\r\n        return l <= r;\r\n    },\r\n    'contains': (l, r) => {\r\n        return l && isFunction(l.indexOf) ? l.indexOf(r) > -1 : false;\r\n    },\r\n    'and': (l, r, ctx) => isTruthy(l, ctx) && isTruthy(r, ctx),\r\n    'or': (l, r, ctx) => isTruthy(l, ctx) || isTruthy(r, ctx)\r\n};\n\n// **DO NOT CHANGE THIS FILE**\r\n//\r\n// This file is generated by bin/character-gen.js\r\n// bitmask character types to boost performance\r\nconst TYPES = [0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 4, 4, 4, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 2, 8, 0, 0, 0, 0, 8, 0, 0, 0, 64, 0, 65, 0, 0, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 0, 0, 2, 2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0];\r\nconst IDENTIFIER = 1;\r\nconst BLANK = 4;\r\nconst QUOTE = 8;\r\nconst INLINE_BLANK = 16;\r\nconst NUMBER = 32;\r\nconst SIGN = 64;\r\nTYPES[160] = TYPES[5760] = TYPES[6158] = TYPES[8192] = TYPES[8193] = TYPES[8194] = TYPES[8195] = TYPES[8196] = TYPES[8197] = TYPES[8198] = TYPES[8199] = TYPES[8200] = TYPES[8201] = TYPES[8202] = TYPES[8232] = TYPES[8233] = TYPES[8239] = TYPES[8287] = TYPES[12288] = BLANK;\n\nfunction createTrie(operators) {\r\n    const trie = {};\r\n    for (const [name, handler] of Object.entries(operators)) {\r\n        let node = trie;\r\n        for (let i = 0; i < name.length; i++) {\r\n            const c = name[i];\r\n            node[c] = node[c] || {};\r\n            if (i === name.length - 1 && (TYPES[name.charCodeAt(i)] & IDENTIFIER)) {\r\n                node[c].needBoundary = true;\r\n            }\r\n            node = node[c];\r\n        }\r\n        node.handler = handler;\r\n        node.end = true;\r\n    }\r\n    return trie;\r\n}\n\nconst defaultOptions = {\r\n    root: ['.'],\r\n    cache: undefined,\r\n    extname: '',\r\n    fs: fs,\r\n    dynamicPartials: true,\r\n    jsTruthy: false,\r\n    trimTagRight: false,\r\n    trimTagLeft: false,\r\n    trimOutputRight: false,\r\n    trimOutputLeft: false,\r\n    greedy: true,\r\n    tagDelimiterLeft: '{%',\r\n    tagDelimiterRight: '%}',\r\n    outputDelimiterLeft: '{{',\r\n    outputDelimiterRight: '}}',\r\n    preserveTimezones: false,\r\n    strictFilters: false,\r\n    strictVariables: false,\r\n    lenientIf: false,\r\n    globals: {},\r\n    keepOutputType: false,\r\n    operators: defaultOperators,\r\n    operatorsTrie: createTrie(defaultOperators)\r\n};\r\nfunction normalize(options) {\r\n    options = options || {};\r\n    if (options.hasOwnProperty('root')) {\r\n        options.root = normalizeStringArray(options.root);\r\n    }\r\n    if (options.hasOwnProperty('cache')) {\r\n        let cache;\r\n        if (typeof options.cache === 'number')\r\n            cache = options.cache > 0 ? new LRU(options.cache) : undefined;\r\n        else if (typeof options.cache === 'object')\r\n            cache = options.cache;\r\n        else\r\n            cache = options.cache ? new LRU(1024) : undefined;\r\n        options.cache = cache;\r\n    }\r\n    if (options.hasOwnProperty('operators')) {\r\n        options.operatorsTrie = createTrie(options.operators);\r\n    }\r\n    return options;\r\n}\r\nfunction applyDefault(options) {\r\n    return Object.assign({}, defaultOptions, options);\r\n}\r\nfunction normalizeStringArray(value) {\r\n    if (isArray(value))\r\n        return value;\r\n    if (isString(value))\r\n        return [value];\r\n    return [];\r\n}\n\nclass LiquidError extends Error {\r\n    constructor(err, token) {\r\n        super(err.message);\r\n        this.originalError = err;\r\n        this.token = token;\r\n        this.context = '';\r\n    }\r\n    update() {\r\n        const err = this.originalError;\r\n        this.context = mkContext(this.token);\r\n        this.message = mkMessage(err.message, this.token);\r\n        this.stack = this.message + '\\n' + this.context +\r\n            '\\n' + this.stack + '\\nFrom ' + err.stack;\r\n    }\r\n}\r\nclass TokenizationError extends LiquidError {\r\n    constructor(message, token) {\r\n        super(new Error(message), token);\r\n        this.name = 'TokenizationError';\r\n        super.update();\r\n    }\r\n}\r\nclass ParseError extends LiquidError {\r\n    constructor(err, token) {\r\n        super(err, token);\r\n        this.name = 'ParseError';\r\n        this.message = err.message;\r\n        super.update();\r\n    }\r\n}\r\nclass RenderError extends LiquidError {\r\n    constructor(err, tpl) {\r\n        super(err, tpl.token);\r\n        this.name = 'RenderError';\r\n        this.message = err.message;\r\n        super.update();\r\n    }\r\n    static is(obj) {\r\n        return obj.name === 'RenderError';\r\n    }\r\n}\r\nclass UndefinedVariableError extends LiquidError {\r\n    constructor(err, token) {\r\n        super(err, token);\r\n        this.name = 'UndefinedVariableError';\r\n        this.message = err.message;\r\n        super.update();\r\n    }\r\n}\r\n// only used internally; raised where we don't have token information,\r\n// so it can't be an UndefinedVariableError.\r\nclass InternalUndefinedVariableError extends Error {\r\n    constructor(variableName) {\r\n        super(`undefined variable: ${variableName}`);\r\n        this.name = 'InternalUndefinedVariableError';\r\n        this.variableName = variableName;\r\n    }\r\n}\r\nclass AssertionError extends Error {\r\n    constructor(message) {\r\n        super(message);\r\n        this.name = 'AssertionError';\r\n        this.message = message + '';\r\n    }\r\n}\r\nfunction mkContext(token) {\r\n    const [line] = token.getPosition();\r\n    const lines = token.input.split('\\n');\r\n    const begin = Math.max(line - 2, 1);\r\n    const end = Math.min(line + 3, lines.length);\r\n    const context = range(begin, end + 1)\r\n        .map(lineNumber => {\r\n        const indicator = (lineNumber === line) ? '>> ' : '   ';\r\n        const num = padStart(String(lineNumber), String(end).length);\r\n        const text = lines[lineNumber - 1];\r\n        return `${indicator}${num}| ${text}`;\r\n    })\r\n        .join('\\n');\r\n    return context;\r\n}\r\nfunction mkMessage(msg, token) {\r\n    if (token.file)\r\n        msg += `, file:${token.file}`;\r\n    const [line, col] = token.getPosition();\r\n    msg += `, line:${line}, col:${col}`;\r\n    return msg;\r\n}\n\nclass Context {\r\n    constructor(env = {}, opts = defaultOptions, sync = false) {\r\n        this.scopes = [{}];\r\n        this.registers = {};\r\n        this.sync = sync;\r\n        this.opts = opts;\r\n        this.globals = opts.globals;\r\n        this.environments = env;\r\n    }\r\n    getRegister(key, defaultValue = {}) {\r\n        return (this.registers[key] = this.registers[key] || defaultValue);\r\n    }\r\n    setRegister(key, value) {\r\n        return (this.registers[key] = value);\r\n    }\r\n    saveRegister(...keys) {\r\n        return keys.map(key => [key, this.getRegister(key)]);\r\n    }\r\n    restoreRegister(keyValues) {\r\n        return keyValues.forEach(([key, value]) => this.setRegister(key, value));\r\n    }\r\n    getAll() {\r\n        return [this.globals, this.environments, ...this.scopes]\r\n            .reduce((ctx, val) => __assign(ctx, val), {});\r\n    }\r\n    get(paths) {\r\n        const scope = this.findScope(paths[0]);\r\n        return this.getFromScope(scope, paths);\r\n    }\r\n    getFromScope(scope, paths) {\r\n        if (typeof paths === 'string')\r\n            paths = paths.split('.');\r\n        return paths.reduce((scope, path) => {\r\n            scope = readProperty(scope, path);\r\n            if (isNil(scope) && this.opts.strictVariables) {\r\n                throw new InternalUndefinedVariableError(path);\r\n            }\r\n            return scope;\r\n        }, scope);\r\n    }\r\n    push(ctx) {\r\n        return this.scopes.push(ctx);\r\n    }\r\n    pop() {\r\n        return this.scopes.pop();\r\n    }\r\n    bottom() {\r\n        return this.scopes[0];\r\n    }\r\n    findScope(key) {\r\n        for (let i = this.scopes.length - 1; i >= 0; i--) {\r\n            const candidate = this.scopes[i];\r\n            if (key in candidate)\r\n                return candidate;\r\n        }\r\n        if (key in this.environments)\r\n            return this.environments;\r\n        return this.globals;\r\n    }\r\n}\r\nfunction readProperty(obj, key) {\r\n    if (isNil(obj))\r\n        return obj;\r\n    obj = toLiquid(obj);\r\n    if (isFunction(obj[key]))\r\n        return obj[key]();\r\n    if (obj instanceof Drop) {\r\n        if (obj.hasOwnProperty(key))\r\n            return obj[key];\r\n        return obj.liquidMethodMissing(key);\r\n    }\r\n    if (key === 'size')\r\n        return readSize(obj);\r\n    if (key === 'first')\r\n        return readFirst(obj);\r\n    if (key === 'last')\r\n        return readLast(obj);\r\n    return obj[key];\r\n}\r\nfunction readFirst(obj) {\r\n    if (isArray(obj))\r\n        return obj[0];\r\n    return obj['first'];\r\n}\r\nfunction readLast(obj) {\r\n    if (isArray(obj))\r\n        return obj[obj.length - 1];\r\n    return obj['last'];\r\n}\r\nfunction readSize(obj) {\r\n    if (isArray(obj) || isString(obj))\r\n        return obj.length;\r\n    return obj['size'];\r\n}\n\nvar TokenKind;\r\n(function (TokenKind) {\r\n    TokenKind[TokenKind[\"Number\"] = 1] = \"Number\";\r\n    TokenKind[TokenKind[\"Literal\"] = 2] = \"Literal\";\r\n    TokenKind[TokenKind[\"Tag\"] = 4] = \"Tag\";\r\n    TokenKind[TokenKind[\"Output\"] = 8] = \"Output\";\r\n    TokenKind[TokenKind[\"HTML\"] = 16] = \"HTML\";\r\n    TokenKind[TokenKind[\"Filter\"] = 32] = \"Filter\";\r\n    TokenKind[TokenKind[\"Hash\"] = 64] = \"Hash\";\r\n    TokenKind[TokenKind[\"PropertyAccess\"] = 128] = \"PropertyAccess\";\r\n    TokenKind[TokenKind[\"Word\"] = 256] = \"Word\";\r\n    TokenKind[TokenKind[\"Range\"] = 512] = \"Range\";\r\n    TokenKind[TokenKind[\"Quoted\"] = 1024] = \"Quoted\";\r\n    TokenKind[TokenKind[\"Operator\"] = 2048] = \"Operator\";\r\n    TokenKind[TokenKind[\"Delimited\"] = 12] = \"Delimited\";\r\n})(TokenKind || (TokenKind = {}));\n\nfunction isDelimitedToken(val) {\r\n    return !!(getKind(val) & TokenKind.Delimited);\r\n}\r\nfunction isOperatorToken(val) {\r\n    return getKind(val) === TokenKind.Operator;\r\n}\r\nfunction isHTMLToken(val) {\r\n    return getKind(val) === TokenKind.HTML;\r\n}\r\nfunction isOutputToken(val) {\r\n    return getKind(val) === TokenKind.Output;\r\n}\r\nfunction isTagToken(val) {\r\n    return getKind(val) === TokenKind.Tag;\r\n}\r\nfunction isQuotedToken(val) {\r\n    return getKind(val) === TokenKind.Quoted;\r\n}\r\nfunction isLiteralToken(val) {\r\n    return getKind(val) === TokenKind.Literal;\r\n}\r\nfunction isNumberToken(val) {\r\n    return getKind(val) === TokenKind.Number;\r\n}\r\nfunction isPropertyAccessToken(val) {\r\n    return getKind(val) === TokenKind.PropertyAccess;\r\n}\r\nfunction isWordToken(val) {\r\n    return getKind(val) === TokenKind.Word;\r\n}\r\nfunction isRangeToken(val) {\r\n    return getKind(val) === TokenKind.Range;\r\n}\r\nfunction getKind(val) {\r\n    return val ? val.kind : -1;\r\n}\n\nvar typeGuards = /*#__PURE__*/Object.freeze({\n  isDelimitedToken: isDelimitedToken,\n  isOperatorToken: isOperatorToken,\n  isHTMLToken: isHTMLToken,\n  isOutputToken: isOutputToken,\n  isTagToken: isTagToken,\n  isQuotedToken: isQuotedToken,\n  isLiteralToken: isLiteralToken,\n  isNumberToken: isNumberToken,\n  isPropertyAccessToken: isPropertyAccessToken,\n  isWordToken: isWordToken,\n  isRangeToken: isRangeToken\n});\n\nfunction whiteSpaceCtrl(tokens, options) {\r\n    let inRaw = false;\r\n    for (let i = 0; i < tokens.length; i++) {\r\n        const token = tokens[i];\r\n        if (!isDelimitedToken(token))\r\n            continue;\r\n        if (!inRaw && token.trimLeft) {\r\n            trimLeft(tokens[i - 1], options.greedy);\r\n        }\r\n        if (isTagToken(token)) {\r\n            if (token.name === 'raw')\r\n                inRaw = true;\r\n            else if (token.name === 'endraw')\r\n                inRaw = false;\r\n        }\r\n        if (!inRaw && token.trimRight) {\r\n            trimRight(tokens[i + 1], options.greedy);\r\n        }\r\n    }\r\n}\r\nfunction trimLeft(token, greedy) {\r\n    if (!token || !isHTMLToken(token))\r\n        return;\r\n    const mask = greedy ? BLANK : INLINE_BLANK;\r\n    while (TYPES[token.input.charCodeAt(token.end - 1 - token.trimRight)] & mask)\r\n        token.trimRight++;\r\n}\r\nfunction trimRight(token, greedy) {\r\n    if (!token || !isHTMLToken(token))\r\n        return;\r\n    const mask = greedy ? BLANK : INLINE_BLANK;\r\n    while (TYPES[token.input.charCodeAt(token.begin + token.trimLeft)] & mask)\r\n        token.trimLeft++;\r\n    if (token.input.charAt(token.begin + token.trimLeft) === '\\n')\r\n        token.trimLeft++;\r\n}\n\nclass Token {\r\n    constructor(kind, input, begin, end, file) {\r\n        this.kind = kind;\r\n        this.input = input;\r\n        this.begin = begin;\r\n        this.end = end;\r\n        this.file = file;\r\n    }\r\n    getText() {\r\n        return this.input.slice(this.begin, this.end);\r\n    }\r\n    getPosition() {\r\n        let [row, col] = [1, 1];\r\n        for (let i = 0; i < this.begin; i++) {\r\n            if (this.input[i] === '\\n') {\r\n                row++;\r\n                col = 1;\r\n            }\r\n            else\r\n                col++;\r\n        }\r\n        return [row, col];\r\n    }\r\n    size() {\r\n        return this.end - this.begin;\r\n    }\r\n}\n\nclass NumberToken extends Token {\r\n    constructor(whole, decimal) {\r\n        super(TokenKind.Number, whole.input, whole.begin, decimal ? decimal.end : whole.end, whole.file);\r\n        this.whole = whole;\r\n        this.decimal = decimal;\r\n    }\r\n}\n\nclass IdentifierToken extends Token {\r\n    constructor(input, begin, end, file) {\r\n        super(TokenKind.Word, input, begin, end, file);\r\n        this.input = input;\r\n        this.begin = begin;\r\n        this.end = end;\r\n        this.file = file;\r\n        this.content = this.getText();\r\n    }\r\n    isNumber(allowSign = false) {\r\n        const begin = allowSign && TYPES[this.input.charCodeAt(this.begin)] & SIGN\r\n            ? this.begin + 1\r\n            : this.begin;\r\n        for (let i = begin; i < this.end; i++) {\r\n            if (!(TYPES[this.input.charCodeAt(i)] & NUMBER))\r\n                return false;\r\n        }\r\n        return true;\r\n    }\r\n}\n\nclass NullDrop extends Drop {\r\n    equals(value) {\r\n        return isNil(toValue(value));\r\n    }\r\n    gt() {\r\n        return false;\r\n    }\r\n    geq() {\r\n        return false;\r\n    }\r\n    lt() {\r\n        return false;\r\n    }\r\n    leq() {\r\n        return false;\r\n    }\r\n    valueOf() {\r\n        return null;\r\n    }\r\n}\n\nclass EmptyDrop extends Drop {\r\n    equals(value) {\r\n        if (value instanceof EmptyDrop)\r\n            return false;\r\n        value = toValue(value);\r\n        if (isString(value) || isArray(value))\r\n            return value.length === 0;\r\n        if (isObject(value))\r\n            return Object.keys(value).length === 0;\r\n        return false;\r\n    }\r\n    gt() {\r\n        return false;\r\n    }\r\n    geq() {\r\n        return false;\r\n    }\r\n    lt() {\r\n        return false;\r\n    }\r\n    leq() {\r\n        return false;\r\n    }\r\n    valueOf() {\r\n        return '';\r\n    }\r\n}\n\nclass BlankDrop extends EmptyDrop {\r\n    equals(value) {\r\n        if (value === false)\r\n            return true;\r\n        if (isNil(toValue(value)))\r\n            return true;\r\n        if (isString(value))\r\n            return /^\\s*$/.test(value);\r\n        return super.equals(value);\r\n    }\r\n}\n\nconst nil = new NullDrop();\r\nconst literalValues = {\r\n    'true': true,\r\n    'false': false,\r\n    'nil': nil,\r\n    'null': nil,\r\n    'empty': new EmptyDrop(),\r\n    'blank': new BlankDrop()\r\n};\n\nclass LiteralToken extends Token {\r\n    constructor(input, begin, end, file) {\r\n        super(TokenKind.Literal, input, begin, end, file);\r\n        this.input = input;\r\n        this.begin = begin;\r\n        this.end = end;\r\n        this.file = file;\r\n        this.literal = this.getText();\r\n    }\r\n}\n\nconst precedence = {\r\n    '==': 1,\r\n    '!=': 1,\r\n    '>': 1,\r\n    '<': 1,\r\n    '>=': 1,\r\n    '<=': 1,\r\n    'contains': 1,\r\n    'and': 0,\r\n    'or': 0\r\n};\r\nclass OperatorToken extends Token {\r\n    constructor(input, begin, end, file) {\r\n        super(TokenKind.Operator, input, begin, end, file);\r\n        this.input = input;\r\n        this.begin = begin;\r\n        this.end = end;\r\n        this.file = file;\r\n        this.operator = this.getText();\r\n    }\r\n    getPrecedence() {\r\n        const key = this.getText();\r\n        return key in precedence ? precedence[key] : 1;\r\n    }\r\n}\n\nconst rHex = /[\\da-fA-F]/;\r\nconst rOct = /[0-7]/;\r\nconst escapeChar = {\r\n    b: '\\b',\r\n    f: '\\f',\r\n    n: '\\n',\r\n    r: '\\r',\r\n    t: '\\t',\r\n    v: '\\x0B'\r\n};\r\nfunction hexVal(c) {\r\n    const code = c.charCodeAt(0);\r\n    if (code >= 97)\r\n        return code - 87;\r\n    if (code >= 65)\r\n        return code - 55;\r\n    return code - 48;\r\n}\r\nfunction parseStringLiteral(str) {\r\n    let ret = '';\r\n    for (let i = 1; i < str.length - 1; i++) {\r\n        if (str[i] !== '\\\\') {\r\n            ret += str[i];\r\n            continue;\r\n        }\r\n        if (escapeChar[str[i + 1]] !== undefined) {\r\n            ret += escapeChar[str[++i]];\r\n        }\r\n        else if (str[i + 1] === 'u') {\r\n            let val = 0;\r\n            let j = i + 2;\r\n            while (j <= i + 5 && rHex.test(str[j])) {\r\n                val = val * 16 + hexVal(str[j++]);\r\n            }\r\n            i = j - 1;\r\n            ret += String.fromCharCode(val);\r\n        }\r\n        else if (!rOct.test(str[i + 1])) {\r\n            ret += str[++i];\r\n        }\r\n        else {\r\n            let j = i + 1;\r\n            let val = 0;\r\n            while (j <= i + 3 && rOct.test(str[j])) {\r\n                val = val * 8 + hexVal(str[j++]);\r\n            }\r\n            i = j - 1;\r\n            ret += String.fromCharCode(val);\r\n        }\r\n    }\r\n    return ret;\r\n}\n\nclass PropertyAccessToken extends Token {\r\n    constructor(variable, props, end) {\r\n        super(TokenKind.PropertyAccess, variable.input, variable.begin, end, variable.file);\r\n        this.variable = variable;\r\n        this.props = props;\r\n    }\r\n    getVariableAsText() {\r\n        if (this.variable instanceof IdentifierToken) {\r\n            return this.variable.getText();\r\n        }\r\n        else {\r\n            return parseStringLiteral(this.variable.getText());\r\n        }\r\n    }\r\n}\n\nfunction assert(predicate, message) {\r\n    if (!predicate) {\r\n        const msg = message ? message() : `expect ${predicate} to be true`;\r\n        throw new AssertionError(msg);\r\n    }\r\n}\n\nclass FilterToken extends Token {\r\n    constructor(name, args, input, begin, end, file) {\r\n        super(TokenKind.Filter, input, begin, end, file);\r\n        this.name = name;\r\n        this.args = args;\r\n    }\r\n}\n\nclass HashToken extends Token {\r\n    constructor(input, begin, end, name, value, file) {\r\n        super(TokenKind.Hash, input, begin, end, file);\r\n        this.input = input;\r\n        this.begin = begin;\r\n        this.end = end;\r\n        this.name = name;\r\n        this.value = value;\r\n        this.file = file;\r\n    }\r\n}\n\nclass QuotedToken extends Token {\r\n    constructor(input, begin, end, file) {\r\n        super(TokenKind.Quoted, input, begin, end, file);\r\n        this.input = input;\r\n        this.begin = begin;\r\n        this.end = end;\r\n        this.file = file;\r\n    }\r\n}\n\nclass HTMLToken extends Token {\r\n    constructor(input, begin, end, file) {\r\n        super(TokenKind.HTML, input, begin, end, file);\r\n        this.input = input;\r\n        this.begin = begin;\r\n        this.end = end;\r\n        this.file = file;\r\n        this.trimLeft = 0;\r\n        this.trimRight = 0;\r\n    }\r\n    getContent() {\r\n        return this.input.slice(this.begin + this.trimLeft, this.end - this.trimRight);\r\n    }\r\n}\n\nclass DelimitedToken extends Token {\r\n    constructor(kind, content, input, begin, end, trimLeft, trimRight, file) {\r\n        super(kind, input, begin, end, file);\r\n        this.trimLeft = false;\r\n        this.trimRight = false;\r\n        this.content = this.getText();\r\n        const tl = content[0] === '-';\r\n        const tr = last(content) === '-';\r\n        this.content = content\r\n            .slice(tl ? 1 : 0, tr ? -1 : content.length)\r\n            .trim();\r\n        this.trimLeft = tl || trimLeft;\r\n        this.trimRight = tr || trimRight;\r\n    }\r\n}\n\nclass TagToken extends DelimitedToken {\r\n    constructor(input, begin, end, options, file) {\r\n        const { trimTagLeft, trimTagRight, tagDelimiterLeft, tagDelimiterRight } = options;\r\n        const value = input.slice(begin + tagDelimiterLeft.length, end - tagDelimiterRight.length);\r\n        super(TokenKind.Tag, value, input, begin, end, trimTagLeft, trimTagRight, file);\r\n        const tokenizer = new Tokenizer(this.content, options.operatorsTrie);\r\n        this.name = tokenizer.readIdentifier().getText();\r\n        if (!this.name)\r\n            throw new TokenizationError(`illegal tag syntax`, this);\r\n        tokenizer.skipBlank();\r\n        this.args = tokenizer.remaining();\r\n    }\r\n}\n\nclass RangeToken extends Token {\r\n    constructor(input, begin, end, lhs, rhs, file) {\r\n        super(TokenKind.Range, input, begin, end, file);\r\n        this.input = input;\r\n        this.begin = begin;\r\n        this.end = end;\r\n        this.lhs = lhs;\r\n        this.rhs = rhs;\r\n        this.file = file;\r\n    }\r\n}\n\nclass OutputToken extends DelimitedToken {\r\n    constructor(input, begin, end, options, file) {\r\n        const { trimOutputLeft, trimOutputRight, outputDelimiterLeft, outputDelimiterRight } = options;\r\n        const value = input.slice(begin + outputDelimiterLeft.length, end - outputDelimiterRight.length);\r\n        super(TokenKind.Output, value, input, begin, end, trimOutputLeft, trimOutputRight, file);\r\n    }\r\n}\n\nfunction matchOperator(str, begin, trie, end = str.length) {\r\n    let node = trie;\r\n    let i = begin;\r\n    let info;\r\n    while (node[str[i]] && i < end) {\r\n        node = node[str[i++]];\r\n        if (node['end'])\r\n            info = node;\r\n    }\r\n    if (!info)\r\n        return -1;\r\n    if (info['needBoundary'] && (TYPES[str.charCodeAt(i)] & IDENTIFIER))\r\n        return -1;\r\n    return i;\r\n}\n\nclass Expression {\r\n    constructor(tokens) {\r\n        this.postfix = [...toPostfix(tokens)];\r\n    }\r\n    *evaluate(ctx, lenient) {\r\n        assert(ctx, () => 'unable to evaluate: context not defined');\r\n        const operands = [];\r\n        for (const token of this.postfix) {\r\n            if (isOperatorToken(token)) {\r\n                const r = yield operands.pop();\r\n                const l = yield operands.pop();\r\n                const result = evalOperatorToken(ctx.opts.operators, token, l, r, ctx);\r\n                operands.push(result);\r\n            }\r\n            else {\r\n                operands.push(yield evalToken(token, ctx, lenient && this.postfix.length === 1));\r\n            }\r\n        }\r\n        return operands[0];\r\n    }\r\n}\r\nfunction evalToken(token, ctx, lenient = false) {\r\n    if (isPropertyAccessToken(token))\r\n        return evalPropertyAccessToken(token, ctx, lenient);\r\n    if (isRangeToken(token))\r\n        return evalRangeToken(token, ctx);\r\n    if (isLiteralToken(token))\r\n        return evalLiteralToken(token);\r\n    if (isNumberToken(token))\r\n        return evalNumberToken(token);\r\n    if (isWordToken(token))\r\n        return token.getText();\r\n    if (isQuotedToken(token))\r\n        return evalQuotedToken(token);\r\n}\r\nfunction evalPropertyAccessToken(token, ctx, lenient) {\r\n    const variable = token.getVariableAsText();\r\n    const props = token.props.map(prop => evalToken(prop, ctx, false));\r\n    try {\r\n        return ctx.get([variable, ...props]);\r\n    }\r\n    catch (e) {\r\n        if (lenient && e.name === 'InternalUndefinedVariableError')\r\n            return null;\r\n        throw (new UndefinedVariableError(e, token));\r\n    }\r\n}\r\nfunction evalNumberToken(token) {\r\n    const str = token.whole.content + '.' + (token.decimal ? token.decimal.content : '');\r\n    return Number(str);\r\n}\r\nfunction evalQuotedToken(token) {\r\n    return parseStringLiteral(token.getText());\r\n}\r\nfunction evalOperatorToken(operators, token, lhs, rhs, ctx) {\r\n    const impl = operators[token.operator];\r\n    return impl(lhs, rhs, ctx);\r\n}\r\nfunction evalLiteralToken(token) {\r\n    return literalValues[token.literal];\r\n}\r\nfunction evalRangeToken(token, ctx) {\r\n    const low = evalToken(token.lhs, ctx);\r\n    const high = evalToken(token.rhs, ctx);\r\n    return range(+low, +high + 1);\r\n}\r\nfunction* toPostfix(tokens) {\r\n    const ops = [];\r\n    for (const token of tokens) {\r\n        if (isOperatorToken(token)) {\r\n            while (ops.length && ops[ops.length - 1].getPrecedence() > token.getPrecedence()) {\r\n                yield ops.pop();\r\n            }\r\n            ops.push(token);\r\n        }\r\n        else\r\n            yield token;\r\n    }\r\n    while (ops.length) {\r\n        yield ops.pop();\r\n    }\r\n}\n\nclass Tokenizer {\r\n    constructor(input, trie, file = '') {\r\n        this.input = input;\r\n        this.trie = trie;\r\n        this.file = file;\r\n        this.p = 0;\r\n        this.rawBeginAt = -1;\r\n        this.N = input.length;\r\n    }\r\n    readExpression() {\r\n        return new Expression(this.readExpressionTokens());\r\n    }\r\n    *readExpressionTokens() {\r\n        const operand = this.readValue();\r\n        if (!operand)\r\n            return;\r\n        yield operand;\r\n        while (this.p < this.N) {\r\n            const operator = this.readOperator();\r\n            if (!operator)\r\n                return;\r\n            const operand = this.readValue();\r\n            if (!operand)\r\n                return;\r\n            yield operator;\r\n            yield operand;\r\n        }\r\n    }\r\n    readOperator() {\r\n        this.skipBlank();\r\n        const end = matchOperator(this.input, this.p, this.trie, this.p + 8);\r\n        if (end === -1)\r\n            return;\r\n        return new OperatorToken(this.input, this.p, (this.p = end), this.file);\r\n    }\r\n    readFilters() {\r\n        const filters = [];\r\n        while (true) {\r\n            const filter = this.readFilter();\r\n            if (!filter)\r\n                return filters;\r\n            filters.push(filter);\r\n        }\r\n    }\r\n    readFilter() {\r\n        this.skipBlank();\r\n        if (this.end())\r\n            return null;\r\n        assert(this.peek() === '|', () => `unexpected token at ${this.snapshot()}`);\r\n        this.p++;\r\n        const begin = this.p;\r\n        const name = this.readIdentifier();\r\n        if (!name.size())\r\n            return null;\r\n        const args = [];\r\n        this.skipBlank();\r\n        if (this.peek() === ':') {\r\n            do {\r\n                ++this.p;\r\n                const arg = this.readFilterArg();\r\n                arg && args.push(arg);\r\n                while (this.p < this.N && this.peek() !== ',' && this.peek() !== '|')\r\n                    ++this.p;\r\n            } while (this.peek() === ',');\r\n        }\r\n        return new FilterToken(name.getText(), args, this.input, begin, this.p, this.file);\r\n    }\r\n    readFilterArg() {\r\n        const key = this.readValue();\r\n        if (!key)\r\n            return;\r\n        this.skipBlank();\r\n        if (this.peek() !== ':')\r\n            return key;\r\n        ++this.p;\r\n        const value = this.readValue();\r\n        return [key.getText(), value];\r\n    }\r\n    readTopLevelTokens(options = defaultOptions) {\r\n        const tokens = [];\r\n        while (this.p < this.N) {\r\n            const token = this.readTopLevelToken(options);\r\n            tokens.push(token);\r\n        }\r\n        whiteSpaceCtrl(tokens, options);\r\n        return tokens;\r\n    }\r\n    readTopLevelToken(options) {\r\n        const { tagDelimiterLeft, outputDelimiterLeft } = options;\r\n        if (this.rawBeginAt > -1)\r\n            return this.readEndrawOrRawContent(options);\r\n        if (this.match(tagDelimiterLeft))\r\n            return this.readTagToken(options);\r\n        if (this.match(outputDelimiterLeft))\r\n            return this.readOutputToken(options);\r\n        return this.readHTMLToken(options);\r\n    }\r\n    readHTMLToken(options) {\r\n        const begin = this.p;\r\n        while (this.p < this.N) {\r\n            const { tagDelimiterLeft, outputDelimiterLeft } = options;\r\n            if (this.match(tagDelimiterLeft))\r\n                break;\r\n            if (this.match(outputDelimiterLeft))\r\n                break;\r\n            ++this.p;\r\n        }\r\n        return new HTMLToken(this.input, begin, this.p, this.file);\r\n    }\r\n    readTagToken(options = defaultOptions) {\r\n        const { file, input } = this;\r\n        const begin = this.p;\r\n        if (this.readToDelimiter(options.tagDelimiterRight) === -1) {\r\n            throw this.mkError(`tag ${this.snapshot(begin)} not closed`, begin);\r\n        }\r\n        const token = new TagToken(input, begin, this.p, options, file);\r\n        if (token.name === 'raw')\r\n            this.rawBeginAt = begin;\r\n        return token;\r\n    }\r\n    readToDelimiter(delimiter) {\r\n        while (this.p < this.N) {\r\n            if ((this.peekType() & QUOTE)) {\r\n                this.readQuoted();\r\n                continue;\r\n            }\r\n            ++this.p;\r\n            if (this.rmatch(delimiter))\r\n                return this.p;\r\n        }\r\n        return -1;\r\n    }\r\n    readOutputToken(options = defaultOptions) {\r\n        const { file, input } = this;\r\n        const { outputDelimiterRight } = options;\r\n        const begin = this.p;\r\n        if (this.readToDelimiter(outputDelimiterRight) === -1) {\r\n            throw this.mkError(`output ${this.snapshot(begin)} not closed`, begin);\r\n        }\r\n        return new OutputToken(input, begin, this.p, options, file);\r\n    }\r\n    readEndrawOrRawContent(options) {\r\n        const { tagDelimiterLeft, tagDelimiterRight } = options;\r\n        const begin = this.p;\r\n        let leftPos = this.readTo(tagDelimiterLeft) - tagDelimiterLeft.length;\r\n        while (this.p < this.N) {\r\n            if (this.readIdentifier().getText() !== 'endraw') {\r\n                leftPos = this.readTo(tagDelimiterLeft) - tagDelimiterLeft.length;\r\n                continue;\r\n            }\r\n            while (this.p <= this.N) {\r\n                if (this.rmatch(tagDelimiterRight)) {\r\n                    const end = this.p;\r\n                    if (begin === leftPos) {\r\n                        this.rawBeginAt = -1;\r\n                        return new TagToken(this.input, begin, end, options, this.file);\r\n                    }\r\n                    else {\r\n                        this.p = leftPos;\r\n                        return new HTMLToken(this.input, begin, leftPos, this.file);\r\n                    }\r\n                }\r\n                if (this.rmatch(tagDelimiterLeft))\r\n                    break;\r\n                this.p++;\r\n            }\r\n        }\r\n        throw this.mkError(`raw ${this.snapshot(this.rawBeginAt)} not closed`, begin);\r\n    }\r\n    mkError(msg, begin) {\r\n        return new TokenizationError(msg, new IdentifierToken(this.input, begin, this.N, this.file));\r\n    }\r\n    snapshot(begin = this.p) {\r\n        return JSON.stringify(ellipsis(this.input.slice(begin), 16));\r\n    }\r\n    /**\r\n     * @deprecated\r\n     */\r\n    readWord() {\r\n        console.warn('Tokenizer#readWord() will be removed, use #readIdentifier instead');\r\n        return this.readIdentifier();\r\n    }\r\n    readIdentifier() {\r\n        this.skipBlank();\r\n        const begin = this.p;\r\n        while (this.peekType() & IDENTIFIER)\r\n            ++this.p;\r\n        return new IdentifierToken(this.input, begin, this.p, this.file);\r\n    }\r\n    readHashes() {\r\n        const hashes = [];\r\n        while (true) {\r\n            const hash = this.readHash();\r\n            if (!hash)\r\n                return hashes;\r\n            hashes.push(hash);\r\n        }\r\n    }\r\n    readHash() {\r\n        this.skipBlank();\r\n        if (this.peek() === ',')\r\n            ++this.p;\r\n        const begin = this.p;\r\n        const name = this.readIdentifier();\r\n        if (!name.size())\r\n            return;\r\n        let value;\r\n        this.skipBlank();\r\n        if (this.peek() === ':') {\r\n            ++this.p;\r\n            value = this.readValue();\r\n        }\r\n        return new HashToken(this.input, begin, this.p, name, value, this.file);\r\n    }\r\n    remaining() {\r\n        return this.input.slice(this.p);\r\n    }\r\n    advance(i = 1) {\r\n        this.p += i;\r\n    }\r\n    end() {\r\n        return this.p >= this.N;\r\n    }\r\n    readTo(end) {\r\n        while (this.p < this.N) {\r\n            ++this.p;\r\n            if (this.rmatch(end))\r\n                return this.p;\r\n        }\r\n        return -1;\r\n    }\r\n    readValue() {\r\n        const value = this.readQuoted() || this.readRange();\r\n        if (value)\r\n            return value;\r\n        if (this.peek() === '[') {\r\n            this.p++;\r\n            const prop = this.readQuoted();\r\n            if (!prop)\r\n                return;\r\n            if (this.peek() !== ']')\r\n                return;\r\n            this.p++;\r\n            return new PropertyAccessToken(prop, [], this.p);\r\n        }\r\n        const variable = this.readIdentifier();\r\n        if (!variable.size())\r\n            return;\r\n        let isNumber = variable.isNumber(true);\r\n        const props = [];\r\n        while (true) {\r\n            if (this.peek() === '[') {\r\n                isNumber = false;\r\n                this.p++;\r\n                const prop = this.readValue() || new IdentifierToken(this.input, this.p, this.p, this.file);\r\n                this.readTo(']');\r\n                props.push(prop);\r\n            }\r\n            else if (this.peek() === '.' && this.peek(1) !== '.') { // skip range syntax\r\n                this.p++;\r\n                const prop = this.readIdentifier();\r\n                if (!prop.size())\r\n                    break;\r\n                if (!prop.isNumber())\r\n                    isNumber = false;\r\n                props.push(prop);\r\n            }\r\n            else\r\n                break;\r\n        }\r\n        if (!props.length && literalValues.hasOwnProperty(variable.content)) {\r\n            return new LiteralToken(this.input, variable.begin, variable.end, this.file);\r\n        }\r\n        if (isNumber)\r\n            return new NumberToken(variable, props[0]);\r\n        return new PropertyAccessToken(variable, props, this.p);\r\n    }\r\n    readRange() {\r\n        this.skipBlank();\r\n        const begin = this.p;\r\n        if (this.peek() !== '(')\r\n            return;\r\n        ++this.p;\r\n        const lhs = this.readValueOrThrow();\r\n        this.p += 2;\r\n        const rhs = this.readValueOrThrow();\r\n        ++this.p;\r\n        return new RangeToken(this.input, begin, this.p, lhs, rhs, this.file);\r\n    }\r\n    readValueOrThrow() {\r\n        const value = this.readValue();\r\n        assert(value, () => `unexpected token ${this.snapshot()}, value expected`);\r\n        return value;\r\n    }\r\n    readQuoted() {\r\n        this.skipBlank();\r\n        const begin = this.p;\r\n        if (!(this.peekType() & QUOTE))\r\n            return;\r\n        ++this.p;\r\n        let escaped = false;\r\n        while (this.p < this.N) {\r\n            ++this.p;\r\n            if (this.input[this.p - 1] === this.input[begin] && !escaped)\r\n                break;\r\n            if (escaped)\r\n                escaped = false;\r\n            else if (this.input[this.p - 1] === '\\\\')\r\n                escaped = true;\r\n        }\r\n        return new QuotedToken(this.input, begin, this.p, this.file);\r\n    }\r\n    readFileName() {\r\n        const begin = this.p;\r\n        while (!(this.peekType() & BLANK) && this.peek() !== ',' && this.p < this.N)\r\n            this.p++;\r\n        return new IdentifierToken(this.input, begin, this.p, this.file);\r\n    }\r\n    match(word) {\r\n        for (let i = 0; i < word.length; i++) {\r\n            if (word[i] !== this.input[this.p + i])\r\n                return false;\r\n        }\r\n        return true;\r\n    }\r\n    rmatch(pattern) {\r\n        for (let i = 0; i < pattern.length; i++) {\r\n            if (pattern[pattern.length - 1 - i] !== this.input[this.p - 1 - i])\r\n                return false;\r\n        }\r\n        return true;\r\n    }\r\n    peekType(n = 0) {\r\n        return TYPES[this.input.charCodeAt(this.p + n)];\r\n    }\r\n    peek(n = 0) {\r\n        return this.input[this.p + n];\r\n    }\r\n    skipBlank() {\r\n        while (this.peekType() & BLANK)\r\n            ++this.p;\r\n    }\r\n}\n\nclass Emitter {\r\n    constructor(keepOutputType) {\r\n        this.html = '';\r\n        this.break = false;\r\n        this.continue = false;\r\n        this.keepOutputType = false;\r\n        this.keepOutputType = keepOutputType;\r\n    }\r\n    write(html) {\r\n        if (this.keepOutputType === true) {\r\n            html = toValue(html);\r\n        }\r\n        else {\r\n            html = stringify(toValue(html));\r\n        }\r\n        // This will only preserve the type if the value is isolated.\r\n        // I.E:\r\n        // {{ my-port }} -> 42\r\n        // {{ my-host }}:{{ my-port }} -> 'host:42'\r\n        if (this.keepOutputType === true && typeof html !== 'string' && this.html === '') {\r\n            this.html = html;\r\n        }\r\n        else {\r\n            this.html = stringify(this.html) + stringify(html);\r\n        }\r\n    }\r\n}\n\nclass Render {\r\n    *renderTemplates(templates, ctx, emitter) {\r\n        if (!emitter) {\r\n            emitter = new Emitter(ctx.opts.keepOutputType);\r\n        }\r\n        for (const tpl of templates) {\r\n            try {\r\n                const html = yield tpl.render(ctx, emitter);\r\n                html && emitter.write(html);\r\n                if (emitter.break || emitter.continue)\r\n                    break;\r\n            }\r\n            catch (e) {\r\n                const err = RenderError.is(e) ? e : new RenderError(e, tpl);\r\n                throw err;\r\n            }\r\n        }\r\n        return emitter.html;\r\n    }\r\n}\n\nclass ParseStream {\r\n    constructor(tokens, parseToken) {\r\n        this.handlers = {};\r\n        this.stopRequested = false;\r\n        this.tokens = tokens;\r\n        this.parseToken = parseToken;\r\n    }\r\n    on(name, cb) {\r\n        this.handlers[name] = cb;\r\n        return this;\r\n    }\r\n    trigger(event, arg) {\r\n        const h = this.handlers[event];\r\n        return h ? (h(arg), true) : false;\r\n    }\r\n    start() {\r\n        this.trigger('start');\r\n        let token;\r\n        while (!this.stopRequested && (token = this.tokens.shift())) {\r\n            if (this.trigger('token', token))\r\n                continue;\r\n            if (isTagToken(token) && this.trigger(`tag:${token.name}`, token)) {\r\n                continue;\r\n            }\r\n            const template = this.parseToken(token, this.tokens);\r\n            this.trigger('template', template);\r\n        }\r\n        if (!this.stopRequested)\r\n            this.trigger('end');\r\n        return this;\r\n    }\r\n    stop() {\r\n        this.stopRequested = true;\r\n        return this;\r\n    }\r\n}\n\nclass TemplateImpl {\r\n    constructor(token) {\r\n        this.token = token;\r\n    }\r\n}\n\n/**\r\n * Key-Value Pairs Representing Tag Arguments\r\n * Example:\r\n *    For the markup `, foo:'bar', coo:2 reversed %}`,\r\n *    hash['foo'] === 'bar'\r\n *    hash['coo'] === 2\r\n *    hash['reversed'] === undefined\r\n */\r\nclass Hash {\r\n    constructor(markup) {\r\n        this.hash = {};\r\n        const tokenizer = new Tokenizer(markup, {});\r\n        for (const hash of tokenizer.readHashes()) {\r\n            this.hash[hash.name.content] = hash.value;\r\n        }\r\n    }\r\n    *render(ctx) {\r\n        const hash = {};\r\n        for (const key of Object.keys(this.hash)) {\r\n            hash[key] = yield evalToken(this.hash[key], ctx);\r\n        }\r\n        return hash;\r\n    }\r\n}\n\nfunction isKeyValuePair(arr) {\r\n    return isArray(arr);\r\n}\n\nclass Filter {\r\n    constructor(name, impl, args, liquid) {\r\n        this.name = name;\r\n        this.impl = impl || identify;\r\n        this.args = args;\r\n        this.liquid = liquid;\r\n    }\r\n    render(value, context) {\r\n        const argv = [];\r\n        for (const arg of this.args) {\r\n            if (isKeyValuePair(arg))\r\n                argv.push([arg[0], evalToken(arg[1], context)]);\r\n            else\r\n                argv.push(evalToken(arg, context));\r\n        }\r\n        return this.impl.apply({ context, liquid: this.liquid }, [value, ...argv]);\r\n    }\r\n}\n\nclass Value {\r\n    /**\r\n     * @param str the value to be valuated, eg.: \"foobar\" | truncate: 3\r\n     */\r\n    constructor(str, liquid) {\r\n        this.filters = [];\r\n        const tokenizer = new Tokenizer(str, liquid.options.operatorsTrie);\r\n        this.initial = tokenizer.readExpression();\r\n        this.filters = tokenizer.readFilters().map(({ name, args }) => new Filter(name, liquid.filters.get(name), args, liquid));\r\n    }\r\n    *value(ctx, lenient) {\r\n        lenient = lenient || (ctx.opts.lenientIf && this.filters.length > 0 && this.filters[0].name === 'default');\r\n        let val = yield this.initial.evaluate(ctx, lenient);\r\n        for (const filter of this.filters) {\r\n            val = yield filter.render(val, ctx);\r\n        }\r\n        return val;\r\n    }\r\n}\n\nfunction createResolvedThenable(value) {\r\n    const ret = {\r\n        then: (resolve) => resolve(value),\r\n        catch: () => ret\r\n    };\r\n    return ret;\r\n}\r\nfunction createRejectedThenable(err) {\r\n    const ret = {\r\n        then: (resolve, reject) => {\r\n            if (reject)\r\n                return reject(err);\r\n            return ret;\r\n        },\r\n        catch: (reject) => reject(err)\r\n    };\r\n    return ret;\r\n}\r\nfunction isThenable(val) {\r\n    return val && isFunction(val.then);\r\n}\r\nfunction isAsyncIterator(val) {\r\n    return val && isFunction(val.next) && isFunction(val.throw) && isFunction(val.return);\r\n}\r\n// convert an async iterator to a thenable (Promise compatible)\r\nfunction toThenable(val) {\r\n    if (isThenable(val))\r\n        return val;\r\n    if (isAsyncIterator(val))\r\n        return reduce();\r\n    return createResolvedThenable(val);\r\n    function reduce(prev) {\r\n        let state;\r\n        try {\r\n            state = val.next(prev);\r\n        }\r\n        catch (err) {\r\n            return createRejectedThenable(err);\r\n        }\r\n        if (state.done)\r\n            return createResolvedThenable(state.value);\r\n        return toThenable(state.value).then(reduce, err => {\r\n            let state;\r\n            try {\r\n                state = val.throw(err);\r\n            }\r\n            catch (e) {\r\n                return createRejectedThenable(e);\r\n            }\r\n            if (state.done)\r\n                return createResolvedThenable(state.value);\r\n            return reduce(state.value);\r\n        });\r\n    }\r\n}\r\nfunction toPromise(val) {\r\n    return Promise.resolve(toThenable(val));\r\n}\r\n// get the value of async iterator in synchronous manner\r\nfunction toValue$1(val) {\r\n    let ret;\r\n    toThenable(val)\r\n        .then((x) => {\r\n        ret = x;\r\n        return createResolvedThenable(ret);\r\n    })\r\n        .catch((err) => {\r\n        throw err;\r\n    });\r\n    return ret;\r\n}\n\nclass Tag extends TemplateImpl {\r\n    constructor(token, tokens, liquid) {\r\n        super(token);\r\n        this.name = token.name;\r\n        const impl = liquid.tags.get(token.name);\r\n        this.impl = Object.create(impl);\r\n        this.impl.liquid = liquid;\r\n        if (this.impl.parse) {\r\n            this.impl.parse(token, tokens);\r\n        }\r\n    }\r\n    *render(ctx, emitter) {\r\n        const hash = yield new Hash(this.token.args).render(ctx);\r\n        const impl = this.impl;\r\n        if (isFunction(impl.render))\r\n            return yield impl.render(ctx, emitter, hash);\r\n    }\r\n}\n\nclass Output extends TemplateImpl {\r\n    constructor(token, liquid) {\r\n        super(token);\r\n        this.value = new Value(token.content, liquid);\r\n    }\r\n    *render(ctx, emitter) {\r\n        const val = yield this.value.value(ctx, false);\r\n        emitter.write(val);\r\n    }\r\n}\n\nclass HTML extends TemplateImpl {\r\n    constructor(token) {\r\n        super(token);\r\n        this.str = token.getContent();\r\n    }\r\n    *render(ctx, emitter) {\r\n        emitter.write(this.str);\r\n    }\r\n}\n\nclass Parser {\r\n    constructor(liquid) {\r\n        this.liquid = liquid;\r\n    }\r\n    parse(tokens) {\r\n        let token;\r\n        const templates = [];\r\n        while ((token = tokens.shift())) {\r\n            templates.push(this.parseToken(token, tokens));\r\n        }\r\n        return templates;\r\n    }\r\n    parseToken(token, remainTokens) {\r\n        try {\r\n            if (isTagToken(token)) {\r\n                return new Tag(token, remainTokens, this.liquid);\r\n            }\r\n            if (isOutputToken(token)) {\r\n                return new Output(token, this.liquid);\r\n            }\r\n            return new HTML(token);\r\n        }\r\n        catch (e) {\r\n            throw new ParseError(e, token);\r\n        }\r\n    }\r\n    parseStream(tokens) {\r\n        return new ParseStream(tokens, (token, tokens) => this.parseToken(token, tokens));\r\n    }\r\n}\n\nvar assign = {\r\n    parse: function (token) {\r\n        const tokenizer = new Tokenizer(token.args, this.liquid.options.operatorsTrie);\r\n        this.key = tokenizer.readIdentifier().content;\r\n        tokenizer.skipBlank();\r\n        assert(tokenizer.peek() === '=', () => `illegal token ${token.getText()}`);\r\n        tokenizer.advance();\r\n        this.value = tokenizer.remaining();\r\n    },\r\n    render: function* (ctx) {\r\n        ctx.bottom()[this.key] = yield this.liquid._evalValue(this.value, ctx);\r\n    }\r\n};\n\nfunction toEnumerable(val) {\r\n    if (isArray(val))\r\n        return val;\r\n    if (isString(val) && val.length > 0)\r\n        return [val];\r\n    if (isObject(val))\r\n        return Object.keys(val).map((key) => [key, val[key]]);\r\n    return [];\r\n}\r\nfunction toArray(val) {\r\n    if (isArray(val))\r\n        return val;\r\n    return [val];\r\n}\n\nclass ForloopDrop extends Drop {\r\n    constructor(length) {\r\n        super();\r\n        this.i = 0;\r\n        this.length = length;\r\n    }\r\n    next() {\r\n        this.i++;\r\n    }\r\n    index0() {\r\n        return this.i;\r\n    }\r\n    index() {\r\n        return this.i + 1;\r\n    }\r\n    first() {\r\n        return this.i === 0;\r\n    }\r\n    last() {\r\n        return this.i === this.length - 1;\r\n    }\r\n    rindex() {\r\n        return this.length - this.i;\r\n    }\r\n    rindex0() {\r\n        return this.length - this.i - 1;\r\n    }\r\n    valueOf() {\r\n        return JSON.stringify(this);\r\n    }\r\n}\n\nvar For = {\r\n    type: 'block',\r\n    parse: function (token, remainTokens) {\r\n        const toknenizer = new Tokenizer(token.args, this.liquid.options.operatorsTrie);\r\n        const variable = toknenizer.readIdentifier();\r\n        const inStr = toknenizer.readIdentifier();\r\n        const collection = toknenizer.readValue();\r\n        assert(variable.size() && inStr.content === 'in' && collection, () => `illegal tag: ${token.getText()}`);\r\n        this.variable = variable.content;\r\n        this.collection = collection;\r\n        this.hash = new Hash(toknenizer.remaining());\r\n        this.templates = [];\r\n        this.elseTemplates = [];\r\n        let p;\r\n        const stream = this.liquid.parser.parseStream(remainTokens)\r\n            .on('start', () => (p = this.templates))\r\n            .on('tag:else', () => (p = this.elseTemplates))\r\n            .on('tag:endfor', () => stream.stop())\r\n            .on('template', (tpl) => p.push(tpl))\r\n            .on('end', () => {\r\n            throw new Error(`tag ${token.getText()} not closed`);\r\n        });\r\n        stream.start();\r\n    },\r\n    render: function* (ctx, emitter) {\r\n        const r = this.liquid.renderer;\r\n        let collection = toEnumerable(yield evalToken(this.collection, ctx));\r\n        if (!collection.length) {\r\n            yield r.renderTemplates(this.elseTemplates, ctx, emitter);\r\n            return;\r\n        }\r\n        const hash = yield this.hash.render(ctx);\r\n        const offset = hash.offset || 0;\r\n        const limit = (hash.limit === undefined) ? collection.length : hash.limit;\r\n        collection = collection.slice(offset, offset + limit);\r\n        if ('reversed' in hash)\r\n            collection.reverse();\r\n        const scope = { forloop: new ForloopDrop(collection.length) };\r\n        ctx.push(scope);\r\n        for (const item of collection) {\r\n            scope[this.variable] = item;\r\n            yield r.renderTemplates(this.templates, ctx, emitter);\r\n            if (emitter.break) {\r\n                emitter.break = false;\r\n                break;\r\n            }\r\n            emitter.continue = false;\r\n            scope.forloop.next();\r\n        }\r\n        ctx.pop();\r\n    }\r\n};\n\nvar capture = {\r\n    parse: function (tagToken, remainTokens) {\r\n        const tokenizer = new Tokenizer(tagToken.args, this.liquid.options.operatorsTrie);\r\n        this.variable = readVariableName(tokenizer);\r\n        assert(this.variable, () => `${tagToken.args} not valid identifier`);\r\n        this.templates = [];\r\n        const stream = this.liquid.parser.parseStream(remainTokens);\r\n        stream.on('tag:endcapture', () => stream.stop())\r\n            .on('template', (tpl) => this.templates.push(tpl))\r\n            .on('end', () => {\r\n            throw new Error(`tag ${tagToken.getText()} not closed`);\r\n        });\r\n        stream.start();\r\n    },\r\n    render: function* (ctx) {\r\n        const r = this.liquid.renderer;\r\n        const html = yield r.renderTemplates(this.templates, ctx);\r\n        ctx.bottom()[this.variable] = html;\r\n    }\r\n};\r\nfunction readVariableName(tokenizer) {\r\n    const word = tokenizer.readIdentifier().content;\r\n    if (word)\r\n        return word;\r\n    const quoted = tokenizer.readQuoted();\r\n    if (quoted)\r\n        return evalQuotedToken(quoted);\r\n}\n\nvar Case = {\r\n    parse: function (tagToken, remainTokens) {\r\n        this.cond = new Value(tagToken.args, this.liquid);\r\n        this.cases = [];\r\n        this.elseTemplates = [];\r\n        let p = [];\r\n        const stream = this.liquid.parser.parseStream(remainTokens)\r\n            .on('tag:when', (token) => {\r\n            p = [];\r\n            const tokenizer = new Tokenizer(token.args, this.liquid.options.operatorsTrie);\r\n            while (!tokenizer.end()) {\r\n                const value = tokenizer.readValue();\r\n                if (value) {\r\n                    this.cases.push({\r\n                        val: value,\r\n                        templates: p\r\n                    });\r\n                }\r\n                tokenizer.readTo(',');\r\n            }\r\n        })\r\n            .on('tag:else', () => (p = this.elseTemplates))\r\n            .on('tag:endcase', () => stream.stop())\r\n            .on('template', (tpl) => p.push(tpl))\r\n            .on('end', () => {\r\n            throw new Error(`tag ${tagToken.getText()} not closed`);\r\n        });\r\n        stream.start();\r\n    },\r\n    render: function* (ctx, emitter) {\r\n        const r = this.liquid.renderer;\r\n        const cond = toValue(yield this.cond.value(ctx, ctx.opts.lenientIf));\r\n        for (const branch of this.cases) {\r\n            const val = evalToken(branch.val, ctx, ctx.opts.lenientIf);\r\n            if (val === cond) {\r\n                yield r.renderTemplates(branch.templates, ctx, emitter);\r\n                return;\r\n            }\r\n        }\r\n        yield r.renderTemplates(this.elseTemplates, ctx, emitter);\r\n    }\r\n};\n\nvar comment = {\r\n    parse: function (tagToken, remainTokens) {\r\n        const stream = this.liquid.parser.parseStream(remainTokens);\r\n        stream\r\n            .on('token', (token) => {\r\n            if (token.name === 'endcomment')\r\n                stream.stop();\r\n        })\r\n            .on('end', () => {\r\n            throw new Error(`tag ${tagToken.getText()} not closed`);\r\n        });\r\n        stream.start();\r\n    }\r\n};\n\nvar BlockMode;\r\n(function (BlockMode) {\r\n    /* store rendered html into blocks */\r\n    BlockMode[BlockMode[\"OUTPUT\"] = 0] = \"OUTPUT\";\r\n    /* output rendered html directly */\r\n    BlockMode[BlockMode[\"STORE\"] = 1] = \"STORE\";\r\n})(BlockMode || (BlockMode = {}));\r\nvar BlockMode$1 = BlockMode;\n\nvar include = {\r\n    parse: function (token) {\r\n        const args = token.args;\r\n        const tokenizer = new Tokenizer(args, this.liquid.options.operatorsTrie);\r\n        this.file = this.liquid.options.dynamicPartials\r\n            ? tokenizer.readValue()\r\n            : tokenizer.readFileName();\r\n        assert(this.file, () => `illegal argument \"${token.args}\"`);\r\n        const begin = tokenizer.p;\r\n        const withStr = tokenizer.readIdentifier();\r\n        if (withStr.content === 'with') {\r\n            tokenizer.skipBlank();\r\n            if (tokenizer.peek() !== ':') {\r\n                this.withVar = tokenizer.readValue();\r\n            }\r\n            else\r\n                tokenizer.p = begin;\r\n        }\r\n        else\r\n            tokenizer.p = begin;\r\n        this.hash = new Hash(tokenizer.remaining());\r\n    },\r\n    render: function* (ctx, emitter) {\r\n        const { liquid, hash, withVar, file } = this;\r\n        const { renderer } = liquid;\r\n        // TODO try move all liquid.parse calls into parse() section\r\n        const filepath = ctx.opts.dynamicPartials\r\n            ? (isQuotedToken(file)\r\n                ? yield renderer.renderTemplates(liquid.parse(evalQuotedToken(file)), ctx)\r\n                : yield evalToken(file, ctx))\r\n            : file.getText();\r\n        assert(filepath, () => `illegal filename \"${file.getText()}\":\"${filepath}\"`);\r\n        const saved = ctx.saveRegister('blocks', 'blockMode');\r\n        ctx.setRegister('blocks', {});\r\n        ctx.setRegister('blockMode', BlockMode$1.OUTPUT);\r\n        const scope = yield hash.render(ctx);\r\n        if (withVar)\r\n            scope[filepath] = evalToken(withVar, ctx);\r\n        const templates = yield liquid._parseFile(filepath, ctx.opts, ctx.sync);\r\n        ctx.push(scope);\r\n        yield renderer.renderTemplates(templates, ctx, emitter);\r\n        ctx.pop();\r\n        ctx.restoreRegister(saved);\r\n    }\r\n};\n\nvar render = {\r\n    parse: function (token) {\r\n        const args = token.args;\r\n        const tokenizer = new Tokenizer(args, this.liquid.options.operatorsTrie);\r\n        this.file = this.liquid.options.dynamicPartials\r\n            ? tokenizer.readValue()\r\n            : tokenizer.readFileName();\r\n        assert(this.file, () => `illegal argument \"${token.args}\"`);\r\n        while (!tokenizer.end()) {\r\n            tokenizer.skipBlank();\r\n            const begin = tokenizer.p;\r\n            const keyword = tokenizer.readIdentifier();\r\n            if (keyword.content === 'with' || keyword.content === 'for') {\r\n                tokenizer.skipBlank();\r\n                if (tokenizer.peek() !== ':') {\r\n                    const value = tokenizer.readValue();\r\n                    if (value) {\r\n                        const beforeAs = tokenizer.p;\r\n                        const asStr = tokenizer.readIdentifier();\r\n                        let alias;\r\n                        if (asStr.content === 'as')\r\n                            alias = tokenizer.readIdentifier();\r\n                        else\r\n                            tokenizer.p = beforeAs;\r\n                        this[keyword.content] = { value, alias: alias && alias.content };\r\n                        tokenizer.skipBlank();\r\n                        if (tokenizer.peek() === ',')\r\n                            tokenizer.advance();\r\n                        continue;\r\n                    }\r\n                }\r\n            }\r\n            tokenizer.p = begin;\r\n            break;\r\n        }\r\n        this.hash = new Hash(tokenizer.remaining());\r\n    },\r\n    render: function* (ctx, emitter) {\r\n        const { liquid, file, hash } = this;\r\n        const { renderer } = liquid;\r\n        const filepath = ctx.opts.dynamicPartials\r\n            ? (isQuotedToken(file)\r\n                ? yield renderer.renderTemplates(liquid.parse(evalQuotedToken(file)), ctx)\r\n                : evalToken(file, ctx))\r\n            : file.getText();\r\n        assert(filepath, () => `illegal filename \"${file.getText()}\":\"${filepath}\"`);\r\n        const childCtx = new Context({}, ctx.opts, ctx.sync);\r\n        const scope = yield hash.render(ctx);\r\n        if (this['with']) {\r\n            const { value, alias } = this['with'];\r\n            scope[alias || filepath] = evalToken(value, ctx);\r\n        }\r\n        childCtx.push(scope);\r\n        if (this['for']) {\r\n            const { value, alias } = this['for'];\r\n            let collection = evalToken(value, ctx);\r\n            collection = toEnumerable(collection);\r\n            scope['forloop'] = new ForloopDrop(collection.length);\r\n            for (const item of collection) {\r\n                scope[alias] = item;\r\n                const templates = yield liquid._parseFile(filepath, childCtx.opts, childCtx.sync);\r\n                yield renderer.renderTemplates(templates, childCtx, emitter);\r\n                scope.forloop.next();\r\n            }\r\n        }\r\n        else {\r\n            const templates = yield liquid._parseFile(filepath, childCtx.opts, childCtx.sync);\r\n            yield renderer.renderTemplates(templates, childCtx, emitter);\r\n        }\r\n    }\r\n};\n\nvar decrement = {\r\n    parse: function (token) {\r\n        const tokenizer = new Tokenizer(token.args, this.liquid.options.operatorsTrie);\r\n        this.variable = tokenizer.readIdentifier().content;\r\n    },\r\n    render: function (context, emitter) {\r\n        const scope = context.environments;\r\n        if (!isNumber(scope[this.variable])) {\r\n            scope[this.variable] = 0;\r\n        }\r\n        emitter.write(stringify(--scope[this.variable]));\r\n    }\r\n};\n\nvar cycle = {\r\n    parse: function (tagToken) {\r\n        const tokenizer = new Tokenizer(tagToken.args, this.liquid.options.operatorsTrie);\r\n        const group = tokenizer.readValue();\r\n        tokenizer.skipBlank();\r\n        this.candidates = [];\r\n        if (group) {\r\n            if (tokenizer.peek() === ':') {\r\n                this.group = group;\r\n                tokenizer.advance();\r\n            }\r\n            else\r\n                this.candidates.push(group);\r\n        }\r\n        while (!tokenizer.end()) {\r\n            const value = tokenizer.readValue();\r\n            if (value)\r\n                this.candidates.push(value);\r\n            tokenizer.readTo(',');\r\n        }\r\n        assert(this.candidates.length, () => `empty candidates: ${tagToken.getText()}`);\r\n    },\r\n    render: function (ctx, emitter) {\r\n        const group = evalToken(this.group, ctx);\r\n        const fingerprint = `cycle:${group}:` + this.candidates.join(',');\r\n        const groups = ctx.getRegister('cycle');\r\n        let idx = groups[fingerprint];\r\n        if (idx === undefined) {\r\n            idx = groups[fingerprint] = 0;\r\n        }\r\n        const candidate = this.candidates[idx];\r\n        idx = (idx + 1) % this.candidates.length;\r\n        groups[fingerprint] = idx;\r\n        const html = evalToken(candidate, ctx);\r\n        emitter.write(html);\r\n    }\r\n};\n\nvar If = {\r\n    parse: function (tagToken, remainTokens) {\r\n        this.branches = [];\r\n        this.elseTemplates = [];\r\n        let p;\r\n        const stream = this.liquid.parser.parseStream(remainTokens)\r\n            .on('start', () => this.branches.push({\r\n            cond: new Value(tagToken.args, this.liquid),\r\n            templates: (p = [])\r\n        }))\r\n            .on('tag:elsif', (token) => {\r\n            this.branches.push({\r\n                cond: new Value(token.args, this.liquid),\r\n                templates: p = []\r\n            });\r\n        })\r\n            .on('tag:else', () => (p = this.elseTemplates))\r\n            .on('tag:endif', () => stream.stop())\r\n            .on('template', (tpl) => p.push(tpl))\r\n            .on('end', () => {\r\n            throw new Error(`tag ${tagToken.getText()} not closed`);\r\n        });\r\n        stream.start();\r\n    },\r\n    render: function* (ctx, emitter) {\r\n        const r = this.liquid.renderer;\r\n        for (const branch of this.branches) {\r\n            const cond = yield branch.cond.value(ctx, ctx.opts.lenientIf);\r\n            if (isTruthy(cond, ctx)) {\r\n                yield r.renderTemplates(branch.templates, ctx, emitter);\r\n                return;\r\n            }\r\n        }\r\n        yield r.renderTemplates(this.elseTemplates, ctx, emitter);\r\n    }\r\n};\n\nvar increment = {\r\n    parse: function (token) {\r\n        const tokenizer = new Tokenizer(token.args, this.liquid.options.operatorsTrie);\r\n        this.variable = tokenizer.readIdentifier().content;\r\n    },\r\n    render: function (context, emitter) {\r\n        const scope = context.environments;\r\n        if (!isNumber(scope[this.variable])) {\r\n            scope[this.variable] = 0;\r\n        }\r\n        const val = scope[this.variable];\r\n        scope[this.variable]++;\r\n        emitter.write(stringify(val));\r\n    }\r\n};\n\nvar layout = {\r\n    parse: function (token, remainTokens) {\r\n        const tokenizer = new Tokenizer(token.args, this.liquid.options.operatorsTrie);\r\n        const file = this.liquid.options.dynamicPartials ? tokenizer.readValue() : tokenizer.readFileName();\r\n        assert(file, () => `illegal argument \"${token.args}\"`);\r\n        this.file = file;\r\n        this.hash = new Hash(tokenizer.remaining());\r\n        this.tpls = this.liquid.parser.parse(remainTokens);\r\n    },\r\n    render: function* (ctx, emitter) {\r\n        const { liquid, hash, file } = this;\r\n        const { renderer } = liquid;\r\n        if (file.getText() === 'none') {\r\n            ctx.setRegister('blockMode', BlockMode$1.OUTPUT);\r\n            const html = yield renderer.renderTemplates(this.tpls, ctx);\r\n            emitter.write(html);\r\n            return;\r\n        }\r\n        const filepath = ctx.opts.dynamicPartials\r\n            ? (isQuotedToken(file)\r\n                ? yield renderer.renderTemplates(liquid.parse(evalQuotedToken(file)), ctx)\r\n                : evalToken(this.file, ctx))\r\n            : file.getText();\r\n        assert(filepath, () => `file \"${file.getText()}\"(\"${filepath}\") not available`);\r\n        const templates = yield liquid._parseFile(filepath, ctx.opts, ctx.sync);\r\n        // render remaining contents and store rendered results\r\n        ctx.setRegister('blockMode', BlockMode$1.STORE);\r\n        const html = yield renderer.renderTemplates(this.tpls, ctx);\r\n        const blocks = ctx.getRegister('blocks');\r\n        if (blocks[''] === undefined)\r\n            blocks[''] = () => html;\r\n        ctx.setRegister('blockMode', BlockMode$1.OUTPUT);\r\n        // render the layout file use stored blocks\r\n        ctx.push(yield hash.render(ctx));\r\n        const partial = yield renderer.renderTemplates(templates, ctx);\r\n        ctx.pop();\r\n        emitter.write(partial);\r\n    }\r\n};\n\nclass BlockDrop extends Drop {\r\n    constructor(\r\n    // the block render from layout template\r\n    superBlockRender = () => '') {\r\n        super();\r\n        this.superBlockRender = superBlockRender;\r\n    }\r\n    super() {\r\n        return this.superBlockRender();\r\n    }\r\n}\n\nvar block = {\r\n    parse(token, remainTokens) {\r\n        const match = /\\w+/.exec(token.args);\r\n        this.block = match ? match[0] : '';\r\n        this.tpls = [];\r\n        const stream = this.liquid.parser.parseStream(remainTokens)\r\n            .on('tag:endblock', () => stream.stop())\r\n            .on('template', (tpl) => this.tpls.push(tpl))\r\n            .on('end', () => {\r\n            throw new Error(`tag ${token.getText()} not closed`);\r\n        });\r\n        stream.start();\r\n    },\r\n    *render(ctx, emitter) {\r\n        const blockRender = this.getBlockRender(ctx);\r\n        yield this.emitHTML(ctx, emitter, blockRender);\r\n    },\r\n    getBlockRender(ctx) {\r\n        const { liquid, tpls } = this;\r\n        const extendedBlockRender = ctx.getRegister('blocks')[this.block];\r\n        const defaultBlockRender = function* (superBlock) {\r\n            ctx.push({ block: superBlock });\r\n            const result = yield liquid.renderer.renderTemplates(tpls, ctx);\r\n            ctx.pop();\r\n            return result;\r\n        };\r\n        return extendedBlockRender\r\n            ? (superBlock) => extendedBlockRender(new BlockDrop(() => defaultBlockRender(superBlock)))\r\n            : defaultBlockRender;\r\n    },\r\n    *emitHTML(ctx, emitter, blockRender) {\r\n        if (ctx.getRegister('blockMode', BlockMode$1.OUTPUT) === BlockMode$1.STORE) {\r\n            ctx.getRegister('blocks')[this.block] = blockRender;\r\n        }\r\n        else {\r\n            emitter.write(yield blockRender(new BlockDrop()));\r\n        }\r\n    }\r\n};\n\nvar raw = {\r\n    parse: function (tagToken, remainTokens) {\r\n        this.tokens = [];\r\n        const stream = this.liquid.parser.parseStream(remainTokens);\r\n        stream\r\n            .on('token', (token) => {\r\n            if (token.name === 'endraw')\r\n                stream.stop();\r\n            else\r\n                this.tokens.push(token);\r\n        })\r\n            .on('end', () => {\r\n            throw new Error(`tag ${tagToken.getText()} not closed`);\r\n        });\r\n        stream.start();\r\n    },\r\n    render: function () {\r\n        return this.tokens.map((token) => token.getText()).join('');\r\n    }\r\n};\n\nclass TablerowloopDrop extends ForloopDrop {\r\n    constructor(length, cols) {\r\n        super(length);\r\n        this.length = length;\r\n        this.cols = cols;\r\n    }\r\n    row() {\r\n        return Math.floor(this.i / this.cols) + 1;\r\n    }\r\n    col0() {\r\n        return (this.i % this.cols);\r\n    }\r\n    col() {\r\n        return this.col0() + 1;\r\n    }\r\n    col_first() {\r\n        return this.col0() === 0;\r\n    }\r\n    col_last() {\r\n        return this.col() === this.cols;\r\n    }\r\n}\n\nvar tablerow = {\r\n    parse: function (tagToken, remainTokens) {\r\n        const tokenizer = new Tokenizer(tagToken.args, this.liquid.options.operatorsTrie);\r\n        this.variable = tokenizer.readIdentifier();\r\n        tokenizer.skipBlank();\r\n        const tmp = tokenizer.readIdentifier();\r\n        assert(tmp && tmp.content === 'in', () => `illegal tag: ${tagToken.getText()}`);\r\n        this.collection = tokenizer.readValue();\r\n        this.hash = new Hash(tokenizer.remaining());\r\n        this.templates = [];\r\n        let p;\r\n        const stream = this.liquid.parser.parseStream(remainTokens)\r\n            .on('start', () => (p = this.templates))\r\n            .on('tag:endtablerow', () => stream.stop())\r\n            .on('template', (tpl) => p.push(tpl))\r\n            .on('end', () => {\r\n            throw new Error(`tag ${tagToken.getText()} not closed`);\r\n        });\r\n        stream.start();\r\n    },\r\n    render: function* (ctx, emitter) {\r\n        let collection = toEnumerable(yield evalToken(this.collection, ctx));\r\n        const hash = yield this.hash.render(ctx);\r\n        const offset = hash.offset || 0;\r\n        const limit = (hash.limit === undefined) ? collection.length : hash.limit;\r\n        collection = collection.slice(offset, offset + limit);\r\n        const cols = hash.cols || collection.length;\r\n        const r = this.liquid.renderer;\r\n        const tablerowloop = new TablerowloopDrop(collection.length, cols);\r\n        const scope = { tablerowloop };\r\n        ctx.push(scope);\r\n        for (let idx = 0; idx < collection.length; idx++, tablerowloop.next()) {\r\n            scope[this.variable.content] = collection[idx];\r\n            if (tablerowloop.col0() === 0) {\r\n                if (tablerowloop.row() !== 1)\r\n                    emitter.write('</tr>');\r\n                emitter.write(`<tr class=\"row${tablerowloop.row()}\">`);\r\n            }\r\n            emitter.write(`<td class=\"col${tablerowloop.col()}\">`);\r\n            yield r.renderTemplates(this.templates, ctx, emitter);\r\n            emitter.write('</td>');\r\n        }\r\n        if (collection.length)\r\n            emitter.write('</tr>');\r\n        ctx.pop();\r\n    }\r\n};\n\nvar unless = {\r\n    parse: function (tagToken, remainTokens) {\r\n        this.templates = [];\r\n        this.branches = [];\r\n        this.elseTemplates = [];\r\n        let p;\r\n        const stream = this.liquid.parser.parseStream(remainTokens)\r\n            .on('start', () => {\r\n            p = this.templates;\r\n            this.cond = new Value(tagToken.args, this.liquid);\r\n        })\r\n            .on('tag:elsif', (token) => {\r\n            this.branches.push({\r\n                cond: new Value(token.args, this.liquid),\r\n                templates: p = []\r\n            });\r\n        })\r\n            .on('tag:else', () => (p = this.elseTemplates))\r\n            .on('tag:endunless', () => stream.stop())\r\n            .on('template', (tpl) => p.push(tpl))\r\n            .on('end', () => {\r\n            throw new Error(`tag ${tagToken.getText()} not closed`);\r\n        });\r\n        stream.start();\r\n    },\r\n    render: function* (ctx, emitter) {\r\n        const r = this.liquid.renderer;\r\n        const cond = yield this.cond.value(ctx, ctx.opts.lenientIf);\r\n        if (isFalsy(cond, ctx)) {\r\n            yield r.renderTemplates(this.templates, ctx, emitter);\r\n            return;\r\n        }\r\n        for (const branch of this.branches) {\r\n            const cond = yield branch.cond.value(ctx, ctx.opts.lenientIf);\r\n            if (isTruthy(cond, ctx)) {\r\n                yield r.renderTemplates(branch.templates, ctx, emitter);\r\n                return;\r\n            }\r\n        }\r\n        yield r.renderTemplates(this.elseTemplates, ctx, emitter);\r\n    }\r\n};\n\nvar Break = {\r\n    render: function (ctx, emitter) {\r\n        emitter.break = true;\r\n    }\r\n};\n\nvar Continue = {\r\n    render: function (ctx, emitter) {\r\n        emitter.continue = true;\r\n    }\r\n};\n\nconst tags = {\r\n    assign, 'for': For, capture, 'case': Case, comment, include, render, decrement, increment, cycle, 'if': If, layout, block, raw, tablerow, unless, 'break': Break, 'continue': Continue\r\n};\n\nconst escapeMap = {\r\n    '&': '&amp;',\r\n    '<': '&lt;',\r\n    '>': '&gt;',\r\n    '\"': '&#34;',\r\n    \"'\": '&#39;'\r\n};\r\nconst unescapeMap = {\r\n    '&amp;': '&',\r\n    '&lt;': '<',\r\n    '&gt;': '>',\r\n    '&#34;': '\"',\r\n    '&#39;': \"'\"\r\n};\r\nfunction escape(str) {\r\n    return stringify(str).replace(/&|<|>|\"|'/g, m => escapeMap[m]);\r\n}\r\nfunction unescape(str) {\r\n    return String(str).replace(/&(amp|lt|gt|#34|#39);/g, m => unescapeMap[m]);\r\n}\r\nfunction escapeOnce(str) {\r\n    return escape(unescape(str));\r\n}\r\nfunction newlineToBr(v) {\r\n    return v.replace(/\\n/g, '<br />\\n');\r\n}\r\nfunction stripHtml(v) {\r\n    return v.replace(/<script.*?<\\/script>|<!--.*?-->|<style.*?<\\/style>|<.*?>/g, '');\r\n}\n\nconst abs = Math.abs;\r\nconst atLeast = Math.max;\r\nconst atMost = Math.min;\r\nconst ceil = Math.ceil;\r\nconst dividedBy = (v, arg) => v / arg;\r\nconst floor = Math.floor;\r\nconst minus = (v, arg) => v - arg;\r\nconst modulo = (v, arg) => v % arg;\r\nconst times = (v, arg) => v * arg;\r\nfunction round(v, arg = 0) {\r\n    const amp = Math.pow(10, arg);\r\n    return Math.round(v * amp) / amp;\r\n}\r\nfunction plus(v, arg) {\r\n    return Number(v) + Number(arg);\r\n}\r\nfunction sortNatural(input, property) {\r\n    if (!input || !input.sort)\r\n        return [];\r\n    if (property !== undefined) {\r\n        return [...input].sort((lhs, rhs) => caseInsensitiveCompare(lhs[property], rhs[property]));\r\n    }\r\n    return [...input].sort(caseInsensitiveCompare);\r\n}\n\nconst urlDecode = (x) => x.split('+').map(decodeURIComponent).join(' ');\r\nconst urlEncode = (x) => x.split(' ').map(encodeURIComponent).join('+');\n\nconst join = (v, arg) => v.join(arg === undefined ? ' ' : arg);\r\nconst last$1 = (v) => isArray(v) ? last(v) : '';\r\nconst first = (v) => isArray(v) ? v[0] : '';\r\nconst reverse = (v) => [...v].reverse();\r\nfunction sort(arr, property) {\r\n    const getValue = (obj) => property ? this.context.getFromScope(obj, property.split('.')) : obj;\r\n    return toArray(arr).sort((lhs, rhs) => {\r\n        lhs = getValue(lhs);\r\n        rhs = getValue(rhs);\r\n        return lhs < rhs ? -1 : (lhs > rhs ? 1 : 0);\r\n    });\r\n}\r\nconst size = (v) => (v && v.length) || 0;\r\nfunction map(arr, property) {\r\n    return toArray(arr).map(obj => this.context.getFromScope(obj, property.split('.')));\r\n}\r\nfunction compact(arr) {\r\n    return toArray(arr).filter(x => !isNil(x));\r\n}\r\nfunction concat(v, arg) {\r\n    return toArray(v).concat(arg);\r\n}\r\nfunction slice(v, begin, length = 1) {\r\n    begin = begin < 0 ? v.length + begin : begin;\r\n    return v.slice(begin, begin + length);\r\n}\r\nfunction where(arr, property, expected) {\r\n    return toArray(arr).filter(obj => {\r\n        const value = this.context.getFromScope(obj, String(property).split('.'));\r\n        return expected === undefined ? isTruthy(value, this.context) : value === expected;\r\n    });\r\n}\r\nfunction uniq(arr) {\r\n    const u = {};\r\n    return (arr || []).filter(val => {\r\n        if (u.hasOwnProperty(String(val)))\r\n            return false;\r\n        u[String(val)] = true;\r\n        return true;\r\n    });\r\n}\n\nconst rFormat = /%([-_0^#:]+)?(\\d+)?([EO])?(.)/;\r\nconst monthNames = [\r\n    'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',\r\n    'September', 'October', 'November', 'December'\r\n];\r\nconst dayNames = [\r\n    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'\r\n];\r\nconst monthNamesShort = monthNames.map(abbr);\r\nconst dayNamesShort = dayNames.map(abbr);\r\nconst suffixes = {\r\n    1: 'st',\r\n    2: 'nd',\r\n    3: 'rd',\r\n    'default': 'th'\r\n};\r\nfunction abbr(str) {\r\n    return str.slice(0, 3);\r\n}\r\n// prototype extensions\r\nfunction daysInMonth(d) {\r\n    const feb = isLeapYear(d) ? 29 : 28;\r\n    return [31, feb, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];\r\n}\r\nfunction getDayOfYear(d) {\r\n    let num = 0;\r\n    for (let i = 0; i < d.getMonth(); ++i) {\r\n        num += daysInMonth(d)[i];\r\n    }\r\n    return num + d.getDate();\r\n}\r\nfunction getWeekOfYear(d, startDay) {\r\n    // Skip to startDay of this week\r\n    const now = getDayOfYear(d) + (startDay - d.getDay());\r\n    // Find the first startDay of the year\r\n    const jan1 = new Date(d.getFullYear(), 0, 1);\r\n    const then = (7 - jan1.getDay() + startDay);\r\n    return String(Math.floor((now - then) / 7) + 1);\r\n}\r\nfunction isLeapYear(d) {\r\n    const year = d.getFullYear();\r\n    return !!((year & 3) === 0 && (year % 100 || (year % 400 === 0 && year)));\r\n}\r\nfunction getSuffix(d) {\r\n    const str = d.getDate().toString();\r\n    const index = parseInt(str.slice(-1));\r\n    return suffixes[index] || suffixes['default'];\r\n}\r\nfunction century(d) {\r\n    return parseInt(d.getFullYear().toString().substring(0, 2), 10);\r\n}\r\n// default to 0\r\nconst padWidths = {\r\n    d: 2,\r\n    e: 2,\r\n    H: 2,\r\n    I: 2,\r\n    j: 3,\r\n    k: 2,\r\n    l: 2,\r\n    L: 3,\r\n    m: 2,\r\n    M: 2,\r\n    S: 2,\r\n    U: 2,\r\n    W: 2\r\n};\r\n// default to '0'\r\nconst padChars = {\r\n    a: ' ',\r\n    A: ' ',\r\n    b: ' ',\r\n    B: ' ',\r\n    c: ' ',\r\n    e: ' ',\r\n    k: ' ',\r\n    l: ' ',\r\n    p: ' ',\r\n    P: ' '\r\n};\r\nconst formatCodes = {\r\n    a: (d) => dayNamesShort[d.getDay()],\r\n    A: (d) => dayNames[d.getDay()],\r\n    b: (d) => monthNamesShort[d.getMonth()],\r\n    B: (d) => monthNames[d.getMonth()],\r\n    c: (d) => d.toLocaleString(),\r\n    C: (d) => century(d),\r\n    d: (d) => d.getDate(),\r\n    e: (d) => d.getDate(),\r\n    H: (d) => d.getHours(),\r\n    I: (d) => String(d.getHours() % 12 || 12),\r\n    j: (d) => getDayOfYear(d),\r\n    k: (d) => d.getHours(),\r\n    l: (d) => String(d.getHours() % 12 || 12),\r\n    L: (d) => d.getMilliseconds(),\r\n    m: (d) => d.getMonth() + 1,\r\n    M: (d) => d.getMinutes(),\r\n    N: (d, opts) => {\r\n        const width = Number(opts.width) || 9;\r\n        const str = String(d.getMilliseconds()).substr(0, width);\r\n        return padEnd(str, width, '0');\r\n    },\r\n    p: (d) => (d.getHours() < 12 ? 'AM' : 'PM'),\r\n    P: (d) => (d.getHours() < 12 ? 'am' : 'pm'),\r\n    q: (d) => getSuffix(d),\r\n    s: (d) => Math.round(d.valueOf() / 1000),\r\n    S: (d) => d.getSeconds(),\r\n    u: (d) => d.getDay() || 7,\r\n    U: (d) => getWeekOfYear(d, 0),\r\n    w: (d) => d.getDay(),\r\n    W: (d) => getWeekOfYear(d, 1),\r\n    x: (d) => d.toLocaleDateString(),\r\n    X: (d) => d.toLocaleTimeString(),\r\n    y: (d) => d.getFullYear().toString().substring(2, 4),\r\n    Y: (d) => d.getFullYear(),\r\n    z: (d, opts) => {\r\n        const offset = d.getTimezoneOffset();\r\n        const nOffset = Math.abs(offset);\r\n        const h = Math.floor(nOffset / 60);\r\n        const m = nOffset % 60;\r\n        return (offset > 0 ? '-' : '+') +\r\n            padStart(h, 2, '0') +\r\n            (opts.flags[':'] ? ':' : '') +\r\n            padStart(m, 2, '0');\r\n    },\r\n    't': () => '\\t',\r\n    'n': () => '\\n',\r\n    '%': () => '%'\r\n};\r\nformatCodes.h = formatCodes.b;\r\nfunction strftime (inputDate, formatStr) {\r\n    let d = inputDate;\r\n    if (d instanceof TimezoneDate) {\r\n        d = d.getDisplayDate();\r\n    }\r\n    let output = '';\r\n    let remaining = formatStr;\r\n    let match;\r\n    while ((match = rFormat.exec(remaining))) {\r\n        output += remaining.slice(0, match.index);\r\n        remaining = remaining.slice(match.index + match[0].length);\r\n        output += format(d, match);\r\n    }\r\n    return output + remaining;\r\n}\r\nfunction format(d, match) {\r\n    const [input, flagStr = '', width, modifier, conversion] = match;\r\n    const convert = formatCodes[conversion];\r\n    if (!convert)\r\n        return input;\r\n    const flags = {};\r\n    for (const flag of flagStr)\r\n        flags[flag] = true;\r\n    let ret = String(convert(d, { flags, width, modifier }));\r\n    let padChar = padChars[conversion] || '0';\r\n    let padWidth = width || padWidths[conversion] || 0;\r\n    if (flags['^'])\r\n        ret = ret.toUpperCase();\r\n    else if (flags['#'])\r\n        ret = changeCase(ret);\r\n    if (flags['_'])\r\n        padChar = ' ';\r\n    else if (flags['0'])\r\n        padChar = '0';\r\n    if (flags['-'])\r\n        padWidth = 0;\r\n    return padStart(ret, padWidth, padChar);\r\n}\r\nclass TimezoneDate extends Date {\r\n    constructor(dateString) {\r\n        super(dateString);\r\n        this.dateString = dateString;\r\n        this.ISO8601_TIMEZONE_PATTERN = /([zZ]|([+-])(\\d{2}):(\\d{2}))$/;\r\n        this.inputTimezoneOffset = 0;\r\n        const m = dateString.match(this.ISO8601_TIMEZONE_PATTERN);\r\n        if (m && m[1] === 'Z') {\r\n            this.inputTimezoneOffset = this.getTimezoneOffset();\r\n        }\r\n        else if (m && m[2] && m[3] && m[4]) {\r\n            const [, , sign, hours, minutes] = m;\r\n            const delta = (sign === '+' ? 1 : -1) * (parseInt(hours, 10) * 60 + parseInt(minutes, 10));\r\n            this.inputTimezoneOffset = this.getTimezoneOffset() + delta;\r\n        }\r\n    }\r\n    getDisplayDate() {\r\n        return new Date((+this) + this.inputTimezoneOffset * 60 * 1000);\r\n    }\r\n}\n\nfunction date(v, arg) {\r\n    let date = v;\r\n    if (v === 'now' || v === 'today') {\r\n        date = new Date();\r\n    }\r\n    else if (isNumber(v)) {\r\n        date = new Date(v * 1000);\r\n    }\r\n    else if (isString(v)) {\r\n        if (/^\\d+$/.test(v)) {\r\n            date = new Date(+v * 1000);\r\n        }\r\n        else if (this.context.opts.preserveTimezones) {\r\n            date = new TimezoneDate(v);\r\n        }\r\n        else {\r\n            date = new Date(v);\r\n        }\r\n    }\r\n    return isValidDate(date) ? strftime(date, arg) : v;\r\n}\r\nfunction isValidDate(date) {\r\n    return date instanceof Date && !isNaN(date.getTime());\r\n}\n\nfunction Default(v, arg) {\r\n    if (isArray(v) || isString(v))\r\n        return v.length ? v : arg;\r\n    return isFalsy(toValue(v), this.context) ? arg : v;\r\n}\r\nfunction json(v) {\r\n    return JSON.stringify(v);\r\n}\n\n/**\r\n * String related filters\r\n *\r\n * * prefer stringify() to String() since `undefined`, `null` should eval ''\r\n */\r\nfunction append(v, arg) {\r\n    assert(arguments.length === 2, () => 'append expect 2 arguments');\r\n    return stringify(v) + stringify(arg);\r\n}\r\nfunction prepend(v, arg) {\r\n    assert(arguments.length === 2, () => 'prepend expect 2 arguments');\r\n    return stringify(arg) + stringify(v);\r\n}\r\nfunction lstrip(v) {\r\n    return stringify(v).replace(/^\\s+/, '');\r\n}\r\nfunction downcase(v) {\r\n    return stringify(v).toLowerCase();\r\n}\r\nfunction upcase(str) {\r\n    return stringify(str).toUpperCase();\r\n}\r\nfunction remove(v, arg) {\r\n    return stringify(v).split(String(arg)).join('');\r\n}\r\nfunction removeFirst(v, l) {\r\n    return stringify(v).replace(String(l), '');\r\n}\r\nfunction rstrip(str) {\r\n    return stringify(str).replace(/\\s+$/, '');\r\n}\r\nfunction split(v, arg) {\r\n    return stringify(v).split(String(arg));\r\n}\r\nfunction strip(v) {\r\n    return stringify(v).trim();\r\n}\r\nfunction stripNewlines(v) {\r\n    return stringify(v).replace(/\\n/g, '');\r\n}\r\nfunction capitalize(str) {\r\n    str = stringify(str);\r\n    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();\r\n}\r\nfunction replace(v, pattern, replacement) {\r\n    return stringify(v).split(String(pattern)).join(replacement);\r\n}\r\nfunction replaceFirst(v, arg1, arg2) {\r\n    return stringify(v).replace(String(arg1), arg2);\r\n}\r\nfunction truncate(v, l = 50, o = '...') {\r\n    v = stringify(v);\r\n    if (v.length <= l)\r\n        return v;\r\n    return v.substr(0, l - o.length) + o;\r\n}\r\nfunction truncatewords(v, l = 15, o = '...') {\r\n    const arr = v.split(/\\s+/);\r\n    let ret = arr.slice(0, l).join(' ');\r\n    if (arr.length >= l)\r\n        ret += o;\r\n    return ret;\r\n}\n\n\n\nvar builtinFilters = /*#__PURE__*/Object.freeze({\n  escape: escape,\n  escapeOnce: escapeOnce,\n  newlineToBr: newlineToBr,\n  stripHtml: stripHtml,\n  abs: abs,\n  atLeast: atLeast,\n  atMost: atMost,\n  ceil: ceil,\n  dividedBy: dividedBy,\n  floor: floor,\n  minus: minus,\n  modulo: modulo,\n  times: times,\n  round: round,\n  plus: plus,\n  sortNatural: sortNatural,\n  urlDecode: urlDecode,\n  urlEncode: urlEncode,\n  join: join,\n  last: last$1,\n  first: first,\n  reverse: reverse,\n  sort: sort,\n  size: size,\n  map: map,\n  compact: compact,\n  concat: concat,\n  slice: slice,\n  where: where,\n  uniq: uniq,\n  date: date,\n  Default: Default,\n  json: json,\n  append: append,\n  prepend: prepend,\n  lstrip: lstrip,\n  downcase: downcase,\n  upcase: upcase,\n  remove: remove,\n  removeFirst: removeFirst,\n  rstrip: rstrip,\n  split: split,\n  strip: strip,\n  stripNewlines: stripNewlines,\n  capitalize: capitalize,\n  replace: replace,\n  replaceFirst: replaceFirst,\n  truncate: truncate,\n  truncatewords: truncatewords\n});\n\nclass TagMap {\r\n    constructor() {\r\n        this.impls = {};\r\n    }\r\n    get(name) {\r\n        const impl = this.impls[name];\r\n        assert(impl, () => `tag \"${name}\" not found`);\r\n        return impl;\r\n    }\r\n    set(name, impl) {\r\n        this.impls[name] = impl;\r\n    }\r\n}\n\nclass FilterMap {\r\n    constructor(strictFilters, liquid) {\r\n        this.strictFilters = strictFilters;\r\n        this.liquid = liquid;\r\n        this.impls = {};\r\n    }\r\n    get(name) {\r\n        const impl = this.impls[name];\r\n        assert(impl || !this.strictFilters, () => `undefined filter: ${name}`);\r\n        return impl;\r\n    }\r\n    set(name, impl) {\r\n        this.impls[name] = impl;\r\n    }\r\n    create(name, args) {\r\n        return new Filter(name, this.get(name), args, this.liquid);\r\n    }\r\n}\n\nclass Liquid {\r\n    constructor(opts = {}) {\r\n        this.options = applyDefault(normalize(opts));\r\n        this.parser = new Parser(this);\r\n        this.renderer = new Render();\r\n        this.filters = new FilterMap(this.options.strictFilters, this);\r\n        this.tags = new TagMap();\r\n        forOwn(tags, (conf, name) => this.registerTag(snakeCase(name), conf));\r\n        forOwn(builtinFilters, (handler, name) => this.registerFilter(snakeCase(name), handler));\r\n    }\r\n    parse(html, filepath) {\r\n        const tokenizer = new Tokenizer(html, this.options.operatorsTrie, filepath);\r\n        const tokens = tokenizer.readTopLevelTokens(this.options);\r\n        return this.parser.parse(tokens);\r\n    }\r\n    _render(tpl, scope, opts, sync) {\r\n        const options = Object.assign({}, this.options, normalize(opts));\r\n        const ctx = new Context(scope, options, sync);\r\n        const emitter = new Emitter(options.keepOutputType);\r\n        return this.renderer.renderTemplates(tpl, ctx, emitter);\r\n    }\r\n    async render(tpl, scope, opts) {\r\n        return toPromise(this._render(tpl, scope, opts, false));\r\n    }\r\n    renderSync(tpl, scope, opts) {\r\n        return toValue$1(this._render(tpl, scope, opts, true));\r\n    }\r\n    _parseAndRender(html, scope, opts, sync) {\r\n        const tpl = this.parse(html);\r\n        return this._render(tpl, scope, opts, sync);\r\n    }\r\n    async parseAndRender(html, scope, opts) {\r\n        return toPromise(this._parseAndRender(html, scope, opts, false));\r\n    }\r\n    parseAndRenderSync(html, scope, opts) {\r\n        return toValue$1(this._parseAndRender(html, scope, opts, true));\r\n    }\r\n    *_parseFile(file, opts, sync) {\r\n        const options = Object.assign({}, this.options, normalize(opts));\r\n        const paths = options.root.map(root => options.fs.resolve(root, file, options.extname));\r\n        if (options.fs.fallback !== undefined) {\r\n            const filepath = options.fs.fallback(file);\r\n            if (filepath !== undefined)\r\n                paths.push(filepath);\r\n        }\r\n        for (const filepath of paths) {\r\n            const { cache } = options;\r\n            if (cache) {\r\n                const tpls = yield cache.read(filepath);\r\n                if (tpls)\r\n                    return tpls;\r\n            }\r\n            if (!(sync ? options.fs.existsSync(filepath) : yield options.fs.exists(filepath)))\r\n                continue;\r\n            const tpl = this.parse(sync ? options.fs.readFileSync(filepath) : yield options.fs.readFile(filepath), filepath);\r\n            if (cache)\r\n                cache.write(filepath, tpl);\r\n            return tpl;\r\n        }\r\n        throw this.lookupError(file, options.root);\r\n    }\r\n    async parseFile(file, opts) {\r\n        return toPromise(this._parseFile(file, opts, false));\r\n    }\r\n    parseFileSync(file, opts) {\r\n        return toValue$1(this._parseFile(file, opts, true));\r\n    }\r\n    async renderFile(file, ctx, opts) {\r\n        const templates = await this.parseFile(file, opts);\r\n        return this.render(templates, ctx, opts);\r\n    }\r\n    renderFileSync(file, ctx, opts) {\r\n        const templates = this.parseFileSync(file, opts);\r\n        return this.renderSync(templates, ctx, opts);\r\n    }\r\n    _evalValue(str, ctx) {\r\n        const value = new Value(str, this);\r\n        return value.value(ctx, false);\r\n    }\r\n    async evalValue(str, ctx) {\r\n        return toPromise(this._evalValue(str, ctx));\r\n    }\r\n    evalValueSync(str, ctx) {\r\n        return toValue$1(this._evalValue(str, ctx));\r\n    }\r\n    registerFilter(name, filter) {\r\n        this.filters.set(name, filter);\r\n    }\r\n    registerTag(name, tag) {\r\n        this.tags.set(name, tag);\r\n    }\r\n    plugin(plugin) {\r\n        return plugin.call(this, Liquid);\r\n    }\r\n    express() {\r\n        const self = this; // eslint-disable-line\r\n        return function (filePath, ctx, callback) {\r\n            const opts = { root: [...normalizeStringArray(this.root), ...self.options.root] };\r\n            self.renderFile(filePath, ctx, opts).then(html => callback(null, html), callback);\r\n        };\r\n    }\r\n    lookupError(file, roots) {\r\n        const err = new Error('ENOENT');\r\n        err.message = `ENOENT: Failed to lookup \"${file}\" in \"${roots}\"`;\r\n        err.code = 'ENOENT';\r\n        return err;\r\n    }\r\n    /**\r\n     * @deprecated use parseFile instead\r\n     */\r\n    async getTemplate(file, opts) {\r\n        return this.parseFile(file, opts);\r\n    }\r\n    /**\r\n     * @deprecated use parseFileSync instead\r\n     */\r\n    getTemplateSync(file, opts) {\r\n        return this.parseFileSync(file, opts);\r\n    }\r\n}\n\n\n\n\n//# sourceURL=webpack://SuperwallSDKJS/./node_modules/liquidjs/dist/liquid.browser.esm.js?");
-
-/***/ }),
-
-/***/ "./sdk-js/index.ts":
-/*!*************************!*\
-  !*** ./sdk-js/index.ts ***!
-  \*************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"evaluate64\": () => (/* binding */ evaluate64),\n/* harmony export */   \"evaluate\": () => (/* binding */ evaluate)\n/* harmony export */ });\n/* harmony import */ var liquidjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! liquidjs */ \"./node_modules/liquidjs/dist/liquid.browser.esm.js\");\n/* harmony import */ var js_base64__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! js-base64 */ \"./node_modules/js-base64/base64.mjs\");\n\n\nvar engine = new liquidjs__WEBPACK_IMPORTED_MODULE_0__.Liquid();\nvar evaluate64 = function (inputBase64) {\n    var input = js_base64__WEBPACK_IMPORTED_MODULE_1__.decode(inputBase64);\n    var inputJson = JSON.parse(input);\n    return evaluate(inputJson);\n};\nvar evaluate = function (_a) {\n    var expression = _a.expression, values = _a.values;\n    var template = engine.parse(\"{% if \" + expression + \" %}true{% else %}false{% endif %}\");\n    return engine.renderSync(template, values) === \"true\";\n};\n\n\n//# sourceURL=webpack://SuperwallSDKJS/./sdk-js/index.ts?");
-
-/***/ })
-
-/******/     });
-/************************************************************************/
-/******/     // The module cache
-/******/     var __webpack_module_cache__ = {};
-/******/
-/******/     // The require function
-/******/     function __webpack_require__(moduleId) {
-/******/         // Check if module is in cache
-/******/         var cachedModule = __webpack_module_cache__[moduleId];
-/******/         if (cachedModule !== undefined) {
-/******/             return cachedModule.exports;
-/******/         }
-/******/         // Create a new module (and put it into the cache)
-/******/         var module = __webpack_module_cache__[moduleId] = {
-/******/             // no module.id needed
-/******/             // no module.loaded needed
-/******/             exports: {}
-/******/         };
-/******/
-/******/         // Execute the module function
-/******/         __webpack_modules__[moduleId](module, module.exports, __webpack_require__);
-/******/
-/******/         // Return the exports of the module
-/******/         return module.exports;
-/******/     }
-/******/
-/************************************************************************/
-/******/     /* webpack/runtime/define property getters */
-/******/     (() => {
-/******/         // define getter functions for harmony exports
-/******/         __webpack_require__.d = (exports, definition) => {
-/******/             for(var key in definition) {
-/******/                 if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/                     Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/                 }
-/******/             }
-/******/         };
-/******/     })();
-/******/
-/******/     /* webpack/runtime/hasOwnProperty shorthand */
-/******/     (() => {
-/******/         __webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/     })();
-/******/
-/******/     /* webpack/runtime/make namespace object */
-/******/     (() => {
-/******/         // define __esModule on exports
-/******/         __webpack_require__.r = (exports) => {
-/******/             if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/                 Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/             }
-/******/             Object.defineProperty(exports, '__esModule', { value: true });
-/******/         };
-/******/     })();
-/******/
-/************************************************************************/
-/******/
-/******/     // startup
-/******/     // Load entry module and return exports
-/******/     // This entry module can't be inlined because the eval devtool is used.
-/******/     var __webpack_exports__ = __webpack_require__("./sdk-js/index.ts");
-/******/     SuperwallSDKJS = __webpack_exports__;
-/******/
-/******/ })()
-;
+              ) {
+                const e = t.readValue()
+                e && this.candidates.push(e), t.readTo(",")
+              }
+              de(this.candidates.length, () => `empty candidates: ${e.getText()}`)
+            },
+            render: function (e, t) {
+              const r = `cycle:${_e(this.group, e)}:` + this.candidates.join(","),
+                s = e.getRegister("cycle")
+              let n = s[r]
+              void 0 === n && (n = s[r] = 0)
+              const i = this.candidates[n]
+              ;(n = (n + 1) % this.candidates.length), (s[r] = n)
+              const o = _e(i, e)
+              t.write(o)
+            },
+          },
+          nt = {
+            parse: function (e, t) {
+              let r
+              ;(this.branches = []), (this.elseTemplates = [])
+              const s = this.liquid.parser
+                .parseStream(t)
+                .on("start", () =>
+                  this.branches.push({ cond: new Le(e.args, this.liquid), templates: (r = []) })
+                )
+                .on("tag:elsif", (e) => {
+                  this.branches.push({ cond: new Le(e.args, this.liquid), templates: (r = []) })
+                })
+                .on("tag:else", () => (r = this.elseTemplates))
+                .on("tag:endif", () => s.stop())
+                .on("template", (e) => r.push(e))
+                .on("end", () => {
+                  throw new Error(`tag ${e.getText()} not closed`)
+                })
+              s.start()
+            },
+            render: function* (e, t) {
+              const r = this.liquid.renderer
+              for (const s of this.branches)
+                if (E(yield s.cond.value(e, e.opts.lenientIf), e))
+                  return void (yield r.renderTemplates(s.templates, e, t))
+              yield r.renderTemplates(this.elseTemplates, e, t)
+            },
+          },
+          it = {
+            parse: function (e) {
+              const t = new qe(e.args, this.liquid.options.operatorsTrie)
+              this.variable = t.readIdentifier().content
+            },
+            render: function (e, t) {
+              const r = e.environments
+              u(r[this.variable]) || (r[this.variable] = 0)
+              const s = r[this.variable]
+              r[this.variable]++, t.write(h(s))
+            },
+          },
+          ot = {
+            parse: function (e, t) {
+              const r = new qe(e.args, this.liquid.options.operatorsTrie),
+                s = this.liquid.options.dynamicPartials ? r.readValue() : r.readFileName()
+              de(s, () => `illegal argument "${e.args}"`),
+                (this.file = s),
+                (this.hash = new Fe(r.remaining())),
+                (this.tpls = this.liquid.parser.parse(t))
+            },
+            render: function* (e, t) {
+              const { liquid: r, hash: s, file: n } = this,
+                { renderer: i } = r
+              if ("none" === n.getText()) {
+                e.setRegister("blockMode", Ge.OUTPUT)
+                const r = yield i.renderTemplates(this.tpls, e)
+                return void t.write(r)
+              }
+              const o = e.opts.dynamicPartials
+                ? K(n)
+                  ? yield i.renderTemplates(r.parse(xe(n)), e)
+                  : _e(this.file, e)
+                : n.getText()
+              de(o, () => `file "${n.getText()}"("${o}") not available`)
+              const a = yield r._parseFile(o, e.opts, e.sync)
+              e.setRegister("blockMode", Ge.STORE)
+              const l = yield i.renderTemplates(this.tpls, e),
+                h = e.getRegister("blocks")
+              void 0 === h[""] && (h[""] = () => l),
+                e.setRegister("blockMode", Ge.OUTPUT),
+                e.push(yield s.render(e))
+              const c = yield i.renderTemplates(a, e)
+              e.pop(), t.write(c)
+            },
+          }
+        class at extends s {
+          constructor(e = () => "") {
+            super(), (this.superBlockRender = e)
+          }
+          super() {
+            return this.superBlockRender()
+          }
+        }
+        var lt = {
+            parse(e, t) {
+              const r = /\w+/.exec(e.args)
+              ;(this.block = r ? r[0] : ""), (this.tpls = [])
+              const s = this.liquid.parser
+                .parseStream(t)
+                .on("tag:endblock", () => s.stop())
+                .on("template", (e) => this.tpls.push(e))
+                .on("end", () => {
+                  throw new Error(`tag ${e.getText()} not closed`)
+                })
+              s.start()
+            },
+            *render(e, t) {
+              const r = this.getBlockRender(e)
+              yield this.emitHTML(e, t, r)
+            },
+            getBlockRender(e) {
+              const { liquid: t, tpls: r } = this,
+                s = e.getRegister("blocks")[this.block],
+                n = function* (s) {
+                  e.push({ block: s })
+                  const n = yield t.renderer.renderTemplates(r, e)
+                  return e.pop(), n
+                }
+              return s ? (e) => s(new at(() => n(e))) : n
+            },
+            *emitHTML(e, t, r) {
+              e.getRegister("blockMode", Ge.OUTPUT) === Ge.STORE
+                ? (e.getRegister("blocks")[this.block] = r)
+                : t.write(yield r(new at()))
+            },
+          },
+          ht = {
+            parse: function (e, t) {
+              this.tokens = []
+              const r = this.liquid.parser.parseStream(t)
+              r
+                .on("token", (e) => {
+                  "endraw" === e.name ? r.stop() : this.tokens.push(e)
+                })
+                .on("end", () => {
+                  throw new Error(`tag ${e.getText()} not closed`)
+                }),
+                r.start()
+            },
+            render: function () {
+              return this.tokens.map((e) => e.getText()).join("")
+            },
+          }
+        class ct extends We {
+          constructor(e, t) {
+            super(e), (this.length = e), (this.cols = t)
+          }
+          row() {
+            return Math.floor(this.i / this.cols) + 1
+          }
+          col0() {
+            return this.i % this.cols
+          }
+          col() {
+            return this.col0() + 1
+          }
+          col_first() {
+            return 0 === this.col0()
+          }
+          col_last() {
+            return this.col() === this.cols
+          }
+        }
+        const ut = {
+            assign: Ue,
+            for: Qe,
+            capture: Ze,
+            case: Ye,
+            comment: Xe,
+            include: et,
+            render: tt,
+            decrement: rt,
+            increment: it,
+            cycle: st,
+            if: nt,
+            layout: ot,
+            block: lt,
+            raw: ht,
+            tablerow: {
+              parse: function (e, t) {
+                const r = new qe(e.args, this.liquid.options.operatorsTrie)
+                ;(this.variable = r.readIdentifier()), r.skipBlank()
+                const s = r.readIdentifier()
+                let n
+                de(s && "in" === s.content, () => `illegal tag: ${e.getText()}`),
+                  (this.collection = r.readValue()),
+                  (this.hash = new Fe(r.remaining())),
+                  (this.templates = [])
+                const i = this.liquid.parser
+                  .parseStream(t)
+                  .on("start", () => (n = this.templates))
+                  .on("tag:endtablerow", () => i.stop())
+                  .on("template", (e) => n.push(e))
+                  .on("end", () => {
+                    throw new Error(`tag ${e.getText()} not closed`)
+                  })
+                i.start()
+              },
+              render: function* (e, t) {
+                let r = He(yield _e(this.collection, e))
+                const s = yield this.hash.render(e),
+                  n = s.offset || 0,
+                  i = void 0 === s.limit ? r.length : s.limit
+                r = r.slice(n, n + i)
+                const o = s.cols || r.length,
+                  a = this.liquid.renderer,
+                  l = new ct(r.length, o),
+                  h = { tablerowloop: l }
+                e.push(h)
+                for (let s = 0; s < r.length; s++, l.next())
+                  (h[this.variable.content] = r[s]),
+                    0 === l.col0() &&
+                      (1 !== l.row() && t.write("</tr>"), t.write(`<tr class="row${l.row()}">`)),
+                    t.write(`<td class="col${l.col()}">`),
+                    yield a.renderTemplates(this.templates, e, t),
+                    t.write("</td>")
+                r.length && t.write("</tr>"), e.pop()
+              },
+            },
+            unless: {
+              parse: function (e, t) {
+                let r
+                ;(this.templates = []), (this.branches = []), (this.elseTemplates = [])
+                const s = this.liquid.parser
+                  .parseStream(t)
+                  .on("start", () => {
+                    ;(r = this.templates), (this.cond = new Le(e.args, this.liquid))
+                  })
+                  .on("tag:elsif", (e) => {
+                    this.branches.push({ cond: new Le(e.args, this.liquid), templates: (r = []) })
+                  })
+                  .on("tag:else", () => (r = this.elseTemplates))
+                  .on("tag:endunless", () => s.stop())
+                  .on("template", (e) => r.push(e))
+                  .on("end", () => {
+                    throw new Error(`tag ${e.getText()} not closed`)
+                  })
+                s.start()
+              },
+              render: function* (e, t) {
+                const r = this.liquid.renderer
+                if (R(yield this.cond.value(e, e.opts.lenientIf), e))
+                  yield r.renderTemplates(this.templates, e, t)
+                else {
+                  for (const s of this.branches)
+                    if (E(yield s.cond.value(e, e.opts.lenientIf), e))
+                      return void (yield r.renderTemplates(s.templates, e, t))
+                  yield r.renderTemplates(this.elseTemplates, e, t)
+                }
+              },
+            },
+            break: {
+              render: function (e, t) {
+                t.break = !0
+              },
+            },
+            continue: {
+              render: function (e, t) {
+                t.continue = !0
+              },
+            },
+          },
+          pt = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&#34;", "'": "&#39;" },
+          dt = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&#34;": '"', "&#39;": "'" }
+        function ft(e) {
+          return h(e).replace(/&|<|>|"|'/g, (e) => pt[e])
+        }
+        const gt = Math.abs,
+          mt = Math.max,
+          wt = Math.min,
+          Tt = Math.ceil,
+          yt = Math.floor,
+          bt = /%([-_0^#:]+)?(\d+)?([EO])?(.)/,
+          kt = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+          ],
+          vt = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          _t = kt.map(St),
+          xt = vt.map(St),
+          Ot = { 1: "st", 2: "nd", 3: "rd", default: "th" }
+        function St(e) {
+          return e.slice(0, 3)
+        }
+        function qt(e) {
+          return [
+            31,
+            (function (e) {
+              const t = e.getFullYear()
+              return !(0 != (3 & t) || !(t % 100 || (t % 400 == 0 && t)))
+            })(e)
+              ? 29
+              : 28,
+            31,
+            30,
+            31,
+            30,
+            31,
+            31,
+            30,
+            31,
+            30,
+            31,
+          ]
+        }
+        function Et(e) {
+          let t = 0
+          for (let r = 0; r < e.getMonth(); ++r) t += qt(e)[r]
+          return t + e.getDate()
+        }
+        function Rt(e, t) {
+          const r = Et(e) + (t - e.getDay()),
+            s = 7 - new Date(e.getFullYear(), 0, 1).getDay() + t
+          return String(Math.floor((r - s) / 7) + 1)
+        }
+        const At = { d: 2, e: 2, H: 2, I: 2, j: 3, k: 2, l: 2, L: 3, m: 2, M: 2, S: 2, U: 2, W: 2 },
+          Dt = { a: " ", A: " ", b: " ", B: " ", c: " ", e: " ", k: " ", l: " ", p: " ", P: " " },
+          Ft = {
+            a: (e) => xt[e.getDay()],
+            A: (e) => vt[e.getDay()],
+            b: (e) => _t[e.getMonth()],
+            B: (e) => kt[e.getMonth()],
+            c: (e) => e.toLocaleString(),
+            C: (e) =>
+              (function (e) {
+                return parseInt(e.getFullYear().toString().substring(0, 2), 10)
+              })(e),
+            d: (e) => e.getDate(),
+            e: (e) => e.getDate(),
+            H: (e) => e.getHours(),
+            I: (e) => String(e.getHours() % 12 || 12),
+            j: (e) => Et(e),
+            k: (e) => e.getHours(),
+            l: (e) => String(e.getHours() % 12 || 12),
+            L: (e) => e.getMilliseconds(),
+            m: (e) => e.getMonth() + 1,
+            M: (e) => e.getMinutes(),
+            N: (e, t) => {
+              const r = Number(t.width) || 9
+              return (function (e, t, r = " ") {
+                return b(e, t, r, (e, t) => e + t)
+              })(String(e.getMilliseconds()).substr(0, r), r, "0")
+            },
+            p: (e) => (e.getHours() < 12 ? "AM" : "PM"),
+            P: (e) => (e.getHours() < 12 ? "am" : "pm"),
+            q: (e) =>
+              (function (e) {
+                const t = e.getDate().toString(),
+                  r = parseInt(t.slice(-1))
+                return Ot[r] || Ot.default
+              })(e),
+            s: (e) => Math.round(e.valueOf() / 1e3),
+            S: (e) => e.getSeconds(),
+            u: (e) => e.getDay() || 7,
+            U: (e) => Rt(e, 0),
+            w: (e) => e.getDay(),
+            W: (e) => Rt(e, 1),
+            x: (e) => e.toLocaleDateString(),
+            X: (e) => e.toLocaleTimeString(),
+            y: (e) => e.getFullYear().toString().substring(2, 4),
+            Y: (e) => e.getFullYear(),
+            z: (e, t) => {
+              const r = e.getTimezoneOffset(),
+                s = Math.abs(r),
+                n = s % 60
+              return (
+                (r > 0 ? "-" : "+") +
+                y(Math.floor(s / 60), 2, "0") +
+                (t.flags[":"] ? ":" : "") +
+                y(n, 2, "0")
+              )
+            },
+            t: () => "\t",
+            n: () => "\n",
+            "%": () => "%",
+          }
+        function Mt(e, t) {
+          const [r, s = "", n, i, o] = t,
+            a = Ft[o]
+          if (!a) return r
+          const l = {}
+          for (const e of s) l[e] = !0
+          let h = String(a(e, { flags: l, width: n, modifier: i })),
+            c = Dt[o] || "0",
+            u = n || At[o] || 0
+          var p
+          return (
+            l["^"]
+              ? (h = h.toUpperCase())
+              : l["#"] &&
+                ((p = h),
+                (h = [...p].some((e) => e >= "a" && e <= "z") ? p.toUpperCase() : p.toLowerCase())),
+            l._ ? (c = " ") : l[0] && (c = "0"),
+            l["-"] && (u = 0),
+            y(h, u, c)
+          )
+        }
+        Ft.h = Ft.b
+        class Lt extends Date {
+          constructor(e) {
+            super(e),
+              (this.dateString = e),
+              (this.ISO8601_TIMEZONE_PATTERN = /([zZ]|([+-])(\d{2}):(\d{2}))$/),
+              (this.inputTimezoneOffset = 0)
+            const t = e.match(this.ISO8601_TIMEZONE_PATTERN)
+            if (t && "Z" === t[1]) this.inputTimezoneOffset = this.getTimezoneOffset()
+            else if (t && t[2] && t[3] && t[4]) {
+              const [, , e, r, s] = t,
+                n = ("+" === e ? 1 : -1) * (60 * parseInt(r, 10) + parseInt(s, 10))
+              this.inputTimezoneOffset = this.getTimezoneOffset() + n
+            }
+          }
+          getDisplayDate() {
+            return new Date(+this + 60 * this.inputTimezoneOffset * 1e3)
+          }
+        }
+        var Pt = Object.freeze({
+          escape: ft,
+          escapeOnce: function (e) {
+            return ft(
+              (function (e) {
+                return String(e).replace(/&(amp|lt|gt|#34|#39);/g, (e) => dt[e])
+              })(e)
+            )
+          },
+          newlineToBr: function (e) {
+            return e.replace(/\n/g, "<br />\n")
+          },
+          stripHtml: function (e) {
+            return e.replace(/<script.*?<\/script>|<!--.*?-->|<style.*?<\/style>|<.*?>/g, "")
+          },
+          abs: gt,
+          atLeast: mt,
+          atMost: wt,
+          ceil: Tt,
+          dividedBy: (e, t) => e / t,
+          floor: yt,
+          minus: (e, t) => e - t,
+          modulo: (e, t) => e % t,
+          times: (e, t) => e * t,
+          round: function (e, t = 0) {
+            const r = Math.pow(10, t)
+            return Math.round(e * r) / r
+          },
+          plus: function (e, t) {
+            return Number(e) + Number(t)
+          },
+          sortNatural: function (e, t) {
+            return e && e.sort
+              ? void 0 !== t
+                ? [...e].sort((e, r) => _(e[t], r[t]))
+                : [...e].sort(_)
+              : []
+          },
+          urlDecode: (e) => e.split("+").map(decodeURIComponent).join(" "),
+          urlEncode: (e) => e.split(" ").map(encodeURIComponent).join("+"),
+          join: (e, t) => e.join(void 0 === t ? " " : t),
+          last: (e) => (f(e) ? m(e) : ""),
+          first: (e) => (f(e) ? e[0] : ""),
+          reverse: (e) => [...e].reverse(),
+          sort: function (e, t) {
+            const r = (e) => (t ? this.context.getFromScope(e, t.split(".")) : e)
+            return Je(e).sort((e, t) => ((e = r(e)) < (t = r(t)) ? -1 : e > t ? 1 : 0))
+          },
+          size: (e) => (e && e.length) || 0,
+          map: function (e, t) {
+            return Je(e).map((e) => this.context.getFromScope(e, t.split(".")))
+          },
+          compact: function (e) {
+            return Je(e).filter((e) => !d(e))
+          },
+          concat: function (e, t) {
+            return Je(e).concat(t)
+          },
+          slice: function (e, t, r = 1) {
+            return (t = t < 0 ? e.length + t : t), e.slice(t, t + r)
+          },
+          where: function (e, t, r) {
+            return Je(e).filter((e) => {
+              const s = this.context.getFromScope(e, String(t).split("."))
+              return void 0 === r ? E(s, this.context) : s === r
+            })
+          },
+          uniq: function (e) {
+            const t = {}
+            return (e || []).filter(
+              (e) => !t.hasOwnProperty(String(e)) && ((t[String(e)] = !0), !0)
+            )
+          },
+          date: function (e, t) {
+            let r = e
+            return (
+              "now" === e || "today" === e
+                ? (r = new Date())
+                : u(e)
+                ? (r = new Date(1e3 * e))
+                : a(e) &&
+                  (r = /^\d+$/.test(e)
+                    ? new Date(1e3 * +e)
+                    : this.context.opts.preserveTimezones
+                    ? new Lt(e)
+                    : new Date(e)),
+              (function (e) {
+                return e instanceof Date && !isNaN(e.getTime())
+              })(r)
+                ? (function (e, t) {
+                    let r = e
+                    r instanceof Lt && (r = r.getDisplayDate())
+                    let s,
+                      n = "",
+                      i = t
+                    for (; (s = bt.exec(i)); )
+                      (n += i.slice(0, s.index)),
+                        (i = i.slice(s.index + s[0].length)),
+                        (n += Mt(r, s))
+                    return n + i
+                  })(r, t)
+                : e
+            )
+          },
+          Default: function (e, t) {
+            return f(e) || a(e) ? (e.length ? e : t) : R(c(e), this.context) ? t : e
+          },
+          json: function (e) {
+            return JSON.stringify(e)
+          },
+          append: function (e, t) {
+            return de(2 === arguments.length, () => "append expect 2 arguments"), h(e) + h(t)
+          },
+          prepend: function (e, t) {
+            return de(2 === arguments.length, () => "prepend expect 2 arguments"), h(t) + h(e)
+          },
+          lstrip: function (e) {
+            return h(e).replace(/^\s+/, "")
+          },
+          downcase: function (e) {
+            return h(e).toLowerCase()
+          },
+          upcase: function (e) {
+            return h(e).toUpperCase()
+          },
+          remove: function (e, t) {
+            return h(e).split(String(t)).join("")
+          },
+          removeFirst: function (e, t) {
+            return h(e).replace(String(t), "")
+          },
+          rstrip: function (e) {
+            return h(e).replace(/\s+$/, "")
+          },
+          split: function (e, t) {
+            return h(e).split(String(t))
+          },
+          strip: function (e) {
+            return h(e).trim()
+          },
+          stripNewlines: function (e) {
+            return h(e).replace(/\n/g, "")
+          },
+          capitalize: function (e) {
+            return (e = h(e)).charAt(0).toUpperCase() + e.slice(1).toLowerCase()
+          },
+          replace: function (e, t, r) {
+            return h(e).split(String(t)).join(r)
+          },
+          replaceFirst: function (e, t, r) {
+            return h(e).replace(String(t), r)
+          },
+          truncate: function (e, t = 50, r = "...") {
+            return (e = h(e)).length <= t ? e : e.substr(0, t - r.length) + r
+          },
+          truncatewords: function (e, t = 15, r = "...") {
+            const s = e.split(/\s+/)
+            let n = s.slice(0, t).join(" ")
+            return s.length >= t && (n += r), n
+          },
+        })
+        class Nt {
+          constructor() {
+            this.impls = {}
+          }
+          get(e) {
+            const t = this.impls[e]
+            return de(t, () => `tag "${e}" not found`), t
+          }
+          set(e, t) {
+            this.impls[e] = t
+          }
+        }
+        class $t {
+          constructor(e, t) {
+            ;(this.strictFilters = e), (this.liquid = t), (this.impls = {})
+          }
+          get(e) {
+            const t = this.impls[e]
+            return de(t || !this.strictFilters, () => `undefined filter: ${e}`), t
+          }
+          set(e, t) {
+            this.impls[e] = t
+          }
+          create(e, t) {
+            return new Me(e, this.get(e), t, this.liquid)
+          }
+        }
+        class Ct {
+          constructor(e = {}) {
+            var t
+            ;(this.options = ((t = L(e)), Object.assign({}, M, t))),
+              (this.parser = new ze(this)),
+              (this.renderer = new Re()),
+              (this.filters = new $t(this.options.strictFilters, this)),
+              (this.tags = new Nt()),
+              g(ut, (e, t) => this.registerTag(v(t), e)),
+              g(Pt, (e, t) => this.registerFilter(v(t), e))
+          }
+          parse(e, t) {
+            const r = new qe(e, this.options.operatorsTrie, t).readTopLevelTokens(this.options)
+            return this.parser.parse(r)
+          }
+          _render(e, t, r, s) {
+            const n = Object.assign({}, this.options, L(r)),
+              i = new z(t, n, s),
+              o = new Ee(n.keepOutputType)
+            return this.renderer.renderTemplates(e, i, o)
+          }
+          async render(e, t, r) {
+            return Ce(this._render(e, t, r, !1))
+          }
+          renderSync(e, t, r) {
+            return Ie(this._render(e, t, r, !0))
+          }
+          _parseAndRender(e, t, r, s) {
+            const n = this.parse(e)
+            return this._render(n, t, r, s)
+          }
+          async parseAndRender(e, t, r) {
+            return Ce(this._parseAndRender(e, t, r, !1))
+          }
+          parseAndRenderSync(e, t, r) {
+            return Ie(this._parseAndRender(e, t, r, !0))
+          }
+          *_parseFile(e, t, r) {
+            const s = Object.assign({}, this.options, L(t)),
+              n = s.root.map((t) => s.fs.resolve(t, e, s.extname))
+            if (void 0 !== s.fs.fallback) {
+              const t = s.fs.fallback(e)
+              void 0 !== t && n.push(t)
+            }
+            for (const e of n) {
+              const { cache: t } = s
+              if (t) {
+                const r = yield t.read(e)
+                if (r) return r
+              }
+              if (!(r ? s.fs.existsSync(e) : yield s.fs.exists(e))) continue
+              const n = this.parse(r ? s.fs.readFileSync(e) : yield s.fs.readFile(e), e)
+              return t && t.write(e, n), n
+            }
+            throw this.lookupError(e, s.root)
+          }
+          async parseFile(e, t) {
+            return Ce(this._parseFile(e, t, !1))
+          }
+          parseFileSync(e, t) {
+            return Ie(this._parseFile(e, t, !0))
+          }
+          async renderFile(e, t, r) {
+            const s = await this.parseFile(e, r)
+            return this.render(s, t, r)
+          }
+          renderFileSync(e, t, r) {
+            const s = this.parseFileSync(e, r)
+            return this.renderSync(s, t, r)
+          }
+          _evalValue(e, t) {
+            return new Le(e, this).value(t, !1)
+          }
+          async evalValue(e, t) {
+            return Ce(this._evalValue(e, t))
+          }
+          evalValueSync(e, t) {
+            return Ie(this._evalValue(e, t))
+          }
+          registerFilter(e, t) {
+            this.filters.set(e, t)
+          }
+          registerTag(e, t) {
+            this.tags.set(e, t)
+          }
+          plugin(e) {
+            return e.call(this, Ct)
+          }
+          express() {
+            const e = this
+            return function (t, r, s) {
+              const n = { root: [...P(this.root), ...e.options.root] }
+              e.renderFile(t, r, n).then((e) => s(null, e), s)
+            }
+          }
+          lookupError(e, t) {
+            const r = new Error("ENOENT")
+            return (r.message = `ENOENT: Failed to lookup "${e}" in "${t}"`), (r.code = "ENOENT"), r
+          }
+          async getTemplate(e, t) {
+            return this.parseFile(e, t)
+          }
+          getTemplateSync(e, t) {
+            return this.parseFileSync(e, t)
+          }
+        }
+      },
+    },
+    __webpack_module_cache__ = {}
+  function __webpack_require__(e) {
+    var t = __webpack_module_cache__[e]
+    if (void 0 !== t) return t.exports
+    var r = (__webpack_module_cache__[e] = { exports: {} })
+    return __webpack_modules__[e](r, r.exports, __webpack_require__), r.exports
+  }
+  ;(__webpack_require__.d = (e, t) => {
+    for (var r in t)
+      __webpack_require__.o(t, r) &&
+        !__webpack_require__.o(e, r) &&
+        Object.defineProperty(e, r, { enumerable: !0, get: t[r] })
+  }),
+    (__webpack_require__.o = (e, t) => Object.prototype.hasOwnProperty.call(e, t)),
+    (__webpack_require__.r = (e) => {
+      "undefined" != typeof Symbol &&
+        Symbol.toStringTag &&
+        Object.defineProperty(e, Symbol.toStringTag, { value: "Module" }),
+        Object.defineProperty(e, "__esModule", { value: !0 })
+    })
+  var __webpack_exports__ = {}
+  ;(() => {
+    __webpack_require__.r(__webpack_exports__),
+      __webpack_require__.d(__webpack_exports__, {
+        evaluate64: () => evaluate64,
+        evaluate: () => evaluate,
+        evaluateJS: () => evaluateJS,
+        evaluateJS64: () => evaluateJS64,
+      })
+    var liquidjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(620),
+      js_base64__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(276),
+      engine = new liquidjs__WEBPACK_IMPORTED_MODULE_0__.Kj(),
+      evaluate64 = function (e) {
+        var t = js_base64__WEBPACK_IMPORTED_MODULE_1__.Jx(e),
+          r = JSON.parse(t)
+        return evaluate(r)
+      },
+      evaluate = function (e) {
+        var t = e.expression,
+          r = e.values,
+          s = engine.parse("{% if " + t + " %}true{% else %}false{% endif %}")
+        return "true" === engine.renderSync(s, r)
+      },
+      evaluateJS = function (_a) {
+        var expressionJS = _a.expressionJS,
+          values = _a.values
+        try {
+          var func = eval(expressionJS)
+          return !!func(values)
+        } catch (e) {
+          return console.error("e", e), !1
+        }
+      },
+      evaluateJS64 = function (e) {
+        var t = js_base64__WEBPACK_IMPORTED_MODULE_1__.Jx(e),
+          r = JSON.parse(t)
+        return evaluateJS(r)
+      }
+  })(),
+    (SuperwallSDKJS = __webpack_exports__)
+})()
 """#
-
-

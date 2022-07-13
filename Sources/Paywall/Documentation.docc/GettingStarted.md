@@ -4,7 +4,7 @@ Configuring the SDK and its delegate.
 
 ## Overview
 
-To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Paywall/Paywall/configure(apiKey:userId:delegate:)``. You pass this function a class that conforms to ``Paywall/PaywallDelegate``, which handles actions taken on the paywall. You can then present your paywall.
+To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)``. You pass this function a class that conforms to ``Paywall/PaywallDelegate``, which handles actions taken on the paywall. You can then present your paywall.
 
 ## Getting your API Key
 
@@ -17,7 +17,7 @@ On that page, you will see your **Public API Key**. Copy this for the next step.
 
 ### Configuring the SDK
 
-To configure the SDK, you call ``Paywall/Paywall/configure(apiKey:userId:delegate:)`` from `application(_:didFinishLaunchingWithOptions:)`. We recommended creating a service class **PaywallService.swift** that handles your SDK configuration and delegate callbacks:
+To configure the SDK, you call ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)`` from `application(_:didFinishLaunchingWithOptions:)`. We recommended creating a service class **PaywallService.swift** that handles your SDK configuration and delegate callbacks:
 
 ```swift
 import Paywall
@@ -36,7 +36,7 @@ final class PaywallService {
 }
 ```
 
-This configures a shared instance of ``Paywall/Paywall`` for use throughout your app and sets the delegate to the PaywallService shared instance. Make sure to replace the `apiKey` with your Public API key that you just retrieved.
+This configures a shared instance of ``Paywall/Paywall`` for use throughout your app and sets the delegate to the `PaywallService` shared instance. Make sure to replace the `apiKey` with your Public API key that you just retrieved.
 
 If you have a unique ID of your user, you can enter it in `userId`. Otherwise we will generate a random id that will persist internally until you call ``Paywall/Paywall/reset()`` or the user deletes/reinstalls your app.
 
@@ -92,12 +92,14 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 }
 ```
 
-You're now ready to present or trigger your paywall.
+You're now ready to trigger a paywall. See <doc:Triggering> for next steps.
 
 ## Topics
 
 ### The Delegate
-
 - ``PaywallDelegate``
 - <doc:CustomPaywallButtons>
 - <doc:ThirdPartyAnalytics>
+
+### Setting the Paywall Options
+- ``PaywallOptions``

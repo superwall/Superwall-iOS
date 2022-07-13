@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SWPriceTemplateVariable: Codable {
+struct SWPriceTemplateVariable: Encodable {
   var `default`: SWProductNumberGroup?
   var daily: SWProductNumberGroup?
   var weekly: SWProductNumberGroup?
@@ -20,7 +20,7 @@ struct SWPriceTemplateVariable: Codable {
   var rounded: SWProductNumber?
 
   init(
-    value: Double,
+    value: Decimal,
     locale: Locale,
     period: SWProductSubscriptionPeriod?
   ) {

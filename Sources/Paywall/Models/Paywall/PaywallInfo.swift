@@ -6,20 +6,22 @@
 //
 
 import Foundation
+import StoreKit
 
-/// `PaywallInfo` is the primary class used to distinguish one paywall from another. Used primarily in `Paywall.present(onPresent:onDismiss)`'s completion handlers.
+/// Contains information about a given paywall.
+///
+/// This is returned in the completion handlers when triggering a paywall with ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` and presenting a paywall with ``Paywall/Paywall/present(onPresent:onDismiss:onFail:)``.
 public final class PaywallInfo: NSObject {
-  /// Superwall's internal identifier for this paywall.
+  /// Superwall's internal ID for this paywall.
   let id: String
 
-  /// The identifier set for this paywall in Superwall's web dashboard.
+  /// The identifier set for this paywall in the Superwall dashboard.
   public let identifier: String
 
-  /// What experiment this paywall presentation is a party of
-  public let experimentId: String?
-
-  /// What variant this user saw
-  public let variantId: String?
+  /// The trigger experiment that caused the paywall to present.
+  ///
+  /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
+  public let experiment: Experiment?
 
   /// The name set for this paywall in Superwall's web dashboard.
   public let name: String
@@ -43,17 +45,35 @@ public final class PaywallInfo: NSObject {
   /// An array of product IDs that this paywall is displaying in `[Primary, Secondary, Tertiary]` order.
   public let productIds: [String]
 
+  /// An iso date string indicating when the paywall response began loading.
   public let responseLoadStartTime: String?
+
+  /// An iso date string indicating when the paywall response finished loading.
   public let responseLoadCompleteTime: String?
-  public let responseLoadDuration: Double?
 
+  /// The time it took to load the paywall response.
+  public let responseLoadDuration: TimeInterval?
+
+  /// An iso date string indicating when the paywall webview began loading.
   public let webViewLoadStartTime: String?
-  public let webViewLoadCompleteTime: String?
-  public let webViewLoadDuration: Double?
 
+  /// An iso date string indicating when the paywall webview finished loading.
+  public let webViewLoadCompleteTime: String?
+
+  /// The time it took to load the paywall website.
+  public let webViewLoadDuration: TimeInterval?
+
+  /// An iso date string indicating when the paywall products began loading.
   public let productsLoadStartTime: String?
+
+  /// An iso date string indicating when the paywall products finished loading.
   public let productsLoadCompleteTime: String?
-  public let productsLoadDuration: Double?
+
+  /// An iso date string indicating when the paywall products failed to load.
+  public let productsLoadFailTime: String?
+
+  /// The time it took to load the paywall products.
+  public let productsLoadDuration: TimeInterval?
 
   init(
     id: String,
@@ -62,16 +82,16 @@ public final class PaywallInfo: NSObject {
     slug: String,
     url: URL?,
     productIds: [String],
-    fromEventData: EventData?,
+    fromEventData eventData: EventData?,
     calledByIdentifier: Bool = false,
     responseLoadStartTime: Date?,
     responseLoadCompleteTime: Date?,
     webViewLoadStartTime: Date?,
     webViewLoadCompleteTime: Date?,
     productsLoadStartTime: Date?,
+    productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
-    variantId: String? = nil,
-    experimentId: String? = nil
+    experiment: Experiment? = nil
   ) {
     self.id = id
     self.identifier = identifier
@@ -79,13 +99,12 @@ public final class PaywallInfo: NSObject {
     self.slug = slug
     self.url = url
     self.productIds = productIds
-    self.presentedByEventWithName = fromEventData?.name
-    self.presentedByEventAt = fromEventData?.createdAt
-    self.presentedByEventWithId = fromEventData?.id.lowercased()
-    self.variantId = variantId
-    self.experimentId = experimentId
+    self.presentedByEventWithName = eventData?.name
+    self.presentedByEventAt = eventData?.createdAt.isoString
+    self.presentedByEventWithId = eventData?.id.lowercased()
+    self.experiment = experiment
 
-    if fromEventData != nil {
+    if eventData != nil {
       self.presentedBy = "event"
     } else if calledByIdentifier {
       self.presentedBy = "identifier"
@@ -114,11 +133,84 @@ public final class PaywallInfo: NSObject {
 
     self.productsLoadStartTime = productsLoadStartTime?.isoString ?? ""
     self.productsLoadCompleteTime = productsLoadCompleteTime?.isoString ?? ""
+    self.productsLoadFailTime = productsLoadFailTime?.isoString ?? ""
     if let startTime = productsLoadStartTime,
       let endTime = productsLoadCompleteTime {
       self.productsLoadDuration = endTime.timeIntervalSince1970 - startTime.timeIntervalSince1970
     } else {
       self.productsLoadDuration = nil
     }
+  }
+
+  func eventParams(
+    forProduct product: SKProduct? = nil,
+    otherParams: [String: Any]? = nil
+  ) -> [String: Any] {
+    var output: [String: Any] = [
+      "paywall_id": id,
+      "paywall_identifier": identifier,
+      "paywall_slug": slug,
+      "paywall_name": name,
+      "paywall_url": url?.absoluteString ?? "unknown",
+      "presented_by_event_name": presentedByEventWithName as Any,
+      "presented_by_event_id": presentedByEventWithId as Any,
+      "presented_by_event_timestamp": presentedByEventAt as Any,
+      "presented_by": presentedBy as Any,
+      "paywall_product_ids": productIds.joined(separator: ","),
+      "paywall_response_load_start_time": responseLoadStartTime as Any,
+      "paywall_response_load_complete_time": responseLoadCompleteTime as Any,
+      "paywall_response_load_duration": responseLoadDuration as Any,
+      "paywall_webview_load_start_time": webViewLoadStartTime as Any,
+      "paywall_webview_load_complete_time": webViewLoadCompleteTime as Any,
+      "paywall_webview_load_duration": webViewLoadDuration as Any,
+      "paywall_products_load_start_time": productsLoadStartTime as Any,
+      "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
+      "paywall_products_load_fail_time": productsLoadCompleteTime as Any,
+      "paywall_products_load_duration": productsLoadDuration as Any
+    ]
+
+    var loadingVars: [String: Any] = [:]
+    for key in output.keys {
+      if key.contains("_load_"),
+        let output = output[key] {
+        loadingVars[key] = output
+      }
+    }
+
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallEvents,
+      message: "Paywall loading timestamps",
+      info: loadingVars
+    )
+
+    let levels = ["primary", "secondary", "tertiary"]
+
+    for (id, level) in levels.enumerated() {
+      let key = "\(level)_product_id"
+      output[key] = ""
+      if id < productIds.count {
+        output[key] = productIds[id]
+      }
+    }
+
+    if let product = product {
+      output["product_id"] = product.productIdentifier
+      for key in product.legacyEventData.keys {
+        if let value = product.legacyEventData[key] {
+          output["product_\(key.camelCaseToSnakeCase())"] = value
+        }
+      }
+    }
+
+    if let otherParams = otherParams {
+      for key in otherParams.keys {
+        if let value = otherParams[key] {
+          output[key] = value
+        }
+      }
+    }
+
+    return output
   }
 }

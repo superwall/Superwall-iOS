@@ -10,7 +10,6 @@ import Foundation
 enum PresentationType {
   case implicitlyTriggered
   case explicitlyTriggered
-  case presented
 }
 
 enum PaywallSubscriptionStatusLogic {
@@ -25,8 +24,7 @@ enum PaywallSubscriptionStatusLogic {
     switch presentationType {
     case .implicitlyTriggered:
       return "You do not have an active subscription so the paywall will show when the counter reaches 3."
-    case .explicitlyTriggered,
-      .presented:
+    case .explicitlyTriggered:
       return "You do not have an active subscription so the paywall will show when clicking the button."
     }
   }

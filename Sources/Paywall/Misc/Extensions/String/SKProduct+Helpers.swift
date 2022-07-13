@@ -25,6 +25,7 @@ extension SKProduct {
       "trialPeriodMonths": trialPeriodMonths,
       "trialPeriodYears": trialPeriodYears,
       "trialPeriodText": trialPeriodText,
+      "trialPeriodEndDate": trialPeriodEndDate,
       "periodDays": periodDays,
       "periodWeeks": periodWeeks,
       "periodMonths": periodMonths,
@@ -358,11 +359,44 @@ extension SKProduct {
   }
 
   var hasFreeTrial: Bool {
-    if introductoryPrice?.subscriptionPeriod != nil {
-      return true
-    } else {
-      return false
+    return introductoryPrice?.subscriptionPeriod != nil
+  }
+
+  var trialPeriodEndDate: String {
+    guard let trialPeriod = introductoryPrice?.subscriptionPeriod else {
+      return ""
     }
+    let numberOfUnits = trialPeriod.numberOfUnits
+
+    let currentDate = Date()
+    var dateComponent = DateComponents()
+
+    switch trialPeriod.unit {
+    case .day:
+      dateComponent.day = numberOfUnits
+    case .week:
+      dateComponent.day = 7 * numberOfUnits
+    case .month:
+      dateComponent.month = numberOfUnits
+    case .year:
+      dateComponent.year = numberOfUnits
+    @unknown default:
+      return ""
+    }
+
+    guard let futureDate = Calendar.current.date(
+      byAdding: dateComponent,
+      to: currentDate
+    ) else {
+      return ""
+    }
+
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateStyle = .medium
+    dateFormatter.timeStyle = .none
+    dateFormatter.locale = .autoupdatingCurrent
+
+    return dateFormatter.string(from: futureDate)
   }
 
   var trialPeriodDays: String {

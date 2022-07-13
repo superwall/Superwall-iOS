@@ -12,17 +12,17 @@ extension Decimal {
     _ scale: Int,
     _ roundingMode: NSDecimalNumber.RoundingMode
   ) {
-    var localCopy = self
-    NSDecimalRound(&self, &localCopy, scale, roundingMode)
+    var initialDecimal = self
+    NSDecimalRound(&self, &initialDecimal, scale, roundingMode)
   }
 
   func rounded(
     _ scale: Int,
     _ roundingMode: NSDecimalNumber.RoundingMode
   ) -> Decimal {
-    var result = Decimal()
-    var localCopy = self
-    NSDecimalRound(&result, &localCopy, scale, roundingMode)
-    return result
+    var roundedDecimal = Decimal()
+    var initialDecimal = self
+    NSDecimalRound(&roundedDecimal, &initialDecimal, scale, roundingMode)
+    return roundedDecimal
   }
 }

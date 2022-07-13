@@ -23,8 +23,8 @@ final class PaywallService {
     )
   }
 
-  static func trackDeepLink(url: URL) {
-    Paywall.track(.deepLinkOpen(deepLinkUrl: url))
+  static func handleDeepLink(_ url: URL) {
+    Paywall.handleDeepLink(url)
   }
 
   static func setName(to name: String) {
@@ -69,6 +69,8 @@ extension PaywallService: PaywallDelegate {
       <#code#>
     case .appLaunch:
       <#code#>
+    case .appInstall:
+      <#code#>
     case .sessionStart:
       <#code#>
     case .appClose:
@@ -93,6 +95,8 @@ extension PaywallService: PaywallDelegate {
       <#code#>
     case .transactionRestore:
       <#code#>
+    case .manualPresent:
+      <#code#>
     case .nonRecurringProductPurchase:
       <#code#>
     case .paywallResponseLoadStart:
@@ -108,6 +112,14 @@ extension PaywallService: PaywallDelegate {
     case .paywallWebviewLoadFail:
       <#code#>
     case .paywallWebviewLoadComplete:
+      <#code#>
+    case .paywallWebviewLoadTimeout:
+      <#code#>
+    case .paywallProductsLoadStart:
+      <#code#>
+    case .paywallProductsLoadFail:
+      <#code#>
+    case .paywallProductsLoadComplete:
       <#code#>
     }
     */

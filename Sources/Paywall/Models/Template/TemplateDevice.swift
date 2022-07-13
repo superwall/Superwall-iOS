@@ -20,6 +20,24 @@ struct TemplateDevice: Codable {
   var deviceLanguageCode: String
   var deviceCurrencyCode: String
   var deviceCurrencySymbol: String
+  var timezoneOffset: Int
+  var radioType: String
+  var interfaceStyle: String
+  var isLowPowerModeEnabled: Bool
+  var bundleId: String
+  var appInstallDate: String
+  var isMac: Bool
+  var daysSinceInstall: Int
+  var minutesSinceInstall: Int
+  var daysSinceLastPaywallView: Int?
+  var minutesSinceLastPaywallView: Int?
+  var totalPaywallViews: Int
+  var utcDate: String
+  var localDate: String
+  var utcTime: String
+  var localTime: String
+  var utcDateTime: String
+  var localDateTime: String
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

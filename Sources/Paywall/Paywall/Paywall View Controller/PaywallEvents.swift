@@ -36,9 +36,10 @@ enum PaywallEvent: Decodable {
 	case templateParamsAndUserAttributes
   case close
   case restore
-  case openUrl(url: URL)
+  case openUrl(_ url: URL)
+  case openUrlInSafari(_ url: URL)
   case openDeepLink(url: URL)
-  case purchase(product: ProductType)
+  case purchase(productId: String)
   case custom(data: String)
 }
 
@@ -48,7 +49,8 @@ extension PaywallEvent {
     case close
     case restore
     case openUrl = "open_url"
-    case openDeepLink
+    case openUrlInSafari = "open_url_external"
+    case openDeepLink = "open_deep_link"
     case purchase
     case custom
   }
@@ -56,7 +58,7 @@ extension PaywallEvent {
   // Everyone write to eventName, other may use the remaining keys
   private enum CodingKeys: String, CodingKey {
     case eventName
-    case product
+    case productId = "productIdentifier"
     case url
     case link
     case data
@@ -77,8 +79,8 @@ extension PaywallEvent {
         self = .onReady
         return
       case .purchase:
-        if let product = try? values.decode(ProductType.self, forKey: .product) {
-          self = .purchase(product: product)
+        if let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .purchase(productId: productId)
           return
         }
       case .restore:
@@ -87,7 +89,13 @@ extension PaywallEvent {
       case .openUrl:
         if let urlString = try? values.decode(String.self, forKey: .url),
           let url = URL(string: urlString) {
-          self = .openUrl(url: url)
+          self = .openUrl(url)
+          return
+        }
+      case .openUrlInSafari:
+        if let urlString = try? values.decode(String.self, forKey: .url),
+          let url = URL(string: urlString) {
+          self = .openUrlInSafari(url)
           return
         }
       case .openDeepLink:

@@ -11,7 +11,6 @@
 		8830FD3427E389D500E87C79 /* PaywallSubscriptionStatusLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8830FD3327E389D500E87C79 /* PaywallSubscriptionStatusLogic.swift */; };
 		886DA1A327E101DF00400CAD /* PaywallOptionsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 886DA1A227E101DF00400CAD /* PaywallOptionsListView.swift */; };
 		888F488827DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */; };
-		888F488A27DA6B0F009C74A3 /* PresentPaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F488927DA6B0F009C74A3 /* PresentPaywallView.swift */; };
 		888F488C27DA6B10009C74A3 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F488B27DA6B10009C74A3 /* Images.xcassets */; };
 		888F488F27DA6B10009C74A3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */; };
 		888F489927DA6B10009C74A3 /* SuperwallSwiftUIExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F489827DA6B10009C74A3 /* SuperwallSwiftUIExampleTests.swift */; };
@@ -58,7 +57,6 @@
 		886DA1A227E101DF00400CAD /* PaywallOptionsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallOptionsListView.swift; sourceTree = "<group>"; };
 		888F488427DA6B0F009C74A3 /* SuperwallSwiftUIExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SuperwallSwiftUIExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallSwiftUIExampleApp.swift; sourceTree = "<group>"; };
-		888F488927DA6B0F009C74A3 /* PresentPaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentPaywallView.swift; sourceTree = "<group>"; };
 		888F488B27DA6B10009C74A3 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		888F489427DA6B10009C74A3 /* SuperwallSwiftUIExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SuperwallSwiftUIExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -150,7 +148,6 @@
 				88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */,
 				888F48C427DB9F52009C74A3 /* PaywallOptionsTableView.swift */,
 				886DA1A227E101DF00400CAD /* PaywallOptionsListView.swift */,
-				888F488927DA6B0F009C74A3 /* PresentPaywallView.swift */,
 				888F48C227DB8584009C74A3 /* ExplicitlyTriggerPaywallView.swift */,
 				8830FD3127E3628A00E87C79 /* ImplicitlyTriggerPaywallView.swift */,
 			);
@@ -410,7 +407,6 @@
 				888F48BD27DA71EA009C74A3 /* AppDelegate.swift in Sources */,
 				88EE539627DF6D0A00F1FFFB /* WelcomeView.swift in Sources */,
 				888F48D127DBA62D009C74A3 /* Font.swift in Sources */,
-				888F488A27DA6B0F009C74A3 /* PresentPaywallView.swift in Sources */,
 				888F48BB27DA6FAF009C74A3 /* PaywallService.swift in Sources */,
 				88F9F1E327E21718004FCE83 /* InfoView.swift in Sources */,
 				888F488827DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift in Sources */,
@@ -640,7 +636,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.superwall.SuperwallSwiftUIExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -659,7 +655,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.superwall.SuperwallSwiftUIExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -677,6 +673,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.superwall.SuperwallSwiftUIExampleUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -694,6 +691,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.superwall.SuperwallSwiftUIExampleUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";

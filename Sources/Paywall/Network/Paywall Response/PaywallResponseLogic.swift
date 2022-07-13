@@ -8,10 +8,13 @@
 import Foundation
 import StoreKit
 
-struct TriggerResponseIdentifiers: Equatable {
+struct ResponseIdentifiers: Equatable {
   let paywallId: String?
-  let experimentId: String?
-  let variantId: String?
+  var experiment: Experiment?
+
+  static var none: ResponseIdentifiers {
+    return  .init(paywallId: nil)
+  }
 }
 
 struct PaywallErrorResponse {
@@ -36,6 +39,17 @@ enum PaywallResponseLogic {
     case setCompletionBlock(hash: String)
   }
 
+  struct TriggerResultOutcome {
+    enum Info {
+      case paywall(ResponseIdentifiers)
+      case holdout(NSError)
+      case unknownEvent(NSError)
+      case noRuleMatch(NSError)
+    }
+    let info: Info
+    var result: TriggerResult?
+  }
+
   static func requestHash(
     identifier: String? = nil,
     event: EventData? = nil,
@@ -45,62 +59,52 @@ enum PaywallResponseLogic {
     return "\(id)_\(locale)"
   }
 
-  // swiftlint:disable:next function_body_length
-  static func handleTriggerResponse(
-    withPaywallId paywallId: String?,
-    fromEvent event: EventData?,
-    didFetchConfig: Bool,
-    handleEvent: (EventData) -> HandleEventResult = TriggerManager.handleEvent,
-    trackEvent: (InternalEvent, [String: Any]) -> Void = Paywall.track
-  ) throws -> TriggerResponseIdentifiers {
-    guard
-      didFetchConfig,
-      let event = event
-    else {
-      return TriggerResponseIdentifiers(
-        paywallId: paywallId,
-        experimentId: nil,
-        variantId: nil
+  static func getTriggerResultOutcome(
+    presentationInfo: PresentationInfo,
+    network: Network = Network.shared,
+    triggers: [String: Trigger]
+  ) -> TriggerResultOutcome {
+    if let eventData = presentationInfo.eventData {
+      let triggerAssignmentOutcome = TriggerLogic.assignmentOutcome(
+        forEvent: eventData,
+        triggers: triggers
+      )
+
+      // Confirm any triggers that the user is assigned
+      if let confirmableAssignments = triggerAssignmentOutcome.confirmableAssignments {
+        network.confirmAssignments(confirmableAssignments)
+      }
+
+      return getOutcome(forResult: triggerAssignmentOutcome.result)
+    } else {
+      let identifiers = ResponseIdentifiers(paywallId: presentationInfo.identifier)
+      return TriggerResultOutcome(
+        info: .paywall(identifiers)
       )
     }
+  }
 
-    let triggerResponse = handleEvent(event)
-
-    switch triggerResponse {
-    case .presentV1:
-      return TriggerResponseIdentifiers(
-        paywallId: paywallId,
-        experimentId: nil,
-        variantId: nil
+  private static func getOutcome(
+    forResult triggerResult: TriggerResult
+  ) -> TriggerResultOutcome {
+    switch triggerResult {
+    case .paywall(let experiment):
+      let identifiers = ResponseIdentifiers(
+        paywallId: experiment.variant.paywallId,
+        experiment: experiment
       )
-    case let .presentV2(experimentIdentifier, variantIdentifier, paywallIdentifier):
-      let outcome = TriggerResponseIdentifiers(
-        paywallId: paywallIdentifier,
-        experimentId: experimentIdentifier,
-        variantId: variantIdentifier
+      return TriggerResultOutcome(
+        info: .paywall(identifiers),
+        result: triggerResult
       )
-
-      trackEvent(
-        .triggerFire(
-          triggerResult: TriggerResult.paywall(
-            experiment: Experiment(
-              id: experimentIdentifier,
-              variantId: variantIdentifier
-            ),
-            paywallIdentifier: paywallIdentifier
-          )
-        ),
-        [:]
-      )
-      return outcome
-    case let .holdout(experimentId, variantId):
+    case let .holdout(experiment):
       let userInfo: [String: Any] = [
-        "experimentId": experimentId,
-        "variantId": variantId,
+        "experimentId": experiment.id,
+        "variantId": experiment.variant.id,
         NSLocalizedDescriptionKey: NSLocalizedString(
           "Trigger Holdout",
           value: "This user was assigned to a holdout in a trigger experiment",
-          comment: "ExperimentId: \(experimentId), VariantId: \(variantId)"
+          comment: "ExperimentId: \(experiment.id), VariantId: \(experiment.variant.id)"
         )
       ]
       let error = NSError(
@@ -108,19 +112,10 @@ enum PaywallResponseLogic {
         code: 4001,
         userInfo: userInfo
       )
-      trackEvent(
-        .triggerFire(
-          triggerResult:
-            TriggerResult.holdout(
-              experiment: Experiment(
-                id: experimentId,
-                variantId: variantId
-              )
-            )
-          ),
-        [:]
+      return TriggerResultOutcome(
+        info: .holdout(error),
+        result: triggerResult
       )
-      throw error
     case .noRuleMatch:
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(
@@ -129,18 +124,15 @@ enum PaywallResponseLogic {
           comment: ""
         )
       ]
-      trackEvent(
-        .triggerFire(
-            triggerResult: TriggerResult.noRuleMatch
-        ),
-        [:]
-      )
       let error = NSError(
         domain: "com.superwall",
         code: 4000,
         userInfo: userInfo
       )
-      throw error
+      return TriggerResultOutcome(
+        info: .noRuleMatch(error),
+        result: triggerResult
+      )
     case .unknownEvent:
       // create the error
       let userInfo: [String: Any] = [
@@ -155,7 +147,10 @@ enum PaywallResponseLogic {
         code: 404,
         userInfo: userInfo
       )
-      throw error
+      return TriggerResultOutcome(
+        info: .unknownEvent(error),
+        result: triggerResult
+      )
     }
   }
 
@@ -163,7 +158,7 @@ enum PaywallResponseLogic {
   static func searchForPaywallResponse(
     forEvent event: EventData?,
     withHash hash: String,
-    identifiers triggerResponseIds: TriggerResponseIdentifiers?,
+    identifiers triggerResponseIds: ResponseIdentifiers?,
     inResultsCache resultsCache: [String: Result<PaywallResponse, NSError>],
     handlersCache: [String: [PaywallResponseCompletionBlock]],
     isDebuggerLaunched: Bool
@@ -173,10 +168,9 @@ enum PaywallResponseLogic {
       !isDebuggerLaunched {
         switch result {
         case .success(let response):
-          var updatedResponse = response
-          updatedResponse.experimentId = triggerResponseIds?.experimentId
-          updatedResponse.variantId = triggerResponseIds?.variantId
-          return .cachedResult(.success(updatedResponse))
+          var response = response
+          response.experiment = triggerResponseIds?.experiment
+          return .cachedResult(.success(response))
         case .failure:
           return .cachedResult(result)
         }
@@ -199,27 +193,21 @@ enum PaywallResponseLogic {
     forEvent event: EventData?,
     withHash hash: String,
     handlersCache: [String: [PaywallResponseCompletionBlock]],
-    trackEvent: (InternalEvent, [String: Any]) -> Void = Paywall.track
+    trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) -> PaywallErrorResponse? {
-    let isFromEvent = event != nil
-
-    if let error = error as? URLSession.NetworkError,
+    if let error = error as? CustomURLSession.NetworkError,
       error == .notFound {
-      trackEvent(
-        .paywallResponseLoadNotFound(
-          fromEvent: isFromEvent,
-          event: event
-        ),
-        [:]
+      let trackedEvent = SuperwallEvent.PaywallResponseLoad(
+        state: .notFound,
+        eventData: event
       )
+      _ = trackEvent(trackedEvent)
     } else {
-      trackEvent(
-        .paywallResponseLoadFail(
-          fromEvent: isFromEvent,
-          event: event
-        ),
-        [:]
+      let trackedEvent = SuperwallEvent.PaywallResponseLoad(
+        state: .fail,
+        eventData: event
       )
+      _ = trackEvent(trackedEvent)
     }
 
     if let handlers = handlersCache[hash] {

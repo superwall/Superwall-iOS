@@ -23,8 +23,8 @@ final class PaywallService {
     )
   }
 
-  static func trackDeepLink(url: URL) {
-    Paywall.track(.deepLinkOpen(deepLinkUrl: url))
+  static func handleDeepLink(_ url: URL) {
+    Paywall.handleDeepLink(url)
   }
 
   static func setName(to name: String) {
@@ -56,7 +56,7 @@ extension PaywallService: PaywallDelegate {
     guard let event = Paywall.EventName(rawValue: name) else {
       return
     }
-    print("analytics event called", event, params)
+    // print("analytics event called", event, params)
 
     // Uncomment the following if you want to track the different analytics
     // events received from the paywall:

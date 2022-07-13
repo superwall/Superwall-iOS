@@ -6,19 +6,32 @@
 //
 
 import Foundation
+import UIKit
 
-final class Network {
+class Network {
   static let shared = Network()
-  private let urlSession = URLSession(configuration: .ephemeral)
+  private let urlSession: CustomURLSession
 
-  func sendEvents(
-    events: EventsRequest,
-    completion: @escaping (Result<EventsResponse, Error>) -> Void
-  ) {
+  /// Only use init when testing, for all other times use `Network.shared`.
+  init(urlSession: CustomURLSession = CustomURLSession()) {
+    self.urlSession = urlSession
+  }
+
+  func sendEvents(events: EventsRequest) {
     urlSession.request(.events(eventsRequest: events)) { result in
       switch result {
       case .success(let response):
-        completion(.success(response))
+        switch response.status {
+        case .ok:
+          break
+        case .partialSuccess:
+          Logger.debug(
+            logLevel: .warn,
+            scope: .network,
+            message: "Request had partial success: /events",
+            info: ["payload": response.invalidIndexes as Any]
+          )
+        }
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -27,13 +40,12 @@ final class Network {
           info: ["payload": events],
           error: error
         )
-        completion(.failure(error))
       }
     }
   }
 
-  func getPaywall(
-    withIdentifier identifier: String? = nil,
+  func getPaywallResponse(
+    withPaywallId identifier: String? = nil,
     fromEvent event: EventData? = nil,
     completion: @escaping (Result<PaywallResponse, Error>) -> Void
   ) {
@@ -63,7 +75,6 @@ final class Network {
             logLevel: .error,
             scope: .network,
             message: "Request Failed: /paywall/:identifier",
-            info: nil,
             error: error
           )
         }
@@ -85,7 +96,6 @@ final class Network {
           logLevel: .error,
           scope: .network,
           message: "Request Failed: /paywalls",
-          info: nil,
           error: error
         )
         completion(.failure(error))
@@ -93,8 +103,22 @@ final class Network {
     }
   }
 
-  func getConfig(completion: @escaping (Result<ConfigResponse, Error>) -> Void) {
-    urlSession.request(.config) { result in
+  func getConfig(
+    withRequestId requestId: String,
+    completion: @escaping (Result<Config, Error>) -> Void,
+    applicationState: UIApplication.State = UIApplication.shared.applicationState,
+    storage: Storage = Storage.shared
+  ) {
+    if applicationState == .background {
+      let configRequest = ConfigRequest(
+        id: requestId,
+        completion: completion
+      )
+      storage.configRequest = configRequest
+      return
+    }
+
+    urlSession.request(.config(requestId: requestId)) { result in
       switch result {
       case .success(let response):
         completion(.success(response))
@@ -103,7 +127,6 @@ final class Network {
           logLevel: .error,
           scope: .network,
           message: "Request Failed: /config",
-          info: nil,
           error: error
         )
         completion(.failure(error))
@@ -111,14 +134,11 @@ final class Network {
     }
   }
 
-  func confirmAssignments(
-    _ confirmableAssignments: ConfirmableAssignments,
-    completion: (((Result<ConfirmedAssignmentResponse, Error>)) -> Void)?
-  ) {
+  func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) {
     urlSession.request(.confirmAssignments(confirmableAssignments)) { result in
       switch result {
-      case .success(let response):
-        completion?(.success(response))
+      case .success:
+        break
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -127,7 +147,33 @@ final class Network {
           info: ["assignments": confirmableAssignments],
           error: error
         )
-        completion?(.failure(error))
+      }
+    }
+  }
+
+  func sendSessionEvents(_ session: SessionEventsRequest) {
+    urlSession.request(.sessionEvents(session)) { result in
+      switch result {
+      case .success(let response):
+        switch response.status {
+        case .ok:
+          break
+        case .partialSuccess:
+          Logger.debug(
+            logLevel: .warn,
+            scope: .network,
+            message: "Request had partial success: /session_events",
+            info: ["payload": response.invalidIndexes as Any]
+          )
+        }
+      case .failure(let error):
+        Logger.debug(
+          logLevel: .error,
+          scope: .network,
+          message: "Request Failed: /session_events",
+          info: ["payload": session],
+          error: error
+        )
       }
     }
   }

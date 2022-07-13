@@ -9,7 +9,6 @@ import Foundation
 import SystemConfiguration
 import CoreTelephony
 
-
 final class DeviceHelper {
   static let shared = DeviceHelper()
   let reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, Api.hostDomain)
@@ -109,22 +108,117 @@ final class DeviceHelper {
 		return Bundle.main.bundleIdentifier ?? ""
 	}
 
-  var appInstallDate: String = {
+  var appInstallDate: Date? = {
     guard let urlToDocumentsFolder = FileManager.default.urls(
       for: .documentDirectory,
       in: .userDomainMask
     ).last else {
-      return ""
+      return nil
     }
 
     guard let installDate = try? FileManager.default.attributesOfItem(
       atPath: urlToDocumentsFolder.path
     )[FileAttributeKey.creationDate] as? Date else {
-      return ""
+      return nil
     }
 
-    return installDate.isoString
+    return installDate
   }()
+
+  var appInstalledAtString: String {
+    return appInstallDate?.isoString ?? ""
+  }
+
+  var daysSinceInstall: Int {
+    let fromDate = appInstallDate ?? Date()
+    let toDate = Date()
+    let numberOfDays = Calendar.current.dateComponents([.day], from: fromDate, to: toDate)
+    return numberOfDays.day ?? 0
+  }
+
+  var localDateString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = Calendar.current.timeZone
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter.string(from: Date())
+  }
+
+  var utcDateString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter.string(from: Date())
+  }
+
+  var localTimeString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = Calendar.current.timeZone
+    formatter.dateFormat = "HH:mm:ss"
+    return formatter.string(from: Date())
+  }
+
+  var utcTimeString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "HH:mm:ss"
+    return formatter.string(from: Date())
+  }
+
+  var localDateTimeString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = Calendar.current.timeZone
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+    return formatter.string(from: Date())
+  }
+
+  var utcDateTimeString: String {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+    return formatter.string(from: Date())
+  }
+
+
+  var minutesSinceInstall: Int {
+    let fromDate = appInstallDate ?? Date()
+    let toDate = Date()
+    let numberOfMinutes = Calendar.current.dateComponents([.minute], from: fromDate, to: toDate)
+    return numberOfMinutes.minute ?? 0
+  }
+
+  var daysSinceLastPaywallView: Int? {
+    guard let fromDate = Storage.shared.getLastPaywallView() else {
+      return nil
+    }
+    let toDate = Date()
+    let numberOfDays = Calendar.current.dateComponents([.day], from: fromDate, to: toDate)
+    return numberOfDays.day
+  }
+
+  var minutesSinceLastPaywallView: Int? {
+    guard let fromDate = Storage.shared.getLastPaywallView() else {
+      return nil
+    }
+    let toDate = Date()
+    let numberOfMinutes = Calendar.current.dateComponents([.minute], from: fromDate, to: toDate)
+    return numberOfMinutes.minute
+  }
+
+  var totalPaywallViews: Int {
+    return Storage.shared.getTotalPaywallViews() ?? 0
+  }
 
   var templateDevice: TemplateDevice {
     let aliases: [String]
@@ -136,7 +230,7 @@ final class DeviceHelper {
 
     return TemplateDevice(
       publicApiKey: Storage.shared.apiKey,
-      platform: "iOS",
+      platform: DeviceHelper.shared.isMac ? "macOS" : "iOS",
       appUserId: Storage.shared.appUserId ?? "",
       aliases: aliases,
       vendorId: DeviceHelper.shared.vendorId,
@@ -146,7 +240,25 @@ final class DeviceHelper {
       deviceLocale: DeviceHelper.shared.locale,
       deviceLanguageCode: DeviceHelper.shared.languageCode,
       deviceCurrencyCode: DeviceHelper.shared.currencyCode,
-      deviceCurrencySymbol: DeviceHelper.shared.currencySymbol
+      deviceCurrencySymbol: DeviceHelper.shared.currencySymbol,
+      timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
+      radioType: DeviceHelper.shared.radioType,
+      interfaceStyle: DeviceHelper.shared.interfaceStyle,
+      isLowPowerModeEnabled: DeviceHelper.shared.isLowPowerModeEnabled == "true",
+      bundleId: DeviceHelper.shared.bundleId,
+      appInstallDate: DeviceHelper.shared.appInstalledAtString,
+      isMac: DeviceHelper.shared.isMac,
+      daysSinceInstall: DeviceHelper.shared.daysSinceInstall,
+      minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall,
+      daysSinceLastPaywallView: DeviceHelper.shared.daysSinceLastPaywallView,
+      minutesSinceLastPaywallView: DeviceHelper.shared.minutesSinceLastPaywallView,
+      totalPaywallViews: DeviceHelper.shared.totalPaywallViews,
+      utcDate: DeviceHelper.shared.utcDateString,
+      localDate: DeviceHelper.shared.localDateString,
+      utcTime: DeviceHelper.shared.utcTimeString,
+      localTime: DeviceHelper.shared.localTimeString,
+      utcDateTime: DeviceHelper.shared.utcDateTimeString,
+      localDateTime: DeviceHelper.shared.localDateTimeString
     )
   }
 }

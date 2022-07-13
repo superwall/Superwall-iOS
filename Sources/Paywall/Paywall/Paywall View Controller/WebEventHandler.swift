@@ -4,12 +4,13 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
+// swiftlint:disable line_length
 
 import UIKit
 import WebKit
 
 protocol WebEventHandlerDelegate: AnyObject {
-  var eventData: EventData? { get }
+  var presentationInfo: PresentationInfo? { get }
   var paywallResponse: PaywallResponse { get set }
   var paywallInfo: PaywallInfo { get }
   var webView: SWWebView { get }
@@ -17,13 +18,15 @@ protocol WebEventHandlerDelegate: AnyObject {
   var isPresentedViewController: Bool { get }
 
   func eventDidOccur(_ paywallPresentationResult: PaywallPresentationResult)
-  func presentSafari(_ url: URL)
+  func openDeepLink(_ url: URL)
+  func presentSafariInApp(_ url: URL)
+  func presentSafariExternal(_ url: URL)
 }
 
 final class WebEventHandler: WebEventDelegate {
   weak var delegate: WebEventHandlerDelegate?
 
-  init(delegate: WebEventHandlerDelegate) {
+  init(delegate: WebEventHandlerDelegate?) {
     self.delegate = delegate
   }
 
@@ -50,13 +53,15 @@ final class WebEventHandler: WebEventDelegate {
       delegate?.eventDidOccur(.closed)
     case .openUrl(let url):
       openUrl(url)
+    case .openUrlInSafari(let url):
+      openUrlInSafari(url)
     case .openDeepLink(let url):
       openDeepLink(url)
     case .restore:
       restorePurchases()
-    case .purchase(product: let type):
+    case .purchase(productId: let id):
       purchaseProduct(
-        withType: type,
+        withId: id,
         from: paywallResponse
       )
     case .custom(data: let customEvent):
@@ -66,7 +71,7 @@ final class WebEventHandler: WebEventDelegate {
 
   private func templateParams(from paywallResponse: PaywallResponse) {
     let params = paywallResponse.getBase64EventsString(
-      params: delegate?.eventData?.parameters
+      params: delegate?.presentationInfo?.eventData?.parameters
     )
     let scriptSrc = """
       window.paywall.accept64('\(params)');
@@ -98,11 +103,20 @@ final class WebEventHandler: WebEventDelegate {
         delegate?.paywallResponse.webViewLoadCompleteTime = Date()
       }
 
-      Paywall.track(.paywallWebviewLoadComplete(paywallInfo: paywallInfo))
+      let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+        state: .complete,
+        paywallInfo: paywallInfo
+      )
+      Paywall.track(trackedEvent)
+
+      SessionEventsManager.shared.triggerSession.trackWebviewLoad(
+        forPaywallId: paywallInfo.id,
+        state: .end
+      )
     }
 
     let params = paywallResponse.getBase64EventsString(
-      params: delegate?.eventData?.parameters
+      params: delegate?.presentationInfo?.eventData?.parameters
     )
     let jsEvent = paywallResponse.paywalljsEvent
     let scriptSrc = """
@@ -144,11 +158,9 @@ final class WebEventHandler: WebEventDelegate {
     )
     delegate?.webView.configuration.userContentController.addUserScript(selectionScript)
 
-    // swiftlint:disable:next line_length
     let preventSelection = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
     delegate?.webView.evaluateJavaScript(preventSelection)
 
-    // swiftlint:disable:next line_length
     let preventZoom: String = "var meta = document.createElement('meta');" + "meta.name = 'viewport';" + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';" + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
     delegate?.webView.evaluateJavaScript(preventZoom)
   }
@@ -160,7 +172,17 @@ final class WebEventHandler: WebEventDelegate {
     )
     hapticFeedback()
     delegate?.eventDidOccur(.openedURL(url: url))
-    delegate?.presentSafari(url)
+    delegate?.presentSafariInApp(url)
+  }
+
+  private func openUrlInSafari(_ url: URL) {
+    detectHiddenPaywallEvent(
+      "openUrlInSafari",
+      userInfo: ["url": url]
+    )
+    hapticFeedback()
+    delegate?.eventDidOccur(.openedUrlInSafari(url))
+    delegate?.presentSafariExternal(url)
   }
 
   private func openDeepLink(_ url: URL) {
@@ -169,8 +191,7 @@ final class WebEventHandler: WebEventDelegate {
       userInfo: ["url": url]
     )
     hapticFeedback()
-    delegate?.eventDidOccur(.openedDeepLink(url: url))
-    // TODO: Handle deep linking
+    delegate?.openDeepLink(url)
   }
 
   private func restorePurchases() {
@@ -180,15 +201,12 @@ final class WebEventHandler: WebEventDelegate {
   }
 
   private func purchaseProduct(
-    withType productType: ProductType,
+    withId id: String,
     from paywallResponse: PaywallResponse
   ) {
     detectHiddenPaywallEvent("purchase")
     hapticFeedback()
-    let product = paywallResponse.products.first { $0.type == productType }
-    if let product = product {
-      delegate?.eventDidOccur(.initiatePurchase(productId: product.id))
-    }
+    delegate?.eventDidOccur(.initiatePurchase(productId: id))
   }
 
   private func handleCustomEvent(_ customEvent: String) {
@@ -224,9 +242,17 @@ final class WebEventHandler: WebEventDelegate {
   }
 
   private func hapticFeedback() {
-    if Paywall.isGameControllerEnabled {
+    guard Paywall.options.isHapticFeedbackEnabled else {
       return
     }
-    UIImpactFeedbackGenerator().impactOccurred()
+    if Paywall.options.isGameControllerEnabled {
+      return
+    }
+
+    if #available(iOS 13.0, *) {
+      UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)
+    } else {
+      UIImpactFeedbackGenerator().impactOccurred()
+    }
   }
 }

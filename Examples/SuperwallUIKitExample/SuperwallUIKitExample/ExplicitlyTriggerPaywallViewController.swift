@@ -41,7 +41,13 @@ final class ExplicitlyTriggerPaywallViewController: UIViewController {
 
   @IBAction private func explicitlyTriggerPaywall() {
     Paywall.trigger(event: "MyEvent") { error in
-      print("did fail", error)
+      if error?.code == 4000 {
+        print("The user did not match any rules")
+      } else if error?.code == 4001 {
+        print("The user is in a holdout group")
+      } else {
+        print("did fail", error)
+      }
     } onPresent: { paywallInfo in
       print("paywall info is", paywallInfo)
     } onDismiss: { didPurchase, productId, paywallInfo in

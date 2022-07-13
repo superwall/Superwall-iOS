@@ -1,36 +1,53 @@
-# The Relationship Between the SDK, the Dashboard and the Presented Paywall
+# Understanding How Superwall Works
 
-An overview of the Superwall ecosystem.
+An overview of how Superwall works in relation to your app.
 
 ## Overview
 
-The following diagram gives an overview of how the Superwall ecosystem works:
+Superwall is built on 3 core principles:
 
-![The relationship between the SDK, the dashboard, and the presented paywall](apiDiagram.png)
+1. Triggers
+2. Rules
+3. Paywalls
 
-## Superwall Dashboard
+When your app executes a **trigger**, evaluate a **rule** to decide which **paywall** to show the user.
 
-The [Superwall Dashboard](https://superwall.com/dashboard) is your control center. You can configure paywalls and triggers, view analytics, manage users and more on there. If you don't already have an account, you can [sign up for free](https://superwall.com/sign-up). The dashboard interacts with the Superwall API to store your configurations.
+Triggers and Rules are grouped in a concept we call **Campaigns**.
 
-## Superwall API
+## Rapid Iteration
 
-The API is the go-between that all our services use to communicate with each other. When you configure the SDK, you pass it your Public API Key, which you retrieve from the dashboard settings. The SDK uses this to be able to communicate with the API to load your paywalls and triggers, ready for presentation. You can also send user variables and events to the API that will appear in the dashboard.
+Paywalls and Campaigns are all defined in the [Superwall Dashboard](https://superwall.com/dashboard). If you don't already have a Superwall account, you can [sign up for free](https://superwall.com/sign-up).
 
-## Paywall Template
+Integrating the Paywall SDK into your app is usually the last time you'll have to write paywall related code.
 
-All paywalls are webpages that act as templates for you to configure in the dashboard. The easiest way to create a paywall webpage is with [Webflow](https://webflow.com). We have created a Webflow project with dozens of common paywall elements for you to quickly get up and running. For more info on how to build a paywall with Webflow, [see here](https://docs.superwall.com/docs/building-paywalls-with-webflow).
+This allows you to iterate on 5 key aspects of your monetization flow, without shipping app updates:
 
-In the header of the paywall, you add a link to a script we provide called Paywall.js. Then, you tag elements on the webpage, such as text or buttons, with [data tags](https://docs.superwall.com/docs/data-tags). These allow Paywall.js to interpret feedback and transmit information to and from the SDK.
+- Design
+- Text / Copy
+- Placement
+- Pricing
+- Discounts
+- Paywalls
 
-In addition, when you configure a paywall on the dashboard, you input its URL and the dashboard instantly recognizes the data tags you've provided. From there, you can edit the text of all tagged items. This allows for quick iteration of paywall text. For example, you could create one paywall webpage but run an A/B test with two different configurations of the paywall in your app.
+Superwall uses a script called **Paywall.js** to turn websites into paywall templates. The Paywall SDK loads these websites inside a `UIWebView`, and executes javascript on them to replace text and template product information. This gives you the flexibility to turn any design into a paywall and update it remotely.
 
-> Important: Paywall.js is available to Superwall customers subject to the terms of the subscription agreement between Superwall and the customer, and is not available as an open-source project.
+Since building websites can be tedious, Superwall maintains a [clonable Webflow template](https://webflow.com/website/45-Paywall-Elements?ref=showcase-search&searchValue=superwall) including ~50 of the most prominent paywall elements we've seen across thousands of apps.
 
+## Rules
 
-## Templated Paywall
+Rules allow you to conditionally show a paywall to a user. For example, you may want to only show users paywalls if they have no remaining credits or if their account is over 24 hours old.
 
-All of this information is abstracted away from users of your app. They just see the templated paywall presented in a `UIWebView`. Paywall.js makes sure that this paywall feels native. Which paywall they see depends on your settings in the dashboard. When a user taps on an interactive element in the paywall that has a valid data tag, the appropriate delegate methods are called. It's up to you as the developer to implement the delegate and handle events that happen on the paywall, such as purchasing and restoring.
+Rule evaluations happen client side, so no network requests are fired to determine whether or not to show a paywall.
 
-## Superwall SDK
+## Triggers
+
+A trigger is an analytics event you can wire up to specific rules. The Paywall SDK listens for these analytics events and evaluates their rules to determine whether or not to show a paywall when the trigger is fired.
+
+## Inner workings of the SDK
+
+The following diagram describes the inner workings of the Paywall SDK and your app:
+
+![How Superwall works](apiDiagram.png)
+
 
 Read <doc:GettingStarted> to learn how to integrate the SDK into your app.

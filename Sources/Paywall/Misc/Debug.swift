@@ -58,12 +58,11 @@ enum Logger {
     logLevel: LogLevel,
     scope: LogScope
   ) -> Bool {
-    let exceedsCurrentLogLevel = logLevel.rawValue >= (Paywall.logLevel?.rawValue ?? 99)
-    let isInScope = Paywall.logScopes.contains(scope)
-    let allLogsActive = Paywall.logScopes.contains(.all)
+    let exceedsCurrentLogLevel = logLevel.rawValue >= ( Paywall.options.logging.level?.rawValue ?? 99)
+    let isInScope = Paywall.options.logging.scopes.contains(scope)
+    let allLogsActive = Paywall.options.logging.scopes.contains(.all)
 
-    return Paywall.debugMode
-      && exceedsCurrentLogLevel
+    return exceedsCurrentLogLevel
       && (isInScope || allLogsActive)
 	}
 

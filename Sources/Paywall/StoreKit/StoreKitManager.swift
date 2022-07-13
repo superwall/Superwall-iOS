@@ -4,6 +4,7 @@ import StoreKit
 final class StoreKitManager: NSObject {
 	static let shared = StoreKitManager()
   var productsById: [String: SKProduct] = [:]
+  var swProducts: [SWProduct] = []
 
 	private let productsManager = ProductsManager()
 
@@ -11,38 +12,63 @@ final class StoreKitManager: NSObject {
     forResponse response: PaywallResponse,
     completion: @escaping ([Variable]) -> Void
   ) {
-		getProducts(withIds: response.productIds) { productsById in
-      var variables: [Variable] = []
+		getProducts(withIds: response.productIds) { result in
+      switch result {
+      case .success(let productsById):
+        var variables: [Variable] = []
 
-			for product in response.products {
-				if let skProduct = productsById[product.id] {
-          let variable = Variable(
-            key: product.type.rawValue,
-            value: JSON(skProduct.legacyEventData)
-          )
-					variables.append(variable)
-				}
-			}
+        for product in response.products {
+          if let skProduct = productsById[product.id] {
+            let variable = Variable(
+              key: product.type.rawValue,
+              value: JSON(skProduct.legacyEventData)
+            )
+            variables.append(variable)
+          }
+        }
 
-			completion(variables)
+        completion(variables)
+      case .failure:
+        break
+      }
 		}
 	}
 
 	func getProducts(
     withIds ids: [String],
-    completion: (([String: SKProduct]) -> Void)? = nil
+    completion: ((Result<[String: SKProduct], Error>) -> Void)? = nil
   ) {
-		let ids = Set(ids)
+		let idSet = Set(ids)
 
-		productsManager.products(withIdentifiers: ids) { productsSet in
-      var output: [String: SKProduct] = [:]
+		productsManager.products(withIdentifiers: idSet) { [weak self] result in
+      switch result {
+      case .success(let productsSet):
+        guard let self = self else {
+          return
+        }
+        var output: [String: SKProduct] = [:]
 
-			for product in productsSet {
-				output[product.productIdentifier] = product
-				self.productsById[product.productIdentifier] = product
-			}
+        for product in productsSet {
+          output[product.productIdentifier] = product
+          self.productsById[product.productIdentifier] = product
+        }
 
-			completion?(output)
+        // Loop through all the product ids and store, in order.
+        var swProducts: [SWProduct] = []
+        for id in ids {
+          guard let product = self.productsById[id] else {
+            continue
+          }
+          let swProduct = SWProduct(product: product)
+          swProducts.append(swProduct)
+        }
+        SessionEventsManager.shared.triggerSession.storeAllProducts(swProducts)
+        self.swProducts = swProducts
+
+        completion?(.success(output))
+      case .failure(let error):
+        completion?(.failure(error))
+      }
 		}
 	}
 }

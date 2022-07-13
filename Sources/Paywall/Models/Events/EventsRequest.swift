@@ -7,6 +7,6 @@
 
 import Foundation
 
-struct EventsRequest: Codable {
+struct EventsRequest: Encodable {
   var events: [JSON]
 }

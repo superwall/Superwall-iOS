@@ -16,18 +16,26 @@ struct PaywallResponse: Decodable {
   var name: String?
   var slug: String?
 
-  var variantId: String?
-  var experimentId: String?
+  /// The experiment associated with the paywall.
+  var experiment: Experiment?
 
+  /// The identifier of the paywall
   var identifier: String?
+
+  /// The URL of the paywall webpage
   var url: String
   var paywalljsEvent: String
 
-  var presentationStyle: PaywallPresentationStyle = .sheet
+  var presentationStyleV2: PaywallPresentationStyle = .modal
+  var presentationCondition: PresentationCondition
   var backgroundColorHex: String?
 
+  /// The products associated with the paywall.
   var products: [Product]
+
+  /// The variables associated with the paywall
   var variables: [Variable]? = []
+
   var productVariables: [ProductVariable]? = []
 
   var idNonOptional: String {
@@ -36,12 +44,15 @@ struct PaywallResponse: Decodable {
 
   var responseLoadStartTime: Date?
   var responseLoadCompleteTime: Date?
+  var responseLoadFailTime: Date?
 
   var webViewLoadStartTime: Date?
   var webViewLoadCompleteTime: Date?
+  var webViewLoadFailTime: Date?
 
   var productsLoadStartTime: Date?
   var productsLoadCompleteTime: Date?
+  var productsLoadFailTime: Date?
 
   var paywallBackgroundColor: UIColor {
     if let hexString = backgroundColorHex {
@@ -93,7 +104,6 @@ struct PaywallResponse: Decodable {
 
   var templateSubstitutionsPrefix: TemplateSubstitutionsPrefix {
     let isFreeTrialAvailable = isFreeTrialAvailable ?? false
-    // TODO: Jake decide if we should send `freeTrial` or `null`
     return TemplateSubstitutionsPrefix(
       eventName: "template_substitutions_prefix",
       prefix: isFreeTrialAvailable ? "freeTrial" : nil
@@ -125,9 +135,9 @@ struct PaywallResponse: Decodable {
       webViewLoadStartTime: webViewLoadStartTime,
       webViewLoadCompleteTime: webViewLoadCompleteTime,
       productsLoadStartTime: productsLoadStartTime,
+      productsLoadFailTime: productsLoadFailTime,
       productsLoadCompleteTime: productsLoadCompleteTime,
-      variantId: variantId,
-      experimentId: experimentId
+      experiment: experiment
     )
   }
 
@@ -168,6 +178,7 @@ extension PaywallResponse: Stubbable {
     return PaywallResponse(
       url: "url",
       paywalljsEvent: "event",
+      presentationCondition: .checkUserSubscription,
       products: []
     )
   }

@@ -2,11 +2,50 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
-
-2.3.0 (upcoming release)
------
+## 2.4.0 (upcoming release)
 
 ### Enhancements
+
+- New _push_ presentation style. By selecting Push on the superwall dashboard, your paywall will push and pop in as if it's being pushed/popped from a navigation controller. If you are using UIKit, you can provide a view controller to `Paywall.trigger` like this: `Paywall.trigger(event: "MyEvent", on: self)`. This will make the push transition more realistic, by moving its view in the transition. Note: This is not backwards compatible with previous versions of the SDK.
+- New _no animation_ presentation style. By selecting No Animation in the superwall dashboard, you can disable presentation/dismissal animation. This release deprecates `Paywall.shouldAnimatePaywallDismissal` and `Paywall.shouldAnimatePaywallPresentation`.
+- A new `PaywallOptions` object that you configure and pass to `Paywall.configure(apiKey:userId:delegate:options) to override the default appearance and presentation of the paywall. This deprecates a lot of static variables for better organisation.
+- New `shouldPreloadPaywalls` option. Set this to `false` to make paywalls load and cache in a just-in-time fashion. This replaces the old `Paywall.shouldPreloadTriggers` flag.
+- New dedicated function for handling deeplinks: `Paywall.handleDeepLink(url)`.
+- Deprecates old `track` functions. The only one you should use is `Paywall.track(_:_:)`, to which you pass an event name and a dictionary of parameters. Note: This is not backwards compatible with previous versions of the SDK.
+- Adds a new way of internally tracking analytics associated with a paywall and the app session. This will greatly improve the Superwall dashboard analytics.
+- Adds support for javascript expressions defined in rules on the Superwall dashboard.
+- Updates the SDK documentation.
+- Adds `trialPeriodEndDate` as a product variable. This means you can tell your users when their trial period will end, e.g. `Start your trial today — you won't be billed until {{primary.trialPeriodEndDate}}` will print out `Start your trial today — you won't be billed until June 21, 2023`.
+- Adds support for having more than 3 products on your paywall.
+- Exposes `Paywall.presentedViewController`. This gives you access to the `UIViewController` of the paywall incase you need to present a view controller on top of it.
+- Adds `today`, `daysSinceInstall`, `minutesSinceInstall`, `daysSinceLastPaywallView`, `minutesSinceLastPaywallView` and `totalPaywallViews` as `device` parameters. These can be references in your rules and paywalls with `{{ device.paramName }}`.
+- Paywalls can now be configured via the dashboard to always present, regardless of the subscription status of the user.
+- Adds a `presentationStyleOverride` parameter to `Paywall.trigger()` and `Paywall.present()`. By setting this, you can override the configured presentation style on case by case basis.
+- Rules can now be limited by occurrence and date. For example, you could set a rule to only match 10 times within the last 5 hours.
+
+### Fixes
+
+- Adds the missing Superwall events `app_install`, `paywallWebviewLoad_fail`, `paywallWebviewLoad_timeout` and `nonRecurringProduct_purchase`.
+- Adds `trigger_name` to a `triggerFire` Superwall event, which can be accessed in the parameters sent back to the `trackAnalyticsEvent(name:params:)` delegate function.
+- Product prices were being sent back to the dashboard with weird values like 89.999998. We fixed that.
+- Modal presentation now uses `.pageSheet` instead of `.formSheet`. This results in a less compact paywall popover on iPad. Thanks to Daniel Yoo from the Daily Bible Inspirations app for spotting that!
+- For SwiftUI users, we've fixed an issue where the explicitly triggered paywalls and presented paywalls would sometimes randomly dismiss. We found that state changes within the presenting view caused a rerendering of the view which temporarily reset the state of the binding that controlled the presentation of the paywall. This was causing the Paywall to dismiss.
+- Fixes an issue where the wrong paywall was shown if a trigger was fired before the config was fetched from the server. Thanks to Zac from Blue Candy for help with finding that :)
+- Future proofs enums internally to increase backwards compatibility.
+- Fixes a bug where long term data was being stored in the cache directory. This update migrates that to the document directory. This means the data stays around until we tell it to delete, rather than the system deleting it at random.
+- Prevents Paywall.configure from being called twice and logs a warning if this occurs.
+- Prevents Paywall.configure from being called in the background.
+- Fixes an issue where the keyboard couldn't be dismissed in the UIKit sample app.
+- Mentions SwiftLint as a requirement to run the sample apps.
+- Deprecates `Paywall.debugMode`. All logs are now controlled by setting the paywall option `.logLevel`. The default `logLevel` is now `.warn`.
+- Fixes broken webview based deeplinks and closes the paywall view before calling the delegate handler.
+
+---
+
+## 2.3.0
+
+### Enhancements
+
 - New [UIKit Example App](Examples/SuperwallUIKitExample).
 - Better [SDK documentation](https://sdk.superwall.me/documentation/paywall/). This is built from the ground up using DocC which means you view it directly in Xcode by selecting **Product ▸ Build Documentation**.
 - New Pull Request and Bug Report templates for the repo.
@@ -16,8 +55,8 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Added a CHANGELOG.md file.
 - Removed the `TPInnAppReceipt` dependency for the SDK.
 
-
 ### Fixes
+
 - All readme links for the UIKit example app now work.
-- Exposes `experimentId` and `variantId` whenever `PaywallInfo` is returned in SDK callbacks. This will be useful in the next version of Triggers.
+- Adds an `experiment` parameter to `PaywallInfo`. This will be useful in the next version of Triggers, where you can see details about the experiment that triggered the presentation of the paywall.
 - When triggering or presenting a paywall, if the default value for `isPresented` was `true`, the paywall would not present/trigger. It now works as expected.

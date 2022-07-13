@@ -7,43 +7,94 @@
 
 import Foundation
 
-protocol CachingType {
+enum SearchPathDirectory {
+  case cache
+  case userSpecificDocuments
+  case appSpecificDocuments
+}
+
+protocol Storable {
   static var key: String { get }
+  static var directory: SearchPathDirectory { get }
   associatedtype Value
 }
 
-enum AppUserId: CachingType {
+enum AppUserId: Storable {
   static var key: String {
     "store.appUserId"
   }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = String
 }
 
-enum AliasId: CachingType {
+enum AliasId: Storable {
   static var key: String {
     "store.aliasId"
   }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = String
 }
 
-enum DidTrackFirstSeen: CachingType {
+enum DidTrackAppInstall: Storable {
   static var key: String {
-    "store.didTrackFirstSeen"
+    "store.didTrackAppInstall"
   }
-  // This really should be a Bool, but for some reason it's a String.
-  typealias Value = String
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
 }
 
-enum UserAttributes: CachingType {
+enum DidTrackFirstSeen: Storable {
+  static var key: String {
+    "store.didTrackFirstSeen.v2"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = Bool
+}
+
+enum UserAttributes: Storable {
   static var key: String {
     "store.userAttributes"
   }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = [String: Any]
 }
 
-enum Config: CachingType {
+enum TriggerSessions: Storable {
   static var key: String {
-    "store.config"
+    "store.triggerSessions"
   }
-  typealias Value = [String: Bool]
+  static var directory: SearchPathDirectory = .cache
+  typealias Value = [TriggerSession]
+}
+
+enum Transactions: Storable {
+  static var key: String {
+    "store.transactions"
+  }
+  static var directory: SearchPathDirectory = .cache
+  typealias Value = [TransactionModel]
+}
+
+enum Version: Storable {
+  static var key: String {
+    "store.version"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = DataStoreVersion
+}
+
+enum LastPaywallView: Storable {
+  static var key: String {
+    "store.lastPaywallView"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = Date
+}
+
+enum TotalPaywallViews: Storable {
+  static var key: String {
+    "store.totalPaywallViews"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = Int
 }

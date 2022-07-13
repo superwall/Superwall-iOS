@@ -15,7 +15,7 @@ struct ImplicitlyTriggerPaywallView: View {
   var body: some View {
     VStack(spacing: 48) {
       InfoView(
-        text: "The button below increments a counter. When the counter hits 3, it will track the event \"MyEvent\", which will implicitly trigger a specific paywall for the event.\n\nThis is because the event is tied to an active trigger on the Superwall Dashboard."
+        text: "The button below increments a counter. When the counter hits 3, it will track the event \"MyEvent\", which will implicitly trigger a paywall for the event.\n\nThis is because the event is tied to an active trigger inside a Campaign on the Superwall Dashboard."
       )
 
       Divider()
@@ -33,7 +33,7 @@ struct ImplicitlyTriggerPaywallView: View {
         BrandedButton(title: "Increment") {
           count += 1
           if count == 3 {
-            Paywall.track("MyEvent", [:])
+            Paywall.track("MyEvent")
           }
         }
         BrandedButton(title: "Reset") {

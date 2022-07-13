@@ -54,7 +54,7 @@ All documentation is compiled using [DocC](https://github.com/apple/swift-docc) 
 
 Open the workspace from: `.swiftpm/xcode/package.xcworkspace`.
 
-If you are editing the example app, open the example app's `xcodeproj` in `Example/SuperwallSwiftUIExample/SuperwallSwiftUIExample.xcodeproj` directly. The advantage of this is that you can see linting issues on build.
+If you are editing one the example apps, open the example app's `xcodeproj` directly. The advantage of this is that you can see linting issues on build.
 
 ## Git Workflow
 

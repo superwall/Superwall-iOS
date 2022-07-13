@@ -18,15 +18,10 @@ final class OptionsTableViewController: UITableViewController {
     switch indexPath.row {
     case 0:
       navigationController?.pushViewController(
-        PresentPaywallViewController.fromStoryboard(),
-        animated: true
-      )
-    case 1:
-      navigationController?.pushViewController(
         ExplicitlyTriggerPaywallViewController.fromStoryboard(),
         animated: true
       )
-    case 2:
+    case 1:
       navigationController?.pushViewController(
         ImplicitlyTriggerPaywallViewController.fromStoryboard(),
         animated: true

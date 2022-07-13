@@ -15,3 +15,14 @@ struct PaywallConfig: Decodable, Hashable {
   var identifier: String
   var products: [ProductConfig]
 }
+
+extension PaywallConfig: Stubbable {
+  static func stub() -> PaywallConfig {
+    return PaywallConfig(
+      identifier: "abc",
+      products: [
+        ProductConfig(identifier: "productIdentifier")
+      ]
+    )
+  }
+}
