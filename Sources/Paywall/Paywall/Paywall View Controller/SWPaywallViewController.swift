@@ -43,11 +43,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	var isSafariVCPresented = false
   var presentationStyle: PaywallPresentationStyle
   var presentationIsAnimated: Bool {
-    if presentationStyle == .fullscreenNoAnimation {
-      return false
-    } else {
-      return Paywall.shouldAnimatePaywallPresentation
-    }
+    return presentationStyle != .fullscreenNoAnimation
   }
 
 	var isActive: Bool {

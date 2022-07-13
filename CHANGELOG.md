@@ -2,7 +2,15 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
-## 2.4.0 (upcoming release)
+## 3.0.0 (upcoming release)
+
+### Enhancements
+
+### Fixes
+
+---
+
+## 2.4.0
 
 ### Enhancements
 
@@ -39,8 +47,6 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Mentions SwiftLint as a requirement to run the sample apps.
 - Deprecates `Paywall.debugMode`. All logs are now controlled by setting the paywall option `.logLevel`. The default `logLevel` is now `.warn`.
 - Fixes broken webview based deeplinks and closes the paywall view before calling the delegate handler.
-
----
 
 ## 2.3.0
 

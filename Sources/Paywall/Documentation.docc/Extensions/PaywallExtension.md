@@ -21,13 +21,9 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 - <doc:Triggering>
 - ``trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
-- ``track(_:_:)-2vkwo``
 - ``dismiss(_:)``
 - ``PaywallInfo``
 - ``EventName``
-- ``track(_:_:)-7gc4r``
-- ``track(name:params:)``
-- ``StandardEvent``
 
 ### In-App Previews
 - <doc:InAppPreviews>
@@ -47,33 +43,17 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``setUserAttributes(_:)``
 - ``userAttributes``
 - ``reset()``
-- ``setUserAttributesDictionary(attributes:)``
-- ``StandardUserAttribute``
-- ``StandardUserAttributeKey``
-- ``setUserAttributes(_:custom:)``
 
 ### Game Controller
 
 - <doc:GameControllerSupport>
 - ``gamepadValueChanged(gamepad:element:)``
-- ``isGameControllerEnabled``
 
 ### Logging
 
 - ``PaywallDelegate/handleLog(level:scope:message:info:error:)``
-- ``Paywall/Paywall/logLevel``
-- ``Paywall/Paywall/logScopes``
-- ``debugMode``
 
 ### Customization
 
 - ``localizationOverride(localeIdentifier:)``
 - ``presentedViewController``
-- ``automaticallyDismiss``
-- ``restoreFailedTitleString``
-- ``restoreFailedMessageString``
-- ``restoreFailedCloseButtonString``
-- ``networkEnvironment``
-- ``shouldPreloadTriggers``
-- ``shouldAnimatePaywallDismissal``
-- ``shouldAnimatePaywallPresentation``
