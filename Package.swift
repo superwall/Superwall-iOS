@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
   name: "Paywall",
   platforms: [
-    .iOS("11.2"),
+    .iOS(.v13),
     .macOS(.v10_12),
     .watchOS("6.2")
   ],

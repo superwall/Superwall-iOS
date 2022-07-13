@@ -101,7 +101,7 @@ final class SWDebugViewController: UIViewController {
     view.hidesWhenStopped = true
     view.startAnimating()
     view.translatesAutoresizingMaskIntoConstraints = false
-    view.style = .whiteLarge
+    view.style = .large
     view.color = primaryColor
     return view
   }()

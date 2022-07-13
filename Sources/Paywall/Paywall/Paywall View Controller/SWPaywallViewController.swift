@@ -75,7 +75,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   private var purchaseLoadingIndicator: UIActivityIndicatorView = {
     let spinner = UIActivityIndicatorView()
     spinner.translatesAutoresizingMaskIntoConstraints = false
-    spinner.style = .whiteLarge
+    spinner.style = .large
     spinner.hidesWhenStopped = false
     spinner.alpha = 0.0
     spinner.startAnimating()

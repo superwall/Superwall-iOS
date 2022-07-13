@@ -20,6 +20,7 @@ enum LegacyDidTrackFirstSeen: Storable {
   typealias Value = String
 }
 
+/// Moves data between different directories rather than all in the cache.
 enum V1Migrator: Migratable {
   static func migrateToNextVersion(
     cache: Cache
