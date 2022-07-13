@@ -73,11 +73,11 @@ Then, run `pod install`.
 
 ## Getting Started
 
-[View our iOS SDK documentation](https://sdk.superwall.me/documentation/paywall/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
+[Sign up for a free account on Superwall](https://superwall.com/sign-up) and [read our docs](https://docs.superwall.com/docs).
 
-For general docs including how to use the Superwall Dashboard, visit [docs.superwall.com](https://docs.superwall.com/docs).
+You can also [view our iOS SDK docs](https://sdk.superwall.me/documentation/paywall/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
 
-Read Ray Wenderlich's tutorial: [Superwall: Remote Paywall Configuration on iOS](https://www.raywenderlich.com/31484602-superwall-remote-paywall-configuration-on-ios)
+Read our Ray Wenderlich tutorial: [Superwall: Remote Paywall Configuration on iOS](https://www.raywenderlich.com/31484602-superwall-remote-paywall-configuration-on-ios)
 
 Check out our sample apps for a hands-on demonstration of the SDK:
 
