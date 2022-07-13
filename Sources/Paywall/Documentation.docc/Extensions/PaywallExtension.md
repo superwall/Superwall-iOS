@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ``Paywall/Paywall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Paywall/Paywall/configure(apiKey:userId:delegate:)`` to configure the SDK.
+The ``Paywall/Paywall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)`` to configure the SDK.
 
 ## Topics
 
@@ -10,17 +10,21 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 - <doc:GettingStarted>
 - <doc:Ecosystem>
-- ``configure(apiKey:userId:delegate:)``
+- ``configure(apiKey:userId:delegate:options:)``
 - ``PaywallDelegate``
 - ``delegate``
-- ``EventName``
+- ``PaywallOptions``
+- ``options``
+- ``PaywallOptions/PaywallNetworkEnvironment``
 
 ### Triggering and Dismissing a Paywall
 
 - <doc:Triggering>
-- ``trigger(event:params:on:ignoreSubscriptionStatus:onSkip:onPresent:onDismiss:)``
+- ``trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``track(_:_:)-2vkwo``
 - ``dismiss(_:)``
+- ``PaywallInfo``
+- ``EventName``
 - ``track(_:_:)-7gc4r``
 - ``track(name:params:)``
 - ``StandardEvent``
@@ -33,8 +37,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 - ``present(onPresent:onDismiss:onFail:)``
 - ``present(on:onPresent:onDismiss:onFail:)``
-- ``present(identifier:on:ignoreSubscriptionStatus:onPresent:onDismiss:onFail:)``
-- ``PaywallInfo``
+- ``present(identifier:on:ignoreSubscriptionStatus:presentationStyleOverride:onPresent:onDismiss:onFail:)``
 - ``load(identifier:)``
 
 ### Identifying a User
@@ -57,22 +60,20 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 ### Logging
 
+- ``PaywallDelegate/handleLog(level:scope:message:info:error:)``
 - ``Paywall/Paywall/logLevel``
 - ``Paywall/Paywall/logScopes``
-- ``PaywallDelegate/handleLog(level:scope:message:info:error:)``
 - ``debugMode``
 
 ### Customization
 
+- ``localizationOverride(localeIdentifier:)``
+- ``presentedViewController``
 - ``automaticallyDismiss``
 - ``restoreFailedTitleString``
 - ``restoreFailedMessageString``
 - ``restoreFailedCloseButtonString``
-- ``localizationOverride(localeIdentifier:)``
-- ``shouldPreloadPaywalls``
 - ``networkEnvironment``
-- ``PaywallNetworkEnvironment``
 - ``shouldPreloadTriggers``
 - ``shouldAnimatePaywallDismissal``
 - ``shouldAnimatePaywallPresentation``
-- ``presentedViewController``

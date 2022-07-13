@@ -9,7 +9,7 @@ import Foundation
 
 enum ExpressionEvaluatorLogic {
   static func shouldFire(
-    basedOn occurrence: TriggerRuleOccurrence?,
+    forOccurrence occurrence: TriggerRuleOccurrence?,
     ruleMatched: Bool,
     storage: Storage
   ) -> Bool {
@@ -23,18 +23,15 @@ enum ExpressionEvaluatorLogic {
           for: occurrence
         ) + 1
 
-      let firing = count <= occurrence.maxCount
+      let shouldFire = count <= occurrence.maxCount
 
-      if firing {
+      if shouldFire {
         storage.coreDataManager.save(triggerRuleOccurrence: occurrence)
       }
 
-      return firing
-
+      return shouldFire
     }
-//    if let occurrence = occurrence {
-//      storage.coreDataManager.save(triggerRuleOccurrence: occurrence)
-//    }
+
     return false
   }
 }

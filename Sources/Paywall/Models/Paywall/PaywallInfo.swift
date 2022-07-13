@@ -8,7 +8,9 @@
 import Foundation
 import StoreKit
 
-/// `PaywallInfo` is the primary class used to distinguish one paywall from another. Used primarily in `Paywall.present(onPresent:onDismiss)`'s completion handlers.
+/// Contains information about a given paywall.
+///
+/// This is returned in the completion handlers when triggering a paywall with ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` and presenting a paywall with ``Paywall/Paywall/present(onPresent:onDismiss:onFail:)``.
 public final class PaywallInfo: NSObject {
   /// Superwall's internal ID for this paywall.
   let id: String
@@ -43,17 +45,34 @@ public final class PaywallInfo: NSObject {
   /// An array of product IDs that this paywall is displaying in `[Primary, Secondary, Tertiary]` order.
   public let productIds: [String]
 
+  /// An iso date string indicating when the paywall response began loading.
   public let responseLoadStartTime: String?
+
+  /// An iso date string indicating when the paywall response finished loading.
   public let responseLoadCompleteTime: String?
+
+  /// The time it took to load the paywall response.
   public let responseLoadDuration: TimeInterval?
 
+  /// An iso date string indicating when the paywall webview began loading.
   public let webViewLoadStartTime: String?
+
+  /// An iso date string indicating when the paywall webview finished loading.
   public let webViewLoadCompleteTime: String?
+
+  /// The time it took to load the paywall website.
   public let webViewLoadDuration: TimeInterval?
 
+  /// An iso date string indicating when the paywall products began loading.
   public let productsLoadStartTime: String?
+
+  /// An iso date string indicating when the paywall products finished loading.
   public let productsLoadCompleteTime: String?
+
+  /// An iso date string indicating when the paywall products failed to load.
   public let productsLoadFailTime: String?
+
+  /// The time it took to load the paywall products.
   public let productsLoadDuration: TimeInterval?
 
   init(

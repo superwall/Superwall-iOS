@@ -8,8 +8,9 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 - New _push_ presentation style. By selecting Push on the superwall dashboard, your paywall will push and pop in as if it's being pushed/popped from a navigation controller. If you are using UIKit, you can provide a view controller to `Paywall.trigger` like this: `Paywall.trigger(event: "MyEvent", on: self)`. This will make the push transition more realistic, by moving its view in the transition. Note: This is not backwards compatible with previous versions of the SDK.
 - New _no animation_ presentation style. By selecting No Animation in the superwall dashboard, you can disable presentation/dismissal animation. This release deprecates `Paywall.shouldAnimatePaywallDismissal` and `Paywall.shouldAnimatePaywallPresentation`.
-- New dedicated function for handling deeplinks: `Paywall.handleDeepLink(url)`
-- New `Paywall.shouldPreloadPaywalls` flag. Set this to `false` to make paywalls load and cache in a just-in-time fashion. This deprecates the old `Paywall.shouldPreloadTriggers` flag.
+- A new `PaywallOptions` object that you configure and pass to `Paywall.configure(apiKey:userId:delegate:options) to override the default appearance and presentation of the paywall. This deprecates a lot of static variables for better organisation.
+- New `shouldPreloadPaywalls` option. Set this to `false` to make paywalls load and cache in a just-in-time fashion. This replaces the old `Paywall.shouldPreloadTriggers` flag.
+- New dedicated function for handling deeplinks: `Paywall.handleDeepLink(url)`.
 - Deprecates old `track` functions. The only one you should use is `Paywall.track(_:_:)`, to which you pass an event name and a dictionary of parameters. Note: This is not backwards compatible with previous versions of the SDK.
 - Adds a new way of internally tracking analytics associated with a paywall and the app session. This will greatly improve the Superwall dashboard analytics.
 - Adds support for javascript expressions defined in rules on the Superwall dashboard.
@@ -36,12 +37,12 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Prevents Paywall.configure from being called in the background.
 - Fixes an issue where the keyboard couldn't be dismissed in the UIKit sample app.
 - Mentions SwiftLint as a requirement to run the sample apps.
-- Deprecates `Paywall.debugMode`. All logs are now controlled by setting `Paywall.logLevel`. The default `logLevel` is now `.warn`.
+- Deprecates `Paywall.debugMode`. All logs are now controlled by setting the paywall option `.logLevel`. The default `logLevel` is now `.warn`.
 - Fixes broken webview based deeplinks and closes the paywall view before calling the delegate handler.
 
-  2.3.0
-
 ---
+
+## 2.3.0
 
 ### Enhancements
 

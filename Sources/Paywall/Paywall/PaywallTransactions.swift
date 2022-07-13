@@ -48,9 +48,9 @@ extension Paywall {
             )
             if userInitiated {
               paywallViewController.presentAlert(
-                title: Paywall.restoreFailedTitleString,
-                message: Paywall.restoreFailedMessageString,
-                closeActionTitle: Paywall.restoreFailedCloseButtonString
+                title: Paywall.options.restoreFailed.title,
+                message: Paywall.options.restoreFailed.message,
+                closeActionTitle: Paywall.options.restoreFailed.closeButtonTitle
               )
             }
           }
@@ -124,7 +124,7 @@ extension Paywall {
       Paywall.track(trackedEvent)
     }
 
-    if Self.automaticallyDismiss {
+    if Paywall.options.automaticallyDismiss {
       dismiss(
         paywallViewController,
         state: .purchased(productId: product.productIdentifier)
@@ -200,7 +200,7 @@ extension Paywall {
     )
     Paywall.track(trackedEvent)
 
-    if Self.automaticallyDismiss {
+    if Paywall.options.automaticallyDismiss {
       dismiss(paywallViewController, state: .restored)
     } else {
       paywallViewController.loadingState = .ready

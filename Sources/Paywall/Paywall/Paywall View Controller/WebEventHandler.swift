@@ -242,7 +242,12 @@ final class WebEventHandler: WebEventDelegate {
   }
 
   private func hapticFeedback() {
-    if Paywall.isGameControllerEnabled { return }
+    guard Paywall.options.isHapticFeedbackEnabled else {
+      return
+    }
+    if Paywall.options.isGameControllerEnabled {
+      return
+    }
 
     if #available(iOS 13.0, *) {
       UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)

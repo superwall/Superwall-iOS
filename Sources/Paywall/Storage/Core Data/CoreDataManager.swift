@@ -8,7 +8,7 @@
 import Foundation
 import CoreData
 
-final class CoreDataManager {
+class CoreDataManager {
   enum SinceOption {
     case thirtyDays
     case sevenDays

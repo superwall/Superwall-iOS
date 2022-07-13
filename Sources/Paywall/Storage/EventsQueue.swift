@@ -23,7 +23,7 @@ final class EventsQueue {
   }
 
   init() {
-    let timeInterval = Paywall.networkEnvironment == .release ? 20.0 : 1.0
+    let timeInterval = Paywall.options.networkEnvironment == .release ? 20.0 : 1.0
     timer = Timer.scheduledTimer(
       timeInterval: timeInterval,
       target: self,
