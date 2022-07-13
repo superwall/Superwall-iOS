@@ -513,16 +513,26 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     guard presentedViewController == nil else {
       return
     }
-    let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    let alertController = UIAlertController(
+      title: title,
+      message: message,
+      preferredStyle: .alert
+    )
 
     if let actionTitle = actionTitle {
-      let alertAction = UIAlertAction(title: actionTitle, style: .default) { _ in
+      let alertAction = UIAlertAction(
+        title: actionTitle,
+        style: .default
+      ) { _ in
         action?()
       }
       alertController.addAction(alertAction)
     }
 
-    let action = UIAlertAction(title: closeActionTitle, style: .cancel) { _ in
+    let action = UIAlertAction(
+      title: closeActionTitle,
+      style: .cancel
+    ) { _ in
       onCancel?()
     }
     alertController.addAction(action)

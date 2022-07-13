@@ -11,7 +11,6 @@ import Foundation
 ///
 /// Pass an instance of this class to ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)`` to override the default paywall appearance and behavior.
 public class PaywallOptions: NSObject {
-  // TODO: Implement this haptic thing
   /// Determines whether the paywall should use haptic feedback. Defaults to true.
   ///
   /// Haptic feedback occurs when a user purchases or restores a product, opens a URL from the paywall, or closes the paywall.
