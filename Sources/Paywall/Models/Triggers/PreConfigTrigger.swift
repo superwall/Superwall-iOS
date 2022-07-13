@@ -13,6 +13,6 @@ struct PreConfigTrigger {
   var viewController: UIViewController?
   var ignoreSubscriptionStatus = false
   var onFail: ((NSError) -> Void)?
-  var onPresent: ((PaywallInfo?) -> Void)?
+  var onPresent: ((PaywallInfo) -> Void)?
   var onDismiss: PaywallDismissalCompletionBlock?
 }
