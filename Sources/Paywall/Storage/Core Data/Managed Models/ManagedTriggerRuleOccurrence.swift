@@ -27,6 +27,11 @@ final class ManagedTriggerRuleOccurrence: NSManagedObject {
       forEntityName: Self.entityName,
       in: context
     ) else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .coreData,
+        message: "Failed to create managed trigger rule occurrence for key: \(occurrenceKey)"
+      )
       return nil
     }
     super.init(entity: entity, insertInto: context)

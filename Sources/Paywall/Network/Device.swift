@@ -190,7 +190,6 @@ final class DeviceHelper {
     return formatter.string(from: Date())
   }
 
-
   var minutesSinceInstall: Int {
     let fromDate = appInstallDate ?? Date()
     let toDate = Date()

@@ -15,6 +15,11 @@ enum ExpressionEvaluatorLogic {
   ) -> Bool {
     if ruleMatched {
       guard let occurrence = occurrence else {
+        Logger.debug(
+          logLevel: .debug,
+          scope: .paywallPresentation,
+          message: "No occurrence parameter found for trigger rule."
+        )
         return true
       }
       let count = storage
@@ -22,7 +27,6 @@ enum ExpressionEvaluatorLogic {
         .countTriggerRuleOccurrences(
           for: occurrence
         ) + 1
-
       let shouldFire = count <= occurrence.maxCount
 
       if shouldFire {

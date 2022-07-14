@@ -30,6 +30,11 @@ final class ManagedEventData: NSManagedObject {
       forEntityName: "EventData",
       in: context
     ) else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .coreData,
+        message: "Failed to create managed event data for event \(name)"
+      )
       return nil
     }
     super.init(entity: entity, insertInto: context)
