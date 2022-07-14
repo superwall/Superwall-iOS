@@ -32,8 +32,8 @@ class CoreDataStack {
     container.loadPersistentStores { _, error in
       if let error = error as NSError? {
         Logger.debug(
-          logLevel: .debug,
-          scope: .paywallCore,
+          logLevel: .error,
+          scope: .coreData,
           message: "Error loading Core Data persistent stores.",
           info: error.userInfo,
           error: error
@@ -67,8 +67,8 @@ class CoreDataStack {
         completion?()
       } catch let error as NSError {
         Logger.debug(
-          logLevel: .debug,
-          scope: .paywallCore,
+          logLevel: .error,
+          scope: .coreData,
           message: "Error saving to Core Data.",
           info: error.userInfo,
           error: error
@@ -84,8 +84,8 @@ class CoreDataStack {
       return count
     } catch let error as NSError {
       Logger.debug(
-        logLevel: .debug,
-        scope: .paywallCore,
+        logLevel: .error,
+        scope: .coreData,
         message: "Error counting from Core Data.",
         info: error.userInfo,
         error: error
