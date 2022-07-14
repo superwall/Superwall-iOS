@@ -32,7 +32,7 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
   }
 
   func testShouldFire_shouldntFire_maxCountGTCount() {
-    let coreDataManagerMock = CoreDataManagerMock(internalOccurrenceCount: 1)
+    let coreDataManagerMock = CoreDataManagerFakeDataMock(internalOccurrenceCount: 1)
     let storage = StorageMock(coreDataManager: coreDataManagerMock)
     let shouldFire = ExpressionEvaluatorLogic.shouldFire(
       forOccurrence: .stub()
@@ -44,7 +44,7 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
   }
 
   func testShouldFire_shouldFire_maxCountEqualToCount() {
-    let coreDataManagerMock = CoreDataManagerMock(internalOccurrenceCount: 0)
+    let coreDataManagerMock = CoreDataManagerFakeDataMock(internalOccurrenceCount: 0)
     let storage = StorageMock(coreDataManager: coreDataManagerMock)
     let shouldFire = ExpressionEvaluatorLogic.shouldFire(
       forOccurrence: .stub()
@@ -56,7 +56,7 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
   }
 
   func testShouldFire_shouldFire_maxCountLtCount() {
-    let coreDataManagerMock = CoreDataManagerMock(internalOccurrenceCount: 1)
+    let coreDataManagerMock = CoreDataManagerFakeDataMock(internalOccurrenceCount: 1)
     let storage = StorageMock(coreDataManager: coreDataManagerMock)
     let shouldFire = ExpressionEvaluatorLogic.shouldFire(
       forOccurrence: .stub()

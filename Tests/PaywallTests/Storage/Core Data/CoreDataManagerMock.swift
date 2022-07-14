@@ -2,7 +2,7 @@
 //  File.swift
 //  
 //
-//  Created by Yusuf Tör on 11/07/2022.
+//  Created by Yusuf Tör on 14/07/2022.
 //
 
 import CoreData
@@ -10,14 +10,15 @@ import CoreData
 
 @available(iOS 14.0, *)
 final class CoreDataManagerMock: CoreDataManager {
-  var internalOccurrenceCount: Int
+  let internalDataStack: CoreDataStack
 
-  init(internalOccurrenceCount: Int = 1) {
-    self.internalOccurrenceCount = internalOccurrenceCount
-    super.init(coreDataStack: CoreDataStackMock())
+  override init(coreDataStack: CoreDataStack = CoreDataStack()) {
+    self.internalDataStack = coreDataStack
+    super.init(coreDataStack: coreDataStack)
   }
 
-  override func countTriggerRuleOccurrences(for ruleOccurrence: TriggerRuleOccurrence) -> Int {
-    return internalOccurrenceCount
+  func countAllEvents() -> Int {
+    let fetchRequest = ManagedEventData.fetchRequest()
+    return internalDataStack.count(for: fetchRequest)
   }
 }

@@ -9,11 +9,7 @@ import Foundation
 import CoreData
 
 final class ManagedEventData: NSManagedObject {
-  @nonobjc
-  class func fetchRequest() -> NSFetchRequest<ManagedEventData> {
-    return NSFetchRequest<ManagedEventData>(entityName: "EventData")
-  }
-
+  static let entityName = "EventData"
   @NSManaged var id: String
   @NSManaged var createdAt: Date
   @NSManaged var name: String
@@ -43,6 +39,11 @@ final class ManagedEventData: NSManagedObject {
     self.createdAt = createdAt
     self.name = name
     self.parameters = parameters
+  }
+
+  @nonobjc
+  class func fetchRequest() -> NSFetchRequest<ManagedEventData> {
+    return NSFetchRequest<ManagedEventData>(entityName: entityName)
   }
 
   @objc override private init(
