@@ -18,7 +18,7 @@ struct PaywallTriggerModifier: ViewModifier {
   var presentationStyleOverride: PaywallPresentationStyle?
   var onPresent: ((PaywallInfo) -> Void)?
   var onDismiss: ((PaywallDismissalResult) -> Void)?
-  var onFail: ((NSError) -> Void)?
+  var onSkip: ((NSError) -> Void)?
 
   func body(content: Content) -> some View {
     content
@@ -60,7 +60,7 @@ struct PaywallTriggerModifier: ViewModifier {
           self.programmaticallySetShouldPresent = true
           self.shouldPresent = false
           self.isInternallyPresenting = false
-          onFail?(error)
+          onSkip?(error)
         }
       )
     } else {

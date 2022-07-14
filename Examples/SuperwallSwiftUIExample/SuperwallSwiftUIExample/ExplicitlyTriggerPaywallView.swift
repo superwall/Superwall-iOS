@@ -49,7 +49,7 @@ struct ExplicitlyTriggerPaywallView: View {
           print("Restored purchases, then dismissed.")
         }
       },
-      onFail: { error in
+      onSkip: { error in
         if error.code == 4000 {
           print("The user did not match any rules")
         } else if error.code == 4001 {

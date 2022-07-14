@@ -35,7 +35,7 @@ In this example, you're sending the event `campaign_trigger` to the dashboard. I
 
 ### Explicit Triggers in SwiftUI
 
-If you're using SwiftUI and need completion handlers for a trigger, you need to use an explicit trigger by attaching the view modifier `.triggerPaywall(forEvent:withParams:shouldPresent:presentationStyleOverride:onPresent:onDismiss:onFail:)` to a view.
+If you're using SwiftUI and need completion handlers for a trigger, you need to use an explicit trigger by attaching the view modifier `.triggerPaywall(forEvent:withParams:shouldPresent:presentationStyleOverride:onPresent:onDismiss:onSkip:)` to a view.
 
 The example below triggers a paywall when the user toggles the `showPaywall` variable by tapping on the **Trigger Paywall** button. The paywall will only show if the trigger for the `campaign_trigger` event is active in the [Superwall Dashboard](https://superwall.com/dashboard) and the user doesn't have an active subscription:
 
@@ -68,7 +68,7 @@ struct ContentView: View {
           print("Restored purchases, then dismissed.")
         }
       },
-      onFail: { error in
+      onSkip: { error in
         print("did fail", error)
       }
     )
