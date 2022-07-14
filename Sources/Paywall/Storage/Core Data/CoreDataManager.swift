@@ -9,52 +9,6 @@ import Foundation
 import CoreData
 
 class CoreDataManager {
-  enum SinceOption {
-    case thirtyDays
-    case sevenDays
-    case twentyFourHours
-    case lastSession(appSessionStartAt: Date)
-    case today
-
-    var date: NSDate? {
-      switch self {
-      case .thirtyDays:
-        guard let thirtyDaysBeforeToday = Calendar.current.date(
-          byAdding: .day,
-          value: -30,
-          to: Date()
-        ) else {
-          return nil
-        }
-        return thirtyDaysBeforeToday as NSDate
-      case .sevenDays:
-        guard let sevenDaysBeforeToday = Calendar.current.date(
-          byAdding: .day,
-          value: -7,
-          to: Date()
-        ) else {
-          return nil
-        }
-        return sevenDaysBeforeToday as NSDate
-      case .twentyFourHours:
-        guard let twentyFourHoursAgo = Calendar.current.date(
-          byAdding: .hour,
-          value: -24,
-          to: Date()
-        ) else {
-          return nil
-        }
-        return twentyFourHoursAgo as NSDate
-      case .lastSession(let sessionStartAt):
-        return sessionStartAt as NSDate
-      case .today:
-        return Calendar.current.startOfDay(for: Date()) as NSDate
-      }
-    }
-  }
-  enum Position {
-    case first, last
-  }
   private let coreDataStack: CoreDataStack
 
   init(coreDataStack: CoreDataStack = CoreDataStack()) {
@@ -76,11 +30,6 @@ class CoreDataManager {
         name: eventData.name,
         parameters: data ?? Data()
       ) else {
-        Logger.debug(
-          logLevel: .debug,
-          scope: .paywallCore,
-          message: "Failed to create managed event data for event \(eventData.name)"
-        )
         return
       }
 
@@ -102,16 +51,39 @@ class CoreDataManager {
         createdAt: Date(),
         occurrenceKey: ruleOccurence.key
       ) else {
-        Logger.debug(
-          logLevel: .debug,
-          scope: .paywallCore,
-          message: "Failed to create managed trigger rule occurrence for key: \(ruleOccurence.key)"
-        )
         return
       }
 
       self?.coreDataStack.saveContext(context) {
         completion?(managedRuleOccurrence)
+      }
+    }
+  }
+
+  func deleteAllEntities(completion: (() -> Void)? = nil) {
+    let eventDataRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(
+      entityName: ManagedEventData.entityName
+    )
+    let deleteEventDataRequest = NSBatchDeleteRequest(fetchRequest: eventDataRequest)
+
+    let occurrenceRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(
+      entityName: ManagedTriggerRuleOccurrence.entityName
+    )
+    let deleteOccurrenceRequest = NSBatchDeleteRequest(fetchRequest: occurrenceRequest)
+
+    let container = coreDataStack.persistentContainer
+    container.performBackgroundTask { context in
+      do {
+        try context.executeAndMergeChanges(using: deleteEventDataRequest)
+        try context.executeAndMergeChanges(using: deleteOccurrenceRequest)
+        completion?()
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .coreData,
+          message: "Could not delete core data.",
+          error: error
+        )
       }
     }
   }
@@ -124,11 +96,18 @@ class CoreDataManager {
 
     switch ruleOccurrence.interval {
     case .minutes(let minutes):
-      let date = Calendar.current.date(
+      guard let date = Calendar.current.date(
         byAdding: .minute,
         value: -minutes,
         to: Date()
-      ) ?? Date()
+      ) else {
+        Logger.debug(
+          logLevel: .error,
+          scope: .coreData,
+          message: "Calendar couldn't calculate date by adding \(minutes) minutes and returned nil."
+        )
+        return .max
+      }
       fetchRequest.predicate = NSPredicate(
         format: "createdAt >= %@ AND occurrenceKey == %@",
         date as NSDate,

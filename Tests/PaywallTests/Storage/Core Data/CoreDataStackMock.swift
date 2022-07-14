@@ -36,7 +36,7 @@ final class CoreDataStackMock: CoreDataStack {
     let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
 
     do {
-      try persistentContainer.persistentStoreCoordinator.execute(deleteRequest, with: mainContext)
+      try mainContext.executeAndMergeChanges(using: deleteRequest)
       print("Deleted entities")
     } catch let error as NSError {
       print("Error deleting!", error)

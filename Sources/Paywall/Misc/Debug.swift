@@ -34,6 +34,7 @@ import CloudKit
 public enum LogScope: String {
 	case localizationManager
 	case bounceButton
+  case coreData
 	case debugManager
 	case debugViewController
 	case localizationViewController
@@ -58,7 +59,7 @@ enum Logger {
     logLevel: LogLevel,
     scope: LogScope
   ) -> Bool {
-    let exceedsCurrentLogLevel = logLevel.rawValue >= ( Paywall.options.logging.level?.rawValue ?? 99)
+    let exceedsCurrentLogLevel = logLevel.rawValue >= (Paywall.options.logging.level?.rawValue ?? 99)
     let isInScope = Paywall.options.logging.scopes.contains(scope)
     let allLogsActive = Paywall.options.logging.scopes.contains(.all)
 

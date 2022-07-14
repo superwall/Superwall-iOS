@@ -29,7 +29,4 @@ extension PaywallService {
 
 Then, when you set up your paywall, you can reference the attributes in its text variables. For more information on how to that, [see our docs for configuring variables in the dashboard](https://docs.superwall.com/docs/configuring-a-paywall#configuring-variables).
 
-In the future, you'll be able to use user attributes to:
-
-- Email/notify users about discounts.
-- Add rules to paywalls/triggers.
+In the future, you'll be able to use user attributes to email/notify users about discounts.
