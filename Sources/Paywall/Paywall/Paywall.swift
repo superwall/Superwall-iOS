@@ -126,7 +126,7 @@ public final class Paywall: NSObject {
 		return shared
 	}
 
-	/// Resets the `userId` stored by Superwall.
+	/// Resets the `userId` and data stored by Superwall.
   ///
   /// Call this when your user signs out.
 	@discardableResult

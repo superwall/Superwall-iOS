@@ -9,12 +9,7 @@ import Foundation
 import CoreData
 
 final class ManagedTriggerRuleOccurrence: NSManagedObject {
-  private static let entityName = "TriggerRuleOccurrence"
-  @nonobjc
-  class func fetchRequest() -> NSFetchRequest<ManagedTriggerRuleOccurrence> {
-    return NSFetchRequest<ManagedTriggerRuleOccurrence>(entityName: entityName)
-  }
-
+  static let entityName = "TriggerRuleOccurrence"
   @NSManaged var createdAt: Date
   @NSManaged var occurrenceKey: String
 
@@ -38,6 +33,11 @@ final class ManagedTriggerRuleOccurrence: NSManagedObject {
 
     self.createdAt = createdAt
     self.occurrenceKey = occurrenceKey
+  }
+
+  @nonobjc
+  class func fetchRequest() -> NSFetchRequest<ManagedTriggerRuleOccurrence> {
+    return NSFetchRequest<ManagedTriggerRuleOccurrence>(entityName: entityName)
   }
 
   @objc override private init(

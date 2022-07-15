@@ -19,7 +19,7 @@ final class StorageMock: Storage {
     internalCachedTriggerSessions: [TriggerSession] = [],
     internalCachedTransactions: [TransactionModel] = [],
     configRequestId: String = "abc",
-    coreDataManager: CoreDataManagerMock = CoreDataManagerMock()
+    coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock()
   ) {
     self.internalCachedTriggerSessions = internalCachedTriggerSessions
     self.internalCachedTransactions = internalCachedTransactions

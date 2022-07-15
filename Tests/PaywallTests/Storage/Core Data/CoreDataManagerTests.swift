@@ -11,13 +11,13 @@ import XCTest
 
 @available(iOS 14.0, *)
 class CoreDataManagerTests: XCTestCase {
-  var coreDataManager: CoreDataManager!
+  var coreDataManager: CoreDataManagerMock!
   var coreDataStack: CoreDataStackMock!
 
   override func setUp() {
     super.setUp()
     coreDataStack = CoreDataStackMock()
-    coreDataManager = CoreDataManager(coreDataStack: coreDataStack)
+    coreDataManager = CoreDataManagerMock(coreDataStack: coreDataStack)
   }
 
   override func tearDown() {
@@ -70,6 +70,71 @@ class CoreDataManagerTests: XCTestCase {
     waitForExpectations(timeout: 2.0) { error in
       XCTAssertNil(error, "Save did not occur")
     }
+  }
+
+  // MARK: - Delete All Entities
+  func test_deleteAllEntities() {
+    // Save Event Data with Params
+    let eventName = "abc"
+    let eventData: EventData = .stub()
+      .setting(\.name, to: eventName)
+      .setting(\.parameters, to: ["def": "ghi"])
+
+    let expectation1 = expectation(description: "Saved event")
+
+    coreDataManager.saveEventData(eventData) { savedEventData in
+      XCTAssertEqual(savedEventData.name, eventName)
+      XCTAssertEqual(savedEventData.name, eventName)
+      XCTAssertEqual(savedEventData.createdAt, eventData.createdAt)
+
+      let encodedParams = try? JSONEncoder().encode(eventData.parameters)
+      XCTAssertEqual(savedEventData.parameters, encodedParams)
+      expectation1.fulfill()
+    }
+
+    waitForExpectations(timeout: 2.0) { error in
+      XCTAssertNil(error, "Save did not occur")
+    }
+
+
+    // Save Trigger Rule Occurrence
+    let key = "abc"
+    let maxCount = 10
+    let interval: TriggerRuleOccurrence.Interval = .minutes(60)
+    let occurrence = TriggerRuleOccurrence(
+      key: key,
+      maxCount: maxCount,
+      interval: interval
+    )
+    let expectation2 = expectation(description: "Saved event")
+    let date = Date().advanced(by: -5)
+
+    coreDataManager.save(triggerRuleOccurrence: occurrence) { savedEventData in
+      XCTAssertEqual(savedEventData.occurrenceKey, key)
+      XCTAssertGreaterThan(savedEventData.createdAt, date)
+      expectation2.fulfill()
+    }
+
+    waitForExpectations(timeout: 20.0) { error in
+      XCTAssertNil(error, "Save did not occur")
+    }
+
+    // Delete All Entities
+    let expectation3 = expectation(description: "Delete entities")
+    coreDataManager.deleteAllEntities() {
+      expectation3.fulfill()
+    }
+
+    waitForExpectations(timeout: 2.0) { error in
+      XCTAssertNil(error, "Save did not occur")
+    }
+
+    // Count triggers
+    let occurrenceCount = coreDataManager.countTriggerRuleOccurrences(for: occurrence)
+    XCTAssertEqual(occurrenceCount, 0)
+
+    let eventCount = coreDataManager.countAllEvents()
+    XCTAssertEqual(eventCount, 0)
   }
 
   // MARK: - Trigger Rule Occurrence

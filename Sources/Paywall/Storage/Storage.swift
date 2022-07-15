@@ -73,6 +73,7 @@ class Storage {
 
   /// Call this when you log out
   func clear() {
+    coreDataManager.deleteAllEntities()
     cache.cleanUserFiles()
     appUserId = nil
     aliasId = StorageLogic.generateAlias()

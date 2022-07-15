@@ -55,7 +55,7 @@ public extension Paywall {
   ///
   /// - Parameter custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   static func setUserAttributes(_ attributes: [String: Any?] = [:]) {
-    // TODO: In the next breaking version, change the Any? param value from optional to non-optional
+    // TODO: In the next breaking version, change the Any? param value from optional to non-optional and add objc.
 
     var customAttributes: [String: Any] = [:]
 
