@@ -37,6 +37,7 @@ public extension Paywall {
 
   /// Set user attributes for use in your paywalls and the dashboard.
   ///
+  /// If the existing user attributes dictionary already has a value for a given property, the old value is overwritten. Other existing properties will not be affected.
   /// Useful for analytics and conditional paywall rules you may define in the Superwall Dashboard. They should **not** be used as a source of truth for sensitive information.
   ///
   /// Here's how you might set user attributes after retrieving your user's data:
@@ -54,13 +55,13 @@ public extension Paywall {
   ///
   ///
   /// - Parameter custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
-  static func setUserAttributes(_ attributes: [String: Any?] = [:]) {
+  static func setUserAttributes(_ attributes: [String: Any?]) {
     mergeAttributes(attributes)
   }
 
-  /// *Note*: Please use ``Paywall/Paywall/setUserAttributes(_:)`` if you're using Swift.
-  /// Set user attributes for use in your paywalls and the dashboard.
+  /// The Objective-C method for setting user attributes for use in your paywalls and the dashboard. **Note**: Please use ``Paywall/Paywall/setUserAttributes(_:)`` if you're using Swift.
   ///
+  /// If the existing user attributes dictionary already has a value for a given property, the old value is overwritten. Other existing properties will not be affected.
   /// Useful for analytics and conditional paywall rules you may define in the web dashboard. They should not be used as a source of truth for sensitive information.
   ///
   /// - Parameter attributes: A `NSDictionary` used to describe user attributes and any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
@@ -68,12 +69,11 @@ public extension Paywall {
   /// We make our best effort to pick out "known" user attributes and set them to our names. For exampe `{"first_name": "..." }` and `{"firstName": "..."}` will both be translated into `$first_name` for use in Superwall where we require a first name.
   ///
   ///  Example:
-  ///  ```swift
-  ///  var userAttributes: NSDictionary = NSDictionary()
-  ///  userAttributes.setValue(value: "Jake", forKey: "first_name");
-  ///  Superwall.setUserAttributes(userAttributes)
   ///  ```
-  @objc static func setUserAttributesDictionary(attributes: NSDictionary = [:]) {
+  ///  NSDictionary *userAttributes = @{ key : value, key2 : value2};
+  ///  [Superwall setUserAttributesDictionary: userAttributes];
+  ///  ```
+  @objc static func setUserAttributesDictionary(_ attributes: NSDictionary) {
     if let anyAttributes = attributes as? [String: Any] {
       mergeAttributes(anyAttributes)
     } else if let anyAttributes = attributes as? [String: Any?] {

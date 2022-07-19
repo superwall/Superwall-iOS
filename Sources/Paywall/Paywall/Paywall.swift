@@ -21,6 +21,11 @@ public final class Paywall: NSObject {
     return PaywallManager.shared.presentedViewController
   }
 
+  /// A convenience variable to access and change the paywall options that you passed to ``configure(apiKey:userId:delegate:options:)``.
+  public static var options: PaywallOptions {
+    return shared.configManager.options
+  }
+
   // MARK: - Private Properties
   /// Used as the reload function if a paywall takes to long to load. set in paywall.present
 	static var presentAgain = {}
@@ -32,10 +37,6 @@ public final class Paywall: NSObject {
 	var paywallWasPresentedThisSession = false
   lazy var configManager = ConfigManager()
 
-  /// A convenience variable to access and change the paywall options that you passed to ``configure(apiKey:userId:delegate:options:)``.
-  public static var options: PaywallOptions {
-    return shared.configManager.options
-  }
 	var paywallViewController: SWPaywallViewController? {
 		return PaywallManager.shared.presentedViewController
 	}
