@@ -93,7 +93,7 @@ class Storage {
     triggers = StorageLogic.getTriggerDictionary(from: config.triggers)
 	}
 
-	func addUserAttributes(_ newAttributes: [String: Any]) {
+	func mergeUserAttributes(_ newAttributes: [String: Any]) {
     let mergedAttributes = StorageLogic.mergeAttributes(
       newAttributes,
       with: userAttributes
@@ -151,7 +151,7 @@ class Storage {
       standardUserAttributes["appUserId"] = appUserId
     }
 
-    addUserAttributes(standardUserAttributes)
+    mergeUserAttributes(standardUserAttributes)
   }
 
   func clearCachedSessionEvents() {
