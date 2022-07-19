@@ -13,12 +13,25 @@ class CoreDataStack {
 
   static let managedObject: NSManagedObjectModel = {
     guard let modelUrl = Bundle.module.url(
-      forResource: "Model",
+      forResource: modelName,
       withExtension: "momd"
     ) else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .coreData,
+        message: "Error finding Core Data model."
+      )
       return .init()
     }
-    return NSManagedObjectModel(contentsOf: modelUrl) ?? .init()
+    guard let model = NSManagedObjectModel(contentsOf: modelUrl) else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .coreData,
+        message: "Error loading Core Data model."
+      )
+      return .init()
+    }
+    return model
   }()
 
   lazy var persistentContainer: NSPersistentContainer = {
