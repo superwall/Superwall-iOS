@@ -72,9 +72,9 @@ extension View {
   /// - Parameters:
   ///   - event: The name of the event you wish to trigger.
   ///   - params: Parameters you wish to pass along to the trigger.  You can refer to these parameters in the rules you define in your campaign.
-  ///   - shouldPresent: A binding to a Boolean value that determines whether to present a paywall.
+  ///   - shouldTrack: A binding to a Boolean value that determines whether to present a paywall.
   ///
-  ///     The system sets `shouldPresent` to false if the trigger is not active or when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
+  ///     The system sets `shouldTrack` to false if the trigger is not active or when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
   ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
   ///   - onPresent: A closure that's called after the paywall is presented. Accepts a `PaywallInfo` object containing information about the paywall. Defaults to `nil`.
   ///   - onDismiss: The closure to execute after the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
@@ -95,7 +95,7 @@ extension View {
   ) -> some View {
     self.modifier(
       PaywallTrackModifier(
-        shouldPresent: shouldPresent,
+        shouldTrack: shouldTrack,
         event: event,
         params: params ?? [:],
         presentationStyleOverride: presentationStyleOverride,

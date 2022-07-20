@@ -7,9 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8830FD3227E3628A00E87C79 /* ImplicitlyTriggerPaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8830FD3127E3628A00E87C79 /* ImplicitlyTriggerPaywallView.swift */; };
 		8830FD3427E389D500E87C79 /* PaywallSubscriptionStatusLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8830FD3327E389D500E87C79 /* PaywallSubscriptionStatusLogic.swift */; };
-		886DA1A327E101DF00400CAD /* PaywallOptionsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 886DA1A227E101DF00400CAD /* PaywallOptionsListView.swift */; };
 		888F488827DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */; };
 		888F488C27DA6B10009C74A3 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F488B27DA6B10009C74A3 /* Images.xcassets */; };
 		888F488F27DA6B10009C74A3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */; };
@@ -19,8 +17,7 @@
 		888F48B927DA6F7F009C74A3 /* Paywall in Frameworks */ = {isa = PBXBuildFile; productRef = 888F48B827DA6F7F009C74A3 /* Paywall */; };
 		888F48BB27DA6FAF009C74A3 /* PaywallService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48BA27DA6FAF009C74A3 /* PaywallService.swift */; };
 		888F48BD27DA71EA009C74A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48BC27DA71EA009C74A3 /* AppDelegate.swift */; };
-		888F48C327DB8584009C74A3 /* ExplicitlyTriggerPaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48C227DB8584009C74A3 /* ExplicitlyTriggerPaywallView.swift */; };
-		888F48C527DB9F52009C74A3 /* PaywallOptionsTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48C427DB9F52009C74A3 /* PaywallOptionsTableView.swift */; };
+		888F48C327DB8584009C74A3 /* TrackEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48C227DB8584009C74A3 /* TrackEventView.swift */; };
 		888F48C827DBA47E009C74A3 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F48C727DBA47E009C74A3 /* Colors.xcassets */; };
 		888F48CB27DBA55E009C74A3 /* BrandedButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48CA27DBA55E009C74A3 /* BrandedButton.swift */; };
 		888F48D127DBA62D009C74A3 /* Font.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48D027DBA62D009C74A3 /* Font.swift */; };
@@ -52,9 +49,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		8830FD3127E3628A00E87C79 /* ImplicitlyTriggerPaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImplicitlyTriggerPaywallView.swift; sourceTree = "<group>"; };
 		8830FD3327E389D500E87C79 /* PaywallSubscriptionStatusLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallSubscriptionStatusLogic.swift; sourceTree = "<group>"; };
-		886DA1A227E101DF00400CAD /* PaywallOptionsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallOptionsListView.swift; sourceTree = "<group>"; };
 		888F488427DA6B0F009C74A3 /* SuperwallSwiftUIExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SuperwallSwiftUIExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallSwiftUIExampleApp.swift; sourceTree = "<group>"; };
 		888F488B27DA6B10009C74A3 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
@@ -67,8 +62,7 @@
 		888F48BA27DA6FAF009C74A3 /* PaywallService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallService.swift; sourceTree = "<group>"; };
 		888F48BC27DA71EA009C74A3 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		888F48BE27DA7352009C74A3 /* paywall-ios */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "paywall-ios"; path = ../..; sourceTree = "<group>"; };
-		888F48C227DB8584009C74A3 /* ExplicitlyTriggerPaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplicitlyTriggerPaywallView.swift; sourceTree = "<group>"; };
-		888F48C427DB9F52009C74A3 /* PaywallOptionsTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallOptionsTableView.swift; sourceTree = "<group>"; };
+		888F48C227DB8584009C74A3 /* TrackEventView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventView.swift; sourceTree = "<group>"; };
 		888F48C727DBA47E009C74A3 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
 		888F48CA27DBA55E009C74A3 /* BrandedButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandedButton.swift; sourceTree = "<group>"; };
 		888F48CC27DBA598009C74A3 /* SuperwallSwiftUIExample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SuperwallSwiftUIExample.entitlements; sourceTree = "<group>"; };
@@ -146,10 +140,7 @@
 				888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */,
 				888F48BC27DA71EA009C74A3 /* AppDelegate.swift */,
 				88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */,
-				888F48C427DB9F52009C74A3 /* PaywallOptionsTableView.swift */,
-				886DA1A227E101DF00400CAD /* PaywallOptionsListView.swift */,
-				888F48C227DB8584009C74A3 /* ExplicitlyTriggerPaywallView.swift */,
-				8830FD3127E3628A00E87C79 /* ImplicitlyTriggerPaywallView.swift */,
+				888F48C227DB8584009C74A3 /* TrackEventView.swift */,
 			);
 			path = SuperwallSwiftUIExample;
 			sourceTree = "<group>";
@@ -396,13 +387,10 @@
 			files = (
 				8830FD3427E389D500E87C79 /* PaywallSubscriptionStatusLogic.swift in Sources */,
 				888F48D327DBA662009C74A3 /* Styles.swift in Sources */,
-				888F48C527DB9F52009C74A3 /* PaywallOptionsTableView.swift in Sources */,
 				888F48CB27DBA55E009C74A3 /* BrandedButton.swift in Sources */,
 				888F48D927DBA751009C74A3 /* Colors.swift in Sources */,
-				888F48C327DB8584009C74A3 /* ExplicitlyTriggerPaywallView.swift in Sources */,
-				886DA1A327E101DF00400CAD /* PaywallOptionsListView.swift in Sources */,
+				888F48C327DB8584009C74A3 /* TrackEventView.swift in Sources */,
 				88F9F1DE27E1081A004FCE83 /* PaywallSubscriptionStatusView.swift in Sources */,
-				8830FD3227E3628A00E87C79 /* ImplicitlyTriggerPaywallView.swift in Sources */,
 				88EE539327DF677900F1FFFB /* StoreKitService.swift in Sources */,
 				888F48BD27DA71EA009C74A3 /* AppDelegate.swift in Sources */,
 				88EE539627DF6D0A00F1FFFB /* WelcomeView.swift in Sources */,

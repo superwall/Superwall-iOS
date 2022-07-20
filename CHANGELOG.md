@@ -5,6 +5,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ## 3.0.0 (upcoming release)
 
 ### Enhancements
+- Renamed `Paywall.trigger` to `Paywall.track`. We found that having separate implicit and explicit trigger functions caused confusion. So from now on, you'll only use `Paywall.track` for all events within your app.
 
 ### Fixes
 

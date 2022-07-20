@@ -8,14 +8,21 @@
 import SwiftUI
 import Paywall
 
-struct ExplicitlyTriggerPaywallView: View {
+struct TrackEventView: View {
   @StateObject private var store = StoreKitService.shared
   @State private var showPaywall = false
+
+  init() {
+    UINavigationBar.appearance().titleTextAttributes = [
+      .foregroundColor: UIColor.white,
+      .font: UIFont.rubikBold(.five)
+    ]
+  }
 
   var body: some View {
     VStack(spacing: 48) {
       InfoView(
-        text: "The button below explicitly triggers a paywall for the event \"MyEvent\".\n\nThis is because the event is tied to an active trigger inside a Campaign on the Superwall Dashboard."
+        text: "The button below tracks an event \"MyEvent\".\n\nWhen this event is tracked, a set of rules are evaluated to determine whether to show a paywall. This logic is remotely configured inside a campaign on the Superwall dashboard.\n\nFor simplicity, we have configured this event to always show a paywall."
       )
 
       Divider()
@@ -26,7 +33,7 @@ struct ExplicitlyTriggerPaywallView: View {
 
       Spacer()
 
-      BrandedButton(title: "Explicitly Trigger Paywall") {
+      BrandedButton(title: "Track event") {
         showPaywall.toggle()
         Paywall.track(
           event: "event",
@@ -35,7 +42,6 @@ struct ExplicitlyTriggerPaywallView: View {
       }
       .padding()
     }
-    .navigationTitle("Explicitly Triggering a Paywall")
     .frame(maxHeight: .infinity)
     .track(
       event: "MyEvent",
@@ -66,11 +72,13 @@ struct ExplicitlyTriggerPaywallView: View {
     )
     .foregroundColor(.white)
     .background(Color.neutral)
+    .navigationBarTitleDisplayMode(.inline)
+    .navigationTitle("Hello \(PaywallService.name)")
   }
 }
 
 struct TriggerPaywall_Previews: PreviewProvider {
   static var previews: some View {
-    ExplicitlyTriggerPaywallView()
+    TrackEventView()
   }
 }
