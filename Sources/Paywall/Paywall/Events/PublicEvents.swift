@@ -23,6 +23,7 @@ public extension Paywall {
   ///   ["steps_completed": 4]
   /// )
   /// ```
+  @available(*, unavailable, renamed: "track(event:params:)")
   @objc static func track(
     _ name: String,
     _ params: [String: Any] = [:]

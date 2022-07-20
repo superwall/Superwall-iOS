@@ -33,10 +33,10 @@ extension View {
   ///             Text("Collect Gems")
   ///           }
   ///         )
-  ///         .triggerPaywall(
-  ///           forEvent: "DidCollectGems",
+  ///         .track(
+  ///           event: "DidCollectGems",
   ///           withParams: ["gemCount": 30],
-  ///           shouldPresent: $showPaywall,
+  ///           shouldTrack: $showPaywall,
   ///           onPresent: { paywallInfo in
   ///             print("paywall info is", paywallInfo)
   ///           },
@@ -51,11 +51,12 @@ extension View {
   ///             }
   ///           },
   ///           onSkip: { error in
-  ///             if error.code == 4000 {
+  ///             switch reason {
+  ///             case .noRuleMatch:
   ///               print("The user did not match any rules")
-  ///             } else if error.code == 4001 {
-  ///               print("The user is in a holdout group")
-  ///             } else {
+  ///             case .holdout(let experiment):
+  ///               print("The user is in a holdout group, with experiment id: \(experiment.id), group id: \(experiment.groupId), paywall id: \(experiment.variant.paywallId ?? "")")
+  ///             case .unknownEvent(let error):
   ///               print("did fail", error)
   ///             }
   ///           }
@@ -86,7 +87,7 @@ extension View {
   public func track(
     event: String,
     withParams params: [String: Any]? = nil,
-    shouldPresent: Binding<Bool>,
+    shouldTrack: Binding<Bool>,
     presentationStyleOverride: PaywallPresentationStyle? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: ((PaywallDismissalResult) -> Void)? = nil,
@@ -105,7 +106,7 @@ extension View {
     )
   }
 
-  @available(*, unavailable, renamed: "track(event:withParams:shouldPresent:presentationStyleOverride:onPresent:onDismiss:onSkip:)")
+  @available(*, unavailable, renamed: "track(event:withParams:shouldTrack:presentationStyleOverride:onPresent:onDismiss:onSkip:)")
   public func triggerPaywall(
     forEvent event: String,
     withParams params: [String: Any]? = nil,

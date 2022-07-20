@@ -28,6 +28,10 @@ struct ExplicitlyTriggerPaywallView: View {
 
       BrandedButton(title: "Explicitly Trigger Paywall") {
         showPaywall.toggle()
+        Paywall.track(
+          event: "event",
+          params: [:]
+        )
       }
       .padding()
     }
@@ -35,7 +39,7 @@ struct ExplicitlyTriggerPaywallView: View {
     .frame(maxHeight: .infinity)
     .track(
       event: "MyEvent",
-      shouldPresent: $showPaywall,
+      shouldTrack: $showPaywall,
       onPresent: { paywallInfo in
         print("paywall info is", paywallInfo)
       },
