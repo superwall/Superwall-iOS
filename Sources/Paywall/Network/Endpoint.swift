@@ -111,7 +111,7 @@ extension Endpoint where Response == EventsResponse {
 
     return Endpoint(
       components: Components(
-        host: Api.Analytics.host,
+        host: Api.Collector.host,
         path: Api.version1 + "events",
         bodyData: bodyData
       ),
@@ -124,7 +124,7 @@ extension Endpoint where Response == EventsResponse {
 
     return Endpoint(
       components: Components(
-        host: Api.Base.host,
+        host: Api.Collector.host,
         path: Api.version1 + "session_events",
         bodyData: bodyData
       ),
@@ -249,7 +249,7 @@ extension Endpoint where Response == PostBackResponse {
 
     return Endpoint(
       components: Components(
-        host: Api.Base.host,
+        host: Api.Collector.host,
         path: Api.version1 + "postback",
         bodyData: bodyData
       ),

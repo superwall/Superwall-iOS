@@ -28,7 +28,7 @@ enum Api {
     }
   }
 
-  enum Analytics {
+  enum Collector {
     static var host: String {
       return "collector.\(hostDomain)"
     }
