@@ -33,8 +33,8 @@ struct ExplicitlyTriggerPaywallView: View {
     }
     .navigationTitle("Explicitly Triggering a Paywall")
     .frame(maxHeight: .infinity)
-    .triggerPaywall(
-      forEvent: "MyEvent",
+    .track(
+      event: "MyEvent",
       shouldPresent: $showPaywall,
       onPresent: { paywallInfo in
         print("paywall info is", paywallInfo)
@@ -49,12 +49,13 @@ struct ExplicitlyTriggerPaywallView: View {
           print("Restored purchases, then dismissed.")
         }
       },
-      onSkip: { error in
-        if error.code == 4000 {
+      onSkip: { reason in
+        switch reason {
+        case .noRuleMatch:
           print("The user did not match any rules")
-        } else if error.code == 4001 {
-          print("The user is in a holdout group")
-        } else {
+        case .holdout(let experiment):
+          print("The user is in a holdout group, with experiment id: \(experiment.id), group id: \(experiment.groupId), paywall id: \(experiment.variant.paywallId ?? "")")
+        case .unknownEvent(let error):
           print("did fail", error)
         }
       }

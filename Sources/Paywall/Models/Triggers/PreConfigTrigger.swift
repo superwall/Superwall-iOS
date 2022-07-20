@@ -12,7 +12,7 @@ struct PreConfigTrigger {
   var presentationStyleOverride: PaywallPresentationStyle?
   var viewController: UIViewController?
   var ignoreSubscriptionStatus = false
-  var onFail: ((NSError) -> Void)?
+  var onSkip: PaywallSkipCompletionBlock?
   var onPresent: ((PaywallInfo) -> Void)?
   var onDismiss: PaywallDismissalCompletionBlock?
 }

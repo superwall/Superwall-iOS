@@ -14,7 +14,7 @@ public typealias PaywallDismissalCompletionBlock = (PaywallDismissalResult) -> V
 public extension Paywall {
   /// Dismisses the presented paywall.
   ///
-  /// Calling this function doesn't fire the `onDismiss` completion block in ``Paywall/Paywall/present(onPresent:onDismiss:onFail:)``, since this action is developer initiated.
+  /// Calling this function doesn't fire the `onDismiss` completion block in ``Paywall/Paywall/present(onPresent:onDismiss:onSkip:)``, since this action is developer initiated.
 	/// - Parameters:
   ///   - completion: An optional completion block that gets called after the paywall is dismissed. Defaults to nil.
 	@objc static func dismiss(_ completion: (() -> Void)? = nil) {
@@ -69,7 +69,7 @@ public extension Paywall {
     params: [String: Any]? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
-    onSkip: ((NSError?) -> Void)? = nil,
+    onSkip: ((Error?) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
   ) {
@@ -90,7 +90,42 @@ public extension Paywall {
           onDismissConverter(result, completion: onDismiss)
         }
       },
-      onFail: onSkip
+      onSkip: { reason in
+        switch reason {
+        case .holdout(let experiment):
+          let userInfo: [String: Any] = [
+            "experimentId": experiment.id,
+            "variantId": experiment.variant.id,
+            NSLocalizedDescriptionKey: NSLocalizedString(
+              "Trigger Holdout",
+              value: "This user was assigned to a holdout in a trigger experiment",
+              comment: "ExperimentId: \(experiment.id), VariantId: \(experiment.variant.id)"
+            )
+          ]
+          let error = NSError(
+            domain: "com.superwall",
+            code: 4001,
+            userInfo: userInfo
+          )
+          onSkip?(error)
+        case .noRuleMatch:
+          let userInfo: [String: Any] = [
+            NSLocalizedDescriptionKey: NSLocalizedString(
+              "No rule match",
+              value: "The user did not match any rules configured for this trigger",
+              comment: ""
+            )
+          ]
+          let error = NSError(
+            domain: "com.superwall",
+            code: 4000,
+            userInfo: userInfo
+          )
+          onSkip?(error)
+        case .unknownEvent(let error):
+          onSkip?(error)
+        }
+      }
     )
   }
 
@@ -119,7 +154,7 @@ public extension Paywall {
     params: [String: Any]? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
-    onSkip: ((NSError?) -> Void)? = nil,
+    onSkip: PaywallSkipCompletionBlock? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: PaywallDismissalCompletionBlock? = nil
   ) {
@@ -136,7 +171,7 @@ public extension Paywall {
       presentationStyleOverride: presentationStyleOverride,
       onPresent: onPresent,
       onDismiss: onDismiss,
-      onFail: onSkip
+      onSkip: onSkip
     )
   }
 

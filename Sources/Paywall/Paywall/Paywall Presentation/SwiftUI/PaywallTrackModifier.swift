@@ -17,8 +17,8 @@ struct PaywallTrackModifier: ViewModifier {
   var params: [String: Any]
   var presentationStyleOverride: PaywallPresentationStyle?
   var onPresent: ((PaywallInfo) -> Void)?
-  var onDismiss: ((PaywallDismissalResult) -> Void)?
-  var onSkip: ((NSError) -> Void)?
+  var onDismiss: PaywallDismissalCompletionBlock?
+  var onSkip: PaywallSkipCompletionBlock?
 
   func body(content: Content) -> some View {
     content
@@ -53,11 +53,11 @@ struct PaywallTrackModifier: ViewModifier {
           self.isInternallyPresenting = false
           onDismiss?(result)
         },
-        onFail: { error in
+        onSkip: { reason in
           self.programmaticallySetShouldPresent = true
           self.shouldPresent = false
           self.isInternallyPresenting = false
-          onSkip?(error)
+          onSkip?(reason)
         }
       )
     } else {

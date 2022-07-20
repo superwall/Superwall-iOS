@@ -7,6 +7,21 @@
 
 import UIKit
 
+/// The reason the paywall presentation was skipped.
+public enum SkipReason {
+  /// The user was assigned to a holdout group.
+  case holdout(Experiment)
+
+  /// No rule was matched for this event.
+  case noRuleMatch
+
+  /// An error occurred.
+  case unknownEvent(Error)
+}
+
+public typealias PaywallSkipCompletionBlock = (SkipReason) -> Void
+public typealias PaywallPresentationCompletionBlock = (SkipReason) -> Void
+
 extension Paywall {
   // swiftlint:disable:next function_body_length cyclomatic_complexity
   static func internallyPresent(
@@ -17,7 +32,7 @@ extension Paywall {
     presentationStyleOverride: PaywallPresentationStyle = .none,
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: PaywallDismissalCompletionBlock? = nil,
-    onFail: ((NSError) -> Void)? = nil
+    onSkip: PaywallSkipCompletionBlock? = nil
   ) {
     let presentationStyleOverride = presentationStyleOverride == .none ? nil : presentationStyleOverride
     guard shared.configManager.didFetchConfig else {
@@ -26,7 +41,7 @@ extension Paywall {
         presentationStyleOverride: presentationStyleOverride,
         viewController: presentingViewController,
         ignoreSubscriptionStatus: ignoreSubscriptionStatus,
-        onFail: onFail,
+        onSkip: onSkip,
         onPresent: onPresent,
         onDismiss: onDismiss
       )
@@ -41,7 +56,7 @@ extension Paywall {
       "cached": cached,
       "presentationCompletion": onPresent.debugDescription,
       "dismissalCompletion": onDismiss.debugDescription,
-      "fallback": onFail.debugDescription
+      "fallback": onSkip.debugDescription
     ]
 
     Logger.debug(
@@ -67,14 +82,22 @@ extension Paywall {
     switch triggerOutcome.info {
     case .paywall(let responseIdentifiers):
       identifiers = responseIdentifiers
-    case let .holdout(error),
-      let .noRuleMatch(error):
+    case .holdout(let experiment):
       SessionEventsManager.shared.triggerSession.activateSession(
         for: presentationInfo,
         on: presentingViewController,
         triggerResult: triggerOutcome.result
       )
-      fallthrough
+      onSkip?(.holdout(experiment))
+      return
+    case .noRuleMatch:
+      SessionEventsManager.shared.triggerSession.activateSession(
+        for: presentationInfo,
+        on: presentingViewController,
+        triggerResult: triggerOutcome.result
+      )
+      onSkip?(.noRuleMatch)
+      return
     case let .unknownEvent(error):
       Logger.debug(
         logLevel: .error,
@@ -83,7 +106,7 @@ extension Paywall {
         info: debugInfo,
         error: error
       )
-      onFail?(error)
+      onSkip?(.unknownEvent(error))
       return
     }
 
@@ -135,14 +158,14 @@ extension Paywall {
             error: nil
           )
           if !shared.isPaywallPresented {
-            onFail?(
+            onSkip?(.unknownEvent(
               shared.presentationError(
                 domain: "SWPresentationError",
                 code: 101,
                 title: "No UIViewController to present paywall on",
                 value: "This usually happens when you call this method before a window was made key and visible."
               )
-            )
+            ))
           }
           return
         }
@@ -165,7 +188,7 @@ extension Paywall {
                 presentationStyleOverride: presentationStyleOverride ?? .none,
                 onPresent: onPresent,
                 onDismiss: onDismiss,
-                onFail: onFail
+                onSkip: onSkip
               )
             }
             onPresent?(paywallViewController.paywallInfo)
@@ -194,7 +217,8 @@ extension Paywall {
           info: debugInfo,
           error: error
         )
-        onFail?(error)
+
+        onSkip?(.unknownEvent(error))
       }
     }
   }

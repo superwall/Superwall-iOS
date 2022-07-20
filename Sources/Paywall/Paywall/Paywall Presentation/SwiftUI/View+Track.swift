@@ -50,7 +50,7 @@ extension View {
   ///               print("Restored purchases, then dismissed.")
   ///             }
   ///           },
-  ///           onFail: { error in
+  ///           onSkip: { error in
   ///             if error.code == 4000 {
   ///               print("The user did not match any rules")
   ///             } else if error.code == 4001 {
@@ -90,7 +90,7 @@ extension View {
     presentationStyleOverride: PaywallPresentationStyle? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: ((PaywallDismissalResult) -> Void)? = nil,
-    onSkip: ((NSError) -> Void)? = nil
+    onSkip: PaywallSkipCompletionBlock? = nil
   ) -> some View {
     self.modifier(
       PaywallTrackModifier(
@@ -103,5 +103,18 @@ extension View {
         onSkip: onSkip
       )
     )
+  }
+
+  @available(*, unavailable, renamed: "track(event:withParams:shouldPresent:presentationStyleOverride:onPresent:onDismiss:onSkip:)")
+  public func triggerPaywall(
+    forEvent event: String,
+    withParams params: [String: Any]? = nil,
+    shouldPresent: Binding<Bool>,
+    presentationStyleOverride: PaywallPresentationStyle? = nil,
+    onPresent: ((PaywallInfo) -> Void)? = nil,
+    onDismiss: ((PaywallDismissalResult) -> Void)? = nil,
+    onSkip: PaywallSkipCompletionBlock? = nil
+  ) -> some View {
+    return EmptyView()
   }
 }

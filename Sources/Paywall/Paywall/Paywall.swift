@@ -169,7 +169,7 @@ public final class Paywall: NSObject {
 		LocalizationManager.shared.selectedLocale = localeIdentifier
 	}
 
-	/// Preloads a paywall, for use before calling ``Paywall/Paywall/present(identifier:on:ignoreSubscriptionStatus:presentationStyleOverride:onPresent:onDismiss:onFail:)``.
+	/// Preloads a paywall, for use before calling ``Paywall/Paywall/present(identifier:on:ignoreSubscriptionStatus:presentationStyleOverride:onPresent:onDismiss:onSkip:)``.
   ///
   /// Only call this if you are manually specifying which paywall to present later — Superwall automatically does this otherwise.
 	///  - Parameter identifier: The identifier of the paywall you would like to load in the background, as found in your paywall's settings in the dashboard.

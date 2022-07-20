@@ -40,12 +40,13 @@ final class ExplicitlyTriggerPaywallViewController: UIViewController {
   }
 
   @IBAction private func explicitlyTriggerPaywall() {
-    Paywall.track(event: "MyEvent") { error in
-      if error?.code == 4000 {
+    Paywall.track(event: "MyEvent") { skipReason in
+      switch skipReason {
+      case .holdout(let experiment):
+        print("The user is in a holdout group, with id \(experiment.id) and group id \(experiment.groupId)")
+      case .noRuleMatch:
         print("The user did not match any rules")
-      } else if error?.code == 4001 {
-        print("The user is in a holdout group")
-      } else {
+      case .unknownEvent(let error):
         print("did fail", error)
       }
     } onPresent: { paywallInfo in

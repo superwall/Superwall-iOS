@@ -425,19 +425,28 @@ final class SWDebugViewController: UIViewController {
           for: .normal
         )
       },
-      onFail: { [weak self] error in
-        self?.presentAlert(title: "Error Occurred", message: error.localizedDescription, options: [])
+      onSkip: { [weak self] reason in
+        var errorMessage: String?
+
+        switch reason {
+        case .holdout:
+          errorMessage = "The user was assigned to a holdout"
+        case .noRuleMatch:
+          errorMessage = "The user didn't match a rule"
+        case .unknownEvent(let error):
+          errorMessage = error.localizedDescription
+          Logger.debug(
+            logLevel: .error,
+            scope: .debugViewController,
+            message: "Failed to Show Paywall",
+            info: nil
+          )
+        }
+        self?.presentAlert(title: "Error Occurred", message: errorMessage, options: [])
         self?.bottomButton.showLoading = false
         // swiftlint:disable:next force_unwrapping
         let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
         self?.bottomButton.setImage(playButton, for: .normal)
-        Logger.debug(
-          logLevel: .error,
-          scope: .debugViewController,
-          message: "Failed to Show Paywall",
-          info: nil,
-          error: error
-        )
         self?.activityIndicator.stopAnimating()
       }
     )

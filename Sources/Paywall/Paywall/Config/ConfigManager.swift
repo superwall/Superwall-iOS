@@ -58,7 +58,7 @@ final class ConfigManager {
                 ignoreSubscriptionStatus: trigger.ignoreSubscriptionStatus,
                 onPresent: trigger.onPresent,
                 onDismiss: trigger.onDismiss,
-                onFail: trigger.onFail
+                onSkip: trigger.onSkip
               )
             }
           }
