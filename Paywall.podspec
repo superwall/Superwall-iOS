@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 	s.name         = "Paywall"
-    s.version      = "2.4.0-rc.3"
+  s.version      = "2.4.0-rc.3"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. superwall.com"
 
@@ -39,6 +39,7 @@ Pod::Spec.new do |s|
 	s.requires_arc = true
 
   s.source_files  = "Sources/**/*.{swift}"
+  s.resources = "Sources/Paywall/**/*.xcdatamodeld"
   s.resource_bundles = {
     "Paywall_Paywall" => ["Sources/Paywall/*.xcassets"]
   }
