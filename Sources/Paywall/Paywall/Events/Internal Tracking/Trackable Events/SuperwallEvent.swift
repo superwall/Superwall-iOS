@@ -47,6 +47,23 @@ enum SuperwallEvent {
     var superwallParameters: [String: Any] = [:]
   }
 
+  struct Attributes: TrackableSuperwallEvent {
+    let name: Paywall.EventName = .userAttributes
+    let superwallParameters: [String: Any] = [
+      "application_installed_at": DeviceHelper.shared.appInstalledAtString
+    ]
+    var customParameters: [String: Any] = [:]
+  }
+
+  struct DeepLink: TrackableSuperwallEvent {
+    let name: Paywall.EventName = .deepLink
+    let url: URL
+    var superwallParameters: [String: Any] {
+      return ["url": url.absoluteString]
+    }
+    var customParameters: [String: Any] = [:]
+  }
+
   struct FirstSeen: TrackableSuperwallEvent {
     let name: Paywall.EventName = .firstSeen
     var customParameters: [String: Any] = [:]

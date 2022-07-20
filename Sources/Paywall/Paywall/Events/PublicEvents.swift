@@ -55,8 +55,35 @@ public extension Paywall {
   ///
   /// - Parameter custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   static func setUserAttributes(_ attributes: [String: Any?] = [:]) {
-    // TODO: In the next breaking version, change the Any? param value from optional to non-optional
+    mergeAttributes(attributes)
+  }
 
+  /// *Note*: Please use ``Paywall/Paywall/setUserAttributes(_:)`` if you're using Swift.
+  /// Set user attributes for use in your paywalls and the dashboard.
+  ///
+  /// Useful for analytics and conditional paywall rules you may define in the web dashboard. They should not be used as a source of truth for sensitive information.
+  ///
+  /// - Parameter attributes: A `NSDictionary` used to describe user attributes and any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+  ///
+  /// We make our best effort to pick out "known" user attributes and set them to our names. For exampe `{"first_name": "..." }` and `{"firstName": "..."}` will both be translated into `$first_name` for use in Superwall where we require a first name.
+  ///
+  ///  Example:
+  ///  ```swift
+  ///  var userAttributes: NSDictionary = NSDictionary()
+  ///  userAttributes.setValue(value: "Jake", forKey: "first_name");
+  ///  Superwall.setUserAttributes(userAttributes)
+  ///  ```
+  @objc static func setUserAttributesDictionary(attributes: NSDictionary = [:]) {
+    if let anyAttributes = attributes as? [String: Any] {
+      mergeAttributes(anyAttributes)
+    } else if let anyAttributes = attributes as? [String: Any?] {
+      mergeAttributes(anyAttributes)
+    } else {
+      mergeAttributes([:])
+    }
+  }
+
+  private static func mergeAttributes(_ attributes: [String: Any?]) {
     var customAttributes: [String: Any] = [:]
 
     for key in attributes.keys {
@@ -69,20 +96,20 @@ public extension Paywall {
       }
     }
 
-    let trackableEvent = UserInitiatedEvent.Attributes(
+    let trackableEvent = SuperwallEvent.Attributes(
       customParameters: customAttributes
     )
     let result = track(trackableEvent)
 
     let eventParams = result.parameters.eventParams
-    Storage.shared.addUserAttributes(eventParams)
+    Storage.shared.mergeUserAttributes(eventParams)
   }
 
   /// Handles a deep link sent to your app to open a preview of your paywall.
   ///
   /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
   static func handleDeepLink(_ url: URL) {
-    track(UserInitiatedEvent.DeepLink(url: url))
+    track(SuperwallEvent.DeepLink(url: url))
     SWDebugManager.shared.handle(deepLinkUrl: url)
   }
 
@@ -189,60 +216,6 @@ public extension Paywall {
     }
   }
 
-  /// *Note*: Please use ``Paywall/Paywall/setUserAttributes(_:)`` if you're using Swift.
-  /// Set user attributes for use in your paywalls and the dashboard.
-  ///
-  /// Useful for analytics and conditional paywall rules you may define in the web dashboard. They should not be used as a source of truth for sensitive information.
-  ///
-  /// - Parameter attributes: A `NSDictionary` used to describe user attributes and any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
-  ///
-  /// We make our best effort to pick out "known" user attributes and set them to our names. For exampe `{"first_name": "..." }` and `{"firstName": "..."}` will both be translated into `$first_name` for use in Superwall where we require a first name.
-  ///
-  ///  Example:
-  ///  ```swift
-  ///  var userAttributes: NSDictionary = NSDictionary()
-  ///  userAttributes.setValue(value: "Jake", forKey: "first_name");
-  ///  Superwall.setUserAttributes(userAttributes)
-  ///  ```
-  @available(*, deprecated, renamed: "setUserAttributes(_:)")
-  @objc static func setUserAttributesDictionary(attributes: NSDictionary = [:]) {
-    var map: [StandardUserAttributeKey: Any] = [:]
-    map[.applicationInstalledAt] = DeviceHelper.shared.appInstalledAtString
-    for (anyKey, value) in attributes {
-      if let key = anyKey as? String {
-        switch key {
-        case "firstName", "first_name":
-          map[.firstName] = value
-        case "id", "ID":
-          map[.id] = value
-        case "lastName", "last_name":
-          map[.firstName] = value
-        case "email":
-          map[.email] = value
-        case "phone":
-          map[.phone] = value
-        case "full_phone", "fullPhone":
-          map[.fullPhone] = value
-        case "phone_country_code", "phoneCountryCode":
-          map[.phoneCountryCode] = value
-        case "fcm_token", "fcmToken":
-          map[.fcmToken] = value
-        case "apns_token", "apnsToken", "APNS":
-          map[.apnsToken] = value
-        case "createdAt", "created_at":
-          map[.createdAt] = value
-        default:
-          break
-        }
-      }
-    }
-    if let anyAttributes = attributes as? [String: Any] {
-      track(.userAttributes(standard: map, custom: anyAttributes))
-    } else {
-      track(.userAttributes(standard: map, custom: [:]))
-    }
-  }
-
   /// Set user attributes for use in your paywalls and the dashboard.
   ///
   /// Useful for analytics and conditional paywall rules you may define in the web dashboard. They should not be used as a source of truth for sensitive information.
@@ -306,7 +279,7 @@ public extension Paywall {
   ) {
     switch event {
     case .deepLinkOpen(let url):
-      track(UserInitiatedEvent.DeepLink(url: url))
+      track(SuperwallEvent.DeepLink(url: url))
       SWDebugManager.shared.handle(deepLinkUrl: url)
     case .pushNotificationReceive(let pushNotificationId):
       let trackedEvent = UserInitiatedEvent.PushNotification(
@@ -339,12 +312,12 @@ public extension Paywall {
           }
         }
       }
-      let trackedEvent = UserInitiatedEvent.Attributes(
+      let trackedEvent = SuperwallEvent.Attributes(
         customParameters: custom
       )
       let result = Paywall.track(trackedEvent)
       let eventParams = result.parameters.eventParams
-      Storage.shared.addUserAttributes(eventParams)
+      Storage.shared.mergeUserAttributes(eventParams)
     case let .base(name, params):
       let trackedEvent = UserInitiatedEvent.Track(
         rawName: name,

@@ -18,6 +18,7 @@ public extension Paywall {
     case appInstall = "app_install"
     case sessionStart = "session_start"
     case appClose = "app_close"
+    case deepLink = "deepLink_open"
     case triggerFire = "trigger_fire"
     case paywallOpen = "paywall_open"
     case paywallClose = "paywall_close"
@@ -29,6 +30,7 @@ public extension Paywall {
     case freeTrialStart = "freeTrial_start"
     case transactionRestore = "transaction_restore"
     case manualPresent = "manual_present"
+    case userAttributes = "user_attributes"
     case nonRecurringProductPurchase = "nonRecurringProduct_purchase"
     case paywallResponseLoadStart = "paywallResponseLoad_start"
     case paywallResponseLoadNotFound = "paywallResponseLoad_notFound"
@@ -46,7 +48,8 @@ public extension Paywall {
       switch self {
       case .appInstall,
         .sessionStart,
-        .appLaunch:
+        .appLaunch,
+        .deepLink:
         return true
       default:
         return false
