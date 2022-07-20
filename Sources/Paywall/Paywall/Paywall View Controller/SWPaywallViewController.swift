@@ -26,8 +26,6 @@ enum PaywallLoadingState {
   case ready
 }
 
-typealias PaywallDismissalCompletionBlock = (PaywallDismissalResult) -> Void
-
 // swiftlint:disable:next type_body_length
 final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   // MARK: - Properties
@@ -36,8 +34,8 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	var isPresented = false
 	var calledDismiss = false
   var paywallResponse: PaywallResponse
-  var presentationInfo: PresentationInfo?
   var calledByIdentifier = false
+  var eventData: EventData?
 	var readyForEventTracking = false
 	var showRefreshTimer: Timer?
 	var isSafariVCPresented = false
@@ -59,7 +57,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	var paywallInfo: PaywallInfo {
 		return paywallResponse.getPaywallInfo(
-      fromEvent: presentationInfo?.eventData,
+      fromEvent: eventData,
       calledByIdentifier: calledByIdentifier
     )
 	}
@@ -476,10 +474,10 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   }
 
 	func set(
-    _ presentationInfo: PresentationInfo,
+    _ eventData: EventData?,
     dismissalBlock: PaywallDismissalCompletionBlock?
   ) {
-		self.presentationInfo = presentationInfo
+		self.eventData = eventData
 		self.dismissalCompletion = dismissalBlock
 	}
 
@@ -610,7 +608,7 @@ extension SWPaywallViewController: WebEventHandlerDelegate {
 extension SWPaywallViewController {
 	func present(
     on presenter: UIViewController,
-    presentationInfo: PresentationInfo,
+    eventData: EventData?,
     presentationStyleOverride: PaywallPresentationStyle?,
     dismissalBlock: PaywallDismissalCompletionBlock?,
     completion: @escaping (Bool) -> Void
@@ -620,7 +618,7 @@ extension SWPaywallViewController {
 			return
 		} else {
 			prepareForPresentation()
-      set(presentationInfo, dismissalBlock: dismissalBlock)
+      set(eventData, dismissalBlock: dismissalBlock)
       setPresentationStyle(withOverride: presentationStyleOverride)
 
       presenter.present(

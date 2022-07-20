@@ -9,11 +9,11 @@ import SwiftUI
 import Combine
 
 @available(iOS 13.0, *)
-struct PaywallTriggerModifier: ViewModifier {
+struct PaywallTrackModifier: ViewModifier {
   @Binding var shouldPresent: Bool
   @State private var programmaticallySetShouldPresent = false
   @State private var isInternallyPresenting = false
-  var event: String?
+  var event: String
   var params: [String: Any]
   var presentationStyleOverride: PaywallPresentationStyle?
   var onPresent: ((PaywallInfo) -> Void)?
@@ -33,21 +33,18 @@ struct PaywallTriggerModifier: ViewModifier {
       if isInternallyPresenting {
         return
       }
-      var eventInfo: PresentationInfo = .defaultPaywall
 
-      if let name = event {
-        let trackableEvent = UserInitiatedEvent.Track(
-          rawName: name,
-          canImplicitlyTriggerPaywall: false,
-          customParameters: params
-        )
-        let result = Paywall.track(trackableEvent)
-        eventInfo = .explicitTrigger(result.data)
-      }
+      let trackableEvent = UserInitiatedEvent.Track(
+        rawName: event,
+        canImplicitlyTriggerPaywall: false,
+        customParameters: params
+      )
+      let result = Paywall.track(trackableEvent)
+
       isInternallyPresenting = true
 
       Paywall.internallyPresent(
-        eventInfo,
+        .explicitTrigger(result.data),
         presentationStyleOverride: presentationStyleOverride ?? .none,
         onPresent: onPresent,
         onDismiss: { result in

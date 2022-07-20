@@ -98,7 +98,7 @@ class PaywallResponseLogicTests: XCTestCase {
 
     // When
     let outcome = PaywallResponseLogic.getTriggerResultOutcome(
-      presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
+      presentationInfo: .track(.stub().setting(\.name, to: eventName)),
       network: network,
       triggers: [eventName: .stub()
         .setting(\.eventName, to: eventName)
@@ -153,7 +153,7 @@ class PaywallResponseLogicTests: XCTestCase {
 
     // When
     let outcome = PaywallResponseLogic.getTriggerResultOutcome(
-      presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
+      presentationInfo: .track(.stub().setting(\.name, to: eventName)),
       network: network,
       triggers: [eventName: holdout]
     )
@@ -217,7 +217,7 @@ class PaywallResponseLogicTests: XCTestCase {
 
     // When
     let outcome = PaywallResponseLogic.getTriggerResultOutcome(
-      presentationInfo: .explicitTrigger(eventData),
+      presentationInfo: .track(eventData),
       network: network,
       triggers: [eventName: trigger]
     )
@@ -274,7 +274,7 @@ class PaywallResponseLogicTests: XCTestCase {
 
     // When
     let outcome = PaywallResponseLogic.getTriggerResultOutcome(
-      presentationInfo: .explicitTrigger(.stub().setting(\.name, to: "other")),
+      presentationInfo: .track(.stub().setting(\.name, to: "other")),
       network: network,
       triggers: [eventName: trigger]
     )

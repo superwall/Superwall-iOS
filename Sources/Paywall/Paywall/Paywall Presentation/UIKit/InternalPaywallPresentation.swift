@@ -47,7 +47,7 @@ extension Paywall {
     Logger.debug(
       logLevel: .debug,
       scope: .paywallPresentation,
-      message: "Called Paywall.present",
+      message: "Called Paywall.track",
       info: debugInfo
     )
 
@@ -149,7 +149,7 @@ extension Paywall {
 
         paywallViewController.present(
           on: presenter,
-          presentationInfo: presentationInfo,
+          eventData: eventData,
           presentationStyleOverride: presentationStyleOverride,
           dismissalBlock: onDismiss
         ) { success in

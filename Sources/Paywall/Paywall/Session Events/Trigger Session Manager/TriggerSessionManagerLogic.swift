@@ -77,8 +77,7 @@ enum TriggerSessionManagerLogic {
           experiment: experiment
         )
       }
-    case .fromIdentifier,
-      .defaultPaywall:
+    case .fromIdentifier:
       presentationOutcome = .paywall
       let eventData = trackEvent(SuperwallEvent.ManualPresent()).data
       trigger = TriggerSession.Trigger(

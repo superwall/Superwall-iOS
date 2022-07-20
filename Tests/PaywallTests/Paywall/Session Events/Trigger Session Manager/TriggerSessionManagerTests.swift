@@ -96,7 +96,7 @@ final class TriggerSessionManagerTests: XCTestCase {
 
     // When
     sessionManager.activateSession(
-      for: .explicitTrigger(eventData),
+      for: .track(eventData),
       triggerResult: .unknownEvent
     )
 
@@ -120,7 +120,7 @@ final class TriggerSessionManagerTests: XCTestCase {
 
     // When
     sessionManager.activateSession(
-      for: .explicitTrigger(eventData),
+      for: .track(eventData),
       triggerResult: .paywall(experiment: experiment)
     )
 
@@ -145,7 +145,7 @@ final class TriggerSessionManagerTests: XCTestCase {
 
     // When
     sessionManager.activateSession(
-      for: .explicitTrigger(eventData),
+      for: .track(eventData),
       triggerResult: .holdout(experiment: experiment)
     )
     
@@ -169,7 +169,7 @@ final class TriggerSessionManagerTests: XCTestCase {
 
     // When
     sessionManager.activateSession(
-      for: .explicitTrigger(eventData),
+      for: .track(eventData),
       triggerResult: .noRuleMatch
     )
 
@@ -232,7 +232,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     )
     let experiment = triggers[eventName]!.rules.first!.experiment
     sessionManager.activateSession(
-      for: .explicitTrigger(eventData),
+      for: .track(eventData),
       triggerResult: .paywall(experiment: experiment)
     )
 
@@ -315,7 +315,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     let paywallResponse: PaywallResponse = .stub()
       .setting(\.id, to: paywallId)
     sessionManager.activateSession(
-      for: .explicitTrigger(eventData),
+      for: .track(eventData),
       paywallResponse: paywallResponse,
       triggerResult: .paywall(experiment: experiment)
     )

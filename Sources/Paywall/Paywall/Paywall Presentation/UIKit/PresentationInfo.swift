@@ -12,7 +12,6 @@ enum PresentationInfo {
   case implicitTrigger(EventData)
   case explicitTrigger(EventData)
   case fromIdentifier(String)
-  case defaultPaywall
 
   var eventData: EventData? {
     switch self {
@@ -29,8 +28,6 @@ enum PresentationInfo {
     case let .implicitTrigger(eventData),
       let .explicitTrigger(eventData):
       return eventData.name
-    case .defaultPaywall:
-      return Paywall.EventName.manualPresent.rawValue
     case .fromIdentifier:
       return nil
     }

@@ -40,7 +40,7 @@ final class ExplicitlyTriggerPaywallViewController: UIViewController {
   }
 
   @IBAction private func explicitlyTriggerPaywall() {
-    Paywall.trigger(event: "MyEvent") { error in
+    Paywall.track(event: "MyEvent") { error in
       if error?.code == 4000 {
         print("The user did not match any rules")
       } else if error?.code == 4001 {
@@ -50,11 +50,14 @@ final class ExplicitlyTriggerPaywallViewController: UIViewController {
       }
     } onPresent: { paywallInfo in
       print("paywall info is", paywallInfo)
-    } onDismiss: { didPurchase, productId, paywallInfo in
-      if didPurchase {
+    } onDismiss: { result in
+      switch result.state {
+      case .purchased(let productId):
         print("The purchased product ID is", productId)
-      } else {
-        print("The info of the paywall is", paywallInfo)
+      case .closed:
+        print("The paywall was closed.")
+      case .restored:
+        print("The product was restored.")
       }
     }
   }

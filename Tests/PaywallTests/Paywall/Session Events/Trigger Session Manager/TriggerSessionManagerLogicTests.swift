@@ -51,7 +51,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     let viewController = SWDebugViewController()
 
     let outcome = TriggerSessionManagerLogic.outcome(
-      presentationInfo: .explicitTrigger(eventData),
+      presentationInfo: .track(eventData),
       presentingViewController: viewController,
       paywallResponse: nil,
       triggerResult: .holdout(experiment: experiment)
@@ -99,7 +99,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       .setting(\.webViewLoadCompleteTime, to: time)
 
     let outcome = TriggerSessionManagerLogic.outcome(
-      presentationInfo: .explicitTrigger(eventData),
+      presentationInfo: .track(eventData),
       presentingViewController: nil,
       paywallResponse: paywallResponse,
       triggerResult: .holdout(experiment: experiment)
@@ -131,7 +131,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     )
 
     let outcome = TriggerSessionManagerLogic.outcome(
-      presentationInfo: .explicitTrigger(eventData),
+      presentationInfo: .track(eventData),
       presentingViewController: nil,
       paywallResponse: nil,
       triggerResult: .noRuleMatch
@@ -169,7 +169,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     )
     let viewController = SWDebugViewController()
     let outcome = TriggerSessionManagerLogic.outcome(
-      presentationInfo: .explicitTrigger(eventData),
+      presentationInfo: .track(eventData),
       presentingViewController: viewController,
       paywallResponse: nil,
       triggerResult: .paywall(experiment: experiment)

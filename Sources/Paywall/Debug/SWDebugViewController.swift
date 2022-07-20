@@ -403,13 +403,17 @@ final class SWDebugViewController: UIViewController {
   }
 
   func loadAndShowPaywall(freeTrialAvailable: Bool = false) {
+    guard let paywallIdentifier = paywallIdentifier else {
+      return
+    }
+
     Paywall.isFreeTrialAvailableOverride = freeTrialAvailable
 
     bottomButton.setImage(nil, for: .normal)
     bottomButton.showLoading = true
 
-    Paywall.present(
-      identifier: paywallIdentifier,
+    Paywall.internallyPresent(
+      .fromIdentifier(paywallIdentifier),
       on: self,
       onPresent: { [weak self] _ in
         self?.bottomButton.showLoading = false
@@ -422,7 +426,7 @@ final class SWDebugViewController: UIViewController {
         )
       },
       onFail: { [weak self] error in
-        self?.presentAlert(title: "Error Occurred", message: error?.localizedDescription, options: [])
+        self?.presentAlert(title: "Error Occurred", message: error.localizedDescription, options: [])
         self?.bottomButton.showLoading = false
         // swiftlint:disable:next force_unwrapping
         let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!

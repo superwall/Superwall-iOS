@@ -10,7 +10,7 @@ import UIKit
 import WebKit
 
 protocol WebEventHandlerDelegate: AnyObject {
-  var presentationInfo: PresentationInfo? { get }
+  var eventData: EventData? { get }
   var paywallResponse: PaywallResponse { get set }
   var paywallInfo: PaywallInfo { get }
   var webView: SWWebView { get }
@@ -71,7 +71,7 @@ final class WebEventHandler: WebEventDelegate {
 
   private func templateParams(from paywallResponse: PaywallResponse) {
     let params = paywallResponse.getBase64EventsString(
-      params: delegate?.presentationInfo?.eventData?.parameters
+      params: delegate?.eventData?.parameters
     )
     let scriptSrc = """
       window.paywall.accept64('\(params)');
@@ -116,7 +116,7 @@ final class WebEventHandler: WebEventDelegate {
     }
 
     let params = paywallResponse.getBase64EventsString(
-      params: delegate?.presentationInfo?.eventData?.parameters
+      params: delegate?.eventData?.parameters
     )
     let jsEvent = paywallResponse.paywalljsEvent
     let scriptSrc = """
