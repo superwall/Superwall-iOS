@@ -39,9 +39,11 @@ Pod::Spec.new do |s|
 	s.requires_arc = true
 
   s.source_files  = "Sources/**/*.{swift}"
-  s.resources = "Sources/Paywall/**/*.xcdatamodeld"
   s.resource_bundles = {
-    "Paywall_Paywall" => ["Sources/Paywall/*.xcassets"]
+    "Paywall_Paywall" => [
+      "Sources/Paywall/*.xcassets",
+      "Sources/Paywall/**/*.xcdatamodeld"
+    ]
   }
   s.dependency 'TPInAppReceipt', '~> 3.0.0'
 
