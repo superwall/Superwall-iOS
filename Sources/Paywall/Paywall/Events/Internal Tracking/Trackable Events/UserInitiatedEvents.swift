@@ -18,6 +18,13 @@ enum UserInitiatedEvent {
     let canImplicitlyTriggerPaywall: Bool
     var customParameters: [String: Any] = [:]
   }
+
+  struct DefaultPaywall: TrackableUserInitiatedEvent {
+    let rawName = "$present"
+    let superwallParameters: [String: Any] = [:]
+    let canImplicitlyTriggerPaywall = false
+    let customParameters: [String: Any] = [:]
+  }
   
   // MARK: - To be deprecated/deleted
   struct PushNotification: TrackableUserInitiatedEvent {

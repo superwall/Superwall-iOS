@@ -36,8 +36,12 @@ public extension Paywall {
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil,
     onFail: ((NSError?) -> Void)? = nil
   ) {
+    let trackableEvent = UserInitiatedEvent.DefaultPaywall()
+    let result = Paywall.track(trackableEvent)
+    let eventInfo = PresentationInfo.explicitTrigger(result.data)
+
     internallyPresent(
-      .defaultPaywall,
+      eventInfo,
       onPresent: onPresent,
       onDismiss: { result in
         if let onDismiss = onDismiss {
@@ -61,8 +65,12 @@ public extension Paywall {
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil,
     onFail: ((NSError?) -> Void)? = nil
   ) {
+    let trackableEvent = UserInitiatedEvent.DefaultPaywall()
+    let result = Paywall.track(trackableEvent)
+    let eventInfo = PresentationInfo.explicitTrigger(result.data)
+
     internallyPresent(
-      .defaultPaywall,
+      eventInfo,
       on: viewController,
       onPresent: onPresent,
       onDismiss: { result in
@@ -97,7 +105,9 @@ public extension Paywall {
     if let identifier = identifier {
       presentationInfo = .fromIdentifier(identifier)
     } else {
-      presentationInfo = .defaultPaywall
+      let trackableEvent = UserInitiatedEvent.DefaultPaywall()
+      let result = Paywall.track(trackableEvent)
+      presentationInfo = .explicitTrigger(result.data)
     }
     internallyPresent(
       presentationInfo,
@@ -145,20 +155,23 @@ public extension Paywall {
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil
   ) {
-    var presentationInfo: PresentationInfo = .defaultPaywall
-
+    let eventInfo: PresentationInfo
     if let name = event {
       let trackableEvent = UserInitiatedEvent.Track(
         rawName: name,
         canImplicitlyTriggerPaywall: false,
         customParameters: params ?? [:]
       )
-      let result = track(trackableEvent)
-      presentationInfo = .explicitTrigger(result.data)
+      let result = Paywall.track(trackableEvent)
+      eventInfo = .explicitTrigger(result.data)
+    } else {
+      let trackableEvent = UserInitiatedEvent.DefaultPaywall()
+      let result = Paywall.track(trackableEvent)
+      eventInfo = .explicitTrigger(result.data)
     }
 
     internallyPresent(
-      presentationInfo,
+      eventInfo,
       on: viewController,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
       presentationStyleOverride: presentationStyleOverride,
