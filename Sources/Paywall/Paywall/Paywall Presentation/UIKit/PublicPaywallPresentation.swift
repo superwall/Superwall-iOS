@@ -31,6 +31,7 @@ public extension Paywall {
 ///     - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
 ///     - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo``? object containing information about the paywall.
 ///    - onFail: A completion block that gets called when the paywall fails to present, either because an error occurred or because all paywalls are off. Defaults to `nil`.  Accepts an `NSError?` with more details.
+  @available(*, deprecated, message: "Please use Paywall.trigger")
 	@objc static func present(
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil,
@@ -59,6 +60,7 @@ public extension Paywall {
 ///     - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
 ///     - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo``? object containing information about the paywall.
 ///     - onFail: A completion block that gets called when the paywall fails to present, either because an error occurred or because all paywalls are off. Defaults to `nil`.  Accepts an `NSError?` with more details.
+  @available(*, deprecated, message: "Please use Paywall.trigger")
   @objc static func present(
     on viewController: UIViewController? = nil,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
@@ -92,6 +94,7 @@ public extension Paywall {
   ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
   ///   - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo``? object containing information about the paywall.
   ///   - onFail: A completion block that gets called when the paywall fails to present, either because an error occurred or because all paywalls are off. Defaults to `nil`.  Accepts an `NSError?` with more details.
+  @available(*, deprecated, message: "Please use Paywall.trigger")
   @objc static func present(
     identifier: String? = nil,
     on viewController: UIViewController? = nil,
