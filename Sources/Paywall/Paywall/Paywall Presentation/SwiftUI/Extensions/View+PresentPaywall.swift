@@ -70,6 +70,7 @@ extension View {
   ///     Defaults to `nil`.
   ///   - onFail: A closure that's called when the paywall fails to present, either because an error occurred or because all paywalls are off in the Superwall Dashboard.
   ///     Accepts an `NSError?` with more details. Defaults to `nil`.
+  @available(*, deprecated, message: "Please use triggerPaywall instead.")
   public func presentPaywall(
     isPresented: Binding<Bool>,
     presentationStyleOverride: PaywallPresentationStyle? = nil,
