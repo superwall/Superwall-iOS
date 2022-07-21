@@ -25,7 +25,7 @@ enum UserInitiatedEvent {
     let canImplicitlyTriggerPaywall = false
     let customParameters: [String: Any] = [:]
   }
-  
+
   // MARK: - To be deprecated/deleted
   struct PushNotification: TrackableUserInitiatedEvent {
     enum State {
