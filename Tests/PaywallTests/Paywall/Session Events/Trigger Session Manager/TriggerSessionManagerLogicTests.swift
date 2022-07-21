@@ -188,24 +188,33 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
   }
 
   func testDefaultPaywall_noPaywallResponse() {
-    let eventName = "eventName"
+    let experiment = Experiment(
+      id: "1",
+      groupId: "2",
+      variant: .init(
+        id: "3",
+        type: .treatment,
+        paywallId: nil
+      )
+    )
+    let eventName = "$present"
     let eventId = "eventId"
     let eventCreatedAt = Date()
 
-    let trackEvent: (Trackable) -> TrackingResult = { event in
-      return .stub()
-        .setting(\.data.name, to: eventName)
-        .setting(\.data.id, to: eventId)
-        .setting(\.data.createdAt, to: eventCreatedAt)
-    }
+    let event = EventData
+      .stub()
+      .setting(\.name, to: eventName)
+      .setting(\.id, to: eventId)
+      .setting(\.createdAt, to: eventCreatedAt)
 
     let viewController = SWDebugViewController()
+
+    let presentationInfo = PresentationInfo.explicitTrigger(event)
     let outcome = TriggerSessionManagerLogic.outcome(
-      presentationInfo: .defaultPaywall,
+      presentationInfo: presentationInfo,
       presentingViewController: viewController,
       paywallResponse: nil,
-      triggerResult: nil,
-      trackEvent: trackEvent
+      triggerResult: .paywall(experiment: experiment)
     )
 
     XCTAssertEqual(outcome?.presentationOutcome, .paywall)
@@ -215,7 +224,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventCreatedAt)
     XCTAssertEqual(outcome?.trigger.type, .explicit)
     XCTAssertEqual(outcome?.trigger.presentedOn, "SWDebugViewController")
-    XCTAssertNil(outcome?.trigger.experiment)
+    XCTAssertEqual(outcome?.trigger.experiment, experiment)
     XCTAssertNil(outcome?.paywall)
   }
 
