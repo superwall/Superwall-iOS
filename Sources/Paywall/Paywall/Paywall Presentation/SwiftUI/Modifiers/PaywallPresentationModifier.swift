@@ -47,7 +47,7 @@ struct PaywallPresentationModifier: ViewModifier {
           self.isInternallyPresenting = false
           onDismiss?(result)
         },
-        onFail: { error in
+        onSkip: { error in
           self.programmaticallySetIsPresented = true
           self.isPresented = false
           self.isInternallyPresenting = false

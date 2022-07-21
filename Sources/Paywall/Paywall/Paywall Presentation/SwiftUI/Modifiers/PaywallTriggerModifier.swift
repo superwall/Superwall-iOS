@@ -61,7 +61,7 @@ struct PaywallTriggerModifier: ViewModifier {
           self.isInternallyPresenting = false
           onDismiss?(result)
         },
-        onFail: { error in
+        onSkip: { error in
           self.programmaticallySetShouldPresent = true
           self.shouldPresent = false
           self.isInternallyPresenting = false

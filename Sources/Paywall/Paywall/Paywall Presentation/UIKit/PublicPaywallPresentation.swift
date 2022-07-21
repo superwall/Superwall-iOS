@@ -49,7 +49,7 @@ public extension Paywall {
           onDismissConverter(result, completion: onDismiss)
         }
       },
-      onFail: onFail
+      onSkip: onFail
     )
 	}
 
@@ -80,7 +80,7 @@ public extension Paywall {
           onDismissConverter(result, completion: onDismiss)
         }
       },
-      onFail: onFail
+      onSkip: onFail
     )
 	}
 
@@ -123,7 +123,7 @@ public extension Paywall {
           onDismissConverter(result, completion: onDismiss)
         }
       },
-      onFail: onFail
+      onSkip: onFail
     )
   }
 
@@ -184,7 +184,7 @@ public extension Paywall {
           onDismissConverter(result, completion: onDismiss)
         }
       },
-      onFail: onSkip
+      onSkip: onSkip
     )
   }
 
