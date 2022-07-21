@@ -32,8 +32,13 @@ struct PaywallPresentationModifier: ViewModifier {
         return
       }
       isInternallyPresenting = true
+
+      let trackableEvent = UserInitiatedEvent.DefaultPaywall()
+      let result = Paywall.track(trackableEvent)
+      let eventInfo = PresentationInfo.explicitTrigger(result.data)
+
       Paywall.internallyPresent(
-        .defaultPaywall,
+        eventInfo,
         presentationStyleOverride: presentationStyleOverride ?? .none,
         onPresent: onPresent,
         onDismiss: { result in
@@ -42,7 +47,7 @@ struct PaywallPresentationModifier: ViewModifier {
           self.isInternallyPresenting = false
           onDismiss?(result)
         },
-        onFail: { error in
+        onSkip: { error in
           self.programmaticallySetIsPresented = true
           self.isPresented = false
           self.isInternallyPresenting = false

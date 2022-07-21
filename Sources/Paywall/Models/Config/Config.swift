@@ -31,7 +31,6 @@ struct Config: Decodable {
     if Paywall.options.shouldPreloadPaywalls {
       preloadPaywallsAndProducts()
       preloadTriggerPaywalls()
-      preloadDefaultPaywall()
     }
     executePostback()
   }
@@ -61,14 +60,6 @@ struct Config: Decodable {
         cached: true
       )
     }
-  }
-
-  /// Preloads the default paywall for the user. This is the paywall shown when calling paywall.present().
-  private func preloadDefaultPaywall() {
-    PaywallManager.shared.getPaywallViewController(
-      responseIdentifiers: .none,
-      cached: true
-    )
   }
 
   /// This sends product data back to the dashboard

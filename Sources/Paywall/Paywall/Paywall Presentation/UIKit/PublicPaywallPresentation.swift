@@ -28,23 +28,28 @@ public extension Paywall {
 	/// Presents a paywall to the user. This method will be deprecated soon, we recommend using ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` for greater flexibility.
   ///
 	/// - Parameters:
-///     - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
-///     - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo``? object containing information about the paywall.
-///    - onFail: A completion block that gets called when the paywall fails to present, either because an error occurred or because all paywalls are off. Defaults to `nil`.  Accepts an `NSError?` with more details.
+  ///     - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
+  ///     - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo``? object containing information about the paywall.
+  ///    - onFail: A completion block that gets called when the paywall fails to present, either because an error occurred or because all paywalls are off. Defaults to `nil`.  Accepts an `NSError?` with more details.
+  @available(*, deprecated, message: "Please use Paywall.trigger")
 	@objc static func present(
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil,
     onFail: ((NSError?) -> Void)? = nil
   ) {
+    let trackableEvent = UserInitiatedEvent.DefaultPaywall()
+    let result = Paywall.track(trackableEvent)
+    let eventInfo = PresentationInfo.explicitTrigger(result.data)
+
     internallyPresent(
-      .defaultPaywall,
+      eventInfo,
       onPresent: onPresent,
       onDismiss: { result in
         if let onDismiss = onDismiss {
           onDismissConverter(result, completion: onDismiss)
         }
       },
-      onFail: onFail
+      onSkip: onFail
     )
 	}
 
@@ -55,14 +60,19 @@ public extension Paywall {
 ///     - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
 ///     - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo``? object containing information about the paywall.
 ///     - onFail: A completion block that gets called when the paywall fails to present, either because an error occurred or because all paywalls are off. Defaults to `nil`.  Accepts an `NSError?` with more details.
+  @available(*, deprecated, message: "Please use Paywall.trigger")
   @objc static func present(
     on viewController: UIViewController? = nil,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil,
     onFail: ((NSError?) -> Void)? = nil
   ) {
+    let trackableEvent = UserInitiatedEvent.DefaultPaywall()
+    let result = Paywall.track(trackableEvent)
+    let eventInfo = PresentationInfo.explicitTrigger(result.data)
+
     internallyPresent(
-      .defaultPaywall,
+      eventInfo,
       on: viewController,
       onPresent: onPresent,
       onDismiss: { result in
@@ -70,7 +80,7 @@ public extension Paywall {
           onDismissConverter(result, completion: onDismiss)
         }
       },
-      onFail: onFail
+      onSkip: onFail
     )
 	}
 
@@ -84,6 +94,7 @@ public extension Paywall {
   ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
   ///   - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo``? object containing information about the paywall.
   ///   - onFail: A completion block that gets called when the paywall fails to present, either because an error occurred or because all paywalls are off. Defaults to `nil`.  Accepts an `NSError?` with more details.
+  @available(*, deprecated, message: "Please use Paywall.trigger")
   @objc static func present(
     identifier: String? = nil,
     on viewController: UIViewController? = nil,
@@ -97,7 +108,9 @@ public extension Paywall {
     if let identifier = identifier {
       presentationInfo = .fromIdentifier(identifier)
     } else {
-      presentationInfo = .defaultPaywall
+      let trackableEvent = UserInitiatedEvent.DefaultPaywall()
+      let result = Paywall.track(trackableEvent)
+      presentationInfo = .explicitTrigger(result.data)
     }
     internallyPresent(
       presentationInfo,
@@ -110,7 +123,7 @@ public extension Paywall {
           onDismissConverter(result, completion: onDismiss)
         }
       },
-      onFail: onFail
+      onSkip: onFail
     )
   }
 
@@ -145,20 +158,23 @@ public extension Paywall {
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil
   ) {
-    var presentationInfo: PresentationInfo = .defaultPaywall
-
+    let eventInfo: PresentationInfo
     if let name = event {
       let trackableEvent = UserInitiatedEvent.Track(
         rawName: name,
         canImplicitlyTriggerPaywall: false,
         customParameters: params ?? [:]
       )
-      let result = track(trackableEvent)
-      presentationInfo = .explicitTrigger(result.data)
+      let result = Paywall.track(trackableEvent)
+      eventInfo = .explicitTrigger(result.data)
+    } else {
+      let trackableEvent = UserInitiatedEvent.DefaultPaywall()
+      let result = Paywall.track(trackableEvent)
+      eventInfo = .explicitTrigger(result.data)
     }
 
     internallyPresent(
-      presentationInfo,
+      eventInfo,
       on: viewController,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
       presentationStyleOverride: presentationStyleOverride,
@@ -168,7 +184,7 @@ public extension Paywall {
           onDismissConverter(result, completion: onDismiss)
         }
       },
-      onFail: onSkip
+      onSkip: onSkip
     )
   }
 
