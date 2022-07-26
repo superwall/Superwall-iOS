@@ -21,6 +21,11 @@ public final class Paywall: NSObject {
     return PaywallManager.shared.presentedViewController
   }
 
+  /// The current user's id`.
+  public static var userId: String {
+    return Storage.shared.userId ?? ""
+  }
+
   // MARK: - Private Properties
   /// Used as the reload function if a paywall takes to long to load. set in paywall.present
 	static var presentAgain = {}
@@ -117,12 +122,7 @@ public final class Paywall: NSObject {
   ///  - Returns: The shared Paywall instance.
 	@discardableResult
 	@objc public static func identify(userId: String) -> Paywall {
-    // refetch the paywall, we don't know if the alias was for an existing user
-    if Storage.shared.userId != userId {
-			PaywallManager.shared.clearCache()
-		}
     Storage.shared.appUserId = userId
-
 		return shared
 	}
 

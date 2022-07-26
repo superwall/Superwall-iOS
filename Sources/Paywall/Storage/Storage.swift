@@ -63,7 +63,11 @@ class Storage {
     apiKey: String
   ) {
     migrateData()
-    self.appUserId = appUserId
+
+    if let appUserId = appUserId {
+      self.appUserId = appUserId
+    }
+    
     self.apiKey = apiKey
 
     if aliasId == nil {
