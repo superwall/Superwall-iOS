@@ -122,6 +122,11 @@ public final class Paywall: NSObject {
   ///  - Returns: The shared Paywall instance.
 	@discardableResult
 	@objc public static func identify(userId: String) -> Paywall {
+
+    if Storage.shared.appUserId != nil {
+      Logger.debug(logLevel: .warn, scope: .paywallCore, message: "Paywall.identify() called twice with different User Ids. Both IDs will be aliased. Call Paywall.reset() between identify calls to suppress this warning", info: ["from": Storage.shared.appUserId, "to": userId], error: nil)
+    }
+
     Storage.shared.appUserId = userId
 		return shared
 	}
