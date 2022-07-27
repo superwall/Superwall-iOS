@@ -67,7 +67,7 @@ class Storage {
     if let appUserId = appUserId {
       self.appUserId = appUserId
     }
-    
+
     self.apiKey = apiKey
 
     if aliasId == nil {
