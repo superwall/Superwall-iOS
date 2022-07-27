@@ -21,9 +21,10 @@ public final class Paywall: NSObject {
     return PaywallManager.shared.presentedViewController
   }
 
-  /// The current user's id.
-  public static var userId: String {
-    return Storage.shared.userId ?? ""
+  /// The current user's id. It shouldn't ever be `nil` since Superwall assigns an anonymous user id and caches it to disk if one isn't provided.
+  public static var userId: String? {
+    // Technically Storage.shared.userId is an optional value
+    return Storage.shared.userId
   }
 
   // MARK: - Private Properties
@@ -117,19 +118,15 @@ public final class Paywall: NSObject {
 		return shared
 	}
 
-	/// Links your `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId.
+	/// Links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
 	///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
   ///  - Returns: The shared Paywall instance.
 	@discardableResult
 	@objc public static func identify(userId: String) -> Paywall {
-    if Storage.shared.appUserId != nil {
-      Logger.debug(
-        logLevel: .warn,
-        scope: .paywallCore,
-        message: "Paywall.identify() called twice with different User Ids. Both IDs will be aliased. Call Paywall.reset() between identify calls to suppress this warning.",
-        info: ["from": Storage.shared.appUserId ?? "nil", "to": userId],
-        error: nil
-      )
+    // if there isn't an app user id set, don't clear the cache
+    // if there is an app user id already set, clear the cache if it changed
+    if let currentUserId = Storage.shared.appUserId, currentUserId != userId {
+      Paywall.reset()
     }
 
     Storage.shared.appUserId = userId
