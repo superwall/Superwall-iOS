@@ -237,12 +237,10 @@ extension Paywall {
     if presentingWindow == nil {
       if #available(iOS 13.0, *) {
         let scenes = UIApplication.shared.connectedScenes
-        if let windowScene = scenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+        if let windowScene = scenes.first as? UIWindowScene {
           presentingWindow = UIWindow(windowScene: windowScene)
         }
-      }
-
-      if presentingWindow == nil {
+      } else {
         presentingWindow = UIWindow(frame: UIScreen.main.bounds)
       }
 

@@ -244,6 +244,16 @@ public final class Paywall: NSObject {
       )
 
       switch outcome {
+      case .deepLinkTrigger:
+          onMain {
+            if Paywall.shared.isPaywallPresented {
+              Paywall.dismiss {
+                Paywall.internallyPresent(presentationInfo)
+              }
+            } else {
+              Paywall.internallyPresent(presentationInfo)
+            }
+          }
       case .triggerPaywall:
         // delay in case they are presenting a view controller alongside an event they are calling
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
