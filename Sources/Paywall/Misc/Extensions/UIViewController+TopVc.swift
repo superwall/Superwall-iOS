@@ -9,12 +9,12 @@ import UIKit
 
 extension UIViewController {
   static var topMostViewController: UIViewController? {
-    var topViewController = UIApplication.shared.windows.first?.rootViewController
-
+    var topViewController: UIViewController? = UIApplication.shared.activeWindow?.rootViewController
     while let presentedViewController = topViewController?.presentedViewController {
       topViewController = presentedViewController
     }
-
     return topViewController
   }
 }
+
+

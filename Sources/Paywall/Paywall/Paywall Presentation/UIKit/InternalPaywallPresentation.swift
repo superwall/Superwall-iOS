@@ -235,13 +235,15 @@ extension Paywall {
 
   private func createPresentingWindowIfNeeded() {
     if presentingWindow == nil {
+
+      let activeWindow = UIApplication.shared.activeWindow
+
       if #available(iOS 13.0, *) {
-        let scenes = UIApplication.shared.connectedScenes
-        if let windowScene = scenes.first as? UIWindowScene {
+        if let windowScene = activeWindow?.windowScene {
           presentingWindow = UIWindow(windowScene: windowScene)
         }
       } else {
-        presentingWindow = UIWindow(frame: UIScreen.main.bounds)
+        presentingWindow = UIWindow(frame: activeWindow?.bounds ?? UIScreen.main.bounds)
       }
 
       presentingWindow?.rootViewController = UIViewController()
