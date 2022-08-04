@@ -10,6 +10,7 @@ import UIKit
 final class ConfigManager {
   var didFetchConfig = !Storage.shared.configRequestId.isEmpty
   var options: PaywallOptions
+  var config: Config?
   private let storage: Storage
   private let network: Network
 
@@ -39,11 +40,12 @@ final class ConfigManager {
         }
         switch result {
         case .success(let config):
+
           Storage.shared.addConfig(config, withRequestId: requestId)
           SessionEventsManager.shared.triggerSession.createSessions(from: config)
           self.didFetchConfig = true
           config.cache()
-
+          self.config = config
           Storage.shared.triggersFiredPreConfig.forEach { trigger in
             switch trigger.presentationInfo.triggerType {
             case .implicit:

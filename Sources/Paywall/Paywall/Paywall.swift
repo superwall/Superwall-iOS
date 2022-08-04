@@ -98,7 +98,7 @@ public final class Paywall: NSObject {
     apiKey: String,
     userId: String? = nil,
     delegate: PaywallDelegate? = nil,
-    options: PaywallOptions = PaywallOptions()
+    options: PaywallOptions? = nil
   ) -> Paywall {
     if hasCalledConfig {
       Logger.debug(
@@ -113,7 +113,7 @@ public final class Paywall: NSObject {
       apiKey: apiKey,
       userId: userId,
       delegate: delegate,
-      options: options
+      options: options ?? shared.configManager.options
     )
 		return shared
 	}
@@ -132,6 +132,20 @@ public final class Paywall: NSObject {
     Storage.shared.appUserId = userId
 		return shared
 	}
+
+  /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard. Won't reload paywalls that are already preloaded.
+  ///
+  /// Call this if you set `Paywall.options.shouldPreloadPaywalls` to `false` when you would like preloading to begin.
+  @objc public static func preloadAllPaywalls() {
+    shared.configManager.config?.preloadAllPaywalls()
+  }
+
+  /// Preloads paywalls that the user may see only when these triggers are fired. Won't reload paywalls that are already preloaded.
+  ///
+  /// Call this if you set `Paywall.options.shouldPreloadPaywalls` to `false` when you would like preloading to begin.
+  @objc public static func preloadPaywalls(forTriggers triggers: [String]) {
+    shared.configManager.config?.preloadPaywalls(forTriggers: triggers)
+  }
 
 	/// Resets the `userId` and data stored by Superwall.
   ///

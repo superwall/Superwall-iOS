@@ -9,7 +9,7 @@ import Foundation
 
 struct Config: Decodable {
   var triggers: Set<Trigger>
-  var paywalls: Set<PaywallConfig>
+  var paywalls: Set<PaywallConfig> // not used anymore
   var logLevel: Int
   var postback: PostbackRequest
   var localization: LocalizationConfig
@@ -29,32 +29,41 @@ struct Config: Decodable {
   /// A developer can disable preloading of paywalls by setting ``Paywall/Paywall/shouldPreloadPaywalls``
   func cache() {
     if Paywall.options.shouldPreloadPaywalls {
-      preloadPaywallsAndProducts()
-      preloadTriggerPaywalls()
+      preloadAllPaywalls()
+    } else {
+      preloadAllPaywallResponses()
     }
     executePostback()
   }
 
-  /// Preloads paywalls and their products.
-  private func preloadPaywallsAndProducts() {
-    for paywall in paywalls {
-      // cache paywall's products
-      let productIds = paywall.products.map { $0.identifier }
-      StoreKitManager.shared.getProducts(withIds: productIds)
+  /// Preloads only the paywall responses
+  internal func preloadAllPaywallResponses() {
+    let triggerPaywallIdentifiers = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
+    for identifier in triggerPaywallIdentifiers {
+      PaywallResponseManager.shared.getResponse(
+        withIdentifiers: .init(paywallId: identifier)) { _ in
 
-      // cache the view controller
-      PaywallManager.shared.getPaywallViewController(
-        responseIdentifiers: .init(paywallId: paywall.identifier),
-        cached: true
-      )
+        }
     }
   }
 
-  /// Pre-loads all the paywalls referenced by triggers.
-  private func preloadTriggerPaywalls() {
+  /// Preloads paywalls referenced by triggers.
+  internal func preloadAllPaywalls() {
     let triggerPaywallIdentifiers = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
+    preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
+  }
 
-    for identifier in triggerPaywallIdentifiers {
+  /// Preloads paywalls referenced by the provided triggers.
+  internal func preloadPaywalls(forTriggers triggerEvents: [String]) {
+    let triggerSet = Set(triggerEvents)
+    let triggersToPreload = self.triggers.filter { triggerSet.contains($0.eventName) }
+    let triggerPaywallIdentifiers = ConfigResponseLogic.getPaywallIds(fromTriggers: triggersToPreload)
+    preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
+  }
+
+  /// Preloads paywalls referenced by triggers.
+  private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) {
+    for identifier in paywallIdentifiers {
       PaywallManager.shared.getPaywallViewController(
         responseIdentifiers: .init(paywallId: identifier),
         cached: true

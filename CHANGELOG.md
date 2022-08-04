@@ -2,7 +2,19 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
-## 2.4.0 (upcoming release)
+## 2.4.1-beta.1
+
+### Enhancements
+
+- adds `Paywall.preloadAllPaywalls()` and `Paywall.preloadPaywalls(forTriggers triggers: [String])`. Use this with `Paywall.options.shouldPreloadPaywall = false` to have more control over when / what paywalls are preloaded.
+
+### Fixes
+
+- Paywall options specified prior to config are now respected, regardless of if you don't pass an options object through to config
+
+---
+
+## 2.4.0 
 
 ### Enhancements
 
