@@ -2,6 +2,14 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
+## 2.4.1-beta.2
+
+### Enhancements
+
+- adds `Paywall.options.useCachedPaywallTemplates`. When set to `true`, Superwall will load paywall template URLs from disk, if available. Superwall will continue to load cached responses unless you change a paywalls template URL in the dashboard. Something like `?cache_key=08-08-2022` will suffice. Update `cache_key` when changes to your template are made, otherwise Superwall will continue to load a previously cached version from disk. Defaults to `false`.
+
+---
+
 ## 2.4.1-beta.1
 
 ### Enhancements
