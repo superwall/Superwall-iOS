@@ -22,6 +22,23 @@ enum TriggerLogic {
         in: event,
         trigger: trigger
       ) {
+        let variant: Experiment.Variant
+        let assignments = Storage.shared.getAssignments()
+
+        if let assignment = assignments.first(where: { $0.experimentId == rule.experiment.id }),
+          let variantOption = rule.experiment.variants.first(where: { $0.id == assignment.variantId }) {
+          variant = .init(
+            id: variantOption.id,
+            type: variantOption.type,
+            paywallId: variantOption.paywallId
+          )
+        } else {
+          variant = TriggerRuleLogic.chooseVariant(from: Storage.shared.co)
+        }
+        // Cache the response. On trigger fire, check the confirmed assignment cache for experiment id, if it's not in there choose a variant and then store to local cache, as well as send off to server.
+        // When confirmed assignments is sent, it returns the current assignments. If it no lon
+
+
         let confirmableAssignments = getConfirmableAssignments(forRule: rule)
 
         switch rule.experiment.variant.type {

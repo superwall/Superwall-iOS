@@ -137,8 +137,9 @@ class Network {
   func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) {
     urlSession.request(.confirmAssignments(confirmableAssignments)) { result in
       switch result {
-      case .success:
-        break
+      case .success(let response):
+        let assignments = response.assignments
+        Storage.shared.saveAssignments(assignments)
       case .failure(let error):
         Logger.debug(
           logLevel: .error,

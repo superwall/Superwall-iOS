@@ -37,6 +37,7 @@ class Storage {
   var triggers: [String: Trigger] = [:]
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
   private let cache: Cache
+  private let config: Config
 
   init(
     cache: Cache = Cache(),
@@ -93,6 +94,7 @@ class Storage {
     _ config: Config,
     withRequestId requestId: String
   ) {
+    self.config = config
     locales = Set(config.localization.locales.map { $0.locale })
     configRequestId = requestId
     AppSessionManager.shared.appSessionTimeout = config.appSessionTimeout
@@ -207,5 +209,16 @@ class Storage {
 
   func getTotalPaywallViews() -> TotalPaywallViews.Value? {
     return cache.read(TotalPaywallViews.self)
+  }
+
+  func saveAssignments(_ assignments: [Assignment]) {
+    cache.write(
+      assignments,
+      forType: Assignments.self
+    )
+  }
+
+  func getAssignments() -> [Assignment] {
+    return cache.read(Assignments.self) ?? []
   }
 }

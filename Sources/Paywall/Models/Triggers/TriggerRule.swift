@@ -8,26 +8,18 @@
 import Foundation
 
 struct TriggerRule: Decodable, Hashable {
-  var experiment: Experiment
+  var experiment: RawExperiment
   var expression: String?
   var expressionJs: String?
-  var isAssigned: Bool
   var occurrence: TriggerRuleOccurrence?
 
   enum CodingKeys: String, CodingKey {
     case experimentGroupId
     case experimentId
     case expression
-    case isAssigned = "assigned"
-    case variant
+    case variants
     case expressionJs
     case occurrence
-  }
-
-  enum VariantKeys: String, CodingKey {
-    case variantType
-    case variantId
-    case paywallIdentifier
   }
 
   init(from decoder: Decoder) throws {
@@ -35,39 +27,28 @@ struct TriggerRule: Decodable, Hashable {
 
     let experimentId = try values.decode(String.self, forKey: .experimentId)
     let experimentGroupId = try values.decode(String.self, forKey: .experimentGroupId)
+    let variants = try values.decode([VariantOption].self, forKey: .variants)
 
-    let variant = try values.nestedContainer(keyedBy: VariantKeys.self, forKey: .variant)
-    let variantId = try variant.decode(String.self, forKey: .variantId)
-    let paywallIdentifier = try variant.decodeIfPresent(String.self, forKey: .paywallIdentifier)
-    let variantType = try variant.decode(Experiment.Variant.VariantType.self, forKey: .variantType)
-
-    experiment = Experiment(
+    experiment = RawExperiment(
       id: experimentId,
       groupId: experimentGroupId,
-      variant: .init(
-        id: variantId,
-        type: variantType,
-        paywallId: paywallIdentifier
-      )
+      variants: variants
     )
 
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
     expressionJs = try values.decodeIfPresent(String.self, forKey: .expressionJs)
-    isAssigned = try values.decode(Bool.self, forKey: .isAssigned)
     occurrence = try values.decodeIfPresent(TriggerRuleOccurrence.self, forKey: .occurrence)
   }
 
   init(
-    experiment: Experiment,
+    experiment: RawExperiment,
     expression: String?,
     expressionJs: String?,
-    isAssigned: Bool,
     occurrence: TriggerRuleOccurrence? = nil
   ) {
     self.experiment = experiment
     self.expression = expression
     self.expressionJs = expressionJs
-    self.isAssigned = isAssigned
     self.occurrence = occurrence
   }
 }
@@ -75,18 +56,18 @@ struct TriggerRule: Decodable, Hashable {
 extension TriggerRule: Stubbable {
   static func stub() -> TriggerRule {
     return TriggerRule(
-      experiment: Experiment(
+      experiment: RawExperiment(
         id: "1",
         groupId: "2",
-        variant: .init(
-          id: "3",
+        variants: [ .init(
           type: .holdout,
+          id: "3",
+          percentage: 20,
           paywallId: nil
-        )
+        )]
       ),
       expression: nil,
       expressionJs: nil,
-      isAssigned: false,
       occurrence: nil
     )
   }

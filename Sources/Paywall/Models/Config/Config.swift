@@ -9,6 +9,7 @@ import Foundation
 
 struct Config: Decodable {
   var triggers: Set<Trigger>
+  //TODO: Remove paywalls?:
   var paywalls: Set<PaywallConfig> // not used anymore
   var logLevel: Int
   var postback: PostbackRequest
@@ -16,7 +17,7 @@ struct Config: Decodable {
   var appSessionTimeout: Milliseconds
 
   enum CodingKeys: String, CodingKey {
-    case triggers
+    case triggers = "triggerOptions"
     case paywalls
     case logLevel
     case postback

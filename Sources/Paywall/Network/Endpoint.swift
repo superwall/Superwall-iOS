@@ -215,10 +215,13 @@ extension Endpoint where Response == PaywallsResponse {
 // MARK: - ConfigResponse
 extension Endpoint where Response == Config {
   static func config(requestId: String) -> Self {
+    var queryItems = [URLQueryItem(name: "pk", value: Storage.shared.apiKey)]
+
     return Endpoint(
       components: Components(
         host: Api.Base.host,
-        path: Api.version1 + "config"
+        path: Api.version1 + "static_config",
+        queryItems: queryItems
       ),
       method: .get,
       requestId: requestId
