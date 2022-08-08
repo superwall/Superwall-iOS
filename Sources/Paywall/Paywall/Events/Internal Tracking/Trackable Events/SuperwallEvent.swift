@@ -59,7 +59,6 @@ enum SuperwallEvent {
     let name: Paywall.EventName = .deepLink
     let url: URL
 
-
     var superwallParameters: [String: Any] {
       return [
         "url": url.absoluteString,
@@ -71,32 +70,39 @@ enum SuperwallEvent {
         "fragment": url.fragment ?? ""
       ]
     }
-//    var customParameters: [String: Any] = [:]
 
     var customParameters: [String: Any] {
-      guard let query = self.url.query else { return [:] }
+      guard let urlComponents = URLComponents(
+        url: url,
+        resolvingAgainstBaseURL: false
+      ) else {
+        return [:]
+      }
+      guard let queryItems = urlComponents.queryItems else {
+        return [:]
+      }
 
-      var queryStrings = [String: Any]()
-      for pair in query.components(separatedBy: "&") {
-        if let key = pair.components(separatedBy: "=").first {
-          if pair.components(separatedBy:"=").count >= 2 {
-            if let value = pair.components(separatedBy:"=")[1].replacingOccurrences(of: "+", with: " ").removingPercentEncoding {
-              let lowerCase = value.lowercased()
-              if lowerCase == "true" {
-                queryStrings[key] = true
-              } else if lowerCase == "false" {
-                queryStrings[key] = false
-              } else if let i = Int(value) {
-                queryStrings[key] = i
-              } else if let d = Double(value) {
-                queryStrings[key] = d
-              } else {
-                queryStrings[key] = value
-              }
-            } else {
-              queryStrings[key] = true
-            }
-          }
+      var queryStrings: [String: Any] = [:]
+      for queryItem in queryItems {
+        guard
+          !queryItem.name.isEmpty,
+          let value = queryItem.value,
+          !value.isEmpty
+        else {
+          continue
+        }
+        let name = queryItem.name
+        let lowerCaseValue = value.lowercased()
+        if lowerCaseValue == "true" {
+          queryStrings[name] = true
+        } else if lowerCaseValue == "false" {
+          queryStrings[name] = false
+        } else if let int = Int(value) {
+          queryStrings[name] = int
+        } else if let double = Double(value) {
+          queryStrings[name] = double
+        } else {
+          queryStrings[name] = value
         }
       }
       return queryStrings

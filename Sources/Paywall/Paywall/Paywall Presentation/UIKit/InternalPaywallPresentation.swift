@@ -235,7 +235,6 @@ extension Paywall {
 
   private func createPresentingWindowIfNeeded() {
     if presentingWindow == nil {
-
       let activeWindow = UIApplication.shared.activeWindow
 
       if #available(iOS 13.0, *) {

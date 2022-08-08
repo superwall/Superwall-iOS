@@ -37,26 +37,23 @@ struct Config: Decodable {
   }
 
   /// Preloads only the paywall responses
-  internal func preloadAllPaywallResponses() {
+  func preloadAllPaywallResponses() {
     let triggerPaywallIdentifiers = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
     for identifier in triggerPaywallIdentifiers {
       PaywallResponseManager.shared.getResponse(
-        withIdentifiers: .init(paywallId: identifier)) { _ in
-
-        }
+        withIdentifiers: .init(paywallId: identifier)) { _ in }
     }
   }
 
   /// Preloads paywalls referenced by triggers.
-  internal func preloadAllPaywalls() {
+  func preloadAllPaywalls() {
     let triggerPaywallIdentifiers = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
   }
 
   /// Preloads paywalls referenced by the provided triggers.
-  internal func preloadPaywalls(forTriggers triggerEvents: [String]) {
-    let triggerSet = Set(triggerEvents)
-    let triggersToPreload = self.triggers.filter { triggerSet.contains($0.eventName) }
+  func preloadPaywalls(forTriggers triggerNames: Set<String>) {
+    let triggersToPreload = self.triggers.filter { triggerNames.contains($0.eventName) }
     let triggerPaywallIdentifiers = ConfigResponseLogic.getPaywallIds(fromTriggers: triggersToPreload)
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
   }

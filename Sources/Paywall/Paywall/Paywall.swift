@@ -123,9 +123,10 @@ public final class Paywall: NSObject {
   ///  - Returns: The shared Paywall instance.
 	@discardableResult
 	@objc public static func identify(userId: String) -> Paywall {
-    // if there isn't an app user id set, don't clear the cache
-    // if there is an app user id already set, clear the cache if it changed
-    if let currentUserId = Storage.shared.appUserId, currentUserId != userId {
+    // If there isn't an app user id set, don't clear the cache.
+    // If there is an app user id already set, clear the cache if it changed.
+    if let currentUserId = Storage.shared.appUserId,
+      currentUserId != userId {
       Paywall.reset()
     }
 
@@ -133,17 +134,21 @@ public final class Paywall: NSObject {
 		return shared
 	}
 
-  /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard. Won't reload paywalls that are already preloaded.
+  /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard.
   ///
-  /// Call this if you set `Paywall.options.shouldPreloadPaywalls` to `false` when you would like preloading to begin.
+  /// To use this, first set ``PaywallOptions/shouldPreloadPaywalls``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
+  ///
+  /// Note: This will not reload any paywalls you've already preloaded via ``Paywall/Paywall/preloadPaywalls(forTriggers:)``.
   @objc public static func preloadAllPaywalls() {
     shared.configManager.config?.preloadAllPaywalls()
   }
 
-  /// Preloads paywalls that the user may see only when these triggers are fired. Won't reload paywalls that are already preloaded.
+  /// Preloads paywalls for specific trigger names.
   ///
-  /// Call this if you set `Paywall.options.shouldPreloadPaywalls` to `false` when you would like preloading to begin.
-  @objc public static func preloadPaywalls(forTriggers triggers: [String]) {
+  /// To use this, first set ``PaywallOptions/shouldPreloadPaywalls``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
+  ///
+  /// Note: This will not reload any paywalls you've already preloaded.
+  @objc public static func preloadPaywalls(forTriggers triggers: Set<String>) {
     shared.configManager.config?.preloadPaywalls(forTriggers: triggers)
   }
 
@@ -259,15 +264,15 @@ public final class Paywall: NSObject {
 
       switch outcome {
       case .deepLinkTrigger:
-          onMain {
-            if Paywall.shared.isPaywallPresented {
-              Paywall.dismiss {
-                Paywall.internallyPresent(presentationInfo)
-              }
-            } else {
+        onMain {
+          if Paywall.shared.isPaywallPresented {
+            Paywall.dismiss {
               Paywall.internallyPresent(presentationInfo)
             }
+          } else {
+            Paywall.internallyPresent(presentationInfo)
           }
+        }
       case .triggerPaywall:
         // delay in case they are presenting a view controller alongside an event they are calling
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {

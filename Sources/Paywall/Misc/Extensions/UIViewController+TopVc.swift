@@ -16,5 +16,3 @@ extension UIViewController {
     return topViewController
   }
 }
-
-

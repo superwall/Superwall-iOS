@@ -2,23 +2,15 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
-## 2.4.1-beta.2
+## 2.4.1 (Upcoming release)
 
 ### Enhancements
-
-- adds `Paywall.options.useCachedPaywallTemplates`. When set to `true`, Superwall will load paywall template URLs from disk, if available. Superwall will continue to load cached responses unless you change a paywalls template URL in the dashboard. Something like `?cache_key=08-08-2022` will suffice. Update `cache_key` when changes to your template are made, otherwise Superwall will continue to load a previously cached version from disk. Defaults to `false`.
-
----
-
-## 2.4.1-beta.1
-
-### Enhancements
-
-- adds `Paywall.preloadAllPaywalls()` and `Paywall.preloadPaywalls(forTriggers triggers: [String])`. Use this with `Paywall.options.shouldPreloadPaywall = false` to have more control over when / what paywalls are preloaded.
+- Adds `Paywall.options.useCachedPaywallTemplates`. This defaults to `true`. Superwall will load paywall template websites from disk, if available.  When you save a change to your paywall in the Superwall dashboard, a key is appended to the end of your paywall website URL, e.g. `sw_cache_key=<Date saved>`. This is used to cache your paywall webpage to disk after it's first loaded. Superwall will continue to load the cached version of your paywall webpage unless the next time you make a change on the Superwall dashboard.
+- Adds `Paywall.preloadAllPaywalls()` and `Paywall.preloadPaywalls(forTriggers:)`. Use this with `Paywall.options.shouldPreloadPaywall = false` to have more control over when/what paywalls are preloaded.
 
 ### Fixes
 
-- Paywall options specified prior to config are now respected, regardless of if you don't pass an options object through to config
+- Paywall options specified prior to config are now respected, regardless of whether you pass an options object through to config or not.
 
 ---
 
