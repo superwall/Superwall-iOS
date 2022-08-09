@@ -109,27 +109,31 @@ class Network {
     applicationState: UIApplication.State = UIApplication.shared.applicationState,
     storage: Storage = Storage.shared
   ) {
-    if applicationState == .background {
-      let configRequest = ConfigRequest(
-        id: requestId,
-        completion: completion
-      )
-      storage.configRequest = configRequest
-      return
-    }
-
-    urlSession.request(.config(requestId: requestId)) { result in
-      switch result {
-      case .success(let response):
-        completion(.success(response))
-      case .failure(let error):
-        Logger.debug(
-          logLevel: .error,
-          scope: .network,
-          message: "Request Failed: /config",
-          error: error
+    onMain { [weak self] in
+      if applicationState == .background {
+        let configRequest = ConfigRequest(
+          id: requestId,
+          completion: completion
         )
-        completion(.failure(error))
+        storage.configRequest = configRequest
+        return
+      }
+
+      self?.urlSession.request(.config(requestId: requestId)) { result in
+        onMain {
+          switch result {
+          case .success(let response):
+            completion(.success(response))
+          case .failure(let error):
+            Logger.debug(
+              logLevel: .error,
+              scope: .network,
+              message: "Request Failed: /config",
+              error: error
+            )
+            completion(.failure(error))
+          }
+        }
       }
     }
   }
