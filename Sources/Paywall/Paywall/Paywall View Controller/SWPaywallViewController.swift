@@ -467,7 +467,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     Paywall.track(trackedEvent)
 
     if Paywall.options.useCachedPaywallTemplates {
-      print("cache?")
       let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
       webView.load(request)
     } else {
