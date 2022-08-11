@@ -107,7 +107,7 @@ class Network {
     withRequestId requestId: String,
     completion: @escaping (Result<Config, Error>) -> Void,
     applicationState: UIApplication.State = UIApplication.shared.applicationState,
-    storage: Storage = Storage.shared
+    configManager: ConfigManager = .shared
   ) {
     onMain { [weak self] in
       if applicationState == .background {
@@ -115,7 +115,7 @@ class Network {
           id: requestId,
           completion: completion
         )
-        storage.configRequest = configRequest
+        configManager.configRequest = configRequest
         return
       }
 
@@ -128,7 +128,7 @@ class Network {
             Logger.debug(
               logLevel: .error,
               scope: .network,
-              message: "Request Failed: /config",
+              message: "Request Failed: /static_config",
               error: error
             )
             completion(.failure(error))
@@ -142,14 +142,31 @@ class Network {
     urlSession.request(.confirmAssignments(confirmableAssignments)) { result in
       switch result {
       case .success(let response):
-        let assignments = response.assignments
-        Storage.shared.saveAssignments(assignments)
+        break
+        // let assignments = response.assignments
+        // TODO: Should we save these?
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
           scope: .network,
           message: "Request Failed: /confirm_assignments",
           info: ["assignments": confirmableAssignments],
+          error: error
+        )
+      }
+    }
+  }
+
+  func getAssignments(completion: @escaping (Result<[Assignment], Error>) -> Void) {
+    urlSession.request(.assignments) { result in
+      switch result {
+      case .success(let response):
+        completion(.success(response.assignments))
+      case .failure(let error):
+        Logger.debug(
+          logLevel: .error,
+          scope: .network,
+          message: "Request Failed: /assignments",
           error: error
         )
       }

@@ -17,12 +17,14 @@ enum TriggerRuleLogic {
     if variants.isEmpty {
       throw TriggerRuleError.noVariantsFound
     }
-    let variantSum = variants.reduce(0, { partialResult, variant in
+    let variantSum = variants.reduce(0) { partialResult, variant in
       partialResult + variant.percentage
-    })
+    }
 
     if variantSum == 0 {
-      let firstVariant = variants.first!
+      guard let firstVariant = variants.first else {
+        throw TriggerRuleError.invalidState
+      }
       return .init(
         id: firstVariant.id,
         type: firstVariant.type,

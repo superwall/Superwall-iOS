@@ -59,12 +59,14 @@ extension TriggerRule: Stubbable {
       experiment: RawExperiment(
         id: "1",
         groupId: "2",
-        variants: [ .init(
+        variants: [
+          .init(
           type: .holdout,
           id: "3",
           percentage: 20,
           paywallId: nil
-        )]
+          )
+        ]
       ),
       expression: nil,
       expressionJs: nil,

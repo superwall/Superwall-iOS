@@ -15,6 +15,9 @@ final class TriggerSessionManager {
   /// Storage class. Can be injected via init for testing.
   private let storage: Storage
 
+  /// Config Manager class. Can be injected via init for testing.
+  private let configManager: ConfigManager
+
   /// The list of all potential trigger sessions, keyed by the trigger event name, created after receiving the config.
   private var pendingTriggerSessions: [String: TriggerSession] = [:]
 
@@ -33,10 +36,12 @@ final class TriggerSessionManager {
   /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
   init(
     delegate: SessionEventsDelegate?,
-    storage: Storage = Storage.shared
+    storage: Storage = .shared,
+    configManager: ConfigManager = .shared
   ) {
     self.delegate = delegate
     self.storage = storage
+    self.configManager = configManager
     addObservers()
   }
 
@@ -76,7 +81,7 @@ final class TriggerSessionManager {
     // Loop through triggers and create a session for each.
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-        configRequestId: storage.configRequestId,
+        configRequestId: configManager.configRequestId,
         userAttributes: storage.userAttributes,
         isSubscribed: Paywall.shared.isUserSubscribed,
         eventName: trigger.eventName,
@@ -89,7 +94,7 @@ final class TriggerSessionManager {
     // Add in the default paywall session.
     let defaultEventName = SuperwallEvent.ManualPresent().rawName
     let defaultPaywallSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-      configRequestId: storage.configRequestId,
+      configRequestId: configManager.configRequestId,
       userAttributes: storage.userAttributes,
       isSubscribed: Paywall.shared.isUserSubscribed,
       eventName: defaultEventName,
@@ -180,7 +185,7 @@ final class TriggerSessionManager {
     // Recreate a pending trigger session
     let eventName = currentTriggerSession.trigger.eventName
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-      configRequestId: storage.configRequestId,
+      configRequestId: configManager.configRequestId,
       userAttributes: storage.userAttributes,
       isSubscribed: Paywall.shared.isUserSubscribed,
       eventName: eventName,

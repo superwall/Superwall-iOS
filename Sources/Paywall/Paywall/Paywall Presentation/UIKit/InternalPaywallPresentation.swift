@@ -20,7 +20,7 @@ extension Paywall {
     onSkip: ((NSError) -> Void)? = nil
   ) {
     let presentationStyleOverride = presentationStyleOverride == .none ? nil : presentationStyleOverride
-    guard shared.configManager.didFetchConfig else {
+    guard ConfigManager.shared.didFetchConfig else {
       let trigger = PreConfigTrigger(
         presentationInfo: presentationInfo,
         presentationStyleOverride: presentationStyleOverride,
@@ -58,9 +58,9 @@ extension Paywall {
       }
     }
 
-    let triggerOutcome = PaywallResponseLogic.getTriggerResultOutcome(
+    let triggerOutcome = PaywallResponseLogic.getTriggerResultAndConfirmAssignment(
       presentationInfo: presentationInfo,
-      triggers: Storage.shared.triggers
+      triggers: ConfigManager.shared.triggers
     )
     let identifiers: ResponseIdentifiers
 

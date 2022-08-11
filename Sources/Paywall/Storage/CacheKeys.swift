@@ -99,10 +99,10 @@ enum TotalPaywallViews: Storable {
   typealias Value = Int
 }
 
-enum Assignments: Storable {
+enum ConfirmedAssignments: Storable {
   static var key: String {
-    "store.assignments"
+    "store.confirmedAssignments"
   }
   static var directory: SearchPathDirectory = .userSpecificDocuments
-  typealias Value = [Assignment]
+  typealias Value = [Experiment.ID: Experiment.Variant]
 }

@@ -22,6 +22,12 @@ final class PaywallResponseManager: NSObject {
     withIdentifiers responseIdentifiers: ResponseIdentifiers,
     completion: @escaping PaywallResponseCompletionBlock
   ) {
+    if let paywallResponse = ConfigManager.shared.getStaticPaywallResponse(
+      forPaywallId: responseIdentifiers.paywallId
+    ) {
+      return completion(.success(paywallResponse))
+    }
+
     let paywallRequestHash = PaywallResponseLogic.requestHash(
       identifier: responseIdentifiers.paywallId,
       event: eventData

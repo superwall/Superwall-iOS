@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
+// swiftlint:disable type_name
 
 import Foundation
 
@@ -13,6 +14,8 @@ import Foundation
 ///
 /// To learn more, read <doc:Ecosystem>.
 public struct Experiment: Equatable, Hashable, Codable {
+  public typealias ID = String
+
   public struct Variant: Equatable, Hashable, Codable {
     public enum VariantType: String, Codable, Hashable {
       case treatment = "TREATMENT"
@@ -35,7 +38,7 @@ public struct Experiment: Equatable, Hashable, Codable {
     public let paywallId: String?
   }
   /// The id of the experiment.
-  public let id: String
+  public let id: Experiment.ID
 
   /// The id of the experiment group.
   public let groupId: String

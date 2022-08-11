@@ -15,6 +15,19 @@ class Storage {
   var debugKey: String?
   var appUserId: String? {
     didSet {
+      // If there is an appUserId already set, clear the cache if it changed.
+      if let oldValue = oldValue {
+        if appUserId != nil,
+          oldValue != appUserId {
+          Paywall.reset()
+        }
+      } else {
+        // If there isn't an appUserId already set, don't clear the cache.
+        // If appUserId just set, get assignments.
+        if oldValue != appUserId {
+          ConfigManager.shared.getAssignments()
+        }
+      }
       save()
     }
   }
@@ -25,19 +38,12 @@ class Storage {
   }
 	var didTrackFirstSeen = false
   var userAttributes: [String: Any] = [:]
-  var locales: Set<String> = []
-  var configRequestId = ""
 
   var userId: String? {
     return appUserId ?? aliasId
   }
-  /// Used to store the config request if it occurred in the background.
-  var configRequest: ConfigRequest?
-  // swiftlint:disable:next array_constructor
-  var triggers: [String: Trigger] = [:]
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
   private let cache: Cache
-  private let config: Config
 
   init(
     cache: Cache = Cache(),
@@ -65,10 +71,9 @@ class Storage {
   ) {
     migrateData()
 
-    if let newAppUserId = appUserId {
-      if self.appUserId != newAppUserId {
-        self.appUserId = newAppUserId
-      }
+    if let newAppUserId = appUserId,
+      self.appUserId != newAppUserId {
+      self.appUserId = newAppUserId
     }
 
     self.apiKey = apiKey
@@ -85,21 +90,10 @@ class Storage {
     appUserId = nil
     aliasId = StorageLogic.generateAlias()
     userAttributes = [:]
-    triggers.removeAll()
+    ConfigManager.shared.clear()
     didTrackFirstSeen = false
     recordFirstSeenTracked()
   }
-
-	func addConfig(
-    _ config: Config,
-    withRequestId requestId: String
-  ) {
-    self.config = config
-    locales = Set(config.localization.locales.map { $0.locale })
-    configRequestId = requestId
-    AppSessionManager.shared.appSessionTimeout = config.appSessionTimeout
-    triggers = StorageLogic.getTriggerDictionary(from: config.triggers)
-	}
 
 	func mergeUserAttributes(_ newAttributes: [String: Any]) {
     let mergedAttributes = StorageLogic.mergeAttributes(
@@ -211,14 +205,14 @@ class Storage {
     return cache.read(TotalPaywallViews.self)
   }
 
-  func saveAssignments(_ assignments: [Assignment]) {
+  func saveAssignments(_ assignments: [String: Experiment.Variant]) {
     cache.write(
       assignments,
-      forType: Assignments.self
+      forType: ConfirmedAssignments.self
     )
   }
 
-  func getAssignments() -> [Assignment] {
-    return cache.read(Assignments.self) ?? []
+  func getConfirmedAssignments() -> [Experiment.ID: Experiment.Variant] {
+    return cache.read(ConfirmedAssignments.self) ?? [:]
   }
 }
