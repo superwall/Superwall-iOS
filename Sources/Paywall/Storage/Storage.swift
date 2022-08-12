@@ -75,6 +75,8 @@ class Storage {
     if aliasId == nil {
       aliasId = StorageLogic.generateAlias()
     }
+
+    updateSdkVersion()
   }
 
   private func migrateData() {
@@ -87,9 +89,15 @@ class Storage {
 
   /// Checks to see whether a user has upgraded from normal to static config.
   /// This blocks triggers until assignments is returned.
+  private func updateSdkVersion() {
+    let actualSdkVersion = sdkVersion
+    cache.write(actualSdkVersion, forType: SdkVersion.self)
+  }
+
   private func checkForStaticConfigUpgrade() {
-    let usingStaticConfig = cache.read(UsingStaticConfig.self) ?? false
-    if !usingStaticConfig && DeviceHelper.shared.minutesSinceInstall > 60 {
+    let storedSdkVersion = cache.read(SdkVersion.self)
+
+    if storedSdkVersion == nil && DeviceHelper.shared.minutesSinceInstall > 60 {
       TriggerDelayManager.shared.enterAssignmentDispatchQueue()
 
       // After config, we get the assignments.
@@ -99,10 +107,6 @@ class Storage {
           TriggerDelayManager.shared.leaveAssignmentDispatchQueue()
         }
       }
-    }
-
-    if usingStaticConfig == false {
-      cache.write(true, forType: UsingStaticConfig.self)
     }
   }
 
@@ -228,7 +232,7 @@ class Storage {
     return cache.read(TotalPaywallViews.self)
   }
 
-  func saveAssignments(_ assignments: [String: Experiment.Variant]) {
+  func saveConfirmedAssignments(_ assignments: [String: Experiment.Variant]) {
     cache.write(
       assignments,
       forType: ConfirmedAssignments.self

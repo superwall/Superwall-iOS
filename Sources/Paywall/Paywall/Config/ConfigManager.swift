@@ -95,16 +95,26 @@ final class ConfigManager {
   // MARK: - Assignments
 
   private func assignVariants() {
-    let confirmedAssignments = Storage.shared.getConfirmedAssignments()
+    var confirmedAssignments = Storage.shared.getConfirmedAssignments()
     guard let triggers = config?.triggers else {
       return
     }
+    let availableVariantIds = Set(triggers.flatMap { $0.rules.flatMap { $0.experiment.variants.map { $0.id } } })
 
     // Loop through each trigger and each of its rules.
     for trigger in triggers {
       for rule in trigger.rules {
         // Check whether we have already chosen a variant for the experiment on disk.
-        if confirmedAssignments[rule.experiment.id] == nil {
+        if let confirmedVariant = confirmedAssignments[rule.experiment.id] {
+          // If one exists, check it's still in the available variants, otherwise reroll.
+          if !availableVariantIds.contains(confirmedVariant.id) {
+            guard let variant = try? TriggerRuleLogic.chooseVariant(from: rule.experiment.variants) else {
+              continue
+            }
+            unconfirmedAssignments[rule.experiment.id] = variant
+            confirmedAssignments[rule.experiment.id] = nil
+          }
+        } else {
           // No variant found on disk so dice roll to choose a variant and store in memory as an unconfirmed assignment.
           guard let variant = try? TriggerRuleLogic.chooseVariant(from: rule.experiment.variants) else {
             continue
@@ -113,6 +123,8 @@ final class ConfigManager {
         }
       }
     }
+
+    Storage.shared.saveConfirmedAssignments(confirmedAssignments)
   }
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
@@ -123,7 +135,6 @@ final class ConfigManager {
     }
     Network.shared.getAssignments { [weak self] result in
       guard let self = self else {
-        completion?()
         return
       }
       switch result {
@@ -151,7 +162,7 @@ final class ConfigManager {
           )
           self.unconfirmedAssignments[assignment.experimentId] = nil
         }
-        Storage.shared.saveAssignments(confirmedAssignments)
+        Storage.shared.saveConfirmedAssignments(confirmedAssignments)
         self.cacheConfig()
         completion?()
       case .failure(let error):
@@ -190,9 +201,24 @@ final class ConfigManager {
     }
   }
 
+  /*
+   Make sure it doesn't preload variants that aren't in static config.
+   */
   private func getAllTreatmentPaywallIds() -> Set<String> {
+    guard let triggers = config?.triggers else {
+      return []
+    }
     // TODO: Extract confirmed assignments into memory to reduce load time.
-    let confirmedAssignments = Storage.shared.getConfirmedAssignments()
+    var confirmedAssignments = Storage.shared.getConfirmedAssignments()
+
+    // Don't preload any experiment IDs that are on disk but no longer in static config.
+    // This could happen when a campaign has been archived.
+    let confirmedExperimentIds = Set(confirmedAssignments.keys)
+    let triggerExperimentIds = Set(triggers.flatMap { $0.rules.map { $0.experiment.id } })
+    let oldExperimentIds = confirmedExperimentIds.subtracting(triggerExperimentIds)
+    for id in oldExperimentIds {
+      confirmedAssignments[id] = nil
+    }
 
     let confirmedVariants = [Experiment.Variant](confirmedAssignments.values)
     let unconfirmedVariants = [Experiment.Variant](unconfirmedAssignments.values)
@@ -246,7 +272,7 @@ final class ConfigManager {
 
     var confirmedAssignments = Storage.shared.getConfirmedAssignments()
     confirmedAssignments[confirmableAssignment.experimentId] = confirmableAssignment.variant
-    Storage.shared.saveAssignments(confirmedAssignments)
+    Storage.shared.saveConfirmedAssignments(confirmedAssignments)
     unconfirmedAssignments[confirmableAssignment.experimentId] = nil
   }
 
