@@ -20,6 +20,8 @@ class Storage {
         if appUserId != nil,
           oldValue != appUserId {
           Paywall.reset()
+        } else if oldValue == appUserId {
+          checkForStaticConfigUpgrade()
         }
       } else {
         // If there isn't an appUserId already set, don't clear the cache.
@@ -38,6 +40,7 @@ class Storage {
   }
 	var didTrackFirstSeen = false
   var userAttributes: [String: Any] = [:]
+  var isUpdatingToStaticConfig = false
 
   var userId: String? {
     return appUserId ?? aliasId
@@ -57,22 +60,13 @@ class Storage {
     self.userAttributes = cache.read(UserAttributes.self) ?? [:]
   }
 
-  func migrateData() {
-    let version = cache.read(Version.self) ?? .v1
-    FileManagerMigrator.migrate(
-      fromVersion: version,
-      cache: cache
-    )
-  }
-
   func configure(
     appUserId: String?,
     apiKey: String
   ) {
     migrateData()
 
-    if let newAppUserId = appUserId,
-      self.appUserId != newAppUserId {
+    if let newAppUserId = appUserId {
       self.appUserId = newAppUserId
     }
 
@@ -80,6 +74,35 @@ class Storage {
 
     if aliasId == nil {
       aliasId = StorageLogic.generateAlias()
+    }
+  }
+
+  private func migrateData() {
+    let version = cache.read(Version.self) ?? .v1
+    FileManagerMigrator.migrate(
+      fromVersion: version,
+      cache: cache
+    )
+  }
+
+  /// Checks to see whether a user has upgraded from normal to static config.
+  /// This blocks triggers until assignments is returned.
+  private func checkForStaticConfigUpgrade() {
+    let usingStaticConfig = cache.read(UsingStaticConfig.self) ?? false
+    if !usingStaticConfig && DeviceHelper.shared.minutesSinceInstall > 60 {
+      TriggerDelayManager.shared.enterAssignmentDispatchQueue()
+
+      // After config, we get the assignments.
+      // Only when the config and assignments are fetched do we fire triggers.
+      TriggerDelayManager.shared.configDispatchGroup.notify(queue: .main) {
+        ConfigManager.shared.getAssignments() {
+          TriggerDelayManager.shared.leaveAssignmentDispatchQueue()
+        }
+      }
+    }
+
+    if usingStaticConfig == false {
+      cache.write(true, forType: UsingStaticConfig.self)
     }
   }
 

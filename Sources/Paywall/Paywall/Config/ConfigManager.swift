@@ -10,7 +10,6 @@ import UIKit
 final class ConfigManager {
   static let shared = ConfigManager()
 
-  lazy var didFetchConfig = !configRequestId.isEmpty
   var options = PaywallOptions()
   var config: Config?
   /// Used to store the config request if it occurred in the background.
@@ -63,29 +62,11 @@ final class ConfigManager {
         self.triggers = StorageLogic.getTriggerDictionary(from: config.triggers)
 
         SessionEventsManager.shared.triggerSession.createSessions(from: config)
-        self.didFetchConfig = true
         self.config = config
         self.assignVariants()
         self.cacheConfig()
-        Storage.shared.triggersFiredPreConfig.forEach { trigger in
-          switch trigger.presentationInfo.triggerType {
-          case .implicit:
-            guard let eventData = trigger.presentationInfo.eventData else {
-              return
-            }
-            Paywall.shared.handleImplicitTrigger(forEvent: eventData)
-          case .explicit:
-            Paywall.internallyPresent(
-              trigger.presentationInfo,
-              on: trigger.viewController,
-              ignoreSubscriptionStatus: trigger.ignoreSubscriptionStatus,
-              onPresent: trigger.onPresent,
-              onDismiss: trigger.onDismiss,
-              onSkip: trigger.onFail
-            )
-          }
-        }
-        Storage.shared.clearPreConfigTriggers()
+        TriggerDelayManager.shared.leaveConfigDispatchQueue()
+        TriggerDelayManager.shared.fireDelayedTriggers()
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -94,7 +75,8 @@ final class ConfigManager {
           info: nil,
           error: error
         )
-        self.didFetchConfig = true
+        TriggerDelayManager.shared.leaveConfigDispatchQueue()
+        TriggerDelayManager.shared.fireDelayedTriggers()
       }
     }
   }
@@ -136,10 +118,12 @@ final class ConfigManager {
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
   func getAssignments(completion: (() -> Void)? = nil) {
     guard let triggers = config?.triggers else {
+      completion?()
       return
     }
     Network.shared.getAssignments { [weak self] result in
       guard let self = self else {
+        completion?()
         return
       }
       switch result {
@@ -156,7 +140,7 @@ final class ConfigManager {
           guard let variantOption = trigger.rules.compactMap({
             $0.experiment.variants.first { $0.id == assignment.variantId }
           }).first else {
-            return
+            continue
           }
 
           // Save this to disk, remove any unconfirmed assignments with the same experiment ID.

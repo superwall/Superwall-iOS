@@ -20,7 +20,7 @@ extension Paywall {
     onSkip: ((NSError) -> Void)? = nil
   ) {
     let presentationStyleOverride = presentationStyleOverride == .none ? nil : presentationStyleOverride
-    guard ConfigManager.shared.didFetchConfig else {
+    if TriggerDelayManager.shared.hasDelay {
       let trigger = PreConfigTrigger(
         presentationInfo: presentationInfo,
         presentationStyleOverride: presentationStyleOverride,

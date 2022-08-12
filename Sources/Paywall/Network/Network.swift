@@ -141,7 +141,7 @@ class Network {
   func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) {
     urlSession.request(.confirmAssignments(confirmableAssignments)) { result in
       switch result {
-      case .success(let response):
+      case .success:
         break
         // let assignments = response.assignments
         // TODO: Should we save these?

@@ -106,3 +106,11 @@ enum ConfirmedAssignments: Storable {
   static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = [Experiment.ID: Experiment.Variant]
 }
+
+enum UsingStaticConfig: Storable {
+  static var key: String {
+    "store.usingStaticConfig"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}

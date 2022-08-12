@@ -239,7 +239,7 @@ extension Endpoint where Response == ConfirmedAssignmentResponse {
         host: Api.Base.host,
         path: Api.version1 + "assignments"
       ),
-      method: .post
+      method: .get
     )
   }
 

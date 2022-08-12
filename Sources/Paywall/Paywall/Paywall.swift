@@ -211,6 +211,7 @@ public final class Paywall: NSObject {
 		guard let apiKey = apiKey else {
 			return
 		}
+    TriggerDelayManager.shared.enterConfigDispatchQueue()
     ConfigManager.shared.setOptions(options)
     Storage.shared.configure(
       appUserId: userId,
@@ -242,7 +243,7 @@ public final class Paywall: NSObject {
 
       let presentationInfo: PresentationInfo = .implicitTrigger(event)
 
-      guard ConfigManager.shared.didFetchConfig else {
+      if TriggerDelayManager.shared.hasDelay {
         let trigger = PreConfigTrigger(presentationInfo: presentationInfo)
         Storage.shared.cachePreConfigTrigger(trigger)
         return
