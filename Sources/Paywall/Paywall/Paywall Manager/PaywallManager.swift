@@ -11,7 +11,7 @@ import UIKit
 final class PaywallManager {
 	static let shared = PaywallManager()
 	var presentedViewController: SWPaywallViewController? {
-    return SWPaywallViewController.cache.first {  $0.isActive }
+    return SWPaywallViewController.cache.first { $0.isActive }
 	}
 
   private var cache = PaywallCache()

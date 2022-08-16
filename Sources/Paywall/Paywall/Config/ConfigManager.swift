@@ -202,9 +202,6 @@ final class ConfigManager {
     }
   }
 
-  /*
-   Make sure it doesn't preload variants that aren't in static config.
-   */
   private func getAllTreatmentPaywallIds() -> Set<String> {
     guard let triggers = config?.triggers else {
       return []

@@ -22,7 +22,6 @@ final class PaywallResponseManager: NSObject {
     withIdentifiers responseIdentifiers: ResponseIdentifiers,
     completion: @escaping PaywallResponseCompletionBlock
   ) {
-
     let paywallRequestHash = PaywallResponseLogic.requestHash(
       identifier: responseIdentifiers.paywallId,
       event: eventData
@@ -57,23 +56,22 @@ final class PaywallResponseManager: NSObject {
     )
 	}
 
-  private func getCachedResponseOrLoad(paywallId: String?, fromEvent event: EventData?, completion: @escaping (PaywallResponse?, Error?) -> Void) {
+  private func getCachedResponseOrLoad(
+    paywallId: String?,
+    fromEvent event: EventData?,
+    completion: @escaping (Result<PaywallResponse, Error>) -> Void
+  ) {
     if let paywallResponse = ConfigManager.shared.getStaticPaywallResponse(
       forPaywallId: paywallId
     ) {
-      completion(paywallResponse, nil)
+      completion(.success(paywallResponse))
     } else {
       Network.shared.getPaywallResponse(
         withPaywallId: paywallId,
         fromEvent: event
       ) { result in
         self.queue.async {
-          switch result {
-          case .success(let response):
-            completion(response, nil)
-          case .failure(let error):
-            completion(nil, error)
-          }
+          completion(result)
         }
       }
     }
@@ -101,8 +99,12 @@ final class PaywallResponseManager: NSObject {
       )
       Paywall.track(trackedEvent)
 
-      self.getCachedResponseOrLoad(paywallId: responseIdentifiers.paywallId, fromEvent: event) {  response, error in
-        if var response = response {
+      self.getCachedResponseOrLoad(
+        paywallId: responseIdentifiers.paywallId,
+        fromEvent: event
+      ) { result in
+        switch result {
+        case .success(var response):
           response.experiment = responseIdentifiers.experiment
           response.responseLoadStartTime = responseLoadStartTime
           response.responseLoadCompleteTime = Date()
@@ -126,7 +128,7 @@ final class PaywallResponseManager: NSObject {
             paywallInfo: paywallInfo,
             event: event
           )
-        } else if let error = error {
+        case .failure(let error):
           SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
             forPaywallId: responseIdentifiers.paywallId,
             state: .fail

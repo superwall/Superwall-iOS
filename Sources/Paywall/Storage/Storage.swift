@@ -88,7 +88,7 @@ class Storage {
       // After config, we get the assignments.
       // Only when the config and assignments are fetched do we fire triggers.
       TriggerDelayManager.shared.configDispatchGroup.notify(queue: .main) {
-        ConfigManager.shared.getAssignments() {
+        ConfigManager.shared.getAssignments {
           TriggerDelayManager.shared.leaveAssignmentDispatchQueue()
         }
       }
