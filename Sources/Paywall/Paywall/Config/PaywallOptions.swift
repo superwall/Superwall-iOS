@@ -55,7 +55,7 @@ public class PaywallOptions: NSObject {
   /// Loads paywall template websites from disk, if available. Defaults to `true`.
   ///
   /// When you save a change to your paywall in the Superwall dashboard, a key is appended to the end of your paywall website URL, e.g. `sw_cache_key=<Date saved>`. This is used to cache your paywall webpage to disk after it's first loaded. Superwall will continue to load the cached version of your paywall webpage unless the next time you make a change on the Superwall dashboard.
-  public var useCachedPaywallTemplates = true
+  internal var useCachedPaywallTemplates = false
 
   /// Configuration for printing to the console.
   public struct Logging {

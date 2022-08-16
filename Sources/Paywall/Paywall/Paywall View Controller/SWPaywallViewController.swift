@@ -50,6 +50,8 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     }
   }
 
+  static var all =  Set<SWPaywallViewController>()
+
 	var isActive: Bool {
 		return isPresented || isBeingPresented
 	}
@@ -135,6 +137,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     super.init(nibName: nil, bundle: nil)
     configureUI()
     loadPaywallWebpage()
+    SWPaywallViewController.all.insert(self)
 	}
 
 	required init?(coder: NSCoder) {
@@ -142,6 +145,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	}
 
   deinit {
+    SWPaywallViewController.all.remove(self)
     NotificationCenter.default.removeObserver(
       self,
       name: UIApplication.willResignActiveNotification,

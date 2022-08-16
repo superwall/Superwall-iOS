@@ -17,7 +17,16 @@ final class PaywallManager {
 		return vcs.first
 	}
   private var viewControllers: Set<SWPaywallViewController> {
-    return Set<SWPaywallViewController>(cache.viewControllers)
+
+//    let referencedViewControllers = Set<SWPaywallViewController>(cache.viewControllers)
+//    let dereferencedViewControllers = SWPaywallViewController.all.subtracting(referencedViewControllers)
+//
+//    if dereferencedViewControllers.count > 0 {
+//      print(dereferencedViewControllers)
+//      fatalError("Internal Inconsistentcy")
+//    }
+
+    return SWPaywallViewController.all
   }
   private var cache = PaywallCache()
 
