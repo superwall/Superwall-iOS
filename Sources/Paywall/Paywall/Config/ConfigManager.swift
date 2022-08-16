@@ -283,19 +283,8 @@ final class ConfigManager {
   private func cacheConfig() {
     if Paywall.options.shouldPreloadPaywalls {
       preloadAllPaywalls()
-    } else {
-      preloadAllPaywallResponses()
     }
     executePostback()
-  }
-
-  /// Preloads only the paywall responses
-  func preloadAllPaywallResponses() {
-    let triggerPaywallIdentifiers = getAllTreatmentPaywallIds()
-    for identifier in triggerPaywallIdentifiers {
-      PaywallResponseManager.shared.getResponse(
-        withIdentifiers: .init(paywallId: identifier)) { _ in }
-    }
   }
 
   /// Preloads paywalls referenced by triggers.
