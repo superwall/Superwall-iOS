@@ -15,21 +15,6 @@ class Storage {
   var debugKey: String?
   var appUserId: String? {
     didSet {
-      // If there is an appUserId already set, clear the cache if it changed.
-      if let oldValue = oldValue {
-        if appUserId != nil,
-          oldValue != appUserId {
-          Paywall.reset()
-        } else if oldValue == appUserId {
-          checkForStaticConfigUpgrade()
-        }
-      } else {
-        // If there isn't an appUserId already set, don't clear the cache.
-        // If appUserId just set, get assignments.
-        if oldValue != appUserId {
-          ConfigManager.shared.getAssignments()
-        }
-      }
       save()
     }
   }
@@ -94,7 +79,7 @@ class Storage {
     cache.write(actualSdkVersion, forType: SdkVersion.self)
   }
 
-  private func checkForStaticConfigUpgrade() {
+  func checkForStaticConfigUpgrade() {
     let storedSdkVersion = cache.read(SdkVersion.self)
 
     if storedSdkVersion == nil && DeviceHelper.shared.minutesSinceInstall > 60 {
