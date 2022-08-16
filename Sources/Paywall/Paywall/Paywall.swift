@@ -211,7 +211,7 @@ public final class Paywall: NSObject {
 		guard let apiKey = apiKey else {
 			return
 		}
-    TriggerDelayManager.shared.enterConfigDispatchQueue()
+    
     ConfigManager.shared.setOptions(options)
     Storage.shared.configure(
       appUserId: userId,

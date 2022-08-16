@@ -50,6 +50,7 @@ final class ConfigManager {
   }
 
   func fetchConfiguration() {
+    TriggerDelayManager.shared.enterConfigDispatchQueue()
     let requestId = UUID().uuidString
     Network.shared.getConfig(withRequestId: requestId) { [weak self] result in
       guard let self = self else {
