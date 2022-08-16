@@ -19,7 +19,6 @@ final class PaywallService {
   static func initPaywall() {
     Paywall.configure(
       apiKey: apiKey,
-      userId: "abcd",
       delegate: shared
     )
   }
