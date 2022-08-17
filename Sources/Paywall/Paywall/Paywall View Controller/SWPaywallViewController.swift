@@ -511,8 +511,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     Paywall.track(trackedEvent)
 	}
 
-  weak var refreshVC: UIViewController? = nil
-
 	func presentAlert(
     title: String? = nil,
     message: String? = nil,
@@ -554,8 +552,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         self?.loadingState = .ready
       }
     }
-
-    refreshVC = alertController
   }
 
   @objc func applicationWillResignActive(_ sender: AnyObject? = nil) {
