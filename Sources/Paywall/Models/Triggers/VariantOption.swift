@@ -53,9 +53,9 @@ extension VariantOption: Stubbable {
   static func stub() -> VariantOption {
     return VariantOption(
       type: .treatment,
-      id: "abc",
+      id: UUID().uuidString,
       percentage: 100,
-      paywallId: "def"
+      paywallId: UUID().uuidString
     )
   }
 }

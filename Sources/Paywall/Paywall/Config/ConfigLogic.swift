@@ -13,7 +13,10 @@ enum ConfigLogic {
     case invalidState
   }
 
-  static func chooseVariant(from variants: [VariantOption]) throws -> Experiment.Variant {
+  static func chooseVariant(
+    from variants: [VariantOption],
+    randomiser: (Range<Int>) -> Int = Int.random(in:)
+  ) throws -> Experiment.Variant {
     if variants.isEmpty {
       throw TriggerRuleError.noVariantsFound
     }
@@ -22,18 +25,11 @@ enum ConfigLogic {
     }
 
     if variantSum == 0 {
-      guard let firstVariant = variants.first else {
-        throw TriggerRuleError.invalidState
-      }
-      return .init(
-        id: firstVariant.id,
-        type: firstVariant.type,
-        paywallId: firstVariant.paywallId
-      )
+      throw TriggerRuleError.invalidState
     }
 
     // Choose a random percentage e.g. 21
-    let randomPercentage = Int.random(in: 0..<variantSum)
+    let randomPercentage = randomiser(0..<variantSum)
 
     // Normalise the percentage e.g. 21/99 = 0.212
     let normRandomPercentage = Double(randomPercentage) / Double(variantSum)
