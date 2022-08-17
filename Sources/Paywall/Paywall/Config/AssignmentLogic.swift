@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ConfirmableAssignment {
+struct ConfirmableAssignment: Equatable {
   let experimentId: Experiment.ID
   let variant: Experiment.Variant
 }
@@ -24,7 +24,8 @@ enum AssignmentLogic {
   static func getOutcome(
     forEvent event: EventData,
     triggers: [String: Trigger],
-    configManager: ConfigManager = .shared
+    configManager: ConfigManager = .shared,
+    storage: Storage = .shared
   ) -> Outcome {
     if let trigger = triggers[event.name] {
       if let rule = TriggerLogic.findMatchingRule(
@@ -35,20 +36,18 @@ enum AssignmentLogic {
         var confirmableAssignment: ConfirmableAssignment?
 
         // For a matching rule there will be an unconfirmed or confirmed variant assignment (either in memory or on disk respectively).
-        if let unconfirmedVariant = configManager.unconfirmedAssignments[rule.experiment.id] {
+        // First check the disk, otherwise check memory.
+        let confirmedAssignments = storage.getConfirmedAssignments()
+        if let confirmedVariant = confirmedAssignments[rule.experiment.id] {
+          variant = confirmedVariant
+        } else if let unconfirmedVariant = configManager.unconfirmedAssignments[rule.experiment.id] {
           confirmableAssignment = ConfirmableAssignment(
             experimentId: rule.experiment.id,
             variant: unconfirmedVariant
           )
           variant = unconfirmedVariant
         } else {
-          let confirmedAssignments = Storage.shared.getConfirmedAssignments()
-          guard let confirmedVariant = confirmedAssignments[rule.experiment.id] else {
-            // TODO: Review this outcome.
-            // This should never be hit, but in the case it does, we'll return unknownEvent.
-            return Outcome(result: .unknownEvent)
-          }
-          variant = confirmedVariant
+          return Outcome(result: .unknownEvent)
         }
 
         switch variant.type {

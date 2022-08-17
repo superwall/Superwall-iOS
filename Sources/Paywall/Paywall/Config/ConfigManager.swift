@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class ConfigManager {
+class ConfigManager {
   static let shared = ConfigManager()
 
   var options = PaywallOptions()
@@ -109,7 +109,7 @@ final class ConfigManager {
         if let confirmedVariant = confirmedAssignments[rule.experiment.id] {
           // If one exists, check it's still in the available variants, otherwise reroll.
           if !availableVariantIds.contains(confirmedVariant.id) {
-            guard let variant = try? TriggerRuleLogic.chooseVariant(from: rule.experiment.variants) else {
+            guard let variant = try? ConfigLogic.chooseVariant(from: rule.experiment.variants) else {
               continue
             }
             unconfirmedAssignments[rule.experiment.id] = variant
@@ -117,7 +117,7 @@ final class ConfigManager {
           }
         } else {
           // No variant found on disk so dice roll to choose a variant and store in memory as an unconfirmed assignment.
-          guard let variant = try? TriggerRuleLogic.chooseVariant(from: rule.experiment.variants) else {
+          guard let variant = try? ConfigLogic.chooseVariant(from: rule.experiment.variants) else {
             continue
           }
           unconfirmedAssignments[rule.experiment.id] = variant
@@ -156,11 +156,7 @@ final class ConfigManager {
           }
 
           // Save this to disk, remove any unconfirmed assignments with the same experiment ID.
-          confirmedAssignments[assignment.experimentId] = Experiment.Variant(
-            id: variantOption.id,
-            type: variantOption.type,
-            paywallId: variantOption.paywallId
-          )
+          confirmedAssignments[assignment.experimentId] = variantOption.toVariant()
           self.unconfirmedAssignments[assignment.experimentId] = nil
         }
         Storage.shared.saveConfirmedAssignments(confirmedAssignments)

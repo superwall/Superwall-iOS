@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum TriggerRuleLogic {
+enum ConfigLogic {
   enum TriggerRuleError: Error {
     case noVariantsFound
     case invalidState

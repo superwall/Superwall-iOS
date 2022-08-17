@@ -62,12 +62,15 @@ enum PaywallResponseLogic {
   static func getTriggerResultAndConfirmAssignment(
     presentationInfo: PresentationInfo,
     configManager: ConfigManager = .shared,
+    storage: Storage = .shared,
     triggers: [String: Trigger]
   ) -> TriggerResultOutcome {
     if let eventData = presentationInfo.eventData {
       let triggerAssignmentOutcome = AssignmentLogic.getOutcome(
         forEvent: eventData,
-        triggers: triggers
+        triggers: triggers,
+        configManager: configManager,
+        storage: storage
       )
 
       // Confirm any triggers that the user is assigned

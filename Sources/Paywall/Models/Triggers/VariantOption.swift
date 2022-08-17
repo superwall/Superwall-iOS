@@ -8,10 +8,10 @@
 import Foundation
 
 struct VariantOption: Decodable, Hashable {
-  let type: Experiment.Variant.VariantType
-  let id: String
-  let percentage: Int
-  let paywallId: String?
+  var type: Experiment.Variant.VariantType
+  var id: String
+  var percentage: Int
+  var paywallId: String?
 
   enum CodingKeys: String, CodingKey {
     case variantType
@@ -38,5 +38,24 @@ struct VariantOption: Decodable, Hashable {
     self.id = id
     self.percentage = percentage
     self.paywallId = paywallId
+  }
+
+  func toVariant() -> Experiment.Variant {
+    return Experiment.Variant(
+      id: id,
+      type: type,
+      paywallId: paywallId
+    )
+  }
+}
+
+extension VariantOption: Stubbable {
+  static func stub() -> VariantOption {
+    return VariantOption(
+      type: .treatment,
+      id: "abc",
+      percentage: 100,
+      paywallId: "def"
+    )
   }
 }

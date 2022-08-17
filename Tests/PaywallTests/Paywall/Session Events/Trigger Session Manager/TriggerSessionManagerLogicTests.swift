@@ -39,8 +39,6 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
         paywallId: nil
       )
     )
-    let rule: TriggerRule = .stub()
-      .setting(\.experiment, to: experiment)
     let eventName = "MyTrigger"
     
     let eventData = EventData(
@@ -65,7 +63,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventData.createdAt)
     XCTAssertEqual(outcome?.trigger.type, .explicit)
     XCTAssertNil(outcome?.trigger.presentedOn)
-    XCTAssertEqual(outcome?.trigger.experiment, rule.experiment)
+    XCTAssertEqual(outcome?.trigger.experiment, experiment)
     XCTAssertNil(outcome?.paywall)
   }
 
@@ -81,8 +79,6 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       )
     )
     let time = Date()
-    let rule: TriggerRule = .stub()
-      .setting(\.experiment, to: experiment)
     let eventName = "MyTrigger"
 
     let eventData = EventData(
@@ -113,7 +109,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventData.createdAt)
     XCTAssertEqual(outcome?.trigger.type, .explicit)
     XCTAssertNil(outcome?.trigger.presentedOn)
-    XCTAssertEqual(outcome?.trigger.experiment, rule.experiment)
+    XCTAssertEqual(outcome?.trigger.experiment, experiment)
     XCTAssertEqual(outcome?.paywall?.databaseId, paywallResponse.id)
     XCTAssertEqual(outcome?.paywall?.substitutionPrefix, paywallResponse.templateSubstitutionsPrefix.prefix)
     XCTAssertEqual(outcome?.paywall?.responseLoading.startAt, paywallResponse.responseLoadStartTime)
@@ -159,8 +155,6 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
         paywallId: nil
       )
     )
-    let rule: TriggerRule = .stub()
-      .setting(\.experiment, to: experiment)
     let eventName = "MyTrigger"
     let eventData = EventData(
       name: eventName,
@@ -183,7 +177,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventData.createdAt)
     XCTAssertEqual(outcome?.trigger.type, .explicit)
     XCTAssertEqual(outcome?.trigger.presentedOn, "SWDebugViewController")
-    XCTAssertEqual(outcome?.trigger.experiment, rule.experiment)
+    XCTAssertEqual(outcome?.trigger.experiment, experiment)
     XCTAssertNil(outcome?.paywall)
   }
 
