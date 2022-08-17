@@ -24,7 +24,6 @@ enum FileManagerMigrator {
     if rawCurrentVersion == rawMaxVersion {
       return
     }
-
     switch version {
     case .v1:
       V1Migrator.migrateToNextVersion(cache: cache)

@@ -12,13 +12,7 @@ import XCTest
 @available(iOS 14.0, *)
 final class ConfigManagerTests: XCTestCase {
   func test_backgroundToForeground_noConfig() {
-    let storage = StorageMock()
     let network = NetworkMock()
-    let configManager = ConfigManager(
-      storage: storage,
-      network: network
-    )
-    
     NotificationCenter.default.post(
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
@@ -30,14 +24,12 @@ final class ConfigManagerTests: XCTestCase {
       id: "abc",
       completion: { _ in }
     )
-    let storage = StorageMock()
-    storage.configRequest = configRequest
     let network = NetworkMock()
-
     let configManager = ConfigManager(
-      storage: storage,
       network: network
     )
+    configManager.configRequest = configRequest
+
 
     NotificationCenter.default.post(
       Notification(name: UIApplication.didBecomeActiveNotification)

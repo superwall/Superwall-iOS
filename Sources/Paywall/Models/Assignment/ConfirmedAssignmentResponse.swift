@@ -8,5 +8,5 @@
 import Foundation
 
 struct ConfirmedAssignmentResponse: Codable {
-  var status: String
+  var assignments: [Assignment]
 }

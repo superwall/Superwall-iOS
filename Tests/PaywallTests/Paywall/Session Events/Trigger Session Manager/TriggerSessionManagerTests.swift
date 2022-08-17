@@ -39,17 +39,18 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   private func createConfig(forEventName eventName: String) -> Config {
     // Given
-    let experiment = Experiment(
+    let rawExperiment = RawExperiment(
       id: "1",
       groupId: "2",
-      variant: .init(
-        id: "3",
+      variants: [.init(
         type: .holdout,
+        id: "3",
+        percentage: 100,
         paywallId: nil
-      )
+      )]
     )
     let rule: TriggerRule = .stub()
-      .setting(\.experiment, to: experiment)
+      .setting(\.experiment, to: rawExperiment)
     let trigger = Trigger(
       eventName: eventName,
       rules: [rule]
@@ -64,10 +65,6 @@ final class TriggerSessionManagerTests: XCTestCase {
   func testActivatePendingSession_byIdentifier() {
     // Given
     let eventName = "MyTrigger"
-    let triggers = createTriggers(
-      withName: eventName,
-      variantType: .treatment
-    )
     let config = createConfig(forEventName: eventName)
     sessionManager.createSessions(from: config)
     
@@ -83,10 +80,6 @@ final class TriggerSessionManagerTests: XCTestCase {
   func testActivatePendingSession_triggerNotFound() {
     // Given
     let eventName = "MyTrigger"
-    let triggers = createTriggers(
-      withName: eventName,
-      variantType: .treatment
-    )
 
     let config = createConfig(forEventName: eventName)
     sessionManager.createSessions(from: config)
@@ -116,7 +109,12 @@ final class TriggerSessionManagerTests: XCTestCase {
       withName: eventName,
       variantType: .treatment
     )
-    let experiment = triggers[eventName]!.rules.first!.experiment
+    let rawExperiment = triggers[eventName]!.rules.first!.experiment
+    let experiment = Experiment(
+      id: rawExperiment.id,
+      groupId: rawExperiment.groupId,
+      variant: rawExperiment.variants.first!.toVariant()
+    )
 
     // When
     sessionManager.activateSession(
@@ -139,7 +137,12 @@ final class TriggerSessionManagerTests: XCTestCase {
       withName: eventName,
       variantType: .holdout
     )
-    let experiment = triggers[eventName]!.rules.first!.experiment
+    let rawExperiment = triggers[eventName]!.rules.first!.experiment
+    let experiment = Experiment(
+      id: rawExperiment.id,
+      groupId: rawExperiment.groupId,
+      variant: rawExperiment.variants.first!.toVariant()
+    )
     let eventData: EventData = .stub()
       .setting(\.name, to: eventName)
 
@@ -162,11 +165,6 @@ final class TriggerSessionManagerTests: XCTestCase {
     let eventData: EventData = .stub()
       .setting(\.name, to: eventName)
 
-    let trigger = Trigger(
-      eventName: eventName,
-      rules: []
-    )
-
     // When
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
@@ -182,17 +180,18 @@ final class TriggerSessionManagerTests: XCTestCase {
     withName eventName: String,
     variantType: Experiment.Variant.VariantType
   ) -> [String: Trigger] {
-    let experiment = Experiment(
+    let rawExperiment = RawExperiment(
       id: "1",
       groupId: "2",
-      variant: .init(
-        id: "3",
+      variants: [.init(
         type: variantType,
+        id: "3",
+        percentage: 100,
         paywallId: variantType == .treatment ? "123" : nil
-      )
+      )]
     )
     let rule: TriggerRule = .stub()
-      .setting(\.experiment, to: experiment)
+      .setting(\.experiment, to: rawExperiment)
     let trigger = Trigger(
       eventName: eventName,
       rules: [rule]
@@ -230,7 +229,12 @@ final class TriggerSessionManagerTests: XCTestCase {
       withName: eventName,
       variantType: .treatment
     )
-    let experiment = triggers[eventName]!.rules.first!.experiment
+    let rawExperiment = triggers[eventName]!.rules.first!.experiment
+    let experiment = Experiment(
+      id: rawExperiment.id,
+      groupId: rawExperiment.groupId,
+      variant: rawExperiment.variants.first!.toVariant()
+    )
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       triggerResult: .paywall(experiment: experiment)
@@ -317,8 +321,12 @@ final class TriggerSessionManagerTests: XCTestCase {
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       paywallResponse: paywallResponse,
-      triggerResult: .paywall(experiment: experiment)
-    )
+      triggerResult: .paywall(experiment: Experiment(
+         id: experiment.id,
+        groupId: experiment.groupId,
+        variant: experiment.variants.first!.toVariant()
+      )
+    ))
   }
 
   // MARK: - Webview Load

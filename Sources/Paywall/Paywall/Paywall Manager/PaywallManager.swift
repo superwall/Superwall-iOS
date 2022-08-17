@@ -11,14 +11,9 @@ import UIKit
 final class PaywallManager {
 	static let shared = PaywallManager()
 	var presentedViewController: SWPaywallViewController? {
-		let vcs = viewControllers.filter {
-			$0.isActive
-		}
-		return vcs.first
+    return SWPaywallViewController.cache.first { $0.isActive }
 	}
-  private var viewControllers: Set<SWPaywallViewController> {
-    return Set<SWPaywallViewController>(cache.viewControllers)
-  }
+
   private var cache = PaywallCache()
 
   private init() {}
@@ -82,11 +77,6 @@ final class PaywallManager {
           )
           .scaledBy(x: 0.1, y: 0.1)
         }
-
-        self.cache.savePaywall(
-          paywallViewController,
-          withIdentifier: response.identifier
-        )
 
         completion?(.success(paywallViewController))
       case .failure(let error):

@@ -21,7 +21,7 @@ final class NetworkMock: Network {
     withRequestId requestId: String,
     completion: @escaping (Result<Config, Error>) -> Void,
     applicationState: UIApplication.State = UIApplication.shared.applicationState,
-    storage: Storage = Storage.shared
+    configManager: ConfigManager = .shared
   ) {
     getConfigCalled = true
   }

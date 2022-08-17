@@ -10,6 +10,7 @@ import XCTest
 @testable import Paywall
 import StoreKit
 
+@available(iOS 14.0, *)
 class PaywallResponseLogicTests: XCTestCase {
   // MARK: - Request Hash
   func testRequestHash_withIdentifierNoEvent() {
@@ -79,39 +80,46 @@ class PaywallResponseLogicTests: XCTestCase {
     // Given
     let experimentId = "expId"
     let experimentGroupId = "groupId"
-    let variantId = "varId"
     let paywallId = "paywallId"
     let eventName = "blah"
 
-    let experiment = Experiment(
-      id: experimentId,
-      groupId: experimentGroupId,
-      variant: .init(
-        id: variantId,
-        type: .treatment,
-        paywallId: paywallId
-      )
+    let variantOption = VariantOption.stub()
+      .setting(\.type, to: .treatment)
+      .setting(\.paywallId, to: paywallId)
+    let rawExperiment = RawExperiment.stub()
+      .setting(\.id, to: experimentId)
+      .setting(\.groupId, to: experimentGroupId)
+      .setting(\.variants, to: [variantOption])
+
+    let triggerRule = TriggerRule(
+      experiment: rawExperiment,
+      expression: nil,
+      expressionJs: nil
     )
-    let rule: TriggerRule = .stub()
-      .setting(\.experiment, to: experiment)
-    let network = NetworkMock()
+    let trigger = Trigger(
+      eventName: eventName,
+      rules: [triggerRule]
+    )
+
+    let configManager = ConfigManagerMock()
+    configManager.unconfirmedAssignments = [experimentId: variantOption.toVariant()]
 
     // When
-    let outcome = PaywallResponseLogic.getTriggerResultOutcome(
+    let outcome = PaywallResponseLogic.getTriggerResultAndConfirmAssignment(
       presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
-      network: network,
-      triggers: [eventName: .stub()
-        .setting(\.eventName, to: eventName)
-        .setting(\.rules, to: [
-          rule
-        ])
-      ]
+      configManager: configManager,
+      triggers: [eventName: trigger]
     )
 
     // Then
+    let expectedExperiment = Experiment(
+      id: experimentId,
+      groupId: experimentGroupId,
+      variant: variantOption.toVariant()
+    )
     let expectedIdentifiers = ResponseIdentifiers(
       paywallId: paywallId,
-      experiment: experiment
+      experiment: expectedExperiment
     )
 
     guard case let .paywall(identifiers) = outcome.info else {
@@ -123,8 +131,8 @@ class PaywallResponseLogicTests: XCTestCase {
     guard case let .paywall(experiment: returnedExperiment) = outcome.result else {
       return XCTFail()
     }
-    XCTAssertTrue(network.assigmentsConfirmed)
-    XCTAssertEqual(experiment, returnedExperiment)
+    XCTAssertTrue(configManager.confirmedAssignment)
+    XCTAssertEqual(expectedExperiment, returnedExperiment)
   }
 
   func testTriggerResultOutcome_holdout() {
@@ -133,32 +141,41 @@ class PaywallResponseLogicTests: XCTestCase {
     let experimentGroupId = "groupId"
     let variantId = "varId"
     let eventName = "opened_application"
-    let experiment = Experiment(
-      id: experimentId,
-      groupId: experimentGroupId,
-      variant: .init(
-        id: variantId,
-        type: .holdout,
-        paywallId: nil
-      )
+
+    let variantOption = VariantOption.stub()
+      .setting(\.type, to: .holdout)
+      .setting(\.id, to: variantId)
+    let rawExperiment = RawExperiment.stub()
+      .setting(\.id, to: experimentId)
+      .setting(\.groupId, to: experimentGroupId)
+      .setting(\.variants, to: [variantOption]
+    )
+    let triggerRule = TriggerRule(
+      experiment: rawExperiment,
+      expression: nil,
+      expressionJs: nil
+    )
+    let trigger = Trigger(
+      eventName: eventName,
+      rules: [triggerRule]
     )
 
-    let holdout: Trigger = .stub()
-      .setting(\.eventName, to: eventName)
-      .setting(\.rules, to: [
-        .stub()
-        .setting(\.experiment, to: experiment)
-      ])
-    let network = NetworkMock()
+    let configManager = ConfigManagerMock()
+    configManager.unconfirmedAssignments = [experimentId: variantOption.toVariant()]
 
     // When
-    let outcome = PaywallResponseLogic.getTriggerResultOutcome(
+    let outcome = PaywallResponseLogic.getTriggerResultAndConfirmAssignment(
       presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
-      network: network,
-      triggers: [eventName: holdout]
+      configManager: configManager,
+      triggers: [eventName: trigger]
     )
 
     // Then
+    let expectedExperiment = Experiment(
+      id: experimentId,
+      groupId: experimentGroupId,
+      variant: variantOption.toVariant()
+    )
     guard case let .holdout(error) = outcome.info else {
       return XCTFail()
     }
@@ -182,47 +199,43 @@ class PaywallResponseLogicTests: XCTestCase {
     guard case let .holdout(experiment: returnedExperiment) = outcome.result else {
       return XCTFail()
     }
-    XCTAssertEqual(experiment, returnedExperiment)
-    XCTAssertTrue(network.assigmentsConfirmed)
+    XCTAssertEqual(expectedExperiment, returnedExperiment)
+    XCTAssertTrue(configManager.confirmedAssignment)
   }
 
   func testGetTriggerIdentifiers_noRuleMatch() {
     // Given
     let experimentId = "expId"
     let experimentGroupId = "groupId"
-    let variantId = "varId"
     let eventName = "opened_application"
-    let experiment = Experiment(
-      id: experimentId,
-      groupId: experimentGroupId,
-      variant: .init(
-        id: variantId,
-        type: .treatment,
-        paywallId: nil
-      )
+
+    let variantOption = VariantOption.stub()
+      .setting(\.type, to: .holdout)
+    let rawExperiment = RawExperiment.stub()
+      .setting(\.id, to: experimentId)
+      .setting(\.groupId, to: experimentGroupId)
+      .setting(\.variants, to: [variantOption]
+    )
+    let triggerRule = TriggerRule(
+      experiment: rawExperiment,
+      expression: "user.a == c",
+      expressionJs: nil
+    )
+    let trigger = Trigger(
+      eventName: eventName,
+      rules: [triggerRule]
     )
 
-    let trigger: Trigger = .stub()
-      .setting(\.eventName, to: eventName)
-      .setting(\.rules, to: [
-        .stub()
-        .setting(\.experiment, to: experiment)
-        .setting(\.expression, to: "params.a == c")
-      ])
-    let network = NetworkMock()
-    let eventData: EventData = .stub()
-      .setting(\.parameters, to: [
-        "a": "b"
-      ])
+    let configManager = ConfigManagerMock()
+    configManager.unconfirmedAssignments = [experimentId: variantOption.toVariant()]
 
     // When
-    let outcome = PaywallResponseLogic.getTriggerResultOutcome(
-      presentationInfo: .explicitTrigger(eventData),
-      network: network,
+    let outcome = PaywallResponseLogic.getTriggerResultAndConfirmAssignment(
+      presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
+      configManager: configManager,
       triggers: [eventName: trigger]
     )
 
-    print("*** ds", outcome.info)
     // Then
     guard case let .noRuleMatch(error) = outcome.info else {
       return XCTFail()
@@ -245,37 +258,38 @@ class PaywallResponseLogicTests: XCTestCase {
     guard case .noRuleMatch = outcome.result else {
       return XCTFail()
     }
-    XCTAssertFalse(network.assigmentsConfirmed)
+    XCTAssertFalse(configManager.confirmedAssignment)
   }
 
   func testGetTriggerIdentifiers_unknownEvent() {
     // Given
     let experimentId = "expId"
     let experimentGroupId = "groupId"
-    let variantId = "varId"
     let eventName = "opened_application"
-    let experiment = Experiment(
-      id: experimentId,
-      groupId: experimentGroupId,
-      variant: .init(
-        id: variantId,
-        type: .holdout,
-        paywallId: nil
-      )
+
+    let variantOption = VariantOption.stub()
+      .setting(\.type, to: .holdout)
+    let rawExperiment = RawExperiment.stub()
+      .setting(\.id, to: experimentId)
+      .setting(\.groupId, to: experimentGroupId)
+      .setting(\.variants, to: [variantOption]
+    )
+    let triggerRule = TriggerRule(
+      experiment: rawExperiment,
+      expression: nil,
+      expressionJs: nil
+    )
+    let trigger = Trigger(
+      eventName: "other",
+      rules: [triggerRule]
     )
 
-    let trigger: Trigger = .stub()
-      .setting(\.eventName, to: "other")
-      .setting(\.rules, to: [
-        .stub()
-        .setting(\.experiment, to: experiment)
-      ])
-    let network = NetworkMock()
+    let configManager = ConfigManagerMock()
 
     // When
-    let outcome = PaywallResponseLogic.getTriggerResultOutcome(
-      presentationInfo: .explicitTrigger(.stub().setting(\.name, to: "other")),
-      network: network,
+    let outcome = PaywallResponseLogic.getTriggerResultAndConfirmAssignment(
+      presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
+      configManager: configManager,
       triggers: [eventName: trigger]
     )
 
@@ -301,7 +315,7 @@ class PaywallResponseLogicTests: XCTestCase {
     guard case .unknownEvent = outcome.result else {
       return XCTFail()
     }
-    XCTAssertFalse(network.assigmentsConfirmed)
+    XCTAssertFalse(configManager.confirmedAssignment)
   }
 
   // MARK: - searchForPaywallResponse

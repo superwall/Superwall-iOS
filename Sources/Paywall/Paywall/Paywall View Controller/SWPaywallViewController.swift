@@ -50,6 +50,8 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     }
   }
 
+  static var cache = Set<SWPaywallViewController>()
+
 	var isActive: Bool {
 		return isPresented || isBeingPresented
 	}
@@ -106,6 +108,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 		return imageView
 	}()
 
+  var cacheKey: String
 
   lazy var refreshAlertViewController: UIAlertController = {
 
@@ -137,12 +140,14 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     paywallResponse: PaywallResponse,
     delegate: SWPaywallViewControllerDelegate? = nil
   ) {
+    self.cacheKey = PaywallCacheLogic.key(forIdentifier: paywallResponse.identifier)
 		self.delegate = delegate
     self.paywallResponse = paywallResponse
     presentationStyle = paywallResponse.presentationStyleV2
     super.init(nibName: nil, bundle: nil)
     configureUI()
     loadPaywallWebpage()
+    SWPaywallViewController.cache.insert(self)
 	}
 
 	required init?(coder: NSCoder) {
@@ -150,6 +155,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	}
 
   deinit {
+    SWPaywallViewController.cache.remove(self)
     NotificationCenter.default.removeObserver(
       self,
       name: UIApplication.willResignActiveNotification,

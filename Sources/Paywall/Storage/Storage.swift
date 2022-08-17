@@ -25,16 +25,11 @@ class Storage {
   }
 	var didTrackFirstSeen = false
   var userAttributes: [String: Any] = [:]
-  var locales: Set<String> = []
-  var configRequestId = ""
+  var isUpdatingToStaticConfig = false
 
   var userId: String? {
     return appUserId ?? aliasId
   }
-  /// Used to store the config request if it occurred in the background.
-  var configRequest: ConfigRequest?
-  // swiftlint:disable:next array_constructor
-  var triggers: [String: Trigger] = [:]
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
   private let cache: Cache
 
@@ -50,14 +45,6 @@ class Storage {
     self.userAttributes = cache.read(UserAttributes.self) ?? [:]
   }
 
-  func migrateData() {
-    let version = cache.read(Version.self) ?? .v1
-    FileManagerMigrator.migrate(
-      fromVersion: version,
-      cache: cache
-    )
-  }
-
   func configure(
     appUserId: String?,
     apiKey: String
@@ -65,15 +52,46 @@ class Storage {
     migrateData()
 
     if let newAppUserId = appUserId {
-      if self.appUserId != newAppUserId {
-        self.appUserId = newAppUserId
-      }
+      self.appUserId = newAppUserId
     }
 
     self.apiKey = apiKey
 
     if aliasId == nil {
       aliasId = StorageLogic.generateAlias()
+    }
+
+    updateSdkVersion()
+  }
+
+  private func migrateData() {
+    let version = cache.read(Version.self) ?? .v1
+    FileManagerMigrator.migrate(
+      fromVersion: version,
+      cache: cache
+    )
+  }
+
+  /// Checks to see whether a user has upgraded from normal to static config.
+  /// This blocks triggers until assignments is returned.
+  private func updateSdkVersion() {
+    let actualSdkVersion = sdkVersion
+    cache.write(actualSdkVersion, forType: SdkVersion.self)
+  }
+
+  func checkForStaticConfigUpgrade() {
+    let storedSdkVersion = cache.read(SdkVersion.self)
+
+    if storedSdkVersion == nil && DeviceHelper.shared.minutesSinceInstall > 60 {
+      TriggerDelayManager.shared.enterAssignmentDispatchQueue()
+
+      // After config, we get the assignments.
+      // Only when the config and assignments are fetched do we fire triggers.
+      TriggerDelayManager.shared.configDispatchGroup.notify(queue: .main) {
+        ConfigManager.shared.getAssignments {
+          TriggerDelayManager.shared.leaveAssignmentDispatchQueue()
+        }
+      }
     }
   }
 
@@ -84,20 +102,10 @@ class Storage {
     appUserId = nil
     aliasId = StorageLogic.generateAlias()
     userAttributes = [:]
-    triggers.removeAll()
+    ConfigManager.shared.clear()
     didTrackFirstSeen = false
     recordFirstSeenTracked()
   }
-
-	func addConfig(
-    _ config: Config,
-    withRequestId requestId: String
-  ) {
-    locales = Set(config.localization.locales.map { $0.locale })
-    configRequestId = requestId
-    AppSessionManager.shared.appSessionTimeout = config.appSessionTimeout
-    triggers = StorageLogic.getTriggerDictionary(from: config.triggers)
-	}
 
 	func mergeUserAttributes(_ newAttributes: [String: Any]) {
     let mergedAttributes = StorageLogic.mergeAttributes(
@@ -207,5 +215,16 @@ class Storage {
 
   func getTotalPaywallViews() -> TotalPaywallViews.Value? {
     return cache.read(TotalPaywallViews.self)
+  }
+
+  func saveConfirmedAssignments(_ assignments: [String: Experiment.Variant]) {
+    cache.write(
+      assignments,
+      forType: ConfirmedAssignments.self
+    )
+  }
+
+  func getConfirmedAssignments() -> [Experiment.ID: Experiment.Variant] {
+    return cache.read(ConfirmedAssignments.self) ?? [:]
   }
 }

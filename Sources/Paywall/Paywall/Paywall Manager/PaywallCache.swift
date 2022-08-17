@@ -8,49 +8,37 @@
 import Foundation
 
 final class PaywallCache {
-  var viewControllers: Dictionary<String, SWPaywallViewController>.Values {
-    return cache.values
-  }
-  private var cache: [String: SWPaywallViewController] = [:]
-
   func getPaywall(
     withIdentifier identifier: String?
   ) -> SWPaywallViewController? {
     let key = PaywallCacheLogic.key(
       forIdentifier: identifier
     )
-    return cache[key]
+    return SWPaywallViewController.cache.first { $0.cacheKey == key }
   }
 
   func getPaywall(withKey key: String) -> SWPaywallViewController? {
-    return cache[key]
-  }
-
-  func savePaywall(
-    _ viewController: SWPaywallViewController,
-    withIdentifier identifier: String?
-  ) {
-    let key = PaywallCacheLogic.key(
-      forIdentifier: identifier
-    )
-    self.cache[key] = viewController
+    return SWPaywallViewController.cache.first { $0.cacheKey == key }
   }
 
   func removePaywall(
     withIdentifier identifier: String?
   ) {
-    let key = PaywallCacheLogic.key(
-      forIdentifier: identifier
-    )
-    cache[key] = nil
+    if let viewController = getPaywall(withIdentifier: identifier) {
+      SWPaywallViewController.cache.remove(viewController)
+    }
   }
 
   func removePaywall(withViewController viewController: SWPaywallViewController) {
-    let keys = cache.allKeys(forValue: viewController)
-    keys.forEach { cache[$0] = nil }
+    SWPaywallViewController.cache.remove(viewController)
   }
 
   func clearCache() {
-    cache.removeAll()
+    for viewController in SWPaywallViewController.cache {
+      // don't remove the reference to a presented paywall
+      if !viewController.isActive {
+        SWPaywallViewController.cache.remove(viewController)
+      }
+    }
   }
 }

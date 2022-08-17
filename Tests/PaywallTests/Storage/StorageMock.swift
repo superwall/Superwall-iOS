@@ -13,18 +13,19 @@ import Foundation
 final class StorageMock: Storage {
   var internalCachedTriggerSessions: [TriggerSession]
   var internalCachedTransactions: [TransactionModel]
+  var internalConfirmedAssignments: [Experiment.ID: Experiment.Variant]
   var didClearCachedSessionEvents = false
 
   init(
     internalCachedTriggerSessions: [TriggerSession] = [],
     internalCachedTransactions: [TransactionModel] = [],
-    configRequestId: String = "abc",
-    coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock()
+    coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock(),
+    confirmedAssignments: [Experiment.ID : Experiment.Variant] = [:]
   ) {
     self.internalCachedTriggerSessions = internalCachedTriggerSessions
     self.internalCachedTransactions = internalCachedTransactions
+    self.internalConfirmedAssignments = confirmedAssignments
     super.init(coreDataManager: coreDataManager)
-    self.configRequestId = configRequestId
   }
 
   override func getCachedTriggerSessions() -> [TriggerSession] {
@@ -34,9 +35,12 @@ final class StorageMock: Storage {
   override func getCachedTransactions() -> [TransactionModel] {
     return internalCachedTransactions
   }
-  
 
   override func clearCachedSessionEvents() {
     didClearCachedSessionEvents = true
+  }
+
+  override func getConfirmedAssignments() -> [Experiment.ID: Experiment.Variant] {
+    return internalConfirmedAssignments
   }
 }

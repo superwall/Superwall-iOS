@@ -15,7 +15,8 @@ final class TransactionManagerTests: XCTestCase {
     let queue = SessionEventsQueueMock()
     let delegate = SessionEventsDelegateMock(queue: queue)
     let configRequestId = "abc"
-    let storage = StorageMock(configRequestId: configRequestId)
+    let configManager = ConfigManager()
+    configManager.configRequestId = configRequestId
 
     let appSessionId = "123"
     let appSession = AppSession.stub()
@@ -24,7 +25,7 @@ final class TransactionManagerTests: XCTestCase {
 
     let transactionManager = TransactionManager(
       delegate: delegate,
-      storage: storage,
+      configManager: configManager,
       appSessionManager: appSessionManager
     )
 

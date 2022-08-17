@@ -59,20 +59,23 @@ enum PaywallResponseLogic {
     return "\(id)_\(locale)"
   }
 
-  static func getTriggerResultOutcome(
+  static func getTriggerResultAndConfirmAssignment(
     presentationInfo: PresentationInfo,
-    network: Network = Network.shared,
+    configManager: ConfigManager = .shared,
+    storage: Storage = .shared,
     triggers: [String: Trigger]
   ) -> TriggerResultOutcome {
     if let eventData = presentationInfo.eventData {
-      let triggerAssignmentOutcome = TriggerLogic.assignmentOutcome(
+      let triggerAssignmentOutcome = AssignmentLogic.getOutcome(
         forEvent: eventData,
-        triggers: triggers
+        triggers: triggers,
+        configManager: configManager,
+        storage: storage
       )
 
       // Confirm any triggers that the user is assigned
-      if let confirmableAssignments = triggerAssignmentOutcome.confirmableAssignments {
-        network.confirmAssignments(confirmableAssignments)
+      if let confirmableAssignment = triggerAssignmentOutcome.confirmableAssignment {
+        configManager.confirmAssignments(confirmableAssignment)
       }
 
       return getOutcome(forResult: triggerAssignmentOutcome.result)

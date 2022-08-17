@@ -38,10 +38,6 @@ struct PaywallResponse: Decodable {
 
   var productVariables: [ProductVariable]? = []
 
-  var idNonOptional: String {
-    return id ?? ""
-  }
-
   var responseLoadStartTime: Date?
   var responseLoadCompleteTime: Date?
   var responseLoadFailTime: Date?
