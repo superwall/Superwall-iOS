@@ -68,23 +68,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     )
 	}
 
-  private var purchaseLoadingIndicatorContainer: UIView = {
-    let view = UIView()
-    view.translatesAutoresizingMaskIntoConstraints = false
-    view.isUserInteractionEnabled = false
-    view.clipsToBounds = false
-    return view
-  }()
-
-  private var purchaseLoadingIndicator: UIActivityIndicatorView = {
-    let spinner = UIActivityIndicatorView()
-    spinner.translatesAutoresizingMaskIntoConstraints = false
-    spinner.style = .whiteLarge
-    spinner.hidesWhenStopped = false
-    spinner.alpha = 0.0
-    spinner.startAnimating()
-    return spinner
-  }()
+  private var purchaseLoader: SWPaywallLoadingView = SWPaywallLoadingView()
 
   var loadingState: PaywallLoadingState  = .unknown {
     didSet {
@@ -121,6 +105,30 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 		imageView.alpha = 1.0 - 0.618
 		return imageView
 	}()
+
+
+  lazy var refreshAlertViewController: UIAlertController = {
+
+    let alertController = UIAlertController(
+      title: "Waiting to Purchase...",
+      message: "Your connection may be offline. Waiting for transaction to begin.",
+      preferredStyle: .alert
+    )
+
+    let refreshAction = UIAlertAction(title: "Refresh", style: .default) { [weak self] a in
+      self?.pressedRefreshPaywall()
+    }
+    alertController.addAction(refreshAction)
+
+    let closeAction = UIAlertAction(title: "Exit", style: .destructive) { [weak self] a in
+      self?.pressedExitPaywall()
+    }
+    alertController.addAction(closeAction)
+
+
+    return alertController
+
+  }()
 
 
 	// MARK: - View Lifecycle
@@ -178,8 +186,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   private func layoutSubviews() {
     shimmerView.isShimmering = true
     view.addSubview(shimmerView)
-    view.addSubview(purchaseLoadingIndicatorContainer)
-    purchaseLoadingIndicatorContainer.addSubview(purchaseLoadingIndicator)
+    view.addSubview(purchaseLoader)
     view.addSubview(webView)
     shimmerView.translatesAutoresizingMaskIntoConstraints = false
     shimmerView.contentView = contentPlaceholderImageView
@@ -188,14 +195,10 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     view.addSubview(exitButton)
 
     NSLayoutConstraint.activate([
-      purchaseLoadingIndicatorContainer.topAnchor.constraint(equalTo: view.topAnchor),
-      purchaseLoadingIndicatorContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      purchaseLoadingIndicatorContainer.widthAnchor.constraint(equalTo: view.widthAnchor),
-      purchaseLoadingIndicatorContainer.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.5),
-
-      purchaseLoadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      purchaseLoadingIndicator.centerYAnchor.constraint(equalTo: purchaseLoadingIndicatorContainer.bottomAnchor),
-
+      purchaseLoader.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+      purchaseLoader.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      purchaseLoader.widthAnchor.constraint(equalTo: view.widthAnchor),
+      purchaseLoader.heightAnchor.constraint(equalTo: view.heightAnchor),
       shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       shimmerView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -303,79 +306,77 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 				break
 			case .loadingPurchase:
 				self?.shimmerView.isShimmering = false
-				self?.showRefreshButtonAfterTimeout(true)
+				self?.showRefreshButtonAfterTimeout(true, useModal: true)
 				self?.shimmerView.alpha = 0.0
 				self?.shimmerView.transform = .identity
-
-        if let background = Paywall.options.transactionBackgroundView,
-          background == .spinner {
-          self?.purchaseLoadingIndicator.alpha = 0.0
-          self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
-          UIView.springAnimate {
-            self?.webView.alpha = 0.0
-            self?.webView.transform = CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97)
-            self?.purchaseLoadingIndicator.alpha = 1.0
-            self?.purchaseLoadingIndicator.transform = .identity
-          }
-        }
+        self?.purchaseLoader.toggle(show: true, animated: true)
 			case .loadingResponse:
 				self?.shimmerView.isShimmering = true
 				self?.shimmerView.alpha = 0.0
 				self?.shimmerView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
 				self?.showRefreshButtonAfterTimeout(true)
+        self?.purchaseLoader.toggle(show: false, animated: false)
         UIView.springAnimate {
           self?.webView.alpha = 0.0
           self?.shimmerView.alpha = 1.0
           self?.webView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)
           self?.shimmerView.transform = .identity
-          self?.purchaseLoadingIndicator.alpha = 0.0
-          self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
         }
 			case .ready:
         let translation = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
-        let scaling: CGAffineTransform
-        if let background = Paywall.options.transactionBackgroundView,
-          background == .spinner {
-          scaling = CGAffineTransform.identity.scaledBy(x: 0.97, y: 0.97)
-        } else {
-          scaling = .identity
-        }
-				self?.webView.transform = oldValue == .loadingPurchase ? scaling : translation
+        self?.webView.transform = oldValue == .loadingPurchase ? .identity : translation
 				self?.showRefreshButtonAfterTimeout(false)
-        UIView.springAnimate(
-          withDuration: 1,
-          delay: 0.25,
-          animations: {
-            self?.webView.alpha = 1.0
-            self?.webView.transform = .identity
-            self?.shimmerView.alpha = 0.0
+        self?.purchaseLoader.toggle(show: false, animated: true)
 
-            if let background = Paywall.options.transactionBackgroundView,
-              background == .spinner {
-              self?.purchaseLoadingIndicator.alpha = 0.0
-              self?.purchaseLoadingIndicator.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
+        if oldValue != .loadingPurchase {
+          UIView.springAnimate(
+            withDuration: 1,
+            delay: 0.25,
+            animations: {
+              self?.webView.alpha = 1.0
+              self?.webView.transform = .identity
+              self?.shimmerView.alpha = 0.0
+            },
+            completion: { _ in
+              self?.shimmerView.isShimmering = false
             }
-          },
-          completion: { _ in
-            self?.shimmerView.isShimmering = false
-          }
-        )
+          )
+        }
 			}
 		}
 	}
 
-	func showRefreshButtonAfterTimeout(_ isVisible: Bool) {
+
+  func refreshAlert(show: Bool) {
+    if show {
+      self.present(self.refreshAlertViewController, animated: true, completion: nil)
+    } else if !show {
+      self.refreshAlertViewController.dismiss(animated: true, completion: nil)
+      print("done")
+    }
+  }
+
+  func showRefreshButtonAfterTimeout(_ isVisible: Bool, useModal: Bool = false) {
 		showRefreshTimer?.invalidate()
 		showRefreshTimer = nil
 
 		if isVisible {
       showRefreshTimer = Timer.scheduledTimer(
-        withTimeInterval: 4.0,
+        withTimeInterval: 5.0,
         repeats: false
       ) { [weak self] _ in
         guard let self = self else {
           return
         }
+
+        if useModal {
+          self.refreshAlert(show: true)
+          return
+        }
+
+        self.view.bringSubviewToFront(self.refreshPaywallButton)
+        self.view.bringSubviewToFront(self.self.exitButton)
+
         self.refreshPaywallButton.isHidden = false
         self.refreshPaywallButton.alpha = 0.0
         self.exitButton.isHidden = false
@@ -393,6 +394,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         }
       }
 		} else {
+      self.refreshAlert(show: false)
 			hideRefreshButton()
 			return
 		}
@@ -446,7 +448,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       self.webView.alpha = 0.0
       self.view.backgroundColor = self.paywallResponse.paywallBackgroundColor
       let loadingColor = self.paywallResponse.paywallBackgroundColor.readableOverlayColor
-      self.purchaseLoadingIndicator.color = loadingColor
+      self.purchaseLoader.paywallBackgroundColor = self.paywallResponse.paywallBackgroundColor
       self.refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.contentPlaceholderImageView.tintColor = loadingColor.withAlphaComponent(0.5)
@@ -509,6 +511,8 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     Paywall.track(trackedEvent)
 	}
 
+  weak var refreshVC: UIViewController? = nil
+
 	func presentAlert(
     title: String? = nil,
     message: String? = nil,
@@ -550,34 +554,24 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         self?.loadingState = .ready
       }
     }
+
+    refreshVC = alertController
   }
 
   @objc func applicationWillResignActive(_ sender: AnyObject? = nil) {
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
       if self.loadingState == .loadingPurchase {
-        UIView.springAnimate {
-          let height = self.purchaseLoadingIndicatorContainer.frame.size.height
-          let transform = CGAffineTransform.identity.translatedBy(
-            x: 0,
-            y: height * 0.5 * -1
-          )
-          self.purchaseLoadingIndicatorContainer.transform = transform
-        }
+        self.purchaseLoader.move(up: true)
       }
     }
   }
 
   @objc func applicationDidBecomeActive(_ sender: AnyObject? = nil) {
     DispatchQueue.main.async { [weak self] in
-      guard let self = self else {
-        return
-      }
-      guard self.loadingState == .loadingPurchase else {
-        return
-      }
-      UIView.springAnimate {
-        self.purchaseLoadingIndicatorContainer.transform = .identity
+      guard let self = self else { return }
+      if self.loadingState == .loadingPurchase {
+        self.purchaseLoader.move(up: false)
       }
     }
   }
