@@ -100,31 +100,13 @@ class ConfigManager {
     guard let triggers = config?.triggers else {
       return
     }
-    let availableVariantIds = Set(triggers.flatMap { $0.rules.flatMap { $0.experiment.variants.map { $0.id } } })
-
-    // Loop through each trigger and each of its rules.
-    for trigger in triggers {
-      for rule in trigger.rules {
-        // Check whether we have already chosen a variant for the experiment on disk.
-        if let confirmedVariant = confirmedAssignments[rule.experiment.id] {
-          // If one exists, check it's still in the available variants, otherwise reroll.
-          if !availableVariantIds.contains(confirmedVariant.id) {
-            guard let variant = try? ConfigLogic.chooseVariant(from: rule.experiment.variants) else {
-              continue
-            }
-            unconfirmedAssignments[rule.experiment.id] = variant
-            confirmedAssignments[rule.experiment.id] = nil
-          }
-        } else {
-          // No variant found on disk so dice roll to choose a variant and store in memory as an unconfirmed assignment.
-          guard let variant = try? ConfigLogic.chooseVariant(from: rule.experiment.variants) else {
-            continue
-          }
-          unconfirmedAssignments[rule.experiment.id] = variant
-        }
-      }
-    }
-
+    let result = ConfigLogic.assignVariants(
+      fromTriggers: triggers,
+      confirmedAssignments: confirmedAssignments,
+      unconfirmedAssignments: unconfirmedAssignments
+    )
+    unconfirmedAssignments = result.unconfirmedAssignments
+    confirmedAssignments = result.confirmedAssignments
     Storage.shared.saveConfirmedAssignments(confirmedAssignments)
   }
 
@@ -141,24 +123,14 @@ class ConfigManager {
       switch result {
       case .success(let assignments):
         var confirmedAssignments = Storage.shared.getConfirmedAssignments()
-        for assignment in assignments {
-          // Get the trigger with the matching experiment ID
-          guard let trigger = triggers.first(
-            where: { $0.rules.contains(where: { $0.experiment.id == assignment.experimentId }) }
-          ) else {
-            continue
-          }
-          // Get the variant with the matching variant ID
-          guard let variantOption = trigger.rules.compactMap({
-            $0.experiment.variants.first { $0.id == assignment.variantId }
-          }).first else {
-            continue
-          }
-
-          // Save this to disk, remove any unconfirmed assignments with the same experiment ID.
-          confirmedAssignments[assignment.experimentId] = variantOption.toVariant()
-          self.unconfirmedAssignments[assignment.experimentId] = nil
-        }
+        let result = ConfigLogic.processAssignmentsFromServer(
+          assignments,
+          triggers: triggers,
+          confirmedAssignments: confirmedAssignments,
+          unconfirmedAssignments: self.unconfirmedAssignments
+        )
+        self.unconfirmedAssignments = result.unconfirmedAssignments
+        confirmedAssignments = result.confirmedAssignments
         Storage.shared.saveConfirmedAssignments(confirmedAssignments)
         self.cacheConfig()
         completion?()
@@ -175,79 +147,33 @@ class ConfigManager {
 
   /// Gets the paywall response from the static config, if the device locale starts with "en" and no more specific version can be found.
   func getStaticPaywallResponse(forPaywallId paywallId: String?) -> PaywallResponse? {
-    guard let paywallId = paywallId else {
-      return nil
-    }
-    guard let config = config else {
-      return nil
-    }
-
-    // If the available locales contains the exact device locale, load the response the old way.
-    if config.locales.contains(DeviceHelper.shared.locale) {
-      return nil
-    } else {
-      let shortLocale = String(DeviceHelper.shared.locale.split(separator: "_")[0])
-
-      // Otherwise, if the shortened locale contains "en", load the paywall responses from static config.
-      // Same if we can't find any matching locale in available locales.
-      if shortLocale == "en" || !config.locales.contains(shortLocale) {
-        return config.paywallResponses.first { $0.identifier == paywallId }
-      } else {
-        return nil
-      }
-    }
+    return ConfigLogic.getStaticPaywallResponse(
+      fromPaywallId: paywallId,
+      config: config
+    )
   }
 
-  private func getAllTreatmentPaywallIds() -> Set<String> {
+  private func getAllActiveTreatmentPaywallIds() -> Set<String> {
     guard let triggers = config?.triggers else {
       return []
     }
     // TODO: Extract confirmed assignments into memory to reduce load time.
-    var confirmedAssignments = Storage.shared.getConfirmedAssignments()
-
-    // Don't preload any experiment IDs that are on disk but no longer in static config.
-    // This could happen when a campaign has been archived.
-    let confirmedExperimentIds = Set(confirmedAssignments.keys)
-    let triggerExperimentIds = Set(triggers.flatMap { $0.rules.map { $0.experiment.id } })
-    let oldExperimentIds = confirmedExperimentIds.subtracting(triggerExperimentIds)
-    for id in oldExperimentIds {
-      confirmedAssignments[id] = nil
-    }
-
-    let confirmedVariants = [Experiment.Variant](confirmedAssignments.values)
-    let unconfirmedVariants = [Experiment.Variant](unconfirmedAssignments.values)
-    let mergedVariants = confirmedVariants + unconfirmedVariants
-    var identifiers: Set<String> = []
-
-    for variant in mergedVariants {
-      if variant.type == .treatment,
-        let paywallId = variant.paywallId {
-        identifiers.insert(paywallId)
-      }
-    }
-
-    return identifiers
+    let confirmedAssignments = Storage.shared.getConfirmedAssignments()
+    return ConfigLogic.getAllActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      confirmedAssignments: confirmedAssignments,
+      unconfirmedAssignments: unconfirmedAssignments
+    )
   }
 
   private func getTreatmentPaywallIds(from triggers: Set<Trigger>) -> Set<String> {
     // TODO: Extract confirmed assignments into memory to reduce load time.
     let confirmedAssignments = Storage.shared.getConfirmedAssignments()
-
-    let mergedAssignments = confirmedAssignments.merging(unconfirmedAssignments)
-    let triggerExperimentIds = triggers.flatMap { $0.rules.map { $0.experiment.id } }
-
-    var identifiers: Set<String> = []
-    for experimentId in triggerExperimentIds {
-      guard let variant = mergedAssignments[experimentId] else {
-        continue
-      }
-      if variant.type == .treatment,
-        let paywallId = variant.paywallId {
-        identifiers.insert(paywallId)
-      }
-    }
-
-    return identifiers
+    return ConfigLogic.getActiveTreatmentPaywallIds(
+      forTriggers: triggers,
+      confirmedAssignments: confirmedAssignments,
+      unconfirmedAssignments: unconfirmedAssignments
+    )
   }
 
   func confirmAssignments(
@@ -272,7 +198,7 @@ class ConfigManager {
 
   /// Preloads paywalls, products, trigger paywalls, and trigger responses. It then sends the products back to the server.
   ///
-  /// A developer can disable preloading of paywalls by setting ``Paywall/Paywall/shouldPreloadPaywalls``
+  /// A developer can disable preloading of paywalls by setting ``PaywallOptions/shouldPreloadPaywalls``.
   private func cacheConfig() {
     if Paywall.options.shouldPreloadPaywalls {
       preloadAllPaywalls()
@@ -282,7 +208,7 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by triggers.
   func preloadAllPaywalls() {
-    let triggerPaywallIdentifiers = getAllTreatmentPaywallIds()
+    let triggerPaywallIdentifiers = getAllActiveTreatmentPaywallIds()
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
   }
 
