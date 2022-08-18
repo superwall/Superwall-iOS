@@ -159,6 +159,7 @@ internal class SWPaywallLoadingView: UIView {
       UIView.springAnimate { [weak self] in
         self?.backgroundColor = UIColor.black.withAlphaComponent(0.0)
         self?.activityContainer.alpha = 0.0
+        activityContainer.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
       } completion: { [weak self] _ in
         self?.activityIndicator.stopAnimating()
         self?.isHidden = true
@@ -181,9 +182,9 @@ internal class SWPaywallLoadingView: UIView {
       }
     }
 
-    if up {
-      toggle(show: false, animated: true)
-    }
+//    if up {
+//      toggle(show: false, animated: true)
+//    }
   }
 
 
