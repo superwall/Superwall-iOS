@@ -60,7 +60,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   }
 
   // Views
-	lazy var shimmerView = ShimmeringView(frame: self.view.bounds)
+  lazy var shimmerView = SWShimmerView(frame: self.view.bounds)//ShimmeringView(frame: self.view.bounds)
   lazy var webView = SWWebView(delegate: self)
 
 	var paywallInfo: PaywallInfo {
@@ -92,20 +92,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       target: self,
       action: #selector(pressedExitPaywall)
     )
-	}()
-
-	var contentPlaceholderImageView: UIImageView = {
-    // swiftlint:disable:next force_unwrapping
-    let placeholder = UIImage(named: "paywall_placeholder", in: Bundle.module, compatibleWith: nil)!
-		let imageView = UIImageView(image: placeholder)
-		imageView.contentMode = .scaleAspectFit
-		imageView.tintColor = .white
-		imageView.backgroundColor = .clear
-		imageView.clipsToBounds = true
-		imageView.translatesAutoresizingMaskIntoConstraints = false
-		imageView.isHidden = false
-		imageView.alpha = 1.0 - 0.618
-		return imageView
 	}()
 
   var cacheKey: String
@@ -194,8 +180,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     view.addSubview(shimmerView)
     view.addSubview(purchaseLoader)
     view.addSubview(webView)
-    shimmerView.translatesAutoresizingMaskIntoConstraints = false
-    shimmerView.contentView = contentPlaceholderImageView
 
     view.addSubview(refreshPaywallButton)
     view.addSubview(exitButton)
@@ -205,6 +189,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       purchaseLoader.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       purchaseLoader.widthAnchor.constraint(equalTo: view.widthAnchor),
       purchaseLoader.heightAnchor.constraint(equalTo: view.heightAnchor),
+
       shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       shimmerView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -240,16 +225,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     if #available(iOS 15.0, *),
       !DeviceHelper.shared.isMac {
       webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
-    }
-
-    if UIWindow.isLandscape {
-      let placeholder = UIImage(
-        named: "paywall_placeholder_landscape",
-        in: Bundle.module,
-        compatibleWith: nil
-      )!
-      // swiftlint:disable:previous force_unwrapping
-      contentPlaceholderImageView.image = placeholder
     }
 
     // if the loading state is ready, re template user attributes
@@ -303,7 +278,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	func loadingStateDidChange(from oldValue: PaywallLoadingState) {
 		onMain { [weak self] in
-			guard let loadingState = self?.loadingState else {
+			guard let loadingState = self?.loadingState, loadingState != oldValue else {
         return
       }
 
@@ -318,15 +293,11 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         self?.purchaseLoader.toggle(show: true, animated: true)
 			case .loadingResponse:
 				self?.shimmerView.isShimmering = true
-				self?.shimmerView.alpha = 0.0
-				self?.shimmerView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
 				self?.showRefreshButtonAfterTimeout(true)
         self?.purchaseLoader.toggle(show: false, animated: false)
         UIView.springAnimate {
           self?.webView.alpha = 0.0
-          self?.shimmerView.alpha = 1.0
           self?.webView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)
-          self?.shimmerView.transform = .identity
         }
 			case .ready:
         let translation = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
@@ -341,7 +312,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
             animations: {
               self?.webView.alpha = 1.0
               self?.webView.transform = .identity
-              self?.shimmerView.alpha = 0.0
             },
             completion: { _ in
               self?.shimmerView.isShimmering = false
@@ -358,7 +328,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       self.present(self.refreshAlertViewController, animated: true, completion: nil)
     } else if !show {
       self.refreshAlertViewController.dismiss(animated: true, completion: nil)
-      print("done")
     }
   }
 
@@ -451,13 +420,15 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         return
       }
 
+    
       self.webView.alpha = 0.0
       self.view.backgroundColor = self.paywallResponse.paywallBackgroundColor
       let loadingColor = self.paywallResponse.paywallBackgroundColor.readableOverlayColor
       self.purchaseLoader.paywallBackgroundColor = self.paywallResponse.paywallBackgroundColor
       self.refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
-      self.contentPlaceholderImageView.tintColor = loadingColor.withAlphaComponent(0.5)
+      self.shimmerView.isLightBackground = !self.paywallResponse.paywallBackgroundColor.isDarkColor
+      self.shimmerView.contentColor = loadingColor
     }
   }
 

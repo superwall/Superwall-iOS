@@ -45,7 +45,6 @@
 		23732BC304D9DCA0E13E842C /* StorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70A5544125D707360AA177A2 /* StorageTests.swift */; };
 		23DE3F4BA1B8583A011B3C82 /* AppSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C5D02AE31199F3D2D9A058 /* AppSession.swift */; };
 		243B78060569848568CC0041 /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2953556FD4F8B0D6FF39A667 /* Storage.swift */; };
-		2559BEECCD493062B2B8B9D7 /* ShimmeringLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23D70898410086252ECA7B4D /* ShimmeringLayer.swift */; };
 		2801763A38A0026CB6E75E7F /* Assignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C8F09DB172508CBFABE512 /* Assignment.swift */; };
 		287ECEF9FEDA3951FB00D254 /* PaywallResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59A33C3A336B91740D1E4E2 /* PaywallResponse.swift */; };
 		28F460A926E8A803C16B5122 /* EmptyResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B87B9D430A6620BBAA89E1B /* EmptyResponse.swift */; };
@@ -94,7 +93,6 @@
 		53D4A9DEA247C744CC415F75 /* AppSessionLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99BCF8451802EE26D6631A32 /* AppSessionLogicTests.swift */; };
 		54F9FD56BA9C90972B1F882B /* addATrigger.png in Resources */ = {isa = PBXBuildFile; fileRef = D7812C8F258D36072563F839 /* addATrigger.png */; };
 		5583F9F356EB1F6B004FCE0E /* PaywallMessageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 215AB8BB204C9D125EBDC0C2 /* PaywallMessageHandler.swift */; };
-		56F6CAD55C77243E7677A605 /* ShimmeringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BCB92333070318FF40FD013 /* ShimmeringView.swift */; };
 		5A75E5260CD3C7B630AEE73F /* SWProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95CEBF812CD70ED1F0902EE4 /* SWProduct.swift */; };
 		5B495411A04CC48664673813 /* TransactionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA605E8FFB514B1B17BF63EE /* TransactionModel.swift */; };
 		5D46778A8CF0259CD13D8791 /* Product.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F52BB53807697F6828E0F1E /* Product.swift */; };
@@ -127,6 +125,7 @@
 		7B130CCFFD2351AA8EF3B01B /* KeypathWritable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735AB8BF863D4273C6B95173 /* KeypathWritable.swift */; };
 		7C9D672EBA6A4A07D4259B62 /* SettingUserAttributes.md in Resources */ = {isa = PBXBuildFile; fileRef = 8A04A3C6BBB0AF9F0355A5C0 /* SettingUserAttributes.md */; };
 		7DE675ADD3913981D17C659C /* ConfigResponseLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1519882963E83455C4BB6CA9 /* ConfigResponseLogicTests.swift */; };
+		7EF2F048FF9B9765CEE02942 /* SWShimmerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528803ED37D49CB570B08E01 /* SWShimmerView.swift */; };
 		80FB3598F0140E82FC39F315 /* PublicEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B554B2EBF0FD4C0CEA74764 /* PublicEvents.swift */; };
 		815F5D3BE8D39CBA1E54219F /* UserInitiatedEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CD5996D9E051FEE49EA57A2 /* UserInitiatedEvents.swift */; };
 		81A9D66B3066195F3A954EE2 /* GameControllerEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26835AC78EAE0E056845AC12 /* GameControllerEvent.swift */; };
@@ -212,7 +211,6 @@
 		CCEB6D7ED30AE06566540E81 /* SWDebugManagerLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73472591C3E9801C1E549A56 /* SWDebugManagerLogic.swift */; };
 		CCF094AC1313D105BD530AAF /* InAppReceiptPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83297977DD5F249445DB6660 /* InAppReceiptPayload.swift */; };
 		CD941668619B9DE3DE8378AF /* View+PresentPaywall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E5BCA3329790B0F476B8DAF /* View+PresentPaywall.swift */; };
-		CF20978CDB4E42FB242D2C9E /* Shimmer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D9C63C76AE79C2254DF1C /* Shimmer.swift */; };
 		CFC9E3F33255A1DF3356E6CC /* Bundle+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C69AB0D5211D0E0427CF1B /* Bundle+Helpers.swift */; };
 		CFF3F37688ECD07D7B0B5BBB /* SWProductDiscount.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB29FF92CEC6C7BC46C57B6 /* SWProductDiscount.swift */; };
 		D0CE9FB96FB542BCCEEB75EC /* ManagedTriggerRuleOccurrence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16ED923A1017EC1783347590 /* ManagedTriggerRuleOccurrence.swift */; };
@@ -236,7 +234,6 @@
 		DE0EA3F3E7C70718205FF3D8 /* CacheMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E755E0D0EC86A8F1CC42A53 /* CacheMock.swift */; };
 		DFA47542598AA2C93EB5D006 /* SWProductPeriod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18145711AB256473A81C9879 /* SWProductPeriod.swift */; };
 		E07E247AF07B540DA9FA356C /* GameControllerSupport.md in Resources */ = {isa = PBXBuildFile; fileRef = 5308A1C5A08504D78FBB0B3D /* GameControllerSupport.md */; };
-		E2C928F75405E84DEB0882B6 /* ShimmeringMaskLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172F9EA3F79A4A44E12F7BE /* ShimmeringMaskLayer.swift */; };
 		E6484BA2CEC33F586DBFB015 /* WebEventHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30D725AAB81C9CE04DEC3BF /* WebEventHandler.swift */; };
 		E6B2BCB729901EA89CE1C5D8 /* dashboardUrlScheme.png in Resources */ = {isa = PBXBuildFile; fileRef = 6B9DA9620D72051411C55BF3 /* dashboardUrlScheme.png */; };
 		E779DA8FE71A6CD2D8613387 /* TriggerSessionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3648B5231E6588F6AED85F9 /* TriggerSessionManagerTests.swift */; };
@@ -308,7 +305,6 @@
 		0F15AE5254FDF2872D7D0F29 /* CacheKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheKeys.swift; sourceTree = "<group>"; };
 		10981E067436E13F06E5A58C /* SWLocalizationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWLocalizationViewController.swift; sourceTree = "<group>"; };
 		10CE66D8CF93838412EA82C6 /* TransactionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionManager.swift; sourceTree = "<group>"; };
-		1172F9EA3F79A4A44E12F7BE /* ShimmeringMaskLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringMaskLayer.swift; sourceTree = "<group>"; };
 		139DBACB45849BF7DC111235 /* PaywallOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallOptions.swift; sourceTree = "<group>"; };
 		14053CF7BD3B8F2521D2E832 /* ProductPrice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductPrice.swift; sourceTree = "<group>"; };
 		1519882963E83455C4BB6CA9 /* ConfigResponseLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigResponseLogicTests.swift; sourceTree = "<group>"; };
@@ -332,7 +328,6 @@
 		21C718FA9E6B454773581EC2 /* apiDiagram.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = apiDiagram.png; sourceTree = "<group>"; };
 		223B4FAEBC4A4CC7D90CDCE2 /* PaywallCacheLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallCacheLogic.swift; sourceTree = "<group>"; };
 		23084E8D587E5D4E43FBD710 /* FileManagerMigratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManagerMigratorTests.swift; sourceTree = "<group>"; };
-		23D70898410086252ECA7B4D /* ShimmeringLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringLayer.swift; sourceTree = "<group>"; };
 		26835AC78EAE0E056845AC12 /* GameControllerEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameControllerEvent.swift; sourceTree = "<group>"; };
 		270B2B4C53AC7E11EAF679E1 /* InternalPresentationLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalPresentationLogic.swift; sourceTree = "<group>"; };
 		271079AB0915D7C997940C95 /* SWBounceButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWBounceButton.swift; sourceTree = "<group>"; };
@@ -391,6 +386,7 @@
 		50145219FAA1D30CA74AB286 /* PaywallResponseLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallResponseLogicTests.swift; sourceTree = "<group>"; };
 		524B8A11EB225C08EC17C579 /* PaywallDismissalResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallDismissalResult.swift; sourceTree = "<group>"; };
 		526F877FDC797BE686FCD845 /* Decimal+Rounding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Decimal+Rounding.swift"; sourceTree = "<group>"; };
+		528803ED37D49CB570B08E01 /* SWShimmerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWShimmerView.swift; sourceTree = "<group>"; };
 		52995B5A9DE68BF1BF8C526A /* UIComponentFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIComponentFactory.swift; sourceTree = "<group>"; };
 		5308A1C5A08504D78FBB0B3D /* GameControllerSupport.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = GameControllerSupport.md; sourceTree = "<group>"; };
 		54EB804FF46C1EF73A2CD64E /* UIColor+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Hex.swift"; sourceTree = "<group>"; };
@@ -428,7 +424,6 @@
 		744529966D6FF7CA5C4D17E1 /* TriggerSessionTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerSessionTrigger.swift; sourceTree = "<group>"; };
 		78E9054E5668E4A3781AC73A /* UIWindow+Landscape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIWindow+Landscape.swift"; sourceTree = "<group>"; };
 		794D14C224AAD4EFC398052B /* EventData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventData.swift; sourceTree = "<group>"; };
-		7BCB92333070318FF40FD013 /* ShimmeringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmeringView.swift; sourceTree = "<group>"; };
 		7C887834FA91E59873E09097 /* ConfigManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigManagerMock.swift; sourceTree = "<group>"; };
 		7E6D037FB91C425333BC5479 /* AssignmentLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignmentLogic.swift; sourceTree = "<group>"; };
 		7F7B43A48E2ACE984AB08BAB /* SWPaywallLoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWPaywallLoadingView.swift; sourceTree = "<group>"; };
@@ -494,7 +489,6 @@
 		BE80DD570FD4999C34313FB4 /* EventsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsRequest.swift; sourceTree = "<group>"; };
 		BEECF871CEF5502F22C21CF6 /* PaywallTransactions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallTransactions.swift; sourceTree = "<group>"; };
 		BFC74C59605E4C1C25ABB96B /* Date+IsoStringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+IsoStringTests.swift"; sourceTree = "<group>"; };
-		C01D9C63C76AE79C2254DF1C /* Shimmer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shimmer.swift; sourceTree = "<group>"; };
 		C1D19915CF6D26A5E709BCFE /* MockSubscriptionPeriod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockSubscriptionPeriod.swift; sourceTree = "<group>"; };
 		C2FE90776BAC699BF24D446A /* SWTemplateVariable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWTemplateVariable.swift; sourceTree = "<group>"; };
 		C3648B5231E6588F6AED85F9 /* TriggerSessionManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerSessionManagerTests.swift; sourceTree = "<group>"; };
@@ -640,7 +634,6 @@
 				1BFBAE7439CFE42E63037B72 /* Paywall Presentation */,
 				3ACB8BA65B5F77426DCB273F /* Paywall View Controller */,
 				B199664FC6C2CCC63AA478AE /* Session Events */,
-				B1ACB0917547FD193909E9B0 /* ShimmerView */,
 				62478AD3FC15019BFBCD70E9 /* Trigger Logic */,
 			);
 			path = Paywall;
@@ -781,6 +774,7 @@
 				D6FDA942D086159AD293B2BA /* PaywallPresentationResult.swift */,
 				7F7B43A48E2ACE984AB08BAB /* SWPaywallLoadingView.swift */,
 				9B697B38C6AB10F76741CFB5 /* SWPaywallViewController.swift */,
+				528803ED37D49CB570B08E01 /* SWShimmerView.swift */,
 				900CD5B37D92F444B845530C /* SWWebView.swift */,
 				B30D725AAB81C9CE04DEC3BF /* WebEventHandler.swift */,
 			);
@@ -1266,17 +1260,6 @@
 				7507FA54575F9BFC6B621CBB /* Trigger Session Manager */,
 			);
 			path = "Session Events";
-			sourceTree = "<group>";
-		};
-		B1ACB0917547FD193909E9B0 /* ShimmerView */ = {
-			isa = PBXGroup;
-			children = (
-				C01D9C63C76AE79C2254DF1C /* Shimmer.swift */,
-				23D70898410086252ECA7B4D /* ShimmeringLayer.swift */,
-				1172F9EA3F79A4A44E12F7BE /* ShimmeringMaskLayer.swift */,
-				7BCB92333070318FF40FD013 /* ShimmeringView.swift */,
-			);
-			path = ShimmerView;
 			sourceTree = "<group>";
 		};
 		B2C273995851F7B34B27C8D0 /* Models */ = {
@@ -1813,16 +1796,13 @@
 				F20F8441D11290137289BAE5 /* SWProductNumberGroup.swift in Sources */,
 				DFA47542598AA2C93EB5D006 /* SWProductPeriod.swift in Sources */,
 				8FD66036DDB65BBD8DFF8578 /* SWProductSubscriptionPeriod.swift in Sources */,
+				7EF2F048FF9B9765CEE02942 /* SWShimmerView.swift in Sources */,
 				60377E95CB4828CEE42438D0 /* SWSubscriptionTemplateVariable.swift in Sources */,
 				C9660BF7F4468D6F7367E648 /* SWTemplateVariable.swift in Sources */,
 				499B74660F312087055274E1 /* SWWebView.swift in Sources */,
 				68B377C8C5DE44BD0E982D35 /* SessionEventsManager.swift in Sources */,
 				3B7894D28460D3570712CA9C /* SessionEventsQueue.swift in Sources */,
 				AE7AD84EBD481EF5551F5F22 /* SessionEventsRequest.swift in Sources */,
-				CF20978CDB4E42FB242D2C9E /* Shimmer.swift in Sources */,
-				2559BEECCD493062B2B8B9D7 /* ShimmeringLayer.swift in Sources */,
-				E2C928F75405E84DEB0882B6 /* ShimmeringMaskLayer.swift in Sources */,
-				56F6CAD55C77243E7677A605 /* ShimmeringView.swift in Sources */,
 				243B78060569848568CC0041 /* Storage.swift in Sources */,
 				B849A706340FF7CC355722DD /* StorageLogic.swift in Sources */,
 				07DE9F5B9BE44235B3A9330F /* StoreKitManager.swift in Sources */,

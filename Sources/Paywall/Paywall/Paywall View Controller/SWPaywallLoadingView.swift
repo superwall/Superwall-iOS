@@ -77,7 +77,7 @@ internal class SWPaywallLoadingView: UIView {
     spinner.translatesAutoresizingMaskIntoConstraints = false
     spinner.style = .whiteLarge
     spinner.hidesWhenStopped = true
-    spinner.alpha = 0.9
+    spinner.alpha = 0.85
     return spinner
   }()
 
@@ -129,20 +129,24 @@ internal class SWPaywallLoadingView: UIView {
       activityIndicator.startAnimating()
       activityContainer.alpha = 0.0
       activityContainer.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
+      self.activityIndicator.transform = CGAffineTransform(rotationAngle: CGFloat.pi )
+      outerContainer.transform = .identity
       self.isHidden = false
-      self.backgroundColor = .clear
+//      self.backgroundColor = self.paywallBackgroundColor.withAlphaComponent(0.0)
       UIView.springAnimate { [weak self] in
-        self?.backgroundColor = UIColor.black.withAlphaComponent(1.0 - 0.618)
+//        self?.backgroundColor = self?.paywallBackgroundColor.withAlphaComponent(0.1)
         self?.activityContainer.alpha = 1.0
         self?.activityContainer.transform = .identity
+        self?.activityIndicator.transform = .identity
       }
     } else {
       activityContainer.alpha = 1.0
       activityContainer.transform = .identity
       UIView.springAnimate { [weak self] in
-        self?.backgroundColor = .clear
+//        self?.backgroundColor = self?.paywallBackgroundColor.withAlphaComponent(0.0)
         self?.activityContainer.alpha = 0.0
         self?.activityContainer.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
+        self?.activityIndicator.transform = CGAffineTransform(rotationAngle: CGFloat.pi )
       } completion: { [weak self] _ in
         self?.activityIndicator.stopAnimating()
         self?.isHidden = true
@@ -165,6 +169,7 @@ internal class SWPaywallLoadingView: UIView {
       }
     }
   }
+
 
 //  func timeout() {
 //    UIView.springAnimate(animations: { [weak self] in
