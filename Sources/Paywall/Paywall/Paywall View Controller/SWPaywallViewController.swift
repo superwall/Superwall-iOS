@@ -60,7 +60,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   }
 
   // Views
-  lazy var shimmerView = SWShimmerView(frame: self.view.bounds)//ShimmeringView(frame: self.view.bounds)
+  lazy var shimmerView = SWShimmerView(frame: self.view.bounds)
   lazy var webView = SWWebView(delegate: self)
 
 	var paywallInfo: PaywallInfo {
@@ -69,8 +69,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       calledByIdentifier: calledByIdentifier
     )
 	}
-
-  private var purchaseLoader: SWPaywallLoadingView = SWPaywallLoadingView()
+  private var purchaseLoader = SWPaywallLoadingView()
 
   var loadingState: PaywallLoadingState  = .unknown {
     didSet {
@@ -97,26 +96,23 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   var cacheKey: String
 
   lazy var refreshAlertViewController: UIAlertController = {
-
     let alertController = UIAlertController(
       title: "Waiting to Purchase...",
       message: "Your connection may be offline. Waiting for transaction to begin.",
       preferredStyle: .alert
     )
 
-    let refreshAction = UIAlertAction(title: "Refresh", style: .default) { [weak self] a in
+    let refreshAction = UIAlertAction(title: "Refresh", style: .default) { [weak self] _ in
       self?.pressedRefreshPaywall()
     }
     alertController.addAction(refreshAction)
 
-    let closeAction = UIAlertAction(title: "Exit", style: .destructive) { [weak self] a in
+    let closeAction = UIAlertAction(title: "Exit", style: .destructive) { [weak self] _ in
       self?.pressedExitPaywall()
     }
     alertController.addAction(closeAction)
 
-
     return alertController
-
   }()
 
 
@@ -419,8 +415,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       guard let self = self else {
         return
       }
-
-    
       self.webView.alpha = 0.0
       self.view.backgroundColor = self.paywallResponse.paywallBackgroundColor
       let loadingColor = self.paywallResponse.paywallBackgroundColor.readableOverlayColor

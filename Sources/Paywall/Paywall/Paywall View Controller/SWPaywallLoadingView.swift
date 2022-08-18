@@ -4,13 +4,20 @@
 //
 //  Created by Jake Mor on 8/17/22.
 //
+// swiftlint:disable identifier_name
 
 import Foundation
 import UIKit
 
-internal class SWPaywallLoadingView: UIView {
+final class SWPaywallLoadingView: UIView {
+  var paywallBackgroundColor: UIColor = .white {
+    didSet {
+      lightBlurEffectView.isHidden = paywallBackgroundColor.isDarkColor
+      darkBlurEffectView.isHidden = !paywallBackgroundColor.isDarkColor
+    }
+  }
 
-  var isEnabled: Bool {
+  private var isEnabled: Bool {
     if let background = Paywall.options.transactionBackgroundView,
       background == .spinner {
       return true
@@ -19,12 +26,6 @@ internal class SWPaywallLoadingView: UIView {
     }
   }
 
-  var paywallBackgroundColor: UIColor = .white {
-    didSet {
-      lightBlurEffectView.isHidden = paywallBackgroundColor.isDarkColor
-      darkBlurEffectView.isHidden = !paywallBackgroundColor.isDarkColor
-    }
-  }
 
   private var outerContainer: UIView = {
     let view = UIView()
@@ -34,26 +35,26 @@ internal class SWPaywallLoadingView: UIView {
     return view
   }()
 
-  var lightBlurEffectView: UIVisualEffectView = {
+  private var lightBlurEffectView: UIVisualEffectView = {
     let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
     blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     return blurEffectView
   }()
 
-  var darkBlurEffectView: UIVisualEffectView = {
+  private var darkBlurEffectView: UIVisualEffectView = {
     let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
     blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     return blurEffectView
   }()
 
-  lazy var activityContainer: UIView = {
+  private lazy var activityContainer: UIView = {
     let view = UIView()
     view.translatesAutoresizingMaskIntoConstraints = false
     view.isUserInteractionEnabled = false
     return view
   }()
 
-  lazy var innerContainer: UIView = {
+  private lazy var innerContainer: UIView = {
     let view = UIView()
     view.translatesAutoresizingMaskIntoConstraints = false
     view.isUserInteractionEnabled = false
@@ -66,11 +67,10 @@ internal class SWPaywallLoadingView: UIView {
       view.layer.cornerCurve = .continuous
     }
     view.layer.cornerRadius = 15
-    
     return view
   }()
 
-  var innerContainerShadow = SWShadowView()
+  private var innerContainerShadow = SWShadowView()
 
   private var activityIndicator: UIActivityIndicatorView = {
     let spinner = UIActivityIndicatorView()
@@ -109,13 +109,14 @@ internal class SWPaywallLoadingView: UIView {
       innerContainerShadow.widthAnchor.constraint(equalToConstant: 75),
       innerContainerShadow.heightAnchor.constraint(equalToConstant: 75),
       activityIndicator.centerXAnchor.constraint(equalTo: innerContainer.centerXAnchor),
-      activityIndicator.centerYAnchor.constraint(equalTo: innerContainer.centerYAnchor),
+      activityIndicator.centerYAnchor.constraint(equalTo: innerContainer.centerYAnchor)
     ])
   }
 
   func toggle(show: Bool, animated: Bool) {
-
-    guard isEnabled else { return }
+    guard isEnabled else {
+      return
+    }
     if show && activityIndicator.isAnimating {
       return
     } else if !show && !activityIndicator.isAnimating {
@@ -123,7 +124,6 @@ internal class SWPaywallLoadingView: UIView {
     }
 
     superview?.bringSubviewToFront(self)
-//    self.outerContainer.alpha = 0.0
 
     if show {
       activityIndicator.startAnimating()
@@ -132,9 +132,8 @@ internal class SWPaywallLoadingView: UIView {
       self.activityIndicator.transform = CGAffineTransform(rotationAngle: CGFloat.pi )
       outerContainer.transform = .identity
       self.isHidden = false
-//      self.backgroundColor = self.paywallBackgroundColor.withAlphaComponent(0.0)
+
       UIView.springAnimate { [weak self] in
-//        self?.backgroundColor = self?.paywallBackgroundColor.withAlphaComponent(0.1)
         self?.activityContainer.alpha = 1.0
         self?.activityContainer.transform = .identity
         self?.activityIndicator.transform = .identity
@@ -143,15 +142,13 @@ internal class SWPaywallLoadingView: UIView {
       activityContainer.alpha = 1.0
       activityContainer.transform = .identity
       UIView.springAnimate { [weak self] in
-//        self?.backgroundColor = self?.paywallBackgroundColor.withAlphaComponent(0.0)
         self?.activityContainer.alpha = 0.0
         self?.activityContainer.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
-        self?.activityIndicator.transform = CGAffineTransform(rotationAngle: CGFloat.pi )
+        self?.activityIndicator.transform = CGAffineTransform(rotationAngle: CGFloat.pi)
       } completion: { [weak self] _ in
         self?.activityIndicator.stopAnimating()
         self?.isHidden = true
       }
-
     }
   }
 
@@ -170,22 +167,12 @@ internal class SWPaywallLoadingView: UIView {
     }
   }
 
-
-//  func timeout() {
-//    UIView.springAnimate(animations: { [weak self] in
-//      guard let self = self else { return }
-//      self.backgroundColor = self.paywallBackgroundColor
-//      self.outerContainer.alpha = 0.0
-//    })
-//  }
-
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
 }
 
-class SWShadowView: UIView {
-
+final class SWShadowView: UIView {
   let corner: CGFloat = 15
 
   init() {
