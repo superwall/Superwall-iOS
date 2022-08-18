@@ -9,7 +9,7 @@ import Foundation
 import SystemConfiguration
 import CoreTelephony
 
-final class DeviceHelper {
+class DeviceHelper {
   static let shared = DeviceHelper()
   let reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, Api.hostDomain)
   var appVersion: String {

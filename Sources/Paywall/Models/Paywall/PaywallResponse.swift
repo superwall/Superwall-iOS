@@ -169,6 +169,14 @@ struct PaywallResponse: Decodable {
   }
 }
 
+// MARK: - Equatable
+extension PaywallResponse: Equatable {
+  static func == (lhs: PaywallResponse, rhs: PaywallResponse) -> Bool {
+    return lhs.id == rhs.id
+  }
+}
+
+// MARK: - Stubbable
 extension PaywallResponse: Stubbable {
   static func stub() -> PaywallResponse {
     return PaywallResponse(

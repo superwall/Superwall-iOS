@@ -128,6 +128,14 @@ final class ConfigLogicTests: XCTestCase {
     XCTAssertTrue(rules.isEmpty)
   }
 
+  func test_getRulesPerTriggerGroup_noRules() {
+    let rules = ConfigLogic.getRulesPerTriggerGroup(from: [
+      .stub()
+      .setting(\.rules, to: [])
+    ])
+    XCTAssertTrue(rules.isEmpty)
+  }
+
   func test_getRulesPerTriggerGroup_threeTriggersTwoWithSameGroupId() {
     let trigger1 = Trigger.stub()
       .setting(\.rules, to: [
@@ -162,23 +170,15 @@ final class ConfigLogicTests: XCTestCase {
         paywallId: "abc"
       )
     ]
-    let unconfirmedAssignments = [
-      "exp2": Experiment.Variant(
-        id: "3",
-        type: .holdout,
-        paywallId: "def"
-      )
-    ]
 
     // When
     let variant = ConfigLogic.assignVariants(
       fromTriggers: [],
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
+      confirmedAssignments: confirmedAssignments
     )
 
     // Then
-    XCTAssertEqual(variant.unconfirmedAssignments, unconfirmedAssignments)
+    XCTAssertTrue(variant.unconfirmedAssignments.isEmpty)
     XCTAssertEqual(variant.confirmedAssignments, confirmedAssignments)
   }
 
@@ -191,26 +191,17 @@ final class ConfigLogicTests: XCTestCase {
         paywallId: "abc"
       )
     ]
-    let unconfirmedAssignments = [
-      "exp2": Experiment.Variant(
-        id: "3",
-        type: .holdout,
-        paywallId: "def"
-      )
-    ]
-
     // When
     let variant = ConfigLogic.assignVariants(
       fromTriggers: [
         .stub()
         .setting(\.rules, to: [])
       ],
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
+      confirmedAssignments: confirmedAssignments
     )
 
     // Then
-    XCTAssertEqual(variant.unconfirmedAssignments, unconfirmedAssignments)
+    XCTAssertTrue(variant.unconfirmedAssignments.isEmpty)
     XCTAssertEqual(variant.confirmedAssignments, confirmedAssignments)
   }
 
@@ -240,8 +231,7 @@ final class ConfigLogicTests: XCTestCase {
           )
         ])
       ],
-      confirmedAssignments: [:],
-      unconfirmedAssignments: [:]
+      confirmedAssignments: [:]
     )
 
     // When
@@ -276,8 +266,7 @@ final class ConfigLogicTests: XCTestCase {
           )
         ])
       ],
-      confirmedAssignments: [experimentId: variantOption.toVariant()],
-      unconfirmedAssignments: [:]
+      confirmedAssignments: [experimentId: variantOption.toVariant()]
     )
 
     // Then
@@ -315,13 +304,227 @@ final class ConfigLogicTests: XCTestCase {
           )
         ])
       ],
-      confirmedAssignments: [experimentId: oldVariantOption.toVariant()],
-      unconfirmedAssignments: [:]
+      confirmedAssignments: [experimentId: oldVariantOption.toVariant()]
     )
 
     // Then
     XCTAssertEqual(variant.unconfirmedAssignments.count, 1)
     XCTAssertEqual(variant.unconfirmedAssignments[experimentId], newVariantOption.toVariant())
     XCTAssertTrue(variant.confirmedAssignments.isEmpty)
+  }
+
+  // MARK: - processAssignmentsFromServer
+
+  func test_processAssignmentsFromServer_noAssignments() {
+    let confirmedVariant: Experiment.Variant = .init(id: "def", type: .treatment, paywallId: "ghi")
+    let unconfirmedVariant: Experiment.Variant = .init(id: "mno", type: .treatment, paywallId: "pqr")
+    let result = ConfigLogic.transferAssignmentsFromServerToDisk(
+      assignments: [],
+      triggers: [.stub()],
+      confirmedAssignments: ["abc": .init(id: "def", type: .treatment, paywallId: "ghi")],
+      unconfirmedAssignments: ["jkl": .init(id: "mno", type: .treatment, paywallId: "pqr")]
+    )
+    XCTAssertEqual(result.confirmedAssignments["abc"], confirmedVariant)
+    XCTAssertEqual(result.unconfirmedAssignments["jkl"], unconfirmedVariant)
+  }
+
+  func test_processAssignmentsFromServer_overwriteConfirmedAssignment() {
+    let experimentId = "abc"
+    let variantId = "def"
+
+    let assignments: [Assignment] = [
+      Assignment(
+        experimentId: experimentId,
+        variantId: variantId
+      )
+    ]
+    let oldVariantOption: VariantOption = .stub()
+    let variantOption: VariantOption = .stub()
+      .setting(\.id, to: variantId)
+    let triggers: Set<Trigger> = [
+      .stub()
+      .setting(\.rules, to: [
+        .stub()
+        .setting(
+          \.experiment,
+           to: .stub()
+            .setting(\.id, to: experimentId)
+            .setting(\.variants, to: [variantOption])
+        )
+      ])
+    ]
+
+    let unconfirmedVariant: Experiment.Variant = .init(id: "mno", type: .treatment, paywallId: "pqr")
+    let result = ConfigLogic.transferAssignmentsFromServerToDisk(
+      assignments: assignments,
+      triggers: triggers,
+      confirmedAssignments: [experimentId: oldVariantOption.toVariant()],
+      unconfirmedAssignments: ["jkl": .init(id: "mno", type: .treatment, paywallId: "pqr")]
+    )
+
+    XCTAssertEqual(result.confirmedAssignments[experimentId], variantOption.toVariant())
+    XCTAssertEqual(result.unconfirmedAssignments["jkl"], unconfirmedVariant)
+  }
+
+  func test_processAssignmentsFromServer_multipleAssignments() {
+    let experimentId1 = "abc"
+    let variantId1 = "def"
+
+    let experimentId2 = "ghi"
+    let variantId2 = "klm"
+
+    let assignments: [Assignment] = [
+      Assignment(
+        experimentId: experimentId1,
+        variantId: variantId1
+      ),
+      Assignment(
+        experimentId: experimentId2,
+        variantId: variantId2
+      )
+    ]
+    let unusedVariantOption1: VariantOption = .stub()
+      .setting(\.id, to: "unusedOption1")
+    let variantOption1: VariantOption = .stub()
+      .setting(\.id, to: variantId1)
+    let variantOption2: VariantOption = .stub()
+      .setting(\.id, to: variantId2)
+    let unusedVariantOption2: VariantOption = .stub()
+      .setting(\.id, to: "unusedOption2")
+
+    let triggers: Set<Trigger> = [
+      .stub()
+      .setting(\.rules, to: [
+        .stub()
+        .setting(
+          \.experiment,
+           to: .stub()
+            .setting(\.id, to: experimentId1)
+            .setting(\.variants, to: [variantOption1, unusedVariantOption1])
+        ),
+        .stub()
+        .setting(
+          \.experiment,
+           to: .stub()
+            .setting(\.id, to: experimentId2)
+            .setting(\.variants, to: [variantOption2, unusedVariantOption2])
+        )
+      ])
+    ]
+
+    let unconfirmedVariant: Experiment.Variant = .init(id: "mno", type: .treatment, paywallId: "pqr")
+    let result = ConfigLogic.transferAssignmentsFromServerToDisk(
+      assignments: assignments,
+      triggers: triggers,
+      confirmedAssignments: [:],
+      unconfirmedAssignments: ["jkl": .init(id: "mno", type: .treatment, paywallId: "pqr")]
+    )
+    XCTAssertEqual(result.confirmedAssignments.count, 2)
+    XCTAssertEqual(result.confirmedAssignments[experimentId1], variantOption1.toVariant())
+    XCTAssertEqual(result.confirmedAssignments[experimentId2], variantOption2.toVariant())
+    XCTAssertEqual(result.unconfirmedAssignments["jkl"], unconfirmedVariant)
+  }
+
+  // MARK: - getStaticPaywallResponse
+
+  func test_getStaticPaywallResponse_noPaywallId() {
+    let response = ConfigLogic.getStaticPaywallResponse(
+      fromPaywallId: nil,
+      config: .stub(),
+      deviceHelper: .shared
+    )
+    XCTAssertNil(response)
+  }
+
+  func test_getStaticPaywallResponse_noConfig() {
+    let response = ConfigLogic.getStaticPaywallResponse(
+      fromPaywallId: "abc",
+      config: nil,
+      deviceHelper: .shared
+    )
+    XCTAssertNil(response)
+  }
+
+  func test_getStaticPaywallResponse_deviceLocaleSpecifiedInConfig() {
+    let locale = "en_GB"
+    let deviceHelper = DeviceHelperMock()
+    deviceHelper.internalLocale = locale
+
+    let response = ConfigLogic.getStaticPaywallResponse(
+      fromPaywallId: "abc",
+      config: .stub()
+        .setting(\.locales, to: [locale]),
+      deviceHelper: deviceHelper
+    )
+    XCTAssertNil(response)
+  }
+
+  func test_getStaticPaywallResponse_shortLocaleContainsEn() {
+    let paywallId = "abc"
+    let deviceHelper = DeviceHelperMock()
+    deviceHelper.internalLocale = "en_GB"
+    let config: Config = .stub()
+      .setting(\.locales, to: ["de_DE"])
+      .setting(\.paywallResponses, to: [
+        .stub(),
+        .stub()
+        .setting(\.identifier, to: paywallId)
+      ])
+
+    let response = ConfigLogic.getStaticPaywallResponse(
+      fromPaywallId: paywallId,
+      config: config,
+      deviceHelper: deviceHelper
+    )
+
+    XCTAssertEqual(response, config.paywallResponses[1])
+  }
+
+  func test_getStaticPaywallResponse_shortLocaleNotContainedInConfig() {
+    let paywallId = "abc"
+    let deviceHelper = DeviceHelperMock()
+    deviceHelper.internalLocale = "de_DE"
+    let config: Config = .stub()
+      .setting(\.locales, to: [])
+      .setting(\.paywallResponses, to: [
+        .stub(),
+        .stub()
+        .setting(\.identifier, to: paywallId)
+      ])
+
+    let response = ConfigLogic.getStaticPaywallResponse(
+      fromPaywallId: paywallId,
+      config: config,
+      deviceHelper: deviceHelper
+    )
+
+    XCTAssertEqual(response, config.paywallResponses[1])
+  }
+
+  func test_getStaticPaywallResponse_shortLocaleContainedInConfig() {
+    let paywallId = "abc"
+    let deviceHelper = DeviceHelperMock()
+    deviceHelper.internalLocale = "de_DE"
+    let config: Config = .stub()
+      .setting(\.locales, to: ["de"])
+      .setting(\.paywallResponses, to: [
+        .stub(),
+        .stub()
+        .setting(\.identifier, to: paywallId)
+      ])
+
+    let response = ConfigLogic.getStaticPaywallResponse(
+      fromPaywallId: paywallId,
+      config: config,
+      deviceHelper: deviceHelper
+    )
+
+    XCTAssertNil(response)
+  }
+
+  // MARK: - getAllActiveTreatmentPaywallIds
+
+  func test_getAllActiveTreatmentPaywallIds_hi() {
+    
   }
 }

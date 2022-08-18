@@ -81,11 +81,10 @@ enum ConfigLogic {
 
   static func assignVariants(
     fromTriggers triggers: Set<Trigger>,
-    confirmedAssignments: [Experiment.ID: Experiment.Variant],
-    unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
+    confirmedAssignments: [Experiment.ID: Experiment.Variant]
   ) -> (confirmedAssignments: [Experiment.ID: Experiment.Variant], unconfirmedAssignments: [Experiment.ID: Experiment.Variant]) {
     var confirmedAssignments = confirmedAssignments
-    var unconfirmedAssignments = unconfirmedAssignments
+    var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
     let groupedTriggerRules = getRulesPerTriggerGroup(from: triggers)
 
@@ -119,8 +118,8 @@ enum ConfigLogic {
 
   /// Loops through assignments retrieved from the server to get variants by id.
   /// Returns updated confirmed/unconfirmed assignments to save.
-  static func processAssignmentsFromServer(
-    _ assignments: [Assignment],
+  static func transferAssignmentsFromServerToDisk(
+    assignments: [Assignment],
     triggers: Set<Trigger>,
     confirmedAssignments: [Experiment.ID: Experiment.Variant],
     unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
@@ -166,7 +165,10 @@ enum ConfigLogic {
     if config.locales.contains(deviceHelper.locale) {
       return nil
     } else {
-      let shortLocale = String(deviceHelper.locale.split(separator: "_")[0])
+      guard let shortLocaleElement = deviceHelper.locale.split(separator: "_").first else {
+        return nil
+      }
+      let shortLocale = String(shortLocaleElement)
 
       // Otherwise, if the shortened locale contains "en", load the paywall responses from static config.
       // Same if we can't find any matching locale in available locales.

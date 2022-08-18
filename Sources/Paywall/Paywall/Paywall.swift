@@ -132,9 +132,9 @@ public final class Paywall: NSObject {
         Storage.shared.checkForStaticConfigUpgrade()
       }
     } else {
+      // Get assignments if user has gone from anonymous to having an ID.
       ConfigManager.shared.getAssignments()
     }
-
 
     Storage.shared.appUserId = userId
 		return shared

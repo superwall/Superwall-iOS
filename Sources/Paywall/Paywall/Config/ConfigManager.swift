@@ -102,8 +102,7 @@ class ConfigManager {
     }
     let result = ConfigLogic.assignVariants(
       fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
+      confirmedAssignments: confirmedAssignments
     )
     unconfirmedAssignments = result.unconfirmedAssignments
     confirmedAssignments = result.confirmedAssignments
@@ -123,8 +122,8 @@ class ConfigManager {
       switch result {
       case .success(let assignments):
         var confirmedAssignments = Storage.shared.getConfirmedAssignments()
-        let result = ConfigLogic.processAssignmentsFromServer(
-          assignments,
+        let result = ConfigLogic.transferAssignmentsFromServerToDisk(
+          assignments: assignments,
           triggers: triggers,
           confirmedAssignments: confirmedAssignments,
           unconfirmedAssignments: self.unconfirmedAssignments
