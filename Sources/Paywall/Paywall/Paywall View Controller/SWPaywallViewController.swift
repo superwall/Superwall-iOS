@@ -227,11 +227,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     if loadingState == .ready {
       webView.eventHandler.handleEvent(.templateParamsAndUserAttributes)
     }
-
-
-
-
-
 	}
 
   override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -258,10 +253,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       return
     }
     Paywall.delegate?.willDismissPaywall?()
-    UIApplication.shared.statusBarStyle = UIStatusBarStyle.default
 	}
-
-
 
 	override func viewDidDisappear(_ animated: Bool) {
 		super.viewDidDisappear(animated)
