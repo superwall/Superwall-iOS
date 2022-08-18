@@ -137,16 +137,14 @@ internal class SWPaywallLoadingView: UIView {
     }
 
     superview?.bringSubviewToFront(self)
-//    self.outerContainer.alpha = 0.0
-
     if show {
       activityIndicator.startAnimating()
       activityContainer.alpha = 0.0
       activityContainer.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
-      self.activityIndicator.transform = CGAffineTransform(rotationAngle: CGFloat.pi )
+      activityIndicator.transform = CGAffineTransform(rotationAngle: CGFloat.pi )
       outerContainer.transform = .identity
-      self.isHidden = false
-      self.backgroundColor = UIColor.black.withAlphaComponent(0.0)
+      isHidden = false
+      backgroundColor = UIColor.black.withAlphaComponent(0.0)
       UIView.springAnimate { [weak self] in
         self?.backgroundColor = UIColor.black.withAlphaComponent(0.25)
         self?.activityContainer.alpha = 1.0
@@ -160,6 +158,7 @@ internal class SWPaywallLoadingView: UIView {
         self?.backgroundColor = UIColor.black.withAlphaComponent(0.0)
         self?.activityContainer.alpha = 0.0
         self?.activityContainer.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
+        self?.activityIndicator.transform = CGAffineTransform(rotationAngle: CGFloat.pi )
       } completion: { [weak self] _ in
         self?.activityIndicator.stopAnimating()
         self?.isHidden = true
