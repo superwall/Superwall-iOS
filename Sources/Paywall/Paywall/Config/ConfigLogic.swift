@@ -12,6 +12,10 @@ enum ConfigLogic {
     case noVariantsFound
     case invalidState
   }
+  struct AssignmentOutcome {
+    let confirmedAssignments: [Experiment.ID: Experiment.Variant]
+    let unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
+  }
 
   static func chooseVariant(
     from variants: [VariantOption],
@@ -20,12 +24,21 @@ enum ConfigLogic {
     if variants.isEmpty {
       throw TriggerRuleError.noVariantsFound
     }
-    let variantSum = variants.reduce(0) { partialResult, variant in
-      partialResult + variant.percentage
+
+    // If there's only one variant, return it.
+    // This could have a zero percentage.
+    if variants.count == 1,
+      let variant = variants.first {
+      return .init(
+        id: variant.id,
+        type: variant.type,
+        paywallId: variant.paywallId
+      )
     }
 
-    if variantSum == 0 {
-      throw TriggerRuleError.invalidState
+    // Calculate the total sum of variant percentages.
+    let variantSum = variants.reduce(0) { partialResult, variant in
+      partialResult + variant.percentage
     }
 
     // Choose a random percentage e.g. 21
@@ -82,7 +95,7 @@ enum ConfigLogic {
   static func assignVariants(
     fromTriggers triggers: Set<Trigger>,
     confirmedAssignments: [Experiment.ID: Experiment.Variant]
-  ) -> (confirmedAssignments: [Experiment.ID: Experiment.Variant], unconfirmedAssignments: [Experiment.ID: Experiment.Variant]) {
+  ) -> AssignmentOutcome {
     var confirmedAssignments = confirmedAssignments
     var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
@@ -97,7 +110,9 @@ enum ConfigLogic {
         if let confirmedVariant = confirmedAssignments[rule.experiment.id] {
           // If one exists, check it's still in the available variants of the experiment's rules, otherwise reroll.
           if !availableVariantIds.contains(confirmedVariant.id) {
+            // If we couldn't choose a variant, because of an invalid state, such as no variants available, delete the confirmed assignment.
             guard let variant = try? Self.chooseVariant(from: rule.experiment.variants) else {
+              confirmedAssignments[rule.experiment.id] = nil
               continue
             }
             unconfirmedAssignments[rule.experiment.id] = variant
@@ -113,7 +128,10 @@ enum ConfigLogic {
       }
     }
 
-    return (confirmedAssignments, unconfirmedAssignments)
+    return .init(
+      confirmedAssignments: confirmedAssignments,
+      unconfirmedAssignments: unconfirmedAssignments
+    )
   }
 
   /// Loops through assignments retrieved from the server to get variants by id.
@@ -123,7 +141,7 @@ enum ConfigLogic {
     triggers: Set<Trigger>,
     confirmedAssignments: [Experiment.ID: Experiment.Variant],
     unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
-  ) -> (confirmedAssignments: [Experiment.ID: Experiment.Variant], unconfirmedAssignments: [Experiment.ID: Experiment.Variant]) {
+  ) -> AssignmentOutcome {
     var confirmedAssignments = confirmedAssignments
     var unconfirmedAssignments = unconfirmedAssignments
 
@@ -146,7 +164,10 @@ enum ConfigLogic {
       unconfirmedAssignments[assignment.experimentId] = nil
     }
 
-    return (confirmedAssignments, unconfirmedAssignments)
+    return .init(
+      confirmedAssignments: confirmedAssignments,
+      unconfirmedAssignments: unconfirmedAssignments
+    )
   }
 
   static func getStaticPaywallResponse(
@@ -190,7 +211,8 @@ enum ConfigLogic {
     // Don't preload any experiment IDs that are on disk but no longer in static config.
     // This could happen when a campaign has been archived.
     let confirmedExperimentIds = Set(confirmedAssignments.keys)
-    let triggerExperimentIds = Set(triggers.flatMap { $0.rules.map { $0.experiment.id } })
+    let groupedTriggerRules = getRulesPerTriggerGroup(from: triggers)
+    let triggerExperimentIds = groupedTriggerRules.flatMap { $0.map { $0.experiment.id } }
     let oldExperimentIds = confirmedExperimentIds.subtracting(triggerExperimentIds)
     for id in oldExperimentIds {
       confirmedAssignments[id] = nil
@@ -217,7 +239,8 @@ enum ConfigLogic {
     unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
   ) -> Set<String> {
     let mergedAssignments = confirmedAssignments.merging(unconfirmedAssignments)
-    let triggerExperimentIds = triggers.flatMap { $0.rules.map { $0.experiment.id } }
+    let groupedTriggerRules = getRulesPerTriggerGroup(from: triggers)
+    let triggerExperimentIds = groupedTriggerRules.flatMap { $0.map { $0.experiment.id } }
 
     var identifiers: Set<String> = []
     for experimentId in triggerExperimentIds {
