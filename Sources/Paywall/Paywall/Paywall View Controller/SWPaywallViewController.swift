@@ -231,7 +231,24 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     if loadingState == .ready {
       webView.eventHandler.handleEvent(.templateParamsAndUserAttributes)
     }
+
+
+
+
+
 	}
+
+  override var preferredStatusBarStyle: UIStatusBarStyle {
+    if let isDark = view.backgroundColor?.isDarkColor, isDark {
+      return .lightContent
+    }
+
+    if #available(iOS 13.0, *) {
+      return .darkContent
+    } else {
+      return .default
+    }
+  }
 
 	override func viewWillDisappear(_ animated: Bool) {
 		super.viewWillDisappear(animated)
@@ -245,7 +262,10 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       return
     }
     Paywall.delegate?.willDismissPaywall?()
+    UIApplication.shared.statusBarStyle = UIStatusBarStyle.default
 	}
+
+
 
 	override func viewDidDisappear(_ animated: Bool) {
 		super.viewDidDisappear(animated)
@@ -429,6 +449,9 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       self.exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.shimmerView.isLightBackground = !self.paywallResponse.paywallBackgroundColor.isDarkColor
       self.shimmerView.contentColor = loadingColor
+
+      self.modalPresentationCapturesStatusBarAppearance = true
+      self.setNeedsStatusBarAppearanceUpdate()
     }
   }
 
