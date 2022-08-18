@@ -21,10 +21,10 @@ internal class SWPaywallLoadingView: UIView {
 
   var paywallBackgroundColor: UIColor = .white {
     didSet {
-      let isDark = paywallBackgroundColor.isDarkColor
+      let isDark = true //paywallBackgroundColor.isDarkColor
       lightBlurEffectView.isHidden = isDark
       darkBlurEffectView.isHidden = !isDark
-      activityIndicator.color = isDark ? .white : .black
+      activityIndicator.color = .white // isDark ? .white : .black
     }
   }
 
