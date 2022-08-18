@@ -21,8 +21,10 @@ internal class SWPaywallLoadingView: UIView {
 
   var paywallBackgroundColor: UIColor = .white {
     didSet {
-      lightBlurEffectView.isHidden = paywallBackgroundColor.isDarkColor
-      darkBlurEffectView.isHidden = !paywallBackgroundColor.isDarkColor
+      let isDark = paywallBackgroundColor.isDarkColor
+      lightBlurEffectView.isHidden = isDark
+      darkBlurEffectView.isHidden = !isDark
+      activityIndicator.color = isDark ? .white : .black
     }
   }
 
@@ -35,15 +37,29 @@ internal class SWPaywallLoadingView: UIView {
   }()
 
   var lightBlurEffectView: UIVisualEffectView = {
-    let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
-    blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    return blurEffectView
+    if #available(iOS 13.0, *) {
+      let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialLight))
+      blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+      return blurEffectView
+    } else {
+      let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
+      blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+      return blurEffectView
+    }
+
   }()
 
   var darkBlurEffectView: UIVisualEffectView = {
-    let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
-    blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    return blurEffectView
+    if #available(iOS 13.0, *) {
+      let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+      blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+      return blurEffectView
+    } else {
+      let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
+      blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+      return blurEffectView
+    }
+
   }()
 
   lazy var activityContainer: UIView = {
@@ -66,7 +82,6 @@ internal class SWPaywallLoadingView: UIView {
       view.layer.cornerCurve = .continuous
     }
     view.layer.cornerRadius = 15
-    
     return view
   }()
 
@@ -77,7 +92,6 @@ internal class SWPaywallLoadingView: UIView {
     spinner.translatesAutoresizingMaskIntoConstraints = false
     spinner.style = .whiteLarge
     spinner.hidesWhenStopped = true
-    spinner.alpha = 0.85
     return spinner
   }()
 
@@ -132,9 +146,9 @@ internal class SWPaywallLoadingView: UIView {
       self.activityIndicator.transform = CGAffineTransform(rotationAngle: CGFloat.pi )
       outerContainer.transform = .identity
       self.isHidden = false
-//      self.backgroundColor = self.paywallBackgroundColor.withAlphaComponent(0.0)
+      self.backgroundColor = UIColor.black.withAlphaComponent(0.0)
       UIView.springAnimate { [weak self] in
-//        self?.backgroundColor = self?.paywallBackgroundColor.withAlphaComponent(0.1)
+        self?.backgroundColor = UIColor.black.withAlphaComponent(0.25)
         self?.activityContainer.alpha = 1.0
         self?.activityContainer.transform = .identity
         self?.activityIndicator.transform = .identity
@@ -143,10 +157,8 @@ internal class SWPaywallLoadingView: UIView {
       activityContainer.alpha = 1.0
       activityContainer.transform = .identity
       UIView.springAnimate { [weak self] in
-//        self?.backgroundColor = self?.paywallBackgroundColor.withAlphaComponent(0.0)
+        self?.backgroundColor = UIColor.black.withAlphaComponent(0.0)
         self?.activityContainer.alpha = 0.0
-        self?.activityContainer.transform = CGAffineTransform(scaleX: 0.05, y: 0.05)
-        self?.activityIndicator.transform = CGAffineTransform(rotationAngle: CGFloat.pi )
       } completion: { [weak self] _ in
         self?.activityIndicator.stopAnimating()
         self?.isHidden = true
@@ -167,6 +179,10 @@ internal class SWPaywallLoadingView: UIView {
       } else {
         self?.outerContainer.transform = .identity
       }
+    }
+
+    if up {
+      toggle(show: false, animated: true)
     }
   }
 
@@ -202,9 +218,9 @@ class SWShadowView: UIView {
     super.layoutSubviews()
     layer.masksToBounds = false
     layer.shadowRadius = 20
-    layer.shadowOpacity = 1.0
+    layer.shadowOpacity = 0
     layer.shadowOffset = .zero
-    layer.shadowColor = UIColor.black.withAlphaComponent(0.25).cgColor
+    layer.shadowColor = UIColor.black.cgColor
     layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 15).cgPath
   }
 }
