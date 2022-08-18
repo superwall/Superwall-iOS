@@ -21,7 +21,7 @@ final class SWPaywallLoadingView: UIView {
 
   var paywallBackgroundColor: UIColor = .white {
     didSet {
-      let isDark = true //paywallBackgroundColor.isDarkColor
+      let isDark = true // paywallBackgroundColor.isDarkColor
       lightBlurEffectView.isHidden = isDark
       darkBlurEffectView.isHidden = !isDark
       activityIndicator.color = .white // isDark ? .white : .black
@@ -46,7 +46,6 @@ final class SWPaywallLoadingView: UIView {
       blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
       return blurEffectView
     }
-
   }()
 
   var darkBlurEffectView: UIVisualEffectView = {
@@ -59,7 +58,6 @@ final class SWPaywallLoadingView: UIView {
       blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
       return blurEffectView
     }
-
   }()
 
   private lazy var activityContainer: UIView = {
