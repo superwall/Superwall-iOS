@@ -13,8 +13,7 @@ final class ConfigManagerMock: ConfigManager {
   var confirmedAssignment = false
 
   override func confirmAssignments(
-    _ confirmableAssignment: ConfirmableAssignment,
-    network: Network = .shared
+    _ confirmableAssignment: ConfirmableAssignment
   ) {
     confirmedAssignment = true
   }

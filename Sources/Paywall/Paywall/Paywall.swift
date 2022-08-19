@@ -133,7 +133,7 @@ public final class Paywall: NSObject {
       }
     } else {
       // Get assignments if user has gone from anonymous to having an ID.
-      ConfigManager.shared.getAssignments()
+      ConfigManager.shared.loadAssignments()
     }
 
     Storage.shared.appUserId = userId

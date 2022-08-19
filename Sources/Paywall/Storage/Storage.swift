@@ -31,6 +31,7 @@ class Storage {
     return appUserId ?? aliasId
   }
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
+  private var confirmedAssignments: [Experiment.ID: Experiment.Variant]?
   private let cache: Cache
 
   init(
@@ -88,7 +89,7 @@ class Storage {
       // After config, we get the assignments.
       // Only when the config and assignments are fetched do we fire triggers.
       TriggerDelayManager.shared.configDispatchGroup.notify(queue: .main) {
-        ConfigManager.shared.getAssignments {
+        ConfigManager.shared.loadAssignments {
           TriggerDelayManager.shared.leaveAssignmentDispatchQueue()
         }
       }
@@ -217,14 +218,21 @@ class Storage {
     return cache.read(TotalPaywallViews.self)
   }
 
-  func saveConfirmedAssignments(_ assignments: [String: Experiment.Variant]) {
+  func saveConfirmedAssignments(_ assignments: [Experiment.ID: Experiment.Variant]) {
     cache.write(
       assignments,
       forType: ConfirmedAssignments.self
     )
+    confirmedAssignments = assignments
   }
 
   func getConfirmedAssignments() -> [Experiment.ID: Experiment.Variant] {
-    return cache.read(ConfirmedAssignments.self) ?? [:]
+    if let confirmedAssignments = confirmedAssignments {
+      return confirmedAssignments
+    } else {
+      let assignments = cache.read(ConfirmedAssignments.self) ?? [:]
+      confirmedAssignments = assignments
+      return assignments
+    }
   }
 }

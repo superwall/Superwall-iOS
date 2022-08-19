@@ -36,4 +36,24 @@ final class ConfigManagerTests: XCTestCase {
     )
     XCTAssertTrue(network.getConfigCalled)
   }
+
+  func test_confirmAssignments() {
+    let network = NetworkMock()
+    let storage = StorageMock()
+
+    let experimentId = "abc"
+    let variantId = "def"
+    let variant: Experiment.Variant = .init(id: variantId, type: .treatment, paywallId: "jkl")
+    let assignment = ConfirmableAssignment(
+      experimentId: experimentId,
+      variant: variant
+    )
+    let configManager = ConfigManager(storage: storage, network: network)
+
+    configManager.confirmAssignments(assignment)
+
+    XCTAssertTrue(network.assignmentsConfirmed)
+    XCTAssertEqual(storage.getConfirmedAssignments()[experimentId], variant)
+    XCTAssertNil(configManager.unconfirmedAssignments[experimentId])
+  }
 }

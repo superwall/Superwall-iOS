@@ -18,17 +18,20 @@ class ConfigManager {
   var triggers: [String: Trigger] = [:]
   private let storage: Storage
   private let network: Network
+  private let paywallManager: PaywallManager
   /// A memory store of assignments that are yet to be confirmed.
   ///
   /// When the trigger is fired, the assignment is confirmed and stored to disk.
   var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
   init(
-    storage: Storage = Storage.shared,
-    network: Network = Network.shared
+    storage: Storage = .shared,
+    network: Network = .shared,
+    paywallManager: PaywallManager = .shared
   ) {
     self.storage = storage
     self.network = network
+    self.paywallManager = paywallManager
 
     NotificationCenter.default.addObserver(
       self,
@@ -96,7 +99,7 @@ class ConfigManager {
   // MARK: - Assignments
 
   private func assignVariants() {
-    var confirmedAssignments = Storage.shared.getConfirmedAssignments()
+    var confirmedAssignments = storage.getConfirmedAssignments()
     guard let triggers = config?.triggers else {
       return
     }
@@ -106,11 +109,11 @@ class ConfigManager {
     )
     unconfirmedAssignments = result.unconfirmedAssignments
     confirmedAssignments = result.confirmedAssignments
-    Storage.shared.saveConfirmedAssignments(confirmedAssignments)
+    storage.saveConfirmedAssignments(confirmedAssignments)
   }
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
-  func getAssignments(completion: (() -> Void)? = nil) {
+  func loadAssignments(completion: (() -> Void)? = nil) {
     guard let triggers = config?.triggers else {
       completion?()
       return
@@ -121,7 +124,7 @@ class ConfigManager {
       }
       switch result {
       case .success(let assignments):
-        var confirmedAssignments = Storage.shared.getConfirmedAssignments()
+        var confirmedAssignments = self.storage.getConfirmedAssignments()
         let result = ConfigLogic.transferAssignmentsFromServerToDisk(
           assignments: assignments,
           triggers: triggers,
@@ -130,7 +133,7 @@ class ConfigManager {
         )
         self.unconfirmedAssignments = result.unconfirmedAssignments
         confirmedAssignments = result.confirmedAssignments
-        Storage.shared.saveConfirmedAssignments(confirmedAssignments)
+        self.storage.saveConfirmedAssignments(confirmedAssignments)
         self.cacheConfig()
         completion?()
       case .failure(let error):
@@ -156,8 +159,7 @@ class ConfigManager {
     guard let triggers = config?.triggers else {
       return []
     }
-    // TODO: Extract confirmed assignments into memory to reduce load time.
-    let confirmedAssignments = Storage.shared.getConfirmedAssignments()
+    let confirmedAssignments = storage.getConfirmedAssignments()
     return ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       confirmedAssignments: confirmedAssignments,
@@ -166,8 +168,7 @@ class ConfigManager {
   }
 
   private func getTreatmentPaywallIds(from triggers: Set<Trigger>) -> Set<String> {
-    // TODO: Extract confirmed assignments into memory to reduce load time.
-    let confirmedAssignments = Storage.shared.getConfirmedAssignments()
+    let confirmedAssignments = storage.getConfirmedAssignments()
     return ConfigLogic.getActiveTreatmentPaywallIds(
       forTriggers: triggers,
       confirmedAssignments: confirmedAssignments,
@@ -176,8 +177,7 @@ class ConfigManager {
   }
 
   func confirmAssignments(
-    _ confirmableAssignment: ConfirmableAssignment,
-    network: Network = .shared
+    _ confirmableAssignment: ConfirmableAssignment
   ) {
     let assignmentPostback = ConfirmableAssignments(
       assignments: [
@@ -189,9 +189,9 @@ class ConfigManager {
     )
     network.confirmAssignments(assignmentPostback)
 
-    var confirmedAssignments = Storage.shared.getConfirmedAssignments()
+    var confirmedAssignments = storage.getConfirmedAssignments()
     confirmedAssignments[confirmableAssignment.experimentId] = confirmableAssignment.variant
-    Storage.shared.saveConfirmedAssignments(confirmedAssignments)
+    storage.saveConfirmedAssignments(confirmedAssignments)
     unconfirmedAssignments[confirmableAssignment.experimentId] = nil
   }
 
@@ -224,7 +224,7 @@ class ConfigManager {
   /// Preloads paywalls referenced by triggers.
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) {
     for identifier in paywallIdentifiers {
-      PaywallManager.shared.getPaywallViewController(
+      paywallManager.getPaywallViewController(
         responseIdentifiers: .init(paywallId: identifier),
         cached: true
       )

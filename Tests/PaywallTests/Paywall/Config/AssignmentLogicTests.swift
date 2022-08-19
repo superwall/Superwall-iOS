@@ -42,12 +42,14 @@ class AssignmentLogicTests: XCTestCase {
     configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
+    let storage = StorageMock()
 
     // MARK: When
     let outcome = AssignmentLogic.getOutcome(
       forEvent: eventData,
       triggers: triggers,
-      configManager: configManager
+      configManager: configManager,
+      storage: storage
     )
 
     // MARK: Then
@@ -99,12 +101,14 @@ class AssignmentLogicTests: XCTestCase {
     configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
+    let storage = StorageMock()
 
     // MARK: When
     let outcome = AssignmentLogic.getOutcome(
       forEvent: eventData,
       triggers: triggers,
-      configManager: configManager
+      configManager: configManager,
+      storage: storage
     )
 
     // MARK: Then

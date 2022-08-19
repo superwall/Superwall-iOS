@@ -43,4 +43,8 @@ final class StorageMock: Storage {
   override func getConfirmedAssignments() -> [Experiment.ID: Experiment.Variant] {
     return internalConfirmedAssignments
   }
+
+  override func saveConfirmedAssignments(_ assignments: [String : Experiment.Variant]) {
+    internalConfirmedAssignments = assignments
+  }
 }
