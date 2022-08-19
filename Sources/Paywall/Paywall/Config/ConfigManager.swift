@@ -55,7 +55,7 @@ class ConfigManager {
   func fetchConfiguration() {
     TriggerDelayManager.shared.enterConfigDispatchQueue()
     let requestId = UUID().uuidString
-    Network.shared.getConfig(withRequestId: requestId) { [weak self] result in
+    network.getConfig(withRequestId: requestId) { [weak self] result in
       guard let self = self else {
         return
       }
@@ -114,11 +114,14 @@ class ConfigManager {
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
   func loadAssignments(completion: (() -> Void)? = nil) {
-    guard let triggers = config?.triggers else {
+    guard
+      let triggers = config?.triggers,
+      !triggers.isEmpty
+    else {
       completion?()
       return
     }
-    Network.shared.getAssignments { [weak self] result in
+    network.getAssignments { [weak self] result in
       guard let self = self else {
         return
       }
@@ -135,7 +138,6 @@ class ConfigManager {
         confirmedAssignments = result.confirmedAssignments
         self.storage.saveConfirmedAssignments(confirmedAssignments)
         self.cacheConfig()
-        completion?()
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -144,6 +146,7 @@ class ConfigManager {
           error: error
         )
       }
+      completion?()
     }
   }
 
@@ -195,7 +198,7 @@ class ConfigManager {
     unconfirmedAssignments[confirmableAssignment.experimentId] = nil
   }
 
-  /// Preloads paywalls, products, trigger paywalls, and trigger responses. It then sends the products back to the server.
+  /// Preloads paywalls, products and trigger responses. It then sends the products back to the server.
   ///
   /// A developer can disable preloading of paywalls by setting ``PaywallOptions/shouldPreloadPaywalls``.
   private func cacheConfig() {
@@ -239,12 +242,12 @@ class ConfigManager {
     // TODO: Does this need to be on the main thread?
     DispatchQueue.main.asyncAfter(deadline: .now() + config.postback.postbackDelay) {
       let productIds = config.postback.productsToPostBack.map { $0.identifier }
-      StoreKitManager.shared.getProducts(withIds: productIds) { result in
+      StoreKitManager.shared.getProducts(withIds: productIds) { [weak self] result in
         switch result {
         case .success(let productsById):
           let products = productsById.values.map(PostbackProduct.init)
           let postback = Postback(products: products)
-          Network.shared.sendPostback(postback)
+          self?.network.sendPostback(postback)
         case .failure:
           break
         }

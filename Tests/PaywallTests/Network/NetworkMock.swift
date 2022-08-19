@@ -12,6 +12,7 @@ final class NetworkMock: Network {
   var sentSessionEvents: SessionEventsRequest?
   var getConfigCalled = false
   var assignmentsConfirmed = false
+  var assignments: [Assignment] = []
 
   override func sendSessionEvents(_ session: SessionEventsRequest) {
     sentSessionEvents = session
@@ -28,5 +29,9 @@ final class NetworkMock: Network {
 
   override func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) {
     assignmentsConfirmed = true
+  }
+
+  override func getAssignments(completion: @escaping (Result<[Assignment], Error>) -> Void) {
+    completion(.success(assignments))
   }
 }
