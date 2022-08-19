@@ -18,7 +18,11 @@ enum AssignmentLogic {
     var result: TriggerResult
   }
 
-  /// Determines whether there is an assignment to confirm based on the rule.
+  /// Determines the outcome of an event based on given triggers. It also determines whether there is an assignment to confirm based on the rule.
+  ///
+  /// This first finds a trigger for a given event name. Then it determines whether any of the rules of the triggers match for that event.
+  /// It takes that rule and checks the disk for a confirmed variant assignment for the rule's experiment ID. If there isn't one, it checks the unconfirmed assignments.
+  /// Then it returns the result of the event given the assignment.
   ///
   /// - Returns: An assignment to confirm, if available.
   static func getOutcome(

@@ -268,6 +268,7 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggers = [eventName: trigger]
 
+    let storage = StorageMock()
     let configManager = ConfigManager()
     let variant = variantOption.toVariant()
     configManager.unconfirmedAssignments = [
@@ -278,7 +279,8 @@ class AssignmentLogicTests: XCTestCase {
     let outcome = AssignmentLogic.getOutcome(
       forEvent: eventData,
       triggers: triggers,
-      configManager: configManager
+      configManager: configManager,
+      storage: storage
     )
 
     // MARK: Then
@@ -317,6 +319,7 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggers = [eventName: trigger]
 
+    let storage = StorageMock()
     let configManager = ConfigManager()
     let variant = variantOption.toVariant()
     configManager.unconfirmedAssignments = [
@@ -327,7 +330,8 @@ class AssignmentLogicTests: XCTestCase {
     let outcome = AssignmentLogic.getOutcome(
       forEvent: eventData,
       triggers: triggers,
-      configManager: configManager
+      configManager: configManager,
+      storage: storage
     )
 
     // MARK: Then
