@@ -34,11 +34,9 @@ final class PaywallCache {
   }
 
   func clearCache() {
-    for viewController in SWPaywallViewController.cache {
-      // don't remove the reference to a presented paywall
-      if !viewController.isActive {
-        SWPaywallViewController.cache.remove(viewController)
-      }
+    // don't remove the reference to a presented paywall
+    for viewController in SWPaywallViewController.cache where !viewController.isActive {
+      SWPaywallViewController.cache.remove(viewController)
     }
   }
 }

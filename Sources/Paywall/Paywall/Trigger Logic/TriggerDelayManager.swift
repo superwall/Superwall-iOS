@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/08/2022.
 //
-// swiftlint:disable:all empty_count
+// swiftlint:disable empty_count
 
 import Foundation
 
