@@ -254,7 +254,7 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
-      expression: "user.a == c",
+      expression: "params.a == \"c\"",
       expressionJs: nil
     )
     let trigger = Trigger(
@@ -305,7 +305,7 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
-      expression: "params.a == c",
+      expression: "params.a == \"c\"",
       expressionJs: nil
     )
     let trigger = Trigger(
