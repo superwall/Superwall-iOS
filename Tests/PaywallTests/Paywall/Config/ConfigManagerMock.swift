@@ -6,15 +6,26 @@
 //
 // swiftlint:disable all
 
+import Foundation
 @testable import Paywall
-import XCTest
 
 final class ConfigManagerMock: ConfigManager {
   var confirmedAssignment = false
+  var hasLoadedBlockingAssignments = false
+  var hasLoadedNonBlockingAssignments = false
 
   override func confirmAssignments(
     _ confirmableAssignment: ConfirmableAssignment
   ) {
     confirmedAssignment = true
+  }
+
+  override func loadAssignments(completion: (() -> Void)? = nil) {
+    super.loadAssignments(completion: completion)
+    if completion == nil {
+      hasLoadedNonBlockingAssignments = true
+    } else {
+      hasLoadedBlockingAssignments = true
+    }
   }
 }

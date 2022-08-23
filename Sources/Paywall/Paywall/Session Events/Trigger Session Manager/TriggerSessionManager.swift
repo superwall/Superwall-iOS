@@ -62,7 +62,6 @@ final class TriggerSessionManager {
 
   // MARK: - App Lifecycle
 
-  // TODO: be sure to test what happens during a transaction, as app leaves foreground in that scenario
   @objc private func applicationDidEnterBackground() {
     activeTriggerSession?.endAt = Date()
     enqueueCurrentTriggerSession()

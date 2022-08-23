@@ -10,8 +10,13 @@ import Foundation
 
 final class DeviceHelperMock: DeviceHelper {
   var internalLocale: String?
+  var internalMinutesSinceInstall: Int = 0
 
   override var locale: String {
     return internalLocale ?? super.locale
+  }
+
+  override var minutesSinceInstall: Int {
+    return internalMinutesSinceInstall
   }
 }

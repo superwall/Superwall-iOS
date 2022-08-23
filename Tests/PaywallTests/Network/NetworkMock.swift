@@ -13,6 +13,7 @@ final class NetworkMock: Network {
   var getConfigCalled = false
   var assignmentsConfirmed = false
   var assignments: [Assignment] = []
+  var configReturnValue: Result<Config, Error> = .success(.stub())
 
   override func sendSessionEvents(_ session: SessionEventsRequest) {
     sentSessionEvents = session
@@ -25,6 +26,7 @@ final class NetworkMock: Network {
     configManager: ConfigManager = .shared
   ) {
     getConfigCalled = true
+    completion(configReturnValue)
   }
 
   override func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) {

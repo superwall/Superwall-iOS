@@ -52,9 +52,12 @@ class ConfigManager {
     unconfirmedAssignments.removeAll()
   }
 
-  func fetchConfiguration() {
-    TriggerDelayManager.shared.enterConfigDispatchQueue()
-    let requestId = UUID().uuidString
+  func fetchConfiguration(
+    triggerDelayManager: TriggerDelayManager = .shared,
+    appSessionManager: AppSessionManager = .shared,
+    sessionEventsManager: SessionEventsManager = .shared,
+    requestId: String = UUID().uuidString
+  ) {
     network.getConfig(withRequestId: requestId) { [weak self] result in
       guard let self = self else {
         return
@@ -62,15 +65,17 @@ class ConfigManager {
       switch result {
       case .success(let config):
         self.configRequestId = requestId
-        AppSessionManager.shared.appSessionTimeout = config.appSessionTimeout
+        appSessionManager.appSessionTimeout = config.appSessionTimeout
         self.triggers = StorageLogic.getTriggerDictionary(from: config.triggers)
 
-        SessionEventsManager.shared.triggerSession.createSessions(from: config)
+        sessionEventsManager.triggerSession.createSessions(from: config)
         self.config = config
         self.assignVariants()
         self.cacheConfig()
-        TriggerDelayManager.shared.leaveConfigDispatchQueue()
-        TriggerDelayManager.shared.fireDelayedTriggers()
+        triggerDelayManager.handleDelayedContent(
+          storage: self.storage,
+          configManager: self
+        )
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -79,8 +84,6 @@ class ConfigManager {
           info: nil,
           error: error
         )
-        TriggerDelayManager.shared.leaveConfigDispatchQueue()
-        TriggerDelayManager.shared.fireDelayedTriggers()
       }
     }
   }
@@ -137,7 +140,9 @@ class ConfigManager {
         self.unconfirmedAssignments = result.unconfirmedAssignments
         confirmedAssignments = result.confirmedAssignments
         self.storage.saveConfirmedAssignments(confirmedAssignments)
-        self.cacheConfig()
+        if Paywall.options.shouldPreloadPaywalls {
+          self.preloadAllPaywalls()
+        }
       case .failure(let error):
         Logger.debug(
           logLevel: .error,

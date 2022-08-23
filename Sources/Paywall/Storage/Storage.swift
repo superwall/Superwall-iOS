@@ -31,6 +31,8 @@ class Storage {
     return appUserId ?? aliasId
   }
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
+  var preConfigAssignmentCall: PreConfigAssignmentCall?
+
   private var confirmedAssignments: [Experiment.ID: Experiment.Variant]?
   private let cache: Cache
 
@@ -53,7 +55,7 @@ class Storage {
     migrateData()
 
     if let newAppUserId = appUserId {
-      self.appUserId = newAppUserId
+      self.identify(with: newAppUserId)
     }
 
     self.apiKey = apiKey
@@ -63,6 +65,29 @@ class Storage {
     }
 
     updateSdkVersion()
+  }
+
+  func identify(with userId: String) {
+    // if there was a previously set userId ...
+    if let oldValue = appUserId {
+      // Check if the userId changed, automatically call reset
+      if userId != oldValue {
+        Paywall.reset()
+      } else {
+        // otherwise, check for a static config upgrade
+        checkForStaticConfigUpgrade()
+      }
+    } else {
+      // Get assignments if user has gone from anonymous to having an ID.
+      // Delay it if config hasn't been retrieved.
+      if TriggerDelayManager.shared.hasDelay {
+        preConfigAssignmentCall = PreConfigAssignmentCall(isBlocking: false)
+      } else {
+        ConfigManager.shared.loadAssignments()
+      }
+    }
+
+    appUserId = userId
   }
 
   private func migrateData() {
@@ -80,18 +105,23 @@ class Storage {
     cache.write(actualSdkVersion, forType: SdkVersion.self)
   }
 
-  func checkForStaticConfigUpgrade() {
+  /// Called by `identify(with:)` if the user ID set is the same as before.
+  ///
+  /// This gets, or queues the retrieval of, the user's assignments.
+  /// This only happens if the user hasn't previously stored an SDK version in the cache and it's been over an hour since install.
+  func checkForStaticConfigUpgrade(
+    deviceHelper: DeviceHelper = DeviceHelper.shared,
+    triggerDelayManager: TriggerDelayManager = .shared,
+    configManager: ConfigManager = .shared,
+    completion: (() -> Void)? = nil
+  ) {
     let storedSdkVersion = cache.read(SdkVersion.self)
 
-    if storedSdkVersion == nil && DeviceHelper.shared.minutesSinceInstall > 60 {
-      TriggerDelayManager.shared.enterAssignmentDispatchQueue()
-
-      // After config, we get the assignments.
-      // Only when the config and assignments are fetched do we fire triggers.
-      TriggerDelayManager.shared.configDispatchGroup.notify(queue: .main) {
-        ConfigManager.shared.loadAssignments {
-          TriggerDelayManager.shared.leaveAssignmentDispatchQueue()
-        }
+    if storedSdkVersion == nil && deviceHelper.minutesSinceInstall > 60 {
+      if triggerDelayManager.hasDelay {
+        preConfigAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
+      } else {
+        configManager.loadAssignments()
       }
     }
   }

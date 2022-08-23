@@ -122,21 +122,7 @@ public final class Paywall: NSObject {
   ///  - Returns: The shared Paywall instance.
 	@discardableResult
 	@objc public static func identify(userId: String) -> Paywall {
-    // if there was a previously set userId ...
-    if let oldValue = Storage.shared.appUserId {
-      // Check if the userId changed, automatically call reset
-      if userId != oldValue {
-        Paywall.reset()
-      } else {
-        // otherwise, check for a static config upgrade
-        Storage.shared.checkForStaticConfigUpgrade()
-      }
-    } else {
-      // Get assignments if user has gone from anonymous to having an ID.
-      ConfigManager.shared.loadAssignments()
-    }
-
-    Storage.shared.appUserId = userId
+    Storage.shared.identify(with: userId)
 		return shared
 	}
 
@@ -225,7 +211,6 @@ public final class Paywall: NSObject {
 		guard let apiKey = apiKey else {
 			return
 		}
-
     ConfigManager.shared.setOptions(options)
     Storage.shared.configure(
       appUserId: userId,
