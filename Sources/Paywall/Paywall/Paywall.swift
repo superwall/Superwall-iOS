@@ -20,6 +20,11 @@ public final class Paywall: NSObject {
   public static var presentedViewController: UIViewController? {
     return PaywallManager.shared.presentedViewController
   }
+	
+  /// The presented paywall view controller.
+  public static var presentedPaywallInfo: PaywallInfo? {
+    return PaywallManager.shared.presentedViewController?.paywallInfo
+  }
 
   /// The current user's id. It shouldn't ever be `nil` since Superwall assigns an anonymous user id and caches it to disk if one isn't provided.
   public static var userId: String? {
