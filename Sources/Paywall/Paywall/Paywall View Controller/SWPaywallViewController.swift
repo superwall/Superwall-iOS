@@ -626,7 +626,7 @@ extension SWPaywallViewController {
     shouldCallCompletion: Bool = true,
     completion: (() -> Void)? = nil
   ) {
-    prepareToDismiss()
+    prepareToDismiss(withInfo: dismissalResult.paywallInfo)
 
 		dismiss(animated: presentationIsAnimated) { [weak self] in
       self?.didDismiss(
@@ -637,8 +637,9 @@ extension SWPaywallViewController {
 		}
 	}
 
-  private func prepareToDismiss() {
+  private func prepareToDismiss(withInfo paywallInfo: PaywallInfo?) {
     calledDismiss = true
+    Paywall.shared.latestDismissedPaywallInfo = paywallInfo
     Paywall.delegate?.willDismissPaywall?()
   }
 

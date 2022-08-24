@@ -5,10 +5,12 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ## 2.4.1
 
 ### Enhancements
-- Adds `Paywall.options.useCachedPaywallTemplates`. This defaults to `true`. Superwall will load paywall template websites from disk, if available.  When you save a change to your paywall in the Superwall dashboard, a key is appended to the end of your paywall website URL, e.g. `sw_cache_key=<Date saved>`. This is used to cache your paywall webpage to disk after it's first loaded. Superwall will continue to load the cached version of your paywall webpage unless the next time you make a change on the Superwall dashboard. (2.4.1-beta.1)
+
+- Adds `Paywall.options.useCachedPaywallTemplates`. This defaults to `true`. Superwall will load paywall template websites from disk, if available. When you save a change to your paywall in the Superwall dashboard, a key is appended to the end of your paywall website URL, e.g. `sw_cache_key=<Date saved>`. This is used to cache your paywall webpage to disk after it's first loaded. Superwall will continue to load the cached version of your paywall webpage unless the next time you make a change on the Superwall dashboard. (2.4.1-beta.1)
 - Adds `Paywall.preloadAllPaywalls()` and `Paywall.preloadPaywalls(forTriggers:)`. Use this with `Paywall.options.shouldPreloadPaywall = false` to have more control over when/what paywalls are preloaded. (2.4.1-beta.2)
 - Removes `Paywall.options.useCachedPaywallTemplates`. Too tricky (2.4.1-beta.2)
 - Assigments of paywall variants are now performed on device, meaning reduced network calls and faster setup time for the SDK. (2.4.1-beta.3)
+- Adds `Paywall.latestPaywallInfo`. You can read this to access the `PaywallInfo` object of the most recently presented view controller. (2.4.1-beta.3)
 
 ### Fixes
 
@@ -17,7 +19,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ---
 
-## 2.4.0 
+## 2.4.0
 
 ### Enhancements
 
