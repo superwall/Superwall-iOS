@@ -21,6 +21,16 @@ public final class Paywall: NSObject {
     return PaywallManager.shared.presentedViewController
   }
 
+  /// The ``PaywallInfo`` object of the most recently presented view controller.
+  public static var latestPaywallInfo: PaywallInfo? {
+    let presentedPaywallInfo = PaywallManager.shared.presentedViewController?.paywallInfo
+    return presentedPaywallInfo ?? shared.latestDismissedPaywallInfo
+  }
+
+  /// The ``PaywallInfo`` object stored from the latest paywall that was dismissed.
+  var latestDismissedPaywallInfo: PaywallInfo?
+
+
   /// The current user's id. It shouldn't ever be `nil` since Superwall assigns an anonymous user id and caches it to disk if one isn't provided.
   public static var userId: String? {
     // Technically Storage.shared.userId is an optional value
@@ -161,6 +171,7 @@ public final class Paywall: NSObject {
       return shared
     }
     Paywall.presentAgain = {}
+    shared.latestDismissedPaywallInfo = nil
     Storage.shared.clear()
     PaywallManager.shared.clearCache()
     shared.configManager.fetchConfiguration()
