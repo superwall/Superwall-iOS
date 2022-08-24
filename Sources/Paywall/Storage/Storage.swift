@@ -68,7 +68,7 @@ class Storage {
     let outcome = StorageLogic.identify(
       withUserId: userId,
       oldUserId: appUserId,
-      hasRetrievedConfig: TriggerDelayManager.shared.hasDelay
+      hasTriggerDelay: TriggerDelayManager.shared.hasDelay
     )
 
     switch outcome {

@@ -13,7 +13,7 @@ final class StorageLogicTests: XCTestCase {
     let outcome = StorageLogic.identify(
       withUserId: "ab",
       oldUserId: "ab",
-      hasRetrievedConfig: true
+      hasTriggerDelay: true
     )
     XCTAssertEqual(outcome, .checkForStaticConfigUpgrade)
   }
@@ -22,26 +22,26 @@ final class StorageLogicTests: XCTestCase {
     let outcome = StorageLogic.identify(
       withUserId: "ab",
       oldUserId: "cd",
-      hasRetrievedConfig: true
+      hasTriggerDelay: true
     )
     XCTAssertEqual(outcome, .reset)
-  }
-
-  func test_identify_fromAnonymous_hasRetrievedConfig() {
-    let outcome = StorageLogic.identify(
-      withUserId: "ab",
-      oldUserId: nil,
-      hasRetrievedConfig: true
-    )
-    XCTAssertEqual(outcome, .loadAssignments)
   }
 
   func test_identify_fromAnonymous_hasntRetrievedConfig() {
     let outcome = StorageLogic.identify(
       withUserId: "ab",
       oldUserId: nil,
-      hasRetrievedConfig: false
+      hasTriggerDelay: true
     )
     XCTAssertEqual(outcome, .nonBlockingAssignmentDelay)
+  }
+
+  func test_identify_fromAnonymous_hasRetrievedConfig() {
+    let outcome = StorageLogic.identify(
+      withUserId: "ab",
+      oldUserId: nil,
+      hasTriggerDelay: false
+    )
+    XCTAssertEqual(outcome, .loadAssignments)
   }
 }

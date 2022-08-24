@@ -55,7 +55,7 @@ enum StorageLogic {
   static func identify(
     withUserId newUserId: String,
     oldUserId: String?,
-    hasRetrievedConfig: Bool
+    hasTriggerDelay: Bool
   ) -> IdentifyOutcome {
     // if there was a previously set userId ...
     if let oldUserId = oldUserId {
@@ -67,12 +67,13 @@ enum StorageLogic {
         return .reset
       }
     }
-    // Get assignments if user has gone from anonymous to having an ID and config has been retrieved.
-    if hasRetrievedConfig {
-      return .loadAssignments
+    // Else, if user has gone from anonymous to having an ID...
+    // If config hasn't been retrieved return a non-blocking delay to retrieve assignments
+    if hasTriggerDelay {
+      return .nonBlockingAssignmentDelay
     }
 
-    // Else, delay it if config hasn't been retrieved.
-    return .nonBlockingAssignmentDelay
+    // Else, get assignments if config has been retrieved.
+    return .loadAssignments
   }
 }
