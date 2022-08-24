@@ -11,6 +11,7 @@ import Foundation
 final class TriggerDelayManagerMock: TriggerDelayManager {
   var aboutToHandleDelayedContent: (() -> Void)?
   var didFireDelayedTriggers = false
+  var didClearPreConfigTriggers = false
 
   override func handleDelayedContent(
     storage: Storage = .shared,
@@ -22,5 +23,9 @@ final class TriggerDelayManagerMock: TriggerDelayManager {
 
   override func fireDelayedTriggers(storage: Storage = .shared, paywall: Paywall = .shared) {
     didFireDelayedTriggers = true
+  }
+
+  override func clearPreConfigTriggers() {
+    didClearPreConfigTriggers = true
   }
 }

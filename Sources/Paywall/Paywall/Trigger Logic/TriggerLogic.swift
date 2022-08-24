@@ -22,4 +22,13 @@ enum TriggerLogic {
     }
     return nil
   }
+
+  static func getTriggerDictionary(from triggers: Set<Trigger>) -> [String: Trigger] {
+    let triggersDictionary = triggers.reduce([String: Trigger]()) { result, trigger in
+      var result = result
+      result[trigger.eventName] = trigger
+      return result
+    }
+    return triggersDictionary
+  }
 }

@@ -15,7 +15,6 @@ final class StorageMock: Storage {
   var internalCachedTransactions: [TransactionModel]
   var internalConfirmedAssignments: [Experiment.ID: Experiment.Variant]
   var didClearCachedSessionEvents = false
-  var didClearPreConfigTriggers = false
 
   init(
     internalCachedTriggerSessions: [TriggerSession] = [],
@@ -49,9 +48,5 @@ final class StorageMock: Storage {
 
   override func saveConfirmedAssignments(_ assignments: [String : Experiment.Variant]) {
     internalConfirmedAssignments = assignments
-  }
-
-  override func clearPreConfigTriggers() {
-    didClearPreConfigTriggers = true
   }
 }

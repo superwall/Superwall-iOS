@@ -30,7 +30,7 @@ extension Paywall {
         onPresent: onPresent,
         onDismiss: onDismiss
       )
-      Storage.shared.cachePreConfigTrigger(trigger)
+      TriggerDelayManager.shared.cachePreConfigTrigger(trigger)
       return
     }
 

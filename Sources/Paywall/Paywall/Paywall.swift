@@ -244,7 +244,7 @@ public final class Paywall: NSObject {
 
       if TriggerDelayManager.shared.hasDelay {
         let trigger = PreConfigTrigger(presentationInfo: presentationInfo)
-        Storage.shared.cachePreConfigTrigger(trigger)
+        TriggerDelayManager.shared.cachePreConfigTrigger(trigger)
         return
       }
 

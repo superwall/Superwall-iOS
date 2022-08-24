@@ -66,7 +66,7 @@ class ConfigManager {
       case .success(let config):
         self.configRequestId = requestId
         appSessionManager.appSessionTimeout = config.appSessionTimeout
-        self.triggers = StorageLogic.getTriggerDictionary(from: config.triggers)
+        self.triggers = TriggerLogic.getTriggerDictionary(from: config.triggers)
 
         sessionEventsManager.triggerSession.createSessions(from: config)
         self.config = config

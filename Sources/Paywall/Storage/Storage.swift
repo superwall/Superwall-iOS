@@ -30,9 +30,6 @@ class Storage {
   var userId: String? {
     return appUserId ?? aliasId
   }
-  private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
-  var preConfigAssignmentCall: PreConfigAssignmentCall?
-
   private var confirmedAssignments: [Experiment.ID: Experiment.Variant]?
   private let cache: Cache
 
@@ -68,23 +65,22 @@ class Storage {
   }
 
   func identify(with userId: String) {
-    // if there was a previously set userId ...
-    if let oldValue = appUserId {
-      // Check if the userId changed, automatically call reset
-      if userId != oldValue {
-        Paywall.reset()
-      } else {
-        // otherwise, check for a static config upgrade
-        checkForStaticConfigUpgrade()
-      }
-    } else {
-      // Get assignments if user has gone from anonymous to having an ID.
-      // Delay it if config hasn't been retrieved.
-      if TriggerDelayManager.shared.hasDelay {
-        preConfigAssignmentCall = PreConfigAssignmentCall(isBlocking: false)
-      } else {
-        ConfigManager.shared.loadAssignments()
-      }
+    let outcome = StorageLogic.identify(
+      withUserId: userId,
+      oldUserId: appUserId,
+      hasRetrievedConfig: TriggerDelayManager.shared.hasDelay
+    )
+
+    switch outcome {
+    case .reset:
+      Paywall.reset()
+    case .checkForStaticConfigUpgrade:
+      checkForStaticConfigUpgrade()
+    case .loadAssignments:
+      ConfigManager.shared.loadAssignments()
+    case .nonBlockingAssignmentDelay:
+      let nonBlockingAssignmentCall = PreConfigAssignmentCall(isBlocking: false)
+      TriggerDelayManager.shared.cachePreConfigAssignmentCall(nonBlockingAssignmentCall)
     }
 
     appUserId = userId
@@ -119,7 +115,8 @@ class Storage {
 
     if storedSdkVersion == nil && deviceHelper.minutesSinceInstall > 60 {
       if triggerDelayManager.hasDelay {
-        preConfigAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
+        let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
+        triggerDelayManager.cachePreConfigAssignmentCall(blockingAssignmentCall)
       } else {
         configManager.loadAssignments()
       }
@@ -167,14 +164,6 @@ class Storage {
 
     _ = trackEvent(SuperwallEvent.AppInstall())
     cache.write(true, forType: DidTrackAppInstall.self)
-  }
-
-  func cachePreConfigTrigger(_ trigger: PreConfigTrigger) {
-    triggersFiredPreConfig.append(trigger)
-  }
-
-  func clearPreConfigTriggers() {
-    triggersFiredPreConfig.removeAll()
   }
 
   private func save() {

@@ -134,11 +134,9 @@ final class ConfigManagerTests: XCTestCase {
   // MARK: - Fetch Configuration
 
   func test_fetchConfiguration_success_hasBlockingAssignmentWaiting() {
-    // TODO: Check for everything else inside the config completion block
     let network = NetworkMock()
     network.configReturnValue = .success(.stub())
     let storage = StorageMock()
-    storage.preConfigAssignmentCall = .init(isBlocking: true)
 
     let requestId = "abc"
     let configManager = ConfigManagerMock(
@@ -147,6 +145,7 @@ final class ConfigManagerTests: XCTestCase {
     )
 
     let triggerDelayManager = TriggerDelayManagerMock()
+    triggerDelayManager.cachePreConfigAssignmentCall(.init(isBlocking: true))
 
     // 2. When the config has returned, check triggers haven't fired yet.
     let aboutToHandleDelayContentExpectation = expectation(description: "Handled delayed content")
@@ -175,7 +174,7 @@ final class ConfigManagerTests: XCTestCase {
     XCTAssertFalse(configManager.hasLoadedNonBlockingAssignments)
 
     // 7. Check that assignment calls cleared
-    XCTAssertNil(storage.preConfigAssignmentCall)
+    XCTAssertNil(triggerDelayManager.preConfigAssignmentCall)
 
     // 8. Check that it's now fired the delayed triggers
     XCTAssertTrue(triggerDelayManager.didFireDelayedTriggers)
@@ -183,11 +182,9 @@ final class ConfigManagerTests: XCTestCase {
   }
 
   func test_fetchConfiguration_success_hasNonBlockingAssignmentWaiting() {
-    // TODO: Check for everything else inside the config completion block
     let network = NetworkMock()
     network.configReturnValue = .success(.stub())
     let storage = StorageMock()
-    storage.preConfigAssignmentCall = .init(isBlocking: false)
 
     let requestId = "abc"
     let configManager = ConfigManagerMock(
@@ -196,6 +193,7 @@ final class ConfigManagerTests: XCTestCase {
     )
 
     let triggerDelayManager = TriggerDelayManagerMock()
+    triggerDelayManager.cachePreConfigAssignmentCall(.init(isBlocking: false))
 
     // 2. When the config has returned, check triggers haven't fired yet.
     let aboutToHandleDelayContentExpectation = expectation(description: "Handled delayed content")
@@ -224,7 +222,7 @@ final class ConfigManagerTests: XCTestCase {
     XCTAssertTrue(configManager.hasLoadedNonBlockingAssignments)
 
     // 7. Check that assignment calls cleared
-    XCTAssertNil(storage.preConfigAssignmentCall)
+    XCTAssertNil(triggerDelayManager.preConfigAssignmentCall)
 
     // 8. Check that it's now fired the delayed triggers
     XCTAssertTrue(triggerDelayManager.didFireDelayedTriggers)
@@ -232,7 +230,6 @@ final class ConfigManagerTests: XCTestCase {
 
 
   func test_fetchConfiguration_success_noAssignmentsWaiting_triggersOnly() {
-    // TODO: Check for everything else inside the config completion block
     let network = NetworkMock()
     network.configReturnValue = .success(.stub())
     let storage = StorageMock()

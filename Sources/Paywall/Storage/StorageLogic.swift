@@ -8,17 +8,15 @@
 import Foundation
 
 enum StorageLogic {
-  static func generateAlias() -> String {
-    return "$SuperwallAlias:\(UUID().uuidString)"
+  enum IdentifyOutcome {
+    case reset
+    case checkForStaticConfigUpgrade
+    case loadAssignments
+    case nonBlockingAssignmentDelay
   }
 
-  static func getTriggerDictionary(from triggers: Set<Trigger>) -> [String: Trigger] {
-    let triggersDictionary = triggers.reduce([String: Trigger]()) { result, trigger in
-      var result = result
-      result[trigger.eventName] = trigger
-      return result
-    }
-    return triggersDictionary
+  static func generateAlias() -> String {
+    return "$SuperwallAlias:\(UUID().uuidString)"
   }
 
   static func mergeAttributes(
@@ -52,5 +50,29 @@ enum StorageLogic {
     mergedAttributes["applicationInstalledAt"] = DeviceHelper.shared.appInstalledAtString
 
     return mergedAttributes
+  }
+
+  static func identify(
+    withUserId newUserId: String,
+    oldUserId: String?,
+    hasRetrievedConfig: Bool
+  ) -> IdentifyOutcome {
+    // if there was a previously set userId ...
+    if let oldUserId = oldUserId {
+      // Check if the userId changed. If it hasn't, check for a static config upgrade.
+      if newUserId == oldUserId {
+        return .checkForStaticConfigUpgrade
+      } else {
+        // Otherwise, call reset.
+        return .reset
+      }
+    }
+    // Get assignments if user has gone from anonymous to having an ID and config has been retrieved.
+    if hasRetrievedConfig {
+      return .loadAssignments
+    }
+
+    // Else, delay it if config hasn't been retrieved.
+    return .nonBlockingAssignmentDelay
   }
 }
