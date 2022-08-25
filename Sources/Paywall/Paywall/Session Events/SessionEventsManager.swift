@@ -34,15 +34,24 @@ final class SessionEventsManager {
   /// Storage class. Can be injected via init for testing.
   private let storage: Storage
 
+  /// Storage class. Can be injected via init for testing.
+  private let configManager: ConfigManager
+
   /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
   init(
     queue: SessionEventsQueue = SessionEventsQueue(),
-    storage: Storage = Storage.shared,
-    network: Network = Network.shared
+    storage: Storage = .shared,
+    network: Network = .shared,
+    configManager: ConfigManager = .shared
   ) {
     self.queue = queue
     self.storage = storage
     self.network = network
+    self.configManager = configManager
+
+    guard configManager.config?.featureFlags.enableSessionEvents == true else {
+      return
+    }
     postCachedSessionEvents()
   }
 
@@ -70,6 +79,9 @@ final class SessionEventsManager {
   func updateAppSession(
     _ appSession: AppSession = AppSessionManager.shared.appSession
   ) {
+    guard configManager.config?.featureFlags.enableSessionEvents == true else {
+      return
+    }
     triggerSession.updateAppSession(to: appSession)
   }
 }
@@ -77,14 +89,23 @@ final class SessionEventsManager {
 // MARK: - SessionEventsDelegate
 extension SessionEventsManager: SessionEventsDelegate {
   func enqueue(_ triggerSession: TriggerSession) {
+    guard configManager.config?.featureFlags.enableSessionEvents == true else {
+      return
+    }
     queue.enqueue(triggerSession)
   }
 
   func enqueue(_ triggerSessions: [TriggerSession]) {
+    guard configManager.config?.featureFlags.enableSessionEvents == true else {
+      return
+    }
     queue.enqueue(triggerSessions)
   }
 
   func enqueue(_ transaction: TransactionModel) {
+    guard configManager.config?.featureFlags.enableSessionEvents == true else {
+      return
+    }
     queue.enqueue(transaction)
   }
 }

@@ -11,6 +11,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Removes `Paywall.options.useCachedPaywallTemplates`. Too tricky (2.4.1-beta.2)
 - Assigments of paywall variants are now performed on device, meaning reduced network calls and faster setup time for the SDK. (2.4.1-beta.3)
 - Adds `Paywall.latestPaywallInfo`. You can read this to access the `PaywallInfo` object of the most recently presented view controller. (2.4.1-beta.3)
+- Adds feature flags under the hood so that when we introduce new features we can turn them on for specific organizations and apps. (2.4.1-beta.3)
 
 ### Fixes
 

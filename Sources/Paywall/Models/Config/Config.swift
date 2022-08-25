@@ -14,6 +14,7 @@ struct Config: Decodable {
   var postback: PostbackRequest
   var locales: Set<String>
   var appSessionTimeout: Milliseconds
+  var featureFlags: FeatureFlags
 
   enum CodingKeys: String, CodingKey {
     case triggers = "triggerOptions"
@@ -22,6 +23,7 @@ struct Config: Decodable {
     case postback
     case localization
     case appSessionTimeout = "appSessionTimeoutMs"
+    case featureFlags = "toggles"
   }
 
   init(from decoder: Decoder) throws {
@@ -32,6 +34,7 @@ struct Config: Decodable {
     logLevel = try values.decode(Int.self, forKey: .logLevel)
     postback = try values.decode(PostbackRequest.self, forKey: .postback)
     appSessionTimeout = try values.decode(Milliseconds.self, forKey: .appSessionTimeout)
+    featureFlags = try FeatureFlags(from: decoder)
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
@@ -43,7 +46,8 @@ struct Config: Decodable {
     logLevel: Int,
     postback: PostbackRequest,
     locales: Set<String>,
-    appSessionTimeout: Milliseconds
+    appSessionTimeout: Milliseconds,
+    featureFlags: FeatureFlags
   ) {
     self.triggers = triggers
     self.paywallResponses = paywallResponses
@@ -51,6 +55,7 @@ struct Config: Decodable {
     self.postback = postback
     self.locales = locales
     self.appSessionTimeout = appSessionTimeout
+    self.featureFlags = featureFlags
   }
 }
 
@@ -63,7 +68,8 @@ extension Config: Stubbable {
       logLevel: 0,
       postback: .stub(),
       locales: [],
-      appSessionTimeout: 3600000
+      appSessionTimeout: 3600000,
+      featureFlags: .stub()
     )
   }
 }
