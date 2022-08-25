@@ -210,7 +210,9 @@ class ConfigManager {
     if Paywall.options.shouldPreloadPaywalls {
       preloadAllPaywalls()
     }
-    executePostback()
+    if config?.featureFlags.enablePostback == true {
+      executePostback()
+    }
   }
 
   /// Preloads paywalls referenced by triggers.

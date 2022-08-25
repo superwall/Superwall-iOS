@@ -14,6 +14,7 @@ struct RawFeatureFlag: Decodable {
 
 struct FeatureFlags: Decodable {
   let enableSessionEvents: Bool
+  let enablePostback: Bool
 
   enum CodingKeys: String, CodingKey {
     case toggles
@@ -24,10 +25,15 @@ struct FeatureFlags: Decodable {
     let rawFeatureFlags = try values.decode([RawFeatureFlag].self, forKey: .toggles)
 
     enableSessionEvents = rawFeatureFlags.value(forKey: "enable_session_events", default: false)
+    enablePostback = rawFeatureFlags.value(forKey: "enable_postback", default: false)
   }
 
-  init(enableSessionEvents: Bool) {
+  init(
+    enableSessionEvents: Bool,
+    enablePostback: Bool
+  ) {
     self.enableSessionEvents = enableSessionEvents
+    self.enablePostback = enablePostback
   }
 }
 
@@ -45,6 +51,9 @@ extension Collection where Element == RawFeatureFlag {
 // MARK: - Stubbable
 extension FeatureFlags: Stubbable {
   static func stub() -> FeatureFlags {
-    return FeatureFlags(enableSessionEvents: true)
+    return FeatureFlags(
+      enableSessionEvents: true,
+      enablePostback: true
+    )
   }
 }
