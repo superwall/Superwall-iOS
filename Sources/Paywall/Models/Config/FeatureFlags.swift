@@ -43,7 +43,7 @@ extension Collection where Element == RawFeatureFlag {
     forKey key: String,
     default defaultExpression: @autoclosure () -> Bool
   ) -> Bool {
-    let featureFlag = first { $0.key == "enable_session_events" }
+    let featureFlag = first { $0.key == key }
     return featureFlag?.enabled ?? defaultExpression()
   }
 }
