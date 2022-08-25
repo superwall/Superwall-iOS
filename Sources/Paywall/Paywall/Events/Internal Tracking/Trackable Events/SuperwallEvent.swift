@@ -153,10 +153,15 @@ enum SuperwallEvent {
 
     var superwallParameters: [String: Any] {
       let fromEvent = eventData != nil
-      let params: [String: Any] = [
+      var params: [String: Any] = [
         "is_triggered_from_event": fromEvent,
         "event_name": eventData?.name ?? ""
       ]
+      if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession {
+        params["trigger_session_id"] = triggerSession.id
+        params["experiment_id"] = triggerSession.trigger.experiment?.id
+        params["variant_id"] = triggerSession.trigger.experiment?.variant.id
+      }
 
       switch state {
       case .start,
@@ -207,15 +212,28 @@ enum SuperwallEvent {
     let name: Paywall.EventName = .paywallOpen
     let paywallInfo: PaywallInfo
     var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams()
+      var params = paywallInfo.eventParams()
+      if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession {
+        params["trigger_session_id"] = triggerSession.id
+        params["experiment_id"] = triggerSession.trigger.experiment?.id
+        params["variant_id"] = triggerSession.trigger.experiment?.variant.id
+      }
+      return params
     }
     var customParameters: [String: Any] = [:]
   }
+
   struct PaywallClose: TrackableSuperwallEvent {
     let name: Paywall.EventName = .paywallClose
     let paywallInfo: PaywallInfo
     var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams()
+      var params = paywallInfo.eventParams()
+      if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession {
+        params["trigger_session_id"] = triggerSession.id
+        params["experiment_id"] = triggerSession.trigger.experiment?.id
+        params["variant_id"] = triggerSession.trigger.experiment?.variant.id
+      }
+      return params
     }
     var customParameters: [String: Any] = [:]
   }
@@ -249,18 +267,26 @@ enum SuperwallEvent {
     var customParameters: [String: Any] = [:]
 
     var superwallParameters: [String: Any] {
+      var params: [String: Any]
+
       switch state {
       case .start,
         .abandon,
         .complete,
         .restore:
-        return paywallInfo.eventParams(forProduct: product)
+        params = paywallInfo.eventParams(forProduct: product)
       case .fail(let message):
-        return paywallInfo.eventParams(
+        params = paywallInfo.eventParams(
           forProduct: product,
           otherParams: ["message": message]
         )
       }
+      if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession {
+        params["trigger_session_id"] = triggerSession.id
+        params["experiment_id"] = triggerSession.trigger.experiment?.id
+        params["variant_id"] = triggerSession.trigger.experiment?.variant.id
+      }
+      return params
     }
   }
 
@@ -271,7 +297,13 @@ enum SuperwallEvent {
     var customParameters: [String: Any] = [:]
 
     var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams(forProduct: product)
+      var params = paywallInfo.eventParams(forProduct: product)
+      if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession {
+        params["trigger_session_id"] = triggerSession.id
+        params["experiment_id"] = triggerSession.trigger.experiment?.id
+        params["variant_id"] = triggerSession.trigger.experiment?.variant.id
+      }
+      return params
     }
   }
 
@@ -282,7 +314,13 @@ enum SuperwallEvent {
     var customParameters: [String: Any] = [:]
 
     var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams(forProduct: product)
+      var params = paywallInfo.eventParams(forProduct: product)
+      if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession {
+        params["trigger_session_id"] = triggerSession.id
+        params["experiment_id"] = triggerSession.trigger.experiment?.id
+        params["variant_id"] = triggerSession.trigger.experiment?.variant.id
+      }
+      return params
     }
   }
 
@@ -293,7 +331,13 @@ enum SuperwallEvent {
     var customParameters: [String: Any] = [:]
 
     var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams(forProduct: product)
+      var params = paywallInfo.eventParams(forProduct: product)
+      if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession {
+        params["trigger_session_id"] = triggerSession.id
+        params["experiment_id"] = triggerSession.trigger.experiment?.id
+        params["variant_id"] = triggerSession.trigger.experiment?.variant.id
+      }
+      return params
     }
   }
 
@@ -321,7 +365,13 @@ enum SuperwallEvent {
     let paywallInfo: PaywallInfo
 
     var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams()
+      var params = paywallInfo.eventParams()
+      if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession {
+        params["trigger_session_id"] = triggerSession.id
+        params["experiment_id"] = triggerSession.trigger.experiment?.id
+        params["variant_id"] = triggerSession.trigger.experiment?.variant.id
+      }
+      return params
     }
     var customParameters: [String: Any] = [:]
   }
@@ -350,17 +400,24 @@ enum SuperwallEvent {
 
     var superwallParameters: [String: Any] {
       let fromEvent = eventData != nil
-      let params: [String: Any] = [
+      var params: [String: Any] = [
         "is_triggered_from_event": fromEvent,
         "event_name": eventData?.name ?? ""
       ]
+      if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession {
+        params["trigger_session_id"] = triggerSession.id
+        params["experiment_id"] = triggerSession.trigger.experiment?.id
+        params["variant_id"] = triggerSession.trigger.experiment?.variant.id
+      }
 
       switch state {
       case .start,
         .fail,
         .complete:
-        return paywallInfo.eventParams(otherParams: params)
+        params += paywallInfo.eventParams()
       }
+
+      return params
     }
   }
 

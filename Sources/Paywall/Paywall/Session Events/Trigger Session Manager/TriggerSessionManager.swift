@@ -42,10 +42,6 @@ final class TriggerSessionManager {
     self.delegate = delegate
     self.storage = storage
     self.configManager = configManager
-
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     addObservers()
   }
 
@@ -81,9 +77,6 @@ final class TriggerSessionManager {
 
   /// Creates a session for each potential trigger on config and manual paywall presentation and sends them off to the server.
   func createSessions(from config: Config) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     // Loop through triggers and create a session for each.
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
@@ -126,9 +119,6 @@ final class TriggerSessionManager {
     triggerResult: TriggerResult?,
     trackEvent: (Trackable) -> TrackingResult = Paywall.track
   ) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     guard let eventName = presentationInfo.eventName else {
       // The paywall is being presented by identifier and that's not supported.
       return
@@ -183,9 +173,6 @@ final class TriggerSessionManager {
 
   /// Ends the active trigger session and resets it to `nil`.
   func endSession() {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     guard var currentTriggerSession = activeTriggerSession else {
       return
     }
@@ -239,9 +226,6 @@ final class TriggerSessionManager {
 
   /// Adds the latest app session to the trigger
   func updateAppSession(to appSession: AppSession) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     activeTriggerSession?.appSession = appSession
 
     for eventName in pendingTriggerSessions.keys {
@@ -258,18 +242,12 @@ final class TriggerSessionManager {
 
   /// Tracks when the paywall was opened
   func trackPaywallOpen() {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     activeTriggerSession?.paywall?.action.openAt = Date()
     enqueueCurrentTriggerSession()
   }
 
   /// Tracks when paywall was closed and then ends the session.
   func trackPaywallClose() {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     activeTriggerSession?.paywall?.action.closeAt = Date()
     endSession()
   }
@@ -281,9 +259,6 @@ final class TriggerSessionManager {
     forPaywallId paywallId: String,
     state: LoadState
   ) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     // Check the webview that's loading is for the active trigger session paywall.
     // Without this check preloading paywalls could intefere.
     guard paywallId == activeTriggerSession?.paywall?.databaseId else {
@@ -317,9 +292,6 @@ final class TriggerSessionManager {
     forPaywallId paywallId: String?,
     state: LoadState
   ) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     if paywallId == nil {
       // If there isn't a paywallId, it means it's started loading the default paywall.
       // The only way we can check that is via checking the eventName.
@@ -362,9 +334,6 @@ final class TriggerSessionManager {
     forPaywallId paywallId: String,
     state: LoadState
   ) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     guard paywallId == activeTriggerSession?.paywall?.databaseId else {
       return
     }
@@ -390,9 +359,6 @@ final class TriggerSessionManager {
   }
 
   func storeAllProducts(_ products: [SWProduct]) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     activeTriggerSession?
       .products
       .allProducts = products
@@ -405,9 +371,6 @@ final class TriggerSessionManager {
     of product: SKProduct,
     allProducts: [SWProduct] = StoreKitManager.shared.swProducts
   ) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     // Determine local transaction count, per trigger session.
     if transactionCount != nil {
       transactionCount?.start += 1
@@ -428,9 +391,6 @@ final class TriggerSessionManager {
 
   /// When a transaction error occurred.
   func trackTransactionError() {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     transactionCount?.fail += 1
 
     activeTriggerSession?
@@ -453,9 +413,6 @@ final class TriggerSessionManager {
 
   /// When a transaction has been abandoned.
   func trackTransactionAbandon() {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     transactionCount?.abandon += 1
 
     activeTriggerSession?
@@ -483,9 +440,6 @@ final class TriggerSessionManager {
     isFreeTrialAvailable: Bool,
     allProducts: [SWProduct] = StoreKitManager.shared.swProducts
   ) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     if transactionCount != nil {
       transactionCount?.restore += 1
     } else {
@@ -518,9 +472,6 @@ final class TriggerSessionManager {
   }
 
   func trackDeferredTransaction() {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     transactionCount?.fail += 1
 
     activeTriggerSession?
@@ -545,9 +496,6 @@ final class TriggerSessionManager {
     for product: SKProduct,
     isFreeTrialAvailable: Bool
   ) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     transactionCount?.complete += 1
 
     activeTriggerSession?

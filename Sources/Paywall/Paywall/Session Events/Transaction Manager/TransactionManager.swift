@@ -34,9 +34,6 @@ final class TransactionManager {
   }
 
   func record(_ transaction: SKPaymentTransaction) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     let triggerSession = delegate?.triggerSession.activeTriggerSession
     let triggerSessionId = TransactionManagerLogic.getTriggerSessionId(
       transaction: transaction,

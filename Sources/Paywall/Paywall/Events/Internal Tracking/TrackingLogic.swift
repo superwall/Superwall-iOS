@@ -14,7 +14,9 @@ enum TrackingLogic {
     eventCreatedAt: Date,
     storage: Storage = Storage.shared
   ) -> TrackingParameters {
-    let superwallParameters = trackableEvent.superwallParameters
+    var superwallParameters = trackableEvent.superwallParameters
+    superwallParameters["app_session_id"] = AppSessionManager.shared.appSession.id
+
     let customParameters = trackableEvent.customParameters
     let eventName = trackableEvent.rawName
 
@@ -22,7 +24,7 @@ enum TrackingLogic {
       "is_superwall": true
     ]
 
-    // Add a special property if it's an automatically tracked event
+    // Add a special property if it's a standard event
     let isStandardEvent = Paywall.EventName(rawValue: eventName) != nil
     var eventParams: [String: Any] = [
       "$is_standard_event": isStandardEvent,
@@ -73,6 +75,7 @@ enum TrackingLogic {
     )
   }
 
+  /// Makes optional variables non-optional. Removes `nil`, `NSArray`, `NSDictionary`, and anything that can't be `JSON`, `Date` or `URL`.
   private static func clean(input: Any?) -> Any? {
     guard let input = input else {
       return nil

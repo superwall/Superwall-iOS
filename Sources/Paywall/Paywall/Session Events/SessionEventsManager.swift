@@ -49,15 +49,15 @@ final class SessionEventsManager {
     self.network = network
     self.configManager = configManager
 
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     postCachedSessionEvents()
   }
 
   /// Gets the last 20 cached trigger sessions and transactions from the last time the app was terminated,
   /// sends them back to the server, then clears cache.
   private func postCachedSessionEvents() {
+    guard configManager.config?.featureFlags.enableSessionEvents == true else {
+      return
+    }
     let cachedTriggerSessions = storage.getCachedTriggerSessions()
     let cachedTransactions = storage.getCachedTransactions()
 
@@ -79,9 +79,6 @@ final class SessionEventsManager {
   func updateAppSession(
     _ appSession: AppSession = AppSessionManager.shared.appSession
   ) {
-    guard configManager.config?.featureFlags.enableSessionEvents == true else {
-      return
-    }
     triggerSession.updateAppSession(to: appSession)
   }
 }
