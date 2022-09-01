@@ -304,7 +304,10 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertNotNil(queue.triggerSessions.first!.paywall?.action.closeAt)
   }
 
-  private func activateSession(withPaywallId paywallId: String = "123") {
+  private func activateSession(
+    withPaywallId paywallId: String = "123",
+    products: [SWProduct] = [SWProduct(product: MockSkProduct())]
+  ) {
     let eventName = "MyTrigger"
     let config = createConfig(forEventName: eventName)
     sessionManager.createSessions(from: config)
@@ -318,6 +321,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     let experiment = triggers[eventName]!.rules.first!.experiment
     let paywallResponse: PaywallResponse = .stub()
       .setting(\.id, to: paywallId)
+      .setting(\.swProducts, to: products)
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       paywallResponse: paywallResponse,
@@ -505,27 +509,6 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertNotNil(queue.triggerSessions.last!.products.loadingInfo?.failAt)
   }
 
-  func testStoreAllProducts() {
-    // Given
-    let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
-
-    XCTAssertTrue(queue.triggerSessions.last!.products.allProducts.isEmpty)
-    queue.triggerSessions.removeAll()
-
-    let products = [SWProduct(product: MockSkProduct())]
-
-    // When
-    sessionManager.storeAllProducts(products)
-
-    // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertEqual(
-      queue.triggerSessions.last!.products.allProducts.first!.productIdentifier,
-      products.first?.productIdentifier
-    )
-  }
-
   // MARK: - Transactions
 
   func testBeginTransaction_firstTime() {
@@ -547,22 +530,21 @@ final class TriggerSessionManagerTests: XCTestCase {
   private func beginTransactionOf(primaryProduct product: MockSkProduct) {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
-
     let products = [
       SWProduct(product: product),
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]
+    activateSession(
+      withPaywallId: paywallId,
+      products: products
+    )
 
     XCTAssertNil(queue.triggerSessions.last!.transaction)
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.trackBeginTransaction(
-      of: product,
-      allProducts: products
-    )
+    sessionManager.trackBeginTransaction(of: product)
   }
 
   func testBeginTransaction_secondTime() {
@@ -572,17 +554,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertNotNil(queue.triggerSessions.last!.transaction)
     queue.triggerSessions.removeAll()
 
-    let products = [
-      SWProduct(product: primaryProduct),
-      SWProduct(product: MockSkProduct()),
-      SWProduct(product: MockSkProduct())
-    ]
-
     // When
-    sessionManager.trackBeginTransaction(
-      of: primaryProduct,
-      allProducts: products
-    )
+    sessionManager.trackBeginTransaction(of: primaryProduct)
 
     // Then
     let expectedTransactionCount = TriggerSession.Transaction.Count(start: 2)
@@ -640,14 +613,16 @@ final class TriggerSessionManagerTests: XCTestCase {
   func testTransactionRestoration_noPreviousTransactionActions() {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
-
     let primaryProduct = MockSkProduct(productIdentifier: "primary")
     let products = [
       SWProduct(product: primaryProduct),
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]
+    activateSession(
+      withPaywallId: paywallId,
+      products: products
+    )
 
     XCTAssertNil(queue.triggerSessions.last!.transaction)
     queue.triggerSessions.removeAll()
@@ -656,8 +631,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     sessionManager.trackTransactionRestoration(
       withId: "abc",
       product: primaryProduct,
-      isFreeTrialAvailable: false,
-      allProducts: products
+      isFreeTrialAvailable: false
     )
 
     // Then
@@ -685,18 +659,12 @@ final class TriggerSessionManagerTests: XCTestCase {
 
     queue.triggerSessions.removeAll()
 
-    let products = [
-      SWProduct(product: primaryProduct),
-      SWProduct(product: MockSkProduct()),
-      SWProduct(product: MockSkProduct())
-    ]
 
     // When
     sessionManager.trackTransactionRestoration(
       withId: "abc",
       product: primaryProduct,
-      isFreeTrialAvailable: false,
-      allProducts: products
+      isFreeTrialAvailable: false
     )
 
     // Then

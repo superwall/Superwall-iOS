@@ -163,7 +163,7 @@ enum PaywallResponseLogic {
     forEvent event: EventData?,
     withHash hash: String,
     identifiers triggerResponseIds: ResponseIdentifiers?,
-    substituteProducts: PaywallProducts?,
+    hasSubstituteProducts: Bool,
     inResultsCache resultsCache: [String: Result<PaywallResponse, NSError>],
     handlersCache: [String: [PaywallResponseCompletionBlock]],
     isDebuggerLaunched: Bool
@@ -171,7 +171,7 @@ enum PaywallResponseLogic {
     // If the response for request exists, and there are no products to substitute
     // return the response.
     if let result = resultsCache[hash],
-      substituteProducts == nil,
+      !hasSubstituteProducts,
       !isDebuggerLaunched {
         switch result {
         case .success(let response):
