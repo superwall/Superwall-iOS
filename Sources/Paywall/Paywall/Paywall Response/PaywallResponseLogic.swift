@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 03/03/2022.
 //
+// swiftlint:disable type_body_length
 
 import Foundation
 import StoreKit
@@ -238,6 +239,30 @@ enum PaywallResponseLogic {
     }
 
     return nil
+  }
+
+  static func alterResponse(
+    _ response: PaywallResponse,
+    substituteResponseProducts: [Product]?,
+    productsById: [String: SKProduct],
+    isFreeTrialAvailableOverride: Bool?
+  ) -> (response: PaywallResponse, resetFreeTrialOverride: Bool) {
+    var response = response
+    let products = substituteResponseProducts ?? response.products
+
+    response.products = products
+    let outcome = getVariablesAndFreeTrial(
+      fromProducts: products,
+      productsById: productsById,
+      isFreeTrialAvailableOverride: isFreeTrialAvailableOverride
+    )
+
+    response.swProducts = outcome.orderedSwProducts
+    response.variables = outcome.variables
+    response.productVariables = outcome.productVariables
+    response.isFreeTrialAvailable = outcome.isFreeTrialAvailable
+
+    return (response, outcome.resetFreeTrialOverride)
   }
 
   static func getVariablesAndFreeTrial(

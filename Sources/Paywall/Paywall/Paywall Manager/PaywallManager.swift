@@ -61,6 +61,7 @@ final class PaywallManager {
         if cached,
           let identifier = response.identifier,
           let viewController = self.cache.getPaywall(withIdentifier: identifier) {
+          // Set paywall response again incase products have been substituted into paywallResponse.
           viewController.paywallResponse = response
           completion?(.success(viewController))
           return

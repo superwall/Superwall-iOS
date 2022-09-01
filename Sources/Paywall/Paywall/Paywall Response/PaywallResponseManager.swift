@@ -233,26 +233,21 @@ final class PaywallResponseManager: NSObject {
     paywallInfo: PaywallInfo,
     event: EventData?
   ) {
-    var response = response
-    let products = substituteResponseProducts ?? response.products
-    response.products = products
-    let outcome = PaywallResponseLogic.getVariablesAndFreeTrial(
-      fromProducts: response.products,
+    let outcome = PaywallResponseLogic.alterResponse(
+      response,
+      substituteResponseProducts: substituteResponseProducts,
       productsById: productsById,
       isFreeTrialAvailableOverride: Paywall.isFreeTrialAvailableOverride
     )
 
-    response.swProducts = outcome.orderedSwProducts
-    response.variables = outcome.variables
-    response.productVariables = outcome.productVariables
-    response.isFreeTrialAvailable = outcome.isFreeTrialAvailable
+    var response = outcome.response
 
     if outcome.resetFreeTrialOverride {
       Paywall.isFreeTrialAvailableOverride = nil
     }
 
+      // cache the response for later if we haven't substituted products.
     if substituteResponseProducts == nil {
-      // cache the response for later
       self.responsesByHash[paywallRequestHash] = .success(response)
     }
 
