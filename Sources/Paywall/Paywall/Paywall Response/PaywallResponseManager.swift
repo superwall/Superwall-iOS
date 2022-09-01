@@ -33,7 +33,7 @@ final class PaywallResponseManager: NSObject {
       forEvent: eventData,
       withHash: paywallRequestHash,
       identifiers: responseIdentifiers,
-      hasSubstituteProducts: substituteProducts == nil,
+      hasSubstituteProducts: substituteProducts != nil,
       inResultsCache: responsesByHash,
       handlersCache: handlersByHash,
       isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched
