@@ -347,6 +347,7 @@ class PaywallResponseLogicTests: XCTestCase {
       forEvent: .stub(),
       withHash: hash,
       identifiers: triggerIdentifiers,
+      substituteProducts: nil,
       inResultsCache: results,
       handlersCache: [:],
       isDebuggerLaunched: false

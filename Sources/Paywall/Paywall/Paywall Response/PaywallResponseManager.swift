@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import StoreKit
 
 typealias PaywallResponseCompletionBlock = (Result<PaywallResponse, NSError>) -> Void
 
@@ -20,6 +21,7 @@ final class PaywallResponseManager: NSObject {
 	func getResponse(
     from eventData: EventData? = nil,
     withIdentifiers responseIdentifiers: ResponseIdentifiers,
+    substituteProducts: PaywallProducts? = nil,
     completion: @escaping PaywallResponseCompletionBlock
   ) {
     let paywallRequestHash = PaywallResponseLogic.requestHash(
@@ -31,6 +33,7 @@ final class PaywallResponseManager: NSObject {
       forEvent: eventData,
       withHash: paywallRequestHash,
       identifiers: responseIdentifiers,
+      substituteProducts: substituteProducts,
       inResultsCache: responsesByHash,
       handlersCache: handlersByHash,
       isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched
@@ -52,7 +55,8 @@ final class PaywallResponseManager: NSObject {
     loadPaywall(
       forEvent: eventData,
       withHash: paywallRequestHash,
-      responseIdentifiers: responseIdentifiers
+      responseIdentifiers: responseIdentifiers,
+      substituteProducts: substituteProducts
     )
 	}
 
@@ -80,7 +84,8 @@ final class PaywallResponseManager: NSObject {
   private func loadPaywall(
     forEvent event: EventData?,
     withHash paywallRequestHash: String,
-    responseIdentifiers: ResponseIdentifiers
+    responseIdentifiers: ResponseIdentifiers,
+    substituteProducts: PaywallProducts?
   ) {
     queue.async { [weak self] in
       guard let self = self else {
@@ -124,6 +129,7 @@ final class PaywallResponseManager: NSObject {
 
           self.getProducts(
             from: response,
+            substituteProducts: substituteProducts,
             withHash: paywallRequestHash,
             paywallInfo: paywallInfo,
             event: event
@@ -157,6 +163,7 @@ final class PaywallResponseManager: NSObject {
 
   private func getProducts(
     from response: PaywallResponse,
+    substituteProducts: PaywallProducts?,
     withHash paywallRequestHash: String,
     paywallInfo: PaywallInfo,
     event: EventData?
@@ -176,71 +183,103 @@ final class PaywallResponseManager: NSObject {
       state: .start
     )
 
-    // add its products
-    StoreKitManager.shared.getProducts(withIds: response.productIds) { [weak self] result in
-      switch result {
-      case .success(let productsById):
-        guard let self = self else {
-          return
-        }
-
-        let outcome = PaywallResponseLogic.getVariablesAndFreeTrial(
-          fromProducts: response.products,
-          productsById: productsById,
-          isFreeTrialAvailableOverride: Paywall.isFreeTrialAvailableOverride
-        )
-
-        response.variables = outcome.variables
-        response.productVariables = outcome.productVariables
-        response.isFreeTrialAvailable = outcome.isFreeTrialAvailable
-
-        if outcome.resetFreeTrialOverride {
-          Paywall.isFreeTrialAvailableOverride = nil
-        }
-
-        // cache the response for later
-        self.responsesByHash[paywallRequestHash] = .success(response)
-
-        // execute all the cached handlers
-        if let handlers = self.handlersByHash[paywallRequestHash] {
-          onMain {
-            for handler in handlers {
-              handler(.success(response))
-            }
-          }
-        }
-
-        // reset the handler cache
-        self.handlersByHash.removeValue(forKey: paywallRequestHash)
-
-        response.productsLoadCompleteTime = Date()
-
-        let paywallInfo = response.getPaywallInfo(fromEvent: event)
-        SessionEventsManager.shared.triggerSession.trackProductsLoad(
-          forPaywallId: paywallInfo.id,
-          state: .end
-        )
-        let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
-          state: .complete,
+    if let products = substituteProducts {
+      StoreKitManager.shared.processSubstituteProducts(products) { [weak self] productsById, responseProducts in
+        self?.alterResponse(
+          response,
+          withAppleProductsById: productsById,
+          substituteResponseProducts: responseProducts,
+          requestHash: paywallRequestHash,
           paywallInfo: paywallInfo,
-          eventData: event
-        )
-        Paywall.track(productLoadEvent)
-      case .failure:
-        response.productsLoadFailTime = Date()
-        let paywallInfo = response.getPaywallInfo(fromEvent: event)
-        let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
-          state: .fail,
-          paywallInfo: paywallInfo,
-          eventData: event
-        )
-        Paywall.track(productLoadEvent)
-
-        SessionEventsManager.shared.triggerSession.trackProductsLoad(
-          forPaywallId: paywallInfo.id,
-          state: .fail
+          event: event
         )
       }
+    } else {
+      // add its products
+      StoreKitManager.shared.getProducts(withIds: response.productIds) { [weak self] result in
+        switch result {
+        case .success(let productsById):
+          self?.alterResponse(
+            response,
+            withAppleProductsById: productsById,
+            requestHash: paywallRequestHash,
+            paywallInfo: paywallInfo,
+            event: event
+          )
+        case .failure:
+          response.productsLoadFailTime = Date()
+          let paywallInfo = response.getPaywallInfo(fromEvent: event)
+          let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+            state: .fail,
+            paywallInfo: paywallInfo,
+            eventData: event
+          )
+          Paywall.track(productLoadEvent)
+
+          SessionEventsManager.shared.triggerSession.trackProductsLoad(
+            forPaywallId: paywallInfo.id,
+            state: .fail
+          )
+        }
+      }
     }
+  }
+
+  private func alterResponse(
+    _ response: PaywallResponse,
+    withAppleProductsById productsById: [String: SKProduct],
+    substituteResponseProducts: [Product]? = nil,
+    requestHash paywallRequestHash: String,
+    paywallInfo: PaywallInfo,
+    event: EventData?
+  ) {
+    var response = response
+    let products = substituteResponseProducts ?? response.products
+    response.products = products
+    let outcome = PaywallResponseLogic.getVariablesAndFreeTrial(
+      fromProducts: response.products,
+      productsById: productsById,
+      isFreeTrialAvailableOverride: Paywall.isFreeTrialAvailableOverride
+    )
+
+    response.swProducts = outcome.orderedSwProducts
+    response.variables = outcome.variables
+    response.productVariables = outcome.productVariables
+    response.isFreeTrialAvailable = outcome.isFreeTrialAvailable
+
+    if outcome.resetFreeTrialOverride {
+      Paywall.isFreeTrialAvailableOverride = nil
+    }
+
+    if substituteResponseProducts == nil {
+      // cache the response for later
+      self.responsesByHash[paywallRequestHash] = .success(response)
+    }
+
+    // execute all the cached handlers
+    if let handlers = self.handlersByHash[paywallRequestHash] {
+      onMain {
+        for handler in handlers {
+          handler(.success(response))
+        }
+      }
+    }
+
+    // reset the handler cache
+    self.handlersByHash.removeValue(forKey: paywallRequestHash)
+
+    response.productsLoadCompleteTime = Date()
+
+    let paywallInfo = response.getPaywallInfo(fromEvent: event)
+    SessionEventsManager.shared.triggerSession.trackProductsLoad(
+      forPaywallId: paywallInfo.id,
+      state: .end
+    )
+    let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+      state: .complete,
+      paywallInfo: paywallInfo,
+      eventData: event
+    )
+    Paywall.track(productLoadEvent)
   }
 }

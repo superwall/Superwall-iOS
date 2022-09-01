@@ -44,12 +44,14 @@ final class PaywallManager {
 	func getPaywallViewController(
     from eventData: EventData? = nil,
     responseIdentifiers: ResponseIdentifiers,
+    substituteProducts: PaywallProducts? = nil,
     cached: Bool,
     completion: ((Result<SWPaywallViewController, NSError>) -> Void)? = nil
   ) {
     PaywallResponseManager.shared.getResponse(
       from: eventData,
-      withIdentifiers: responseIdentifiers
+      withIdentifiers: responseIdentifiers,
+      substituteProducts: substituteProducts
     ) { [weak self] result in
       guard let self = self else {
         return
@@ -59,6 +61,7 @@ final class PaywallManager {
         if cached,
           let identifier = response.identifier,
           let viewController = self.cache.getPaywall(withIdentifier: identifier) {
+          viewController.paywallResponse = response
           completion?(.success(viewController))
           return
         }

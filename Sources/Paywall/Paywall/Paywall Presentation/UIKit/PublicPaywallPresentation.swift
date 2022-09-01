@@ -152,6 +152,7 @@ public extension Paywall {
     event: String? = nil,
     params: [String: Any]? = nil,
     on viewController: UIViewController? = nil,
+    substituteProducts: PaywallProducts? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
     onSkip: ((NSError?) -> Void)? = nil,
@@ -176,6 +177,7 @@ public extension Paywall {
     internallyPresent(
       eventInfo,
       on: viewController,
+      substituteProducts: substituteProducts,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
       presentationStyleOverride: presentationStyleOverride,
       onPresent: onPresent,
