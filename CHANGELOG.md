@@ -9,6 +9,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Assigments of paywall variants are now performed on device, meaning reduced network calls and faster setup time for the SDK.
 - Adds `Paywall.latestPaywallInfo`. You can read this to access the `PaywallInfo` object of the most recently presented view controller.
 - Adds feature flags under the hood so that when we introduce new features we can turn them on for specific organizations and apps.
+- Adds the ability to specify `SKProducts` with a trigger. These override the products defined on the dashboard for the paywall. You do this by creating a `PaywallProducts` object and calling `Paywall.trigger(event: "event", products: products)`.
 
 ---
 

@@ -20,7 +20,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 ### Triggering and Dismissing a Paywall
 
 - <doc:Triggering>
-- ``trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
+- ``trigger(event:params:on:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``track(_:_:)-2vkwo``
 - ``dismiss(_:)``
 - ``PaywallInfo``

@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 03/03/2022.
 //
+// swiftlint:disable type_body_length
 
 import Foundation
 import StoreKit
@@ -25,6 +26,7 @@ struct PaywallErrorResponse {
 struct ProductProcessingOutcome {
   var variables: [Variable]
   var productVariables: [ProductVariable]
+  var orderedSwProducts: [SWProduct]
   var isFreeTrialAvailable: Bool?
   var resetFreeTrialOverride: Bool
 }
@@ -162,12 +164,15 @@ enum PaywallResponseLogic {
     forEvent event: EventData?,
     withHash hash: String,
     identifiers triggerResponseIds: ResponseIdentifiers?,
+    hasSubstituteProducts: Bool,
     inResultsCache resultsCache: [String: Result<PaywallResponse, NSError>],
     handlersCache: [String: [PaywallResponseCompletionBlock]],
     isDebuggerLaunched: Bool
   ) -> PaywallCachingOutcome {
-    // If the response for request exists, return it
+    // If the response for request exists, and there are no products to substitute
+    // return the response.
     if let result = resultsCache[hash],
+      !hasSubstituteProducts,
       !isDebuggerLaunched {
         switch result {
         case .success(let response):
@@ -236,6 +241,30 @@ enum PaywallResponseLogic {
     return nil
   }
 
+  static func alterResponse(
+    _ response: PaywallResponse,
+    substituteResponseProducts: [Product]?,
+    productsById: [String: SKProduct],
+    isFreeTrialAvailableOverride: Bool?
+  ) -> (response: PaywallResponse, resetFreeTrialOverride: Bool) {
+    var response = response
+    let products = substituteResponseProducts ?? response.products
+
+    response.products = products
+    let outcome = getVariablesAndFreeTrial(
+      fromProducts: products,
+      productsById: productsById,
+      isFreeTrialAvailableOverride: isFreeTrialAvailableOverride
+    )
+
+    response.swProducts = outcome.orderedSwProducts
+    response.variables = outcome.variables
+    response.productVariables = outcome.productVariables
+    response.isFreeTrialAvailable = outcome.isFreeTrialAvailable
+
+    return (response, outcome.resetFreeTrialOverride)
+  }
+
   static func getVariablesAndFreeTrial(
     fromProducts products: [Product],
     productsById: [String: SKProduct],
@@ -246,12 +275,14 @@ enum PaywallResponseLogic {
     var newVariables: [ProductVariable] = []
     var isFreeTrialAvailable: Bool?
     var resetFreeTrialOverride = false
+    var orderedSwProducts: [SWProduct] = []
 
     for product in products {
       // Get skproduct
       guard let appleProduct = productsById[product.id] else {
         continue
       }
+      orderedSwProducts.append(appleProduct.swProduct)
 
       let legacyVariable = Variable(
         key: product.type.rawValue,
@@ -267,7 +298,6 @@ enum PaywallResponseLogic {
 
       if product.type == .primary {
         isFreeTrialAvailable = appleProduct.hasFreeTrial
-
         if hasPurchased(product.id),
           appleProduct.hasFreeTrial {
           isFreeTrialAvailable = false
@@ -283,6 +313,7 @@ enum PaywallResponseLogic {
     return ProductProcessingOutcome(
       variables: legacyVariables,
       productVariables: newVariables,
+      orderedSwProducts: orderedSwProducts,
       isFreeTrialAvailable: isFreeTrialAvailable,
       resetFreeTrialOverride: resetFreeTrialOverride
     )

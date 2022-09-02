@@ -33,6 +33,9 @@ struct PaywallResponse: Decodable {
   /// The products associated with the paywall.
   var products: [Product]
 
+  /// An ordered list of SWProducts that this paywall uses. This is accessed by the trigger session.
+  var swProducts: [SWProduct]? = []
+
   /// The variables associated with the paywall
   var variables: [Variable]? = []
 
@@ -86,7 +89,6 @@ struct PaywallResponse: Decodable {
     for variable in productVariables ?? [] {
       variables[variable.key] = variable.value
     }
-
     // swiftlint:disable:next array_constructor
     let values: [String: Any] = [
       "event_name": "template_product_variables",
@@ -157,6 +159,7 @@ struct PaywallResponse: Decodable {
     let string = "[" + encodedStrings.joined(separator: ",") + "]"
 
     let utf8str = string.data(using: .utf8)
+
     return utf8str?.base64EncodedString() ?? ""
   }
 

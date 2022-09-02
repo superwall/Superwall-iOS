@@ -347,6 +347,7 @@ class PaywallResponseLogicTests: XCTestCase {
       forEvent: .stub(),
       withHash: hash,
       identifiers: triggerIdentifiers,
+      hasSubstituteProducts: false,
       inResultsCache: results,
       handlersCache: [:],
       isDebuggerLaunched: false
@@ -362,6 +363,47 @@ class PaywallResponseLogicTests: XCTestCase {
     case .failure:
       XCTFail()
     }
+  }
+
+  func testSearchForPaywallResponse_hasSubstituteProducts_whenResultCached() {
+    // Given
+    let hash = "hash"
+
+    let experiment = Experiment(
+      id: "experimentId",
+      groupId: "groupId",
+      variant: .init(
+        id: "variantId",
+        type: .holdout,
+        paywallId: nil
+      )
+    )
+    let paywallResponse: PaywallResponse = .stub()
+
+    let results: [String: Result<PaywallResponse, NSError>] = [
+      hash: .success(paywallResponse)
+    ]
+    let triggerIdentifiers = ResponseIdentifiers(
+      paywallId: "yo",
+      experiment: experiment
+    )
+
+    // When
+    let outcome = PaywallResponseLogic.searchForPaywallResponse(
+      forEvent: .stub(),
+      withHash: hash,
+      identifiers: triggerIdentifiers,
+      hasSubstituteProducts: true,
+      inResultsCache: results,
+      handlersCache: [:],
+      isDebuggerLaunched: false
+    )
+
+    // Then
+    guard case let .setCompletionBlock(hash: givenHash) = outcome else {
+      return XCTFail()
+    }
+    XCTAssertEqual(hash, givenHash)
   }
 
   func testSearchForPaywallResponse_cachedResultFail() {
@@ -382,6 +424,7 @@ class PaywallResponseLogicTests: XCTestCase {
       forEvent: .stub(),
       withHash: hash,
       identifiers: nil,
+      hasSubstituteProducts: false,
       inResultsCache: results,
       handlersCache: [:],
       isDebuggerLaunched: false
@@ -422,6 +465,7 @@ class PaywallResponseLogicTests: XCTestCase {
       forEvent: .stub(),
       withHash: hash,
       identifiers: nil,
+      hasSubstituteProducts: false,
       inResultsCache: [:],
       handlersCache: handlersCache,
       isDebuggerLaunched: false
@@ -447,6 +491,7 @@ class PaywallResponseLogicTests: XCTestCase {
       forEvent: .stub(),
       withHash: hash,
       identifiers: nil,
+      hasSubstituteProducts: false,
       inResultsCache: [:],
       handlersCache: [:],
       isDebuggerLaunched: false
@@ -575,6 +620,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let expectation = ProductProcessingOutcome(
       variables: [],
       productVariables: [],
+      orderedSwProducts: [],
       isFreeTrialAvailable: nil,
       resetFreeTrialOverride: false
     )
@@ -583,6 +629,7 @@ class PaywallResponseLogicTests: XCTestCase {
     XCTAssertTrue(response.variables.isEmpty)
     XCTAssertEqual(response.resetFreeTrialOverride, expectation.resetFreeTrialOverride)
     XCTAssertTrue(response.productVariables.isEmpty)
+    XCTAssertTrue(response.orderedSwProducts.isEmpty)
   }
 
   func testGetVariablesAndFreeTrial_productNotFound() {
@@ -608,6 +655,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let expectation = ProductProcessingOutcome(
       variables: [],
       productVariables: [],
+      orderedSwProducts: [],
       isFreeTrialAvailable: nil,
       resetFreeTrialOverride: false
     )
@@ -616,6 +664,7 @@ class PaywallResponseLogicTests: XCTestCase {
     XCTAssertTrue(response.variables.isEmpty)
     XCTAssertEqual(response.resetFreeTrialOverride, expectation.resetFreeTrialOverride)
     XCTAssertTrue(response.productVariables.isEmpty)
+    XCTAssertTrue(response.orderedSwProducts.isEmpty)
   }
 
   func testGetVariablesAndFreeTrial_secondaryProduct() {
@@ -796,5 +845,41 @@ class PaywallResponseLogicTests: XCTestCase {
     XCTAssertEqual(response.variables, expectedVariables)
     XCTAssertTrue(response.resetFreeTrialOverride)
     XCTAssertEqual(response.productVariables, expectedProductVariables)
+  }
+
+  // MARK: - alterResponse
+
+  func test_alterResponse_withSubstituteProducts() {
+    let appleProduct = MockSkProduct()
+    let response = PaywallResponse.stub()
+      .setting(\.products, to: [.init(type: .primary, id: "def")])
+    let outcome = PaywallResponseLogic.alterResponse(
+      response,
+      substituteResponseProducts: [.init(type: .primary, id: "abc")],
+      productsById: ["abc": appleProduct],
+      isFreeTrialAvailableOverride: nil
+    )
+
+    XCTAssertEqual(outcome.response.products.count, 1)
+    XCTAssertEqual(outcome.response.products.first!.id, "abc")
+    XCTAssertEqual(outcome.response.products.first!.type, .primary)
+    XCTAssertEqual(outcome.response.swProducts?.first!.productIdentifier, appleProduct.swProduct.productIdentifier)
+  }
+
+  func test_alterResponse_withoutSubstituteProducts() {
+    let appleProduct = MockSkProduct()
+    let response = PaywallResponse.stub()
+      .setting(\.products, to: [.init(type: .primary, id: "abc")])
+    let outcome = PaywallResponseLogic.alterResponse(
+      response,
+      substituteResponseProducts: nil,
+      productsById: ["abc": appleProduct],
+      isFreeTrialAvailableOverride: nil
+    )
+
+    XCTAssertEqual(outcome.response.products.count, 1)
+    XCTAssertEqual(outcome.response.products.first!.id, "abc")
+    XCTAssertEqual(outcome.response.products.first!.type, .primary)
+    XCTAssertEqual(outcome.response.swProducts?.first!.productIdentifier, appleProduct.swProduct.productIdentifier)
   }
 }

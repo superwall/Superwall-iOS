@@ -12,6 +12,7 @@ extension Paywall {
   static func internallyPresent(
     _ presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
+    products: PaywallProducts? = nil,
     cached: Bool = true,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
@@ -90,6 +91,7 @@ extension Paywall {
     PaywallManager.shared.getPaywallViewController(
       from: eventData,
       responseIdentifiers: identifiers,
+      substituteProducts: products,
       cached: cached && !SWDebugManager.shared.isDebuggerLaunched
     ) { result in
       // if there's a paywall being presented, don't do anything
