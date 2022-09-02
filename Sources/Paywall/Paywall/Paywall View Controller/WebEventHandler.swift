@@ -46,7 +46,8 @@ final class WebEventHandler: WebEventDelegate {
     switch event {
     case .templateParamsAndUserAttributes:
       templateParams(from: paywallResponse)
-    case .onReady:
+    case .onReady(let paywalljsVersion):
+      delegate?.paywallResponse.paywalljsVersion = paywalljsVersion
       didLoadWebView(from: paywallResponse)
     case .close:
       hapticFeedback()

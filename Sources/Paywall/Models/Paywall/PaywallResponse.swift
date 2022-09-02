@@ -53,6 +53,8 @@ struct PaywallResponse: Decodable {
   var productsLoadCompleteTime: Date?
   var productsLoadFailTime: Date?
 
+  var paywalljsVersion: String?
+
   var paywallBackgroundColor: UIColor {
     if let hexString = backgroundColorHex {
       return UIColor(hexString: hexString)
@@ -135,7 +137,8 @@ struct PaywallResponse: Decodable {
       productsLoadStartTime: productsLoadStartTime,
       productsLoadFailTime: productsLoadFailTime,
       productsLoadCompleteTime: productsLoadCompleteTime,
-      experiment: experiment
+      experiment: experiment,
+      paywalljsVersion: paywalljsVersion
     )
   }
 

@@ -32,7 +32,7 @@ struct PayloadEvents: Decodable {
 }
 
 enum PaywallEvent: Decodable {
-  case onReady
+  case onReady(paywallJsVersion: String?)
 	case templateParamsAndUserAttributes
   case close
   case restore
@@ -62,6 +62,7 @@ extension PaywallEvent {
     case url
     case link
     case data
+    case version
   }
 
   enum PaywallEventError: Error {
@@ -76,7 +77,8 @@ extension PaywallEvent {
         self = .close
         return
       case .onReady:
-        self = .onReady
+        let version = try? values.decode(String.self, forKey: .version)
+        self = .onReady(paywallJsVersion: version)
         return
       case .purchase:
         if let productId = try? values.decode(String.self, forKey: .productId) {
