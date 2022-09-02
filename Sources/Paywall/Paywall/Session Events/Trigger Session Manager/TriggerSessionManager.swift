@@ -84,7 +84,6 @@ final class TriggerSessionManager {
         userAttributes: storage.userAttributes,
         isSubscribed: Paywall.shared.isUserSubscribed,
         eventName: trigger.eventName,
-        products: StoreKitManager.shared.swProducts,
         appSession: AppSessionManager.shared.appSession
       )
       pendingTriggerSessions[trigger.eventName] = pendingTriggerSession
@@ -97,7 +96,6 @@ final class TriggerSessionManager {
       userAttributes: storage.userAttributes,
       isSubscribed: Paywall.shared.isUserSubscribed,
       eventName: defaultEventName,
-      products: StoreKitManager.shared.swProducts,
       appSession: AppSessionManager.shared.appSession
     )
     pendingTriggerSessions[defaultEventName] = defaultPaywallSession
@@ -150,13 +148,14 @@ final class TriggerSessionManager {
     session.trigger = outcome.trigger
     session.paywall = outcome.paywall
     session.products = TriggerSession.Products(
-      allProducts: StoreKitManager.shared.swProducts,
+      allProducts: paywallResponse?.swProducts ?? [],
       loadingInfo: .init(
         startAt: paywallResponse?.productsLoadStartTime,
         endAt: paywallResponse?.productsLoadCompleteTime,
         failAt: paywallResponse?.productsLoadFailTime
       )
     )
+
     session.appSession = AppSessionManager.shared.appSession
 
     self.activeTriggerSession = session
@@ -188,7 +187,7 @@ final class TriggerSessionManager {
       userAttributes: storage.userAttributes,
       isSubscribed: Paywall.shared.isUserSubscribed,
       eventName: eventName,
-      products: StoreKitManager.shared.swProducts,
+      products: currentTriggerSession.products.allProducts,
       appSession: AppSessionManager.shared.appSession
     )
     pendingTriggerSessions[eventName] = pendingTriggerSession
@@ -358,18 +357,10 @@ final class TriggerSessionManager {
     enqueueCurrentTriggerSession()
   }
 
-  func storeAllProducts(_ products: [SWProduct]) {
-    activeTriggerSession?
-      .products
-      .allProducts = products
-    enqueueCurrentTriggerSession()
-  }
-
   // MARK: - Transactions
 
   func trackBeginTransaction(
-    of product: SKProduct,
-    allProducts: [SWProduct] = StoreKitManager.shared.swProducts
+    of product: SKProduct
   ) {
     // Determine local transaction count, per trigger session.
     if transactionCount != nil {
@@ -378,9 +369,12 @@ final class TriggerSessionManager {
       transactionCount = .init(start: 1)
     }
 
-    let productIndex = allProducts.firstIndex {
-      $0.productIdentifier == product.productIdentifier
-    } ?? 0
+    let productIndex = activeTriggerSession?
+      .products
+      .allProducts
+      .firstIndex {
+        $0.productIdentifier == product.productIdentifier
+      } ?? 0
     activeTriggerSession?.transaction = .init(
       startAt: Date(),
       count: transactionCount,
@@ -437,8 +431,7 @@ final class TriggerSessionManager {
   func trackTransactionRestoration(
     withId id: String?,
     product: SKProduct,
-    isFreeTrialAvailable: Bool,
-    allProducts: [SWProduct] = StoreKitManager.shared.swProducts
+    isFreeTrialAvailable: Bool
   ) {
     if transactionCount != nil {
       transactionCount?.restore += 1
@@ -448,9 +441,12 @@ final class TriggerSessionManager {
 
     var transaction: TriggerSession.Transaction
 
-    let productIndex = allProducts.firstIndex {
-      $0.productIdentifier == product.productIdentifier
-    } ?? 0
+    let productIndex = activeTriggerSession?
+      .products
+      .allProducts
+      .firstIndex {
+        $0.productIdentifier == product.productIdentifier
+      } ?? 0
 
     let date = Date()
     transaction = .init(

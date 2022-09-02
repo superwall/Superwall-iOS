@@ -9,7 +9,7 @@ import SwiftUI
 
 @available(iOS 13.0, *)
 extension View {
-  /// Presents a paywall to the user when a binding to a Boolean value that you provide is true. This method will be deprecated soon, we recommend using `.triggerPaywall` for greater flexibility.
+  /// Presents a paywall to the user when a binding to a Boolean value that you provide is true. This method is deprecated and we recommend using `.triggerPaywall` for greater flexibility.
   ///
   /// Use this method to present a paywall to the user when a Boolean value you provide is `true`.
   ///

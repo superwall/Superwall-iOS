@@ -136,7 +136,7 @@ enum TriggerSessionManagerLogic {
     userAttributes: [String: Any],
     isSubscribed: Bool,
     eventName: String,
-    products: [SWProduct],
+    products: [SWProduct] = [],
     appSession: AppSession
   ) -> TriggerSession {
     return TriggerSession(

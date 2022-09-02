@@ -18,7 +18,7 @@ When you sign up for a Superwall account, we give you an example paywall and cam
 
 ### Explicit Triggers in UIKit
 
-If you're using UIKit and you need completion handlers for a trigger, you need to use an explicit trigger by calling ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``:
+If you're using UIKit and you need completion handlers for a trigger, you need to use an explicit trigger by calling ``Paywall/Paywall/trigger(event:params:on:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``:
 
 ```swift
 Paywall.trigger(

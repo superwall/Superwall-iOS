@@ -6,6 +6,16 @@ import CoreMedia
 
 let response = #"""
 {
+  "toggles": [
+  {
+    "key": "enable_session_events",
+    "enabled": true
+  },
+  {
+    "key": "some_unknown_key",
+    "enabled": true
+  }
+  ],
   "trigger_options": [{
     "trigger_version": "V2",
     "event_name": "MyEvent",
@@ -411,6 +421,7 @@ final class ConfigTypeTests: XCTestCase {
       from: response.data(using: .utf8)!
     )
     print(parsedResponse)
+    XCTAssertTrue(parsedResponse.featureFlags.enableSessionEvents)
 
     guard let trigger = parsedResponse.triggers.filter({ $0.eventName == "MyEvent" }).first
     else {

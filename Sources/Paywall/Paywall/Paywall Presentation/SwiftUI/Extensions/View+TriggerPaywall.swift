@@ -74,11 +74,12 @@ extension View {
   ///   - shouldPresent: A binding to a Boolean value that determines whether to present a paywall.
   ///
   ///     The system sets `shouldPresent` to false if the trigger is not active or when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
-  ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
-  ///   - onPresent: A closure that's called after the paywall is presented. Accepts a `PaywallInfo?` object containing information about the paywall. Defaults to `nil`.
+  ///   - presentationStyleOverride: An optional ``PaywallPresentationStyle`` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
+  ///   - products: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defauls to `nil`.
+  ///   - onPresent: A closure that's called after the paywall is presented. Accepts an optional ``PaywallInfo`` object containing information about the paywall. Defaults to `nil`.
   ///   - onDismiss: The closure to execute after the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
   ///
-  ///     Accepts a `PaywallDismissalResult` object. This has a `paywallInfo` property containing information about the paywall and a `state` that tells you why the paywall was dismissed.
+  ///     Accepts a ``PaywallDismissalResult`` object. This has a ``PaywallInfo`` property containing information about the paywall and a `state` that tells you why the paywall was dismissed.
   ///     This closure will not be called if you programmatically set `isPresented` to `false` to dismiss the paywall.
   ///
   ///     Defaults to `nil`.
@@ -87,16 +88,18 @@ extension View {
     forEvent event: String,
     withParams params: [String: Any]? = nil,
     shouldPresent: Binding<Bool>,
+    products: PaywallProducts? = nil,
     presentationStyleOverride: PaywallPresentationStyle? = nil,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((PaywallDismissalResult) -> Void)? = nil,
     onFail: ((NSError) -> Void)? = nil
   ) -> some View {
-    self.modifier(
+    return self.modifier(
       PaywallTriggerModifier(
         shouldPresent: shouldPresent,
         event: event,
         params: params ?? [:],
+        products: products,
         presentationStyleOverride: presentationStyleOverride,
         onPresent: onPresent,
         onDismiss: onDismiss,

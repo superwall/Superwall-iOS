@@ -17,6 +17,7 @@ final class TransactionManagerTests: XCTestCase {
     let configRequestId = "abc"
     let configManager = ConfigManager()
     configManager.configRequestId = configRequestId
+    configManager.config = .stub()
 
     let appSessionId = "123"
     let appSession = AppSession.stub()
