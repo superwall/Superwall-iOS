@@ -75,7 +75,7 @@ extension View {
   ///
   ///     The system sets `shouldPresent` to false if the trigger is not active or when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
   ///   - presentationStyleOverride: An optional ``PaywallPresentationStyle`` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
-  ///   - substituteProducts: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defauls to `nil`.
+  ///   - products: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defauls to `nil`.
   ///   - onPresent: A closure that's called after the paywall is presented. Accepts an optional ``PaywallInfo`` object containing information about the paywall. Defaults to `nil`.
   ///   - onDismiss: The closure to execute after the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
   ///
@@ -88,7 +88,7 @@ extension View {
     forEvent event: String,
     withParams params: [String: Any]? = nil,
     shouldPresent: Binding<Bool>,
-    substituteProducts: PaywallProducts? = nil,
+    products: PaywallProducts? = nil,
     presentationStyleOverride: PaywallPresentationStyle? = nil,
     onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((PaywallDismissalResult) -> Void)? = nil,
@@ -99,7 +99,7 @@ extension View {
         shouldPresent: shouldPresent,
         event: event,
         params: params ?? [:],
-        substituteProducts: substituteProducts,
+        products: products,
         presentationStyleOverride: presentationStyleOverride,
         onPresent: onPresent,
         onDismiss: onDismiss,

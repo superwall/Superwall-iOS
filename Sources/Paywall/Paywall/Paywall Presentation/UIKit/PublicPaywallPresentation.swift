@@ -25,7 +25,7 @@ public extension Paywall {
     )
 	}
 
-	/// Presents a paywall to the user. This method will be deprecated soon, we recommend using ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` for greater flexibility.
+	/// Presents a paywall to the user. This method is deprecated and we recommend using ``Paywall/Paywall/trigger(event:params:on:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)` for greater flexibility.
   ///
 	/// - Parameters:
   ///     - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
@@ -53,7 +53,7 @@ public extension Paywall {
     )
 	}
 
-	/// Presents a paywall to the user. This method will be deprecated soon, we recommend using ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` for greater flexibility.
+	/// Presents a paywall to the user. This method is deprecated and we recommend using ``Paywall/Paywall/trigger(event:params:on:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` for greater flexibility.
   ///
 	/// - Parameters:
 ///     - on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
@@ -84,7 +84,7 @@ public extension Paywall {
     )
 	}
 
-  /// Presents a paywall to the user. This method will be deprecated soon, we recommend using ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` for greater flexibility.
+  /// Presents a paywall to the user. This method is deprecated and we recommend using ``Paywall/Paywall/trigger(event:params:on:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` for greater flexibility.
   ///
   /// - Parameters:
   ///   - identifier: The identifier of the paywall you wish to present.
@@ -143,7 +143,7 @@ public extension Paywall {
   ///   -  event: The name of the event you wish to trigger (equivalent to event name in ``Paywall/Paywall/track(_:_:)-2vkwo``)
   ///   - params: Parameters you wish to pass along to the trigger (equivalent to params in ``Paywall/Paywall/track(_:_:)-2vkwo``). You can refer to these parameters in the rules you define in your campaign.
   ///   - on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
-  ///   - substituteProducts: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defauls to `nil`.
+  ///   - products: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defauls to `nil`.
   ///   - ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
   ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
   ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo``? object containing information about the paywall.
@@ -153,7 +153,7 @@ public extension Paywall {
     event: String? = nil,
     params: [String: Any]? = nil,
     on viewController: UIViewController? = nil,
-    substituteProducts: PaywallProducts? = nil,
+    products: PaywallProducts? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
     onSkip: ((NSError?) -> Void)? = nil,
@@ -178,7 +178,7 @@ public extension Paywall {
     internallyPresent(
       eventInfo,
       on: viewController,
-      substituteProducts: substituteProducts,
+      products: products,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
       presentationStyleOverride: presentationStyleOverride,
       onPresent: onPresent,
