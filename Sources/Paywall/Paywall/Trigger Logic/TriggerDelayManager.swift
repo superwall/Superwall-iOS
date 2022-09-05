@@ -59,7 +59,7 @@ class TriggerDelayManager {
           ignoreSubscriptionStatus: trigger.ignoreSubscriptionStatus,
           onPresent: trigger.onPresent,
           onDismiss: trigger.onDismiss,
-          onSkip: trigger.onFail
+          onSkip: trigger.onSkip
         )
       }
     }

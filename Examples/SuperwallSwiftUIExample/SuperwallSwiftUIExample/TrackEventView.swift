@@ -29,7 +29,7 @@ struct TrackEventView: View {
         .background(Color.primaryTeal)
         .padding()
 
-      PaywallSubscriptionStatusView(presentationType: .explicitlyTriggered)
+      PaywallSubscriptionStatusView()
 
       Spacer()
 

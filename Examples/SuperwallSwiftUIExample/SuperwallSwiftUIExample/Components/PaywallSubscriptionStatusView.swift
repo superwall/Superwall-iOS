@@ -8,11 +8,9 @@
 import SwiftUI
 
 struct PaywallSubscriptionStatusView: View {
-  var presentationType: PresentationType
   @StateObject private var store = StoreKitService.shared
   var text: String {
     return PaywallSubscriptionStatusLogic.text(
-      forPresentationType: presentationType,
       isSubscribed: store.isSubscribed
     )
   }
@@ -27,6 +25,6 @@ struct PaywallSubscriptionStatusView: View {
 
 struct PaywallSubscriptionStatusView_Previews: PreviewProvider {
   static var previews: some View {
-    PaywallSubscriptionStatusView(presentationType: .implicitlyTriggered)
+    PaywallSubscriptionStatusView()
   }
 }
