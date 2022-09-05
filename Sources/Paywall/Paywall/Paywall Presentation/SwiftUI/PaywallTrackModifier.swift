@@ -18,8 +18,8 @@ struct PaywallTrackModifier: ViewModifier {
   var products: PaywallProducts?
   var presentationStyleOverride: PaywallPresentationStyle?
   var onPresent: ((PaywallInfo) -> Void)?
-  var onDismiss: PaywallDismissalCompletionBlock?
-  var onSkip: PaywallSkipCompletionBlock?
+  var onDismiss: PaywallDismissedCompletionBlock?
+  var onSkip: PaywallSkippedCompletionBlock?
 
   func body(content: Content) -> some View {
     content

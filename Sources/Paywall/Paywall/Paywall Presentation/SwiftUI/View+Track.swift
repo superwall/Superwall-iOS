@@ -92,8 +92,8 @@ extension View {
     products: PaywallProducts? = nil,
     presentationStyleOverride: PaywallPresentationStyle? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((PaywallDismissalResult) -> Void)? = nil,
-    onSkip: PaywallSkipCompletionBlock? = nil
+    onDismiss: ((PaywallDismissedResult) -> Void)? = nil,
+    onSkip: PaywallSkippedCompletionBlock? = nil
   ) -> some View {
     self.modifier(
       PaywallTrackModifier(
@@ -116,8 +116,8 @@ extension View {
     shouldPresent: Binding<Bool>,
     presentationStyleOverride: PaywallPresentationStyle? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((PaywallDismissalResult) -> Void)? = nil,
-    onSkip: PaywallSkipCompletionBlock? = nil
+    onDismiss: ((PaywallDismissedResult) -> Void)? = nil,
+    onSkip: PaywallSkippedCompletionBlock? = nil
   ) -> some View {
     return EmptyView()
   }

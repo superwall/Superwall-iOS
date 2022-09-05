@@ -8,7 +8,7 @@
 import Foundation
 
 /// Returned as a result of a paywall dismissing. It contains information about the paywall and the reason it was dismissed.
-public struct PaywallDismissalResult {
+public struct PaywallDismissedResult {
   /// Contains information about the dismissed paywall
   public let paywallInfo: PaywallInfo
 
@@ -34,7 +34,7 @@ public struct PaywallDismissalResult {
     paywallInfo: PaywallInfo,
     state: DismissState
   ) -> Self {
-    return PaywallDismissalResult(
+    return PaywallDismissedResult(
       paywallInfo: paywallInfo,
       state: state
     )

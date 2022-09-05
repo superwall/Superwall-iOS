@@ -9,21 +9,26 @@ import UIKit
 import Paywall
 import Combine
 
-final class ExplicitlyTriggerPaywallViewController: UIViewController {
+final class TrackEventViewController: UIViewController {
   @IBOutlet private var subscriptionLabel: UILabel!
   private var cancellables: Set<AnyCancellable> = []
 
-  static func fromStoryboard() -> ExplicitlyTriggerPaywallViewController {
+  static func fromStoryboard() -> TrackEventViewController {
     let storyboard = UIStoryboard(
       name: "Main",
       bundle: nil
     )
     let controller = storyboard.instantiateViewController(
-      withIdentifier: "ExplicitlyTriggerPaywallViewController"
-    ) as! ExplicitlyTriggerPaywallViewController
+      withIdentifier: "TrackEventViewController"
+    ) as! TrackEventViewController
     // swiftlint:disable:previous force_cast
 
     return controller
+  }
+
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    navigationController?.isNavigationBarHidden = false
   }
 
   override func viewDidLoad() {
@@ -39,7 +44,7 @@ final class ExplicitlyTriggerPaywallViewController: UIViewController {
       .store(in: &cancellables)
   }
 
-  @IBAction private func explicitlyTriggerPaywall() {
+  @IBAction private func trackEvent() {
     Paywall.track(event: "MyEvent") { skipReason in
       switch skipReason {
       case .holdout(let experiment):

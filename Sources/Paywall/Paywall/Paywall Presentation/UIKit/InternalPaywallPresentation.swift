@@ -8,7 +8,7 @@
 import UIKit
 
 /// The reason the paywall presentation was skipped.
-public enum SkipReason {
+public enum PaywallSkippedReason {
   /// The user was assigned to a holdout group.
   case holdout(Experiment)
 
@@ -19,8 +19,8 @@ public enum SkipReason {
   case unknownEvent(Error)
 }
 
-public typealias PaywallSkipCompletionBlock = (SkipReason) -> Void
-public typealias PaywallPresentationCompletionBlock = (SkipReason) -> Void
+public typealias PaywallSkippedCompletionBlock = (PaywallSkippedReason) -> Void
+public typealias PaywallPresentationCompletionBlock = (PaywallSkippedReason) -> Void
 
 extension Paywall {
   // swiftlint:disable:next function_body_length cyclomatic_complexity
@@ -32,8 +32,8 @@ extension Paywall {
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: PaywallDismissalCompletionBlock? = nil,
-    onSkip: PaywallSkipCompletionBlock? = nil
+    onDismiss: PaywallDismissedCompletionBlock? = nil,
+    onSkip: PaywallSkippedCompletionBlock? = nil
   ) {
     let presentationStyleOverride = presentationStyleOverride == .none ? nil : presentationStyleOverride
     if TriggerDelayManager.shared.hasDelay {
@@ -243,7 +243,7 @@ extension Paywall {
 
   func dismiss(
     _ paywallViewController: SWPaywallViewController,
-    state: PaywallDismissalResult.DismissState,
+    state: PaywallDismissedResult.DismissState,
     completion: (() -> Void)? = nil
   ) {
     onMain {

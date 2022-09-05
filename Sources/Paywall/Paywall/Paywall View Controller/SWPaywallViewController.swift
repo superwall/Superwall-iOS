@@ -30,7 +30,7 @@ enum PaywallLoadingState {
 final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   // MARK: - Properties
 	weak var delegate: SWPaywallViewControllerDelegate?
-	var dismissalCompletion: PaywallDismissalCompletionBlock?
+	var dismissalCompletion: PaywallDismissedCompletionBlock?
 	var isPresented = false
 	var calledDismiss = false
   var paywallResponse: PaywallResponse
@@ -470,7 +470,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	func set(
     _ eventData: EventData?,
-    dismissalBlock: PaywallDismissalCompletionBlock?
+    dismissalBlock: PaywallDismissedCompletionBlock?
   ) {
 		self.eventData = eventData
 		self.dismissalCompletion = dismissalBlock
@@ -593,7 +593,7 @@ extension SWPaywallViewController {
     on presenter: UIViewController,
     eventData: EventData?,
     presentationStyleOverride: PaywallPresentationStyle?,
-    dismissalBlock: PaywallDismissalCompletionBlock?,
+    dismissalBlock: PaywallDismissedCompletionBlock?,
     completion: @escaping (Bool) -> Void
   ) {
 		if Paywall.shared.isPaywallPresented || presenter is SWPaywallViewController || isBeingPresented {
@@ -616,7 +616,7 @@ extension SWPaywallViewController {
 	}
 
 	func dismiss(
-    _ dismissalResult: PaywallDismissalResult,
+    _ dismissalResult: PaywallDismissedResult,
     shouldCallCompletion: Bool = true,
     completion: (() -> Void)? = nil
   ) {
@@ -656,7 +656,7 @@ extension SWPaywallViewController {
   }
 
 	func didDismiss(
-    _ dismissalResult: PaywallDismissalResult,
+    _ dismissalResult: PaywallDismissedResult,
     shouldCallCompletion: Bool = true,
     completion: (() -> Void)? = nil
   ) {
