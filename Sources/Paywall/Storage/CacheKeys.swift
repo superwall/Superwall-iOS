@@ -98,3 +98,19 @@ enum TotalPaywallViews: Storable {
   static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = Int
 }
+
+enum ConfirmedAssignments: Storable {
+  static var key: String {
+    "store.confirmedAssignments"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = [Experiment.ID: Experiment.Variant]
+}
+
+enum SdkVersion: Storable {
+  static var key: String {
+    "store.sdkVersion"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = String
+}

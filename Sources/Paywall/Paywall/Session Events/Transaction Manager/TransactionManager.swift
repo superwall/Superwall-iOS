@@ -14,17 +14,22 @@ final class TransactionManager {
   /// Storage class. Can be injected via init for testing.
   private let storage: Storage
 
+  /// Config manager class. Can be injected via init for testing.
+  private let configManager: ConfigManager
+
   /// App session manager that can be injected via init for testing.
   private let appSessionManager: AppSessionManager
 
   /// Only instantiate this if you're testing. Otherwise use `TriggerSessionManager.shared`.
   init(
     delegate: SessionEventsDelegate,
-    storage: Storage = Storage.shared,
+    storage: Storage = .shared,
+    configManager: ConfigManager = .shared,
     appSessionManager: AppSessionManager = AppSessionManager.shared
   ) {
     self.delegate = delegate
     self.storage = storage
+    self.configManager = configManager
     self.appSessionManager = appSessionManager
   }
 
@@ -37,7 +42,7 @@ final class TransactionManager {
 
     let transaction = TransactionModel(
       from: transaction,
-      configRequestId: storage.configRequestId,
+      configRequestId: configManager.configRequestId,
       appSessionId: appSessionManager.appSession.id,
       triggerSessionId: triggerSessionId
     )

@@ -51,7 +51,6 @@ public final class Paywall: NSObject {
 	var presentingWindow: UIWindow?
 	var didTryToAutoRestore = false
 	var paywallWasPresentedThisSession = false
-  lazy var configManager = ConfigManager()
 
 	var paywallViewController: SWPaywallViewController? {
 		return PaywallManager.shared.presentedViewController
@@ -124,7 +123,7 @@ public final class Paywall: NSObject {
       apiKey: apiKey,
       userId: userId,
       delegate: delegate,
-      options: options ?? shared.configManager.options
+      options: options
     )
 		return shared
 	}
@@ -134,14 +133,7 @@ public final class Paywall: NSObject {
   ///  - Returns: The shared Paywall instance.
 	@discardableResult
 	@objc public static func identify(userId: String) -> Paywall {
-    // If there isn't an app user id set, don't clear the cache.
-    // If there is an app user id already set, clear the cache if it changed.
-    if let currentUserId = Storage.shared.appUserId,
-      currentUserId != userId {
-      Paywall.reset()
-    }
-
-    Storage.shared.appUserId = userId
+    Storage.shared.identify(with: userId)
 		return shared
 	}
 
@@ -151,7 +143,7 @@ public final class Paywall: NSObject {
   ///
   /// Note: This will not reload any paywalls you've already preloaded via ``Paywall/Paywall/preloadPaywalls(forTriggers:)``.
   @objc public static func preloadAllPaywalls() {
-    shared.configManager.config?.preloadAllPaywalls()
+    ConfigManager.shared.preloadAllPaywalls()
   }
 
   /// Preloads paywalls for specific trigger names.
@@ -160,7 +152,7 @@ public final class Paywall: NSObject {
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
   @objc public static func preloadPaywalls(forTriggers triggers: Set<String>) {
-    shared.configManager.config?.preloadPaywalls(forTriggers: triggers)
+    ConfigManager.shared.preloadPaywalls(forTriggers: triggers)
   }
 
 	/// Resets the `userId` and data stored by Superwall.
@@ -175,7 +167,7 @@ public final class Paywall: NSObject {
     shared.latestDismissedPaywallInfo = nil
     Storage.shared.clear()
     PaywallManager.shared.clearCache()
-    shared.configManager.fetchConfiguration()
+    ConfigManager.shared.fetchConfiguration()
 
     return shared
 	}
@@ -225,13 +217,13 @@ public final class Paywall: NSObject {
     apiKey: String?,
     userId: String? = nil,
     delegate: PaywallDelegate? = nil,
-    options: PaywallOptions = PaywallOptions()
+    options: PaywallOptions? = nil
   ) {
 		super.init()
-    self.configManager = ConfigManager(options: options)
 		guard let apiKey = apiKey else {
 			return
 		}
+    ConfigManager.shared.setOptions(options)
     Storage.shared.configure(
       appUserId: userId,
       apiKey: apiKey
@@ -247,7 +239,7 @@ public final class Paywall: NSObject {
 
     SKPaymentQueue.default().add(self)
     Storage.shared.recordAppInstall()
-    configManager.fetchConfiguration()
+    ConfigManager.shared.fetchConfiguration()
 	}
 
   /// Attemps to implicitly trigger a paywall for a given analytical event.
@@ -262,15 +254,15 @@ public final class Paywall: NSObject {
 
       let presentationInfo: PresentationInfo = .implicitTrigger(event)
 
-      guard self.configManager.didFetchConfig else {
+      if TriggerDelayManager.shared.hasDelay {
         let trigger = PreConfigTrigger(presentationInfo: presentationInfo)
-        Storage.shared.cachePreConfigTrigger(trigger)
+        TriggerDelayManager.shared.cachePreConfigTrigger(trigger)
         return
       }
 
       let outcome = PaywallLogic.canTriggerPaywall(
         eventName: event.name,
-        triggers: Set(Storage.shared.triggers.keys),
+        triggers: Set(ConfigManager.shared.triggers.keys),
         isPaywallPresented: self.isPaywallPresented
       )
 

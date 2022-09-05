@@ -10,19 +10,27 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ---
 
+## 2.4.2
+
+### Enhancements
+
+- Assigments of paywall variants are now performed on device, meaning reduced network calls and faster setup time for the SDK.
+- Adds `Paywall.latestPaywallInfo`. You can read this to access the `PaywallInfo` object of the most recently presented view controller.
+- Adds feature flags under the hood so that when we introduce new features we can turn them on for specific organizations and apps.
+- Adds the ability to specify `SKProducts` with a trigger. These override the products defined on the dashboard for the paywall. You do this by creating a `PaywallProducts` object and calling `Paywall.trigger(event: "event", products: products)`.
+
+---
+
 ## 2.4.1
 
 ### Enhancements
 
-- Adds `Paywall.options.useCachedPaywallTemplates`. This defaults to `true`. Superwall will load paywall template websites from disk, if available. When you save a change to your paywall in the Superwall dashboard, a key is appended to the end of your paywall website URL, e.g. `sw_cache_key=<Date saved>`. This is used to cache your paywall webpage to disk after it's first loaded. Superwall will continue to load the cached version of your paywall webpage unless the next time you make a change on the Superwall dashboard. (2.4.1-beta.1)
-- Adds `Paywall.preloadAllPaywalls()` and `Paywall.preloadPaywalls(forTriggers:)`. Use this with `Paywall.options.shouldPreloadPaywall = false` to have more control over when/what paywalls are preloaded. (2.4.1-beta.2)
-- Removes `Paywall.options.useCachedPaywallTemplates`. Too tricky (2.4.1-beta.2)
-- Adds `Paywall.latestPaywallInfo`. You can read this to access the `PaywallInfo` object of the most recently presented view controller.
+- Adds `Paywall.preloadAllPaywalls()` and `Paywall.preloadPaywalls(forTriggers:)`. Use this with `Paywall.options.shouldPreloadPaywall = false` to have more control over when/what paywalls are preloaded.
 
 ### Fixes
 
-- Paywall options specified prior to config are now respected, regardless of whether you pass an options object through to config or not. (2.4.1-beta.1)
-- Ensures /config's request and response is always handled on the main thread (2.4.1)
+- Paywall options specified prior to config are now respected, regardless of whether you pass an options object through to config or not.
+- Ensures /config's request and response is always handled on the main thread
 
 ---
 

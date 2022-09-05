@@ -33,14 +33,13 @@ struct PaywallResponse: Decodable {
   /// The products associated with the paywall.
   var products: [Product]
 
+  /// An ordered list of SWProducts that this paywall uses. This is accessed by the trigger session.
+  var swProducts: [SWProduct]? = []
+
   /// The variables associated with the paywall
   var variables: [Variable]? = []
 
   var productVariables: [ProductVariable]? = []
-
-  var idNonOptional: String {
-    return id ?? ""
-  }
 
   var responseLoadStartTime: Date?
   var responseLoadCompleteTime: Date?
@@ -53,6 +52,8 @@ struct PaywallResponse: Decodable {
   var productsLoadStartTime: Date?
   var productsLoadCompleteTime: Date?
   var productsLoadFailTime: Date?
+
+  var paywalljsVersion: String?
 
   var paywallBackgroundColor: UIColor {
     if let hexString = backgroundColorHex {
@@ -90,7 +91,6 @@ struct PaywallResponse: Decodable {
     for variable in productVariables ?? [] {
       variables[variable.key] = variable.value
     }
-
     // swiftlint:disable:next array_constructor
     let values: [String: Any] = [
       "event_name": "template_product_variables",
@@ -137,7 +137,8 @@ struct PaywallResponse: Decodable {
       productsLoadStartTime: productsLoadStartTime,
       productsLoadFailTime: productsLoadFailTime,
       productsLoadCompleteTime: productsLoadCompleteTime,
-      experiment: experiment
+      experiment: experiment,
+      paywalljsVersion: paywalljsVersion
     )
   }
 
@@ -161,6 +162,7 @@ struct PaywallResponse: Decodable {
     let string = "[" + encodedStrings.joined(separator: ",") + "]"
 
     let utf8str = string.data(using: .utf8)
+
     return utf8str?.base64EncodedString() ?? ""
   }
 
@@ -173,6 +175,14 @@ struct PaywallResponse: Decodable {
   }
 }
 
+// MARK: - Equatable
+extension PaywallResponse: Equatable {
+  static func == (lhs: PaywallResponse, rhs: PaywallResponse) -> Bool {
+    return lhs.id == rhs.id
+  }
+}
+
+// MARK: - Stubbable
 extension PaywallResponse: Stubbable {
   static func stub() -> PaywallResponse {
     return PaywallResponse(

@@ -75,6 +75,8 @@ extension PaywallService: PaywallDelegate {
       <#code#>
     case .appClose:
       <#code#>
+    case .deepLink:
+      <#code#>
     case .triggerFire:
       <#code#>
     case .paywallOpen:
@@ -96,6 +98,8 @@ extension PaywallService: PaywallDelegate {
     case .transactionRestore:
       <#code#>
     case .manualPresent:
+      <#code#>
+    case .userAttributes:
       <#code#>
     case .nonRecurringProductPurchase:
       <#code#>

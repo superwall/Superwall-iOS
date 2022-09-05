@@ -171,20 +171,22 @@ extension Endpoint where Response == PaywallResponse {
     // 2. The shortend device locale (ex: en) exists in the locale list
     // If either exist (preferring the most specific) include the locale in the
     // the url as a query param.
-    if Storage.shared.locales.contains(DeviceHelper.shared.locale) {
-      let localeQuery = URLQueryItem(
-        name: "locale",
-        value: DeviceHelper.shared.locale
-      )
-      queryItems.append(localeQuery)
-    } else {
-      let shortLocale = DeviceHelper.shared.locale.split(separator: "_")[0]
-      if Storage.shared.locales.contains(String(shortLocale)) {
+    if let config = ConfigManager.shared.config {
+      if config.locales.contains(DeviceHelper.shared.locale) {
         let localeQuery = URLQueryItem(
           name: "locale",
-          value: String(shortLocale)
+          value: DeviceHelper.shared.locale
         )
         queryItems.append(localeQuery)
+      } else {
+        let shortLocale = DeviceHelper.shared.locale.split(separator: "_")[0]
+        if config.locales.contains(String(shortLocale)) {
+          let localeQuery = URLQueryItem(
+            name: "locale",
+            value: String(shortLocale)
+          )
+          queryItems.append(localeQuery)
+        }
       }
     }
 
@@ -215,10 +217,13 @@ extension Endpoint where Response == PaywallsResponse {
 // MARK: - ConfigResponse
 extension Endpoint where Response == Config {
   static func config(requestId: String) -> Self {
+    let queryItems = [URLQueryItem(name: "pk", value: Storage.shared.apiKey)]
+
     return Endpoint(
       components: Components(
         host: Api.Base.host,
-        path: Api.version1 + "config"
+        path: Api.version1 + "static_config",
+        queryItems: queryItems
       ),
       method: .get,
       requestId: requestId
@@ -228,6 +233,16 @@ extension Endpoint where Response == Config {
 
 // MARK: - ConfirmedAssignmentResponse
 extension Endpoint where Response == ConfirmedAssignmentResponse {
+  static var assignments: Self {
+    return Endpoint(
+      components: Components(
+        host: Api.Base.host,
+        path: Api.version1 + "assignments"
+      ),
+      method: .get
+    )
+  }
+
   static func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) -> Self {
     let bodyData = try? JSONEncoder.toSnakeCase.encode(confirmableAssignments)
 

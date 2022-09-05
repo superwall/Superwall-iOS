@@ -4,7 +4,6 @@ import StoreKit
 final class StoreKitManager: NSObject {
 	static let shared = StoreKitManager()
   var productsById: [String: SKProduct] = [:]
-  var swProducts: [SWProduct] = []
 
 	private let productsManager = ProductsManager()
 
@@ -34,6 +33,37 @@ final class StoreKitManager: NSObject {
 		}
 	}
 
+  func processSubstituteProducts(
+    _ substituteProducts: PaywallProducts,
+    completion: ([String: SKProduct], [Product]) -> Void
+  ) {
+    var productsById: [String: SKProduct] = [:]
+    var products: [Product] = []
+
+    func store(
+      _ product: SKProduct,
+      type: ProductType
+    ) {
+      let id = product.productIdentifier
+      productsById[id] = product
+      self.productsById[id] = product
+      let product = Product(type: type, id: id)
+      products.append(product)
+    }
+
+    if let primaryProduct = substituteProducts.primary {
+      store(primaryProduct, type: .primary)
+    }
+    if let secondaryProduct = substituteProducts.secondary {
+      store(secondaryProduct, type: .secondary)
+    }
+    if let tertiaryProduct = substituteProducts.tertiary {
+      store(tertiaryProduct, type: .tertiary)
+    }
+
+    completion(productsById, products)
+  }
+
 	func getProducts(
     withIds ids: [String],
     completion: ((Result<[String: SKProduct], Error>) -> Void)? = nil
@@ -52,18 +82,6 @@ final class StoreKitManager: NSObject {
           output[product.productIdentifier] = product
           self.productsById[product.productIdentifier] = product
         }
-
-        // Loop through all the product ids and store, in order.
-        var swProducts: [SWProduct] = []
-        for id in ids {
-          guard let product = self.productsById[id] else {
-            continue
-          }
-          let swProduct = SWProduct(product: product)
-          swProducts.append(swProduct)
-        }
-        SessionEventsManager.shared.triggerSession.storeAllProducts(swProducts)
-        self.swProducts = swProducts
 
         completion?(.success(output))
       case .failure(let error):

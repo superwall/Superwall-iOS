@@ -13,7 +13,7 @@ final class LocalizationManager {
 	var selectedLocale: String?
 
 	lazy var localizationGroupings: [LocalizationGrouping] = {
-		let localeIds = NSLocale.availableLocaleIdentifiers
+		let localeIds = Locale.availableIdentifiers
     let sortedLocalizations = LocalizationLogic.getSortedLocalizations(forLocales: localeIds)
     let groupings = LocalizationLogic.getGroupings(for: sortedLocalizations)
 

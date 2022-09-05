@@ -69,9 +69,13 @@ extension PaywallService: PaywallDelegate {
       <#code#>
     case .appLaunch:
       <#code#>
+    case .appInstall:
+      <#code#>
     case .sessionStart:
       <#code#>
     case .appClose:
+      <#code#>
+    case .deepLink:
       <#code#>
     case .triggerFire:
       <#code#>
@@ -93,6 +97,10 @@ extension PaywallService: PaywallDelegate {
       <#code#>
     case .transactionRestore:
       <#code#>
+    case .manualPresent:
+      <#code#>
+    case .userAttributes:
+      <#code#>
     case .nonRecurringProductPurchase:
       <#code#>
     case .paywallResponseLoadStart:
@@ -108,6 +116,14 @@ extension PaywallService: PaywallDelegate {
     case .paywallWebviewLoadFail:
       <#code#>
     case .paywallWebviewLoadComplete:
+      <#code#>
+    case .paywallWebviewLoadTimeout:
+      <#code#>
+    case .paywallProductsLoadStart:
+      <#code#>
+    case .paywallProductsLoadFail:
+      <#code#>
+    case .paywallProductsLoadComplete:
       <#code#>
     }
     */
