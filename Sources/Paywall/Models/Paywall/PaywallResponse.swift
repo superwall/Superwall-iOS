@@ -73,6 +73,12 @@ struct PaywallResponse: Decodable {
       "device": DeviceHelper.shared.templateDevice.dictionary ?? [:]
     ]
 
+    // nil these out so they are removed unless present
+    variables["primary"] = JSON([:])
+    variables["secondary"] = JSON([:])
+    variables["tertiary"] = JSON([:])
+
+    // products which are present will be set, others will be nil
     for variable in self.variables ?? [] {
       variables[variable.key] = variable.value
     }
@@ -91,6 +97,7 @@ struct PaywallResponse: Decodable {
     for variable in productVariables ?? [] {
       variables[variable.key] = variable.value
     }
+
     // swiftlint:disable:next array_constructor
     let values: [String: Any] = [
       "event_name": "template_product_variables",
