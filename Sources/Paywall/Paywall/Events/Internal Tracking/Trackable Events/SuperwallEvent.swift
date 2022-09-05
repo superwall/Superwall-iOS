@@ -58,10 +58,55 @@ enum SuperwallEvent {
   struct DeepLink: TrackableSuperwallEvent {
     let name: Paywall.EventName = .deepLink
     let url: URL
+
     var superwallParameters: [String: Any] {
-      return ["url": url.absoluteString]
+      return [
+        "url": url.absoluteString,
+        "path": url.path,
+        "pathExtension": url.pathExtension,
+        "lastPathComponent": url.lastPathComponent,
+        "host": url.host ?? "",
+        "query": url.query ?? "",
+        "fragment": url.fragment ?? ""
+      ]
     }
-    var customParameters: [String: Any] = [:]
+
+    var customParameters: [String: Any] {
+      guard let urlComponents = URLComponents(
+        url: url,
+        resolvingAgainstBaseURL: false
+      ) else {
+        return [:]
+      }
+      guard let queryItems = urlComponents.queryItems else {
+        return [:]
+      }
+
+      var queryStrings: [String: Any] = [:]
+      for queryItem in queryItems {
+        guard
+          !queryItem.name.isEmpty,
+          let value = queryItem.value,
+          !value.isEmpty
+        else {
+          continue
+        }
+        let name = queryItem.name
+        let lowerCaseValue = value.lowercased()
+        if lowerCaseValue == "true" {
+          queryStrings[name] = true
+        } else if lowerCaseValue == "false" {
+          queryStrings[name] = false
+        } else if let int = Int(value) {
+          queryStrings[name] = int
+        } else if let double = Double(value) {
+          queryStrings[name] = double
+        } else {
+          queryStrings[name] = value
+        }
+      }
+      return queryStrings
+    }
   }
 
   struct FirstSeen: TrackableSuperwallEvent {

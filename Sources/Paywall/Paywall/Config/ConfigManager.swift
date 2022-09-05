@@ -10,6 +10,7 @@ import UIKit
 final class ConfigManager {
   var didFetchConfig = !Storage.shared.configRequestId.isEmpty
   var options: PaywallOptions
+  var config: Config?
   private let storage: Storage
   private let network: Network
 
@@ -32,47 +33,45 @@ final class ConfigManager {
 
   func fetchConfiguration() {
     let requestId = UUID().uuidString
-    DispatchQueue.main.async {
-      Network.shared.getConfig(withRequestId: requestId) { [weak self] result in
-        guard let self = self else {
-          return
-        }
-        switch result {
-        case .success(let config):
-          Storage.shared.addConfig(config, withRequestId: requestId)
-          SessionEventsManager.shared.triggerSession.createSessions(from: config)
-          self.didFetchConfig = true
-          config.cache()
-
-          Storage.shared.triggersFiredPreConfig.forEach { trigger in
-            switch trigger.presentationInfo.triggerType {
-            case .implicit:
-              guard let eventData = trigger.presentationInfo.eventData else {
-                return
-              }
-              Paywall.shared.handleImplicitTrigger(forEvent: eventData)
-            case .explicit:
-              Paywall.internallyPresent(
-                trigger.presentationInfo,
-                on: trigger.viewController,
-                ignoreSubscriptionStatus: trigger.ignoreSubscriptionStatus,
-                onPresent: trigger.onPresent,
-                onDismiss: trigger.onDismiss,
-                onFail: trigger.onFail
-              )
+    Network.shared.getConfig(withRequestId: requestId) { [weak self] result in
+      guard let self = self else {
+        return
+      }
+      switch result {
+      case .success(let config):
+        Storage.shared.addConfig(config, withRequestId: requestId)
+        SessionEventsManager.shared.triggerSession.createSessions(from: config)
+        self.didFetchConfig = true
+        config.cache()
+        self.config = config
+        Storage.shared.triggersFiredPreConfig.forEach { trigger in
+          switch trigger.presentationInfo.triggerType {
+          case .implicit:
+            guard let eventData = trigger.presentationInfo.eventData else {
+              return
             }
+            Paywall.shared.handleImplicitTrigger(forEvent: eventData)
+          case .explicit:
+            Paywall.internallyPresent(
+              trigger.presentationInfo,
+              on: trigger.viewController,
+              ignoreSubscriptionStatus: trigger.ignoreSubscriptionStatus,
+              onPresent: trigger.onPresent,
+              onDismiss: trigger.onDismiss,
+              onSkip: trigger.onFail
+            )
           }
-          Storage.shared.clearPreConfigTriggers()
-        case .failure(let error):
-          Logger.debug(
-            logLevel: .error,
-            scope: .paywallCore,
-            message: "Failed to Fetch Configuration",
-            info: nil,
-            error: error
-          )
-          self.didFetchConfig = true
         }
+        Storage.shared.clearPreConfigTriggers()
+      case .failure(let error):
+        Logger.debug(
+          logLevel: .error,
+          scope: .paywallCore,
+          message: "Failed to Fetch Configuration",
+          info: nil,
+          error: error
+        )
+        self.didFetchConfig = true
       }
     }
   }

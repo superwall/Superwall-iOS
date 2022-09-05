@@ -33,8 +33,8 @@ struct PaywallTriggerModifier: ViewModifier {
       if isInternallyPresenting {
         return
       }
-      var eventInfo: PresentationInfo = .defaultPaywall
 
+      let eventInfo: PresentationInfo
       if let name = event {
         let trackableEvent = UserInitiatedEvent.Track(
           rawName: name,
@@ -43,7 +43,12 @@ struct PaywallTriggerModifier: ViewModifier {
         )
         let result = Paywall.track(trackableEvent)
         eventInfo = .explicitTrigger(result.data)
+      } else {
+        let trackableEvent = UserInitiatedEvent.DefaultPaywall()
+        let result = Paywall.track(trackableEvent)
+        eventInfo = .explicitTrigger(result.data)
       }
+
       isInternallyPresenting = true
 
       Paywall.internallyPresent(
@@ -56,7 +61,7 @@ struct PaywallTriggerModifier: ViewModifier {
           self.isInternallyPresenting = false
           onDismiss?(result)
         },
-        onFail: { error in
+        onSkip: { error in
           self.programmaticallySetShouldPresent = true
           self.shouldPresent = false
           self.isInternallyPresenting = false

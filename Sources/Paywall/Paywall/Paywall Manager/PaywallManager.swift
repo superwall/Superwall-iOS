@@ -73,7 +73,7 @@ final class PaywallManager {
           delegate: Paywall.shared
         )
 
-        if let window = UIApplication.shared.keyWindow {
+        if let window = UIApplication.shared.activeWindow {
           paywallViewController.view.alpha = 0.01
           window.addSubview(paywallViewController.view)
           paywallViewController.view.transform = CGAffineTransform(

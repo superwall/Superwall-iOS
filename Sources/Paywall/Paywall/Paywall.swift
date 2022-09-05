@@ -25,6 +25,22 @@ public final class Paywall: NSObject {
   public static var options: PaywallOptions {
     return shared.configManager.options
   }
+  
+  /// The ``PaywallInfo`` object of the most recently presented view controller.
+  public static var latestPaywallInfo: PaywallInfo? {
+    let presentedPaywallInfo = PaywallManager.shared.presentedViewController?.paywallInfo
+    return presentedPaywallInfo ?? shared.latestDismissedPaywallInfo
+  }
+
+  /// The ``PaywallInfo`` object stored from the latest paywall that was dismissed.
+  var latestDismissedPaywallInfo: PaywallInfo?
+
+
+  /// The current user's id. It shouldn't ever be `nil` since Superwall assigns an anonymous user id and caches it to disk if one isn't provided.
+  public static var userId: String? {
+    // Technically Storage.shared.userId is an optional value
+    return Storage.shared.userId
+  }
 
   // MARK: - Private Properties
   /// Used as the reload function if a paywall takes to long to load. set in paywall.present
@@ -93,7 +109,7 @@ public final class Paywall: NSObject {
     apiKey: String,
     userId: String? = nil,
     delegate: PaywallDelegate? = nil,
-    options: PaywallOptions = PaywallOptions()
+    options: PaywallOptions? = nil
   ) -> Paywall {
     if hasCalledConfig {
       Logger.debug(
@@ -108,24 +124,44 @@ public final class Paywall: NSObject {
       apiKey: apiKey,
       userId: userId,
       delegate: delegate,
-      options: options
+      options: options ?? shared.configManager.options
     )
 		return shared
 	}
 
-	/// Links your `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId.
+	/// Links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
 	///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
   ///  - Returns: The shared Paywall instance.
 	@discardableResult
 	@objc public static func identify(userId: String) -> Paywall {
-    // refetch the paywall, we don't know if the alias was for an existing user
-    if Storage.shared.userId != userId {
-			PaywallManager.shared.clearCache()
-		}
-    Storage.shared.appUserId = userId
+    // If there isn't an app user id set, don't clear the cache.
+    // If there is an app user id already set, clear the cache if it changed.
+    if let currentUserId = Storage.shared.appUserId,
+      currentUserId != userId {
+      Paywall.reset()
+    }
 
+    Storage.shared.appUserId = userId
 		return shared
 	}
+
+  /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard.
+  ///
+  /// To use this, first set ``PaywallOptions/shouldPreloadPaywalls``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
+  ///
+  /// Note: This will not reload any paywalls you've already preloaded via ``Paywall/Paywall/preloadPaywalls(forTriggers:)``.
+  @objc public static func preloadAllPaywalls() {
+    shared.configManager.config?.preloadAllPaywalls()
+  }
+
+  /// Preloads paywalls for specific trigger names.
+  ///
+  /// To use this, first set ``PaywallOptions/shouldPreloadPaywalls``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
+  ///
+  /// Note: This will not reload any paywalls you've already preloaded.
+  @objc public static func preloadPaywalls(forTriggers triggers: Set<String>) {
+    shared.configManager.config?.preloadPaywalls(forTriggers: triggers)
+  }
 
 	/// Resets the `userId` and data stored by Superwall.
   ///
@@ -136,6 +172,7 @@ public final class Paywall: NSObject {
       return shared
     }
     Paywall.presentAgain = {}
+    shared.latestDismissedPaywallInfo = nil
     Storage.shared.clear()
     PaywallManager.shared.clearCache()
     shared.configManager.fetchConfiguration()
@@ -238,6 +275,16 @@ public final class Paywall: NSObject {
       )
 
       switch outcome {
+      case .deepLinkTrigger:
+        onMain {
+          if Paywall.shared.isPaywallPresented {
+            Paywall.dismiss {
+              Paywall.internallyPresent(presentationInfo)
+            }
+          } else {
+            Paywall.internallyPresent(presentationInfo)
+          }
+        }
       case .triggerPaywall:
         // delay in case they are presenting a view controller alongside an event they are calling
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {

@@ -10,6 +10,7 @@ import Foundation
 enum PaywallLogic {
   enum Outcome {
     case triggerPaywall
+    case deepLinkTrigger
     case disallowedEventAsTrigger
     case dontTriggerPaywall
   }
@@ -18,6 +19,11 @@ enum PaywallLogic {
     triggers: Set<String>,
     isPaywallPresented: Bool
   ) -> Outcome {
+    if let superwallEvent = Paywall.EventName(rawValue: eventName),
+      superwallEvent == .deepLink {
+      return .deepLinkTrigger
+    }
+
     if isPaywallPresented {
       return .dontTriggerPaywall
     }

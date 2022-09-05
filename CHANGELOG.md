@@ -10,6 +10,22 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ---
 
+## 2.4.1
+
+### Enhancements
+
+- Adds `Paywall.options.useCachedPaywallTemplates`. This defaults to `true`. Superwall will load paywall template websites from disk, if available. When you save a change to your paywall in the Superwall dashboard, a key is appended to the end of your paywall website URL, e.g. `sw_cache_key=<Date saved>`. This is used to cache your paywall webpage to disk after it's first loaded. Superwall will continue to load the cached version of your paywall webpage unless the next time you make a change on the Superwall dashboard. (2.4.1-beta.1)
+- Adds `Paywall.preloadAllPaywalls()` and `Paywall.preloadPaywalls(forTriggers:)`. Use this with `Paywall.options.shouldPreloadPaywall = false` to have more control over when/what paywalls are preloaded. (2.4.1-beta.2)
+- Removes `Paywall.options.useCachedPaywallTemplates`. Too tricky (2.4.1-beta.2)
+- Adds `Paywall.latestPaywallInfo`. You can read this to access the `PaywallInfo` object of the most recently presented view controller.
+
+### Fixes
+
+- Paywall options specified prior to config are now respected, regardless of whether you pass an options object through to config or not. (2.4.1-beta.1)
+- Ensures /config's request and response is always handled on the main thread (2.4.1)
+
+---
+
 ## 2.4.0
 
 ### Enhancements
@@ -30,6 +46,11 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Paywalls can now be configured via the dashboard to always present, regardless of the subscription status of the user.
 - Adds a `presentationStyleOverride` parameter to `Paywall.trigger()` and `Paywall.present()`. By setting this, you can override the configured presentation style on case by case basis.
 - Rules can now be limited by occurrence and date. For example, you could set a rule to only match 10 times within the last 5 hours.
+- Adds `Paywall.userId` to grab the id of the current user.
+- Adds `$url`, `$path`, `$pathExtension`, `$lastPathComponent`, `$host`, `$query`, `$fragment` as standard parameters to the `deepLink_open` event trigger (automatically tracked).
+- Parses URL parameters and adds them as trigger parameters to the `deepLink_open` event trigger (automatically tracked).
+- Fixes window logic for opening the debugger and launching paywalls on `deepLink_open`.
+- Launching a paywall using the `deepLink_open` Trigger now dismisses a currently presenting paywall before presenting the new one.
 
 ### Fixes
 
@@ -47,6 +68,9 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Mentions SwiftLint as a requirement to run the sample apps.
 - Deprecates `Paywall.debugMode`. All logs are now controlled by setting the paywall option `.logLevel`. The default `logLevel` is now `.warn`.
 - Fixes broken webview based deeplinks and closes the paywall view before calling the delegate handler.
+- Deprecates `Paywall.present` for `Paywall.trigger`.
+- Fixes issue where preloaded paywalls would be cleared upon calling `Paywall.identify()` if config was called without a `userId`.
+- Fixes logic for grabbing the active view controller.
 
 ## 2.3.0
 

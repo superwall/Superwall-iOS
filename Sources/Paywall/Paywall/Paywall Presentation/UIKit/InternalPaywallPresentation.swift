@@ -17,7 +17,7 @@ extension Paywall {
     presentationStyleOverride: PaywallPresentationStyle = .none,
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: PaywallDismissalCompletionBlock? = nil,
-    onFail: ((NSError) -> Void)? = nil
+    onSkip: ((NSError) -> Void)? = nil
   ) {
     let presentationStyleOverride = presentationStyleOverride == .none ? nil : presentationStyleOverride
     guard shared.configManager.didFetchConfig else {
@@ -26,7 +26,7 @@ extension Paywall {
         presentationStyleOverride: presentationStyleOverride,
         viewController: presentingViewController,
         ignoreSubscriptionStatus: ignoreSubscriptionStatus,
-        onFail: onFail,
+        onFail: onSkip,
         onPresent: onPresent,
         onDismiss: onDismiss
       )
@@ -41,7 +41,7 @@ extension Paywall {
       "cached": cached,
       "presentationCompletion": onPresent.debugDescription,
       "dismissalCompletion": onDismiss.debugDescription,
-      "fallback": onFail.debugDescription
+      "fallback": onSkip.debugDescription
     ]
 
     Logger.debug(
@@ -83,7 +83,7 @@ extension Paywall {
         info: debugInfo,
         error: error
       )
-      onFail?(error)
+      onSkip?(error)
       return
     }
 
@@ -135,7 +135,7 @@ extension Paywall {
             error: nil
           )
           if !shared.isPaywallPresented {
-            onFail?(
+            onSkip?(
               shared.presentationError(
                 domain: "SWPresentationError",
                 code: 101,
@@ -165,7 +165,7 @@ extension Paywall {
                 presentationStyleOverride: presentationStyleOverride ?? .none,
                 onPresent: onPresent,
                 onDismiss: onDismiss,
-                onFail: onFail
+                onSkip: onSkip
               )
             }
             onPresent?(paywallViewController.paywallInfo)
@@ -194,7 +194,7 @@ extension Paywall {
           info: debugInfo,
           error: error
         )
-        onFail?(error)
+        onSkip?(error)
       }
     }
   }
@@ -235,15 +235,14 @@ extension Paywall {
 
   private func createPresentingWindowIfNeeded() {
     if presentingWindow == nil {
+      let activeWindow = UIApplication.shared.activeWindow
+
       if #available(iOS 13.0, *) {
-        let scenes = UIApplication.shared.connectedScenes
-        if let windowScene = scenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+        if let windowScene = activeWindow?.windowScene {
           presentingWindow = UIWindow(windowScene: windowScene)
         }
-      }
-
-      if presentingWindow == nil {
-        presentingWindow = UIWindow(frame: UIScreen.main.bounds)
+      } else {
+        presentingWindow = UIWindow(frame: activeWindow?.bounds ?? UIScreen.main.bounds)
       }
 
       presentingWindow?.rootViewController = UIViewController()

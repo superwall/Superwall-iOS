@@ -449,6 +449,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     }
   }
 
+
   private func loadPaywallWebpage() {
     let urlString = paywallResponse.url
     guard let url = URL(string: urlString) else {
@@ -461,7 +462,13 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     )
     Paywall.track(trackedEvent)
 
-    webView.load(URLRequest(url: url))
+    if Paywall.options.useCachedPaywallTemplates {
+      let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
+      webView.load(request)
+    } else {
+      let request = URLRequest(url: url)
+      webView.load(request)
+    }
 
     if paywallResponse.webViewLoadStartTime == nil {
       paywallResponse.webViewLoadStartTime = Date()
@@ -639,7 +646,7 @@ extension SWPaywallViewController {
     shouldCallCompletion: Bool = true,
     completion: (() -> Void)? = nil
   ) {
-    prepareToDismiss()
+    prepareToDismiss(withInfo: dismissalResult.paywallInfo)
 
 		dismiss(animated: presentationIsAnimated) { [weak self] in
       self?.didDismiss(
@@ -650,8 +657,9 @@ extension SWPaywallViewController {
 		}
 	}
 
-  private func prepareToDismiss() {
+  private func prepareToDismiss(withInfo paywallInfo: PaywallInfo?) {
     calledDismiss = true
+    Paywall.shared.latestDismissedPaywallInfo = paywallInfo
     Paywall.delegate?.willDismissPaywall?()
   }
 
