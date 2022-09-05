@@ -27,6 +27,7 @@ extension Paywall {
   static func internallyPresent(
     _ presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
+    products: PaywallProducts? = nil,
     cached: Bool = true,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
@@ -35,7 +36,7 @@ extension Paywall {
     onSkip: PaywallSkipCompletionBlock? = nil
   ) {
     let presentationStyleOverride = presentationStyleOverride == .none ? nil : presentationStyleOverride
-    guard shared.configManager.didFetchConfig else {
+    if TriggerDelayManager.shared.hasDelay {
       let trigger = PreConfigTrigger(
         presentationInfo: presentationInfo,
         presentationStyleOverride: presentationStyleOverride,
@@ -45,7 +46,7 @@ extension Paywall {
         onPresent: onPresent,
         onDismiss: onDismiss
       )
-      Storage.shared.cachePreConfigTrigger(trigger)
+      TriggerDelayManager.shared.cachePreConfigTrigger(trigger)
       return
     }
 
@@ -73,9 +74,9 @@ extension Paywall {
       }
     }
 
-    let triggerOutcome = PaywallResponseLogic.getTriggerResultOutcome(
+    let triggerOutcome = PaywallResponseLogic.getTriggerResultAndConfirmAssignment(
       presentationInfo: presentationInfo,
-      triggers: Storage.shared.triggers
+      triggers: ConfigManager.shared.triggers
     )
     let identifiers: ResponseIdentifiers
 
@@ -113,6 +114,7 @@ extension Paywall {
     PaywallManager.shared.getPaywallViewController(
       from: eventData,
       responseIdentifiers: identifiers,
+      substituteProducts: products,
       cached: cached && !SWDebugManager.shared.isDebuggerLaunched
     ) { result in
       // if there's a paywall being presented, don't do anything
@@ -259,15 +261,14 @@ extension Paywall {
 
   private func createPresentingWindowIfNeeded() {
     if presentingWindow == nil {
+      let activeWindow = UIApplication.shared.activeWindow
+
       if #available(iOS 13.0, *) {
-        let scenes = UIApplication.shared.connectedScenes
-        if let windowScene = scenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+        if let windowScene = activeWindow?.windowScene {
           presentingWindow = UIWindow(windowScene: windowScene)
         }
-      }
-
-      if presentingWindow == nil {
-        presentingWindow = UIWindow(frame: UIScreen.main.bounds)
+      } else {
+        presentingWindow = UIWindow(frame: activeWindow?.bounds ?? UIScreen.main.bounds)
       }
 
       presentingWindow?.rootViewController = UIViewController()

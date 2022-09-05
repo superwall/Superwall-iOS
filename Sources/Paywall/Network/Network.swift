@@ -107,29 +107,33 @@ class Network {
     withRequestId requestId: String,
     completion: @escaping (Result<Config, Error>) -> Void,
     applicationState: UIApplication.State = UIApplication.shared.applicationState,
-    storage: Storage = Storage.shared
+    configManager: ConfigManager = .shared
   ) {
-    if applicationState == .background {
-      let configRequest = ConfigRequest(
-        id: requestId,
-        completion: completion
-      )
-      storage.configRequest = configRequest
-      return
-    }
-
-    urlSession.request(.config(requestId: requestId)) { result in
-      switch result {
-      case .success(let response):
-        completion(.success(response))
-      case .failure(let error):
-        Logger.debug(
-          logLevel: .error,
-          scope: .network,
-          message: "Request Failed: /config",
-          error: error
+    onMain { [weak self] in
+      if applicationState == .background {
+        let configRequest = ConfigRequest(
+          id: requestId,
+          completion: completion
         )
-        completion(.failure(error))
+        configManager.configRequest = configRequest
+        return
+      }
+
+      self?.urlSession.request(.config(requestId: requestId)) { result in
+        onMain {
+          switch result {
+          case .success(let response):
+            completion(.success(response))
+          case .failure(let error):
+            Logger.debug(
+              logLevel: .error,
+              scope: .network,
+              message: "Request Failed: /static_config",
+              error: error
+            )
+            completion(.failure(error))
+          }
+        }
       }
     }
   }
@@ -139,12 +143,30 @@ class Network {
       switch result {
       case .success:
         break
+        // let assignments = response.assignments
+        // TODO: Should we save these?
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
           scope: .network,
           message: "Request Failed: /confirm_assignments",
           info: ["assignments": confirmableAssignments],
+          error: error
+        )
+      }
+    }
+  }
+
+  func getAssignments(completion: @escaping (Result<[Assignment], Error>) -> Void) {
+    urlSession.request(.assignments) { result in
+      switch result {
+      case .success(let response):
+        completion(.success(response.assignments))
+      case .failure(let error):
+        Logger.debug(
+          logLevel: .error,
+          scope: .network,
+          message: "Request Failed: /assignments",
           error: error
         )
       }

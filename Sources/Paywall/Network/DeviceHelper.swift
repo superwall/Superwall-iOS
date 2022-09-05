@@ -9,36 +9,36 @@ import Foundation
 import SystemConfiguration
 import CoreTelephony
 
-final class DeviceHelper {
+class DeviceHelper {
   static let shared = DeviceHelper()
   let reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, Api.hostDomain)
   var appVersion: String {
     Bundle.main.releaseVersionNumber ?? ""
   }
 
-  var osVersion: String {
+  lazy var osVersion: String = {
     let systemVersion = ProcessInfo.processInfo.operatingSystemVersion
     return String(
       format: "%ld.%ld.%ld",
       arguments: [systemVersion.majorVersion, systemVersion.minorVersion, systemVersion.patchVersion]
     )
-  }
+  }()
 
-	var isMac: Bool {
+	lazy var isMac: Bool = {
 		var output = false
 		if #available(iOS 14.0, *) {
 			output = ProcessInfo.processInfo.isiOSAppOnMac
 		}
 		return output
-	}
+	}()
 
-  var model: String {
+  lazy var model: String = {
     UIDevice.modelName
-  }
+  }()
 
-  var vendorId: String {
+  lazy var vendorId: String = {
     UIDevice.current.identifierForVendor?.uuidString ?? ""
-  }
+  }()
 
   var locale: String {
     LocalizationManager.shared.selectedLocale ?? Locale.autoupdatingCurrent.identifier
@@ -104,11 +104,11 @@ final class DeviceHelper {
     return ProcessInfo.processInfo.isLowPowerModeEnabled ? "true" : "false"
 	}
 
-	var bundleId: String {
+	lazy var bundleId: String = {
 		return Bundle.main.bundleIdentifier ?? ""
-	}
+	}()
 
-  var appInstallDate: Date? = {
+  lazy var appInstallDate: Date? = {
     guard let urlToDocumentsFolder = FileManager.default.urls(
       for: .documentDirectory,
       in: .userDomainMask
@@ -125,9 +125,9 @@ final class DeviceHelper {
     return installDate
   }()
 
-  var appInstalledAtString: String {
+  lazy var appInstalledAtString: String = {
     return appInstallDate?.isoString ?? ""
-  }
+  }()
 
   var daysSinceInstall: Int {
     let fromDate = appInstallDate ?? Date()

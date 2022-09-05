@@ -39,17 +39,18 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   private func createConfig(forEventName eventName: String) -> Config {
     // Given
-    let experiment = Experiment(
+    let rawExperiment = RawExperiment(
       id: "1",
       groupId: "2",
-      variant: .init(
-        id: "3",
+      variants: [.init(
         type: .holdout,
+        id: "3",
+        percentage: 100,
         paywallId: nil
-      )
+      )]
     )
     let rule: TriggerRule = .stub()
-      .setting(\.experiment, to: experiment)
+      .setting(\.experiment, to: rawExperiment)
     let trigger = Trigger(
       eventName: eventName,
       rules: [rule]
@@ -64,10 +65,6 @@ final class TriggerSessionManagerTests: XCTestCase {
   func testActivatePendingSession_byIdentifier() {
     // Given
     let eventName = "MyTrigger"
-    let triggers = createTriggers(
-      withName: eventName,
-      variantType: .treatment
-    )
     let config = createConfig(forEventName: eventName)
     sessionManager.createSessions(from: config)
     
@@ -83,10 +80,6 @@ final class TriggerSessionManagerTests: XCTestCase {
   func testActivatePendingSession_triggerNotFound() {
     // Given
     let eventName = "MyTrigger"
-    let triggers = createTriggers(
-      withName: eventName,
-      variantType: .treatment
-    )
 
     let config = createConfig(forEventName: eventName)
     sessionManager.createSessions(from: config)
@@ -116,7 +109,12 @@ final class TriggerSessionManagerTests: XCTestCase {
       withName: eventName,
       variantType: .treatment
     )
-    let experiment = triggers[eventName]!.rules.first!.experiment
+    let rawExperiment = triggers[eventName]!.rules.first!.experiment
+    let experiment = Experiment(
+      id: rawExperiment.id,
+      groupId: rawExperiment.groupId,
+      variant: rawExperiment.variants.first!.toVariant()
+    )
 
     // When
     sessionManager.activateSession(
@@ -139,7 +137,12 @@ final class TriggerSessionManagerTests: XCTestCase {
       withName: eventName,
       variantType: .holdout
     )
-    let experiment = triggers[eventName]!.rules.first!.experiment
+    let rawExperiment = triggers[eventName]!.rules.first!.experiment
+    let experiment = Experiment(
+      id: rawExperiment.id,
+      groupId: rawExperiment.groupId,
+      variant: rawExperiment.variants.first!.toVariant()
+    )
     let eventData: EventData = .stub()
       .setting(\.name, to: eventName)
 
@@ -162,11 +165,6 @@ final class TriggerSessionManagerTests: XCTestCase {
     let eventData: EventData = .stub()
       .setting(\.name, to: eventName)
 
-    let trigger = Trigger(
-      eventName: eventName,
-      rules: []
-    )
-
     // When
     sessionManager.activateSession(
       for: .track(eventData),
@@ -182,17 +180,18 @@ final class TriggerSessionManagerTests: XCTestCase {
     withName eventName: String,
     variantType: Experiment.Variant.VariantType
   ) -> [String: Trigger] {
-    let experiment = Experiment(
+    let rawExperiment = RawExperiment(
       id: "1",
       groupId: "2",
-      variant: .init(
-        id: "3",
+      variants: [.init(
         type: variantType,
+        id: "3",
+        percentage: 100,
         paywallId: variantType == .treatment ? "123" : nil
-      )
+      )]
     )
     let rule: TriggerRule = .stub()
-      .setting(\.experiment, to: experiment)
+      .setting(\.experiment, to: rawExperiment)
     let trigger = Trigger(
       eventName: eventName,
       rules: [rule]
@@ -230,7 +229,12 @@ final class TriggerSessionManagerTests: XCTestCase {
       withName: eventName,
       variantType: .treatment
     )
-    let experiment = triggers[eventName]!.rules.first!.experiment
+    let rawExperiment = triggers[eventName]!.rules.first!.experiment
+    let experiment = Experiment(
+      id: rawExperiment.id,
+      groupId: rawExperiment.groupId,
+      variant: rawExperiment.variants.first!.toVariant()
+    )
     sessionManager.activateSession(
       for: .track(eventData),
       triggerResult: .paywall(experiment: experiment)
@@ -300,7 +304,10 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertNotNil(queue.triggerSessions.first!.paywall?.action.closeAt)
   }
 
-  private func activateSession(withPaywallId paywallId: String = "123") {
+  private func activateSession(
+    withPaywallId paywallId: String = "123",
+    products: [SWProduct] = [SWProduct(product: MockSkProduct())]
+  ) {
     let eventName = "MyTrigger"
     let config = createConfig(forEventName: eventName)
     sessionManager.createSessions(from: config)
@@ -314,11 +321,16 @@ final class TriggerSessionManagerTests: XCTestCase {
     let experiment = triggers[eventName]!.rules.first!.experiment
     let paywallResponse: PaywallResponse = .stub()
       .setting(\.id, to: paywallId)
+      .setting(\.swProducts, to: products)
     sessionManager.activateSession(
       for: .track(eventData),
       paywallResponse: paywallResponse,
-      triggerResult: .paywall(experiment: experiment)
-    )
+      triggerResult: .paywall(experiment: Experiment(
+         id: experiment.id,
+        groupId: experiment.groupId,
+        variant: experiment.variants.first!.toVariant()
+      )
+    ))
   }
 
   // MARK: - Webview Load
@@ -497,27 +509,6 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertNotNil(queue.triggerSessions.last!.products.loadingInfo?.failAt)
   }
 
-  func testStoreAllProducts() {
-    // Given
-    let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
-
-    XCTAssertTrue(queue.triggerSessions.last!.products.allProducts.isEmpty)
-    queue.triggerSessions.removeAll()
-
-    let products = [SWProduct(product: MockSkProduct())]
-
-    // When
-    sessionManager.storeAllProducts(products)
-
-    // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertEqual(
-      queue.triggerSessions.last!.products.allProducts.first!.productIdentifier,
-      products.first?.productIdentifier
-    )
-  }
-
   // MARK: - Transactions
 
   func testBeginTransaction_firstTime() {
@@ -539,22 +530,21 @@ final class TriggerSessionManagerTests: XCTestCase {
   private func beginTransactionOf(primaryProduct product: MockSkProduct) {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
-
     let products = [
       SWProduct(product: product),
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]
+    activateSession(
+      withPaywallId: paywallId,
+      products: products
+    )
 
     XCTAssertNil(queue.triggerSessions.last!.transaction)
     queue.triggerSessions.removeAll()
 
     // When
-    sessionManager.trackBeginTransaction(
-      of: product,
-      allProducts: products
-    )
+    sessionManager.trackBeginTransaction(of: product)
   }
 
   func testBeginTransaction_secondTime() {
@@ -564,17 +554,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertNotNil(queue.triggerSessions.last!.transaction)
     queue.triggerSessions.removeAll()
 
-    let products = [
-      SWProduct(product: primaryProduct),
-      SWProduct(product: MockSkProduct()),
-      SWProduct(product: MockSkProduct())
-    ]
-
     // When
-    sessionManager.trackBeginTransaction(
-      of: primaryProduct,
-      allProducts: products
-    )
+    sessionManager.trackBeginTransaction(of: primaryProduct)
 
     // Then
     let expectedTransactionCount = TriggerSession.Transaction.Count(start: 2)
@@ -632,14 +613,16 @@ final class TriggerSessionManagerTests: XCTestCase {
   func testTransactionRestoration_noPreviousTransactionActions() {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
-
     let primaryProduct = MockSkProduct(productIdentifier: "primary")
     let products = [
       SWProduct(product: primaryProduct),
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]
+    activateSession(
+      withPaywallId: paywallId,
+      products: products
+    )
 
     XCTAssertNil(queue.triggerSessions.last!.transaction)
     queue.triggerSessions.removeAll()
@@ -648,8 +631,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     sessionManager.trackTransactionRestoration(
       withId: "abc",
       product: primaryProduct,
-      isFreeTrialAvailable: false,
-      allProducts: products
+      isFreeTrialAvailable: false
     )
 
     // Then
@@ -677,18 +659,12 @@ final class TriggerSessionManagerTests: XCTestCase {
 
     queue.triggerSessions.removeAll()
 
-    let products = [
-      SWProduct(product: primaryProduct),
-      SWProduct(product: MockSkProduct()),
-      SWProduct(product: MockSkProduct())
-    ]
 
     // When
     sessionManager.trackTransactionRestoration(
       withId: "abc",
       product: primaryProduct,
-      isFreeTrialAvailable: false,
-      allProducts: products
+      isFreeTrialAvailable: false
     )
 
     // Then

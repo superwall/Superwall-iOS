@@ -9,84 +9,53 @@ import Foundation
 
 struct Config: Decodable {
   var triggers: Set<Trigger>
-  var paywalls: Set<PaywallConfig>
+  var paywallResponses: [PaywallResponse]
   var logLevel: Int
   var postback: PostbackRequest
-  var localization: LocalizationConfig
+  var locales: Set<String>
   var appSessionTimeout: Milliseconds
+  var featureFlags: FeatureFlags
 
   enum CodingKeys: String, CodingKey {
-    case triggers
-    case paywalls
+    case triggers = "triggerOptions"
+    case paywallResponses
     case logLevel
     case postback
     case localization
     case appSessionTimeout = "appSessionTimeoutMs"
+    case featureFlags = "toggles"
   }
 
-  /// Preloads paywalls, products, trigger paywalls, and trigger responses. It then sends the products back to the server.
-  ///
-  /// A developer can disable preloading of paywalls by setting ``Paywall/Paywall/shouldPreloadPaywalls``
-  func cache() {
-    if Paywall.options.shouldPreloadPaywalls {
-      preloadPaywallsAndProducts()
-      preloadTriggerPaywalls()
-      preloadDefaultPaywall()
-    }
-    executePostback()
+  init(from decoder: Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+
+    triggers = try values.decode(Set<Trigger>.self, forKey: .triggers)
+    paywallResponses = try values.decode([PaywallResponse].self, forKey: .paywallResponses)
+    logLevel = try values.decode(Int.self, forKey: .logLevel)
+    postback = try values.decode(PostbackRequest.self, forKey: .postback)
+    appSessionTimeout = try values.decode(Milliseconds.self, forKey: .appSessionTimeout)
+    featureFlags = try FeatureFlags(from: decoder)
+
+    let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
+    locales = Set(localization.locales.map { $0.locale })
   }
 
-  /// Preloads paywalls and their products.
-  private func preloadPaywallsAndProducts() {
-    for paywall in paywalls {
-      // cache paywall's products
-      let productIds = paywall.products.map { $0.identifier }
-      StoreKitManager.shared.getProducts(withIds: productIds)
-
-      // cache the view controller
-      PaywallManager.shared.getPaywallViewController(
-        responseIdentifiers: .init(paywallId: paywall.identifier),
-        cached: true
-      )
-    }
-  }
-
-  /// Pre-loads all the paywalls referenced by triggers.
-  private func preloadTriggerPaywalls() {
-    let triggerPaywallIdentifiers = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
-
-    for identifier in triggerPaywallIdentifiers {
-      PaywallManager.shared.getPaywallViewController(
-        responseIdentifiers: .init(paywallId: identifier),
-        cached: true
-      )
-    }
-  }
-
-  /// Preloads the default paywall for the user. This is the paywall shown when calling paywall.present().
-  private func preloadDefaultPaywall() {
-    PaywallManager.shared.getPaywallViewController(
-      responseIdentifiers: .none,
-      cached: true
-    )
-  }
-
-  /// This sends product data back to the dashboard
-  private func executePostback() {
-    // TODO: Does this need to be on the main thread?
-    DispatchQueue.main.asyncAfter(deadline: .now() + postback.postbackDelay) {
-      let productIds = postback.productsToPostBack.map { $0.identifier }
-      StoreKitManager.shared.getProducts(withIds: productIds) { result in
-        switch result {
-        case .success(let productsById):
-          let products = productsById.values.map(PostbackProduct.init)
-          let postback = Postback(products: products)
-          Network.shared.sendPostback(postback)
-        case .failure:
-          break
-        }
-      }
-    }
+  init(
+    triggers: Set<Trigger>,
+    paywallResponses: [PaywallResponse],
+    logLevel: Int,
+    postback: PostbackRequest,
+    locales: Set<String>,
+    appSessionTimeout: Milliseconds,
+    featureFlags: FeatureFlags
+  ) {
+    self.triggers = triggers
+    self.paywallResponses = paywallResponses
+    self.logLevel = logLevel
+    self.postback = postback
+    self.locales = locales
+    self.appSessionTimeout = appSessionTimeout
+    self.featureFlags = featureFlags
   }
 }
 
@@ -95,11 +64,12 @@ extension Config: Stubbable {
   static func stub() -> Config {
     return Config(
       triggers: [.stub()],
-      paywalls: [.stub()],
+      paywallResponses: [.stub()],
       logLevel: 0,
       postback: .stub(),
-      localization: .stub(),
-      appSessionTimeout: 3600000
+      locales: [],
+      appSessionTimeout: 3600000,
+      featureFlags: .stub()
     )
   }
 }

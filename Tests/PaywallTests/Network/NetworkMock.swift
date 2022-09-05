@@ -11,7 +11,9 @@ import UIKit
 final class NetworkMock: Network {
   var sentSessionEvents: SessionEventsRequest?
   var getConfigCalled = false
-  var assigmentsConfirmed = false
+  var assignmentsConfirmed = false
+  var assignments: [Assignment] = []
+  var configReturnValue: Result<Config, Error> = .success(.stub())
 
   override func sendSessionEvents(_ session: SessionEventsRequest) {
     sentSessionEvents = session
@@ -21,12 +23,17 @@ final class NetworkMock: Network {
     withRequestId requestId: String,
     completion: @escaping (Result<Config, Error>) -> Void,
     applicationState: UIApplication.State = UIApplication.shared.applicationState,
-    storage: Storage = Storage.shared
+    configManager: ConfigManager = .shared
   ) {
     getConfigCalled = true
+    completion(configReturnValue)
   }
 
   override func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) {
-    assigmentsConfirmed = true
+    assignmentsConfirmed = true
+  }
+
+  override func getAssignments(completion: @escaping (Result<[Assignment], Error>) -> Void) {
+    completion(.success(assignments))
   }
 }

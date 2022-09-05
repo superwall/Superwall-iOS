@@ -5,12 +5,57 @@
 //  Created by Yusuf Tör on 28/04/2022.
 //
 // swiftlint:disable all
-/*
+
 import XCTest
 @testable import Paywall
 
+@available(iOS 14, *)
 class StorageTests: XCTestCase {
-  let queue = DispatchQueue.main
+  /*// TODO: SHOULD CONFIGANDASSIGNMENTS FIRE BEFORE ASSIGNMENTS GETS A CHANCE? CHECK THE RETURN HERE, MAY HAVE TO DELAY THE NOTIFY UNTIL ASSIGNMENTS RETURNS.
+  func test_identify_staticConfigUpgrade_configFinishesBeforeAssignment() {
+    let network = NetworkMock()
+    let cache = Cache()
+    cache.delete(SdkVersion.self)
+
+    network.configReturnValue = .success(.stub())
+    let storage = StorageMock(cache: cache)
+
+    let requestId = "abc"
+    let configManager = ConfigManager(
+      storage: storage,
+      network: network
+    )
+    let triggerDelayManager = TriggerDelayManagerMock()
+    XCTAssertEqual(triggerDelayManager.count, 0)
+
+    // When
+    configManager.fetchConfiguration(
+      triggerDelayManager: triggerDelayManager,
+      requestId: requestId
+    )
+
+    let configAndAssignmentExpectation = expectation(description: "config and assignment callback")
+    triggerDelayManager.listenForConfigAndAssignments {
+      configAndAssignmentExpectation.fulfill()
+    }
+    waitForExpectations(timeout: 1)
+
+
+    let deviceHelper = DeviceHelperMock()
+    deviceHelper.internalMinutesSinceInstall = 61
+    let staticExpectation = expectation(description: "Static config upgrade")
+    storage.checkForStaticConfigUpgrade(
+      deviceHelper: deviceHelper,
+      triggerDelayManager: triggerDelayManager
+    ) {
+      staticExpectation.fulfill()
+    }
+
+    waitForExpectations(timeout: 1)
+
+  }
+*/
+  /*let queue = DispatchQueue.main
   var storage: Storage!
 
   override func setUp() {
@@ -80,6 +125,6 @@ class StorageTests: XCTestCase {
 
     print("erm??", tracked2)
     XCTAssertFalse(tracked2)
-  }
+  }*/
 }
-*/
+

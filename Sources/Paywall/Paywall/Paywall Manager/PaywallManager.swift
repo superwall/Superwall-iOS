@@ -11,14 +11,9 @@ import UIKit
 final class PaywallManager {
 	static let shared = PaywallManager()
 	var presentedViewController: SWPaywallViewController? {
-		let vcs = viewControllers.filter {
-			$0.isActive
-		}
-		return vcs.first
+    return SWPaywallViewController.cache.first { $0.isActive }
 	}
-  private var viewControllers: Set<SWPaywallViewController> {
-    return Set<SWPaywallViewController>(cache.viewControllers)
-  }
+
   private var cache = PaywallCache()
 
   private init() {}
@@ -49,12 +44,14 @@ final class PaywallManager {
 	func getPaywallViewController(
     from eventData: EventData? = nil,
     responseIdentifiers: ResponseIdentifiers,
+    substituteProducts: PaywallProducts? = nil,
     cached: Bool,
     completion: ((Result<SWPaywallViewController, NSError>) -> Void)? = nil
   ) {
     PaywallResponseManager.shared.getResponse(
       from: eventData,
-      withIdentifiers: responseIdentifiers
+      withIdentifiers: responseIdentifiers,
+      substituteProducts: substituteProducts
     ) { [weak self] result in
       guard let self = self else {
         return
@@ -64,6 +61,8 @@ final class PaywallManager {
         if cached,
           let identifier = response.identifier,
           let viewController = self.cache.getPaywall(withIdentifier: identifier) {
+          // Set paywall response again incase products have been substituted into paywallResponse.
+          viewController.paywallResponse = response
           completion?(.success(viewController))
           return
         }
@@ -73,7 +72,7 @@ final class PaywallManager {
           delegate: Paywall.shared
         )
 
-        if let window = UIApplication.shared.keyWindow {
+        if let window = UIApplication.shared.activeWindow {
           paywallViewController.view.alpha = 0.01
           window.addSubview(paywallViewController.view)
           paywallViewController.view.transform = CGAffineTransform(
@@ -82,11 +81,6 @@ final class PaywallManager {
           )
           .scaledBy(x: 0.1, y: 0.1)
         }
-
-        self.cache.savePaywall(
-          paywallViewController,
-          withIdentifier: response.identifier
-        )
 
         completion?(.success(paywallViewController))
       case .failure(let error):

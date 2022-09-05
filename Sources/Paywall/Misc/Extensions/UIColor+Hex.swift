@@ -7,7 +7,7 @@
 
 import UIKit
 
-extension UIColor {
+internal extension UIColor {
   convenience init(hexString: String) {
     let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
     var int = UInt64()
@@ -36,7 +36,11 @@ extension UIColor {
     return isDarkColor ? .white : .black
   }
 
-  private var isDarkColor: Bool {
+  var inverseReadableOverlayColor: UIColor {
+    return isDarkColor ? .black : .white
+  }
+
+  var isDarkColor: Bool {
     var red, green, blue, alpha: CGFloat
     (red, green, blue, alpha) = (0, 0, 0, 0)
     self.getRed(&red, green: &green, blue: &blue, alpha: &alpha)

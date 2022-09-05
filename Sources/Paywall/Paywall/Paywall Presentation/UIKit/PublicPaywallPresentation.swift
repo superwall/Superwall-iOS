@@ -58,6 +58,7 @@ public extension Paywall {
   ///   -  event: The name of the event you wish to trigger (equivalent to event name in ``Paywall/Paywall/track(_:_:)-2vkwo``)
   ///   - params: Parameters you wish to pass along to the trigger (equivalent to params in ``Paywall/Paywall/track(_:_:)-2vkwo``). You can refer to these parameters in the rules you define in your campaign.
   ///   - on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
+  ///   - products: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defauls to `nil`.
   ///   - ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
   ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
   ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo`` object containing information about the paywall.
@@ -67,6 +68,8 @@ public extension Paywall {
   @objc static func track(
     event: String,
     params: [String: Any]? = nil,
+    on viewController: UIViewController? = nil,
+    products: PaywallProducts? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
     onSkip: ((Error?) -> Void)? = nil,
@@ -82,6 +85,8 @@ public extension Paywall {
 
     internallyPresent(
       .explicitTrigger(result.data),
+      on: viewController,
+      products: products,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
       presentationStyleOverride: presentationStyleOverride,
       onPresent: onPresent,

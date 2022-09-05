@@ -12,7 +12,7 @@ enum LocalizationLogic {
     forLocales localeIds: [String]
   ) -> [LocalizationOption] {
     var localizations: [LocalizationOption] = []
-    let currentLocale = NSLocale.autoupdatingCurrent
+    let currentLocale = Locale.autoupdatingCurrent
 
     for localeId in localeIds {
       // Get language
@@ -22,12 +22,12 @@ enum LocalizationLogic {
       // swiftlint:disable:previous force_unwrapping
 
       // Get country
-      let locale = NSLocale(localeIdentifier: localeId)
+      let locale = Locale(identifier: localeId)
       let localeIdComponents = localeId.split(separator: "_")
       var country: String?
 
-      if let countryCode = locale.countryCode {
-        country = currentLocale.localizedString(forRegionCode: countryCode)
+      if let regionCode = locale.regionCode {
+        country = currentLocale.localizedString(forRegionCode: regionCode)
       } else if let countryCode = localeIdComponents.last,
         localeIdComponents.count > 1 {
         country = currentLocale.localizedString(forRegionCode: String(countryCode))

@@ -10,7 +10,7 @@ import StoreKit
 
 /// Contains information about a given paywall.
 ///
-/// This is returned in the completion handlers when triggering a paywall with ``Paywall/Paywall/trigger(event:params:on:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` and presenting a paywall with ``Paywall/Paywall/present(onPresent:onDismiss:onSkip:)``.
+/// This is returned in the completion handlers after presenting a paywall with ``Paywall/Paywall/track(event:params:on:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``.
 public final class PaywallInfo: NSObject {
   /// Superwall's internal ID for this paywall.
   let id: String
@@ -75,6 +75,9 @@ public final class PaywallInfo: NSObject {
   /// The time it took to load the paywall products.
   public let productsLoadDuration: TimeInterval?
 
+  /// The paywall.js version installed on the paywall website.
+  public let paywalljsVersion: String?
+
   init(
     id: String,
     identifier: String,
@@ -91,7 +94,8 @@ public final class PaywallInfo: NSObject {
     productsLoadStartTime: Date?,
     productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
-    experiment: Experiment? = nil
+    experiment: Experiment? = nil,
+    paywalljsVersion: String? = nil
   ) {
     self.id = id
     self.identifier = identifier
@@ -103,6 +107,7 @@ public final class PaywallInfo: NSObject {
     self.presentedByEventAt = eventData?.createdAt.isoString
     self.presentedByEventWithId = eventData?.id.lowercased()
     self.experiment = experiment
+    self.paywalljsVersion = paywalljsVersion
 
     if eventData != nil {
       self.presentedBy = "event"
@@ -148,6 +153,7 @@ public final class PaywallInfo: NSObject {
   ) -> [String: Any] {
     var output: [String: Any] = [
       "paywall_id": id,
+      "paywalljs_version": paywalljsVersion as Any,
       "paywall_identifier": identifier,
       "paywall_slug": slug,
       "paywall_name": name,

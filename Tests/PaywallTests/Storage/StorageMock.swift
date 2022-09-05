@@ -13,18 +13,21 @@ import Foundation
 final class StorageMock: Storage {
   var internalCachedTriggerSessions: [TriggerSession]
   var internalCachedTransactions: [TransactionModel]
+  var internalConfirmedAssignments: [Experiment.ID: Experiment.Variant]
   var didClearCachedSessionEvents = false
 
   init(
     internalCachedTriggerSessions: [TriggerSession] = [],
     internalCachedTransactions: [TransactionModel] = [],
-    configRequestId: String = "abc",
-    coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock()
+    coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock(),
+    confirmedAssignments: [Experiment.ID : Experiment.Variant] = [:],
+    cache: Cache = Cache()
   ) {
     self.internalCachedTriggerSessions = internalCachedTriggerSessions
     self.internalCachedTransactions = internalCachedTransactions
-    super.init(coreDataManager: coreDataManager)
-    self.configRequestId = configRequestId
+    self.internalConfirmedAssignments = confirmedAssignments
+
+    super.init(cache: cache, coreDataManager: coreDataManager)
   }
 
   override func getCachedTriggerSessions() -> [TriggerSession] {
@@ -34,9 +37,16 @@ final class StorageMock: Storage {
   override func getCachedTransactions() -> [TransactionModel] {
     return internalCachedTransactions
   }
-  
 
   override func clearCachedSessionEvents() {
     didClearCachedSessionEvents = true
+  }
+
+  override func getConfirmedAssignments() -> [Experiment.ID: Experiment.Variant] {
+    return internalConfirmedAssignments
+  }
+
+  override func saveConfirmedAssignments(_ assignments: [String : Experiment.Variant]) {
+    internalConfirmedAssignments = assignments
   }
 }

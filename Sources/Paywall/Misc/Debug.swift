@@ -35,6 +35,7 @@ public enum LogScope: String {
 	case localizationManager
 	case bounceButton
   case coreData
+  case configManager
 	case debugManager
 	case debugViewController
 	case localizationViewController

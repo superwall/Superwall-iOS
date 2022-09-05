@@ -28,10 +28,14 @@ final class SessionEventsManagerTests: XCTestCase {
 
   func testPostCachedSessionEvents_triggerSessionsOnly() {
     let storage = StorageMock(internalCachedTriggerSessions: [.stub()])
+    let configManager = ConfigManager()
+    configManager.config = .stub()
+
     let network = NetworkMock()
     _ = SessionEventsManager(
       storage: storage,
-      network: network
+      network: network,
+      configManager: configManager
     )
     XCTAssertTrue(network.sentSessionEvents!.transactions.isEmpty)
     XCTAssertFalse(network.sentSessionEvents!.triggerSessions.isEmpty)
@@ -43,10 +47,14 @@ final class SessionEventsManagerTests: XCTestCase {
       internalCachedTriggerSessions: [.stub()],
       internalCachedTransactions: [.stub()]
     )
+    let configManager = ConfigManager()
+    configManager.config = .stub()
+
     let network = NetworkMock()
     _ = SessionEventsManager(
       storage: storage,
-      network: network
+      network: network,
+      configManager: configManager
     )
     XCTAssertFalse(network.sentSessionEvents!.transactions.isEmpty)
     XCTAssertFalse(network.sentSessionEvents!.triggerSessions.isEmpty)
@@ -58,10 +66,14 @@ final class SessionEventsManagerTests: XCTestCase {
       internalCachedTriggerSessions: [],
       internalCachedTransactions: [.stub()]
     )
+    let configManager = ConfigManager()
+    configManager.config = .stub()
+
     let network = NetworkMock()
     _ = SessionEventsManager(
       storage: storage,
-      network: network
+      network: network,
+      configManager: configManager
     )
     XCTAssertFalse(network.sentSessionEvents!.transactions.isEmpty)
     XCTAssertTrue(network.sentSessionEvents!.triggerSessions.isEmpty)

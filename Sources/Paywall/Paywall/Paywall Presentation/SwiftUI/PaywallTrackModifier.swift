@@ -15,6 +15,7 @@ struct PaywallTrackModifier: ViewModifier {
   @State private var isInternallyPresenting = false
   var event: String
   var params: [String: Any]
+  var products: PaywallProducts?
   var presentationStyleOverride: PaywallPresentationStyle?
   var onPresent: ((PaywallInfo) -> Void)?
   var onDismiss: PaywallDismissalCompletionBlock?
@@ -45,6 +46,7 @@ struct PaywallTrackModifier: ViewModifier {
 
       Paywall.internallyPresent(
         .explicitTrigger(result.data),
+        products: products,
         presentationStyleOverride: presentationStyleOverride ?? .none,
         onPresent: onPresent,
         onDismiss: { result in
