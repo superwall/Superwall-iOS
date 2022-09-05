@@ -23,7 +23,7 @@ public final class Paywall: NSObject {
 
   /// A convenience variable to access and change the paywall options that you passed to ``configure(apiKey:userId:delegate:options:)``.
   public static var options: PaywallOptions {
-    return shared.configManager.options
+    return ConfigManager.shared.options
   }
   
   /// The ``PaywallInfo`` object of the most recently presented view controller.
@@ -34,7 +34,6 @@ public final class Paywall: NSObject {
 
   /// The ``PaywallInfo`` object stored from the latest paywall that was dismissed.
   var latestDismissedPaywallInfo: PaywallInfo?
-
 
   /// The current user's id. It shouldn't ever be `nil` since Superwall assigns an anonymous user id and caches it to disk if one isn't provided.
   public static var userId: String? {
