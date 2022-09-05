@@ -11,6 +11,10 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Adds feature flags under the hood so that when we introduce new features we can turn them on for specific organizations and apps.
 - Adds the ability to specify `SKProducts` with a trigger. These override the products defined on the dashboard for the paywall. You do this by creating a `PaywallProducts` object and calling `Paywall.trigger(event: "event", products: products)`.
 
+### Fixes 
+
+- Shimmer view is no longer visible beneath a paywall's `WKWebView` when there is no `body` or `html` background color set 
+
 ---
 
 ## 2.4.1

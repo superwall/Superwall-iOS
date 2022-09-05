@@ -300,6 +300,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 				self?.shimmerView.transform = .identity
         self?.purchaseLoader.toggle(show: true, animated: true)
 			case .loadingResponse:
+        self?.shimmerView.isHidden = false
 				self?.shimmerView.isShimmering = true
 				self?.showRefreshButtonAfterTimeout(true)
         self?.purchaseLoader.toggle(show: false, animated: false)
@@ -323,6 +324,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
             },
             completion: { _ in
               self?.shimmerView.isShimmering = false
+              self?.shimmerView.isHidden = true
             }
           )
         }
