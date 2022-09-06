@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 20/04/2022.
 //
-// swiftlint:disable:all type_body_length file_length nesting
+// swiftlint:disable:all type_body_length nesting
 
 import Foundation
 import StoreKit
@@ -152,7 +152,7 @@ enum SuperwallEvent {
 
     var superwallParameters: [String: Any] {
       let fromEvent = eventData != nil
-      var params: [String: Any] = [
+      let params: [String: Any] = [
         "is_triggered_from_event": fromEvent,
         "event_name": eventData?.name ?? ""
       ]
