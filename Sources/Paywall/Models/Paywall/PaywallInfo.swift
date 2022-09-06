@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
+// swiftlint:disable cyclomatic_complexity
 
 import Foundation
 import StoreKit
