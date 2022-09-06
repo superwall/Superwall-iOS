@@ -88,7 +88,7 @@ final class SWPaywallLoadingView: UIView {
   private var activityIndicator: UIActivityIndicatorView = {
     let spinner = UIActivityIndicatorView()
     spinner.translatesAutoresizingMaskIntoConstraints = false
-    spinner.style = .whiteLarge
+    spinner.style = .large
     spinner.hidesWhenStopped = true
     return spinner
   }()

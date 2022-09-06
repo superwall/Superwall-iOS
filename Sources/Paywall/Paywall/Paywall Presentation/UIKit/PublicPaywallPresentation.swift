@@ -68,7 +68,6 @@ public extension Paywall {
   @objc static func track(
     event: String,
     params: [String: Any]? = nil,
-    on viewController: UIViewController? = nil,
     products: PaywallProducts? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
@@ -85,7 +84,6 @@ public extension Paywall {
 
     internallyPresent(
       .explicitTrigger(result.data),
-      on: viewController,
       products: products,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
       presentationStyleOverride: presentationStyleOverride,
@@ -116,7 +114,6 @@ public extension Paywall {
   /// - Parameters:
   ///   -  event: The name of the event you wish to track
   ///   - params: Custom parameters you'd like to pass with your event. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
-  ///   - on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
   ///   - products: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defauls to `nil`.
   ///   - ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
   ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
@@ -126,7 +123,6 @@ public extension Paywall {
   static func track(
     event: String,
     params: [String: Any]? = nil,
-    on viewController: UIViewController? = nil,
     products: PaywallProducts? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
@@ -143,7 +139,6 @@ public extension Paywall {
 
     internallyPresent(
       .explicitTrigger(result.data),
-      on: viewController,
       products: products,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
       presentationStyleOverride: presentationStyleOverride,

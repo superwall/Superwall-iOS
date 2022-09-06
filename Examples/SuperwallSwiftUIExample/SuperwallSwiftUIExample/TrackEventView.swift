@@ -10,7 +10,7 @@ import Paywall
 
 struct TrackEventView: View {
   @StateObject private var store = StoreKitService.shared
-  @State private var showPaywall = false
+  private let model = TrackEventModel()
 
   init() {
     UINavigationBar.appearance().titleTextAttributes = [
@@ -22,7 +22,7 @@ struct TrackEventView: View {
   var body: some View {
     VStack(spacing: 48) {
       InfoView(
-        text: "The button below tracks an event \"MyEvent\".\n\nWhen this event is tracked, a set of rules are evaluated to determine whether to show a paywall. This logic is remotely configured inside a campaign on the Superwall dashboard.\n\nFor simplicity, we have configured this event to always show a paywall."
+        text: "The button below tracks an event \"MyEvent\".\n\nThis event has been added as a trigger in a campaign on the Superwall dashboard.\n\nWhen this event is tracked, the trigger is fired, which evaluates the rules set in the campaign.\n\nThe rules match and cause a paywall to show."
       )
 
       Divider()
@@ -34,42 +34,11 @@ struct TrackEventView: View {
       Spacer()
 
       BrandedButton(title: "Track event") {
-        showPaywall.toggle()
-        Paywall.track(
-          event: "event",
-          params: [:]
-        )
+        model.trackEvent()
       }
       .padding()
     }
     .frame(maxHeight: .infinity)
-    .track(
-      event: "MyEvent",
-      shouldTrack: $showPaywall,
-      onPresent: { paywallInfo in
-        print("paywall info is", paywallInfo)
-      },
-      onDismiss: { result in
-        switch result.state {
-        case .closed:
-          print("User dismissed the paywall.")
-        case .purchased(productId: let productId):
-          print("Purchased a product with id \(productId), then dismissed.")
-        case .restored:
-          print("Restored purchases, then dismissed.")
-        }
-      },
-      onSkip: { reason in
-        switch reason {
-        case .noRuleMatch:
-          print("The user did not match any rules")
-        case .holdout(let experiment):
-          print("The user is in a holdout group, with experiment id: \(experiment.id), group id: \(experiment.groupId), paywall id: \(experiment.variant.paywallId ?? "")")
-        case .unknownEvent(let error):
-          print("did fail", error)
-        }
-      }
-    )
     .foregroundColor(.white)
     .background(Color.neutral)
     .navigationBarTitleDisplayMode(.inline)
