@@ -175,6 +175,14 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_duration": productsLoadDuration as Any
     ]
 
+    if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession,
+      let databaseId = triggerSession.paywall?.databaseId,
+      databaseId == id {
+      output["trigger_session_id"] = triggerSession.id
+      output["experiment_id"] = triggerSession.trigger.experiment?.id
+      output["variant_id"] = triggerSession.trigger.experiment?.variant.id
+    }
+
     var loadingVars: [String: Any] = [:]
     for key in output.keys {
       if key.contains("_load_"),
