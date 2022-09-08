@@ -414,18 +414,22 @@ final class SWDebugViewController: UIViewController {
 
     Paywall.internallyPresent(
       .fromIdentifier(paywallIdentifier),
-      on: self,
-      onPresent: { [weak self] _ in
-        self?.bottomButton.showLoading = false
+      on: self
+    ) { [weak self] state in
+      guard let self = self else {
+        return
+      }
+      switch state {
+      case .presented:
+        self.bottomButton.showLoading = false
 
         // swiftlint:disable:next force_unwrapping
         let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
-        self?.bottomButton.setImage(
+        self.bottomButton.setImage(
           playButton,
           for: .normal
         )
-      },
-      onSkip: { [weak self] reason in
+      case .skipped(let reason):
         var errorMessage: String?
 
         switch reason {
@@ -433,7 +437,9 @@ final class SWDebugViewController: UIViewController {
           errorMessage = "The user was assigned to a holdout"
         case .noRuleMatch:
           errorMessage = "The user didn't match a rule"
-        case .unknownEvent(let error):
+        case .triggerNotFound:
+          errorMessage = "Couldn't find trigger"
+        case .error(let error):
           errorMessage = error.localizedDescription
           Logger.debug(
             logLevel: .error,
@@ -442,14 +448,16 @@ final class SWDebugViewController: UIViewController {
             info: nil
           )
         }
-        self?.presentAlert(title: "Error Occurred", message: errorMessage, options: [])
-        self?.bottomButton.showLoading = false
+        self.presentAlert(title: "Paywall Skipped", message: errorMessage, options: [])
+        self.bottomButton.showLoading = false
         // swiftlint:disable:next force_unwrapping
         let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
-        self?.bottomButton.setImage(playButton, for: .normal)
-        self?.activityIndicator.stopAnimating()
+        self.bottomButton.setImage(playButton, for: .normal)
+        self.activityIndicator.stopAnimating()
+      case .dismissed:
+        break
       }
-    )
+    }
   }
 
   var oldTintColor: UIColor? = UIColor.systemBlue

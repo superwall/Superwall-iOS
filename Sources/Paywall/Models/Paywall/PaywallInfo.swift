@@ -11,7 +11,7 @@ import StoreKit
 
 /// Contains information about a given paywall.
 ///
-/// This is returned in the completion handlers after presenting a paywall with ``Paywall/Paywall/track(event:params:on:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``.
+/// This is returned in the `paywallState` after presenting a paywall with ``Paywall/Paywall/track(event:params:paywallOverrides:paywallState:)``.
 public final class PaywallInfo: NSObject {
   /// Superwall's internal ID for this paywall.
   let id: String

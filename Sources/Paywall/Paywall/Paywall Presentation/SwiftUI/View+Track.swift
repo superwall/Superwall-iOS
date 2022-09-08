@@ -85,39 +85,16 @@ extension View {
   ///
   ///     Defaults to `nil`.
   ///   - onSkip: A completion block that gets called when the paywall's presentation fails. Defaults to `nil`. Accepts an `NSError` with more details. It is recommended to check the error code to handle the onFail callback. If the error code is `4000`, it means the user didn't match any rules. If the error code is `4001` it means the user is in a holdout group. Otherwise, a `404` error code means an error occurred.
-  public func track(
-    event: String,
-    withParams params: [String: Any]? = nil,
-    shouldTrack: Binding<Bool>,
-    products: PaywallProducts? = nil,
-    presentationStyleOverride: PaywallPresentationStyle? = nil,
-    onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((PaywallDismissedResult) -> Void)? = nil,
-    onSkip: PaywallSkippedCompletionBlock? = nil
-  ) -> some View {
-    self.modifier(
-      PaywallTrackModifier(
-        shouldTrack: shouldTrack,
-        event: event,
-        params: params ?? [:],
-        products: products,
-        presentationStyleOverride: presentationStyleOverride,
-        onPresent: onPresent,
-        onDismiss: onDismiss,
-        onSkip: onSkip
-      )
-    )
-  }
-
-  @available(*, unavailable, renamed: "track(event:withParams:shouldTrack:presentationStyleOverride:onPresent:onDismiss:onSkip:)")
+  @available(*, unavailable, message: "Please use the UIKit function Superwall.track(...) instead.")
   public func triggerPaywall(
     forEvent event: String,
     withParams params: [String: Any]? = nil,
     shouldPresent: Binding<Bool>,
+    products: PaywallProducts? = nil,
     presentationStyleOverride: PaywallPresentationStyle? = nil,
-    onPresent: ((PaywallInfo) -> Void)? = nil,
+    onPresent: ((PaywallInfo?) -> Void)? = nil,
     onDismiss: ((PaywallDismissedResult) -> Void)? = nil,
-    onSkip: PaywallSkippedCompletionBlock? = nil
+    onFail: ((NSError) -> Void)? = nil
   ) -> some View {
     return EmptyView()
   }

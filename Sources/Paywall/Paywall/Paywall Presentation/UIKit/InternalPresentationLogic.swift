@@ -11,7 +11,7 @@ enum InternalPresentationLogic {
   static func shouldNotDisplayPaywall(
     isUserSubscribed: Bool,
     isDebuggerLaunched: Bool,
-    shouldIgnoreSubscriptionStatus: Bool,
+    shouldIgnoreSubscriptionStatus: Bool?,
     presentationCondition: PresentationCondition? = nil
   ) -> Bool {
     if isDebuggerLaunched {
@@ -22,7 +22,7 @@ enum InternalPresentationLogic {
       guard isUserSubscribed else {
         return false
       }
-      if shouldIgnoreSubscriptionStatus {
+      if shouldIgnoreSubscriptionStatus ?? false {
         return false
       }
       return true

@@ -4,7 +4,6 @@
 //
 //  Created by Yusuf Tör on 03/03/2022.
 //
-// swiftlint:disable type_body_length
 
 import Foundation
 import StoreKit
@@ -45,8 +44,9 @@ enum PaywallResponseLogic {
     enum Info {
       case paywall(ResponseIdentifiers)
       case holdout(Experiment)
-      case unknownEvent(NSError)
+      case triggerNotFound
       case noRuleMatch
+      case error(NSError)
     }
     let info: Info
     var result: TriggerResult?
@@ -112,22 +112,14 @@ enum PaywallResponseLogic {
         info: .noRuleMatch,
         result: triggerResult
       )
-    case .unknownEvent:
-      // create the error
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Trigger Disabled",
-          value: "There isn't a paywall configured to show in this context",
-          comment: ""
-        )
-      ]
-      let error = NSError(
-        domain: "SWTriggerDisabled",
-        code: 404,
-        userInfo: userInfo
-      )
+    case .triggerNotFound:
       return TriggerResultOutcome(
-        info: .unknownEvent(error),
+        info: .triggerNotFound,
+        result: triggerResult
+      )
+    case .error(let error):
+      return TriggerResultOutcome(
+        info: .error(error),
         result: triggerResult
       )
     }

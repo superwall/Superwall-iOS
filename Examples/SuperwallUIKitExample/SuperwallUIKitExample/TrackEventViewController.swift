@@ -7,11 +7,11 @@
 
 import UIKit
 import Paywall
-import Combine
+// import Combine
 
 final class TrackEventViewController: UIViewController {
   @IBOutlet private var subscriptionLabel: UILabel!
-  private var cancellables: Set<AnyCancellable> = []
+  // private var cancellable: AnyCancellable?
 
   static func fromStoryboard() -> TrackEventViewController {
     let storyboard = UIStoryboard(
@@ -45,26 +45,67 @@ final class TrackEventViewController: UIViewController {
   }
 
   @IBAction private func trackEvent() {
-    Paywall.track(event: "MyEvent") { skipReason in
-      switch skipReason {
-      case .holdout(let experiment):
-        print("The user is in a holdout group, with id \(experiment.id) and group id \(experiment.groupId)")
-      case .noRuleMatch:
-        print("The user did not match any rules")
-      case .unknownEvent(let error):
-        print("did fail", error)
+    Paywall.track(
+      event: "MyEvent"
+    ) { paywallState in
+      switch paywallState {
+      case .presented(let paywallInfo):
+        print("paywall info is", paywallInfo)
+      case .dismissed(let result):
+        switch result.state {
+        case .purchased(let productId):
+          print("The purchased product ID is", productId)
+        case .closed:
+          print("The paywall was closed.")
+        case .restored:
+          print("The product was restored.")
+        }
       }
-    } onPresent: { paywallInfo in
-      print("paywall info is", paywallInfo)
-    } onDismiss: { result in
-      switch result.state {
-      case .purchased(let productId):
-        print("The purchased product ID is", productId)
-      case .closed:
-        print("The paywall was closed.")
-      case .restored:
-        print("The product was restored.")
-      }
+      case .skipped(let reason):
+        switch reason {
+        case .holdout(let experiment):
+          print("The user is in a holdout group, with id \(experiment.id) and group id \(experiment.groupId)")
+        case .noRuleMatch:
+          print("The user did not match any rules")
+        case .triggerNotFound:
+          print("The trigger wasn't found on the dashboard.")
+        case .error(let error):
+          print("Failed to present paywall. Consider a native paywall fallback", error)
+        }
     }
   }
+
+  // The below function gives an example of how to track an event using Combine publishers:
+
+  /*
+   func trackEventUsingCombine() {
+   cancellable = Paywall
+     .track(event: "MyEvent")
+     .sink { paywallState in
+       switch paywallState {
+       case .presented(let paywallInfo):
+         print("paywall info is", paywallInfo)
+       case .dismissed(let result):
+         switch result.state {
+         case .closed:
+           print("User dismissed the paywall.")
+         case .purchased(productId: let productId):
+           print("Purchased a product with id \(productId), then dismissed.")
+         case .restored:
+           print("Restored purchases, then dismissed.")
+         }
+       case .skipped(let reason):
+         switch reason {
+         case .noRuleMatch:
+           print("The user did not match any rules")
+         case .holdout(let experiment):
+           print("The user is in a holdout group, with experiment id: \(experiment.id), group id: \(experiment.groupId), paywall id: \(experiment.variant.paywallId ?? "")")
+         case .triggerNotFound:
+           print("The trigger wasn't found on the dashboard.")
+         case .error(let error):
+           print("Failed to present paywall. Consider a native paywall fallback", error)
+         }
+       }
+     }
+   */
 }

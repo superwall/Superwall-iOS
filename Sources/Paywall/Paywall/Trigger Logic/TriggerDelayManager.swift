@@ -55,11 +55,8 @@ class TriggerDelayManager {
       case .explicit:
         Paywall.internallyPresent(
           trigger.presentationInfo,
-          on: trigger.viewController,
-          ignoreSubscriptionStatus: trigger.ignoreSubscriptionStatus,
-          onPresent: trigger.onPresent,
-          onDismiss: trigger.onDismiss,
-          onSkip: trigger.onSkip
+          paywallOverrides: trigger.paywallOverrides,
+          paywallState: trigger.paywallState
         )
       }
     }

@@ -94,10 +94,12 @@ public struct Experiment: Equatable, Hashable, Codable {
 ///
 /// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
 enum TriggerResult {
-  /// An unknown event was triggered.
-  case unknownEvent
+  /// A trigger was not found for this event.
+  ///
+  /// Please make sure the trigger is enabled on the dashboard and you have the correct spelling of the event.
+  case triggerNotFound
 
-  /// No matching rule was found for this trigger, so nothing happens.
+  /// No matching rule was found for this trigger so no paywall will be shown.
   case noRuleMatch
 
   /// A matching rule was found and this user was shown a paywall
@@ -111,4 +113,11 @@ enum TriggerResult {
   /// - Parameters:
   ///   - experiment: The experiment  associated with the trigger
   case holdout(experiment: Experiment)
+
+  /// An error occurred.
+  ///
+  /// If the error code is `101`, it means that no view controller could be found to present on. Otherwise a network failure may have occurred.
+  ///
+  /// In these instances, consider fallilng back to a native paywall.
+  case error(NSError)
 }

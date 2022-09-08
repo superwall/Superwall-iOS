@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 import UIKit
 
 /// A completion block that contains a ``PaywallDismissedResult`` object. This contains info about why the paywall was dismissed.
@@ -28,7 +29,7 @@ public extension Paywall {
     )
 	}
 
-  @available(*, unavailable , renamed: "track")
+  @available(*, unavailable, renamed: "track")
   @objc static func trigger(
     event: String? = nil,
     params: [String: Any]? = nil,
@@ -39,6 +40,7 @@ public extension Paywall {
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
   ) {
+    // TODO: Check this can't be called.
     // Won't be called, just kept to prompt the user to rename.
   }
 
@@ -49,8 +51,6 @@ public extension Paywall {
   /// Before using this method, you'll first need to create a campaign and add a trigger associated with the event name on the [Superwall Dashboard](https://superwall.com/dashboard).
   ///
   /// The paywall shown to the user is determined by the rules defined in the campaign. Paywalls are sticky, in that when a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
-  ///
-  /// If you don't want to use any completion handlers, consider using ``Paywall/Paywall/track(_:_:)-2vkwo`` to implicitly trigger a paywall.
   ///
   /// For more information, see <doc:Triggering>.
   ///
@@ -82,21 +82,27 @@ public extension Paywall {
     )
     let result = track(trackableEvent)
 
-    internallyPresent(
-      .explicitTrigger(result.data),
+    let overrides = PaywallOverrides(
       products: products,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
-      presentationStyleOverride: presentationStyleOverride,
-      onPresent: onPresent,
-      onDismiss: { result in
+      presentationStyleOverride: presentationStyleOverride
+    )
+
+    internallyPresent(
+      .explicitTrigger(result.data),
+      paywallOverrides: overrides
+    ) { state in
+      switch state {
+      case .presented(let paywallInfo):
+        onPresent?(paywallInfo)
+      case .dismissed(let result):
         if let onDismiss = onDismiss {
           onDismissConverter(result, completion: onDismiss)
         }
-      },
-      onSkip: { reason in
-        onSkipConverter(reason: reason)
+      case .skipped(let reason):
+        onSkipConverter(reason: reason, completion: onSkip)
       }
-    )
+    }
   }
 
   /// Shows a paywall to the user when: An event you provide is tied to an active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); and the user matches a rule in the campaign.
@@ -118,17 +124,13 @@ public extension Paywall {
   ///   - ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
   ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a``PaywallSkippedCompletionBlock`` which contains a `reason` enum giving more information about why it was skipped.
-  ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo`` object containing information about the paywall.
+  ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallPresentedCompletionBlock`` which contains a ``PaywallInfo`` object containing information about the paywall.
   ///   - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a ``PaywallDismissedCompletionBlock`` that contains information about why the paywall was dismissed.
   static func track(
     event: String,
     params: [String: Any]? = nil,
-    products: PaywallProducts? = nil,
-    ignoreSubscriptionStatus: Bool = false,
-    presentationStyleOverride: PaywallPresentationStyle = .none,
-    onSkip: PaywallSkippedCompletionBlock? = nil,
-    onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: PaywallDismissedCompletionBlock? = nil
+    overrides: PaywallOverrides? = nil,
+    paywallState: ((PaywallState) -> Void)? = nil
   ) {
     let trackableEvent = UserInitiatedEvent.Track(
       rawName: event,
@@ -139,13 +141,39 @@ public extension Paywall {
 
     internallyPresent(
       .explicitTrigger(result.data),
-      products: products,
-      ignoreSubscriptionStatus: ignoreSubscriptionStatus,
-      presentationStyleOverride: presentationStyleOverride,
-      onPresent: onPresent,
-      onDismiss: onDismiss,
-      onSkip: onSkip
+      paywallOverrides: overrides,
+      paywallState: paywallState
     )
+  }
+
+  static func track(
+    event: String,
+    params: [String: Any]? = nil,
+    overrides: PaywallOverrides? = nil
+  ) -> AnyPublisher<PaywallState, Never> {
+    let trackableEvent = UserInitiatedEvent.Track(
+      rawName: event,
+      canImplicitlyTriggerPaywall: false,
+      customParameters: params ?? [:]
+    )
+    let result = track(trackableEvent)
+    let paywallState = PassthroughSubject<PaywallState, Never>()
+
+    internallyPresent(
+      .explicitTrigger(result.data),
+      paywallOverrides: overrides
+    ) { state in
+      switch state {
+      case .presented:
+        paywallState.send(state)
+      case .dismissed,
+        .skipped:
+        paywallState.send(state)
+        paywallState.send(completion: .finished)
+      }
+    }
+
+    return paywallState.eraseToAnyPublisher()
   }
 
   /// Converts dismissal result from enums with associated values, to old objective-c compatible way
@@ -169,7 +197,7 @@ public extension Paywall {
 
   private static func onSkipConverter(
     reason: PaywallSkippedReason,
-    completion: ((Error?) -> Void)? = nil
+    completion: ((Error?) -> Void)?
   ) {
     switch reason {
     case .holdout(let experiment):
@@ -202,7 +230,21 @@ public extension Paywall {
         userInfo: userInfo
       )
       completion?(error)
-    case .unknownEvent(let error):
+    case .triggerNotFound:
+      let userInfo: [String: Any] = [
+        NSLocalizedDescriptionKey: NSLocalizedString(
+          "Trigger Not Found",
+          value: "The specified trigger could not be found",
+          comment: ""
+        )
+      ]
+      let error = NSError(
+        domain: "com.superwall",
+        code: 404,
+        userInfo: userInfo
+      )
+      completion?(error)
+    case .error(let error):
       completion?(error)
     }
   }

@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
+// swiftlint:disable function_body_length cyclomatic_complexity
 
 import UIKit
 
@@ -15,36 +16,29 @@ public enum PaywallSkippedReason {
   /// No rule was matched for this event.
   case noRuleMatch
 
+  /// A trigger was not found for this event.
+  ///
+  /// Please make sure the trigger is enabled on the dashboard and you have the correct spelling of the event.
+  case triggerNotFound
+
   /// An error occurred.
-  case unknownEvent(Error)
+  case error(Error)
 }
 
-public typealias PaywallSkippedCompletionBlock = (PaywallSkippedReason) -> Void
-public typealias PaywallPresentationCompletionBlock = (PaywallSkippedReason) -> Void
-
 extension Paywall {
-  // swiftlint:disable:next function_body_length cyclomatic_complexity
   static func internallyPresent(
     _ presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
-    products: PaywallProducts? = nil,
     cached: Bool = true,
-    ignoreSubscriptionStatus: Bool = false,
-    presentationStyleOverride: PaywallPresentationStyle = .none,
-    onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: PaywallDismissedCompletionBlock? = nil,
-    onSkip: PaywallSkippedCompletionBlock? = nil
+    paywallOverrides: PaywallOverrides? = nil,
+    paywallState: ((PaywallState) -> Void)? = nil
   ) {
-    let presentationStyleOverride = presentationStyleOverride == .none ? nil : presentationStyleOverride
     if TriggerDelayManager.shared.hasDelay {
       let trigger = PreConfigTrigger(
         presentationInfo: presentationInfo,
-        presentationStyleOverride: presentationStyleOverride,
         viewController: presentingViewController,
-        ignoreSubscriptionStatus: ignoreSubscriptionStatus,
-        onSkip: onSkip,
-        onPresent: onPresent,
-        onDismiss: onDismiss
+        paywallOverrides: paywallOverrides,
+        paywallState: paywallState
       )
       TriggerDelayManager.shared.cachePreConfigTrigger(trigger)
       return
@@ -55,9 +49,7 @@ extension Paywall {
       "on": presentingViewController.debugDescription,
       "fromEvent": eventData.debugDescription as Any,
       "cached": cached,
-      "presentationCompletion": onPresent.debugDescription,
-      "dismissalCompletion": onDismiss.debugDescription,
-      "fallback": onSkip.debugDescription
+      "paywallState": paywallState.debugDescription
     ]
 
     Logger.debug(
@@ -89,7 +81,7 @@ extension Paywall {
         on: presentingViewController,
         triggerResult: triggerOutcome.result
       )
-      onSkip?(.holdout(experiment))
+      paywallState?(.skipped(.holdout(experiment)))
       return
     case .noRuleMatch:
       SessionEventsManager.shared.triggerSession.activateSession(
@@ -97,9 +89,12 @@ extension Paywall {
         on: presentingViewController,
         triggerResult: triggerOutcome.result
       )
-      onSkip?(.noRuleMatch)
+      paywallState?(.skipped(.noRuleMatch))
       return
-    case let .unknownEvent(error):
+    case .triggerNotFound:
+      paywallState?(.skipped(.triggerNotFound))
+      return
+    case let .error(error):
       Logger.debug(
         logLevel: .error,
         scope: .paywallPresentation,
@@ -107,14 +102,14 @@ extension Paywall {
         info: debugInfo,
         error: error
       )
-      onSkip?(.unknownEvent(error))
+      paywallState?(.skipped(.error(error)))
       return
     }
 
     PaywallManager.shared.getPaywallViewController(
       from: eventData,
       responseIdentifiers: identifiers,
-      substituteProducts: products,
+      substituteProducts: paywallOverrides?.products,
       cached: cached && !SWDebugManager.shared.isDebuggerLaunched
     ) { result in
       // if there's a paywall being presented, don't do anything
@@ -133,7 +128,7 @@ extension Paywall {
         if InternalPresentationLogic.shouldNotDisplayPaywall(
           isUserSubscribed: shared.isUserSubscribed,
           isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
-          shouldIgnoreSubscriptionStatus: ignoreSubscriptionStatus,
+          shouldIgnoreSubscriptionStatus: paywallOverrides?.ignoreSubscriptionStatus,
           presentationCondition: paywallViewController.paywallResponse.presentationCondition
         ) {
           return
@@ -160,14 +155,14 @@ extension Paywall {
             error: nil
           )
           if !shared.isPaywallPresented {
-            onSkip?(.unknownEvent(
+            paywallState?(.skipped(.error(
               shared.presentationError(
                 domain: "SWPresentationError",
                 code: 101,
                 title: "No UIViewController to present paywall on",
                 value: "This usually happens when you call this method before a window was made key and visible."
               )
-            ))
+            )))
           }
           return
         }
@@ -175,8 +170,8 @@ extension Paywall {
         paywallViewController.present(
           on: presenter,
           eventData: eventData,
-          presentationStyleOverride: presentationStyleOverride,
-          dismissalBlock: onDismiss
+          presentationStyleOverride: paywallOverrides?.presentationStyle,
+          paywallState: paywallState
         ) { success in
           if success {
             self.presentAgain = {
@@ -187,13 +182,11 @@ extension Paywall {
                 presentationInfo,
                 on: presentingViewController,
                 cached: false,
-                presentationStyleOverride: presentationStyleOverride ?? .none,
-                onPresent: onPresent,
-                onDismiss: onDismiss,
-                onSkip: onSkip
+                paywallOverrides: paywallOverrides,
+                paywallState: paywallState
               )
             }
-            onPresent?(paywallViewController.paywallInfo)
+            paywallState?(.presented(paywallViewController.paywallInfo))
           } else {
             Logger.debug(
               logLevel: .info,
@@ -207,7 +200,7 @@ extension Paywall {
         if InternalPresentationLogic.shouldNotDisplayPaywall(
           isUserSubscribed: shared.isUserSubscribed,
           isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
-          shouldIgnoreSubscriptionStatus: ignoreSubscriptionStatus
+          shouldIgnoreSubscriptionStatus: paywallOverrides?.ignoreSubscriptionStatus
         ) {
           return
         }
@@ -220,7 +213,7 @@ extension Paywall {
           error: error
         )
 
-        onSkip?(.unknownEvent(error))
+        paywallState?(.skipped(.error(error)))
       }
     }
   }

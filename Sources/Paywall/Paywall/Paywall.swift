@@ -25,7 +25,7 @@ public final class Paywall: NSObject {
   public static var options: PaywallOptions {
     return ConfigManager.shared.options
   }
-  
+
   /// The ``PaywallInfo`` object of the most recently presented view controller.
   public static var latestPaywallInfo: PaywallInfo? {
     let presentedPaywallInfo = PaywallManager.shared.presentedViewController?.paywallInfo

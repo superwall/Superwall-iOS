@@ -196,7 +196,8 @@ enum SuperwallEvent {
           "result": "present",
           "trigger_name": triggerName
         ]
-      case .unknownEvent:
+      case .triggerNotFound,
+        .error:
         return [:]
       }
     }
