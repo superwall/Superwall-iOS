@@ -105,31 +105,25 @@ public extension Paywall {
     }
   }
 
-  /// Shows a paywall to the user when: An event you provide is tied to an active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); and the user matches a rule in the campaign.
+  /// Tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
   ///
-  /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.
+  /// This shows a paywall to the user when: An event you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.
   ///
-  /// Before using this method, you'll first need to create a campaign and add a trigger associated with the event name on the [Superwall Dashboard](https://superwall.com/dashboard).
+  /// Before using this method, you'll first need to create a campaign and add the event to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
   ///
-  /// The paywall shown to the user is determined by the rules defined in the campaign. Paywalls are sticky, in that when a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
-  ///
-  /// If you don't want to use any completion handlers, consider using ``Paywall/Paywall/track(_:_:)-2vkwo`` to implicitly trigger a paywall.
+  /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reassign users to the rule.
   ///
   /// For more information, see <doc:Triggering>.
   ///
   /// - Parameters:
   ///   -  event: The name of the event you wish to track
   ///   - params: Custom parameters you'd like to pass with your event. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
-  ///   - products: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defauls to `nil`.
-  ///   - ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
-  ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
-  ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a``PaywallSkippedCompletionBlock`` which contains a `reason` enum giving more information about why it was skipped.
-  ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallPresentedCompletionBlock`` which contains a ``PaywallInfo`` object containing information about the paywall.
-  ///   - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a ``PaywallDismissedCompletionBlock`` that contains information about why the paywall was dismissed.
+  ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
+  ///   - paywallState: An optional callback that provides updates on the state of the paywall via a ``PaywallState`` object.
   static func track(
     event: String,
     params: [String: Any]? = nil,
-    overrides: PaywallOverrides? = nil,
+    paywallOverrides: PaywallOverrides? = nil,
     paywallState: ((PaywallState) -> Void)? = nil
   ) {
     let trackableEvent = UserInitiatedEvent.Track(
@@ -141,15 +135,31 @@ public extension Paywall {
 
     internallyPresent(
       .explicitTrigger(result.data),
-      paywallOverrides: overrides,
+      paywallOverrides: paywallOverrides,
       paywallState: paywallState
     )
   }
 
+  /// Tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
+  ///
+  /// This shows a paywall to the user when: An event you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.
+  ///
+  /// Before using this method, you'll first need to create a campaign and add the event to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
+  ///
+  /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reassign users to the rule.
+  ///
+  /// For more information, see <doc:Triggering>.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the event you wish to track
+  ///   - params: Custom parameters you'd like to pass with your event. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+  ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
+  ///
+  /// - Returns: A publisher that provides updates on the state of the paywall via a ``PaywallState`` object.
   static func track(
     event: String,
     params: [String: Any]? = nil,
-    overrides: PaywallOverrides? = nil
+    paywallOverrides: PaywallOverrides? = nil
   ) -> AnyPublisher<PaywallState, Never> {
     let trackableEvent = UserInitiatedEvent.Track(
       rawName: event,
@@ -161,7 +171,7 @@ public extension Paywall {
 
     internallyPresent(
       .explicitTrigger(result.data),
-      paywallOverrides: overrides
+      paywallOverrides: paywallOverrides
     ) { state in
       switch state {
       case .presented:
