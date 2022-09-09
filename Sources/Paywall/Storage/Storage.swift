@@ -68,9 +68,9 @@ class Storage {
 
     guard let outcome = StorageLogic.identify(
       newUserId: userId,
-      oldUserId: appUserId,
-      neverCalledStaticConfig: neverCalledStaticConfig
+      oldUserId: appUserId
     ) else {
+      loadAssignmentsIfNeeded()
       return
     }
 
@@ -83,24 +83,34 @@ class Storage {
       TriggerDelayManager.shared.appUserIdAfterReset = appUserId
       Paywall.reset()
     case .loadAssignments:
-      if TriggerDelayManager.shared.hasDelay {
-        // if we have NOT yet tracked the install (or if the value is nil), this
-        // is a fresh install
-        let isFreshInstall = !(cache.read(DidTrackAppInstall.self) ?? false)
-        // blocking assignment call if you
-        // 1. never called static config before
-        // 2. this isn't a fresh install
-        // 3. haven't loaded assignments in this session
-        let isBlocking = neverCalledStaticConfig && !isFreshInstall && !loadedAssignments
-        let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: isBlocking)
-        TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
-      } else {
-        ConfigManager.shared.loadAssignments()
-      }
-
-      neverCalledStaticConfig = false
-      loadedAssignments = true
+      loadAssignments()
     }
+  }
+
+  private func loadAssignmentsIfNeeded() {
+    if neverCalledStaticConfig {
+      loadAssignments()
+    }
+  }
+
+  private func loadAssignments() {
+    if TriggerDelayManager.shared.hasDelay {
+      // if we have NOT yet tracked the install (or if the value is nil), this
+      // is a fresh install
+      let isFreshInstall = !(cache.read(DidTrackAppInstall.self) ?? false)
+      // blocking assignment call if you
+      // 1. never called static config before
+      // 2. this isn't a fresh install
+      // 3. haven't loaded assignments in this session
+      let isBlocking = neverCalledStaticConfig && !isFreshInstall && !loadedAssignments
+      let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: isBlocking)
+      TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
+    } else {
+      ConfigManager.shared.loadAssignments()
+    }
+
+    neverCalledStaticConfig = false
+    loadedAssignments = true
   }
 
   private func migrateData() {
