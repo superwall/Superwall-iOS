@@ -26,6 +26,7 @@ class Storage {
 	var didTrackFirstSeen = false
   var userAttributes: [String: Any] = [:]
   var isUpdatingToStaticConfig = false
+  var didCheckForStaticConfigUpdate = false
 
   var userId: String? {
     return appUserId ?? aliasId
@@ -50,9 +51,16 @@ class Storage {
     apiKey: String
   ) {
     migrateData()
+    updateSdkVersion()
+
 
     if let newAppUserId = appUserId {
+      // if they pass appUserId through when calling config
       self.identify(with: newAppUserId)
+    } else if let existingAppUserId = self.appUserId {
+      // in this case, dev hasn't passed a user id in with config.
+      // they will either call identify later or never call it.
+      self.identify(with: existingAppUserId)
     }
 
     self.apiKey = apiKey
@@ -61,7 +69,7 @@ class Storage {
       aliasId = StorageLogic.generateAlias()
     }
 
-    updateSdkVersion()
+
   }
 
   func identify(with userId: String) {
@@ -98,8 +106,22 @@ class Storage {
   /// Checks to see whether a user has upgraded from normal to static config.
   /// This blocks triggers until assignments is returned.
   private func updateSdkVersion() {
+
+    if didCheckForStaticConfigUpdate {
+      return
+    }
+
     let actualSdkVersion = sdkVersion
-    cache.write(actualSdkVersion, forType: SdkVersion.self)
+    let previousSdkVersion = cache.read(SdkVersion.self)
+    if actualSdkVersion != previousSdkVersion {
+      cache.write(actualSdkVersion, forType: SdkVersion.self)
+    }
+    if previousSdkVersion == nil {
+      isUpdatingToStaticConfig = true
+    }
+
+    didCheckForStaticConfigUpdate = true
+
   }
 
   /// Called by `identify(with:)` if the user ID set is the same as before.
@@ -112,9 +134,7 @@ class Storage {
     configManager: ConfigManager = .shared,
     completion: (() -> Void)? = nil
   ) {
-    let storedSdkVersion = cache.read(SdkVersion.self)
-
-    if storedSdkVersion == nil && deviceHelper.minutesSinceInstall > 60 {
+    if isUpdatingToStaticConfig && deviceHelper.minutesSinceInstall > 60 {
       if triggerDelayManager.hasDelay {
         let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
         triggerDelayManager.cachePreConfigAssignmentCall(blockingAssignmentCall)
