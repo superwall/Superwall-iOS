@@ -52,14 +52,15 @@ enum StorageLogic {
 
   static func identify(
     newUserId: String?,
-    oldUserId: String?
+    oldUserId: String?,
+    neverCalledStaticConfig: Bool
   ) -> IdentifyOutcome? {
 
     let hasNewUserId = newUserId != nil
     let hasOldUserId = oldUserId != nil
 
     if (hasNewUserId && hasOldUserId) && newUserId == oldUserId {
-      return nil
+      return neverCalledStaticConfig ? .loadAssignments : nil
     }
 
     if (hasNewUserId && hasOldUserId) && newUserId != oldUserId {

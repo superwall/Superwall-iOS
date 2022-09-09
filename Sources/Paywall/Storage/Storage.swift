@@ -69,6 +69,7 @@ class Storage {
     guard let outcome = StorageLogic.identify(
       newUserId: userId,
       oldUserId: appUserId
+      neverCalledStaticConfig: neverCalledStaticConfig
     ) else {
       return
     }
