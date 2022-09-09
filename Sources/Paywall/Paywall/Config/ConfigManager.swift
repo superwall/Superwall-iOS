@@ -221,9 +221,17 @@ class ConfigManager {
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
   }
 
+  private func handlePreloadPaywallsPreConfig(
+    forTriggers triggerNames: Set<String>,
+    triggerDelayManager: TriggerDelayManager = .shared
+  ) {
+    triggerDelayManager.triggersToPreloadPreConfigCall = triggerNames
+  }
+
   /// Preloads paywalls referenced by the provided triggers.
   func preloadPaywalls(forTriggers triggerNames: Set<String>) {
     guard let config = config else {
+      handlePreloadPaywallsPreConfig(forTriggers: triggerNames)
       return
     }
     let triggersToPreload = config.triggers.filter { triggerNames.contains($0.eventName) }
