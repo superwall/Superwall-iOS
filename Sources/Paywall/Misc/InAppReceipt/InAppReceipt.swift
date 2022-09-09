@@ -49,6 +49,33 @@ final class InAppReceipt {
     guard let payload = payload else {
       return false
     }
+
+    var subscriptionGroupIdentifiers: Set<String> = []
+
+    for purchase in payload.purchases {
+      guard let product = StoreKitManager.shared.productsById[productId] else {
+        // TODO: CHECK
+        continue
+      }
+      guard let subscriptionGroupIdentifier = product.subscriptionGroupIdentifier else {
+        // TODO: CHECK
+        return
+      }
+      if subscriptionGroupIdentifiers.contains(product.subscriptionGroupIdentifier) {
+
+      }
+      subscriptionGroupIdentifiers.insert()
+    }
+    if let product = StoreKitManager.shared.productsById[productId] {
+      let purchasedProduct = payload.purchases.filter { $0.productIdentifier == productId }
+      return purchasedProduct.first != nil
+
+      product.subscriptionGroupIdentifier
+    } else {
+
+    }
+
+
     let purchasedProduct = payload.purchases.filter { $0.productIdentifier == productId }
     return purchasedProduct.first != nil
   }

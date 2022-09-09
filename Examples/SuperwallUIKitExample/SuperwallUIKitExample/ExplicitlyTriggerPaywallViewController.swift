@@ -40,7 +40,7 @@ final class ExplicitlyTriggerPaywallViewController: UIViewController {
   }
 
   @IBAction private func explicitlyTriggerPaywall() {
-    Paywall.trigger(event: "MyEvent") { error in
+    Paywall.trigger(event: "campaign_trigger") { error in
       if error?.code == 4000 {
         print("The user did not match any rules")
       } else if error?.code == 4001 {
