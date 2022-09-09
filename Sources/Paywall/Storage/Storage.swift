@@ -106,7 +106,6 @@ class Storage {
   /// Checks to see whether a user has upgraded from normal to static config.
   /// This blocks triggers until assignments is returned.
   private func updateSdkVersion() {
-
     if didCheckForStaticConfigUpdate {
       return
     }
@@ -121,7 +120,6 @@ class Storage {
     }
 
     didCheckForStaticConfigUpdate = true
-
   }
 
   /// Called by `identify(with:)` if the user ID set is the same as before.
