@@ -22,7 +22,7 @@ class TriggerDelayManager {
   private(set) var preConfigAssignmentCall: PreConfigAssignmentCall?
 
   var appUserIdAfterReset: String?
-  var triggersToPreloadPreConfigCall: Set<String>? = nil
+  var triggersToPreloadPreConfigCall: Set<String>?
 
   func handleDelayedContent(
     storage: Storage = .shared,
