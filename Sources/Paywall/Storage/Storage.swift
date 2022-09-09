@@ -134,7 +134,7 @@ class Storage {
     configManager: ConfigManager = .shared,
     completion: (() -> Void)? = nil
   ) {
-    if isUpdatingToStaticConfig && deviceHelper.minutesSinceInstall > 60 {
+    if isUpdatingToStaticConfig {
       if triggerDelayManager.hasDelay {
         let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
         triggerDelayManager.cachePreConfigAssignmentCall(blockingAssignmentCall)
