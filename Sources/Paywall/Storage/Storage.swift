@@ -132,6 +132,7 @@ class Storage {
       } else {
         configManager.loadAssignments()
       }
+      isUpdatingToStaticConfig = false
     }
   }
 
