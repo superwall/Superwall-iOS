@@ -64,11 +64,19 @@ class Storage {
   }
 
   func identify(with userId: String?) {
-    let outcome = StorageLogic.identify(
-      withUserId: userId,
-      oldUserId: appUserId,
-      hasTriggerDelay: TriggerDelayManager.shared.hasDelay
-    )
+
+    // if we have NOT yet tracked the install (or if the value is nil)
+    let isFirstAppOpen = !(cache.read(DidTrackAppInstall.self) ?? false)
+
+    guard let outcome = StorageLogic.identify(
+      hasNewUserId: !(userId == nil),
+      hasOldUserId: !(appUserId == nil),
+      hasConfig: !TriggerDelayManager.shared.hasDelay,
+      isFirstAppOpen: isFirstAppOpen,
+      isUpdatingToStaticConfig: isUpdatingToStaticConfig
+    ) else {
+      return
+    }
 
     if let userId = userId {
       appUserId = userId
@@ -78,13 +86,16 @@ class Storage {
     case .reset:
       TriggerDelayManager.shared.appUserIdAfterReset = appUserId
       Paywall.reset()
-    case .checkForStaticConfigUpgrade:
-      checkForStaticConfigUpgrade()
+    case .staticConfigUpgrade:
+      ConfigManager.shared.loadAssignments()
     case .loadAssignments:
       ConfigManager.shared.loadAssignments()
-    case .nonBlockingAssignmentDelay:
+    case .loadAssignmentsPostConfig:
       let nonBlockingAssignmentCall = PreConfigAssignmentCall(isBlocking: false)
       TriggerDelayManager.shared.cachePreConfigAssignmentCall(nonBlockingAssignmentCall)
+    case .staticConfigUpgradePostConfig:
+      let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
+      TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
     }
   }
 
@@ -125,6 +136,7 @@ class Storage {
     configManager: ConfigManager = .shared,
     completion: (() -> Void)? = nil
   ) {
+
     if isUpdatingToStaticConfig {
       if triggerDelayManager.hasDelay {
         let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: true)

@@ -10,9 +10,10 @@ import Foundation
 enum StorageLogic {
   enum IdentifyOutcome {
     case reset
-    case checkForStaticConfigUpgrade
+    case staticConfigUpgrade
     case loadAssignments
-    case nonBlockingAssignmentDelay
+    case loadAssignmentsPostConfig
+    case staticConfigUpgradePostConfig
   }
 
   static func generateAlias() -> String {
@@ -53,15 +54,41 @@ enum StorageLogic {
   }
 
   static func identify(
-    withUserId newUserId: String?,
-    oldUserId: String?,
-    hasTriggerDelay: Bool
-  ) -> IdentifyOutcome {
-    // If user hasn't passed in a userID, but an old userID exists
+    hasNewUserId: Bool,
+    hasOldUserId: Bool,
+    hasConfig: Bool,
+    isFirstAppOpen: Bool,
+    isUpdatingToStaticConfig: Bool
+  ) -> IdentifyOutcome? {
+
+
+    if isUpdatingToStaticConfig {
+      if hasNewUserId && hasOldUserId {
+
+      }
+
+      if hasNewUserId && !hasOldUserId
+
+    }
+
+
+
+
+    // If user hasn't passed in a userId, but an old userId exists
     // Check for static config upgrade.
     if newUserId == nil,
      oldUserId != nil {
       return .checkForStaticConfigUpgrade
+    }
+
+    // if its the first app open since install, and there is no userId being passed in
+    if newUserId == nil && oldUserId == nil && isFirstAppOpen {
+      return nil // do nothing
+    }
+
+    // if it is the first install, but an appUserId is being passed through
+    if newUserId != nil && oldUserId == nil && isFirstAppOpen {
+      return hasConfig ? .loadAssignments : .loadAssignmentsPostConfig
     }
 
     // If the userId hasn't changed (including if they stay anonymous)
@@ -76,13 +103,8 @@ enum StorageLogic {
       return .reset
     }
 
-    // Else, if user has gone from anonymous to having an ID...
-    // If config hasn't been retrieved return a non-blocking delay to retrieve assignments
-    if hasTriggerDelay {
-      return .nonBlockingAssignmentDelay
-    }
 
-    // Else, get assignments if config has been retrieved.
-    return .loadAssignments
+    // Else, get assignments if config has been retrieved, otherwise wait
+    return hasConfig ? .loadAssignments : .loadAssignmentsPostConfig
   }
 }
