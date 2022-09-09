@@ -21,10 +21,25 @@ class TriggerDelayManager {
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
   private(set) var preConfigAssignmentCall: PreConfigAssignmentCall?
 
+  var appUserIdAfterReset: String?
+  var triggersToPreloadPreConfigCall: Set<String>?
+
   func handleDelayedContent(
     storage: Storage = .shared,
     configManager: ConfigManager = .shared
   ) {
+    // If the user has called identify with a diff ID, we call reset.
+    // Then we wait until config has returned before identifying again.
+    if let appUserIdAfterReset = appUserIdAfterReset {
+      storage.identify(with: appUserIdAfterReset)
+      self.appUserIdAfterReset = nil
+    }
+
+    if let triggersToPreloadPreConfigCall = triggersToPreloadPreConfigCall {
+      configManager.preloadPaywalls(forTriggers: triggersToPreloadPreConfigCall)
+      self.triggersToPreloadPreConfigCall = nil
+    }
+
     if let preConfigAssignmentCall = preConfigAssignmentCall {
       if preConfigAssignmentCall.isBlocking {
         configManager.loadAssignments { [weak self] in

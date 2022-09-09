@@ -71,8 +71,11 @@ class Storage {
       hasTriggerDelay: TriggerDelayManager.shared.hasDelay
     )
 
+    appUserId = userId
+
     switch outcome {
     case .reset:
+      TriggerDelayManager.shared.appUserIdAfterReset = appUserId
       Paywall.reset()
     case .checkForStaticConfigUpgrade:
       checkForStaticConfigUpgrade()
@@ -82,8 +85,6 @@ class Storage {
       let nonBlockingAssignmentCall = PreConfigAssignmentCall(isBlocking: false)
       TriggerDelayManager.shared.cachePreConfigAssignmentCall(nonBlockingAssignmentCall)
     }
-
-    appUserId = userId
   }
 
   private func migrateData() {
@@ -127,6 +128,7 @@ class Storage {
   func clear() {
     coreDataManager.deleteAllEntities()
     cache.cleanUserFiles()
+    confirmedAssignments = nil
     appUserId = nil
     aliasId = StorageLogic.generateAlias()
     userAttributes = [:]
