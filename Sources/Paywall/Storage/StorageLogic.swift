@@ -60,7 +60,11 @@ enum StorageLogic {
     let hasOldUserId = oldUserId != nil
 
     if (hasNewUserId && hasOldUserId) && newUserId == oldUserId {
-      return neverCalledStaticConfig ? .loadAssignments : nil
+      if neverCalledStaticConfig {
+        return .loadAssignments
+      } else {
+        return nil
+      }
     }
 
     if (hasNewUserId && hasOldUserId) && newUserId != oldUserId {
