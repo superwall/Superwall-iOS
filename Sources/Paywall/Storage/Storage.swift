@@ -54,32 +54,25 @@ class Storage {
     updateSdkVersion()
 
 
-    if let newAppUserId = appUserId {
-      // if they pass appUserId through when calling config
-      self.identify(with: newAppUserId)
-    } else if let existingAppUserId = self.appUserId {
-      // in this case, dev hasn't passed a user id in with config.
-      // they will either call identify later or never call it.
-      self.identify(with: existingAppUserId)
-    }
+    identify(with: appUserId)
 
     self.apiKey = apiKey
 
     if aliasId == nil {
       aliasId = StorageLogic.generateAlias()
     }
-
-
   }
 
-  func identify(with userId: String) {
+  func identify(with userId: String?) {
     let outcome = StorageLogic.identify(
       withUserId: userId,
       oldUserId: appUserId,
       hasTriggerDelay: TriggerDelayManager.shared.hasDelay
     )
 
-    appUserId = userId
+    if let userId = userId {
+      appUserId = userId
+    }
 
     switch outcome {
     case .reset:

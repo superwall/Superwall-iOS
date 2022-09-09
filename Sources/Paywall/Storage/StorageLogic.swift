@@ -53,20 +53,29 @@ enum StorageLogic {
   }
 
   static func identify(
-    withUserId newUserId: String,
+    withUserId newUserId: String?,
     oldUserId: String?,
     hasTriggerDelay: Bool
   ) -> IdentifyOutcome {
-    // if there was a previously set userId ...
-    if let oldUserId = oldUserId {
-      // Check if the userId changed. If it hasn't, check for a static config upgrade.
-      if newUserId == oldUserId {
-        return .checkForStaticConfigUpgrade
-      } else {
-        // Otherwise, call reset.
-        return .reset
-      }
+    // If user hasn't passed in a userID, but an old userID exists
+    // Check for static config upgrade.
+    if newUserId == nil,
+     oldUserId != nil {
+      return .checkForStaticConfigUpgrade
     }
+
+    // If the userId hasn't changed (including if they stay anonymous)
+    // Check for a static config upgrade.
+    if newUserId == oldUserId {
+      return .checkForStaticConfigUpgrade
+    }
+
+    // Else, if the userId already existed and has now changed, call reset.
+    if let oldUserId = oldUserId,
+      newUserId != oldUserId {
+      return .reset
+    }
+
     // Else, if user has gone from anonymous to having an ID...
     // If config hasn't been retrieved return a non-blocking delay to retrieve assignments
     if hasTriggerDelay {
