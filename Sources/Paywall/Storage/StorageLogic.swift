@@ -10,10 +10,7 @@ import Foundation
 enum StorageLogic {
   enum IdentifyOutcome {
     case reset
-    case staticConfigUpgrade
     case loadAssignments
-    case loadAssignmentsPostConfig
-    case staticConfigUpgradePostConfig
   }
 
   static func generateAlias() -> String {
@@ -54,57 +51,22 @@ enum StorageLogic {
   }
 
   static func identify(
-    hasNewUserId: Bool,
-    hasOldUserId: Bool,
-    hasConfig: Bool,
-    isFirstAppOpen: Bool,
-    isUpdatingToStaticConfig: Bool
+    newUserId: String?,
+    oldUserId: String?
   ) -> IdentifyOutcome? {
 
+    let hasNewUserId = newUserId != nil
+    let hasOldUserId = oldUserId != nil
 
-    if isUpdatingToStaticConfig {
-      if hasNewUserId && hasOldUserId {
-
-      }
-
-      if hasNewUserId && !hasOldUserId
-
+    if (hasNewUserId && hasOldUserId) && newUserId == oldUserId {
+      return nil
     }
 
-
-
-
-    // If user hasn't passed in a userId, but an old userId exists
-    // Check for static config upgrade.
-    if newUserId == nil,
-     oldUserId != nil {
-      return .checkForStaticConfigUpgrade
-    }
-
-    // if its the first app open since install, and there is no userId being passed in
-    if newUserId == nil && oldUserId == nil && isFirstAppOpen {
-      return nil // do nothing
-    }
-
-    // if it is the first install, but an appUserId is being passed through
-    if newUserId != nil && oldUserId == nil && isFirstAppOpen {
-      return hasConfig ? .loadAssignments : .loadAssignmentsPostConfig
-    }
-
-    // If the userId hasn't changed (including if they stay anonymous)
-    // Check for a static config upgrade.
-    if newUserId == oldUserId {
-      return .checkForStaticConfigUpgrade
-    }
-
-    // Else, if the userId already existed and has now changed, call reset.
-    if let oldUserId = oldUserId,
-      newUserId != oldUserId {
+    if (hasNewUserId && hasOldUserId) && newUserId != oldUserId {
       return .reset
     }
 
 
-    // Else, get assignments if config has been retrieved, otherwise wait
-    return hasConfig ? .loadAssignments : .loadAssignmentsPostConfig
+    return .loadAssignments
   }
 }
