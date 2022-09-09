@@ -25,9 +25,9 @@ class Storage {
   }
 	var didTrackFirstSeen = false
   var userAttributes: [String: Any] = [:]
+
   var neverCalledStaticConfig = false
   var didCheckForStaticConfigUpdate = false
-  var loadedAssignments = false
 
   var userId: String? {
     return appUserId ?? aliasId
@@ -88,29 +88,24 @@ class Storage {
   }
 
   private func loadAssignmentsIfNeeded() {
-    if neverCalledStaticConfig {
+    // if we have NOT yet tracked the install (or if the value is nil), this
+    // is a fresh install
+    let isFreshInstall = !(cache.read(DidTrackAppInstall.self) ?? false)
+    if neverCalledStaticConfig && !isFreshInstall {
       loadAssignments()
     }
   }
 
   private func loadAssignments() {
     if TriggerDelayManager.shared.hasDelay {
-      // if we have NOT yet tracked the install (or if the value is nil), this
-      // is a fresh install
-      let isFreshInstall = !(cache.read(DidTrackAppInstall.self) ?? false)
-      // blocking assignment call if you
-      // 1. never called static config before
-      // 2. this isn't a fresh install
-      // 3. haven't loaded assignments in this session
-      let isBlocking = neverCalledStaticConfig && !isFreshInstall && !loadedAssignments
+      // blocking assignment call if you we've never called static config before
+      let isBlocking = neverCalledStaticConfig
       let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: isBlocking)
       TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
     } else {
       ConfigManager.shared.loadAssignments()
     }
-
     neverCalledStaticConfig = false
-    loadedAssignments = true
   }
 
   private func migrateData() {
