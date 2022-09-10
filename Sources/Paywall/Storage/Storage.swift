@@ -83,7 +83,12 @@ class Storage {
       TriggerDelayManager.shared.appUserIdAfterReset = appUserId
       Paywall.reset()
     case .loadAssignments:
-      loadAssignments()
+      if TriggerDelayManager.shared.appUserIdAfterReset == nil {
+        loadAssignments()
+      } else {
+        loadBlockingAssignmentsAfterConfig()
+        TriggerDelayManager.shared.appUserIdAfterReset = nil
+      }
     }
   }
 
@@ -106,6 +111,11 @@ class Storage {
       ConfigManager.shared.loadAssignments()
     }
     neverCalledStaticConfig = false
+  }
+
+  private func loadBlockingAssignmentsAfterConfig() {
+    let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking:true)
+    TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
   }
 
   private func migrateData() {

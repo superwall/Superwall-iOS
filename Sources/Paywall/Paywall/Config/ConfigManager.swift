@@ -50,6 +50,7 @@ class ConfigManager {
   func clear() {
     triggers.removeAll()
     unconfirmedAssignments.removeAll()
+    config = nil
   }
 
   func fetchConfiguration(

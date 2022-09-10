@@ -32,7 +32,6 @@ class TriggerDelayManager {
     // Then we wait until config has returned before identifying again.
     if let appUserIdAfterReset = appUserIdAfterReset {
       storage.identify(with: appUserIdAfterReset)
-      self.appUserIdAfterReset = nil
     }
 
     if let triggersToPreloadPreConfigCall = triggersToPreloadPreConfigCall {
