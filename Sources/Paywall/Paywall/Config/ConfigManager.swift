@@ -144,6 +144,7 @@ class ConfigManager {
         if Paywall.options.shouldPreloadPaywalls {
           self.preloadAllPaywalls()
         }
+        TriggerDelayManager.shared.handleDelayedContent()
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
