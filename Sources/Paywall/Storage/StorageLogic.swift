@@ -10,7 +10,10 @@ import Foundation
 enum StorageLogic {
   enum IdentifyOutcome {
     case reset
+    case doNothing
     case loadAssignments
+    case enqueBlockingAssignments
+    case enqueNonBlockingAssignments
   }
 
   static func generateAlias() -> String {
@@ -52,27 +55,74 @@ enum StorageLogic {
 
   static func identify(
     newUserId: String?,
-    oldUserId: String?
-  ) -> IdentifyOutcome? {
+    oldUserId: String?,
+    didResetViaIdentify: Bool,
+    isFreshInstall: Bool,
+    isFirstStaticConfigCall: Bool,
+    hasConfigReturned: Bool
+  ) -> IdentifyOutcome {
 
+    // helper variables
     let hasNewUserId = newUserId != nil
     let hasOldUserId = oldUserId != nil
 
-    if (hasNewUserId && hasOldUserId) && newUserId == oldUserId {
-      return nil
+    // if we are reseting as a result of calling identify with
+    // a new id, block assignments since the user is switching
+    // from a logged in account to another logged in account
+    if didResetViaIdentify {
+      if hasConfigReturned {
+        return .loadAssignments
+      } else {
+        return .enqueBlockingAssignments
+      }
     }
 
-    if (hasNewUserId && hasOldUserId) && newUserId != oldUserId {
-      return .reset
+    // if this is a fresh install, we load assignments
+    // if a user id is provided. no need to check for a
+    // static config update
+    if isFreshInstall {
+      if hasNewUserId {
+        // it's a fresh install and we have an id, so we
+        // need to load assignments
+        if hasConfigReturned {
+          return .loadAssignments
+        } else {
+          return .enqueNonBlockingAssignments
+        }
+      } else {
+        // it's a fresh install and we have no userId, no need
+        // to do anything since we for sure won't have assignments
+        // for them
+        return .doNothing
+      }
     }
 
-    if !hasNewUserId {
-      // this can only happen from a configure call that doesn't pass
-      // in an app user id if the dev calls identify later in the app
-      // lifecycle, oldUserId will be set
-      return nil
+    // if the user is passing through a new user id and hasn't called
+    // reset in between, we automattically call reset for them
+    if (hasOldUserId && hasNewUserId) && newUserId != oldUserId  {
+        // reset via identify, the UIDs have changed
+        return .reset
     }
 
-    return .loadAssignments
+    // this isn't a fresh install, so we need to check if this is
+    // their first static config upgrade. If we don't have assignments
+    // on disk, we should wait for config & assignments to return before
+    // firing any triggers
+    if isFirstStaticConfigCall {
+      if hasConfigReturned {
+        // config returned so there are likely no pending triggers, just
+        // load assignments
+        return .loadAssignments
+      } else {
+        // we're still waiting for static config to return,
+        // we enque assignments and block triggers from happening
+        // until we receive assignments
+        return .enqueBlockingAssignments
+      }
+    }
+
+    // if we've made it this far, we have assignments on disk
+    // for an existing user and there is no need to do anything
+    return .doNothing
   }
 }
