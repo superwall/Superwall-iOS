@@ -124,7 +124,11 @@ enum StorageLogic {
     // this is just a plain old identify() call, so load assignments
     // if the user id has changed
     if hasNewUserId && !hasOldUserId {
-      return .enqueBlockingAssignments
+      if hasConfigReturned {
+        return .loadAssignments
+      } else {
+        return .enqueBlockingAssignments
+      }
     } else {
       // if we've made it this far, we have assignments on disk
       // for an existing user and there is no need to do anything
