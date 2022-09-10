@@ -70,6 +70,8 @@ enum StorageLogic {
     // a new id, block assignments since the user is switching
     // from a logged in account to another logged in account
     if didResetViaIdentify {
+      // reset the flag
+      TriggerDelayManager.shared.appUserIdAfterReset = nil
       if hasConfigReturned {
         return .loadAssignments
       } else {

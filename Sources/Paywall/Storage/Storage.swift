@@ -92,7 +92,6 @@ class Storage {
       neverCalledStaticConfig = false
     case .enqueBlockingAssignments:
       enqueAssignments(isBlocking: true)
-      TriggerDelayManager.shared.appUserIdAfterReset = nil
       neverCalledStaticConfig = false
     case .enqueNonBlockingAssignments:
       enqueAssignments(isBlocking: false)
