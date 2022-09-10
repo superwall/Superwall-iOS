@@ -72,11 +72,7 @@ enum StorageLogic {
     if didResetViaIdentify {
       // reset the flag
       TriggerDelayManager.shared.appUserIdAfterReset = nil
-      if hasConfigReturned {
-        return .loadAssignments
-      } else {
-        return .enqueBlockingAssignments
-      }
+      return .enqueBlockingAssignments
     }
 
     // if this is a fresh install, we load assignments
@@ -89,7 +85,7 @@ enum StorageLogic {
         if hasConfigReturned {
           return .loadAssignments
         } else {
-          return .enqueNonBlockingAssignments
+          return .enqueBlockingAssignments
         }
       } else {
         // it's a fresh install and we have no userId, no need
@@ -109,7 +105,8 @@ enum StorageLogic {
     // this isn't a fresh install, so we need to check if this is
     // their first static config upgrade. If we don't have assignments
     // on disk, we should wait for config & assignments to return before
-    // firing any triggers
+    // firing any triggers. logic is the same regardless of what app user
+    // ids are passed through
     if isFirstStaticConfigCall {
       if hasConfigReturned {
         // config returned so there are likely no pending triggers, just
@@ -123,8 +120,17 @@ enum StorageLogic {
       }
     }
 
-    // if we've made it this far, we have assignments on disk
-    // for an existing user and there is no need to do anything
-    return .doNothing
+    // if we're receiving a new user id, and we've made it this far,
+    // this is just a plain old identify() call, so load assignments
+    // if the user id has changed
+    if hasNewUserId && !hasOldUserId {
+      return .enqueBlockingAssignments
+    } else {
+      // if we've made it this far, we have assignments on disk
+      // for an existing user and there is no need to do anything
+      return .doNothing
+    }
+
+
   }
 }
