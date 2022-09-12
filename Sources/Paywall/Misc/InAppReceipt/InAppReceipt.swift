@@ -50,33 +50,38 @@ final class InAppReceipt {
       return false
     }
 
-    var subscriptionGroupIdentifiers: Set<String> = []
+    if #available(iOS 12.0, *) {
+      if let product = StoreKitManager.shared.productsById[productId],
+        let subscriptionGroupIdentifier = product.subscriptionGroupIdentifier {
+        // Load all purchased products' subscriptionGroupIdentifiers.
+        var subscriptionGroupIdentifiers: Set<String> = []
+        for purchase in payload.purchases {
+          guard let product = StoreKitManager.shared.productsById[purchase.productIdentifier] else {
+            continue
+          }
+          guard let subscriptionGroupIdentifier = product.subscriptionGroupIdentifier else {
+            continue
+          }
+          subscriptionGroupIdentifiers.insert(subscriptionGroupIdentifier)
+        }
 
-    for purchase in payload.purchases {
-      guard let product = StoreKitManager.shared.productsById[productId] else {
-        // TODO: CHECK
-        continue
+        return subscriptionGroupIdentifiers.contains(subscriptionGroupIdentifier)
+      } else {
+        // A non automatically renewing subscription may have been purchased.
+        // Fallback to just checking if the product has been purchased before.
+        return purchasesHasProductId(productId, purchases: payload.purchases)
       }
-      guard let subscriptionGroupIdentifier = product.subscriptionGroupIdentifier else {
-        // TODO: CHECK
-        return
-      }
-      if subscriptionGroupIdentifiers.contains(product.subscriptionGroupIdentifier) {
-
-      }
-      subscriptionGroupIdentifiers.insert()
-    }
-    if let product = StoreKitManager.shared.productsById[productId] {
-      let purchasedProduct = payload.purchases.filter { $0.productIdentifier == productId }
-      return purchasedProduct.first != nil
-
-      product.subscriptionGroupIdentifier
     } else {
-
+      // In iOS 11, fallback to just checking if the product has been purchased before.
+      return purchasesHasProductId(productId, purchases: payload.purchases)
     }
+  }
 
-
-    let purchasedProduct = payload.purchases.filter { $0.productIdentifier == productId }
+  private func purchasesHasProductId(
+    _ productId: String,
+    purchases: [InAppPurchase]
+  ) -> Bool {
+    let purchasedProduct = purchases.filter { $0.productIdentifier == productId }
     return purchasedProduct.first != nil
   }
 
