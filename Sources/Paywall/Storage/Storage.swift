@@ -83,39 +83,39 @@ class Storage {
       if TriggerDelayManager.shared.appUserIdAfterReset == nil {
         loadAssignments()
       } else {
-        loadBlockingAssignmentsAfterConfig()
+        loadAssignmentsAfterConfig(isBlocking: true)
         TriggerDelayManager.shared.appUserIdAfterReset = nil
       }
     }
   }
 
+  /// Loads assignments only if it's a fresh install
   private func loadAssignmentsIfNeeded() {
-    // if we have NOT yet tracked the install (or if the value is nil), this
-    // is a fresh install
     guard neverCalledStaticConfig else {
       return
     }
-    let didTrackAppInstall = cache.read(DidTrackAppInstall.self) ?? false
-    if didTrackAppInstall {
+
+    let isNotFreshInstall = cache.read(DidTrackAppInstall.self) ?? false
+    if isNotFreshInstall {
       return
     }
+
     loadAssignments()
   }
 
+  /// If static config hasn't been called before, this queues a blocking assignment call.
   private func loadAssignments() {
     if TriggerDelayManager.shared.hasDelay {
-      // blocking assignment call if you we've never called static config before
       let isBlocking = neverCalledStaticConfig
-      let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: isBlocking)
-      TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
+      loadAssignmentsAfterConfig(isBlocking: isBlocking)
     } else {
       ConfigManager.shared.loadAssignments()
     }
     neverCalledStaticConfig = false
   }
 
-  private func loadBlockingAssignmentsAfterConfig() {
-    let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
+  private func loadAssignmentsAfterConfig(isBlocking: Bool) {
+    let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: isBlocking)
     TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
   }
 

@@ -66,7 +66,7 @@ enum StorageLogic {
       }
     }
 
-    if !hasNewUserId {
+    if newUserId == nil {
       // this can only happen from a configure call that doesn't pass
       // in an app user id if the dev calls identify later in the app
       // lifecycle, oldUserId will be set
