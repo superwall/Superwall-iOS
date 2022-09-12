@@ -53,8 +53,6 @@ class Storage {
   ) {
     migrateData()
     updateSdkVersion()
-
-
     identify(with: appUserId)
 
     self.apiKey = apiKey
@@ -65,7 +63,6 @@ class Storage {
   }
 
   func identify(with userId: String?) {
-
     guard let outcome = StorageLogic.identify(
       newUserId: userId,
       oldUserId: appUserId
@@ -95,10 +92,14 @@ class Storage {
   private func loadAssignmentsIfNeeded() {
     // if we have NOT yet tracked the install (or if the value is nil), this
     // is a fresh install
-    let isFreshInstall = !(cache.read(DidTrackAppInstall.self) ?? false)
-    if neverCalledStaticConfig && !isFreshInstall {
-      loadAssignments()
+    guard neverCalledStaticConfig else {
+      return
     }
+    let didTrackAppInstall = cache.read(DidTrackAppInstall.self) ?? false
+    if didTrackAppInstall {
+      return
+    }
+    loadAssignments()
   }
 
   private func loadAssignments() {
@@ -114,7 +115,7 @@ class Storage {
   }
 
   private func loadBlockingAssignmentsAfterConfig() {
-    let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking:true)
+    let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
     TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
   }
 
@@ -143,28 +144,6 @@ class Storage {
     }
 
     didCheckForStaticConfigUpdate = true
-  }
-
-  /// Called by `identify(with:)` if the user ID set is the same as before.
-  ///
-  /// This gets, or queues the retrieval of, the user's assignments.
-  /// This only happens if the user hasn't previously stored an SDK version in the cache and it's been over an hour since install.
-  func checkForStaticConfigUpgrade(
-    deviceHelper: DeviceHelper = DeviceHelper.shared,
-    triggerDelayManager: TriggerDelayManager = .shared,
-    configManager: ConfigManager = .shared,
-    completion: (() -> Void)? = nil
-  ) {
-
-    if neverCalledStaticConfig {
-      if triggerDelayManager.hasDelay {
-        let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
-        triggerDelayManager.cachePreConfigAssignmentCall(blockingAssignmentCall)
-      } else {
-        configManager.loadAssignments()
-      }
-      neverCalledStaticConfig = false
-    }
   }
 
   /// Call this when you log out

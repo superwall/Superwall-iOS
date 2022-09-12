@@ -11,37 +11,41 @@ import XCTest
 final class StorageLogicTests: XCTestCase {
   func test_identify_withSameUserIdAsBefore() {
     let outcome = StorageLogic.identify(
-      withUserId: "ab",
-      oldUserId: "ab",
-      hasTriggerDelay: true
+      newUserId: "ab",
+      oldUserId: "ab"
     )
-    XCTAssertEqual(outcome, .checkForStaticConfigUpgrade)
+    XCTAssertNil(outcome)
   }
 
   func test_identify_withDifferentUserIdComparedToBefore() {
     let outcome = StorageLogic.identify(
-      withUserId: "ab",
-      oldUserId: "cd",
-      hasTriggerDelay: true
+      newUserId: "ab",
+      oldUserId: "cd"
     )
     XCTAssertEqual(outcome, .reset)
   }
 
-  func test_identify_fromAnonymous_hasntRetrievedConfig() {
+  func test_identify_fromAnonymous() {
     let outcome = StorageLogic.identify(
-      withUserId: "ab",
-      oldUserId: nil,
-      hasTriggerDelay: true
-    )
-    XCTAssertEqual(outcome, .nonBlockingAssignmentDelay)
-  }
-
-  func test_identify_fromAnonymous_hasRetrievedConfig() {
-    let outcome = StorageLogic.identify(
-      withUserId: "ab",
-      oldUserId: nil,
-      hasTriggerDelay: false
+      newUserId: "ab",
+      oldUserId: nil
     )
     XCTAssertEqual(outcome, .loadAssignments)
+  }
+
+  func test_identify_fromAnonymous_noNewUserId_noOldUserId() {
+    let outcome = StorageLogic.identify(
+      newUserId: nil,
+      oldUserId: nil
+    )
+    XCTAssertNil(outcome)
+  }
+
+  func test_identify_fromAnonymous_noNewUser_hasOldUserId() {
+    let outcome = StorageLogic.identify(
+      newUserId: nil,
+      oldUserId: "ab"
+    )
+    XCTAssertNil(outcome)
   }
 }

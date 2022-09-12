@@ -54,16 +54,16 @@ enum StorageLogic {
     newUserId: String?,
     oldUserId: String?
   ) -> IdentifyOutcome? {
-
     let hasNewUserId = newUserId != nil
     let hasOldUserId = oldUserId != nil
 
-    if (hasNewUserId && hasOldUserId) && newUserId == oldUserId {
-      return nil
-    }
-
-    if (hasNewUserId && hasOldUserId) && newUserId != oldUserId {
-      return .reset
+    if hasNewUserId,
+      hasOldUserId {
+      if newUserId == oldUserId {
+        return nil
+      } else {
+        return .reset
+      }
     }
 
     if !hasNewUserId {
