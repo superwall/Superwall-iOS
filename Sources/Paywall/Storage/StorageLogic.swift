@@ -10,9 +10,7 @@ import Foundation
 enum StorageLogic {
   enum IdentifyOutcome {
     case reset
-    case checkForStaticConfigUpgrade
     case loadAssignments
-    case nonBlockingAssignmentDelay
   }
 
   static func generateAlias() -> String {
@@ -53,27 +51,28 @@ enum StorageLogic {
   }
 
   static func identify(
-    withUserId newUserId: String,
-    oldUserId: String?,
-    hasTriggerDelay: Bool
-  ) -> IdentifyOutcome {
-    // if there was a previously set userId ...
-    if let oldUserId = oldUserId {
-      // Check if the userId changed. If it hasn't, check for a static config upgrade.
+    newUserId: String?,
+    oldUserId: String?
+  ) -> IdentifyOutcome? {
+    let hasNewUserId = newUserId != nil
+    let hasOldUserId = oldUserId != nil
+
+    if hasNewUserId,
+      hasOldUserId {
       if newUserId == oldUserId {
-        return .checkForStaticConfigUpgrade
+        return nil
       } else {
-        // Otherwise, call reset.
         return .reset
       }
     }
-    // Else, if user has gone from anonymous to having an ID...
-    // If config hasn't been retrieved return a non-blocking delay to retrieve assignments
-    if hasTriggerDelay {
-      return .nonBlockingAssignmentDelay
+
+    if !hasNewUserId {
+      // this can only happen from a configure call that doesn't pass
+      // in an app user id if the dev calls identify later in the app
+      // lifecycle, oldUserId will be set
+      return nil
     }
 
-    // Else, get assignments if config has been retrieved.
     return .loadAssignments
   }
 }

@@ -25,7 +25,9 @@ class Storage {
   }
 	var didTrackFirstSeen = false
   var userAttributes: [String: Any] = [:]
-  var isUpdatingToStaticConfig = false
+
+  var neverCalledStaticConfig = false
+  var didCheckForStaticConfigUpdate = false
 
   var userId: String? {
     return appUserId ?? aliasId
@@ -50,41 +52,71 @@ class Storage {
     apiKey: String
   ) {
     migrateData()
-
-    if let newAppUserId = appUserId {
-      self.identify(with: newAppUserId)
-    }
+    updateSdkVersion()
+    identify(with: appUserId)
 
     self.apiKey = apiKey
 
     if aliasId == nil {
       aliasId = StorageLogic.generateAlias()
     }
-
-    updateSdkVersion()
   }
 
-  func identify(with userId: String) {
-    let outcome = StorageLogic.identify(
-      withUserId: userId,
-      oldUserId: appUserId,
-      hasTriggerDelay: TriggerDelayManager.shared.hasDelay
-    )
+  func identify(with userId: String?) {
+    guard let outcome = StorageLogic.identify(
+      newUserId: userId,
+      oldUserId: appUserId
+    ) else {
+      loadAssignmentsIfNeeded()
+      return
+    }
 
-    appUserId = userId
+    if let userId = userId {
+      appUserId = userId
+    }
 
     switch outcome {
     case .reset:
       TriggerDelayManager.shared.appUserIdAfterReset = appUserId
       Paywall.reset()
-    case .checkForStaticConfigUpgrade:
-      checkForStaticConfigUpgrade()
     case .loadAssignments:
-      ConfigManager.shared.loadAssignments()
-    case .nonBlockingAssignmentDelay:
-      let nonBlockingAssignmentCall = PreConfigAssignmentCall(isBlocking: false)
-      TriggerDelayManager.shared.cachePreConfigAssignmentCall(nonBlockingAssignmentCall)
+      if TriggerDelayManager.shared.appUserIdAfterReset == nil {
+        loadAssignments()
+      } else {
+        loadBlockingAssignmentsAfterConfig()
+        TriggerDelayManager.shared.appUserIdAfterReset = nil
+      }
     }
+  }
+
+  private func loadAssignmentsIfNeeded() {
+    // if we have NOT yet tracked the install (or if the value is nil), this
+    // is a fresh install
+    guard neverCalledStaticConfig else {
+      return
+    }
+    let didTrackAppInstall = cache.read(DidTrackAppInstall.self) ?? false
+    if didTrackAppInstall {
+      return
+    }
+    loadAssignments()
+  }
+
+  private func loadAssignments() {
+    if TriggerDelayManager.shared.hasDelay {
+      // blocking assignment call if you we've never called static config before
+      let isBlocking = neverCalledStaticConfig
+      let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: isBlocking)
+      TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
+    } else {
+      ConfigManager.shared.loadAssignments()
+    }
+    neverCalledStaticConfig = false
+  }
+
+  private func loadBlockingAssignmentsAfterConfig() {
+    let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
+    TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
   }
 
   private func migrateData() {
@@ -98,30 +130,20 @@ class Storage {
   /// Checks to see whether a user has upgraded from normal to static config.
   /// This blocks triggers until assignments is returned.
   private func updateSdkVersion() {
-    let actualSdkVersion = sdkVersion
-    cache.write(actualSdkVersion, forType: SdkVersion.self)
-  }
-
-  /// Called by `identify(with:)` if the user ID set is the same as before.
-  ///
-  /// This gets, or queues the retrieval of, the user's assignments.
-  /// This only happens if the user hasn't previously stored an SDK version in the cache and it's been over an hour since install.
-  func checkForStaticConfigUpgrade(
-    deviceHelper: DeviceHelper = DeviceHelper.shared,
-    triggerDelayManager: TriggerDelayManager = .shared,
-    configManager: ConfigManager = .shared,
-    completion: (() -> Void)? = nil
-  ) {
-    let storedSdkVersion = cache.read(SdkVersion.self)
-
-    if storedSdkVersion == nil && deviceHelper.minutesSinceInstall > 60 {
-      if triggerDelayManager.hasDelay {
-        let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
-        triggerDelayManager.cachePreConfigAssignmentCall(blockingAssignmentCall)
-      } else {
-        configManager.loadAssignments()
-      }
+    if didCheckForStaticConfigUpdate {
+      return
     }
+
+    let actualSdkVersion = sdkVersion
+    let previousSdkVersion = cache.read(SdkVersion.self)
+    if actualSdkVersion != previousSdkVersion {
+      cache.write(actualSdkVersion, forType: SdkVersion.self)
+    }
+    if previousSdkVersion == nil {
+      neverCalledStaticConfig = true
+    }
+
+    didCheckForStaticConfigUpdate = true
   }
 
   /// Call this when you log out
