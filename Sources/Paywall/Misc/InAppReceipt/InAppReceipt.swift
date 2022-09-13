@@ -9,18 +9,24 @@ import Foundation
 import ASN1Swift
 
 final class InAppReceipt {
-  let getReceiptData: () -> Data?
+  static let shared = InAppReceipt()
+  let purchasedProductIds: Set<String>
+  private let purchases: [InAppPurchase]
+  private var purchasedSubscriptionGroupIds: Set<String> = []
+  private var failedToLoadSubscriptionGroupIds = false
 
   init(getReceiptData: @escaping () -> Data? = getInAppReceiptData) {
-    self.getReceiptData = getReceiptData
+    purchases = Self.getPurchases(using: getReceiptData)
+    purchasedProductIds = Set(purchases.map { $0.productIdentifier })
+
   }
 
-  /// This checks to see whether a product has been purchased by looking through receipts on device.
-  /// If the receipt has expired/is invalid but contains the productID it'll still say it has been purchased
-  /// However, it's okay use this method when checking whether to display a free trial or not
-  func hasPurchased(productId: String) -> Bool {
+  /// Returns the decoded purchases of on-device receipts.
+  static func getPurchases(
+    using getReceiptData: () -> Data?
+  ) -> [InAppPurchase] {
     guard let data = getReceiptData() else {
-      return false
+      return []
     }
 
     let asn1decoder = ASN1Decoder()
@@ -29,7 +35,7 @@ final class InAppReceipt {
       PKCS7Container.self,
       from: data
     ) else {
-      return false
+      return []
     }
 
     let payload: InAppReceiptPayload?
@@ -47,40 +53,59 @@ final class InAppReceipt {
     }
 
     guard let payload = payload else {
-      return false
+      return []
     }
 
-    if #available(iOS 12.0, *) {
-      if let product = StoreKitManager.shared.productsById[productId],
-        let subscriptionGroupIdentifier = product.subscriptionGroupIdentifier {
-        // Load all purchased products' subscriptionGroupIdentifiers.
-        var subscriptionGroupIdentifiers: Set<String> = []
-        for purchase in payload.purchases {
-          guard let product = StoreKitManager.shared.productsById[purchase.productIdentifier] else {
-            continue
-          }
-          guard let subscriptionGroupIdentifier = product.subscriptionGroupIdentifier else {
-            continue
-          }
-          subscriptionGroupIdentifiers.insert(subscriptionGroupIdentifier)
-        }
+    return payload.purchases
+  }
 
-        return subscriptionGroupIdentifiers.contains(subscriptionGroupIdentifier)
-      } else {
-        // A non automatically renewing subscription may have been purchased.
-        // Fallback to just checking if the product has been purchased before.
-        return purchasesHasProductId(productId, purchases: payload.purchases)
+  /// Loads all purchased products' subscriptionGroupIdentifiers.
+  ///
+  /// Call this after loading products into the `StoreKitManager`.
+  func loadSubscriptionGroupIds() {
+    guard #available(iOS 12.0, *) else {
+      return
+    }
+
+    for purchase in purchases {
+      guard let product = StoreKitManager.shared.productsById[purchase.productIdentifier] else {
+        continue
       }
-    } else {
-      // In iOS 11, fallback to just checking if the product has been purchased before.
-      return purchasesHasProductId(productId, purchases: payload.purchases)
+      guard let subscriptionGroupIdentifier = product.subscriptionGroupIdentifier else {
+        continue
+      }
+      purchasedSubscriptionGroupIds.insert(subscriptionGroupIdentifier)
     }
   }
 
-  private func purchasesHasProductId(
-    _ productId: String,
-    purchases: [InAppPurchase]
-  ) -> Bool {
+  func failedToLoadPurchasedProducts() {
+    failedToLoadSubscriptionGroupIds = true
+  }
+
+  /// Checks to see whether a different product has already been purchased within the subscription
+  /// group of the supplied product
+  ///
+  /// If the user is on iOS 11 or the product isn't an autorenewable subscription, it just checks whether
+  /// the product has been purchased before.
+  func hasPurchasedInSubscriptionGroupOfProduct(withId productId: String) -> Bool {
+    if failedToLoadSubscriptionGroupIds {
+      return hasPurchasedProduct(withId: productId)
+    }
+    guard #available(iOS 12.0, *) else {
+      return hasPurchasedProduct(withId: productId)
+    }
+
+    if let product = StoreKitManager.shared.productsById[productId],
+      let subscriptionGroupIdentifier = product.subscriptionGroupIdentifier {
+      return purchasedSubscriptionGroupIds.contains(subscriptionGroupIdentifier)
+    } else {
+      // A non automatically renewing subscription may have been purchased.
+      // Fallback to just checking if the product has been purchased before.
+      return hasPurchasedProduct(withId: productId)
+    }
+  }
+
+  private func hasPurchasedProduct(withId productId: String) -> Bool {
     let purchasedProduct = purchases.filter { $0.productIdentifier == productId }
     return purchasedProduct.first != nil
   }

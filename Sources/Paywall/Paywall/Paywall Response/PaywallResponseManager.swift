@@ -183,44 +183,34 @@ final class PaywallResponseManager: NSObject {
       state: .start
     )
 
-    if let products = substituteProducts {
-      StoreKitManager.shared.processSubstituteProducts(products) { [weak self] productsById, responseProducts in
+    StoreKitManager.shared.getProducts(
+      withIds: response.productIds,
+      substituting: substituteProducts
+    ) { [weak self] result in
+      switch result {
+      case .success(let output):
         self?.alterResponse(
           response,
-          withAppleProductsById: productsById,
-          substituteResponseProducts: responseProducts,
+          withAppleProductsById: output.productsById,
+          substituteResponseProducts: output.substituteProducts,
           requestHash: paywallRequestHash,
           paywallInfo: paywallInfo,
           event: event
         )
-      }
-    } else {
-      // add its products
-      StoreKitManager.shared.getProducts(withIds: response.productIds) { [weak self] result in
-        switch result {
-        case .success(let productsById):
-          self?.alterResponse(
-            response,
-            withAppleProductsById: productsById,
-            requestHash: paywallRequestHash,
-            paywallInfo: paywallInfo,
-            event: event
-          )
-        case .failure:
-          response.productsLoadFailTime = Date()
-          let paywallInfo = response.getPaywallInfo(fromEvent: event)
-          let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
-            state: .fail,
-            paywallInfo: paywallInfo,
-            eventData: event
-          )
-          Paywall.track(productLoadEvent)
+      case .failure:
+        response.productsLoadFailTime = Date()
+        let paywallInfo = response.getPaywallInfo(fromEvent: event)
+        let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+          state: .fail,
+          paywallInfo: paywallInfo,
+          eventData: event
+        )
+        Paywall.track(productLoadEvent)
 
-          SessionEventsManager.shared.triggerSession.trackProductsLoad(
-            forPaywallId: paywallInfo.id,
-            state: .fail
-          )
-        }
+        SessionEventsManager.shared.triggerSession.trackProductsLoad(
+          forPaywallId: paywallInfo.id,
+          state: .fail
+        )
       }
     }
   }
@@ -228,7 +218,7 @@ final class PaywallResponseManager: NSObject {
   private func alterResponse(
     _ response: PaywallResponse,
     withAppleProductsById productsById: [String: SKProduct],
-    substituteResponseProducts: [Product]? = nil,
+    substituteResponseProducts: [Product],
     requestHash paywallRequestHash: String,
     paywallInfo: PaywallInfo,
     event: EventData?
@@ -247,7 +237,7 @@ final class PaywallResponseManager: NSObject {
     }
 
       // cache the response for later if we haven't substituted products.
-    if substituteResponseProducts == nil {
+    if substituteResponseProducts.isEmpty {
       self.responsesByHash[paywallRequestHash] = .success(response)
     }
 

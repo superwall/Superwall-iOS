@@ -38,9 +38,11 @@ class ProductsManager: NSObject {
 
 		queue.async { [self] in
       // If products already cached, return them
-			let productsAlreadyCached = self.cachedProductsByIdentifier.filter { key, _ in identifiers.contains(key) }
-			if productsAlreadyCached.count == identifiers.count {
-				let productsAlreadyCachedSet = Set(productsAlreadyCached.values)
+      let cachedProducts = Set(self.cachedProductsByIdentifier.map { $0.key })
+      let productsToRetrieve = identifiers.subtracting(cachedProducts)
+
+			if productsToRetrieve.isEmpty {
+        let productsAlreadyCached = Set(self.cachedProductsByIdentifier.map { $0.value })
 				Logger.debug(
           logLevel: .debug,
           scope: .productsManager,
@@ -48,12 +50,12 @@ class ProductsManager: NSObject {
           info: ["product_ids": identifiers],
           error: nil
         )
-        completion(.success(productsAlreadyCachedSet))
+        completion(.success(productsAlreadyCached))
 				return
 			}
 
       // If there are any existing completion handlers, it means there have already been some requests for products but they haven't loaded. Queue up this request's completion handler.
-			if let existingHandlers = self.completionHandlers[identifiers] {
+			if let existingHandlers = self.completionHandlers[productsToRetrieve] {
 				Logger.debug(
           logLevel: .debug,
           scope: .productsManager,
@@ -61,7 +63,7 @@ class ProductsManager: NSObject {
           info: ["product_ids": identifiers],
           error: nil
         )
-				self.completionHandlers[identifiers] = existingHandlers + [completion]
+				self.completionHandlers[productsToRetrieve] = existingHandlers + [completion]
 				return
 			}
 
@@ -71,13 +73,13 @@ class ProductsManager: NSObject {
         logLevel: .debug,
         scope: .productsManager,
         message: "Creating New Request",
-        info: ["product_ids": identifiers],
+        info: ["product_ids": productsToRetrieve],
         error: nil
       )
-			let request = self.productsRequestFactory.request(productIdentifiers: identifiers)
+			let request = self.productsRequestFactory.request(productIdentifiers: productsToRetrieve)
 			request.delegate = self
-			self.completionHandlers[identifiers] = [completion]
-			self.productsByRequests[request] = identifiers
+			self.completionHandlers[productsToRetrieve] = [completion]
+			self.productsByRequests[request] = productsToRetrieve
 			request.start()
 		}
 	}

@@ -106,7 +106,7 @@ extension TriggerSession.Transaction {
           )
         }
 
-        let hasPurchasedProduct = InAppReceipt().hasPurchased(productId: product.productIdentifier)
+        let hasPurchasedProduct = InAppReceipt.shared.hasPurchasedInSubscriptionGroupOfProduct(withId: product.productIdentifier)
         self.introductoryRedeemable = !hasPurchasedProduct
         self.hasIntroductoryOffer = true
       } else {
