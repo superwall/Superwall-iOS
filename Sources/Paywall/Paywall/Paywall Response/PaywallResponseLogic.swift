@@ -243,22 +243,11 @@ enum PaywallResponseLogic {
 
   static func alterResponse(
     _ response: PaywallResponse,
-    substituteResponseProducts: [Product],
+    products: [Product],
     productsById: [String: SKProduct],
     isFreeTrialAvailableOverride: Bool?
   ) -> (response: PaywallResponse, resetFreeTrialOverride: Bool) {
     var response = response
-
-    var products: [Product] = response.products
-    for substituteResponseProduct in substituteResponseProducts {
-      if substituteResponseProduct.type == .primary {
-        products[guarded: 0] = substituteResponseProduct
-      } else if substituteResponseProduct.type == .secondary {
-        products[guarded: 1] = substituteResponseProduct
-      } else if substituteResponseProduct.type == .tertiary {
-        products[guarded: 2] = substituteResponseProduct
-      }
-    }
 
     response.products = products
     let outcome = getVariablesAndFreeTrial(

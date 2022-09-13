@@ -185,14 +185,16 @@ final class PaywallResponseManager: NSObject {
 
     StoreKitManager.shared.getProducts(
       withIds: response.productIds,
+      responseProducts: response.products,
       substituting: substituteProducts
     ) { [weak self] result in
       switch result {
       case .success(let output):
         self?.alterResponse(
           response,
-          withAppleProductsById: output.allProductsById,
-          substituteResponseProducts: output.substituteProducts,
+          withAppleProductsById: output.productsById,
+          products: output.products,
+          isNotSubstitutingProducts: substituteProducts == nil,
           requestHash: paywallRequestHash,
           paywallInfo: paywallInfo,
           event: event
@@ -218,14 +220,15 @@ final class PaywallResponseManager: NSObject {
   private func alterResponse(
     _ response: PaywallResponse,
     withAppleProductsById productsById: [String: SKProduct],
-    substituteResponseProducts: [Product],
+    products: [Product],
+    isNotSubstitutingProducts: Bool,
     requestHash paywallRequestHash: String,
     paywallInfo: PaywallInfo,
     event: EventData?
   ) {
     let outcome = PaywallResponseLogic.alterResponse(
       response,
-      substituteResponseProducts: substituteResponseProducts,
+      products: products,
       productsById: productsById,
       isFreeTrialAvailableOverride: Paywall.isFreeTrialAvailableOverride
     )
@@ -237,7 +240,7 @@ final class PaywallResponseManager: NSObject {
     }
 
       // cache the response for later if we haven't substituted products.
-    if substituteResponseProducts.isEmpty {
+    if isNotSubstitutingProducts {
       self.responsesByHash[paywallRequestHash] = .success(response)
     }
 

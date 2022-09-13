@@ -271,7 +271,7 @@ class ConfigManager {
       StoreKitManager.shared.getProducts(withIds: productIds) { [weak self] result in
         switch result {
         case .success(let output):
-          let products = output.allProductsById.values.map(PostbackProduct.init)
+          let products = output.productsById.values.map(PostbackProduct.init)
           let postback = Postback(products: products)
           self?.network.sendPostback(postback)
         case .failure:

@@ -8,9 +8,9 @@ final class StoreKitManager: NSObject {
   private var hasLoadedPurchasedProducts = false
   private let productsManager: ProductsManager
   private struct ProductProcessingResult {
-    let responseProductIds: Set<String>
+    let productIdsToLoad: Set<String>
     let substituteProductsById: [String: SKProduct]
-    let subsituteProducts: [Product]
+    let products: [Product]
   }
 
   init(productsManager: ProductsManager = ProductsManager()) {
@@ -23,11 +23,11 @@ final class StoreKitManager: NSObject {
   ) {
 		getProducts(withIds: response.productIds) { result in
       switch result {
-      case .success(let (productsById, _)):
+      case .success(let output):
         var variables: [Variable] = []
 
         for product in response.products {
-          if let skProduct = productsById[product.id] {
+          if let skProduct = output.productsById[product.id] {
             let variable = Variable(
               key: product.type.rawValue,
               value: JSON(skProduct.legacyEventData)
@@ -62,30 +62,32 @@ final class StoreKitManager: NSObject {
     }
   }
 
-  /// Loads products which aren't being substituted.
+  /// Gets non-substituted products and returns a
 	func getProducts(
     withIds responseProductIds: [String],
+    responseProducts: [Product] = [],
     substituting substituteProducts: PaywallProducts? = nil,
-    completion: ((Result<(allProductsById: [String: SKProduct], substituteProducts: [Product]), Error>) -> Void)? = nil
+    completion: ((Result<(productsById: [String: SKProduct], products: [Product]), Error>) -> Void)? = nil
   ) {
     let processingResult = removeAndStore(
       substituteProducts: substituteProducts,
-      fromResponseProductIds: responseProductIds
+      fromResponseProductIds: responseProductIds,
+      responseProducts: responseProducts
     )
 
-    productsManager.products(withIdentifiers: processingResult.responseProductIds) { [weak self] result in
+    productsManager.products(withIdentifiers: processingResult.productIdsToLoad) { [weak self] result in
       switch result {
       case .success(let responseProducts):
         guard let self = self else {
           return
         }
-        var allProductsById = processingResult.substituteProductsById
+        var productsById = processingResult.substituteProductsById
 
         for responseProduct in responseProducts {
-          allProductsById[responseProduct.productIdentifier] = responseProduct
+          productsById[responseProduct.productIdentifier] = responseProduct
           self.productsById[responseProduct.productIdentifier] = responseProduct
         }
-        completion?(.success((allProductsById, processingResult.subsituteProducts)))
+        completion?(.success((productsById, processingResult.products)))
       case .failure(let error):
         completion?(.failure(error))
       }
@@ -96,40 +98,52 @@ final class StoreKitManager: NSObject {
   /// the substitute product in memory.
   private func removeAndStore(
     substituteProducts: PaywallProducts?,
-    fromResponseProductIds responseProductIds: [String]
+    fromResponseProductIds responseProductIds: [String],
+    responseProducts: [Product]
   ) -> ProductProcessingResult {
     var responseProductIds = responseProductIds
     var substituteProductsById: [String: SKProduct] = [:]
-    var products: [Product] = []
+    var products: [Product] = responseProducts
 
-    func store(
+    func storeAndSubstitute(
       _ product: SKProduct,
-      type: ProductType
+      type: ProductType,
+      index: Int
     ) {
       let id = product.productIdentifier
       substituteProductsById[id] = product
       self.productsById[id] = product
       let product = Product(type: type, id: id)
-      products.append(product)
+      products[guarded: index] = product
+      responseProductIds.remove(safeAt: index)
     }
 
     if let primaryProduct = substituteProducts?.primary {
-      responseProductIds.remove(safeAt: 0)
-      store(primaryProduct, type: .primary)
+      storeAndSubstitute(
+        primaryProduct,
+        type: .primary,
+        index: 0
+      )
     }
     if let secondaryProduct = substituteProducts?.secondary {
-      responseProductIds.remove(safeAt: 1)
-      store(secondaryProduct, type: .secondary)
+      storeAndSubstitute(
+        secondaryProduct,
+        type: .secondary,
+        index: 1
+      )
     }
     if let tertiaryProduct = substituteProducts?.tertiary {
-      responseProductIds.remove(safeAt: 2)
-      store(tertiaryProduct, type: .tertiary)
+      storeAndSubstitute(
+        tertiaryProduct,
+        type: .tertiary,
+        index: 2
+      )
     }
-    print("resp", responseProductIds, substituteProductsById)
+
     return ProductProcessingResult(
-      responseProductIds: Set(responseProductIds),
+      productIdsToLoad: Set(responseProductIds),
       substituteProductsById: substituteProductsById,
-      subsituteProducts: products
+      products: products
     )
   }
 }
