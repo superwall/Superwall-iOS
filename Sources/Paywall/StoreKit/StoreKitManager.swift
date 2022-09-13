@@ -6,11 +6,15 @@ final class StoreKitManager: NSObject {
   var productsById: [String: SKProduct] = [:]
 
   private var hasLoadedPurchasedProducts = false
-	private let productsManager = ProductsManager()
+  private let productsManager: ProductsManager
   private struct ProductProcessingResult {
     let responseProductIds: Set<String>
-    let productsById: [String: SKProduct]
+    let substituteProductsById: [String: SKProduct]
     let subsituteProducts: [Product]
+  }
+
+  init(productsManager: ProductsManager = ProductsManager()) {
+    self.productsManager = productsManager
   }
 
 	func getVariables(
@@ -19,11 +23,11 @@ final class StoreKitManager: NSObject {
   ) {
 		getProducts(withIds: response.productIds) { result in
       switch result {
-      case .success(let output):
+      case .success(let (productsById, _)):
         var variables: [Variable] = []
 
         for product in response.products {
-          if let skProduct = output.productsById[product.id] {
+          if let skProduct = productsById[product.id] {
             let variable = Variable(
               key: product.type.rawValue,
               value: JSON(skProduct.legacyEventData)
@@ -62,38 +66,40 @@ final class StoreKitManager: NSObject {
 	func getProducts(
     withIds responseProductIds: [String],
     substituting substituteProducts: PaywallProducts? = nil,
-    completion: ((Result<(productsById: [String: SKProduct], substituteProducts: [Product]), Error>) -> Void)? = nil
+    completion: ((Result<(allProductsById: [String: SKProduct], substituteProducts: [Product]), Error>) -> Void)? = nil
   ) {
-    let processingResult = processProducts(
-      responseProductIds: responseProductIds,
-      substituteProducts: substituteProducts
+    let processingResult = removeAndStore(
+      substituteProducts: substituteProducts,
+      fromResponseProductIds: responseProductIds
     )
 
     productsManager.products(withIdentifiers: processingResult.responseProductIds) { [weak self] result in
       switch result {
-      case .success(let productsSet):
+      case .success(let responseProducts):
         guard let self = self else {
           return
         }
-        var productsById = processingResult.productsById
+        var allProductsById = processingResult.substituteProductsById
 
-        for product in productsSet {
-          productsById[product.productIdentifier] = product
-          self.productsById[product.productIdentifier] = product
+        for responseProduct in responseProducts {
+          allProductsById[responseProduct.productIdentifier] = responseProduct
+          self.productsById[responseProduct.productIdentifier] = responseProduct
         }
-        completion?(.success((processingResult.productsById, processingResult.subsituteProducts)))
+        completion?(.success((allProductsById, processingResult.subsituteProducts)))
       case .failure(let error):
         completion?(.failure(error))
       }
     }
 	}
 
-  private func processProducts(
-    responseProductIds: [String],
-    substituteProducts: PaywallProducts?
+  /// For each product to substitute, this removes the response product at the given index and stores
+  /// the substitute product in memory.
+  private func removeAndStore(
+    substituteProducts: PaywallProducts?,
+    fromResponseProductIds responseProductIds: [String]
   ) -> ProductProcessingResult {
     var responseProductIds = responseProductIds
-    var productsById: [String: SKProduct] = [:]
+    var substituteProductsById: [String: SKProduct] = [:]
     var products: [Product] = []
 
     func store(
@@ -101,7 +107,7 @@ final class StoreKitManager: NSObject {
       type: ProductType
     ) {
       let id = product.productIdentifier
-      productsById[id] = product
+      substituteProductsById[id] = product
       self.productsById[id] = product
       let product = Product(type: type, id: id)
       products.append(product)
@@ -119,10 +125,10 @@ final class StoreKitManager: NSObject {
       responseProductIds.remove(safeAt: 2)
       store(tertiaryProduct, type: .tertiary)
     }
-
+    print("resp", responseProductIds, substituteProductsById)
     return ProductProcessingResult(
       responseProductIds: Set(responseProductIds),
-      productsById: productsById,
+      substituteProductsById: substituteProductsById,
       subsituteProducts: products
     )
   }

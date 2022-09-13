@@ -349,12 +349,12 @@ final class SWDebugViewController: UIViewController {
 		if let paywallResponse = paywallResponse {
 			StoreKitManager.shared.getProducts(withIds: paywallResponse.productIds) { [weak self] result in
         switch result {
-        case .success(let output):
+        case .success(let (productsById, _)):
           onMain {
             var products: [SKProduct] = []
 
             for id in paywallResponse.productIds {
-              if let product = output.productsById[id] {
+              if let product = productsById[id] {
                 products.append(product)
               }
             }

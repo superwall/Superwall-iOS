@@ -872,7 +872,7 @@ class PaywallResponseLogicTests: XCTestCase {
       .setting(\.products, to: [.init(type: .primary, id: "abc")])
     let outcome = PaywallResponseLogic.alterResponse(
       response,
-      substituteResponseProducts: nil,
+      substituteResponseProducts: [],
       productsById: ["abc": appleProduct],
       isFreeTrialAvailableOverride: nil
     )

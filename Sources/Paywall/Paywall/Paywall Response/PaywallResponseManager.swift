@@ -191,7 +191,7 @@ final class PaywallResponseManager: NSObject {
       case .success(let output):
         self?.alterResponse(
           response,
-          withAppleProductsById: output.productsById,
+          withAppleProductsById: output.allProductsById,
           substituteResponseProducts: output.substituteProducts,
           requestHash: paywallRequestHash,
           paywallInfo: paywallInfo,

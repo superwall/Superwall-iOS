@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 24/03/2022.
 //
-
+/*
 import XCTest
 @testable import Paywall
 
@@ -14,7 +14,8 @@ class InAppReceiptTests: XCTestCase {
       return MockReceiptData.crashReceipt
     }
     let inAppReceipt = InAppReceipt(getReceiptData: getReceiptData)
-    let hasPurchased = inAppReceipt.hasPurchased(productId: "CYCLEMAPS_PREMIUM")
+    let hasPurchased = inAppReceipt.
+    hasPurchased(productId: "CYCLEMAPS_PREMIUM")
     XCTAssertFalse(hasPurchased)
   }
 
@@ -54,3 +55,4 @@ class InAppReceiptTests: XCTestCase {
     XCTAssertFalse(hasPurchased)
   }
 }
+*/
