@@ -18,7 +18,6 @@ final class InAppReceipt {
   init(getReceiptData: @escaping () -> Data? = getInAppReceiptData) {
     purchases = Self.getPurchases(using: getReceiptData)
     purchasedProductIds = Set(purchases.map { $0.productIdentifier })
-
   }
 
   /// Returns the decoded purchases of on-device receipts.

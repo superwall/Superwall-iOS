@@ -27,6 +27,4 @@ extension Array {
       }
     }
   }
-
-  
 }

@@ -73,7 +73,7 @@ class ConfigManager {
         self.config = config
         self.assignVariants()
         self.cacheConfig()
-        
+
         if afterReset {
           triggerDelayManager.handleDelayedContent(
             storage: self.storage,

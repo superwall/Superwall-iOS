@@ -7,6 +7,11 @@ final class StoreKitManager: NSObject {
 
   private var hasLoadedPurchasedProducts = false
 	private let productsManager = ProductsManager()
+  private struct ProductProcessingResult {
+    let responseProductIds: Set<String>
+    let productsById: [String: SKProduct]
+    let subsituteProducts: [Product]
+  }
 
 	func getVariables(
     forResponse response: PaywallResponse,
@@ -59,34 +64,34 @@ final class StoreKitManager: NSObject {
     substituting substituteProducts: PaywallProducts? = nil,
     completion: ((Result<(productsById: [String: SKProduct], substituteProducts: [Product]), Error>) -> Void)? = nil
   ) {
-    let (responseProductIds, substituteProductsById, products) = processProducts(
+    let processingResult = processProducts(
       responseProductIds: responseProductIds,
       substituteProducts: substituteProducts
     )
 
-		productsManager.products(withIdentifiers: responseProductIds) { [weak self] result in
+    productsManager.products(withIdentifiers: processingResult.responseProductIds) { [weak self] result in
       switch result {
       case .success(let productsSet):
         guard let self = self else {
           return
         }
-        var productsById = substituteProductsById
+        var productsById = processingResult.productsById
 
         for product in productsSet {
           productsById[product.productIdentifier] = product
           self.productsById[product.productIdentifier] = product
         }
-        completion?(.success((productsById, products)))
+        completion?(.success((processingResult.productsById, processingResult.subsituteProducts)))
       case .failure(let error):
         completion?(.failure(error))
       }
-		}
+    }
 	}
 
   private func processProducts(
     responseProductIds: [String],
     substituteProducts: PaywallProducts?
-  ) -> (reponseProductIds: Set<String>, productsById: [String: SKProduct], products: [Product]) {
+  ) -> ProductProcessingResult {
     var responseProductIds = responseProductIds
     var productsById: [String: SKProduct] = [:]
     var products: [Product] = []
@@ -115,6 +120,10 @@ final class StoreKitManager: NSObject {
       store(tertiaryProduct, type: .tertiary)
     }
 
-    return (Set(responseProductIds), productsById, products)
+    return ProductProcessingResult(
+      responseProductIds: Set(responseProductIds),
+      productsById: productsById,
+      subsituteProducts: products
+    )
   }
 }
