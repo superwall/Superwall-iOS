@@ -141,7 +141,7 @@ extension Paywall {
   ) {
 		// prevent a recursive loop
 		onMain { [weak self] in
-			guard let self else {
+			guard let self = self else {
         return
       }
 			paywallViewController.loadingState = .ready
@@ -262,7 +262,7 @@ extension Paywall: SKPaymentTransactionObserver {
 			guard paywallWasPresentedThisSession else {
         return
       }
-			guard let paywallViewController else {
+			guard let paywallViewController = paywallViewController else {
         return
       }
 			guard let product = StoreKitManager.shared.productsById[transaction.payment.productIdentifier] else {

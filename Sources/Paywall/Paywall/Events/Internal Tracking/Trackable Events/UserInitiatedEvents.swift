@@ -41,7 +41,7 @@ enum UserInitiatedEvent {
       }
     }
     var superwallParameters: [String: Any] {
-      if let pushNotificationId {
+      if let pushNotificationId = pushNotificationId {
         return ["push_notification_id": pushNotificationId]
       }
       return [:]

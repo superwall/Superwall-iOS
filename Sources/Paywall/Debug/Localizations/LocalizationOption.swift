@@ -40,7 +40,7 @@ struct LocalizationOption: Codable {
     self.country = country
     self.locale = locale
 
-    if let country {
+    if let country = country {
       self.description = "\(language) (\(country))"
     } else {
       self.description = language

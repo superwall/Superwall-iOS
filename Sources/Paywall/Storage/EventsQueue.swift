@@ -47,7 +47,7 @@ final class EventsQueue {
 
   @objc private func flush() {
     serialQueue.async { [weak self] in
-      guard let self else {
+      guard let self = self else {
         return
       }
       self.flushInternal()

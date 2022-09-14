@@ -24,7 +24,7 @@ struct PostbackRequest: Codable {
   var products: [PostbackProductIdentifier]
   var delay: Int?
   var postbackDelay: Double {
-    if let delay {
+    if let delay = delay {
       return Double(delay) / 1000
     } else {
       return Double.random(in: 2.0 ..< 10.0)

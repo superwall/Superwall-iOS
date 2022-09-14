@@ -208,22 +208,22 @@ final class SWDebugViewController: UIViewController {
 	func finishLoadingPreview() {
 		var paywallId: String?
 
-		if let paywallIdentifier {
+		if let paywallIdentifier = paywallIdentifier {
 			paywallId = paywallIdentifier
-		} else if let paywallDatabaseId {
+		} else if let paywallDatabaseId = paywallDatabaseId {
 			paywallId = paywallResponses.first(where: { $0.id == paywallDatabaseId })?.identifier
 			paywallIdentifier = paywallId
 		}
 
     // TODO: Can PaywallId actually be nil here or just a state error?
-    guard let paywallId else {
+    guard let paywallId = paywallId else {
       return
     }
 
     PaywallResponseManager.shared.getResponse(
       withIdentifiers: .init(paywallId: paywallId)
     ) { [weak self] result in
-      guard let self else {
+      guard let self = self else {
         return
       }
       switch result {
@@ -346,7 +346,7 @@ final class SWDebugViewController: UIViewController {
 	}
 
 	func showConsole() {
-		if let paywallResponse {
+		if let paywallResponse = paywallResponse {
 			StoreKitManager.shared.getProducts(withIds: paywallResponse.productIds) { [weak self] result in
         switch result {
         case .success(let output):

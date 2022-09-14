@@ -45,7 +45,7 @@ public extension Paywall {
       eventInfo,
       onPresent: onPresent,
       onDismiss: { result in
-        if let onDismiss {
+        if let onDismiss = onDismiss {
           onDismissConverter(result, completion: onDismiss)
         }
       },
@@ -76,7 +76,7 @@ public extension Paywall {
       on: viewController,
       onPresent: onPresent,
       onDismiss: { result in
-        if let onDismiss {
+        if let onDismiss = onDismiss {
           onDismissConverter(result, completion: onDismiss)
         }
       },
@@ -105,7 +105,7 @@ public extension Paywall {
     onFail: ((NSError?) -> Void)? = nil
   ) {
     let presentationInfo: PresentationInfo
-    if let identifier {
+    if let identifier = identifier {
       presentationInfo = .fromIdentifier(identifier)
     } else {
       let trackableEvent = UserInitiatedEvent.DefaultPaywall()
@@ -119,7 +119,7 @@ public extension Paywall {
       presentationStyleOverride: presentationStyleOverride,
       onPresent: onPresent,
       onDismiss: { result in
-        if let onDismiss {
+        if let onDismiss = onDismiss {
           onDismissConverter(result, completion: onDismiss)
         }
       },
@@ -161,7 +161,7 @@ public extension Paywall {
     onDismiss: ((Bool, String?, PaywallInfo?) -> Void)? = nil
   ) {
     let eventInfo: PresentationInfo
-    if let event {
+    if let event = event {
       let trackableEvent = UserInitiatedEvent.Track(
         rawName: event,
         canImplicitlyTriggerPaywall: false,

@@ -55,9 +55,9 @@ extension TriggerSession.Transaction.Product {
       let count = try values.decodeIfPresent(Int.self, forKey: .periodCount)
       let days = try values.decodeIfPresent(Int.self, forKey: .periodDays)
 
-      if let unit,
-        let count,
-        let days {
+      if let unit = unit,
+        let count = count,
+        let days = days {
         period = Period(unit: unit, count: count, days: days)
       } else {
         period = nil

@@ -56,7 +56,7 @@ final class InAppReceipt {
       ).payload
     }
 
-    guard let payload else {
+    guard let payload = payload else {
       return []
     }
 

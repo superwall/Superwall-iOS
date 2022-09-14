@@ -78,7 +78,7 @@ final class WebEventHandler: WebEventDelegate {
       window.paywall.accept64('\(params)');
     """
     delegate?.webView.evaluateJavaScript(scriptSrc) { _, error in
-      if let error {
+      if let error = error {
         Logger.debug(
           logLevel: .error,
           scope: .paywallViewController,
@@ -134,7 +134,7 @@ final class WebEventHandler: WebEventDelegate {
     )
 
     delegate?.webView.evaluateJavaScript(scriptSrc) { [weak self] _, error in
-      if let error {
+      if let error = error {
         Logger.debug(
           logLevel: .error,
           scope: .paywallViewController,
@@ -231,7 +231,7 @@ final class WebEventHandler: WebEventDelegate {
       "Paywall.shared.paywallViewController": paywallDebugDescription,
       "event": eventName
     ]
-    if let userInfo {
+    if let userInfo = userInfo {
       info = info.merging(userInfo)
     }
     Logger.debug(

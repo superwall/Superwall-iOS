@@ -56,7 +56,7 @@ struct PaywallResponse: Decodable {
   var paywalljsVersion: String?
 
   var paywallBackgroundColor: UIColor {
-    if let backgroundColorHex {
+    if let backgroundColorHex = backgroundColorHex {
       return UIColor(hexString: backgroundColorHex)
     }
 
@@ -152,7 +152,7 @@ struct PaywallResponse: Decodable {
   func getBase64EventsString(params: JSON? = nil) -> String {
     var templateVariables = self.templateVariables
 
-    if let params {
+    if let params = params {
       templateVariables["variables"]["params"] = params
     } else {
       templateVariables["variables"]["params"] = JSON([String: Any]())

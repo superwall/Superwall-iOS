@@ -55,7 +55,7 @@ final class SWBounceButton: UIButton {
 
   var customTint: UIColor? {
     didSet {
-      if let customTint {
+      if let customTint = customTint {
         backgroundColor = customTint.withAlphaComponent(0.15)
         setTitleColor(customTint, for: .normal)
       }

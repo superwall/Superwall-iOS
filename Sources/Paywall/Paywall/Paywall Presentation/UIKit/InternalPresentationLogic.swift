@@ -28,7 +28,7 @@ enum InternalPresentationLogic {
       return true
     }
 
-    guard let presentationCondition else {
+    guard let presentationCondition = presentationCondition else {
       return checkSubscriptionStatus()
     }
 

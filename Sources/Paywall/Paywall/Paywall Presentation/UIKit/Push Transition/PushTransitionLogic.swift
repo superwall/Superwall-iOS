@@ -14,7 +14,7 @@ enum PushTransitionLogic {
     animator: UIViewImplicitlyAnimating?,
     using transitionContext: UIViewControllerContextTransitioning
   ) -> UIViewImplicitlyAnimating? {
-    if let animator {
+    if let animator = animator {
       return animator
     }
 

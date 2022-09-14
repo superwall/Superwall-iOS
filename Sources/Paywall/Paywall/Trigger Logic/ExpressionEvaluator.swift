@@ -27,7 +27,7 @@ enum ExpressionEvaluator {
     // swiftlint:disable:next force_unwrapping
     let jsCtx = JSContext()!
     jsCtx.exceptionHandler = { (_, value: JSValue?) in
-      guard let value else {
+      guard let value = value else {
         return
       }
       let stackTraceString = value

@@ -29,7 +29,7 @@ enum TriggerSessionManagerLogic {
 
     // Get the name of the presenting view controller
     var presentedOn: String?
-    if let presentingViewController {
+    if let presentingViewController = presentingViewController {
       presentedOn = String(describing: type(of: presentingViewController))
     }
 
@@ -90,7 +90,7 @@ enum TriggerSessionManagerLogic {
       )
     }
 
-    if let paywallResponse {
+    if let paywallResponse = paywallResponse {
       let paywallInfo = paywallResponse.getPaywallInfo(fromEvent: presentationInfo.eventData)
 
       paywall = TriggerSession.Paywall(

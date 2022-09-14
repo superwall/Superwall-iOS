@@ -1,4 +1,4 @@
-// swift-tools-version:5.7
+// swift-tools-version:5.5
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -7,7 +7,7 @@ let package = Package(
   name: "Paywall",
   platforms: [
     .iOS("11.2"),
-    .macOS(.v10_13),
+    .macOS(.v10_12),
     .watchOS("6.2")
   ],
   products: [

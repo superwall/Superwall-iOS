@@ -70,7 +70,7 @@ final class SWDebugManager {
 
 	func presentDebugger(withPaywallId paywallDatabaseId: String? = nil) {
 		isDebuggerLaunched = true
-		if let viewController {
+		if let viewController = viewController {
 			viewController.paywallDatabaseId = paywallDatabaseId
 			viewController.loadPreview()
 			UIViewController.topMostViewController?.present(

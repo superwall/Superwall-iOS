@@ -112,7 +112,7 @@ class Cache {
       memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
     }
 
-    if let data {
+    if let data = data {
       return NSKeyedUnarchiver.unarchiveObject(with: data) as? Key.Value
     }
     return nil
@@ -184,7 +184,7 @@ class Cache {
     toDirectory directory: SearchPathDirectory
   ) {
     ioQueue.async { [weak self] in
-      guard let self else {
+      guard let self = self else {
         return
       }
       let directoryUrl = self.getDirectoryUrl(from: directory)
@@ -220,7 +220,7 @@ class Cache {
     fromDirectory directory: SearchPathDirectory
   ) {
     ioQueue.async { [weak self] in
-      guard let self else {
+      guard let self = self else {
         return
       }
       do {
@@ -254,7 +254,7 @@ extension Cache {
 
   private func cleanDiskCache() {
     ioQueue.async { [weak self] in
-      guard let self else {
+      guard let self = self else {
         return
       }
       do {
@@ -283,7 +283,7 @@ extension Cache {
   @objc private func cleanExpiredDiskCache() {
     // Do things in cocurrent io queue
     ioQueue.async { [weak self] in
-      guard let self else {
+      guard let self = self else {
         return
       }
       var (URLsToDelete, diskCacheSize, cachedFiles) = self.travelCachedFiles()
@@ -373,7 +373,7 @@ extension Cache {
           }
 
           // If this file is expired and not recently accessed, add it to URLsToDelete
-          if let expiredDate,
+          if let expiredDate = expiredDate,
             let lastAccessData = resourceValues.contentAccessDate,
             (lastAccessData as NSDate).laterDate(expiredDate) == expiredDate {
             urlsToDelete.append(fileUrl)

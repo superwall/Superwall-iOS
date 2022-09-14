@@ -50,7 +50,7 @@ class SessionEventsQueue {
 
   func enqueue(_ triggerSession: TriggerSession) {
     serialQueue.async { [weak self] in
-      guard let self else {
+      guard let self = self else {
         return
       }
       self.triggerSessions.append(triggerSession)
@@ -60,7 +60,7 @@ class SessionEventsQueue {
 
   func enqueue(_ transaction: TransactionModel) {
     serialQueue.async { [weak self] in
-      guard let self else {
+      guard let self = self else {
         return
       }
       self.transactions.append(transaction)
@@ -70,7 +70,7 @@ class SessionEventsQueue {
 
   func enqueue(_ triggerSessions: [TriggerSession]) {
     serialQueue.async { [weak self] in
-      guard let self else {
+      guard let self = self else {
         return
       }
       self.triggerSessions += triggerSessions

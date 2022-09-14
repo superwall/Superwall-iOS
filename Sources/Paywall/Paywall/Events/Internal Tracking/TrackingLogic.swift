@@ -77,7 +77,7 @@ enum TrackingLogic {
 
   /// Makes optional variables non-optional. Removes `nil`, `NSArray`, `NSDictionary`, and anything that can't be `JSON`, `Date` or `URL`.
   private static func clean(input: Any?) -> Any? {
-    guard let input else {
+    guard let input = input else {
       return nil
     }
     if input is NSArray {

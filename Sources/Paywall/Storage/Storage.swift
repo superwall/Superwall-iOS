@@ -191,21 +191,21 @@ class Storage {
   }
 
   private func save() {
-    if let appUserId {
+    if let appUserId = appUserId {
       cache.write(appUserId, forType: AppUserId.self)
     }
 
-    if let aliasId {
+    if let aliasId = aliasId {
       cache.write(aliasId, forType: AliasId.self)
     }
 
     var standardUserAttributes: [String: Any] = [:]
 
-    if let aliasId {
+    if let aliasId = aliasId {
       standardUserAttributes["aliasId"] = aliasId
     }
 
-    if let appUserId {
+    if let appUserId = aliasId {
       standardUserAttributes["appUserId"] = appUserId
     }
 
@@ -270,7 +270,7 @@ class Storage {
   }
 
   func getConfirmedAssignments() -> [Experiment.ID: Experiment.Variant] {
-    if let confirmedAssignments {
+    if let confirmedAssignments = confirmedAssignments {
       return confirmedAssignments
     } else {
       let assignments = cache.read(ConfirmedAssignments.self) ?? [:]

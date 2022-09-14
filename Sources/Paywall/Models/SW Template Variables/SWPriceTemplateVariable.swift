@@ -24,7 +24,7 @@ struct SWPriceTemplateVariable: Encodable {
     locale: Locale,
     period: SWProductSubscriptionPeriod?
   ) {
-    if let period {
+    if let period = period {
       self.default = SWProductNumberGroup(
         value: period.price(for: value, in: period.colloquialUnit),
         format: .currency,

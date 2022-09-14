@@ -175,10 +175,10 @@ enum ConfigLogic {
     config: Config?,
     deviceHelper: DeviceHelper = .shared
   ) -> PaywallResponse? {
-    guard let paywallId else {
+    guard let paywallId = paywallId else {
       return nil
     }
-    guard let config else {
+    guard let config = config else {
       return nil
     }
 

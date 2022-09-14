@@ -13,7 +13,7 @@ class TriggerDelayManager {
   var hasDelay: Bool {
     let configUnavailable = ConfigManager.shared.config == nil
     var blockingAssignmentWaiting = false
-    if let preConfigAssignmentCall {
+    if let preConfigAssignmentCall = preConfigAssignmentCall {
       blockingAssignmentWaiting = preConfigAssignmentCall.isBlocking
     }
     return configUnavailable || blockingAssignmentWaiting
@@ -34,12 +34,12 @@ class TriggerDelayManager {
       storage.identify(with: appUserIdAfterReset)
     }
 
-    if let triggersToPreloadPreConfigCall {
+    if let triggersToPreloadPreConfigCall = triggersToPreloadPreConfigCall {
       configManager.preloadPaywalls(forTriggers: triggersToPreloadPreConfigCall)
       self.triggersToPreloadPreConfigCall = nil
     }
 
-    if let preConfigAssignmentCall {
+    if let preConfigAssignmentCall = preConfigAssignmentCall {
       if preConfigAssignmentCall.isBlocking {
         configManager.loadAssignments { [weak self] in
           self?.preConfigAssignmentCall = nil
