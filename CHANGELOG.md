@@ -7,6 +7,8 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ### Breaking Changes
 
 - Renamed `Paywall.trigger` to `Paywall.track`. We found that having separate implicit (`Paywall.track(...)`) and explicit (`Paywall.trigger(...)`) trigger functions caused confusion. So from now on, you'll just use `Superwall.track` for all events within your app.
+- Removes `Paywall.load(identifier:)`. This was being used to preload a paywall by identifier.
+
 
 ### Enhancements
 
