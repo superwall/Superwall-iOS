@@ -22,7 +22,7 @@ final class NetworkMock: Network {
   override func getConfig(
     withRequestId requestId: String,
     completion: @escaping (Result<Config, Error>) -> Void,
-    applicationState: UIApplication.State = UIApplication.shared.applicationState,
+    applicationState: UIApplication.State? = UIApplication.shared.applicationState,
     configManager: ConfigManager = .shared
   ) {
     getConfigCalled = true

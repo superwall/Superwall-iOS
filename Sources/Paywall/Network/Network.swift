@@ -106,10 +106,11 @@ class Network {
   func getConfig(
     withRequestId requestId: String,
     completion: @escaping (Result<Config, Error>) -> Void,
-    applicationState: UIApplication.State = UIApplication.shared.applicationState,
+    applicationState: UIApplication.State? = nil,
     configManager: ConfigManager = .shared
   ) {
     onMain { [weak self] in
+      let applicationState = applicationState ?? UIApplication.shared.applicationState
       if applicationState == .background {
         let configRequest = ConfigRequest(
           id: requestId,
