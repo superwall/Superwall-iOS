@@ -88,7 +88,7 @@ final class PaywallResponseManager: NSObject {
     substituteProducts: PaywallProducts?
   ) {
     queue.async { [weak self] in
-      guard let self = self else {
+      guard let self else {
         return
       }
       let responseLoadStartTime = Date()

@@ -286,7 +286,10 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	func loadingStateDidChange(from oldValue: PaywallLoadingState) {
 		onMain { [weak self] in
-			guard let loadingState = self?.loadingState, loadingState != oldValue else {
+			guard
+        let loadingState = self?.loadingState,
+        loadingState != oldValue
+      else {
         return
       }
 
@@ -350,7 +353,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         withTimeInterval: 5.0,
         repeats: false
       ) { [weak self] _ in
-        guard let self = self else {
+        guard let self else {
           return
         }
 
@@ -426,7 +429,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	private func configureUI() {
     DispatchQueue.main.async { [weak self] in
-      guard let self = self else {
+      guard let self else {
         return
       }
       self.webView.alpha = 0.0
@@ -516,7 +519,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       preferredStyle: .alert
     )
 
-    if let actionTitle = actionTitle {
+    if let actionTitle {
       let alertAction = UIAlertAction(
         title: actionTitle,
         style: .default
@@ -544,7 +547,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
   @objc func applicationWillResignActive(_ sender: AnyObject? = nil) {
     DispatchQueue.main.async { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       if self.loadingState == .loadingPurchase {
         self.purchaseLoader.move(up: true)
       }
@@ -553,7 +556,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
   @objc func applicationDidBecomeActive(_ sender: AnyObject? = nil) {
     DispatchQueue.main.async { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       if self.loadingState == .loadingPurchase {
         self.purchaseLoader.move(up: false)
       }

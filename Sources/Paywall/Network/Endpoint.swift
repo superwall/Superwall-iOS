@@ -28,7 +28,7 @@ struct Endpoint<Response: Decodable> {
   func makeRequest(forDebugging isForDebugging: Bool) -> URLRequest? {
     let url: URL
 
-    if let components = components {
+    if let components {
       var component = URLComponents()
       component.scheme = components.scheme
       component.host = components.host
@@ -141,9 +141,9 @@ extension Endpoint where Response == PaywallResponse {
   ) -> Self {
     let bodyData: Data?
 
-    if let identifier = identifier {
+    if let identifier {
       return paywall(byIdentifier: identifier)
-    } else if let event = event {
+    } else if let event {
       let bodyDict = ["event": event.jsonData]
       bodyData = try? JSONEncoder.toSnakeCase.encode(bodyDict)
     } else {

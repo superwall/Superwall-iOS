@@ -61,7 +61,7 @@ class ConfigManager {
     afterReset: Bool = false
   ) {
     network.getConfig(withRequestId: requestId) { [weak self] result in
-      guard let self = self else {
+      guard let self else {
         return
       }
       switch result {
@@ -100,7 +100,7 @@ class ConfigManager {
   }
 
   @objc private func applicationDidBecomeActive() {
-    guard let configRequest = configRequest else {
+    guard let configRequest else {
       return
     }
     network.getConfig(
@@ -136,7 +136,7 @@ class ConfigManager {
       return
     }
     network.getAssignments { [weak self] result in
-      guard let self = self else {
+      guard let self else {
         return
       }
       switch result {
@@ -241,7 +241,7 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by the provided triggers.
   func preloadPaywalls(forTriggers triggerNames: Set<String>) {
-    guard let config = config else {
+    guard let config else {
       handlePreloadPaywallsPreConfig(forTriggers: triggerNames)
       return
     }
@@ -262,7 +262,7 @@ class ConfigManager {
 
   /// This sends product data back to the dashboard
   private func executePostback() {
-    guard let config = config else {
+    guard let config else {
       return
     }
     // TODO: Does this need to be on the main thread?

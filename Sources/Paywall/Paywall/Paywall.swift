@@ -219,7 +219,7 @@ public final class Paywall: NSObject {
     options: PaywallOptions? = nil
   ) {
 		super.init()
-		guard let apiKey = apiKey else {
+		guard let apiKey else {
 			return
 		}
     ConfigManager.shared.setOptions(options)
@@ -247,7 +247,7 @@ public final class Paywall: NSObject {
   ///     - event: The data of an analytical event data that could trigger a paywall.
 	func handleImplicitTrigger(forEvent event: EventData) {
 		onMain { [weak self] in
-			guard let self = self else {
+			guard let self else {
         return
       }
 
@@ -304,7 +304,7 @@ extension Paywall: SWPaywallViewControllerDelegate {
   ) {
 		// TODO: log this
 		onMain { [weak self] in
-      guard let self = self else {
+      guard let self else {
         return
       }
       switch result {

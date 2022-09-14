@@ -131,17 +131,17 @@ extension TriggerSession.Transaction {
       let count = try values.decodeIfPresent(Int.self, forKey: .periodCount)
       let days = try values.decodeIfPresent(Int.self, forKey: .periodDays)
 
-      if let unit = unit,
-        let count = count,
-        let days = days {
+      if let unit,
+        let count,
+        let days {
         period = Period(unit: unit, count: count, days: days)
       }
 
       let discountPrice = try values.decodeIfPresent(String.self, forKey: .discountPrice)
       let discountType = try values.decodeIfPresent(SWProductDiscount.DiscountType.self, forKey: .discountType)
 
-      if let discountPrice = discountPrice,
-        let discountType = discountType {
+      if let discountPrice,
+        let discountType {
         discount = Discount(
           priceDescription: discountPrice,
           type: discountType

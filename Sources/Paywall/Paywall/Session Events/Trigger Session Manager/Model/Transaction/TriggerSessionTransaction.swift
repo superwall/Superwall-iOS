@@ -77,11 +77,11 @@ extension TriggerSession {
       let abandon = try values.decodeIfPresent(Int.self, forKey: .abandonCount)
       let restore = try values.decodeIfPresent(Int.self, forKey: .restoreCount)
 
-      if let start = start,
-        let complete = complete,
-        let fail = fail,
-        let abandon = abandon,
-        let restore = restore {
+      if let start,
+        let complete,
+        let fail,
+        let abandon,
+        let restore {
         self.count = Count(
           start: start,
           complete: complete,

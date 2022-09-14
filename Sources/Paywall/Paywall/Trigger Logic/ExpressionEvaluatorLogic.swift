@@ -14,7 +14,7 @@ enum ExpressionEvaluatorLogic {
     storage: Storage
   ) -> Bool {
     if ruleMatched {
-      guard let occurrence = occurrence else {
+      guard let occurrence else {
         Logger.debug(
           logLevel: .debug,
           scope: .paywallPresentation,

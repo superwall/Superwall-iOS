@@ -155,7 +155,7 @@ extension SWConsoleViewController: UITableViewDelegate, UITableViewDataSource {
     cell.textLabel?.text = value
     cell.textLabel?.textColor = .white
     let text: String
-    if let selectedProduct = selectedProduct {
+    if let selectedProduct {
       text = "\(selectedProduct).\(key)"
     } else {
       text = key

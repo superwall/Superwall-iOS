@@ -71,7 +71,7 @@ class CustomURLSession {
       let requestDuration = Date().timeIntervalSince1970 - startTime
 
       do {
-        guard let data = data else {
+        guard let data else {
           return completion(.failure(error ?? NetworkError.unknown))
         }
         var requestId = "unknown"

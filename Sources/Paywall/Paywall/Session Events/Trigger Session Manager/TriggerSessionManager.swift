@@ -122,7 +122,7 @@ final class TriggerSessionManager {
       return
     }
 
-    if let triggerResult = triggerResult {
+    if let triggerResult {
       let trackedEvent = SuperwallEvent.TriggerFire(
         triggerResult: triggerResult,
         triggerName: eventName

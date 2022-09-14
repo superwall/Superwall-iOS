@@ -236,8 +236,6 @@ struct JSON {
         rawString = string
       case _ as NSNull:
         type = .null
-      case nil:
-        type = .null
       case let array as [Any]:
         type = .array
         rawArray = array
@@ -837,7 +835,7 @@ extension JSON {
         }
     }
     func exists() -> Bool {
-        if let errorValue = error, (400...1000).contains(errorValue.errorCode) {
+        if let error, (400...1000).contains(error.errorCode) {
             return false
         }
         return true
@@ -879,7 +877,7 @@ extension JSON {
             return number?.doubleValue
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: newValue)
             } else {
                 object = NSNull()
@@ -901,7 +899,7 @@ extension JSON {
             return number?.floatValue
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: newValue)
             } else {
                 object = NSNull()
@@ -923,7 +921,7 @@ extension JSON {
             return number?.intValue
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: newValue)
             } else {
                 object = NSNull()
@@ -945,7 +943,7 @@ extension JSON {
             return number?.uintValue
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: newValue)
             } else {
                 object = NSNull()
@@ -967,7 +965,7 @@ extension JSON {
             return number?.int8Value
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: Int(newValue))
             } else {
                 object =  NSNull()
@@ -989,7 +987,7 @@ extension JSON {
             return number?.uint8Value
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: newValue)
             } else {
                 object =  NSNull()
@@ -1011,7 +1009,7 @@ extension JSON {
             return number?.int16Value
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: newValue)
             } else {
                 object =  NSNull()
@@ -1033,7 +1031,7 @@ extension JSON {
             return number?.uint16Value
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: newValue)
             } else {
                 object =  NSNull()
@@ -1055,7 +1053,7 @@ extension JSON {
             return number?.int32Value
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: newValue)
             } else {
                 object =  NSNull()
@@ -1077,7 +1075,7 @@ extension JSON {
             return number?.uint32Value
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: newValue)
             } else {
                 object =  NSNull()
@@ -1099,7 +1097,7 @@ extension JSON {
             return number?.int64Value
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: newValue)
             } else {
                 object =  NSNull()
@@ -1121,7 +1119,7 @@ extension JSON {
             return number?.uint64Value
         }
         set {
-            if let newValue = newValue {
+            if let newValue {
                 object = NSNumber(value: newValue)
             } else {
                 object =  NSNull()

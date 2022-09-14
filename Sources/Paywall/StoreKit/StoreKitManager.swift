@@ -78,7 +78,7 @@ final class StoreKitManager: NSObject {
     productsManager.products(withIdentifiers: processingResult.productIdsToLoad) { [weak self] result in
       switch result {
       case .success(let responseProducts):
-        guard let self = self else {
+        guard let self else {
           return
         }
         var productsById = processingResult.substituteProductsById

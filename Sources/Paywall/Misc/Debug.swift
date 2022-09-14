@@ -78,16 +78,16 @@ enum Logger {
     var output: [String] = []
     var dumping: [String: Any] = [:]
 
-    if let message = message {
+    if let message {
 			output.append(message)
 		}
 
-		if let info = info {
+		if let info {
 			output.append(info.debugDescription)
 			dumping["info"] = info
 		}
 
-		if let error = error {
+		if let error {
 			output.append(error.localizedDescription)
 			dumping["error"] = error
 		}

@@ -61,7 +61,7 @@ class DeviceHelper {
   }
 
 	var radioType: String {
-		guard let reachability = reachability else {
+		guard let reachability else {
 			return "No Internet"
 		}
 

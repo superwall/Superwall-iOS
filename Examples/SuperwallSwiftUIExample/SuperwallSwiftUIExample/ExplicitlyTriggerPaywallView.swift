@@ -59,6 +59,7 @@ struct ExplicitlyTriggerPaywallView: View {
         }
       }
     )
+    .accentColor(.white)
     .foregroundColor(.white)
     .background(Color.neutral)
   }

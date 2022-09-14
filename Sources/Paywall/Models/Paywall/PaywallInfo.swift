@@ -209,7 +209,7 @@ public final class PaywallInfo: NSObject {
       }
     }
 
-    if let product = product {
+    if let product {
       output["product_id"] = product.productIdentifier
       for key in product.legacyEventData.keys {
         if let value = product.legacyEventData[key] {
@@ -218,7 +218,7 @@ public final class PaywallInfo: NSObject {
       }
     }
 
-    if let otherParams = otherParams {
+    if let otherParams {
       for key in otherParams.keys {
         if let value = otherParams[key] {
           output[key] = value

@@ -53,7 +53,7 @@ final class PaywallManager {
       withIdentifiers: responseIdentifiers,
       substituteProducts: substituteProducts
     ) { [weak self] result in
-      guard let self = self else {
+      guard let self else {
         return
       }
       switch result {

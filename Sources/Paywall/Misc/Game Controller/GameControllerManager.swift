@@ -22,7 +22,7 @@ final class GameControllerManager: NSObject {
     _ value: Float
   ) {
 		DispatchQueue.main.async { [weak self] in
-			guard let self = self else {
+			guard let self else {
         return
       }
 			let event = GameControllerEvent(
@@ -42,7 +42,7 @@ final class GameControllerManager: NSObject {
     _ y: Float
   ) {
 		DispatchQueue.main.async { [weak self] in
-			guard let self = self else {
+			guard let self else {
         return
       }
 			let event = GameControllerEvent(

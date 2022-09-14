@@ -24,6 +24,8 @@ struct PaywallOptionsListView: View {
           .padding()
       }
     }
+    .scrollDisabled(true)
+    .scrollContentBackground(.hidden)
     .listRowBackground(Color.neutral)
   }
 }
