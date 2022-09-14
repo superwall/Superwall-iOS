@@ -209,12 +209,11 @@ enum PaywallResponseLogic {
 
   static func alterResponse(
     _ response: PaywallResponse,
-    substituteResponseProducts: [Product]?,
+    products: [Product],
     productsById: [String: SKProduct],
     isFreeTrialAvailableOverride: Bool?
   ) -> (response: PaywallResponse, resetFreeTrialOverride: Bool) {
     var response = response
-    let products = substituteResponseProducts ?? response.products
 
     response.products = products
     let outcome = getVariablesAndFreeTrial(
@@ -235,7 +234,7 @@ enum PaywallResponseLogic {
     fromProducts products: [Product],
     productsById: [String: SKProduct],
     isFreeTrialAvailableOverride: Bool?,
-    hasPurchased: @escaping (String) -> Bool = InAppReceipt().hasPurchased(productId:)
+    hasPurchased: @escaping (String) -> Bool = InAppReceipt.shared.hasPurchasedInSubscriptionGroupOfProduct(withId:)
   ) -> ProductProcessingOutcome {
     var legacyVariables: [Variable] = []
     var newVariables: [ProductVariable] = []

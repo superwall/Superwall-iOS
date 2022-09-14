@@ -812,30 +812,13 @@ class PaywallResponseLogicTests: XCTestCase {
 
   // MARK: - alterResponse
 
-  func test_alterResponse_withSubstituteProducts() {
+  func test_alterResponse() {
     let appleProduct = MockSkProduct()
     let response = PaywallResponse.stub()
       .setting(\.products, to: [.init(type: .primary, id: "def")])
     let outcome = PaywallResponseLogic.alterResponse(
       response,
-      substituteResponseProducts: [.init(type: .primary, id: "abc")],
-      productsById: ["abc": appleProduct],
-      isFreeTrialAvailableOverride: nil
-    )
-
-    XCTAssertEqual(outcome.response.products.count, 1)
-    XCTAssertEqual(outcome.response.products.first!.id, "abc")
-    XCTAssertEqual(outcome.response.products.first!.type, .primary)
-    XCTAssertEqual(outcome.response.swProducts?.first!.productIdentifier, appleProduct.swProduct.productIdentifier)
-  }
-
-  func test_alterResponse_withoutSubstituteProducts() {
-    let appleProduct = MockSkProduct()
-    let response = PaywallResponse.stub()
-      .setting(\.products, to: [.init(type: .primary, id: "abc")])
-    let outcome = PaywallResponseLogic.alterResponse(
-      response,
-      substituteResponseProducts: nil,
+      products: [.init(type: .primary, id: "abc")],
       productsById: ["abc": appleProduct],
       isFreeTrialAvailableOverride: nil
     )
