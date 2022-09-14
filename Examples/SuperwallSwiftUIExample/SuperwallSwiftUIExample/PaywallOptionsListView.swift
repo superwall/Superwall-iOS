@@ -9,21 +9,36 @@ import SwiftUI
 import UIKit
 
 struct PaywallOptionsListView: View {
-  init() {
+  @Binding var path: [Destination]
+
+  init(path: Binding<[Destination]>) {
+    self._path = path
     UITableView.appearance().backgroundColor = .neutral
   }
 
   var body: some View {
     List {
-      NavigationLink(destination: ExplicitlyTriggerPaywallView()) {
-        Text("Explicitly Triggering a Paywall")
-          .padding()
-      }
-      NavigationLink(destination: ImplicitlyTriggerPaywallView()) {
-        Text("Implicitly Triggering a Paywall")
-          .padding()
-      }
+      Button(
+        action: {
+          path.append(.explicit)
+        },
+        label: {
+          Text("Explicitly Triggering a Paywall")
+            .padding()
+        }
+      )
+
+      Button(
+        action: {
+          path.append(.implicit)
+        },
+        label: {
+          Text("Implicitly Triggering a Paywall")
+            .padding()
+        }
+      )
     }
+    .foregroundColor(.neutral)
     .scrollDisabled(true)
     .scrollContentBackground(.hidden)
     .listRowBackground(Color.neutral)
@@ -32,6 +47,6 @@ struct PaywallOptionsListView: View {
 
 struct PaywallOptionsListView_Previews: PreviewProvider {
   static var previews: some View {
-    PaywallOptionsListView()
+    PaywallOptionsListView(path: .constant([]))
   }
 }
