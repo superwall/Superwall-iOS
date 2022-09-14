@@ -45,10 +45,10 @@ final class TrackEventModel {
   // The below function gives an example of how to track an event using Combine publishers:
 
   /*
-   func trackEventUsingCombine() {
-   cancellable = Paywall
-     .track(event: "MyEvent")
-     .sink { paywallState in
+  func trackEventUsingCombine() {
+    cancellable = Paywall
+      .track(event: "MyEvent")
+      .sink { paywallState in
        switch paywallState {
        case .presented(let paywallInfo):
          print("paywall info is", paywallInfo)
@@ -73,6 +73,6 @@ final class TrackEventModel {
            print("Failed to present paywall. Consider a native paywall fallback", error)
          }
        }
-     }
+      }
    */
 }
