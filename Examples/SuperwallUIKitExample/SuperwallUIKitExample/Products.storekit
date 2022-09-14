@@ -46,35 +46,6 @@
           "referenceName" : "sw_8999_yr",
           "subscriptionGroupID" : "CC896C93",
           "type" : "RecurringSubscription"
-        },
-        {
-          "adHocOffers" : [
-
-          ],
-          "codeOffers" : [
-
-          ],
-          "displayPrice" : "89.99",
-          "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "33FC55A9",
-          "introductoryOffer" : {
-            "internalID" : "5DE86086",
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P1W"
-          },
-          "localizations" : [
-            {
-              "description" : "with a free 7 day trial",
-              "displayName" : "Yearly Subscription",
-              "locale" : "en_US"
-            }
-          ],
-          "productID" : "sk.superwall.annual.89.99_2",
-          "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "sw_8999_yr2",
-          "subscriptionGroupID" : "CC896C93",
-          "type" : "RecurringSubscription"
         }
       ]
     }
