@@ -9,10 +9,22 @@ import Foundation
 
 extension Array {
   /// Makes sure that the element is within the bounds of the array: O(1)
-  subscript(guarded idx: Int) -> Element? {
-    guard (startIndex..<endIndex).contains(idx) else {
-      return nil
+  subscript(guarded index: Int) -> Element? {
+    get {
+      guard (startIndex..<endIndex).contains(index) else {
+        return nil
+      }
+      return self[index]
     }
-    return self[idx]
+    set(newValue) {
+      guard let newValue = newValue else {
+        return
+      }
+      if index >= endIndex {
+        append(newValue)
+      } else {
+        self[index] = newValue
+      }
+    }
   }
 }

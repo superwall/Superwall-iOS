@@ -11,8 +11,6 @@ import Combine
 final class StoreKitService: NSObject, ObservableObject {
   static let shared = StoreKitService()
   var isSubscribed = CurrentValueSubject<Bool, Never>(false)
-  private(set) var purchasedIdentifiers = Set<String>()
-  private var productIdsToName: [String: String] = [:]
   enum StoreError: Error {
     case failedVerification
   }

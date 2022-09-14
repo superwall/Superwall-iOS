@@ -12,6 +12,7 @@ final class MockSkProduct: SKProduct {
   private let internalIntroPeriod: MockIntroductoryPeriod?
   private let internalSubscriptionPeriod: SKProductSubscriptionPeriod?
   private let internalProductIdentifier: String?
+  private let internalSubscriptionGroupIdentifier: String?
 
   override var productIdentifier: String {
     return internalProductIdentifier ?? super.productIdentifier
@@ -31,13 +32,20 @@ final class MockSkProduct: SKProduct {
     return 0
   }
 
+  @available(iOS 12.0, *)
+  override var subscriptionGroupIdentifier: String? {
+    return internalSubscriptionGroupIdentifier ?? super.subscriptionGroupIdentifier
+  }
+
   init(
     subscriptionPeriod: SKProductSubscriptionPeriod? = nil,
     productIdentifier: String? = nil,
-    introPeriod: MockIntroductoryPeriod? = nil
+    introPeriod: MockIntroductoryPeriod? = nil,
+    subscriptionGroupIdentifier: String? = nil
   ) {
     self.internalSubscriptionPeriod = subscriptionPeriod
     self.internalProductIdentifier = productIdentifier
     self.internalIntroPeriod = introPeriod
+    self.internalSubscriptionGroupIdentifier = subscriptionGroupIdentifier
   }
 }

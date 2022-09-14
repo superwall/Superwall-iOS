@@ -10,7 +10,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ---
 
-## 2.4.2
+## 2.4.2 (Upcoming release)
 
 ### Enhancements
 
@@ -19,9 +19,12 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Adds feature flags under the hood so that when we introduce new features we can turn them on for specific organizations and apps.
 - Adds the ability to specify `SKProducts` with a trigger. These override the products defined on the dashboard for the paywall. You do this by creating a `PaywallProducts` object and calling `Paywall.trigger(event: "event", products: products)`.
 
-### Fixes 
+### Fixes
 
-- Shimmer view is no longer visible beneath a paywall's `WKWebView` when there is no `body` or `html` background color set 
+- Shimmer view is no longer visible beneath a paywall's `WKWebView` when there is no `body` or `html` background color set
+- Previously calls to `Paywall.preloadPaywalls(forTriggers:)` before `Paywall.config()` finished were ignored. This has been fixed.
+- If a user had already bought a product within a subscription group, they were still being offered a free trial on other products within that group. This is incorrect logic and this update fixes that.
+- Fixed a bug where `Paywall.reset()` couldn't be called on a background thread.
 
 ---
 
