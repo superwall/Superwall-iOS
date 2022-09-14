@@ -38,9 +38,10 @@ class ProductsManager: NSObject {
 
 		queue.async { [self] in
       // If products already cached, return them
-			let productsAlreadyCached = self.cachedProductsByIdentifier.filter { key, _ in identifiers.contains(key) }
-			if productsAlreadyCached.count == identifiers.count {
-				let productsAlreadyCachedSet = Set(productsAlreadyCached.values)
+      let productsAlreadyCached = self.cachedProductsByIdentifier.filter { key, _ in identifiers.contains(key) }
+
+      if productsAlreadyCached.count == identifiers.count {
+        let productsAlreadyCachedSet = Set(self.cachedProductsByIdentifier.map { $0.value })
 				Logger.debug(
           logLevel: .debug,
           scope: .productsManager,

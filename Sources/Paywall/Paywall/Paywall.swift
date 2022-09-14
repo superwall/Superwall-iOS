@@ -166,7 +166,7 @@ public final class Paywall: NSObject {
     shared.latestDismissedPaywallInfo = nil
     Storage.shared.clear()
     PaywallManager.shared.clearCache()
-    ConfigManager.shared.fetchConfiguration()
+    ConfigManager.shared.fetchConfiguration(afterReset: true)
 
     return shared
 	}

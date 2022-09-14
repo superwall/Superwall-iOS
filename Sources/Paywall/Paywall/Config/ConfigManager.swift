@@ -57,7 +57,8 @@ class ConfigManager {
     triggerDelayManager: TriggerDelayManager = .shared,
     appSessionManager: AppSessionManager = .shared,
     sessionEventsManager: SessionEventsManager = .shared,
-    requestId: String = UUID().uuidString
+    requestId: String = UUID().uuidString,
+    afterReset: Bool = false
   ) {
     network.getConfig(withRequestId: requestId) { [weak self] result in
       guard let self = self else {
@@ -68,15 +69,24 @@ class ConfigManager {
         self.configRequestId = requestId
         appSessionManager.appSessionTimeout = config.appSessionTimeout
         self.triggers = TriggerLogic.getTriggerDictionary(from: config.triggers)
-
         sessionEventsManager.triggerSession.createSessions(from: config)
         self.config = config
         self.assignVariants()
         self.cacheConfig()
-        triggerDelayManager.handleDelayedContent(
-          storage: self.storage,
-          configManager: self
-        )
+
+        if afterReset {
+          triggerDelayManager.handleDelayedContent(
+            storage: self.storage,
+            configManager: self
+          )
+        } else {
+          StoreKitManager.shared.loadPurchasedProducts {
+            triggerDelayManager.handleDelayedContent(
+              storage: self.storage,
+              configManager: self
+            )
+          }
+        }
       case .failure(let error):
         Logger.debug(
           logLevel: .error,
@@ -260,8 +270,8 @@ class ConfigManager {
       let productIds = config.postback.productsToPostBack.map { $0.identifier }
       StoreKitManager.shared.getProducts(withIds: productIds) { [weak self] result in
         switch result {
-        case .success(let productsById):
-          let products = productsById.values.map(PostbackProduct.init)
+        case .success(let output):
+          let products = output.productsById.values.map(PostbackProduct.init)
           let postback = Postback(products: products)
           self?.network.sendPostback(postback)
         case .failure:
