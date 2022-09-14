@@ -14,10 +14,15 @@ final class InAppReceipt {
   private let purchases: [InAppPurchase]
   private var purchasedSubscriptionGroupIds: Set<String> = []
   private var failedToLoadSubscriptionGroupIds = false
+  private let storeKitManager: StoreKitManager
 
-  init(getReceiptData: @escaping () -> Data? = getInAppReceiptData) {
-    purchases = Self.getPurchases(using: getReceiptData)
-    purchasedProductIds = Set(purchases.map { $0.productIdentifier })
+  init(
+    getReceiptData: @escaping () -> Data? = getInAppReceiptData,
+    storeKitManager: StoreKitManager = .shared
+  ) {
+    self.purchases = Self.getPurchases(using: getReceiptData)
+    purchasedProductIds = Set(self.purchases.map { $0.productIdentifier })
+    self.storeKitManager = storeKitManager
   }
 
   /// Returns the decoded purchases of on-device receipts.
@@ -67,7 +72,7 @@ final class InAppReceipt {
     }
 
     for purchase in purchases {
-      guard let product = StoreKitManager.shared.productsById[purchase.productIdentifier] else {
+      guard let product = storeKitManager.productsById[purchase.productIdentifier] else {
         continue
       }
       guard let subscriptionGroupIdentifier = product.subscriptionGroupIdentifier else {
@@ -94,7 +99,7 @@ final class InAppReceipt {
       return hasPurchasedProduct(withId: productId)
     }
 
-    if let product = StoreKitManager.shared.productsById[productId],
+    if let product = storeKitManager.productsById[productId],
       let subscriptionGroupIdentifier = product.subscriptionGroupIdentifier {
       return purchasedSubscriptionGroupIds.contains(subscriptionGroupIdentifier)
     } else {
