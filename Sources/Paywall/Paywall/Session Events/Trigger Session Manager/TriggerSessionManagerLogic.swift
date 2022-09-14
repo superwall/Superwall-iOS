@@ -37,7 +37,7 @@ enum TriggerSessionManagerLogic {
     switch presentationInfo {
     case let .implicitTrigger(eventData),
       let .explicitTrigger(eventData):
-      guard let triggerResult else {
+      guard let triggerResult = triggerResult else {
         return nil
       }
       switch triggerResult {

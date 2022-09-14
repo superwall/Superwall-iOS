@@ -254,7 +254,7 @@ final class SWDebugViewController: UIViewController {
 	}
 
   func addPaywallPreview() {
-    guard let paywallResponse else {
+    guard let paywallResponse = paywallResponse else {
       return
     }
 

@@ -81,7 +81,7 @@ class Cache {
         memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
       }
     }
-    guard let data else {
+    guard let data = data else {
       return nil
     }
 
