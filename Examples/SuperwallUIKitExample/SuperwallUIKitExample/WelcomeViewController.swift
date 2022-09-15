@@ -30,8 +30,8 @@ final class WelcomeViewController: UIViewController {
     if let name = textField.text {
       PaywallService.setName(to: name)
     }
-    let optionsViewController = PaywallOptionsViewController.fromStoryboard()
-    navigationController?.pushViewController(optionsViewController, animated: true)
+    let trackEventViewController = TrackEventViewController.fromStoryboard()
+    navigationController?.pushViewController(trackEventViewController, animated: true)
   }
 }
 

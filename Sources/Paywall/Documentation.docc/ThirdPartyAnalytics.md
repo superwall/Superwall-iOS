@@ -4,7 +4,7 @@ Tracking events sent via the ``PaywallDelegate`` in your own analytics.
 
 ## Overview
 
-Superwall automatically tracks analytical events to do with the paywall for you (see <doc:AutomaticallyTrackedEvents> for a full list). You can use ``Paywall/PaywallDelegate/trackAnalyticsEvent(withName:params:)`` to send these events to your own analytics service, such as Mixpanel.
+Superwall automatically tracks events to do with the paywall for you (see ``SuperwallEvent`` for a full list). You can use ``Paywall/PaywallDelegate/trackAnalyticsEvent(withName:params:)`` to send these events to your own analytics service, such as Mixpanel.
 
 ## Tracking Analytical Events
 
@@ -21,59 +21,79 @@ extension PaywallService: PaywallDelegate {
 }
 ```
 
-Or if you'd like to override our naming convention, you can initialize a ``Paywall/Paywall/EventName`` and use a switch statement over the possible cases:
+Or if you'd like to override our naming convention, you can initialize a ``SuperwallEvent`` and use a switch statement over the possible cases:
 
 ```swift
 func trackAnalyticsEvent(
   withName name: String,
   params: [String: Any]
 ) {
-  guard let event = Paywall.EventName(rawValue: name) else {
+  guard let event = SuperwallEvent(rawValue: name) else {
     return
   } 
   switch event {
   case .firstSeen:
-    // track your custom event
+    // Track your custom event
   case .appOpen:
-    // track your custom event
+    // Track your custom event
   case .appLaunch:
-    // track your custom event
-  case .appClose:
-    // track your custom event
+   // Track your custom event
+  case .appInstall:
+    // Track your custom event
   case .sessionStart:
-    // track your custom event
+    // Track your custom event
+  case .appClose:
+    // Track your custom event
+  case .deepLink:
+    // Track your custom event
+  case .triggerFire:
+    // Track your custom event
   case .paywallOpen:
-    // track your custom event
+    // Track your custom event
   case .paywallClose:
-    // track your custom event
+    // Track your custom event
   case .transactionStart:
-    // track your custom event
+    // Track your custom event
   case .transactionFail:
-    // track your custom event
+    // Track your custom event
   case .transactionAbandon:
-    // track your custom event
+    // Track your custom event
   case .transactionComplete:
-    // track your custom event
+    // Track your custom event
   case .subscriptionStart:
-    // track your custom event
+    // Track your custom event
   case .freeTrialStart:
-    // track your custom event
+    // Track your custom event
   case .transactionRestore:
-    // track your custom event
+    // Track your custom event
+  case .manualPresent:
+    // Track your custom event
+  case .userAttributes:
+    // Track your custom event
   case .nonRecurringProductPurchase:
-    // track your custom event
+    // Track your custom event
   case .paywallResponseLoadStart:
-    // track your custom event
+    // Track your custom event
+  case .paywallResponseLoadNotFound:
+    // Track your custom event
   case .paywallResponseLoadFail:
-    // track your custom event
+    // Track your custom event
   case .paywallResponseLoadComplete:
-    // track your custom event
+    // Track your custom event
   case .paywallWebviewLoadStart:
-    // track your custom event
+    // Track your custom event
   case .paywallWebviewLoadFail:
-    // track your custom event
+    // Track your custom event
   case .paywallWebviewLoadComplete:
-    // track your custom event
+    // Track your custom event
+  case .paywallWebviewLoadTimeout:
+    // Track your custom event
+  case .paywallProductsLoadStart:
+    // Track your custom event
+  case .paywallProductsLoadFail:
+    // Track your custom event
+  case .paywallProductsLoadComplete:
+    // Track your custom event
   }
 }
 ```

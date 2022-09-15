@@ -33,10 +33,10 @@ extension View {
   ///             Text("Collect Gems")
   ///           }
   ///         )
-  ///         .triggerPaywall(
-  ///           forEvent: "DidCollectGems",
+  ///         .track(
+  ///           event: "DidCollectGems",
   ///           withParams: ["gemCount": 30],
-  ///           shouldPresent: $showPaywall,
+  ///           shouldTrack: $showPaywall,
   ///           onPresent: { paywallInfo in
   ///             print("paywall info is", paywallInfo)
   ///           },
@@ -50,12 +50,13 @@ extension View {
   ///               print("Restored purchases, then dismissed.")
   ///             }
   ///           },
-  ///           onFail: { error in
-  ///             if error.code == 4000 {
+  ///           onSkip: { error in
+  ///             switch reason {
+  ///             case .noRuleMatch:
   ///               print("The user did not match any rules")
-  ///             } else if error.code == 4001 {
-  ///               print("The user is in a holdout group")
-  ///             } else {
+  ///             case .holdout(let experiment):
+  ///               print("The user is in a holdout group, with experiment id: \(experiment.id), group id: \(experiment.groupId), paywall id: \(experiment.variant.paywallId ?? "")")
+  ///             case .unknownEvent(let error):
   ///               print("did fail", error)
   ///             }
   ///           }
@@ -63,7 +64,7 @@ extension View {
   ///       }
   ///     }
   ///
-  /// For more information, see <doc:Triggering>.
+  /// For more information, see <doc:TrackingEvents>.
   ///
   /// **Please note**:
   /// In order to trigger a paywall, the SDK must have been configured using ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)``.
@@ -71,12 +72,12 @@ extension View {
   /// - Parameters:
   ///   - event: The name of the event you wish to trigger.
   ///   - params: Parameters you wish to pass along to the trigger.  You can refer to these parameters in the rules you define in your campaign.
-  ///   - shouldPresent: A binding to a Boolean value that determines whether to present a paywall.
+  ///   - shouldTrack: A binding to a Boolean value that determines whether to present a paywall.
   ///
-  ///     The system sets `shouldPresent` to false if the trigger is not active or when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
-  ///   - presentationStyleOverride: An optional ``PaywallPresentationStyle`` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `nil`.
+  ///     The system sets `shouldTrack` to false if the trigger is not active or when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
+  ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
   ///   - products: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defauls to `nil`.
-  ///   - onPresent: A closure that's called after the paywall is presented. Accepts a ``PaywallInfo`` object containing information about the paywall. Defaults to `nil`.
+  ///   - onPresent: A closure that's called after the paywall is presented. Accepts a `PaywallInfo` object containing information about the paywall. Defaults to `nil`.
   ///   - onDismiss: The closure to execute after the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing.
   ///
   ///     Accepts a ``PaywallDismissalResult`` object. This has a ``PaywallInfo`` property containing information about the paywall and a `state` that tells you why the paywall was dismissed.
@@ -84,27 +85,17 @@ extension View {
   ///
   ///     Defaults to `nil`.
   ///   - onSkip: A completion block that gets called when the paywall's presentation fails. Defaults to `nil`. Accepts an `NSError` with more details. It is recommended to check the error code to handle the onFail callback. If the error code is `4000`, it means the user didn't match any rules. If the error code is `4001` it means the user is in a holdout group. Otherwise, a `404` error code means an error occurred.
+  @available(*, unavailable, message: "Please use the UIKit function Superwall.track(...) instead.")
   public func triggerPaywall(
     forEvent event: String,
     withParams params: [String: Any]? = nil,
     shouldPresent: Binding<Bool>,
     products: PaywallProducts? = nil,
     presentationStyleOverride: PaywallPresentationStyle? = nil,
-    onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((PaywallDismissalResult) -> Void)? = nil,
-    onSkip: ((NSError) -> Void)? = nil
+    onPresent: ((PaywallInfo?) -> Void)? = nil,
+    onDismiss: ((PaywallDismissedResult) -> Void)? = nil,
+    onFail: ((NSError) -> Void)? = nil
   ) -> some View {
-    return self.modifier(
-      PaywallTriggerModifier(
-        shouldPresent: shouldPresent,
-        event: event,
-        params: params ?? [:],
-        products: products,
-        presentationStyleOverride: presentationStyleOverride,
-        onPresent: onPresent,
-        onDismiss: onDismiss,
-        onSkip: onSkip
-      )
-    )
+    return EmptyView()
   }
 }

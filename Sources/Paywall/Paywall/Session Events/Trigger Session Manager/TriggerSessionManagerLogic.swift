@@ -41,7 +41,8 @@ enum TriggerSessionManagerLogic {
         return nil
       }
       switch triggerResult {
-      case .unknownEvent:
+      case .error,
+        .triggerNotFound:
         // Error
         return nil
       case let .holdout(experiment):
@@ -79,7 +80,12 @@ enum TriggerSessionManagerLogic {
       }
     case .fromIdentifier:
       presentationOutcome = .paywall
-      let eventData = trackEvent(SuperwallEvent.ManualPresent()).data
+      let eventData = EventData(
+        name: "manual_present",
+        parameters: [],
+        createdAt: Date()
+      )
+
       trigger = TriggerSession.Trigger(
         eventId: eventData.id,
         eventName: eventData.name,

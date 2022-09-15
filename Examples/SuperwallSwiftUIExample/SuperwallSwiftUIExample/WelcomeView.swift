@@ -32,7 +32,7 @@ struct WelcomeView: View {
         NavigationLink(
           isActive: $showTableView,
           destination: {
-            PaywallOptionsTableView()
+            TrackEventView()
           },
           label: {
             EmptyView()

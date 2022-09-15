@@ -4,14 +4,13 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
-// swiftlint:disable:all line_length
 
 import Foundation
 
 public extension Paywall {
   /// Tracks a custom analytical event with optional parameters.
   ///
-  /// Any event you track is recorded in the Superwall Dashboard. You can use these events to create implicit triggers. See <doc:Triggering> for more info.
+  /// Any event you track is recorded in the Superwall Dashboard. You can use these events to create implicit triggers. See <doc:TrackingEvents> for more info.
   ///
   /// - Parameter name: The name of your event
   /// - Parameter params: Custom parameters you'd like to include in your event. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
@@ -23,6 +22,7 @@ public extension Paywall {
   ///   ["steps_completed": 4]
   /// )
   /// ```
+  @available(*, unavailable, renamed: "track(event:params:)")
   @objc static func track(
     _ name: String,
     _ params: [String: Any] = [:]
@@ -73,6 +73,7 @@ public extension Paywall {
   ///  NSDictionary *userAttributes = @{ key : value, key2 : value2};
   ///  [Superwall setUserAttributesDictionary: userAttributes];
   ///  ```
+  @available (*, unavailable)
   @objc static func setUserAttributesDictionary(_ attributes: NSDictionary) {
     if let anyAttributes = attributes as? [String: Any] {
       mergeAttributes(anyAttributes)
@@ -96,7 +97,7 @@ public extension Paywall {
       }
     }
 
-    let trackableEvent = SuperwallEvent.Attributes(
+    let trackableEvent = InternalSuperwallEvent.Attributes(
       customParameters: customAttributes
     )
     let result = track(trackableEvent)
@@ -109,7 +110,7 @@ public extension Paywall {
   ///
   /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
   static func handleDeepLink(_ url: URL) {
-    track(SuperwallEvent.DeepLink(url: url))
+    track(InternalSuperwallEvent.DeepLink(url: url))
     SWDebugManager.shared.handle(deepLinkUrl: url)
   }
 }

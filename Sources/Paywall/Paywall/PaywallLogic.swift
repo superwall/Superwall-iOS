@@ -19,7 +19,7 @@ enum PaywallLogic {
     triggers: Set<String>,
     isPaywallPresented: Bool
   ) -> Outcome {
-    if let superwallEvent = Paywall.EventName(rawValue: eventName),
+    if let superwallEvent = SuperwallEvent(rawValue: eventName),
       superwallEvent == .deepLink {
       return .deepLinkTrigger
     }
@@ -31,7 +31,7 @@ enum PaywallLogic {
       return .dontTriggerPaywall
     }
 
-    if let superwallEvent = Paywall.EventName(rawValue: eventName) {
+    if let superwallEvent = SuperwallEvent(rawValue: eventName) {
       if superwallEvent.canImplicitlyTriggerPaywall {
         return .triggerPaywall
       } else {

@@ -9,8 +9,7 @@ Usually, to integrate the SDK into your app, you first need to have configured a
 Feature | Sample Project Location
 --- | ---
 🕹 Configuring the *Paywall* SDK | [Services/PaywallService.swift](SuperwallSwiftUIExample/Services/PaywallService.swift#L20)
-👉 Explicitly Triggering a paywall | [ExplicitlyTriggerPaywallView.swift](SuperwallSwiftUIExample/ExplicitlyTriggerPaywallView.swift#L36)
-👉 Explicitly Triggering a paywall | [ImplicitlyTriggerPaywallView.swift](SuperwallSwiftUIExample/ImplicitlyTriggerPaywallView.swift#L36)
+👉 Tracking an event | [TrackEventView.swift](SuperwallSwiftUIExample/TrackEventView.swift#L46)
 👥 Identifying the user | [Services/PaywallService.swift](SuperwallSwiftUIExample/Services/PaywallService.swift#L31)
 
 ## Requirements
@@ -78,18 +77,6 @@ Head back to the overview screen, and tap on **Explicitly Triggering a Paywall**
 
 
 Tap the **Trigger Paywall** button and you'll see the same paywall as before come up. If the trigger in the dashboard is disabled, this trigger would stop working.
-
-### Triggering a Paywall Implicitly
-
-If you don't need completion handlers for triggering a paywall, you can use `track(_:_:)`.
-
-Head back to the overview screen, and tap on **Implicitly Triggering a Paywall**. You'll see some explanatory text, and two buttons that increment and reset a counter:
-
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/3296904/158837258-ad374697-ad0b-410d-90fc-638a8514d83f.png" alt="Implicitly triggering a paywall" width="220px" />
-</p>
-
-Tap on increment 3 times. When the counter reaches 3, it will track an event, which will implicitly trigger a paywall. 
 
 ## Purchasing a subscription
 

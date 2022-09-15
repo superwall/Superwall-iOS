@@ -1,10 +1,10 @@
-# Getting Started with Paywall
+# Getting Started with Superwall
 
 Configuring the SDK and its delegate.
 
 ## Overview
 
-To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)``. You pass this function a class that conforms to ``Paywall/PaywallDelegate``, which handles actions taken on the paywall. You can then present your paywall.
+To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)``. You pass this function a class that conforms to ``PaywallDelegate``, which handles actions taken on the paywall. You can then present your paywall.
 
 ## Getting your API Key
 
@@ -17,7 +17,7 @@ On that page, you will see your **Public API Key**. Copy this for the next step.
 
 ### Configuring the SDK
 
-To configure the SDK, you call ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)`` from `application(_:didFinishLaunchingWithOptions:)`. We recommended creating a service class **PaywallService.swift** that handles your SDK configuration and delegate callbacks:
+To configure the SDK, you call ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)`` from  `application(_:didFinishLaunchingWithOptions:)`. We recommended creating a service class **PaywallService.swift** that handles your SDK configuration and delegate callbacks:
 
 ```swift
 import Paywall
@@ -92,7 +92,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 }
 ```
 
-You're now ready to trigger a paywall. See <doc:Triggering> for next steps.
+You're now ready to track an event to present your first paywall. See <doc:TrackingEvents> for next steps.
 
 ## Topics
 

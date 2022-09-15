@@ -68,7 +68,7 @@ Triggers enable you to retroactively decide where or when to show a paywall in y
 
 A trigger is an analytics event you can wire up to specific rules in a Campaign on the [Superwall Dashboard](https://superwall.com/dashboard). The Paywall SDK listens for these analytics events and evaluates their rules to determine whether or not to show a paywall when the trigger is fired.
 
-By calling [Paywall.trigger(event:onSkip:onPresent:onDismiss:)](SuperwallUIKitExample/ExplicitlyTriggerPaywallViewController.swift#L43), you explicitly trigger a paywall in response to an analytical event. In this app, we have tied an active trigger on the dashboard to the event "MyEvent". 
+By calling [Paywall.track(event:onSkip:onPresent:onDismiss:)](SuperwallUIKitExample/ExplicitlyTriggerPaywallViewController.swift#L43), you explicitly trigger a paywall in response to an analytical event. In this app, we have tied an active trigger on the dashboard to the event "MyEvent". 
 
 Head back to the overview screen, and tap on **Explicitly Triggering a Paywall**. You'll see some explanatory text and a button that triggers the paywall:
 

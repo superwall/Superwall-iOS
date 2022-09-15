@@ -403,40 +403,61 @@ final class SWDebugViewController: UIViewController {
   }
 
   func loadAndShowPaywall(freeTrialAvailable: Bool = false) {
+    guard let paywallIdentifier = paywallIdentifier else {
+      return
+    }
+
     Paywall.isFreeTrialAvailableOverride = freeTrialAvailable
 
     bottomButton.setImage(nil, for: .normal)
     bottomButton.showLoading = true
 
-    Paywall.present(
-      identifier: paywallIdentifier,
-      on: self,
-      onPresent: { [weak self] _ in
-        self?.bottomButton.showLoading = false
+    Paywall.internallyPresent(
+      .fromIdentifier(paywallIdentifier),
+      on: self
+    ) { [weak self] state in
+      guard let self = self else {
+        return
+      }
+      switch state {
+      case .presented:
+        self.bottomButton.showLoading = false
 
         // swiftlint:disable:next force_unwrapping
         let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
-        self?.bottomButton.setImage(
+        self.bottomButton.setImage(
           playButton,
           for: .normal
         )
-      },
-      onFail: { [weak self] error in
-        self?.presentAlert(title: "Error Occurred", message: error?.localizedDescription, options: [])
-        self?.bottomButton.showLoading = false
+      case .skipped(let reason):
+        var errorMessage: String?
+
+        switch reason {
+        case .holdout:
+          errorMessage = "The user was assigned to a holdout"
+        case .noRuleMatch:
+          errorMessage = "The user didn't match a rule"
+        case .triggerNotFound:
+          errorMessage = "Couldn't find trigger"
+        case .error(let error):
+          errorMessage = error.localizedDescription
+          Logger.debug(
+            logLevel: .error,
+            scope: .debugViewController,
+            message: "Failed to Show Paywall",
+            info: nil
+          )
+        }
+        self.presentAlert(title: "Paywall Skipped", message: errorMessage, options: [])
+        self.bottomButton.showLoading = false
         // swiftlint:disable:next force_unwrapping
         let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
-        self?.bottomButton.setImage(playButton, for: .normal)
-        Logger.debug(
-          logLevel: .error,
-          scope: .debugViewController,
-          message: "Failed to Show Paywall",
-          info: nil,
-          error: error
-        )
-        self?.activityIndicator.stopAnimating()
+        self.bottomButton.setImage(playButton, for: .normal)
+        self.activityIndicator.stopAnimating()
+      case .dismissed:
+        break
       }
-    )
+    }
   }
 
   var oldTintColor: UIColor? = UIColor.systemBlue

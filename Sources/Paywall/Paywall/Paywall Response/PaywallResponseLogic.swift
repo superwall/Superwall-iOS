@@ -4,7 +4,6 @@
 //
 //  Created by Yusuf Tör on 03/03/2022.
 //
-// swiftlint:disable type_body_length
 
 import Foundation
 import StoreKit
@@ -44,9 +43,10 @@ enum PaywallResponseLogic {
   struct TriggerResultOutcome {
     enum Info {
       case paywall(ResponseIdentifiers)
-      case holdout(NSError)
-      case unknownEvent(NSError)
-      case noRuleMatch(NSError)
+      case holdout(Experiment)
+      case triggerNotFound
+      case noRuleMatch
+      case error(NSError)
     }
     let info: Info
     var result: TriggerResult?
@@ -103,57 +103,23 @@ enum PaywallResponseLogic {
         result: triggerResult
       )
     case let .holdout(experiment):
-      let userInfo: [String: Any] = [
-        "experimentId": experiment.id,
-        "variantId": experiment.variant.id,
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Trigger Holdout",
-          value: "This user was assigned to a holdout in a trigger experiment",
-          comment: "ExperimentId: \(experiment.id), VariantId: \(experiment.variant.id)"
-        )
-      ]
-      let error = NSError(
-        domain: "com.superwall",
-        code: 4001,
-        userInfo: userInfo
-      )
       return TriggerResultOutcome(
-        info: .holdout(error),
+        info: .holdout(experiment),
         result: triggerResult
       )
     case .noRuleMatch:
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "No rule match",
-          value: "The user did not match any rules configured for this trigger",
-          comment: ""
-        )
-      ]
-      let error = NSError(
-        domain: "com.superwall",
-        code: 4000,
-        userInfo: userInfo
-      )
       return TriggerResultOutcome(
-        info: .noRuleMatch(error),
+        info: .noRuleMatch,
         result: triggerResult
       )
-    case .unknownEvent:
-      // create the error
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Trigger Disabled",
-          value: "There isn't a paywall configured to show in this context",
-          comment: ""
-        )
-      ]
-      let error = NSError(
-        domain: "SWTriggerDisabled",
-        code: 404,
-        userInfo: userInfo
-      )
+    case .triggerNotFound:
       return TriggerResultOutcome(
-        info: .unknownEvent(error),
+        info: .triggerNotFound,
+        result: triggerResult
+      )
+    case .error(let error):
+      return TriggerResultOutcome(
+        info: .error(error),
         result: triggerResult
       )
     }
@@ -205,13 +171,13 @@ enum PaywallResponseLogic {
   ) -> PaywallErrorResponse? {
     if let error = error as? CustomURLSession.NetworkError,
       error == .notFound {
-      let trackedEvent = SuperwallEvent.PaywallResponseLoad(
+      let trackedEvent = InternalSuperwallEvent.PaywallResponseLoad(
         state: .notFound,
         eventData: event
       )
       _ = trackEvent(trackedEvent)
     } else {
-      let trackedEvent = SuperwallEvent.PaywallResponseLoad(
+      let trackedEvent = InternalSuperwallEvent.PaywallResponseLoad(
         state: .fail,
         eventData: event
       )

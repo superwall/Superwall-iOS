@@ -48,7 +48,7 @@ class AppSessionManager {
   }
 
   @objc private func applicationWillResignActive() {
-    Paywall.track(SuperwallEvent.AppClose())
+    Paywall.track(InternalSuperwallEvent.AppClose())
     lastAppClose = Date()
     appSession.endAt = Date()
   }
@@ -65,14 +65,14 @@ class AppSessionManager {
 
     if didStartNewSession {
       appSession = AppSession()
-      Paywall.track(SuperwallEvent.SessionStart())
+      Paywall.track(InternalSuperwallEvent.SessionStart())
     } else {
       appSession.endAt = nil
     }
-    Paywall.track(SuperwallEvent.AppOpen())
+    Paywall.track(InternalSuperwallEvent.AppOpen())
 
     if !didTrackLaunch {
-      Paywall.track(SuperwallEvent.AppLaunch())
+      Paywall.track(InternalSuperwallEvent.AppLaunch())
       didTrackLaunch = true
     }
 

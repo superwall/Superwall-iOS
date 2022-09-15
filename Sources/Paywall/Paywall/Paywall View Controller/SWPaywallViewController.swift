@@ -26,18 +26,16 @@ enum PaywallLoadingState {
   case ready
 }
 
-typealias PaywallDismissalCompletionBlock = (PaywallDismissalResult) -> Void
-
 // swiftlint:disable:next type_body_length
 final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   // MARK: - Properties
 	weak var delegate: SWPaywallViewControllerDelegate?
-	var dismissalCompletion: PaywallDismissalCompletionBlock?
+	var paywallState: ((PaywallState) -> Void)?
 	var isPresented = false
 	var calledDismiss = false
   var paywallResponse: PaywallResponse
-  var presentationInfo: PresentationInfo?
   var calledByIdentifier = false
+  var eventData: EventData?
 	var readyForEventTracking = false
 	var showRefreshTimer: Timer?
 	var isSafariVCPresented = false
@@ -61,7 +59,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	var paywallInfo: PaywallInfo {
 		return paywallResponse.getPaywallInfo(
-      fromEvent: presentationInfo?.eventData,
+      fromEvent: eventData,
       calledByIdentifier: calledByIdentifier
     )
 	}
@@ -363,7 +361,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         self.exitButton.isHidden = false
         self.exitButton.alpha = 0.0
 
-        let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+        let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
           state: .timeout,
           paywallInfo: self.paywallInfo
         )
@@ -446,7 +444,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       return
     }
 
-    let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+    let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
       state: .start,
       paywallInfo: paywallInfo
     )
@@ -473,25 +471,25 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   }
 
 	func set(
-    _ presentationInfo: PresentationInfo,
-    dismissalBlock: PaywallDismissalCompletionBlock?
+    _ eventData: EventData?,
+    paywallState: ((PaywallState) -> Void)?
   ) {
-		self.presentationInfo = presentationInfo
-		self.dismissalCompletion = dismissalBlock
+		self.eventData = eventData
+		self.paywallState = paywallState
 	}
 
 	func trackOpen() {
     SessionEventsManager.shared.triggerSession.trackPaywallOpen()
     Storage.shared.saveLastPaywallView()
     Storage.shared.incrementTotalPaywallViews()
-    let trackedEvent = SuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
+    let trackedEvent = InternalSuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}
 
 	func trackClose() {
     SessionEventsManager.shared.triggerSession.trackPaywallClose()
 
-    let trackedEvent = SuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
+    let trackedEvent = InternalSuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}
 
@@ -595,9 +593,9 @@ extension SWPaywallViewController: WebEventHandlerDelegate {
 extension SWPaywallViewController {
 	func present(
     on presenter: UIViewController,
-    presentationInfo: PresentationInfo,
+    eventData: EventData?,
     presentationStyleOverride: PaywallPresentationStyle?,
-    dismissalBlock: PaywallDismissalCompletionBlock?,
+    paywallState: ((PaywallState) -> Void)?,
     completion: @escaping (Bool) -> Void
   ) {
 		if Paywall.shared.isPaywallPresented || presenter is SWPaywallViewController || isBeingPresented {
@@ -605,7 +603,7 @@ extension SWPaywallViewController {
 			return
 		} else {
 			prepareForPresentation()
-      set(presentationInfo, dismissalBlock: dismissalBlock)
+      set(eventData, paywallState: paywallState)
       setPresentationStyle(withOverride: presentationStyleOverride)
 
       presenter.present(
@@ -620,7 +618,7 @@ extension SWPaywallViewController {
 	}
 
 	func dismiss(
-    _ dismissalResult: PaywallDismissalResult,
+    _ dismissalResult: PaywallDismissedResult,
     shouldCallCompletion: Bool = true,
     completion: (() -> Void)? = nil
   ) {
@@ -660,7 +658,7 @@ extension SWPaywallViewController {
   }
 
 	func didDismiss(
-    _ dismissalResult: PaywallDismissalResult,
+    _ dismissalResult: PaywallDismissedResult,
     shouldCallCompletion: Bool = true,
     completion: (() -> Void)? = nil
   ) {
@@ -671,7 +669,7 @@ extension SWPaywallViewController {
 		Paywall.delegate?.didDismissPaywall?()
     //  loadingState = .ready
 		if shouldCallCompletion {
-			dismissalCompletion?(dismissalResult)
+      paywallState?(.dismissed(dismissalResult))
 		}
 		completion?()
 		Paywall.shared.destroyPresentingWindow()

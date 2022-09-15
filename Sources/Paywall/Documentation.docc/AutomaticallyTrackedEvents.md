@@ -4,15 +4,17 @@ Events that are automatically tracked via the SDK and power the charts in the Su
 
 ## Overview
 
-The SDK automatically tracks the below events. Some of these can trigger paywalls. We encourage you to track them in your own analytics and use them to trigger paywalls on the dashboard if supported, as described in [Triggering a Paywall](<doc:Triggering>).
+The SDK automatically tracks the events specified in ``SuperwallEvent``. Some of these can be used to present paywalls by adding them as events to a campaign.
 
-Event Name | Action | Can Trigger Paywalls
+Event Name | Action | Can Present Paywalls
 --- | --- | ---
 `app_install` | When the SDK is configured for the first time, or directly after calling ``Paywall/Paywall/reset()`` | *Yes*
 `app_launch` | When the app is launched from a cold start | *Yes*
 `session_start` | When the app is opened either from a cold start, or after at least 30 seconds since last `app_close`. | *Yes* (recommended)
+`first_seen` | When the user, regardless of whether they've logged in, was first seen on the app | *no*
 `app_close` | Anytime the app leaves the foreground | *no*
 `app_open` | Anytime the app enters the foreground | *no*
+`app_launch` | Anytime the app enters the foreground | *no*
 `paywall_open` | When a paywall is opened | *no*
 `paywall_close` | When a paywall is closed (either by user interaction or do to a transaction succeeding) | *no*
 `transaction_start` | When the payment sheet is displayed to the user | *no*

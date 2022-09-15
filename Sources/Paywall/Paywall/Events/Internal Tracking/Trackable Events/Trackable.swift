@@ -11,7 +11,7 @@ import Foundation
 protocol Trackable {
   /// The string representation of the name.
   ///
-  /// For  a `TrackableSuperwallEvent`,  this is the raw value of an ``Paywall/Paywall/EventName`` assigned to it.
+  /// For  a `TrackableSuperwallEvent`,  this is the raw value of an ``SuperwallEvent`` assigned to it.
   var rawName: String { get }
   /// Parameters that are marked with a $ when sent back to the server to be recognised as Superwall parameters.
   var superwallParameters: [String: Any] { get }

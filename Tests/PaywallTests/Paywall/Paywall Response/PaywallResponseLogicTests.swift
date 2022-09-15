@@ -176,30 +176,11 @@ class PaywallResponseLogicTests: XCTestCase {
       groupId: experimentGroupId,
       variant: variantOption.toVariant()
     )
-    guard case let .holdout(error) = outcome.info else {
+    guard case let .holdout(experiment) = outcome.info else {
       return XCTFail()
     }
 
-    let userInfo: [String: Any] = [
-      "experimentId": experimentId,
-      "variantId": variantId,
-      NSLocalizedDescriptionKey: NSLocalizedString(
-        "Trigger Holdout",
-        value: "This user was assigned to a holdout in a trigger experiment",
-        comment: "ExperimentId: \(experimentId), VariantId: \(variantId)"
-      )
-    ]
-    let expectedError = NSError(
-      domain: "com.superwall",
-      code: 4001,
-      userInfo: userInfo
-    )
-    XCTAssertEqual(error, expectedError)
-
-    guard case let .holdout(experiment: returnedExperiment) = outcome.result else {
-      return XCTFail()
-    }
-    XCTAssertEqual(expectedExperiment, returnedExperiment)
+    XCTAssertEqual(expectedExperiment, experiment)
     XCTAssertTrue(configManager.confirmedAssignment)
   }
 
@@ -237,25 +218,7 @@ class PaywallResponseLogicTests: XCTestCase {
     )
 
     // Then
-    guard case let .noRuleMatch(error) = outcome.info else {
-      return XCTFail()
-    }
-
-    let userInfo: [String: Any] = [
-      NSLocalizedDescriptionKey: NSLocalizedString(
-        "No rule match",
-        value: "The user did not match any rules configured for this trigger",
-        comment: ""
-      )
-    ]
-    let expectedError = NSError(
-      domain: "com.superwall",
-      code: 4000,
-      userInfo: userInfo
-    )
-    XCTAssertEqual(error, expectedError)
-
-    guard case .noRuleMatch = outcome.result else {
+    guard case .noRuleMatch = outcome.info else {
       return XCTFail()
     }
     XCTAssertFalse(configManager.confirmedAssignment)

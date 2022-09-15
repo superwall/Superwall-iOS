@@ -173,7 +173,7 @@ class Storage {
       return
     }
 
-    Paywall.track(SuperwallEvent.FirstSeen())
+    Paywall.track(InternalSuperwallEvent.FirstSeen())
     cache.write(true, forType: DidTrackFirstSeen.self)
 		didTrackFirstSeen = true
 	}
@@ -186,7 +186,7 @@ class Storage {
       return
     }
 
-    _ = trackEvent(SuperwallEvent.AppInstall())
+    _ = trackEvent(InternalSuperwallEvent.AppInstall())
     cache.write(true, forType: DidTrackAppInstall.self)
   }
 

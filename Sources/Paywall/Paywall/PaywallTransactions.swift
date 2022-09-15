@@ -67,7 +67,7 @@ extension Paywall {
     SessionEventsManager.shared.triggerSession.trackBeginTransaction(of: product)
 
 		let paywallInfo = paywallViewController.paywallInfo
-    let trackedEvent = SuperwallEvent.Transaction(
+    let trackedEvent = InternalSuperwallEvent.Transaction(
       state: .start,
       paywallInfo: paywallInfo,
       product: product
@@ -95,7 +95,7 @@ extension Paywall {
     )
 
     let paywallInfo = paywallViewController.paywallInfo
-    let trackedEvent = SuperwallEvent.Transaction(
+    let trackedEvent = InternalSuperwallEvent.Transaction(
       state: .complete,
       paywallInfo: paywallInfo,
       product: product
@@ -103,7 +103,7 @@ extension Paywall {
     Paywall.track(trackedEvent)
 
     if product.subscriptionPeriod == nil {
-      let trackedEvent = SuperwallEvent.NonRecurringProductPurchase(
+      let trackedEvent = InternalSuperwallEvent.NonRecurringProductPurchase(
         paywallInfo: paywallInfo,
         product: product
       )
@@ -111,13 +111,13 @@ extension Paywall {
     }
 
     if isFreeTrialAvailable {
-      let trackedEvent = SuperwallEvent.FreeTrialStart(
+      let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
         paywallInfo: paywallInfo,
         product: product
       )
       Paywall.track(trackedEvent)
     } else {
-      let trackedEvent = SuperwallEvent.SubscriptionStart(
+      let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
         paywallInfo: paywallInfo,
         product: product
       )
@@ -150,7 +150,7 @@ extension Paywall {
 				paywallViewController.loadingState = .ready
 
         let paywallInfo = paywallViewController.paywallInfo
-        let trackedEvent = SuperwallEvent.Transaction(
+        let trackedEvent = InternalSuperwallEvent.Transaction(
           state: .fail(message: error?.localizedDescription ?? ""),
           paywallInfo: paywallInfo,
           product: product
@@ -179,7 +179,7 @@ extension Paywall {
     for product: SKProduct
   ) {
 		let paywallInfo = paywallViewController.paywallInfo
-    let trackedEvent = SuperwallEvent.Transaction(
+    let trackedEvent = InternalSuperwallEvent.Transaction(
       state: .abandon,
       paywallInfo: paywallInfo,
       product: product
@@ -193,7 +193,7 @@ extension Paywall {
 
 	private func transactionWasRestored(paywallViewController: SWPaywallViewController) {
 		let paywallInfo = paywallViewController.paywallInfo
-    let trackedEvent = SuperwallEvent.Transaction(
+    let trackedEvent = InternalSuperwallEvent.Transaction(
       state: .restore,
       paywallInfo: paywallInfo,
       product: nil
@@ -215,7 +215,7 @@ extension Paywall {
     )
 
 		let paywallInfo = paywallViewController.paywallInfo
-    let trackedEvent = SuperwallEvent.Transaction(
+    let trackedEvent = InternalSuperwallEvent.Transaction(
       state: .fail(message: "Needs parental approval"),
       paywallInfo: paywallInfo,
       product: nil

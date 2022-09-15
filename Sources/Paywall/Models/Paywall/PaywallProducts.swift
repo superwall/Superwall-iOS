@@ -10,10 +10,15 @@ import StoreKit
 
 /// Defines primary, secondary and tertiary products to be used on the paywall.
 ///
-/// Pass an instance of this to ``Paywall/Paywall/trigger(event:params:on:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)`` to replace your remotely defined products.
+/// Pass an instance of this to ``Paywall/Paywall/track(event:params:paywallOverrides:paywallState:)`` to replace your remotely defined products.
 @objc public class PaywallProducts: NSObject {
+  /// The primary product for the paywall.
   var primary: SKProduct?
+
+  /// The secondary product for the paywall.
   var secondary: SKProduct?
+
+  /// The tertiary product for the paywall.
   var tertiary: SKProduct?
 
   private override init() {}
@@ -21,9 +26,9 @@ import StoreKit
   /// Define one or more products to be substituted into the paywall.
   ///
   /// - parameters:
-  ///   - primary: The primary product for your paywall.
-  ///   - secondary: The secondary product for your paywall.
-  ///   - tertiary: The tertiary product for your paywall.
+  ///   - primary: The primary product for the paywall.
+  ///   - secondary: The secondary product for the paywall.
+  ///   - tertiary: The tertiary product for the paywall.
   public init(
     primary: SKProduct? = nil,
     secondary: SKProduct? = nil,

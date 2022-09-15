@@ -89,17 +89,6 @@ final class TriggerSessionManager {
       pendingTriggerSessions[trigger.eventName] = pendingTriggerSession
     }
 
-    // Add in the default paywall session.
-    let defaultEventName = SuperwallEvent.ManualPresent().rawName
-    let defaultPaywallSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-      configRequestId: configManager.configRequestId,
-      userAttributes: storage.userAttributes,
-      isSubscribed: Paywall.shared.isUserSubscribed,
-      eventName: defaultEventName,
-      appSession: AppSessionManager.shared.appSession
-    )
-    pendingTriggerSessions[defaultEventName] = defaultPaywallSession
-
     // Send the sessions back to the server.
     enqueuePendingTriggerSessions()
   }
@@ -123,7 +112,7 @@ final class TriggerSessionManager {
     }
 
     if let triggerResult = triggerResult {
-      let trackedEvent = SuperwallEvent.TriggerFire(
+      let trackedEvent = InternalSuperwallEvent.TriggerFire(
         triggerResult: triggerResult,
         triggerName: eventName
       )
@@ -292,17 +281,12 @@ final class TriggerSessionManager {
     state: LoadState
   ) {
     if paywallId == nil {
-      // If there isn't a paywallId, it means it's started loading the default paywall.
-      // The only way we can check that is via checking the eventName.
-      let eventName = SuperwallEvent.ManualPresent().rawName
-      guard activeTriggerSession?.trigger.eventName == eventName else {
-        return
-      }
-    } else {
-      // Otherwise, we check against the databaseId of the paywall
-      guard paywallId == activeTriggerSession?.paywall?.databaseId else {
-        return
-      }
+      return
+    }
+
+    // Otherwise, we check against the databaseId of the paywall
+    guard paywallId == activeTriggerSession?.paywall?.databaseId else {
+      return
     }
 
     switch state {

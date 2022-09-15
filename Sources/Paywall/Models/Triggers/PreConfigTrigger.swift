@@ -9,10 +9,7 @@ import UIKit
 
 struct PreConfigTrigger {
   let presentationInfo: PresentationInfo
-  var presentationStyleOverride: PaywallPresentationStyle?
   var viewController: UIViewController?
-  var ignoreSubscriptionStatus = false
-  var onFail: ((NSError) -> Void)?
-  var onPresent: ((PaywallInfo) -> Void)?
-  var onDismiss: PaywallDismissalCompletionBlock?
+  var paywallOverrides: PaywallOverrides?
+  var paywallState: ((PaywallState) -> Void)?
 }

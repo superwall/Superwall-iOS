@@ -39,7 +39,7 @@ enum AssignmentLogic {
         let variant: Experiment.Variant
         var confirmableAssignment: ConfirmableAssignment?
 
-        // For a matching rule there will be an unconfirmed or confirmed variant assignment (either in memory or on disk respectively).
+        // For a matching rule there will be an unconfirmed (in-memory) or confirmed (on disk) variant assignment.
         // First check the disk, otherwise check memory.
         let confirmedAssignments = storage.getConfirmedAssignments()
         if let confirmedVariant = confirmedAssignments[rule.experiment.id] {
@@ -51,7 +51,20 @@ enum AssignmentLogic {
           )
           variant = unconfirmedVariant
         } else {
-          return Outcome(result: .unknownEvent)
+          // If no variant in memory or disk, 
+          let userInfo: [String: Any] = [
+            NSLocalizedDescriptionKey: NSLocalizedString(
+              "Not Found",
+              value: "There isn't a paywall configured to show in this context",
+              comment: ""
+            )
+          ]
+          let error = NSError(
+            domain: "SWPaywallNotFound",
+            code: 404,
+            userInfo: userInfo
+          )
+          return Outcome(result: .error(error))
         }
 
         switch variant.type {
@@ -82,7 +95,7 @@ enum AssignmentLogic {
         return Outcome(result: .noRuleMatch)
       }
     } else {
-      return Outcome(result: .unknownEvent)
+      return Outcome(result: .triggerNotFound)
     }
   }
 }

@@ -4,32 +4,41 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
+// swiftlint:disable function_body_length cyclomatic_complexity
 
 import UIKit
 
+/// The reason the paywall presentation was skipped.
+public enum PaywallSkippedReason {
+  /// The user was assigned to a holdout group.
+  case holdout(Experiment)
+
+  /// No rule was matched for this event.
+  case noRuleMatch
+
+  /// A trigger was not found for this event.
+  ///
+  /// Please make sure the trigger is enabled on the dashboard and you have the correct spelling of the event.
+  case triggerNotFound
+
+  /// An error occurred.
+  case error(Error)
+}
+
 extension Paywall {
-  // swiftlint:disable:next function_body_length cyclomatic_complexity
   static func internallyPresent(
     _ presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
-    products: PaywallProducts? = nil,
     cached: Bool = true,
-    ignoreSubscriptionStatus: Bool = false,
-    presentationStyleOverride: PaywallPresentationStyle = .none,
-    onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: PaywallDismissalCompletionBlock? = nil,
-    onSkip: ((NSError) -> Void)? = nil
+    paywallOverrides: PaywallOverrides? = nil,
+    paywallState: ((PaywallState) -> Void)? = nil
   ) {
-    let presentationStyleOverride = presentationStyleOverride == .none ? nil : presentationStyleOverride
     if TriggerDelayManager.shared.hasDelay {
       let trigger = PreConfigTrigger(
         presentationInfo: presentationInfo,
-        presentationStyleOverride: presentationStyleOverride,
         viewController: presentingViewController,
-        ignoreSubscriptionStatus: ignoreSubscriptionStatus,
-        onFail: onSkip,
-        onPresent: onPresent,
-        onDismiss: onDismiss
+        paywallOverrides: paywallOverrides,
+        paywallState: paywallState
       )
       TriggerDelayManager.shared.cachePreConfigTrigger(trigger)
       return
@@ -40,15 +49,13 @@ extension Paywall {
       "on": presentingViewController.debugDescription,
       "fromEvent": eventData.debugDescription as Any,
       "cached": cached,
-      "presentationCompletion": onPresent.debugDescription,
-      "dismissalCompletion": onDismiss.debugDescription,
-      "fallback": onSkip.debugDescription
+      "paywallState": paywallState.debugDescription
     ]
 
     Logger.debug(
       logLevel: .debug,
       scope: .paywallPresentation,
-      message: "Called Paywall.present",
+      message: "Called Paywall.track",
       info: debugInfo
     )
 
@@ -68,15 +75,26 @@ extension Paywall {
     switch triggerOutcome.info {
     case .paywall(let responseIdentifiers):
       identifiers = responseIdentifiers
-    case let .holdout(error),
-      let .noRuleMatch(error):
+    case .holdout(let experiment):
       SessionEventsManager.shared.triggerSession.activateSession(
         for: presentationInfo,
         on: presentingViewController,
         triggerResult: triggerOutcome.result
       )
-      fallthrough
-    case let .unknownEvent(error):
+      paywallState?(.skipped(.holdout(experiment)))
+      return
+    case .noRuleMatch:
+      SessionEventsManager.shared.triggerSession.activateSession(
+        for: presentationInfo,
+        on: presentingViewController,
+        triggerResult: triggerOutcome.result
+      )
+      paywallState?(.skipped(.noRuleMatch))
+      return
+    case .triggerNotFound:
+      paywallState?(.skipped(.triggerNotFound))
+      return
+    case let .error(error):
       Logger.debug(
         logLevel: .error,
         scope: .paywallPresentation,
@@ -84,14 +102,14 @@ extension Paywall {
         info: debugInfo,
         error: error
       )
-      onSkip?(error)
+      paywallState?(.skipped(.error(error)))
       return
     }
 
     PaywallManager.shared.getPaywallViewController(
       from: eventData,
       responseIdentifiers: identifiers,
-      substituteProducts: products,
+      substituteProducts: paywallOverrides?.products,
       cached: cached && !SWDebugManager.shared.isDebuggerLaunched
     ) { result in
       // if there's a paywall being presented, don't do anything
@@ -110,7 +128,7 @@ extension Paywall {
         if InternalPresentationLogic.shouldNotDisplayPaywall(
           isUserSubscribed: shared.isUserSubscribed,
           isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
-          shouldIgnoreSubscriptionStatus: ignoreSubscriptionStatus,
+          shouldIgnoreSubscriptionStatus: paywallOverrides?.ignoreSubscriptionStatus,
           presentationCondition: paywallViewController.paywallResponse.presentationCondition
         ) {
           return
@@ -137,23 +155,23 @@ extension Paywall {
             error: nil
           )
           if !shared.isPaywallPresented {
-            onSkip?(
+            paywallState?(.skipped(.error(
               shared.presentationError(
                 domain: "SWPresentationError",
                 code: 101,
                 title: "No UIViewController to present paywall on",
                 value: "This usually happens when you call this method before a window was made key and visible."
               )
-            )
+            )))
           }
           return
         }
 
         paywallViewController.present(
           on: presenter,
-          presentationInfo: presentationInfo,
-          presentationStyleOverride: presentationStyleOverride,
-          dismissalBlock: onDismiss
+          eventData: eventData,
+          presentationStyleOverride: paywallOverrides?.presentationStyle,
+          paywallState: paywallState
         ) { success in
           if success {
             self.presentAgain = {
@@ -164,13 +182,11 @@ extension Paywall {
                 presentationInfo,
                 on: presentingViewController,
                 cached: false,
-                presentationStyleOverride: presentationStyleOverride ?? .none,
-                onPresent: onPresent,
-                onDismiss: onDismiss,
-                onSkip: onSkip
+                paywallOverrides: paywallOverrides,
+                paywallState: paywallState
               )
             }
-            onPresent?(paywallViewController.paywallInfo)
+            paywallState?(.presented(paywallViewController.paywallInfo))
           } else {
             Logger.debug(
               logLevel: .info,
@@ -184,7 +200,7 @@ extension Paywall {
         if InternalPresentationLogic.shouldNotDisplayPaywall(
           isUserSubscribed: shared.isUserSubscribed,
           isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
-          shouldIgnoreSubscriptionStatus: ignoreSubscriptionStatus
+          shouldIgnoreSubscriptionStatus: paywallOverrides?.ignoreSubscriptionStatus
         ) {
           return
         }
@@ -196,7 +212,8 @@ extension Paywall {
           info: debugInfo,
           error: error
         )
-        onSkip?(error)
+
+        paywallState?(.skipped(.error(error)))
       }
     }
   }
@@ -219,7 +236,7 @@ extension Paywall {
 
   func dismiss(
     _ paywallViewController: SWPaywallViewController,
-    state: PaywallDismissalResult.DismissState,
+    state: PaywallDismissedResult.DismissState,
     completion: (() -> Void)? = nil
   ) {
     onMain {

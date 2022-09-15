@@ -15,7 +15,7 @@ import XCTest
 class OccurrenceLogicTests: XCTestCase {
   var coreDataManager: CoreDataManager!
   var coreDataStack: CoreDataStackMock!
-  let eventName = "EventName"
+  let eventName = "SuperwallEvent"
 
   override func setUp() {
     super.setUp()
