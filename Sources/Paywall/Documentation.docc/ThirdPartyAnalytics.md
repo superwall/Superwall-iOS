@@ -33,47 +33,67 @@ func trackAnalyticsEvent(
   } 
   switch event {
   case .firstSeen:
-    // track your custom event
+    // Track your custom event
   case .appOpen:
-    // track your custom event
+    // Track your custom event
   case .appLaunch:
-    // track your custom event
-  case .appClose:
-    // track your custom event
+   // Track your custom event
+  case .appInstall:
+    // Track your custom event
   case .sessionStart:
-    // track your custom event
+    // Track your custom event
+  case .appClose:
+    // Track your custom event
+  case .deepLink:
+    // Track your custom event
+  case .triggerFire:
+    // Track your custom event
   case .paywallOpen:
-    // track your custom event
+    // Track your custom event
   case .paywallClose:
-    // track your custom event
+    // Track your custom event
   case .transactionStart:
-    // track your custom event
+    // Track your custom event
   case .transactionFail:
-    // track your custom event
+    // Track your custom event
   case .transactionAbandon:
-    // track your custom event
+    // Track your custom event
   case .transactionComplete:
-    // track your custom event
+    // Track your custom event
   case .subscriptionStart:
-    // track your custom event
+    // Track your custom event
   case .freeTrialStart:
-    // track your custom event
+    // Track your custom event
   case .transactionRestore:
-    // track your custom event
+    // Track your custom event
+  case .manualPresent:
+    // Track your custom event
+  case .userAttributes:
+    // Track your custom event
   case .nonRecurringProductPurchase:
-    // track your custom event
+    // Track your custom event
   case .paywallResponseLoadStart:
-    // track your custom event
+    // Track your custom event
+  case .paywallResponseLoadNotFound:
+    // Track your custom event
   case .paywallResponseLoadFail:
-    // track your custom event
+    // Track your custom event
   case .paywallResponseLoadComplete:
-    // track your custom event
+    // Track your custom event
   case .paywallWebviewLoadStart:
-    // track your custom event
+    // Track your custom event
   case .paywallWebviewLoadFail:
-    // track your custom event
+    // Track your custom event
   case .paywallWebviewLoadComplete:
-    // track your custom event
+    // Track your custom event
+  case .paywallWebviewLoadTimeout:
+    // Track your custom event
+  case .paywallProductsLoadStart:
+    // Track your custom event
+  case .paywallProductsLoadFail:
+    // Track your custom event
+  case .paywallProductsLoadComplete:
+    // Track your custom event
   }
 }
 ```
