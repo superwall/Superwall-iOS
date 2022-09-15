@@ -52,7 +52,7 @@ public extension Paywall {
   ///
   /// The paywall shown to the user is determined by the rules defined in the campaign. Paywalls are sticky, in that when a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
   ///
-  /// For more information, see <doc:Triggering>.
+  /// For more information, see <doc:TrackingEvents>.
   ///
   /// - Parameters:
   ///   -  event: The name of the event you wish to trigger (equivalent to event name in ``Paywall/Paywall/track(_:_:)-2vkwo``)
@@ -111,9 +111,9 @@ public extension Paywall {
   ///
   /// Before using this method, you'll first need to create a campaign and add the event to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
   ///
-  /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reassign users to the rule.
+  /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
   ///
-  /// For more information, see <doc:Triggering>.
+  /// For more information, see <doc:TrackingEvents>.
   ///
   /// - Parameters:
   ///   -  event: The name of the event you wish to track
@@ -146,9 +146,9 @@ public extension Paywall {
   ///
   /// Before using this method, you'll first need to create a campaign and add the event to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
   ///
-  /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reassign users to the rule.
+  /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
   ///
-  /// For more information, see <doc:Triggering>.
+  /// For more information, see <doc:TrackingEvents>.
   ///
   /// - Parameters:
   ///   -  event: The name of the event you wish to track

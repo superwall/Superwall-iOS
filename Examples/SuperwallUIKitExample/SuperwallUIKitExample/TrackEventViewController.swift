@@ -7,11 +7,12 @@
 
 import UIKit
 import Paywall
-// import Combine
+import Combine
 
 final class TrackEventViewController: UIViewController {
   @IBOutlet private var subscriptionLabel: UILabel!
-  // private var cancellable: AnyCancellable?
+  private var subscribedCancellable: AnyCancellable?
+  private var trackCancellable: AnyCancellable?
 
   static func fromStoryboard() -> TrackEventViewController {
     let storyboard = UIStoryboard(
@@ -33,7 +34,7 @@ final class TrackEventViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    StoreKitService.shared.isSubscribed
+    subscribedCancellable = StoreKitService.shared.isSubscribed
       .sink { [weak self] isSubscribed in
         if isSubscribed {
           self?.subscriptionLabel.text = "You currently have an active subscription. Therefore, the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions."
@@ -41,7 +42,6 @@ final class TrackEventViewController: UIViewController {
           self?.subscriptionLabel.text = "You do not have an active subscription so the paywall will show when clicking the button."
         }
       }
-      .store(in: &cancellables)
   }
 
   @IBAction private func trackEvent() {
@@ -60,7 +60,6 @@ final class TrackEventViewController: UIViewController {
         case .restored:
           print("The product was restored.")
         }
-      }
       case .skipped(let reason):
         switch reason {
         case .holdout(let experiment):
@@ -72,6 +71,7 @@ final class TrackEventViewController: UIViewController {
         case .error(let error):
           print("Failed to present paywall. Consider a native paywall fallback", error)
         }
+      }
     }
   }
 
@@ -79,7 +79,7 @@ final class TrackEventViewController: UIViewController {
 
   /*
    func trackEventUsingCombine() {
-   cancellable = Paywall
+   trackCancellable = Paywall
      .track(event: "MyEvent")
      .sink { paywallState in
        switch paywallState {

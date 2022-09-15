@@ -19,7 +19,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 ### Presenting and Dismissing a Paywall
 
-- <doc:Triggering>
+- <doc:TrackingEvents>
 - ``track(event:params:paywallOverrides:paywallState:)``
 - ``track(event:params:paywallOverrides:)``
 - ``dismiss(_:)``

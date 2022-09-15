@@ -1,4 +1,4 @@
-# Getting Started with Paywall
+# Getting Started with Superwall
 
 Configuring the SDK and its delegate.
 
@@ -92,7 +92,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 }
 ```
 
-You're now ready to trigger a paywall. See <doc:Triggering> for next steps.
+You're now ready to track an event to present your first paywall. See <doc:TrackingEvents> for next steps.
 
 ## Topics
 
