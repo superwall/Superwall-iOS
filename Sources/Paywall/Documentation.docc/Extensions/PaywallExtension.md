@@ -24,7 +24,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 - ``track(event:params:paywallOverrides:)``
 - ``dismiss(_:)``
 - ``PaywallInfo``
-- ``EventName``
+- ``SuperwallEvent``
 
 ### In-App Previews
 

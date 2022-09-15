@@ -98,7 +98,7 @@ final class PaywallResponseManager: NSObject {
         state: .start
       )
 
-      let trackedEvent = SuperwallEvent.PaywallResponseLoad(
+      let trackedEvent = InternalSuperwallEvent.PaywallResponseLoad(
         state: .start,
         eventData: event
       )
@@ -116,7 +116,7 @@ final class PaywallResponseManager: NSObject {
 
           let paywallInfo = response.getPaywallInfo(fromEvent: event)
 
-          let responseLoadEvent = SuperwallEvent.PaywallResponseLoad(
+          let responseLoadEvent = InternalSuperwallEvent.PaywallResponseLoad(
             state: .complete(paywallInfo: paywallInfo),
             eventData: event
           )
@@ -171,7 +171,7 @@ final class PaywallResponseManager: NSObject {
     var response = response
     response.productsLoadStartTime = Date()
 
-    let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+    let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
       state: .start,
       paywallInfo: paywallInfo,
       eventData: event
@@ -202,7 +202,7 @@ final class PaywallResponseManager: NSObject {
       case .failure:
         response.productsLoadFailTime = Date()
         let paywallInfo = response.getPaywallInfo(fromEvent: event)
-        let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+        let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
           state: .fail,
           paywallInfo: paywallInfo,
           eventData: event
@@ -263,7 +263,7 @@ final class PaywallResponseManager: NSObject {
       forPaywallId: paywallInfo.id,
       state: .end
     )
-    let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+    let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
       state: .complete,
       paywallInfo: paywallInfo,
       eventData: event

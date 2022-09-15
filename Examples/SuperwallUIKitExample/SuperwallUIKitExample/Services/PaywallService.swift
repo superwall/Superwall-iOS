@@ -53,7 +53,7 @@ extension PaywallService: PaywallDelegate {
     withName name: String,
     params: [String: Any]
   ) {
-    guard let event = Paywall.EventName(rawValue: name) else {
+    guard let event = SuperwallEvent(rawValue: name) else {
       return
     }
     print("analytics event called", event, params)

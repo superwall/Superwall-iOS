@@ -127,7 +127,7 @@ extension SWWebView: WKNavigationDelegate {
       state: .fail
     )
 
-    let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+    let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
       state: .fail,
       paywallInfo: paywallInfo
     )

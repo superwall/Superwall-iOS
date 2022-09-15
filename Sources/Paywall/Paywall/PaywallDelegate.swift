@@ -69,7 +69,7 @@ import StoreKit
   /// If you want the event's name as an enum, do this:
   ///
   /// ```swift
-  /// let event = Paywall.EventName(
+  /// let event = SuperwallEvent(
   ///   rawValue: name
   /// )
   /// ```

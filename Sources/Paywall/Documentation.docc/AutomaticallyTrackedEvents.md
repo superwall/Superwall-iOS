@@ -4,7 +4,7 @@ Events that are automatically tracked via the SDK and power the charts in the Su
 
 ## Overview
 
-The SDK automatically tracks the below events. Some of these can be used to present paywalls by adding them as events to a campaign.
+The SDK automatically tracks the events specified in ``SuperwallEvent``. Some of these can be used to present paywalls by adding them as events to a campaign.
 
 Event Name | Action | Can Present Paywalls
 --- | --- | ---

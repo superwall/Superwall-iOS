@@ -361,7 +361,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         self.exitButton.isHidden = false
         self.exitButton.alpha = 0.0
 
-        let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+        let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
           state: .timeout,
           paywallInfo: self.paywallInfo
         )
@@ -444,7 +444,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       return
     }
 
-    let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+    let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
       state: .start,
       paywallInfo: paywallInfo
     )
@@ -482,14 +482,14 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     SessionEventsManager.shared.triggerSession.trackPaywallOpen()
     Storage.shared.saveLastPaywallView()
     Storage.shared.incrementTotalPaywallViews()
-    let trackedEvent = SuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
+    let trackedEvent = InternalSuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}
 
 	func trackClose() {
     SessionEventsManager.shared.triggerSession.trackPaywallClose()
 
-    let trackedEvent = SuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
+    let trackedEvent = InternalSuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
     Paywall.track(trackedEvent)
 	}
 

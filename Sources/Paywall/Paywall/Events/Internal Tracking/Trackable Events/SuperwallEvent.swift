@@ -10,8 +10,8 @@ import Foundation
 import StoreKit
 
 protocol TrackableSuperwallEvent: Trackable {
-  /// The Superwall ``Paywall/Paywall/EventName`` to be tracked by this event.
-  var name: Paywall.EventName { get }
+  /// The ``SuperwallEvent`` to be tracked by this event.
+  var name: SuperwallEvent { get }
 }
 
 extension TrackableSuperwallEvent {
@@ -25,15 +25,15 @@ extension TrackableSuperwallEvent {
 }
 
 /// These are events that tracked internally and sent back to the user via the delegate.
-enum SuperwallEvent {
+enum InternalSuperwallEvent {
   struct AppOpen: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .appOpen
+    let name: SuperwallEvent = .appOpen
     var customParameters: [String: Any] = [:]
     var superwallParameters: [String: Any] = [:]
   }
 
   struct AppInstall: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .appInstall
+    let name: SuperwallEvent = .appInstall
     var customParameters: [String: Any] = [:]
     let superwallParameters: [String: Any] = [
       "application_installed_at": DeviceHelper.shared.appInstalledAtString
@@ -41,13 +41,13 @@ enum SuperwallEvent {
   }
 
   struct AppLaunch: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .appLaunch
+    let name: SuperwallEvent = .appLaunch
     var customParameters: [String: Any] = [:]
     var superwallParameters: [String: Any] = [:]
   }
 
   struct Attributes: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .userAttributes
+    let name: SuperwallEvent = .userAttributes
     let superwallParameters: [String: Any] = [
       "application_installed_at": DeviceHelper.shared.appInstalledAtString
     ]
@@ -55,7 +55,7 @@ enum SuperwallEvent {
   }
 
   struct DeepLink: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .deepLink
+    let name: SuperwallEvent = .deepLink
     let url: URL
 
     var superwallParameters: [String: Any] {
@@ -109,19 +109,19 @@ enum SuperwallEvent {
   }
 
   struct FirstSeen: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .firstSeen
+    let name: SuperwallEvent = .firstSeen
     var customParameters: [String: Any] = [:]
     var superwallParameters: [String: Any] = [:]
   }
 
   struct AppClose: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .appClose
+    let name: SuperwallEvent = .appClose
     var customParameters: [String: Any] = [:]
     var superwallParameters: [String: Any] = [:]
   }
 
   struct SessionStart: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .sessionStart
+    let name: SuperwallEvent = .sessionStart
     var customParameters: [String: Any] = [:]
     var superwallParameters: [String: Any] = [:]
   }
@@ -135,7 +135,7 @@ enum SuperwallEvent {
     }
     let state: State
 
-    var name: Paywall.EventName {
+    var name: SuperwallEvent {
       switch state {
       case .start:
         return .paywallResponseLoadStart
@@ -170,7 +170,7 @@ enum SuperwallEvent {
 
   struct TriggerFire: TrackableSuperwallEvent {
     let triggerResult: TriggerResult
-    let name: Paywall.EventName = .triggerFire
+    let name: SuperwallEvent = .triggerFire
     let triggerName: String
     var customParameters: [String: Any] = [:]
 
@@ -204,7 +204,7 @@ enum SuperwallEvent {
   }
 
   struct PaywallOpen: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .paywallOpen
+    let name: SuperwallEvent = .paywallOpen
     let paywallInfo: PaywallInfo
     var superwallParameters: [String: Any] {
       return paywallInfo.eventParams()
@@ -213,7 +213,7 @@ enum SuperwallEvent {
   }
 
   struct PaywallClose: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .paywallClose
+    let name: SuperwallEvent = .paywallClose
     let paywallInfo: PaywallInfo
     var superwallParameters: [String: Any] {
       return paywallInfo.eventParams()
@@ -231,7 +231,7 @@ enum SuperwallEvent {
     }
     let state: State
 
-    var name: Paywall.EventName {
+    var name: SuperwallEvent {
       switch state {
       case .start:
         return .transactionStart
@@ -266,7 +266,7 @@ enum SuperwallEvent {
   }
 
   struct SubscriptionStart: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .subscriptionStart
+    let name: SuperwallEvent = .subscriptionStart
     let paywallInfo: PaywallInfo
     let product: SKProduct
     var customParameters: [String: Any] = [:]
@@ -277,7 +277,7 @@ enum SuperwallEvent {
   }
 
   struct FreeTrialStart: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .freeTrialStart
+    let name: SuperwallEvent = .freeTrialStart
     let paywallInfo: PaywallInfo
     let product: SKProduct
     var customParameters: [String: Any] = [:]
@@ -288,7 +288,7 @@ enum SuperwallEvent {
   }
 
   struct NonRecurringProductPurchase: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .nonRecurringProductPurchase
+    let name: SuperwallEvent = .nonRecurringProductPurchase
     let paywallInfo: PaywallInfo
     let product: SKProduct
     var customParameters: [String: Any] = [:]
@@ -307,7 +307,7 @@ enum SuperwallEvent {
     }
     let state: State
 
-    var name: Paywall.EventName {
+    var name: SuperwallEvent {
       switch state {
       case .start:
         return .paywallWebviewLoadStart
@@ -336,7 +336,7 @@ enum SuperwallEvent {
     let state: State
     var customParameters: [String: Any] = [:]
 
-    var name: Paywall.EventName {
+    var name: SuperwallEvent {
       switch state {
       case .start:
         return .paywallProductsLoadStart
@@ -358,11 +358,5 @@ enum SuperwallEvent {
       params += paywallInfo.eventParams()
       return params
     }
-  }
-
-  struct ManualPresent: TrackableSuperwallEvent {
-    let name: Paywall.EventName = .manualPresent
-    var customParameters: [String: Any] = [:]
-    var superwallParameters: [String: Any] = [:]
   }
 }

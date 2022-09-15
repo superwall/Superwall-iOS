@@ -4,7 +4,7 @@ Tracking events sent via the ``PaywallDelegate`` in your own analytics.
 
 ## Overview
 
-Superwall automatically tracks analytical events to do with the paywall for you (see <doc:AutomaticallyTrackedEvents> for a full list). You can use ``Paywall/PaywallDelegate/trackAnalyticsEvent(withName:params:)`` to send these events to your own analytics service, such as Mixpanel.
+Superwall automatically tracks events to do with the paywall for you (see ``SuperwallEvent`` for a full list). You can use ``Paywall/PaywallDelegate/trackAnalyticsEvent(withName:params:)`` to send these events to your own analytics service, such as Mixpanel.
 
 ## Tracking Analytical Events
 
@@ -21,14 +21,14 @@ extension PaywallService: PaywallDelegate {
 }
 ```
 
-Or if you'd like to override our naming convention, you can initialize a ``Paywall/Paywall/EventName`` and use a switch statement over the possible cases:
+Or if you'd like to override our naming convention, you can initialize a ``SuperwallEvent`` and use a switch statement over the possible cases:
 
 ```swift
 func trackAnalyticsEvent(
   withName name: String,
   params: [String: Any]
 ) {
-  guard let event = Paywall.EventName(rawValue: name) else {
+  guard let event = SuperwallEvent(rawValue: name) else {
     return
   } 
   switch event {

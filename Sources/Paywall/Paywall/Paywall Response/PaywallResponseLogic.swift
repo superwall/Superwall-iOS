@@ -171,13 +171,13 @@ enum PaywallResponseLogic {
   ) -> PaywallErrorResponse? {
     if let error = error as? CustomURLSession.NetworkError,
       error == .notFound {
-      let trackedEvent = SuperwallEvent.PaywallResponseLoad(
+      let trackedEvent = InternalSuperwallEvent.PaywallResponseLoad(
         state: .notFound,
         eventData: event
       )
       _ = trackEvent(trackedEvent)
     } else {
-      let trackedEvent = SuperwallEvent.PaywallResponseLoad(
+      let trackedEvent = InternalSuperwallEvent.PaywallResponseLoad(
         state: .fail,
         eventData: event
       )

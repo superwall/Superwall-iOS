@@ -97,7 +97,7 @@ public extension Paywall {
       }
     }
 
-    let trackableEvent = SuperwallEvent.Attributes(
+    let trackableEvent = InternalSuperwallEvent.Attributes(
       customParameters: customAttributes
     )
     let result = track(trackableEvent)
@@ -110,7 +110,7 @@ public extension Paywall {
   ///
   /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
   static func handleDeepLink(_ url: URL) {
-    track(SuperwallEvent.DeepLink(url: url))
+    track(InternalSuperwallEvent.DeepLink(url: url))
     SWDebugManager.shared.handle(deepLinkUrl: url)
   }
 }
