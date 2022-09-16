@@ -9,6 +9,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Renamed `Paywall.trigger` to `Paywall.track`. We found that having separate implicit (`Paywall.track(...)`) and explicit (`Paywall.trigger(...)`) trigger functions caused confusion. So from now on, you'll just use `Superwall.track` for all events within your app.
 - Removes `Paywall.load(identifier:)`. This was being used to preload a paywall by identifier.
 - Renames `Paywall.EventName` to `SuperwallEvent` and removes `.manualPresent` as a `SuperwallEvent`.
+- Removes `userId` from `Paywall.configure` and removes `identify(userId:)`. You must now call `Superwall.logIn(userId:)` if you're logging a user in to an existing Superwall account or `Superwall.createAccount(userId:) when you've just created their `userId`.
 
 ### Enhancements
 

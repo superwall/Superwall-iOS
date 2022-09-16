@@ -135,7 +135,7 @@ final class SWDebugViewController: UIViewController {
     super.viewDidLoad()
 
     addSubviews()
-    loadPreview()
+    Task { await loadPreview() }
   }
 
   private func addSubviews() {
@@ -181,24 +181,22 @@ final class SWDebugViewController: UIViewController {
     ])
   }
 
-  func loadPreview() {
+  func loadPreview() async {
     activityIndicator.startAnimating()
     previewViewContent?.removeFromSuperview()
 
     if paywallResponses.isEmpty {
-      Network.shared.getPaywalls { [weak self] result in
-        switch result {
-        case .success(let response):
-          self?.paywallResponses = response.paywalls
-          self?.finishLoadingPreview()
-        case .failure(let error):
-          Logger.debug(
-            logLevel: .error,
-            scope: .debugViewController,
-            message: "Failed to Fetch Paywalls",
-            error: error
-          )
-        }
+      do {
+        let response = try await Network.shared.getPaywalls()
+        paywallResponses = response.paywalls
+        finishLoadingPreview()
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .debugViewController,
+          message: "Failed to Fetch Paywalls",
+          error: error
+        )
       }
     } else {
       finishLoadingPreview()
@@ -314,7 +312,7 @@ final class SWDebugViewController: UIViewController {
         action: { [weak self] in
           self?.paywallDatabaseId = response.id
           self?.paywallIdentifier = response.identifier
-          self?.loadPreview()
+          Task { await self?.loadPreview() }
         },
         style: .default
       )
@@ -338,7 +336,7 @@ final class SWDebugViewController: UIViewController {
 	func showLocalizationPicker() {
 		let viewController = SWLocalizationViewController { [weak self] locale in
 			LocalizationManager.shared.selectedLocale = locale
-			self?.loadPreview()
+      Task { await self?.loadPreview() }
 		}
 
 		let navController = UINavigationController(rootViewController: viewController)

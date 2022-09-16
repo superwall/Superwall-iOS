@@ -47,13 +47,10 @@ class Storage {
     self.userAttributes = cache.read(UserAttributes.self) ?? [:]
   }
 
-  func configure(
-    appUserId: String?,
-    apiKey: String
-  ) {
+  func configure(apiKey: String) {
     migrateData()
     updateSdkVersion()
-    identify(with: appUserId)
+    loadAssignmentsIfNeeded()
 
     self.apiKey = apiKey
 
@@ -62,7 +59,8 @@ class Storage {
     }
   }
 
-  func identify(with userId: String?) {
+
+  func identify(with userId: String) {
     guard let outcome = StorageLogic.identify(
       newUserId: userId,
       oldUserId: appUserId
@@ -71,9 +69,7 @@ class Storage {
       return
     }
 
-    if let userId = userId {
-      appUserId = userId
-    }
+    appUserId = userId
 
     switch outcome {
     case .reset:
@@ -109,7 +105,7 @@ class Storage {
       let isBlocking = neverCalledStaticConfig
       loadAssignmentsAfterConfig(isBlocking: isBlocking)
     } else {
-      ConfigManager.shared.loadAssignments()
+      Task { await ConfigManager.shared.loadAssignments() }
     }
     neverCalledStaticConfig = false
   }

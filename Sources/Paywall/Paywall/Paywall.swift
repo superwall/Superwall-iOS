@@ -105,7 +105,6 @@ public final class Paywall: NSObject {
 	@discardableResult
 	@objc public static func configure(
     apiKey: String,
-    userId: String? = nil,
     delegate: PaywallDelegate? = nil,
     options: PaywallOptions? = nil
   ) -> Paywall {
@@ -120,21 +119,13 @@ public final class Paywall: NSObject {
     hasCalledConfig = true
 		shared = Paywall(
       apiKey: apiKey,
-      userId: userId,
       delegate: delegate,
       options: options
     )
 		return shared
 	}
 
-	/// Links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
-	///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
-  ///  - Returns: The shared Paywall instance.
-	@discardableResult
-	@objc public static func identify(userId: String) -> Paywall {
-    Storage.shared.identify(with: userId)
-		return shared
-	}
+
 
   /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard.
   ///
@@ -171,6 +162,17 @@ public final class Paywall: NSObject {
     return shared
 	}
 
+  /// Log in a user with their userId to retrieve paywalls that they've been assigned to.
+  ///
+  /// This links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
+  ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
+  ///  - Returns: The shared Paywall instance.
+  @discardableResult
+  @objc public static func login(userId: String) -> Paywall {
+    Storage.shared.identify(with: userId)
+    return shared
+  }
+
 	/// Forwards Game controller events to the paywall.
   ///
   /// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`
@@ -202,7 +204,6 @@ public final class Paywall: NSObject {
 
 	private init(
     apiKey: String?,
-    userId: String? = nil,
     delegate: PaywallDelegate? = nil,
     options: PaywallOptions? = nil
   ) {
@@ -211,10 +212,7 @@ public final class Paywall: NSObject {
 			return
 		}
     ConfigManager.shared.setOptions(options)
-    Storage.shared.configure(
-      appUserId: userId,
-      apiKey: apiKey
-    )
+    Storage.shared.configure(apiKey: apiKey)
 
     // Initialise session events manager and app session manager on main thread
     _ = SessionEventsManager.shared
@@ -323,4 +321,27 @@ extension Paywall: SWPaywallViewControllerDelegate {
 			}
 		}
 	}
+
+
+  // MARK: - Unavailable methods
+  @available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
+  @discardableResult
+  @objc public static func configure(
+    apiKey: String,
+    userId: String?,
+    delegate: PaywallDelegate? = nil,
+    options: PaywallOptions? = nil
+  ) -> Paywall {
+    return shared
+  }
+
+  /// Links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
+  ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
+  ///  - Returns: The shared Paywall instance.
+  @available(*, unavailable, message: "Please use login(userId:) or createAccount(userId:).")
+  @discardableResult
+  @objc public static func identify(userId: String) -> Paywall {
+    Storage.shared.identify(with: userId)
+    return shared
+  }
 }

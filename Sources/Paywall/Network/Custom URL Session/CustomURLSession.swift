@@ -28,18 +28,17 @@ class CustomURLSession {
     }
   }
 
-  // swiftlint:disable:next function_body_length
+  @discardableResult
   func request<Response>(
     _ endpoint: Endpoint<Response>,
     isForDebugging: Bool = false,
-    completion: @escaping (Result<Response, Error>) -> Void,
     attempt: Double = 1
-  ) {
+  ) async throws -> Response {
     guard let request = endpoint.makeRequest(forDebugging: isForDebugging) else {
-      return completion(.failure(NetworkError.unknown))
+      throw NetworkError.unknown
     }
     guard let auth = request.allHTTPHeaderFields?["Authorization"] else {
-      return completion(.failure(NetworkError.notAuthenticated))
+      throw NetworkError.notAuthenticated
     }
 
     Logger.debug(
@@ -53,73 +52,73 @@ class CustomURLSession {
     )
 
     let startTime = Date().timeIntervalSince1970
+    let (data, response) = try await Task.retrying {
+      return try await self.urlSession.data(for: request)
+    }
+    .value
 
-    let task = urlSession.dataTask(with: request) { data, response, error in
-      if error != nil,
-        let delay = URLSessionRetryLogic.delay(forAttempt: attempt) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delay)) {
-          self.request(
-            endpoint,
-            isForDebugging: isForDebugging,
-            completion: completion,
-            attempt: attempt + 1
-          )
-        }
-        return
+    let requestDuration = Date().timeIntervalSince1970 - startTime
+    let requestId = try getRequestId(
+      from: request,
+      checkingValidityOf: response,
+      withAuth: auth,
+      requestDuration: requestDuration
+    )
+
+    Logger.debug(
+      logLevel: .debug,
+      scope: .network,
+      message: "Request Completed",
+      info: [
+        "request": request.debugDescription,
+        "api_key": auth,
+        "url": request.url?.absoluteString ?? "unknown",
+        "request_id": requestId,
+        "request_duration": requestDuration
+      ]
+    )
+
+    guard let value = try? JSONDecoder.fromSnakeCase.decode(
+      Response.self,
+      from: data
+    ) else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Error",
+        info: [
+          "request": request.debugDescription,
+          "api_key": auth,
+          "url": request.url?.absoluteString ?? "unknown",
+          "message": "Unable to decode response to type \(Response.self)",
+          "info": String(decoding: data, as: UTF8.self),
+          "request_duration": requestDuration
+        ]
+      )
+      throw NetworkError.decoding
+    }
+
+    return value
+  }
+
+  private func getRequestId(
+    from request: URLRequest,
+    checkingValidityOf response: URLResponse,
+    withAuth auth: String,
+    requestDuration: TimeInterval
+  ) throws -> String {
+    var requestId = "unknown"
+
+    if let response = response as? HTTPURLResponse {
+      if let id = response.allHeaderFields["x-request-id"] as? String {
+        requestId = id
       }
 
-      let requestDuration = Date().timeIntervalSince1970 - startTime
-
-      do {
-        guard let data = data else {
-          return completion(.failure(error ?? NetworkError.unknown))
-        }
-        var requestId = "unknown"
-
-        if let response = response as? HTTPURLResponse {
-          if let id = response.allHeaderFields["x-request-id"] as? String {
-            requestId = id
-          }
-
-          if response.statusCode == 401 {
-            Logger.debug(
-              logLevel: .error,
-              scope: .network,
-              message: "Unable to Authenticate",
-              info: [
-                "request": request.debugDescription,
-                "api_key": auth,
-                "url": request.url?.absoluteString ?? "unknown",
-                "request_id": requestId,
-                "request_duration": requestDuration
-              ],
-              error: error
-            )
-            return completion(.failure(NetworkError.notAuthenticated))
-          }
-
-          if response.statusCode == 404 {
-            Logger.debug(
-              logLevel: .error,
-              scope: .network,
-              message: "Not Found",
-              info: [
-                "request": request.debugDescription,
-                "api_key": auth,
-                "url": request.url?.absoluteString ?? "unknown",
-                "request_id": requestId,
-                "request_duration": requestDuration
-              ],
-              error: error
-            )
-            return completion(.failure(NetworkError.notFound))
-          }
-        }
-
+      if response.statusCode == 401 {
         Logger.debug(
-          logLevel: .debug,
+          logLevel: .error,
           scope: .network,
-          message: "Request Completed",
+          message: "Unable to Authenticate",
           info: [
             "request": request.debugDescription,
             "api_key": auth,
@@ -128,31 +127,26 @@ class CustomURLSession {
             "request_duration": requestDuration
           ]
         )
+        throw NetworkError.notAuthenticated
+      }
 
-        let response = try JSONDecoder.fromSnakeCase.decode(
-          Response.self,
-          from: data
-        )
-
-        completion(.success(response))
-      } catch {
+      if response.statusCode == 404 {
         Logger.debug(
           logLevel: .error,
           scope: .network,
-          message: "Request Error",
+          message: "Not Found",
           info: [
             "request": request.debugDescription,
             "api_key": auth,
             "url": request.url?.absoluteString ?? "unknown",
-            "message": "Unable to decode response to type \(Response.self)",
-            "info": String(decoding: data ?? Data(), as: UTF8.self),
+            "request_id": requestId,
             "request_duration": requestDuration
-          ],
-          error: error
+          ]
         )
-        completion(.failure(NetworkError.decoding))
+        throw NetworkError.notFound
       }
     }
-    task.resume()
+
+    return requestId
   }
 }

@@ -7,6 +7,7 @@
 
 import Foundation
 import StoreKit
+import os
 
 typealias PaywallResponseCompletionBlock = (Result<PaywallResponse, NSError>) -> Void
 
@@ -70,6 +71,7 @@ final class PaywallResponseManager: NSObject {
     ) {
       completion(.success(paywallResponse))
     } else {
+
       Network.shared.getPaywallResponse(
         withPaywallId: paywallId,
         fromEvent: event

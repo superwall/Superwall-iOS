@@ -51,26 +51,17 @@ enum StorageLogic {
   }
 
   static func identify(
-    newUserId: String?,
+    newUserId: String,
     oldUserId: String?
   ) -> IdentifyOutcome? {
-    let hasNewUserId = newUserId != nil
     let hasOldUserId = oldUserId != nil
 
-    if hasNewUserId,
-      hasOldUserId {
+    if hasOldUserId {
       if newUserId == oldUserId {
         return nil
       } else {
         return .reset
       }
-    }
-
-    if newUserId == nil {
-      // this can only happen from a configure call that doesn't pass
-      // in an app user id if the dev calls identify later in the app
-      // lifecycle, oldUserId will be set
-      return nil
     }
 
     return .loadAssignments

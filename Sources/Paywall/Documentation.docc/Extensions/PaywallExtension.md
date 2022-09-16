@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ``Paywall/Paywall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)`` to configure the SDK.
+The ``Paywall/Paywall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Paywall/Paywall/configure(apiKey:delegate:options:)`` to configure the SDK.
 
 ## Topics
 
@@ -10,7 +10,7 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 - <doc:GettingStarted>
 - <doc:Ecosystem>
-- ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)``
+- ``Paywall/Paywall/configure(apiKey:delegate:options:)``
 - ``PaywallDelegate``
 - ``delegate``
 - ``PaywallOptions``

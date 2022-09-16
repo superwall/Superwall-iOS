@@ -12,9 +12,9 @@ class ConfigManager {
 
   var options = PaywallOptions()
   var config: Config?
-  /// Used to store the config request if it occurred in the background.
-  var configRequest: ConfigRequest?
   var configRequestId = ""
+  /// Used to store the config request if it occurred in the background.
+  var pendingConfigRequest: PendingConfigRequest?
   var triggers: [String: Trigger] = [:]
   private let storage: Storage
   private let network: Network
@@ -54,60 +54,88 @@ class ConfigManager {
   }
 
   func fetchConfiguration(
+    applicationState: UIApplication.State? = nil,
     triggerDelayManager: TriggerDelayManager = .shared,
     appSessionManager: AppSessionManager = .shared,
     sessionEventsManager: SessionEventsManager = .shared,
     requestId: String = UUID().uuidString,
     afterReset: Bool = false
-  ) {
-    network.getConfig(withRequestId: requestId) { [weak self] result in
-      guard let self = self else {
-        return
-      }
-      switch result {
-      case .success(let config):
-        self.configRequestId = requestId
-        appSessionManager.appSessionTimeout = config.appSessionTimeout
-        self.triggers = TriggerLogic.getTriggerDictionary(from: config.triggers)
-        sessionEventsManager.triggerSession.createSessions(from: config)
-        self.config = config
-        self.assignVariants()
-        self.cacheConfig()
+  ) async {
+    if await isCalledInBackground(
+      applicationState,
+      withRequestId: requestId,
+      afterReset: afterReset
+    ) {
+      return
+    }
 
-        if afterReset {
+    do {
+      let config = try await network.getConfig(withRequestId: requestId)
+
+      self.configRequestId = requestId
+      appSessionManager.appSessionTimeout = config.appSessionTimeout
+      self.triggers = TriggerLogic.getTriggerDictionary(from: config.triggers)
+      sessionEventsManager.triggerSession.createSessions(from: config)
+      self.config = config
+      self.assignVariants()
+      self.cacheConfig()
+
+      if afterReset {
+        triggerDelayManager.handleDelayedContent(
+          storage: self.storage,
+          configManager: self
+        )
+      } else {
+        StoreKitManager.shared.loadPurchasedProducts {
           triggerDelayManager.handleDelayedContent(
             storage: self.storage,
             configManager: self
           )
-        } else {
-          StoreKitManager.shared.loadPurchasedProducts {
-            triggerDelayManager.handleDelayedContent(
-              storage: self.storage,
-              configManager: self
-            )
-          }
         }
-      case .failure(let error):
-        Logger.debug(
-          logLevel: .error,
-          scope: .paywallCore,
-          message: "Failed to Fetch Configuration",
-          info: nil,
-          error: error
-        )
       }
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallCore,
+        message: "Failed to Fetch Configuration",
+        info: nil,
+        error: error
+      )
     }
   }
 
-  @objc private func applicationDidBecomeActive() {
-    guard let configRequest = configRequest else {
+
+
+  // TODO: MAYBE MOVE THIS SUCH THAT WE STORE A VALUE THAT ITS CALLED IN BG AND JUST RERUN THE
+  // TODO: FETCH CONFIG CALL BUT PASS IN THE REQUESTID. COULD MOVE THIS TO THE CONFIG MANAGER TOO? ALTHOUGH MAYBE ITS REQUEST
+  // TODO: SPECIFIC...
+  @MainActor
+  private func isCalledInBackground(
+    _ applicationState: UIApplication.State?,
+    withRequestId requestId: String,
+    afterReset: Bool
+  ) -> Bool {
+    let applicationState = applicationState ?? UIApplication.shared.applicationState
+    if applicationState == .background {
+      let pendingConfigRequest = PendingConfigRequest(
+        requestId: requestId,
+        afterReset: afterReset
+      )
+      self.pendingConfigRequest = pendingConfigRequest
+      return true
+    }
+    return false
+  }
+
+  @objc private func applicationDidBecomeActive() async {
+    guard let pendingConfigRequest = pendingConfigRequest else {
       return
     }
-    network.getConfig(
-      withRequestId: configRequest.id,
-      completion: configRequest.completion
+    await fetchConfiguration(
+      requestId: pendingConfigRequest.requestId,
+      afterReset: pendingConfigRequest.afterReset
     )
-    self.configRequest = nil
+    self.pendingConfigRequest = nil
   }
 
   // MARK: - Assignments
@@ -127,42 +155,37 @@ class ConfigManager {
   }
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
-  func loadAssignments(completion: (() -> Void)? = nil) {
+  func loadAssignments() async {
     guard
       let triggers = config?.triggers,
       !triggers.isEmpty
     else {
-      completion?()
       return
     }
-    network.getAssignments { [weak self] result in
-      guard let self = self else {
-        return
+
+    do {
+      let assignments = try await network.getAssignments()
+
+      var confirmedAssignments = storage.getConfirmedAssignments()
+      let result = ConfigLogic.transferAssignmentsFromServerToDisk(
+        assignments: assignments,
+        triggers: triggers,
+        confirmedAssignments: confirmedAssignments,
+        unconfirmedAssignments: self.unconfirmedAssignments
+      )
+      unconfirmedAssignments = result.unconfirmedAssignments
+      confirmedAssignments = result.confirmedAssignments
+      storage.saveConfirmedAssignments(confirmedAssignments)
+      if Paywall.options.shouldPreloadPaywalls {
+        self.preloadAllPaywalls()
       }
-      switch result {
-      case .success(let assignments):
-        var confirmedAssignments = self.storage.getConfirmedAssignments()
-        let result = ConfigLogic.transferAssignmentsFromServerToDisk(
-          assignments: assignments,
-          triggers: triggers,
-          confirmedAssignments: confirmedAssignments,
-          unconfirmedAssignments: self.unconfirmedAssignments
-        )
-        self.unconfirmedAssignments = result.unconfirmedAssignments
-        confirmedAssignments = result.confirmedAssignments
-        self.storage.saveConfirmedAssignments(confirmedAssignments)
-        if Paywall.options.shouldPreloadPaywalls {
-          self.preloadAllPaywalls()
-        }
-      case .failure(let error):
-        Logger.debug(
-          logLevel: .error,
-          scope: .configManager,
-          message: "Error retrieving assignments.",
-          error: error
-        )
-      }
-      completion?()
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .configManager,
+        message: "Error retrieving assignments.",
+        error: error
+      )
     }
   }
 
@@ -195,9 +218,7 @@ class ConfigManager {
     )
   }
 
-  func confirmAssignments(
-    _ confirmableAssignment: ConfirmableAssignment
-  ) {
+  func confirmAssignments(_ confirmableAssignment: ConfirmableAssignment) {
     let assignmentPostback = ConfirmableAssignments(
       assignments: [
         Assignment(
@@ -206,7 +227,8 @@ class ConfigManager {
         )
       ]
     )
-    network.confirmAssignments(assignmentPostback)
+
+    Task { await network.confirmAssignments(assignmentPostback) }
 
     var confirmedAssignments = storage.getConfirmedAssignments()
     confirmedAssignments[confirmableAssignment.experimentId] = confirmableAssignment.variant
@@ -273,7 +295,7 @@ class ConfigManager {
         case .success(let output):
           let products = output.productsById.values.map(PostbackProduct.init)
           let postback = Postback(products: products)
-          self?.network.sendPostback(postback)
+          Task { await self?.network.sendPostback(postback) }
         case .failure:
           break
         }
