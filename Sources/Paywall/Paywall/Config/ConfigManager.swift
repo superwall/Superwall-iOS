@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 class ConfigManager {
   static let shared = ConfigManager()
@@ -23,6 +24,7 @@ class ConfigManager {
   ///
   /// When the trigger is fired, the assignment is confirmed and stored to disk.
   var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
+  private var cancellables: [AnyCancellable] = []
 
   init(
     storage: Storage = .shared,
@@ -33,12 +35,13 @@ class ConfigManager {
     self.network = network
     self.paywallManager = paywallManager
 
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(applicationDidBecomeActive),
-      name: UIApplication.didBecomeActiveNotification,
-      object: nil
-    )
+    NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+      .sink { _ in
+        Task {
+          await self.applicationDidBecomeActive()
+        }
+      }
+      .store(in: &cancellables)
   }
 
   func setOptions(_ options: PaywallOptions?) {
@@ -80,19 +83,13 @@ class ConfigManager {
       self.assignVariants()
       self.cacheConfig()
 
-      if afterReset {
-        triggerDelayManager.handleDelayedContent(
-          storage: self.storage,
-          configManager: self
-        )
-      } else {
-        StoreKitManager.shared.loadPurchasedProducts {
-          triggerDelayManager.handleDelayedContent(
-            storage: self.storage,
-            configManager: self
-          )
-        }
+      if !afterReset {
+        await StoreKitManager.shared.loadPurchasedProducts()
       }
+      await triggerDelayManager.handleDelayedContent(
+        storage: self.storage,
+        configManager: self
+      )
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -103,8 +100,6 @@ class ConfigManager {
       )
     }
   }
-
-
 
   // TODO: MAYBE MOVE THIS SUCH THAT WE STORE A VALUE THAT ITS CALLED IN BG AND JUST RERUN THE
   // TODO: FETCH CONFIG CALL BUT PASS IN THE REQUESTID. COULD MOVE THIS TO THE CONFIG MANAGER TOO? ALTHOUGH MAYBE ITS REQUEST
@@ -127,15 +122,18 @@ class ConfigManager {
     return false
   }
 
+  @MainActor
   @objc private func applicationDidBecomeActive() async {
     guard let pendingConfigRequest = pendingConfigRequest else {
       return
     }
+
     await fetchConfiguration(
       requestId: pendingConfigRequest.requestId,
       afterReset: pendingConfigRequest.afterReset
     )
     self.pendingConfigRequest = nil
+
   }
 
   // MARK: - Assignments

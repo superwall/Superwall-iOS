@@ -22,11 +22,7 @@ extension TransactionModel {
     init(from payment: SKPayment) {
       self.productIdentifier = payment.productIdentifier
       self.quantity = payment.quantity
-      if #available(iOS 12.2, *) {
-        self.discountIdentifier = payment.paymentDiscount?.identifier
-      } else {
-        self.discountIdentifier = nil
-      }
+      self.discountIdentifier = payment.paymentDiscount?.identifier
     }
   }
 }

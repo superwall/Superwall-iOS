@@ -8,11 +8,16 @@
 import Foundation
 
 enum IdentityLogic {
-  struct func logIn(
+  enum IdentifyOutcome {
+    case reset
+    case loadAssignments
+  }
+  
+  static func logIn(
     newUserId: String,
     oldUserId: String?
   ) {
-    i
+
   }
 
   static func identify(

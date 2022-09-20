@@ -181,6 +181,7 @@ final class SWDebugViewController: UIViewController {
     ])
   }
 
+  @MainActor
   func loadPreview() async {
     activityIndicator.startAnimating()
     previewViewContent?.removeFromSuperview()
@@ -322,8 +323,8 @@ final class SWDebugViewController: UIViewController {
     presentAlert(title: nil, message: "Your Paywalls", options: options)
   }
 
-  @objc func pressedExitButton() {
-    SWDebugManager.shared.closeDebugger()
+  @objc func pressedExitButton() async {
+    await SWDebugManager.shared.closeDebugger(animated: false)
   }
 
   @objc func pressedConsoleButton() {

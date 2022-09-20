@@ -71,7 +71,7 @@ final class PaywallResponseManager: NSObject {
     ) {
       completion(.success(paywallResponse))
     } else {
-
+      
       Network.shared.getPaywallResponse(
         withPaywallId: paywallId,
         fromEvent: event

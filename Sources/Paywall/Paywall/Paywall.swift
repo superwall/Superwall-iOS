@@ -157,8 +157,9 @@ public final class Paywall: NSObject {
     shared.latestDismissedPaywallInfo = nil
     Storage.shared.clear()
     PaywallManager.shared.clearCache()
-    ConfigManager.shared.fetchConfiguration(afterReset: true)
-
+    Task {
+      await ConfigManager.shared.fetchConfiguration(afterReset: true)
+    }
     return shared
 	}
 
@@ -224,7 +225,9 @@ public final class Paywall: NSObject {
 
     SKPaymentQueue.default().add(self)
     Storage.shared.recordAppInstall()
-    ConfigManager.shared.fetchConfiguration()
+    Task {
+      await ConfigManager.shared.fetchConfiguration()
+    }
 	}
 
   /// Attemps to implicitly trigger a paywall for a given analytical event.

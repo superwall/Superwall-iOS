@@ -29,6 +29,24 @@ public extension Paywall {
     )
 	}
 
+  /// Dismisses the presented paywall.
+  ///
+  /// Calling this function doesn't fire the `onDismiss` completion block in ``Paywall/Paywall/present(onPresent:onDismiss:onSkip:)``, since this action is developer initiated.
+  @objc static func dismiss() async {
+    guard let paywallViewController = shared.paywallViewController else {
+      return
+    }
+    return await withCheckedContinuation { continuation in
+      shared.dismiss(
+        paywallViewController,
+        state: .closed,
+        completion: {
+          continuation.resume()
+        }
+      )
+    }
+  }
+
   @available(*, unavailable, renamed: "track")
   @objc static func trigger(
     event: String? = nil,

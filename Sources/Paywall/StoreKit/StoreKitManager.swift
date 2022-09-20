@@ -43,22 +43,16 @@ final class StoreKitManager: NSObject {
 		}
 	}
 
-  func loadPurchasedProducts(completion: @escaping () -> Void) {
+  func loadPurchasedProducts() async {
     let purchasedProductIds = InAppReceipt.shared.purchasedProductIds
-    productsManager.products(withIdentifiers: purchasedProductIds) { [weak self] result in
-      switch result {
-      case .success(let productsSet):
-        guard let self = self else {
-          return
-        }
-        for product in productsSet {
-          self.productsById[product.productIdentifier] = product
-        }
-        InAppReceipt.shared.loadSubscriptionGroupIds()
-      case .failure:
-        InAppReceipt.shared.failedToLoadPurchasedProducts()
+    do {
+      let productsSet = try await productsManager.getProducts(withIdentifiers: purchasedProductIds)
+      for product in productsSet {
+        self.productsById[product.productIdentifier] = product
       }
-      completion()
+      InAppReceipt.shared.loadSubscriptionGroupIds()
+    } catch {
+      InAppReceipt.shared.failedToLoadPurchasedProducts()
     }
   }
 

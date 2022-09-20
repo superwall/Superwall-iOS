@@ -94,17 +94,10 @@ extension TriggerSession.Transaction {
           yearlyPrice: trialPrice.yearly?.raw?.value.description
         )
 
-        if #available(iOS 12.2, *) {
-          self.discount = .init(
-            priceDescription: introductoryPrice.price.description,
-            type: introductoryPrice.type
-          )
-        } else {
-          self.discount = .init(
-            priceDescription: introductoryPrice.price.description,
-            type: .unknown
-          )
-        }
+        self.discount = .init(
+          priceDescription: introductoryPrice.price.description,
+          type: introductoryPrice.type
+        )
 
         let hasPurchasedProduct = InAppReceipt.shared.hasPurchasedInSubscriptionGroupOfProduct(
           withId: product.productIdentifier

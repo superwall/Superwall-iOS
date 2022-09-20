@@ -42,6 +42,22 @@ class Network {
     }
   }
 
+  #warning("Completion block version added here")
+  func getPaywallResponse(
+    withPaywallId identifier: String? = nil,
+    fromEvent event: EventData? = nil,
+    completion: @escaping (Result<PaywallResponse, Error>) -> Void
+  ) {
+    Task {
+      do {
+        let response = try await getPaywallResponse(withPaywallId: identifier, fromEvent: event)
+        completion(.success(response))
+      } catch {
+        completion(.failure(error))
+      }
+    }
+  }
+
   func getPaywallResponse(
     withPaywallId identifier: String? = nil,
     fromEvent event: EventData? = nil
@@ -91,7 +107,8 @@ class Network {
       configManager: ConfigManager = .shared
     ) async throws -> Config {
     do {
-      try await urlSession.request(.config(requestId: requestId))
+      let config = try await urlSession.request(.config(requestId: requestId))
+      return config
     } catch {
       Logger.debug(
         logLevel: .error,

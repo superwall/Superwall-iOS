@@ -288,10 +288,7 @@ extension Paywall: SKPaymentTransactionObserver {
         )
 			case .failed:
 				if let error = transaction.error as? SKError {
-					var userCancelled = error.code == .paymentCancelled
-					if #available(iOS 12.2, *) {
-						userCancelled = error.code == .overlayCancelled || error.code == .paymentCancelled
-					}
+					var userCancelled = error.code == .overlayCancelled || error.code == .paymentCancelled
 
 					if #available(iOS 14.0, *) {
             userCancelled = error.code == .overlayCancelled

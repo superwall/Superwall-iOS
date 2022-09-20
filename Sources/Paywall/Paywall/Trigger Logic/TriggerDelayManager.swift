@@ -27,7 +27,7 @@ class TriggerDelayManager {
   func handleDelayedContent(
     storage: Storage = .shared,
     configManager: ConfigManager = .shared
-  ) {
+  ) async {
     // If the user has called identify with a diff ID, we call reset.
     // Then we wait until config has returned before identifying again.
     if let appUserIdAfterReset = appUserIdAfterReset {
@@ -41,12 +41,11 @@ class TriggerDelayManager {
 
     if let preConfigAssignmentCall = preConfigAssignmentCall {
       if preConfigAssignmentCall.isBlocking {
-        configManager.loadAssignments { [weak self] in
-          self?.preConfigAssignmentCall = nil
-          self?.fireDelayedTriggers()
-        }
+        await configManager.loadAssignments()
+        self.preConfigAssignmentCall = nil
+        fireDelayedTriggers()
       } else {
-        configManager.loadAssignments()
+        Task { await configManager.loadAssignments() }
         self.preConfigAssignmentCall = nil
         fireDelayedTriggers()
       }

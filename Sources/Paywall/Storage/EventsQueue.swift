@@ -66,7 +66,7 @@ final class EventsQueue {
     if !eventsToSend.isEmpty {
       // Send to network
       let events = EventsRequest(events: eventsToSend)
-      Network.shared.sendEvents(events: events)
+      Task { await Network.shared.sendEvents(events: events) }
     }
 
     if !elements.isEmpty && depth > 0 {

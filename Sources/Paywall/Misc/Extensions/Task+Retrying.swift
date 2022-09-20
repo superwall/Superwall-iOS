@@ -20,7 +20,6 @@ extension Task where Failure == Error {
         do {
           return try await operation()
         } catch {
-          let oneSecond = TimeInterval(1_000_000_000)
           let delay = TaskRetryLogic.delay(
             forAttempt: attempt,
             maxRetries: maxRetryCount

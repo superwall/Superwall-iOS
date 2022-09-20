@@ -38,24 +38,18 @@ struct SWProduct: Codable {
       isFamilyShareable = product.isFamilyShareable
     }
 
-    if #available(iOS 12.2, *) {
-      discounts = product.discounts.map(SWProductDiscount.init)
-    }
+    discounts = product.discounts.map(SWProductDiscount.init)
 
-    if #available(iOS 12.0, *) {
-      subscriptionGroupIdentifier = product.subscriptionGroupIdentifier
-    }
+    subscriptionGroupIdentifier = product.subscriptionGroupIdentifier
 
-    if #available(iOS 12.2, *) {
-      if let period = product.subscriptionPeriod {
-        subscriptionPeriod = SWProductSubscriptionPeriod(
-          period: period,
-          numberOfPeriods: 1
-        )
-      }
-      if let discount = product.introductoryPrice {
-        introductoryPrice = SWProductDiscount(discount: discount)
-      }
+    if let period = product.subscriptionPeriod {
+      subscriptionPeriod = SWProductSubscriptionPeriod(
+        period: period,
+        numberOfPeriods: 1
+      )
+    }
+    if let discount = product.introductoryPrice {
+      introductoryPrice = SWProductDiscount(discount: discount)
     }
   }
 }

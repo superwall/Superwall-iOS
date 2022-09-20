@@ -41,8 +41,9 @@ final class SWDebugManager {
       fromUrl: deepLinkUrl,
       withName: .paywallId
     )
-
-    self.launchDebugger(withPaywallId: paywallId)
+    Task {
+      await self.launchDebugger(withPaywallId: paywallId)
+    }
   }
 
 	/// Launches the debugger for you to preview paywalls.
@@ -50,29 +51,28 @@ final class SWDebugManager {
   /// If you call `Paywall.handleDeepLink(url)` from `application(_:, open:, options:)` in your `AppDelegate`, this function is called automatically after scanning your debug QR code in Superwall's web dashboard.
   ///
   /// Remember to add your URL scheme in settings for QR code scanning to work.
-	func launchDebugger(withPaywallId paywallDatabaseId: String? = nil) {
+  func launchDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
     if Paywall.shared.isPaywallPresented {
-			Paywall.dismiss { [weak self] in
-				self?.launchDebugger(withPaywallId: paywallDatabaseId)
-			}
+			await Paywall.dismiss()
+			await launchDebugger(withPaywallId: paywallDatabaseId)
 		} else {
 			if viewController == nil {
-        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) { [weak self] in
-          self?.presentDebugger(withPaywallId: paywallDatabaseId)
-        }
+        let twoHundredMilliseconds = UInt64(200_000_000)
+        try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+        await presentDebugger(withPaywallId: paywallDatabaseId)
 			} else {
-        closeDebugger { [weak self] in
-          self?.launchDebugger(withPaywallId: paywallDatabaseId)
-        }
+        await closeDebugger(animated: true)
+        await launchDebugger(withPaywallId: paywallDatabaseId)
 			}
 		}
 	}
 
-	func presentDebugger(withPaywallId paywallDatabaseId: String? = nil) {
+  @MainActor
+	func presentDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
 		isDebuggerLaunched = true
 		if let viewController = viewController {
 			viewController.paywallDatabaseId = paywallDatabaseId
-			viewController.loadPreview()
+			await viewController.loadPreview()
 			UIViewController.topMostViewController?.present(
         viewController,
         animated: true
@@ -90,23 +90,24 @@ final class SWDebugManager {
 		}
 	}
 
-	func closeDebugger(completion: (() -> Void)? = nil) {
-		let animate = completion == nil
+  @MainActor
+  func closeDebugger(animated: Bool) async {
 
-    func dismissViewController() {
-      viewController?.dismiss(animated: animate) { [weak self] in
-        self?.viewController = nil
-        self?.isDebuggerLaunched = false
-        completion?()
+    func dismissViewController() async {
+      return await withCheckedContinuation { continuation in
+        viewController?.dismiss(animated: animated) { [weak self] in
+          self?.viewController = nil
+          self?.isDebuggerLaunched = false
+          continuation.resume()
+        }
       }
     }
 
     if let presentedViewController = viewController?.presentedViewController {
-			presentedViewController.dismiss(animated: animate) {
-        dismissViewController()
-			}
+			await presentedViewController.dismiss(animated: animated)
+      await dismissViewController()
 		} else {
-      dismissViewController()
+      await dismissViewController()
 		}
 	}
 }
