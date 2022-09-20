@@ -35,10 +35,12 @@ public final class Paywall: NSObject {
   /// The ``PaywallInfo`` object stored from the latest paywall that was dismissed.
   var latestDismissedPaywallInfo: PaywallInfo?
 
-  /// The current user's id. It shouldn't ever be `nil` since Superwall assigns an anonymous user id and caches it to disk if one isn't provided.
-  public static var userId: String? {
-    // Technically Storage.shared.userId is an optional value
-    return Storage.shared.userId
+  /// The current user's id.
+  ///
+  /// If you haven't called ``Paywall/Paywall/logIn(userId:)`` or ``Paywall/Paywall/createAccount(userId:)``,
+  /// this value will return an anonymous user id which is cached to disk
+  public static var userId: String {
+    return shared.identityManager.userId
   }
 
   // MARK: - Private Properties
@@ -91,6 +93,7 @@ public final class Paywall: NSObject {
     return isSubscribed
   }
   private static var hasCalledConfig = false
+  private lazy var identityManager = IdentityManager()
 
   // MARK: - Public Functions
 	/// Configures a shared instance of ``Paywall/Paywall`` for use throughout your app.
@@ -168,9 +171,48 @@ public final class Paywall: NSObject {
   /// This links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
   ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
   ///  - Returns: The shared Paywall instance.
+  @available (*, unavailable)
+  @objc public static func logIn(
+    userId: String,
+    completion: ((Paywall?, Error?) -> Void)?
+  ) {
+    Task {
+      do {
+        try await shared.identityManager.logIn(userId: userId)
+        completion?(shared, nil)
+      } catch {
+        completion?(nil, error)
+      }
+    }
+  }
+
+  /// Log in a user with their userId to retrieve paywalls that they've been assigned to.
+  ///
+  /// This links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
+  ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
+  ///  - Returns: The shared Paywall instance.
+  public static func logIn(
+    userId: String,
+    completion: ((Result<Paywall, Error>) -> Void)?
+  ) {
+    Task {
+      do {
+        try await shared.identityManager.logIn(userId: userId)
+        completion?(.success(shared))
+      } catch {
+        completion?(.failure(error))
+      }
+    }
+  }
+
+  /// Log in a user with their userId to retrieve paywalls that they've been assigned to.
+  ///
+  /// This links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
+  ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
+  ///  - Returns: The shared Paywall instance.
   @discardableResult
-  @objc public static func login(userId: String) -> Paywall {
-    Storage.shared.identify(with: userId)
+  @objc public static func logIn(userId: String) async throws -> Paywall {
+    try await shared.identityManager.logIn(userId: userId)
     return shared
   }
 

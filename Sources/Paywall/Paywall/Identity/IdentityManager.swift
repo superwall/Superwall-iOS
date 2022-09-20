@@ -8,63 +8,119 @@
 import Foundation
 import Combine
 
-final class IdentityManager {
-  enum IdentityError: Error {
-    case configNotCalled
-    case missingAppUserId
-    case alreadyLoggedIn
-  }
+//TODO: FILL OUT INFO HERE AND EXPLAIN ON LOGIN ETC THAT THIS IS THROWN
+public enum IdentityError: Error {
+  case configNotCalled
+  case missingAppUserId
+  case alreadyLoggedIn
+  case notLoggedIn
+}
 
+final class IdentityManager {
+  var aliasId: String {
+    didSet {
+      saveIds()
+    }
+  }
+  var appUserId: String? {
+    didSet {
+      saveIds()
+    }
+  }
+  var userId: String {
+    return appUserId ?? aliasId
+  }
+  var userAttributes: [String: Any] = [:]
   private let storage: Storage
   private let configManager: ConfigManager
+  private var cancellables: Set<AnyCancellable> = []
 
   init(
-    storage: Storage,
-    configManager: ConfigManager
+    storage: Storage = .shared,
+    configManager: ConfigManager = .shared
   ) {
     self.storage = storage
     self.configManager = configManager
+    self.appUserId = storage.get(AppUserId.self)
+    self.aliasId = storage.get(AliasId.self) ?? IdentityLogic.generateAlias()
+    self.userAttributes = storage.get(UserAttributes.self) ?? [:]
   }
-/*
-  /// Logs user in and waits for assignments to return before firing triggers.
-  func logIn(
-    userId: String
-  ) async throws  {
-    // Make sure config has been called before logging in.
-    if configManager.config == nil {
-      throw IdentityError.configNotCalled
-    }
 
-    // Make sure the user isn't already logged in.
-    guard storage.appUserId == nil else {
+  /// Logs user in and waits for config then assignments before firing triggers.
+  func logIn(userId: String) async throws  {
+    guard appUserId == nil else {
       throw IdentityError.alreadyLoggedIn
     }
 
-    // Remove excess characters and check they userId isn't empty.
     let userId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
     if userId.isEmpty {
       throw IdentityError.missingAppUserId
     }
 
-    storage.appUserId = userId
+    appUserId = userId
 
-    await configManager.loadAssignments()
-    
-    if configCalled {
-      getASsignments() {
+    try await configManager.$config
+      .compactMap { $0 }
+      .eraseToAnyPublisher()
+      .async()
+    await self.configManager.loadAssignments()
 
-      }
-    }
-    let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: true)
-    TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
-
-    // From here config -> assignments -> fire triggers ->
-    // Wait for assignments to return before firing triggers.
+    // TODO: FIRE TRIGGERS AFTER THIS
   }
 
-  /**
-    On login -> Does some
-   */
+  func createAccount(userId: String) throws {
+    guard appUserId == nil else {
+      throw IdentityError.alreadyLoggedIn
+    }
+
+    let userId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
+    if userId.isEmpty {
+      throw IdentityError.missingAppUserId
+    }
+
+    appUserId = userId
+
+    Task {
+      await self.configManager.loadAssignments()
+    }
+  }
+
+  func logOut() throws {
+    if appUserId == nil {
+      throw IdentityError.notLoggedIn
+    }
+
+    clear()
+  }
+
+  func clear() {
+    appUserId = nil
+    aliasId = IdentityLogic.generateAlias()
+    userAttributes = [:]
+  }
+
+  private func saveIds() {
+    if let appUserId = appUserId {
+      storage.save(appUserId, forType: AppUserId.self)
+    }
+
+    storage.save(aliasId, forType: AliasId.self)
+
+    var newUserAttributes = [
+      "aliasId": aliasId
+    ]
+    if let appUserId = appUserId {
+      newUserAttributes["appUserId"] = appUserId
+    }
+
+    let mergedAttributes = IdentityLogic.mergeAttributes(
+      newUserAttributes,
+      with: userAttributes
+    )
+    storage.save(mergedAttributes, forType: UserAttributes.self)
+    userAttributes = mergedAttributes
+  }
+/*
 
 
   func identify(with userId: String) {
@@ -92,18 +148,4 @@ final class IdentityManager {
     }
   }
 */
-  func createAccount(
-    userId: String,
-    completion: () -> Void
-  ) {
-
-  }
-
-  func logOut() {
-
-  }
-
-  func reset() {
-
-  }
 }

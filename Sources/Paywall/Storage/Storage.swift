@@ -13,25 +13,13 @@ class Storage {
 
   var apiKey = ""
   var debugKey: String?
-  var appUserId: String? {
-    didSet {
-      save()
-    }
-  }
-  var aliasId: String? {
-    didSet {
-      save()
-    }
-  }
+
 	var didTrackFirstSeen = false
-  var userAttributes: [String: Any] = [:]
 
   var neverCalledStaticConfig = false
   var didCheckForStaticConfigUpdate = false
 
-  var userId: String? {
-    return appUserId ?? aliasId
-  }
+
   private var confirmedAssignments: [Experiment.ID: Experiment.Variant]?
   private let cache: Cache
 
@@ -41,10 +29,7 @@ class Storage {
   ) {
     self.cache = cache
     self.coreDataManager = coreDataManager
-    self.appUserId = cache.read(AppUserId.self)
-    self.aliasId = cache.read(AliasId.self)
     self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true
-    self.userAttributes = cache.read(UserAttributes.self) ?? [:]
   }
 
   func configure(apiKey: String) {
@@ -53,10 +38,6 @@ class Storage {
     loadAssignmentsIfNeeded()
 
     self.apiKey = apiKey
-
-    if aliasId == nil {
-      aliasId = StorageLogic.generateAlias()
-    }
   }
 
 
@@ -147,22 +128,11 @@ class Storage {
     coreDataManager.deleteAllEntities()
     cache.cleanUserFiles()
     confirmedAssignments = nil
-    appUserId = nil
-    aliasId = StorageLogic.generateAlias()
-    userAttributes = [:]
+    IdentityManager.shared.clear()
     ConfigManager.shared.clear()
     didTrackFirstSeen = false
     recordFirstSeenTracked()
   }
-
-	func mergeUserAttributes(_ newAttributes: [String: Any]) {
-    let mergedAttributes = StorageLogic.mergeAttributes(
-      newAttributes,
-      with: userAttributes
-    )
-    cache.write(mergedAttributes, forType: UserAttributes.self)
-    userAttributes = mergedAttributes
-	}
 
 	func recordFirstSeenTracked() {
     if didTrackFirstSeen {
@@ -186,27 +156,6 @@ class Storage {
     cache.write(true, forType: DidTrackAppInstall.self)
   }
 
-  private func save() {
-    if let appUserId = appUserId {
-      cache.write(appUserId, forType: AppUserId.self)
-    }
-
-    if let aliasId = aliasId {
-      cache.write(aliasId, forType: AliasId.self)
-    }
-
-    var standardUserAttributes: [String: Any] = [:]
-
-    if let aliasId = aliasId {
-      standardUserAttributes["aliasId"] = aliasId
-    }
-
-    if let appUserId = appUserId {
-      standardUserAttributes["appUserId"] = appUserId
-    }
-
-    mergeUserAttributes(standardUserAttributes)
-  }
 
   func clearCachedSessionEvents() {
     cache.delete(TriggerSessions.self)
@@ -240,6 +189,14 @@ class Storage {
       Date(),
       forType: LastPaywallView.self
     )
+  }
+
+  func get<Key: Storable>(_ keyType: Key.Type) -> Key.Value? {
+    return cache.read(keyType)
+  }
+
+  func save<Key: Storable>(_ value: Key.Value, forType keyType: Key.Type) {
+    return cache.write(value, forType: keyType)
   }
 
   func getLastPaywallView() -> LastPaywallView.Value? {

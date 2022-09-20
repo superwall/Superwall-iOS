@@ -12,7 +12,7 @@ class ConfigManager {
   static let shared = ConfigManager()
 
   var options = PaywallOptions()
-  var config: Config?
+  @Published var config: Config?
   var configRequestId = ""
   /// Used to store the config request if it occurred in the background.
   var pendingConfigRequest: PendingConfigRequest?
