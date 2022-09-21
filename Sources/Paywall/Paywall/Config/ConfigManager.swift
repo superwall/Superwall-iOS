@@ -34,14 +34,6 @@ class ConfigManager {
     self.storage = storage
     self.network = network
     self.paywallManager = paywallManager
-
-    NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
-      .sink { _ in
-        Task {
-          await self.applicationDidBecomeActive()
-        }
-      }
-      .store(in: &cancellables)
   }
 
   func setOptions(_ options: PaywallOptions?) {
@@ -61,35 +53,19 @@ class ConfigManager {
     triggerDelayManager: TriggerDelayManager = .shared,
     appSessionManager: AppSessionManager = .shared,
     sessionEventsManager: SessionEventsManager = .shared,
-    requestId: String = UUID().uuidString,
-    afterReset: Bool = false
+    requestId: String = UUID().uuidString
   ) async {
-    if await isCalledInBackground(
-      applicationState,
-      withRequestId: requestId,
-      afterReset: afterReset
-    ) {
-      return
-    }
-
     do {
       let config = try await network.getConfig(withRequestId: requestId)
 
-      self.configRequestId = requestId
+      configRequestId = requestId
       appSessionManager.appSessionTimeout = config.appSessionTimeout
-      self.triggers = TriggerLogic.getTriggerDictionary(from: config.triggers)
+      triggers = TriggerLogic.getTriggerDictionary(from: config.triggers)
       sessionEventsManager.triggerSession.createSessions(from: config)
+      assignVariants(from: config.triggers)
+      executePostback(from: config)
       self.config = config
-      self.assignVariants()
-      self.cacheConfig()
-
-      if !afterReset {
-        await StoreKitManager.shared.loadPurchasedProducts()
-      }
-      await triggerDelayManager.handleDelayedContent(
-        storage: self.storage,
-        configManager: self
-      )
+      preloadPaywalls()
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -101,44 +77,9 @@ class ConfigManager {
     }
   }
 
-  // TODO: MAYBE MOVE THIS SUCH THAT WE STORE A VALUE THAT ITS CALLED IN BG AND JUST RERUN THE
-  // TODO: FETCH CONFIG CALL BUT PASS IN THE REQUESTID. COULD MOVE THIS TO THE CONFIG MANAGER TOO? ALTHOUGH MAYBE ITS REQUEST
-  // TODO: SPECIFIC...
-  @MainActor
-  private func isCalledInBackground(
-    _ applicationState: UIApplication.State?,
-    withRequestId requestId: String,
-    afterReset: Bool
-  ) -> Bool {
-    let applicationState = applicationState ?? UIApplication.shared.applicationState
-    if applicationState == .background {
-      let pendingConfigRequest = PendingConfigRequest(
-        requestId: requestId,
-        afterReset: afterReset
-      )
-      self.pendingConfigRequest = pendingConfigRequest
-      return true
-    }
-    return false
-  }
-
-  @MainActor
-  @objc private func applicationDidBecomeActive() async {
-    guard let pendingConfigRequest = pendingConfigRequest else {
-      return
-    }
-
-    await fetchConfiguration(
-      requestId: pendingConfigRequest.requestId,
-      afterReset: pendingConfigRequest.afterReset
-    )
-    self.pendingConfigRequest = nil
-
-  }
-
   // MARK: - Assignments
 
-  private func assignVariants() {
+  private func assignVariants(from triggers: Set<Trigger>) {
     var confirmedAssignments = storage.getConfirmedAssignments()
     guard let triggers = config?.triggers else {
       return
@@ -153,7 +94,7 @@ class ConfigManager {
   }
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
-  func loadAssignments() async {
+  func getAssignments() async {
     guard
       let triggers = config?.triggers,
       !triggers.isEmpty
@@ -234,16 +175,14 @@ class ConfigManager {
     unconfirmedAssignments[confirmableAssignment.experimentId] = nil
   }
 
-  /// Preloads paywalls, products and trigger responses. It then sends the products back to the server.
+  /// Preloads paywalls.
   ///
   /// A developer can disable preloading of paywalls by setting ``PaywallOptions/shouldPreloadPaywalls``.
-  private func cacheConfig() {
-    if Paywall.options.shouldPreloadPaywalls {
-      preloadAllPaywalls()
+  private func preloadPaywalls() {
+    guard Paywall.options.shouldPreloadPaywalls else {
+      return
     }
-    if config?.featureFlags.enablePostback == true {
-      executePostback()
-    }
+    preloadAllPaywalls()
   }
 
   /// Preloads paywalls referenced by triggers.
@@ -252,20 +191,10 @@ class ConfigManager {
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
   }
 
-  private func handlePreloadPaywallsPreConfig(
-    forTriggers triggerNames: Set<String>,
-    triggerDelayManager: TriggerDelayManager = .shared
-  ) {
-    triggerDelayManager.triggersToPreloadPreConfigCall = triggerNames
-  }
-
   /// Preloads paywalls referenced by the provided triggers.
-  func preloadPaywalls(forTriggers triggerNames: Set<String>) {
-    guard let config = config else {
-      handlePreloadPaywallsPreConfig(forTriggers: triggerNames)
-      return
-    }
-    let triggersToPreload = config.triggers.filter { triggerNames.contains($0.eventName) }
+  func preloadPaywalls(forTriggers triggerNames: Set<String>) async {
+    let config = await $config.compactMap { $0 }.value()
+    let triggersToPreload =  config.triggers.filter { triggerNames.contains($0.eventName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
   }
@@ -281,8 +210,8 @@ class ConfigManager {
   }
 
   /// This sends product data back to the dashboard
-  private func executePostback() {
-    guard let config = config else {
+  private func executePostback(from config: Config) {
+    guard config.featureFlags.enablePostback else {
       return
     }
     // TODO: Does this need to be on the main thread?

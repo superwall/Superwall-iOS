@@ -107,6 +107,13 @@ class Network {
       configManager: ConfigManager = .shared
     ) async throws -> Config {
     do {
+      // Suspend until app is in foreground.
+      try await UIApplication.shared.publisher(for: \.applicationState)
+        .subscribe(on: RunLoop.main)
+        .contains(where: { $0 != .background })
+        .eraseToAnyPublisher()
+        .async()
+
       let config = try await urlSession.request(.config(requestId: requestId))
       return config
     } catch {

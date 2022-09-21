@@ -26,10 +26,18 @@ final class WelcomeViewController: UIViewController {
     ]
   }
 
-  @IBAction private func showOptionsView() {
-    if let name = textField.text {
-      PaywallService.setName(to: name)
+  @IBAction private func logIn() {
+    Task {
+      if let name = textField.text {
+        PaywallService.setName(to: name)
+      }
+      await PaywallService.logIn()
+      next()
     }
+  }
+
+  @MainActor
+  private func next() {
     let trackEventViewController = TrackEventViewController.fromStoryboard()
     navigationController?.pushViewController(trackEventViewController, animated: true)
   }

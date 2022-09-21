@@ -470,7 +470,9 @@ final class SWDebugViewController: UIViewController {
 
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
-    PaywallManager.shared.clearCache() // TODO: test if we need this
+    Task {
+      await PaywallManager.shared.clearCache() // TODO: test if we need this
+    }
     UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = oldTintColor
     SWDebugManager.shared.isDebuggerLaunched = false
     LocalizationManager.shared.selectedLocale = nil

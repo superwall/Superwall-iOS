@@ -8,7 +8,7 @@
 import Foundation
 
 enum IdentityLogic {
-  enum IdentifyOutcome {
+  enum IdentityConfigurationAction {
     case reset
     case loadAssignments
   }
@@ -49,21 +49,36 @@ enum IdentityLogic {
 
     return mergedAttributes
   }
-  
-  static func identify(
-    newUserId: String,
-    oldUserId: String?
-  ) -> IdentifyOutcome? {
-    let hasOldUserId = oldUserId != nil
 
-    if hasOldUserId {
-      if newUserId == oldUserId {
-        return nil
-      } else {
-        return .reset
+  /// Logic to figure out whether to get assignments before firing triggers.
+  ///
+  /// The logic is:
+  /// - If the appUserId exists, and existed PRE static config, get assignments.
+  /// - If the appUserId exists, and existed POST static config, don't get assignments.
+  /// - If they are anonymous, is NOT first app open since install, and existed PRE static config, get assignments.
+  /// - If they are anonymous, is NOT first app open since install, and existed POST static config, don't get assignments.
+  /// - If they are anonymous, IS first app open since install, existed PRE static, don't get assignments.
+  /// - If they are anonymous, IS first app open since install, existed POST static, don't get assignments.
+  static func shouldGetAssignments(
+    hasAccount: Bool,
+    accountExistedPreStaticConfig: Bool,
+    isFirstAppOpen: Bool
+  ) -> Bool {
+    if hasAccount {
+      if accountExistedPreStaticConfig {
+        return true
       }
+      return false
     }
 
-    return .loadAssignments
+    if isFirstAppOpen {
+      return false
+    }
+
+    if accountExistedPreStaticConfig {
+      return true
+    }
+
+    return false
   }
 }

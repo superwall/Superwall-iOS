@@ -5,7 +5,10 @@
 //  Created by Yusuf Tör on 12/08/2022.
 //
 
-import Foundation
+import Combine
+
+
+
 
 class TriggerDelayManager {
   static let shared = TriggerDelayManager()
@@ -19,10 +22,23 @@ class TriggerDelayManager {
     return configUnavailable || blockingAssignmentWaiting
   }
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
-  private(set) var preConfigAssignmentCall: PreConfigAssignmentCall?
 
-  var appUserIdAfterReset: String?
-  var triggersToPreloadPreConfigCall: Set<String>?
+  private var cancellable: AnyCancellable?
+
+
+  init() {
+    waitToFireDelayedTriggers()
+  }
+
+  func waitToFireDelayedTriggers() {
+    cancellable = ConfigManager.shared.$config
+      .zip(IdentityManager.shared.identityPublisher)
+      .sink { completion in
+        if completion == .finished {
+          self.fireDelayedTriggers()
+        }
+      } receiveValue: { _ in }
+  }
 
   func handleDelayedContent(
     storage: Storage = .shared,
@@ -30,28 +46,10 @@ class TriggerDelayManager {
   ) async {
     // If the user has called identify with a diff ID, we call reset.
     // Then we wait until config has returned before identifying again.
-    if let appUserIdAfterReset = appUserIdAfterReset {
-      storage.identify(with: appUserIdAfterReset)
-    }
-
-    if let triggersToPreloadPreConfigCall = triggersToPreloadPreConfigCall {
-      configManager.preloadPaywalls(forTriggers: triggersToPreloadPreConfigCall)
-      self.triggersToPreloadPreConfigCall = nil
-    }
-
-    if let preConfigAssignmentCall = preConfigAssignmentCall {
-      if preConfigAssignmentCall.isBlocking {
-        await configManager.loadAssignments()
-        self.preConfigAssignmentCall = nil
-        fireDelayedTriggers()
-      } else {
-        Task { await configManager.loadAssignments() }
-        self.preConfigAssignmentCall = nil
-        fireDelayedTriggers()
-      }
-    } else {
-      fireDelayedTriggers()
-    }
+    //if let appUserIdAfterReset = appUserIdAfterReset {
+      //TODO: FIGURE THIS OUT
+      //    storage.identify(with: appUserIdAfterReset)
+    //}
   }
 
   func fireDelayedTriggers(
@@ -82,13 +80,5 @@ class TriggerDelayManager {
 
   func clearPreConfigTriggers() {
     triggersFiredPreConfig.removeAll()
-  }
-
-  func cachePreConfigAssignmentCall(_ assignmentCall: PreConfigAssignmentCall) {
-    preConfigAssignmentCall = assignmentCall
-  }
-
-  func removePreConfigAssignmentCall() {
-    preConfigAssignmentCall = nil
   }
 }

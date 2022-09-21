@@ -21,10 +21,21 @@ final class PaywallService {
       apiKey: apiKey,
       delegate: shared
     )
+  }
+
+  static func logIn() async {
     do {
       try await Paywall.logIn(userId: "abc")
     } catch {
       print("An error occurred logging in", error)
+    }
+  }
+
+  static func logOut() async {
+    do {
+      try await Paywall.logOut()
+    } catch {
+      print("An error occurred logging out", error)
     }
   }
 

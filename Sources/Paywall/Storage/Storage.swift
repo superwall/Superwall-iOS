@@ -35,12 +35,10 @@ class Storage {
   func configure(apiKey: String) {
     migrateData()
     updateSdkVersion()
-    loadAssignmentsIfNeeded()
-
     self.apiKey = apiKey
   }
 
-
+/*
   func identify(with userId: String) {
     guard let outcome = StorageLogic.identify(
       newUserId: userId,
@@ -64,37 +62,7 @@ class Storage {
         TriggerDelayManager.shared.appUserIdAfterReset = nil
       }
     }
-  }
-
-  /// Loads assignments only if it's a fresh install
-  private func loadAssignmentsIfNeeded() {
-    guard neverCalledStaticConfig else {
-      return
-    }
-
-    let isNotFreshInstall = cache.read(DidTrackAppInstall.self) ?? false
-    if isNotFreshInstall {
-      return
-    }
-
-    loadAssignments()
-  }
-
-  /// If static config hasn't been called before, this queues a blocking assignment call.
-  private func loadAssignments() {
-    if TriggerDelayManager.shared.hasDelay {
-      let isBlocking = neverCalledStaticConfig
-      loadAssignmentsAfterConfig(isBlocking: isBlocking)
-    } else {
-      Task { await ConfigManager.shared.loadAssignments() }
-    }
-    neverCalledStaticConfig = false
-  }
-
-  private func loadAssignmentsAfterConfig(isBlocking: Bool) {
-    let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: isBlocking)
-    TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
-  }
+  }*/
 
   private func migrateData() {
     let version = cache.read(Version.self) ?? .v1
@@ -128,8 +96,6 @@ class Storage {
     coreDataManager.deleteAllEntities()
     cache.cleanUserFiles()
     confirmedAssignments = nil
-    IdentityManager.shared.clear()
-    ConfigManager.shared.clear()
     didTrackFirstSeen = false
     recordFirstSeenTracked()
   }

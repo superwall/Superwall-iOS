@@ -103,7 +103,7 @@ public extension Paywall {
     let result = track(trackableEvent)
 
     let eventParams = result.parameters.eventParams
-    Storage.shared.mergeUserAttributes(eventParams)
+    IdentityManager.shared.mergeUserAttributes(eventParams)
   }
 
   /// Handles a deep link sent to your app to open a preview of your paywall.

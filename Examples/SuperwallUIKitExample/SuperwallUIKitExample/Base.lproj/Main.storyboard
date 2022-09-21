@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Q5H-aZ-jXR">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21225" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Q5H-aZ-jXR">
     <device id="retina6_5" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21207"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
@@ -83,7 +84,7 @@
                                     <constraint firstAttribute="height" constant="50" id="uEe-TV-kRb"/>
                                 </constraints>
                                 <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="plain" title="Continue" cornerStyle="capsule">
+                                <buttonConfiguration key="configuration" style="plain" title="Log In" cornerStyle="capsule">
                                     <backgroundConfiguration key="background">
                                         <color key="backgroundColor" name="PrimaryTeal"/>
                                     </backgroundConfiguration>
@@ -91,7 +92,7 @@
                                     <color key="baseForegroundColor" name="Neutral"/>
                                 </buttonConfiguration>
                                 <connections>
-                                    <action selector="showOptionsView" destination="BYZ-38-t0r" eventType="touchUpInside" id="ZV4-1h-Lhy"/>
+                                    <action selector="logIn" destination="BYZ-38-t0r" eventType="touchUpInside" id="ZV4-1h-Lhy"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -174,8 +175,26 @@ This causes a paywall to show.</string>
                                     <constraint firstAttribute="height" constant="1" id="Gti-31-pJd"/>
                                 </constraints>
                             </view>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="yif-OP-vvf">
+                                <rect key="frame" x="20" y="812" width="374" height="50"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" priority="998" constant="500" id="Rrf-CH-WGO"/>
+                                    <constraint firstAttribute="height" constant="50" id="boJ-D1-1zE"/>
+                                </constraints>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="Log Out" cornerStyle="capsule">
+                                    <backgroundConfiguration key="background">
+                                        <color key="backgroundColor" name="PrimaryTeal"/>
+                                    </backgroundConfiguration>
+                                    <fontDescription key="titleFontDescription" name="Rubik-Bold" family="Rubik" pointSize="18"/>
+                                    <color key="baseForegroundColor" name="Neutral"/>
+                                </buttonConfiguration>
+                                <connections>
+                                    <action selector="logOut" destination="gix-OZ-Ey9" eventType="touchUpInside" id="cuP-5X-xuA"/>
+                                </connections>
+                            </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tZ5-ih-G51">
-                                <rect key="frame" x="20" y="792" width="374" height="50"/>
+                                <rect key="frame" x="20" y="744" width="374" height="50"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="50" id="XtR-mZ-9VF"/>
                                     <constraint firstAttribute="width" priority="998" constant="500" id="jGn-xw-W7Z"/>
@@ -199,10 +218,13 @@ This causes a paywall to show.</string>
                             <constraint firstItem="gFw-H8-1gc" firstAttribute="centerX" secondItem="QDw-P3-DQY" secondAttribute="centerX" id="0HV-Ra-0b3"/>
                             <constraint firstItem="tZ5-ih-G51" firstAttribute="centerX" secondItem="QDw-P3-DQY" secondAttribute="centerX" id="13G-Yw-nKy"/>
                             <constraint firstItem="JHi-ua-mAu" firstAttribute="leading" secondItem="QDw-P3-DQY" secondAttribute="leading" constant="20" id="19H-nU-0sc"/>
+                            <constraint firstItem="QDw-P3-DQY" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="yif-OP-vvf" secondAttribute="trailing" priority="999" constant="20" id="6jI-yy-glC"/>
                             <constraint firstItem="QDw-P3-DQY" firstAttribute="trailing" secondItem="JHi-ua-mAu" secondAttribute="trailing" constant="20" id="DlN-qR-Tay"/>
+                            <constraint firstItem="yif-OP-vvf" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="QDw-P3-DQY" secondAttribute="leading" priority="999" constant="20" id="Imz-S1-Z4Y"/>
                             <constraint firstItem="gFw-H8-1gc" firstAttribute="top" secondItem="JHi-ua-mAu" secondAttribute="bottom" constant="48" id="KDO-QE-deB"/>
-                            <constraint firstItem="QDw-P3-DQY" firstAttribute="bottom" secondItem="tZ5-ih-G51" secondAttribute="bottom" constant="20" id="QqU-lC-flE"/>
+                            <constraint firstItem="yif-OP-vvf" firstAttribute="top" secondItem="tZ5-ih-G51" secondAttribute="bottom" constant="18" id="LGl-32-43c"/>
                             <constraint firstItem="yY5-8L-kgo" firstAttribute="top" secondItem="gFw-H8-1gc" secondAttribute="bottom" constant="48" id="RtI-Dj-c4E"/>
+                            <constraint firstItem="yif-OP-vvf" firstAttribute="centerX" secondItem="QDw-P3-DQY" secondAttribute="centerX" id="btl-gz-Au3"/>
                             <constraint firstItem="QDw-P3-DQY" firstAttribute="trailing" secondItem="gFw-H8-1gc" secondAttribute="trailing" constant="20" id="k62-WQ-Hep"/>
                             <constraint firstItem="gFw-H8-1gc" firstAttribute="leading" secondItem="QDw-P3-DQY" secondAttribute="leading" constant="20" id="mj7-w1-jFq"/>
                             <constraint firstItem="JHi-ua-mAu" firstAttribute="top" secondItem="QDw-P3-DQY" secondAttribute="top" constant="20" id="qjM-os-5St"/>
@@ -210,6 +232,7 @@ This causes a paywall to show.</string>
                             <constraint firstItem="yY5-8L-kgo" firstAttribute="leading" secondItem="QDw-P3-DQY" secondAttribute="leading" constant="20" id="sj5-im-DWM"/>
                             <constraint firstItem="QDw-P3-DQY" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="tZ5-ih-G51" secondAttribute="trailing" priority="999" constant="20" id="xBZ-eK-cvV"/>
                             <constraint firstItem="tZ5-ih-G51" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="QDw-P3-DQY" secondAttribute="leading" priority="999" constant="20" id="xCv-hS-WDV"/>
+                            <constraint firstItem="QDw-P3-DQY" firstAttribute="bottom" secondItem="yif-OP-vvf" secondAttribute="bottom" id="zkH-gQ-lyn"/>
                         </constraints>
                     </view>
                     <connections>
@@ -227,7 +250,7 @@ This causes a paywall to show.</string>
             <color red="0.054901960784313725" green="0.058823529411764705" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
         <namedColor name="PrimaryTeal">
-            <color red="0.60392156862745094" green="0.9882352941176471" blue="0.94509803921568625" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.60399997234344482" green="0.98799997568130493" blue="0.94499999284744263" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>

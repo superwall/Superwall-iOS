@@ -1,20 +1,28 @@
 import Foundation
 import StoreKit
 
-final class StoreKitManager: NSObject {
+final class StoreKitManager {
 	static let shared = StoreKitManager()
   var productsById: [String: SKProduct] = [:]
 
   private var hasLoadedPurchasedProducts = false
   private let productsManager: ProductsManager
+  private let configManager: ConfigManager
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
     let substituteProductsById: [String: SKProduct]
     let products: [Product]
   }
 
-  init(productsManager: ProductsManager = ProductsManager()) {
+  init(
+    productsManager: ProductsManager = ProductsManager(),
+    configManager: ConfigManager = .shared
+  ) {
     self.productsManager = productsManager
+    self.configManager = configManager
+    Task {
+      await loadPurchasedProducts()
+    }
   }
 
 	func getVariables(
@@ -43,9 +51,10 @@ final class StoreKitManager: NSObject {
 		}
 	}
 
-  func loadPurchasedProducts() async {
-    let purchasedProductIds = InAppReceipt.shared.purchasedProductIds
+  private func loadPurchasedProducts() async {
     do {
+      await configManager.$config.value()
+      let purchasedProductIds = InAppReceipt.shared.purchasedProductIds
       let productsSet = try await productsManager.getProducts(withIdentifiers: purchasedProductIds)
       for product in productsSet {
         self.productsById[product.productIdentifier] = product

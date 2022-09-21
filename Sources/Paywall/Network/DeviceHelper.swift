@@ -216,17 +216,12 @@ class DeviceHelper {
   }
 
   var templateDevice: TemplateDevice {
-    let aliases: [String]
-    if let alias = Storage.shared.aliasId {
-      aliases = [alias]
-    } else {
-      aliases = []
-    }
-
+    let aliases = [IdentityManager.shared.aliasId]
+    
     return TemplateDevice(
       publicApiKey: Storage.shared.apiKey,
       platform: DeviceHelper.shared.isMac ? "macOS" : "iOS",
-      appUserId: Storage.shared.appUserId ?? "",
+      appUserId: IdentityManager.shared.appUserId ?? "",
       aliases: aliases,
       vendorId: DeviceHelper.shared.vendorId,
       appVersion: DeviceHelper.shared.appVersion,

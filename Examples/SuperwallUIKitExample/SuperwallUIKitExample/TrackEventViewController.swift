@@ -44,6 +44,15 @@ final class TrackEventViewController: UIViewController {
       }
   }
 
+  @IBAction private func logOut() {
+    Task {
+      await PaywallService.logOut()
+      await MainActor.run {
+        _ = navigationController?.popToRootViewController(animated: true)
+      }
+    }
+  }
+
   @IBAction private func trackEvent() {
     Paywall.track(
       event: "MyEvent"

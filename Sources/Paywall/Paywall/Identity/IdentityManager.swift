@@ -8,15 +8,8 @@
 import Foundation
 import Combine
 
-//TODO: FILL OUT INFO HERE AND EXPLAIN ON LOGIN ETC THAT THIS IS THROWN
-public enum IdentityError: Error {
-  case configNotCalled
-  case missingAppUserId
-  case alreadyLoggedIn
-  case notLoggedIn
-}
-
 final class IdentityManager {
+  static let shared = IdentityManager()
   var aliasId: String {
     didSet {
       saveIds()
@@ -31,6 +24,7 @@ final class IdentityManager {
     return appUserId ?? aliasId
   }
   var userAttributes: [String: Any] = [:]
+  var identityPublisher = PassthroughSubject<Void, Never>()
   private let storage: Storage
   private let configManager: ConfigManager
   private var cancellables: Set<AnyCancellable> = []
@@ -46,26 +40,39 @@ final class IdentityManager {
     self.userAttributes = storage.get(UserAttributes.self) ?? [:]
   }
 
+  func configure() async {
+    await configManager.$config.value()
+
+    let hasAccount = appUserId != nil
+    let accountExistedPreStaticConfig = storage.neverCalledStaticConfig
+    let isFirstAppOpen = !(storage.get(DidTrackFirstSeen.self) ?? false)
+
+    if IdentityLogic.shouldGetAssignments(
+      hasAccount: hasAccount,
+      accountExistedPreStaticConfig: accountExistedPreStaticConfig,
+      isFirstAppOpen: isFirstAppOpen
+    ) {
+      await configManager.getAssignments()
+    }
+    identityPublisher.send(completion: .finished)
+  }
+
+  // TODO: What happens if they have more than one device?
+
+  // TODO: Run through static config and whether we need to block due to that. Always refer to version of storage file on master.
+
+
   /// Logs user in and waits for config then assignments before firing triggers.
   func logIn(userId: String) async throws  {
     guard appUserId == nil else {
       throw IdentityError.alreadyLoggedIn
     }
 
-    let userId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
-    if userId.isEmpty {
-      throw IdentityError.missingAppUserId
-    }
+    appUserId = try sanitize(userId: userId)
 
-    appUserId = userId
-
-    try await configManager.$config
-      .compactMap { $0 }
-      .eraseToAnyPublisher()
-      .async()
-    await self.configManager.loadAssignments()
-
-    // TODO: FIRE TRIGGERS AFTER THIS
+    await configManager.$config.value()
+    await configManager.getAssignments()
+    identityPublisher.send(completion: .finished)
   }
 
   func createAccount(userId: String) throws {
@@ -73,30 +80,43 @@ final class IdentityManager {
       throw IdentityError.alreadyLoggedIn
     }
 
-    let userId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
-    if userId.isEmpty {
-      throw IdentityError.missingAppUserId
-    }
-
-    appUserId = userId
+    appUserId = try sanitize(userId: userId)
 
     Task {
-      await self.configManager.loadAssignments()
+      await self.configManager.getAssignments()
     }
+    identityPublisher.send(completion: .finished)
   }
 
-  func logOut() throws {
+  func logOut() async throws {
     if appUserId == nil {
       throw IdentityError.notLoggedIn
     }
 
-    clear()
+    await Paywall.reset()
   }
 
   func clear() {
     appUserId = nil
     aliasId = IdentityLogic.generateAlias()
     userAttributes = [:]
+  }
+
+  func mergeUserAttributes(_ newUserAttributes: [String: Any]) {
+    let mergedAttributes = IdentityLogic.mergeAttributes(
+      newUserAttributes,
+      with: userAttributes
+    )
+    storage.save(mergedAttributes, forType: UserAttributes.self)
+    userAttributes = mergedAttributes
+  }
+
+  private func sanitize(userId: String) throws -> String {
+    let userId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
+    if userId.isEmpty {
+      throw IdentityError.missingAppUserId
+    }
+    return userId
   }
 
   private func saveIds() {
@@ -113,39 +133,6 @@ final class IdentityManager {
       newUserAttributes["appUserId"] = appUserId
     }
 
-    let mergedAttributes = IdentityLogic.mergeAttributes(
-      newUserAttributes,
-      with: userAttributes
-    )
-    storage.save(mergedAttributes, forType: UserAttributes.self)
-    userAttributes = mergedAttributes
+    mergeUserAttributes(newUserAttributes)
   }
-/*
-
-
-  func identify(with userId: String) {
-    guard let outcome = StorageLogic.identify(
-      newUserId: userId,
-      oldUserId: appUserId
-    ) else {
-      loadAssignmentsIfNeeded()
-      return
-    }
-
-    appUserId = userId
-
-    switch outcome {
-    case .reset:
-      TriggerDelayManager.shared.appUserIdAfterReset = appUserId
-      Paywall.reset()
-    case .loadAssignments:
-      if TriggerDelayManager.shared.appUserIdAfterReset == nil {
-        loadAssignments()
-      } else {
-        loadAssignmentsAfterConfig(isBlocking: true)
-        TriggerDelayManager.shared.appUserIdAfterReset = nil
-      }
-    }
-  }
-*/
 }

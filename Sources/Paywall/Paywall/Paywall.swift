@@ -9,12 +9,12 @@ import GameController
 public final class Paywall: NSObject {
   // MARK: - Public Properties
   /// The delegate of the Paywall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
-	@objc public static var delegate: PaywallDelegate?
+  @objc public static var delegate: PaywallDelegate?
 
-	/// Properties stored about the user, set using ``Paywall/Paywall/setUserAttributes(_:)``.
-	public static var userAttributes: [String: Any] {
-		return Storage.shared.userAttributes
-	}
+  /// Properties stored about the user, set using ``Paywall/Paywall/setUserAttributes(_:)``.
+  public static var userAttributes: [String: Any] {
+    return IdentityManager.shared.userAttributes
+  }
 
   /// The presented paywall view controller.
   public static var presentedViewController: UIViewController? {
@@ -40,37 +40,37 @@ public final class Paywall: NSObject {
   /// If you haven't called ``Paywall/Paywall/logIn(userId:)`` or ``Paywall/Paywall/createAccount(userId:)``,
   /// this value will return an anonymous user id which is cached to disk
   public static var userId: String {
-    return shared.identityManager.userId
+    return IdentityManager.shared.userId
   }
 
   // MARK: - Private Properties
   /// Used as the reload function if a paywall takes to long to load. set in paywall.present
-	static var presentAgain = {}
-	static var shared = Paywall(apiKey: nil)
-	static var isFreeTrialAvailableOverride: Bool?
+  static var presentAgain = {}
+  static var shared = Paywall(apiKey: nil)
+  static var isFreeTrialAvailableOverride: Bool?
 
-	var presentingWindow: UIWindow?
-	var didTryToAutoRestore = false
-	var paywallWasPresentedThisSession = false
+  var presentingWindow: UIWindow?
+  var didTryToAutoRestore = false
+  var paywallWasPresentedThisSession = false
 
-	var paywallViewController: SWPaywallViewController? {
-		return PaywallManager.shared.presentedViewController
-	}
+  var paywallViewController: SWPaywallViewController? {
+    return PaywallManager.shared.presentedViewController
+  }
 
-	var recentlyPresented = false {
-		didSet {
+  var recentlyPresented = false {
+    didSet {
       guard recentlyPresented else {
         return
       }
       DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(700)) {
         self.recentlyPresented = false
       }
-		}
-	}
+    }
+  }
 
-	var isPaywallPresented: Bool {
-		return paywallViewController != nil
-	}
+  var isPaywallPresented: Bool {
+    return paywallViewController != nil
+  }
 
   /// Indicates whether the user has an active subscription. Performed on the main thread.
   var isUserSubscribed: Bool {
@@ -93,20 +93,50 @@ public final class Paywall: NSObject {
     return isSubscribed
   }
   private static var hasCalledConfig = false
-  private lazy var identityManager = IdentityManager()
+
+  // MARK: - Private Functions
+  private override init() {}
+
+  private init(
+    apiKey: String?,
+    delegate: PaywallDelegate? = nil,
+    options: PaywallOptions? = nil
+  ) {
+    super.init()
+    guard let apiKey = apiKey else {
+      return
+    }
+    ConfigManager.shared.setOptions(options)
+    Storage.shared.configure(apiKey: apiKey)
+
+    // Initialise session events manager and app session manager on main thread
+    _ = SessionEventsManager.shared
+    _ = AppSessionManager.shared
+
+    if delegate != nil {
+      Self.delegate = delegate
+    }
+
+    SKPaymentQueue.default().add(self)
+    Storage.shared.recordAppInstall()
+    Task {
+      await ConfigManager.shared.fetchConfiguration()
+      await IdentityManager.shared.configure()
+    }
+  }
 
   // MARK: - Public Functions
-	/// Configures a shared instance of ``Paywall/Paywall`` for use throughout your app.
+  /// Configures a shared instance of ``Paywall/Paywall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. For a tutorial on the best practices for implementing the delegate, we recommend checking out our <doc:GettingStarted> article.
-	/// - Parameters:
+  /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
-	///   - userId: Your user's unique identifier, as defined by your backend system. If you don't specify a `userId`, we'll create one for you. Calling ``Paywall/Paywall/identify(userId:)`` later on will automatically alias these two for simple reporting.
+  ///   - userId: Your user's unique identifier, as defined by your backend system. If you don't specify a `userId`, we'll create one for you. Calling ``Paywall/Paywall/identify(userId:)`` later on will automatically alias these two for simple reporting.
   ///   - delegate: A class that conforms to ``PaywallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``PaywallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   /// - Returns: The newly configured ``Paywall/Paywall`` instance.
-	@discardableResult
-	@objc public static func configure(
+  @discardableResult
+  @objc public static func configure(
     apiKey: String,
     delegate: PaywallDelegate? = nil,
     options: PaywallOptions? = nil
@@ -120,15 +150,13 @@ public final class Paywall: NSObject {
       return shared
     }
     hasCalledConfig = true
-		shared = Paywall(
+    shared = Paywall(
       apiKey: apiKey,
       delegate: delegate,
       options: options
     )
-		return shared
-	}
-
-
+    return shared
+  }
 
   /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard.
   ///
@@ -145,27 +173,14 @@ public final class Paywall: NSObject {
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
   @objc public static func preloadPaywalls(forTriggers triggers: Set<String>) {
-    ConfigManager.shared.preloadPaywalls(forTriggers: triggers)
-  }
-
-	/// Resets the `userId` and data stored by Superwall.
-  ///
-  /// Call this when your user signs out.
-	@discardableResult
-	@objc public static func reset() -> Paywall {
-    if Storage.shared.appUserId == nil {
-      return shared
-    }
-    Paywall.presentAgain = {}
-    shared.latestDismissedPaywallInfo = nil
-    Storage.shared.clear()
-    PaywallManager.shared.clearCache()
     Task {
-      await ConfigManager.shared.fetchConfiguration(afterReset: true)
+      await ConfigManager.shared.preloadPaywalls(forTriggers: triggers)
     }
-    return shared
-	}
+  }
+}
 
+// MARK: - Login
+extension Paywall {
   /// Log in a user with their userId to retrieve paywalls that they've been assigned to.
   ///
   /// This links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
@@ -178,10 +193,14 @@ public final class Paywall: NSObject {
   ) {
     Task {
       do {
-        try await shared.identityManager.logIn(userId: userId)
-        completion?(shared, nil)
+        try await IdentityManager.shared.logIn(userId: userId)
+        await MainActor.run {
+          completion?(shared, nil)
+        }
       } catch {
-        completion?(nil, error)
+        await MainActor.run {
+          completion?(nil, error)
+        }
       }
     }
   }
@@ -197,8 +216,10 @@ public final class Paywall: NSObject {
   ) {
     Task {
       do {
-        try await shared.identityManager.logIn(userId: userId)
-        completion?(.success(shared))
+        try await IdentityManager.shared.logIn(userId: userId)
+        await MainActor.run {
+          completion?(.success(shared))
+        }
       } catch {
         completion?(.failure(error))
       }
@@ -212,10 +233,78 @@ public final class Paywall: NSObject {
   ///  - Returns: The shared Paywall instance.
   @discardableResult
   @objc public static func logIn(userId: String) async throws -> Paywall {
-    try await shared.identityManager.logIn(userId: userId)
+    try await IdentityManager.shared.logIn(userId: userId)
+    return shared
+  }
+}
+
+// MARK: - Create Account
+extension Paywall {
+  /// Log in a user with their userId to retrieve paywalls that they've been assigned to.
+  ///
+  /// This links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
+  ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
+  ///  - Returns: The shared Paywall instance.
+  @discardableResult
+  @objc public static func createAccount(userId: String) throws -> Paywall {
+    try IdentityManager.shared.createAccount(userId: userId)
+    return shared
+  }
+}
+
+// MARK: - Log Out
+extension Paywall {
+  /// Log in a user with their userId to retrieve paywalls that they've been assigned to.
+  ///
+  /// This links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
+  ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
+  ///  - Returns: The shared Paywall instance.
+  @objc public static func logOut() async throws {
+    try await IdentityManager.shared.logOut()
+  }
+
+  /// Log in a user with their userId to retrieve paywalls that they've been assigned to.
+  ///
+  /// This links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
+  ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
+  ///  - Returns: The shared Paywall instance.
+  @objc public static func logOut(completion: (() -> Void)?) throws {
+    Task {
+      try await IdentityManager.shared.logOut()
+      await MainActor.run {
+        completion?()
+      }
+    }
+  }
+}
+
+// MARK: - Reset
+extension Paywall {
+  /// Resets the `userId` and data stored by Superwall.
+  @discardableResult
+  @objc public static func reset() async -> Paywall {
+    Paywall.presentAgain = {}
+    shared.latestDismissedPaywallInfo = nil
+    IdentityManager.shared.clear()
+    Storage.shared.clear()
+    ConfigManager.shared.clear()
+    await PaywallManager.shared.clearCache()
+    await ConfigManager.shared.fetchConfiguration()
     return shared
   }
 
+  /// Resets the `userId` and data stored by Superwall.
+  @objc public static func reset(completion: ((Paywall) -> Void)?) {
+    Task {
+      await reset()
+      await MainActor.run {
+        completion?(shared)
+      }
+    }
+  }
+}
+
+extension Paywall {
 	/// Forwards Game controller events to the paywall.
   ///
   /// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`
@@ -240,36 +329,6 @@ public final class Paywall: NSObject {
 	///  - Parameter localeIdentifier: The locale identifier for the language you would like to test.
 	public static func localizationOverride(localeIdentifier: String? = nil) {
 		LocalizationManager.shared.selectedLocale = localeIdentifier
-	}
-
-  // MARK: - Private Functions
-  private override init() {}
-
-	private init(
-    apiKey: String?,
-    delegate: PaywallDelegate? = nil,
-    options: PaywallOptions? = nil
-  ) {
-		super.init()
-		guard let apiKey = apiKey else {
-			return
-		}
-    ConfigManager.shared.setOptions(options)
-    Storage.shared.configure(apiKey: apiKey)
-
-    // Initialise session events manager and app session manager on main thread
-    _ = SessionEventsManager.shared
-    _ = AppSessionManager.shared
-
-    if delegate != nil {
-      Self.delegate = delegate
-    }
-
-    SKPaymentQueue.default().add(self)
-    Storage.shared.recordAppInstall()
-    Task {
-      await ConfigManager.shared.fetchConfiguration()
-    }
 	}
 
   /// Attemps to implicitly trigger a paywall for a given analytical event.
@@ -386,7 +445,6 @@ extension Paywall: SWPaywallViewControllerDelegate {
   @available(*, unavailable, message: "Please use login(userId:) or createAccount(userId:).")
   @discardableResult
   @objc public static func identify(userId: String) -> Paywall {
-    Storage.shared.identify(with: userId)
     return shared
   }
 }
