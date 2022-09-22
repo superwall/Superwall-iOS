@@ -8,7 +8,10 @@
 import SwiftUI
 
 struct PaywallOptionsTableView: View {
-  init() {
+  @Binding var path: [Destination]
+
+  init(path: Binding<[Destination]>) {
+    self._path = path
     UINavigationBar.appearance().titleTextAttributes = [
       .foregroundColor: UIColor.white,
       .font: UIFont.rubikBold(.five)
@@ -19,7 +22,7 @@ struct PaywallOptionsTableView: View {
     ZStack {
       VStack(spacing: 40) {
         information()
-        PaywallOptionsListView()
+        PaywallOptionsListView(path: $path)
         Spacer()
       }
       .background(Color.neutral)
@@ -57,7 +60,7 @@ struct PaywallOptionsTableView: View {
 struct PaywallOptionsTableView_Previews: PreviewProvider {
   static var previews: some View {
     NavigationView {
-      PaywallOptionsTableView()
+      PaywallOptionsTableView(path: .constant([]))
     }
   }
 }

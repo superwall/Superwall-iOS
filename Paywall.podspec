@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 	s.name         = "Paywall"
-    s.version      = "2.4.2-beta.4"
+    s.version      = "2.4.2-rc.1"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. superwall.com"
 
@@ -34,7 +34,7 @@ Pod::Spec.new do |s|
 
 	s.author       = { "Jake Mor" => "jake@superwall.com" }
 	s.documentation_url = "https://docs.superwall.com/"
-	s.swift_versions = ['5.6']
+	s.swift_versions = ['5.5']
 	s.ios.deployment_target = '11.2'
 	s.requires_arc = true
 
