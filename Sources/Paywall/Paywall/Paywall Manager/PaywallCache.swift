@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 final class PaywallCache {
   func getPaywall(
     withIdentifier identifier: String?

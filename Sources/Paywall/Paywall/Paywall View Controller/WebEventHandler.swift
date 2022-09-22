@@ -23,6 +23,7 @@ protocol WebEventHandlerDelegate: AnyObject {
   func presentSafariExternal(_ url: URL)
 }
 
+@MainActor
 final class WebEventHandler: WebEventDelegate {
   weak var delegate: WebEventHandlerDelegate?
 

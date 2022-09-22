@@ -165,10 +165,8 @@ enum PaywallResponseLogic {
   static func handlePaywallError(
     _ error: Error,
     forEvent event: EventData?,
-    withHash hash: String,
-    handlersCache: [String: [PaywallResponseCompletionBlock]],
     trackEvent: (Trackable) -> TrackingResult = Paywall.track
-  ) -> PaywallErrorResponse? {
+  ) -> NSError {
     if let error = error as? CustomURLSession.NetworkError,
       error == .notFound {
       let trackedEvent = InternalSuperwallEvent.PaywallResponseLoad(
@@ -184,27 +182,19 @@ enum PaywallResponseLogic {
       _ = trackEvent(trackedEvent)
     }
 
-    if let handlers = handlersCache[hash] {
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Not Found",
-          value: "There isn't a paywall configured to show in this context",
-          comment: ""
-        )
-      ]
-      let error = NSError(
-        domain: "SWPaywallNotFound",
-        code: 404,
-        userInfo: userInfo
+    let userInfo: [String: Any] = [
+      NSLocalizedDescriptionKey: NSLocalizedString(
+        "Not Found",
+        value: "There isn't a paywall configured to show in this context",
+        comment: ""
       )
-
-      return PaywallErrorResponse(
-        handlers: handlers,
-        error: error
-      )
-    }
-
-    return nil
+    ]
+    let error = NSError(
+      domain: "SWPaywallNotFound",
+      code: 404,
+      userInfo: userInfo
+    )
+    return error
   }
 
   static func alterResponse(

@@ -24,11 +24,12 @@ final class IdentityManager {
     return appUserId ?? aliasId
   }
   var userAttributes: [String: Any] = [:]
-  var identityPublisher = PassthroughSubject<Void, Never>()
+  /// When `true`, the SDK is able to fire triggers.
+  @Published var hasIdentity = true
   private let storage: Storage
   private let configManager: ConfigManager
   private var cancellables: Set<AnyCancellable> = []
-
+  var cancell: AnyCancellable?
   init(
     storage: Storage = .shared,
     configManager: ConfigManager = .shared
@@ -38,10 +39,13 @@ final class IdentityManager {
     self.appUserId = storage.get(AppUserId.self)
     self.aliasId = storage.get(AliasId.self) ?? IdentityLogic.generateAlias()
     self.userAttributes = storage.get(UserAttributes.self) ?? [:]
+
+
   }
 
+  /// Called on configure of the Paywall framework.
   func configure() async {
-    await configManager.$config.value()
+    await configManager.$config.hasValue()
 
     let hasAccount = appUserId != nil
     let accountExistedPreStaticConfig = storage.neverCalledStaticConfig
@@ -54,38 +58,48 @@ final class IdentityManager {
     ) {
       await configManager.getAssignments()
     }
-    identityPublisher.send(completion: .finished)
+
+    // When configure called, identity completed. can fire triggers...
+    // Calls login, must suspend until identity finished again.
+    hasIdentity = true
   }
 
   // TODO: What happens if they have more than one device?
 
   // TODO: Run through static config and whether we need to block due to that. Always refer to version of storage file on master.
 
+  // TODO: If someone configures, then calls login, then login again, what happens?
+
 
   /// Logs user in and waits for config then assignments before firing triggers.
   func logIn(userId: String) async throws  {
+    hasIdentity = false
+    defer {
+      hasIdentity = true
+    }
     guard appUserId == nil else {
       throw IdentityError.alreadyLoggedIn
     }
 
     appUserId = try sanitize(userId: userId)
 
-    await configManager.$config.value()
+    await configManager.$config.hasValue()
     await configManager.getAssignments()
-    identityPublisher.send(completion: .finished)
   }
 
   func createAccount(userId: String) throws {
+    hasIdentity = false
+    defer {
+      hasIdentity = true
+    }
     guard appUserId == nil else {
       throw IdentityError.alreadyLoggedIn
     }
-
     appUserId = try sanitize(userId: userId)
 
     Task {
       await self.configManager.getAssignments()
     }
-    identityPublisher.send(completion: .finished)
   }
 
   func logOut() async throws {
@@ -97,6 +111,7 @@ final class IdentityManager {
   }
 
   func clear() {
+    hasIdentity = false
     appUserId = nil
     aliasId = IdentityLogic.generateAlias()
     userAttributes = [:]

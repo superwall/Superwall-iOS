@@ -4,6 +4,7 @@ import UIKit
 import Foundation
 import StoreKit
 import GameController
+import Combine
 
 /// The primary class for integrating Superwall into your application. It provides access to all its featured via static functions and variables.
 public final class Paywall: NSObject {
@@ -17,6 +18,7 @@ public final class Paywall: NSObject {
   }
 
   /// The presented paywall view controller.
+  @MainActor
   public static var presentedViewController: UIViewController? {
     return PaywallManager.shared.presentedViewController
   }
@@ -27,6 +29,7 @@ public final class Paywall: NSObject {
   }
 
   /// The ``PaywallInfo`` object of the most recently presented view controller.
+  @MainActor
   public static var latestPaywallInfo: PaywallInfo? {
     let presentedPaywallInfo = PaywallManager.shared.presentedViewController?.paywallInfo
     return presentedPaywallInfo ?? shared.latestDismissedPaywallInfo
@@ -45,7 +48,7 @@ public final class Paywall: NSObject {
 
   // MARK: - Private Properties
   /// Used as the reload function if a paywall takes to long to load. set in paywall.present
-  static var presentAgain = {}
+  static var presentAgain: () async -> Void = {}
   static var shared = Paywall(apiKey: nil)
   static var isFreeTrialAvailableOverride: Bool?
 
@@ -53,6 +56,7 @@ public final class Paywall: NSObject {
   var didTryToAutoRestore = false
   var paywallWasPresentedThisSession = false
 
+  @MainActor
   var paywallViewController: SWPaywallViewController? {
     return PaywallManager.shared.presentedViewController
   }
@@ -68,6 +72,7 @@ public final class Paywall: NSObject {
     }
   }
 
+  @MainActor
   var isPaywallPresented: Bool {
     return paywallViewController != nil
   }
@@ -289,6 +294,8 @@ extension Paywall {
     Storage.shared.clear()
     ConfigManager.shared.clear()
     await PaywallManager.shared.clearCache()
+
+    // TODO: Maybe change this and get assignments?
     await ConfigManager.shared.fetchConfiguration()
     return shared
   }
@@ -335,54 +342,39 @@ extension Paywall {
   ///
   ///  - Parameters:
   ///     - event: The data of an analytical event data that could trigger a paywall.
-	func handleImplicitTrigger(forEvent event: EventData) {
-		onMain { [weak self] in
-			guard let self = self else {
-        return
+	func handleImplicitTrigger(forEvent event: EventData) async {
+    await Publishers.readyToFireTriggers.async()
+
+    let presentationInfo: PresentationInfo = .implicitTrigger(event)
+
+    let outcome = await PaywallLogic.canTriggerPaywall(
+      eventName: event.name,
+      triggers: Set(ConfigManager.shared.triggers.keys),
+      isPaywallPresented: self.isPaywallPresented
+    )
+
+    switch outcome {
+    case .deepLinkTrigger:
+      if await Paywall.shared.isPaywallPresented {
+        await Paywall.dismiss()
       }
-
-      let presentationInfo: PresentationInfo = .implicitTrigger(event)
-
-      if TriggerDelayManager.shared.hasDelay {
-        let trigger = PreConfigTrigger(presentationInfo: presentationInfo)
-        TriggerDelayManager.shared.cachePreConfigTrigger(trigger)
-        return
-      }
-
-      let outcome = PaywallLogic.canTriggerPaywall(
-        eventName: event.name,
-        triggers: Set(ConfigManager.shared.triggers.keys),
-        isPaywallPresented: self.isPaywallPresented
+      await Paywall.internallyPresent(presentationInfo)
+    case .triggerPaywall:
+      // delay in case they are presenting a view controller alongside an event they are calling
+      let twoHundredMilliseconds = UInt64(200_000_000)
+      try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+      await Paywall.internallyPresent(presentationInfo)
+    case .disallowedEventAsTrigger:
+      Logger.debug(
+        logLevel: .warn,
+        scope: .paywallCore,
+        message: "Event Used as Trigger",
+        info: ["message": "You can't use events as triggers"],
+        error: nil
       )
-
-      switch outcome {
-      case .deepLinkTrigger:
-        onMain {
-          if Paywall.shared.isPaywallPresented {
-            Paywall.dismiss {
-              Paywall.internallyPresent(presentationInfo)
-            }
-          } else {
-            Paywall.internallyPresent(presentationInfo)
-          }
-        }
-      case .triggerPaywall:
-        // delay in case they are presenting a view controller alongside an event they are calling
-        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
-          Paywall.internallyPresent(presentationInfo)
-        }
-      case .disallowedEventAsTrigger:
-        Logger.debug(
-          logLevel: .warn,
-          scope: .paywallCore,
-          message: "Event Used as Trigger",
-          info: ["message": "You can't use events as triggers"],
-          error: nil
-        )
-      case .dontTriggerPaywall:
-        return
-      }
-		}
+    case .dontTriggerPaywall:
+      return
+    }
 	}
 }
 

@@ -18,7 +18,8 @@ public extension Paywall {
   /// Calling this function doesn't fire the `onDismiss` completion block in ``Paywall/Paywall/present(onPresent:onDismiss:onSkip:)``, since this action is developer initiated.
 	/// - Parameters:
   ///   - completion: An optional completion block that gets called after the paywall is dismissed. Defaults to nil.
-	@objc static func dismiss(_ completion: (() -> Void)? = nil) {
+  @MainActor
+  @objc static func dismiss(_ completion: (() -> Void)? = nil) {
 		guard let paywallViewController = shared.paywallViewController else {
       return
     }
@@ -32,6 +33,7 @@ public extension Paywall {
   /// Dismisses the presented paywall.
   ///
   /// Calling this function doesn't fire the `onDismiss` completion block in ``Paywall/Paywall/present(onPresent:onDismiss:onSkip:)``, since this action is developer initiated.
+  @MainActor
   @objc static func dismiss() async {
     guard let paywallViewController = shared.paywallViewController else {
       return
@@ -106,19 +108,21 @@ public extension Paywall {
       presentationStyleOverride: presentationStyleOverride
     )
 
-    internallyPresent(
-      .explicitTrigger(result.data),
-      paywallOverrides: overrides
-    ) { state in
-      switch state {
-      case .presented(let paywallInfo):
-        onPresent?(paywallInfo)
-      case .dismissed(let result):
-        if let onDismiss = onDismiss {
-          onDismissConverter(result, completion: onDismiss)
+    Task {
+      await internallyPresent(
+        .explicitTrigger(result.data),
+        paywallOverrides: overrides
+      ) { state in
+        switch state {
+        case .presented(let paywallInfo):
+          onPresent?(paywallInfo)
+        case .dismissed(let result):
+          if let onDismiss = onDismiss {
+            onDismissConverter(result, completion: onDismiss)
+          }
+        case .skipped(let reason):
+          onSkipConverter(reason: reason, completion: onSkip)
         }
-      case .skipped(let reason):
-        onSkipConverter(reason: reason, completion: onSkip)
       }
     }
   }
@@ -151,11 +155,13 @@ public extension Paywall {
     )
     let result = track(trackableEvent)
 
-    internallyPresent(
-      .explicitTrigger(result.data),
-      paywallOverrides: paywallOverrides,
-      paywallState: paywallState
-    )
+    Task {
+      await internallyPresent(
+        .explicitTrigger(result.data),
+        paywallOverrides: paywallOverrides,
+        paywallState: paywallState
+      )
+    }
   }
 
   /// Tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -187,17 +193,19 @@ public extension Paywall {
     let result = track(trackableEvent)
     let paywallState = PassthroughSubject<PaywallState, Never>()
 
-    internallyPresent(
-      .explicitTrigger(result.data),
-      paywallOverrides: paywallOverrides
-    ) { state in
-      switch state {
-      case .presented:
-        paywallState.send(state)
-      case .dismissed,
-        .skipped:
-        paywallState.send(state)
-        paywallState.send(completion: .finished)
+    Task {
+      await internallyPresent(
+        .explicitTrigger(result.data),
+        paywallOverrides: paywallOverrides
+      ) { state in
+        switch state {
+        case .presented:
+          paywallState.send(state)
+        case .dismissed,
+            .skipped:
+          paywallState.send(state)
+          paywallState.send(completion: .finished)
+        }
       }
     }
 

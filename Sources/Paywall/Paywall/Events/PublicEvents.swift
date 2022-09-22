@@ -111,6 +111,8 @@ public extension Paywall {
   /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
   static func handleDeepLink(_ url: URL) {
     track(InternalSuperwallEvent.DeepLink(url: url))
-    SWDebugManager.shared.handle(deepLinkUrl: url)
+    Task {
+      await SWDebugManager.shared.handle(deepLinkUrl: url)
+    }
   }
 }

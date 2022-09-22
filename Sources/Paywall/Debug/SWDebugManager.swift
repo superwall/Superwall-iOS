@@ -13,6 +13,7 @@ struct DebugResponse {
   var token: String
 }
 
+@MainActor
 final class SWDebugManager {
 	var viewController: SWDebugViewController?
   static let shared = SWDebugManager()
@@ -53,8 +54,8 @@ final class SWDebugManager {
   /// Remember to add your URL scheme in settings for QR code scanning to work.
   func launchDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
     if Paywall.shared.isPaywallPresented {
-			await Paywall.dismiss()
-			await launchDebugger(withPaywallId: paywallDatabaseId)
+      await Paywall.dismiss()
+      await launchDebugger(withPaywallId: paywallDatabaseId)
 		} else {
 			if viewController == nil {
         let twoHundredMilliseconds = UInt64(200_000_000)
@@ -67,7 +68,6 @@ final class SWDebugManager {
 		}
 	}
 
-  @MainActor
 	func presentDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
 		isDebuggerLaunched = true
 		if let viewController = viewController {
@@ -90,9 +90,7 @@ final class SWDebugManager {
 		}
 	}
 
-  @MainActor
   func closeDebugger(animated: Bool) async {
-
     func dismissViewController() async {
       return await withCheckedContinuation { continuation in
         viewController?.dismiss(animated: animated) { [weak self] in

@@ -7,12 +7,30 @@
 
 import Combine
 
-extension Publisher {
+extension Publisher  {
   @discardableResult
-  func value() async -> Output {
+  func hasValue<T>() async -> T where Output == Optional<T> {
     await self
       .compactMap { $0 }
       .eraseToAnyPublisher()
       .async()
+  }
+}
+
+extension Publishers {
+  static var readyToFireTriggers: AnyPublisher<Void, Never> {
+    let hasConfig = ConfigManager.shared.$config
+      .compactMap { $0 }
+
+    let hasIdentity = IdentityManager.shared.$hasIdentity
+      .filter { $0 == true }
+      .eraseToAnyPublisher()
+
+    return hasConfig
+      .zip(hasIdentity)
+      .map { _ in
+        return ()
+      }
+      .eraseToAnyPublisher()
   }
 }

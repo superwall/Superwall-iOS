@@ -402,7 +402,9 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       ),
       shouldCallCompletion: false
     ) {
-      Paywall.presentAgain()
+      Task {
+        await Paywall.presentAgain()
+      }
     }
 	}
 

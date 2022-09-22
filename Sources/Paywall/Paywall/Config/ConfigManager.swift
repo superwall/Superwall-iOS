@@ -193,7 +193,7 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by the provided triggers.
   func preloadPaywalls(forTriggers triggerNames: Set<String>) async {
-    let config = await $config.compactMap { $0 }.value()
+    let config = await $config.hasValue()
     let triggersToPreload =  config.triggers.filter { triggerNames.contains($0.eventName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
@@ -202,10 +202,12 @@ class ConfigManager {
   /// Preloads paywalls referenced by triggers.
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) {
     for identifier in paywallIdentifiers {
-      paywallManager.getPaywallViewController(
-        responseIdentifiers: .init(paywallId: identifier),
-        cached: true
-      )
+      Task {
+        try? await paywallManager.getPaywallViewController(
+          responseIdentifiers: .init(paywallId: identifier),
+          cached: true
+        )
+      }
     }
   }
 

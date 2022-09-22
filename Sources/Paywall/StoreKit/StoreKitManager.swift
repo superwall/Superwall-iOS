@@ -53,7 +53,7 @@ final class StoreKitManager {
 
   private func loadPurchasedProducts() async {
     do {
-      await configManager.$config.value()
+      await configManager.$config.hasValue()
       let purchasedProductIds = InAppReceipt.shared.purchasedProductIds
       let productsSet = try await productsManager.getProducts(withIdentifiers: purchasedProductIds)
       for product in productsSet {
@@ -65,7 +65,24 @@ final class StoreKitManager {
     }
   }
 
+  func getProducts(
+    withIds responseProductIds: [String],
+    responseProducts: [Product] = [],
+    substituting substituteProducts: PaywallProducts? = nil
+  ) async throws -> (productsById: [String: SKProduct], products: [Product]) {
+    return try await withUnsafeThrowingContinuation { continuation in
+      getProducts(
+        withIds: responseProductIds,
+        responseProducts: responseProducts,
+        substituting: substituteProducts
+      ) { response in
+        continuation.resume(with: response)
+      }
+    }
+  }
+
   /// Gets non-substituted products and returns a
+  #warning("Added async wrapped. Convert to async properly and eventually stop using this.")
 	func getProducts(
     withIds responseProductIds: [String],
     responseProducts: [Product] = [],
@@ -77,6 +94,7 @@ final class StoreKitManager {
       fromResponseProductIds: responseProductIds,
       responseProducts: responseProducts
     )
+
 
     productsManager.products(withIdentifiers: processingResult.productIdsToLoad) { [weak self] result in
       switch result {

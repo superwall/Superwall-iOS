@@ -108,7 +108,7 @@ class Network {
     ) async throws -> Config {
     do {
       // Suspend until app is in foreground.
-      try await UIApplication.shared.publisher(for: \.applicationState)
+      await UIApplication.shared.publisher(for: \.applicationState)
         .subscribe(on: RunLoop.main)
         .contains(where: { $0 != .background })
         .eraseToAnyPublisher()

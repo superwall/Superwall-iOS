@@ -7,25 +7,14 @@
 
 import Combine
 
-
-
+// TODO: hasDelay needs to be removed such that the internal paywall presentation/implicit trigger handler can use an await call to zip call below instead.
+// TODO: Check identity stuff on calling reset()
 
 class TriggerDelayManager {
   static let shared = TriggerDelayManager()
-  /// Returns `true` if config doesn't exist yet.
-  var hasDelay: Bool {
-    let configUnavailable = ConfigManager.shared.config == nil
-    var blockingAssignmentWaiting = false
-    if let preConfigAssignmentCall = preConfigAssignmentCall {
-      blockingAssignmentWaiting = preConfigAssignmentCall.isBlocking
-    }
-    return configUnavailable || blockingAssignmentWaiting
-  }
   private(set) var triggersFiredPreConfig: [PreConfigTrigger] = []
-
   private var cancellable: AnyCancellable?
-
-
+/*
   init() {
     waitToFireDelayedTriggers()
   }
@@ -38,7 +27,7 @@ class TriggerDelayManager {
           self.fireDelayedTriggers()
         }
       } receiveValue: { _ in }
-  }
+  }*/
 
   func handleDelayedContent(
     storage: Storage = .shared,
@@ -56,7 +45,7 @@ class TriggerDelayManager {
     storage: Storage = .shared,
     paywall: Paywall = .shared
   ) {
-    triggersFiredPreConfig.forEach { trigger in
+    /*triggersFiredPreConfig.forEach { trigger in
       switch trigger.presentationInfo.triggerType {
       case .implicit:
         guard let eventData = trigger.presentationInfo.eventData else {
@@ -71,7 +60,7 @@ class TriggerDelayManager {
         )
       }
     }
-    clearPreConfigTriggers()
+    clearPreConfigTriggers()*/
   }
 
   func cachePreConfigTrigger(_ trigger: PreConfigTrigger) {

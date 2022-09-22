@@ -7,6 +7,7 @@
 // swiftlint:disable function_body_length cyclomatic_complexity
 
 import UIKit
+import Combine
 
 /// The reason the paywall presentation was skipped.
 public enum PaywallSkippedReason {
@@ -32,17 +33,8 @@ extension Paywall {
     cached: Bool = true,
     paywallOverrides: PaywallOverrides? = nil,
     paywallState: ((PaywallState) -> Void)? = nil
-  ) {
-    if TriggerDelayManager.shared.hasDelay {
-      let trigger = PreConfigTrigger(
-        presentationInfo: presentationInfo,
-        viewController: presentingViewController,
-        paywallOverrides: paywallOverrides,
-        paywallState: paywallState
-      )
-      TriggerDelayManager.shared.cachePreConfigTrigger(trigger)
-      return
-    }
+  ) async {
+    await IdentityManager.shared.$hasIdentity.isTrue()
 
     let eventData = presentationInfo.eventData
     let debugInfo: [String: Any] = [
@@ -59,7 +51,7 @@ extension Paywall {
       info: debugInfo
     )
 
-    if SWDebugManager.shared.isDebuggerLaunched {
+    if await SWDebugManager.shared.isDebuggerLaunched {
       // if the debugger is launched, ensure the viewcontroller is the debugger
       guard presentingViewController is SWDebugViewController else {
         return
@@ -106,14 +98,17 @@ extension Paywall {
       return
     }
 
-    PaywallManager.shared.getPaywallViewController(
-      from: eventData,
-      responseIdentifiers: identifiers,
-      substituteProducts: paywallOverrides?.products,
-      cached: cached && !SWDebugManager.shared.isDebuggerLaunched
-    ) { result in
+    do {
+      let isDebuggerLaunched = await SWDebugManager.shared.isDebuggerLaunched
+      let paywallViewController = try await PaywallManager.shared.getPaywallViewController(
+        from: eventData,
+        responseIdentifiers: identifiers,
+        substituteProducts: paywallOverrides?.products,
+        cached: cached && !isDebuggerLaunched
+      )
+
       // if there's a paywall being presented, don't do anything
-      if shared.isPaywallPresented {
+      if await shared.isPaywallPresented {
         Logger.debug(
           logLevel: .error,
           scope: .paywallPresentation,
@@ -123,8 +118,7 @@ extension Paywall {
         return
       }
 
-      switch result {
-      case .success(let paywallViewController):
+      await MainActor.run {
         if InternalPresentationLogic.shouldNotDisplayPaywall(
           isUserSubscribed: shared.isUserSubscribed,
           isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
@@ -167,6 +161,7 @@ extension Paywall {
           return
         }
 
+
         paywallViewController.present(
           on: presenter,
           eventData: eventData,
@@ -178,7 +173,7 @@ extension Paywall {
               if let presentingPaywallIdentifier = paywallViewController.paywallResponse.identifier {
                 PaywallManager.shared.removePaywall(withIdentifier: presentingPaywallIdentifier)
               }
-              internallyPresent(
+              await internallyPresent(
                 presentationInfo,
                 on: presentingViewController,
                 cached: false,
@@ -196,25 +191,25 @@ extension Paywall {
             )
           }
         }
-      case .failure(let error):
-        if InternalPresentationLogic.shouldNotDisplayPaywall(
-          isUserSubscribed: shared.isUserSubscribed,
-          isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
-          shouldIgnoreSubscriptionStatus: paywallOverrides?.ignoreSubscriptionStatus
-        ) {
-          return
-        }
-
-        Logger.debug(
-          logLevel: .error,
-          scope: .paywallPresentation,
-          message: "Error Getting Paywall View Controller",
-          info: debugInfo,
-          error: error
-        )
-
-        paywallState?(.skipped(.error(error)))
       }
+    } catch {
+      if await InternalPresentationLogic.shouldNotDisplayPaywall(
+        isUserSubscribed: shared.isUserSubscribed,
+        isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
+        shouldIgnoreSubscriptionStatus: paywallOverrides?.ignoreSubscriptionStatus
+      ) {
+        return
+      }
+
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallPresentation,
+        message: "Error Getting Paywall View Controller",
+        info: debugInfo,
+        error: error
+      )
+
+      paywallState?(.skipped(.error(error)))
     }
   }
 

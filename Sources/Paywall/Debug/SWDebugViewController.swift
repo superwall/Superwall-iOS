@@ -21,6 +21,7 @@ struct AlertOption {
 }
 
 // swiftlint:disable:next type_body_length
+@MainActor
 final class SWDebugViewController: UIViewController {
   var logoImageView: UIImageView = {
     // swiftlint:disable:next force_unwrapping
@@ -181,7 +182,6 @@ final class SWDebugViewController: UIViewController {
     ])
   }
 
-  @MainActor
   func loadPreview() async {
     activityIndicator.startAnimating()
     previewViewContent?.removeFromSuperview()
@@ -190,7 +190,7 @@ final class SWDebugViewController: UIViewController {
       do {
         let response = try await Network.shared.getPaywalls()
         paywallResponses = response.paywalls
-        finishLoadingPreview()
+        await finishLoadingPreview()
       } catch {
         Logger.debug(
           logLevel: .error,
@@ -200,11 +200,11 @@ final class SWDebugViewController: UIViewController {
         )
       }
     } else {
-      finishLoadingPreview()
+      await finishLoadingPreview()
     }
   }
 
-	func finishLoadingPreview() {
+	func finishLoadingPreview() async {
 		var paywallId: String?
 
 		if let paywallIdentifier = paywallIdentifier {
@@ -219,36 +219,26 @@ final class SWDebugViewController: UIViewController {
       return
     }
 
-    PaywallResponseManager.shared.getResponse(
-      withIdentifiers: .init(paywallId: paywallId)
-    ) { [weak self] result in
-      guard let self = self else {
-        return
-      }
-      switch result {
-      case .success(let response):
-        self.paywallResponse = response
+    do {
+      let response = try await PaywallResponseManager.shared.getResponse(withIdentifiers: .init(paywallId: paywallId))
+      self.paywallResponse = response
+      self.previewPickerButton.setTitle("\(response.name ?? "Preview")", for: .normal)
 
+      StoreKitManager.shared.getVariables(forResponse: response) { variables in
+        self.paywallResponse?.variables = variables
         onMain {
-          self.previewPickerButton.setTitle("\(response.name ?? "Preview")", for: .normal)
+          self.activityIndicator.stopAnimating()
+          self.addPaywallPreview()
         }
-
-        StoreKitManager.shared.getVariables(forResponse: response) { variables in
-          self.paywallResponse?.variables = variables
-          onMain {
-            self.activityIndicator.stopAnimating()
-            self.addPaywallPreview()
-          }
-        }
-      case .failure(let error):
-        Logger.debug(
-          logLevel: .error,
-          scope: .debugViewController,
-          message: "No Paywall Response",
-          info: nil,
-          error: error
-        )
       }
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .debugViewController,
+        message: "No Paywall Response",
+        info: nil,
+        error: error
+      )
     }
 	}
 
@@ -386,14 +376,18 @@ final class SWDebugViewController: UIViewController {
         AlertOption(
           title: "With Free Trial",
           action: { [weak self] in
-            self?.loadAndShowPaywall(freeTrialAvailable: true)
+            Task {
+              await self?.loadAndShowPaywall(freeTrialAvailable: true)
+            }
           },
           style: .default
         ),
         AlertOption(
           title: "Without Free Trial",
           action: {  [weak self] in
-            self?.loadAndShowPaywall(freeTrialAvailable: false)
+            Task {
+              await self?.loadAndShowPaywall(freeTrialAvailable: false)
+            }
           },
           style: .default
         )
@@ -401,7 +395,7 @@ final class SWDebugViewController: UIViewController {
     )
   }
 
-  func loadAndShowPaywall(freeTrialAvailable: Bool = false) {
+  func loadAndShowPaywall(freeTrialAvailable: Bool = false) async {
     guard let paywallIdentifier = paywallIdentifier else {
       return
     }
@@ -411,7 +405,7 @@ final class SWDebugViewController: UIViewController {
     bottomButton.setImage(nil, for: .normal)
     bottomButton.showLoading = true
 
-    Paywall.internallyPresent(
+    await Paywall.internallyPresent(
       .fromIdentifier(paywallIdentifier),
       on: self
     ) { [weak self] state in
