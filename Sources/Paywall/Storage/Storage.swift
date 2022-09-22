@@ -205,7 +205,7 @@ class Storage {
       standardUserAttributes["aliasId"] = aliasId
     }
 
-    if let appUserId = appUserId {
+    if let appUserId = aliasId {
       standardUserAttributes["appUserId"] = appUserId
     }
 

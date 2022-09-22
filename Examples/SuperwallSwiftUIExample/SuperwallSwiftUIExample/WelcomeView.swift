@@ -7,12 +7,17 @@
 
 import SwiftUI
 
+enum Destination: Hashable {
+  case options, implicit, explicit
+}
+
 struct WelcomeView: View {
   @State private var name: String = ""
   @State private var showTableView = false
+  @State private var path: [Destination] = []
 
   var body: some View {
-    NavigationView {
+    NavigationStack(path: $path) {
       ZStack {
         VStack(alignment: .center, spacing: 60) {
           logo()
@@ -28,21 +33,20 @@ struct WelcomeView: View {
         .padding()
         .frame(maxHeight: .infinity)
         .background(Color.neutral)
-
-        NavigationLink(
-          isActive: $showTableView,
-          destination: {
-            PaywallOptionsTableView()
-          },
-          label: {
-            EmptyView()
-          }
-        ).hidden()
+      }
+      .navigationDestination(for: Destination.self) {
+        switch $0 {
+        case .options:
+          PaywallOptionsTableView(path: $path)
+        case .implicit:
+          ImplicitlyTriggerPaywallView()
+        case .explicit:
+          ExplicitlyTriggerPaywallView()
+        }
       }
       .navigationBarHidden(true)
       .navigationTitle("")
     }
-    .navigationViewStyle(.stack)
     .accentColor(.primaryTeal)
   }
 
@@ -74,7 +78,7 @@ struct WelcomeView: View {
   private func signInButton() -> some View {
     BrandedButton(title: "Continue") {
       PaywallService.setName(to: name)
-      showTableView = true
+      path.append(.options)
     }
   }
 }

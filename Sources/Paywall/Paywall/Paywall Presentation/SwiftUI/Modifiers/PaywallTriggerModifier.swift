@@ -36,9 +36,9 @@ struct PaywallTriggerModifier: ViewModifier {
       }
 
       let eventInfo: PresentationInfo
-      if let name = event {
+      if let event = event {
         let trackableEvent = UserInitiatedEvent.Track(
-          rawName: name,
+          rawName: event,
           canImplicitlyTriggerPaywall: false,
           customParameters: params
         )
