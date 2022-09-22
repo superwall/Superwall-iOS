@@ -2,22 +2,22 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
-## 2.4.2 (Upcoming release)
+## 2.5.0
 
 ### Enhancements
 
 - Assigments of paywall variants are now performed on device, meaning reduced network calls and faster setup time for the SDK.
 - Adds `Paywall.latestPaywallInfo`. You can read this to access the `PaywallInfo` object of the most recently presented view controller.
-- Adds feature flags under the hood so that when we introduce new features we can turn them on for specific organizations and apps.
-- Adds the ability to specify `SKProducts` with a trigger. These override the products defined on the dashboard for the paywall. You do this by creating a `PaywallProducts` object and calling `Paywall.trigger(event: "event", products: products)`.
+- Adds feature flags under the hood so new features can be turned on for specific organizations and apps.
+- Adds the ability to specify `SKProducts` with triggers. These override products defined in the dashboard. You do this by creating a `PaywallProducts` object and calling `Paywall.trigger(event: "event", products: products)`.
 - Updates sample projects to iOS 16.
 
 ### Fixes 
 
 - Shimmer view is no longer visible beneath a paywall's `WKWebView` when there is no `body` or `html` background color set
-- Previously calls to `Paywall.preloadPaywalls(forTriggers:)` before `Paywall.config()` finished were ignored. This has been fixed. 
-- If a user had already bought a product within a subscription group, they were still being offered a free trial on other products within that group. This is incorrect logic and this update fixes that.
-- Fixed a bug where `Paywall.reset()` couldn't be called on a background thread.
+- Previously, calling `Paywall.preloadPaywalls(forTriggers:)` before `Paywall.config()` finished would not work. This has been fixed. 
+- Previously, if a user purchases a product within a subscription group, they would still be offered a free trial on other products within that group. This has been fixed.
+- Fixes a bug where `Paywall.reset()` couldn't be called on a background thread.
 
 ---
 
