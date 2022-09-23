@@ -5,13 +5,14 @@
 //  Created by Yusuf Tör on 23/09/2022.
 //
 
-import Foundation
+import UIKit
 import Combine
 
-struct PaywallResponseRequest {
-  var eventData: EventData?
-  let responseIdentifiers: ResponseIdentifiers
-  var substituteProducts: PaywallProducts?
+struct PaywallPresentationRequest {
+  let presentationInfo: PresentationInfo
+  var presentingViewController: UIViewController?
+  var cached = true
+  var paywallOverrides: PaywallOverrides?
 
   var publisher: AnyPublisher<Self, Error> {
     Just(self)

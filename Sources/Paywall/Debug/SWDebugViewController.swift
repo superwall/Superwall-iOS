@@ -220,7 +220,8 @@ final class SWDebugViewController: UIViewController {
     }
 
     do {
-      let response = try await PaywallResponseManager.shared.getResponse(withIdentifiers: .init(paywallId: paywallId))
+      let request = PaywallResponseRequest(responseIdentifiers: .init(paywallId: paywallId))
+      let response = try await PaywallResponseManager.shared.getResponse(from: request)
       self.paywallResponse = response
       self.previewPickerButton.setTitle("\(response.name ?? "Preview")", for: .normal)
 

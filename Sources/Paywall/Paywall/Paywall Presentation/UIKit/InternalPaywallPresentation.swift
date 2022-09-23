@@ -27,6 +27,24 @@ public enum PaywallSkippedReason {
 }
 
 extension Paywall {
+  static func internallyPresent(_ request: PaywallPresentationRequest) -> AnyPublisher<PaywallState, Error> {
+    var cancellable: AnyCancellable?
+    cancellable = request.publisher
+      .awaitIdentity()
+      .logPresentation()
+      .checkForDebugger(cancellable)
+      .getTriggerOutcome()
+      .confirmAssignment()
+      .handleTriggerOutcome(cancellable)
+      .mapError { error in
+        
+      }
+      .eraseToAnyPublisher()
+
+    return publisher
+  }
+
+
   static func internallyPresent(
     _ presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
@@ -36,6 +54,22 @@ extension Paywall {
   ) async {
     await IdentityManager.shared.$hasIdentity.isTrue()
 
+    /*
+     1. Wait for identity
+     2. Log
+     3. If debugger launched, return if presenting view is not debugger
+     4. Get assignment outcome, confirm assignments
+     5. Get trigger result
+     6. Handle trigger result -> if skipped then return OR present paywall with id.
+     7. Get paywallViewController
+     8. Check no paywall being presented already
+     9. Check whether paywall isn't supposed to be presented.
+     10. Activate session.
+     11. Create presentation window or fail if nothing to present on
+     12. Present
+     13. Save incase people want to retry presenting (should we just try a retry handler on this?)
+     14. If error at all, Check if we're purposely not showing a paywall (which is why we've thrown an error?) and pass error to skipped func
+     */
     let eventData = presentationInfo.eventData
 
     let debugInfo: [String: Any] = [
@@ -51,7 +85,8 @@ extension Paywall {
       info: debugInfo
     )
 
-    if await SWDebugManager.shared.isDebuggerLaunched {
+    let isDebuggerLaunched = await SWDebugManager.shared.isDebuggerLaunched
+    if isDebuggerLaunched {
       // if the debugger is launched, ensure the viewcontroller is the debugger
       guard presentingViewController is SWDebugViewController else {
         return
@@ -100,11 +135,13 @@ extension Paywall {
     }
 
     do {
-      let isDebuggerLaunched = await SWDebugManager.shared.isDebuggerLaunched
-      let paywallViewController = try await PaywallManager.shared.getPaywallViewController(
-        from: eventData,
+      let request = PaywallResponseRequest(
+        eventData: eventData,
         responseIdentifiers: identifiers,
-        substituteProducts: paywallOverrides?.products,
+        substituteProducts: paywallOverrides?.products
+      )
+      let paywallViewController = try await PaywallManager.shared.getPaywallViewController(
+        from: request,
         cached: cached && !isDebuggerLaunched
       )
 

@@ -43,16 +43,10 @@ final class PaywallManager {
   ///   - cached: Whether or not the paywall is cached.
   ///   - completion: A completion block called with the resulting paywall view controller.
 	nonisolated func getPaywallViewController(
-    from eventData: EventData? = nil,
-    responseIdentifiers: ResponseIdentifiers,
-    substituteProducts: PaywallProducts? = nil,
+    from request: PaywallResponseRequest,
     cached: Bool
   ) async throws -> SWPaywallViewController {
-    let response = try await PaywallResponseManager.shared.getResponse(
-      from: eventData,
-      withIdentifiers: responseIdentifiers,
-      substituteProducts: substituteProducts
-    )
+    let response = try await PaywallResponseManager.shared.getResponse(from: request)
 
     return await MainActor.run {
       if cached,

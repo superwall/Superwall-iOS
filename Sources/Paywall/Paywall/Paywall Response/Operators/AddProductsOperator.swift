@@ -22,7 +22,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
       }
       .flatMap(getProducts)
       .map { input in
-        trackProductsLoaded(
+        trackProductsLoadFinish(
           paywallResponse: input.response,
           event: input.request.eventData
         )
@@ -108,7 +108,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
     )
   }
 
-  private func trackProductsLoaded(
+  private func trackProductsLoadFinish(
     paywallResponse: PaywallResponse,
     event: EventData?
   ) {

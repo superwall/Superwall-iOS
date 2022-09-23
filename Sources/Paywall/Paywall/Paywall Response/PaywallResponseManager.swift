@@ -28,11 +28,11 @@ actor PaywallResponseManager {
     }
 
     let task = Task<PaywallResponse, Error> {
-      if var paywallResponse = paywallResponsesByHash[paywallRequestHash],
+      if var response = paywallResponsesByHash[paywallRequestHash],
         shouldUseCache {
-        paywallResponse.experiment = request.responseIdentifiers.experiment
+        response.experiment = request.responseIdentifiers.experiment
         activeTasks[paywallRequestHash] = nil
-        return paywallResponse
+        return response
       }
 
       do {

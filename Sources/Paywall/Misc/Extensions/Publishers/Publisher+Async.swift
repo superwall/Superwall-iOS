@@ -19,6 +19,13 @@ extension Publisher where Output == Bool {
       .eraseToAnyPublisher()
       .async()
   }
+
+  func isTrue() -> AnyPublisher<Output, Error> where Failure == Never {
+    return self
+      .setFailureType(to: Error.self)
+      .filter { $0 == true }
+      .eraseToAnyPublisher()
+  }
 }
 
 extension Publisher {

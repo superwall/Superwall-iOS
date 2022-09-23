@@ -26,17 +26,7 @@ struct ProductProcessingOutcome {
 }
 
 enum PaywallResponseLogic {
-  struct TriggerResultOutcome {
-    enum Info {
-      case paywall(ResponseIdentifiers)
-      case holdout(Experiment)
-      case triggerNotFound
-      case noRuleMatch
-      case error(NSError)
-    }
-    let info: Info
-    var result: TriggerResult?
-  }
+
 
   static func requestHash(
     identifier: String? = nil,
