@@ -37,13 +37,13 @@ extension Paywall {
     await IdentityManager.shared.$hasIdentity.isTrue()
 
     let eventData = presentationInfo.eventData
+
     let debugInfo: [String: Any] = [
       "on": presentingViewController.debugDescription,
       "fromEvent": eventData.debugDescription as Any,
       "cached": cached,
       "paywallState": paywallState.debugDescription
     ]
-
     Logger.debug(
       logLevel: .debug,
       scope: .paywallPresentation,
@@ -62,6 +62,7 @@ extension Paywall {
       presentationInfo: presentationInfo,
       triggers: ConfigManager.shared.triggers
     )
+
     let identifiers: ResponseIdentifiers
 
     switch triggerOutcome.info {

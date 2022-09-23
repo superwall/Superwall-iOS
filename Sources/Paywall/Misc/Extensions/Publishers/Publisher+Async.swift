@@ -8,6 +8,10 @@
 
 import Combine
 
+enum AsyncError: Error {
+    case finishedWithoutValue
+}
+
 extension Publisher where Output == Bool {
   func isTrue() async {
     await self
@@ -42,6 +46,30 @@ extension Publisher {
         .sink { result in
           cancellable?.cancel()
         } receiveValue: { value in
+          continuation.resume(with: .success(value))
+        }
+    }
+  }
+
+  /// Returns the first value of the publisher
+  @discardableResult
+  func throwableAsync() async throws -> Output {
+    try await withCheckedThrowingContinuation { continuation in
+      var cancellable: AnyCancellable?
+      var finishedWithoutValue = true
+      cancellable = first()
+        .sink { result in
+          switch result {
+          case .finished:
+            if finishedWithoutValue {
+                continuation.resume(throwing: AsyncError.finishedWithoutValue)
+            }
+          case let .failure(error):
+            continuation.resume(throwing: error)
+          }
+          cancellable?.cancel()
+        } receiveValue: { value in
+          finishedWithoutValue = false
           continuation.resume(with: .success(value))
         }
     }

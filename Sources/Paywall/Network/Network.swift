@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import Combine
 
 class Network {
   static let shared = Network()
@@ -39,22 +40,6 @@ class Network {
         info: ["payload": events],
         error: error
       )
-    }
-  }
-
-  #warning("Completion block version added here")
-  func getPaywallResponse(
-    withPaywallId identifier: String? = nil,
-    fromEvent event: EventData? = nil,
-    completion: @escaping (Result<PaywallResponse, Error>) -> Void
-  ) {
-    Task {
-      do {
-        let response = try await getPaywallResponse(withPaywallId: identifier, fromEvent: event)
-        completion(.success(response))
-      } catch {
-        completion(.failure(error))
-      }
     }
   }
 
