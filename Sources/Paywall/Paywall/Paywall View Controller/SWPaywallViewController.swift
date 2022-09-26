@@ -11,6 +11,7 @@ import WebKit
 import UIKit
 import Foundation
 import SafariServices
+import Combine
 
 protocol SWPaywallViewControllerDelegate: AnyObject {
 	func eventDidOccur(
@@ -30,7 +31,7 @@ enum PaywallLoadingState {
 final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   // MARK: - Properties
 	weak var delegate: SWPaywallViewControllerDelegate?
-	var paywallState: ((PaywallState) -> Void)?
+	var paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
 	var isPresented = false
 	var calledDismiss = false
   var paywallResponse: PaywallResponse
@@ -474,10 +475,10 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	func set(
     _ eventData: EventData?,
-    paywallState: ((PaywallState) -> Void)?
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
   ) {
 		self.eventData = eventData
-		self.paywallState = paywallState
+		self.paywallStatePublisher = paywallStatePublisher
 	}
 
 	func trackOpen() {
@@ -597,7 +598,7 @@ extension SWPaywallViewController {
     on presenter: UIViewController,
     eventData: EventData?,
     presentationStyleOverride: PaywallPresentationStyle?,
-    paywallState: ((PaywallState) -> Void)?,
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?,
     completion: @escaping (Bool) -> Void
   ) {
 		if Paywall.shared.isPaywallPresented || presenter is SWPaywallViewController || isBeingPresented {
@@ -605,7 +606,7 @@ extension SWPaywallViewController {
 			return
 		} else {
 			prepareForPresentation()
-      set(eventData, paywallState: paywallState)
+      set(eventData, paywallStatePublisher: paywallStatePublisher)
       setPresentationStyle(withOverride: presentationStyleOverride)
 
       presenter.present(
@@ -671,7 +672,9 @@ extension SWPaywallViewController {
 		Paywall.delegate?.didDismissPaywall?()
     //  loadingState = .ready
 		if shouldCallCompletion {
-      paywallState?(.dismissed(dismissalResult))
+      paywallStatePublisher?.send(.dismissed(dismissalResult))
+      paywallStatePublisher?.send(completion: .finished)
+      paywallStatePublisher = nil
 		}
 		completion?()
 		Paywall.shared.destroyPresentingWindow()

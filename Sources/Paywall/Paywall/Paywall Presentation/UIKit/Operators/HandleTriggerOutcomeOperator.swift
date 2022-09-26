@@ -8,8 +8,6 @@
 import Foundation
 import Combine
 
-extension PaywallState: Error {}
-
 typealias TriggerOutcomeResponsePipelineData = (
   request: PaywallPresentationRequest,
   triggerOutcome: TriggerResultOutcome,
@@ -19,9 +17,9 @@ typealias TriggerOutcomeResponsePipelineData = (
 
 extension AnyPublisher where Output == TriggerOutcomePipelineData, Failure == Error {
   func handleTriggerOutcome(
-    _ cancellable: AnyCancellable?,
+    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     configManager: ConfigManager = .shared
-  ) -> AnyPublisher<TriggerOutcomeResponsePipelineData, PaywallState> {
+  ) -> AnyPublisher<TriggerOutcomeResponsePipelineData, Error> {
     self
       .tryMap { request, triggerOutcome, debugInfo in
         switch triggerOutcome.info {
@@ -33,16 +31,16 @@ extension AnyPublisher where Output == TriggerOutcomePipelineData, Failure == Er
             on: request.presentingViewController,
             triggerResult: triggerOutcome.result
           )
-          throw PaywallState.skipped(.holdout(experiment))
+          paywallStatePublisher.send(.skipped(.holdout(experiment)))
         case .noRuleMatch:
           SessionEventsManager.shared.triggerSession.activateSession(
             for: request.presentationInfo,
             on: request.presentingViewController,
             triggerResult: triggerOutcome.result
           )
-          throw PaywallState.skipped(.noRuleMatch)
+          paywallStatePublisher.send(.skipped(.noRuleMatch))
         case .triggerNotFound:
-          throw PaywallState.skipped(.triggerNotFound)
+          paywallStatePublisher.send(.skipped(.triggerNotFound))
         case let .error(error):
           Logger.debug(
             logLevel: .error,
@@ -51,12 +49,11 @@ extension AnyPublisher where Output == TriggerOutcomePipelineData, Failure == Er
             info: debugInfo,
             error: error
           )
-          throw PaywallState.skipped(.error(error))
+          paywallStatePublisher.send(.skipped(.error(error)))
         }
+
+        throw PresentationPipelineError.cancelled
       }
       .eraseToAnyPublisher()
   }
 }
-
-
-

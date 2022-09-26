@@ -16,7 +16,8 @@ public final class Paywall: NSObject {
   public static var userAttributes: [String: Any] {
     return IdentityManager.shared.userAttributes
   }
-
+  var stateCancellable: AnyCancellable?
+  var pipeline: AnyCancellable?
   /// The presented paywall view controller.
   @MainActor
   public static var presentedViewController: UIViewController? {
@@ -233,12 +234,16 @@ extension Paywall {
       if await Paywall.shared.isPaywallPresented {
         await Paywall.dismiss()
       }
-      await Paywall.internallyPresent(presentationInfo)
+      let presentationRequest = PaywallPresentationRequest(presentationInfo: presentationInfo)
+      await Paywall.shared.internallyPresent(presentationRequest)
+        .asyncNoValue()
     case .triggerPaywall:
       // delay in case they are presenting a view controller alongside an event they are calling
       let twoHundredMilliseconds = UInt64(200_000_000)
       try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
-      await Paywall.internallyPresent(presentationInfo)
+      let presentationRequest = PaywallPresentationRequest(presentationInfo: presentationInfo)
+      await Paywall.shared.internallyPresent(presentationRequest)
+        .asyncNoValue()
     case .disallowedEventAsTrigger:
       Logger.debug(
         logLevel: .warn,

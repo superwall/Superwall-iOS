@@ -27,24 +27,41 @@ public enum PaywallSkippedReason {
 }
 
 extension Paywall {
-  static func internallyPresent(_ request: PaywallPresentationRequest) -> AnyPublisher<PaywallState, Error> {
-    var cancellable: AnyCancellable?
-    cancellable = request.publisher
+
+  func internallyPresent(_ request: PaywallPresentationRequest) -> AnyPublisher<PaywallState, Never> {
+    let paywallStatePublisher = PassthroughSubject<PaywallState, Never>()
+    let presentationPipeline = CurrentValueSubject<PaywallPresentationRequest, Error>(request)
+
+    pipeline = presentationPipeline
+      .handleEvents(
+        receiveSubscription: { subs in
+        print("Got subscription", subs)
+        },
+        receiveCancel: {
+          print("cancelled!")
+        }
+      )
+      .eraseToAnyPublisher()
       .awaitIdentity()
       .logPresentation()
-      .checkForDebugger(cancellable)
+      .checkForDebugger()
       .getTriggerOutcome()
-      .confirmAssignment()
-      .handleTriggerOutcome(cancellable)
-      .mapError { error in
-        
-      }
+      .confirmAssignment( )
+      .handleTriggerOutcome(paywallStatePublisher)
+      .getPaywallViewController(paywallStatePublisher)
+      .checkPaywallIsPresentable(paywallStatePublisher)
+      .presentPaywall(paywallStatePublisher)
       .eraseToAnyPublisher()
+      .sink(
+        receiveCompletion: { _ in },
+        receiveValue: { _ in }
+      )
 
-    return publisher
+    return paywallStatePublisher
+      .eraseToAnyPublisher()
   }
 
-
+/*
   static func internallyPresent(
     _ presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
@@ -199,7 +216,11 @@ extension Paywall {
           return
         }
 
+        /*
+         Transform. On handling trigger, throw error, put mapError at end and send back.
+         When presenting, pass publisher to present. on dismiss, send value to publisher and complete.
 
+         */
         paywallViewController.present(
           on: presenter,
           eventData: eventData,
@@ -249,8 +270,9 @@ extension Paywall {
 
       paywallState?(.skipped(.error(error)))
     }
-  }
+  }*/
 
+  // TODO: Move this
   func presentationError(
     domain: String,
     code: Int,
@@ -282,24 +304,6 @@ extension Paywall {
       ) {
         completion?()
       }
-    }
-  }
-
-  private func createPresentingWindowIfNeeded() {
-    if presentingWindow == nil {
-      let activeWindow = UIApplication.shared.activeWindow
-
-      if #available(iOS 13.0, *) {
-        if let windowScene = activeWindow?.windowScene {
-          presentingWindow = UIWindow(windowScene: windowScene)
-        }
-      } else {
-        presentingWindow = UIWindow(frame: activeWindow?.bounds ?? UIScreen.main.bounds)
-      }
-
-      presentingWindow?.rootViewController = UIViewController()
-      presentingWindow?.windowLevel = .normal
-      presentingWindow?.makeKeyAndVisible()
     }
   }
 

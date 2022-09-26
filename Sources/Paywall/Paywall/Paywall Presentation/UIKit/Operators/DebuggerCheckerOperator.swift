@@ -9,21 +9,19 @@ import Foundation
 import Combine
 
 extension AnyPublisher where Output == (PaywallPresentationRequest, DebugInfo), Failure == Error {
-  func checkForDebugger(_ cancellable: AnyCancellable?) -> AnyPublisher<Output, Failure> {
+  func checkForDebugger() -> AnyPublisher<Output, Failure> {
     self
-      .receive(on: RunLoop.main)
-      .map { request, debugInfo in
-        let isDebuggerLaunched = SWDebugManager.shared.isDebuggerLaunched
-        if isDebuggerLaunched {
-          // if the debugger is launched, ensure the viewcontroller is the debugger
-          guard request.presentingViewController is SWDebugViewController else {
-            cancellable?.cancel()
-            return
+      .flatMap { request, debugInfo in
+        Future {
+          let isDebuggerLaunched = await SWDebugManager.shared.isDebuggerLaunched
+          if isDebuggerLaunched {
+            guard request.presentingViewController is SWDebugViewController else {
+              throw PresentationPipelineError.cancelled
+            }
           }
+          return (request, debugInfo)
         }
-        return (request, debugInfo)
       }
-      .receive(on: DispatchQueue.global(qos: .userInitiated))
       .eraseToAnyPublisher()
   }
 }

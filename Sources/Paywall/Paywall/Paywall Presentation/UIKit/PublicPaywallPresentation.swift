@@ -95,12 +95,6 @@ public extension Paywall {
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
   ) {
-    let trackableEvent = UserInitiatedEvent.Track(
-      rawName: event,
-      canImplicitlyTriggerPaywall: false,
-      customParameters: params ?? [:]
-    )
-    let result = track(trackableEvent)
 
     let overrides = PaywallOverrides(
       products: products,
@@ -108,21 +102,21 @@ public extension Paywall {
       presentationStyleOverride: presentationStyleOverride
     )
 
-    Task {
-      await internallyPresent(
-        .explicitTrigger(result.data),
-        paywallOverrides: overrides
-      ) { state in
-        switch state {
-        case .presented(let paywallInfo):
-          onPresent?(paywallInfo)
-        case .dismissed(let result):
-          if let onDismiss = onDismiss {
-            onDismissConverter(result, completion: onDismiss)
-          }
-        case .skipped(let reason):
-          onSkipConverter(reason: reason, completion: onSkip)
+    let _ = track(
+      event: event,
+      params: params,
+      paywallOverrides: overrides
+    )
+    .sink { state in
+      switch state {
+      case .presented(let paywallInfo):
+        onPresent?(paywallInfo)
+      case .dismissed(let result):
+        if let onDismiss = onDismiss {
+          onDismissConverter(result, completion: onDismiss)
         }
+      case .skipped(let reason):
+        onSkipConverter(reason: reason, completion: onSkip)
       }
     }
   }
@@ -148,20 +142,16 @@ public extension Paywall {
     paywallOverrides: PaywallOverrides? = nil,
     paywallState: ((PaywallState) -> Void)? = nil
   ) {
-    let trackableEvent = UserInitiatedEvent.Track(
-      rawName: event,
-      canImplicitlyTriggerPaywall: false,
-      customParameters: params ?? [:]
+    // TODO: Fix this so it doesn't dealloc
+    let _ = track(
+      event: event,
+      params: params,
+      paywallOverrides: paywallOverrides
     )
-    let result = track(trackableEvent)
-
-    Task {
-      await internallyPresent(
-        .explicitTrigger(result.data),
-        paywallOverrides: paywallOverrides,
-        paywallState: paywallState
-      )
+    .sink { state in
+      paywallState?(state)
     }
+    
   }
 
   /// Tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -191,25 +181,12 @@ public extension Paywall {
       customParameters: params ?? [:]
     )
     let result = track(trackableEvent)
-    let paywallState = PassthroughSubject<PaywallState, Never>()
 
-    Task {
-      await internallyPresent(
-        .explicitTrigger(result.data),
-        paywallOverrides: paywallOverrides
-      ) { state in
-        switch state {
-        case .presented:
-          paywallState.send(state)
-        case .dismissed,
-            .skipped:
-          paywallState.send(state)
-          paywallState.send(completion: .finished)
-        }
-      }
-    }
-
-    return paywallState.eraseToAnyPublisher()
+    let presentationRequest = PaywallPresentationRequest(
+      presentationInfo: .explicitTrigger(result.data),
+      paywallOverrides: paywallOverrides
+    )
+    return shared.internallyPresent(presentationRequest)
   }
 
   /// Converts dismissal result from enums with associated values, to old objective-c compatible way
