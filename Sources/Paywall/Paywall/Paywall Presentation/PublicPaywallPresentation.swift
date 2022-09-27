@@ -102,7 +102,7 @@ public extension Paywall {
       presentationStyleOverride: presentationStyleOverride
     )
 
-    _ = track(
+    trackCancellable = track(
       event: event,
       params: params,
       paywallOverrides: overrides
