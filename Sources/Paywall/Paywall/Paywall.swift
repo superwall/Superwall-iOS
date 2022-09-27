@@ -51,6 +51,9 @@ public final class Paywall: NSObject {
   static var shared = Paywall(apiKey: nil)
   static var isFreeTrialAvailableOverride: Bool?
 
+  /// Used as a strong reference to any track function that doesn't directly return a publisher.
+  static var trackCancellable: AnyCancellable?
+
   /// The publisher from the last paywall presentation.
   var presentationPublisher: AnyCancellable?
 

@@ -102,7 +102,7 @@ public extension Paywall {
       presentationStyleOverride: presentationStyleOverride
     )
 
-    let _ = track(
+    _ = track(
       event: event,
       params: params,
       paywallOverrides: overrides
@@ -142,7 +142,7 @@ public extension Paywall {
     paywallOverrides: PaywallOverrides? = nil,
     paywallState: ((PaywallState) -> Void)? = nil
   ) {
-    let _ = track(
+    trackCancellable = track(
       event: event,
       params: params,
       paywallOverrides: paywallOverrides

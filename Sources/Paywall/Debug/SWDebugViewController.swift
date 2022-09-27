@@ -9,6 +9,7 @@
 import UIKit
 import Foundation
 import StoreKit
+import Combine
 
 var primaryColor = UIColor(hexString: "#75FFF1")
 var primaryButtonBackgroundColor = UIColor(hexString: "#203133")
@@ -117,6 +118,7 @@ final class SWDebugViewController: UIViewController {
   var paywallResponse: PaywallResponse?
   var paywallResponses: [PaywallResponse] = []
   var previewViewContent: UIView?
+  private var cancellable: AnyCancellable?
 
   init() {
     super.init(nibName: nil, bundle: nil)
@@ -306,8 +308,10 @@ final class SWDebugViewController: UIViewController {
     presentAlert(title: nil, message: "Your Paywalls", options: options)
   }
 
-  @objc func pressedExitButton() async {
-    await SWDebugManager.shared.closeDebugger(animated: false)
+  @objc func pressedExitButton() {
+    Task {
+      await SWDebugManager.shared.closeDebugger(animated: false)
+    }
   }
 
   @objc func pressedConsoleButton() {
@@ -369,18 +373,14 @@ final class SWDebugViewController: UIViewController {
         AlertOption(
           title: "With Free Trial",
           action: { [weak self] in
-            Task {
-              await self?.loadAndShowPaywall(freeTrialAvailable: true)
-            }
+            self?.loadAndShowPaywall(freeTrialAvailable: true)
           },
           style: .default
         ),
         AlertOption(
           title: "Without Free Trial",
           action: {  [weak self] in
-            Task {
-              await self?.loadAndShowPaywall(freeTrialAvailable: false)
-            }
+            self?.loadAndShowPaywall(freeTrialAvailable: false)
           },
           style: .default
         )
@@ -388,7 +388,7 @@ final class SWDebugViewController: UIViewController {
     )
   }
 
-  func loadAndShowPaywall(freeTrialAvailable: Bool = false) async {
+  func loadAndShowPaywall(freeTrialAvailable: Bool = false) {
     guard let paywallIdentifier = paywallIdentifier else {
       return
     }
@@ -403,7 +403,7 @@ final class SWDebugViewController: UIViewController {
       presentingViewController: self
     )
 
-    let _ = Paywall.shared.internallyPresent(presentationRequest)
+    cancellable = Paywall.shared.internallyPresent(presentationRequest)
       .sink { state in
         switch state {
         case .presented:
