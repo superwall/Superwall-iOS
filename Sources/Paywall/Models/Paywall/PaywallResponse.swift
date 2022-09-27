@@ -56,8 +56,8 @@ struct PaywallResponse: Decodable {
   var paywalljsVersion: String?
 
   var paywallBackgroundColor: UIColor {
-    if let hexString = backgroundColorHex {
-      return UIColor(hexString: hexString)
+    if let backgroundColorHex = backgroundColorHex {
+      return UIColor(hexString: backgroundColorHex)
     }
 
     return UIColor.darkGray

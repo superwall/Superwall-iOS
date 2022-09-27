@@ -96,7 +96,6 @@ class Storage {
     cache.write(true, forType: DidTrackAppInstall.self)
   }
 
-
   func clearCachedSessionEvents() {
     cache.delete(TriggerSessions.self)
     cache.delete(Transactions.self)

@@ -276,7 +276,10 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
 	func loadingStateDidChange(from oldValue: PaywallLoadingState) {
 		onMain { [weak self] in
-			guard let loadingState = self?.loadingState, loadingState != oldValue else {
+			guard
+        let loadingState = self?.loadingState,
+        loadingState != oldValue
+      else {
         return
       }
 
