@@ -60,7 +60,7 @@ public extension Paywall {
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
   ) {
-    // TODO: Check this can't be called.
+    // TODO: Check this can't be called via objc.
     // Won't be called, just kept to prompt the user to rename.
   }
 
@@ -142,7 +142,6 @@ public extension Paywall {
     paywallOverrides: PaywallOverrides? = nil,
     paywallState: ((PaywallState) -> Void)? = nil
   ) {
-    // TODO: Fix this so it doesn't dealloc
     let _ = track(
       event: event,
       params: params,
@@ -151,7 +150,6 @@ public extension Paywall {
     .sink { state in
       paywallState?(state)
     }
-    
   }
 
   /// Tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.

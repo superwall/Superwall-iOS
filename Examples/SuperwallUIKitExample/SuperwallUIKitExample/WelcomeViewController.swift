@@ -24,6 +24,7 @@ final class WelcomeViewController: UIViewController {
       .foregroundColor: UIColor.white,
       .font: UIFont.rubikBold(.five)
     ]
+    navigationController?.interactivePopGestureRecognizer?.isEnabled = false
   }
 
   @IBAction private func logIn() {

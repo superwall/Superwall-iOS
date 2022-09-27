@@ -42,6 +42,7 @@ final class TrackEventViewController: UIViewController {
           self?.subscriptionLabel.text = "You do not have an active subscription so the paywall will show when clicking the button."
         }
       }
+    navigationItem.hidesBackButton = true
   }
 
   @IBAction private func logOut() {

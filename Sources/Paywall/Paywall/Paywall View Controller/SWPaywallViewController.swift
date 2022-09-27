@@ -14,7 +14,7 @@ import SafariServices
 import Combine
 
 protocol SWPaywallViewControllerDelegate: AnyObject {
-	func eventDidOccur(
+	@MainActor func eventDidOccur(
     paywallViewController: SWPaywallViewController,
     result: PaywallPresentationResult
   )
@@ -31,7 +31,8 @@ enum PaywallLoadingState {
 final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   // MARK: - Properties
 	weak var delegate: SWPaywallViewControllerDelegate?
-	var paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
+  var paywallStatePublisher: PassthroughSubject<PaywallState, Never>!
+  var presentationPublisher: CurrentValueSubject<PaywallPresentationRequest, Error>!
 	var isPresented = false
 	var calledDismiss = false
   var paywallResponse: PaywallResponse
@@ -228,12 +229,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     if let isDark = view.backgroundColor?.isDarkColor, isDark {
       return .lightContent
     }
-
-    if #available(iOS 13.0, *) {
-      return .darkContent
-    } else {
-      return .default
-    }
+    return .darkContent
   }
 
 	override func viewWillDisappear(_ animated: Bool) {
@@ -404,7 +400,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       shouldCallCompletion: false
     ) {
       Task {
-        await Paywall.presentAgain()
+        await Paywall.shared.presentAgain(using: self.presentationPublisher)
       }
     }
 	}
@@ -472,14 +468,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
     loadingState = .loadingResponse
   }
-
-	func set(
-    _ eventData: EventData?,
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
-  ) {
-		self.eventData = eventData
-		self.paywallStatePublisher = paywallStatePublisher
-	}
 
 	func trackOpen() {
     SessionEventsManager.shared.triggerSession.trackPaywallOpen()
@@ -598,26 +586,32 @@ extension SWPaywallViewController {
     on presenter: UIViewController,
     eventData: EventData?,
     presentationStyleOverride: PaywallPresentationStyle?,
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?,
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
+    presentationPublisher: CurrentValueSubject<PaywallPresentationRequest, Error>,
     completion: @escaping (Bool) -> Void
   ) {
-		if Paywall.shared.isPaywallPresented || presenter is SWPaywallViewController || isBeingPresented {
-			completion(false)
-			return
-		} else {
-			prepareForPresentation()
-      set(eventData, paywallStatePublisher: paywallStatePublisher)
-      setPresentationStyle(withOverride: presentationStyleOverride)
-
-      presenter.present(
-        self,
-        animated: presentationIsAnimated
-      ) { [weak self] in
-        self?.isPresented = true
-        self?.presentationDidFinish()
-        completion(true)
-      }
+		if Paywall.shared.isPaywallPresented
+      || presenter is SWPaywallViewController
+      || isBeingPresented {
+      return completion(false)
 		}
+
+    prepareForPresentation()
+
+    self.eventData = eventData
+    self.paywallStatePublisher = paywallStatePublisher
+    self.presentationPublisher = presentationPublisher
+
+    setPresentationStyle(withOverride: presentationStyleOverride)
+
+    presenter.present(
+      self,
+      animated: presentationIsAnimated
+    ) { [weak self] in
+      self?.isPresented = true
+      self?.presentationDidFinish()
+      completion(true)
+    }
 	}
 
 	func dismiss(

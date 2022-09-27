@@ -24,12 +24,14 @@ final class IdentityManager {
     return appUserId ?? aliasId
   }
   var userAttributes: [String: Any] = [:]
+
   /// When `true`, the SDK is able to fire triggers.
-  @Published var hasIdentity = true
+  var hasIdentity = CurrentValueSubject<Bool, Never>(false)
+
   private let storage: Storage
   private let configManager: ConfigManager
-  private var cancellables: Set<AnyCancellable> = []
-  var cancell: AnyCancellable?
+
+  /// Only use init for testing purposes. Otherwise use `shared`.
   init(
     storage: Storage = .shared,
     configManager: ConfigManager = .shared
@@ -39,11 +41,9 @@ final class IdentityManager {
     self.appUserId = storage.get(AppUserId.self)
     self.aliasId = storage.get(AliasId.self) ?? IdentityLogic.generateAlias()
     self.userAttributes = storage.get(UserAttributes.self) ?? [:]
-
-
   }
 
-  /// Called on configure of the Paywall framework.
+  /// Waits for config to return before getting assignments (if needed).
   func configure() async {
     await configManager.$config.hasValue()
 
@@ -59,49 +59,44 @@ final class IdentityManager {
       await configManager.getAssignments()
     }
 
-    // When configure called, identity completed. can fire triggers...
-    // Calls login, must suspend until identity finished again.
-    hasIdentity = true
+    hasIdentity.send(true)
   }
 
-  // TODO: What happens if they have more than one device?
-
-  // TODO: Run through static config and whether we need to block due to that. Always refer to version of storage file on master.
-
-  // TODO: If someone configures, then calls login, then login again, what happens?
-
-
-  /// Logs user in and waits for config then assignments before firing triggers.
+  /// Logs user in and waits for config then assignments.
+  ///
+  /// - Throws: An error of type ``IdentityError``.
   func logIn(userId: String) async throws  {
-    hasIdentity = false
-    defer {
-      hasIdentity = true
-    }
     guard appUserId == nil else {
       throw IdentityError.alreadyLoggedIn
     }
 
-    appUserId = try sanitize(userId: userId)
+    hasIdentity.send(false)
 
+    appUserId = try sanitize(userId: userId)
     await configManager.$config.hasValue()
     await configManager.getAssignments()
+
+    hasIdentity.send(true)
   }
 
+  /// Create an account but don't wait for assignments before returning.
+  ///
+  /// - Throws: An error of type ``IdentityError``.
   func createAccount(userId: String) throws {
-    hasIdentity = false
-    defer {
-      hasIdentity = true
-    }
     guard appUserId == nil else {
       throw IdentityError.alreadyLoggedIn
     }
+    hasIdentity.send(false)
+
     appUserId = try sanitize(userId: userId)
 
-    Task {
-      await self.configManager.getAssignments()
-    }
+    hasIdentity.send(true)
   }
 
+  /// Logs user out and calls ``Paywall/Paywall/reset()``
+  ///
+  /// - Throws: An ``IdentityError`` error, specifically ``IdentityError/notLoggedIn``
+  /// if  the user isn't logged in.
   func logOut() async throws {
     if appUserId == nil {
       throw IdentityError.notLoggedIn
@@ -110,13 +105,15 @@ final class IdentityManager {
     await Paywall.reset()
   }
 
+  /// Clears all stored user-specific variables.
   func clear() {
-    hasIdentity = false
+    hasIdentity.send(false)
     appUserId = nil
     aliasId = IdentityLogic.generateAlias()
     userAttributes = [:]
   }
 
+  /// Merges the provided user attributes with existing attributes then saves them.
   func mergeUserAttributes(_ newUserAttributes: [String: Any]) {
     let mergedAttributes = IdentityLogic.mergeAttributes(
       newUserAttributes,
@@ -126,10 +123,14 @@ final class IdentityManager {
     userAttributes = mergedAttributes
   }
 
+  /// Removes white spaces and new lines
+  ///
+  /// - Throws: An ``IdentityError`` error, specifically ``IdentityError/missingAppUserId``
+  /// if  the user isn't logged in.
   private func sanitize(userId: String) throws -> String {
     let userId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
     if userId.isEmpty {
-      throw IdentityError.missingAppUserId
+      throw IdentityError.missingUserId
     }
     return userId
   }

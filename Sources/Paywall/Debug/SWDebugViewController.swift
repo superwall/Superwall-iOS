@@ -4,6 +4,8 @@
 //
 //  Created by Jake Mor on 8/26/21.
 //
+// swiftlint:disable:all force_unwrapping
+
 import UIKit
 import Foundation
 import StoreKit
@@ -24,7 +26,6 @@ struct AlertOption {
 @MainActor
 final class SWDebugViewController: UIViewController {
   var logoImageView: UIImageView = {
-    // swiftlint:disable:next force_unwrapping
     let superwallLogo = UIImage(named: "superwall_logo", in: Bundle.module, compatibleWith: nil)!
     let imageView = UIImageView(image: superwallLogo)
     imageView.contentMode = .scaleAspectFit
@@ -37,7 +38,6 @@ final class SWDebugViewController: UIViewController {
 
   lazy var exitButton: SWBounceButton = {
     let button = SWBounceButton()
-    // swiftlint:disable:next force_unwrapping
     let image = UIImage(named: "exit", in: Bundle.module, compatibleWith: nil)!
     button.setImage(image, for: .normal)
     button.translatesAutoresizingMaskIntoConstraints = false
@@ -48,7 +48,6 @@ final class SWDebugViewController: UIViewController {
 
   lazy var consoleButton: SWBounceButton = {
     let button = SWBounceButton()
-    // swiftlint:disable:next force_unwrapping
     let image = UIImage(named: "debugger", in: Bundle.module, compatibleWith: nil)!
     button.setImage(image, for: .normal)
     button.translatesAutoresizingMaskIntoConstraints = false
@@ -64,15 +63,13 @@ final class SWDebugViewController: UIViewController {
     button.backgroundColor = primaryButtonBackgroundColor
     button.setTitleColor(primaryColor, for: .normal)
     button.translatesAutoresizingMaskIntoConstraints = false
-    // swiftlint:disable:next force_unwrapping
+
     let image = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
     button.titleEdgeInsets = UIEdgeInsets(top: -1, left: 0, bottom: 0, right: 0)
     // button.imageEdgeInsets = UIEdgeInsets(top: 1, left: 5, bottom: -1, right: -3)
     button.setImage(image, for: .normal)
     button.imageView?.tintColor = primaryColor
-    if #available(iOS 13.0, *) {
-      button.layer.cornerCurve = .continuous
-    }
+    button.layer.cornerCurve = .continuous
     button.layer.cornerRadius = 64.0 / 3
     button.addTarget(self, action: #selector(pressedBottomButton), for: .primaryActionTriggered)
     return button
@@ -88,7 +85,7 @@ final class SWDebugViewController: UIViewController {
     button.translatesAutoresizingMaskIntoConstraints = false
     button.imageView?.tintColor = primaryColor
     button.layer.cornerRadius = 10
-    // swiftlint:disable:next force_unwrapping
+
     let image = UIImage(named: "down_arrow", in: Bundle.module, compatibleWith: nil)!
     button.semanticContentAttribute = .forceRightToLeft
     button.setImage(image, for: .normal)
@@ -123,9 +120,7 @@ final class SWDebugViewController: UIViewController {
 
   init() {
     super.init(nibName: nil, bundle: nil)
-    if #available(iOS 13.0, *) {
-      overrideUserInterfaceStyle = .dark
-    }
+    overrideUserInterfaceStyle = .dark
   }
 
   required init?(coder: NSCoder) {
@@ -276,10 +271,7 @@ final class SWDebugViewController: UIViewController {
       x: ratio,
       y: ratio
     )
-
-    if #available(iOS 13.0, *) {
-      child.view.layer.cornerCurve = .continuous
-    }
+    child.view.layer.cornerCurve = .continuous
 
     UIView.animate(
       withDuration: 0.25,
@@ -417,7 +409,6 @@ final class SWDebugViewController: UIViewController {
         case .presented:
           self.bottomButton.showLoading = false
 
-          // swiftlint:disable:next force_unwrapping
           let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
           self.bottomButton.setImage(
             playButton,
@@ -444,7 +435,7 @@ final class SWDebugViewController: UIViewController {
           }
           self.presentAlert(title: "Paywall Skipped", message: errorMessage, options: [])
           self.bottomButton.showLoading = false
-          // swiftlint:disable:next force_unwrapping
+
           let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
           self.bottomButton.setImage(playButton, for: .normal)
           self.activityIndicator.stopAnimating()
@@ -477,12 +468,8 @@ final class SWDebugViewController: UIViewController {
 extension SWDebugViewController {
   func presentAlert(title: String?, message: String?, options: [AlertOption]) {
     let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
-    if #available(iOS 13.0, *) {
-      alertController.overrideUserInterfaceStyle = .dark
-      alertController.view.tintColor = primaryColor
-    } else {
-      alertController.view.tintColor = darkBackgroundColor
-    }
+    alertController.overrideUserInterfaceStyle = .dark
+    alertController.view.tintColor = primaryColor
 
     for option in options {
       let action = UIAlertAction(

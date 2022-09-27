@@ -22,7 +22,7 @@ extension Publishers {
     let hasConfig = ConfigManager.shared.$config
       .compactMap { $0 }
 
-    let hasIdentity = IdentityManager.shared.$hasIdentity
+    let hasIdentity = IdentityManager.shared.hasIdentity
       .filter { $0 == true }
       .eraseToAnyPublisher()
 

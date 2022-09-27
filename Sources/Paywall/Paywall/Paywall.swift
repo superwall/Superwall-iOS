@@ -16,8 +16,7 @@ public final class Paywall: NSObject {
   public static var userAttributes: [String: Any] {
     return IdentityManager.shared.userAttributes
   }
-  var stateCancellable: AnyCancellable?
-  var pipeline: AnyCancellable?
+
   /// The presented paywall view controller.
   @MainActor
   public static var presentedViewController: UIViewController? {
@@ -47,12 +46,17 @@ public final class Paywall: NSObject {
     return IdentityManager.shared.userId
   }
 
-  // MARK: - Private Properties
+  // MARK: - Internal Properties
   /// Used as the reload function if a paywall takes to long to load. set in paywall.present
-  static var presentAgain: () async -> Void = {}
   static var shared = Paywall(apiKey: nil)
   static var isFreeTrialAvailableOverride: Bool?
 
+  /// The publisher from the last paywall presentation.
+  var presentationPublisher: AnyCancellable?
+
+  /// The request that triggered the last successful paywall presentation.
+  var lastSuccessfulPresentationRequest: PaywallPresentationRequest?
+  
   var presentingWindow: UIWindow?
   var didTryToAutoRestore = false
   var paywallWasPresentedThisSession = false
@@ -260,44 +264,39 @@ extension Paywall {
 
 // MARK: - SWPaywallViewControllerDelegate
 extension Paywall: SWPaywallViewControllerDelegate {
-	func eventDidOccur(
+  @MainActor
+  func eventDidOccur(
     paywallViewController: SWPaywallViewController,
     result: PaywallPresentationResult
   ) {
 		// TODO: log this
-		onMain { [weak self] in
-      guard let self = self else {
+    switch result {
+    case .closed:
+      self.dismiss(
+        paywallViewController,
+        state: .closed
+      )
+    case .initiatePurchase(let productId):
+      guard let product = StoreKitManager.shared.productsById[productId] else {
         return
       }
-      switch result {
-      case .closed:
-        self.dismiss(
-          paywallViewController,
-          state: .closed
-        )
-      case .initiatePurchase(let productId):
-				guard let product = StoreKitManager.shared.productsById[productId] else {
-          return
-        }
-				paywallViewController.loadingState = .loadingPurchase
-				Paywall.delegate?.purchase(product: product)
-      case .initiateRestore:
-        self.tryToRestore(
-          paywallViewController,
-          userInitiated: true
-        )
-      case .openedURL(let url):
-				Paywall.delegate?.willOpenURL?(url: url)
-      case .openedUrlInSafari(let url):
-        Paywall.delegate?.willOpenURL?(url: url)
-      case .openedDeepLink(let url):
-				Paywall.delegate?.willOpenDeepLink?(url: url)
-      case .custom(let string):
-				Paywall.delegate?.handleCustomPaywallAction?(withName: string)
-			}
-		}
+      paywallViewController.loadingState = .loadingPurchase
+      Paywall.delegate?.purchase(product: product)
+    case .initiateRestore:
+      self.tryToRestore(
+        paywallViewController,
+        userInitiated: true
+      )
+    case .openedURL(let url):
+      Paywall.delegate?.willOpenURL?(url: url)
+    case .openedUrlInSafari(let url):
+      Paywall.delegate?.willOpenURL?(url: url)
+    case .openedDeepLink(let url):
+      Paywall.delegate?.willOpenDeepLink?(url: url)
+    case .custom(let string):
+      Paywall.delegate?.handleCustomPaywallAction?(withName: string)
+    }
 	}
-
 
   // MARK: - Unavailable methods
   @available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")

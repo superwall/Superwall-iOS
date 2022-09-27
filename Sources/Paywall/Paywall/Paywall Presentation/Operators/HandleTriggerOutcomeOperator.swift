@@ -51,7 +51,8 @@ extension AnyPublisher where Output == TriggerOutcomePipelineData, Failure == Er
           )
           paywallStatePublisher.send(.skipped(.error(error)))
         }
-
+        
+        paywallStatePublisher.send(completion: .finished)
         throw PresentationPipelineError.cancelled
       }
       .eraseToAnyPublisher()

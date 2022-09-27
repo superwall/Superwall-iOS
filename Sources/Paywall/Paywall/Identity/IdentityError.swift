@@ -7,10 +7,14 @@
 
 import Foundation
 
-//TODO: FILL OUT INFO HERE AND EXPLAIN ON LOGIN ETC THAT THIS IS THROWN
+/// The error returned when trying to interact with the identity API.
 public enum IdentityError: Error {
-  case configNotCalled
-  case missingAppUserId
+  /// The `userId` that was provided was empty.
+  case missingUserId
+
+  /// The user is already logged in.
   case alreadyLoggedIn
+
+  /// The user isn't logged in.
   case notLoggedIn
 }

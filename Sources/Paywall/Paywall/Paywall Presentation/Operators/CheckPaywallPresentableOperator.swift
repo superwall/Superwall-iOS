@@ -53,15 +53,15 @@ extension AnyPublisher where Output == PaywallVcPipelineData, Failure == Error {
                 error: nil
               )
               if !Paywall.shared.isPaywallPresented {
-                let state: PaywallState = .skipped(.error(
-                  Paywall.shared.presentationError(
-                    domain: "SWPresentationError",
-                    code: 101,
-                    title: "No UIViewController to present paywall on",
-                    value: "This usually happens when you call this method before a window was made key and visible."
-                  )
-                ))
+                let error = InternalPresentationLogic.presentationError(
+                  domain: "SWPresentationError",
+                  code: 101,
+                  title: "No UIViewController to present paywall on",
+                  value: "This usually happens when you call this method before a window was made key and visible."
+                )
+                let state: PaywallState = .skipped(.error(error))
                 paywallStatePublisher.send(state)
+                paywallStatePublisher.send(completion: .finished)
               }
               throw PresentationPipelineError.cancelled
             }
@@ -75,20 +75,17 @@ extension AnyPublisher where Output == PaywallVcPipelineData, Failure == Error {
 
 extension Paywall {
   fileprivate func createPresentingWindowIfNeeded() {
-    if presentingWindow == nil {
-      let activeWindow = UIApplication.shared.activeWindow
-
-      if #available(iOS 13.0, *) {
-        if let windowScene = activeWindow?.windowScene {
-          presentingWindow = UIWindow(windowScene: windowScene)
-        }
-      } else {
-        presentingWindow = UIWindow(frame: activeWindow?.bounds ?? UIScreen.main.bounds)
-      }
-
-      presentingWindow?.rootViewController = UIViewController()
-      presentingWindow?.windowLevel = .normal
-      presentingWindow?.makeKeyAndVisible()
+    guard presentingWindow == nil else {
+      return
     }
+    let activeWindow = UIApplication.shared.activeWindow
+
+    if let windowScene = activeWindow?.windowScene {
+      presentingWindow = UIWindow(windowScene: windowScene)
+    }
+
+    presentingWindow?.rootViewController = UIViewController()
+    presentingWindow?.windowLevel = .normal
+    presentingWindow?.makeKeyAndVisible()
   }
 }

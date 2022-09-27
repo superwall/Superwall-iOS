@@ -64,14 +64,12 @@ final class SWConsoleViewController: UIViewController {
       tableView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
     ])
 
-    if #available(iOS 13.0, *) {
-      let appearance = UINavigationBarAppearance()
-      appearance.configureWithOpaqueBackground()
-      appearance.backgroundColor = lightBackgroundColor
-      appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-      navigationController?.navigationBar.standardAppearance = appearance
-      navigationController?.navigationBar.scrollEdgeAppearance = navigationController?.navigationBar.standardAppearance
-    }
+    let appearance = UINavigationBarAppearance()
+    appearance.configureWithOpaqueBackground()
+    appearance.backgroundColor = lightBackgroundColor
+    appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+    navigationController?.navigationBar.standardAppearance = appearance
+    navigationController?.navigationBar.scrollEdgeAppearance = navigationController?.navigationBar.standardAppearance
 
     navigationItem.rightBarButtonItem = UIBarButtonItem(
       title: "Done",

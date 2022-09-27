@@ -7,10 +7,14 @@
 
 import Foundation
 
+// MARK: - Log In
 public extension Paywall {
-  /// Log in a user with their userId to retrieve paywalls that they've been assigned to.
+  /// Logs in a user with their `userId` to retrieve paywalls that they've been assigned to.
   ///
-  /// This links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
+  /// This links a `userId` to Superwall's automatically generated alias. Call this once after you've retrieved a userId.
+  ///
+  /// The user will stay logged in until you call ``Paywall/Paywall/logOut()`` or ``Paywall/Paywall/reset()``. If you call
+  /// this while they're already logged in, it will throw a ``IdentityError/alreadyLoggedIn`` error.
   ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
   ///  - Returns: The shared Paywall instance.
   @discardableResult
@@ -110,7 +114,7 @@ public extension Paywall {
   /// Resets the `userId` and data stored by Superwall.
   @discardableResult
   @objc static func reset() async -> Paywall {
-    Paywall.presentAgain = {}
+    Paywall.shared.lastSuccessfulPresentationRequest = nil
     shared.latestDismissedPaywallInfo = nil
     IdentityManager.shared.clear()
     Storage.shared.clear()

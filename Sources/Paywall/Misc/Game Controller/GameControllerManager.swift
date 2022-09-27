@@ -63,16 +63,6 @@ final class GameControllerManager: NSObject {
     guard Paywall.options.isGameControllerEnabled else {
       return
     }
-    guard #available(iOS 13.0, *) else {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .gameControllerManager,
-        message: "Unsupported OS",
-        info: nil,
-        error: nil
-      )
-      return
-    }
 
     let name = element.buttonName(gamepad: gamepad)
     switch element {
