@@ -101,5 +101,4 @@ extension AnyPublisher where Output == (PaywallPresentationRequest, DebugInfo), 
       )
     }
   }
-
 }

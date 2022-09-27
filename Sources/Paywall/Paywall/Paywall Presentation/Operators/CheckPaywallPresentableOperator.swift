@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 26/09/2022.
 //
+// swiftlint:disable strict_fileprivate
 
 import UIKit
 import Combine
@@ -28,20 +29,23 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
       ) {
         throw PresentationPipelineError.cancelled
       }
-      
+
       SessionEventsManager.shared.triggerSession.activateSession(
         for: input.request.presentationInfo,
         on: input.request.presentingViewController,
         paywallResponse: input.paywallViewController.paywallResponse,
         triggerResult: input.triggerOutcome.result
       )
-      
+
       if input.request.presentingViewController == nil {
         Paywall.shared.createPresentingWindowIfNeeded()
       }
-      
+
       // Make sure there's a presenter. If there isn't throw an error if no paywall is being presented
-      guard let presenter = (input.request.presentingViewController ?? Paywall.shared.presentingWindow?.rootViewController) else {
+      let providedViewController = input.request.presentingViewController
+      let rootViewController = Paywall.shared.presentingWindow?.rootViewController
+
+      guard let presenter = (providedViewController ?? rootViewController) else {
         Logger.debug(
           logLevel: .error,
           scope: .paywallPresentation,

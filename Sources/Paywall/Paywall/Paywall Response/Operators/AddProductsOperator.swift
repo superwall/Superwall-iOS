@@ -42,7 +42,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
         var response = input.response
         response.products = result.products
 
-        let outcome =  PaywallResponseLogic.getVariablesAndFreeTrial(
+        let outcome = PaywallResponseLogic.getVariablesAndFreeTrial(
           fromProducts: result.products,
           productsById: result.productsById,
           isFreeTrialAvailableOverride: Paywall.isFreeTrialAvailableOverride

@@ -50,8 +50,8 @@ final class PaywallManager {
 
     return await MainActor.run {
       if cached,
-         let identifier = response.identifier,
-         let viewController = self.cache.getPaywall(withIdentifier: identifier) {
+        let identifier = response.identifier,
+        let viewController = self.cache.getPaywall(withIdentifier: identifier) {
         // Set paywall response again incase products have been substituted into paywallResponse.
         viewController.paywallResponse = response
         return viewController

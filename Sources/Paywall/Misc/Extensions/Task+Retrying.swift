@@ -14,7 +14,7 @@ extension Task where Failure == Error {
     priority: TaskPriority? = nil,
     maxRetryCount: Int = 6,
     operation: @Sendable @escaping () async throws -> Success
-) -> Task {
+  ) -> Task {
     Task(priority: priority) {
       for attempt in 0..<maxRetryCount {
         do {

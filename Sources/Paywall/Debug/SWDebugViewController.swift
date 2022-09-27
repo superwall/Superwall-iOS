@@ -23,7 +23,7 @@ struct AlertOption {
   var style: UIAlertAction.Style = .default
 }
 
-// swiftlint:disable:next type_body_length
+// swiftlint:disable:all type_body_length
 @MainActor
 final class SWDebugViewController: UIViewController {
   var logoImageView: UIImageView = {

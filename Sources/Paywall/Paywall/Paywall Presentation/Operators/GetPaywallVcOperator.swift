@@ -78,4 +78,3 @@ extension AnyPublisher where Output == TriggerOutcomeResponsePipelineOutput, Fai
     .eraseToAnyPublisher()
   }
 }
-

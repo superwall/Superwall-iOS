@@ -9,7 +9,7 @@
 import Combine
 
 enum AsyncError: Error {
-    case finishedWithoutValue
+  case finishedWithoutValue
 }
 
 extension Publisher {
@@ -19,10 +19,10 @@ extension Publisher {
       var cancellable: AnyCancellable?
       cancellable = first()
         .sink(
-          receiveCompletion: { completion in
+          receiveCompletion: { _ in
             continuation.resume()
             cancellable?.cancel()
-        },
+          },
           receiveValue: { _ in }
         )
     }
@@ -34,7 +34,7 @@ extension Publisher {
     await withCheckedContinuation { continuation in
       var cancellable: AnyCancellable?
       cancellable = first()
-        .sink { result in
+        .sink { _ in
           cancellable?.cancel()
         } receiveValue: { value in
           continuation.resume(with: .success(value))
@@ -53,7 +53,7 @@ extension Publisher {
           switch result {
           case .finished:
             if finishedWithoutValue {
-                continuation.resume(throwing: AsyncError.finishedWithoutValue)
+              continuation.resume(throwing: AsyncError.finishedWithoutValue)
             }
           case let .failure(error):
             continuation.resume(throwing: error)
@@ -66,4 +66,3 @@ extension Publisher {
     }
   }
 }
-

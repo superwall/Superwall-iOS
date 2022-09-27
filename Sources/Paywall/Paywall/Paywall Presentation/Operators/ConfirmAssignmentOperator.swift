@@ -6,8 +6,6 @@
 //
 
 import Foundation
-
-import Foundation
 import Combine
 
 struct TriggerOutcomePipelineOutput {
@@ -22,17 +20,14 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
       if let confirmableAssignment = input.confirmableAssignment {
         configManager.confirmAssignments(confirmableAssignment)
       }
-      
+
       let output = TriggerOutcomePipelineOutput(
         request: input.request,
         triggerOutcome: input.triggerOutcome,
         debugInfo: input.debugInfo
       )
       return output
-     }
+    }
     .eraseToAnyPublisher()
   }
 }
-
-
-

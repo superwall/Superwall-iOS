@@ -38,32 +38,6 @@ class Storage {
     self.apiKey = apiKey
   }
 
-/*
-  func identify(with userId: String) {
-    guard let outcome = StorageLogic.identify(
-      newUserId: userId,
-      oldUserId: appUserId
-    ) else {
-      loadAssignmentsIfNeeded()
-      return
-    }
-
-    appUserId = userId
-
-    switch outcome {
-    case .reset:
-      TriggerDelayManager.shared.appUserIdAfterReset = appUserId
-      Paywall.reset()
-    case .loadAssignments:
-      if TriggerDelayManager.shared.appUserIdAfterReset == nil {
-        loadAssignments()
-      } else {
-        loadAssignmentsAfterConfig(isBlocking: true)
-        TriggerDelayManager.shared.appUserIdAfterReset = nil
-      }
-    }
-  }*/
-
   private func migrateData() {
     let version = cache.read(Version.self) ?? .v1
     FileManagerMigrator.migrate(

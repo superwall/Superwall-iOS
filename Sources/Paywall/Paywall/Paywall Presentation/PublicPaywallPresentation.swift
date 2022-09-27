@@ -41,11 +41,10 @@ public extension Paywall {
     return await withCheckedContinuation { continuation in
       shared.dismiss(
         paywallViewController,
-        state: .closed,
-        completion: {
-          continuation.resume()
-        }
-      )
+        state: .closed
+      ) {
+        continuation.resume()
+      }
     }
   }
 
@@ -95,7 +94,6 @@ public extension Paywall {
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
   ) {
-
     let overrides = PaywallOverrides(
       products: products,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,

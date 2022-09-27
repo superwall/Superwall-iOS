@@ -15,7 +15,7 @@ extension AnyPublisher where Output == PaywallPresentationRequest, Failure == Er
       .setFailureType(to: Error.self)
 
     return subscribe(on: DispatchQueue.global(qos: .userInitiated))
-      .zip(hasIdentityPublisher) { request, hasIdentity in
+      .zip(hasIdentityPublisher) { request, _ in
         return request
       }
       .eraseToAnyPublisher()

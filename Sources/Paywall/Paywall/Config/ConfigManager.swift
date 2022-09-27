@@ -50,7 +50,6 @@ class ConfigManager {
 
   func fetchConfiguration(
     applicationState: UIApplication.State? = nil,
-    triggerDelayManager: TriggerDelayManager = .shared,
     appSessionManager: AppSessionManager = .shared,
     sessionEventsManager: SessionEventsManager = .shared,
     requestId: String = UUID().uuidString
@@ -194,7 +193,7 @@ class ConfigManager {
   /// Preloads paywalls referenced by the provided triggers.
   func preloadPaywalls(forTriggers triggerNames: Set<String>) async {
     let config = await $config.hasValue()
-    let triggersToPreload =  config.triggers.filter { triggerNames.contains($0.eventName) }
+    let triggersToPreload = config.triggers.filter { triggerNames.contains($0.eventName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
   }

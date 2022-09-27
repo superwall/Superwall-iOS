@@ -217,7 +217,7 @@ class DeviceHelper {
 
   var templateDevice: TemplateDevice {
     let aliases = [IdentityManager.shared.aliasId]
-    
+
     return TemplateDevice(
       publicApiKey: Storage.shared.apiKey,
       platform: DeviceHelper.shared.isMac ? "macOS" : "iOS",

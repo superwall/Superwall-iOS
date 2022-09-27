@@ -7,9 +7,9 @@
 
 import Combine
 
-extension Publisher  {
+extension Publisher {
   @discardableResult
-  func hasValue<T>() async -> T where Output == Optional<T> {
+  func hasValue<T>() async -> T where Output == T? {
     await self
       .compactMap { $0 }
       .eraseToAnyPublisher()

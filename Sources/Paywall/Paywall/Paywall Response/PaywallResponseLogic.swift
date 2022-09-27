@@ -26,8 +26,6 @@ struct ProductProcessingOutcome {
 }
 
 enum PaywallResponseLogic {
-
-
   static func requestHash(
     identifier: String? = nil,
     event: EventData? = nil,

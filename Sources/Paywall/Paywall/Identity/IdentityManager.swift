@@ -65,7 +65,7 @@ final class IdentityManager {
   /// Logs user in and waits for config then assignments.
   ///
   /// - Throws: An error of type ``IdentityError``.
-  func logIn(userId: String) async throws  {
+  func logIn(userId: String) async throws {
     guard appUserId == nil else {
       throw IdentityError.alreadyLoggedIn
     }

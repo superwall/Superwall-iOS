@@ -59,7 +59,6 @@ public final class Paywall: NSObject {
 
   /// The request that triggered the last successful paywall presentation.
   var lastSuccessfulPresentationRequest: PaywallPresentationRequest?
-  
   var presentingWindow: UIWindow?
   var didTryToAutoRestore = false
   var paywallWasPresentedThisSession = false
@@ -192,8 +191,7 @@ public final class Paywall: NSObject {
   }
 }
 
-
-
+// MARK: - Gamepad
 extension Paywall {
 	/// Forwards Game controller events to the paywall.
   ///
