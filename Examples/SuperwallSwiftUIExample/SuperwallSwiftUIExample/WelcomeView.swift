@@ -7,17 +7,12 @@
 
 import SwiftUI
 
-enum Destination: Hashable {
-  case options, implicit, explicit
-}
-
 struct WelcomeView: View {
   @State private var name: String = ""
-  @State private var showTableView = false
-  @State private var path: [Destination] = []
+  @State private var showTrackView = false
 
   var body: some View {
-    NavigationStack(path: $path) {
+    NavigationStack {
       ZStack {
         VStack(alignment: .center, spacing: 60) {
           logo()
@@ -34,15 +29,8 @@ struct WelcomeView: View {
         .frame(maxHeight: .infinity)
         .background(Color.neutral)
       }
-      .navigationDestination(for: Destination.self) {
-        switch $0 {
-        case .options:
-          PaywallOptionsTableView(path: $path)
-        case .implicit:
-          ImplicitlyTriggerPaywallView()
-        case .explicit:
-          ExplicitlyTriggerPaywallView()
-        }
+      .navigationDestination(isPresented: $showTrackView) {
+        TrackEventView()
       }
       .navigationBarHidden(true)
       .navigationTitle("")
@@ -78,7 +66,7 @@ struct WelcomeView: View {
   private func signInButton() -> some View {
     BrandedButton(title: "Continue") {
       PaywallService.setName(to: name)
-      path.append(.options)
+      showTrackView = true
     }
   }
 }

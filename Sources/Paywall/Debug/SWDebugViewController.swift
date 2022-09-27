@@ -19,7 +19,7 @@ var darkBackgroundColor = UIColor(hexString: "#0D0F12")
 
 struct AlertOption {
   var title: String? = ""
-  var action: (() -> Void)?
+  var action: (@MainActor () -> Void)?
   var style: UIAlertAction.Style = .default
 }
 

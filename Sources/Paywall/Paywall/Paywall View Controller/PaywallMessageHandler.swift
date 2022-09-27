@@ -9,7 +9,7 @@ import Foundation
 import WebKit
 
 protocol WebEventDelegate: AnyObject {
-  func handleEvent(_ event: PaywallEvent)
+  @MainActor func handleEvent(_ event: PaywallEvent)
 }
 
 final class PaywallMessageHandler: NSObject, WKScriptMessageHandler {
@@ -20,6 +20,7 @@ final class PaywallMessageHandler: NSObject, WKScriptMessageHandler {
     self.delegate = delegate
   }
 
+  @MainActor
   func userContentController(
     _ userContentController: WKUserContentController,
     didReceive message: WKScriptMessage
