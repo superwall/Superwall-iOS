@@ -8,15 +8,20 @@
 import UIKit
 import Combine
 
+typealias PaywallPresentationSubject = CurrentValueSubject<PaywallPresentationRequest, Error>
+
+/// A publisher that emits ``PaywallState`` objects.
+public typealias PaywallStatePublisher = AnyPublisher<PaywallState, Never>
+
 extension Paywall {
   /// Runs a combine pipeline to present a paywall, publishing ``PaywallState`` objects that provide updates on the lifecycle of the paywall.
   ///
   /// - Parameters:
   ///   - request: A presentation request of type `PaywallPresentationRequest` to feed into a presentation pipeline.
   /// - Returns: A publisher that outputs a ``PaywallState``.
-  func internallyPresent(_ request: PaywallPresentationRequest) -> AnyPublisher<PaywallState, Never> {
+  func internallyPresent(_ request: PaywallPresentationRequest) -> PaywallStatePublisher {
     let paywallStatePublisher = PassthroughSubject<PaywallState, Never>()
-    let presentationPublisher = CurrentValueSubject<PaywallPresentationRequest, Error>(request)
+    let presentationPublisher = PaywallPresentationSubject(request)
 
     self.presentationPublisher = presentationPublisher
       .eraseToAnyPublisher()
@@ -43,9 +48,7 @@ extension Paywall {
   ///
   /// - Parameters:
   ///   - presentationPublisher: The publisher created in the `internallyPresent(request:)` function to kick off the presentation pipeline.
-  func presentAgain(
-    using presentationPublisher: CurrentValueSubject<PaywallPresentationRequest, Error>
-  ) async {
+  func presentAgain(using presentationPublisher: PaywallPresentationSubject) async {
     guard let request = Paywall.shared.lastSuccessfulPresentationRequest else {
       return
     }

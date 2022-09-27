@@ -14,8 +14,7 @@ extension AnyPublisher where Output == PaywallPresentationRequest, Failure == Er
       .filter { $0 == true }
       .setFailureType(to: Error.self)
 
-    return self
-      .subscribe(on: DispatchQueue.global(qos: .userInitiated))
+    return subscribe(on: DispatchQueue.global(qos: .userInitiated))
       .zip(hasIdentityPublisher) { request, hasIdentity in
         return request
       }

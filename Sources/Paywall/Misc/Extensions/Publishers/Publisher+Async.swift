@@ -12,22 +12,6 @@ enum AsyncError: Error {
     case finishedWithoutValue
 }
 
-extension Publisher where Output == Bool {
-  func isTrue() async {
-    await self
-      .filter { $0 == true }
-      .eraseToAnyPublisher()
-      .async()
-  }
-
-  func isTrue() -> AnyPublisher<Output, Error> where Failure == Never {
-    return self
-      .setFailureType(to: Error.self)
-      .filter { $0 == true }
-      .eraseToAnyPublisher()
-  }
-}
-
 extension Publisher {
   /// Returns the first value of the publisher
   func asyncNoValue() async {

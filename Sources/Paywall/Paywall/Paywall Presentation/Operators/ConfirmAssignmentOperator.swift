@@ -10,22 +10,27 @@ import Foundation
 import Foundation
 import Combine
 
-typealias TriggerOutcomePipelineData = (
-  request: PaywallPresentationRequest,
-  triggerOutcome: TriggerResultOutcome,
-  debugInfo: DebugInfo
-)
+struct TriggerOutcomePipelineOutput {
+  let request: PaywallPresentationRequest
+  let triggerOutcome: TriggerResultOutcome
+  let debugInfo: DebugInfo
+}
 
-extension AnyPublisher where Output == AssignmentPipelineData, Failure == Error {
-  func confirmAssignment(configManager: ConfigManager = .shared) -> AnyPublisher<TriggerOutcomePipelineData, Failure> {
-    self
-      .map { request, triggerOutcome, confirmableAssignment, debugInfo in
-        if let confirmableAssignment = confirmableAssignment {
-          configManager.confirmAssignments(confirmableAssignment)
-        }
-        return (request, triggerOutcome, debugInfo)
-       }
-      .eraseToAnyPublisher()
+extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Error {
+  func confirmAssignment(configManager: ConfigManager = .shared) -> AnyPublisher<TriggerOutcomePipelineOutput, Failure> {
+    map { input in
+      if let confirmableAssignment = input.confirmableAssignment {
+        configManager.confirmAssignments(confirmableAssignment)
+      }
+      
+      let output = TriggerOutcomePipelineOutput(
+        request: input.request,
+        triggerOutcome: input.triggerOutcome,
+        debugInfo: input.debugInfo
+      )
+      return output
+     }
+    .eraseToAnyPublisher()
   }
 }
 

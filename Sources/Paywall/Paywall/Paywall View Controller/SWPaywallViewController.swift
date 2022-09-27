@@ -32,7 +32,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   // MARK: - Properties
 	weak var delegate: SWPaywallViewControllerDelegate?
   var paywallStatePublisher: PassthroughSubject<PaywallState, Never>!
-  var presentationPublisher: CurrentValueSubject<PaywallPresentationRequest, Error>!
+  var presentationPublisher: PaywallPresentationSubject!
 	var isPresented = false
 	var calledDismiss = false
   var paywallResponse: PaywallResponse
@@ -587,7 +587,7 @@ extension SWPaywallViewController {
     eventData: EventData?,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
-    presentationPublisher: CurrentValueSubject<PaywallPresentationRequest, Error>,
+    presentationPublisher: PaywallPresentationSubject,
     completion: @escaping (Bool) -> Void
   ) {
 		if Paywall.shared.isPaywallPresented

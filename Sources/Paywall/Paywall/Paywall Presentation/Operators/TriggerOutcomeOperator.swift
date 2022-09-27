@@ -20,41 +20,49 @@ struct TriggerResultOutcome {
   var result: TriggerResult?
 }
 
-typealias AssignmentPipelineData = (
-  request: PaywallPresentationRequest,
-  triggerOutcome: TriggerResultOutcome,
-  confirmableAssignment: ConfirmableAssignment?,
-  debugInfo: DebugInfo
-)
+struct AssignmentPipelineOutput {
+  let request: PaywallPresentationRequest
+  let triggerOutcome: TriggerResultOutcome
+  var confirmableAssignment: ConfirmableAssignment?
+  let debugInfo: DebugInfo
+}
 
 extension AnyPublisher where Output == (PaywallPresentationRequest, DebugInfo), Failure == Error {
   func getTriggerOutcome(
     configManager: ConfigManager = .shared,
     storage: Storage = .shared
-  ) -> AnyPublisher<AssignmentPipelineData, Failure> {
-    self
-      .map { request, debugInfo in
-        if let eventData = request.presentationInfo.eventData {
-          let assignmentOutcome = AssignmentLogic.getOutcome(
-            forEvent: eventData,
-            triggers: ConfigManager.shared.triggers,
-            configManager: configManager,
-            storage: storage
-          )
+  ) -> AnyPublisher<AssignmentPipelineOutput, Failure> {
+    map { request, debugInfo in
+      if let eventData = request.presentationInfo.eventData {
+        let assignmentOutcome = AssignmentLogic.getOutcome(
+          forEvent: eventData,
+          triggers: ConfigManager.shared.triggers,
+          configManager: configManager,
+          storage: storage
+        )
+        let confirmableAssignment = assignmentOutcome.confirmableAssignment
+        let triggerOutcome = getTriggerOutcome(forResult: assignmentOutcome.result)
 
-          let confirmableAssignment = assignmentOutcome.confirmableAssignment
+        return AssignmentPipelineOutput(
+          request: request,
+          triggerOutcome: triggerOutcome,
+          confirmableAssignment: confirmableAssignment,
+          debugInfo: debugInfo
+        )
+      } else {
+        let identifiers = ResponseIdentifiers(paywallId: request.presentationInfo.identifier)
+        let triggerOutcome = TriggerResultOutcome(
+          info: .paywall(identifiers)
+        )
 
-          let triggerOutcome = getTriggerOutcome(forResult: assignmentOutcome.result)
-          return (request, triggerOutcome, confirmableAssignment, debugInfo)
-        } else {
-          let identifiers = ResponseIdentifiers(paywallId: request.presentationInfo.identifier)
-          let triggerOutcome = TriggerResultOutcome(
-            info: .paywall(identifiers)
-          )
-          return (request, triggerOutcome, nil, debugInfo)
-        }
+        return AssignmentPipelineOutput(
+          request: request,
+          triggerOutcome: triggerOutcome,
+          debugInfo: debugInfo
+        )
       }
-      .eraseToAnyPublisher()
+    }
+    .eraseToAnyPublisher()
   }
 
   // TODO: MOVE THIS TO A LOGIC HANDLER

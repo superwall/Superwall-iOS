@@ -10,24 +10,23 @@ import Foundation
 
 extension AnyPublisher where Output == PaywallResponseRequest, Failure == Error {
   func getRawResponse() -> AnyPublisher<PipelineData, Failure> {
-    self
-      .map { request in
-        trackResponseStarted(
-          paywallId: request.responseIdentifiers.paywallId,
-          event: request.eventData
-        )
-        return request
-      }
-      .flatMap(getCachedResponseOrLoad)
-      .map {
-        let paywallInfo = $0.response.getPaywallInfo(fromEvent: $0.request.eventData)
-        trackResponseLoaded(
-          paywallInfo,
-          event: $0.request.eventData
-        )
-        return $0
-      }
-      .eraseToAnyPublisher()
+    map { request in
+      trackResponseStarted(
+        paywallId: request.responseIdentifiers.paywallId,
+        event: request.eventData
+      )
+      return request
+    }
+    .flatMap(getCachedResponseOrLoad)
+    .map {
+      let paywallInfo = $0.response.getPaywallInfo(fromEvent: $0.request.eventData)
+      trackResponseLoaded(
+        paywallInfo,
+        event: $0.request.eventData
+      )
+      return $0
+    }
+    .eraseToAnyPublisher()
   }
 
   private func getCachedResponseOrLoad(

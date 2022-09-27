@@ -172,7 +172,7 @@ public extension Paywall {
     event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil
-  ) -> AnyPublisher<PaywallState, Never> {
+  ) -> PaywallStatePublisher {
     let trackableEvent = UserInitiatedEvent.Track(
       rawName: event,
       canImplicitlyTriggerPaywall: false,

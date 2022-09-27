@@ -12,23 +12,22 @@ typealias PipelineData = (response: PaywallResponse, request: PaywallResponseReq
 
 extension AnyPublisher where Output == PipelineData, Failure == Error {
   func addProducts() -> AnyPublisher<Output, Failure> {
-    self
-      .map { input in
-        trackProductsLoadStart(
-          response: input.response,
-          event: input.request.eventData
-        )
-        return input
-      }
-      .flatMap(getProducts)
-      .map { input in
-        trackProductsLoadFinish(
-          paywallResponse: input.response,
-          event: input.request.eventData
-        )
-        return input
-      }
-      .eraseToAnyPublisher()
+    map { input in
+      trackProductsLoadStart(
+        response: input.response,
+        event: input.request.eventData
+      )
+      return input
+    }
+    .flatMap(getProducts)
+    .map { input in
+      trackProductsLoadFinish(
+        paywallResponse: input.response,
+        event: input.request.eventData
+      )
+      return input
+    }
+    .eraseToAnyPublisher()
   }
 
   private func getProducts(_ input: PipelineData) -> AnyPublisher<PipelineData, Error> {

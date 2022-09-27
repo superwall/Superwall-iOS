@@ -8,42 +8,40 @@
 import UIKit
 import Combine
 
-extension AnyPublisher where Output == PresentablePipelineData, Failure == Error {
+extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Error {
   func presentPaywall(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
-    _ presentationPublisher: CurrentValueSubject<PaywallPresentationRequest, Error>
-  ) -> AnyPublisher<PresentablePipelineData, Error> {
-    self
-      .flatMap { request, debugInfo, paywallViewController, presenter in
-        Future { promise in
-          Task {
-            await MainActor.run {
-              paywallViewController.present(
-                on: presenter,
-                eventData: request.presentationInfo.eventData,
-                presentationStyleOverride: request.paywallOverrides?.presentationStyle,
-                paywallStatePublisher: paywallStatePublisher,
-                presentationPublisher: presentationPublisher
-              ) { isPresented in
-
-                if isPresented {
-                  Paywall.shared.lastSuccessfulPresentationRequest = request
-                  let state: PaywallState = .presented(paywallViewController.paywallInfo)
-                  paywallStatePublisher.send(state)
-                } else {
-                  Logger.debug(
-                    logLevel: .info,
-                    scope: .paywallPresentation,
-                    message: "Paywall Already Presented",
-                    info: debugInfo
-                  )
-                }
-                promise(.success((request, debugInfo, paywallViewController, presenter)))
+    _ presentationPublisher: PaywallPresentationSubject
+  ) -> AnyPublisher<PresentablePipelineOutput, Error> {
+    flatMap { input in
+      Future { promise in
+        Task {
+          await MainActor.run {
+            input.paywallViewController.present(
+              on: input.presenter,
+              eventData: input.request.presentationInfo.eventData,
+              presentationStyleOverride: input.request.paywallOverrides?.presentationStyle,
+              paywallStatePublisher: paywallStatePublisher,
+              presentationPublisher: presentationPublisher
+            ) { isPresented in
+              if isPresented {
+                Paywall.shared.lastSuccessfulPresentationRequest = input.request
+                let state: PaywallState = .presented(input.paywallViewController.paywallInfo)
+                paywallStatePublisher.send(state)
+              } else {
+                Logger.debug(
+                  logLevel: .info,
+                  scope: .paywallPresentation,
+                  message: "Paywall Already Presented",
+                  info: input.debugInfo
+                )
               }
+              promise(.success(input))
             }
           }
         }
       }
-      .eraseToAnyPublisher()
+    }
+    .eraseToAnyPublisher()
   }
 }
