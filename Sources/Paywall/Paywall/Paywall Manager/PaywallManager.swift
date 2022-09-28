@@ -29,7 +29,7 @@ final class PaywallManager {
     cache.removePaywall(withViewController: viewController)
 	}
 
-	func clearCache() async {
+	func clearCache() {
 		cache.clearCache()
 	}
 

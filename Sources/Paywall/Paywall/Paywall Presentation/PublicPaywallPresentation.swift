@@ -19,7 +19,7 @@ public extension Paywall {
 	/// - Parameters:
   ///   - completion: An optional completion block that gets called after the paywall is dismissed. Defaults to nil.
   @MainActor
-  @objc static func dismiss(_ completion: (() -> Void)? = nil) {
+  static func dismiss(_ completion: (() -> Void)? = nil) {
 		guard let paywallViewController = shared.paywallViewController else {
       return
     }
@@ -59,7 +59,6 @@ public extension Paywall {
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
   ) {
-    // TODO: Check this can't be called via objc.
     // Won't be called, just kept to prompt the user to rename.
   }
 
@@ -83,7 +82,7 @@ public extension Paywall {
   ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo`` object containing information about the paywall.
   ///   - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo`` object containing information about the paywall.
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts an `NSError?` with more details. It is recommended to check the error code to handle the onSkip callback. If the error code is `4000`, it means the user didn't match any rules. If the error code is `4001` it means the user is in a holdout group. Otherwise, a `404` error code means an error occurred.
-  @available (*, unavailable)
+  @available(swift, obsoleted: 1.0)
   @objc static func track(
     event: String,
     params: [String: Any]? = nil,
@@ -166,6 +165,7 @@ public extension Paywall {
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///
   /// - Returns: A publisher that provides updates on the state of the paywall via a ``PaywallState`` object.
+  @discardableResult
   static func track(
     event: String,
     params: [String: Any]? = nil,

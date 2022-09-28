@@ -73,15 +73,19 @@ final class IdentityManager {
 
   /// Logs user in and waits for config then assignments.
   ///
-  /// - Throws: An error of type ``IdentityError``.
+  /// - Throws: An error of type ``LogInError``.
   func logIn(userId: String) async throws {
     guard appUserId == nil else {
-      throw IdentityError.alreadyLoggedIn
+      throw LogInError.alreadyLoggedIn
     }
 
     identitySubject.send(false)
 
-    appUserId = try sanitize(userId: userId)
+    guard let appUserId = sanitize(userId: userId) else {
+      throw LogInError.missingUserId
+    }
+    self.appUserId = appUserId
+
     await configManager.$config.hasValue()
     await configManager.getAssignments()
 
@@ -90,25 +94,28 @@ final class IdentityManager {
 
   /// Create an account but don't wait for assignments before returning.
   ///
-  /// - Throws: An error of type ``IdentityError``.
+  /// - Throws: An error of type ``CreateAccountError``.
   func createAccount(userId: String) throws {
     guard appUserId == nil else {
-      throw IdentityError.alreadyLoggedIn
+      throw CreateAccountError.alreadyLoggedIn
     }
     identitySubject.send(false)
 
-    appUserId = try sanitize(userId: userId)
+    guard let appUserId = sanitize(userId: userId) else {
+      throw CreateAccountError.missingUserId
+    }
+    self.appUserId = appUserId
 
     identitySubject.send(true)
   }
 
   /// Logs user out and calls ``Paywall/Paywall/reset()``
   ///
-  /// - Throws: An ``IdentityError`` error, specifically ``IdentityError/notLoggedIn``
+  /// - Throws: An error of type``LogoutError``.
   /// if  the user isn't logged in.
   func logOut() async throws {
     if appUserId == nil {
-      throw IdentityError.notLoggedIn
+      throw LogoutError.notLoggedIn
     }
 
     await Paywall.reset()
@@ -143,12 +150,12 @@ final class IdentityManager {
 
   /// Removes white spaces and new lines
   ///
-  /// - Throws: An ``IdentityError`` error, specifically ``IdentityError/missingAppUserId``
-  /// if  the user isn't logged in.
-  private func sanitize(userId: String) throws -> String {
+  /// - Returns: An optional `String` of the trimmed `userId`. This is `nil`
+  /// if the `userId` is empty.
+  private func sanitize(userId: String) -> String? {
     let userId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
     if userId.isEmpty {
-      throw IdentityError.missingUserId
+      return nil
     }
     return userId
   }

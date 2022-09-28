@@ -73,7 +73,7 @@ public extension Paywall {
   ///  NSDictionary *userAttributes = @{ key : value, key2 : value2};
   ///  [Superwall setUserAttributesDictionary: userAttributes];
   ///  ```
-  @available (*, unavailable)
+  @available(swift, obsoleted: 1.0)
   @objc static func setUserAttributesDictionary(_ attributes: NSDictionary) {
     if let anyAttributes = attributes as? [String: Any] {
       mergeAttributes(anyAttributes)
