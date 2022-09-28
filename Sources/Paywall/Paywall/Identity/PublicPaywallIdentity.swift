@@ -122,7 +122,8 @@ public extension Paywall {
     await PaywallManager.shared.clearCache()
 
     // TODO: Maybe change this and get assignments?
-    await ConfigManager.shared.fetchConfiguration()
+    ConfigManager.shared.reset()
+    IdentityManager.shared.forceHasIdentity()
     return shared
   }
 

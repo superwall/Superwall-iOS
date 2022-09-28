@@ -137,6 +137,10 @@ final class IdentityManager {
     identitySubject.send(identityValue)
   }
 
+  func forceHasIdentity() {
+    identitySubject.send(true)
+  }
+
   /// Removes white spaces and new lines
   ///
   /// - Throws: An ``IdentityError`` error, specifically ``IdentityError/missingAppUserId``

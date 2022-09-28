@@ -43,9 +43,7 @@ class ConfigManager {
   /// Called when storage is cleared on ``Paywall/Paywall/reset()``.
   /// This happens when a user logs out.
   func clear() {
-    triggers.removeAll()
     unconfirmedAssignments.removeAll()
-    config = nil
   }
 
   func fetchConfiguration(
@@ -74,6 +72,14 @@ class ConfigManager {
         error: error
       )
     }
+  }
+
+  func reset() {
+    guard let config = config else {
+      return
+    }
+    assignVariants(from: config.triggers)
+    preloadPaywalls()
   }
 
   // MARK: - Assignments
