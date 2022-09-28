@@ -114,14 +114,17 @@ public extension Paywall {
   /// Resets the `userId` and data stored by Superwall.
   @discardableResult
   @objc static func reset() async -> Paywall {
-    Paywall.shared.lastSuccessfulPresentationRequest = nil
+    shared.lastSuccessfulPresentationRequest = nil
     shared.latestDismissedPaywallInfo = nil
+    shared.presentationPublisher?.cancel()
+    shared.presentationPublisher = nil
+    trackCancellable?.cancel()
+    trackCancellable = nil
+
     IdentityManager.shared.clear()
     Storage.shared.clear()
-    ConfigManager.shared.clear()
     await PaywallManager.shared.clearCache()
 
-    // TODO: Maybe change this and get assignments?
     ConfigManager.shared.reset()
     IdentityManager.shared.forceHasIdentity()
     return shared

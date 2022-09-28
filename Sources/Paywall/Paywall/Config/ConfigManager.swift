@@ -40,12 +40,6 @@ class ConfigManager {
     self.options = options ?? self.options
   }
 
-  /// Called when storage is cleared on ``Paywall/Paywall/reset()``.
-  /// This happens when a user logs out.
-  func clear() {
-    unconfirmedAssignments.removeAll()
-  }
-
   func fetchConfiguration(
     applicationState: UIApplication.State? = nil,
     appSessionManager: AppSessionManager = .shared,
@@ -74,10 +68,12 @@ class ConfigManager {
     }
   }
 
+  /// Reassigns variants and preloads paywalls again.
   func reset() {
     guard let config = config else {
       return
     }
+    unconfirmedAssignments.removeAll()
     assignVariants(from: config.triggers)
     preloadPaywalls()
   }
