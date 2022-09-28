@@ -25,8 +25,7 @@ final class PaywallService {
 
   static func logIn() async {
     do {
-      let userName = Paywall.userAttributes["firstName"] as! String
-      try await Paywall.logIn(userId: userName)
+      try await Paywall.logIn(userId: "abc")
     } catch {
       print("An error occurred logging in", error)
     }
