@@ -16,21 +16,3 @@ extension Publisher {
       .async()
   }
 }
-
-extension Publishers {
-  static var readyToFireTriggers: AnyPublisher<Void, Never> {
-    let hasConfig = ConfigManager.shared.$config
-      .compactMap { $0 }
-
-    let hasIdentity = IdentityManager.shared.hasIdentity
-      .filter { $0 == true }
-      .eraseToAnyPublisher()
-
-    return hasConfig
-      .zip(hasIdentity)
-      .map { _ in
-        return ()
-      }
-      .eraseToAnyPublisher()
-  }
-}

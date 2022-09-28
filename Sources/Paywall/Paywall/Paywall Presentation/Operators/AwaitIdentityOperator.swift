@@ -10,12 +10,8 @@ import Combine
 
 extension AnyPublisher where Output == PaywallPresentationRequest, Failure == Error {
   func awaitIdentity() -> AnyPublisher<PaywallPresentationRequest, Failure> {
-    let hasIdentityPublisher = IdentityManager.shared.hasIdentity
-      .filter { $0 == true }
-      .setFailureType(to: Error.self)
-
     return subscribe(on: DispatchQueue.global(qos: .userInitiated))
-      .zip(hasIdentityPublisher) { request, _ in
+      .zip(IdentityManager.hasIdentity) { request, _ in
         return request
       }
       .eraseToAnyPublisher()

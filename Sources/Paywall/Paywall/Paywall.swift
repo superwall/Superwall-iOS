@@ -223,20 +223,21 @@ extension Paywall {
   ///
   ///  - Parameters:
   ///     - event: The data of an analytical event data that could trigger a paywall.
-	func handleImplicitTrigger(forEvent event: EventData) async {
-    await Publishers.readyToFireTriggers.async()
+  @MainActor
+  func handleImplicitTrigger(forEvent event: EventData) async {
+    await IdentityManager.hasIdentity.async()
 
     let presentationInfo: PresentationInfo = .implicitTrigger(event)
 
-    let outcome = await PaywallLogic.canTriggerPaywall(
+    let outcome = PaywallLogic.canTriggerPaywall(
       eventName: event.name,
       triggers: Set(ConfigManager.shared.triggers.keys),
-      isPaywallPresented: self.isPaywallPresented
+      isPaywallPresented: isPaywallPresented
     )
 
     switch outcome {
     case .deepLinkTrigger:
-      if await Paywall.shared.isPaywallPresented {
+      if isPaywallPresented {
         await Paywall.dismiss()
       }
       let presentationRequest = PaywallPresentationRequest(presentationInfo: presentationInfo)

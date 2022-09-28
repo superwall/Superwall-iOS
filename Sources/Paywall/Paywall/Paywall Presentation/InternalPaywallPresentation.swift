@@ -56,8 +56,9 @@ extension Paywall {
         PaywallManager.shared.removePaywall(withIdentifier: presentingPaywallIdentifier)
       }
     }
-    let hasIdentity = IdentityManager.shared.hasIdentity.value
-    IdentityManager.shared.hasIdentity.send(hasIdentity)
+
+    // Resend both the identity and request again to run the presentation pipeline again.
+    IdentityManager.shared.resendIdentity()
     presentationPublisher.send(request)
   }
 

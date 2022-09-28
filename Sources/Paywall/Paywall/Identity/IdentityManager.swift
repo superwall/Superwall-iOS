@@ -26,7 +26,16 @@ final class IdentityManager {
   var userAttributes: [String: Any] = [:]
 
   /// When `true`, the SDK is able to fire triggers.
-  var hasIdentity = CurrentValueSubject<Bool, Never>(false)
+  private var identitySubject = CurrentValueSubject<Bool, Never>(false)
+
+  /// A Publisher that only emits when `identitySubject` is `true`. When `true`,
+  /// it means the SDK is ready to fire triggers.
+  static var hasIdentity: AnyPublisher<Bool, Error> {
+    shared.identitySubject
+      .filter { $0 == true }
+      .setFailureType(to: Error.self)
+      .eraseToAnyPublisher()
+  }
 
   private let storage: Storage
   private let configManager: ConfigManager
@@ -59,7 +68,7 @@ final class IdentityManager {
       await configManager.getAssignments()
     }
 
-    hasIdentity.send(true)
+    identitySubject.send(true)
   }
 
   /// Logs user in and waits for config then assignments.
@@ -70,13 +79,13 @@ final class IdentityManager {
       throw IdentityError.alreadyLoggedIn
     }
 
-    hasIdentity.send(false)
+    identitySubject.send(false)
 
     appUserId = try sanitize(userId: userId)
     await configManager.$config.hasValue()
     await configManager.getAssignments()
 
-    hasIdentity.send(true)
+    identitySubject.send(true)
   }
 
   /// Create an account but don't wait for assignments before returning.
@@ -86,11 +95,11 @@ final class IdentityManager {
     guard appUserId == nil else {
       throw IdentityError.alreadyLoggedIn
     }
-    hasIdentity.send(false)
+    identitySubject.send(false)
 
     appUserId = try sanitize(userId: userId)
 
-    hasIdentity.send(true)
+    identitySubject.send(true)
   }
 
   /// Logs user out and calls ``Paywall/Paywall/reset()``
@@ -107,7 +116,7 @@ final class IdentityManager {
 
   /// Clears all stored user-specific variables.
   func clear() {
-    hasIdentity.send(false)
+    identitySubject.send(false)
     appUserId = nil
     aliasId = IdentityLogic.generateAlias()
     userAttributes = [:]
@@ -121,6 +130,11 @@ final class IdentityManager {
     )
     storage.save(mergedAttributes, forType: UserAttributes.self)
     userAttributes = mergedAttributes
+  }
+
+  func resendIdentity() {
+    let identityValue = identitySubject.value
+    identitySubject.send(identityValue)
   }
 
   /// Removes white spaces and new lines
