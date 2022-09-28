@@ -8,7 +8,7 @@
 import Combine
 import Foundation
 
-typealias PipelineData = (response: PaywallResponse, request: PaywallResponseRequest)
+typealias PipelineData = (response: PaywallResponse, request: PaywallRequest)
 
 extension AnyPublisher where Output == PipelineData, Failure == Error {
   func addProducts() -> AnyPublisher<Output, Failure> {

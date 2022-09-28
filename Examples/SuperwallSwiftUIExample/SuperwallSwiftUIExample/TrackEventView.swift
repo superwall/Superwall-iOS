@@ -9,10 +9,12 @@ import SwiftUI
 import Paywall
 
 struct TrackEventView: View {
+  @Binding var showTrackView: Bool
   @StateObject private var store = StoreKitService.shared
   private let model = TrackEventModel()
 
-  init() {
+  init(showTrackView: Binding<Bool>) {
+    _showTrackView = showTrackView
     UINavigationBar.appearance().titleTextAttributes = [
       .foregroundColor: UIColor.white,
       .font: UIFont.rubikBold(.five)
@@ -33,8 +35,16 @@ struct TrackEventView: View {
 
       Spacer()
 
-      BrandedButton(title: "Track event") {
-        model.trackEvent()
+      VStack(spacing: 25) {
+        BrandedButton(title: "Track event") {
+          model.trackEvent()
+        }
+        BrandedButton(title: "Log Out") {
+          Task {
+            await model.logOut()
+            showTrackView = false
+          }
+        }
       }
       .padding()
     }
@@ -42,12 +52,13 @@ struct TrackEventView: View {
     .foregroundColor(.white)
     .background(Color.neutral)
     .navigationBarTitleDisplayMode(.inline)
+    .navigationBarBackButtonHidden()
     .navigationTitle("Hello \(PaywallService.name)")
   }
 }
 
 struct TriggerPaywall_Previews: PreviewProvider {
   static var previews: some View {
-    TrackEventView()
+    TrackEventView(showTrackView: .constant(false))
   }
 }

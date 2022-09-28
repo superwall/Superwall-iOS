@@ -34,7 +34,6 @@ extension Paywall {
       .getPaywallViewController(paywallStatePublisher)
       .checkPaywallIsPresentable(paywallStatePublisher)
       .presentPaywall(paywallStatePublisher, presentationPublisher)
-      .eraseToAnyPublisher()
       .sink(
         receiveCompletion: { _ in },
         receiveValue: { _ in }

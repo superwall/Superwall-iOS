@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-struct PaywallResponseRequest {
+struct PaywallRequest {
   var eventData: EventData?
   let responseIdentifiers: ResponseIdentifiers
   var substituteProducts: PaywallProducts?

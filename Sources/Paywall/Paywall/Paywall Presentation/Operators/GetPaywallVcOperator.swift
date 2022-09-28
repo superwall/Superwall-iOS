@@ -23,7 +23,7 @@ extension AnyPublisher where Output == TriggerOutcomeResponsePipelineOutput, Fai
       Future { promise in
         Task {
           let isDebuggerLaunched = await SWDebugManager.shared.isDebuggerLaunched
-          let responseRequest = PaywallResponseRequest(
+          let responseRequest = PaywallRequest(
             eventData: input.request.presentationInfo.eventData,
             responseIdentifiers: input.responseIdentifiers,
             substituteProducts: input.request.paywallOverrides?.products

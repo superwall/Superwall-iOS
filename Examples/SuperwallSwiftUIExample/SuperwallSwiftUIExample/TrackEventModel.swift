@@ -42,8 +42,11 @@ final class TrackEventModel {
     }
   }
 
-  // The below function gives an example of how to track an event using Combine publishers:
+  func logOut() async {
+    await PaywallService.logOut()
+  }
 
+  // The below function gives an example of how to track an event using Combine publishers:
   /*
   func trackEventUsingCombine() {
     cancellable = Paywall

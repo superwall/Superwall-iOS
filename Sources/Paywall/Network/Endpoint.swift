@@ -147,8 +147,8 @@ extension Endpoint where Response == PaywallResponse {
       let bodyDict = ["event": event.jsonData]
       bodyData = try? JSONEncoder.toSnakeCase.encode(bodyDict)
     } else {
-      let bodyDict = PaywallRequest(appUserId: IdentityManager.shared.userId)
-      bodyData = try? JSONEncoder.toSnakeCase.encode(bodyDict)
+      let body = PaywallRequestBody(appUserId: IdentityManager.shared.userId)
+      bodyData = try? JSONEncoder.toSnakeCase.encode(body)
     }
     return Endpoint(
       components: Components(

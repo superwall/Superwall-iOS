@@ -8,7 +8,7 @@
 import Combine
 import Foundation
 
-extension AnyPublisher where Output == PaywallResponseRequest, Failure == Error {
+extension AnyPublisher where Output == PaywallRequest, Failure == Error {
   func getRawResponse() -> AnyPublisher<PipelineData, Failure> {
     map { request in
       trackResponseStarted(
@@ -30,8 +30,8 @@ extension AnyPublisher where Output == PaywallResponseRequest, Failure == Error 
   }
 
   private func getCachedResponseOrLoad(
-    _ request: PaywallResponseRequest
-  ) -> AnyPublisher<(response: PaywallResponse, request: PaywallResponseRequest), Error> {
+    _ request: PaywallRequest
+  ) -> AnyPublisher<(response: PaywallResponse, request: PaywallRequest), Error> {
     Future {
       let responseLoadStartTime = Date()
       let paywallId = request.responseIdentifiers.paywallId

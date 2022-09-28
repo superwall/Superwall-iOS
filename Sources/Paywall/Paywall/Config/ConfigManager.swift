@@ -80,9 +80,6 @@ class ConfigManager {
 
   private func assignVariants(from triggers: Set<Trigger>) {
     var confirmedAssignments = storage.getConfirmedAssignments()
-    guard let triggers = config?.triggers else {
-      return
-    }
     let result = ConfigLogic.assignVariants(
       fromTriggers: triggers,
       confirmedAssignments: confirmedAssignments
@@ -202,7 +199,7 @@ class ConfigManager {
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) {
     for identifier in paywallIdentifiers {
       Task {
-        let request = PaywallResponseRequest(responseIdentifiers: .init(paywallId: identifier))
+        let request = PaywallRequest(responseIdentifiers: .init(paywallId: identifier))
         _ = try? await paywallManager.getPaywallViewController(
           from: request,
           cached: true

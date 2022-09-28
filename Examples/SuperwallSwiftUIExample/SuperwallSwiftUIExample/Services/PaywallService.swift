@@ -23,6 +23,23 @@ final class PaywallService {
     )
   }
 
+  static func logIn() async {
+    do {
+      let userName = Paywall.userAttributes["firstName"] as! String
+      try await Paywall.logIn(userId: userName)
+    } catch {
+      print("An error occurred logging in", error)
+    }
+  }
+
+  static func logOut() async {
+    do {
+      try await Paywall.logOut()
+    } catch {
+      print("An error occurred logging out", error)
+    }
+  }
+
   static func handleDeepLink(_ url: URL) {
     Paywall.handleDeepLink(url)
   }

@@ -43,7 +43,7 @@ final class PaywallManager {
   ///   - cached: Whether or not the paywall is cached.
   ///   - completion: A completion block called with the resulting paywall view controller.
 	nonisolated func getPaywallViewController(
-    from request: PaywallResponseRequest,
+    from request: PaywallRequest,
     cached: Bool
   ) async throws -> SWPaywallViewController {
     let response = try await PaywallResponseManager.shared.getResponse(from: request)

@@ -23,14 +23,14 @@ struct WelcomeView: View {
             .multilineTextAlignment(.center)
           inputField()
           Spacer()
-          signInButton()
+          logInButton()
         }
         .padding()
         .frame(maxHeight: .infinity)
         .background(Color.neutral)
       }
       .navigationDestination(isPresented: $showTrackView) {
-        TrackEventView()
+        TrackEventView(showTrackView: $showTrackView)
       }
       .navigationBarHidden(true)
       .navigationTitle("")
@@ -63,10 +63,13 @@ struct WelcomeView: View {
   }
 
   @ViewBuilder
-  private func signInButton() -> some View {
-    BrandedButton(title: "Continue") {
-      PaywallService.setName(to: name)
-      showTrackView = true
+  private func logInButton() -> some View {
+    BrandedButton(title: "Log In") {
+      Task {
+        PaywallService.setName(to: name)
+        await PaywallService.logIn()
+        showTrackView = true
+      }
     }
   }
 }

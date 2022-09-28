@@ -13,7 +13,7 @@ actor PaywallResponseManager {
   private var activeTasks: [String: Task<PaywallResponse, Error>] = [:]
   private var paywallResponsesByHash: [String: PaywallResponse] = [:]
 
-  func getResponse(from request: PaywallResponseRequest) async throws -> PaywallResponse {
+  func getResponse(from request: PaywallRequest) async throws -> PaywallResponse {
     let paywallRequestHash = PaywallResponseLogic.requestHash(
       identifier: request.responseIdentifiers.paywallId,
       event: request.eventData
