@@ -18,7 +18,7 @@ public extension Paywall {
 ///
 /// These events are tracked internally by the SDK and sent to the delegate method ``Paywall/PaywallDelegate/trackAnalyticsEvent(withName:params:)``.
 public enum SuperwallEvent: String {
-  /// When the user is first seen in the app, regardless of whether ``Paywall/Paywall/identify(userId:)`` has been called.
+  /// When the user is first seen in the app, regardless of whether the user is logged in or not.
   case firstSeen = "first_seen"
 
   /// Anytime the app enters the foreground
@@ -76,9 +76,6 @@ public enum SuperwallEvent: String {
 
   /// When the user successfully restores their purchases.
   case transactionRestore = "transaction_restore"
-
-  /// When the default paywall is presented using ``Paywall/Paywall/present(onPresent:onDismiss:onFail:)``.
-  case manualPresent = "manual_present"
 
   /// When the user attributes are set.
   case userAttributes = "user_attributes"

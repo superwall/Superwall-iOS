@@ -14,8 +14,7 @@ public typealias PaywallDismissedCompletionBlock = (PaywallDismissedResult) -> V
 
 public extension Paywall {
   /// Dismisses the presented paywall.
-  ///
-  /// Calling this function doesn't fire the `onDismiss` completion block in ``Paywall/Paywall/present(onPresent:onDismiss:onSkip:)``, since this action is developer initiated.
+  /// 
 	/// - Parameters:
   ///   - completion: An optional completion block that gets called after the paywall is dismissed. Defaults to nil.
   @MainActor
@@ -31,8 +30,6 @@ public extension Paywall {
 	}
 
   /// Dismisses the presented paywall.
-  ///
-  /// Calling this function doesn't fire the `onDismiss` completion block in ``Paywall/Paywall/present(onPresent:onDismiss:onSkip:)``, since this action is developer initiated.
   @MainActor
   @objc static func dismiss() async {
     guard let paywallViewController = shared.paywallViewController else {
@@ -48,21 +45,7 @@ public extension Paywall {
     }
   }
 
-  @available(*, unavailable, renamed: "track")
-  @objc static func trigger(
-    event: String? = nil,
-    params: [String: Any]? = nil,
-    on viewController: UIViewController? = nil,
-    ignoreSubscriptionStatus: Bool = false,
-    presentationStyleOverride: PaywallPresentationStyle = .none,
-    onSkip: ((NSError?) -> Void)? = nil,
-    onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
-  ) {
-    // Won't be called, just kept to prompt the user to rename.
-  }
-
-  /// Shows a paywall to the user when: An event you provide is tied to an active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); and the user matches a rule in the campaign.
+  /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); and the user matches a rule in the campaign. **Note**: Please use ``Paywall/Paywall/setUserAttributes(_:)`` if you’re using Swift.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.
   ///
@@ -73,8 +56,8 @@ public extension Paywall {
   /// For more information, see <doc:TrackingEvents>.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event you wish to trigger (equivalent to event name in ``Paywall/Paywall/track(_:_:)-2vkwo``)
-  ///   - params: Parameters you wish to pass along to the trigger (equivalent to params in ``Paywall/Paywall/track(_:_:)-2vkwo``). You can refer to these parameters in the rules you define in your campaign.
+  ///   -  event: The name of the event you wish to track.
+  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///   - on: The view controller to present the paywall on. Adds a new window to present on if `nil`. Defaults to `nil`.
   ///   - products: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defauls to `nil`.
   ///   - ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
@@ -129,7 +112,7 @@ public extension Paywall {
   /// For more information, see <doc:TrackingEvents>.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event you wish to track
+  ///   -  event: The name of the event you wish to track.
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///   - paywallState: An optional callback that provides updates on the state of the paywall via a ``PaywallState`` object.
@@ -160,7 +143,7 @@ public extension Paywall {
   /// For more information, see <doc:TrackingEvents>.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event you wish to track
+  ///   -  event: The name of the event you wish to track.
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///
@@ -256,5 +239,21 @@ public extension Paywall {
     case .error(let error):
       completion?(error)
     }
+  }
+
+  // MARK: - Unavailable
+
+  @available(*, unavailable, renamed: "track")
+  @objc static func trigger(
+    event: String? = nil,
+    params: [String: Any]? = nil,
+    on viewController: UIViewController? = nil,
+    ignoreSubscriptionStatus: Bool = false,
+    presentationStyleOverride: PaywallPresentationStyle = .none,
+    onSkip: ((NSError?) -> Void)? = nil,
+    onPresent: ((PaywallInfo) -> Void)? = nil,
+    onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
+  ) {
+    // Won't be called, just kept to prompt the user to rename.
   }
 }

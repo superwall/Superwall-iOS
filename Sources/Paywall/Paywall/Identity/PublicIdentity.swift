@@ -41,7 +41,9 @@ public extension Paywall {
           completion?(.success(shared))
         }
       } catch let error as LogInError {
-        completion?(.failure(error))
+        await MainActor.run {
+          completion?(.failure(error))
+        }
       }
     }
   }
@@ -66,9 +68,7 @@ public extension Paywall {
 
 // MARK: - Log Out
 public extension Paywall {
-  /// Asynchronously logs out the user.
-  ///
-  /// This calls ``Paywall/Paywall/reset()``, which resets on-device paywall
+  /// Logs out the user. This calls ``Paywall/Paywall/reset()``, which resets on-device paywall
   /// assignments and the `userId` stored by Superwall.
   ///
   /// You must call this method before attempting to log in a new user.
@@ -79,9 +79,7 @@ public extension Paywall {
     try await IdentityManager.shared.logOut()
   }
 
-  /// Asynchronously logs out the user.
-  ///
-  /// This calls ``Paywall/Paywall/reset()``, which resets on-device paywall
+  /// Logs out the user. This calls ``Paywall/Paywall/reset()``, which resets on-device paywall
   /// assignments and the `userId` stored by Superwall.
   ///
   /// You must call this method before attempting to log in a new user.
@@ -90,7 +88,7 @@ public extension Paywall {
   /// - Parameters:
   ///   - completion: A completion block that accepts a `Result` object.
   ///   The `Result`'s success value is `Void` and failure error is of type ``LogoutError``.
-  static func logOut(completion: ((Result<Void, LogoutError>) -> Void)?) {
+  static func logOut(completion: ((Result<Void, LogoutError>) -> Void)? = nil) {
     Task {
       do {
         try await logOut()
@@ -108,8 +106,8 @@ public extension Paywall {
 
 // MARK: - Reset
 public extension Paywall {
-  /// Asynchronously resets the `userId`, on-device paywall assignments,
-  /// and data stored by Superwall.
+  /// Resets the `userId`, on-device paywall assignments, and data stored
+  /// by Superwall.
   ///
   /// - Returns:The shared ``Paywall/Paywall`` instance on the main thread.
   @discardableResult

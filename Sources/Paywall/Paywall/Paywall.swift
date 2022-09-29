@@ -3,7 +3,6 @@
 import UIKit
 import Foundation
 import StoreKit
-import GameController
 import Combine
 
 /// The primary class for integrating Superwall into your application. It provides access to all its featured via static functions and variables.
@@ -23,7 +22,7 @@ public final class Paywall: NSObject {
     return PaywallManager.shared.presentedViewController
   }
 
-  /// A convenience variable to access and change the paywall options that you passed to ``configure(apiKey:userId:delegate:options:)``.
+  /// A convenience variable to access and change the paywall options that you passed to ``configure(apiKey:delegate:options:)``.
   public static var options: PaywallOptions {
     return ConfigManager.shared.options
   }
@@ -143,7 +142,6 @@ public final class Paywall: NSObject {
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. For a tutorial on the best practices for implementing the delegate, we recommend checking out our <doc:GettingStarted> article.
   /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
-  ///   - userId: Your user's unique identifier, as defined by your backend system. If you don't specify a `userId`, we'll create one for you. Calling ``Paywall/Paywall/identify(userId:)`` later on will automatically alias these two for simple reporting.
   ///   - delegate: A class that conforms to ``PaywallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``PaywallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   /// - Returns: The newly configured ``Paywall/Paywall`` instance.
@@ -157,7 +155,7 @@ public final class Paywall: NSObject {
       Logger.debug(
         logLevel: .warn,
         scope: .paywallCore,
-        message: "Paywall.configure called multiple times. Please make sure you only call this once on app launch. Use Paywall.reset() and Paywall.identify(userId:) if you're looking to reset the userId when a user logs out."
+        message: "Paywall.configure called multiple times. Please make sure you only call this once on app launch."
       )
       return shared
     }
@@ -191,24 +189,7 @@ public final class Paywall: NSObject {
   }
 }
 
-// MARK: - Gamepad
 extension Paywall {
-	/// Forwards Game controller events to the paywall.
-  ///
-  /// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`
-  ///
-  /// See <doc:GameControllerSupport> for more information.
-  ///
-  /// - Parameters:
-  ///   - gamepad: The extended Gamepad controller profile.
-  ///   - element: The game controller element.
-	public static func gamepadValueChanged(
-    gamepad: GCExtendedGamepad,
-    element: GCControllerElement
-  ) {
-		GameControllerManager.shared.gamepadValueChanged(gamepad: gamepad, element: element)
-	}
-
 	// TODO: create debugger manager class
 
 	/// Overrides the default device locale for testing purposes.

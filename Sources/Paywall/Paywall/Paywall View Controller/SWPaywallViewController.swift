@@ -399,7 +399,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         paywallInfo: paywallInfo,
         state: .closed
       ),
-      shouldCallCompletion: false
+      shouldSendDismissedState: false
     ) {
       Task {
         await Paywall.shared.presentAgain(using: self.presentationPublisher)
@@ -413,7 +413,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         paywallInfo: paywallInfo,
         state: .closed
       ),
-      shouldCallCompletion: true
+      shouldSendDismissedState: true
     ) {
       PaywallManager.shared.removePaywall(withViewController: self)
     }
@@ -574,7 +574,7 @@ extension SWPaywallViewController: WebEventHandlerDelegate {
         paywallInfo: paywallInfo,
         state: .closed
       ),
-      shouldCallCompletion: true
+      shouldSendDismissedState: true
     ) { [weak self] in
       self?.eventDidOccur(.openedDeepLink(url: url))
       UIApplication.shared.open(url)
@@ -618,7 +618,7 @@ extension SWPaywallViewController {
 
 	func dismiss(
     _ dismissalResult: PaywallDismissedResult,
-    shouldCallCompletion: Bool = true,
+    shouldSendDismissedState: Bool = true,
     completion: (() -> Void)? = nil
   ) {
     prepareToDismiss(withInfo: dismissalResult.paywallInfo)
@@ -626,7 +626,7 @@ extension SWPaywallViewController {
 		dismiss(animated: presentationIsAnimated) { [weak self] in
       self?.didDismiss(
         dismissalResult,
-        shouldCallCompletion: shouldCallCompletion,
+        shouldSendDismissedState: shouldSendDismissedState,
         completion: completion
       )
 		}
@@ -658,7 +658,7 @@ extension SWPaywallViewController {
 
 	func didDismiss(
     _ dismissalResult: PaywallDismissedResult,
-    shouldCallCompletion: Bool = true,
+    shouldSendDismissedState: Bool = true,
     completion: (() -> Void)? = nil
   ) {
 		isPresented = false
@@ -667,7 +667,7 @@ extension SWPaywallViewController {
 		}
 		Paywall.delegate?.didDismissPaywall?()
     //  loadingState = .ready
-		if shouldCallCompletion {
+		if shouldSendDismissedState {
       paywallStatePublisher?.send(.dismissed(dismissalResult))
       paywallStatePublisher?.send(completion: .finished)
       paywallStatePublisher = nil

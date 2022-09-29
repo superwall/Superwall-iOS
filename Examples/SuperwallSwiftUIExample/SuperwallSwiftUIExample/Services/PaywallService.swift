@@ -26,16 +26,25 @@ final class PaywallService {
   static func logIn() async {
     do {
       try await Paywall.logIn(userId: "abc")
+    } catch let error as LogInError {
+      switch error {
+      case .missingUserId:
+        print("The provided userId was empty")
+      case .alreadyLoggedIn:
+        print("There is already a logged in user.")
+      }
     } catch {
-      print("An error occurred logging in", error)
+      print("Unexpected error", error)
     }
   }
 
   static func logOut() async {
     do {
       try await Paywall.logOut()
+    } catch LogoutError.notLoggedIn {
+      print("You called logout but the user wasn't logged in")
     } catch {
-      print("An error occurred logging out", error)
+      print("Unexpected error", error)
     }
   }
 
@@ -112,8 +121,6 @@ extension PaywallService: PaywallDelegate {
     case .freeTrialStart:
       <#code#>
     case .transactionRestore:
-      <#code#>
-    case .manualPresent:
       <#code#>
     case .userAttributes:
       <#code#>

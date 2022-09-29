@@ -9,7 +9,7 @@ import Foundation
 
 /// Options for configuring the appearance and behavior of the paywall.
 ///
-/// Pass an instance of this class to ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)`` to override the default paywall appearance and behavior.
+/// Pass an instance of this class to ``Paywall/Paywall/configure(apiKey:delegate:options:)`` to override the default paywall appearance and behavior.
 public class PaywallOptions: NSObject {
   /// Determines whether the paywall should use haptic feedback. Defaults to true.
   ///
@@ -47,7 +47,7 @@ public class PaywallOptions: NSObject {
   /// Set this to `true` to forward events from the Game Controller to the Paywall via ``Paywall/Paywall/gamepadValueChanged(gamepad:element:)``.
   public var isGameControllerEnabled = false
 
-  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)``. Defaults to `true`.
+  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Paywall/Paywall/configure(apiKey:delegate:options:)``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
   public var shouldPreloadPaywalls = true

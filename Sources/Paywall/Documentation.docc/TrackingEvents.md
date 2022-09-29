@@ -50,32 +50,32 @@ final class Analytics {
   
   func track(
     event: String,
-    properties: [String: Any]
+    params: [String: Any]
   ) {
     // Superwall
     Superwall.track(
       event: event,
-      params: properties
+      params: params
     )
     
     // Firebase (just an example)
-    Firebase.Analytics.logEvent(event, parameters: properties)
+    Firebase.Analytics.logEvent(event, parameters: params)
     
     // Mixpanel (just an example)
-    Mixpanel.mainInstance().track(event: eventName, properties: properties)
+    Mixpanel.mainInstance().track(event: eventName, properties: params)
   }
 }
 ```
 
 Therefore you can track all your analytics in one go. For example:
-  
+
 ```swift
 Analytics.shared.track(
-  "workout_complete",
-  ["total_workouts": 17]
+  event: "workout_complete",
+  params: ["total_workouts": 17]
 )
 ```
 
 ### Using Your Own Paywalls
 
-Now that you've presented the example paywall, it's time to set up your own paywall. First you'll need to [build your paywall](https://docs.superwall.com/docs/overview). Next, you need to [configure your paywall](https://docs.superwall.com/docs/configuring-a-paywall) and [create a campaign](https://docs.superwall.com/docs/campaigns). You can then use this in your app in the same way as you did above!
+Now that you've presented the example paywall, it's time to set up your own paywall. We maintain a [growing list of highly converting paywall templates](https://templates.superwall.com/release/latest/gallery/) for you to choose from. These designs are used by some of the biggest apps on the App Store and are perfect to get you up and running in no time. Otherwise you can [build your own paywall](https://docs.superwall.com/docs/overview) in Webflow. Then, you need to [configure your paywall](https://docs.superwall.com/docs/configuring-a-paywall) and [create a campaign](https://docs.superwall.com/docs/campaigns). You can then use this in your app in the same way as you did in the previous steps!

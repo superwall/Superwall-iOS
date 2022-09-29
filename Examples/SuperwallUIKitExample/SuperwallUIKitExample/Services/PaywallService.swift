@@ -113,8 +113,6 @@ extension PaywallService: PaywallDelegate {
       <#code#>
     case .transactionRestore:
       <#code#>
-    case .manualPresent:
-      <#code#>
     case .userAttributes:
       <#code#>
     case .nonRecurringProductPurchase:
