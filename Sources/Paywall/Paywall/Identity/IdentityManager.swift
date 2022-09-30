@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-final class IdentityManager {
+class IdentityManager {
   static let shared = IdentityManager()
   var aliasId: String {
     didSet {

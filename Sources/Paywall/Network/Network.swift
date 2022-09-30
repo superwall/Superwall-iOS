@@ -12,6 +12,10 @@ import Combine
 class Network {
   static let shared = Network()
   private let urlSession: CustomURLSession
+  private var applicationStatePublisher: AnyPublisher<UIApplication.State, Never> {
+    UIApplication.shared.publisher(for: \.applicationState)
+      .eraseToAnyPublisher()
+  }
 
   /// Only use init when testing, for all other times use `Network.shared`.
   init(urlSession: CustomURLSession = CustomURLSession()) {
@@ -89,16 +93,19 @@ class Network {
 
     func getConfig(
       withRequestId requestId: String,
-      configManager: ConfigManager = .shared
+      configManager: ConfigManager = .shared,
+      injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
     ) async throws -> Config {
-    do {
-      // Suspend until app is in foreground.
-      await UIApplication.shared.publisher(for: \.applicationState)
+    // Suspend until app is in foreground.
+      let applicationStatePublisher = injectedApplicationStatePublisher ?? self.applicationStatePublisher
+
+      await applicationStatePublisher
         .subscribe(on: RunLoop.main)
-        .contains { $0 != .background }
+        .filter { $0 != .background }
         .eraseToAnyPublisher()
         .async()
 
+    do {
       let config = try await urlSession.request(.config(requestId: requestId))
       return config
     } catch {

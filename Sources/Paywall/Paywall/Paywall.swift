@@ -101,6 +101,8 @@ public final class Paywall: NSObject {
     return isSubscribed
   }
   private static var hasCalledConfig = false
+  var configManager: ConfigManager = .shared
+  var identityManager: IdentityManager = .shared
 
   // MARK: - Private Functions
   private override init() {}
@@ -114,7 +116,7 @@ public final class Paywall: NSObject {
     guard let apiKey = apiKey else {
       return
     }
-    ConfigManager.shared.setOptions(options)
+    configManager.setOptions(options)
     Storage.shared.configure(apiKey: apiKey)
 
     // Initialise session events manager and app session manager on main thread
@@ -128,8 +130,8 @@ public final class Paywall: NSObject {
     SKPaymentQueue.default().add(self)
     Storage.shared.recordAppInstall()
     Task {
-      await ConfigManager.shared.fetchConfiguration()
-      await IdentityManager.shared.configure()
+      await configManager.fetchConfiguration()
+      await identityManager.configure()
     }
   }
 

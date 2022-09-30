@@ -438,7 +438,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     }
   }
 
-
   private func loadPaywallWebpage() {
     let urlString = paywallResponse.url
     guard let url = URL(string: urlString) else {

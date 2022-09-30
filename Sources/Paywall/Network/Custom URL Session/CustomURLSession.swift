@@ -31,8 +31,7 @@ class CustomURLSession {
   @discardableResult
   func request<Response>(
     _ endpoint: Endpoint<Response>,
-    isForDebugging: Bool = false,
-    attempt: Double = 1
+    isForDebugging: Bool = false
   ) async throws -> Response {
     guard let request = endpoint.makeRequest(forDebugging: isForDebugging) else {
       throw NetworkError.unknown

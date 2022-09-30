@@ -11,7 +11,10 @@ enum TaskRetryLogic {
   static func delay(
     forAttempt attempt: Int,
     maxRetries: Int
-  ) -> UInt64 {
+  ) -> UInt64? {
+    guard attempt <= maxRetries else {
+      return nil
+    }
     let jitter = Double.random(in: 0..<1)
     let initialDelay = 5.0
     let multiplier = 1.0

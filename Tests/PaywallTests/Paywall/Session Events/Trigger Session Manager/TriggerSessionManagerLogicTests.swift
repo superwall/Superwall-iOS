@@ -23,12 +23,13 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       presentationInfo: .implicitTrigger(eventData),
       presentingViewController: nil,
       paywallResponse: nil,
-      triggerResult: .unknownEvent
+      triggerResult: .triggerNotFound
     )
 
     XCTAssertNil(outcome)
   }
 
+  @MainActor
   func testTrigger_holdout_noPaywallResponse() {
     let experiment = Experiment(
       id: "1",
@@ -145,6 +146,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertNil(outcome?.paywall)
   }
 
+  @MainActor
   func testTrigger_Paywall_noPaywallResponse() {
     let experiment = Experiment(
       id: "1",
@@ -181,6 +183,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertNil(outcome?.paywall)
   }
 
+  @MainActor
   func testDefaultPaywall_noPaywallResponse() {
     let experiment = Experiment(
       id: "1",
@@ -222,32 +225,21 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertNil(outcome?.paywall)
   }
 
+  @MainActor
   func testIdentifierPaywall_noPaywallResponse() {
-    let eventName = "eventName"
-    let eventId = "eventId"
-    let eventCreatedAt = Date()
-
-    let trackEvent: (Trackable) -> TrackingResult = { event in
-      return .stub()
-        .setting(\.data.name, to: eventName)
-        .setting(\.data.id, to: eventId)
-        .setting(\.data.createdAt, to: eventCreatedAt)
-    }
+    let eventName = "manual_present"
 
     let viewController = SWDebugViewController()
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .fromIdentifier("identifier"),
       presentingViewController: viewController,
       paywallResponse: nil,
-      triggerResult: nil,
-      trackEvent: trackEvent
+      triggerResult: nil
     )
 
     XCTAssertEqual(outcome?.presentationOutcome, .paywall)
 
-    XCTAssertEqual(outcome?.trigger.eventId, eventId)
     XCTAssertEqual(outcome?.trigger.eventName, eventName)
-    XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventCreatedAt)
     XCTAssertEqual(outcome?.trigger.type, .explicit)
     XCTAssertEqual(outcome?.trigger.presentedOn, "SWDebugViewController")
     XCTAssertNil(outcome?.trigger.experiment)

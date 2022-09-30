@@ -7,51 +7,66 @@
 // swiftlint:disable all
 
 import XCTest
+import Combine
 @testable import Paywall
 
 @available(iOS 14.0, *)
 final class NetworkTests: XCTestCase {
-  // MARK: - Config
-  func test_config_inBackground() {
-    onMain {
-      let urlSession = CustomURLSessionMock()
+  func configWrapper(
+    urlSession: CustomURLSessionMock,
+    injectedApplicationStatePublisher: AnyPublisher<UIApplication.State, Never>,
+    completion: @escaping () -> Void
+  ) async {
+    let task = Task {
       let network = Network(urlSession: urlSession)
       let configManager = ConfigManager()
       let requestId = "abc"
-      let completion: (Result<Config, Error>) -> Void = { _ in
-        XCTFail("Config went ahead in background")
-      }
-      network.getConfig(
-        withRequestId: requestId,
-        completion: completion,
-        applicationState: .background,
-        configManager: configManager
-      )
-      XCTAssertFalse(urlSession.didRequest)
 
-      let configRequest = ConfigRequest(
-        id: requestId,
-        completion: completion
+      _ = try? await network.getConfig(
+        withRequestId: requestId,
+        configManager: configManager,
+        injectedApplicationStatePublisher: injectedApplicationStatePublisher
       )
-      XCTAssertEqual(configManager.configRequest, configRequest)
+      completion()
     }
+
+    let twoHundredMilliseconds = UInt64(200_000_000)
+    try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+
+    task.cancel()
   }
 
-  func test_config_inForeground() {
-    onMain {
-      let urlSession = CustomURLSessionMock()
-      let network = Network(urlSession: urlSession)
-      let configManager = ConfigManager()
-      let requestId = "abc"
-      let completion: (Result<Config, Error>) -> Void = { _ in }
-      network.getConfig(
-        withRequestId: requestId,
-        completion: completion,
-        applicationState: .active,
-        configManager: configManager
-      )
-      XCTAssertTrue(urlSession.didRequest)
-      XCTAssertNil(configManager.configRequest)
+  // MARK: - Config
+  func test_config_inBackground() async {
+    let urlSession = CustomURLSessionMock()
+    let publisher = Just(UIApplication.State.background)
+      .eraseToAnyPublisher()
+    let expectation = expectation(description: "config completed")
+    expectation.isInverted = true
+    await configWrapper(
+      urlSession: urlSession,
+      injectedApplicationStatePublisher: publisher
+    ) {
+      expectation.fulfill()
     }
+
+    wait(for: [expectation], timeout: 0.4)
+    XCTAssertFalse(urlSession.didRequest)
+  }
+
+  func test_config_inForeground() async {
+    let urlSession = CustomURLSessionMock()
+    let network = Network(urlSession: urlSession)
+    let configManager = ConfigManager()
+    let requestId = "abc"
+    let publisher = Just(UIApplication.State.active)
+      .eraseToAnyPublisher()
+
+    _ = try? await network.getConfig(
+      withRequestId: requestId,
+      configManager: configManager,
+      injectedApplicationStatePublisher: publisher
+    )
+    XCTAssertTrue(urlSession.didRequest)
   }
 }

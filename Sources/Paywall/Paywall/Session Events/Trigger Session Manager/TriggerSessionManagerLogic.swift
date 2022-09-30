@@ -20,8 +20,7 @@ enum TriggerSessionManagerLogic {
     presentationInfo: PresentationInfo,
     presentingViewController: UIViewController?,
     paywallResponse: PaywallResponse?,
-    triggerResult: TriggerResult?,
-    trackEvent: (Trackable) -> TrackingResult = Paywall.track
+    triggerResult: TriggerResult?
   ) -> Outcome? {
     let presentationOutcome: TriggerSession.PresentationOutcome
     let trigger: TriggerSession.Trigger

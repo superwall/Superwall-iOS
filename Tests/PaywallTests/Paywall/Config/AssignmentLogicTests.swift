@@ -291,7 +291,7 @@ class AssignmentLogicTests: XCTestCase {
     XCTAssertNil(confirmableAssignments)
   }
 
-  func testEventTriggerOutcome_unknownEvent() throws {
+  func testEventTriggerOutcome_triggerNotFound() throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -335,7 +335,7 @@ class AssignmentLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case .unknownEvent = outcome.result else {
+    guard case .triggerNotFound = outcome.result else {
       return XCTFail("Incorrect outcome. Expected unknown event")
     }
 

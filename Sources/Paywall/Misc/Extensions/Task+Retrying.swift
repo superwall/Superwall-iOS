@@ -20,10 +20,12 @@ extension Task where Failure == Error {
         do {
           return try await operation()
         } catch {
-          let delay = TaskRetryLogic.delay(
+          guard let delay = TaskRetryLogic.delay(
             forAttempt: attempt,
             maxRetries: maxRetryCount
-          )
+          ) else {
+            break
+          }
           try await Task<Never, Never>.sleep(nanoseconds: delay)
 
           continue

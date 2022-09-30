@@ -30,10 +30,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     sessionManager.createSessions(from: config)
 
     // Then
-    let defaultEventName = SuperwallEvent.ManualPresent().rawName
-    XCTAssertEqual(queue.triggerSessions.count, 2)
+    XCTAssertEqual(queue.triggerSessions.count, 1)
     let names = queue.triggerSessions.map { $0.trigger.eventName }
-    XCTAssertTrue(names.contains(defaultEventName))
     XCTAssertTrue(names.contains(eventName))
   }
 
@@ -90,7 +88,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      triggerResult: .unknownEvent
+      triggerResult: .triggerNotFound
     )
 
     XCTAssertNil(queue.triggerSessions.last!.presentationOutcome)
@@ -122,7 +120,7 @@ final class TriggerSessionManagerTests: XCTestCase {
       triggerResult: .paywall(experiment: experiment)
     )
 
-    XCTAssertEqual(queue.triggerSessions.count, 3)
+    XCTAssertEqual(queue.triggerSessions.count, 2)
     XCTAssertNil(queue.triggerSessions.last!.endAt)
     XCTAssertEqual(queue.triggerSessions.last!.presentationOutcome, .paywall)
   }
@@ -152,7 +150,7 @@ final class TriggerSessionManagerTests: XCTestCase {
       triggerResult: .holdout(experiment: experiment)
     )
     
-    XCTAssertEqual(queue.triggerSessions.count, 3)
+    XCTAssertEqual(queue.triggerSessions.count, 2)
     XCTAssertNotNil(queue.triggerSessions.last!.endAt)
     XCTAssertEqual(queue.triggerSessions.last!.presentationOutcome, .holdout)
   }
@@ -171,7 +169,7 @@ final class TriggerSessionManagerTests: XCTestCase {
       triggerResult: .noRuleMatch
     )
 
-    XCTAssertEqual(queue.triggerSessions.count, 3)
+    XCTAssertEqual(queue.triggerSessions.count, 2)
     XCTAssertNotNil(queue.triggerSessions.last!.endAt)
     XCTAssertEqual(queue.triggerSessions.last!.presentationOutcome, .noRuleMatch)
   }
@@ -212,9 +210,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     sessionManager.endSession()
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 2)
+    XCTAssertEqual(queue.triggerSessions.count, 1)
     XCTAssertNil(queue.triggerSessions[0].endAt)
-    XCTAssertNil(queue.triggerSessions[1].endAt)
   }
 
   func testEndSession() {
@@ -244,11 +241,10 @@ final class TriggerSessionManagerTests: XCTestCase {
     sessionManager.endSession()
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 4)
+    XCTAssertEqual(queue.triggerSessions.count, 3)
     XCTAssertNil(queue.triggerSessions[0].endAt)
     XCTAssertNil(queue.triggerSessions[1].endAt)
-    XCTAssertNil(queue.triggerSessions[2].endAt)
-    XCTAssertNotNil(queue.triggerSessions[3].endAt)
+    XCTAssertNotNil(queue.triggerSessions[2].endAt)
   }
 
   // MARK: - Update App Session
@@ -258,19 +254,16 @@ final class TriggerSessionManagerTests: XCTestCase {
     let paywallId = "abc"
     activateSession(withPaywallId: paywallId)
 
-    XCTAssertEqual(queue.triggerSessions.count, 3)
+    XCTAssertEqual(queue.triggerSessions.count, 2)
     XCTAssertNotEqual(queue.triggerSessions[0].appSession, appSession)
-    XCTAssertNotEqual(queue.triggerSessions[1].appSession, appSession)
-    XCTAssertNotEqual(queue.triggerSessions[2].appSession, appSession)
 
     queue.triggerSessions.removeAll()
 
     // When
     sessionManager.updateAppSession(to: appSession)
 
-    XCTAssertEqual(queue.triggerSessions.count, 2)
+    XCTAssertEqual(queue.triggerSessions.count, 1)
     XCTAssertEqual(queue.triggerSessions[0].appSession, appSession)
-    XCTAssertEqual(queue.triggerSessions[1].appSession, appSession)
   }
 
   // MARK: - Paywall

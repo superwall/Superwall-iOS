@@ -6,13 +6,11 @@
 //
 // swiftlint:disable all
 
-import Foundation
+import UIKit
 @testable import Paywall
 
 final class ConfigManagerMock: ConfigManager {
   var confirmedAssignment = false
-  var hasLoadedBlockingAssignments = false
-  var hasLoadedNonBlockingAssignments = false
 
   override func confirmAssignments(
     _ confirmableAssignment: ConfirmableAssignment
@@ -20,12 +18,7 @@ final class ConfigManagerMock: ConfigManager {
     confirmedAssignment = true
   }
 
-  override func loadAssignments(completion: (() -> Void)? = nil) {
-    super.loadAssignments(completion: completion)
-    if completion == nil {
-      hasLoadedNonBlockingAssignments = true
-    } else {
-      hasLoadedBlockingAssignments = true
-    }
+  override func fetchConfiguration(applicationState: UIApplication.State? = nil, appSessionManager: AppSessionManager = .shared, sessionEventsManager: SessionEventsManager = .shared, requestId: String = UUID().uuidString) async {
+    return
   }
 }

@@ -21,7 +21,7 @@ final class TrackEventModel {
       case .dismissed(let result):
         switch result.state {
         case .closed:
-          print("User dismissed the paywall.")
+          print("The paywall was dismissed.")
         case .purchased(productId: let productId):
           print("Purchased a product with id \(productId), then dismissed.")
         case .restored:
