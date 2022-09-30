@@ -55,9 +55,3 @@ targets:
         CFBundleSignature: ????
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSPrincipalClass: ""
-
-  #Paywall_Paywall:
-  #   type: bundle
-  #  platform: iOS
-  #  deploymentTarget: "11.2"
-  # sources: [Sources/Paywall/Assets.xcassets]
