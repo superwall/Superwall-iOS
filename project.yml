@@ -28,7 +28,7 @@ targets:
         NSPrincipalClass: ""
     type: framework
     platform: iOS
-    deploymentTarget: "11.2"
+    deploymentTarget: "13.0"
     sources: [Sources/]
     dependencies:
       - package: ASN1Swift
