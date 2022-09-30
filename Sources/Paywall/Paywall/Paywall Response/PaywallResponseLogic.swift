@@ -17,11 +17,6 @@ struct ResponseIdentifiers: Equatable {
   }
 }
 
-struct PaywallErrorResponse {
-  let handlers: [PaywallResponseCompletionBlock]
-  let error: NSError
-}
-
 struct ProductProcessingOutcome {
   var variables: [Variable]
   var productVariables: [ProductVariable]
@@ -31,27 +26,6 @@ struct ProductProcessingOutcome {
 }
 
 enum PaywallResponseLogic {
-  enum PaywallCachingOutcome {
-    case cachedResult(Result<PaywallResponse, NSError>)
-    case enqueCompletionBlock(
-      hash: String,
-      completionBlocks: [PaywallResponseCompletionBlock]
-    )
-    case setCompletionBlock(hash: String)
-  }
-
-  struct TriggerResultOutcome {
-    enum Info {
-      case paywall(ResponseIdentifiers)
-      case holdout(Experiment)
-      case triggerNotFound
-      case noRuleMatch
-      case error(NSError)
-    }
-    let info: Info
-    var result: TriggerResult?
-  }
-
   static func requestHash(
     identifier: String? = nil,
     event: EventData? = nil,
@@ -125,50 +99,11 @@ enum PaywallResponseLogic {
     }
   }
 
-  // swiftlint:disable:next function_parameter_count
-  static func searchForPaywallResponse(
-    forEvent event: EventData?,
-    withHash hash: String,
-    identifiers triggerResponseIds: ResponseIdentifiers?,
-    hasSubstituteProducts: Bool,
-    inResultsCache resultsCache: [String: Result<PaywallResponse, NSError>],
-    handlersCache: [String: [PaywallResponseCompletionBlock]],
-    isDebuggerLaunched: Bool
-  ) -> PaywallCachingOutcome {
-    // If the response for request exists, and there are no products to substitute
-    // return the response.
-    if let result = resultsCache[hash],
-      !hasSubstituteProducts,
-      !isDebuggerLaunched {
-        switch result {
-        case .success(let response):
-          var response = response
-          response.experiment = triggerResponseIds?.experiment
-          return .cachedResult(.success(response))
-        case .failure:
-          return .cachedResult(result)
-        }
-    }
-
-    // if the request is in progress, enque the completion handler and return
-    if let handlers = handlersCache[hash] {
-      return .enqueCompletionBlock(
-        hash: hash,
-        completionBlocks: handlers
-      )
-    }
-
-    // If there are no requests in progress, store completion block and continue
-    return .setCompletionBlock(hash: hash)
-  }
-
   static func handlePaywallError(
     _ error: Error,
     forEvent event: EventData?,
-    withHash hash: String,
-    handlersCache: [String: [PaywallResponseCompletionBlock]],
     trackEvent: (Trackable) -> TrackingResult = Paywall.track
-  ) -> PaywallErrorResponse? {
+  ) -> NSError {
     if let error = error as? CustomURLSession.NetworkError,
       error == .notFound {
       let trackedEvent = InternalSuperwallEvent.PaywallResponseLoad(
@@ -184,50 +119,19 @@ enum PaywallResponseLogic {
       _ = trackEvent(trackedEvent)
     }
 
-    if let handlers = handlersCache[hash] {
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Not Found",
-          value: "There isn't a paywall configured to show in this context",
-          comment: ""
-        )
-      ]
-      let error = NSError(
-        domain: "SWPaywallNotFound",
-        code: 404,
-        userInfo: userInfo
+    let userInfo: [String: Any] = [
+      NSLocalizedDescriptionKey: NSLocalizedString(
+        "Not Found",
+        value: "There isn't a paywall configured to show in this context",
+        comment: ""
       )
-
-      return PaywallErrorResponse(
-        handlers: handlers,
-        error: error
-      )
-    }
-
-    return nil
-  }
-
-  static func alterResponse(
-    _ response: PaywallResponse,
-    products: [Product],
-    productsById: [String: SKProduct],
-    isFreeTrialAvailableOverride: Bool?
-  ) -> (response: PaywallResponse, resetFreeTrialOverride: Bool) {
-    var response = response
-
-    response.products = products
-    let outcome = getVariablesAndFreeTrial(
-      fromProducts: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: isFreeTrialAvailableOverride
+    ]
+    let error = NSError(
+      domain: "SWPaywallNotFound",
+      code: 404,
+      userInfo: userInfo
     )
-
-    response.swProducts = outcome.orderedSwProducts
-    response.variables = outcome.variables
-    response.productVariables = outcome.productVariables
-    response.isFreeTrialAvailable = outcome.isFreeTrialAvailable
-
-    return (response, outcome.resetFreeTrialOverride)
+    return error
   }
 
   static func getVariablesAndFreeTrial(

@@ -13,10 +13,9 @@ final class CustomURLSessionMock: CustomURLSession {
 
   override func request<Response>(
     _ endpoint: Endpoint<Response>,
-    isForDebugging: Bool = false,
-    completion: @escaping (Result<Response, Error>) -> Void,
-    attempt: Double = 1
-  ) {
+    isForDebugging: Bool = false
+  ) async throws -> Response where Response : Decodable {
     didRequest = true
+    return try await super.request(endpoint, isForDebugging: isForDebugging)
   }
 }

@@ -8,9 +8,10 @@
 import Foundation
 import UIKit
 
+@MainActor
 final class PaywallManager {
 	static let shared = PaywallManager()
-	var presentedViewController: SWPaywallViewController? {
+  var presentedViewController: SWPaywallViewController? {
     return SWPaywallViewController.cache.first { $0.isActive }
 	}
 
@@ -41,51 +42,37 @@ final class PaywallManager {
   ///   - presentationInfo: Info concerning the cause of the paywall presentation and data associated with it.
   ///   - cached: Whether or not the paywall is cached.
   ///   - completion: A completion block called with the resulting paywall view controller.
-	func getPaywallViewController(
-    from eventData: EventData? = nil,
-    responseIdentifiers: ResponseIdentifiers,
-    substituteProducts: PaywallProducts? = nil,
-    cached: Bool,
-    completion: ((Result<SWPaywallViewController, NSError>) -> Void)? = nil
-  ) {
-    PaywallResponseManager.shared.getResponse(
-      from: eventData,
-      withIdentifiers: responseIdentifiers,
-      substituteProducts: substituteProducts
-    ) { [weak self] result in
-      guard let self = self else {
-        return
-      }
-      switch result {
-      case .success(let response):
-        if cached,
-          let identifier = response.identifier,
-          let viewController = self.cache.getPaywall(withIdentifier: identifier) {
-          // Set paywall response again incase products have been substituted into paywallResponse.
-          viewController.paywallResponse = response
-          completion?(.success(viewController))
-          return
-        }
+	nonisolated func getPaywallViewController(
+    from request: PaywallRequest,
+    cached: Bool
+  ) async throws -> SWPaywallViewController {
+    let response = try await PaywallResponseManager.shared.getResponse(from: request)
 
-        let paywallViewController = SWPaywallViewController(
-          paywallResponse: response,
-          delegate: Paywall.shared
+    return await MainActor.run {
+      if cached,
+        let identifier = response.identifier,
+        let viewController = self.cache.getPaywall(withIdentifier: identifier) {
+        // Set paywall response again incase products have been substituted into paywallResponse.
+        viewController.paywallResponse = response
+        return viewController
+      }
+
+      let paywallViewController = SWPaywallViewController(
+        paywallResponse: response,
+        delegate: Paywall.shared
+      )
+
+      if let window = UIApplication.shared.activeWindow {
+        paywallViewController.view.alpha = 0.01
+        window.addSubview(paywallViewController.view)
+        paywallViewController.view.transform = CGAffineTransform(
+          translationX: UIScreen.main.bounds.width,
+          y: 0
         )
-
-        if let window = UIApplication.shared.activeWindow {
-          paywallViewController.view.alpha = 0.01
-          window.addSubview(paywallViewController.view)
-          paywallViewController.view.transform = CGAffineTransform(
-            translationX: UIScreen.main.bounds.width,
-            y: 0
-          )
-          .scaledBy(x: 0.1, y: 0.1)
-        }
-
-        completion?(.success(paywallViewController))
-      case .failure(let error):
-        completion?(.failure(error))
+        .scaledBy(x: 0.1, y: 0.1)
       }
+
+      return paywallViewController
     }
 	}
 }

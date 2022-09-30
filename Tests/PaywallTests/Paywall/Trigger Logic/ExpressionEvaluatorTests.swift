@@ -28,7 +28,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
   // MARK: - Expression
 
   func testExpressionEvaluator_expressionTrue() {
-    Storage.shared.userAttributes = ["a": "b"]
+    IdentityManager.shared.userAttributes = ["a": "b"]
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "user.a == \"b\""),
@@ -38,7 +38,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionParams() {
-    Storage.shared.userAttributes = [:]
+    IdentityManager.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "params.a == \"b\""),
@@ -48,7 +48,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionDeviceTrue() {
-    Storage.shared.userAttributes = [:]
+    IdentityManager.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "device.platform == \"iOS\""),
@@ -58,7 +58,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionDeviceFalse() {
-    Storage.shared.userAttributes = [:]
+    IdentityManager.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
         fromRule: .stub()
           .setting(\.expression, to: "device.platform == \"Android\""),
@@ -68,7 +68,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionFalse() {
-    Storage.shared.userAttributes = [:]
+    IdentityManager.shared.userAttributes = [:]
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "a == \"b\""),

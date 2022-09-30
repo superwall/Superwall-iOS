@@ -1,32 +1,31 @@
-// swiftlint:disable line_length
-
-import UIKit
 import Foundation
 import StoreKit
-import GameController
+import Combine
 
 /// The primary class for integrating Superwall into your application. It provides access to all its featured via static functions and variables.
 public final class Paywall: NSObject {
   // MARK: - Public Properties
   /// The delegate of the Paywall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
-	@objc public static var delegate: PaywallDelegate?
+  @objc public static var delegate: PaywallDelegate?
 
-	/// Properties stored about the user, set using ``Paywall/Paywall/setUserAttributes(_:)``.
-	public static var userAttributes: [String: Any] {
-		return Storage.shared.userAttributes
-	}
+  /// Properties stored about the user, set using ``Paywall/Paywall/setUserAttributes(_:)``.
+  public static var userAttributes: [String: Any] {
+    return IdentityManager.shared.userAttributes
+  }
 
   /// The presented paywall view controller.
+  @MainActor
   public static var presentedViewController: UIViewController? {
     return PaywallManager.shared.presentedViewController
   }
 
-  /// A convenience variable to access and change the paywall options that you passed to ``configure(apiKey:userId:delegate:options:)``.
+  /// A convenience variable to access and change the paywall options that you passed to ``configure(apiKey:delegate:options:)``.
   public static var options: PaywallOptions {
     return ConfigManager.shared.options
   }
 
   /// The ``PaywallInfo`` object of the most recently presented view controller.
+  @MainActor
   public static var latestPaywallInfo: PaywallInfo? {
     let presentedPaywallInfo = PaywallManager.shared.presentedViewController?.paywallInfo
     return presentedPaywallInfo ?? shared.latestDismissedPaywallInfo
@@ -35,40 +34,51 @@ public final class Paywall: NSObject {
   /// The ``PaywallInfo`` object stored from the latest paywall that was dismissed.
   var latestDismissedPaywallInfo: PaywallInfo?
 
-  /// The current user's id. It shouldn't ever be `nil` since Superwall assigns an anonymous user id and caches it to disk if one isn't provided.
-  public static var userId: String? {
-    // Technically Storage.shared.userId is an optional value
-    return Storage.shared.userId
+  /// The current user's id.
+  ///
+  /// If you haven't called ``Paywall/Paywall/logIn(userId:)`` or ``Paywall/Paywall/createAccount(userId:)``,
+  /// this value will return an anonymous user id which is cached to disk
+  public static var userId: String {
+    return IdentityManager.shared.userId
   }
 
-  // MARK: - Private Properties
+  // MARK: - Internal Properties
   /// Used as the reload function if a paywall takes to long to load. set in paywall.present
-	static var presentAgain = {}
-	static var shared = Paywall(apiKey: nil)
-	static var isFreeTrialAvailableOverride: Bool?
+  static var shared = Paywall(apiKey: nil)
+  static var isFreeTrialAvailableOverride: Bool?
 
-	var presentingWindow: UIWindow?
-	var didTryToAutoRestore = false
-	var paywallWasPresentedThisSession = false
+  /// Used as a strong reference to any track function that doesn't directly return a publisher.
+  static var trackCancellable: AnyCancellable?
 
-	var paywallViewController: SWPaywallViewController? {
-		return PaywallManager.shared.presentedViewController
-	}
+  /// The publisher from the last paywall presentation.
+  var presentationPublisher: AnyCancellable?
 
-	var recentlyPresented = false {
-		didSet {
+  /// The request that triggered the last successful paywall presentation.
+  var lastSuccessfulPresentationRequest: PaywallPresentationRequest?
+  var presentingWindow: UIWindow?
+  var didTryToAutoRestore = false
+  var paywallWasPresentedThisSession = false
+
+  @MainActor
+  var paywallViewController: SWPaywallViewController? {
+    return PaywallManager.shared.presentedViewController
+  }
+
+  var recentlyPresented = false {
+    didSet {
       guard recentlyPresented else {
         return
       }
       DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(700)) {
         self.recentlyPresented = false
       }
-		}
-	}
+    }
+  }
 
-	var isPaywallPresented: Bool {
-		return paywallViewController != nil
-	}
+  @MainActor
+  var isPaywallPresented: Bool {
+    return paywallViewController != nil
+  }
 
   /// Indicates whether the user has an active subscription. Performed on the main thread.
   var isUserSubscribed: Bool {
@@ -91,21 +101,52 @@ public final class Paywall: NSObject {
     return isSubscribed
   }
   private static var hasCalledConfig = false
+  var configManager: ConfigManager = .shared
+  var identityManager: IdentityManager = .shared
+
+  // MARK: - Private Functions
+  private override init() {}
+
+  private init(
+    apiKey: String?,
+    delegate: PaywallDelegate? = nil,
+    options: PaywallOptions? = nil
+  ) {
+    super.init()
+    guard let apiKey = apiKey else {
+      return
+    }
+    configManager.setOptions(options)
+    Storage.shared.configure(apiKey: apiKey)
+
+    // Initialise session events manager and app session manager on main thread
+    _ = SessionEventsManager.shared
+    _ = AppSessionManager.shared
+
+    if delegate != nil {
+      Self.delegate = delegate
+    }
+
+    SKPaymentQueue.default().add(self)
+    Storage.shared.recordAppInstall()
+    Task {
+      await configManager.fetchConfiguration()
+      await identityManager.configure()
+    }
+  }
 
   // MARK: - Public Functions
-	/// Configures a shared instance of ``Paywall/Paywall`` for use throughout your app.
+  /// Configures a shared instance of ``Paywall/Paywall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. For a tutorial on the best practices for implementing the delegate, we recommend checking out our <doc:GettingStarted> article.
-	/// - Parameters:
+  /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
-	///   - userId: Your user's unique identifier, as defined by your backend system. If you don't specify a `userId`, we'll create one for you. Calling ``Paywall/Paywall/identify(userId:)`` later on will automatically alias these two for simple reporting.
   ///   - delegate: A class that conforms to ``PaywallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``PaywallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   /// - Returns: The newly configured ``Paywall/Paywall`` instance.
-	@discardableResult
-	@objc public static func configure(
+  @discardableResult
+  @objc public static func configure(
     apiKey: String,
-    userId: String? = nil,
     delegate: PaywallDelegate? = nil,
     options: PaywallOptions? = nil
   ) -> Paywall {
@@ -113,28 +154,18 @@ public final class Paywall: NSObject {
       Logger.debug(
         logLevel: .warn,
         scope: .paywallCore,
-        message: "Paywall.configure called multiple times. Please make sure you only call this once on app launch. Use Paywall.reset() and Paywall.identify(userId:) if you're looking to reset the userId when a user logs out."
+        message: "Paywall.configure called multiple times. Please make sure you only call this once on app launch."
       )
       return shared
     }
     hasCalledConfig = true
-		shared = Paywall(
+    shared = Paywall(
       apiKey: apiKey,
-      userId: userId,
       delegate: delegate,
       options: options
     )
-		return shared
-	}
-
-	/// Links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
-	///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
-  ///  - Returns: The shared Paywall instance.
-	@discardableResult
-	@objc public static func identify(userId: String) -> Paywall {
-    Storage.shared.identify(with: userId)
-		return shared
-	}
+    return shared
+  }
 
   /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard.
   ///
@@ -151,42 +182,13 @@ public final class Paywall: NSObject {
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
   @objc public static func preloadPaywalls(forTriggers triggers: Set<String>) {
-    ConfigManager.shared.preloadPaywalls(forTriggers: triggers)
-  }
-
-	/// Resets the `userId` and data stored by Superwall.
-  ///
-  /// Call this when your user signs out.
-	@discardableResult
-	@objc public static func reset() -> Paywall {
-    if Storage.shared.appUserId == nil {
-      return shared
+    Task {
+      await ConfigManager.shared.preloadPaywalls(forTriggers: triggers)
     }
-    Paywall.presentAgain = {}
-    shared.latestDismissedPaywallInfo = nil
-    Storage.shared.clear()
-    PaywallManager.shared.clearCache()
-    ConfigManager.shared.fetchConfiguration(afterReset: true)
+  }
+}
 
-    return shared
-	}
-
-	/// Forwards Game controller events to the paywall.
-  ///
-  /// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`
-  ///
-  /// See <doc:GameControllerSupport> for more information.
-  ///
-  /// - Parameters:
-  ///   - gamepad: The extended Gamepad controller profile.
-  ///   - element: The game controller element.
-	public static func gamepadValueChanged(
-    gamepad: GCExtendedGamepad,
-    element: GCControllerElement
-  ) {
-		GameControllerManager.shared.gamepadValueChanged(gamepad: gamepad, element: element)
-	}
-
+extension Paywall {
 	// TODO: create debugger manager class
 
 	/// Overrides the default device locale for testing purposes.
@@ -197,130 +199,105 @@ public final class Paywall: NSObject {
 		LocalizationManager.shared.selectedLocale = localeIdentifier
 	}
 
-  // MARK: - Private Functions
-  private override init() {}
-
-	private init(
-    apiKey: String?,
-    userId: String? = nil,
-    delegate: PaywallDelegate? = nil,
-    options: PaywallOptions? = nil
-  ) {
-		super.init()
-		guard let apiKey = apiKey else {
-			return
-		}
-    ConfigManager.shared.setOptions(options)
-    Storage.shared.configure(
-      appUserId: userId,
-      apiKey: apiKey
-    )
-
-    // Initialise session events manager and app session manager on main thread
-    _ = SessionEventsManager.shared
-    _ = AppSessionManager.shared
-
-    if delegate != nil {
-      Self.delegate = delegate
-    }
-
-    SKPaymentQueue.default().add(self)
-    Storage.shared.recordAppInstall()
-    ConfigManager.shared.fetchConfiguration()
-	}
-
   /// Attemps to implicitly trigger a paywall for a given analytical event.
   ///
   ///  - Parameters:
   ///     - event: The data of an analytical event data that could trigger a paywall.
-	func handleImplicitTrigger(forEvent event: EventData) {
-		onMain { [weak self] in
-			guard let self = self else {
-        return
+  @MainActor
+  func handleImplicitTrigger(forEvent event: EventData) async {
+    await IdentityManager.hasIdentity.async()
+
+    let presentationInfo: PresentationInfo = .implicitTrigger(event)
+
+    let outcome = PaywallLogic.canTriggerPaywall(
+      eventName: event.name,
+      triggers: Set(ConfigManager.shared.triggers.keys),
+      isPaywallPresented: isPaywallPresented
+    )
+
+    switch outcome {
+    case .deepLinkTrigger:
+      if isPaywallPresented {
+        await Paywall.dismiss()
       }
-
-      let presentationInfo: PresentationInfo = .implicitTrigger(event)
-
-      if TriggerDelayManager.shared.hasDelay {
-        let trigger = PreConfigTrigger(presentationInfo: presentationInfo)
-        TriggerDelayManager.shared.cachePreConfigTrigger(trigger)
-        return
-      }
-
-      let outcome = PaywallLogic.canTriggerPaywall(
-        eventName: event.name,
-        triggers: Set(ConfigManager.shared.triggers.keys),
-        isPaywallPresented: self.isPaywallPresented
+      let presentationRequest = PaywallPresentationRequest(presentationInfo: presentationInfo)
+      await Paywall.shared.internallyPresent(presentationRequest)
+        .asyncNoValue()
+    case .triggerPaywall:
+      // delay in case they are presenting a view controller alongside an event they are calling
+      let twoHundredMilliseconds = UInt64(200_000_000)
+      try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+      let presentationRequest = PaywallPresentationRequest(presentationInfo: presentationInfo)
+      await Paywall.shared.internallyPresent(presentationRequest)
+        .asyncNoValue()
+    case .disallowedEventAsTrigger:
+      Logger.debug(
+        logLevel: .warn,
+        scope: .paywallCore,
+        message: "Event Used as Trigger",
+        info: ["message": "You can't use events as triggers"],
+        error: nil
       )
-
-      switch outcome {
-      case .deepLinkTrigger:
-        onMain {
-          if Paywall.shared.isPaywallPresented {
-            Paywall.dismiss {
-              Paywall.internallyPresent(presentationInfo)
-            }
-          } else {
-            Paywall.internallyPresent(presentationInfo)
-          }
-        }
-      case .triggerPaywall:
-        // delay in case they are presenting a view controller alongside an event they are calling
-        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
-          Paywall.internallyPresent(presentationInfo)
-        }
-      case .disallowedEventAsTrigger:
-        Logger.debug(
-          logLevel: .warn,
-          scope: .paywallCore,
-          message: "Event Used as Trigger",
-          info: ["message": "You can't use events as triggers"],
-          error: nil
-        )
-      case .dontTriggerPaywall:
-        return
-      }
-		}
+    case .dontTriggerPaywall:
+      return
+    }
 	}
 }
 
 // MARK: - SWPaywallViewControllerDelegate
 extension Paywall: SWPaywallViewControllerDelegate {
-	func eventDidOccur(
+  @MainActor
+  func eventDidOccur(
     paywallViewController: SWPaywallViewController,
     result: PaywallPresentationResult
   ) {
 		// TODO: log this
-		onMain { [weak self] in
-      guard let self = self else {
+    switch result {
+    case .closed:
+      self.dismiss(
+        paywallViewController,
+        state: .closed
+      )
+    case .initiatePurchase(let productId):
+      guard let product = StoreKitManager.shared.productsById[productId] else {
         return
       }
-      switch result {
-      case .closed:
-        self.dismiss(
-          paywallViewController,
-          state: .closed
-        )
-      case .initiatePurchase(let productId):
-				guard let product = StoreKitManager.shared.productsById[productId] else {
-          return
-        }
-				paywallViewController.loadingState = .loadingPurchase
-				Paywall.delegate?.purchase(product: product)
-      case .initiateRestore:
-        self.tryToRestore(
-          paywallViewController,
-          userInitiated: true
-        )
-      case .openedURL(let url):
-				Paywall.delegate?.willOpenURL?(url: url)
-      case .openedUrlInSafari(let url):
-        Paywall.delegate?.willOpenURL?(url: url)
-      case .openedDeepLink(let url):
-				Paywall.delegate?.willOpenDeepLink?(url: url)
-      case .custom(let string):
-				Paywall.delegate?.handleCustomPaywallAction?(withName: string)
-			}
-		}
+      paywallViewController.loadingState = .loadingPurchase
+      Paywall.delegate?.purchase(product: product)
+    case .initiateRestore:
+      self.tryToRestore(
+        paywallViewController,
+        userInitiated: true
+      )
+    case .openedURL(let url):
+      Paywall.delegate?.willOpenURL?(url: url)
+    case .openedUrlInSafari(let url):
+      Paywall.delegate?.willOpenURL?(url: url)
+    case .openedDeepLink(let url):
+      Paywall.delegate?.willOpenDeepLink?(url: url)
+    case .custom(let string):
+      Paywall.delegate?.handleCustomPaywallAction?(withName: string)
+    }
 	}
+
+  // MARK: - Unavailable methods
+  @available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
+  @discardableResult
+  @objc public static func configure(
+    apiKey: String,
+    userId: String?,
+    delegate: PaywallDelegate? = nil,
+    options: PaywallOptions? = nil
+  ) -> Paywall {
+    return shared
+  }
+
+  /// Links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
+  ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
+  ///  - Returns: The shared Paywall instance.
+  @available(*, unavailable, message: "Please use login(userId:) or createAccount(userId:).")
+  @discardableResult
+  @objc public static func identify(userId: String) -> Paywall {
+    return shared
+  }
 }

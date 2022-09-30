@@ -48,7 +48,9 @@ extension Paywall {
     Storage.shared.coreDataManager.saveEventData(eventData)
 
     if event.canImplicitlyTriggerPaywall {
-			shared.handleImplicitTrigger(forEvent: eventData)
+      Task {
+        await shared.handleImplicitTrigger(forEvent: eventData)
+      }
 		}
 
     let result = TrackingResult(

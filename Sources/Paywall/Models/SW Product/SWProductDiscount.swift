@@ -29,7 +29,6 @@ struct SWProductDiscount: Codable {
   var paymentMode: SWProductDiscount.PaymentMode
   var type: SWProductDiscount.DiscountType
 
-  @available(iOS 12.2, *)
   init(discount: SKProductDiscount) {
     price = discount.price as Decimal
     priceLocale = discount.priceLocale.identifier

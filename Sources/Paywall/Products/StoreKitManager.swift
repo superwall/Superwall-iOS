@@ -1,20 +1,28 @@
 import Foundation
 import StoreKit
 
-final class StoreKitManager: NSObject {
+final class StoreKitManager {
 	static let shared = StoreKitManager()
   var productsById: [String: SKProduct] = [:]
 
   private var hasLoadedPurchasedProducts = false
   private let productsManager: ProductsManager
+  private let configManager: ConfigManager
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
     let substituteProductsById: [String: SKProduct]
     let products: [Product]
   }
 
-  init(productsManager: ProductsManager = ProductsManager()) {
+  init(
+    productsManager: ProductsManager = ProductsManager(),
+    configManager: ConfigManager = .shared
+  ) {
     self.productsManager = productsManager
+    self.configManager = configManager
+    Task {
+      await loadPurchasedProducts()
+    }
   }
 
 	func getVariables(
@@ -43,26 +51,38 @@ final class StoreKitManager: NSObject {
 		}
 	}
 
-  func loadPurchasedProducts(completion: @escaping () -> Void) {
-    let purchasedProductIds = InAppReceipt.shared.purchasedProductIds
-    productsManager.products(withIdentifiers: purchasedProductIds) { [weak self] result in
-      switch result {
-      case .success(let productsSet):
-        guard let self = self else {
-          return
-        }
-        for product in productsSet {
-          self.productsById[product.productIdentifier] = product
-        }
-        InAppReceipt.shared.loadSubscriptionGroupIds()
-      case .failure:
-        InAppReceipt.shared.failedToLoadPurchasedProducts()
+  private func loadPurchasedProducts() async {
+    do {
+      await configManager.$config.hasValue()
+      let purchasedProductIds = InAppReceipt.shared.purchasedProductIds
+      let productsSet = try await productsManager.getProducts(withIdentifiers: purchasedProductIds)
+      for product in productsSet {
+        self.productsById[product.productIdentifier] = product
       }
-      completion()
+      InAppReceipt.shared.loadSubscriptionGroupIds()
+    } catch {
+      InAppReceipt.shared.failedToLoadPurchasedProducts()
+    }
+  }
+
+  func getProducts(
+    withIds responseProductIds: [String],
+    responseProducts: [Product] = [],
+    substituting substituteProducts: PaywallProducts? = nil
+  ) async throws -> (productsById: [String: SKProduct], products: [Product]) {
+    return try await withUnsafeThrowingContinuation { continuation in
+      getProducts(
+        withIds: responseProductIds,
+        responseProducts: responseProducts,
+        substituting: substituteProducts
+      ) { response in
+        continuation.resume(with: response)
+      }
     }
   }
 
   /// Gets non-substituted products and returns a
+  #warning("Added async wrapped. Convert to async properly and eventually stop using this.")
 	func getProducts(
     withIds responseProductIds: [String],
     responseProducts: [Product] = [],
@@ -74,6 +94,7 @@ final class StoreKitManager: NSObject {
       fromResponseProductIds: responseProductIds,
       responseProducts: responseProducts
     )
+
 
     productsManager.products(withIdentifiers: processingResult.productIdsToLoad) { [weak self] result in
       switch result {

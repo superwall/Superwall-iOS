@@ -4,7 +4,7 @@
 //
 //  Created by Jake Mor on 11/16/21.
 //
-// swiftlint:disable trailing_closure
+// swiftlint:disable trailing_closure function_body_length
 
 import Foundation
 import StoreKit
@@ -134,44 +134,39 @@ extension Paywall {
     }
 	}
 
+  @MainActor
 	private func transactionErrorDidOccur(
     paywallViewController: SWPaywallViewController,
     error: SKError?,
     for product: SKProduct
   ) {
-		// prevent a recursive loop
-		onMain { [weak self] in
-			guard let self = self else {
-        return
-      }
-			paywallViewController.loadingState = .ready
+    paywallViewController.loadingState = .ready
 
-			if self.didTryToAutoRestore {
-				paywallViewController.loadingState = .ready
+    if didTryToAutoRestore {
+      paywallViewController.loadingState = .ready
 
-        let paywallInfo = paywallViewController.paywallInfo
-        let trackedEvent = InternalSuperwallEvent.Transaction(
-          state: .fail(message: error?.localizedDescription ?? ""),
-          paywallInfo: paywallInfo,
-          product: product
-        )
-        Paywall.track(trackedEvent)
+      let paywallInfo = paywallViewController.paywallInfo
+      let trackedEvent = InternalSuperwallEvent.Transaction(
+        state: .fail(message: error?.localizedDescription ?? ""),
+        paywallInfo: paywallInfo,
+        product: product
+      )
+      Paywall.track(trackedEvent)
 
-        SessionEventsManager.shared.triggerSession.trackTransactionError()
+      SessionEventsManager.shared.triggerSession.trackTransactionError()
 
-				self.paywallViewController?.presentAlert(
-          title: "Please try again",
-          message: error?.localizedDescription ?? "",
-          actionTitle: "Restore Purchase",
-          onCancel: {
-            Paywall.shared.tryToRestore(paywallViewController)
-          }
-        )
-      } else {
-        Paywall.shared.tryToRestore(paywallViewController)
-        self.didTryToAutoRestore = true
-      }
-		}
+      self.paywallViewController?.presentAlert(
+        title: "Please try again",
+        message: error?.localizedDescription ?? "",
+        actionTitle: "Restore Purchase",
+        onCancel: {
+          Paywall.shared.tryToRestore(paywallViewController)
+        }
+      )
+    } else {
+      Paywall.shared.tryToRestore(paywallViewController)
+      didTryToAutoRestore = true
+    }
 	}
 
 	private func transactionWasAbandoned(
@@ -251,7 +246,7 @@ extension Paywall: SKPaymentTransactionObserver {
     )
 	}
 
-  // swiftlint:disable:next function_body_length
+  @MainActor
 	public func paymentQueue(
     _ queue: SKPaymentQueue,
     updatedTransactions transactions: [SKPaymentTransaction]
@@ -288,10 +283,7 @@ extension Paywall: SKPaymentTransactionObserver {
         )
 			case .failed:
 				if let error = transaction.error as? SKError {
-					var userCancelled = error.code == .paymentCancelled
-					if #available(iOS 12.2, *) {
-						userCancelled = error.code == .overlayCancelled || error.code == .paymentCancelled
-					}
+					var userCancelled = error.code == .overlayCancelled || error.code == .paymentCancelled
 
 					if #available(iOS 14.0, *) {
             userCancelled = error.code == .overlayCancelled

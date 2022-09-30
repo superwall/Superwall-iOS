@@ -7,214 +7,183 @@
 
 import Foundation
 import UIKit
+import Combine
 
 class Network {
   static let shared = Network()
   private let urlSession: CustomURLSession
+  private var applicationStatePublisher: AnyPublisher<UIApplication.State, Never> {
+    UIApplication.shared.publisher(for: \.applicationState)
+      .eraseToAnyPublisher()
+  }
 
   /// Only use init when testing, for all other times use `Network.shared`.
   init(urlSession: CustomURLSession = CustomURLSession()) {
     self.urlSession = urlSession
   }
 
-  func sendEvents(events: EventsRequest) {
-    urlSession.request(.events(eventsRequest: events)) { result in
-      switch result {
-      case .success(let response):
-        switch response.status {
-        case .ok:
-          break
-        case .partialSuccess:
-          Logger.debug(
-            logLevel: .warn,
-            scope: .network,
-            message: "Request had partial success: /events",
-            info: ["payload": response.invalidIndexes as Any]
-          )
-        }
-      case .failure(let error):
+  func sendEvents(events: EventsRequest) async {
+    do {
+      let result = try await urlSession.request(.events(eventsRequest: events))
+      switch result.status {
+      case .ok:
+        break
+      case .partialSuccess:
         Logger.debug(
-          logLevel: .error,
+          logLevel: .warn,
           scope: .network,
-          message: "Request Failed: /events",
-          info: ["payload": events],
-          error: error
+          message: "Request had partial success: /events",
+          info: ["payload": result.invalidIndexes as Any]
         )
       }
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /events",
+        info: ["payload": events],
+        error: error
+      )
     }
   }
 
   func getPaywallResponse(
     withPaywallId identifier: String? = nil,
-    fromEvent event: EventData? = nil,
-    completion: @escaping (Result<PaywallResponse, Error>) -> Void
-  ) {
-    urlSession.request(
-      .paywall(
-        withIdentifier: identifier,
-        fromEvent: event
+    fromEvent event: EventData? = nil
+  ) async throws -> PaywallResponse {
+    do {
+      return try await urlSession.request(.paywall(withIdentifier: identifier, fromEvent: event))
+    } catch {
+      if identifier == nil {
+        Logger.debug(
+          logLevel: .error,
+          scope: .network,
+          message: "Request Failed: /paywall",
+          info: [
+            "identifier": identifier ?? "none",
+            "event": event.debugDescription
+          ],
+          error: error
+        )
+      } else {
+        Logger.debug(
+          logLevel: .error,
+          scope: .network,
+          message: "Request Failed: /paywall/:identifier",
+          error: error
+        )
+      }
+      throw error
+    }
+  }
+
+  func getPaywalls() async throws -> PaywallsResponse {
+    do {
+      return try await urlSession.request(.paywalls(), isForDebugging: true)
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /paywalls",
+        error: error
       )
-    ) { result in
-      switch result {
-      case .success(let response):
-        completion(.success(response))
-      case .failure(let error):
-        if identifier == nil {
-          Logger.debug(
-            logLevel: .error,
-            scope: .network,
-            message: "Request Failed: /paywall",
-            info: [
-              "identifier": identifier ?? "none",
-              "event": event.debugDescription
-            ],
-            error: error
-          )
-        } else {
-          Logger.debug(
-            logLevel: .error,
-            scope: .network,
-            message: "Request Failed: /paywall/:identifier",
-            error: error
-          )
-        }
-        completion(.failure(error))
-      }
+      throw error
     }
   }
 
-  func getPaywalls(completion: @escaping (Result<PaywallsResponse, Error>) -> Void) {
-    urlSession.request(
-      .paywalls(),
-      isForDebugging: true
-    ) { result in
-      switch result {
-      case .success(let response):
-        completion(.success(response))
-      case .failure(let error):
-        Logger.debug(
-          logLevel: .error,
-          scope: .network,
-          message: "Request Failed: /paywalls",
-          error: error
-        )
-        completion(.failure(error))
-      }
+    func getConfig(
+      withRequestId requestId: String,
+      configManager: ConfigManager = .shared,
+      injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
+    ) async throws -> Config {
+    // Suspend until app is in foreground.
+      let applicationStatePublisher = injectedApplicationStatePublisher ?? self.applicationStatePublisher
+
+      await applicationStatePublisher
+        .subscribe(on: RunLoop.main)
+        .filter { $0 != .background }
+        .eraseToAnyPublisher()
+        .async()
+
+    do {
+      let config = try await urlSession.request(.config(requestId: requestId))
+      return config
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /static_config",
+        error: error
+      )
+      throw error
     }
   }
 
-  func getConfig(
-    withRequestId requestId: String,
-    completion: @escaping (Result<Config, Error>) -> Void,
-    applicationState: UIApplication.State? = nil,
-    configManager: ConfigManager = .shared
-  ) {
-    onMain { [weak self] in
-      let applicationState = applicationState ?? UIApplication.shared.applicationState
-      if applicationState == .background {
-        let configRequest = ConfigRequest(
-          id: requestId,
-          completion: completion
-        )
-        configManager.configRequest = configRequest
-        return
-      }
-
-      self?.urlSession.request(.config(requestId: requestId)) { result in
-        onMain {
-          switch result {
-          case .success(let response):
-            completion(.success(response))
-          case .failure(let error):
-            Logger.debug(
-              logLevel: .error,
-              scope: .network,
-              message: "Request Failed: /static_config",
-              error: error
-            )
-            completion(.failure(error))
-          }
-        }
-      }
+  func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) async {
+    do {
+      try await urlSession.request(.confirmAssignments(confirmableAssignments))
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /confirm_assignments",
+        info: ["assignments": confirmableAssignments],
+        error: error
+      )
     }
   }
 
-  func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) {
-    urlSession.request(.confirmAssignments(confirmableAssignments)) { result in
-      switch result {
-      case .success:
+  func getAssignments() async throws -> [Assignment] {
+    do {
+      let result = try await urlSession.request(.assignments)
+      return result.assignments
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /assignments",
+        error: error
+      )
+      throw error
+    }
+  }
+
+  func sendSessionEvents(_ session: SessionEventsRequest) async {
+    do {
+      let result = try await urlSession.request(.sessionEvents(session))
+      switch result.status {
+      case .ok:
         break
-        // let assignments = response.assignments
-        // TODO: Should we save these?
-      case .failure(let error):
+      case .partialSuccess:
         Logger.debug(
-          logLevel: .error,
+          logLevel: .warn,
           scope: .network,
-          message: "Request Failed: /confirm_assignments",
-          info: ["assignments": confirmableAssignments],
-          error: error
+          message: "Request had partial success: /session_events",
+          info: ["payload": result.invalidIndexes as Any]
         )
       }
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /session_events",
+        info: ["payload": session],
+        error: error
+      )
     }
   }
 
-  func getAssignments(completion: @escaping (Result<[Assignment], Error>) -> Void) {
-    urlSession.request(.assignments) { result in
-      switch result {
-      case .success(let response):
-        completion(.success(response.assignments))
-      case .failure(let error):
-        Logger.debug(
-          logLevel: .error,
-          scope: .network,
-          message: "Request Failed: /assignments",
-          error: error
-        )
-      }
-    }
-  }
-
-  func sendSessionEvents(_ session: SessionEventsRequest) {
-    urlSession.request(.sessionEvents(session)) { result in
-      switch result {
-      case .success(let response):
-        switch response.status {
-        case .ok:
-          break
-        case .partialSuccess:
-          Logger.debug(
-            logLevel: .warn,
-            scope: .network,
-            message: "Request had partial success: /session_events",
-            info: ["payload": response.invalidIndexes as Any]
-          )
-        }
-      case .failure(let error):
-        Logger.debug(
-          logLevel: .error,
-          scope: .network,
-          message: "Request Failed: /session_events",
-          info: ["payload": session],
-          error: error
-        )
-      }
-    }
-  }
-
-  func sendPostback(_ postback: Postback) {
-    urlSession.request(.postback(postback)) { result in
-      switch result {
-      case .success:
-        break
-      case .failure(let error):
-        Logger.debug(
-          logLevel: .error,
-          scope: .network,
-          message: "Request Failed: /postback",
-          info: ["payload": postback],
-          error: error
-        )
-      }
+  func sendPostback(_ postback: Postback) async {
+    do {
+      try await urlSession.request(.assignments)
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /postback",
+        info: ["payload": postback],
+        error: error
+      )
     }
   }
 }

@@ -77,7 +77,7 @@ enum ExpressionEvaluator {
     storage: Storage
   ) -> String? {
     let values = JSON([
-      "user": Storage.shared.userAttributes,
+      "user": IdentityManager.shared.userAttributes,
       "device": DeviceHelper.shared.templateDevice.toDictionary(),
       "params": eventData.parameters
     ])

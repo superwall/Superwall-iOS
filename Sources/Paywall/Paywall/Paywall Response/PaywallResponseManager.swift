@@ -6,268 +6,53 @@
 //
 
 import Foundation
-import StoreKit
+import Combine
 
-typealias PaywallResponseCompletionBlock = (Result<PaywallResponse, NSError>) -> Void
+actor PaywallResponseManager {
+  static let shared = PaywallResponseManager()
+  private var activeTasks: [String: Task<PaywallResponse, Error>] = [:]
+  private var paywallResponsesByHash: [String: PaywallResponse] = [:]
 
-final class PaywallResponseManager: NSObject {
-	static let shared = PaywallResponseManager()
-
-  private let queue = DispatchQueue(label: "PaywallRequests")
-	private var cachedResponsesByIdentifier: [String: PaywallResponse] = [:]
-	private var responsesByHash: [String: Result<PaywallResponse, NSError>] = [:]
-	private var handlersByHash: [String: [PaywallResponseCompletionBlock]] = [:]
-
-	func getResponse(
-    from eventData: EventData? = nil,
-    withIdentifiers responseIdentifiers: ResponseIdentifiers,
-    substituteProducts: PaywallProducts? = nil,
-    completion: @escaping PaywallResponseCompletionBlock
-  ) {
+  func getResponse(from request: PaywallRequest) async throws -> PaywallResponse {
     let paywallRequestHash = PaywallResponseLogic.requestHash(
-      identifier: responseIdentifiers.paywallId,
-      event: eventData
+      identifier: request.responseIdentifiers.paywallId,
+      event: request.eventData
     )
 
-    let paywallResponseCachingOutcome = PaywallResponseLogic.searchForPaywallResponse(
-      forEvent: eventData,
-      withHash: paywallRequestHash,
-      identifiers: responseIdentifiers,
-      hasSubstituteProducts: substituteProducts != nil,
-      inResultsCache: responsesByHash,
-      handlersCache: handlersByHash,
-      isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched
-    )
+    let notSubstitutingProducts = request.substituteProducts == nil
+    let debuggerNotLaunched = await !SWDebugManager.shared.isDebuggerLaunched
+    let shouldUseCache = notSubstitutingProducts && debuggerNotLaunched
 
-    switch paywallResponseCachingOutcome {
-    case .cachedResult(let result):
-      onMain {
-        completion(result)
+    if let existingTask = activeTasks[paywallRequestHash] {
+      return try await existingTask.value
+    }
+
+    let task = Task<PaywallResponse, Error> {
+      if var response = paywallResponsesByHash[paywallRequestHash],
+        shouldUseCache {
+        response.experiment = request.responseIdentifiers.experiment
+        activeTasks[paywallRequestHash] = nil
+        return response
       }
-      return
-    case let .enqueCompletionBlock(hash, completionBlocks):
-      handlersByHash[hash] = completionBlocks + [completion]
-      return
-    case .setCompletionBlock(let hash):
-      handlersByHash[hash] = [completion]
-    }
 
-    loadPaywall(
-      forEvent: eventData,
-      withHash: paywallRequestHash,
-      responseIdentifiers: responseIdentifiers,
-      substituteProducts: substituteProducts
-    )
-	}
+      do {
+        let response = try await request.publisher
+          .getRawResponse()
+          .addProducts()
+          .map { $0.response }
+          .throwableAsync()
 
-  private func getCachedResponseOrLoad(
-    paywallId: String?,
-    fromEvent event: EventData?,
-    completion: @escaping (Result<PaywallResponse, Error>) -> Void
-  ) {
-    if let paywallResponse = ConfigManager.shared.getStaticPaywallResponse(
-      forPaywallId: paywallId
-    ) {
-      completion(.success(paywallResponse))
-    } else {
-      Network.shared.getPaywallResponse(
-        withPaywallId: paywallId,
-        fromEvent: event
-      ) { result in
-        self.queue.async {
-          completion(result)
-        }
-      }
-    }
-  }
-
-  private func loadPaywall(
-    forEvent event: EventData?,
-    withHash paywallRequestHash: String,
-    responseIdentifiers: ResponseIdentifiers,
-    substituteProducts: PaywallProducts?
-  ) {
-    queue.async { [weak self] in
-      guard let self = self else {
-        return
-      }
-      let responseLoadStartTime = Date()
-
-      SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
-        forPaywallId: responseIdentifiers.paywallId,
-        state: .start
-      )
-
-      let trackedEvent = InternalSuperwallEvent.PaywallResponseLoad(
-        state: .start,
-        eventData: event
-      )
-      Paywall.track(trackedEvent)
-
-      self.getCachedResponseOrLoad(
-        paywallId: responseIdentifiers.paywallId,
-        fromEvent: event
-      ) { result in
-        switch result {
-        case .success(var response):
-          response.experiment = responseIdentifiers.experiment
-          response.responseLoadStartTime = responseLoadStartTime
-          response.responseLoadCompleteTime = Date()
-
-          let paywallInfo = response.getPaywallInfo(fromEvent: event)
-
-          let responseLoadEvent = InternalSuperwallEvent.PaywallResponseLoad(
-            state: .complete(paywallInfo: paywallInfo),
-            eventData: event
-          )
-          Paywall.track(responseLoadEvent)
-
-          SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
-            forPaywallId: paywallInfo.id,
-            state: .end
-          )
-
-          self.getProducts(
-            from: response,
-            substituteProducts: substituteProducts,
-            withHash: paywallRequestHash,
-            paywallInfo: paywallInfo,
-            event: event
-          )
-        case .failure(let error):
-          SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
-            forPaywallId: responseIdentifiers.paywallId,
-            state: .fail
-          )
-          guard let errorResponse = PaywallResponseLogic.handlePaywallError(
-            error,
-            forEvent: event,
-            withHash: paywallRequestHash,
-            handlersCache: self.handlersByHash
-          ) else {
-            return
-          }
-
-          onMain {
-            for handler in errorResponse.handlers {
-              handler(.failure(errorResponse.error))
-            }
-          }
-
-          // reset the handler cache
-          self.handlersByHash.removeValue(forKey: paywallRequestHash)
-        }
-      }
-    }
-  }
-
-  private func getProducts(
-    from response: PaywallResponse,
-    substituteProducts: PaywallProducts?,
-    withHash paywallRequestHash: String,
-    paywallInfo: PaywallInfo,
-    event: EventData?
-  ) {
-    var response = response
-    response.productsLoadStartTime = Date()
-
-    let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
-      state: .start,
-      paywallInfo: paywallInfo,
-      eventData: event
-    )
-    Paywall.track(productLoadEvent)
-
-    SessionEventsManager.shared.triggerSession.trackProductsLoad(
-      forPaywallId: paywallInfo.id,
-      state: .start
-    )
-
-    StoreKitManager.shared.getProducts(
-      withIds: response.productIds,
-      responseProducts: response.products,
-      substituting: substituteProducts
-    ) { [weak self] result in
-      switch result {
-      case .success(let output):
-        self?.alterResponse(
-          response,
-          withAppleProductsById: output.productsById,
-          products: output.products,
-          isNotSubstitutingProducts: substituteProducts == nil,
-          requestHash: paywallRequestHash,
-          paywallInfo: paywallInfo,
-          event: event
-        )
-      case .failure:
-        response.productsLoadFailTime = Date()
-        let paywallInfo = response.getPaywallInfo(fromEvent: event)
-        let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
-          state: .fail,
-          paywallInfo: paywallInfo,
-          eventData: event
-        )
-        Paywall.track(productLoadEvent)
-
-        SessionEventsManager.shared.triggerSession.trackProductsLoad(
-          forPaywallId: paywallInfo.id,
-          state: .fail
-        )
-      }
-    }
-  }
-
-  private func alterResponse(
-    _ response: PaywallResponse,
-    withAppleProductsById productsById: [String: SKProduct],
-    products: [Product],
-    isNotSubstitutingProducts: Bool,
-    requestHash paywallRequestHash: String,
-    paywallInfo: PaywallInfo,
-    event: EventData?
-  ) {
-    let outcome = PaywallResponseLogic.alterResponse(
-      response,
-      products: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: Paywall.isFreeTrialAvailableOverride
-    )
-
-    var response = outcome.response
-
-    if outcome.resetFreeTrialOverride {
-      Paywall.isFreeTrialAvailableOverride = nil
-    }
-
-      // cache the response for later if we haven't substituted products.
-    if isNotSubstitutingProducts {
-      self.responsesByHash[paywallRequestHash] = .success(response)
-    }
-
-    // execute all the cached handlers
-    if let handlers = self.handlersByHash[paywallRequestHash] {
-      onMain {
-        for handler in handlers {
-          handler(.success(response))
-        }
+        paywallResponsesByHash[paywallRequestHash] = response
+        activeTasks[paywallRequestHash] = nil
+        return response
+      } catch {
+        activeTasks[paywallRequestHash] = nil
+        throw error
       }
     }
 
-    // reset the handler cache
-    self.handlersByHash.removeValue(forKey: paywallRequestHash)
+    activeTasks[paywallRequestHash] = task
 
-    response.productsLoadCompleteTime = Date()
-
-    let paywallInfo = response.getPaywallInfo(fromEvent: event)
-    SessionEventsManager.shared.triggerSession.trackProductsLoad(
-      forPaywallId: paywallInfo.id,
-      state: .end
-    )
-    let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
-      state: .complete,
-      paywallInfo: paywallInfo,
-      eventData: event
-    )
-    Paywall.track(productLoadEvent)
+    return try await task.value
   }
 }

@@ -16,11 +16,27 @@ final class PaywallService {
   static var name: String {
     return Paywall.userAttributes["firstName"] as? String ?? ""
   }
-  static func initPaywall() {
+  static func initPaywall() async {
     Paywall.configure(
       apiKey: apiKey,
       delegate: shared
     )
+  }
+
+  static func logIn() async {
+    do {
+      try await Paywall.logIn(userId: "abc")
+    } catch {
+      print("An error occurred logging in", error)
+    }
+  }
+
+  static func logOut() async {
+    do {
+      try await Paywall.logOut()
+    } catch {
+      print("An error occurred logging out", error)
+    }
   }
 
   static func handleDeepLink(_ url: URL) {
@@ -96,8 +112,6 @@ extension PaywallService: PaywallDelegate {
     case .freeTrialStart:
       <#code#>
     case .transactionRestore:
-      <#code#>
-    case .manualPresent:
       <#code#>
     case .userAttributes:
       <#code#>

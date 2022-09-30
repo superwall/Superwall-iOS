@@ -4,9 +4,12 @@
 //
 //  Created by Jake Mor on 8/26/21.
 //
+// swiftlint:disable:all force_unwrapping
+
 import UIKit
 import Foundation
 import StoreKit
+import Combine
 
 var primaryColor = UIColor(hexString: "#75FFF1")
 var primaryButtonBackgroundColor = UIColor(hexString: "#203133")
@@ -16,14 +19,14 @@ var darkBackgroundColor = UIColor(hexString: "#0D0F12")
 
 struct AlertOption {
   var title: String? = ""
-  var action: (() -> Void)?
+  var action: (@MainActor () -> Void)?
   var style: UIAlertAction.Style = .default
 }
 
-// swiftlint:disable:next type_body_length
+// swiftlint:disable:all type_body_length
+@MainActor
 final class SWDebugViewController: UIViewController {
   var logoImageView: UIImageView = {
-    // swiftlint:disable:next force_unwrapping
     let superwallLogo = UIImage(named: "superwall_logo", in: Bundle.module, compatibleWith: nil)!
     let imageView = UIImageView(image: superwallLogo)
     imageView.contentMode = .scaleAspectFit
@@ -36,7 +39,6 @@ final class SWDebugViewController: UIViewController {
 
   lazy var exitButton: SWBounceButton = {
     let button = SWBounceButton()
-    // swiftlint:disable:next force_unwrapping
     let image = UIImage(named: "exit", in: Bundle.module, compatibleWith: nil)!
     button.setImage(image, for: .normal)
     button.translatesAutoresizingMaskIntoConstraints = false
@@ -47,7 +49,6 @@ final class SWDebugViewController: UIViewController {
 
   lazy var consoleButton: SWBounceButton = {
     let button = SWBounceButton()
-    // swiftlint:disable:next force_unwrapping
     let image = UIImage(named: "debugger", in: Bundle.module, compatibleWith: nil)!
     button.setImage(image, for: .normal)
     button.translatesAutoresizingMaskIntoConstraints = false
@@ -63,15 +64,13 @@ final class SWDebugViewController: UIViewController {
     button.backgroundColor = primaryButtonBackgroundColor
     button.setTitleColor(primaryColor, for: .normal)
     button.translatesAutoresizingMaskIntoConstraints = false
-    // swiftlint:disable:next force_unwrapping
+
     let image = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
     button.titleEdgeInsets = UIEdgeInsets(top: -1, left: 0, bottom: 0, right: 0)
     // button.imageEdgeInsets = UIEdgeInsets(top: 1, left: 5, bottom: -1, right: -3)
     button.setImage(image, for: .normal)
     button.imageView?.tintColor = primaryColor
-    if #available(iOS 13.0, *) {
-      button.layer.cornerCurve = .continuous
-    }
+    button.layer.cornerCurve = .continuous
     button.layer.cornerRadius = 64.0 / 3
     button.addTarget(self, action: #selector(pressedBottomButton), for: .primaryActionTriggered)
     return button
@@ -87,7 +86,7 @@ final class SWDebugViewController: UIViewController {
     button.translatesAutoresizingMaskIntoConstraints = false
     button.imageView?.tintColor = primaryColor
     button.layer.cornerRadius = 10
-    // swiftlint:disable:next force_unwrapping
+
     let image = UIImage(named: "down_arrow", in: Bundle.module, compatibleWith: nil)!
     button.semanticContentAttribute = .forceRightToLeft
     button.setImage(image, for: .normal)
@@ -119,12 +118,11 @@ final class SWDebugViewController: UIViewController {
   var paywallResponse: PaywallResponse?
   var paywallResponses: [PaywallResponse] = []
   var previewViewContent: UIView?
+  private var cancellable: AnyCancellable?
 
   init() {
     super.init(nibName: nil, bundle: nil)
-    if #available(iOS 13.0, *) {
-      overrideUserInterfaceStyle = .dark
-    }
+    overrideUserInterfaceStyle = .dark
   }
 
   required init?(coder: NSCoder) {
@@ -135,7 +133,7 @@ final class SWDebugViewController: UIViewController {
     super.viewDidLoad()
 
     addSubviews()
-    loadPreview()
+    Task { await loadPreview() }
   }
 
   private func addSubviews() {
@@ -181,31 +179,29 @@ final class SWDebugViewController: UIViewController {
     ])
   }
 
-  func loadPreview() {
+  func loadPreview() async {
     activityIndicator.startAnimating()
     previewViewContent?.removeFromSuperview()
 
     if paywallResponses.isEmpty {
-      Network.shared.getPaywalls { [weak self] result in
-        switch result {
-        case .success(let response):
-          self?.paywallResponses = response.paywalls
-          self?.finishLoadingPreview()
-        case .failure(let error):
-          Logger.debug(
-            logLevel: .error,
-            scope: .debugViewController,
-            message: "Failed to Fetch Paywalls",
-            error: error
-          )
-        }
+      do {
+        let response = try await Network.shared.getPaywalls()
+        paywallResponses = response.paywalls
+        await finishLoadingPreview()
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .debugViewController,
+          message: "Failed to Fetch Paywalls",
+          error: error
+        )
       }
     } else {
-      finishLoadingPreview()
+      await finishLoadingPreview()
     }
   }
 
-	func finishLoadingPreview() {
+	func finishLoadingPreview() async {
 		var paywallId: String?
 
 		if let paywallIdentifier = paywallIdentifier {
@@ -220,36 +216,27 @@ final class SWDebugViewController: UIViewController {
       return
     }
 
-    PaywallResponseManager.shared.getResponse(
-      withIdentifiers: .init(paywallId: paywallId)
-    ) { [weak self] result in
-      guard let self = self else {
-        return
-      }
-      switch result {
-      case .success(let response):
-        self.paywallResponse = response
+    do {
+      let request = PaywallRequest(responseIdentifiers: .init(paywallId: paywallId))
+      let response = try await PaywallResponseManager.shared.getResponse(from: request)
+      self.paywallResponse = response
+      self.previewPickerButton.setTitle("\(response.name ?? "Preview")", for: .normal)
 
+      StoreKitManager.shared.getVariables(forResponse: response) { variables in
+        self.paywallResponse?.variables = variables
         onMain {
-          self.previewPickerButton.setTitle("\(response.name ?? "Preview")", for: .normal)
+          self.activityIndicator.stopAnimating()
+          self.addPaywallPreview()
         }
-
-        StoreKitManager.shared.getVariables(forResponse: response) { variables in
-          self.paywallResponse?.variables = variables
-          onMain {
-            self.activityIndicator.stopAnimating()
-            self.addPaywallPreview()
-          }
-        }
-      case .failure(let error):
-        Logger.debug(
-          logLevel: .error,
-          scope: .debugViewController,
-          message: "No Paywall Response",
-          info: nil,
-          error: error
-        )
       }
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .debugViewController,
+        message: "No Paywall Response",
+        info: nil,
+        error: error
+      )
     }
 	}
 
@@ -286,10 +273,7 @@ final class SWDebugViewController: UIViewController {
       x: ratio,
       y: ratio
     )
-
-    if #available(iOS 13.0, *) {
-      child.view.layer.cornerCurve = .continuous
-    }
+    child.view.layer.cornerCurve = .continuous
 
     UIView.animate(
       withDuration: 0.25,
@@ -314,7 +298,7 @@ final class SWDebugViewController: UIViewController {
         action: { [weak self] in
           self?.paywallDatabaseId = response.id
           self?.paywallIdentifier = response.identifier
-          self?.loadPreview()
+          Task { await self?.loadPreview() }
         },
         style: .default
       )
@@ -325,7 +309,9 @@ final class SWDebugViewController: UIViewController {
   }
 
   @objc func pressedExitButton() {
-    SWDebugManager.shared.closeDebugger()
+    Task {
+      await SWDebugManager.shared.closeDebugger(animated: false)
+    }
   }
 
   @objc func pressedConsoleButton() {
@@ -338,7 +324,7 @@ final class SWDebugViewController: UIViewController {
 	func showLocalizationPicker() {
 		let viewController = SWLocalizationViewController { [weak self] locale in
 			LocalizationManager.shared.selectedLocale = locale
-			self?.loadPreview()
+      Task { await self?.loadPreview() }
 		}
 
 		let navController = UINavigationController(rootViewController: viewController)
@@ -412,52 +398,51 @@ final class SWDebugViewController: UIViewController {
     bottomButton.setImage(nil, for: .normal)
     bottomButton.showLoading = true
 
-    Paywall.internallyPresent(
-      .fromIdentifier(paywallIdentifier),
-      on: self
-    ) { [weak self] state in
-      guard let self = self else {
-        return
-      }
-      switch state {
-      case .presented:
-        self.bottomButton.showLoading = false
+    let presentationRequest = PaywallPresentationRequest(
+      presentationInfo: .fromIdentifier(paywallIdentifier),
+      presentingViewController: self
+    )
 
-        // swiftlint:disable:next force_unwrapping
-        let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
-        self.bottomButton.setImage(
-          playButton,
-          for: .normal
-        )
-      case .skipped(let reason):
-        var errorMessage: String?
+    cancellable = Paywall.shared.internallyPresent(presentationRequest)
+      .sink { state in
+        switch state {
+        case .presented:
+          self.bottomButton.showLoading = false
 
-        switch reason {
-        case .holdout:
-          errorMessage = "The user was assigned to a holdout"
-        case .noRuleMatch:
-          errorMessage = "The user didn't match a rule"
-        case .triggerNotFound:
-          errorMessage = "Couldn't find trigger"
-        case .error(let error):
-          errorMessage = error.localizedDescription
-          Logger.debug(
-            logLevel: .error,
-            scope: .debugViewController,
-            message: "Failed to Show Paywall",
-            info: nil
+          let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
+          self.bottomButton.setImage(
+            playButton,
+            for: .normal
           )
+        case .skipped(let reason):
+          var errorMessage: String?
+
+          switch reason {
+          case .holdout:
+            errorMessage = "The user was assigned to a holdout"
+          case .noRuleMatch:
+            errorMessage = "The user didn't match a rule"
+          case .triggerNotFound:
+            errorMessage = "Couldn't find trigger"
+          case .error(let error):
+            errorMessage = error.localizedDescription
+            Logger.debug(
+              logLevel: .error,
+              scope: .debugViewController,
+              message: "Failed to Show Paywall",
+              info: nil
+            )
+          }
+          self.presentAlert(title: "Paywall Skipped", message: errorMessage, options: [])
+          self.bottomButton.showLoading = false
+
+          let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
+          self.bottomButton.setImage(playButton, for: .normal)
+          self.activityIndicator.stopAnimating()
+        case .dismissed:
+          break
         }
-        self.presentAlert(title: "Paywall Skipped", message: errorMessage, options: [])
-        self.bottomButton.showLoading = false
-        // swiftlint:disable:next force_unwrapping
-        let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
-        self.bottomButton.setImage(playButton, for: .normal)
-        self.activityIndicator.stopAnimating()
-      case .dismissed:
-        break
       }
-    }
   }
 
   var oldTintColor: UIColor? = UIColor.systemBlue
@@ -471,7 +456,7 @@ final class SWDebugViewController: UIViewController {
 
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
-    PaywallManager.shared.clearCache() // TODO: test if we need this
+    PaywallManager.shared.clearCache()
     UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = oldTintColor
     SWDebugManager.shared.isDebuggerLaunched = false
     LocalizationManager.shared.selectedLocale = nil
@@ -481,12 +466,8 @@ final class SWDebugViewController: UIViewController {
 extension SWDebugViewController {
   func presentAlert(title: String?, message: String?, options: [AlertOption]) {
     let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
-    if #available(iOS 13.0, *) {
-      alertController.overrideUserInterfaceStyle = .dark
-      alertController.view.tintColor = primaryColor
-    } else {
-      alertController.view.tintColor = darkBackgroundColor
-    }
+    alertController.overrideUserInterfaceStyle = .dark
+    alertController.view.tintColor = primaryColor
 
     for option in options {
       let action = UIAlertAction(

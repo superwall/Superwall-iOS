@@ -26,6 +26,14 @@ class ProductsManager: NSObject {
 		self.productsRequestFactory = productsRequestFactory
 	}
 
+  func getProducts(withIdentifiers identifiers: Set<String>) async throws -> Set<SKProduct> {
+    return try await withCheckedThrowingContinuation { continuation in
+      self.products(withIdentifiers: identifiers) { result in
+        continuation.resume(with: result)
+      }
+    }
+  }
+
 	func products(
     withIdentifiers identifiers: Set<String>,
     completion: @escaping ProductRequestCompletionBlock

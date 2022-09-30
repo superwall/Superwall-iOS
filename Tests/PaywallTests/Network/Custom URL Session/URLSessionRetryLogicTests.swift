@@ -11,12 +11,20 @@ import XCTest
 
 final class URLSessionRetryLogicTests: XCTestCase {
   func test_delay_lastAttempt() {
-    let delay = URLSessionRetryLogic.delay(forAttempt: 6)!
-    XCTAssertEqual(Int(delay/1000), 25)
+    let delay = TaskRetryLogic.delay(
+      forAttempt: 6,
+      maxRetries: 6
+    )!
+    let twentySixSeconds = UInt64(26_000_000_000)
+
+    XCTAssertLessThanOrEqual(UInt64(delay/1000), twentySixSeconds)
   }
   
   func test_delay_tooManyAttempts() {
-    let delay = URLSessionRetryLogic.delay(forAttempt: 7)
+    let delay = TaskRetryLogic.delay(
+      forAttempt: 7,
+      maxRetries: 6
+    )
     XCTAssertNil(delay)
   }
 }

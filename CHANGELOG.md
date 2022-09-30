@@ -6,33 +6,50 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ### Breaking Changes
 
-- Renamed `Paywall.trigger` to `Paywall.track`. We found that having separate implicit (`Paywall.track(...)`) and explicit (`Paywall.trigger(...)`) trigger functions caused confusion. So from now on, you'll just use `Superwall.track` for all events within your app.
-- Removes `Paywall.load(identifier:)`. This was being used to preload a paywall by identifier.
+- Sets the minimum iOS version to iOS 13.
+- Renames `configure(apiKey:userId:delegate:options:)` to `configure(apiKey:delegate:options:)`. This means you no longer provide a `userId` with configure. Instead you must use the new identity API detailed below.
+- Renames `Superwall.trigger(event:)` to `Superwall.track(event:)`. We found that having separate implicit (`Superwall.track(event:)`) and explicit (`Superwall.trigger(event:)`) trigger functions caused confusion. So from now on, you'll just use `Superwall.track(event:)` for all events within your app.
 - Renames `Paywall.EventName` to `SuperwallEvent` and removes `.manualPresent` as a `SuperwallEvent`.
+
+- Removes `identify(userId:)` in favor of the new Identity API detailed below.
+- Removes `Paywall.load(identifier:)`. This was being used to preload a paywall by identifier.
+- Removes `.triggerPaywall()` for SwiftUI apps. Instead, SwiftUI users should now use the UIKit function `Superwall.track()`. Take a look at our SwiftUI example app to see how that works.
 
 ### Enhancements
 
-- New function `Superwall.track(event:params:overrides)` which returns an `AnyPublisher<PaywallState, Never>` for those Combine lovers. We've updated our sample apps to show you how to use that.
+- New identity API:
+  - `logIn(userId:)`: Logs in a user with their `userId` to retrieve paywalls that they've been assigned to.
+  - `createAccount(userId:)`: Creates an account with Superwall. This links a `userId` to Superwall's automatically generated alias.
+  - `logOut(userId:)`: Logs out the user, which resets on-device paywall assignments and the `userId` stored by Superwall.
+  - `reset()`: Resets the `userId`, on-device paywall assignments, and data stored by Superwall. This can be called even if the user isn't logged in.
+- The identity API can be accessed using async/await or completion handlers.
+- New function `Superwall.track(event:params:overrides)` which returns a `PaywallStatePublisher` (`AnyPublisher<PaywallState, Never>`) for those Combine lovers. By subscribing to this publisher, you can receive state updates of your paywall. We've updated our sample apps to show you how to use that.
 
 ### Fixes
-
+- The API is now thread safe. By default the API uses background threads, dispatching to the main thread when necessary and when returning from completion blocks.
 ---
 
-## 2.4.2
+## 2.5.0
 
 ### Enhancements
 
 - Assigments of paywall variants are now performed on device, meaning reduced network calls and faster setup time for the SDK.
 - Adds `Paywall.latestPaywallInfo`. You can read this to access the `PaywallInfo` object of the most recently presented view controller.
-- Adds feature flags under the hood so that when we introduce new features we can turn them on for specific organizations and apps.
-- Adds the ability to specify `SKProducts` with a trigger. These override the products defined on the dashboard for the paywall. You do this by creating a `PaywallProducts` object and calling `Paywall.trigger(event: "event", products: products)`.
+- Adds feature flags under the hood so new features can be turned on for specific organizations and apps.
+- Adds the ability to specify `SKProducts` with triggers. These override products defined in the dashboard. You do this by creating a `PaywallProducts` object and calling `Paywall.trigger(event: "event", products: products)`.
+- Updates sample projects to iOS 16.
 
 ### Fixes
 
 - Shimmer view is no longer visible beneath a paywall's `WKWebView` when there is no `body` or `html` background color set
+  <<<<<<< HEAD
 - Previously calls to `Paywall.preloadPaywalls(forTriggers:)` before `Paywall.config()` finished were ignored. This has been fixed.
 - If a user had already bought a product within a subscription group, they were still being offered a free trial on other products within that group. This is incorrect logic and this update fixes that.
-- Fixed a bug where `Paywall.reset()` couldn't be called on a background thread.
+- # Fixed a bug where `Paywall.reset()` couldn't be called on a background thread.
+- Previously, calling `Paywall.preloadPaywalls(forTriggers:)` before `Paywall.config()` finished would not work. This has been fixed.
+- Previously, if a user purchases a product within a subscription group, they would still be offered a free trial on other products within that group. This has been fixed.
+- Fixes a bug where `Paywall.reset()` couldn't be called on a background thread.
+  > > > > > > > master
 
 ---
 

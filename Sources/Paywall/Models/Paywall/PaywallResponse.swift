@@ -56,8 +56,8 @@ struct PaywallResponse: Decodable {
   var paywalljsVersion: String?
 
   var paywallBackgroundColor: UIColor {
-    if let hexString = backgroundColorHex {
-      return UIColor(hexString: hexString)
+    if let backgroundColorHex = backgroundColorHex {
+      return UIColor(hexString: backgroundColorHex)
     }
 
     return UIColor.darkGray
@@ -69,7 +69,7 @@ struct PaywallResponse: Decodable {
 
   var templateVariables: JSON {
     var variables: [String: Any] = [
-      "user": Storage.shared.userAttributes,
+      "user": IdentityManager.shared.userAttributes,
       "device": DeviceHelper.shared.templateDevice.dictionary ?? [:]
     ]
 

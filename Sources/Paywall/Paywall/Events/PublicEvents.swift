@@ -73,7 +73,7 @@ public extension Paywall {
   ///  NSDictionary *userAttributes = @{ key : value, key2 : value2};
   ///  [Superwall setUserAttributesDictionary: userAttributes];
   ///  ```
-  @available (*, unavailable)
+  @available(swift, obsoleted: 1.0)
   @objc static func setUserAttributesDictionary(_ attributes: NSDictionary) {
     if let anyAttributes = attributes as? [String: Any] {
       mergeAttributes(anyAttributes)
@@ -103,7 +103,7 @@ public extension Paywall {
     let result = track(trackableEvent)
 
     let eventParams = result.parameters.eventParams
-    Storage.shared.mergeUserAttributes(eventParams)
+    IdentityManager.shared.mergeUserAttributes(eventParams)
   }
 
   /// Handles a deep link sent to your app to open a preview of your paywall.
@@ -111,6 +111,8 @@ public extension Paywall {
   /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
   static func handleDeepLink(_ url: URL) {
     track(InternalSuperwallEvent.DeepLink(url: url))
-    SWDebugManager.shared.handle(deepLinkUrl: url)
+    Task {
+      await SWDebugManager.shared.handle(deepLinkUrl: url)
+    }
   }
 }

@@ -9,10 +9,10 @@ import SwiftUI
 
 struct WelcomeView: View {
   @State private var name: String = ""
-  @State private var showTableView = false
+  @State private var showTrackView = false
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       ZStack {
         VStack(alignment: .center, spacing: 60) {
           logo()
@@ -23,26 +23,18 @@ struct WelcomeView: View {
             .multilineTextAlignment(.center)
           inputField()
           Spacer()
-          signInButton()
+          logInButton()
         }
         .padding()
         .frame(maxHeight: .infinity)
         .background(Color.neutral)
-
-        NavigationLink(
-          isActive: $showTableView,
-          destination: {
-            TrackEventView()
-          },
-          label: {
-            EmptyView()
-          }
-        ).hidden()
+      }
+      .navigationDestination(isPresented: $showTrackView) {
+        TrackEventView(showTrackView: $showTrackView)
       }
       .navigationBarHidden(true)
       .navigationTitle("")
     }
-    .navigationViewStyle(.stack)
     .accentColor(.primaryTeal)
   }
 
@@ -71,10 +63,13 @@ struct WelcomeView: View {
   }
 
   @ViewBuilder
-  private func signInButton() -> some View {
-    BrandedButton(title: "Continue") {
-      PaywallService.setName(to: name)
-      showTableView = true
+  private func logInButton() -> some View {
+    BrandedButton(title: "Log In") {
+      Task {
+        PaywallService.setName(to: name)
+        await PaywallService.logIn()
+        showTrackView = true
+      }
     }
   }
 }

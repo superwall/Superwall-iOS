@@ -70,7 +70,9 @@ final class SessionEventsManager {
       triggerSessions: cachedTriggerSessions,
       transactions: cachedTransactions
     )
-    network.sendSessionEvents(sessionEvents)
+    Task {
+      await network.sendSessionEvents(sessionEvents)
+    }
     storage.clearCachedSessionEvents()
   }
 

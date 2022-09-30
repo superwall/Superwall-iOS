@@ -23,6 +23,7 @@ protocol WebEventHandlerDelegate: AnyObject {
   func presentSafariExternal(_ url: URL)
 }
 
+@MainActor
 final class WebEventHandler: WebEventDelegate {
   weak var delegate: WebEventHandlerDelegate?
 
@@ -249,11 +250,6 @@ final class WebEventHandler: WebEventDelegate {
     if Paywall.options.isGameControllerEnabled {
       return
     }
-
-    if #available(iOS 13.0, *) {
-      UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)
-    } else {
-      UIImpactFeedbackGenerator().impactOccurred()
-    }
+    UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)
   }
 }

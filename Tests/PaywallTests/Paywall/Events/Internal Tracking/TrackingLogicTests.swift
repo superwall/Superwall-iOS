@@ -13,7 +13,7 @@ import XCTest
 final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_noParams() {
     // Given
-    let event = SuperwallEvent.AppLaunch()
+    let event = InternalSuperwallEvent.AppLaunch()
     let storage = StorageMock()
 
     // When
@@ -88,7 +88,7 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_noCustomParams() {
     // Given
     let eventName = "TestName"
-    let event = SuperwallEvent.PaywallResponseLoad(
+    let event = InternalSuperwallEvent.PaywallResponseLoad(
       state: .start,
       eventData: EventData
         .stub()
@@ -111,7 +111,7 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_withCustomParams() {
     // Given
     let eventName = "TestName"
-    let event = SuperwallEvent.PaywallResponseLoad(
+    let event = InternalSuperwallEvent.PaywallResponseLoad(
       state: .start,
       eventData: EventData
         .stub()
@@ -142,7 +142,7 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_containsDollar() {
     // Given
     let eventName = "TestName"
-    let event = SuperwallEvent.PaywallResponseLoad(
+    let event = InternalSuperwallEvent.PaywallResponseLoad(
       state: .start,
       eventData: EventData
         .stub()
@@ -173,7 +173,7 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_containArray() {
     // Given
     let eventName = "TestName"
-    let event = SuperwallEvent.PaywallResponseLoad(
+    let event = InternalSuperwallEvent.PaywallResponseLoad(
       state: .start,
       eventData: EventData
         .stub()
@@ -204,7 +204,7 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_containDictionary() {
     // Given
     let eventName = "TestName"
-    let event = SuperwallEvent.PaywallResponseLoad(
+    let event = InternalSuperwallEvent.PaywallResponseLoad(
       state: .start,
       eventData: EventData
         .stub()
@@ -236,7 +236,7 @@ final class TrackingLogicTests: XCTestCase {
     // Given
     let date = Date(timeIntervalSince1970: 1650534735)
     let eventName = "TestName"
-    let event = SuperwallEvent.PaywallResponseLoad(
+    let event = InternalSuperwallEvent.PaywallResponseLoad(
       state: .start,
       eventData: EventData
         .stub()
@@ -268,7 +268,7 @@ final class TrackingLogicTests: XCTestCase {
     // Given
     let url = URL(string: "https://www.google.com")!
     let eventName = "TestName"
-    let event = SuperwallEvent.PaywallResponseLoad(
+    let event = InternalSuperwallEvent.PaywallResponseLoad(
       state: .start,
       eventData: EventData
         .stub()
@@ -299,7 +299,7 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_nilValue() {
     // Given
     let eventName = "TestName"
-    let event = SuperwallEvent.PaywallResponseLoad(
+    let event = InternalSuperwallEvent.PaywallResponseLoad(
       state: .start,
       eventData: EventData
         .stub()

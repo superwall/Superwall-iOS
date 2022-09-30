@@ -81,7 +81,7 @@ final class TriggerSessionManager {
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
         configRequestId: configManager.configRequestId,
-        userAttributes: storage.userAttributes,
+        userAttributes: IdentityManager.shared.userAttributes,
         isSubscribed: Paywall.shared.isUserSubscribed,
         eventName: trigger.eventName,
         appSession: AppSessionManager.shared.appSession
@@ -132,7 +132,7 @@ final class TriggerSessionManager {
     }
 
     // Update trigger session
-    session.userAttributes = JSON(storage.userAttributes)
+    session.userAttributes = JSON(IdentityManager.shared.userAttributes)
     session.presentationOutcome = outcome.presentationOutcome
     session.trigger = outcome.trigger
     session.paywall = outcome.paywall
@@ -173,7 +173,7 @@ final class TriggerSessionManager {
     let eventName = currentTriggerSession.trigger.eventName
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
       configRequestId: configManager.configRequestId,
-      userAttributes: storage.userAttributes,
+      userAttributes: IdentityManager.shared.userAttributes,
       isSubscribed: Paywall.shared.isUserSubscribed,
       eventName: eventName,
       products: currentTriggerSession.products.allProducts,

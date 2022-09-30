@@ -66,8 +66,6 @@ func trackAnalyticsEvent(
     // Track your custom event
   case .transactionRestore:
     // Track your custom event
-  case .manualPresent:
-    // Track your custom event
   case .userAttributes:
     // Track your custom event
   case .nonRecurringProductPurchase:

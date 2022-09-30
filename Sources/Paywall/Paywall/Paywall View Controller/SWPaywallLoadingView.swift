@@ -37,27 +37,15 @@ final class SWPaywallLoadingView: UIView {
   }()
 
   var lightBlurEffectView: UIVisualEffectView = {
-    if #available(iOS 13.0, *) {
-      let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialLight))
-      blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-      return blurEffectView
-    } else {
-      let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
-      blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-      return blurEffectView
-    }
+    let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialLight))
+    blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    return blurEffectView
   }()
 
   var darkBlurEffectView: UIVisualEffectView = {
-    if #available(iOS 13.0, *) {
-      let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
-      blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-      return blurEffectView
-    } else {
-      let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
-      blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-      return blurEffectView
-    }
+    let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    return blurEffectView
   }()
 
   private lazy var activityContainer: UIView = {
@@ -76,9 +64,7 @@ final class SWPaywallLoadingView: UIView {
     lightBlurEffectView.frame = view.bounds
     view.addSubview(darkBlurEffectView)
     view.addSubview(lightBlurEffectView)
-    if #available(iOS 13.0, *) {
-      view.layer.cornerCurve = .continuous
-    }
+    view.layer.cornerCurve = .continuous
     view.layer.cornerRadius = 15
     return view
   }()

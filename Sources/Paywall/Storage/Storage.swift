@@ -13,25 +13,13 @@ class Storage {
 
   var apiKey = ""
   var debugKey: String?
-  var appUserId: String? {
-    didSet {
-      save()
-    }
-  }
-  var aliasId: String? {
-    didSet {
-      save()
-    }
-  }
+
 	var didTrackFirstSeen = false
-  var userAttributes: [String: Any] = [:]
 
   var neverCalledStaticConfig = false
   var didCheckForStaticConfigUpdate = false
 
-  var userId: String? {
-    return appUserId ?? aliasId
-  }
+
   private var confirmedAssignments: [Experiment.ID: Experiment.Variant]?
   private let cache: Cache
 
@@ -41,82 +29,13 @@ class Storage {
   ) {
     self.cache = cache
     self.coreDataManager = coreDataManager
-    self.appUserId = cache.read(AppUserId.self)
-    self.aliasId = cache.read(AliasId.self)
     self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true
-    self.userAttributes = cache.read(UserAttributes.self) ?? [:]
   }
 
-  func configure(
-    appUserId: String?,
-    apiKey: String
-  ) {
+  func configure(apiKey: String) {
     migrateData()
     updateSdkVersion()
-    identify(with: appUserId)
-
     self.apiKey = apiKey
-
-    if aliasId == nil {
-      aliasId = StorageLogic.generateAlias()
-    }
-  }
-
-  func identify(with userId: String?) {
-    guard let outcome = StorageLogic.identify(
-      newUserId: userId,
-      oldUserId: appUserId
-    ) else {
-      loadAssignmentsIfNeeded()
-      return
-    }
-
-    if let userId = userId {
-      appUserId = userId
-    }
-
-    switch outcome {
-    case .reset:
-      TriggerDelayManager.shared.appUserIdAfterReset = appUserId
-      Paywall.reset()
-    case .loadAssignments:
-      if TriggerDelayManager.shared.appUserIdAfterReset == nil {
-        loadAssignments()
-      } else {
-        loadAssignmentsAfterConfig(isBlocking: true)
-        TriggerDelayManager.shared.appUserIdAfterReset = nil
-      }
-    }
-  }
-
-  /// Loads assignments only if it's a fresh install
-  private func loadAssignmentsIfNeeded() {
-    guard neverCalledStaticConfig else {
-      return
-    }
-
-    let isNotFreshInstall = cache.read(DidTrackAppInstall.self) ?? false
-    if isNotFreshInstall {
-      return
-    }
-
-    loadAssignments()
-  }
-
-  /// If static config hasn't been called before, this queues a blocking assignment call.
-  private func loadAssignments() {
-    if TriggerDelayManager.shared.hasDelay {
-      let isBlocking = neverCalledStaticConfig
-      loadAssignmentsAfterConfig(isBlocking: isBlocking)
-    } else {
-      ConfigManager.shared.loadAssignments()
-    }
-    neverCalledStaticConfig = false
-  }
-
-  private func loadAssignmentsAfterConfig(isBlocking: Bool) {
-    let blockingAssignmentCall = PreConfigAssignmentCall(isBlocking: isBlocking)
-    TriggerDelayManager.shared.cachePreConfigAssignmentCall(blockingAssignmentCall)
   }
 
   private func migrateData() {
@@ -151,22 +70,9 @@ class Storage {
     coreDataManager.deleteAllEntities()
     cache.cleanUserFiles()
     confirmedAssignments = nil
-    appUserId = nil
-    aliasId = StorageLogic.generateAlias()
-    userAttributes = [:]
-    ConfigManager.shared.clear()
     didTrackFirstSeen = false
     recordFirstSeenTracked()
   }
-
-	func mergeUserAttributes(_ newAttributes: [String: Any]) {
-    let mergedAttributes = StorageLogic.mergeAttributes(
-      newAttributes,
-      with: userAttributes
-    )
-    cache.write(mergedAttributes, forType: UserAttributes.self)
-    userAttributes = mergedAttributes
-	}
 
 	func recordFirstSeenTracked() {
     if didTrackFirstSeen {
@@ -188,28 +94,6 @@ class Storage {
 
     _ = trackEvent(InternalSuperwallEvent.AppInstall())
     cache.write(true, forType: DidTrackAppInstall.self)
-  }
-
-  private func save() {
-    if let appUserId = appUserId {
-      cache.write(appUserId, forType: AppUserId.self)
-    }
-
-    if let aliasId = aliasId {
-      cache.write(aliasId, forType: AliasId.self)
-    }
-
-    var standardUserAttributes: [String: Any] = [:]
-
-    if let aliasId = aliasId {
-      standardUserAttributes["aliasId"] = aliasId
-    }
-
-    if let appUserId = appUserId {
-      standardUserAttributes["appUserId"] = appUserId
-    }
-
-    mergeUserAttributes(standardUserAttributes)
   }
 
   func clearCachedSessionEvents() {
@@ -244,6 +128,14 @@ class Storage {
       Date(),
       forType: LastPaywallView.self
     )
+  }
+
+  func get<Key: Storable>(_ keyType: Key.Type) -> Key.Value? {
+    return cache.read(keyType)
+  }
+
+  func save<Key: Storable>(_ value: Key.Value, forType keyType: Key.Type) {
+    return cache.write(value, forType: keyType)
   }
 
   func getLastPaywallView() -> LastPaywallView.Value? {

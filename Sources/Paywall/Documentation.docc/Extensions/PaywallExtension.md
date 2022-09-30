@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ``Paywall/Paywall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)`` to configure the SDK.
+The ``Paywall/Paywall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Paywall/Paywall/configure(apiKey:delegate:options:)`` to configure the SDK.
 
 ## Topics
 
@@ -10,18 +10,21 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 
 - <doc:GettingStarted>
 - <doc:Ecosystem>
-- ``Paywall/Paywall/configure(apiKey:userId:delegate:options:)``
+- ``configure(apiKey:delegate:options:)``
 - ``PaywallDelegate``
 - ``delegate``
 - ``PaywallOptions``
 - ``options``
-- ``PaywallOptions/PaywallNetworkEnvironment``
+- ``preloadAllPaywalls()``
+- ``preloadPaywalls(forTriggers:)``
 
 ### Presenting and Dismissing a Paywall
 
 - <doc:TrackingEvents>
 - ``track(event:params:paywallOverrides:paywallState:)``
 - ``track(event:params:paywallOverrides:)``
+- ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
+- ``dismiss()``
 - ``dismiss(_:)``
 - ``PaywallInfo``
 - ``SuperwallEvent``
@@ -34,10 +37,16 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 ### Identifying a User
 
 - <doc:SettingUserAttributes>
-- ``identify(userId:)``
-- ``setUserAttributes(_:)``
-- ``userAttributes``
+- ``createAccount(userId:)``
+- ``logIn(userId:)``
+- ``logIn(userId:completion:)``
+- ``logOut()``
+- ``logOut(completion:)``
 - ``reset()``
+- ``reset(completion:)``
+- ``setUserAttributes(_:)``
+- ``setUserAttributesDictionary(_:)``
+- ``userAttributes``
 
 ### Game Controller
 
@@ -51,4 +60,8 @@ The ``Paywall/Paywall`` class is used to access all the features of the SDK. Bef
 ### Customization
 
 - ``localizationOverride(localeIdentifier:)``
+
+### Helper Variables
 - ``presentedViewController``
+- ``latestPaywallInfo``
+- ``userId``

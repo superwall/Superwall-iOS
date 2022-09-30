@@ -21,7 +21,7 @@ final class TrackEventModel {
       case .dismissed(let result):
         switch result.state {
         case .closed:
-          print("User dismissed the paywall.")
+          print("The paywall was dismissed.")
         case .purchased(productId: let productId):
           print("Purchased a product with id \(productId), then dismissed.")
         case .restored:
@@ -42,8 +42,11 @@ final class TrackEventModel {
     }
   }
 
-  // The below function gives an example of how to track an event using Combine publishers:
+  func logOut() async {
+    await PaywallService.logOut()
+  }
 
+  // The below function gives an example of how to track an event using Combine publishers:
   /*
   func trackEventUsingCombine() {
     cancellable = Paywall

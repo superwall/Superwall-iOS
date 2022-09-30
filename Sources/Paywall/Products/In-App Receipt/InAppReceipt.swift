@@ -67,10 +67,6 @@ final class InAppReceipt {
   ///
   /// Call this after loading products into the `StoreKitManager`.
   func loadSubscriptionGroupIds() {
-    guard #available(iOS 12.0, *) else {
-      return
-    }
-
     for purchase in purchases {
       guard let product = storeKitManager.productsById[purchase.productIdentifier] else {
         continue
@@ -88,14 +84,8 @@ final class InAppReceipt {
 
   /// Checks to see whether a different product has already been purchased within the subscription
   /// group of the supplied product
-  ///
-  /// If the user is on iOS 11 or the product isn't an autorenewable subscription, it just checks whether
-  /// the product has been purchased before.
   func hasPurchasedInSubscriptionGroupOfProduct(withId productId: String) -> Bool {
     if failedToLoadSubscriptionGroupIds {
-      return hasPurchasedProduct(withId: productId)
-    }
-    guard #available(iOS 12.0, *) else {
       return hasPurchasedProduct(withId: productId)
     }
 

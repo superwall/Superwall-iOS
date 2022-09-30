@@ -109,7 +109,9 @@ class SessionEventsQueue {
         triggerSessions: triggerSessionsToSend,
         transactions: transactionsToSend
       )
-      Network.shared.sendSessionEvents(sessionEvents)
+      Task {
+        await Network.shared.sendSessionEvents(sessionEvents)
+      }
     }
 
     if (!triggerSessions.isEmpty || !transactions.isEmpty) && depth > 0 {

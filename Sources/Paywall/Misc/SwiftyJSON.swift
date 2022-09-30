@@ -837,7 +837,7 @@ extension JSON {
         }
     }
     func exists() -> Bool {
-        if let errorValue = error, (400...1000).contains(errorValue.errorCode) {
+        if let error = error, (400...1000).contains(error.errorCode) {
             return false
         }
         return true

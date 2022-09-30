@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 @testable import Paywall
 
 final class NetworkMock: Network {
@@ -15,25 +16,30 @@ final class NetworkMock: Network {
   var assignments: [Assignment] = []
   var configReturnValue: Result<Config, Error> = .success(.stub())
 
-  override func sendSessionEvents(_ session: SessionEventsRequest) {
+  override func sendSessionEvents(_ session: SessionEventsRequest) async {
     sentSessionEvents = session
   }
 
   override func getConfig(
     withRequestId requestId: String,
-    completion: @escaping (Result<Config, Error>) -> Void,
-    applicationState: UIApplication.State? = UIApplication.shared.applicationState,
-    configManager: ConfigManager = .shared
-  ) {
+    configManager: ConfigManager = .shared,
+    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
+  ) async throws -> Config {
     getConfigCalled = true
-    completion(configReturnValue)
+
+    switch configReturnValue {
+    case .success(let success):
+      return success
+    case .failure(let failure):
+      throw failure
+    }
   }
 
-  override func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) {
+  override func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) async {
     assignmentsConfirmed = true
   }
 
-  override func getAssignments(completion: @escaping (Result<[Assignment], Error>) -> Void) {
-    completion(.success(assignments))
+  override func getAssignments() async throws -> [Assignment] {
+    return assignments
   }
 }
