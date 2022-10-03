@@ -12,7 +12,7 @@ final class TrackEventModel {
   // private var cancellable: AnyCancellable?
 
   func trackEvent() {
-    Paywall.track(
+    Superwall.track(
       event: "MyEvent"
     ) { paywallState in
       switch paywallState {
