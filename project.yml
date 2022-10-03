@@ -10,7 +10,7 @@ targets:
   Superwall:
     scheme:
       testTargets:
-        - superwallTests
+        - SuperwallTests
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.Superwall"
     info:
