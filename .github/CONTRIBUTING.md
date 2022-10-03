@@ -1,4 +1,4 @@
-# Contributing to Paywall
+# Contributing to Superwall
 
 We want to make contributing to this project as easy and transparent as
 possible, and actively welcome your pull requests. If you run into problems,
@@ -64,7 +64,7 @@ All pull requests are set to merge into `develop`, with the exception of a hotfi
 
 Name your branch `feature/<feature name>` for consistency.
 
-When we're ready to cut a new release, we update the `sdkVersion` in [Constants.swift](/Sources/Paywall/Misc/Constants.swift) and merge `develop` into `master`. This runs some GitHub actions to tag the release, build the docs, and push to cocoapods.
+When we're ready to cut a new release, we update the `sdkVersion` in [Constants.swift](/Sources/Superwall/Misc/Constants.swift) and merge `develop` into `master`. This runs some GitHub actions to tag the release, build the docs, and push to cocoapods.
 
 ## Testing
 
@@ -78,4 +78,4 @@ We use GitHub issues to track public bugs. Please ensure your description is cle
 
 ## License
 
-By contributing to `Paywall`, you agree that your contributions will be licensed under the LICENSE file in the root directory of this source tree.
+By contributing to `Superwall`, you agree that your contributions will be licensed under the LICENSE file in the root directory of this source tree.
