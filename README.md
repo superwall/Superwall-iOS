@@ -30,9 +30,9 @@
 
 [Superwall](https://superwall.com/) lets you remotely configure every aspect of your paywall — helping you find winners quickly.
 
-## Paywall.framework
+## Superwall.framework
 
-**Paywall** is the open source SDK for Superwall, providing a wrapper around `Webkit` for presenting and creating paywalls. It interacts with the Superwall backend letting you easily iterate paywalls on the fly in `Swift` or `Objective-C`!
+**Superwall** is the open source SDK for Superwall, providing a wrapper around `Webkit` for presenting and creating paywalls. It interacts with the Superwall backend letting you easily iterate paywalls on the fly in `Swift` or `Objective-C`!
 
 ## Features
 |   | Superwall |
@@ -63,10 +63,10 @@ The preferred installation method is with [Swift Package Manager](https://swift.
 ### Cocoapods
 
 [Cocoapods](https://cocoapods.org) is an alternative dependency manager for iOS projects. For usage and installation instructions, please visit their website.
-To include the *Paywall* SDK in your app, add the following to your Podfile:
+To include the *Superwall* SDK in your app, add the following to your Podfile:
 
 ```
-pod 'Paywall', '< 3.0.0'
+pod 'Superwall', '< 3.0.0'
 ```
 
 Then, run `pod install`.

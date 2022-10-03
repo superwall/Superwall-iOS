@@ -1,20 +1,20 @@
-name: Paywall
+name: superwall
 options:
-  bundleIdentifer: me.superwall
+  bundleIdentifer: com.superwall
 packages:
   ASN1Swift:
     url: https://github.com/tikhop/ASN1Swift
     from: 1.2.4
 
 targets:
-  Paywall:
+  Superwall:
     scheme:
       testTargets:
-        - PaywallTests
+        - SuperwallTests
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: "me.superwall.Paywall"
+      PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.Superwall"
     info:
-      path: Paywall.xcodeproj/Paywall_Info.plist
+      path: Superwall.xcodeproj/Superwall_Info.plist
       properties:
         CFBundleDevelopmentRegion: en
         CFBundleExecutable: "$(EXECUTABLE_NAME)"
@@ -32,18 +32,18 @@ targets:
     sources: [Sources/]
     dependencies:
       - package: ASN1Swift
-  PaywallTests:
+  SuperwallTests:
     scheme: {}
     sources: [Tests/]
     type: bundle.unit-test
     platform: iOS
     dependencies:
-      - target: Paywall
+      - target: Superwall
       - package: ASN1Swift
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: "me.superwall.PaywallTests"
+      PRODUCT_BUNDLE_IDENTIFIER: "me.superwall.SuperwallTests"
     info:
-      path: Paywall.xcodeproj/PaywallTests_Info.plist
+      path: Superwall.xcodeproj/SuperwallTests_Info.plist
       properties:
         CFBundleDevelopmentRegion: en
         CFBundleExecutable: "$(EXECUTABLE_NAME)"

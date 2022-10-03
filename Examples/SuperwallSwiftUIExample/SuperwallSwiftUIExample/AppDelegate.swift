@@ -12,7 +12,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    PaywallService.initPaywall()
+    SuperwallService.initSuperwall()
     Task {
       await StoreKitService.shared.loadSubscriptionState()
     }

@@ -30,9 +30,9 @@ final class WelcomeViewController: UIViewController {
   @IBAction private func logIn() {
     Task {
       if let name = textField.text {
-        PaywallService.setName(to: name)
+        SuperwallService.setName(to: name)
       }
-      await PaywallService.logIn()
+      await SuperwallService.logIn()
       next()
     }
   }

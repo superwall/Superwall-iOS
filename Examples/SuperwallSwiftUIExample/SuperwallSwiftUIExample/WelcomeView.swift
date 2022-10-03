@@ -17,7 +17,7 @@ struct WelcomeView: View {
         VStack(alignment: .center, spacing: 60) {
           logo()
           Spacer()
-          Text("Welcome! Enter your name to get started. Your name will be added to the Paywall user attributes, which can then be accessed and displayed within your paywall.")
+          Text("Welcome! Enter your name to get started. Your name will be added to the Superwall user attributes, which can then be accessed and displayed within your paywall.")
             .lineSpacing(5)
             .foregroundColor(.white)
             .multilineTextAlignment(.center)
@@ -66,8 +66,8 @@ struct WelcomeView: View {
   private func logInButton() -> some View {
     BrandedButton(title: "Log In") {
       Task {
-        PaywallService.setName(to: name)
-        await PaywallService.logIn()
+        SuperwallService.setName(to: name)
+        await SuperwallService.logIn()
         showTrackView = true
       }
     }

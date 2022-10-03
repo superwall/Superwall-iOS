@@ -6,8 +6,10 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ### Breaking Changes
 
+- Renames the package from `Paywall` to `Superwall`.
 - Sets the minimum iOS version to iOS 13.
 - Renames `configure(apiKey:userId:delegate:options:)` to `configure(apiKey:delegate:options:)`. This means you no longer provide a `userId` with configure. Instead you must use the new identity API detailed below.
+- Changes `PaywallOptions` to `SuperwallOptions`. This now clearly defines which of the options are explicit to paywalls vs other configuration options within the SDK.
 - Renames `Superwall.trigger(event:)` to `Superwall.track(event:)`. We found that having separate implicit (`Superwall.track(event:)`) and explicit (`Superwall.trigger(event:)`) trigger functions caused confusion. So from now on, you'll just use `Superwall.track(event:)` for all events within your app.
 - Renames `Paywall.EventName` to `SuperwallEvent` and removes `.manualPresent` as a `SuperwallEvent`.
 
@@ -57,7 +59,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ### Enhancements
 
-- Adds `Paywall.preloadAllPaywalls()` and `Paywall.preloadPaywalls(forTriggers:)`. Use this with `Paywall.options.shouldPreloadPaywall = false` to have more control over when/what paywalls are preloaded.
+- Adds `Paywall.preloadAllPaywalls()` and `Paywall.preloadPaywalls(forTriggers:)`. Use this with `Superwall.options.shouldPreloadPaywall = false` to have more control over when/what paywalls are preloaded.
 
 ### Fixes
 
@@ -75,7 +77,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - A new `PaywallOptions` object that you configure and pass to `Paywall.configure(apiKey:userId:delegate:options) to override the default appearance and presentation of the paywall. This deprecates a lot of static variables for better organisation.
 - New `shouldPreloadPaywalls` option. Set this to `false` to make paywalls load and cache in a just-in-time fashion. This replaces the old `Paywall.shouldPreloadTriggers` flag.
 - New dedicated function for handling deeplinks: `Paywall.handleDeepLink(url)`.
-- Deprecates old `track` functions. The only one you should use is `Paywall.track(_:_:)`, to which you pass an event name and a dictionary of parameters. Note: This is not backwards compatible with previous versions of the SDK.
+- Deprecates old `track` functions. The only one you should use is `Superwall.track(_:_:)`, to which you pass an event name and a dictionary of parameters. Note: This is not backwards compatible with previous versions of the SDK.
 - Adds a new way of internally tracking analytics associated with a paywall and the app session. This will greatly improve the Superwall dashboard analytics.
 - Adds support for javascript expressions defined in rules on the Superwall dashboard.
 - Updates the SDK documentation.

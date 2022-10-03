@@ -1,12 +1,12 @@
 //
-//  ExplicitlyTriggerPaywallView.swift
+//  TrackEventView.swift
 //  SuperwallSwiftUIExample
 //
 //  Created by Yusuf Tör on 11/03/2022.
 //
 
 import SwiftUI
-import Paywall
+import Superwall
 
 struct TrackEventView: View {
   @Binding var showTrackView: Bool
@@ -31,7 +31,7 @@ struct TrackEventView: View {
         .background(Color.primaryTeal)
         .padding()
 
-      PaywallSubscriptionStatusView()
+      SuperwallSubscriptionStatusView()
 
       Spacer()
 
@@ -53,11 +53,11 @@ struct TrackEventView: View {
     .background(Color.neutral)
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden()
-    .navigationTitle("Hello \(PaywallService.name)")
+    .navigationTitle("Hello \(SuperwallService.name)")
   }
 }
 
-struct TriggerPaywall_Previews: PreviewProvider {
+struct TrackEventView_Previews: PreviewProvider {
   static var previews: some View {
     TrackEventView(showTrackView: .constant(false))
   }

@@ -16,7 +16,7 @@ struct SuperwallSwiftUIExampleApp: App {
       WelcomeView()
         .font(.rubik(.four))
         .onOpenURL { url in
-          PaywallService.handleDeepLink(url)
+          SuperwallService.handleDeepLink(url)
         }
     }
   }

@@ -6,7 +6,7 @@
 //
 
 // import Combine
-import Paywall
+import Superwall
 
 final class TrackEventModel {
   // private var cancellable: AnyCancellable?
@@ -43,13 +43,13 @@ final class TrackEventModel {
   }
 
   func logOut() async {
-    await PaywallService.logOut()
+    await SuperwallService.logOut()
   }
 
   // The below function gives an example of how to track an event using Combine publishers:
   /*
   func trackEventUsingCombine() {
-    cancellable = Paywall
+    cancellable = Superwall
       .track(event: "MyEvent")
       .sink { paywallState in
        switch paywallState {

@@ -15,7 +15,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
   ) -> Bool {
     Task {
       await StoreKitService.shared.loadSubscriptionState()
-      await PaywallService.initPaywall()
+      await SuperwallService.initSuperwall()
     }
     return true
   }

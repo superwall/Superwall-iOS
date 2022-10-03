@@ -1,12 +1,12 @@
 //
-//  ExplicitlyTriggerPaywallViewController.swift
+//  TrackEventViewController.swift
 //  SuperwallUIKitExample
 //
 //  Created by Yusuf Tör on 05/04/2022.
 //
 
 import UIKit
-import Paywall
+import Superwall
 import Combine
 
 final class TrackEventViewController: UIViewController {
@@ -47,13 +47,13 @@ final class TrackEventViewController: UIViewController {
 
   @IBAction private func logOut() {
     Task {
-      await PaywallService.logOut()
+      await SuperwallService.logOut()
       await navigationController?.popToRootViewController(animated: true)
     }
   }
 
   @IBAction private func trackEvent() {
-    Paywall.track(
+    Superwall.track(
       event: "MyEvent"
     ) { paywallState in
       switch paywallState {
@@ -86,7 +86,7 @@ final class TrackEventViewController: UIViewController {
   // The below function gives an example of how to track an event using Combine publishers:
   /*
   func trackEventUsingCombine() {
-    trackCancellable = Paywall
+    trackCancellable = Superwall
       .track(event: "MyEvent")
       .sink { paywallState in
         switch paywallState {
