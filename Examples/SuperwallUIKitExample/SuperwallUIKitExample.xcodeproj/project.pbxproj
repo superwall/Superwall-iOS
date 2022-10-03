@@ -19,10 +19,10 @@
 		889FAA8127FC53EB00CB6EF5 /* Styles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA8027FC53EB00CB6EF5 /* Styles.swift */; };
 		889FAA8327FC53FF00CB6EF5 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA8227FC53FF00CB6EF5 /* Colors.swift */; };
 		889FAA8527FC557100CB6EF5 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 889FAA8427FC557100CB6EF5 /* Colors.xcassets */; };
-		889FAA8927FC585100CB6EF5 /* PaywallService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA8827FC585100CB6EF5 /* PaywallService.swift */; };
 		889FAA8F27FC596700CB6EF5 /* StoreKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA8E27FC596700CB6EF5 /* StoreKitService.swift */; };
 		889FAA9927FC939400CB6EF5 /* TrackEventViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */; };
-		88B5FED32847ABD4009F36E2 /* Paywall in Frameworks */ = {isa = PBXBuildFile; productRef = 88B5FED22847ABD4009F36E2 /* Paywall */; };
+		88A801D228EB15E2004244CA /* SuperwallService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A801D128EB15E2004244CA /* SuperwallService.swift */; };
+		88A801D428EB1620004244CA /* Superwall in Frameworks */ = {isa = PBXBuildFile; productRef = 88A801D328EB1620004244CA /* Superwall */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,10 +40,10 @@
 		889FAA8027FC53EB00CB6EF5 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
 		889FAA8227FC53FF00CB6EF5 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		889FAA8427FC557100CB6EF5 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
-		889FAA8827FC585100CB6EF5 /* PaywallService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallService.swift; sourceTree = "<group>"; };
 		889FAA8E27FC596700CB6EF5 /* StoreKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitService.swift; sourceTree = "<group>"; };
 		889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventViewController.swift; sourceTree = "<group>"; };
 		889FAA9C27FDADD000CB6EF5 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
+		88A801D128EB15E2004244CA /* SuperwallService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperwallService.swift; sourceTree = "<group>"; };
 		88B5FED12847ABCA009F36E2 /* paywall-ios */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "paywall-ios"; path = ../..; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -52,7 +52,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				88B5FED32847ABD4009F36E2 /* Paywall in Frameworks */,
+				88A801D428EB1620004244CA /* Superwall in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -127,8 +127,8 @@
 		889FAA8A27FC585800CB6EF5 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				889FAA8827FC585100CB6EF5 /* PaywallService.swift */,
 				889FAA8E27FC596700CB6EF5 /* StoreKitService.swift */,
+				88A801D128EB15E2004244CA /* SuperwallService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -158,7 +158,7 @@
 			);
 			name = SuperwallUIKitExample;
 			packageProductDependencies = (
-				88B5FED22847ABD4009F36E2 /* Paywall */,
+				88A801D328EB1620004244CA /* Superwall */,
 			);
 			productName = SuperwallUIKitExample;
 			productReference = 889FAA6027FC530200CB6EF5 /* SuperwallUIKitExample.app */;
@@ -249,7 +249,7 @@
 				889FAA6427FC530200CB6EF5 /* AppDelegate.swift in Sources */,
 				889FAA6627FC530200CB6EF5 /* SceneDelegate.swift in Sources */,
 				889FAA8F27FC596700CB6EF5 /* StoreKitService.swift in Sources */,
-				889FAA8927FC585100CB6EF5 /* PaywallService.swift in Sources */,
+				88A801D228EB15E2004244CA /* SuperwallService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -473,9 +473,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		88B5FED22847ABD4009F36E2 /* Paywall */ = {
+		88A801D328EB1620004244CA /* Superwall */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = Paywall;
+			productName = Superwall;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

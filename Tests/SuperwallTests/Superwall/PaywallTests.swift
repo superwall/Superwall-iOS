@@ -8,16 +8,16 @@
 import XCTest
 @testable import Superwall
 
-class PaywallTests: XCTestCase {
+class SuperwallTests: XCTestCase {
   func test_configureCalledTwice() async {
-    let paywall = Superwall.configure(apiKey: "abc")
-    let paywall2 = Superwall.configure(apiKey: "abc")
+    let superwall = Superwall.configure(apiKey: "abc")
+    let superwall2 = Superwall.configure(apiKey: "abc")
     Superwall.shared.configManager = ConfigManagerMock()
     Superwall.shared.identityManager = IdentityManagerMock()
 
     let twoHundredMilliseconds = UInt64(200_000_000)
     try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
 
-    XCTAssertEqual(paywall, paywall2)
+    XCTAssertEqual(superwall, superwall2)
   }
 }

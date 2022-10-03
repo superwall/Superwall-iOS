@@ -13,6 +13,7 @@ The ``Superwall/Superwall`` class is used to access all the features of the SDK.
 - ``configure(apiKey:delegate:options:)``
 - ``SuperwallDelegate``
 - ``delegate``
+- ``SuperwallOptions``
 - ``PaywallOptions``
 - ``options``
 - ``preloadAllPaywalls()``

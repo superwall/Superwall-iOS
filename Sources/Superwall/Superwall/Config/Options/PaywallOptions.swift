@@ -7,8 +7,8 @@
 
 import Foundation
 
-/// Options for configuring the appearance and behavior of the paywall.
-public class PaywallOptions {
+/// Options for configuring the appearance and behavior of paywalls.
+public final class PaywallOptions {
   /// Determines whether the paywall should use haptic feedback. Defaults to true.
   ///
   /// Haptic feedback occurs when a user purchases or restores a product, opens a URL from the paywall, or closes the paywall.

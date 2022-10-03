@@ -40,11 +40,11 @@ This configures a shared instance of ``Superwall/Superwall`` for use throughout 
 
 ## Identity Management
 
-We generate a random user ID that persists internally until ``Superwall/Superwall/logOut()`` or ``Superwall/Superwall/reset()`` is called or the user deletes/reinstalls your app.
+We generate a random user ID that persists internally until the user deletes/reinstalls your app.
 
-However, if you use your own user management system, you can call ``Superwall/Superwall/createAccount(userId:)`` when a user first creates an account, and ``Superwall/Superwall/logIn(userId:)`` if you're logging in an existing user. This will alias your `userId` with the anonymous Superwall ID enabling us to load the user's assigned paywalls.
+If you use your own user management system, you can call ``Superwall/Superwall/createAccount(userId:)`` when a user first creates an account, and ``Superwall/Superwall/logIn(userId:)`` if you're logging in an existing user. This will alias your `userId` with the anonymous Superwall ID enabling us to load the user's assigned paywalls.
 
-Calling ``Superwall/Superwall/logOut()`` will reset the on-device userId to a random ID and clear the paywall assignments.
+Calling ``Superwall/Superwall/logOut()`` or ``Superwall/Superwall/reset()`` will reset the on-device `userId` to a random ID and clear the paywall assignments.
 
 ## Setting the delegate
 
@@ -105,5 +105,5 @@ You're now ready to track an event to present your first paywall. See <doc:Track
 - <doc:CustomPaywallButtons>
 - <doc:ThirdPartyAnalytics>
 
-### Setting the Paywall Options
-- ``PaywallOptions``
+### Customising Superwall
+- ``SuperwallOptions``

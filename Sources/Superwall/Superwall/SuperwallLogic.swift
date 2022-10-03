@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum PaywallLogic {
+enum SuperwallLogic {
   enum Outcome {
     case triggerPaywall
     case deepLinkTrigger

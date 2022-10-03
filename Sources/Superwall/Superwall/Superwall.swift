@@ -142,7 +142,7 @@ public final class Superwall: NSObject {
   /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
   ///   - delegate: A class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
-  ///   - options: A ``PaywallOptions`` object which allows you to customise the appearance and behavior of the paywall.
+  ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   /// - Returns: The newly configured ``Superwall/Superwall`` instance.
   @discardableResult
   @objc public static func configure(
@@ -169,7 +169,7 @@ public final class Superwall: NSObject {
 
   /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard.
   ///
-  /// To use this, first set ``PaywallOptions/shouldPreloadPaywalls``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
+  /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded via ``Superwall/Superwall/preloadPaywalls(forTriggers:)``.
   @objc public static func preloadAllPaywalls() {
@@ -178,7 +178,7 @@ public final class Superwall: NSObject {
 
   /// Preloads paywalls for specific trigger names.
   ///
-  /// To use this, first set ``PaywallOptions/shouldPreloadPaywalls``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
+  /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
   @objc public static func preloadPaywalls(forTriggers triggers: Set<String>) {
@@ -209,7 +209,7 @@ extension Superwall {
 
     let presentationInfo: PresentationInfo = .implicitTrigger(event)
 
-    let outcome = PaywallLogic.canTriggerPaywall(
+    let outcome = SuperwallLogic.canTriggerPaywall(
       eventName: event.name,
       triggers: Set(ConfigManager.shared.triggers.keys),
       isPaywallPresented: isPaywallPresented

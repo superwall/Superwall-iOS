@@ -13,7 +13,7 @@ Superwall makes it easy to show paywalls in your app using UIKit or SwiftUI. If 
 - <doc:GettingStarted>
 - <doc:TrackingEvents>
 - ``Superwall/Superwall``
-- ``PaywallOptions``
+- ``SuperwallOptions``
 
 ### The Delegate
 - ``SuperwallDelegate``
