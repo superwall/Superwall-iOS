@@ -25,7 +25,7 @@ final class StoreKitManager {
     self.receiptManager = receiptManager
   }
 
-	func getVariables(forResponse response: PaywallResponse) async -> [Variable] {
+	func getVariables(forResponse response: Paywall) async -> [Variable] {
     guard let output = try? await getProducts(withIds: response.productIds) else {
       return []
     }

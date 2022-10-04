@@ -115,8 +115,8 @@ final class SWDebugViewController: UIViewController {
 
   var paywallDatabaseId: String?
 	var paywallIdentifier: String?
-  var paywallResponse: PaywallResponse?
-  var paywallResponses: [PaywallResponse] = []
+  var paywall: Paywall?
+  var paywalls: [Paywall] = []
   var previewViewContent: UIView?
   private var cancellable: AnyCancellable?
 
@@ -183,10 +183,10 @@ final class SWDebugViewController: UIViewController {
     activityIndicator.startAnimating()
     previewViewContent?.removeFromSuperview()
 
-    if paywallResponses.isEmpty {
+    if paywalls.isEmpty {
       do {
         let response = try await Network.shared.getPaywalls()
-        paywallResponses = response.paywalls
+        paywalls = response.paywalls
         await finishLoadingPreview()
       } catch {
         Logger.debug(
@@ -207,7 +207,7 @@ final class SWDebugViewController: UIViewController {
 		if let paywallIdentifier = paywallIdentifier {
 			paywallId = paywallIdentifier
 		} else if let paywallDatabaseId = paywallDatabaseId {
-			paywallId = paywallResponses.first(where: { $0.id == paywallDatabaseId })?.identifier
+			paywallId = paywalls.first(where: { $0.id == paywallDatabaseId })?.identifier
 			paywallIdentifier = paywallId
 		}
 
@@ -218,12 +218,12 @@ final class SWDebugViewController: UIViewController {
 
     do {
       let request = PaywallRequest(responseIdentifiers: .init(paywallId: paywallId))
-      let response = try await PaywallResponseManager.shared.getResponse(from: request)
-      self.paywallResponse = response
+      let response = try await PaywallRequestManager.shared.getPaywall(from: request)
+      self.paywall = response
       self.previewPickerButton.setTitle("\(response.name ?? "Preview")", for: .normal)
 
       let variables = await StoreKitManager.shared.getVariables(forResponse: response)
-      paywallResponse?.variables = variables
+      paywall?.variables = variables
 
       await MainActor.run {
         self.activityIndicator.stopAnimating()
@@ -241,11 +241,11 @@ final class SWDebugViewController: UIViewController {
 	}
 
   func addPaywallPreview() {
-    guard let paywallResponse = paywallResponse else {
+    guard let paywall = paywall else {
       return
     }
 
-    let child = SWPaywallViewController(paywallResponse: paywallResponse)
+    let child = SWPaywallViewController(paywall: paywall)
     addChild(child)
     previewContainerView.insertSubview(child.view, at: 0)
     previewViewContent = child.view
@@ -286,7 +286,7 @@ final class SWDebugViewController: UIViewController {
   @objc func pressedPreview() {
     guard let id = paywallDatabaseId else { return }
 
-    let options: [AlertOption] = paywallResponses.map { response in
+    let options: [AlertOption] = paywalls.map { response in
       var name = response.name ?? ""
 
       if id == response.id ?? "none" {
@@ -332,7 +332,7 @@ final class SWDebugViewController: UIViewController {
 	}
 
 	func showConsole() async {
-    guard let paywallResponse = paywallResponse else {
+    guard let paywall = paywall else {
       Logger.debug(
         logLevel: .error,
         scope: .debugViewController,
@@ -343,13 +343,13 @@ final class SWDebugViewController: UIViewController {
       return
     }
     guard let (productsById, _) = try? await StoreKitManager.shared
-      .getProducts(withIds: paywallResponse.productIds)
+      .getProducts(withIds: paywall.productIds)
     else {
       return
     }
 
     var products: [SKProduct] = []
-    for id in paywallResponse.productIds {
+    for id in paywall.productIds {
       if let product = productsById[id] {
         products.append(product)
       }
@@ -394,7 +394,7 @@ final class SWDebugViewController: UIViewController {
     bottomButton.setImage(nil, for: .normal)
     bottomButton.showLoading = true
 
-    let presentationRequest = PaywallPresentationRequest(
+    let presentationRequest = PresentationRequest(
       presentationInfo: .fromIdentifier(paywallIdentifier),
       presentingViewController: self
     )

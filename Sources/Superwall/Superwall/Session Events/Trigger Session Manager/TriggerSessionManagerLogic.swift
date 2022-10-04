@@ -19,7 +19,7 @@ enum TriggerSessionManagerLogic {
   static func outcome(
     presentationInfo: PresentationInfo,
     presentingViewController: UIViewController?,
-    paywallResponse: PaywallResponse?,
+    paywallResponse: Paywall?,
     triggerResult: TriggerResult?
   ) -> Outcome? {
     let presentationOutcome: TriggerSession.PresentationOutcome
@@ -96,7 +96,7 @@ enum TriggerSessionManagerLogic {
     }
 
     if let paywallResponse = paywallResponse {
-      let paywallInfo = paywallResponse.getPaywallInfo(fromEvent: presentationInfo.eventData)
+      let paywallInfo = paywallResponse.getInfo(fromEvent: presentationInfo.eventData)
 
       paywall = TriggerSession.Paywall(
         databaseId: paywallInfo.id,

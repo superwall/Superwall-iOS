@@ -43,7 +43,6 @@ public enum LogScope: String {
 	case device
 	case network
 	case paywallEvents
-	case paywallResponseManager
 	case productsManager
 	case storeKitManager
 	case events

@@ -31,10 +31,10 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   // MARK: - Properties
 	weak var delegate: SWPaywallViewControllerDelegate?
   var paywallStatePublisher: PassthroughSubject<PaywallState, Never>!
-  var presentationPublisher: PaywallPresentationSubject!
+  var presentationPublisher: PresentationSubject!
 	var isPresented = false
 	var calledDismiss = false
-  var paywallResponse: PaywallResponse
+  var paywall: Paywall
   var calledByIdentifier = false
   var eventData: EventData?
 	var readyForEventTracking = false
@@ -59,7 +59,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   lazy var webView = SWWebView(delegate: self)
 
 	var paywallInfo: PaywallInfo {
-		return paywallResponse.getPaywallInfo(
+		return paywall.getInfo(
       fromEvent: eventData,
       calledByIdentifier: calledByIdentifier
     )
@@ -114,13 +114,13 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	// MARK: - View Lifecycle
 
 	init(
-    paywallResponse: PaywallResponse,
+    paywall: Paywall,
     delegate: SWPaywallViewControllerDelegate? = nil
   ) {
-    self.cacheKey = PaywallCacheLogic.key(forIdentifier: paywallResponse.identifier)
+    self.cacheKey = PaywallCacheLogic.key(forIdentifier: paywall.identifier)
 		self.delegate = delegate
-    self.paywallResponse = paywallResponse
-    presentationStyle = paywallResponse.presentationStyleV2
+    self.paywall = paywall
+    presentationStyle = paywall.presentationStyleV2
     super.init(nibName: nil, bundle: nil)
     configureUI()
     loadPaywallWebpage()
@@ -425,12 +425,12 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         return
       }
       self.webView.alpha = 0.0
-      self.view.backgroundColor = self.paywallResponse.paywallBackgroundColor
-      let loadingColor = self.paywallResponse.paywallBackgroundColor.readableOverlayColor
-      self.purchaseLoader.paywallBackgroundColor = self.paywallResponse.paywallBackgroundColor
+      self.view.backgroundColor = self.paywall.paywallBackgroundColor
+      let loadingColor = self.paywall.paywallBackgroundColor.readableOverlayColor
+      self.purchaseLoader.paywallBackgroundColor = self.paywall.paywallBackgroundColor
       self.refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
-      self.shimmerView.isLightBackground = !self.paywallResponse.paywallBackgroundColor.isDarkColor
+      self.shimmerView.isLightBackground = !self.paywall.paywallBackgroundColor.isDarkColor
       self.shimmerView.contentColor = loadingColor
 
       self.modalPresentationCapturesStatusBarAppearance = true
@@ -439,7 +439,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   }
 
   private func loadPaywallWebpage() {
-    let urlString = paywallResponse.url
+    let urlString = paywall.url
     guard let url = URL(string: urlString) else {
       return
     }
@@ -458,8 +458,8 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       webView.load(request)
     }
 
-    if paywallResponse.webViewLoadStartTime == nil {
-      paywallResponse.webViewLoadStartTime = Date()
+    if paywall.webViewLoadStartTime == nil {
+      paywall.webViewLoadStartTime = Date()
     }
 
     SessionEventsManager.shared.triggerSession.trackWebviewLoad(
@@ -588,7 +588,7 @@ extension SWPaywallViewController {
     eventData: EventData?,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
-    presentationPublisher: PaywallPresentationSubject,
+    presentationPublisher: PresentationSubject,
     completion: @escaping (Bool) -> Void
   ) {
 		if Superwall.shared.isPaywallPresented
@@ -638,7 +638,7 @@ extension SWPaywallViewController {
   }
 
   private func setPresentationStyle(withOverride presentationStyleOverride: PaywallPresentationStyle?) {
-    presentationStyle = presentationStyleOverride ?? paywallResponse.presentationStyleV2
+    presentationStyle = presentationStyleOverride ?? paywall.presentationStyleV2
 
     switch presentationStyle {
     case .modal:
@@ -752,7 +752,7 @@ extension SWPaywallViewController: GameControllerDelegate {
 extension SWPaywallViewController: Stubbable {
   static func stub() -> SWPaywallViewController {
     return SWPaywallViewController(
-      paywallResponse: .stub(),
+      paywall: .stub(),
       delegate: nil
     )
   }

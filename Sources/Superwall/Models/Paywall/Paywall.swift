@@ -1,5 +1,5 @@
 //
-//  PaywallResponse.swift
+//  Paywall.swift
 //  Superwall
 //
 //  Created by Yusuf Tör on 28/02/2022.
@@ -8,10 +8,10 @@
 import UIKit
 
 struct PaywallsResponse: Decodable {
-  var paywalls: [PaywallResponse]
+  var paywalls: [Paywall]
 }
 
-struct PaywallResponse: Decodable {
+struct Paywall: Decodable {
   var id: String?
   var name: String?
   var slug: String?
@@ -124,7 +124,7 @@ struct PaywallResponse: Decodable {
     )
   }
 
-  func getPaywallInfo(
+  func getInfo(
     fromEvent: EventData?,
     calledByIdentifier: Bool = false
   ) -> PaywallInfo {
@@ -183,16 +183,16 @@ struct PaywallResponse: Decodable {
 }
 
 // MARK: - Equatable
-extension PaywallResponse: Equatable {
-  static func == (lhs: PaywallResponse, rhs: PaywallResponse) -> Bool {
+extension Paywall: Equatable {
+  static func == (lhs: Paywall, rhs: Paywall) -> Bool {
     return lhs.id == rhs.id
   }
 }
 
 // MARK: - Stubbable
-extension PaywallResponse: Stubbable {
-  static func stub() -> PaywallResponse {
-    return PaywallResponse(
+extension Paywall: Stubbable {
+  static func stub() -> Paywall {
+    return Paywall(
       url: "url",
       paywalljsEvent: "event",
       presentationCondition: .checkUserSubscription,

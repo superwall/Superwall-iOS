@@ -7,7 +7,7 @@
 
 import GameController
 import UIKit
-
+/*
 @available(*, unavailable, renamed: "Superwall")
 public final class Paywall: NSObject {
   @objc static var delegate: SuperwallDelegate?
@@ -88,3 +88,4 @@ public final class Paywall: NSObject {
 
   static func dismiss(_ completion: (() -> Void)? = nil) {}
 }
+*/

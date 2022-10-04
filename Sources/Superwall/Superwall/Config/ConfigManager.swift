@@ -135,9 +135,9 @@ class ConfigManager {
   }
 
   /// Gets the paywall response from the static config, if the device locale starts with "en" and no more specific version can be found.
-  func getStaticPaywallResponse(forPaywallId paywallId: String?) -> PaywallResponse? {
-    return ConfigLogic.getStaticPaywallResponse(
-      fromPaywallId: paywallId,
+  func getStaticPaywall(withId paywallId: String?) -> Paywall? {
+    return ConfigLogic.getStaticPaywall(
+      withId: paywallId,
       config: config
     )
   }

@@ -9,7 +9,7 @@ import UIKit
 import Combine
 
 struct PaywallVcPipelineOutput {
-  let request: PaywallPresentationRequest
+  let request: PresentationRequest
   let triggerOutcome: TriggerResultOutcome
   let debugInfo: DebugInfo
   let paywallViewController: SWPaywallViewController

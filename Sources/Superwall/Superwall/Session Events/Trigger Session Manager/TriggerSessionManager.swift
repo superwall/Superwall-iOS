@@ -114,7 +114,7 @@ final class TriggerSessionManager {
   func activateSession(
     for presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
-    paywallResponse: PaywallResponse? = nil,
+    paywall: Paywall? = nil,
     triggerResult: TriggerResult?,
     trackEvent: (Trackable) -> TrackingResult = Superwall.track
   ) {
@@ -137,7 +137,7 @@ final class TriggerSessionManager {
     guard let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: presentationInfo,
       presentingViewController: presentingViewController,
-      paywallResponse: paywallResponse,
+      paywallResponse: paywall,
       triggerResult: triggerResult
     ) else {
       return
@@ -149,11 +149,11 @@ final class TriggerSessionManager {
     session.trigger = outcome.trigger
     session.paywall = outcome.paywall
     session.products = TriggerSession.Products(
-      allProducts: paywallResponse?.swProducts ?? [],
+      allProducts: paywall?.swProducts ?? [],
       loadingInfo: .init(
-        startAt: paywallResponse?.productsLoadStartTime,
-        endAt: paywallResponse?.productsLoadCompleteTime,
-        failAt: paywallResponse?.productsLoadFailTime
+        startAt: paywall?.productsLoadStartTime,
+        endAt: paywall?.productsLoadCompleteTime,
+        failAt: paywall?.productsLoadFailTime
       )
     )
 

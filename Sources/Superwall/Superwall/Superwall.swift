@@ -54,7 +54,7 @@ public final class Superwall: NSObject {
   var presentationPublisher: AnyCancellable?
 
   /// The request that triggered the last successful paywall presentation.
-  var lastSuccessfulPresentationRequest: PaywallPresentationRequest?
+  var lastSuccessfulPresentationRequest: PresentationRequest?
   var presentingWindow: UIWindow?
   var didTryToAutoRestore = false
   var paywallWasPresentedThisSession = false
@@ -221,14 +221,14 @@ extension Superwall {
       if isPaywallPresented {
         await Superwall.dismiss()
       }
-      let presentationRequest = PaywallPresentationRequest(presentationInfo: presentationInfo)
+      let presentationRequest = PresentationRequest(presentationInfo: presentationInfo)
       await Superwall.shared.internallyPresent(presentationRequest)
         .asyncNoValue()
     case .triggerPaywall:
       // delay in case they are presenting a view controller alongside an event they are calling
       let twoHundredMilliseconds = UInt64(200_000_000)
       try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
-      let presentationRequest = PaywallPresentationRequest(presentationInfo: presentationInfo)
+      let presentationRequest = PresentationRequest(presentationInfo: presentationInfo)
       await Superwall.shared.internallyPresent(presentationRequest)
         .asyncNoValue()
     case .disallowedEventAsTrigger:

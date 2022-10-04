@@ -88,7 +88,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       createdAt: Date()
     )
     let paywallId = "abc"
-    let paywallResponse: PaywallResponse = .stub()
+    let paywallResponse: Paywall = .stub()
       .setting(\.id, to: paywallId)
       .setting(\.responseLoadStartTime, to: time)
       .setting(\.responseLoadCompleteTime, to: time)

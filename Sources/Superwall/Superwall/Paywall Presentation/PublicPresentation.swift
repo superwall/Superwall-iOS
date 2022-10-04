@@ -161,7 +161,7 @@ public extension Superwall {
     )
     let result = track(trackableEvent)
 
-    let presentationRequest = PaywallPresentationRequest(
+    let presentationRequest = PresentationRequest(
       presentationInfo: .explicitTrigger(result.data),
       paywallOverrides: paywallOverrides
     )

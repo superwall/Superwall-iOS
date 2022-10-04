@@ -11,7 +11,7 @@ import Combine
 extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Error {
   func presentPaywall(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
-    _ presentationPublisher: PaywallPresentationSubject
+    _ presentationPublisher: PresentationSubject
   ) -> AnyPublisher<PresentablePipelineOutput, Error> {
     flatMap { input in
       Future { promise in

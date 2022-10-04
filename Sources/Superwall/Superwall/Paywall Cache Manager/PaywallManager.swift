@@ -46,18 +46,18 @@ final class PaywallManager {
     from request: PaywallRequest,
     cached: Bool
   ) async throws -> SWPaywallViewController {
-    let response = try await PaywallResponseManager.shared.getResponse(from: request)
+    let paywall = try await PaywallRequestManager.shared.getPaywall(from: request)
 
     if cached,
-      let identifier = response.identifier,
-      let viewController = self.cache.getPaywall(withIdentifier: identifier) {
-      // Set paywall response again incase products have been substituted into paywallResponse.
-      viewController.paywallResponse = response
+      let identifier = paywall.identifier,
+      let viewController = self.cache.getPaywallViewController(withIdentifier: identifier) {
+      // Set paywall again incase products have been substituted into paywall.
+      viewController.paywall = paywall
       return viewController
     }
 
     let paywallViewController = SWPaywallViewController(
-      paywallResponse: response,
+      paywall: paywall,
       delegate: Superwall.shared
     )
 

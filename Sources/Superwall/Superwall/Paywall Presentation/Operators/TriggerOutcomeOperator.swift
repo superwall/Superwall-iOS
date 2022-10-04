@@ -21,13 +21,13 @@ struct TriggerResultOutcome {
 }
 
 struct AssignmentPipelineOutput {
-  let request: PaywallPresentationRequest
+  let request: PresentationRequest
   let triggerOutcome: TriggerResultOutcome
   var confirmableAssignment: ConfirmableAssignment?
   let debugInfo: DebugInfo
 }
 
-extension AnyPublisher where Output == (PaywallPresentationRequest, DebugInfo), Failure == Error {
+extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure == Error {
   func getTriggerOutcome(
     configManager: ConfigManager = .shared,
     storage: Storage = .shared

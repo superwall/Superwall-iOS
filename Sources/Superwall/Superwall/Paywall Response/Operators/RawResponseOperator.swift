@@ -19,7 +19,7 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
     }
     .flatMap(getCachedResponseOrLoad)
     .map {
-      let paywallInfo = $0.response.getPaywallInfo(fromEvent: $0.request.eventData)
+      let paywallInfo = $0.response.getInfo(fromEvent: $0.request.eventData)
       trackResponseLoaded(
         paywallInfo,
         event: $0.request.eventData
@@ -31,19 +31,19 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
 
   private func getCachedResponseOrLoad(
     _ request: PaywallRequest
-  ) -> AnyPublisher<(response: PaywallResponse, request: PaywallRequest), Error> {
+  ) -> AnyPublisher<(response: Paywall, request: PaywallRequest), Error> {
     Future {
       let responseLoadStartTime = Date()
       let paywallId = request.responseIdentifiers.paywallId
       let event = request.eventData
-      var response: PaywallResponse
+      var response: Paywall
 
       do {
-        if let paywallResponse = ConfigManager.shared.getStaticPaywallResponse(forPaywallId: paywallId) {
-          response = paywallResponse
+        if let paywall = ConfigManager.shared.getStaticPaywall(withId: paywallId) {
+          response = paywall
         } else {
-          response = try await Network.shared.getPaywallResponse(
-            withPaywallId: paywallId,
+          response = try await Network.shared.getPaywall(
+            withId: paywallId,
             fromEvent: event
           )
         }

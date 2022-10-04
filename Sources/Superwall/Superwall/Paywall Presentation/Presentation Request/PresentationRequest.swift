@@ -9,7 +9,7 @@ import UIKit
 import Combine
 
 /// Defines the information needed to request the presentation of a paywall.
-struct PaywallPresentationRequest {
+struct PresentationRequest {
   /// The type of trigger (implicit/explicit/fromIdentifier), and associated data.
   let presentationInfo: PresentationInfo
 

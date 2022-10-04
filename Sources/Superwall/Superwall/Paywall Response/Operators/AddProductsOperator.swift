@@ -8,13 +8,13 @@
 import Combine
 import Foundation
 
-typealias PipelineData = (response: PaywallResponse, request: PaywallRequest)
+typealias PipelineData = (response: Paywall, request: PaywallRequest)
 
 extension AnyPublisher where Output == PipelineData, Failure == Error {
   func addProducts() -> AnyPublisher<Output, Failure> {
     map { input in
       trackProductsLoadStart(
-        response: input.response,
+        paywall: input.response,
         event: input.request.eventData
       )
       return input
@@ -22,7 +22,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
     .flatMap(getProducts)
     .map { input in
       trackProductsLoadFinish(
-        paywallResponse: input.response,
+        paywall: input.response,
         event: input.request.eventData
       )
       return input
@@ -61,7 +61,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
       } catch {
         var input = input
         input.response.productsLoadFailTime = Date()
-        let paywallInfo = input.response.getPaywallInfo(fromEvent: input.request.eventData)
+        let paywallInfo = input.response.getInfo(fromEvent: input.request.eventData)
         trackProductLoadFail(paywallInfo: paywallInfo, event: input.request.eventData)
         throw error
       }
@@ -71,12 +71,12 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
 
   // MARK: - Analytics
   private func trackProductsLoadStart(
-    response: PaywallResponse,
+    paywall: Paywall,
     event: EventData?
   ) {
-    var response = response
-    response.productsLoadStartTime = Date()
-    let paywallInfo = response.getPaywallInfo(fromEvent: event)
+    var paywall = paywall
+    paywall.productsLoadStartTime = Date()
+    let paywallInfo = paywall.getInfo(fromEvent: event)
     let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
       state: .start,
       paywallInfo: paywallInfo,
@@ -108,10 +108,10 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
   }
 
   private func trackProductsLoadFinish(
-    paywallResponse: PaywallResponse,
+    paywall: Paywall,
     event: EventData?
   ) {
-    let paywallInfo = paywallResponse.getPaywallInfo(fromEvent: event)
+    let paywallInfo = paywall.getInfo(fromEvent: event)
     SessionEventsManager.shared.triggerSession.trackProductsLoad(
       forPaywallId: paywallInfo.id,
       state: .end

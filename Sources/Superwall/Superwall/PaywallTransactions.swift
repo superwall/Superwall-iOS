@@ -86,7 +86,7 @@ extension Superwall {
     paywallViewController: SWPaywallViewController,
     for product: SKProduct
   ) {
-    let isFreeTrialAvailable = paywallViewController.paywallResponse.isFreeTrialAvailable == true
+    let isFreeTrialAvailable = paywallViewController.paywall.isFreeTrialAvailable == true
 
     SessionEventsManager.shared.triggerSession.trackTransactionSucceeded(
       withId: id,
@@ -334,7 +334,7 @@ extension Superwall: SKPaymentTransactionObserver {
 					}
 				}
 			case .restored:
-        let isFreeTrialAvailable = paywallViewController.paywallResponse.isFreeTrialAvailable == true
+        let isFreeTrialAvailable = paywallViewController.paywall.isFreeTrialAvailable == true
         SessionEventsManager.shared.triggerSession.trackTransactionRestoration(
           withId: transaction.transactionIdentifier,
           product: product,

@@ -8,7 +8,7 @@
 import Foundation
 
 final class PaywallCache {
-  func getPaywall(
+  func getPaywallViewController(
     withIdentifier identifier: String?
   ) -> SWPaywallViewController? {
     let key = PaywallCacheLogic.key(
@@ -24,7 +24,7 @@ final class PaywallCache {
   func removePaywall(
     withIdentifier identifier: String?
   ) {
-    if let viewController = getPaywall(withIdentifier: identifier) {
+    if let viewController = getPaywallViewController(withIdentifier: identifier) {
       SWPaywallViewController.cache.remove(viewController)
     }
   }

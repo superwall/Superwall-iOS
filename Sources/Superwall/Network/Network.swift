@@ -47,10 +47,10 @@ class Network {
     }
   }
 
-  func getPaywallResponse(
-    withPaywallId identifier: String? = nil,
+  func getPaywall(
+    withId identifier: String? = nil,
     fromEvent event: EventData? = nil
-  ) async throws -> PaywallResponse {
+  ) async throws -> Paywall {
     do {
       return try await urlSession.request(.paywall(withIdentifier: identifier, fromEvent: event))
     } catch {

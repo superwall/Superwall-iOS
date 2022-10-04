@@ -133,8 +133,8 @@ extension Endpoint where Response == EventsResponse {
   }
 }
 
-// MARK: - PaywallResponse
-extension Endpoint where Response == PaywallResponse {
+// MARK: - Paywall
+extension Endpoint where Response == Paywall {
   static func paywall(
     withIdentifier identifier: String? = nil,
     fromEvent event: EventData? = nil

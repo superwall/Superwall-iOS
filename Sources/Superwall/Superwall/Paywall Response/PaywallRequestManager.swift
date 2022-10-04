@@ -8,13 +8,13 @@
 import Foundation
 import Combine
 
-actor PaywallResponseManager {
-  static let shared = PaywallResponseManager()
-  private var activeTasks: [String: Task<PaywallResponse, Error>] = [:]
-  private var paywallResponsesByHash: [String: PaywallResponse] = [:]
+actor PaywallRequestManager {
+  static let shared = PaywallRequestManager()
+  private var activeTasks: [String: Task<Paywall, Error>] = [:]
+  private var paywallsByHash: [String: Paywall] = [:]
 
-  func getResponse(from request: PaywallRequest) async throws -> PaywallResponse {
-    let paywallRequestHash = PaywallResponseLogic.requestHash(
+  func getPaywall(from request: PaywallRequest) async throws -> Paywall {
+    let requestHash = PaywallResponseLogic.requestHash(
       identifier: request.responseIdentifiers.paywallId,
       event: request.eventData
     )
@@ -23,17 +23,17 @@ actor PaywallResponseManager {
     let debuggerNotLaunched = await !SWDebugManager.shared.isDebuggerLaunched
     let shouldUseCache = notSubstitutingProducts && debuggerNotLaunched
 
-    if var response = paywallResponsesByHash[paywallRequestHash],
+    if var response = paywallsByHash[requestHash],
       shouldUseCache {
       response.experiment = request.responseIdentifiers.experiment
       return response
     }
 
-    if let existingTask = activeTasks[paywallRequestHash] {
+    if let existingTask = activeTasks[requestHash] {
       return try await existingTask.value
     }
 
-    let task = Task<PaywallResponse, Error> {
+    let task = Task<Paywall, Error> {
       do {
         let response = try await request.publisher
           .getRawResponse()
@@ -41,16 +41,16 @@ actor PaywallResponseManager {
           .map { $0.response }
           .throwableAsync()
 
-        paywallResponsesByHash[paywallRequestHash] = response
-        activeTasks[paywallRequestHash] = nil
+        paywallsByHash[requestHash] = response
+        activeTasks[requestHash] = nil
         return response
       } catch {
-        activeTasks[paywallRequestHash] = nil
+        activeTasks[requestHash] = nil
         throw error
       }
     }
 
-    activeTasks[paywallRequestHash] = task
+    activeTasks[requestHash] = task
 
     return try await task.value
   }

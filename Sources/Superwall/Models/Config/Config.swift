@@ -9,7 +9,7 @@ import Foundation
 
 struct Config: Decodable {
   var triggers: Set<Trigger>
-  var paywallResponses: [PaywallResponse]
+  var paywalls: [Paywall]
   var logLevel: Int
   var postback: PostbackRequest
   var locales: Set<String>
@@ -20,7 +20,7 @@ struct Config: Decodable {
 
   enum CodingKeys: String, CodingKey {
     case triggers = "triggerOptions"
-    case paywallResponses
+    case paywalls = "paywallReponses"
     case logLevel
     case postback
     case localization
@@ -32,7 +32,7 @@ struct Config: Decodable {
     let values = try decoder.container(keyedBy: CodingKeys.self)
 
     triggers = try values.decode(Set<Trigger>.self, forKey: .triggers)
-    paywallResponses = try values.decode([PaywallResponse].self, forKey: .paywallResponses)
+    paywalls = try values.decode([Paywall].self, forKey: .paywalls)
     logLevel = try values.decode(Int.self, forKey: .logLevel)
     postback = try values.decode(PostbackRequest.self, forKey: .postback)
     appSessionTimeout = try values.decode(Milliseconds.self, forKey: .appSessionTimeout)
@@ -44,7 +44,7 @@ struct Config: Decodable {
 
   init(
     triggers: Set<Trigger>,
-    paywallResponses: [PaywallResponse],
+    paywalls: [Paywall],
     logLevel: Int,
     postback: PostbackRequest,
     locales: Set<String>,
@@ -52,7 +52,7 @@ struct Config: Decodable {
     featureFlags: FeatureFlags
   ) {
     self.triggers = triggers
-    self.paywallResponses = paywallResponses
+    self.paywalls = paywalls
     self.logLevel = logLevel
     self.postback = postback
     self.locales = locales
@@ -66,7 +66,7 @@ extension Config: Stubbable {
   static func stub() -> Config {
     return Config(
       triggers: [.stub()],
-      paywallResponses: [.stub()],
+      paywalls: [.stub()],
       logLevel: 0,
       postback: .stub(),
       locales: [],

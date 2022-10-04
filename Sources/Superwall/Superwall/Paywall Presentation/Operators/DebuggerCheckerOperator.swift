@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-extension AnyPublisher where Output == (PaywallPresentationRequest, DebugInfo), Failure == Error {
+extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure == Error {
   func checkForDebugger() -> AnyPublisher<Output, Failure> {
     asyncMap { request, debugInfo in
       let isDebuggerLaunched = await SWDebugManager.shared.isDebuggerLaunched

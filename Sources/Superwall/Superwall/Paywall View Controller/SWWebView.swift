@@ -116,7 +116,7 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func trackPaywallError() {
-    delegate?.paywallResponse.webViewLoadFailTime = Date()
+    delegate?.paywall.webViewLoadFailTime = Date()
 
     guard let paywallInfo = delegate?.paywallInfo else {
       return

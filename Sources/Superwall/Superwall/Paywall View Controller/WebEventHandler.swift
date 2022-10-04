@@ -11,7 +11,7 @@ import WebKit
 
 protocol WebEventHandlerDelegate: AnyObject {
   var eventData: EventData? { get }
-  var paywallResponse: PaywallResponse { get set }
+  var paywall: Paywall { get set }
   var paywallInfo: PaywallInfo { get }
   var webView: SWWebView { get }
   var loadingState: PaywallLoadingState { get set }
@@ -40,16 +40,16 @@ final class WebEventHandler: WebEventDelegate {
       error: nil
     )
 
-    guard let paywallResponse = delegate?.paywallResponse else {
+    guard let paywall = delegate?.paywall else {
       return
     }
 
     switch event {
     case .templateParamsAndUserAttributes:
-      templateParams(from: paywallResponse)
+      templateParams(from: paywall)
     case .onReady(let paywalljsVersion):
-      delegate?.paywallResponse.paywalljsVersion = paywalljsVersion
-      didLoadWebView(from: paywallResponse)
+      delegate?.paywall.paywalljsVersion = paywalljsVersion
+      didLoadWebView(from: paywall)
     case .close:
       hapticFeedback()
       delegate?.eventDidOccur(.closed)
@@ -62,17 +62,14 @@ final class WebEventHandler: WebEventDelegate {
     case .restore:
       restorePurchases()
     case .purchase(productId: let id):
-      purchaseProduct(
-        withId: id,
-        from: paywallResponse
-      )
+      purchaseProduct(withId: id)
     case .custom(data: let customEvent):
       handleCustomEvent(customEvent)
     }
   }
 
-  private func templateParams(from paywallResponse: PaywallResponse) {
-    let params = paywallResponse.getBase64EventsString(
+  private func templateParams(from paywall: Paywall) {
+    let params = paywall.getBase64EventsString(
       params: delegate?.eventData?.parameters
     )
     let scriptSrc = """
@@ -99,10 +96,10 @@ final class WebEventHandler: WebEventDelegate {
     )
   }
 
-  private func didLoadWebView(from paywallResponse: PaywallResponse) {
+  private func didLoadWebView(from paywallResponse: Paywall) {
     if let paywallInfo = delegate?.paywallInfo {
       if paywallResponse.webViewLoadCompleteTime == nil {
-        delegate?.paywallResponse.webViewLoadCompleteTime = Date()
+        delegate?.paywall.webViewLoadCompleteTime = Date()
       }
 
       let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
@@ -202,10 +199,7 @@ final class WebEventHandler: WebEventDelegate {
     delegate?.eventDidOccur(.initiateRestore)
   }
 
-  private func purchaseProduct(
-    withId id: String,
-    from paywallResponse: PaywallResponse
-  ) {
+  private func purchaseProduct(withId id: String) {
     detectHiddenPaywallEvent("purchase")
     hapticFeedback()
     delegate?.eventDidOccur(.initiatePurchase(productId: id))
