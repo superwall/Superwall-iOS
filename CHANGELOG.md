@@ -8,6 +8,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 - Renames the package from `Paywall` to `Superwall`.
 - Sets the minimum iOS version to iOS 13.
+- Renames `preloadPaywalls(forTriggers:)` to `preloadPaywalls(forEvents:)`
 - Renames `configure(apiKey:userId:delegate:options:)` to `configure(apiKey:delegate:options:)`. This means you no longer provide a `userId` with configure. Instead you must use the new identity API detailed below.
 - Changes `PaywallOptions` to `SuperwallOptions`. This now clearly defines which of the options are explicit to paywalls vs other configuration options within the SDK.
 - Renames `Superwall.trigger(event:)` to `Superwall.track(event:)`. We found that having separate implicit (`Superwall.track(event:)`) and explicit (`Superwall.trigger(event:)`) trigger functions caused confusion. So from now on, you'll just use `Superwall.track(event:)` for all events within your app.

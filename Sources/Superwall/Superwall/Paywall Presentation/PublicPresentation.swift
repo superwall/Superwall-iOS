@@ -240,20 +240,4 @@ public extension Superwall {
       completion?(error)
     }
   }
-
-  // MARK: - Unavailable
-
-  @available(*, unavailable, renamed: "track")
-  @objc static func trigger(
-    event: String? = nil,
-    params: [String: Any]? = nil,
-    on viewController: UIViewController? = nil,
-    ignoreSubscriptionStatus: Bool = false,
-    presentationStyleOverride: PaywallPresentationStyle = .none,
-    onSkip: ((NSError?) -> Void)? = nil,
-    onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
-  ) {
-    // Won't be called, just kept to prompt the user to rename.
-  }
 }

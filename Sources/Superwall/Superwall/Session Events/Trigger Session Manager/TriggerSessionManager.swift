@@ -8,6 +8,7 @@
 
 import UIKit
 import StoreKit
+import Combine
 
 final class TriggerSessionManager {
   weak var delegate: SessionEventsDelegate?
@@ -27,6 +28,8 @@ final class TriggerSessionManager {
   /// A local count for transactions used within the trigger session.
   private var transactionCount: TriggerSession.Transaction.Count?
 
+  private var cancellable: AnyCancellable?
+
   enum LoadState {
     case start
     case end
@@ -43,6 +46,7 @@ final class TriggerSessionManager {
     self.storage = storage
     self.configManager = configManager
     addObservers()
+    listenForConfig()
   }
 
   private func addObservers() {
@@ -58,6 +62,14 @@ final class TriggerSessionManager {
       name: UIApplication.willEnterForegroundNotification,
       object: nil
     )
+  }
+
+  private func listenForConfig() {
+    cancellable = configManager.$config
+      .compactMap { $0 }
+      .sink { [weak self] config in
+        self?.createSessions(from: config)
+      }
   }
 
   // MARK: - App Lifecycle
@@ -80,7 +92,7 @@ final class TriggerSessionManager {
     // Loop through triggers and create a session for each.
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-        configRequestId: configManager.configRequestId,
+        configRequestId: configManager.config?.requestId,
         userAttributes: IdentityManager.shared.userAttributes,
         isSubscribed: Superwall.shared.isUserSubscribed,
         eventName: trigger.eventName,
@@ -172,7 +184,7 @@ final class TriggerSessionManager {
     // Recreate a pending trigger session
     let eventName = currentTriggerSession.trigger.eventName
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-      configRequestId: configManager.configRequestId,
+      configRequestId: configManager.config?.requestId,
       userAttributes: IdentityManager.shared.userAttributes,
       isSubscribed: Superwall.shared.isUserSubscribed,
       eventName: eventName,

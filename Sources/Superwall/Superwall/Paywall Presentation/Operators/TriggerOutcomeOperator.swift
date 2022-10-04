@@ -36,7 +36,7 @@ extension AnyPublisher where Output == (PaywallPresentationRequest, DebugInfo), 
       if let eventData = request.presentationInfo.eventData {
         let assignmentOutcome = AssignmentLogic.getOutcome(
           forEvent: eventData,
-          triggers: ConfigManager.shared.triggers,
+          triggers: ConfigManager.shared.triggersByEventName,
           configManager: configManager,
           storage: storage
         )

@@ -116,7 +116,6 @@ public final class Superwall: NSObject {
     guard let apiKey = apiKey else {
       return
     }
-    configManager.setOptions(options)
     Storage.shared.configure(apiKey: apiKey)
 
     // Initialise session events manager and app session manager on main thread
@@ -130,7 +129,7 @@ public final class Superwall: NSObject {
     SKPaymentQueue.default().add(self)
     Storage.shared.recordAppInstall()
     Task {
-      await configManager.fetchConfiguration()
+      await configManager.fetchConfiguration(withOptions: options)
       await identityManager.configure()
     }
   }
@@ -173,17 +172,19 @@ public final class Superwall: NSObject {
   ///
   /// Note: This will not reload any paywalls you've already preloaded via ``Superwall/Superwall/preloadPaywalls(forTriggers:)``.
   @objc public static func preloadAllPaywalls() {
-    ConfigManager.shared.preloadAllPaywalls()
+    Task {
+      await ConfigManager.shared.preloadAllPaywalls()
+    }
   }
 
-  /// Preloads paywalls for specific trigger names.
+  /// Preloads paywalls for specific event names.
   ///
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
-  @objc public static func preloadPaywalls(forTriggers triggers: Set<String>) {
+  @objc public static func preloadPaywalls(forEvents eventNames: Set<String>) {
     Task {
-      await ConfigManager.shared.preloadPaywalls(forTriggers: triggers)
+      await ConfigManager.shared.preloadPaywalls(for: eventNames)
     }
   }
 }
@@ -211,7 +212,7 @@ extension Superwall {
 
     let outcome = SuperwallLogic.canTriggerPaywall(
       eventName: event.name,
-      triggers: Set(ConfigManager.shared.triggers.keys),
+      triggers: Set(ConfigManager.shared.triggersByEventName.keys),
       isPaywallPresented: isPaywallPresented
     )
 
@@ -251,7 +252,7 @@ extension Superwall: SWPaywallViewControllerDelegate {
     paywallViewController: SWPaywallViewController,
     result: PaywallPresentationResult
   ) {
-		// TODO: log this
+    // TODO: log this
     switch result {
     case .closed:
       self.dismiss(
@@ -278,26 +279,5 @@ extension Superwall: SWPaywallViewControllerDelegate {
     case .custom(let string):
       Superwall.delegate?.handleCustomPaywallAction?(withName: string)
     }
-	}
-
-  // MARK: - Unavailable methods
-  @available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
-  @discardableResult
-  @objc public static func configure(
-    apiKey: String,
-    userId: String?,
-    delegate: SuperwallDelegate? = nil,
-    options: SuperwallOptions? = nil
-  ) -> Superwall {
-    return shared
-  }
-
-  /// Links a `userId` to Superwall's automatically generated alias. Call this as soon as you have a userId. If a user with a different id was previously identified, calling this will automatically call `Paywall.reset()`
-  ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
-  ///  - Returns: The shared Paywall instance.
-  @available(*, unavailable, message: "Please use login(userId:) or createAccount(userId:).")
-  @discardableResult
-  @objc public static func identify(userId: String) -> Superwall {
-    return shared
   }
 }

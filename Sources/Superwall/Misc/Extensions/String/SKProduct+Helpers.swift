@@ -358,7 +358,7 @@ extension SKProduct {
   }
 
   var hasFreeTrial: Bool {
-    return introductoryPrice?.subscriptionPeriod != nil
+    return introductoryPrice != nil
   }
 
   var trialPeriodEndDate: String {

@@ -15,16 +15,11 @@ import Foundation
 import StoreKit
 
 class ProductsManager: NSObject {
-	private let productsRequestFactory: ProductsRequestFactory
 	private var cachedProductsByIdentifier: [String: SKProduct] = [:]
 	private let queue = DispatchQueue(label: "ProductsManager")
 	private var productsByRequests: [SKRequest: Set<String>] = [:]
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
-
-	init(productsRequestFactory: ProductsRequestFactory = ProductsRequestFactory()) {
-		self.productsRequestFactory = productsRequestFactory
-	}
 
   func getProducts(identifiers: Set<String>) async throws -> Set<SKProduct> {
     return try await withCheckedThrowingContinuation { continuation in
@@ -34,7 +29,7 @@ class ProductsManager: NSObject {
     }
   }
 
-	func products(
+	private func products(
     withIdentifiers identifiers: Set<String>,
     completion: @escaping ProductRequestCompletionBlock
   ) {
@@ -83,7 +78,7 @@ class ProductsManager: NSObject {
         info: ["product_ids": identifiers],
         error: nil
       )
-			let request = self.productsRequestFactory.request(productIdentifiers: identifiers)
+			let request = SKProductsRequest(productIdentifiers: identifiers)
 			request.delegate = self
 			self.completionHandlers[identifiers] = [completion]
 			self.productsByRequests[request] = identifiers
@@ -91,7 +86,15 @@ class ProductsManager: NSObject {
 		}
 	}
 
-	func cacheProduct(_ product: SKProduct) {
+  private func cacheProducts(_ products: [SKProduct]) {
+    let productsByIdentifier = products.reduce(into: [:]) { resultDict, product in
+      resultDict[product.productIdentifier] = product
+    }
+
+    cachedProductsByIdentifier = cachedProductsByIdentifier.merging(productsByIdentifier)
+  }
+
+	private func cacheProduct(_ product: SKProduct) {
 		queue.async {
 			self.cachedProductsByIdentifier[product.productIdentifier] = product
 		}
@@ -188,22 +191,5 @@ extension ProductsManager: SKProductsRequestDelegate {
 			}
 		}
 		request.cancel()
-	}
-}
-
-private extension ProductsManager {
-	func cacheProducts(_ products: [SKProduct]) {
-		let productsByIdentifier = products.reduce(into: [:]) { resultDict, product in
-			resultDict[product.productIdentifier] = product
-		}
-
-		cachedProductsByIdentifier = cachedProductsByIdentifier.merging(productsByIdentifier)
-	}
-}
-
-
-class ProductsRequestFactory {
-	func request(productIdentifiers: Set<String>) -> SKProductsRequest {
-		return SKProductsRequest(productIdentifiers: productIdentifiers)
 	}
 }

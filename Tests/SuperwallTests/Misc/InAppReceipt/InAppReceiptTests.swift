@@ -15,7 +15,7 @@ class InAppReceiptTests: XCTestCase {
     let getReceiptData: () -> Data = {
       return MockReceiptData.crashReceipt
     }
-    let inAppReceipt = InAppReceipt(getReceiptData: getReceiptData)
+    let inAppReceipt = ReceiptManager(getReceiptData: getReceiptData)
     let hasPurchased = inAppReceipt.hasPurchasedInSubscriptionGroupOfProduct(withId: "CYCLEMAPS_PREMIUM")
     XCTAssertFalse(hasPurchased)
   }
@@ -24,7 +24,7 @@ class InAppReceiptTests: XCTestCase {
     let getReceiptData: () -> Data = {
       return MockReceiptData.newReceipt
     }
-    let inAppReceipt = InAppReceipt(getReceiptData: getReceiptData)
+    let inAppReceipt = ReceiptManager(getReceiptData: getReceiptData)
     let hasPurchased = inAppReceipt.hasPurchasedInSubscriptionGroupOfProduct(withId: "CYCLEMAPS_PREMIUM")
     XCTAssertTrue(hasPurchased)
   }
@@ -33,7 +33,7 @@ class InAppReceiptTests: XCTestCase {
     let getReceiptData: () -> Data = {
       return MockReceiptData.newReceipt
     }
-    let inAppReceipt = InAppReceipt(getReceiptData: getReceiptData)
+    let inAppReceipt = ReceiptManager(getReceiptData: getReceiptData)
     let hasPurchased = inAppReceipt.hasPurchasedInSubscriptionGroupOfProduct(withId: "OTHER_ID")
     XCTAssertFalse(hasPurchased)
   }
@@ -42,7 +42,7 @@ class InAppReceiptTests: XCTestCase {
     let getReceiptData: () -> Data = {
       return MockReceiptData.legacyReceipt
     }
-    let inAppReceipt = InAppReceipt(getReceiptData: getReceiptData)
+    let inAppReceipt = ReceiptManager(getReceiptData: getReceiptData)
     let hasPurchased = inAppReceipt.hasPurchasedInSubscriptionGroupOfProduct(withId: "com.nutcallalert.inapp.optimum")
     XCTAssertTrue(hasPurchased)
   }
@@ -51,7 +51,7 @@ class InAppReceiptTests: XCTestCase {
     let getReceiptData: () -> Data = {
       return MockReceiptData.legacyReceipt
     }
-    let inAppReceipt = InAppReceipt(getReceiptData: getReceiptData)
+    let inAppReceipt = ReceiptManager(getReceiptData: getReceiptData)
     let hasPurchased = inAppReceipt.hasPurchasedInSubscriptionGroupOfProduct(withId: "otherId")
     XCTAssertFalse(hasPurchased)
   }
@@ -60,7 +60,7 @@ class InAppReceiptTests: XCTestCase {
     let getReceiptData: () -> Data = {
       return MockReceiptData.legacyReceipt
     }
-    let inAppReceipt = InAppReceipt(getReceiptData: getReceiptData)
+    let inAppReceipt = ReceiptManager(getReceiptData: getReceiptData)
     let hasPurchased = inAppReceipt.hasPurchasedInSubscriptionGroupOfProduct(withId: "com.nutcallalert.inapp.optimum")
     XCTAssertTrue(hasPurchased)
     XCTAssertEqual(inAppReceipt.purchasedProductIds, Set(["com.nutcallalert.inapp.pro", "com.nutcallalert.inapp.optimum", "com.nutcallalert.inapp.lite"]))
@@ -90,7 +90,7 @@ class InAppReceiptTests: XCTestCase {
     let getReceiptData: () -> Data = {
       return MockReceiptData.legacyReceipt
     }
-    let inAppReceipt = InAppReceipt(
+    let inAppReceipt = ReceiptManager(
       getReceiptData: getReceiptData,
       storeKitManager: storeKitManager
     )
@@ -123,7 +123,7 @@ class InAppReceiptTests: XCTestCase {
     let getReceiptData: () -> Data = {
       return MockReceiptData.legacyReceipt
     }
-    let inAppReceipt = InAppReceipt(
+    let inAppReceipt = ReceiptManager(
       getReceiptData: getReceiptData,
       storeKitManager: storeKitManager
     )
@@ -154,7 +154,7 @@ class InAppReceiptTests: XCTestCase {
     let getReceiptData: () -> Data = {
       return MockReceiptData.legacyReceipt
     }
-    let inAppReceipt = InAppReceipt(
+    let inAppReceipt = ReceiptManager(
       getReceiptData: getReceiptData,
       storeKitManager: storeKitManager
     )
@@ -178,7 +178,7 @@ class InAppReceiptTests: XCTestCase {
     let getReceiptData: () -> Data = {
       return MockReceiptData.legacyReceipt
     }
-    let inAppReceipt = InAppReceipt(
+    let inAppReceipt = ReceiptManager(
       getReceiptData: getReceiptData,
       storeKitManager: storeKitManager
     )

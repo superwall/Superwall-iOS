@@ -16,6 +16,8 @@ struct Config: Decodable {
   var appSessionTimeout: Milliseconds
   var featureFlags: FeatureFlags
 
+  var requestId: String?
+
   enum CodingKeys: String, CodingKey {
     case triggers = "triggerOptions"
     case paywallResponses

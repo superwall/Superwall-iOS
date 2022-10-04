@@ -99,10 +99,7 @@ extension TriggerSession.Transaction {
           type: introductoryPrice.type
         )
 
-        let hasPurchasedProduct = InAppReceipt.shared.hasPurchasedInSubscriptionGroupOfProduct(
-          withId: product.productIdentifier
-        )
-        self.introductoryRedeemable = !hasPurchasedProduct
+        self.introductoryRedeemable = StoreKitManager.shared.isFreeTrialAvailable(for: product)
         self.hasIntroductoryOffer = true
       } else {
         self.hasIntroductoryOffer = false

@@ -6,25 +6,28 @@
 //
 
 import UIKit
-import Combine
 
 class ConfigManager {
+  /// The shared ConfigManager instance
   static let shared = ConfigManager()
 
-  var options = SuperwallOptions()
+  /// The configuration of the Superwall dashboard
   @Published var config: Config?
-  var configRequestId = ""
-  /// Used to store the config request if it occurred in the background.
-  var pendingConfigRequest: PendingConfigRequest?
-  var triggers: [String: Trigger] = [:]
-  private let storage: Storage
-  private let network: Network
-  private let paywallManager: PaywallManager
+
+  /// Options for configuring the SDK.
+  var options = SuperwallOptions()
+
+  /// A dictionary of triggers by their event name.
+  var triggersByEventName: [String: Trigger] = [:]
+
   /// A memory store of assignments that are yet to be confirmed.
   ///
   /// When the trigger is fired, the assignment is confirmed and stored to disk.
   var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
-  private var cancellables: [AnyCancellable] = []
+  
+  private let storage: Storage
+  private let network: Network
+  private let paywallManager: PaywallManager
 
   init(
     storage: Storage = .shared,
@@ -36,29 +39,21 @@ class ConfigManager {
     self.paywallManager = paywallManager
   }
 
-  func setOptions(_ options: SuperwallOptions?) {
-    self.options = options ?? self.options
-  }
-
   func fetchConfiguration(
-    applicationState: UIApplication.State? = nil,
-    appSessionManager: AppSessionManager = .shared,
-    sessionEventsManager: SessionEventsManager = .shared,
+    withOptions options: SuperwallOptions?,
     requestId: String = UUID().uuidString
   ) async {
+    self.options = options ?? self.options
+
     do {
       let config = try await network.getConfig(withRequestId: requestId)
+      Task { await sendProductsBack(from: config) }
 
-      configRequestId = requestId
-      appSessionManager.appSessionTimeout = config.appSessionTimeout
-      triggers = TriggerLogic.getTriggerDictionary(from: config.triggers)
-      sessionEventsManager.triggerSession.createSessions(from: config)
-      assignVariants(from: config.triggers)
-      Task {
-        await executePostback(from: config)
-      }
+      triggersByEventName = TriggerLogic.getTriggersByEventName(from: config.triggers)
+      choosePaywallVariants(from: config.triggers)
+      await StoreKitManager.shared.loadPurchasedProducts()
       self.config = config
-      preloadPaywalls()
+      Task { await preloadPaywalls() }
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -76,21 +71,19 @@ class ConfigManager {
       return
     }
     unconfirmedAssignments.removeAll()
-    assignVariants(from: config.triggers)
-    preloadPaywalls()
+    choosePaywallVariants(from: config.triggers)
+    Task { await preloadPaywalls() }
   }
 
   // MARK: - Assignments
 
-  private func assignVariants(from triggers: Set<Trigger>) {
-    var confirmedAssignments = storage.getConfirmedAssignments()
-    let result = ConfigLogic.assignVariants(
-      fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments
-    )
-    unconfirmedAssignments = result.unconfirmedAssignments
-    confirmedAssignments = result.confirmedAssignments
-    storage.saveConfirmedAssignments(confirmedAssignments)
+  private func choosePaywallVariants(from triggers: Set<Trigger>) {
+    updateAssignments { confirmedAssignments in
+      ConfigLogic.chooseAssignments(
+        fromTriggers: triggers,
+        confirmedAssignments: confirmedAssignments
+      )
+    }
   }
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
@@ -105,18 +98,17 @@ class ConfigManager {
     do {
       let assignments = try await network.getAssignments()
 
-      var confirmedAssignments = storage.getConfirmedAssignments()
-      let result = ConfigLogic.transferAssignmentsFromServerToDisk(
-        assignments: assignments,
-        triggers: triggers,
-        confirmedAssignments: confirmedAssignments,
-        unconfirmedAssignments: self.unconfirmedAssignments
-      )
-      unconfirmedAssignments = result.unconfirmedAssignments
-      confirmedAssignments = result.confirmedAssignments
-      storage.saveConfirmedAssignments(confirmedAssignments)
+      updateAssignments { confirmedAssignments in
+        ConfigLogic.transferAssignmentsFromServerToDisk(
+          assignments: assignments,
+          triggers: triggers,
+          confirmedAssignments: confirmedAssignments,
+          unconfirmedAssignments: unconfirmedAssignments
+        )
+      }
+
       if Superwall.options.paywalls.shouldPreload {
-        self.preloadAllPaywalls()
+        Task { await preloadAllPaywalls() }
       }
     } catch {
       Logger.debug(
@@ -124,6 +116,20 @@ class ConfigManager {
         scope: .configManager,
         message: "Error retrieving assignments.",
         error: error
+      )
+    }
+  }
+
+  /// Sends an assignment confirmation to the server and updates on-device assignments.
+  func confirmAssignment(_ assignment: ConfirmableAssignment) {
+    let postback: AssignmentPostback = .create(from: assignment)
+    Task { await network.confirmAssignments(postback) }
+
+    updateAssignments { confirmedAssignments in
+      ConfigLogic.move(
+        assignment,
+        from: unconfirmedAssignments,
+        to: confirmedAssignments
       )
     }
   }
@@ -136,18 +142,24 @@ class ConfigManager {
     )
   }
 
-  private func getAllActiveTreatmentPaywallIds() -> Set<String> {
-    guard let triggers = config?.triggers else {
-      return []
-    }
-    let confirmedAssignments = storage.getConfirmedAssignments()
-    return ConfigLogic.getAllActiveTreatmentPaywallIds(
-      fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
-    )
+  /// Performs a given operation on the confirmed assignments, before updating both confirmed
+  /// and unconfirmed assignments.
+  ///
+  /// - Parameters:
+  ///   - operation: Provided logic that takes confirmed assignments by ID and returns updated assignments.
+  private func updateAssignments(
+    using operation: ([Experiment.ID : Experiment.Variant]) -> ConfigLogic.AssignmentOutcome
+  ) {
+    var confirmedAssignments = storage.getConfirmedAssignments()
+
+    let updatedAssignments = operation(confirmedAssignments)
+    unconfirmedAssignments = updatedAssignments.unconfirmed
+    confirmedAssignments = updatedAssignments.confirmed
+
+    storage.saveConfirmedAssignments(confirmedAssignments)
   }
 
+  // MARK: - Preloading Paywalls
   private func getTreatmentPaywallIds(from triggers: Set<Trigger>) -> Set<String> {
     let confirmedAssignments = storage.getConfirmedAssignments()
     return ConfigLogic.getActiveTreatmentPaywallIds(
@@ -157,44 +169,33 @@ class ConfigManager {
     )
   }
 
-  func confirmAssignments(_ confirmableAssignment: ConfirmableAssignment) {
-    let assignmentPostback = ConfirmableAssignments(
-      assignments: [
-        Assignment(
-          experimentId: confirmableAssignment.experimentId,
-          variantId: confirmableAssignment.variant.id
-        )
-      ]
-    )
-
-    Task { await network.confirmAssignments(assignmentPostback) }
-
-    var confirmedAssignments = storage.getConfirmedAssignments()
-    confirmedAssignments[confirmableAssignment.experimentId] = confirmableAssignment.variant
-    storage.saveConfirmedAssignments(confirmedAssignments)
-    unconfirmedAssignments[confirmableAssignment.experimentId] = nil
-  }
-
   /// Preloads paywalls.
   ///
   /// A developer can disable preloading of paywalls by setting ``SuperwallOptions/shouldPreloadPaywalls``.
-  private func preloadPaywalls() {
+  private func preloadPaywalls() async {
     guard Superwall.options.paywalls.shouldPreload else {
       return
     }
-    preloadAllPaywalls()
+    await preloadAllPaywalls()
   }
 
   /// Preloads paywalls referenced by triggers.
-  func preloadAllPaywalls() {
-    let triggerPaywallIdentifiers = getAllActiveTreatmentPaywallIds()
-    preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
+  func preloadAllPaywalls() async {
+    let config = await $config.hasValue()
+
+    let confirmedAssignments = storage.getConfirmedAssignments()
+    let paywallIds = ConfigLogic.getAllActiveTreatmentPaywallIds(
+      fromTriggers: config.triggers,
+      confirmedAssignments: confirmedAssignments,
+      unconfirmedAssignments: unconfirmedAssignments
+    )
+    preloadPaywalls(withIdentifiers: paywallIds)
   }
 
   /// Preloads paywalls referenced by the provided triggers.
-  func preloadPaywalls(forTriggers triggerNames: Set<String>) async {
+  func preloadPaywalls(for eventNames: Set<String>) async {
     let config = await $config.hasValue()
-    let triggersToPreload = config.triggers.filter { triggerNames.contains($0.eventName) }
+    let triggersToPreload = config.triggers.filter { eventNames.contains($0.eventName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
   }
@@ -212,8 +213,8 @@ class ConfigManager {
     }
   }
 
-  /// This sends product data back to the dashboard
-  private func executePostback(from config: Config) async {
+  /// This sends product data back to the dashboard.
+  private func sendProductsBack(from config: Config) async {
     guard config.featureFlags.enablePostback else {
       return
     }
@@ -224,7 +225,6 @@ class ConfigManager {
       try await Task.sleep(nanoseconds: nanosecondDelay)
 
       let productIds = config.postback.productsToPostBack.map { $0.identifier }
-
       let products = try await StoreKitManager.shared.getProducts(withIds: productIds)
       let postbackProducts = products.productsById.values.map(PostbackProduct.init)
       let postback = Postback(products: postbackProducts)

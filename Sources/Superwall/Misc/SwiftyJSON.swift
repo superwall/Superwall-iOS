@@ -252,8 +252,6 @@ struct JSON {
   }
 
   /// The static null JSON
-  @available(*, unavailable, renamed:"null")
-  static var nullJSON: JSON { return null }
   static var null: JSON { return JSON(NSNull()) }
 }
 

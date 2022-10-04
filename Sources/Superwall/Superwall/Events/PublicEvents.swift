@@ -8,33 +8,6 @@
 import Foundation
 
 public extension Superwall {
-  /// Tracks a custom analytical event with optional parameters.
-  ///
-  /// Any event you track is recorded in the Superwall Dashboard. You can use these events to create implicit triggers. See <doc:TrackingEvents> for more info.
-  ///
-  /// - Parameter name: The name of your event
-  /// - Parameter params: Custom parameters you'd like to include in your event. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
-  ///
-  /// Here's how you might track an event:
-  /// ```swift
-  /// Superwall.track(
-  ///   "onboarding_skip",
-  ///   ["steps_completed": 4]
-  /// )
-  /// ```
-  @available(*, unavailable, renamed: "track(event:params:)")
-  @objc static func track(
-    _ name: String,
-    _ params: [String: Any] = [:]
-  ) {
-    let trackableEvent = UserInitiatedEvent.Track(
-      rawName: name,
-      canImplicitlyTriggerPaywall: true,
-      customParameters: params
-    )
-    Superwall.track(trackableEvent)
-  }
-
   /// Set user attributes for use in your paywalls and the dashboard.
   ///
   /// If the existing user attributes dictionary already has a value for a given property, the old value is overwritten. Other existing properties will not be affected.
@@ -109,7 +82,7 @@ public extension Superwall {
   /// Handles a deep link sent to your app to open a preview of your paywall.
   ///
   /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
-  static func handleDeepLink(_ url: URL) {
+  @objc static func handleDeepLink(_ url: URL) {
     track(InternalSuperwallEvent.DeepLink(url: url))
     Task {
       await SWDebugManager.shared.handle(deepLinkUrl: url)

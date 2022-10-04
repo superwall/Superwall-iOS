@@ -35,70 +35,6 @@ enum PaywallResponseLogic {
     return "\(id)_\(locale)"
   }
 
-  static func getTriggerResultAndConfirmAssignment(
-    presentationInfo: PresentationInfo,
-    configManager: ConfigManager = .shared,
-    storage: Storage = .shared,
-    triggers: [String: Trigger]
-  ) -> TriggerResultOutcome {
-    if let eventData = presentationInfo.eventData {
-      let triggerAssignmentOutcome = AssignmentLogic.getOutcome(
-        forEvent: eventData,
-        triggers: triggers,
-        configManager: configManager,
-        storage: storage
-      )
-
-      // Confirm any triggers that the user is assigned
-      if let confirmableAssignment = triggerAssignmentOutcome.confirmableAssignment {
-        configManager.confirmAssignments(confirmableAssignment)
-      }
-
-      return getOutcome(forResult: triggerAssignmentOutcome.result)
-    } else {
-      let identifiers = ResponseIdentifiers(paywallId: presentationInfo.identifier)
-      return TriggerResultOutcome(
-        info: .paywall(identifiers)
-      )
-    }
-  }
-
-  private static func getOutcome(
-    forResult triggerResult: TriggerResult
-  ) -> TriggerResultOutcome {
-    switch triggerResult {
-    case .paywall(let experiment):
-      let identifiers = ResponseIdentifiers(
-        paywallId: experiment.variant.paywallId,
-        experiment: experiment
-      )
-      return TriggerResultOutcome(
-        info: .paywall(identifiers),
-        result: triggerResult
-      )
-    case let .holdout(experiment):
-      return TriggerResultOutcome(
-        info: .holdout(experiment),
-        result: triggerResult
-      )
-    case .noRuleMatch:
-      return TriggerResultOutcome(
-        info: .noRuleMatch,
-        result: triggerResult
-      )
-    case .triggerNotFound:
-      return TriggerResultOutcome(
-        info: .triggerNotFound,
-        result: triggerResult
-      )
-    case .error(let error):
-      return TriggerResultOutcome(
-        info: .error(error),
-        result: triggerResult
-      )
-    }
-  }
-
   static func handlePaywallError(
     _ error: Error,
     forEvent event: EventData?,
@@ -138,11 +74,11 @@ enum PaywallResponseLogic {
     fromProducts products: [Product],
     productsById: [String: SKProduct],
     isFreeTrialAvailableOverride: Bool?,
-    hasPurchased: @escaping (String) -> Bool = InAppReceipt.shared.hasPurchasedInSubscriptionGroupOfProduct(withId:)
+    isFreeTrialAvailable: @escaping (SKProduct) -> Bool = StoreKitManager.shared.isFreeTrialAvailable(for:)
   ) -> ProductProcessingOutcome {
     var legacyVariables: [Variable] = []
     var newVariables: [ProductVariable] = []
-    var isFreeTrialAvailable: Bool?
+    var hasFreeTrial: Bool?
     var resetFreeTrialOverride = false
     var orderedSwProducts: [SWProduct] = []
 
@@ -166,14 +102,11 @@ enum PaywallResponseLogic {
       newVariables.append(productVariable)
 
       if product.type == .primary {
-        isFreeTrialAvailable = appleProduct.hasFreeTrial
-        if hasPurchased(product.id),
-          appleProduct.hasFreeTrial {
-          isFreeTrialAvailable = false
-        }
+        hasFreeTrial = isFreeTrialAvailable(appleProduct)
+
         // use the override if it is set
         if let freeTrialOverride = isFreeTrialAvailableOverride {
-          isFreeTrialAvailable = freeTrialOverride
+          hasFreeTrial = freeTrialOverride
           resetFreeTrialOverride = true
         }
       }
@@ -183,7 +116,7 @@ enum PaywallResponseLogic {
       variables: legacyVariables,
       productVariables: newVariables,
       orderedSwProducts: orderedSwProducts,
-      isFreeTrialAvailable: isFreeTrialAvailable,
+      isFreeTrialAvailable: hasFreeTrial,
       resetFreeTrialOverride: resetFreeTrialOverride
     )
   }

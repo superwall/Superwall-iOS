@@ -13,8 +13,8 @@ enum ConfigLogic {
     case invalidState
   }
   struct AssignmentOutcome {
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant]
-    let unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
+    let confirmed: [Experiment.ID: Experiment.Variant]
+    let unconfirmed: [Experiment.ID: Experiment.Variant]
   }
 
   static func chooseVariant(
@@ -92,7 +92,7 @@ enum ConfigLogic {
     return groupedTriggerRules
   }
 
-  static func assignVariants(
+  static func chooseAssignments(
     fromTriggers triggers: Set<Trigger>,
     confirmedAssignments: [Experiment.ID: Experiment.Variant]
   ) -> AssignmentOutcome {
@@ -128,9 +128,26 @@ enum ConfigLogic {
       }
     }
 
-    return .init(
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
+    return AssignmentOutcome(
+      confirmed: confirmedAssignments,
+      unconfirmed: unconfirmedAssignments
+    )
+  }
+
+  static func move(
+    _ newAssignment: ConfirmableAssignment,
+    from unconfirmedAssignments: [Experiment.ID: Experiment.Variant],
+    to confirmedAssignments: [Experiment.ID: Experiment.Variant]
+  ) -> AssignmentOutcome {
+    var confirmedAssignments = confirmedAssignments
+    confirmedAssignments[newAssignment.experimentId] = newAssignment.variant
+
+    var unconfirmedAssignments = unconfirmedAssignments
+    unconfirmedAssignments[newAssignment.experimentId] = nil
+
+    return ConfigLogic.AssignmentOutcome(
+      confirmed: confirmedAssignments,
+      unconfirmed: unconfirmedAssignments
     )
   }
 
@@ -165,8 +182,8 @@ enum ConfigLogic {
     }
 
     return .init(
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
+      confirmed: confirmedAssignments,
+      unconfirmed: unconfirmedAssignments
     )
   }
 

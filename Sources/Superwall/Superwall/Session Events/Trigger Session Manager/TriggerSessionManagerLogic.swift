@@ -137,7 +137,7 @@ enum TriggerSessionManagerLogic {
   }
 
   static func createPendingTriggerSession(
-    configRequestId: String,
+    configRequestId: String?,
     userAttributes: [String: Any],
     isSubscribed: Bool,
     eventName: String,
@@ -145,7 +145,7 @@ enum TriggerSessionManagerLogic {
     appSession: AppSession
   ) -> TriggerSession {
     return TriggerSession(
-      configRequestId: configRequestId,
+      configRequestId: configRequestId ?? "",
       userAttributes: JSON(userAttributes),
       isSubscribed: isSubscribed,
       trigger: TriggerSession.Trigger(

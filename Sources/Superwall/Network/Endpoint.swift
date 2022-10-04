@@ -243,7 +243,7 @@ extension Endpoint where Response == ConfirmedAssignmentResponse {
     )
   }
 
-  static func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) -> Self {
+  static func confirmAssignments(_ confirmableAssignments: AssignmentPostback) -> Self {
     let bodyData = try? JSONEncoder.toSnakeCase.encode(confirmableAssignments)
 
     return Endpoint(

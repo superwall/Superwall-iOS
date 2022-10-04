@@ -106,7 +106,8 @@ class Network {
       .async()
 
     do {
-      let config = try await urlSession.request(.config(requestId: requestId))
+      var config = try await urlSession.request(.config(requestId: requestId))
+      config.requestId = requestId
       return config
     } catch {
       Logger.debug(
@@ -119,7 +120,7 @@ class Network {
     }
   }
 
-  func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) async {
+  func confirmAssignments(_ confirmableAssignments: AssignmentPostback) async {
     do {
       try await urlSession.request(.confirmAssignments(confirmableAssignments))
     } catch {
