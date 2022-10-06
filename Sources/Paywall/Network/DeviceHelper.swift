@@ -15,7 +15,7 @@ class DeviceHelper {
   var appVersion: String {
     Bundle.main.releaseVersionNumber ?? ""
   }
-  
+
   lazy var osVersion: String = {
     let systemVersion = ProcessInfo.processInfo.operatingSystemVersion
     return String(
@@ -23,7 +23,7 @@ class DeviceHelper {
       arguments: [systemVersion.majorVersion, systemVersion.minorVersion, systemVersion.patchVersion]
     )
   }()
-  
+
   lazy var isMac: Bool = {
     var output = false
     if #available(iOS 14.0, *) {
@@ -31,46 +31,46 @@ class DeviceHelper {
     }
     return output
   }()
-  
+
   lazy var model: String = {
     UIDevice.modelName
   }()
-  
+
   lazy var vendorId: String = {
     UIDevice.current.identifierForVendor?.uuidString ?? ""
   }()
-  
+
   var locale: String {
     LocalizationManager.shared.selectedLocale ?? Locale.autoupdatingCurrent.identifier
   }
-  
+
   var languageCode: String {
     Locale.autoupdatingCurrent.languageCode ?? ""
   }
-  
+
   var currencyCode: String {
     Locale.autoupdatingCurrent.currencyCode ?? ""
   }
-  
+
   var currencySymbol: String {
     Locale.autoupdatingCurrent.currencySymbol ?? ""
   }
-  
+
   var secondsFromGMT: String {
     "\(Int(TimeZone.current.secondsFromGMT()))"
   }
-  
+
   var radioType: String {
     guard let reachability = reachability else {
       return "No Internet"
     }
-    
+
     var flags = SCNetworkReachabilityFlags()
     SCNetworkReachabilityGetFlags(reachability, &flags)
-    
+
     let isReachable = flags.contains(.reachable)
     let isWWAN = flags.contains(.isWWAN)
-    
+
     if isReachable {
       if isWWAN {
         return "Cellular"
@@ -81,7 +81,7 @@ class DeviceHelper {
       return "No Internet"
     }
   }
-  
+
   var interfaceStyle: String {
     if #available(iOS 12.0, *) {
       let style = UIScreen.main.traitCollection.userInterfaceStyle
@@ -99,15 +99,15 @@ class DeviceHelper {
       return "Unavailable"
     }
   }
-  
+
   var isLowPowerModeEnabled: String {
     return ProcessInfo.processInfo.isLowPowerModeEnabled ? "true" : "false"
   }
-  
+
   lazy var bundleId: String = {
     return Bundle.main.bundleIdentifier ?? ""
   }()
-  
+
   lazy var appInstallDate: Date? = {
     guard let urlToDocumentsFolder = FileManager.default.urls(
       for: .documentDirectory,
@@ -115,20 +115,19 @@ class DeviceHelper {
     ).last else {
       return nil
     }
-    
+
     guard let installDate = try? FileManager.default.attributesOfItem(
       atPath: urlToDocumentsFolder.path
     )[FileAttributeKey.creationDate] as? Date else {
       return nil
     }
-    
     return installDate
   }()
-  
+
   lazy var appInstalledAtString: String = {
     return appInstallDate?.isoString ?? ""
   }()
-  
+
   var daysSinceInstall: Int {
     let fromDate = appInstallDate ?? Date()
     let toDate = Date()

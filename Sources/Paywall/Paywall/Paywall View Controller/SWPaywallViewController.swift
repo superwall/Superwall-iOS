@@ -90,7 +90,8 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       target: self,
       action: #selector(pressedExitPaywall)
     )
-	}()
+  }()
+
   var cacheKey: String
 
   lazy var refreshAlertViewController: UIAlertController = {
@@ -285,12 +286,12 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       }
 
       switch self.loadingState {
-			case .unknown:
+      case .unknown:
 				break
-			case .loadingPurchase:
+      case .loadingPurchase:
 				self.showRefreshButtonAfterTimeout(true, useModal: true)
         self.purchaseLoader.toggle(show: true, animated: true)
-			case .loadingResponse:
+      case .loadingResponse:
         self.addShimmerView()
 				self.showRefreshButtonAfterTimeout(true)
         self.purchaseLoader.toggle(show: false, animated: false)
@@ -298,7 +299,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
           self.webView.alpha = 0.0
           self.webView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)
         }
-			case .ready:
+      case .ready:
         let translation = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
         self.webView.transform = oldValue == .loadingPurchase ? .identity : translation
 				self.showRefreshButtonAfterTimeout(false)

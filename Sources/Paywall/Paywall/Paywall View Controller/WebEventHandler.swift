@@ -90,7 +90,7 @@ final class WebEventHandler: WebEventDelegate {
         info: ["message": scriptSrc],
         error: nil
       )
-      
+
       DispatchQueue.main.async {
         self.delegate?.webView.evaluateJavaScript(scriptSrc) { _, error in
           if let error = error {
