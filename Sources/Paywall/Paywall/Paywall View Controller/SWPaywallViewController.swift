@@ -49,7 +49,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       return Paywall.shouldAnimatePaywallPresentation
     }
   }
-
   static var cache = Set<SWPaywallViewController>()
 
 	var isActive: Bool {
@@ -60,7 +59,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   }
 
   // Views
-  lazy var shimmerView = SWShimmerView(frame: self.view.bounds)
   lazy var webView = SWWebView(delegate: self)
 
 	var paywallInfo: PaywallInfo {
@@ -70,8 +68,9 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
     )
 	}
   private var purchaseLoader = SWPaywallLoadingView()
+  private var shimmerView: ShimmerView?
 
-  var loadingState: PaywallLoadingState  = .unknown {
+  var loadingState: PaywallLoadingState = .unknown {
     didSet {
       loadingStateDidChange(from: oldValue)
     }
@@ -92,7 +91,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       action: #selector(pressedExitPaywall)
     )
 	}()
-
   var cacheKey: String
 
   lazy var refreshAlertViewController: UIAlertController = {
@@ -172,8 +170,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
   }
 
   private func layoutSubviews() {
-    shimmerView.isShimmering = true
-    view.addSubview(shimmerView)
     view.addSubview(purchaseLoader)
     view.addSubview(webView)
 
@@ -185,11 +181,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       purchaseLoader.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       purchaseLoader.widthAnchor.constraint(equalTo: view.widthAnchor),
       purchaseLoader.heightAnchor.constraint(equalTo: view.heightAnchor),
-
-      shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      shimmerView.topAnchor.constraint(equalTo: view.topAnchor),
-      shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
       webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -287,54 +278,50 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 	func loadingStateDidChange(from oldValue: PaywallLoadingState) {
 		onMain { [weak self] in
 			guard
-        let loadingState = self?.loadingState,
-        loadingState != oldValue
+        let self = self,
+        self.loadingState != oldValue
       else {
         return
       }
 
-			switch loadingState {
+      switch self.loadingState {
 			case .unknown:
 				break
 			case .loadingPurchase:
-				self?.shimmerView.isShimmering = false
-				self?.showRefreshButtonAfterTimeout(true, useModal: true)
-				self?.shimmerView.alpha = 0.0
-				self?.shimmerView.transform = .identity
-        self?.purchaseLoader.toggle(show: true, animated: true)
+				self.showRefreshButtonAfterTimeout(true, useModal: true)
+        self.purchaseLoader.toggle(show: true, animated: true)
 			case .loadingResponse:
-        self?.shimmerView.isHidden = false
-				self?.shimmerView.isShimmering = true
-				self?.showRefreshButtonAfterTimeout(true)
-        self?.purchaseLoader.toggle(show: false, animated: false)
+        self.addShimmerView()
+				self.showRefreshButtonAfterTimeout(true)
+        self.purchaseLoader.toggle(show: false, animated: false)
         UIView.springAnimate {
-          self?.webView.alpha = 0.0
-          self?.webView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)
+          self.webView.alpha = 0.0
+          self.webView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)
         }
 			case .ready:
         let translation = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
-        self?.webView.transform = oldValue == .loadingPurchase ? .identity : translation
-				self?.showRefreshButtonAfterTimeout(false)
-        self?.purchaseLoader.toggle(show: false, animated: true)
+        self.webView.transform = oldValue == .loadingPurchase ? .identity : translation
+				self.showRefreshButtonAfterTimeout(false)
+        self.purchaseLoader.toggle(show: false, animated: true)
 
         if oldValue != .loadingPurchase {
           UIView.springAnimate(
             withDuration: 1,
             delay: 0.25,
             animations: {
-              self?.webView.alpha = 1.0
-              self?.webView.transform = .identity
+              self.shimmerView?.alpha = 0.0
+              self.webView.alpha = 1.0
+              self.webView.transform = .identity
             },
             completion: { _ in
-              self?.shimmerView.isShimmering = false
-              self?.shimmerView.isHidden = true
+              self.shimmerView?.removeFromSuperview()
+              self.shimmerView = nil
             }
           )
         }
 			}
 		}
 	}
-
 
   func refreshAlert(show: Bool) {
     if show {
@@ -438,9 +425,6 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
       self.purchaseLoader.paywallBackgroundColor = self.paywallResponse.paywallBackgroundColor
       self.refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
       self.exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
-      self.shimmerView.isLightBackground = !self.paywallResponse.paywallBackgroundColor.isDarkColor
-      self.shimmerView.contentColor = loadingColor
-
       self.modalPresentationCapturesStatusBarAppearance = true
       self.setNeedsStatusBarAppearanceUpdate()
     }
@@ -611,6 +595,7 @@ extension SWPaywallViewController {
 			completion(false)
 			return
 		} else {
+      addShimmerView()
 			prepareForPresentation()
       set(presentationInfo, dismissalBlock: dismissalBlock)
       setPresentationStyle(withOverride: presentationStyleOverride)
@@ -625,6 +610,28 @@ extension SWPaywallViewController {
       }
 		}
 	}
+
+  private func addShimmerView() {
+    guard shimmerView == nil else {
+      return
+    }
+    guard loadingState == .loadingResponse || loadingState == .unknown else {
+      return
+    }
+    let shimmerView = ShimmerView(
+      backgroundColor: paywallResponse.paywallBackgroundColor,
+      tintColor: paywallResponse.paywallBackgroundColor.readableOverlayColor,
+      isLightBackground: !paywallResponse.paywallBackgroundColor.isDarkColor
+    )
+    view.addSubview(shimmerView)
+    NSLayoutConstraint.activate([
+      shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      shimmerView.topAnchor.constraint(equalTo: view.topAnchor),
+      shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+    ])
+    self.shimmerView = shimmerView
+  }
 
 	func dismiss(
     _ dismissalResult: PaywallDismissalResult,
