@@ -595,7 +595,7 @@ extension SWPaywallViewController {
 			completion(false)
 			return
 		} else {
-      addShimmerView()
+      addShimmerView(onPresent: true)
 			prepareForPresentation()
       set(presentationInfo, dismissalBlock: dismissalBlock)
       setPresentationStyle(withOverride: presentationStyleOverride)
@@ -611,11 +611,14 @@ extension SWPaywallViewController {
 		}
 	}
 
-  private func addShimmerView() {
+  private func addShimmerView(onPresent: Bool = false) {
     guard shimmerView == nil else {
       return
     }
     guard loadingState == .loadingResponse || loadingState == .unknown else {
+      return
+    }
+    guard isActive || onPresent else {
       return
     }
     let shimmerView = ShimmerView(
