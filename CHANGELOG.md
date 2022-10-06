@@ -7,6 +7,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ### Fixes 
 
 - Fixed memory and time issues associated with the shimmer view when loading a paywall. Special thanks to Martin from Planta for spotting that one. We've rebuilt the shimmer view and only add it when the paywall is visible and loading. This means it doesn't get added to paywalls preloading in the background. After loading, we remove the shimmer view from memory.
+- Moves internal operations for templating paywall variables from the main thread to a background thread. This prevents hangs on the main thread.
 
 ---
 
