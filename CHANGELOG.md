@@ -2,6 +2,14 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
+## 2.5.1
+
+### Fixes 
+
+- Fixed a memory issue associated with the shimmer view when loading a paywall. Special thanks to Martin from Planta for spotting that one. We've rebuilt the shimmer view and only add it when the paywall is visible and loading. This means it doesn't get added to paywalls preloading in the background. After loading, we remove the shimmer view from memory.
+
+---
+
 ## 2.5.0
 
 ### Enhancements
