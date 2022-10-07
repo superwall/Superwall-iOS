@@ -1,9 +1,6 @@
 {
   "meta": {},
   "theme": {
-    "code": {
-      "indentationWidth": 4
-    },
     "colors": {
       "text": "",
       "text-background": "",
@@ -12,6 +9,9 @@
       "generic-modal-background": "",
       "secondary-label": "",
       "header-text": "",
+      "welcome-experience": {
+        "links-item-border": ""
+      },
       "not-found": {
         "input-border": ""
       },
@@ -54,8 +54,8 @@
   },
   "features": {
     "docs": {
-      "quickNavigation": {
-        "enable": false
+      "summary": {
+        "hide": false
       }
     }
   }
