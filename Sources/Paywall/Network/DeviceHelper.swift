@@ -135,7 +135,7 @@ class DeviceHelper {
     return numberOfDays.day ?? 0
   }
 
-  private lazy var localDateFormatter = {
+  private lazy var localDateFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -162,7 +162,7 @@ class DeviceHelper {
     return formatter
   }()
 
-  private lazy var localDateTimeFormatter = {
+  private lazy var localDateTimeFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
