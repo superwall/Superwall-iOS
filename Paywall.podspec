@@ -45,6 +45,6 @@ Pod::Spec.new do |s|
       "Sources/Paywall/**/*.xcdatamodeld"
     ]
   }
-  s.dependency 'ASN1Swift', '~> 1.2.4'
+  s.dependency 'ASN1Swift', '~> 1.2.3'
 
 end
