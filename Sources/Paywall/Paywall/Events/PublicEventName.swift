@@ -14,7 +14,7 @@ public extension Paywall {
   enum EventName: String {
     /// When the user is first seen in the app, regardless of whether ``Paywall/Paywall/identify(userId:)`` has been called.
     case firstSeen = "first_seen"
-    
+
     /// Anytime the app enters the foreground
     case appOpen = "app_open"
 
