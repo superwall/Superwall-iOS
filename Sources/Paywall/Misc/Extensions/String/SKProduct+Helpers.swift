@@ -83,7 +83,7 @@ extension SKProduct {
   }
 
   var period: String {
-    guard let subscriptionPeriod = subscriptionPeriod else  {
+    guard let subscriptionPeriod = subscriptionPeriod else {
       return ""
     }
 
@@ -111,7 +111,7 @@ extension SKProduct {
   }
 
   var periodWeeks: String {
-    guard let subscriptionPeriod = subscriptionPeriod else  {
+    guard let subscriptionPeriod = subscriptionPeriod else {
       return ""
     }
 
@@ -137,7 +137,7 @@ extension SKProduct {
   }
 
   var periodMonths: String {
-    guard let subscriptionPeriod = subscriptionPeriod else  {
+    guard let subscriptionPeriod = subscriptionPeriod else {
       return ""
     }
     let numberOfUnits = subscriptionPeriod.numberOfUnits
@@ -162,7 +162,7 @@ extension SKProduct {
   }
 
   var periodYears: String {
-    guard let subscriptionPeriod = subscriptionPeriod else  {
+    guard let subscriptionPeriod = subscriptionPeriod else {
       return ""
     }
     let numberOfUnits = subscriptionPeriod.numberOfUnits
@@ -187,7 +187,7 @@ extension SKProduct {
   }
 
   var periodDays: String {
-    guard let subscriptionPeriod = subscriptionPeriod else  {
+    guard let subscriptionPeriod = subscriptionPeriod else {
       return ""
     }
     let numberOfUnits = subscriptionPeriod.numberOfUnits
@@ -221,7 +221,7 @@ extension SKProduct {
     numberFormatter.numberStyle = .currency
     numberFormatter.locale = locale
 
-    guard let subscriptionPeriod = subscriptionPeriod else  {
+    guard let subscriptionPeriod = subscriptionPeriod else {
       return "n/a"
     }
     let numberOfUnits = subscriptionPeriod.numberOfUnits
@@ -257,7 +257,7 @@ extension SKProduct {
     numberFormatter.numberStyle = .currency
     numberFormatter.locale = locale
 
-    guard let subscriptionPeriod = subscriptionPeriod else  {
+    guard let subscriptionPeriod = subscriptionPeriod else {
       return "n/a"
     }
     let numberOfUnits = subscriptionPeriod.numberOfUnits
@@ -293,7 +293,7 @@ extension SKProduct {
     numberFormatter.numberStyle = .currency
     numberFormatter.locale = locale
 
-    guard let subscriptionPeriod = subscriptionPeriod else  {
+    guard let subscriptionPeriod = subscriptionPeriod else {
       return "n/a"
     }
 
@@ -330,7 +330,7 @@ extension SKProduct {
     numberFormatter.numberStyle = .currency
     numberFormatter.locale = locale
 
-    guard let subscriptionPeriod = subscriptionPeriod else  {
+    guard let subscriptionPeriod = subscriptionPeriod else {
       return "n/a"
     }
 
