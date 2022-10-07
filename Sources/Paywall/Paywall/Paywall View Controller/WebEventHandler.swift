@@ -79,6 +79,7 @@ final class WebEventHandler: WebEventDelegate {
       let params = paywallResponse.getBase64EventsString(
         params: self.delegate?.presentationInfo?.eventData?.parameters
       )
+
       let scriptSrc = """
       window.paywall.accept64('\(params)');
     """

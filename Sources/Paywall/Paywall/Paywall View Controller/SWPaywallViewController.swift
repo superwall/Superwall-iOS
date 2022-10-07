@@ -94,7 +94,9 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 
   var cacheKey: String
 
+  private var hasRefreshAlertController = false
   lazy var refreshAlertViewController: UIAlertController = {
+    hasRefreshAlertController = true
     let alertController = UIAlertController(
       title: "Waiting to Purchase...",
       message: "Your connection may be offline. Waiting for transaction to begin.",
@@ -324,11 +326,16 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
 		}
 	}
 
-  func refreshAlert(show: Bool) {
+  var presentedModel = false
+
+  private func refreshAlert(show: Bool) {
     if show {
-      self.present(self.refreshAlertViewController, animated: true, completion: nil)
-    } else if !show {
-      self.refreshAlertViewController.dismiss(animated: true, completion: nil)
+      present(refreshAlertViewController, animated: true)
+    } else {
+      guard hasRefreshAlertController else {
+        return
+      }
+      refreshAlertViewController.dismiss(animated: true)
     }
   }
 
@@ -351,7 +358,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         }
 
         self.view.bringSubviewToFront(self.refreshPaywallButton)
-        self.view.bringSubviewToFront(self.self.exitButton)
+        self.view.bringSubviewToFront(self.exitButton)
 
         self.refreshPaywallButton.isHidden = false
         self.refreshPaywallButton.alpha = 0.0
@@ -370,7 +377,7 @@ final class SWPaywallViewController: UIViewController, SWWebViewDelegate {
         }
       }
 		} else {
-      self.refreshAlert(show: false)
+      refreshAlert(show: false)
 			hideRefreshButton()
 			return
 		}
