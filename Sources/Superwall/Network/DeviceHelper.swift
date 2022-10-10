@@ -24,13 +24,13 @@ class DeviceHelper {
     )
   }()
 
-	lazy var isMac: Bool = {
-		var output = false
-		if #available(iOS 14.0, *) {
-			output = ProcessInfo.processInfo.isiOSAppOnMac
-		}
-		return output
-	}()
+  lazy var isMac: Bool = {
+    var output = false
+    if #available(iOS 14.0, *) {
+      output = ProcessInfo.processInfo.isiOSAppOnMac
+    }
+    return output
+  }()
 
   lazy var model: String = {
     UIDevice.modelName
@@ -60,27 +60,27 @@ class DeviceHelper {
     "\(Int(TimeZone.current.secondsFromGMT()))"
   }
 
-	var radioType: String {
-		guard let reachability = reachability else {
-			return "No Internet"
-		}
+  var radioType: String {
+    guard let reachability = reachability else {
+      return "No Internet"
+    }
 
-		var flags = SCNetworkReachabilityFlags()
-		SCNetworkReachabilityGetFlags(reachability, &flags)
+    var flags = SCNetworkReachabilityFlags()
+    SCNetworkReachabilityGetFlags(reachability, &flags)
 
-		let isReachable = flags.contains(.reachable)
-		let isWWAN = flags.contains(.isWWAN)
+    let isReachable = flags.contains(.reachable)
+    let isWWAN = flags.contains(.isWWAN)
 
-		if isReachable {
-			if isWWAN {
-				return "Cellular"
-			} else {
-				return "Wifi"
-			}
-		} else {
-			return "No Internet"
-		}
-	}
+    if isReachable {
+      if isWWAN {
+        return "Cellular"
+      } else {
+        return "Wifi"
+      }
+    } else {
+      return "No Internet"
+    }
+  }
 
 	var interfaceStyle: String {
     let style = UIScreen.main.traitCollection.userInterfaceStyle
@@ -96,13 +96,13 @@ class DeviceHelper {
     }
 	}
 
-	var isLowPowerModeEnabled: String {
+  var isLowPowerModeEnabled: String {
     return ProcessInfo.processInfo.isLowPowerModeEnabled ? "true" : "false"
-	}
+  }
 
-	lazy var bundleId: String = {
-		return Bundle.main.bundleIdentifier ?? ""
-	}()
+  lazy var bundleId: String = {
+    return Bundle.main.bundleIdentifier ?? ""
+  }()
 
   lazy var appInstallDate: Date? = {
     guard let urlToDocumentsFolder = FileManager.default.urls(
@@ -117,7 +117,6 @@ class DeviceHelper {
     )[FileAttributeKey.creationDate] as? Date else {
       return nil
     }
-
     return installDate
   }()
 
@@ -132,58 +131,82 @@ class DeviceHelper {
     return numberOfDays.day ?? 0
   }
 
-  var localDateString: String {
+  private lazy var localDateFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
     formatter.timeZone = Calendar.current.timeZone
     formatter.dateFormat = "yyyy-MM-dd"
-    return formatter.string(from: Date())
-  }
+    return formatter
+  }()
 
-  var utcDateString: String {
+  private lazy var utcDateFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
     formatter.timeZone = TimeZone(secondsFromGMT: 0)
     formatter.dateFormat = "yyyy-MM-dd"
-    return formatter.string(from: Date())
+    return formatter
+  }()
+
+  private lazy var utcTimeFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "HH:mm:ss"
+    return formatter
+  }()
+
+  private lazy var localDateTimeFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = Calendar.current.timeZone
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+    return formatter
+  }()
+
+  private lazy var localTimeFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = Calendar.current.timeZone
+    formatter.dateFormat = "HH:mm:ss"
+    return formatter
+  }()
+
+  private lazy var utcDateTimeFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+    return formatter
+  }()
+
+  var localDateString: String {
+    return localDateFormatter.string(from: Date())
   }
 
   var localTimeString: String {
-    let formatter = DateFormatter()
-    formatter.calendar = Calendar(identifier: .iso8601)
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = Calendar.current.timeZone
-    formatter.dateFormat = "HH:mm:ss"
-    return formatter.string(from: Date())
-  }
-
-  var utcTimeString: String {
-    let formatter = DateFormatter()
-    formatter.calendar = Calendar(identifier: .iso8601)
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = TimeZone(secondsFromGMT: 0)
-    formatter.dateFormat = "HH:mm:ss"
-    return formatter.string(from: Date())
+    return localTimeFormatter.string(from: Date())
   }
 
   var localDateTimeString: String {
-    let formatter = DateFormatter()
-    formatter.calendar = Calendar(identifier: .iso8601)
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = Calendar.current.timeZone
-    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-    return formatter.string(from: Date())
+    return localDateTimeFormatter.string(from: Date())
+  }
+
+  var utcDateString: String {
+    return utcDateFormatter.string(from: Date())
+  }
+
+  var utcTimeString: String {
+    return utcTimeFormatter.string(from: Date())
   }
 
   var utcDateTimeString: String {
-    let formatter = DateFormatter()
-    formatter.calendar = Calendar(identifier: .iso8601)
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = TimeZone(secondsFromGMT: 0)
-    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-    return formatter.string(from: Date())
+    return utcDateTimeFormatter.string(from: Date())
   }
 
   var minutesSinceInstall: Int {
@@ -220,35 +243,35 @@ class DeviceHelper {
 
     return TemplateDevice(
       publicApiKey: Storage.shared.apiKey,
-      platform: DeviceHelper.shared.isMac ? "macOS" : "iOS",
+      platform: isMac ? "macOS" : "iOS",
       appUserId: IdentityManager.shared.appUserId ?? "",
       aliases: aliases,
-      vendorId: DeviceHelper.shared.vendorId,
-      appVersion: DeviceHelper.shared.appVersion,
-      osVersion: DeviceHelper.shared.osVersion,
-      deviceModel: DeviceHelper.shared.model,
-      deviceLocale: DeviceHelper.shared.locale,
-      deviceLanguageCode: DeviceHelper.shared.languageCode,
-      deviceCurrencyCode: DeviceHelper.shared.currencyCode,
-      deviceCurrencySymbol: DeviceHelper.shared.currencySymbol,
+      vendorId: vendorId,
+      appVersion: appVersion,
+      osVersion: osVersion,
+      deviceModel: model,
+      deviceLocale: locale,
+      deviceLanguageCode: languageCode,
+      deviceCurrencyCode: currencyCode,
+      deviceCurrencySymbol: currencySymbol,
       timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
-      radioType: DeviceHelper.shared.radioType,
-      interfaceStyle: DeviceHelper.shared.interfaceStyle,
-      isLowPowerModeEnabled: DeviceHelper.shared.isLowPowerModeEnabled == "true",
-      bundleId: DeviceHelper.shared.bundleId,
-      appInstallDate: DeviceHelper.shared.appInstalledAtString,
-      isMac: DeviceHelper.shared.isMac,
-      daysSinceInstall: DeviceHelper.shared.daysSinceInstall,
-      minutesSinceInstall: DeviceHelper.shared.minutesSinceInstall,
-      daysSinceLastPaywallView: DeviceHelper.shared.daysSinceLastPaywallView,
-      minutesSinceLastPaywallView: DeviceHelper.shared.minutesSinceLastPaywallView,
-      totalPaywallViews: DeviceHelper.shared.totalPaywallViews,
-      utcDate: DeviceHelper.shared.utcDateString,
-      localDate: DeviceHelper.shared.localDateString,
-      utcTime: DeviceHelper.shared.utcTimeString,
-      localTime: DeviceHelper.shared.localTimeString,
-      utcDateTime: DeviceHelper.shared.utcDateTimeString,
-      localDateTime: DeviceHelper.shared.localDateTimeString
+      radioType: radioType,
+      interfaceStyle: interfaceStyle,
+      isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
+      bundleId: bundleId,
+      appInstallDate: appInstalledAtString,
+      isMac: isMac,
+      daysSinceInstall: daysSinceInstall,
+      minutesSinceInstall: minutesSinceInstall,
+      daysSinceLastPaywallView: daysSinceLastPaywallView,
+      minutesSinceLastPaywallView: minutesSinceLastPaywallView,
+      totalPaywallViews: totalPaywallViews,
+      utcDate: utcDateString,
+      localDate: localDateString,
+      utcTime: utcTimeString,
+      localTime: localTimeString,
+      utcDateTime: utcDateTimeString,
+      localDateTime: localDateTimeString
     )
   }
 }

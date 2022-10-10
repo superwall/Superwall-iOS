@@ -26,6 +26,7 @@ protocol WebEventHandlerDelegate: AnyObject {
 @MainActor
 final class WebEventHandler: WebEventDelegate {
   weak var delegate: WebEventHandlerDelegate?
+  let queue = DispatchQueue(label: "templating")
 
   init(delegate: WebEventHandlerDelegate?) {
     self.delegate = delegate
@@ -69,99 +70,115 @@ final class WebEventHandler: WebEventDelegate {
   }
 
   private func templateParams(from paywall: Paywall) {
-    let params = paywall.getBase64EventsString(
-      params: delegate?.eventData?.parameters
-    )
-    let scriptSrc = """
+    queue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      let params = paywall.getBase64EventsString(
+        params: self.delegate?.eventData?.parameters
+      )
+
+      let scriptSrc = """
       window.paywall.accept64('\(params)');
     """
-    delegate?.webView.evaluateJavaScript(scriptSrc) { _, error in
-      if let error = error {
-        Logger.debug(
-          logLevel: .error,
-          scope: .paywallViewController,
-          message: "Error Evaluating JS",
-          info: ["message": scriptSrc],
-          error: error
-        )
+
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallViewController,
+        message: "Posting Message",
+        info: ["message": scriptSrc],
+        error: nil
+      )
+
+      DispatchQueue.main.async {
+        self.delegate?.webView.evaluateJavaScript(scriptSrc) { _, error in
+          if let error = error {
+            Logger.debug(
+              logLevel: .error,
+              scope: .paywallViewController,
+              message: "Error Evaluating JS",
+              info: ["message": scriptSrc],
+              error: error
+            )
+          }
+        }
       }
     }
-
-    Logger.debug(
-      logLevel: .debug,
-      scope: .paywallViewController,
-      message: "Posting Message",
-      info: ["message": scriptSrc],
-      error: nil
-    )
   }
 
-  private func didLoadWebView(from paywallResponse: Paywall) {
-    if let paywallInfo = delegate?.paywallInfo {
-      if paywallResponse.webViewLoadCompleteTime == nil {
-        delegate?.paywall.webViewLoadCompleteTime = Date()
+  private func didLoadWebView(from paywall: Paywall) {
+    queue.async { [weak self] in
+      guard let self = self else {
+        return
       }
+      if let paywallInfo = self.delegate?.paywallInfo {
+        if paywall.webViewLoadCompleteTime == nil {
+          self.delegate?.paywall.webViewLoadCompleteTime = Date()
+        }
 
-      let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
-        state: .complete,
-        paywallInfo: paywallInfo
-      )
-      Superwall.track(trackedEvent)
+        let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
+          state: .complete,
+          paywallInfo: paywallInfo
+        )
+        Superwall.track(trackedEvent)
 
-      SessionEventsManager.shared.triggerSession.trackWebviewLoad(
-        forPaywallId: paywallInfo.id,
-        state: .end
-      )
-    }
-
-    let params = paywallResponse.getBase64EventsString(
-      params: delegate?.eventData?.parameters
-    )
-    let jsEvent = paywallResponse.paywalljsEvent
-    let scriptSrc = """
-      window.paywall.accept64('\(params)');
-      window.paywall.accept64('\(jsEvent)');
-    """
-
-    Logger.debug(
-      logLevel: .debug,
-      scope: .paywallViewController,
-      message: "Posting Message",
-      info: ["message": scriptSrc],
-      error: nil
-    )
-
-    delegate?.webView.evaluateJavaScript(scriptSrc) { [weak self] _, error in
-      if let error = error {
-        Logger.debug(
-          logLevel: .error,
-          scope: .paywallViewController,
-          message: "Error Evaluating JS",
-          info: ["message": scriptSrc],
-          error: error
+        SessionEventsManager.shared.triggerSession.trackWebviewLoad(
+          forPaywallId: paywallInfo.id,
+          state: .end
         )
       }
-      self?.delegate?.loadingState = .ready
-    }
 
-    // block selection
-    let selectionString = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none} .w-webflow-badge { display: none !important; }'; "
-      + "var head = document.head || document.getElementsByTagName('head')[0]; "
-      + "var style = document.createElement('style'); style.type = 'text/css'; "
-      + "style.appendChild(document.createTextNode(css)); head.appendChild(style); "
-
-    let selectionScript = WKUserScript(
-      source: selectionString,
-      injectionTime: .atDocumentEnd,
-      forMainFrameOnly: true
+      let params = paywall.getBase64EventsString(
+      params: self.delegate?.eventData?.parameters
     )
-    delegate?.webView.configuration.userContentController.addUserScript(selectionScript)
+      let jsEvent = paywall.paywalljsEvent
+      let scriptSrc = """
+        window.paywall.accept64('\(params)');
+        window.paywall.accept64('\(jsEvent)');
+      """
 
-    let preventSelection = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
-    delegate?.webView.evaluateJavaScript(preventSelection)
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallViewController,
+        message: "Posting Message",
+        info: ["message": scriptSrc],
+        error: nil
+      )
 
-    let preventZoom: String = "var meta = document.createElement('meta');" + "meta.name = 'viewport';" + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';" + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
-    delegate?.webView.evaluateJavaScript(preventZoom)
+      DispatchQueue.main.async {
+        self.delegate?.webView.evaluateJavaScript(scriptSrc) { _, error in
+          if let error = error {
+            Logger.debug(
+              logLevel: .error,
+              scope: .paywallViewController,
+              message: "Error Evaluating JS",
+              info: ["message": scriptSrc],
+              error: error
+            )
+          }
+          self.delegate?.loadingState = .ready
+        }
+
+        // block selection
+        let selectionString = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none} .w-webflow-badge { display: none !important; }'; "
+        + "var head = document.head || document.getElementsByTagName('head')[0]; "
+        + "var style = document.createElement('style'); style.type = 'text/css'; "
+        + "style.appendChild(document.createTextNode(css)); head.appendChild(style); "
+
+        let selectionScript = WKUserScript(
+          source: selectionString,
+          injectionTime: .atDocumentEnd,
+          forMainFrameOnly: true
+        )
+        self.delegate?.webView.configuration.userContentController.addUserScript(selectionScript)
+
+        let preventSelection = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
+        self.delegate?.webView.evaluateJavaScript(preventSelection)
+
+        let preventZoom: String = "var meta = document.createElement('meta');" + "meta.name = 'viewport';" + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';" + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
+        self.delegate?.webView.evaluateJavaScript(preventZoom)
+      }
+    }
   }
 
   private func openUrl(_ url: URL) {
