@@ -2,7 +2,7 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
-## 3.0.0 (upcoming release)
+## 3.0.0 (Upcoming Release)
 
 ### Breaking Changes
 
@@ -28,7 +28,20 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - New function `Superwall.track(event:params:overrides)` which returns a `PaywallStatePublisher` (`AnyPublisher<PaywallState, Never>`) for those Combine lovers. By subscribing to this publisher, you can receive state updates of your paywall. We've updated our sample apps to show you how to use that.
 
 ### Fixes
+
 - The API is now thread safe. By default the API uses background threads, dispatching to the main thread when necessary and when returning from completion blocks.
+
+---
+
+## 2.5.2
+
+### Fixes
+
+- Fixed memory and time issues associated with the shimmer view when loading a paywall. Special thanks to Martin from Planta for spotting that one. We've rebuilt the shimmer view and only add it when the paywall is visible and loading. This means it doesn't get added to paywalls preloading in the background. After loading, we remove the shimmer view from memory.
+- Moves internal operations for templating paywall variables from the main thread to a background thread. This prevents hangs on the main thread.
+- Stops UIAlertViewControllers being unnecessarily created when loading a paywall.
+- Removes the dependency on `TPInAppReceipt` from our podspec and replaces it with a `ASN1Swift` dependency to keep it in line with our Swift Package file.
+
 ---
 
 ## 2.5.0

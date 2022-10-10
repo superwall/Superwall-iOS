@@ -45,6 +45,6 @@ Pod::Spec.new do |s|
       "Sources/Paywall/**/*.xcdatamodeld"
     ]
   }
-  s.dependency 'TPInAppReceipt', '~> 3.0.0'
+  s.dependency 'ASN1Swift', '~> 1.2.3'
 
 end
