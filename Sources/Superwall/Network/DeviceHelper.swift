@@ -238,10 +238,10 @@ class DeviceHelper {
     return Storage.shared.getTotalPaywallViews() ?? 0
   }
 
-  var templateDevice: TemplateDevice {
+  var templateDevice: DeviceTemplate {
     let aliases = [IdentityManager.shared.aliasId]
 
-    return TemplateDevice(
+    return DeviceTemplate(
       publicApiKey: Storage.shared.apiKey,
       platform: isMac ? "macOS" : "iOS",
       appUserId: IdentityManager.shared.appUserId ?? "",

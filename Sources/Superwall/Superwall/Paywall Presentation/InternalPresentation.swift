@@ -63,7 +63,7 @@ extension Superwall {
   }
 
   func dismiss(
-    _ paywallViewController: SWPaywallViewController,
+    _ paywallViewController: PaywallViewController,
     state: PaywallDismissedResult.DismissState,
     completion: (() -> Void)? = nil
   ) {

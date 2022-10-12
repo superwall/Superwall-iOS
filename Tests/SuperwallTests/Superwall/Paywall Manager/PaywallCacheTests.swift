@@ -21,11 +21,11 @@ class PaywallCacheTests: XCTestCase {
     // Given
     let id = "myid"
     let key = PaywallCacheLogic.key(forIdentifier: id)
-    let paywall: SWPaywallViewController = .stub()
+    let paywall: PaywallViewController = .stub()
       .setting(\.cacheKey, to: key)
 
     // When
-    SWPaywallViewController.cache.insert(paywall)
+    PaywallViewController.cache.insert(paywall)
 
     let cachedPaywall = paywallCache.getPaywall(withKey: key)
 
@@ -37,11 +37,11 @@ class PaywallCacheTests: XCTestCase {
     // Given
     let id = "myid"
     let key = PaywallCacheLogic.key(forIdentifier: id)
-    let paywall: SWPaywallViewController = .stub()
+    let paywall: PaywallViewController = .stub()
       .setting(\.cacheKey, to: key)
 
     // When
-    SWPaywallViewController.cache.insert(paywall)
+    PaywallViewController.cache.insert(paywall)
 
     var cachedPaywall = paywallCache.getPaywall(withKey: key)
 
@@ -59,10 +59,10 @@ class PaywallCacheTests: XCTestCase {
 
   func testSaveAndRemovePaywall_withVc() {
     // Given
-    let paywall: SWPaywallViewController = .stub()
+    let paywall: PaywallViewController = .stub()
 
     // When
-    SWPaywallViewController.cache.insert(paywall)
+    PaywallViewController.cache.insert(paywall)
 
     let key = PaywallCacheLogic.key(
       forIdentifier: nil
@@ -85,17 +85,17 @@ class PaywallCacheTests: XCTestCase {
     // Given
     let paywallId1 = "id1"
     let key1 = PaywallCacheLogic.key(forIdentifier: paywallId1)
-    let paywall1: SWPaywallViewController = .stub()
+    let paywall1: PaywallViewController = .stub()
       .setting(\.cacheKey, to: key1)
 
     let paywallId2 = "id2"
     let key2 = PaywallCacheLogic.key(forIdentifier: paywallId2)
-    let paywall2: SWPaywallViewController = .stub()
+    let paywall2: PaywallViewController = .stub()
       .setting(\.cacheKey, to: key2)
 
     // When
-    SWPaywallViewController.cache.insert(paywall1)
-    SWPaywallViewController.cache.insert(paywall2)
+    PaywallViewController.cache.insert(paywall1)
+    PaywallViewController.cache.insert(paywall2)
 
     let cachedPaywall1 = paywallCache.getPaywall(withKey: key1)
     let cachedPaywall2 = paywallCache.getPaywall(withKey: key2)
@@ -115,16 +115,16 @@ class PaywallCacheTests: XCTestCase {
 
   func testViewControllers() {
     // Given
-    let paywall1: SWPaywallViewController = .stub()
+    let paywall1: PaywallViewController = .stub()
       .setting(\.cacheKey, to: "myid1")
-    let paywall2: SWPaywallViewController = .stub()
+    let paywall2: PaywallViewController = .stub()
       .setting(\.cacheKey, to: "myid2")
 
     // When
-    SWPaywallViewController.cache.insert(paywall1)
-    SWPaywallViewController.cache.insert(paywall2)
+    PaywallViewController.cache.insert(paywall1)
+    PaywallViewController.cache.insert(paywall2)
 
-    let viewControllers = SWPaywallViewController.cache
+    let viewControllers = PaywallViewController.cache
     XCTAssertTrue(viewControllers.contains(paywall1))
     XCTAssertTrue(viewControllers.contains(paywall2))
   }

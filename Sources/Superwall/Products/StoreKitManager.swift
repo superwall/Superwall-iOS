@@ -25,17 +25,17 @@ final class StoreKitManager {
     self.receiptManager = receiptManager
   }
 
-	func getVariables(forResponse response: Paywall) async -> [Variable] {
-    guard let output = try? await getProducts(withIds: response.productIds) else {
+	func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
+    guard let output = try? await getProducts(withIds: paywall.productIds) else {
       return []
     }
-    var variables: [Variable] = []
+    var variables: [ProductVariable] = []
 
-    for product in response.products {
+    for product in paywall.products {
       if let skProduct = output.productsById[product.id] {
-        let variable = Variable(
-          key: product.type.rawValue,
-          value: JSON(skProduct.legacyEventData)
+        let variable = ProductVariable(
+          type: product.type,
+          attributes: skProduct.attributesJson
         )
         variables.append(variable)
       }

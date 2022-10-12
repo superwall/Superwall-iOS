@@ -14,7 +14,10 @@ import StoreKit
 /// This is returned in the `paywallState` after presenting a paywall with ``Superwall/Superwall/track(event:params:paywallOverrides:paywallState:)``.
 public final class PaywallInfo: NSObject {
   /// Superwall's internal ID for this paywall.
-  let id: String
+  let databaseId: String
+
+  @available(*, unavailable, renamed: "databaseId")
+  let id: String = ""
 
   /// The identifier set for this paywall in the Superwall dashboard.
   public let identifier: String
@@ -26,10 +29,9 @@ public final class PaywallInfo: NSObject {
 
   /// The name set for this paywall in Superwall's web dashboard.
   public let name: String
-  public let slug: String
 
   /// The URL where this paywall is hosted.
-  public let url: URL?
+  public let url: URL
 
   /// The name of the event that triggered this Paywall. Defaults to `nil` if `triggeredByEvent` is false.
   public let presentedByEventWithName: String?
@@ -80,11 +82,10 @@ public final class PaywallInfo: NSObject {
   public let paywalljsVersion: String?
 
   init(
-    id: String,
+    databaseId: String,
     identifier: String,
     name: String,
-    slug: String,
-    url: URL?,
+    url: URL,
     productIds: [String],
     fromEventData eventData: EventData?,
     calledByIdentifier: Bool = false,
@@ -98,10 +99,9 @@ public final class PaywallInfo: NSObject {
     experiment: Experiment? = nil,
     paywalljsVersion: String? = nil
   ) {
-    self.id = id
+    self.databaseId = databaseId
     self.identifier = identifier
     self.name = name
-    self.slug = slug
     self.url = url
     self.productIds = productIds
     self.presentedByEventWithName = eventData?.name
@@ -153,12 +153,11 @@ public final class PaywallInfo: NSObject {
     otherParams: [String: Any]? = nil
   ) -> [String: Any] {
     var output: [String: Any] = [
-      "paywall_id": id,
+      "paywall_database_id": databaseId,
       "paywalljs_version": paywalljsVersion as Any,
       "paywall_identifier": identifier,
-      "paywall_slug": slug,
       "paywall_name": name,
-      "paywall_url": url?.absoluteString ?? "unknown",
+      "paywall_url": url.absoluteString,
       "presented_by_event_name": presentedByEventWithName as Any,
       "presented_by_event_id": presentedByEventWithId as Any,
       "presented_by_event_timestamp": presentedByEventAt as Any,
@@ -178,7 +177,7 @@ public final class PaywallInfo: NSObject {
 
     if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession,
       let databaseId = triggerSession.paywall?.databaseId,
-      databaseId == id {
+      databaseId == self.databaseId {
       output["trigger_session_id"] = triggerSession.id
       output["experiment_id"] = triggerSession.trigger.experiment?.id
       output["variant_id"] = triggerSession.trigger.experiment?.variant.id
@@ -211,8 +210,8 @@ public final class PaywallInfo: NSObject {
 
     if let product = product {
       output["product_id"] = product.productIdentifier
-      for key in product.legacyEventData.keys {
-        if let value = product.legacyEventData[key] {
+      for key in product.attributes.keys {
+        if let value = product.attributes[key] {
           output["product_\(key.camelCaseToSnakeCase())"] = value
         }
       }

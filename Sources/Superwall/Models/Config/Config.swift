@@ -20,7 +20,7 @@ struct Config: Decodable {
 
   enum CodingKeys: String, CodingKey {
     case triggers = "triggerOptions"
-    case paywalls = "paywallReponses"
+    case paywalls = "paywallResponses"
     case logLevel
     case postback
     case localization

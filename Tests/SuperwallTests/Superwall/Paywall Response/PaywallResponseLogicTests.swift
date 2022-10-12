@@ -19,7 +19,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let locale = "en_US"
 
     // When
-    let hash = PaywallResponseLogic.requestHash(
+    let hash = PaywallLogic.requestHash(
       identifier: id,
       locale: locale
     )
@@ -35,7 +35,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let event: EventData = .stub()
 
     // When
-    let hash = PaywallResponseLogic.requestHash(
+    let hash = PaywallLogic.requestHash(
       identifier: id,
       event: event,
       locale: locale
@@ -53,7 +53,7 @@ class PaywallResponseLogicTests: XCTestCase {
       .setting(\.name, to: eventName)
 
     // When
-    let hash = PaywallResponseLogic.requestHash(
+    let hash = PaywallLogic.requestHash(
       event: event,
       locale: locale
     )
@@ -67,7 +67,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let locale = "en_US"
 
     // When
-    let hash = PaywallResponseLogic.requestHash(
+    let hash = PaywallLogic.requestHash(
       locale: locale
     )
 
@@ -105,7 +105,7 @@ class PaywallResponseLogicTests: XCTestCase {
     configManager.unconfirmedAssignments = [experimentId: variantOption.toVariant()]
 
     // When
-    let outcome = PaywallResponseLogic.getTriggerResultAndConfirmAssignment(
+    let outcome = PaywallLogic.getTriggerResultAndConfirmAssignment(
       presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
       configManager: configManager,
       triggers: [eventName: trigger]
@@ -164,7 +164,7 @@ class PaywallResponseLogicTests: XCTestCase {
     configManager.unconfirmedAssignments = [experimentId: variantOption.toVariant()]
 
     // When
-    let outcome = PaywallResponseLogic.getTriggerResultAndConfirmAssignment(
+    let outcome = PaywallLogic.getTriggerResultAndConfirmAssignment(
       presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
       configManager: configManager,
       triggers: [eventName: trigger]
@@ -211,7 +211,7 @@ class PaywallResponseLogicTests: XCTestCase {
     configManager.unconfirmedAssignments = [experimentId: variantOption.toVariant()]
 
     // When
-    let outcome = PaywallResponseLogic.getTriggerResultAndConfirmAssignment(
+    let outcome = PaywallLogic.getTriggerResultAndConfirmAssignment(
       presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
       configManager: configManager,
       triggers: [eventName: trigger]
@@ -250,7 +250,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let configManager = ConfigManagerMock()
 
     // When
-    let outcome = PaywallResponseLogic.getTriggerResultAndConfirmAssignment(
+    let outcome = PaywallLogic.getTriggerResultAndConfirmAssignment(
       presentationInfo: .explicitTrigger(.stub().setting(\.name, to: eventName)),
       configManager: configManager,
       triggers: [eventName: trigger]
@@ -283,7 +283,7 @@ class PaywallResponseLogicTests: XCTestCase {
 
   // MARK: - getVariablesAndFreeTrial
   func testGetVariablesAndFreeTrial_noProducts() {
-    let response = PaywallResponseLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getVariablesAndFreeTrial(
       fromProducts: [],
       productsById: [:],
       isFreeTrialAvailableOverride: nil
@@ -318,7 +318,7 @@ class PaywallResponseLogicTests: XCTestCase {
     )
     let productsById = [skProductId: skProduct]
     
-    let response = PaywallResponseLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getVariablesAndFreeTrial(
       fromProducts: products,
       productsById: productsById,
       isFreeTrialAvailableOverride: nil
@@ -355,7 +355,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let productsById = [productId: skProduct]
 
     // When
-    let response = PaywallResponseLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getVariablesAndFreeTrial(
       fromProducts: products,
       productsById: productsById,
       isFreeTrialAvailableOverride: nil
@@ -365,11 +365,11 @@ class PaywallResponseLogicTests: XCTestCase {
 
     let expectedVariables = [Variable(
       key: productType.rawValue,
-      value: skProduct.eventData
+      value: skProduct.attributesJson
     )]
     let expectedProductVariables = [ProductVariable(
       key: productType.rawValue,
-      value: skProduct.productVariables
+      value: skProduct.swTemplateVariables
     )]
     XCTAssertNil(response.isFreeTrialAvailable)
     XCTAssertEqual(response.variables, expectedVariables)
@@ -397,7 +397,7 @@ class PaywallResponseLogicTests: XCTestCase {
 
     
     // When
-    let response = PaywallResponseLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getVariablesAndFreeTrial(
       fromProducts: products,
       productsById: productsById,
       isFreeTrialAvailableOverride: nil,
@@ -409,11 +409,11 @@ class PaywallResponseLogicTests: XCTestCase {
     // Then
     let expectedVariables = [Variable(
       key: productType.rawValue,
-      value: skProduct.eventData
+      value: skProduct.attributesJson
     )]
     let expectedProductVariables = [ProductVariable(
       key: productType.rawValue,
-      value: skProduct.productVariables
+      value: skProduct.swTemplateVariables
     )]
 
     guard let freeTrialAvailable = response.isFreeTrialAvailable else {
@@ -444,7 +444,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let productsById = [productId: skProduct]
 
     // When
-    let response = PaywallResponseLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getVariablesAndFreeTrial(
       fromProducts: products,
       productsById: productsById,
       isFreeTrialAvailableOverride: nil,
@@ -456,11 +456,11 @@ class PaywallResponseLogicTests: XCTestCase {
     // Then
     let expectedVariables = [Variable(
       key: productType.rawValue,
-      value: skProduct.eventData
+      value: skProduct.attributesJson
     )]
     let expectedProductVariables = [ProductVariable(
       key: productType.rawValue,
-      value: skProduct.productVariables
+      value: skProduct.swTemplateVariables
     )]
 
     guard let freeTrialAvailable = response.isFreeTrialAvailable else {
@@ -491,7 +491,7 @@ class PaywallResponseLogicTests: XCTestCase {
     let productsById = [productId: skProduct]
 
     // When
-    let response = PaywallResponseLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getVariablesAndFreeTrial(
       fromProducts: products,
       productsById: productsById,
       isFreeTrialAvailableOverride: true,
@@ -503,11 +503,11 @@ class PaywallResponseLogicTests: XCTestCase {
     // Then
     let expectedVariables = [Variable(
       key: productType.rawValue,
-      value: skProduct.eventData
+      value: skProduct.attributesJson
     )]
     let expectedProductVariables = [ProductVariable(
       key: productType.rawValue,
-      value: skProduct.productVariables
+      value: skProduct.swTemplateVariables
     )]
 
     guard let freeTrialAvailable = response.isFreeTrialAvailable else {

@@ -1,5 +1,5 @@
 //
-//  PaywallResponseLogic.swift
+//  PaywallLogic.swift
 //  Paywall
 //
 //  Created by Yusuf Tör on 03/03/2022.
@@ -18,14 +18,14 @@ struct ResponseIdentifiers: Equatable {
 }
 
 struct ProductProcessingOutcome {
-  var variables: [Variable]
   var productVariables: [ProductVariable]
+  var swProductVariablesTemplate: [ProductVariable]
   var orderedSwProducts: [SWProduct]
   var isFreeTrialAvailable: Bool?
   var resetFreeTrialOverride: Bool
 }
 
-enum PaywallResponseLogic {
+enum PaywallLogic {
   static func requestHash(
     identifier: String? = nil,
     event: EventData? = nil,
@@ -42,13 +42,13 @@ enum PaywallResponseLogic {
   ) -> NSError {
     if let error = error as? CustomURLSession.NetworkError,
       error == .notFound {
-      let trackedEvent = InternalSuperwallEvent.PaywallResponseLoad(
+      let trackedEvent = InternalSuperwallEvent.PaywallLoad(
         state: .notFound,
         eventData: event
       )
       _ = trackEvent(trackedEvent)
     } else {
-      let trackedEvent = InternalSuperwallEvent.PaywallResponseLoad(
+      let trackedEvent = InternalSuperwallEvent.PaywallLoad(
         state: .fail,
         eventData: event
       )
@@ -76,8 +76,8 @@ enum PaywallResponseLogic {
     isFreeTrialAvailableOverride: Bool?,
     isFreeTrialAvailable: @escaping (SKProduct) -> Bool = StoreKitManager.shared.isFreeTrialAvailable(for:)
   ) -> ProductProcessingOutcome {
-    var legacyVariables: [Variable] = []
-    var newVariables: [ProductVariable] = []
+    var productVariables: [ProductVariable] = []
+    var swTemplateProductVariables: [ProductVariable] = []
     var hasFreeTrial: Bool?
     var resetFreeTrialOverride = false
     var orderedSwProducts: [SWProduct] = []
@@ -89,17 +89,17 @@ enum PaywallResponseLogic {
       }
       orderedSwProducts.append(appleProduct.swProduct)
 
-      let legacyVariable = Variable(
-        key: product.type.rawValue,
-        value: appleProduct.eventData
-      )
-      legacyVariables.append(legacyVariable)
-
       let productVariable = ProductVariable(
-        key: product.type.rawValue,
-        value: appleProduct.productVariables
+        type: product.type,
+        attributes: appleProduct.attributesJson
       )
-      newVariables.append(productVariable)
+      productVariables.append(productVariable)
+
+      let swTemplateProductVariable = ProductVariable(
+        type: product.type,
+        attributes: appleProduct.swProductTemplateVariablesJson
+      )
+      swTemplateProductVariables.append(swTemplateProductVariable)
 
       if product.type == .primary {
         hasFreeTrial = isFreeTrialAvailable(appleProduct)
@@ -113,8 +113,8 @@ enum PaywallResponseLogic {
     }
 
     return ProductProcessingOutcome(
-      variables: legacyVariables,
-      productVariables: newVariables,
+      productVariables: productVariables,
+      swProductVariablesTemplate: swTemplateProductVariables,
       orderedSwProducts: orderedSwProducts,
       isFreeTrialAvailable: hasFreeTrial,
       resetFreeTrialOverride: resetFreeTrialOverride

@@ -185,8 +185,7 @@ final class SWDebugViewController: UIViewController {
 
     if paywalls.isEmpty {
       do {
-        let response = try await Network.shared.getPaywalls()
-        paywalls = response.paywalls
+        paywalls = try await Network.shared.getPaywalls()
         await finishLoadingPreview()
       } catch {
         Logger.debug(
@@ -207,7 +206,7 @@ final class SWDebugViewController: UIViewController {
 		if let paywallIdentifier = paywallIdentifier {
 			paywallId = paywallIdentifier
 		} else if let paywallDatabaseId = paywallDatabaseId {
-			paywallId = paywalls.first(where: { $0.id == paywallDatabaseId })?.identifier
+			paywallId = paywalls.first(where: { $0.databaseId == paywallDatabaseId })?.identifier
 			paywallIdentifier = paywallId
 		}
 
@@ -218,17 +217,15 @@ final class SWDebugViewController: UIViewController {
 
     do {
       let request = PaywallRequest(responseIdentifiers: .init(paywallId: paywallId))
-      let response = try await PaywallRequestManager.shared.getPaywall(from: request)
-      self.paywall = response
-      self.previewPickerButton.setTitle("\(response.name ?? "Preview")", for: .normal)
+      var paywall = try await PaywallRequestManager.shared.getPaywall(from: request)
 
-      let variables = await StoreKitManager.shared.getVariables(forResponse: response)
-      paywall?.variables = variables
+      let productVariables = await StoreKitManager.shared.getProductVariables(for: paywall)
+      paywall.productVariables = productVariables
 
-      await MainActor.run {
-        self.activityIndicator.stopAnimating()
-        self.addPaywallPreview()
-      }
+      self.paywall = paywall
+      self.previewPickerButton.setTitle("\(paywall.name)", for: .normal)
+      self.activityIndicator.stopAnimating()
+      self.addPaywallPreview()
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -286,18 +283,18 @@ final class SWDebugViewController: UIViewController {
   @objc func pressedPreview() {
     guard let id = paywallDatabaseId else { return }
 
-    let options: [AlertOption] = paywalls.map { response in
-      var name = response.name ?? ""
+    let options: [AlertOption] = paywalls.map { paywall in
+      var name = paywall.name
 
-      if id == response.id ?? "none" {
+      if id == paywall.databaseId {
         name = "\(name) ✓"
       }
 
       let alert = AlertOption(
         title: name,
         action: { [weak self] in
-          self?.paywallDatabaseId = response.id
-          self?.paywallIdentifier = response.identifier
+          self?.paywallDatabaseId = paywall.databaseId
+          self?.paywallIdentifier = paywall.identifier
           Task { await self?.loadPreview() }
         },
         style: .default

@@ -7,185 +7,227 @@
 
 import UIKit
 
-struct PaywallsResponse: Decodable {
+struct Paywalls: Decodable {
   var paywalls: [Paywall]
 }
 
 struct Paywall: Decodable {
-  var id: String?
-  var name: String?
-  var slug: String?
+  let databaseId: String
+
+  /// The identifier of the paywall
+  let identifier: String
+
+  let name: String
+
+  /// The URL of the paywall webpage
+  let url: URL
+
+  /// Contains the website modifications that are made on the paywall editor to be accepted
+  /// by the webview.
+  let htmlSubstitutions: String
+
+  struct Presentation {
+    var style: PaywallPresentationStyle = .modal
+    let condition: PresentationCondition
+
+    init(
+      style: PaywallPresentationStyle,
+      condition: PresentationCondition
+    ) {
+      self.style = style
+      self.condition = condition
+    }
+  }
+  let presentation: Presentation
+
+  let backgroundColorHex: String
+  let backgroundColor: UIColor
+
+  /// The products associated with the paywall.
+  var products: [Product] {
+    didSet {
+      productIds = products.map { $0.id }
+    }
+  }
+
+  var responseLoadingInfo: LoadingInfo
+  var webviewLoadingInfo: LoadingInfo
+  var productsLoadingInfo: LoadingInfo
+
+  // MARK: - Added by client
+  /// An array of the ids of paywall products.
+  ///
+  /// This is set on init and whenever products are updated.
+  var productIds: [String]
 
   /// The experiment associated with the paywall.
   var experiment: Experiment?
 
-  /// The identifier of the paywall
-  var identifier: String?
-
-  /// The URL of the paywall webpage
-  var url: String
-  var paywalljsEvent: String
-
-  var presentationStyleV2: PaywallPresentationStyle = .modal
-  var presentationCondition: PresentationCondition
-  var backgroundColorHex: String?
-
-  /// The products associated with the paywall.
-  var products: [Product]
-
   /// An ordered list of SWProducts that this paywall uses. This is accessed by the trigger session.
   var swProducts: [SWProduct]? = []
 
-  /// The variables associated with the paywall
-  var variables: [Variable]? = []
-
+  /// The product variables associated with the paywall.
+  ///
+  /// Each contains a product type and their attributes.
   var productVariables: [ProductVariable]? = []
 
-  var responseLoadStartTime: Date?
-  var responseLoadCompleteTime: Date?
-  var responseLoadFailTime: Date?
+  /// As of yet unused product variables in a different format.
+  ///
+  /// Each consists of a type and a dictionary of SWTemplateVariable properties.
+  var swProductVariablesTemplate: [ProductVariable]? = []
 
-  var webViewLoadStartTime: Date?
-  var webViewLoadCompleteTime: Date?
-  var webViewLoadFailTime: Date?
-
-  var productsLoadStartTime: Date?
-  var productsLoadCompleteTime: Date?
-  var productsLoadFailTime: Date?
-
+  /// The paywall.js version being used. Added when the website fires `onReady`.
   var paywalljsVersion: String?
 
-  var paywallBackgroundColor: UIColor {
-    if let backgroundColorHex = backgroundColorHex {
-      return UIColor(hexString: backgroundColorHex)
-    }
+  enum CodingKeys: String, CodingKey {
+    case id
+    case identifier
+    case name
+    case slug
+    case url
+    case htmlSubstitutions = "paywalljsEvent"
+    case presentationStyle = "presentationStyleV2"
+    case presentationCondition
+    case backgroundColorHex
+    case products
 
-    return UIColor.darkGray
+    case responseLoadStartTime
+    case responseLoadCompleteTime
+    case responseLoadFailTime
+
+    case webViewLoadStartTime
+    case webViewLoadCompleteTime
+    case webViewLoadFailTime
+
+    case productsLoadStartTime
+    case productsLoadCompleteTime
+    case productsLoadFailTime
   }
 
-  var productIds: [String] {
-    return products.map { $0.id }
+  init(from decoder: Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    databaseId = try values.decode(String.self, forKey: .id)
+    identifier = try values.decode(String.self, forKey: .identifier)
+    name = try values.decode(String.self, forKey: .name)
+    url = try values.decode(URL.self, forKey: .url)
+    htmlSubstitutions = try values.decode(String.self, forKey: .htmlSubstitutions)
+
+    let presentationStyle = try values.decode(PaywallPresentationStyle.self, forKey: .presentationStyle)
+    let presentationCondition = try values.decode(PresentationCondition.self, forKey: .presentationCondition)
+
+    presentation = Presentation(
+      style: presentationStyle,
+      condition: presentationCondition
+    )
+
+    backgroundColorHex = try values.decode(String.self, forKey: .backgroundColorHex)
+    let backgroundColor = UIColor(hexString: backgroundColorHex)
+    self.backgroundColor = backgroundColor
+
+    products = try values.decode([Product].self, forKey: .products)
+    productIds = products.map { $0.id }
+
+    let responseLoadStartTime = try values.decodeIfPresent(Date.self, forKey: .responseLoadStartTime)
+    let responseLoadCompleteTime = try values.decodeIfPresent(Date.self, forKey: .responseLoadCompleteTime)
+    let responseLoadFailTime = try values.decodeIfPresent(Date.self, forKey: .responseLoadFailTime)
+    responseLoadingInfo = LoadingInfo(
+      startAt: responseLoadStartTime,
+      endAt: responseLoadCompleteTime,
+      failAt: responseLoadFailTime
+    )
+
+    let webviewLoadStartTime = try values.decodeIfPresent(Date.self, forKey: .webViewLoadStartTime)
+    let webviewLoadCompleteTime = try values.decodeIfPresent(Date.self, forKey: .webViewLoadCompleteTime)
+    let webviewLoadFailTime = try values.decodeIfPresent(Date.self, forKey: .webViewLoadFailTime)
+    webviewLoadingInfo = LoadingInfo(
+      startAt: webviewLoadStartTime,
+      endAt: webviewLoadCompleteTime,
+      failAt: webviewLoadFailTime
+    )
+
+    let productsLoadStartTime = try values.decodeIfPresent(Date.self, forKey: .productsLoadStartTime)
+    let productsLoadCompleteTime = try values.decodeIfPresent(Date.self, forKey: .productsLoadCompleteTime)
+    let productsLoadFailTime = try values.decodeIfPresent(Date.self, forKey: .productsLoadFailTime)
+    productsLoadingInfo = LoadingInfo(
+      startAt: productsLoadStartTime,
+      endAt: productsLoadCompleteTime,
+      failAt: productsLoadFailTime
+    )
   }
 
-  var templateVariables: JSON {
-    var variables: [String: Any] = [
-      "user": IdentityManager.shared.userAttributes,
-      "device": DeviceHelper.shared.templateDevice.dictionary ?? [:]
-    ]
-
-    // nil these out so they are removed unless present
-    variables["primary"] = JSON([:])
-    variables["secondary"] = JSON([:])
-    variables["tertiary"] = JSON([:])
-
-    // products which are present will be set, others will be nil
-    for variable in self.variables ?? [] {
-      variables[variable.key] = variable.value
-    }
-
-    let values: [String: Any] = [
-      "event_name": "template_variables",
-      "variables": variables
-    ]
-
-    return JSON(values)
-  }
-
-  var templateProductVariables: JSON {
-    var variables: [String: Any] = [:]
-
-    for variable in productVariables ?? [] {
-      variables[variable.key] = variable.value
-    }
-
-    // swiftlint:disable:next array_constructor
-    let values: [String: Any] = [
-      "event_name": "template_product_variables",
-      "variables": variables
-    ]
-
-    return JSON(values)
+  init(
+    databaseId: String,
+    identifier: String,
+    name: String,
+    experiment: Experiment? = nil,
+    url: URL,
+    htmlSubstitutions: String,
+    presentation: Paywall.Presentation,
+    backgroundColorHex: String,
+    backgroundColor: UIColor,
+    products: [Product],
+    productIds: [String],
+    responseLoadingInfo: LoadingInfo,
+    webviewLoadingInfo: LoadingInfo,
+    productsLoadingInfo: LoadingInfo,
+    paywalljsVersion: String,
+    swProducts: [SWProduct]? = [],
+    variables: [ProductVariable]? = [],
+    swTemplateProductVariables: [ProductVariable]? = [],
+    isFreeTrialAvailable: Bool? = false
+  ) {
+    self.databaseId = databaseId
+    self.identifier = identifier
+    self.name = name
+    self.experiment = experiment
+    self.url = url
+    self.htmlSubstitutions = htmlSubstitutions
+    self.presentation = presentation
+    self.backgroundColor = backgroundColor
+    self.backgroundColorHex = backgroundColorHex
+    self.products = products
+    self.productIds = productIds
+    self.responseLoadingInfo = responseLoadingInfo
+    self.webviewLoadingInfo = webviewLoadingInfo
+    self.productsLoadingInfo = productsLoadingInfo
+    self.paywalljsVersion = paywalljsVersion
+    self.swProducts = swProducts
+    self.productVariables = variables
+    self.swProductVariablesTemplate = swTemplateProductVariables
+    self.isFreeTrialAvailable = isFreeTrialAvailable
   }
 
   var isFreeTrialAvailable: Bool? = false
-
-  var templateSubstitutionsPrefix: TemplateSubstitutionsPrefix {
-    let isFreeTrialAvailable = isFreeTrialAvailable ?? false
-    return TemplateSubstitutionsPrefix(
-      eventName: "template_substitutions_prefix",
-      prefix: isFreeTrialAvailable ? "freeTrial" : nil
-    )
-  }
-
-  var templateProducts: TemplateProducts {
-    return TemplateProducts(
-      eventName: "products",
-      products: products
-    )
-  }
 
   func getInfo(
     fromEvent: EventData?,
     calledByIdentifier: Bool = false
   ) -> PaywallInfo {
     return PaywallInfo(
-      id: id ?? "unknown",
-      identifier: identifier ?? "unknown",
-      name: name ?? "unknown",
-      slug: slug ?? "unknown",
-      url: URL(string: url),
+      databaseId: databaseId,
+      identifier: identifier,
+      name: name,
+      url: url,
       productIds: productIds,
       fromEventData: fromEvent,
       calledByIdentifier: calledByIdentifier,
-      responseLoadStartTime: responseLoadStartTime,
-      responseLoadCompleteTime: responseLoadCompleteTime,
-      webViewLoadStartTime: webViewLoadStartTime,
-      webViewLoadCompleteTime: webViewLoadCompleteTime,
-      productsLoadStartTime: productsLoadStartTime,
-      productsLoadFailTime: productsLoadFailTime,
-      productsLoadCompleteTime: productsLoadCompleteTime,
+      responseLoadStartTime: responseLoadingInfo.startAt,
+      responseLoadCompleteTime: responseLoadingInfo.endAt,
+      webViewLoadStartTime: webviewLoadingInfo.startAt,
+      webViewLoadCompleteTime: webviewLoadingInfo.endAt,
+      productsLoadStartTime: productsLoadingInfo.startAt,
+      productsLoadFailTime: productsLoadingInfo.failAt,
+      productsLoadCompleteTime: productsLoadingInfo.endAt,
       experiment: experiment,
       paywalljsVersion: paywalljsVersion
     )
-  }
-
-  func getBase64EventsString(params: JSON? = nil) -> String {
-    var templateVariables = self.templateVariables
-
-    if let params = params {
-      templateVariables["variables"]["params"] = params
-    } else {
-      templateVariables["variables"]["params"] = JSON([String: Any]())
-    }
-
-    let encodedStrings = [
-      encodedEventString(DeviceHelper.shared.templateDevice),
-      encodedEventString(templateProducts),
-      encodedEventString(templateSubstitutionsPrefix),
-      encodedEventString(templateVariables),
-      encodedEventString(templateProductVariables)
-    ]
-
-    let string = "[" + encodedStrings.joined(separator: ",") + "]"
-
-    let utf8str = string.data(using: .utf8)
-
-    return utf8str?.base64EncodedString() ?? ""
-  }
-
-  private func encodedEventString<T: Codable>(_ input: T) -> String {
-    if let data = try? JSONEncoder().encode(input) {
-      return String(data: data, encoding: .utf8) ?? "{}"
-    } else {
-      return "{}"
-    }
   }
 }
 
 // MARK: - Equatable
 extension Paywall: Equatable {
   static func == (lhs: Paywall, rhs: Paywall) -> Bool {
-    return lhs.id == rhs.id
+    return lhs.databaseId == rhs.databaseId
   }
 }
 
@@ -193,10 +235,23 @@ extension Paywall: Equatable {
 extension Paywall: Stubbable {
   static func stub() -> Paywall {
     return Paywall(
-      url: "url",
-      paywalljsEvent: "event",
-      presentationCondition: .checkUserSubscription,
-      products: []
+      databaseId: "id",
+      identifier: "identifier",
+      name: "abc",
+      url: URL(string: "https://google.com")!,
+      htmlSubstitutions: "",
+      presentation: Presentation(
+        style: .modal,
+        condition: .checkUserSubscription
+      ),
+      backgroundColorHex: "",
+      backgroundColor: .black,
+      products: [],
+      productIds: [],
+      responseLoadingInfo: .init(),
+      webviewLoadingInfo: .init(),
+      productsLoadingInfo: .init(),
+      paywalljsVersion: ""
     )
   }
 }

@@ -74,45 +74,46 @@ enum Logger {
     info: [String: Any]? = nil,
     error: Swift.Error? = nil
   ) {
-    var output: [String] = []
-    var dumping: [String: Any] = [:]
+    Task {
+      var output: [String] = []
+      var dumping: [String: Any] = [:]
 
-    if let message = message {
-			output.append(message)
-		}
+      if let message = message {
+        output.append(message)
+      }
 
-		if let info = info {
-			output.append(info.debugDescription)
-			dumping["info"] = info
-		}
+      if let info = info {
+        output.append(info.debugDescription)
+        dumping["info"] = info
+      }
 
-		if let error = error {
-			output.append(error.localizedDescription)
-			dumping["error"] = error
-		}
+      if let error = error {
+        output.append(error.localizedDescription)
+        dumping["error"] = error
+      }
 
-		onMain {
-			Superwall.delegate?.handleLog?(
+      await Superwall.delegate?.handleLog?(
         level: logLevel.description,
         scope: scope.rawValue,
         message: message,
         info: info,
         error: error
       )
-		}
 
-		if shouldPrint(logLevel: logLevel, scope: scope) {
-			let dateString = Date().isoString
+      guard shouldPrint(logLevel: logLevel, scope: scope) else {
+        return
+      }
+      let dateString = Date().isoString
         .replacingOccurrences(of: "T", with: " ")
         .replacingOccurrences(of: "Z", with: "")
 
-			dump(
+      dump(
         dumping,
         name: "[Superwall]  [\(dateString)]  \(logLevel.description)  \(scope.rawValue)  \(message ?? "")",
         indent: 0,
         maxDepth: 100,
         maxItems: 100
       )
-		}
+    }
 	}
 }

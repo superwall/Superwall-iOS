@@ -1,5 +1,5 @@
 //
-//  TemplateProduct.swift
+//  TemplateSubstitutionPrefix.swift
 //  Superwall
 //
 //  Created by Yusuf Tör on 28/02/2022.
@@ -7,12 +7,13 @@
 
 import Foundation
 
-struct TemplateProducts: Codable {
+struct FreeTrialTemplate: Codable {
   var eventName: String
-  var products: [Product]
+  // Right now can be `null` or `freeTrial`
+  var prefix: String?
 
   enum CodingKeys: String, CodingKey {
     case eventName = "event_name"
-    case products
+    case prefix
   }
 }

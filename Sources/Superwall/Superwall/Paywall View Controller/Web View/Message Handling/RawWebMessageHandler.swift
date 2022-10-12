@@ -9,10 +9,10 @@ import Foundation
 import WebKit
 
 protocol WebEventDelegate: AnyObject {
-  @MainActor func handleEvent(_ event: PaywallEvent)
+  @MainActor func handle(_ message: PaywallMessage)
 }
 
-final class PaywallMessageHandler: NSObject, WKScriptMessageHandler {
+final class RawWebMessageHandler: NSObject, WKScriptMessageHandler {
   weak var delegate: WebEventDelegate?
 
   init(delegate: WebEventDelegate) {
@@ -53,8 +53,8 @@ final class PaywallMessageHandler: NSObject, WKScriptMessageHandler {
       return
     }
 
-    guard let wrappedPaywallEvents = try? JSONDecoder.fromSnakeCase.decode(
-      WrappedPaywallEvents.self,
+    guard let wrappedPaywallMessages = try? JSONDecoder.fromSnakeCase.decode(
+      WrappedPaywallMessages.self,
       from: bodyData
     ) else {
       Logger.debug(
@@ -70,13 +70,13 @@ final class PaywallMessageHandler: NSObject, WKScriptMessageHandler {
       logLevel: .debug,
       scope: .paywallViewController,
       message: "Body Converted",
-      info: ["message": message.debugDescription, "events": wrappedPaywallEvents]
+      info: ["message": message.debugDescription, "events": wrappedPaywallMessages]
     )
 
-    let events = wrappedPaywallEvents.payload.events
+    let messages = wrappedPaywallMessages.payload.messages
 
-    for event in events {
-      delegate?.handleEvent(event)
+    for message in messages {
+      delegate?.handle(message)
     }
   }
 }

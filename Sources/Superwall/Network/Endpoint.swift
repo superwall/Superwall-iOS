@@ -202,7 +202,7 @@ extension Endpoint where Response == Paywall {
 }
 
 // MARK: - PaywallsResponse
-extension Endpoint where Response == PaywallsResponse {
+extension Endpoint where Response == Paywalls {
   static func paywalls() -> Self {
     return Endpoint(
       components: Components(

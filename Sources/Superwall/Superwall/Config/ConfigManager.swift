@@ -24,7 +24,7 @@ class ConfigManager {
   ///
   /// When the trigger is fired, the assignment is confirmed and stored to disk.
   var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
-  
+
   private let storage: Storage
   private let network: Network
   private let paywallManager: PaywallManager
@@ -148,7 +148,7 @@ class ConfigManager {
   /// - Parameters:
   ///   - operation: Provided logic that takes confirmed assignments by ID and returns updated assignments.
   private func updateAssignments(
-    using operation: ([Experiment.ID : Experiment.Variant]) -> ConfigLogic.AssignmentOutcome
+    using operation: ([Experiment.ID: Experiment.Variant]) -> ConfigLogic.AssignmentOutcome
   ) {
     var confirmedAssignments = storage.getConfirmedAssignments()
 

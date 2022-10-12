@@ -14,7 +14,7 @@ actor PaywallRequestManager {
   private var paywallsByHash: [String: Paywall] = [:]
 
   func getPaywall(from request: PaywallRequest) async throws -> Paywall {
-    let requestHash = PaywallResponseLogic.requestHash(
+    let requestHash = PaywallLogic.requestHash(
       identifier: request.responseIdentifiers.paywallId,
       event: request.eventData
     )
@@ -35,15 +35,15 @@ actor PaywallRequestManager {
 
     let task = Task<Paywall, Error> {
       do {
-        let response = try await request.publisher
-          .getRawResponse()
+        let paywall = try await request.publisher
+          .getRawPaywall()
           .addProducts()
-          .map { $0.response }
+          .map { $0.paywall }
           .throwableAsync()
 
-        paywallsByHash[requestHash] = response
+        paywallsByHash[requestHash] = paywall
         activeTasks[requestHash] = nil
-        return response
+        return paywall
       } catch {
         activeTasks[requestHash] = nil
         throw error

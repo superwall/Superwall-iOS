@@ -22,17 +22,21 @@ import Foundation
 
 */
 
-struct WrappedPaywallEvents: Decodable {
+struct WrappedPaywallMessages: Decodable {
   var version: Int = 1
-  var payload: PayloadEvents
+  var payload: PayloadMessages
 }
 
-struct PayloadEvents: Decodable {
-  var events: [PaywallEvent]
+struct PayloadMessages: Decodable {
+  var messages: [PaywallMessage]
+
+  private enum CodingKeys: String, CodingKey {
+    case messages = "events"
+  }
 }
 
-enum PaywallEvent: Decodable {
-  case onReady(paywallJsVersion: String?)
+enum PaywallMessage: Decodable {
+  case onReady(paywallJsVersion: String)
 	case templateParamsAndUserAttributes
   case close
   case restore
@@ -41,10 +45,8 @@ enum PaywallEvent: Decodable {
   case openDeepLink(url: URL)
   case purchase(productId: String)
   case custom(data: String)
-}
-
-extension PaywallEvent {
-  private enum EventNames: String, Decodable {
+  
+  private enum MessageTypes: String, Decodable {
     case onReady = "ping"
     case close
     case restore
@@ -57,7 +59,7 @@ extension PaywallEvent {
 
   // Everyone write to eventName, other may use the remaining keys
   private enum CodingKeys: String, CodingKey {
-    case eventName
+    case messageType = "eventName"
     case productId = "productIdentifier"
     case url
     case link
@@ -65,19 +67,19 @@ extension PaywallEvent {
     case version
   }
 
-  enum PaywallEventError: Error {
+  enum PaywallMessageError: Error {
     case decoding(String)
   }
 
   public init(from decoder: Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
-    if let eventName = try? values.decode(EventNames.self, forKey: .eventName) {
-      switch eventName {
+    if let messageType = try? values.decode(MessageTypes.self, forKey: .messageType) {
+      switch messageType {
       case .close:
         self = .close
         return
       case .onReady:
-        let version = try? values.decode(String.self, forKey: .version)
+        let version = try values.decode(String.self, forKey: .version)
         self = .onReady(paywallJsVersion: version)
         return
       case .purchase:
@@ -114,6 +116,6 @@ extension PaywallEvent {
       }
     }
 
-    throw PaywallEventError.decoding("Whoops! \(dump(values))")
+    throw PaywallMessageError.decoding("Whoops! \(dump(values))")
   }
 }

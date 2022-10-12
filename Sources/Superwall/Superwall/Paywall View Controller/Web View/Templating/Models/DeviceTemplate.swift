@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct TemplateDevice: Codable {
+struct DeviceTemplate: Codable {
   var publicApiKey: String
   var platform: String
   var appUserId: String

@@ -12,7 +12,7 @@ struct PaywallVcPipelineOutput {
   let request: PresentationRequest
   let triggerOutcome: TriggerResultOutcome
   let debugInfo: DebugInfo
-  let paywallViewController: SWPaywallViewController
+  let paywallViewController: PaywallViewController
 }
 
 extension AnyPublisher where Output == TriggerOutcomeResponsePipelineOutput, Failure == Error {

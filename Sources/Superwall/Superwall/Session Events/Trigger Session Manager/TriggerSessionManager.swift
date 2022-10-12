@@ -110,7 +110,7 @@ final class TriggerSessionManager {
   /// - Parameters:
   ///   - presentationInfo: Information about the paywall presentation.
   ///   - presentingViewController: What view the paywall will be presented on, if any.
-  ///   - paywallResponse: The response from the server associated with the paywall
+  ///   - paywall: The response from the server associated with the paywall
   func activateSession(
     for presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
@@ -137,7 +137,7 @@ final class TriggerSessionManager {
     guard let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: presentationInfo,
       presentingViewController: presentingViewController,
-      paywallResponse: paywall,
+      paywall: paywall,
       triggerResult: triggerResult
     ) else {
       return
@@ -150,11 +150,7 @@ final class TriggerSessionManager {
     session.paywall = outcome.paywall
     session.products = TriggerSession.Products(
       allProducts: paywall?.swProducts ?? [],
-      loadingInfo: .init(
-        startAt: paywall?.productsLoadStartTime,
-        endAt: paywall?.productsLoadCompleteTime,
-        failAt: paywall?.productsLoadFailTime
-      )
+      loadingInfo: paywall?.productsLoadingInfo
     )
 
     session.appSession = AppSessionManager.shared.appSession

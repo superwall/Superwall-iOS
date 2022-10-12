@@ -12,7 +12,7 @@ import Combine
 struct PresentablePipelineOutput {
   let request: PresentationRequest
   let debugInfo: DebugInfo
-  let paywallViewController: SWPaywallViewController
+  let paywallViewController: PaywallViewController
   let presenter: UIViewController
 }
 
@@ -25,7 +25,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         isUserSubscribed: Superwall.shared.isUserSubscribed,
         isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
         shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus,
-        presentationCondition: input.paywallViewController.paywall.presentationCondition
+        presentationCondition: input.paywallViewController.paywall.presentation.condition
       ) {
         throw PresentationPipelineError.cancelled
       }

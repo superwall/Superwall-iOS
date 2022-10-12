@@ -11,6 +11,7 @@ import StoreKit
 /// The protocol that handles Superwall lifecycle events.
 ///
 /// The delegate methods receive callbacks from the SDK in response to certain events that happen on the paywall. It contains some required and some optional methods. To learn how to conform to the delegate in your app and best practices, see <doc:GettingStarted>.
+@MainActor
 @objc public protocol SuperwallDelegate: AnyObject {
 	/// Called when the user initiates checkout for a product.
   ///
@@ -31,7 +32,8 @@ import StoreKit
   /// A paywall will never be shown if this function returns `true`.
   ///
   /// - Returns: A boolean that indicates whether or not the user has an active subscription.
-	@objc func isUserSubscribed() -> Bool
+  //TODO: Move this to main actor
+  @objc nonisolated func isUserSubscribed() -> Bool
 
 	/// Called when the user taps a button on your paywall that has a `data-pw-custom` tag attached.
   ///

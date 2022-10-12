@@ -14,7 +14,7 @@ protocol SWWebViewDelegate: AnyObject {
 }
 
 final class SWWebView: WKWebView {
-  lazy var eventHandler = WebEventHandler(delegate: delegate)
+  lazy var messageHandler = PaywallMessageHandler(delegate: delegate)
   weak var delegate: (SWWebViewDelegate & WebEventHandlerDelegate)?
 
   private var wkConfig: WKWebViewConfiguration = {
@@ -42,7 +42,7 @@ final class SWWebView: WKWebView {
       configuration: wkConfig
     )
     wkConfig.userContentController.add(
-      PaywallMessageHandler(delegate: eventHandler),
+      RawWebMessageHandler(delegate: messageHandler),
       name: "paywallMessageHandler"
     )
     self.navigationDelegate = self
@@ -116,14 +116,14 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func trackPaywallError() {
-    delegate?.paywall.webViewLoadFailTime = Date()
+    delegate?.paywall.webviewLoadingInfo.failAt = Date()
 
     guard let paywallInfo = delegate?.paywallInfo else {
       return
     }
 
     SessionEventsManager.shared.triggerSession.trackWebviewLoad(
-      forPaywallId: paywallInfo.id,
+      forPaywallId: paywallInfo.databaseId,
       state: .fail
     )
 

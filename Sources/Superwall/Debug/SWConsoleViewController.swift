@@ -93,7 +93,7 @@ final class SWConsoleViewController: UIViewController {
 
     tableViewCellData = []
     let product = products[index]
-    for i in product.legacyEventData {
+    for i in product.attributes {
       tableViewCellData.append(i)
     }
 

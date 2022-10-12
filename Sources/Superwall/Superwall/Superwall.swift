@@ -60,7 +60,7 @@ public final class Superwall: NSObject {
   var paywallWasPresentedThisSession = false
 
   @MainActor
-  var paywallViewController: SWPaywallViewController? {
+  var paywallViewController: PaywallViewController? {
     return PaywallManager.shared.presentedViewController
   }
 
@@ -249,9 +249,9 @@ extension Superwall {
 extension Superwall: SWPaywallViewControllerDelegate {
   @MainActor
   func eventDidOccur(
-    paywallViewController: SWPaywallViewController,
+    paywallViewController: PaywallViewController,
     result: PaywallPresentationResult
-  ) {
+  ) async {
     // TODO: log this
     switch result {
     case .closed:
@@ -266,7 +266,7 @@ extension Superwall: SWPaywallViewControllerDelegate {
       paywallViewController.loadingState = .loadingPurchase
       Superwall.delegate?.purchase(product: product)
     case .initiateRestore:
-      self.tryToRestore(
+      await tryToRestore(
         paywallViewController,
         userInitiated: true
       )

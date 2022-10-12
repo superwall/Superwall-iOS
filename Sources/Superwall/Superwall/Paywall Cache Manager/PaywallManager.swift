@@ -11,8 +11,8 @@ import UIKit
 @MainActor
 final class PaywallManager {
 	static let shared = PaywallManager()
-  var presentedViewController: SWPaywallViewController? {
-    return SWPaywallViewController.cache.first { $0.isActive }
+  var presentedViewController: PaywallViewController? {
+    return PaywallViewController.cache.first { $0.isActive }
 	}
 
   private var cache = PaywallCache()
@@ -25,7 +25,7 @@ final class PaywallManager {
     )
 	}
 
-	func removePaywall(withViewController viewController: SWPaywallViewController) {
+	func removePaywall(withViewController viewController: PaywallViewController) {
     cache.removePaywall(withViewController: viewController)
 	}
 
@@ -45,12 +45,11 @@ final class PaywallManager {
 	func getPaywallViewController(
     from request: PaywallRequest,
     cached: Bool
-  ) async throws -> SWPaywallViewController {
+  ) async throws -> PaywallViewController {
     let paywall = try await PaywallRequestManager.shared.getPaywall(from: request)
 
     if cached,
-      let identifier = paywall.identifier,
-      let viewController = self.cache.getPaywallViewController(withIdentifier: identifier) {
+      let viewController = self.cache.getPaywallViewController(withIdentifier: paywall.identifier) {
       // Set paywall again incase products have been substituted into paywall.
       viewController.paywall = paywall
       return viewController

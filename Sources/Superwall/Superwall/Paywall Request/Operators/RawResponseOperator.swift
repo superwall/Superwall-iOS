@@ -9,7 +9,7 @@ import Combine
 import Foundation
 
 extension AnyPublisher where Output == PaywallRequest, Failure == Error {
-  func getRawResponse() -> AnyPublisher<PipelineData, Failure> {
+  func getRawPaywall() -> AnyPublisher<PipelineData, Failure> {
     map { request in
       trackResponseStarted(
         paywallId: request.responseIdentifiers.paywallId,
@@ -19,7 +19,7 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
     }
     .flatMap(getCachedResponseOrLoad)
     .map {
-      let paywallInfo = $0.response.getInfo(fromEvent: $0.request.eventData)
+      let paywallInfo = $0.paywall.getInfo(fromEvent: $0.request.eventData)
       trackResponseLoaded(
         paywallInfo,
         event: $0.request.eventData
@@ -31,18 +31,18 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
 
   private func getCachedResponseOrLoad(
     _ request: PaywallRequest
-  ) -> AnyPublisher<(response: Paywall, request: PaywallRequest), Error> {
+  ) -> AnyPublisher<(paywall: Paywall, request: PaywallRequest), Error> {
     Future {
       let responseLoadStartTime = Date()
       let paywallId = request.responseIdentifiers.paywallId
       let event = request.eventData
-      var response: Paywall
+      var paywall: Paywall
 
       do {
-        if let paywall = ConfigManager.shared.getStaticPaywall(withId: paywallId) {
-          response = paywall
+        if let staticPaywall = ConfigManager.shared.getStaticPaywall(withId: paywallId) {
+          paywall = staticPaywall
         } else {
-          response = try await Network.shared.getPaywall(
+          paywall = try await Network.shared.getPaywall(
             withId: paywallId,
             fromEvent: event
           )
@@ -52,18 +52,18 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
           forPaywallId: request.responseIdentifiers.paywallId,
           state: .fail
         )
-        let errorResponse = PaywallResponseLogic.handlePaywallError(
+        let errorResponse = PaywallLogic.handlePaywallError(
           error,
           forEvent: event
         )
         throw errorResponse
       }
 
-      response.experiment = request.responseIdentifiers.experiment
-      response.responseLoadStartTime = responseLoadStartTime
-      response.responseLoadCompleteTime = Date()
+      paywall.experiment = request.responseIdentifiers.experiment
+      paywall.responseLoadingInfo.startAt = responseLoadStartTime
+      paywall.responseLoadingInfo.endAt = Date()
 
-      return (response, request)
+      return (paywall, request)
     }
     .eraseToAnyPublisher()
   }
@@ -77,7 +77,7 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
       forPaywallId: paywallId,
       state: .start
     )
-    let trackedEvent = InternalSuperwallEvent.PaywallResponseLoad(
+    let trackedEvent = InternalSuperwallEvent.PaywallLoad(
       state: .start,
       eventData: event
     )
@@ -88,14 +88,14 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
     _ paywallInfo: PaywallInfo,
     event: EventData?
   ) {
-    let responseLoadEvent = InternalSuperwallEvent.PaywallResponseLoad(
+    let responseLoadEvent = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: paywallInfo),
       eventData: event
     )
     Superwall.track(responseLoadEvent)
 
     SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
-      forPaywallId: paywallInfo.id,
+      forPaywallId: paywallInfo.databaseId,
       state: .end
     )
   }

@@ -8,13 +8,13 @@
 import Combine
 import Foundation
 
-typealias PipelineData = (response: Paywall, request: PaywallRequest)
+typealias PipelineData = (paywall: Paywall, request: PaywallRequest)
 
 extension AnyPublisher where Output == PipelineData, Failure == Error {
   func addProducts() -> AnyPublisher<Output, Failure> {
     map { input in
       trackProductsLoadStart(
-        paywall: input.response,
+        paywall: input.paywall,
         event: input.request.eventData
       )
       return input
@@ -22,7 +22,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
     .flatMap(getProducts)
     .map { input in
       trackProductsLoadFinish(
-        paywall: input.response,
+        paywall: input.paywall,
         event: input.request.eventData
       )
       return input
@@ -34,34 +34,34 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
     Future {
       do {
         let result = try await StoreKitManager.shared.getProducts(
-          withIds: input.response.productIds,
-          responseProducts: input.response.products,
+          withIds: input.paywall.productIds,
+          responseProducts: input.paywall.products,
           substituting: input.request.substituteProducts
         )
 
-        var response = input.response
-        response.products = result.products
+        var paywall = input.paywall
+        paywall.products = result.products
 
-        let outcome = PaywallResponseLogic.getVariablesAndFreeTrial(
+        let outcome = PaywallLogic.getVariablesAndFreeTrial(
           fromProducts: result.products,
           productsById: result.productsById,
           isFreeTrialAvailableOverride: Superwall.isFreeTrialAvailableOverride
         )
-        response.swProducts = outcome.orderedSwProducts
-        response.variables = outcome.variables
-        response.productVariables = outcome.productVariables
-        response.isFreeTrialAvailable = outcome.isFreeTrialAvailable
+        paywall.swProducts = outcome.orderedSwProducts
+        paywall.productVariables = outcome.productVariables
+        paywall.swProductVariablesTemplate = outcome.swProductVariablesTemplate
+        paywall.isFreeTrialAvailable = outcome.isFreeTrialAvailable
 
         if outcome.resetFreeTrialOverride {
           Superwall.isFreeTrialAvailableOverride = nil
         }
 
-        response.productsLoadCompleteTime = Date()
-        return (response, input.request)
+        paywall.productsLoadingInfo.endAt = Date()
+        return (paywall, input.request)
       } catch {
         var input = input
-        input.response.productsLoadFailTime = Date()
-        let paywallInfo = input.response.getInfo(fromEvent: input.request.eventData)
+        input.paywall.productsLoadingInfo.failAt = Date()
+        let paywallInfo = input.paywall.getInfo(fromEvent: input.request.eventData)
         trackProductLoadFail(paywallInfo: paywallInfo, event: input.request.eventData)
         throw error
       }
@@ -75,7 +75,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
     event: EventData?
   ) {
     var paywall = paywall
-    paywall.productsLoadStartTime = Date()
+    paywall.productsLoadingInfo.startAt = Date()
     let paywallInfo = paywall.getInfo(fromEvent: event)
     let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
       state: .start,
@@ -85,7 +85,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
     Superwall.track(productLoadEvent)
 
     SessionEventsManager.shared.triggerSession.trackProductsLoad(
-      forPaywallId: paywallInfo.id,
+      forPaywallId: paywallInfo.databaseId,
       state: .start
     )
   }
@@ -102,7 +102,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
     Superwall.track(productLoadEvent)
 
     SessionEventsManager.shared.triggerSession.trackProductsLoad(
-      forPaywallId: paywallInfo.id,
+      forPaywallId: paywallInfo.databaseId,
       state: .fail
     )
   }
@@ -113,7 +113,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
   ) {
     let paywallInfo = paywall.getInfo(fromEvent: event)
     SessionEventsManager.shared.triggerSession.trackProductsLoad(
-      forPaywallId: paywallInfo.id,
+      forPaywallId: paywallInfo.databaseId,
       state: .end
     )
     let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(

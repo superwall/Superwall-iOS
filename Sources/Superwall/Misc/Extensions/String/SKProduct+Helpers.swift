@@ -8,7 +8,7 @@
 import StoreKit
 
 extension SKProduct {
-  var legacyEventData: [String: String] {
+  var attributes: [String: String] {
     return [
       "rawPrice": "\(price)",
       "price": localizedPrice,
@@ -38,12 +38,12 @@ extension SKProduct {
     ]
   }
 
-  var eventData: JSON {
-    return JSON(legacyEventData)
+  var attributesJson: JSON {
+    return JSON(attributes)
   }
 
-  var productVariables: JSON {
-    return JSON(SWTemplateVariable(product: self).dictionary as Any)
+  var swProductTemplateVariablesJson: JSON {
+    return JSON(SWProductTemplateVariable(product: self).dictionary as Any)
   }
 
   var swProduct: SWProduct {

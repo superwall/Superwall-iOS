@@ -77,9 +77,10 @@ class Network {
     }
   }
 
-  func getPaywalls() async throws -> PaywallsResponse {
+  func getPaywalls() async throws -> [Paywall] {
     do {
-      return try await urlSession.request(.paywalls(), isForDebugging: true)
+      let response = try await urlSession.request(.paywalls(), isForDebugging: true)
+      return response.paywalls
     } catch {
       Logger.debug(
         logLevel: .error,
