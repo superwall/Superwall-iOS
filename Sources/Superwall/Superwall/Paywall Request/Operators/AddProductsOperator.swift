@@ -45,16 +45,12 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
         let outcome = PaywallLogic.getVariablesAndFreeTrial(
           fromProducts: result.products,
           productsById: result.productsById,
-          isFreeTrialAvailableOverride: Superwall.isFreeTrialAvailableOverride
+          isFreeTrialAvailableOverride: input.request.overrides.isFreeTrial
         )
         paywall.swProducts = outcome.orderedSwProducts
         paywall.productVariables = outcome.productVariables
         paywall.swProductVariablesTemplate = outcome.swProductVariablesTemplate
         paywall.isFreeTrialAvailable = outcome.isFreeTrialAvailable
-
-        if outcome.resetFreeTrialOverride {
-          Superwall.isFreeTrialAvailableOverride = nil
-        }
 
         paywall.productsLoadingInfo.endAt = Date()
         return (paywall, input.request)

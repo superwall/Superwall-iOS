@@ -68,8 +68,7 @@ struct Endpoint<Response: Decodable> {
     requestId: String,
     forDebugging isForDebugging: Bool
   ) {
-    let apiKey = isForDebugging ? (Storage.shared.debugKey ?? "") : Storage.shared.apiKey
-    let auth = "Bearer \(apiKey)"
+    let auth = "Bearer \(Storage.shared.apiKey)"
     let headers = [
       "Authorization": auth,
       "X-Platform": "iOS",

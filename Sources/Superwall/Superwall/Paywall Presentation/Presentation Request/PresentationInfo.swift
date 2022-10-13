@@ -11,7 +11,16 @@ import Foundation
 enum PresentationInfo {
   case implicitTrigger(EventData)
   case explicitTrigger(EventData)
-  case fromIdentifier(String)
+  case fromIdentifier(_ identifier: String, freeTrialOverride: Bool)
+
+  var freeTrialOverride: Bool? {
+    switch self {
+    case .fromIdentifier(_, let freeTrialOverride):
+      return freeTrialOverride
+    default:
+      return nil
+    }
+  }
 
   var eventData: EventData? {
     switch self {
@@ -35,7 +44,7 @@ enum PresentationInfo {
 
   var identifier: String? {
     switch self {
-    case .fromIdentifier(let identifier):
+    case .fromIdentifier(let identifier, _):
       return identifier
     default:
       return nil

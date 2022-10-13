@@ -386,13 +386,14 @@ final class SWDebugViewController: UIViewController {
       return
     }
 
-    Superwall.isFreeTrialAvailableOverride = freeTrialAvailable
-
     bottomButton.setImage(nil, for: .normal)
     bottomButton.showLoading = true
 
     let presentationRequest = PresentationRequest(
-      presentationInfo: .fromIdentifier(paywallIdentifier),
+      presentationInfo: .fromIdentifier(
+        paywallIdentifier,
+        freeTrialOverride: freeTrialAvailable
+      ),
       presentingViewController: self
     )
 

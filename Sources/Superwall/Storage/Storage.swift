@@ -8,21 +8,31 @@
 import Foundation
 
 class Storage {
+  /// The shared `Storage` instance.
   static let shared = Storage()
+
+  /// The interface that manages core data.
   let coreDataManager: CoreDataManager
 
+  /// The API key set on configure.
   var apiKey = ""
-  var debugKey: String?
 
+  /// Indicates whether first seen has been tracked.
 	var didTrackFirstSeen = false
 
+  /// Indicates whether static config hasn't been called before.
+  ///
+  /// Users upgrading from older SDK versions will not have called static config.
+  /// This means that we'll need to wait for assignments before firing triggers.
   var neverCalledStaticConfig = false
-  var didCheckForStaticConfigUpdate = false
 
-
+  /// The confirmed assignments for the user loaded from the cache.
   private var confirmedAssignments: [Experiment.ID: Experiment.Variant]?
+
+  /// The disk cache.
   private let cache: Cache
 
+  // MARK: - Configuration
   init(
     cache: Cache = Cache(),
     coreDataManager: CoreDataManager = CoreDataManager()
@@ -49,23 +59,19 @@ class Storage {
   /// Checks to see whether a user has upgraded from normal to static config.
   /// This blocks triggers until assignments is returned.
   private func updateSdkVersion() {
-    if didCheckForStaticConfigUpdate {
-      return
-    }
-
     let actualSdkVersion = sdkVersion
     let previousSdkVersion = cache.read(SdkVersion.self)
+
     if actualSdkVersion != previousSdkVersion {
-      cache.write(actualSdkVersion, forType: SdkVersion.self)
+      save(actualSdkVersion, forType: SdkVersion.self)
     }
+
     if previousSdkVersion == nil {
       neverCalledStaticConfig = true
     }
-
-    didCheckForStaticConfigUpdate = true
   }
 
-  /// Call this when you log out
+  /// Clears data that is user specific.
   func clear() {
     coreDataManager.deleteAllEntities()
     cache.cleanUserFiles()
@@ -74,26 +80,29 @@ class Storage {
     recordFirstSeenTracked()
   }
 
+  // MARK: - Custom
+  /// Tracks and stores first seen for the user.
 	func recordFirstSeenTracked() {
     if didTrackFirstSeen {
       return
     }
 
     Superwall.track(InternalSuperwallEvent.FirstSeen())
-    cache.write(true, forType: DidTrackFirstSeen.self)
+    save(true, forType: DidTrackFirstSeen.self)
 		didTrackFirstSeen = true
 	}
 
+  /// Records the app install
   func recordAppInstall(
     trackEvent: (Trackable) -> TrackingResult = Superwall.track
   ) {
-    let didTrackAppInstall = cache.read(DidTrackAppInstall.self) ?? false
+    let didTrackAppInstall = get(DidTrackAppInstall.self) ?? false
     if didTrackAppInstall {
       return
     }
 
     _ = trackEvent(InternalSuperwallEvent.AppInstall())
-    cache.write(true, forType: DidTrackAppInstall.self)
+    save(true, forType: DidTrackAppInstall.self)
   }
 
   func clearCachedSessionEvents() {
@@ -101,60 +110,15 @@ class Storage {
     cache.delete(Transactions.self)
   }
 
-  func getCachedTriggerSessions() -> TriggerSessions.Value {
-    return cache.read(TriggerSessions.self) ?? []
-  }
-
-  func saveTriggerSessions(_ sessions: [TriggerSession]) {
-    cache.write(
-      sessions,
-      forType: TriggerSessions.self
-    )
-  }
-
-  func getCachedTransactions() -> Transactions.Value {
-    return cache.read(Transactions.self) ?? []
-  }
-
-  func saveTransactions(_ transactions: [TransactionModel]) {
-    cache.write(
-      transactions,
-      forType: Transactions.self
-    )
-  }
-
   func trackPaywallOpen() {
-    cache.write(
-      (getTotalPaywallViews() ?? 0) + 1,
-      forType: TotalPaywallViews.self
-    )
-    cache.write(
-      Date(),
-      forType: LastPaywallView.self
-    )
+    let totalPaywallViews = get(TotalPaywallViews.self) ?? 0
+    save(totalPaywallViews + 1, forType: TotalPaywallViews.self)
+    save(Date(), forType: LastPaywallView.self)
   }
 
-  func get<Key: Storable>(_ keyType: Key.Type) -> Key.Value? {
-    return cache.read(keyType)
-  }
-
-  func save<Key: Storable>(_ value: Key.Value, forType keyType: Key.Type) {
-    return cache.write(value, forType: keyType)
-  }
-
-  func getLastPaywallView() -> LastPaywallView.Value? {
-    return cache.read(LastPaywallView.self)
-  }
-
-  func getTotalPaywallViews() -> TotalPaywallViews.Value? {
-    return cache.read(TotalPaywallViews.self)
-  }
 
   func saveConfirmedAssignments(_ assignments: [Experiment.ID: Experiment.Variant]) {
-    cache.write(
-      assignments,
-      forType: ConfirmedAssignments.self
-    )
+    save(assignments, forType: ConfirmedAssignments.self)
     confirmedAssignments = assignments
   }
 
@@ -162,9 +126,20 @@ class Storage {
     if let confirmedAssignments = confirmedAssignments {
       return confirmedAssignments
     } else {
-      let assignments = cache.read(ConfirmedAssignments.self) ?? [:]
+      let assignments = get(ConfirmedAssignments.self) ?? [:]
       confirmedAssignments = assignments
       return assignments
     }
+  }
+}
+
+// MARK: - Cache Reading & Writing
+extension Storage {
+  func get<Key: Storable>(_ keyType: Key.Type) -> Key.Value? {
+    return cache.read(keyType)
+  }
+
+  func save<Key: Storable>(_ value: Key.Value, forType keyType: Key.Type) {
+    return cache.write(value, forType: keyType)
   }
 }

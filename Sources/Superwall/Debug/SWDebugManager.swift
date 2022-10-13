@@ -8,11 +8,6 @@
 import Foundation
 import UIKit
 
-struct DebugResponse {
-  var paywallId: Int
-  var token: String
-}
-
 @MainActor
 final class SWDebugManager {
 	var viewController: SWDebugViewController?
@@ -36,7 +31,7 @@ final class SWDebugManager {
       return
     }
 
-    Storage.shared.debugKey = debugKey
+    Storage.shared.apiKey = debugKey
 
     let paywallId = SWDebugManagerLogic.getQueryItemValue(
       fromUrl: deepLinkUrl,

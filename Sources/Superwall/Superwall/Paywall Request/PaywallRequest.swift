@@ -10,11 +10,23 @@ import Combine
 
 /// A request to get a paywall.
 struct PaywallRequest {
+  struct Overrides {
+    /// The products to substitute into the response.
+    var products: PaywallProducts?
+
+    /// Whether to override the displaying of a free trial.
+    var isFreeTrial: Bool?
+  }
+
   /// The event data
   var eventData: EventData?
 
   /// The identifiers for the paywall and experiment.
   let responseIdentifiers: ResponseIdentifiers
+
+  /// Overrides within the paywall.
+  var overrides = Overrides()
+
 
   /// The products to substitute into the response.
   var substituteProducts: PaywallProducts?

@@ -22,7 +22,6 @@ struct ProductProcessingOutcome {
   var swProductVariablesTemplate: [ProductVariable]
   var orderedSwProducts: [SWProduct]
   var isFreeTrialAvailable: Bool?
-  var resetFreeTrialOverride: Bool
 }
 
 enum PaywallLogic {
@@ -79,7 +78,6 @@ enum PaywallLogic {
     var productVariables: [ProductVariable] = []
     var swTemplateProductVariables: [ProductVariable] = []
     var hasFreeTrial: Bool?
-    var resetFreeTrialOverride = false
     var orderedSwProducts: [SWProduct] = []
 
     for product in products {
@@ -107,7 +105,6 @@ enum PaywallLogic {
         // use the override if it is set
         if let freeTrialOverride = isFreeTrialAvailableOverride {
           hasFreeTrial = freeTrialOverride
-          resetFreeTrialOverride = true
         }
       }
     }
@@ -116,8 +113,7 @@ enum PaywallLogic {
       productVariables: productVariables,
       swProductVariablesTemplate: swTemplateProductVariables,
       orderedSwProducts: orderedSwProducts,
-      isFreeTrialAvailable: hasFreeTrial,
-      resetFreeTrialOverride: resetFreeTrialOverride
+      isFreeTrialAvailable: hasFreeTrial
     )
   }
 }

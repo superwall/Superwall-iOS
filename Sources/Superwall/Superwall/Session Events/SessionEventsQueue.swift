@@ -126,11 +126,11 @@ class SessionEventsQueue {
 
   private func saveLatestSessionsToDisk() {
     let sessions = lastTwentySessions.getArray()
-    Storage.shared.saveTriggerSessions(sessions)
+    Storage.shared.save(sessions, forType: TriggerSessions.self)
   }
 
   private func saveLatestTransactionsToDisk() {
     let transactions = lastTwentyTransactions.getArray()
-    Storage.shared.saveTransactions(transactions)
+    Storage.shared.save(transactions, forType: Transactions.self)
   }
 }
