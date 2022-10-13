@@ -1,5 +1,5 @@
 //
-//  PaywallPresentationResult.swift
+//  PaywallWebEvent.swift
 //  Superwall
 //
 //  Created by Yusuf Tör on 07/03/2022.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum PaywallPresentationResult {
+enum PaywallWebEvent {
   case closed
   case initiatePurchase(productId: String)
   case initiateRestore

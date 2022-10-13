@@ -88,7 +88,6 @@ public final class PaywallInfo: NSObject {
     url: URL,
     productIds: [String],
     fromEventData eventData: EventData?,
-    calledByIdentifier: Bool = false,
     responseLoadStartTime: Date?,
     responseLoadCompleteTime: Date?,
     webViewLoadStartTime: Date?,
@@ -112,8 +111,6 @@ public final class PaywallInfo: NSObject {
 
     if eventData != nil {
       self.presentedBy = "event"
-    } else if calledByIdentifier {
-      self.presentedBy = "identifier"
     } else {
       self.presentedBy = "programmatically"
     }

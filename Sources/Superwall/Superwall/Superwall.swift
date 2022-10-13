@@ -64,17 +64,6 @@ public final class Superwall: NSObject {
     return PaywallManager.shared.presentedViewController
   }
 
-  var recentlyPresented = false {
-    didSet {
-      guard recentlyPresented else {
-        return
-      }
-      DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(700)) {
-        self.recentlyPresented = false
-      }
-    }
-  }
-
   @MainActor
   var isPaywallPresented: Bool {
     return paywallViewController != nil
@@ -245,15 +234,15 @@ extension Superwall {
 	}
 }
 
-// MARK: - SWPaywallViewControllerDelegate
-extension Superwall: SWPaywallViewControllerDelegate {
+// MARK: - PaywallViewControllerDelegate
+extension Superwall: PaywallViewControllerDelegate {
   @MainActor
   func eventDidOccur(
-    paywallViewController: PaywallViewController,
-    result: PaywallPresentationResult
+    _ paywallEvent: PaywallWebEvent,
+    on paywallViewController: PaywallViewController
   ) async {
     // TODO: log this
-    switch result {
+    switch paywallEvent {
     case .closed:
       self.dismiss(
         paywallViewController,

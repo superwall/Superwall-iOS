@@ -42,15 +42,6 @@ enum PresentationInfo {
     }
   }
 
-  var calledByIdentifier: Bool {
-    switch self {
-    case .fromIdentifier:
-      return true
-    default:
-      return false
-    }
-  }
-
   var triggerType: TriggerSession.Trigger.TriggerType {
     switch self {
     case .implicitTrigger:

@@ -200,8 +200,7 @@ struct Paywall: Decodable {
   var isFreeTrialAvailable: Bool? = false
 
   func getInfo(
-    fromEvent: EventData?,
-    calledByIdentifier: Bool = false
+    fromEvent: EventData?
   ) -> PaywallInfo {
     return PaywallInfo(
       databaseId: databaseId,
@@ -210,7 +209,6 @@ struct Paywall: Decodable {
       url: url,
       productIds: productIds,
       fromEventData: fromEvent,
-      calledByIdentifier: calledByIdentifier,
       responseLoadStartTime: responseLoadingInfo.startAt,
       responseLoadCompleteTime: responseLoadingInfo.endAt,
       webViewLoadStartTime: webviewLoadingInfo.startAt,

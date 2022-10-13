@@ -13,6 +13,13 @@ actor PaywallRequestManager {
   private var activeTasks: [String: Task<Paywall, Error>] = [:]
   private var paywallsByHash: [String: Paywall] = [:]
 
+  ///  Gets a paywall from a given request.
+  ///
+  ///  If a request for the same paywall is already in progress, it suspends until the request returns.
+  ///
+  ///  - Parameters:
+  ///     - request: A request to get a paywall.
+  ///  - Returns A paywall.
   func getPaywall(from request: PaywallRequest) async throws -> Paywall {
     let requestHash = PaywallLogic.requestHash(
       identifier: request.responseIdentifiers.paywallId,

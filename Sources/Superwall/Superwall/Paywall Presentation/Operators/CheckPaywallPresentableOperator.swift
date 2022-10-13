@@ -93,4 +93,9 @@ extension Superwall {
     presentingWindow?.windowLevel = .normal
     presentingWindow?.makeKeyAndVisible()
   }
+
+  func destroyPresentingWindow() {
+    presentingWindow?.isHidden = true
+    presentingWindow = nil
+  }
 }

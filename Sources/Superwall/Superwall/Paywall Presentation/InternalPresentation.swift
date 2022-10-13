@@ -8,6 +8,7 @@
 import UIKit
 import Combine
 
+/// A CurrentValueSubject that emits `PresentationRequest` objects.
 typealias PresentationSubject = CurrentValueSubject<PresentationRequest, Error>
 
 /// A publisher that emits ``PaywallState`` objects.
@@ -21,9 +22,9 @@ extension Superwall {
   /// - Returns: A publisher that outputs a ``PaywallState``.
   func internallyPresent(_ request: PresentationRequest) -> PaywallStatePublisher {
     let paywallStatePublisher = PassthroughSubject<PaywallState, Never>()
-    let presentationPublisher = PresentationSubject(request)
+    let presentationSubject = PresentationSubject(request)
 
-    self.presentationPublisher = presentationPublisher
+    self.presentationPublisher = presentationSubject
       .eraseToAnyPublisher()
       .awaitIdentity()
       .logPresentation()
@@ -33,7 +34,7 @@ extension Superwall {
       .handleTriggerOutcome(paywallStatePublisher)
       .getPaywallViewController(paywallStatePublisher)
       .checkPaywallIsPresentable(paywallStatePublisher)
-      .presentPaywall(paywallStatePublisher, presentationPublisher)
+      .presentPaywall(paywallStatePublisher, presentationSubject)
       .sink(
         receiveCompletion: { _ in },
         receiveValue: { _ in }
@@ -78,10 +79,5 @@ extension Superwall {
         completion?()
       }
     }
-  }
-
-  func destroyPresentingWindow() {
-    presentingWindow?.isHidden = true
-    presentingWindow = nil
   }
 }

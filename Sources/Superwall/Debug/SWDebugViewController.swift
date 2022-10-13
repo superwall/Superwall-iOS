@@ -242,7 +242,7 @@ final class SWDebugViewController: UIViewController {
       return
     }
 
-    let child = SWPaywallViewController(paywall: paywall)
+    let child = PaywallViewController(paywall: paywall)
     addChild(child)
     previewContainerView.insertSubview(child.view, at: 0)
     previewViewContent = child.view
@@ -325,7 +325,7 @@ final class SWDebugViewController: UIViewController {
 		}
 
 		let navController = UINavigationController(rootViewController: viewController)
-		self.present(navController, animated: true)
+		await present(navController, animated: true)
 	}
 
 	func showConsole() async {
@@ -355,7 +355,7 @@ final class SWDebugViewController: UIViewController {
     let viewController = SWConsoleViewController(products: products)
     let navController = UINavigationController(rootViewController: viewController)
     navController.modalPresentationStyle = .overFullScreen
-    self.present(navController, animated: true)
+    await present(navController, animated: true)
 	}
 
   @objc func pressedBottomButton() {

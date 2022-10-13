@@ -73,7 +73,7 @@ final class SWDebugManager {
 		if let viewController = viewController {
 			viewController.paywallDatabaseId = paywallDatabaseId
 			await viewController.loadPreview()
-			UIViewController.topMostViewController?.present(
+			await UIViewController.topMostViewController?.present(
         viewController,
         animated: true
       )

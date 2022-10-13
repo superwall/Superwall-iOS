@@ -8,9 +8,9 @@
 import UIKit
 
 enum AlertControllerFactory {
-  static func create(
-    title: String,
-    message: String,
+  static func make(
+    title: String? = nil,
+    message: String? = nil,
     actionTitle: String? = nil,
     closeActionTitle: String = "Done",
     closeActionStyle: UIAlertAction.Style = .cancel,

@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-/// A request to get a paywall response.
+/// A request to get a paywall.
 struct PaywallRequest {
   /// The event data
   var eventData: EventData?

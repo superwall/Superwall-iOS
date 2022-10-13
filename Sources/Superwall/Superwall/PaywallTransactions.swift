@@ -159,7 +159,7 @@ extension Superwall {
         title: "Please try again",
         message: error?.localizedDescription ?? "",
         actionTitle: "Restore Purchase",
-        onCancel: {
+        onClose: {
           Task {
             await Superwall.shared.tryToRestore(paywallViewController)
           }
@@ -256,6 +256,7 @@ extension Superwall: SKPaymentTransactionObserver {
 		for transaction in transactions {
       SessionEventsManager.shared.transactions.record(transaction)
 
+      // TODO: DOUBLE CHECK THIS:
 			guard paywallWasPresentedThisSession else {
         return
       }
@@ -339,9 +340,7 @@ extension Superwall: SKPaymentTransactionObserver {
             )
 						paywallViewController.presentAlert(
               title: "Something went wrong",
-              message: transaction.error?.localizedDescription ?? "",
-              actionTitle: nil,
-              action: nil
+              message: transaction.error?.localizedDescription ?? ""
             )
 					}
 				}

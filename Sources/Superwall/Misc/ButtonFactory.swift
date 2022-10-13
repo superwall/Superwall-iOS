@@ -7,8 +7,8 @@
 
 import UIKit
 
-enum UIComponentFactory {
-  static func makeButton(
+enum ButtonFactory {
+  static func make(
     imageNamed name: String,
     target: Any,
     action: Selector

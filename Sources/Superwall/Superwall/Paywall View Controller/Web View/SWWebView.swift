@@ -15,7 +15,7 @@ protocol SWWebViewDelegate: AnyObject {
 
 final class SWWebView: WKWebView {
   lazy var messageHandler = PaywallMessageHandler(delegate: delegate)
-  weak var delegate: (SWWebViewDelegate & WebEventHandlerDelegate)?
+  weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
 
   private var wkConfig: WKWebViewConfiguration = {
     let config = WKWebViewConfiguration()
@@ -35,7 +35,7 @@ final class SWWebView: WKWebView {
     return config
   }()
 
-  init(delegate: SWWebViewDelegate & WebEventHandlerDelegate) {
+  init(delegate: SWWebViewDelegate & PaywallMessageHandlerDelegate) {
     self.delegate = delegate
     super.init(
       frame: .zero,

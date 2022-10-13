@@ -9,15 +9,15 @@
 import UIKit
 import WebKit
 
-protocol WebEventHandlerDelegate: AnyObject {
+protocol PaywallMessageHandlerDelegate: AnyObject {
   var eventData: EventData? { get }
   var paywall: Paywall { get set }
   var paywallInfo: PaywallInfo { get }
   var webView: SWWebView { get }
   var loadingState: PaywallLoadingState { get set }
-  var isPresentedViewController: Bool { get }
+  var isActive: Bool { get }
 
-  func eventDidOccur(_ paywallPresentationResult: PaywallPresentationResult)
+  func eventDidOccur(_ paywallWebEvent: PaywallWebEvent)
   func openDeepLink(_ url: URL)
   func presentSafariInApp(_ url: URL)
   func presentSafariExternal(_ url: URL)
@@ -25,9 +25,9 @@ protocol WebEventHandlerDelegate: AnyObject {
 
 @MainActor
 final class PaywallMessageHandler: WebEventDelegate {
-  weak var delegate: WebEventHandlerDelegate?
+  weak var delegate: PaywallMessageHandlerDelegate?
 
-  init(delegate: WebEventHandlerDelegate?) {
+  init(delegate: PaywallMessageHandlerDelegate?) {
     self.delegate = delegate
   }
 
@@ -187,9 +187,6 @@ final class PaywallMessageHandler: WebEventDelegate {
       userInfo: ["url": url]
     )
     hapticFeedback()
-    /*
-     PassthroughSubject, send event.
-     */
     delegate?.eventDidOccur(.openedURL(url: url))
     delegate?.presentSafariInApp(url)
   }
@@ -237,7 +234,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     _ eventName: String,
     userInfo: [String: Any]? = nil
   ) {
-    guard delegate?.isPresentedViewController == false else {
+    guard delegate?.isActive == false else {
       return
     }
     let paywallDebugDescription = Superwall.shared.paywallViewController.debugDescription

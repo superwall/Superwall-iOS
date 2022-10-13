@@ -123,7 +123,11 @@ class Storage {
     )
   }
 
-  func saveLastPaywallView() {
+  func trackPaywallOpen() {
+    cache.write(
+      (getTotalPaywallViews() ?? 0) + 1,
+      forType: TotalPaywallViews.self
+    )
     cache.write(
       Date(),
       forType: LastPaywallView.self
@@ -140,13 +144,6 @@ class Storage {
 
   func getLastPaywallView() -> LastPaywallView.Value? {
     return cache.read(LastPaywallView.self)
-  }
-
-  func incrementTotalPaywallViews() {
-    cache.write(
-      (getTotalPaywallViews() ?? 0) + 1,
-      forType: TotalPaywallViews.self
-    )
   }
 
   func getTotalPaywallViews() -> TotalPaywallViews.Value? {

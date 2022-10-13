@@ -25,7 +25,7 @@ final class PaywallManager {
     )
 	}
 
-	func removePaywall(withViewController viewController: PaywallViewController) {
+	func removePaywallViewController(_ viewController: PaywallViewController) {
     cache.removePaywall(withViewController: viewController)
 	}
 
@@ -55,7 +55,7 @@ final class PaywallManager {
       return viewController
     }
 
-    let paywallViewController = SWPaywallViewController(
+    let paywallViewController = PaywallViewController(
       paywall: paywall,
       delegate: Superwall.shared
     )
