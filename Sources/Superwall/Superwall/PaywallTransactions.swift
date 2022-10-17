@@ -10,49 +10,49 @@ import Foundation
 import StoreKit
 
 extension Superwall {
+  @MainActor
   func tryToRestore(
-    _ paywallViewController: SWPaywallViewController,
+    _ paywallViewController: PaywallViewController,
     userInitiated: Bool = false
-  ) {
-    onMain {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .paywallTransactions,
-        message: "Attempting Restore"
-      )
-      guard let delegate = Superwall.delegate else {
-        return
-      }
-      if userInitiated {
-        paywallViewController.loadingState = .loadingPurchase
-      }
+  ) async {
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallTransactions,
+      message: "Attempting Restore"
+    )
+    guard let delegate = Superwall.delegate else {
+      return
+    }
 
-      delegate.restorePurchases { [weak self] success in
-        onMain {
+    if userInitiated {
+      paywallViewController.loadingState = .loadingPurchase
+    }
+
+    delegate.restorePurchases { [weak self] success in
+      Task { @MainActor in
+        if userInitiated {
+          paywallViewController.loadingState = .ready
+        }
+        if success {
+          Logger.debug(
+            logLevel: .debug,
+            scope: .paywallTransactions,
+            message: "Transaction Restored"
+          )
+          self?.transactionWasRestored(paywallViewController: paywallViewController)
+        } else {
+          // TODO: We're not tracking restoration failures?
+          Logger.debug(
+            logLevel: .debug,
+            scope: .paywallTransactions,
+            message: "Transaction Failed to Restore"
+          )
           if userInitiated {
-            paywallViewController.loadingState = .ready
-          }
-          if success {
-            Logger.debug(
-              logLevel: .debug,
-              scope: .paywallTransactions,
-              message: "Transaction Restored"
+            paywallViewController.presentAlert(
+              title: Superwall.options.paywalls.restoreFailed.title,
+              message: Superwall.options.paywalls.restoreFailed.message,
+              closeActionTitle: Superwall.options.paywalls.restoreFailed.closeButtonTitle
             )
-            self?.transactionWasRestored(paywallViewController: paywallViewController)
-          } else {
-            // TODO: We're not tracking restoration failures?
-            Logger.debug(
-              logLevel: .debug,
-              scope: .paywallTransactions,
-              message: "Transaction Failed to Restore"
-            )
-            if userInitiated {
-              paywallViewController.presentAlert(
-                title: Superwall.options.paywalls.restoreFailed.title,
-                message: Superwall.options.paywalls.restoreFailed.message,
-                closeActionTitle: Superwall.options.paywalls.restoreFailed.closeButtonTitle
-              )
-            }
           }
         }
       }
@@ -61,7 +61,7 @@ extension Superwall {
 
 	// purchase callbacks
 	private func transactionDidBegin(
-    paywallViewController: SWPaywallViewController,
+    paywallViewController: PaywallViewController,
     for product: SKProduct
   ) {
     SessionEventsManager.shared.triggerSession.trackBeginTransaction(of: product)
@@ -83,10 +83,10 @@ extension Superwall {
 
 	private func transactionDidSucceed(
     withId id: String?,
-    paywallViewController: SWPaywallViewController,
+    paywallViewController: PaywallViewController,
     for product: SKProduct
   ) {
-    let isFreeTrialAvailable = paywallViewController.paywallResponse.isFreeTrialAvailable == true
+    let isFreeTrialAvailable = paywallViewController.paywall.isFreeTrialAvailable == true
 
     SessionEventsManager.shared.triggerSession.trackTransactionSucceeded(
       withId: id,
@@ -136,10 +136,10 @@ extension Superwall {
 
   @MainActor
 	private func transactionErrorDidOccur(
-    paywallViewController: SWPaywallViewController,
+    paywallViewController: PaywallViewController,
     error: SKError?,
     for product: SKProduct
-  ) {
+  ) async {
     paywallViewController.loadingState = .ready
 
     if didTryToAutoRestore {
@@ -159,18 +159,20 @@ extension Superwall {
         title: "Please try again",
         message: error?.localizedDescription ?? "",
         actionTitle: "Restore Purchase",
-        onCancel: {
-          Superwall.shared.tryToRestore(paywallViewController)
+        onClose: {
+          Task {
+            await Superwall.shared.tryToRestore(paywallViewController)
+          }
         }
       )
     } else {
-      Superwall.shared.tryToRestore(paywallViewController)
+      await Superwall.shared.tryToRestore(paywallViewController)
       didTryToAutoRestore = true
     }
 	}
 
 	private func transactionWasAbandoned(
-    paywallViewController: SWPaywallViewController,
+    paywallViewController: PaywallViewController,
     for product: SKProduct
   ) {
 		let paywallInfo = paywallViewController.paywallInfo
@@ -186,7 +188,7 @@ extension Superwall {
 		paywallViewController.loadingState = .ready
 	}
 
-	private func transactionWasRestored(paywallViewController: SWPaywallViewController) {
+	private func transactionWasRestored(paywallViewController: PaywallViewController) {
 		let paywallInfo = paywallViewController.paywallInfo
     let trackedEvent = InternalSuperwallEvent.Transaction(
       state: .restore,
@@ -203,13 +205,13 @@ extension Superwall {
 	}
 
 	// if a parent needs to approve the purchase
-	private func transactionWasDeferred(paywallViewController: SWPaywallViewController) {
-		paywallViewController.presentAlert(
+	private func transactionWasDeferred(paywallViewController: PaywallViewController) async {
+		await paywallViewController.presentAlert(
       title: "Waiting for Approval",
       message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved."
     )
 
-		let paywallInfo = paywallViewController.paywallInfo
+		let paywallInfo = await paywallViewController.paywallInfo
     let trackedEvent = InternalSuperwallEvent.Transaction(
       state: .fail(message: "Needs parental approval"),
       paywallInfo: paywallInfo,
@@ -254,6 +256,7 @@ extension Superwall: SKPaymentTransactionObserver {
 		for transaction in transactions {
       SessionEventsManager.shared.transactions.record(transaction)
 
+      // TODO: DOUBLE CHECK THIS:
 			guard paywallWasPresentedThisSession else {
         return
       }
@@ -309,7 +312,13 @@ extension Superwall: SKPaymentTransactionObserver {
               info: ["product_id": product.productIdentifier, "paywall_vc": paywallViewController],
               error: error
             )
-						transactionErrorDidOccur(paywallViewController: paywallViewController, error: error, for: product)
+            Task {
+              await transactionErrorDidOccur(
+                paywallViewController: paywallViewController,
+                error: error,
+                for: product
+              )
+            }
 						return
 					}
 				} else {
@@ -323,18 +332,20 @@ extension Superwall: SKPaymentTransactionObserver {
             ],
             error: transaction.error
           )
-					self.transactionErrorDidOccur(paywallViewController: paywallViewController, error: nil, for: product)
-					onMain {
+          Task {
+            await transactionErrorDidOccur(
+              paywallViewController: paywallViewController,
+              error: nil,
+              for: product
+            )
 						paywallViewController.presentAlert(
               title: "Something went wrong",
-              message: transaction.error?.localizedDescription ?? "",
-              actionTitle: nil,
-              action: nil
+              message: transaction.error?.localizedDescription ?? ""
             )
 					}
 				}
 			case .restored:
-        let isFreeTrialAvailable = paywallViewController.paywallResponse.isFreeTrialAvailable == true
+        let isFreeTrialAvailable = paywallViewController.paywall.isFreeTrialAvailable == true
         SessionEventsManager.shared.triggerSession.trackTransactionRestoration(
           withId: transaction.transactionIdentifier,
           product: product,
@@ -348,7 +359,9 @@ extension Superwall: SKPaymentTransactionObserver {
           info: ["paywall_vc": paywallViewController],
           error: nil
         )
-				transactionWasDeferred(paywallViewController: paywallViewController)
+        Task {
+          await transactionWasDeferred(paywallViewController: paywallViewController)
+        }
 			case .purchasing:
 				Logger.debug(
           logLevel: .debug,

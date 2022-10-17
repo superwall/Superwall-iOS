@@ -16,7 +16,6 @@ final class TransactionManagerTests: XCTestCase {
     let delegate = SessionEventsDelegateMock(queue: queue)
     let configRequestId = "abc"
     let configManager = ConfigManager()
-    configManager.configRequestId = configRequestId
     configManager.config = .stub()
 
     let appSessionId = "123"

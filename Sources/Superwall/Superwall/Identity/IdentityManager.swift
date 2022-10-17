@@ -139,12 +139,17 @@ class IdentityManager {
     userAttributes = mergedAttributes
   }
 
+  /// Resends the last stored value of the `identitySubject`.
+  ///
+  /// Used to present a paywall again.
   func resendIdentity() {
     let identityValue = identitySubject.value
     identitySubject.send(identityValue)
   }
 
-  func forceHasIdentity() {
+  /// Sends a `true` value to the `identitySubject` in order to fire
+  /// triggers after reset.
+  func reset() {
     identitySubject.send(true)
   }
 
@@ -160,6 +165,7 @@ class IdentityManager {
     return userId
   }
 
+  /// Saves the aliasId and appUserId to storage and user attributes.
   private func saveIds() {
     if let appUserId = appUserId {
       storage.save(appUserId, forType: AppUserId.self)

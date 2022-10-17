@@ -19,12 +19,12 @@ enum TriggerSessionManagerLogic {
   static func outcome(
     presentationInfo: PresentationInfo,
     presentingViewController: UIViewController?,
-    paywallResponse: PaywallResponse?,
+    paywall: Paywall?,
     triggerResult: TriggerResult?
   ) -> Outcome? {
     let presentationOutcome: TriggerSession.PresentationOutcome
     let trigger: TriggerSession.Trigger
-    var paywall: TriggerSession.Paywall?
+    var sessionPaywall: TriggerSession.Paywall?
 
     // Get the name of the presenting view controller
     var presentedOn: String?
@@ -95,29 +95,19 @@ enum TriggerSessionManagerLogic {
       )
     }
 
-    if let paywallResponse = paywallResponse {
-      let paywallInfo = paywallResponse.getPaywallInfo(fromEvent: presentationInfo.eventData)
-
-      paywall = TriggerSession.Paywall(
-        databaseId: paywallInfo.id,
-        substitutionPrefix: paywallResponse.templateSubstitutionsPrefix.prefix,
-        webviewLoading: .init(
-          startAt: paywallResponse.webViewLoadStartTime,
-          endAt: paywallResponse.webViewLoadCompleteTime,
-          failAt: paywallResponse.webViewLoadFailTime
-        ),
-        responseLoading: .init(
-          startAt: paywallResponse.responseLoadStartTime,
-          endAt: paywallResponse.responseLoadCompleteTime,
-          failAt: paywallResponse.responseLoadFailTime
-        )
+    if let paywall = paywall {
+      sessionPaywall = TriggerSession.Paywall(
+        databaseId: paywall.databaseId,
+        substitutionPrefix: paywall.isFreeTrialAvailable ? "freeTrial" : nil,
+        webviewLoading: paywall.webviewLoadingInfo,
+        responseLoading: paywall.responseLoadingInfo
       )
     }
 
     return Outcome(
       presentationOutcome: presentationOutcome,
       trigger: trigger,
-      paywall: paywall
+      paywall: sessionPaywall
     )
   }
 
@@ -137,7 +127,7 @@ enum TriggerSessionManagerLogic {
   }
 
   static func createPendingTriggerSession(
-    configRequestId: String,
+    configRequestId: String?,
     userAttributes: [String: Any],
     isSubscribed: Bool,
     eventName: String,
@@ -145,7 +135,7 @@ enum TriggerSessionManagerLogic {
     appSession: AppSession
   ) -> TriggerSession {
     return TriggerSession(
-      configRequestId: configRequestId,
+      configRequestId: configRequestId ?? "",
       userAttributes: JSON(userAttributes),
       isSubscribed: isSubscribed,
       trigger: TriggerSession.Trigger(

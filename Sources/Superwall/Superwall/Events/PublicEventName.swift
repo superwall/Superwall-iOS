@@ -7,13 +7,6 @@
 
 import Foundation
 
-public extension Superwall {
-  @available(*, unavailable, renamed: "SuperwallEvent")
-  enum EventName: String {
-    case fakeCase = "fake"
-  }
-}
-
 /// Analytical events that are automatically tracked by Superwall.
 ///
 /// These events are tracked internally by the SDK and sent to the delegate method ``Superwall/SuperwallDelegate/trackAnalyticsEvent(withName:params:)``.

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ProductVariable: Decodable, Equatable {
-  var key: String
-  var value: JSON
+struct ProductVariable: Codable, Equatable {
+  let type: ProductType
+  let attributes: JSON
 }

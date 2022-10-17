@@ -10,8 +10,8 @@ import Combine
 
 typealias DebugInfo = [String: Any]
 
-extension AnyPublisher where Output == PaywallPresentationRequest, Failure == Error {
-  func logPresentation() -> AnyPublisher<(PaywallPresentationRequest, DebugInfo), Failure> {
+extension AnyPublisher where Output == PresentationRequest, Failure == Error {
+  func logPresentation() -> AnyPublisher<(PresentationRequest, DebugInfo), Failure> {
     map { request in
       let eventData = request.presentationInfo.eventData
       let debugInfo: [String: Any] = [

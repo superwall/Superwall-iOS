@@ -19,6 +19,23 @@ final class GameControllerManager: NSObject {
 	static let shared = GameControllerManager()
 	weak var delegate: GameControllerDelegate?
 
+  func setDelegate(_ delegate: GameControllerDelegate) {
+    guard Superwall.options.isGameControllerEnabled else {
+      return
+    }
+    self.delegate = delegate
+  }
+
+  func clearDelegate(_ delegate: PaywallViewController?) {
+    guard
+      Superwall.options.isGameControllerEnabled,
+      self.delegate == delegate
+    else {
+      return
+    }
+    self.delegate = nil
+  }
+
 	func valueChanged(
     _ name: String,
     _ value: Float

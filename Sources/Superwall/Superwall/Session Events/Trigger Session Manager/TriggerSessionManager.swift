@@ -8,6 +8,7 @@
 
 import UIKit
 import StoreKit
+import Combine
 
 final class TriggerSessionManager {
   weak var delegate: SessionEventsDelegate?
@@ -27,6 +28,8 @@ final class TriggerSessionManager {
   /// A local count for transactions used within the trigger session.
   private var transactionCount: TriggerSession.Transaction.Count?
 
+  private var cancellable: AnyCancellable?
+
   enum LoadState {
     case start
     case end
@@ -43,6 +46,7 @@ final class TriggerSessionManager {
     self.storage = storage
     self.configManager = configManager
     addObservers()
+    listenForConfig()
   }
 
   private func addObservers() {
@@ -58,6 +62,14 @@ final class TriggerSessionManager {
       name: UIApplication.willEnterForegroundNotification,
       object: nil
     )
+  }
+
+  private func listenForConfig() {
+    cancellable = configManager.$config
+      .compactMap { $0 }
+      .sink { [weak self] config in
+        self?.createSessions(from: config)
+      }
   }
 
   // MARK: - App Lifecycle
@@ -80,7 +92,7 @@ final class TriggerSessionManager {
     // Loop through triggers and create a session for each.
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-        configRequestId: configManager.configRequestId,
+        configRequestId: configManager.config?.requestId,
         userAttributes: IdentityManager.shared.userAttributes,
         isSubscribed: Superwall.shared.isUserSubscribed,
         eventName: trigger.eventName,
@@ -98,11 +110,11 @@ final class TriggerSessionManager {
   /// - Parameters:
   ///   - presentationInfo: Information about the paywall presentation.
   ///   - presentingViewController: What view the paywall will be presented on, if any.
-  ///   - paywallResponse: The response from the server associated with the paywall
+  ///   - paywall: The response from the server associated with the paywall
   func activateSession(
     for presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
-    paywallResponse: PaywallResponse? = nil,
+    paywall: Paywall? = nil,
     triggerResult: TriggerResult?,
     trackEvent: (Trackable) -> TrackingResult = Superwall.track
   ) {
@@ -125,7 +137,7 @@ final class TriggerSessionManager {
     guard let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: presentationInfo,
       presentingViewController: presentingViewController,
-      paywallResponse: paywallResponse,
+      paywall: paywall,
       triggerResult: triggerResult
     ) else {
       return
@@ -137,12 +149,8 @@ final class TriggerSessionManager {
     session.trigger = outcome.trigger
     session.paywall = outcome.paywall
     session.products = TriggerSession.Products(
-      allProducts: paywallResponse?.swProducts ?? [],
-      loadingInfo: .init(
-        startAt: paywallResponse?.productsLoadStartTime,
-        endAt: paywallResponse?.productsLoadCompleteTime,
-        failAt: paywallResponse?.productsLoadFailTime
-      )
+      allProducts: paywall?.swProducts ?? [],
+      loadingInfo: paywall?.productsLoadingInfo
     )
 
     session.appSession = AppSessionManager.shared.appSession
@@ -172,7 +180,7 @@ final class TriggerSessionManager {
     // Recreate a pending trigger session
     let eventName = currentTriggerSession.trigger.eventName
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-      configRequestId: configManager.configRequestId,
+      configRequestId: configManager.config?.requestId,
       userAttributes: IdentityManager.shared.userAttributes,
       isSubscribed: Superwall.shared.isUserSubscribed,
       eventName: eventName,

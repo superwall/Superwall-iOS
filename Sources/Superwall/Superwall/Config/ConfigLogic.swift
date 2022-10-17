@@ -13,8 +13,8 @@ enum ConfigLogic {
     case invalidState
   }
   struct AssignmentOutcome {
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant]
-    let unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
+    let confirmed: [Experiment.ID: Experiment.Variant]
+    let unconfirmed: [Experiment.ID: Experiment.Variant]
   }
 
   static func chooseVariant(
@@ -92,7 +92,7 @@ enum ConfigLogic {
     return groupedTriggerRules
   }
 
-  static func assignVariants(
+  static func chooseAssignments(
     fromTriggers triggers: Set<Trigger>,
     confirmedAssignments: [Experiment.ID: Experiment.Variant]
   ) -> AssignmentOutcome {
@@ -128,9 +128,26 @@ enum ConfigLogic {
       }
     }
 
-    return .init(
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
+    return AssignmentOutcome(
+      confirmed: confirmedAssignments,
+      unconfirmed: unconfirmedAssignments
+    )
+  }
+
+  static func move(
+    _ newAssignment: ConfirmableAssignment,
+    from unconfirmedAssignments: [Experiment.ID: Experiment.Variant],
+    to confirmedAssignments: [Experiment.ID: Experiment.Variant]
+  ) -> AssignmentOutcome {
+    var confirmedAssignments = confirmedAssignments
+    confirmedAssignments[newAssignment.experimentId] = newAssignment.variant
+
+    var unconfirmedAssignments = unconfirmedAssignments
+    unconfirmedAssignments[newAssignment.experimentId] = nil
+
+    return ConfigLogic.AssignmentOutcome(
+      confirmed: confirmedAssignments,
+      unconfirmed: unconfirmedAssignments
     )
   }
 
@@ -165,16 +182,16 @@ enum ConfigLogic {
     }
 
     return .init(
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
+      confirmed: confirmedAssignments,
+      unconfirmed: unconfirmedAssignments
     )
   }
 
-  static func getStaticPaywallResponse(
-    fromPaywallId paywallId: String?,
+  static func getStaticPaywall(
+    withId paywallId: String?,
     config: Config?,
     deviceHelper: DeviceHelper = .shared
-  ) -> PaywallResponse? {
+  ) -> Paywall? {
     guard let paywallId = paywallId else {
       return nil
     }
@@ -194,7 +211,7 @@ enum ConfigLogic {
       // Otherwise, if the shortened locale contains "en", load the paywall responses from static config.
       // Same if we can't find any matching locale in available locales.
       if shortLocale == "en" || !config.locales.contains(shortLocale) {
-        return config.paywallResponses.first { $0.identifier == paywallId }
+        return config.paywalls.first { $0.identifier == paywallId }
       } else {
         return nil
       }

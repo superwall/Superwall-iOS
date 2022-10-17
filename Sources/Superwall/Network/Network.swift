@@ -47,10 +47,10 @@ class Network {
     }
   }
 
-  func getPaywallResponse(
-    withPaywallId identifier: String? = nil,
+  func getPaywall(
+    withId identifier: String? = nil,
     fromEvent event: EventData? = nil
-  ) async throws -> PaywallResponse {
+  ) async throws -> Paywall {
     do {
       return try await urlSession.request(.paywall(withIdentifier: identifier, fromEvent: event))
     } catch {
@@ -77,9 +77,10 @@ class Network {
     }
   }
 
-  func getPaywalls() async throws -> PaywallsResponse {
+  func getPaywalls() async throws -> [Paywall] {
     do {
-      return try await urlSession.request(.paywalls(), isForDebugging: true)
+      let response = try await urlSession.request(.paywalls(), isForDebugging: true)
+      return response.paywalls
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -106,7 +107,8 @@ class Network {
       .async()
 
     do {
-      let config = try await urlSession.request(.config(requestId: requestId))
+      var config = try await urlSession.request(.config(requestId: requestId))
+      config.requestId = requestId
       return config
     } catch {
       Logger.debug(
@@ -119,7 +121,7 @@ class Network {
     }
   }
 
-  func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) async {
+  func confirmAssignments(_ confirmableAssignments: AssignmentPostback) async {
     do {
       try await urlSession.request(.confirmAssignments(confirmableAssignments))
     } catch {

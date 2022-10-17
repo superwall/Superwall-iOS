@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 class AppSessionManager {
   static let shared = AppSessionManager()
@@ -19,11 +20,13 @@ class AppSessionManager {
   private let sessionEventsManager: SessionEventsManager
   private var lastAppClose: Date?
   private var didTrackLaunch = false
+  private var cancellable: AnyCancellable?
 
   /// Only directly initialise if testing otherwise use `AppSessionManager.shared`.
   init(sessionEventsManager: SessionEventsManager = SessionEventsManager.shared) {
     self.sessionEventsManager = sessionEventsManager
     addActiveStateObservers()
+    listenForAppSessionTimeout()
   }
 
   private func addActiveStateObservers() {
@@ -45,6 +48,14 @@ class AppSessionManager {
       name: UIApplication.willTerminateNotification,
       object: nil
     )
+  }
+
+  private func listenForAppSessionTimeout() {
+    cancellable = ConfigManager.shared.$config
+      .compactMap { $0 }
+      .sink { [weak self] config in
+        self?.appSessionTimeout = config.appSessionTimeout
+      }
   }
 
   @objc private func applicationWillResignActive() {

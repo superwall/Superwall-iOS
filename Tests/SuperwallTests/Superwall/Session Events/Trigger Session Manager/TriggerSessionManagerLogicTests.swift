@@ -22,7 +22,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .implicitTrigger(eventData),
       presentingViewController: nil,
-      paywallResponse: nil,
+      paywall: nil,
       triggerResult: .triggerNotFound
     )
 
@@ -52,7 +52,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: viewController,
-      paywallResponse: nil,
+      paywall: nil,
       triggerResult: .holdout(experiment: experiment)
     )
 
@@ -88,20 +88,21 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       createdAt: Date()
     )
     let paywallId = "abc"
-    let paywallResponse: PaywallResponse = .stub()
-      .setting(\.id, to: paywallId)
-      .setting(\.responseLoadStartTime, to: time)
-      .setting(\.responseLoadCompleteTime, to: time)
-      .setting(\.webViewLoadStartTime, to: time)
-      .setting(\.webViewLoadCompleteTime, to: time)
+    let paywallResponse: Paywall = .stub()
+      .setting(\.databaseId, to: paywallId)
+      .setting(\.responseLoadingInfo.startAt, to: time)
+      .setting(\.responseLoadingInfo.endAt, to: time)
+      .setting(\.webviewLoadingInfo.startAt, to: time)
+      .setting(\.webviewLoadingInfo.endAt, to: time)
 
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: nil,
-      paywallResponse: paywallResponse,
+      paywall: paywallResponse,
       triggerResult: .holdout(experiment: experiment)
     )
 
+    print("***", paywallResponse.isFreeTrialAvailable)
     XCTAssertEqual(outcome?.presentationOutcome, .holdout)
 
     XCTAssertEqual(outcome?.trigger.eventId, eventData.id)
@@ -111,12 +112,13 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertEqual(outcome?.trigger.type, .explicit)
     XCTAssertNil(outcome?.trigger.presentedOn)
     XCTAssertEqual(outcome?.trigger.experiment, experiment)
-    XCTAssertEqual(outcome?.paywall?.databaseId, paywallResponse.id)
-    XCTAssertEqual(outcome?.paywall?.substitutionPrefix, paywallResponse.templateSubstitutionsPrefix.prefix)
-    XCTAssertEqual(outcome?.paywall?.responseLoading.startAt, paywallResponse.responseLoadStartTime)
-    XCTAssertEqual(outcome?.paywall?.responseLoading.endAt, paywallResponse.responseLoadCompleteTime)
-    XCTAssertEqual(outcome?.paywall?.webviewLoading.startAt, paywallResponse.webViewLoadStartTime)
-    XCTAssertEqual(outcome?.paywall?.webviewLoading.endAt, paywallResponse.webViewLoadCompleteTime)
+    XCTAssertEqual(outcome?.paywall?.databaseId, paywallResponse.databaseId)
+    let hasFreeTrial = outcome?.paywall?.substitutionPrefix == "freeTrial" ? true : false
+    XCTAssertEqual(hasFreeTrial, paywallResponse.isFreeTrialAvailable)
+    XCTAssertEqual(outcome?.paywall?.responseLoading.startAt, paywallResponse.responseLoadingInfo.startAt)
+    XCTAssertEqual(outcome?.paywall?.responseLoading.endAt, paywallResponse.responseLoadingInfo.endAt)
+    XCTAssertEqual(outcome?.paywall?.webviewLoading.startAt, paywallResponse.webviewLoadingInfo.startAt)
+    XCTAssertEqual(outcome?.paywall?.webviewLoading.endAt, paywallResponse.webviewLoadingInfo.endAt)
   }
 
   func testTrigger_noRuleMatch_noPaywallResponse() {
@@ -130,7 +132,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: nil,
-      paywallResponse: nil,
+      paywall: nil,
       triggerResult: .noRuleMatch
     )
 
@@ -167,7 +169,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: viewController,
-      paywallResponse: nil,
+      paywall: nil,
       triggerResult: .paywall(experiment: experiment)
     )
 
@@ -210,7 +212,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: presentationInfo,
       presentingViewController: viewController,
-      paywallResponse: nil,
+      paywall: nil,
       triggerResult: .paywall(experiment: experiment)
     )
 
@@ -231,9 +233,9 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
 
     let viewController = SWDebugViewController()
     let outcome = TriggerSessionManagerLogic.outcome(
-      presentationInfo: .fromIdentifier("identifier"),
+      presentationInfo: .fromIdentifier("identifier", freeTrialOverride: false),
       presentingViewController: viewController,
-      paywallResponse: nil,
+      paywall: nil,
       triggerResult: nil
     )
 

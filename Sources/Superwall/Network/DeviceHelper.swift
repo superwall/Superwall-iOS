@@ -217,7 +217,7 @@ class DeviceHelper {
   }
 
   var daysSinceLastPaywallView: Int? {
-    guard let fromDate = Storage.shared.getLastPaywallView() else {
+    guard let fromDate = Storage.shared.get(LastPaywallView.self) else {
       return nil
     }
     let toDate = Date()
@@ -226,7 +226,7 @@ class DeviceHelper {
   }
 
   var minutesSinceLastPaywallView: Int? {
-    guard let fromDate = Storage.shared.getLastPaywallView() else {
+    guard let fromDate = Storage.shared.get(LastPaywallView.self) else {
       return nil
     }
     let toDate = Date()
@@ -235,13 +235,13 @@ class DeviceHelper {
   }
 
   var totalPaywallViews: Int {
-    return Storage.shared.getTotalPaywallViews() ?? 0
+    return Storage.shared.get(TotalPaywallViews.self) ?? 0
   }
 
-  var templateDevice: TemplateDevice {
+  var templateDevice: DeviceTemplate {
     let aliases = [IdentityManager.shared.aliasId]
 
-    return TemplateDevice(
+    return DeviceTemplate(
       publicApiKey: Storage.shared.apiKey,
       platform: isMac ? "macOS" : "iOS",
       appUserId: IdentityManager.shared.appUserId ?? "",

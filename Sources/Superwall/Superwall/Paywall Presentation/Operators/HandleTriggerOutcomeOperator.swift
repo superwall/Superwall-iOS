@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 struct TriggerOutcomeResponsePipelineOutput {
-  let request: PaywallPresentationRequest
+  let request: PresentationRequest
   let triggerOutcome: TriggerResultOutcome
   let debugInfo: DebugInfo
   let responseIdentifiers: ResponseIdentifiers

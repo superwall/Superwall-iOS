@@ -58,8 +58,8 @@ final class SessionEventsManager {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
-    let cachedTriggerSessions = storage.getCachedTriggerSessions()
-    let cachedTransactions = storage.getCachedTransactions()
+    let cachedTriggerSessions = storage.get(TriggerSessions.self) ?? []
+    let cachedTransactions = storage.get(Transactions.self) ?? []
 
     if cachedTriggerSessions.isEmpty,
       cachedTransactions.isEmpty {

@@ -30,12 +30,22 @@ final class StorageMock: Storage {
     super.init(cache: cache, coreDataManager: coreDataManager)
   }
 
-  override func getCachedTriggerSessions() -> [TriggerSession] {
-    return internalCachedTriggerSessions
+  override func get<Key>(_ keyType: Key.Type) -> Key.Value? where Key : Storable {
+    if keyType == TriggerSessions.self {
+      return internalCachedTriggerSessions as? Key.Value
+    } else if keyType == Transactions.self {
+      return internalCachedTransactions as? Key.Value
+    }
+    return nil
   }
 
-  override func getCachedTransactions() -> [TransactionModel] {
-    return internalCachedTransactions
+  override func get<Key>(_ keyType: Key.Type) -> Key.Value? where Key : Storable, Key.Value : Decodable {
+    if keyType == TriggerSessions.self {
+      return internalCachedTriggerSessions as? Key.Value
+    } else if keyType == Transactions.self {
+      return internalCachedTransactions as? Key.Value
+    }
+    return nil
   }
 
   override func clearCachedSessionEvents() {

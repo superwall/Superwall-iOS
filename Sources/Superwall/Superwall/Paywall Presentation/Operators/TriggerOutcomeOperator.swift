@@ -21,13 +21,13 @@ struct TriggerResultOutcome {
 }
 
 struct AssignmentPipelineOutput {
-  let request: PaywallPresentationRequest
+  let request: PresentationRequest
   let triggerOutcome: TriggerResultOutcome
   var confirmableAssignment: ConfirmableAssignment?
   let debugInfo: DebugInfo
 }
 
-extension AnyPublisher where Output == (PaywallPresentationRequest, DebugInfo), Failure == Error {
+extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure == Error {
   func getTriggerOutcome(
     configManager: ConfigManager = .shared,
     storage: Storage = .shared
@@ -36,7 +36,7 @@ extension AnyPublisher where Output == (PaywallPresentationRequest, DebugInfo), 
       if let eventData = request.presentationInfo.eventData {
         let assignmentOutcome = AssignmentLogic.getOutcome(
           forEvent: eventData,
-          triggers: ConfigManager.shared.triggers,
+          triggers: ConfigManager.shared.triggersByEventName,
           configManager: configManager,
           storage: storage
         )
@@ -65,7 +65,6 @@ extension AnyPublisher where Output == (PaywallPresentationRequest, DebugInfo), 
     .eraseToAnyPublisher()
   }
 
-  // TODO: MOVE THIS TO A LOGIC HANDLER
   private func getTriggerOutcome(
     forResult triggerResult: TriggerResult
   ) -> TriggerResultOutcome {

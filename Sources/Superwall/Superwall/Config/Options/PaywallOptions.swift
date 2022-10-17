@@ -31,6 +31,9 @@ public final class PaywallOptions {
   /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Superwall/Superwall/configure(apiKey:delegate:options:)``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
+  ///
+  /// If you want to preload them at a later date, you can call ``Superwall/Superwall/preloadAllPaywalls()``
+  /// or ``Superwall/Superwall/preloadPaywalls(forEvents:)``
   public var shouldPreload = true
 
   /// Loads paywall template websites from disk, if available. Defaults to `true`.

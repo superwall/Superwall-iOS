@@ -19,7 +19,7 @@ final class TriggerLogicTests: XCTestCase {
     let triggers: Set<Trigger> = [
       firstTrigger, secondTrigger
     ]
-    let dictionary = TriggerLogic.getTriggerDictionary(from: triggers)
+    let dictionary = TriggerLogic.getTriggersByEventName(from: triggers)
     XCTAssertEqual(dictionary["abc"], firstTrigger)
     XCTAssertEqual(dictionary["def"], secondTrigger)
   }

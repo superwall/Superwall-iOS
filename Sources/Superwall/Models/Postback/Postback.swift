@@ -19,7 +19,7 @@ struct PostbackProduct: Codable {
 
   init(product: SKProduct) {
     self.identifier = product.productIdentifier
-    self.productVariables = product.productVariables
+    self.productVariables = product.swProductTemplateVariablesJson
     self.product = SWProduct(product: product)
   }
 }

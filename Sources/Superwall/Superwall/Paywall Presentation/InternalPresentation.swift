@@ -8,7 +8,8 @@
 import UIKit
 import Combine
 
-typealias PaywallPresentationSubject = CurrentValueSubject<PaywallPresentationRequest, Error>
+/// A CurrentValueSubject that emits `PresentationRequest` objects.
+typealias PresentationSubject = CurrentValueSubject<PresentationRequest, Error>
 
 /// A publisher that emits ``PaywallState`` objects.
 public typealias PaywallStatePublisher = AnyPublisher<PaywallState, Never>
@@ -17,13 +18,13 @@ extension Superwall {
   /// Runs a combine pipeline to present a paywall, publishing ``PaywallState`` objects that provide updates on the lifecycle of the paywall.
   ///
   /// - Parameters:
-  ///   - request: A presentation request of type `PaywallPresentationRequest` to feed into a presentation pipeline.
+  ///   - request: A presentation request of type `PresentationRequest` to feed into a presentation pipeline.
   /// - Returns: A publisher that outputs a ``PaywallState``.
-  func internallyPresent(_ request: PaywallPresentationRequest) -> PaywallStatePublisher {
+  func internallyPresent(_ request: PresentationRequest) -> PaywallStatePublisher {
     let paywallStatePublisher = PassthroughSubject<PaywallState, Never>()
-    let presentationPublisher = PaywallPresentationSubject(request)
+    let presentationSubject = PresentationSubject(request)
 
-    self.presentationPublisher = presentationPublisher
+    self.presentationPublisher = presentationSubject
       .eraseToAnyPublisher()
       .awaitIdentity()
       .logPresentation()
@@ -33,7 +34,7 @@ extension Superwall {
       .handleTriggerOutcome(paywallStatePublisher)
       .getPaywallViewController(paywallStatePublisher)
       .checkPaywallIsPresentable(paywallStatePublisher)
-      .presentPaywall(paywallStatePublisher, presentationPublisher)
+      .presentPaywall(paywallStatePublisher, presentationSubject)
       .sink(
         receiveCompletion: { _ in },
         receiveValue: { _ in }
@@ -47,12 +48,12 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   - presentationPublisher: The publisher created in the `internallyPresent(request:)` function to kick off the presentation pipeline.
-  func presentAgain(using presentationPublisher: PaywallPresentationSubject) async {
+  func presentAgain(using presentationPublisher: PresentationSubject) async {
     guard let request = Superwall.shared.lastSuccessfulPresentationRequest else {
       return
     }
     await MainActor.run {
-      if let presentingPaywallIdentifier = Superwall.shared.paywallViewController?.paywallResponse.identifier {
+      if let presentingPaywallIdentifier = Superwall.shared.paywallViewController?.paywall.identifier {
         PaywallManager.shared.removePaywall(withIdentifier: presentingPaywallIdentifier)
       }
     }
@@ -63,7 +64,7 @@ extension Superwall {
   }
 
   func dismiss(
-    _ paywallViewController: SWPaywallViewController,
+    _ paywallViewController: PaywallViewController,
     state: PaywallDismissedResult.DismissState,
     completion: (() -> Void)? = nil
   ) {
@@ -78,10 +79,5 @@ extension Superwall {
         completion?()
       }
     }
-  }
-
-  func destroyPresentingWindow() {
-    presentingWindow?.isHidden = true
-    presentingWindow = nil
   }
 }

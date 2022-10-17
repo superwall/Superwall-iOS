@@ -42,7 +42,7 @@ final class TransactionManager {
 
     let transaction = TransactionModel(
       from: transaction,
-      configRequestId: configManager.configRequestId,
+      configRequestId: configManager.config?.requestId ?? "",
       appSessionId: appSessionManager.appSession.id,
       triggerSessionId: triggerSessionId
     )

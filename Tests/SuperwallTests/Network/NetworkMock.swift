@@ -35,7 +35,7 @@ final class NetworkMock: Network {
     }
   }
 
-  override func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) async {
+  override func confirmAssignments(_ confirmableAssignments: AssignmentPostback) async {
     assignmentsConfirmed = true
   }
 

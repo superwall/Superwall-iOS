@@ -48,7 +48,7 @@ final class TrackEventViewController: UIViewController {
   @IBAction private func logOut() {
     Task {
       await SuperwallService.logOut()
-      await navigationController?.popToRootViewController(animated: true)
+      _ = navigationController?.popToRootViewController(animated: true)
     }
   }
 

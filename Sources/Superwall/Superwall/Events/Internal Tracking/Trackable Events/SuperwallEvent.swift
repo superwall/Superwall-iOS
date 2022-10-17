@@ -126,7 +126,7 @@ enum InternalSuperwallEvent {
     var superwallParameters: [String: Any] = [:]
   }
 
-  struct PaywallResponseLoad: TrackableSuperwallEvent {
+  struct PaywallLoad: TrackableSuperwallEvent {
     enum State {
       case start
       case notFound

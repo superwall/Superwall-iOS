@@ -124,7 +124,7 @@ public extension Superwall {
     await PaywallManager.shared.clearCache()
 
     ConfigManager.shared.reset()
-    IdentityManager.shared.forceHasIdentity()
+    IdentityManager.shared.reset()
 
     return await MainActor.run {
       return shared

@@ -10,9 +10,9 @@ import UIKit
 import Combine
 
 struct PresentablePipelineOutput {
-  let request: PaywallPresentationRequest
+  let request: PresentationRequest
   let debugInfo: DebugInfo
-  let paywallViewController: SWPaywallViewController
+  let paywallViewController: PaywallViewController
   let presenter: UIViewController
 }
 
@@ -25,7 +25,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         isUserSubscribed: Superwall.shared.isUserSubscribed,
         isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
         shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus,
-        presentationCondition: input.paywallViewController.paywallResponse.presentationCondition
+        presentationCondition: input.paywallViewController.paywall.presentation.condition
       ) {
         throw PresentationPipelineError.cancelled
       }
@@ -33,7 +33,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
       SessionEventsManager.shared.triggerSession.activateSession(
         for: input.request.presentationInfo,
         on: input.request.presentingViewController,
-        paywallResponse: input.paywallViewController.paywallResponse,
+        paywall: input.paywallViewController.paywall,
         triggerResult: input.triggerOutcome.result
       )
 
@@ -92,5 +92,10 @@ extension Superwall {
     presentingWindow?.rootViewController = UIViewController()
     presentingWindow?.windowLevel = .normal
     presentingWindow?.makeKeyAndVisible()
+  }
+
+  func destroyPresentingWindow() {
+    presentingWindow?.isHidden = true
+    presentingWindow = nil
   }
 }

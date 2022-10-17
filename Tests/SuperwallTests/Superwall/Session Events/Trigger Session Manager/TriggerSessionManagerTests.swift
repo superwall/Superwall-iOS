@@ -68,7 +68,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     
     // When
     sessionManager.activateSession(
-      for: .fromIdentifier("123"),
+      for: .fromIdentifier("123", freeTrialOverride: false),
       triggerResult: nil
     )
 
@@ -312,12 +312,12 @@ final class TriggerSessionManagerTests: XCTestCase {
       variantType: .treatment
     )
     let experiment = triggers[eventName]!.rules.first!.experiment
-    let paywallResponse: PaywallResponse = .stub()
-      .setting(\.id, to: paywallId)
+    let paywallResponse: Paywall = .stub()
+      .setting(\.databaseId, to: paywallId)
       .setting(\.swProducts, to: products)
     sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      paywallResponse: paywallResponse,
+      paywall: paywallResponse,
       triggerResult: .paywall(experiment: Experiment(
          id: experiment.id,
         groupId: experiment.groupId,

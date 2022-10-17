@@ -8,8 +8,8 @@
 import Foundation
 import Combine
 
-extension AnyPublisher where Output == PaywallPresentationRequest, Failure == Error {
-  func awaitIdentity() -> AnyPublisher<PaywallPresentationRequest, Failure> {
+extension AnyPublisher where Output == PresentationRequest, Failure == Error {
+  func awaitIdentity() -> AnyPublisher<PresentationRequest, Failure> {
     return subscribe(on: DispatchQueue.global(qos: .userInitiated))
       .zip(IdentityManager.hasIdentity) { request, _ in
         return request

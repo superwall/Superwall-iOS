@@ -68,8 +68,7 @@ struct Endpoint<Response: Decodable> {
     requestId: String,
     forDebugging isForDebugging: Bool
   ) {
-    let apiKey = isForDebugging ? (Storage.shared.debugKey ?? "") : Storage.shared.apiKey
-    let auth = "Bearer \(apiKey)"
+    let auth = "Bearer \(Storage.shared.apiKey)"
     let headers = [
       "Authorization": auth,
       "X-Platform": "iOS",
@@ -133,8 +132,8 @@ extension Endpoint where Response == EventsResponse {
   }
 }
 
-// MARK: - PaywallResponse
-extension Endpoint where Response == PaywallResponse {
+// MARK: - Paywall
+extension Endpoint where Response == Paywall {
   static func paywall(
     withIdentifier identifier: String? = nil,
     fromEvent event: EventData? = nil
@@ -202,7 +201,7 @@ extension Endpoint where Response == PaywallResponse {
 }
 
 // MARK: - PaywallsResponse
-extension Endpoint where Response == PaywallsResponse {
+extension Endpoint where Response == Paywalls {
   static func paywalls() -> Self {
     return Endpoint(
       components: Components(
@@ -243,7 +242,7 @@ extension Endpoint where Response == ConfirmedAssignmentResponse {
     )
   }
 
-  static func confirmAssignments(_ confirmableAssignments: ConfirmableAssignments) -> Self {
+  static func confirmAssignments(_ confirmableAssignments: AssignmentPostback) -> Self {
     let bodyData = try? JSONEncoder.toSnakeCase.encode(confirmableAssignments)
 
     return Endpoint(

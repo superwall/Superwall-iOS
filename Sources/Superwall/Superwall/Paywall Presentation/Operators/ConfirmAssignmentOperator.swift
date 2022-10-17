@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 struct TriggerOutcomePipelineOutput {
-  let request: PaywallPresentationRequest
+  let request: PresentationRequest
   let triggerOutcome: TriggerResultOutcome
   let debugInfo: DebugInfo
 }
@@ -18,15 +18,14 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
   func confirmAssignment(configManager: ConfigManager = .shared) -> AnyPublisher<TriggerOutcomePipelineOutput, Failure> {
     map { input in
       if let confirmableAssignment = input.confirmableAssignment {
-        configManager.confirmAssignments(confirmableAssignment)
+        configManager.confirmAssignment(confirmableAssignment)
       }
 
-      let output = TriggerOutcomePipelineOutput(
+      return TriggerOutcomePipelineOutput(
         request: input.request,
         triggerOutcome: input.triggerOutcome,
         debugInfo: input.debugInfo
       )
-      return output
     }
     .eraseToAnyPublisher()
   }

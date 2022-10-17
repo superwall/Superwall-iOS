@@ -11,7 +11,7 @@ import Combine
 extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Error {
   func presentPaywall(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
-    _ presentationPublisher: PaywallPresentationSubject
+    _ presentationSubject: PresentationSubject
   ) -> AnyPublisher<PresentablePipelineOutput, Error> {
     flatMap { input in
       Future { promise in
@@ -22,7 +22,7 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
               eventData: input.request.presentationInfo.eventData,
               presentationStyleOverride: input.request.paywallOverrides?.presentationStyle,
               paywallStatePublisher: paywallStatePublisher,
-              presentationPublisher: presentationPublisher
+              presentationPublisher: presentationSubject
             ) { isPresented in
               if isPresented {
                 Superwall.shared.lastSuccessfulPresentationRequest = input.request
