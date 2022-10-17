@@ -44,6 +44,10 @@ final class StoreKitService: NSObject, ObservableObject {
       guard case .verified(let transaction) = result else {
         continue
       }
+      if let expirationDate = transaction.expirationDate,
+        expirationDate < Date() {
+        continue
+      }
       if transaction.revocationDate == nil {
         isSubscribed.send(true)
         return

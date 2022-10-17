@@ -139,7 +139,15 @@ extension Storage {
     return cache.read(keyType)
   }
 
+  func get<Key: Storable>(_ keyType: Key.Type) -> Key.Value? where Key.Value: Decodable {
+    return cache.read(keyType)
+  }
+
   func save<Key: Storable>(_ value: Key.Value, forType keyType: Key.Type) {
+    return cache.write(value, forType: keyType)
+  }
+
+  func save<Key: Storable>(_ value: Key.Value, forType keyType: Key.Type) where Key.Value: Encodable {
     return cache.write(value, forType: keyType)
   }
 }
