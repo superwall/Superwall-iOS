@@ -2,6 +2,13 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
+## 2.5.3
+
+### Fixes
+
+- Fixes a bug where `Paywall.reset()` couldn't be called on a background thread.
+
+
 ## 2.5.2
 
 ### Fixes 
