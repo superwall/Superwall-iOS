@@ -59,26 +59,25 @@ class PaywallCacheTests: XCTestCase {
 
   func testSaveAndRemovePaywall_withVc() {
     // Given
-    let paywall: PaywallViewController = .stub()
+    let paywallVc: PaywallViewController = .stub()
 
     // When
-    PaywallViewController.cache.insert(paywall)
+    PaywallViewController.cache.insert(paywallVc)
 
     let key = PaywallCacheLogic.key(
-      forIdentifier: nil
+      forIdentifier: paywallVc.paywall.identifier
     )
 
-    var cachedPaywall = paywallCache.getPaywall(withKey: key)
+    var cachedPaywallVc = paywallCache.getPaywall(withKey: key)
 
-    XCTAssertEqual(cachedPaywall, paywall)
+    XCTAssertEqual(cachedPaywallVc, paywallVc)
 
-
-    paywallCache.removePaywall(withViewController: paywall)
+    paywallCache.removePaywall(withViewController: paywallVc)
 
     // Then
-    cachedPaywall = paywallCache.getPaywall(withKey: key)
+    cachedPaywallVc = paywallCache.getPaywall(withKey: key)
 
-    XCTAssertNil(cachedPaywall)
+    XCTAssertNil(cachedPaywallVc)
   }
 
   func testClearCache() {

@@ -98,7 +98,7 @@ enum TriggerSessionManagerLogic {
     if let paywall = paywall {
       sessionPaywall = TriggerSession.Paywall(
         databaseId: paywall.databaseId,
-        substitutionPrefix: paywall.isFreeTrialAvailable == nil ? nil : "freeTrial",
+        substitutionPrefix: paywall.isFreeTrialAvailable ? "freeTrial" : nil,
         webviewLoading: paywall.webviewLoadingInfo,
         responseLoading: paywall.responseLoadingInfo
       )

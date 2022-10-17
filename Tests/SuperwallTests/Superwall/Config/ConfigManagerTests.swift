@@ -12,7 +12,7 @@ import XCTest
 @available(iOS 14.0, *)
 final class ConfigManagerTests: XCTestCase {
   // MARK: - Confirm Assignments
-  func test_confirmAssignments() async {
+  func test_confirmAssignment() async {
     let network = NetworkMock()
     let storage = StorageMock()
 
@@ -25,7 +25,7 @@ final class ConfigManagerTests: XCTestCase {
     )
     let configManager = ConfigManager(storage: storage, network: network)
 
-    configManager.confirmAssignments(assignment)
+    configManager.confirmAssignment(assignment)
 
     let twoHundredMilliseconds = UInt64(200_000_000)
     try? await Task.sleep(nanoseconds: twoHundredMilliseconds)

@@ -12,10 +12,10 @@ struct Paywalls: Decodable {
 }
 
 struct Paywall: Decodable {
-  let databaseId: String
+  var databaseId: String
 
   /// The identifier of the paywall
-  let identifier: String
+  var identifier: String
 
   let name: String
 
@@ -78,6 +78,9 @@ struct Paywall: Decodable {
 
   /// The paywall.js version being used. Added when the website fires `onReady`.
   var paywalljsVersion: String?
+
+  /// Determines whether a free trial is available or not.
+  var isFreeTrialAvailable = false
 
   enum CodingKeys: String, CodingKey {
     case id
@@ -174,7 +177,7 @@ struct Paywall: Decodable {
     swProducts: [SWProduct]? = [],
     variables: [ProductVariable]? = [],
     swTemplateProductVariables: [ProductVariable]? = [],
-    isFreeTrialAvailable: Bool? = false
+    isFreeTrialAvailable: Bool = false
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -196,8 +199,6 @@ struct Paywall: Decodable {
     self.swProductVariablesTemplate = swTemplateProductVariables
     self.isFreeTrialAvailable = isFreeTrialAvailable
   }
-
-  var isFreeTrialAvailable: Bool? = false
 
   func getInfo(
     fromEvent: EventData?

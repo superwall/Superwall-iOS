@@ -10,8 +10,10 @@ import XCTest
 
 class SuperwallTests: XCTestCase {
   func test_configureCalledTwice() async {
+    
     let superwall = Superwall.configure(apiKey: "abc")
     let superwall2 = Superwall.configure(apiKey: "abc")
+
     Superwall.shared.configManager = ConfigManagerMock()
     Superwall.shared.identityManager = IdentityManagerMock()
 

@@ -12,13 +12,13 @@ import UIKit
 final class ConfigManagerMock: ConfigManager {
   var confirmedAssignment = false
 
-  override func confirmAssignments(
+  override func confirmAssignment(
     _ confirmableAssignment: ConfirmableAssignment
   ) {
     confirmedAssignment = true
   }
 
-  override func fetchConfiguration(applicationState: UIApplication.State? = nil, appSessionManager: AppSessionManager = .shared, sessionEventsManager: SessionEventsManager = .shared, requestId: String = UUID().uuidString) async {
+  override func fetchConfiguration(withOptions options: SuperwallOptions?, requestId: String = UUID().uuidString) async {
     return
   }
 }

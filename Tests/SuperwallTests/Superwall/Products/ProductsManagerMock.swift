@@ -16,10 +16,7 @@ final class ProductsManagerMock: ProductsManager {
     self.productCompletionResult = productCompletionResult
   }
 
-  override func products(
-    withIdentifiers identifiers: Set<String>,
-    completion: @escaping ProductsManager.ProductRequestCompletionBlock
-  ) {
-    completion(productCompletionResult)
+  override func getProducts(identifiers: Set<String>) async throws -> Set<SKProduct> {
+    return try productCompletionResult.get()
   }
 }

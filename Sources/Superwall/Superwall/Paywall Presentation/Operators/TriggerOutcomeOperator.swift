@@ -65,7 +65,6 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
     .eraseToAnyPublisher()
   }
 
-  // TODO: MOVE THIS TO A LOGIC HANDLER
   private func getTriggerOutcome(
     forResult triggerResult: TriggerResult
   ) -> TriggerResultOutcome {

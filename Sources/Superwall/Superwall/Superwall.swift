@@ -98,10 +98,10 @@ public final class Superwall: NSObject {
   }
 
   /// The config manager.
-  private var configManager: ConfigManager = .shared
+  var configManager: ConfigManager = .shared
 
   /// The identity manager.
-  private var identityManager: IdentityManager = .shared
+  var identityManager: IdentityManager = .shared
 
   // MARK: - Private Functions
   private override init() {}

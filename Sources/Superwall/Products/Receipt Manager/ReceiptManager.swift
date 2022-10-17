@@ -12,14 +12,19 @@ final class ReceiptManager {
   var purchasedSubscriptionGroupIds: Set<String>?
   private var purchases: [InAppPurchase] = []
   private let productsManager: ProductsManager
+  private let receiptData: () -> Data?
 
-  init(productsManager: ProductsManager = ProductsManager()) {
+  init(
+    productsManager: ProductsManager = ProductsManager(),
+    receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData
+  ) {
     self.productsManager = productsManager
+    self.receiptData = receiptData
   }
 
   /// Gets the purchased products, whilst storing the purchased subscription group identifiers.
   func loadPurchasedProducts() async -> Set<SKProduct>? {
-    guard let payload = ReceiptLogic.getPayload() else {
+    guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
       return nil
     }
     let purchases = payload.purchases
@@ -39,6 +44,25 @@ final class ReceiptManager {
     } catch {
       return nil
     }
+  }
+
+  /// Determines whether a free trial is available based on the product the user is purchasing.
+  ///
+  /// A free trial is available if the user hasn't already purchased within the subscription group of the
+  /// supplied product. If it isn't a subscription-based product or there are other issues retrieving the products,
+  /// the outcome will default to whether or not the user has already purchased that product.
+  func isFreeTrialAvailable(for product: SKProduct) -> Bool {
+    guard product.hasFreeTrial else {
+      return false
+    }
+    guard
+      let purchasedSubsGroupIds = purchasedSubscriptionGroupIds,
+      let subsGroupId = product.subscriptionGroupIdentifier
+    else {
+      return !hasPurchasedProduct(withId: product.productIdentifier)
+    }
+
+    return !purchasedSubsGroupIds.contains(subsGroupId)
   }
 
   /// Determines whether the purchases already contain the given product ID.

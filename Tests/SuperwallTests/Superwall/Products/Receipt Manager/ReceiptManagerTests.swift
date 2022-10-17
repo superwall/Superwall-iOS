@@ -9,7 +9,40 @@
 import XCTest
 @testable import Superwall
 
-class InAppReceiptTests: XCTestCase {
+class ReceiptManagerTests: XCTestCase {
+  // MARK: - loadPurchasedProducts
+
+  func test_loadPurchasedProducts_nilProducts() async {
+    let product = MockSkProduct(subscriptionGroupIdentifier: "abc")
+    let productsManager = ProductsManagerMock(productCompletionResult: .success([product]))
+    let getReceiptData: () -> Data = {
+      return MockReceiptData.newReceipt
+    }
+    let receiptManager = ReceiptManager(
+      productsManager: productsManager,
+      receiptData: getReceiptData
+    )
+    _ = await receiptManager.loadPurchasedProducts()
+    XCTAssertEqual(receiptManager.purchasedSubscriptionGroupIds, ["abc"])
+  }
+
+  func test_loadPurchasedProducts_productError() async {
+    let productsManager = ProductsManagerMock(productCompletionResult: .failure(TestError("error")))
+    let getReceiptData: () -> Data = {
+      return MockReceiptData.newReceipt
+    }
+    let receiptManager = ReceiptManager(
+      productsManager: productsManager,
+      receiptData: getReceiptData
+    )
+    _ = await receiptManager.loadPurchasedProducts()
+    XCTAssertNil(receiptManager.purchasedSubscriptionGroupIds)
+  }
+
+  func test_isFreeTrialAvailable() {
+    
+  }
+  /*
   // MARK: - Test processing of receipt data
   func testCrashReceipt_hasntPurchased() {
     let getReceiptData: () -> Data = {
@@ -185,6 +218,6 @@ class InAppReceiptTests: XCTestCase {
     inAppReceipt.loadSubscriptionGroupIds()
     let hasPurchased = inAppReceipt.hasPurchasedInSubscriptionGroupOfProduct(withId: proProductId)
     XCTAssertTrue(hasPurchased)
-  }
+  }*/
 }
 

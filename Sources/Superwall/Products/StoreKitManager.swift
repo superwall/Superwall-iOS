@@ -57,17 +57,7 @@ final class StoreKitManager {
   /// supplied product. If it isn't a subscription-based product or there are other issues retrieving the products,
   /// the outcome will default to whether or not the user has already purchased that product.
   func isFreeTrialAvailable(for product: SKProduct) -> Bool {
-    guard product.hasFreeTrial else {
-      return false
-    }
-    guard
-      let purchasedSubsGroupIds = receiptManager.purchasedSubscriptionGroupIds,
-      let subsGroupId = product.subscriptionGroupIdentifier
-    else {
-      return !receiptManager.hasPurchasedProduct(withId: product.productIdentifier)
-    }
-
-    return !purchasedSubsGroupIds.contains(subsGroupId)
+    return receiptManager.isFreeTrialAvailable(for: product)
   }
 
   func getProducts(

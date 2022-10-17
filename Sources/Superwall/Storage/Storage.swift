@@ -131,10 +131,8 @@ class Storage {
       return assignments
     }
   }
-}
 
 // MARK: - Cache Reading & Writing
-extension Storage {
   func get<Key: Storable>(_ keyType: Key.Type) -> Key.Value? {
     return cache.read(keyType)
   }

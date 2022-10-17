@@ -162,7 +162,7 @@ final class ConfigLogicTests: XCTestCase {
     XCTAssertTrue(rules.contains(trigger1.rules))
   }
 
-  // MARK: - Assign Variants
+  // MARK: - Choose Variants
   func test_assignVariants_noTriggers() {
     // Given
     let confirmedAssignments = [
@@ -174,17 +174,17 @@ final class ConfigLogicTests: XCTestCase {
     ]
 
     // When
-    let variant = ConfigLogic.assignVariants(
+    let variant = ConfigLogic.chooseAssignments(
       fromTriggers: [],
       confirmedAssignments: confirmedAssignments
     )
 
     // Then
-    XCTAssertTrue(variant.unconfirmedAssignments.isEmpty)
-    XCTAssertEqual(variant.confirmedAssignments, confirmedAssignments)
+    XCTAssertTrue(variant.unconfirmed.isEmpty)
+    XCTAssertEqual(variant.confirmed, confirmedAssignments)
   }
 
-  func test_assignVariants_noRules() {
+  func test_chooseAssignments_noRules() {
     // Given
     let confirmedAssignments = [
       "exp1": Experiment.Variant(
@@ -194,7 +194,7 @@ final class ConfigLogicTests: XCTestCase {
       )
     ]
     // When
-    let variant = ConfigLogic.assignVariants(
+    let variant = ConfigLogic.chooseAssignments(
       fromTriggers: [
         .stub()
         .setting(\.rules, to: [])
@@ -203,11 +203,11 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertTrue(variant.unconfirmedAssignments.isEmpty)
-    XCTAssertEqual(variant.confirmedAssignments, confirmedAssignments)
+    XCTAssertTrue(variant.unconfirmed.isEmpty)
+    XCTAssertEqual(variant.confirmed, confirmedAssignments)
   }
 
-  func test_assignVariants_variantAsOfYetUnconfirmed() {
+  func test_chooseAssignments_variantAsOfYetUnconfirmed() {
     // Given
     let variantId = "abc"
     let paywallId = "edf"
@@ -219,7 +219,7 @@ final class ConfigLogicTests: XCTestCase {
       .setting(\.type, to: .treatment)
 
     // When
-    let variant = ConfigLogic.assignVariants(
+    let variant = ConfigLogic.chooseAssignments(
       fromTriggers: [
         .stub()
         .setting(\.rules, to: [
@@ -237,12 +237,12 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // When
-    XCTAssertEqual(variant.unconfirmedAssignments.count, 1)
-    XCTAssertEqual(variant.unconfirmedAssignments[experimentId], variantOption.toVariant())
-    XCTAssertTrue(variant.confirmedAssignments.isEmpty)
+    XCTAssertEqual(variant.unconfirmed.count, 1)
+    XCTAssertEqual(variant.unconfirmed[experimentId], variantOption.toVariant())
+    XCTAssertTrue(variant.confirmed.isEmpty)
   }
 
-  func test_assignVariants_variantAlreadyConfirmed() {
+  func test_chooseAssignments_variantAlreadyConfirmed() {
     // Given
     let variantId = "abc"
     let paywallId = "edf"
@@ -254,7 +254,7 @@ final class ConfigLogicTests: XCTestCase {
       .setting(\.type, to: .treatment)
 
     // When
-    let variant = ConfigLogic.assignVariants(
+    let variant = ConfigLogic.chooseAssignments(
       fromTriggers: [
         .stub()
         .setting(\.rules, to: [
@@ -272,12 +272,12 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(variant.confirmedAssignments.count, 1)
-    XCTAssertEqual(variant.confirmedAssignments[experimentId], variantOption.toVariant())
-    XCTAssertTrue(variant.unconfirmedAssignments.isEmpty)
+    XCTAssertEqual(variant.confirmed.count, 1)
+    XCTAssertEqual(variant.confirmed[experimentId], variantOption.toVariant())
+    XCTAssertTrue(variant.unconfirmed.isEmpty)
   }
 
-  func test_assignVariants_variantAlreadyConfirmed_nowUnavailable() {
+  func test_chooseAssignments_variantAlreadyConfirmed_nowUnavailable() {
     // Given
     let paywallId = "edf"
     let experimentId = "3"
@@ -292,7 +292,7 @@ final class ConfigLogicTests: XCTestCase {
       .setting(\.type, to: .treatment)
 
     // When
-    let variant = ConfigLogic.assignVariants(
+    let variant = ConfigLogic.chooseAssignments(
       fromTriggers: [
         .stub()
         .setting(\.rules, to: [
@@ -310,12 +310,12 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(variant.unconfirmedAssignments.count, 1)
-    XCTAssertEqual(variant.unconfirmedAssignments[experimentId], newVariantOption.toVariant())
-    XCTAssertTrue(variant.confirmedAssignments.isEmpty)
+    XCTAssertEqual(variant.unconfirmed.count, 1)
+    XCTAssertEqual(variant.unconfirmed[experimentId], newVariantOption.toVariant())
+    XCTAssertTrue(variant.confirmed.isEmpty)
   }
 
-  func test_assignVariants_variantAlreadyConfirmed_nowNoVariants() {
+  func test_chooseAssignments_variantAlreadyConfirmed_nowNoVariants() {
     // Given
     let paywallId = "edf"
     let experimentId = "3"
@@ -326,7 +326,7 @@ final class ConfigLogicTests: XCTestCase {
       .setting(\.type, to: .treatment)
 
     // When
-    let variant = ConfigLogic.assignVariants(
+    let variant = ConfigLogic.chooseAssignments(
       fromTriggers: [
         .stub()
         .setting(\.rules, to: [
@@ -342,8 +342,8 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertTrue(variant.unconfirmedAssignments.isEmpty)
-    XCTAssertTrue(variant.confirmedAssignments.isEmpty)
+    XCTAssertTrue(variant.unconfirmed.isEmpty)
+    XCTAssertTrue(variant.confirmed.isEmpty)
   }
 
   // MARK: - processAssignmentsFromServer
@@ -357,8 +357,8 @@ final class ConfigLogicTests: XCTestCase {
       confirmedAssignments: ["abc": .init(id: "def", type: .treatment, paywallId: "ghi")],
       unconfirmedAssignments: ["jkl": .init(id: "mno", type: .treatment, paywallId: "pqr")]
     )
-    XCTAssertEqual(result.confirmedAssignments["abc"], confirmedVariant)
-    XCTAssertEqual(result.unconfirmedAssignments["jkl"], unconfirmedVariant)
+    XCTAssertEqual(result.confirmed["abc"], confirmedVariant)
+    XCTAssertEqual(result.unconfirmed["jkl"], unconfirmedVariant)
   }
 
   func test_processAssignmentsFromServer_overwriteConfirmedAssignment() {
@@ -395,8 +395,8 @@ final class ConfigLogicTests: XCTestCase {
       unconfirmedAssignments: ["jkl": .init(id: "mno", type: .treatment, paywallId: "pqr")]
     )
 
-    XCTAssertEqual(result.confirmedAssignments[experimentId], variantOption.toVariant())
-    XCTAssertEqual(result.unconfirmedAssignments["jkl"], unconfirmedVariant)
+    XCTAssertEqual(result.confirmed[experimentId], variantOption.toVariant())
+    XCTAssertEqual(result.unconfirmed["jkl"], unconfirmedVariant)
   }
 
   func test_processAssignmentsFromServer_multipleAssignments() {
@@ -452,39 +452,39 @@ final class ConfigLogicTests: XCTestCase {
       confirmedAssignments: [:],
       unconfirmedAssignments: ["jkl": .init(id: "mno", type: .treatment, paywallId: "pqr")]
     )
-    XCTAssertEqual(result.confirmedAssignments.count, 2)
-    XCTAssertEqual(result.confirmedAssignments[experimentId1], variantOption1.toVariant())
-    XCTAssertEqual(result.confirmedAssignments[experimentId2], variantOption2.toVariant())
-    XCTAssertEqual(result.unconfirmedAssignments["jkl"], unconfirmedVariant)
+    XCTAssertEqual(result.confirmed.count, 2)
+    XCTAssertEqual(result.confirmed[experimentId1], variantOption1.toVariant())
+    XCTAssertEqual(result.confirmed[experimentId2], variantOption2.toVariant())
+    XCTAssertEqual(result.unconfirmed["jkl"], unconfirmedVariant)
   }
 
-  // MARK: - getStaticPaywallResponse
+  // MARK: - getStaticPaywall
 
-  func test_getStaticPaywallResponse_noPaywallId() {
-    let response = ConfigLogic.getStaticPaywallResponse(
-      fromPaywallId: nil,
+  func test_getStaticPaywall_noPaywallId() {
+    let response = ConfigLogic.getStaticPaywall(
+      withId: nil,
       config: .stub(),
       deviceHelper: .shared
     )
     XCTAssertNil(response)
   }
 
-  func test_getStaticPaywallResponse_noConfig() {
-    let response = ConfigLogic.getStaticPaywallResponse(
-      fromPaywallId: "abc",
+  func test_getStaticPaywall_noConfig() {
+    let response = ConfigLogic.getStaticPaywall(
+      withId: "abc",
       config: nil,
       deviceHelper: .shared
     )
     XCTAssertNil(response)
   }
 
-  func test_getStaticPaywallResponse_deviceLocaleSpecifiedInConfig() {
+  func test_getStaticPaywall_deviceLocaleSpecifiedInConfig() {
     let locale = "en_GB"
     let deviceHelper = DeviceHelperMock()
     deviceHelper.internalLocale = locale
 
-    let response = ConfigLogic.getStaticPaywallResponse(
-      fromPaywallId: "abc",
+    let response = ConfigLogic.getStaticPaywall(
+      withId: "abc",
       config: .stub()
         .setting(\.locales, to: [locale]),
       deviceHelper: deviceHelper
@@ -492,46 +492,46 @@ final class ConfigLogicTests: XCTestCase {
     XCTAssertNil(response)
   }
 
-  func test_getStaticPaywallResponse_shortLocaleContainsEn() {
+  func test_getStaticPaywall_shortLocaleContainsEn() {
     let paywallId = "abc"
     let deviceHelper = DeviceHelperMock()
     deviceHelper.internalLocale = "en_GB"
     let config: Config = .stub()
       .setting(\.locales, to: ["de_DE"])
-      .setting(\.paywallResponses, to: [
+      .setting(\.paywalls, to: [
         .stub(),
         .stub()
         .setting(\.identifier, to: paywallId)
       ])
 
-    let response = ConfigLogic.getStaticPaywallResponse(
-      fromPaywallId: paywallId,
+    let response = ConfigLogic.getStaticPaywall(
+      withId: paywallId,
       config: config,
       deviceHelper: deviceHelper
     )
 
-    XCTAssertEqual(response, config.paywallResponses[1])
+    XCTAssertEqual(response, config.paywalls[1])
   }
 
-  func test_getStaticPaywallResponse_shortLocaleNotContainedInConfig() {
+  func test_getStaticPaywall_shortLocaleNotContainedInConfig() {
     let paywallId = "abc"
     let deviceHelper = DeviceHelperMock()
     deviceHelper.internalLocale = "de_DE"
     let config: Config = .stub()
       .setting(\.locales, to: [])
-      .setting(\.paywallResponses, to: [
+      .setting(\.paywalls, to: [
         .stub(),
         .stub()
         .setting(\.identifier, to: paywallId)
       ])
 
-    let response = ConfigLogic.getStaticPaywallResponse(
-      fromPaywallId: paywallId,
+    let response = ConfigLogic.getStaticPaywall(
+      withId: paywallId,
       config: config,
       deviceHelper: deviceHelper
     )
 
-    XCTAssertEqual(response, config.paywallResponses[1])
+    XCTAssertEqual(response, config.paywalls[1])
   }
 
   func test_getStaticPaywallResponse_shortLocaleContainedInConfig() {
@@ -540,14 +540,14 @@ final class ConfigLogicTests: XCTestCase {
     deviceHelper.internalLocale = "de_DE"
     let config: Config = .stub()
       .setting(\.locales, to: ["de"])
-      .setting(\.paywallResponses, to: [
+      .setting(\.paywalls, to: [
         .stub(),
         .stub()
         .setting(\.identifier, to: paywallId)
       ])
 
-    let response = ConfigLogic.getStaticPaywallResponse(
-      fromPaywallId: paywallId,
+    let response = ConfigLogic.getStaticPaywall(
+      withId: paywallId,
       config: config,
       deviceHelper: deviceHelper
     )

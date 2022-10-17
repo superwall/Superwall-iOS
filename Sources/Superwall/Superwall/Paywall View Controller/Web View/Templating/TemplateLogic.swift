@@ -26,7 +26,7 @@ enum TemplateLogic {
 
     let freeTrialTemplate = FreeTrialTemplate(
       eventName: "template_substitutions_prefix",
-      prefix: paywall.isFreeTrialAvailable == nil ? nil : "freeTrial"
+      prefix: paywall.isFreeTrialAvailable ? "freeTrial" : nil
     )
 
     let swProductTemplate = swProductTemplate(

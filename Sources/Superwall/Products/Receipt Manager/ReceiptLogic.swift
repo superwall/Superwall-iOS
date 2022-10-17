@@ -11,7 +11,7 @@ import ASN1Swift
 enum ReceiptLogic {
   /// Gets the on-device receipt payload from the App Store Receipt URL.
   static func getPayload(
-    using getReceiptData: () -> Data? = getReceiptData
+    using getReceiptData: () -> Data?
   ) -> InAppReceiptPayload? {
     guard let data = getReceiptData() else {
       return nil
@@ -43,7 +43,7 @@ enum ReceiptLogic {
     return payload
   }
 
-  private static func getReceiptData() -> Data? {
+  static func getReceiptData() -> Data? {
     guard
       let receiptUrl = Bundle.main.appStoreReceiptURL,
       FileManager.default.fileExists(atPath: receiptUrl.path)

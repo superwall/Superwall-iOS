@@ -21,7 +21,7 @@ struct ProductProcessingOutcome {
   var productVariables: [ProductVariable]
   var swProductVariablesTemplate: [ProductVariable]
   var orderedSwProducts: [SWProduct]
-  var isFreeTrialAvailable: Bool?
+  var isFreeTrialAvailable: Bool
 }
 
 enum PaywallLogic {
@@ -77,7 +77,7 @@ enum PaywallLogic {
   ) -> ProductProcessingOutcome {
     var productVariables: [ProductVariable] = []
     var swTemplateProductVariables: [ProductVariable] = []
-    var hasFreeTrial: Bool?
+    var hasFreeTrial = false
     var orderedSwProducts: [SWProduct] = []
 
     for product in products {

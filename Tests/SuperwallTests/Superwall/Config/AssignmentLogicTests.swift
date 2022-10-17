@@ -11,7 +11,7 @@ import XCTest
 
 @available(iOS 14, *)
 class AssignmentLogicTests: XCTestCase {
-  func testEventTriggerOutcome_holdout() throws {
+  func testGetOutcome_holdout() throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -68,7 +68,7 @@ class AssignmentLogicTests: XCTestCase {
     XCTAssertEqual(confirmableAssignments, expectedConfirmableAssignments)
   }
 
-  func testEventTriggerOutcome_presentIdentifier_unconfirmedAssignmentsOnly() throws {
+  func testGetOutcome_presentIdentifier_unconfirmedAssignmentsOnly() throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -128,7 +128,7 @@ class AssignmentLogicTests: XCTestCase {
     XCTAssertEqual(confirmableAssignments, expectedConfirmableAssignments)
   }
 
-  func testEventTriggerOutcome_presentIdentifier_confirmedAssignmentsOnly() throws {
+  func testGetOutcome_presentIdentifier_confirmedAssignmentsOnly() throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -181,7 +181,7 @@ class AssignmentLogicTests: XCTestCase {
     XCTAssertNil(confirmableAssignments)
   }
 
-  func testEventTriggerOutcome_presentIdentifier_confirmedAssignmentsAndUnconfirmedAssignmentsRaceCondition() throws {
+  func testGetOutcome_presentIdentifier_confirmedAssignmentsAndUnconfirmedAssignmentsRaceCondition() throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -240,7 +240,7 @@ class AssignmentLogicTests: XCTestCase {
     XCTAssertNil(confirmableAssignments)
   }
 
-  func testEventTriggerOutcome_noRuleMatch() throws {
+  func testGetOutcome_noRuleMatch() throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -291,7 +291,7 @@ class AssignmentLogicTests: XCTestCase {
     XCTAssertNil(confirmableAssignments)
   }
 
-  func testEventTriggerOutcome_triggerNotFound() throws {
+  func testGetOutcome_triggerNotFound() throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
