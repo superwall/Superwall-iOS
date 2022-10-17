@@ -34,6 +34,14 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ---
 
+## 2.5.3
+
+### Fixes
+
+- Fixes a bug where `Paywall.reset()` couldn't be called on a background thread.
+
+---
+
 ## 2.5.2
 
 ### Fixes

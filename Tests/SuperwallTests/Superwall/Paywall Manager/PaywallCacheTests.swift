@@ -96,17 +96,17 @@ class PaywallCacheTests: XCTestCase {
     PaywallViewController.cache.insert(paywall1)
     PaywallViewController.cache.insert(paywall2)
 
-    let cachedPaywall1 = paywallCache.getPaywall(withKey: key1)
-    let cachedPaywall2 = paywallCache.getPaywall(withKey: key2)
+    let cachedPaywall1 = self.paywallCache.getPaywall(withKey: key1)
+    let cachedPaywall2 = self.paywallCache.getPaywall(withKey: key2)
 
     XCTAssertEqual(cachedPaywall1, paywall1)
     XCTAssertEqual(cachedPaywall2, paywall2)
 
-    paywallCache.clearCache()
+    self.paywallCache.clearCache()
 
     // Then
-    let nilPaywall1 = paywallCache.getPaywall(withKey: key1)
-    let nilPaywall2 = paywallCache.getPaywall(withKey: key2)
+    let nilPaywall1 = self.paywallCache.getPaywall(withKey: key1)
+    let nilPaywall2 = self.paywallCache.getPaywall(withKey: key2)
 
     XCTAssertNil(nilPaywall1)
     XCTAssertNil(nilPaywall2)
