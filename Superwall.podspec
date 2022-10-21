@@ -40,9 +40,9 @@ Pod::Spec.new do |s|
 
   s.source_files  = "Sources/**/*.{swift}"
   s.resource_bundles = {
-    "Paywall_Paywall" => [
-      "Sources/Paywall/*.xcassets",
-      "Sources/Paywall/**/*.xcdatamodeld"
+    "Superwall_Superwall" => [
+      "Sources/Superwall/*.xcassets",
+      "Sources/Superwall/**/*.xcdatamodeld"
     ]
   }
   s.dependency 'ASN1Swift', '~> 1.2.3'

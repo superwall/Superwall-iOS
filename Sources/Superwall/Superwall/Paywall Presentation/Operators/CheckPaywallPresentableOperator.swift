@@ -20,8 +20,8 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
   func checkPaywallIsPresentable(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<PresentablePipelineOutput, Error> {
-    mainMap { input in
-      if InternalPresentationLogic.shouldNotDisplayPaywall(
+    asyncMap { input in
+      if await InternalPresentationLogic.shouldNotDisplayPaywall(
         isUserSubscribed: Superwall.shared.isUserSubscribed,
         isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
         shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus,
@@ -30,7 +30,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         throw PresentationPipelineError.cancelled
       }
 
-      SessionEventsManager.shared.triggerSession.activateSession(
+      await SessionEventsManager.shared.triggerSession.activateSession(
         for: input.request.presentationInfo,
         on: input.request.presentingViewController,
         paywall: input.paywallViewController.paywall,
@@ -38,12 +38,12 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
       )
 
       if input.request.presentingViewController == nil {
-        Superwall.shared.createPresentingWindowIfNeeded()
+        await Superwall.shared.createPresentingWindowIfNeeded()
       }
 
       // Make sure there's a presenter. If there isn't throw an error if no paywall is being presented
       let providedViewController = input.request.presentingViewController
-      let rootViewController = Superwall.shared.presentingWindow?.rootViewController
+      let rootViewController = await Superwall.shared.presentingWindow?.rootViewController
 
       guard let presenter = (providedViewController ?? rootViewController) else {
         Logger.debug(
@@ -53,7 +53,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
           info: input.debugInfo,
           error: nil
         )
-        if !Superwall.shared.isPaywallPresented {
+        if await !Superwall.shared.isPaywallPresented {
           let error = InternalPresentationLogic.presentationError(
             domain: "SWPresentationError",
             code: 101,
@@ -79,6 +79,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
 }
 
 extension Superwall {
+  @MainActor
   fileprivate func createPresentingWindowIfNeeded() {
     guard presentingWindow == nil else {
       return

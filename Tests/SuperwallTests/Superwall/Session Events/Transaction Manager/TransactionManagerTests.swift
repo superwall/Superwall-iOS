@@ -23,7 +23,7 @@ final class TransactionManagerTests: XCTestCase {
       .setting(\.id, to: appSessionId)
     let appSessionManager = AppSessionManagerMock(appSession: appSession)
 
-    let transactionManager = TransactionManager(
+    let transactionManager = TransactionRecorder(
       delegate: delegate,
       configManager: configManager,
       appSessionManager: appSessionManager

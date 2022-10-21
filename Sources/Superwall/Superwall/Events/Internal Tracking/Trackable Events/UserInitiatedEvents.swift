@@ -14,16 +14,18 @@ protocol TrackableUserInitiatedEvent: Trackable {}
 enum UserInitiatedEvent {
   struct Track: TrackableUserInitiatedEvent {
     let rawName: String
-    let superwallParameters: [String: Any] = [:]
     let canImplicitlyTriggerPaywall: Bool
     var customParameters: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
   struct DefaultPaywall: TrackableUserInitiatedEvent {
     let rawName = "$present"
-    let superwallParameters: [String: Any] = [:]
     let canImplicitlyTriggerPaywall = false
     let customParameters: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
   // MARK: - To be deprecated/deleted
@@ -40,7 +42,7 @@ enum UserInitiatedEvent {
         return "pushNotification_receive"
       }
     }
-    var superwallParameters: [String: Any] {
+    func getSuperwallParameters() async -> [String: Any] {
       if let pushNotificationId = pushNotificationId {
         return ["push_notification_id": pushNotificationId]
       }

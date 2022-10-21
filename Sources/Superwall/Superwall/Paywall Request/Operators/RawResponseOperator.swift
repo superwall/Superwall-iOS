@@ -10,17 +10,17 @@ import Foundation
 
 extension AnyPublisher where Output == PaywallRequest, Failure == Error {
   func getRawPaywall() -> AnyPublisher<PipelineData, Failure> {
-    map { request in
-      trackResponseStarted(
+    asyncMap { request in
+      await trackResponseStarted(
         paywallId: request.responseIdentifiers.paywallId,
         event: request.eventData
       )
       return request
     }
     .flatMap(getCachedResponseOrLoad)
-    .map {
+    .asyncMap {
       let paywallInfo = $0.paywall.getInfo(fromEvent: $0.request.eventData)
-      trackResponseLoaded(
+      await trackResponseLoaded(
         paywallInfo,
         event: $0.request.eventData
       )
@@ -48,7 +48,7 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
           )
         }
       } catch {
-        SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
+        await SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
           forPaywallId: request.responseIdentifiers.paywallId,
           state: .fail
         )
@@ -72,8 +72,8 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
   private func trackResponseStarted(
     paywallId: String?,
     event: EventData?
-  ) {
-    SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
+  ) async {
+    await SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
       forPaywallId: paywallId,
       state: .start
     )
@@ -81,20 +81,20 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
       state: .start,
       eventData: event
     )
-    Superwall.track(trackedEvent)
+    await Superwall.track(trackedEvent)
   }
 
   private func trackResponseLoaded(
     _ paywallInfo: PaywallInfo,
     event: EventData?
-  ) {
+  ) async {
     let responseLoadEvent = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: paywallInfo),
       eventData: event
     )
-    Superwall.track(responseLoadEvent)
+    await Superwall.track(responseLoadEvent)
 
-    SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
+    await SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
       forPaywallId: paywallInfo.databaseId,
       state: .end
     )

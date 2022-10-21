@@ -63,21 +63,21 @@ extension Superwall {
     presentationPublisher.send(request)
   }
 
+
+  @MainActor
   func dismiss(
     _ paywallViewController: PaywallViewController,
     state: PaywallDismissedResult.DismissState,
     completion: (() -> Void)? = nil
   ) {
-    onMain {
-      let paywallInfo = paywallViewController.paywallInfo
-      paywallViewController.dismiss(
-        .withResult(
-          paywallInfo: paywallInfo,
-          state: state
-        )
-      ) {
-        completion?()
-      }
+    let paywallInfo = paywallViewController.paywallInfo
+    paywallViewController.dismiss(
+      .withResult(
+        paywallInfo: paywallInfo,
+        state: state
+      )
+    ) {
+      completion?()
     }
   }
 }

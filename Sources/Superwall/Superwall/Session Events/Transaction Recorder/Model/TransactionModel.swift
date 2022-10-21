@@ -75,6 +75,23 @@ struct TransactionModel: Codable {
     transactionDate = transaction.transactionDate
     payment = Payment(from: transaction.payment)
   }
+
+  @available(iOS 15.0, *)
+  init(
+    from transaction: Transaction,
+    configRequestId: String,
+    appSessionId: String,
+    triggerSessionId: String?
+  ) {
+    state = TransactionState(from: .purchased)
+    self.configRequestId = configRequestId
+    self.appSessionId = appSessionId
+    self.triggerSessionId = triggerSessionId
+    self.storeTransactionId = "\(transaction.id)"
+    originalTransactionIdentifier = "\(transaction.originalID)"
+    transactionDate = transaction.purchaseDate
+    payment = Payment(from: transaction)
+  }
 }
 
 extension TransactionModel: Stubbable {

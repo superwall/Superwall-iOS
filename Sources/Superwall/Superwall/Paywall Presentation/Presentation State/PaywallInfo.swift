@@ -148,7 +148,7 @@ public final class PaywallInfo: NSObject {
   func eventParams(
     forProduct product: SKProduct? = nil,
     otherParams: [String: Any]? = nil
-  ) -> [String: Any] {
+  ) async -> [String: Any] {
     var output: [String: Any] = [
       "paywall_database_id": databaseId,
       "paywalljs_version": paywalljsVersion as Any,
@@ -172,7 +172,7 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_duration": productsLoadDuration as Any
     ]
 
-    if let triggerSession = SessionEventsManager.shared.triggerSession.activeTriggerSession,
+    if let triggerSession = await SessionEventsManager.shared.triggerSession.activeTriggerSession,
       let databaseId = triggerSession.paywall?.databaseId,
       databaseId == self.databaseId {
       output["trigger_session_id"] = triggerSession.id

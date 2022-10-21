@@ -10,7 +10,7 @@ import UIKit
 import StoreKit
 import Combine
 
-final class TriggerSessionManager {
+actor TriggerSessionManager {
   weak var delegate: SessionEventsDelegate?
 
   /// Storage class. Can be injected via init for testing.
@@ -45,56 +45,47 @@ final class TriggerSessionManager {
     self.delegate = delegate
     self.storage = storage
     self.configManager = configManager
-    addObservers()
-    listenForConfig()
-  }
-
-  private func addObservers() {
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(applicationDidEnterBackground),
-      name: UIApplication.didEnterBackgroundNotification,
-      object: nil
-    )
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(applicationWillEnterForeground),
-      name: UIApplication.willEnterForegroundNotification,
-      object: nil
-    )
+    Task {
+      await listenForConfig()
+    }
   }
 
   private func listenForConfig() {
     cancellable = configManager.$config
       .compactMap { $0 }
       .sink { [weak self] config in
-        self?.createSessions(from: config)
+        guard let self = self else {
+          return
+        }
+        Task {
+          await self.createSessions(from: config)
+        }
       }
   }
 
   // MARK: - App Lifecycle
-
-  @objc private func applicationDidEnterBackground() {
-    activeTriggerSession?.endAt = Date()
-    enqueueCurrentTriggerSession()
+  func willEnterForeground() {
+    self.activeTriggerSession?.id = UUID().uuidString
+    self.activeTriggerSession?.endAt = nil
+    self.enqueueCurrentTriggerSession()
   }
 
-  @objc private func applicationWillEnterForeground() {
-    activeTriggerSession?.id = UUID().uuidString
-    activeTriggerSession?.endAt = nil
+  func didEnterBackground() {
+    activeTriggerSession?.endAt = Date()
     enqueueCurrentTriggerSession()
   }
 
   // MARK: - Session Lifecycle
 
   /// Creates a session for each potential trigger on config and manual paywall presentation and sends them off to the server.
-  func createSessions(from config: Config) {
+  func createSessions(from config: Config) async {
     // Loop through triggers and create a session for each.
+    let isUserSubscribed = await Superwall.shared.isUserSubscribed
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
         configRequestId: configManager.config?.requestId,
         userAttributes: IdentityManager.shared.userAttributes,
-        isSubscribed: Superwall.shared.isUserSubscribed,
+        isSubscribed: isUserSubscribed,
         eventName: trigger.eventName,
         appSession: AppSessionManager.shared.appSession
       )
@@ -116,8 +107,8 @@ final class TriggerSessionManager {
     on presentingViewController: UIViewController? = nil,
     paywall: Paywall? = nil,
     triggerResult: TriggerResult?,
-    trackEvent: (Trackable) -> TrackingResult = Superwall.track
-  ) {
+    trackEvent: (Trackable) async -> TrackingResult = Superwall.track
+  ) async {
     guard let eventName = presentationInfo.eventName else {
       // The paywall is being presented by identifier and that's not supported.
       return
@@ -128,7 +119,7 @@ final class TriggerSessionManager {
         triggerResult: triggerResult,
         triggerName: eventName
       )
-      _ = trackEvent(trackedEvent)
+      _ = await trackEvent(trackedEvent)
     }
 
     guard var session = pendingTriggerSessions[eventName] else {
@@ -161,14 +152,14 @@ final class TriggerSessionManager {
     switch outcome.presentationOutcome {
     case .holdout,
       .noRuleMatch:
-      endSession()
+      await endSession()
     case .paywall:
       enqueueCurrentTriggerSession()
     }
   }
 
   /// Ends the active trigger session and resets it to `nil`.
-  func endSession() {
+  func endSession() async {
     guard var currentTriggerSession = activeTriggerSession else {
       return
     }
@@ -182,7 +173,7 @@ final class TriggerSessionManager {
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
       configRequestId: configManager.config?.requestId,
       userAttributes: IdentityManager.shared.userAttributes,
-      isSubscribed: Superwall.shared.isUserSubscribed,
+      isSubscribed: await Superwall.shared.isUserSubscribed,
       eventName: eventName,
       products: currentTriggerSession.products.allProducts,
       appSession: AppSessionManager.shared.appSession
@@ -196,26 +187,31 @@ final class TriggerSessionManager {
 
   /// Queues the trigger session to be sent back to the server.
   private func enqueueCurrentTriggerSession() {
-    guard var triggerSession = activeTriggerSession else {
-      return
-    }
+    Task {
+      guard var triggerSession = activeTriggerSession else {
+        return
+      }
 
-    triggerSession.isSubscribed = Superwall.shared.isUserSubscribed
-    delegate?.enqueue(triggerSession)
+      triggerSession.isSubscribed = await Superwall.shared.isUserSubscribed
+      delegate?.enqueue(triggerSession)
+    }
   }
 
   /// Queues all the pending trigger sessions to be sent back to the server.
   private func enqueuePendingTriggerSessions() {
-    for eventName in pendingTriggerSessions.keys {
-      guard var pendingTriggerSession = pendingTriggerSessions[eventName] else {
-        continue
+    Task {
+      let isUserSubscribed = await Superwall.shared.isUserSubscribed
+      for eventName in pendingTriggerSessions.keys {
+        guard var pendingTriggerSession = pendingTriggerSessions[eventName] else {
+          continue
+        }
+        pendingTriggerSession.isSubscribed = isUserSubscribed
+        pendingTriggerSessions[eventName] = pendingTriggerSession
       }
-      pendingTriggerSession.isSubscribed = Superwall.shared.isUserSubscribed
-      pendingTriggerSessions[eventName] = pendingTriggerSession
-    }
 
-    let triggerSessionsArray = Array(pendingTriggerSessions.values)
-    delegate?.enqueue(triggerSessionsArray)
+      let triggerSessionsArray = Array(pendingTriggerSessions.values)
+      delegate?.enqueue(triggerSessionsArray)
+    }
   }
 
   // MARK: - App Session
@@ -243,9 +239,9 @@ final class TriggerSessionManager {
   }
 
   /// Tracks when paywall was closed and then ends the session.
-  func trackPaywallClose() {
+  func trackPaywallClose() async {
     activeTriggerSession?.paywall?.action.closeAt = Date()
-    endSession()
+    await endSession()
   }
 
   // MARK: - Webview Load

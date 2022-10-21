@@ -87,21 +87,24 @@ class Storage {
       return
     }
 
-    Superwall.track(InternalSuperwallEvent.FirstSeen())
+    Task {
+      await Superwall.track(InternalSuperwallEvent.FirstSeen())
+    }
     save(true, forType: DidTrackFirstSeen.self)
 		didTrackFirstSeen = true
 	}
 
   /// Records the app install
   func recordAppInstall(
-    trackEvent: (Trackable) -> TrackingResult = Superwall.track
+    trackEvent: @escaping (Trackable) async -> TrackingResult = Superwall.track
   ) {
     let didTrackAppInstall = get(DidTrackAppInstall.self) ?? false
     if didTrackAppInstall {
       return
     }
-
-    _ = trackEvent(InternalSuperwallEvent.AppInstall())
+    Task {
+      _ = await trackEvent(InternalSuperwallEvent.AppInstall())
+    }
     save(true, forType: DidTrackAppInstall.self)
   }
 
@@ -115,7 +118,6 @@ class Storage {
     save(totalPaywallViews + 1, forType: TotalPaywallViews.self)
     save(Date(), forType: LastPaywallView.self)
   }
-
 
   func saveConfirmedAssignments(_ assignments: [Experiment.ID: Experiment.Variant]) {
     save(assignments, forType: ConfirmedAssignments.self)

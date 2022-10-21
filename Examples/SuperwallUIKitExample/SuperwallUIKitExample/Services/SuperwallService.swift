@@ -8,18 +8,18 @@
 import Superwall
 import StoreKit
 
-// swiftlint:disable:next convenience_type
 final class SuperwallService {
-  #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
-  static let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
   static let shared = SuperwallService()
+  #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
+  private let apiKey = "pk_e85ec09a2dfe4f52581478543143ae67f4f76e7a6d51714c"
   static var name: String {
     return Superwall.userAttributes["firstName"] as? String ?? ""
   }
-  static func initSuperwall() async {
+
+  func initSuperwall() {
     Superwall.configure(
       apiKey: apiKey,
-      delegate: shared
+      delegate: self
     )
   }
 
@@ -50,10 +50,11 @@ final class SuperwallService {
 
 // MARK: - Superwall Delegate
 extension SuperwallService: SuperwallDelegate {
-  func purchase(product: SKProduct) {
-    Task {
-      try? await StoreKitService.shared.purchase(product)
-    }
+  func purchase(
+    product: SKProduct,
+    completion: @escaping (PurchaseResult) -> Void
+  ) {
+    StoreKitService.shared.purchase(product, completion: completion)
   }
 
   func restorePurchases(completion: @escaping (Bool) -> Void) {

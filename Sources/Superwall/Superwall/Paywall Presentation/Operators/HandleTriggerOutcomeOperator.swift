@@ -20,7 +20,7 @@ extension AnyPublisher where Output == TriggerOutcomePipelineOutput, Failure == 
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     configManager: ConfigManager = .shared
   ) -> AnyPublisher<TriggerOutcomeResponsePipelineOutput, Error> {
-    tryMap { input in
+    asyncMap { input in
       switch input.triggerOutcome.info {
       case .paywall(let responseIdentifiers):
         return TriggerOutcomeResponsePipelineOutput(
@@ -30,14 +30,14 @@ extension AnyPublisher where Output == TriggerOutcomePipelineOutput, Failure == 
           responseIdentifiers: responseIdentifiers
         )
       case .holdout(let experiment):
-        SessionEventsManager.shared.triggerSession.activateSession(
+        await SessionEventsManager.shared.triggerSession.activateSession(
           for: input.request.presentationInfo,
           on: input.request.presentingViewController,
           triggerResult: input.triggerOutcome.result
         )
         paywallStatePublisher.send(.skipped(.holdout(experiment)))
       case .noRuleMatch:
-        SessionEventsManager.shared.triggerSession.activateSession(
+        await SessionEventsManager.shared.triggerSession.activateSession(
           for: input.request.presentationInfo,
           on: input.request.presentingViewController,
           triggerResult: input.triggerOutcome.result

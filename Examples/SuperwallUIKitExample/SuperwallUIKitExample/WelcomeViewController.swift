@@ -37,7 +37,6 @@ final class WelcomeViewController: UIViewController {
     }
   }
 
-  @MainActor
   private func next() {
     let trackEventViewController = TrackEventViewController.fromStoryboard()
     navigationController?.pushViewController(trackEventViewController, animated: true)

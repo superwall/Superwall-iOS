@@ -29,28 +29,32 @@ enum InternalSuperwallEvent {
   struct AppOpen: TrackableSuperwallEvent {
     let name: SuperwallEvent = .appOpen
     var customParameters: [String: Any] = [:]
-    var superwallParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
   struct AppInstall: TrackableSuperwallEvent {
     let name: SuperwallEvent = .appInstall
     var customParameters: [String: Any] = [:]
-    let superwallParameters: [String: Any] = [
-      "application_installed_at": DeviceHelper.shared.appInstalledAtString
-    ]
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "application_installed_at": DeviceHelper.shared.appInstalledAtString
+      ]
+    }
   }
 
   struct AppLaunch: TrackableSuperwallEvent {
     let name: SuperwallEvent = .appLaunch
     var customParameters: [String: Any] = [:]
-    var superwallParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
   struct Attributes: TrackableSuperwallEvent {
     let name: SuperwallEvent = .userAttributes
-    let superwallParameters: [String: Any] = [
-      "application_installed_at": DeviceHelper.shared.appInstalledAtString
-    ]
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "application_installed_at": DeviceHelper.shared.appInstalledAtString
+      ]
+    }
     var customParameters: [String: Any] = [:]
   }
 
@@ -58,7 +62,7 @@ enum InternalSuperwallEvent {
     let name: SuperwallEvent = .deepLink
     let url: URL
 
-    var superwallParameters: [String: Any] {
+    func getSuperwallParameters() async -> [String: Any] {
       return [
         "url": url.absoluteString,
         "path": url.path,
@@ -111,19 +115,19 @@ enum InternalSuperwallEvent {
   struct FirstSeen: TrackableSuperwallEvent {
     let name: SuperwallEvent = .firstSeen
     var customParameters: [String: Any] = [:]
-    var superwallParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
   struct AppClose: TrackableSuperwallEvent {
     let name: SuperwallEvent = .appClose
     var customParameters: [String: Any] = [:]
-    var superwallParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
   struct SessionStart: TrackableSuperwallEvent {
     let name: SuperwallEvent = .sessionStart
     var customParameters: [String: Any] = [:]
-    var superwallParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
   struct PaywallLoad: TrackableSuperwallEvent {
@@ -150,7 +154,7 @@ enum InternalSuperwallEvent {
     let eventData: EventData?
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String: Any] {
+    func getSuperwallParameters() async -> [String: Any] {
       let fromEvent = eventData != nil
       let params: [String: Any] = [
         "is_triggered_from_event": fromEvent,
@@ -163,7 +167,7 @@ enum InternalSuperwallEvent {
         .fail:
         return params
       case .complete(let paywallInfo):
-        return paywallInfo.eventParams(otherParams: params)
+        return await paywallInfo.eventParams(otherParams: params)
       }
     }
   }
@@ -174,7 +178,7 @@ enum InternalSuperwallEvent {
     let triggerName: String
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String: Any] {
+    func getSuperwallParameters() async -> [String: Any] {
       switch triggerResult {
       case .noRuleMatch:
         return [
@@ -206,8 +210,8 @@ enum InternalSuperwallEvent {
   struct PaywallOpen: TrackableSuperwallEvent {
     let name: SuperwallEvent = .paywallOpen
     let paywallInfo: PaywallInfo
-    var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams()
+    func getSuperwallParameters() async -> [String: Any] {
+      return await paywallInfo.eventParams()
     }
     var customParameters: [String: Any] = [:]
   }
@@ -215,8 +219,8 @@ enum InternalSuperwallEvent {
   struct PaywallClose: TrackableSuperwallEvent {
     let name: SuperwallEvent = .paywallClose
     let paywallInfo: PaywallInfo
-    var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams()
+    func getSuperwallParameters() async -> [String: Any] {
+      return await paywallInfo.eventParams()
     }
     var customParameters: [String: Any] = [:]
   }
@@ -249,15 +253,15 @@ enum InternalSuperwallEvent {
     let product: SKProduct?
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String: Any] {
+    func getSuperwallParameters() async -> [String: Any] {
       switch state {
       case .start,
         .abandon,
         .complete,
         .restore:
-        return paywallInfo.eventParams(forProduct: product)
+        return await paywallInfo.eventParams(forProduct: product)
       case .fail(let message):
-        return paywallInfo.eventParams(
+        return await paywallInfo.eventParams(
           forProduct: product,
           otherParams: ["message": message]
         )
@@ -271,8 +275,8 @@ enum InternalSuperwallEvent {
     let product: SKProduct
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams(forProduct: product)
+    func getSuperwallParameters() async -> [String: Any] {
+      return await paywallInfo.eventParams(forProduct: product)
     }
   }
 
@@ -282,8 +286,8 @@ enum InternalSuperwallEvent {
     let product: SKProduct
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams(forProduct: product)
+    func getSuperwallParameters() async -> [String: Any] {
+      return await paywallInfo.eventParams(forProduct: product)
     }
   }
 
@@ -293,8 +297,8 @@ enum InternalSuperwallEvent {
     let product: SKProduct
     var customParameters: [String: Any] = [:]
 
-    var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams(forProduct: product)
+    func getSuperwallParameters() async -> [String: Any] {
+      return await paywallInfo.eventParams(forProduct: product)
     }
   }
 
@@ -321,8 +325,8 @@ enum InternalSuperwallEvent {
     }
     let paywallInfo: PaywallInfo
 
-    var superwallParameters: [String: Any] {
-      return paywallInfo.eventParams()
+    func getSuperwallParameters() async -> [String: Any] {
+      return await paywallInfo.eventParams()
     }
     var customParameters: [String: Any] = [:]
   }
@@ -349,13 +353,13 @@ enum InternalSuperwallEvent {
     let paywallInfo: PaywallInfo
     let eventData: EventData?
 
-    var superwallParameters: [String: Any] {
+    func getSuperwallParameters() async -> [String: Any] {
       let fromEvent = eventData != nil
       var params: [String: Any] = [
         "is_triggered_from_event": fromEvent,
         "event_name": eventData?.name ?? ""
       ]
-      params += paywallInfo.eventParams()
+      params += await paywallInfo.eventParams()
       return params
     }
   }

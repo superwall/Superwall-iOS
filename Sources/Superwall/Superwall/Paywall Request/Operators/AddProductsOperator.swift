@@ -12,16 +12,16 @@ typealias PipelineData = (paywall: Paywall, request: PaywallRequest)
 
 extension AnyPublisher where Output == PipelineData, Failure == Error {
   func addProducts() -> AnyPublisher<Output, Failure> {
-    map { input in
-      trackProductsLoadStart(
+    asyncMap { input in
+      await trackProductsLoadStart(
         paywall: input.paywall,
         event: input.request.eventData
       )
       return input
     }
     .flatMap(getProducts)
-    .map { input in
-      trackProductsLoadFinish(
+    .asyncMap { input in
+      await trackProductsLoadFinish(
         paywall: input.paywall,
         event: input.request.eventData
       )
@@ -58,7 +58,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
         var input = input
         input.paywall.productsLoadingInfo.failAt = Date()
         let paywallInfo = input.paywall.getInfo(fromEvent: input.request.eventData)
-        trackProductLoadFail(paywallInfo: paywallInfo, event: input.request.eventData)
+        await trackProductLoadFail(paywallInfo: paywallInfo, event: input.request.eventData)
         throw error
       }
     }
@@ -69,7 +69,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
   private func trackProductsLoadStart(
     paywall: Paywall,
     event: EventData?
-  ) {
+  ) async {
     var paywall = paywall
     paywall.productsLoadingInfo.startAt = Date()
     let paywallInfo = paywall.getInfo(fromEvent: event)
@@ -78,9 +78,9 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
       paywallInfo: paywallInfo,
       eventData: event
     )
-    Superwall.track(productLoadEvent)
+    await Superwall.track(productLoadEvent)
 
-    SessionEventsManager.shared.triggerSession.trackProductsLoad(
+    await SessionEventsManager.shared.triggerSession.trackProductsLoad(
       forPaywallId: paywallInfo.databaseId,
       state: .start
     )
@@ -89,15 +89,15 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
   private func trackProductLoadFail(
     paywallInfo: PaywallInfo,
     event: EventData?
-  ) {
+  ) async {
     let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
       state: .fail,
       paywallInfo: paywallInfo,
       eventData: event
     )
-    Superwall.track(productLoadEvent)
+    await Superwall.track(productLoadEvent)
 
-    SessionEventsManager.shared.triggerSession.trackProductsLoad(
+    await SessionEventsManager.shared.triggerSession.trackProductsLoad(
       forPaywallId: paywallInfo.databaseId,
       state: .fail
     )
@@ -106,9 +106,9 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
   private func trackProductsLoadFinish(
     paywall: Paywall,
     event: EventData?
-  ) {
+  ) async {
     let paywallInfo = paywall.getInfo(fromEvent: event)
-    SessionEventsManager.shared.triggerSession.trackProductsLoad(
+    await SessionEventsManager.shared.triggerSession.trackProductsLoad(
       forPaywallId: paywallInfo.databaseId,
       state: .end
     )
@@ -117,6 +117,6 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
       paywallInfo: paywallInfo,
       eventData: event
     )
-    Superwall.track(productLoadEvent)
+    await Superwall.track(productLoadEvent)
   }
 }

@@ -5,7 +5,8 @@
 //  Created by Yusuf Tör on 27/05/2022.
 //
 
-import Foundation
+import UIKit
+import Combine
 
 protocol SessionEventsDelegate: AnyObject {
   var triggerSession: TriggerSessionManager { get }
@@ -23,7 +24,7 @@ final class SessionEventsManager {
   lazy var triggerSession = TriggerSessionManager(delegate: self)
 
   /// The transaction manager.
-  lazy var transactions = TransactionManager(delegate: self)
+  lazy var transactionRecorder = TransactionRecorder(delegate: self)
 
   /// A queue of trigger session events that get sent to the server.
   private let queue: SessionEventsQueue
@@ -37,6 +38,9 @@ final class SessionEventsManager {
   /// Storage class. Can be injected via init for testing.
   private let configManager: ConfigManager
 
+  private var cancellables: [AnyCancellable] = []
+
+
   /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
   init(
     queue: SessionEventsQueue = SessionEventsQueue(),
@@ -49,12 +53,55 @@ final class SessionEventsManager {
     self.network = network
     self.configManager = configManager
 
-    postCachedSessionEvents()
+    Task {
+      await postCachedSessionEvents()
+    }
+    addObservers()
+  }
+
+  /// App lifecycle observers that are passed to the trigger session manager.
+  private func addObservers() {
+    NotificationCenter.default
+      .publisher(for: UIApplication.didEnterBackgroundNotification)
+      .sink { [weak self] _ in
+        guard let self = self else {
+          return
+        }
+        Task {
+          await self.triggerSession.didEnterBackground()
+        }
+      }
+      .store(in: &cancellables)
+
+    NotificationCenter.default
+      .publisher(for: UIApplication.willEnterForegroundNotification)
+      .sink { [weak self] _ in
+        guard let self = self else {
+          return
+        }
+        Task {
+          await self.triggerSession.willEnterForeground()
+        }
+      }
+      .store(in: &cancellables)
+
+    NotificationCenter.default
+      .publisher(for: UIApplication.willResignActiveNotification)
+      .sink { [weak self] _ in
+        guard let self = self else {
+          return
+        }
+        Task {
+          await self.queue.flushInternal()
+          await self.queue.saveCacheToDisk()
+        }
+      }
+      .store(in: &cancellables)
   }
 
   /// Gets the last 20 cached trigger sessions and transactions from the last time the app was terminated,
   /// sends them back to the server, then clears cache.
-  private func postCachedSessionEvents() {
+  private func postCachedSessionEvents() async {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
@@ -70,9 +117,9 @@ final class SessionEventsManager {
       triggerSessions: cachedTriggerSessions,
       transactions: cachedTransactions
     )
-    Task {
-      await network.sendSessionEvents(sessionEvents)
-    }
+
+    await network.sendSessionEvents(sessionEvents)
+
     storage.clearCachedSessionEvents()
   }
 
@@ -80,8 +127,8 @@ final class SessionEventsManager {
   /// For transactions, the latest app session id is grabbed when the next transaction occurs.
   func updateAppSession(
     _ appSession: AppSession = AppSessionManager.shared.appSession
-  ) {
-    triggerSession.updateAppSession(to: appSession)
+  ) async {
+    await triggerSession.updateAppSession(to: appSession)
   }
 }
 
@@ -91,20 +138,26 @@ extension SessionEventsManager: SessionEventsDelegate {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
-    queue.enqueue(triggerSession)
+    Task {
+      await queue.enqueue(triggerSession)
+    }
   }
 
   func enqueue(_ triggerSessions: [TriggerSession]) {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
-    queue.enqueue(triggerSessions)
+    Task {
+      await queue.enqueue(triggerSessions)
+    }
   }
 
   func enqueue(_ transaction: TransactionModel) {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
-    queue.enqueue(transaction)
+    Task {
+      await queue.enqueue(transaction)
+    }
   }
 }

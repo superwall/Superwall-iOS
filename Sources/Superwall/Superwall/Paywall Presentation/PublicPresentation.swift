@@ -154,18 +154,22 @@ public extension Superwall {
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil
   ) -> PaywallStatePublisher {
-    let trackableEvent = UserInitiatedEvent.Track(
-      rawName: event,
-      canImplicitlyTriggerPaywall: false,
-      customParameters: params ?? [:]
-    )
-    let result = track(trackableEvent)
-
-    let presentationRequest = PresentationRequest(
-      presentationInfo: .explicitTrigger(result.data),
-      paywallOverrides: paywallOverrides
-    )
-    return shared.internallyPresent(presentationRequest)
+    return Future {
+      let trackableEvent = UserInitiatedEvent.Track(
+        rawName: event,
+        canImplicitlyTriggerPaywall: false,
+        customParameters: params ?? [:]
+      )
+      return await track(trackableEvent)
+    }
+    .flatMap { result in
+      let presentationRequest = PresentationRequest(
+        presentationInfo: .explicitTrigger(result.data),
+        paywallOverrides: paywallOverrides
+      )
+      return shared.internallyPresent(presentationRequest)
+    }
+    .eraseToAnyPublisher()
   }
 
   /// Converts dismissal result from enums with associated values, to old objective-c compatible way

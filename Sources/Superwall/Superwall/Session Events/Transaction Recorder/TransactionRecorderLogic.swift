@@ -8,7 +8,7 @@
 import Foundation
 import StoreKit
 
-enum TransactionManagerLogic {
+enum TransactionRecorderLogic {
   static func getTriggerSessionId(
     transaction: SKPaymentTransaction,
     activeTriggerSession: TriggerSession?

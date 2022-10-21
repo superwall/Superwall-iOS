@@ -73,17 +73,20 @@ public extension Superwall {
     let trackableEvent = InternalSuperwallEvent.Attributes(
       customParameters: customAttributes
     )
-    let result = track(trackableEvent)
-
-    let eventParams = result.parameters.eventParams
-    IdentityManager.shared.mergeUserAttributes(eventParams)
+    Task {
+      let result = await track(trackableEvent)
+      let eventParams = result.parameters.eventParams
+      IdentityManager.shared.mergeUserAttributes(eventParams)
+    }
   }
 
   /// Handles a deep link sent to your app to open a preview of your paywall.
   ///
   /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
   @objc static func handleDeepLink(_ url: URL) {
-    track(InternalSuperwallEvent.DeepLink(url: url))
+    Task {
+      await track(InternalSuperwallEvent.DeepLink(url: url))
+    }
     Task {
       await SWDebugManager.shared.handle(deepLinkUrl: url)
     }
