@@ -21,9 +21,9 @@ final class Sk2TransactionObserver {
   }
 
   private func newTransactionObserverTask() -> Task<Void, Never> {
-    Task(priority: .utility) {
+    Task(priority: .utility) { [weak self] in
       for await verificationResult in Transaction.updates {
-        await self.handle(updatedTransaction: verificationResult)
+        await self?.handle(updatedTransaction: verificationResult)
       }
     }
   }
