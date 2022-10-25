@@ -9,10 +9,12 @@ import StoreKit
 
 @available(iOS 15, *)
 final class Sk2TransactionObserver {
-  var updates: Task<Void, Never>?
+  private var updates: Task<Void, Never>?
+  weak var delegate: TransactionObserverDelegate?
 
-  init() {
+  init(delegate: TransactionObserverDelegate) {
     updates = newTransactionObserverTask()
+    self.delegate = delegate
   }
 
   deinit {
@@ -32,27 +34,34 @@ final class Sk2TransactionObserver {
     guard case .verified(let transaction) = verificationResult else {
       return
     }
-    if let revocationDate = transaction.revocationDate {
-      // Remove access to the product identified by transaction.productID.
-      // Transaction.revocationReason provides details about
-      // the revoked transaction.
+
+    await SessionEventsManager.shared
+      .transactionRecorder
+      .record(transaction)
+
+    guard let product = StoreKitManager.shared.productsById[transaction.productID] else {
+      return
+    }
+
+    if transaction.revocationDate != nil {
+      // Transaction revoked.
+      return
     } else if let expirationDate = transaction.expirationDate,
       expirationDate < Date() {
-      // Do nothing, this subscription is expired.
+      // Subscription expired.
       return
     } else if transaction.isUpgraded {
-      // Do nothing, there is an active transaction
-      // for a higher level of service.
+      // There is an active transaction for a higher
+      // level of service.
       return
     } else {
-      print("TRANSACTION HANDLED", transaction)
       // Provide access to the product identified by
       // transaction.productID.
-      await SessionEventsManager.shared
-        .transactionRecorder
-        .record(transaction)
 
-      print("got here")
+      await self.delegate?.trackTransactionDidSucceed(
+        withId: "\(transaction.id)",
+        product: product
+      )
     }
   }
 }

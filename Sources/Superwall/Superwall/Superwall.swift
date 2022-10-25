@@ -111,6 +111,10 @@ public final class Superwall: NSObject {
   @MainActor
   private let transactionManager = TransactionManager()
 
+  /// Handles restoration logic
+  @MainActor
+  private lazy var restorationHandler = RestorationHandler()
+
   // MARK: - Private Functions
   private override init() {}
 
@@ -306,7 +310,7 @@ extension Superwall: PaywallViewControllerDelegate {
         from: paywallViewController
       )
     case .initiateRestore:
-      await transactionManager.restorationHandler.tryToRestore(paywallViewController)
+      await restorationHandler.tryToRestore(paywallViewController)
     case .openedURL(let url):
       Superwall.shared.delegateManager.willOpenURL(url: url)
     case .openedUrlInSafari(let url):

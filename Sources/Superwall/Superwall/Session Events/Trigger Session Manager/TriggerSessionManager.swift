@@ -417,8 +417,8 @@ actor TriggerSessionManager {
 
   /// When a transaction is restored. A restore is triggered without any other transaction occurring.
   func trackTransactionRestoration(
-    withId id: String?,
-    product: SKProduct,
+    withId id: String? = nil,
+    product: SKProduct? = nil,
     isFreeTrialAvailable: Bool
   ) {
     if transactionCount != nil {
@@ -429,12 +429,17 @@ actor TriggerSessionManager {
 
     var transaction: TriggerSession.Transaction
 
-    let productIndex = activeTriggerSession?
-      .products
-      .allProducts
-      .firstIndex {
-        $0.productIdentifier == product.productIdentifier
-      } ?? 0
+    var transactingProduct: TriggerSession.Transaction.Product?
+
+    if let product = product {
+      let productIndex = activeTriggerSession?
+        .products
+        .allProducts
+        .firstIndex {
+          $0.productIdentifier == product.productIdentifier
+        } ?? 0
+      transactingProduct = .init(from: product, index: productIndex)
+    }
 
     let date = Date()
     transaction = .init(
@@ -443,7 +448,7 @@ actor TriggerSessionManager {
       endAt: date,
       count: transactionCount,
       status: .complete,
-      product: .init(from: product, index: productIndex)
+      product: transactingProduct
     )
 
     activeTriggerSession?

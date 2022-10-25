@@ -7,6 +7,7 @@
 
 import StoreKit
 import UIKit
+import Combine
 
 @MainActor
 final class TransactionManager {
@@ -15,9 +16,14 @@ final class TransactionManager {
   // swiftlint:disable identifier_name
   private var _sk2TransactionObserver: Any?
   // swiftlint:enable identifier_name
+  private var latestPaywallViewController: PaywallViewController?
+  private var lastProductPurchased: SKProduct?
 
-  /// Handles restoration logic
-  lazy var restorationHandler = RestorationHandler()
+  /// A timer that shows the refresh modal when it fires.
+  private var showRefreshTimer: Timer?
+
+  // Cancellable observer.
+  private var cancellable: AnyCancellable?
 
   /*
   var _storeKit2StorefrontListener: Any?
@@ -28,22 +34,27 @@ final class TransactionManager {
   }
    */
 
+  // TODO: Clear when calling reset
+
   @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   var sk2TransactionObserver: Sk2TransactionObserver {
-      // swiftlint:disable:next force_cast
-      return self._sk2TransactionObserver! as! Sk2TransactionObserver
+    // swiftlint:disable:next force_cast
+    return self._sk2TransactionObserver! as! Sk2TransactionObserver
   }
 
   init() {
     // If iOS 15 is available, we can just rely on the SK2 transaction observer
     // for all transactions. Otherwise we fall back to the SK1 transaction observer.
     if #available(iOS 15.0, *) {
-      self._sk2TransactionObserver = Sk2TransactionObserver()
+      self._sk2TransactionObserver = Sk2TransactionObserver(delegate: self)
     } else {
-      sk1TransactionObserver = Sk1TransactionObserver()
+      sk1TransactionObserver = Sk1TransactionObserver(delegate: self)
     }
+
+    observeWillResignActive()
   }
 
+  /// Purchases the given product and handles the callback appropriately.
   func purchase(
     _ productId: String,
     from paywallViewController: PaywallViewController
@@ -51,13 +62,18 @@ final class TransactionManager {
     guard let product = StoreKitManager.shared.productsById[productId] else {
       return
     }
+    lastProductPurchased = product
+    latestPaywallViewController = paywallViewController
+
     trackTransactionStart(of: product, from: paywallViewController)
 
     paywallViewController.loadingState = .loadingPurchase
-    paywallViewController.showRefreshButtonAfterTimeout(false)
 
     do {
+      startTransactionTimeout(on: paywallViewController)
       let result = try await Superwall.shared.delegateManager.purchase(product: product)
+      cancelTransactionTimeout()
+
       switch result {
       case .purchased:
         didPurchase(product, from: paywallViewController)
@@ -85,6 +101,38 @@ final class TransactionManager {
 
     paywallViewController.loadingState = .ready
   }
+
+  // MARK: - Transaction Timeout
+  
+  /// Cancels the transaction timeout when the application resigns active.
+  private func observeWillResignActive() {
+    cancellable = NotificationCenter.default
+      .publisher(for: UIApplication.willResignActiveNotification)
+      .sink { [weak self] _ in
+        guard let self = self else {
+          return
+        }
+        self.cancelTransactionTimeout()
+      }
+  }
+
+  private func startTransactionTimeout(on paywallViewController: PaywallViewController) {
+    showRefreshTimer = Timer.scheduledTimer(
+      withTimeInterval: 5.0,
+      repeats: false
+    ) { _ in
+      Task {
+        await paywallViewController.toggleRefreshModal(isVisible: true)
+      }
+    }
+  }
+
+  private func cancelTransactionTimeout() {
+    showRefreshTimer?.invalidate()
+    showRefreshTimer = nil
+  }
+
+  // MARK: - Transaction lifecycle
 
   /// Tracks the analytics and logs the start of the transaction.
   private func trackTransactionStart(
@@ -218,5 +266,80 @@ final class TransactionManager {
       title: "An error occurred",
       message: error.localizedDescription
     )
+  }
+}
+
+// MARK: - Transaction Observer Delegate
+extension TransactionManager: TransactionObserverDelegate {
+  func trackTransactionRestoration(
+    withId transactionId: String?,
+    product: SKProduct
+  ) async {
+    guard let paywallViewController = latestPaywallViewController else {
+      return
+    }
+
+    let paywallShowingFreeTrial = paywallViewController.paywall.isFreeTrialAvailable == true
+    let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
+
+    await SessionEventsManager.shared.triggerSession.trackTransactionRestoration(
+      withId: transactionId,
+      product: product,
+      isFreeTrialAvailable: didStartFreeTrial
+    )
+  }
+
+  func trackTransactionDidSucceed(
+    withId id: String?,
+    product: SKProduct
+  ) async {
+    guard lastProductPurchased == product else {
+      return
+    }
+    guard let paywallViewController = latestPaywallViewController else {
+      return
+    }
+
+    let paywallShowingFreeTrial = paywallViewController.paywall.isFreeTrialAvailable == true
+    let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
+
+    let paywallInfo = paywallViewController.paywallInfo
+
+    Task.detached(priority: .utility) {
+      await SessionEventsManager.shared.triggerSession.trackTransactionSucceeded(
+        withId: id,
+        for: product,
+        isFreeTrialAvailable: didStartFreeTrial
+      )
+
+      let trackedEvent = InternalSuperwallEvent.Transaction(
+        state: .complete,
+        paywallInfo: paywallInfo,
+        product: product
+      )
+      await Superwall.track(trackedEvent)
+
+      if product.subscriptionPeriod == nil {
+        let trackedEvent = InternalSuperwallEvent.NonRecurringProductPurchase(
+          paywallInfo: paywallInfo,
+          product: product
+        )
+        await Superwall.track(trackedEvent)
+      }
+
+      if didStartFreeTrial {
+        let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
+          paywallInfo: paywallInfo,
+          product: product
+        )
+        await Superwall.track(trackedEvent)
+      } else {
+        let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
+          paywallInfo: paywallInfo,
+          product: product
+        )
+        await Superwall.track(trackedEvent)
+      }
+    }
   }
 }

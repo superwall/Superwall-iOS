@@ -48,6 +48,7 @@ final class RestorationHandler {
 
   private func transactionWasRestored(paywallViewController: PaywallViewController) {
     let paywallInfo = paywallViewController.paywallInfo
+    let isFreeTrialAvailable = paywallViewController.paywall.isFreeTrialAvailable == true
     Task.detached(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .restore,
@@ -55,6 +56,14 @@ final class RestorationHandler {
         product: nil
       )
       await Superwall.track(trackedEvent)
+
+      // If on iOS 15+ we don't use the Sk1 transaction observer.
+      // So will need to track transactions here.
+      if #available(iOS 15.0, *) {
+        await SessionEventsManager.shared.triggerSession.trackTransactionRestoration(
+          isFreeTrialAvailable: isFreeTrialAvailable
+        )
+      }
     }
 
     if Superwall.options.paywalls.automaticallyDismiss {

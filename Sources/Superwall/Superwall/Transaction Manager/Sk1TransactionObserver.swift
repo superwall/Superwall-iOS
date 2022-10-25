@@ -10,60 +10,25 @@ import Foundation
 import StoreKit
 
 protocol TransactionObserverDelegate: AnyObject {
-  func hi()
+  func trackTransactionDidSucceed(
+    withId id: String?,
+    product: SKProduct
+  ) async
+
+  func trackTransactionRestoration(
+    withId id: String?,
+    product: SKProduct
+  ) async
 }
 
 final class Sk1TransactionObserver: NSObject {
   weak var delegate: TransactionObserverDelegate?
 
-  override init() {
+  init(delegate: TransactionObserverDelegate) {
+    self.delegate = delegate
     super.init()
     SKPaymentQueue.default().add(self)
   }
-
-  private func trackTransactionDidSucceed(
-    withId id: String?,
-    paywallViewController: PaywallViewController,
-    for product: SKProduct
-  ) async {
-    let isFreeTrialAvailable = await paywallViewController.paywall.isFreeTrialAvailable == true
-
-    await SessionEventsManager.shared.triggerSession.trackTransactionSucceeded(
-      withId: id,
-      for: product,
-      isFreeTrialAvailable: isFreeTrialAvailable
-    )
-
-    let paywallInfo = await paywallViewController.paywallInfo
-    let trackedEvent = InternalSuperwallEvent.Transaction(
-      state: .complete,
-      paywallInfo: paywallInfo,
-      product: product
-    )
-    await Superwall.track(trackedEvent)
-
-    if product.subscriptionPeriod == nil {
-      let trackedEvent = InternalSuperwallEvent.NonRecurringProductPurchase(
-        paywallInfo: paywallInfo,
-        product: product
-      )
-      await Superwall.track(trackedEvent)
-    }
-
-    if isFreeTrialAvailable {
-      let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
-        paywallInfo: paywallInfo,
-        product: product
-      )
-      await Superwall.track(trackedEvent)
-    } else {
-      let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
-        paywallInfo: paywallInfo,
-        product: product
-      )
-      await Superwall.track(trackedEvent)
-    }
-	}
 }
 
 // MARK: - SKPaymentTransactionObserver
@@ -92,7 +57,6 @@ extension Sk1TransactionObserver: SKPaymentTransactionObserver {
 	}
 
   // TODO: Remove MainActor?
-  @MainActor
 	public func paymentQueue(
     _ queue: SKPaymentQueue,
     updatedTransactions transactions: [SKPaymentTransaction]
@@ -104,13 +68,6 @@ extension Sk1TransactionObserver: SKPaymentTransactionObserver {
           .record(transaction)
       }
 
-      // TODO: DOUBLE CHECK THIS:
-      guard Superwall.shared.paywallWasPresentedThisSession else {
-        return
-      }
-      guard let paywallViewController = Superwall.shared.paywallViewController else {
-        return
-      }
 			guard let product = StoreKitManager.shared.productsById[transaction.payment.productIdentifier] else {
         return
       }
@@ -118,19 +75,16 @@ extension Sk1TransactionObserver: SKPaymentTransactionObserver {
 			switch transaction.transactionState {
 			case .purchased:
         Task.detached(priority: .utility) {
-          await self.trackTransactionDidSucceed(
+          await self.delegate?.trackTransactionDidSucceed(
             withId: transaction.transactionIdentifier,
-            paywallViewController: paywallViewController,
-            for: product
+            product: product
           )
         }
 			case .restored:
-        let isFreeTrialAvailable = paywallViewController.paywall.isFreeTrialAvailable == true
         Task.detached(priority: .utility) {
-          await SessionEventsManager.shared.triggerSession.trackTransactionRestoration(
+          await self.delegate?.trackTransactionRestoration(
             withId: transaction.transactionIdentifier,
-            product: product,
-            isFreeTrialAvailable: isFreeTrialAvailable
+            product: product
           )
         }
 			case .deferred,

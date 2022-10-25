@@ -340,7 +340,6 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
     case .unknown:
       break
     case .loadingPurchase:
-      showRefreshButtonAfterTimeout(true, useModal: true)
       addLoadingView()
     case .loadingResponse:
       addShimmerView()
@@ -429,8 +428,8 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
     loadingViewController.hide()
   }
 
-  private func refreshAlert(show: Bool) {
-    if show {
+  func toggleRefreshModal(isVisible: Bool) {
+    if isVisible {
       present(refreshAlertViewController, animated: true)
     } else {
       guard hasRefreshAlertController else {
@@ -440,7 +439,7 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
     }
   }
 
-  func showRefreshButtonAfterTimeout(_ isVisible: Bool, useModal: Bool = false) {
+  private func showRefreshButtonAfterTimeout(_ isVisible: Bool) {
 		showRefreshTimer?.invalidate()
 		showRefreshTimer = nil
 
@@ -450,11 +449,6 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
         repeats: false
       ) { [weak self] _ in
         guard let self = self else {
-          return
-        }
-
-        if useModal {
-          self.refreshAlert(show: true)
           return
         }
 
@@ -480,9 +474,8 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
         }
       }
 		} else {
-      refreshAlert(show: false)
+      toggleRefreshModal(isVisible: false)
 			hideRefreshButton()
-			return
 		}
 	}
 

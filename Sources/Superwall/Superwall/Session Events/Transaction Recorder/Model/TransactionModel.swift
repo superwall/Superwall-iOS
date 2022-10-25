@@ -60,6 +60,40 @@ struct TransactionModel: Codable {
   /// Info about the payment associated with the transaction
   let payment: Payment
 
+  // MARK: iOS 15 only properties
+  /// The date of purchase for the original transaction.
+  var originalTransactionDate: Date?
+
+  /// The date of purchase for the original transaction.
+  var webOrderLineItemID: String?
+
+  /// The bundle identifier for the app.
+  var appBundleId: String?
+
+  /// The product identifier.
+  var productId: String?
+
+  /// The identifier of the subscription group that the subscription belongs to.
+  var subscriptionGroupId: String?
+
+  /// A Boolean that indicates whether the user upgraded to another subscription.
+  var isUpgraded: Bool?
+
+  /// The date the subscription expires or renews.
+  var expirationDate: Date?
+
+  /// The number of consumable products purchased.
+  var purchasedQuantity: Int?
+
+  /// A string that identifies an offer applied to the current subscription.
+  var offerId: String?
+
+  /// The date that App Store refunded the transaction or revoked it from family sharing.
+  var revocationDate: Date?
+
+  /// A UUID that associates the transaction with a user on your own service.
+  var appAccountToken: UUID?
+
   init(
     from transaction: SKPaymentTransaction,
     configRequestId: String,
@@ -90,6 +124,17 @@ struct TransactionModel: Codable {
     self.storeTransactionId = "\(transaction.id)"
     originalTransactionIdentifier = "\(transaction.originalID)"
     transactionDate = transaction.purchaseDate
+    originalTransactionDate = transaction.originalPurchaseDate
+    webOrderLineItemID = transaction.webOrderLineItemID
+    appBundleId = transaction.appBundleID
+    productId = transaction.productID
+    subscriptionGroupId = transaction.subscriptionGroupID
+    isUpgraded = transaction.isUpgraded
+    expirationDate = transaction.expirationDate
+    purchasedQuantity = transaction.purchasedQuantity
+    offerId = transaction.offerID
+    revocationDate = transaction.revocationDate
+    appAccountToken = transaction.appAccountToken
     payment = Payment(from: transaction)
   }
 }
