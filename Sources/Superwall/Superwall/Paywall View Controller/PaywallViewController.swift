@@ -133,6 +133,9 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
   /// Defines whether the refresh alert view controller has been created.
   private var hasRefreshAlertController = false
 
+  /// Cancellable observer.
+  private var resignActiveObserver: AnyCancellable?
+
   /// An alert view controller that can refresh or exit the paywall view controller if
   /// the purchase is taking too long.
   private lazy var refreshAlertViewController: UIAlertController = {
@@ -164,6 +167,7 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
     presentationStyle = paywall.presentation.style
     super.init(nibName: nil, bundle: nil)
     PaywallViewController.cache.insert(self)
+    observeWillResignActive()
 	}
 
 	required init?(coder: NSCoder) {
@@ -172,6 +176,15 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
 
   deinit {
     PaywallViewController.cache.remove(self)
+  }
+
+  private func observeWillResignActive() {
+    resignActiveObserver = NotificationCenter.default
+      .publisher(for: UIApplication.willResignActiveNotification)
+      .sink { [weak self] _ in
+        self?.cancelTransactionTimeout()
+        self?.toggleRefreshModal(isVisible: false)
+      }
   }
 
   override func viewDidLoad() {
@@ -278,6 +291,45 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
     calledDismiss = false
 	}
 
+  nonisolated private func trackOpen() async {
+    await SessionEventsManager.shared.triggerSession.trackPaywallOpen()
+    Storage.shared.trackPaywallOpen()
+    let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
+    await Superwall.track(trackedEvent)
+  }
+
+  nonisolated private func trackClose() async {
+    let trackedEvent = await InternalSuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
+    await Superwall.track(trackedEvent)
+    await SessionEventsManager.shared.triggerSession.trackPaywallClose()
+  }
+
+  @objc private func pressedRefreshPaywall() {
+    dismiss(
+      .withResult(
+        paywallInfo: paywallInfo,
+        state: .closed
+      ),
+      shouldSendDismissedState: false
+    ) {
+      Task {
+        await Superwall.shared.presentAgain(using: self.presentationPublisher)
+      }
+    }
+  }
+
+  @objc private func pressedExitPaywall() {
+    dismiss(
+      .withResult(
+        paywallInfo: paywallInfo,
+        state: .closed
+      ),
+      shouldSendDismissedState: true
+    ) {
+      PaywallManager.shared.removePaywallViewController(self)
+    }
+  }
+
   private func loadPaywallWebpage() {
     let url = paywall.url
 
@@ -306,32 +358,6 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
     }
 
     loadingState = .loadingResponse
-  }
-
-  @objc private func pressedRefreshPaywall() {
-    dismiss(
-      .withResult(
-        paywallInfo: paywallInfo,
-        state: .closed
-      ),
-      shouldSendDismissedState: false
-    ) {
-      Task {
-        await Superwall.shared.presentAgain(using: self.presentationPublisher)
-      }
-    }
-  }
-
-  @objc private func pressedExitPaywall() {
-    dismiss(
-      .withResult(
-        paywallInfo: paywallInfo,
-        state: .closed
-      ),
-      shouldSendDismissedState: true
-    ) {
-      PaywallManager.shared.removePaywallViewController(self)
-    }
   }
 
   // MARK: - State Handling
@@ -428,7 +454,8 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
     loadingViewController.hide()
   }
 
-  func toggleRefreshModal(isVisible: Bool) {
+  // MARK: - Timeout
+  private func toggleRefreshModal(isVisible: Bool) {
     if isVisible {
       present(refreshAlertViewController, animated: true)
     } else {
@@ -437,6 +464,20 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
       }
       refreshAlertViewController.dismiss(animated: true)
     }
+  }
+
+  func startTransactionTimeout() {
+    showRefreshTimer = Timer.scheduledTimer(
+      withTimeInterval: 5.0,
+      repeats: false
+    ) { [weak self] _ in
+      self?.toggleRefreshModal(isVisible: true)
+    }
+  }
+
+  func cancelTransactionTimeout() {
+    showRefreshTimer?.invalidate()
+    showRefreshTimer = nil
   }
 
   private func showRefreshButtonAfterTimeout(_ isVisible: Bool) {
@@ -492,19 +533,6 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
         self.exitButton.isHidden = true
       }
     )
-	}
-
-	nonisolated private func trackOpen() async {
-    await SessionEventsManager.shared.triggerSession.trackPaywallOpen()
-    Storage.shared.trackPaywallOpen()
-    let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
-    await Superwall.track(trackedEvent)
-	}
-
-	nonisolated private func trackClose() async {
-    await SessionEventsManager.shared.triggerSession.trackPaywallClose()
-    let trackedEvent = await InternalSuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
-    await Superwall.track(trackedEvent)
 	}
 }
 

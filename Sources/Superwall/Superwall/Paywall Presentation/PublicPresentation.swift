@@ -82,8 +82,8 @@ public extension Superwall {
       presentationStyleOverride: presentationStyleOverride
     )
 
-    trackCancellable = track(
-      event: event,
+    trackCancellable = publisher(
+      forEvent: event,
       params: params,
       paywallOverrides: overrides
     )
@@ -122,8 +122,8 @@ public extension Superwall {
     paywallOverrides: PaywallOverrides? = nil,
     paywallState: ((PaywallState) -> Void)? = nil
   ) {
-    trackCancellable = track(
-      event: event,
+    trackCancellable = publisher(
+      forEvent: event,
       params: params,
       paywallOverrides: paywallOverrides
     )
@@ -148,12 +148,12 @@ public extension Superwall {
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///
   /// - Returns: A publisher that provides updates on the state of the paywall via a ``PaywallState`` object.
-  @discardableResult
-  static func track(
-    event: String,
+  static func publisher(
+    forEvent event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil
   ) -> PaywallStatePublisher {
+    // TODO: CHECK THE NAME OF PUBLISHER VS TRACK. USING TRACK DEFAULTS TO THIS FUNC BUT
     return Future {
       let trackableEvent = UserInitiatedEvent.Track(
         rawName: event,

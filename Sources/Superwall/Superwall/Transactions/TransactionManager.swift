@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 20/10/2022.
 //
+// swiftlint:disable identifier_name
 
 import StoreKit
 import UIKit
@@ -11,19 +12,29 @@ import Combine
 
 @MainActor
 final class TransactionManager {
+  /// The transaction manager.
+  lazy var transactionRecorder = TransactionRecorder()
+
+  /// The StoreKit 1 transaction observer.
   private var sk1TransactionObserver: Sk1TransactionObserver?
-  // Can't have these properties with `@available`.
-  // swiftlint:disable identifier_name
+
+  /// The StoreKit 2 transaction observer.
+  ///
+  /// This has to be `Any` as we can't restrict stored properties to
+  /// an iOS version with`@available`.
   private var _sk2TransactionObserver: Any?
-  // swiftlint:enable identifier_name
-  private var latestPaywallViewController: PaywallViewController?
+
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+  private var sk2TransactionObserver: Sk2TransactionObserver {
+    // swiftlint:disable:next force_cast
+    return _sk2TransactionObserver! as! Sk2TransactionObserver
+  }
+
+  /// The paywall view controller that the last product was purchased from.
+  private var lastPaywallViewController: PaywallViewController?
+
+  /// The last product purchased.
   private var lastProductPurchased: SKProduct?
-
-  /// A timer that shows the refresh modal when it fires.
-  private var showRefreshTimer: Timer?
-
-  // Cancellable observer.
-  private var cancellable: AnyCancellable?
 
   /*
   var _storeKit2StorefrontListener: Any?
@@ -34,24 +45,12 @@ final class TransactionManager {
   }
    */
 
-  // TODO: Clear when calling reset
-
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
-  var sk2TransactionObserver: Sk2TransactionObserver {
-    // swiftlint:disable:next force_cast
-    return self._sk2TransactionObserver! as! Sk2TransactionObserver
-  }
-
   init() {
-    // If iOS 15 is available, we can just rely on the SK2 transaction observer
-    // for all transactions. Otherwise we fall back to the SK1 transaction observer.
     if #available(iOS 15.0, *) {
       self._sk2TransactionObserver = Sk2TransactionObserver(delegate: self)
     } else {
       sk1TransactionObserver = Sk1TransactionObserver(delegate: self)
     }
-
-    observeWillResignActive()
   }
 
   /// Purchases the given product and handles the callback appropriately.
@@ -62,23 +61,24 @@ final class TransactionManager {
     guard let product = StoreKitManager.shared.productsById[productId] else {
       return
     }
-    lastProductPurchased = product
-    latestPaywallViewController = paywallViewController
-
-    trackTransactionStart(of: product, from: paywallViewController)
-
-    paywallViewController.loadingState = .loadingPurchase
+    trackStartTransaction(of: product, from: paywallViewController)
 
     do {
-      startTransactionTimeout(on: paywallViewController)
+      let purchaseStartDate = Date()
+
+      paywallViewController.startTransactionTimeout()
       let result = try await Superwall.shared.delegateManager.purchase(product: product)
-      cancelTransactionTimeout()
+      paywallViewController.cancelTransactionTimeout()
+
+      if #available(iOS 15.0, *) {
+        await checkForTransaction(of: product, since: purchaseStartDate)
+      }
 
       switch result {
       case .purchased:
         didPurchase(product, from: paywallViewController)
       case .pending:
-        handleTransactionPending(paywallViewController: paywallViewController)
+        handlePendingTransaction(from: paywallViewController)
       case .cancelled:
         trackCancelled(product: product, from: paywallViewController)
       }
@@ -102,40 +102,15 @@ final class TransactionManager {
     paywallViewController.loadingState = .ready
   }
 
-  // MARK: - Transaction Timeout
-  
   /// Cancels the transaction timeout when the application resigns active.
-  private func observeWillResignActive() {
-    cancellable = NotificationCenter.default
-      .publisher(for: UIApplication.willResignActiveNotification)
-      .sink { [weak self] _ in
-        guard let self = self else {
-          return
-        }
-        self.cancelTransactionTimeout()
-      }
-  }
+  ///
+  /// When the purchase sheet appears, the application resigns active.
 
-  private func startTransactionTimeout(on paywallViewController: PaywallViewController) {
-    showRefreshTimer = Timer.scheduledTimer(
-      withTimeInterval: 5.0,
-      repeats: false
-    ) { _ in
-      Task {
-        await paywallViewController.toggleRefreshModal(isVisible: true)
-      }
-    }
-  }
-
-  private func cancelTransactionTimeout() {
-    showRefreshTimer?.invalidate()
-    showRefreshTimer = nil
-  }
 
   // MARK: - Transaction lifecycle
 
   /// Tracks the analytics and logs the start of the transaction.
-  private func trackTransactionStart(
+  private func trackStartTransaction(
     of product: SKProduct,
     from paywallViewController: PaywallViewController
   ) {
@@ -146,6 +121,7 @@ final class TransactionManager {
       info: ["paywall_vc": paywallViewController],
       error: nil
     )
+
     let paywallInfo = paywallViewController.paywallInfo
     Task.detached(priority: .utility) {
       await SessionEventsManager.shared.triggerSession.trackBeginTransaction(of: product)
@@ -156,6 +132,35 @@ final class TransactionManager {
       )
       await Superwall.track(trackedEvent)
     }
+
+    lastProductPurchased = product
+    lastPaywallViewController = paywallViewController
+    paywallViewController.loadingState = .loadingPurchase
+  }
+
+  /// An iOS 15-only function that checks for the transaction of the product.
+  ///
+  /// We need this function because on iOS 15, the `Transaction.updates` listener doesn't notify us
+  /// of transactions for recent purchases.
+  @available(iOS 15.0, *)
+  private func checkForTransaction(
+    of product: SKProduct,
+    since purchaseStartDate: Date
+  ) async {
+    let transaction = await Transaction.latest(for: product.productIdentifier)
+    guard case let .verified(transaction) = transaction else {
+      return
+    }
+    guard transaction.purchaseDate >= purchaseStartDate else {
+      return
+    }
+    Task.detached(priority: .utility) {
+      await self.transactionRecorder.record(transaction)
+    }
+    await self.trackTransactionDidSucceed(
+      withId: "\(transaction.id)",
+      product: product
+    )
   }
 
   /// Dismisses the view controller, if the developer hasn't disabled the option.
@@ -207,9 +212,7 @@ final class TransactionManager {
     }
   }
 
-  private func handleTransactionPending(
-    paywallViewController: PaywallViewController
-  ) {
+  private func handlePendingTransaction(from paywallViewController: PaywallViewController) {
     Logger.debug(
       logLevel: .debug,
       scope: .paywallTransactions,
@@ -275,7 +278,7 @@ extension TransactionManager: TransactionObserverDelegate {
     withId transactionId: String?,
     product: SKProduct
   ) async {
-    guard let paywallViewController = latestPaywallViewController else {
+    guard let paywallViewController = lastPaywallViewController else {
       return
     }
 
@@ -296,7 +299,7 @@ extension TransactionManager: TransactionObserverDelegate {
     guard lastProductPurchased == product else {
       return
     }
-    guard let paywallViewController = latestPaywallViewController else {
+    guard let paywallViewController = lastPaywallViewController else {
       return
     }
 
@@ -304,7 +307,6 @@ extension TransactionManager: TransactionObserverDelegate {
     let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
 
     let paywallInfo = paywallViewController.paywallInfo
-
     Task.detached(priority: .utility) {
       await SessionEventsManager.shared.triggerSession.trackTransactionSucceeded(
         withId: id,
@@ -341,5 +343,8 @@ extension TransactionManager: TransactionObserverDelegate {
         await Superwall.track(trackedEvent)
       }
     }
+
+    lastProductPurchased = nil
+    lastPaywallViewController = nil
   }
 }

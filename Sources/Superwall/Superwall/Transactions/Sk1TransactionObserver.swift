@@ -10,6 +10,8 @@ import Foundation
 import StoreKit
 
 protocol TransactionObserverDelegate: AnyObject {
+  var transactionRecorder: TransactionRecorder { get }
+
   func trackTransactionDidSucceed(
     withId id: String?,
     product: SKProduct
@@ -27,13 +29,22 @@ final class Sk1TransactionObserver: NSObject {
   init(delegate: TransactionObserverDelegate) {
     self.delegate = delegate
     super.init()
+    enable()
+  }
+
+  func enable() {
+    SKPaymentQueue.default().remove(self)
     SKPaymentQueue.default().add(self)
+  }
+
+  func disable() {
+    SKPaymentQueue.default().remove(self)
   }
 }
 
 // MARK: - SKPaymentTransactionObserver
 extension Sk1TransactionObserver: SKPaymentTransactionObserver {
-	public func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
+	func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
 		Logger.debug(
       logLevel: .debug,
       scope: .paywallTransactions,
@@ -43,7 +54,7 @@ extension Sk1TransactionObserver: SKPaymentTransactionObserver {
     )
 	}
 
-	public func paymentQueue(
+	func paymentQueue(
     _ queue: SKPaymentQueue,
     restoreCompletedTransactionsFailedWithError error: Error
   ) {
@@ -56,16 +67,13 @@ extension Sk1TransactionObserver: SKPaymentTransactionObserver {
     )
 	}
 
-  // TODO: Remove MainActor?
-	public func paymentQueue(
+  func paymentQueue(
     _ queue: SKPaymentQueue,
     updatedTransactions transactions: [SKPaymentTransaction]
   ) {
 		for transaction in transactions {
       Task.detached(priority: .utility) {
-        await SessionEventsManager.shared
-          .transactionRecorder
-          .record(transaction)
+        await self.delegate?.transactionRecorder.record(transaction)
       }
 
 			guard let product = StoreKitManager.shared.productsById[transaction.payment.productIdentifier] else {

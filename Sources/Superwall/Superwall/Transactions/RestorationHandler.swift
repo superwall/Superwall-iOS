@@ -31,7 +31,6 @@ final class RestorationHandler {
       )
       transactionWasRestored(paywallViewController: paywallViewController)
     } else {
-      // TODO: We're not tracking restoration failures?
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,

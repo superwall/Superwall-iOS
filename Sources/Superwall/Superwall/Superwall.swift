@@ -130,9 +130,8 @@ public final class Superwall: NSObject {
     }
     Storage.shared.configure(apiKey: apiKey)
 
-    //TODO: REVIEW THIS:
     // Initialise session events manager and app session manager on main thread
-    _ = SessionEventsManager.shared
+    // _ = SessionEventsManager.shared
     _ = AppSessionManager.shared
 
     Storage.shared.recordAppInstall()

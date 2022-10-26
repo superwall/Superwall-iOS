@@ -27,10 +27,13 @@ class AppSessionManager {
   /// Only directly initialise if testing otherwise use `AppSessionManager.shared`.
   init(sessionEventsManager: SessionEventsManager = SessionEventsManager.shared) {
     self.sessionEventsManager = sessionEventsManager
-    addActiveStateObservers()
+    Task {
+      await addActiveStateObservers()
+    }
     listenForAppSessionTimeout()
   }
 
+  @MainActor
   private func addActiveStateObservers() {
     NotificationCenter.default.addObserver(
       self,
@@ -86,12 +89,12 @@ class AppSessionManager {
     } else {
       appSession.endAt = nil
     }
-    Task.detached(priority: .utility) {
+    Task.detached(priority: .userInitiated) {
       await Superwall.track(InternalSuperwallEvent.AppOpen())
     }
 
     if !didTrackLaunch {
-      Task {
+      Task.detached(priority: .userInitiated) {
         await Superwall.track(InternalSuperwallEvent.AppLaunch())
       }
       didTrackLaunch = true

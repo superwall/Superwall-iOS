@@ -23,9 +23,6 @@ final class SessionEventsManager {
   /// The trigger session manager.
   lazy var triggerSession = TriggerSessionManager(delegate: self)
 
-  /// The transaction manager.
-  lazy var transactionRecorder = TransactionRecorder(delegate: self)
-
   /// A queue of trigger session events that get sent to the server.
   private let queue: SessionEventsQueue
 
@@ -55,11 +52,12 @@ final class SessionEventsManager {
 
     Task {
       await postCachedSessionEvents()
+      await addObservers()
     }
-    addObservers()
   }
 
   /// App lifecycle observers that are passed to the trigger session manager.
+  @MainActor
   private func addObservers() {
     NotificationCenter.default
       .publisher(for: UIApplication.didEnterBackgroundNotification)
