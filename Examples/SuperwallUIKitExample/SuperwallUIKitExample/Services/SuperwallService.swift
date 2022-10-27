@@ -50,16 +50,16 @@ final class SuperwallService {
 
 // MARK: - Superwall Delegate
 extension SuperwallService: SuperwallDelegate {
-  func purchase(
-    product: SKProduct,
-    completion: @escaping (PurchaseResult) -> Void
-  ) {
-    StoreKitService.shared.purchase(product, completion: completion)
+  func purchase(product: SKProduct) async -> PurchaseResult {
+    return await withCheckedContinuation { continuation in
+      StoreKitService.shared.purchase(product) { result in
+        continuation.resume(with: .success(result))
+      }
+    }
   }
 
-  func restorePurchases(completion: @escaping (Bool) -> Void) {
-    let result = StoreKitService.shared.restorePurchases()
-    completion(result)
+  func restorePurchases() async -> Bool {
+    return StoreKitService.shared.restorePurchases()
   }
 
   func isUserSubscribed() -> Bool {

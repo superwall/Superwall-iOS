@@ -11,6 +11,8 @@ import Foundation
 
 final class SessionEventsDelegateMock: SessionEventsDelegate {
   var triggerSession = TriggerSessionManager(delegate: nil)
+
+  @MainActor
   var queue: SessionEventsQueue
 
   init(queue: SessionEventsQueue) {

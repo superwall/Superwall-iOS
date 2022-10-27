@@ -15,26 +15,22 @@ import StoreKit
 /// and best practices, see <doc:GettingStarted>.
 @MainActor
 public protocol SuperwallDelegate: AnyObject {
-  /// Called when the user initiates purchasing of a product.
+  /// An async function called when the user initiates purchasing of a product.
   ///
   /// Add your purchase logic here and call the completion block with the result. You can use Apple's StoreKit APIs,
   /// or if you use RevenueCat, you can call [`Purchases.shared.purchase(product:)`](https://revenuecat.github.io/purchases-ios-docs/4.13.4/documentation/revenuecat/purchases/purchase(product:completion:)).
 	/// - Parameters:
   ///   - product: The `SKProduct` the user would like to purchase.
-  ///   - completion: A completion block the accepts a ``PurchaseResult`` object. Call this with the result of your purchase logic.
-  ///    **Note:** Make sure you handle all cases of ``PurchaseResult``.
-	func purchase(
-    product: SKProduct,
-    completion: @escaping (PurchaseResult) -> Void
-  )
+  ///
+  /// - Returns: A``PurchaseResult`` object, which is the result of your purchase logic. **Note**: Make sure you handle all cases of ``PurchaseResult``.
+	func purchase(product: SKProduct) async -> PurchaseResult
 
-	/// Called when the user initiates a restore.
+	/// An async function called when the user initiates a restore.
   ///
   /// Add your restore logic here.
   ///
-  /// - Parameters:
-  ///   - completion: Call the completion with `true` if the user's transactions were restored or `false` if they weren't.
-	func restorePurchases(completion: @escaping (Bool) -> Void)
+  /// - Returns: A boolean that's `true` if the user's purchases were restored or `false` if they weren't.
+	func restorePurchases() async -> Bool
 
 	/// Decides whether a paywall should be presented based on the user's subscription status.
   ///

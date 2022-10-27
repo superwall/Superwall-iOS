@@ -39,21 +39,20 @@ final class SuperwallDelegateManager {
   func purchase(
     product: SKProduct
   ) async throws -> InternalPurchaseResult {
-    return try await withCheckedThrowingContinuation { continuation in
-      if let swiftDelegate = swiftDelegate {
-        swiftDelegate.purchase(product: product) { complete in
-          switch complete {
-          case .failed(let error):
-            continuation.resume(throwing: error)
-          case .purchased:
-            continuation.resume(returning: .purchased)
-          case .pending:
-            continuation.resume(returning: .pending)
-          case .cancelled:
-            continuation.resume(returning: .cancelled)
-          }
-        }
-      } else if let objcDelegate = objcDelegate {
+    if let swiftDelegate = swiftDelegate {
+      let result = await swiftDelegate.purchase(product: product)
+      switch result {
+      case .cancelled:
+        return .cancelled
+      case .purchased:
+        return .purchased
+      case .pending:
+        return .pending
+      case .failed(let error):
+        throw error
+      }
+    } else if let objcDelegate = objcDelegate {
+      return try await withCheckedThrowingContinuation { continuation in
         objcDelegate.purchase(product: product) { result, error in
           if let error = error {
             continuation.resume(throwing: error)
@@ -72,20 +71,20 @@ final class SuperwallDelegateManager {
         }
       }
     }
+    return .cancelled
   }
 
   func restorePurchases() async -> Bool {
-    return await withCheckedContinuation { continuation in
-      if let swiftDelegate = swiftDelegate {
-        swiftDelegate.restorePurchases { didRestore in
-          continuation.resume(returning: didRestore)
-        }
-      } else if let objcDelegate = objcDelegate {
+    if let swiftDelegate = swiftDelegate {
+      return await swiftDelegate.restorePurchases()
+    } else if let objcDelegate = objcDelegate {
+      return await withCheckedContinuation { continuation in
         objcDelegate.restorePurchases { didRestore in
           continuation.resume(returning: didRestore)
         }
       }
     }
+    return false
   }
 
   func isUserSubscribed() -> Bool {

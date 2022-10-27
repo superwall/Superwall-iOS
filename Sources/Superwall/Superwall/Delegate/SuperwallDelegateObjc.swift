@@ -36,7 +36,7 @@ public protocol SuperwallDelegateObjc: AnyObject {
   /// Add your restore logic here.
   ///
   /// - Parameters:
-  ///   - completion: Call the completion with `true` if the user's transactions were restored or `false` if they weren't.
+  ///   - completion: Call the completion with `true` if the user's purchases were restored or `false` if they weren't.
   @objc func restorePurchases(completion: @escaping (Bool) -> Void)
 
   /// Decides whether a paywall should be presented based on the user's subscription status.
