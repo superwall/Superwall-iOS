@@ -691,7 +691,7 @@ extension PaywallViewController {
 
     present(alertController, animated: true) { [weak self] in
       if let loadingState = self?.loadingState,
-         loadingState != .loadingResponse {
+        loadingState != .loadingResponse {
         self?.loadingState = .ready
       }
     }

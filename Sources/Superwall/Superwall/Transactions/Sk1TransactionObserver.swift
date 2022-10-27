@@ -4,7 +4,6 @@
 //
 //  Created by Jake Mor on 11/16/21.
 //
-// swiftlint:disable trailing_closure function_body_length
 
 import Foundation
 import StoreKit

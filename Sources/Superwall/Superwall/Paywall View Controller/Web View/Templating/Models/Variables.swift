@@ -16,7 +16,7 @@ struct Variables: Encodable {
   var primary: JSON = [:]
   var secondary: JSON = [:]
   var tertiary: JSON = [:]
-  
+
   init(
     productVariables: [ProductVariable]?,
     params: JSON?

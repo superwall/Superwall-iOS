@@ -16,7 +16,7 @@ enum TransactionErrorLogic {
 
   static func handle(_ error: Error) -> ErrorOutcome {
     if #available(iOS 15.0, *),
-       let error = error as? StoreKitError {
+      let error = error as? StoreKitError {
       switch error {
       case .userCancelled:
         return .cancelled

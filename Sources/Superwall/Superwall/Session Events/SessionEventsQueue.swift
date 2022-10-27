@@ -40,13 +40,13 @@ actor SessionEventsQueue {
       )
       .autoconnect()
       .sink { [weak self] _ in
-      guard let self = self else {
-        return
+        guard let self = self else {
+          return
+        }
+        Task {
+          await self.flushInternal()
+        }
       }
-      Task {
-        await self.flushInternal()
-      }
-    }
   }
 
   func enqueue(_ triggerSession: TriggerSession) {

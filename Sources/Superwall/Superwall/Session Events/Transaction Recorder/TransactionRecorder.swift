@@ -35,7 +35,6 @@ final class TransactionRecorder {
   }
 
   func record(_ transaction: SKPaymentTransaction) async {
-
     let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
     let triggerSessionId = TransactionRecorderLogic.getTriggerSessionId(
       transaction: transaction,

@@ -45,10 +45,9 @@ public enum PurchaseResult {
 // MARK: - Objective -C
 
 /*
- Note: In the following enum we don't mention StoreKit 2. This is because StoreKit 2
- isn't supported by Objective-c.
- */
-
+  Note: In the following enum we don't mention StoreKit 2. This is because StoreKit 2
+  isn't supported by Objective-c.
+*/
 
 /// An Objective-C-only enum that defines the possible outcomes of attempting to purchase a product.
 @objc public enum PurchaseResultObjc: Int {

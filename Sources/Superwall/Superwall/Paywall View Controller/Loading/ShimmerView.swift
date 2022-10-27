@@ -22,7 +22,7 @@ final class ShimmerView: UIImageView {
     gradientLayer.add(animation, forKey: animation.keyPath)
     return gradientLayer
   }()
-  
+
   private var placeholderImage: UIImage {
     if UIWindow.isLandscape {
       guard let placeholder = UIImage(

@@ -4,7 +4,6 @@
 //
 //  Created by Yusuf Tör on 20/10/2022.
 //
-// swiftlint:disable identifier_name
 
 import StoreKit
 import UIKit
@@ -26,7 +25,7 @@ final class TransactionManager {
 
   @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   private var sk2TransactionObserver: Sk2TransactionObserver {
-    // swiftlint:disable:next force_cast
+    // swiftlint:disable:next force_cast force_unwrapping
     return _sk2TransactionObserver! as! Sk2TransactionObserver
   }
 
@@ -40,10 +39,9 @@ final class TransactionManager {
   var _storeKit2StorefrontListener: Any?
   @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   var storeKit2StorefrontListener: Sk2StorefrontListener {
-      // swiftlint:disable:next force_cast
-      return self._storeKit2StorefrontListener! as! StoreKit2StorefrontListener
+    return self._storeKit2StorefrontListener! as! StoreKit2StorefrontListener
   }
-   */
+  */
 
   init() {
     if #available(iOS 15.0, *) {
