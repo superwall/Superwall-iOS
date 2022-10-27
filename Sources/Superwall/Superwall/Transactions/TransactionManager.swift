@@ -54,6 +54,11 @@ final class TransactionManager {
   }
 
   /// Purchases the given product and handles the callback appropriately.
+  ///
+  /// - Parameters:
+  ///   - productId: The ID of the product to purchase.
+  ///   - paywallViewController: The `PaywallViewController` that the product is being
+  ///   purhcased from.
   func purchase(
     _ productId: String,
     from paywallViewController: PaywallViewController
@@ -61,7 +66,7 @@ final class TransactionManager {
     guard let product = StoreKitManager.shared.productsById[productId] else {
       return
     }
-    trackStartTransaction(of: product, from: paywallViewController)
+    prepareToStartTransaction(of: product, from: paywallViewController)
 
     do {
       let purchaseStartDate = Date()
@@ -110,7 +115,7 @@ final class TransactionManager {
   // MARK: - Transaction lifecycle
 
   /// Tracks the analytics and logs the start of the transaction.
-  private func trackStartTransaction(
+  private func prepareToStartTransaction(
     of product: SKProduct,
     from paywallViewController: PaywallViewController
   ) {
@@ -138,7 +143,7 @@ final class TransactionManager {
     paywallViewController.loadingState = .loadingPurchase
   }
 
-  /// An iOS 15-only function that checks for the transaction of the product.
+  /// An iOS 15-only function that checks for a transaction of the product.
   ///
   /// We need this function because on iOS 15, the `Transaction.updates` listener doesn't notify us
   /// of transactions for recent purchases.

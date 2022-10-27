@@ -29,16 +29,7 @@ final class Sk1TransactionObserver: NSObject {
   init(delegate: TransactionObserverDelegate) {
     self.delegate = delegate
     super.init()
-    enable()
-  }
-
-  func enable() {
-    SKPaymentQueue.default().remove(self)
     SKPaymentQueue.default().add(self)
-  }
-
-  func disable() {
-    SKPaymentQueue.default().remove(self)
   }
 }
 

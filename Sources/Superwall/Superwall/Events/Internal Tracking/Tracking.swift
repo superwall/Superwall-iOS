@@ -46,7 +46,7 @@ extension Superwall {
       parameters: JSON(parameters.eventParams),
       createdAt: eventCreatedAt
     )
-		queue.enqueue(event: eventData.jsonData)
+		await queue.enqueue(event: eventData.jsonData)
     Storage.shared.coreDataManager.saveEventData(eventData)
 
     if event.canImplicitlyTriggerPaywall {

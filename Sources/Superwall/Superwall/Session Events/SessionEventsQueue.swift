@@ -32,16 +32,18 @@ actor SessionEventsQueue {
 
   private func setupTimer() {
     let timeInterval = Superwall.options.networkEnvironment == .release ? 20.0 : 1.0
-    timer = Timer.publish(
-      every: timeInterval,
-      on: RunLoop.main,
-      in: .default
-    ).sink { [weak self] _ in
+    timer = Timer
+      .publish(
+        every: timeInterval,
+        on: RunLoop.main,
+        in: .default
+      )
+      .autoconnect()
+      .sink { [weak self] _ in
       guard let self = self else {
         return
       }
       Task {
-        print("*** FLUSH")
         await self.flushInternal()
       }
     }
