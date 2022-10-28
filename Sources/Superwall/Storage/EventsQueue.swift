@@ -27,6 +27,7 @@ actor EventsQueue {
   init() {
     Task {
       await setupTimer()
+      await addObserver()
     }
   }
 

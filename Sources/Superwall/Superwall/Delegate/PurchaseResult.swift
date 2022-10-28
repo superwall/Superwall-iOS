@@ -42,7 +42,7 @@ public enum PurchaseResult {
   case failed(Error)
 }
 
-// MARK: - Objective -C
+// MARK: - Objective-C Only
 
 /*
   Note: In the following enum we don't mention StoreKit 2. This is because StoreKit 2

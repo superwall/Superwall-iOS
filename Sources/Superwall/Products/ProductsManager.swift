@@ -23,8 +23,6 @@ class ProductsManager: NSObject {
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
 
-  private override init() {}
-
   func getProducts(identifiers: Set<String>) async throws -> Set<SKProduct> {
     return try await withCheckedThrowingContinuation { continuation in
       self.products(withIdentifiers: identifiers) { result in

@@ -10,12 +10,12 @@ import XCTest
 import StoreKit
 @testable import Superwall
 
-final class TransactionManagerLogicTests: XCTestCase {
+final class TransactionRecorderLogicTests: XCTestCase {
   func testGetTriggerSessionId_purchasing() {
     let id = "abc"
     let transaction = MockSKPaymentTransaction(state: .purchasing)
 
-    let outcome = TransactionManagerLogic.getTriggerSessionId(
+    let outcome = TransactionRecorderLogic.getTriggerSessionId(
       transaction: transaction,
       activeTriggerSession: .stub()
         .setting(\.id, to: id)
@@ -27,7 +27,7 @@ final class TransactionManagerLogicTests: XCTestCase {
   func testGetTriggerSessionId_purchasing_noTriggerSession() {
     let transaction = MockSKPaymentTransaction(state: .purchasing)
 
-    let outcome = TransactionManagerLogic.getTriggerSessionId(
+    let outcome = TransactionRecorderLogic.getTriggerSessionId(
       transaction: transaction,
       activeTriggerSession: nil
     )
@@ -39,7 +39,7 @@ final class TransactionManagerLogicTests: XCTestCase {
     let id = "abc"
     let transaction = MockSKPaymentTransaction(state: .restored)
 
-    let outcome = TransactionManagerLogic.getTriggerSessionId(
+    let outcome = TransactionRecorderLogic.getTriggerSessionId(
       transaction: transaction,
       activeTriggerSession: .stub()
         .setting(\.id, to: id)
@@ -51,7 +51,7 @@ final class TransactionManagerLogicTests: XCTestCase {
   func testGetTriggerSessionId_restored_noTriggerSession() {
     let transaction = MockSKPaymentTransaction(state: .restored)
 
-    let outcome = TransactionManagerLogic.getTriggerSessionId(
+    let outcome = TransactionRecorderLogic.getTriggerSessionId(
       transaction: transaction,
       activeTriggerSession: nil
     )
@@ -68,7 +68,7 @@ final class TransactionManagerLogicTests: XCTestCase {
       count: nil,
       product: .init(from: MockSkProduct(), index: 0)
     )
-    let outcome = TransactionManagerLogic.getTriggerSessionId(
+    let outcome = TransactionRecorderLogic.getTriggerSessionId(
       transaction: transaction,
       activeTriggerSession: .stub()
         .setting(\.id, to: id)
@@ -82,7 +82,7 @@ final class TransactionManagerLogicTests: XCTestCase {
     let id = "abc"
     let transaction = MockSKPaymentTransaction(state: .failed)
 
-    let outcome = TransactionManagerLogic.getTriggerSessionId(
+    let outcome = TransactionRecorderLogic.getTriggerSessionId(
       transaction: transaction,
       activeTriggerSession: .stub()
         .setting(\.id, to: id)
@@ -101,7 +101,7 @@ final class TransactionManagerLogicTests: XCTestCase {
       count: nil,
       product: .init(from: MockSkProduct(), index: 0)
     )
-    let outcome = TransactionManagerLogic.getTriggerSessionId(
+    let outcome = TransactionRecorderLogic.getTriggerSessionId(
       transaction: transaction,
       activeTriggerSession: .stub()
         .setting(\.id, to: id)
@@ -115,7 +115,7 @@ final class TransactionManagerLogicTests: XCTestCase {
     let id = "abc"
     let transaction = MockSKPaymentTransaction(state: .deferred)
 
-    let outcome = TransactionManagerLogic.getTriggerSessionId(
+    let outcome = TransactionRecorderLogic.getTriggerSessionId(
       transaction: transaction,
       activeTriggerSession: .stub()
         .setting(\.id, to: id)
@@ -134,7 +134,7 @@ final class TransactionManagerLogicTests: XCTestCase {
       count: nil,
       product: .init(from: MockSkProduct(), index: 0)
     )
-    let outcome = TransactionManagerLogic.getTriggerSessionId(
+    let outcome = TransactionRecorderLogic.getTriggerSessionId(
       transaction: transaction,
       activeTriggerSession: .stub()
         .setting(\.id, to: id)
@@ -148,7 +148,7 @@ final class TransactionManagerLogicTests: XCTestCase {
     let id = "abc"
     let transaction = MockSKPaymentTransaction(state: .purchased)
 
-    let outcome = TransactionManagerLogic.getTriggerSessionId(
+    let outcome = TransactionRecorderLogic.getTriggerSessionId(
       transaction: transaction,
       activeTriggerSession: .stub()
         .setting(\.id, to: id)

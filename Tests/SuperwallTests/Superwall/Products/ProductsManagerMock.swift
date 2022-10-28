@@ -14,6 +14,7 @@ final class ProductsManagerMock: ProductsManager {
 
   init(productCompletionResult: Result<Set<SKProduct>, Error>) {
     self.productCompletionResult = productCompletionResult
+    super.init()
   }
 
   override func getProducts(identifiers: Set<String>) async throws -> Set<SKProduct> {

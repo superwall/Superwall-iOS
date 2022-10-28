@@ -23,7 +23,7 @@ public protocol SuperwallDelegate: AnyObject {
   ///   - product: The `SKProduct` the user would like to purchase.
   ///
   /// - Returns: A``PurchaseResult`` object, which is the result of your purchase logic. **Note**: Make sure you handle all cases of ``PurchaseResult``.
-	func purchase(product: SKProduct) async -> PurchaseResult
+  func purchase(product: SKProduct) async -> PurchaseResult
 
 	/// An async function called when the user initiates a restore.
   ///

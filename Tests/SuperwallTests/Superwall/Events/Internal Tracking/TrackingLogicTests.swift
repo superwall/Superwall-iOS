@@ -11,13 +11,13 @@ import XCTest
 
 @available(iOS 14.0, *)
 final class TrackingLogicTests: XCTestCase {
-  func testProcessParameters_superwallEvent_noParams() {
+  func testProcessParameters_superwallEvent_noParams() async {
     // Given
     let event = InternalSuperwallEvent.AppLaunch()
     let storage = StorageMock()
 
     // When
-    let parameters = TrackingLogic.processParameters(
+    let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: Date(),
       storage: storage
@@ -45,7 +45,7 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertEqual(parameters.eventParams["$count_24h"] as! Int, 2)
   }*/
 
-  func testProcessParameters_userEvent_noParams() {
+  func testProcessParameters_userEvent_noParams() async {
     // Given
     let event = UserInitiatedEvent.Track(
       rawName: "test",
@@ -54,7 +54,7 @@ final class TrackingLogicTests: XCTestCase {
     let storage = StorageMock()
 
     // When
-    let parameters = TrackingLogic.processParameters(
+    let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: Date(),
       storage: storage
@@ -85,7 +85,7 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertEqual(parameters.eventParams["$count_24h"] as! Int, 2)
   }
 */
-  func testProcessParameters_superwallEvent_noCustomParams() {
+  func testProcessParameters_superwallEvent_noCustomParams() async {
     // Given
     let eventName = "TestName"
     let event = InternalSuperwallEvent.PaywallLoad(
@@ -95,7 +95,7 @@ final class TrackingLogicTests: XCTestCase {
         .setting(\.name, to: eventName)
     )
     // When
-    let parameters = TrackingLogic.processParameters(
+    let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: event.eventData!.createdAt
     )
@@ -108,7 +108,7 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertEqual(parameters.delegateParams["event_name"] as! String, "TestName")
   }
 
-  func testProcessParameters_superwallEvent_withCustomParams() {
+  func testProcessParameters_superwallEvent_withCustomParams() async {
     // Given
     let eventName = "TestName"
     let event = InternalSuperwallEvent.PaywallLoad(
@@ -122,7 +122,7 @@ final class TrackingLogicTests: XCTestCase {
       ]
     )
     // When
-    let parameters = TrackingLogic.processParameters(
+    let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: event.eventData!.createdAt
     )
@@ -139,7 +139,7 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_containsDollar() {
+  func testProcessParameters_superwallEvent_customParams_containsDollar() async {
     // Given
     let eventName = "TestName"
     let event = InternalSuperwallEvent.PaywallLoad(
@@ -153,7 +153,7 @@ final class TrackingLogicTests: XCTestCase {
       ]
     )
     // When
-    let parameters = TrackingLogic.processParameters(
+    let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: event.eventData!.createdAt
     )
@@ -170,7 +170,7 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_containArray() {
+  func testProcessParameters_superwallEvent_customParams_containArray() async {
     // Given
     let eventName = "TestName"
     let event = InternalSuperwallEvent.PaywallLoad(
@@ -184,7 +184,7 @@ final class TrackingLogicTests: XCTestCase {
       ]
     )
     // When
-    let parameters = TrackingLogic.processParameters(
+    let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: event.eventData!.createdAt
     )
@@ -201,7 +201,7 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_containDictionary() {
+  func testProcessParameters_superwallEvent_customParams_containDictionary() async {
     // Given
     let eventName = "TestName"
     let event = InternalSuperwallEvent.PaywallLoad(
@@ -215,7 +215,7 @@ final class TrackingLogicTests: XCTestCase {
       ]
     )
     // When
-    let parameters = TrackingLogic.processParameters(
+    let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: event.eventData!.createdAt
     )
@@ -232,7 +232,7 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_containsDate() {
+  func testProcessParameters_superwallEvent_customParams_containsDate() async {
     // Given
     let date = Date(timeIntervalSince1970: 1650534735)
     let eventName = "TestName"
@@ -247,7 +247,7 @@ final class TrackingLogicTests: XCTestCase {
       ]
     )
     // When
-    let parameters = TrackingLogic.processParameters(
+    let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: event.eventData!.createdAt
     )
@@ -264,7 +264,7 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_containsUrl() {
+  func testProcessParameters_superwallEvent_customParams_containsUrl() async {
     // Given
     let url = URL(string: "https://www.google.com")!
     let eventName = "TestName"
@@ -279,7 +279,7 @@ final class TrackingLogicTests: XCTestCase {
       ]
     )
     // When
-    let parameters = TrackingLogic.processParameters(
+    let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: event.eventData!.createdAt
     )
@@ -296,7 +296,7 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_nilValue() {
+  func testProcessParameters_superwallEvent_customParams_nilValue() async {
     // Given
     let eventName = "TestName"
     let event = InternalSuperwallEvent.PaywallLoad(
@@ -310,7 +310,7 @@ final class TrackingLogicTests: XCTestCase {
       ]
     )
     // When
-    let parameters = TrackingLogic.processParameters(
+    let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: event.eventData!.createdAt
     )

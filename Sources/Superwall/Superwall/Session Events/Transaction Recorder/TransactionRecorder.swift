@@ -48,7 +48,7 @@ final class TransactionRecorder {
       triggerSessionId: triggerSessionId
     )
 
-    sessionEventsManager.enqueue(transaction)
+    await sessionEventsManager.enqueue(transaction)
   }
 
   @available(iOS 15.0, *)
@@ -66,6 +66,6 @@ final class TransactionRecorder {
       triggerSessionId: triggerSessionId
     )
 
-    sessionEventsManager.enqueue(transaction)
+    await sessionEventsManager.enqueue(transaction)
   }
 }

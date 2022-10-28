@@ -2,9 +2,8 @@
 //  File.swift
 //  
 //
-//  Created by Yusuf Tör on 27/05/2022.
+//  Created by Yusuf Tör on 28/10/2022.
 //
-// swiftlint:disable all
 
 import Foundation
 @testable import Superwall
@@ -12,22 +11,21 @@ import Foundation
 final class SessionEventsDelegateMock: SessionEventsDelegate {
   var triggerSession = TriggerSessionManager(delegate: nil)
 
-  @MainActor
-  var queue: SessionEventsQueue
+  var queue: SessionEnqueuable
 
-  init(queue: SessionEventsQueue) {
+  init(queue: SessionEnqueuable) {
     self.queue = queue
   }
 
-  func enqueue(_ triggerSession: TriggerSession) {
-    queue.enqueue(triggerSession)
+  func enqueue(_ triggerSession: TriggerSession) async {
+    await queue.enqueue(triggerSession)
   }
 
-  func enqueue(_ triggerSessions: [TriggerSession]) {
-    queue.enqueue(triggerSessions)
+  func enqueue(_ triggerSessions: [TriggerSession]) async {
+    await queue.enqueue(triggerSessions)
   }
 
-  func enqueue(_ transaction: TransactionModel) {
-    queue.enqueue(transaction)
+  func enqueue(_ transaction: TransactionModel) async {
+    await queue.enqueue(transaction)
   }
 }

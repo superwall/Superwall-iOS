@@ -11,9 +11,9 @@ import Combine
 protocol SessionEventsDelegate: AnyObject {
   var triggerSession: TriggerSessionManager { get }
 
-  func enqueue(_ triggerSession: TriggerSession)
-  func enqueue(_ triggerSessions: [TriggerSession])
-  func enqueue(_ transaction: TransactionModel)
+  func enqueue(_ triggerSession: TriggerSession) async
+  func enqueue(_ triggerSessions: [TriggerSession]) async
+  func enqueue(_ transaction: TransactionModel) async
 }
 
 final class SessionEventsManager {
@@ -24,7 +24,7 @@ final class SessionEventsManager {
   lazy var triggerSession = TriggerSessionManager(delegate: self)
 
   /// A queue of trigger session events that get sent to the server.
-  private let queue: SessionEventsQueue
+  private let queue: SessionEnqueuable
 
   /// Network class. Can be injected via init for testing.
   private let network: Network
@@ -40,7 +40,7 @@ final class SessionEventsManager {
 
   /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
   init(
-    queue: SessionEventsQueue = SessionEventsQueue(),
+    queue: SessionEnqueuable = SessionEventsQueue(),
     storage: Storage = .shared,
     network: Network = .shared,
     configManager: ConfigManager = .shared
@@ -52,49 +52,7 @@ final class SessionEventsManager {
 
     Task {
       await postCachedSessionEvents()
-      await addObservers()
     }
-  }
-
-  /// App lifecycle observers that are passed to the trigger session manager.
-  @MainActor
-  private func addObservers() {
-    NotificationCenter.default
-      .publisher(for: UIApplication.didEnterBackgroundNotification)
-      .sink { [weak self] _ in
-        guard let self = self else {
-          return
-        }
-        Task {
-          await self.triggerSession.didEnterBackground()
-        }
-      }
-      .store(in: &cancellables)
-
-    NotificationCenter.default
-      .publisher(for: UIApplication.willEnterForegroundNotification)
-      .sink { [weak self] _ in
-        guard let self = self else {
-          return
-        }
-        Task {
-          await self.triggerSession.willEnterForeground()
-        }
-      }
-      .store(in: &cancellables)
-
-    NotificationCenter.default
-      .publisher(for: UIApplication.willResignActiveNotification)
-      .sink { [weak self] _ in
-        guard let self = self else {
-          return
-        }
-        Task {
-          await self.queue.flushInternal()
-          await self.queue.saveCacheToDisk()
-        }
-      }
-      .store(in: &cancellables)
   }
 
   /// Gets the last 20 cached trigger sessions and transactions from the last time the app was terminated,
@@ -132,30 +90,24 @@ final class SessionEventsManager {
 
 // MARK: - SessionEventsDelegate
 extension SessionEventsManager: SessionEventsDelegate {
-  func enqueue(_ triggerSession: TriggerSession) {
+  func enqueue(_ triggerSession: TriggerSession) async {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
-    Task {
-      await queue.enqueue(triggerSession)
-    }
+    await queue.enqueue(triggerSession)
   }
 
-  func enqueue(_ triggerSessions: [TriggerSession]) {
+  func enqueue(_ triggerSessions: [TriggerSession]) async {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
-    Task {
-      await queue.enqueue(triggerSessions)
-    }
+    await queue.enqueue(triggerSessions)
   }
 
-  func enqueue(_ transaction: TransactionModel) {
+  func enqueue(_ transaction: TransactionModel) async {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
-    Task {
-      await queue.enqueue(transaction)
-    }
+    await queue.enqueue(transaction)
   }
 }
