@@ -9,12 +9,12 @@ import SwiftUI
 import Superwall
 
 struct TrackEventView: View {
-  @Binding var showTrackView: Bool
+  @Binding var isLoggedIn: Bool
   @StateObject private var store = StoreKitService.shared
   private let model = TrackEventModel()
 
-  init(showTrackView: Binding<Bool>) {
-    _showTrackView = showTrackView
+  init(isLoggedIn: Binding<Bool>) {
+    _isLoggedIn = isLoggedIn
     UINavigationBar.appearance().titleTextAttributes = [
       .foregroundColor: UIColor.white,
       .font: UIFont.rubikBold(.five)
@@ -42,7 +42,7 @@ struct TrackEventView: View {
         BrandedButton(title: "Log Out") {
           Task {
             await model.logOut()
-            showTrackView = false
+            isLoggedIn = false
           }
         }
       }
@@ -59,6 +59,6 @@ struct TrackEventView: View {
 
 struct TrackEventView_Previews: PreviewProvider {
   static var previews: some View {
-    TrackEventView(showTrackView: .constant(false))
+    TrackEventView(isLoggedIn: .constant(false))
   }
 }

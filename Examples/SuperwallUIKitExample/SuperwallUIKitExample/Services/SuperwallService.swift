@@ -11,7 +11,7 @@ import StoreKit
 final class SuperwallService {
   static let shared = SuperwallService()
   #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
-  private let apiKey = "pk_e85ec09a2dfe4f52581478543143ae67f4f76e7a6d51714c"
+  private let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
   static var name: String {
     return Superwall.userAttributes["firstName"] as? String ?? ""
   }
@@ -23,7 +23,7 @@ final class SuperwallService {
       delegate: self
     )
 
-    /// Checking our logged in status.
+    // Checking our logged in status.
     return Superwall.isLoggedIn
   }
 
@@ -35,7 +35,7 @@ final class SuperwallService {
       case .alreadyLoggedIn:
         print("The user is already logged in")
       case .missingUserId:
-        print("A userId was not provided")
+        print("The provided userId was empty")
       }
     } catch {
       print("An unknown error occurred", error)

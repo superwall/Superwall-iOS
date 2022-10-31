@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct WelcomeView: View {
+  @Binding var isLoggedIn: Bool
   @State private var name: String = ""
-  @State private var showTrackView = false
 
   var body: some View {
     NavigationStack {
@@ -29,8 +29,8 @@ struct WelcomeView: View {
         .frame(maxHeight: .infinity)
         .background(Color.neutral)
       }
-      .navigationDestination(isPresented: $showTrackView) {
-        TrackEventView(showTrackView: $showTrackView)
+      .navigationDestination(isPresented: $isLoggedIn) {
+        TrackEventView(isLoggedIn: $isLoggedIn)
       }
       .navigationBarHidden(true)
       .navigationTitle("")
@@ -68,7 +68,7 @@ struct WelcomeView: View {
       Task {
         SuperwallService.setName(to: name)
         await SuperwallService.logIn()
-        showTrackView = true
+        isLoggedIn = true
       }
     }
   }
@@ -76,6 +76,6 @@ struct WelcomeView: View {
 
 struct WelcomeView_Previews: PreviewProvider {
   static var previews: some View {
-    WelcomeView()
+    WelcomeView(isLoggedIn: .constant(false))
   }
 }

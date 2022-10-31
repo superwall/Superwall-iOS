@@ -6,13 +6,13 @@
 //
 
 import StoreKit
-import SwiftUI
+import Combine
+import Superwall
 
 final class StoreKitService: NSObject, ObservableObject {
   static let shared = StoreKitService()
-  @Published var isSubscribed = false
-  private(set) var purchasedIdentifiers = Set<String>()
-  private var productIdsToName: [String: String] = [:]
+  var isSubscribed = CurrentValueSubject<Bool, Never>(false)
+  var completion: ((PurchaseResult) -> Void)?
   enum StoreError: Error {
     case failedVerification
   }
@@ -22,8 +22,12 @@ final class StoreKitService: NSObject, ObservableObject {
     SKPaymentQueue.default().add(self)
   }
 
-  func purchase(_ product: SKProduct) async throws {
+  func purchase(
+    _ product: SKProduct,
+    completion: @escaping (PurchaseResult) -> Void
+  ) {
     let payment = SKPayment(product: product)
+    self.completion = completion
     SKPaymentQueue.default().add(payment)
   }
 
@@ -35,7 +39,7 @@ final class StoreKitService: NSObject, ObservableObject {
 
     refresh.start()
     if refresh.receiptProperties?.isEmpty == false {
-      isSubscribed = true
+      isSubscribed.send(true)
       return true
     }
     return false
@@ -46,12 +50,16 @@ final class StoreKitService: NSObject, ObservableObject {
       guard case .verified(let transaction) = result else {
         continue
       }
+      if let expirationDate = transaction.expirationDate,
+        expirationDate < Date() {
+        continue
+      }
       if transaction.revocationDate == nil {
-        isSubscribed = true
+        isSubscribed.send(true)
         return
       }
     }
-    isSubscribed = false
+    isSubscribed.send(false)
   }
 }
 
@@ -64,9 +72,33 @@ extension StoreKitService: SKPaymentTransactionObserver {
     for transaction in transactions {
       switch transaction.transactionState {
       case .purchased:
-        isSubscribed = true
+        isSubscribed.send(true)
         SKPaymentQueue.default().finishTransaction(transaction)
+        completion?(.purchased)
+        completion = nil
       case .failed:
+        if let error = transaction.error {
+          if let error = error as? SKError {
+            switch error.code {
+            case .overlayTimeout,
+              .paymentCancelled,
+              .overlayCancelled:
+              completion?(.cancelled)
+              completion = nil
+              SKPaymentQueue.default().finishTransaction(transaction)
+              return
+            default:
+              break
+            }
+          }
+          completion?(.failed(error))
+          completion = nil
+        }
+        SKPaymentQueue.default().finishTransaction(transaction)
+      case .deferred:
+        completion?(.pending)
+        completion = nil
+      case .restored:
         SKPaymentQueue.default().finishTransaction(transaction)
       default:
         break
@@ -75,6 +107,6 @@ extension StoreKitService: SKPaymentTransactionObserver {
   }
 
   func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
-    isSubscribed = true
+    isSubscribed.send(true)
   }
 }

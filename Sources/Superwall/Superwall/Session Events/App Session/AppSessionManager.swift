@@ -83,7 +83,7 @@ class AppSessionManager {
 
     if didStartNewSession {
       appSession = AppSession()
-      Task {
+      Task.detached(priority: .userInitiated) {
         await Superwall.track(InternalSuperwallEvent.SessionStart())
       }
     } else {

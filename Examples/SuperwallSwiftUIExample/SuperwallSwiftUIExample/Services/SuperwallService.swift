@@ -7,6 +7,7 @@
 
 import Superwall
 import StoreKit
+import Combine
 
 // swiftlint:disable:next convenience_type
 final class SuperwallService {
@@ -16,11 +17,16 @@ final class SuperwallService {
   static var name: String {
     return Superwall.userAttributes["firstName"] as? String ?? ""
   }
+  var isLoggedIn = CurrentValueSubject<Bool, Never>(false)
+
   static func initSuperwall() {
     Superwall.configure(
       apiKey: apiKey,
       delegate: shared
     )
+
+    // Getting our logged in status to Superwall.
+    shared.isLoggedIn.send(Superwall.isLoggedIn)
   }
 
   static func logIn() async {
@@ -31,7 +37,7 @@ final class SuperwallService {
       case .missingUserId:
         print("The provided userId was empty")
       case .alreadyLoggedIn:
-        print("There is already a logged in user.")
+        print("The user is already logged in")
       }
     } catch {
       print("Unexpected error", error)
@@ -42,7 +48,7 @@ final class SuperwallService {
     do {
       try await Superwall.logOut()
     } catch LogoutError.notLoggedIn {
-      print("You called logout but the user wasn't logged in")
+      print("The user is not logged in")
     } catch {
       print("Unexpected error", error)
     }
@@ -59,19 +65,20 @@ final class SuperwallService {
 
 // MARK: - Superwall Delegate
 extension SuperwallService: SuperwallDelegate {
-  func purchase(product: SKProduct) {
-    Task {
-      try? await StoreKitService.shared.purchase(product)
+  func purchase(product: SKProduct) async -> PurchaseResult {
+    return await withCheckedContinuation { continuation in
+      StoreKitService.shared.purchase(product) { result in
+        continuation.resume(with: .success(result))
+      }
     }
   }
 
-  func restorePurchases(completion: @escaping (Bool) -> Void) {
-    let result = StoreKitService.shared.restorePurchases()
-    completion(result)
+  func restorePurchases() async -> Bool {
+    return StoreKitService.shared.restorePurchases()
   }
 
   func isUserSubscribed() -> Bool {
-    return StoreKitService.shared.isSubscribed
+    return StoreKitService.shared.isSubscribed.value
   }
 
   func trackAnalyticsEvent(

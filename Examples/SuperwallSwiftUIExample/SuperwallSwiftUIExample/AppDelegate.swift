@@ -13,6 +13,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
     SuperwallService.initSuperwall()
+
     Task {
       await StoreKitService.shared.loadSubscriptionState()
     }

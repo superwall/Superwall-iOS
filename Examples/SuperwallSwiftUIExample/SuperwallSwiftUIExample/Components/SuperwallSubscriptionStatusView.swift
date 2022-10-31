@@ -11,7 +11,7 @@ struct SuperwallSubscriptionStatusView: View {
   @StateObject private var store = StoreKitService.shared
   var text: String {
     return SuperwallSubscriptionStatusLogic.text(
-      isSubscribed: store.isSubscribed
+      isSubscribed: store.isSubscribed.value
     )
   }
 
