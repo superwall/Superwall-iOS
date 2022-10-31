@@ -49,7 +49,7 @@ class ConfigManager {
       let config = try await network.getConfig(withRequestId: requestId)
       Task { await sendProductsBack(from: config) }
 
-      triggersByEventName = TriggerLogic.getTriggersByEventName(from: config.triggers)
+      triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
       choosePaywallVariants(from: config.triggers)
       await StoreKitManager.shared.loadPurchasedProducts()
       self.config = config

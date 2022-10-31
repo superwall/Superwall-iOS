@@ -32,7 +32,7 @@ enum AssignmentLogic {
     storage: Storage = .shared
   ) -> Outcome {
     if let trigger = triggers[event.name] {
-      if let rule = TriggerLogic.findMatchingRule(
+      if let rule = findMatchingRule(
         for: event,
         withTrigger: trigger
       ) {
@@ -97,5 +97,20 @@ enum AssignmentLogic {
     } else {
       return Outcome(result: .triggerNotFound)
     }
+  }
+
+  static func findMatchingRule(
+    for event: EventData,
+    withTrigger trigger: Trigger
+  ) -> TriggerRule? {
+    for rule in trigger.rules {
+      if ExpressionEvaluator.evaluateExpression(
+        fromRule: rule,
+        eventData: event
+      ) {
+        return rule
+      }
+    }
+    return nil
   }
 }
