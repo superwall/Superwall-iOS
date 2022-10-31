@@ -13,6 +13,11 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - Changes `PaywallOptions` to `SuperwallOptions`. This now clearly defines which of the options are explicit to paywalls vs other configuration options within the SDK.
 - Renames `Superwall.trigger(event:)` to `Superwall.track(event:)`. We found that having separate implicit (`Superwall.track(event:)`) and explicit (`Superwall.trigger(event:)`) trigger functions caused confusion. So from now on, you'll just use `Superwall.track(event:)` for all events within your app.
 - Renames `Paywall.EventName` to `SuperwallEvent` and removes `.manualPresent` as a `SuperwallEvent`.
+- Renames `PaywallDelegate` to `SuperwallDelegate` (if you're using Swift) or `SuperwallDelegateObjc` (if you're using Objective-C).
+
+- For Swift users, this changes the delegate method `purchase(product:)` to an async function that returns a `PurchaseResult`. Here, you need to return the result of the user attempting to purchase a product, making sure you handle all cases of `PurchaseResult`: `.purchased`, `.cancelled`, `.pending`, `failed(Error)`.
+- For Objective-C users, this changes the delegate method `purchase(product:)` to `purchase(product:completion:)`. You call the completion block with the result of the user attempting to purchase a product, making sure you handle all cases of `PurchaseResultObjc`: `.purchased`, `.cancelled`, `.pending`, `failed`. When you have a purchasing error, you need to call the completion block with the `.failed` case along with the error.
+- Changes `restorePurchases()` to an async function that returns a boolean instead of having a completion block.
 
 - Removes `identify(userId:)` in favor of the new Identity API detailed below.
 - Removes `Paywall.load(identifier:)`. This was being used to preload a paywall by identifier.
@@ -31,6 +36,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ### Fixes
 
 - The API is now thread safe. By default the API uses background threads, dispatching to the main thread when necessary and when returning from completion blocks.
+- Fixes an issue where lazy properties were causing an occasional crash due to the use of multithreading.
 
 ---
 
