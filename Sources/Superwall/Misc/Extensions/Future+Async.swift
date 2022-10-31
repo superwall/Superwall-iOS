@@ -21,3 +21,14 @@ extension Future where Failure == Error {
     }
   }
 }
+
+extension Future where Failure == Never {
+  convenience init(operation: @escaping () async -> Output) {
+    self.init { promise in
+      Task {
+        let output = await operation()
+        promise(.success(output))
+      }
+    }
+  }
+}

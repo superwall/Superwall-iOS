@@ -5,14 +5,15 @@
 //  Created by Yusuf Tör on 27/05/2022.
 //
 
-import Foundation
+import UIKit
+import Combine
 
 protocol SessionEventsDelegate: AnyObject {
   var triggerSession: TriggerSessionManager { get }
 
-  func enqueue(_ triggerSession: TriggerSession)
-  func enqueue(_ triggerSessions: [TriggerSession])
-  func enqueue(_ transaction: TransactionModel)
+  func enqueue(_ triggerSession: TriggerSession) async
+  func enqueue(_ triggerSessions: [TriggerSession]) async
+  func enqueue(_ transaction: TransactionModel) async
 }
 
 final class SessionEventsManager {
@@ -22,11 +23,8 @@ final class SessionEventsManager {
   /// The trigger session manager.
   lazy var triggerSession = TriggerSessionManager(delegate: self)
 
-  /// The transaction manager.
-  lazy var transactions = TransactionManager(delegate: self)
-
   /// A queue of trigger session events that get sent to the server.
-  private let queue: SessionEventsQueue
+  private let queue: SessionEnqueuable
 
   /// Network class. Can be injected via init for testing.
   private let network: Network
@@ -37,9 +35,12 @@ final class SessionEventsManager {
   /// Storage class. Can be injected via init for testing.
   private let configManager: ConfigManager
 
+  private var cancellables: [AnyCancellable] = []
+
+
   /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
   init(
-    queue: SessionEventsQueue = SessionEventsQueue(),
+    queue: SessionEnqueuable = SessionEventsQueue(),
     storage: Storage = .shared,
     network: Network = .shared,
     configManager: ConfigManager = .shared
@@ -49,12 +50,14 @@ final class SessionEventsManager {
     self.network = network
     self.configManager = configManager
 
-    postCachedSessionEvents()
+    Task {
+      await postCachedSessionEvents()
+    }
   }
 
   /// Gets the last 20 cached trigger sessions and transactions from the last time the app was terminated,
   /// sends them back to the server, then clears cache.
-  private func postCachedSessionEvents() {
+  private func postCachedSessionEvents() async {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
@@ -70,9 +73,9 @@ final class SessionEventsManager {
       triggerSessions: cachedTriggerSessions,
       transactions: cachedTransactions
     )
-    Task {
-      await network.sendSessionEvents(sessionEvents)
-    }
+
+    await network.sendSessionEvents(sessionEvents)
+
     storage.clearCachedSessionEvents()
   }
 
@@ -80,31 +83,31 @@ final class SessionEventsManager {
   /// For transactions, the latest app session id is grabbed when the next transaction occurs.
   func updateAppSession(
     _ appSession: AppSession = AppSessionManager.shared.appSession
-  ) {
-    triggerSession.updateAppSession(to: appSession)
+  ) async {
+    await triggerSession.updateAppSession(to: appSession)
   }
 }
 
 // MARK: - SessionEventsDelegate
 extension SessionEventsManager: SessionEventsDelegate {
-  func enqueue(_ triggerSession: TriggerSession) {
+  func enqueue(_ triggerSession: TriggerSession) async {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
-    queue.enqueue(triggerSession)
+    await queue.enqueue(triggerSession)
   }
 
-  func enqueue(_ triggerSessions: [TriggerSession]) {
+  func enqueue(_ triggerSessions: [TriggerSession]) async {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
-    queue.enqueue(triggerSessions)
+    await queue.enqueue(triggerSessions)
   }
 
-  func enqueue(_ transaction: TransactionModel) {
+  func enqueue(_ transaction: TransactionModel) async {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }
-    queue.enqueue(transaction)
+    await queue.enqueue(transaction)
   }
 }

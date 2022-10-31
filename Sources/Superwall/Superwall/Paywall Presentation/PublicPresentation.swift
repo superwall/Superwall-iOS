@@ -82,8 +82,8 @@ public extension Superwall {
       presentationStyleOverride: presentationStyleOverride
     )
 
-    trackCancellable = track(
-      event: event,
+    trackCancellable = publisher(
+      forEvent: event,
       params: params,
       paywallOverrides: overrides
     )
@@ -122,8 +122,8 @@ public extension Superwall {
     paywallOverrides: PaywallOverrides? = nil,
     paywallState: ((PaywallState) -> Void)? = nil
   ) {
-    trackCancellable = track(
-      event: event,
+    trackCancellable = publisher(
+      forEvent: event,
       params: params,
       paywallOverrides: paywallOverrides
     )
@@ -148,24 +148,28 @@ public extension Superwall {
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///
   /// - Returns: A publisher that provides updates on the state of the paywall via a ``PaywallState`` object.
-  @discardableResult
-  static func track(
-    event: String,
+  static func publisher(
+    forEvent event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil
   ) -> PaywallStatePublisher {
-    let trackableEvent = UserInitiatedEvent.Track(
-      rawName: event,
-      canImplicitlyTriggerPaywall: false,
-      customParameters: params ?? [:]
-    )
-    let result = track(trackableEvent)
-
-    let presentationRequest = PresentationRequest(
-      presentationInfo: .explicitTrigger(result.data),
-      paywallOverrides: paywallOverrides
-    )
-    return shared.internallyPresent(presentationRequest)
+    // TODO: CHECK THE NAME OF PUBLISHER VS TRACK. USING TRACK DEFAULTS TO THIS FUNC BUT
+    return Future {
+      let trackableEvent = UserInitiatedEvent.Track(
+        rawName: event,
+        canImplicitlyTriggerPaywall: false,
+        customParameters: params ?? [:]
+      )
+      return await track(trackableEvent)
+    }
+    .flatMap { result in
+      let presentationRequest = PresentationRequest(
+        presentationInfo: .explicitTrigger(result.data),
+        paywallOverrides: paywallOverrides
+      )
+      return shared.internallyPresent(presentationRequest)
+    }
+    .eraseToAnyPublisher()
   }
 
   /// Converts dismissal result from enums with associated values, to old objective-c compatible way

@@ -43,8 +43,8 @@ extension TriggerSession {
     }
     var status: Status?
 
-    /// The product from the transaction
-    let product: Product
+    /// The product from the transaction. Nil if a restore.
+    let product: Product?
 
     init(
       id: String? = nil,
@@ -53,7 +53,7 @@ extension TriggerSession {
       outcome: Outcome? = nil,
       count: Count?,
       status: Status? = nil,
-      product: Product
+      product: Product? = nil
     ) {
       self.id = id
       self.startAt = startAt
@@ -92,7 +92,7 @@ extension TriggerSession {
       }
       status = try values.decodeIfPresent(Status.self, forKey: .status)
 
-      product = try Product(from: decoder)
+      product = try? Product(from: decoder)
     }
 
     enum CodingKeys: String, CodingKey {
@@ -124,7 +124,9 @@ extension TriggerSession {
       try container.encodeIfPresent(outcome, forKey: .outcome)
       try container.encodeIfPresent(status, forKey: .status)
 
-      try product.encode(to: encoder)
+      if let product = product {
+        try product.encode(to: encoder)
+      }
     }
   }
 }

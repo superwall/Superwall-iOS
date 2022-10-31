@@ -8,8 +8,14 @@
 import Foundation
 
 extension Encodable {
-  var dictionary: [String: Any]? {
-    guard let data = try? JSONEncoder().encode(self) else {
+  func dictionary(withSnakeCase: Bool = false) -> [String: Any]? {
+    let encoder: JSONEncoder
+    if withSnakeCase {
+      encoder = JSONEncoder.toSnakeCase
+    } else {
+      encoder = JSONEncoder()
+    }
+    guard let data = try? encoder.encode(self) else {
       return nil
     }
     let jsonObject = try? JSONSerialization.jsonObject(

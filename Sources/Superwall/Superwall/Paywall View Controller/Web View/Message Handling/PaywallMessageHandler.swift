@@ -47,12 +47,12 @@ final class PaywallMessageHandler: WebEventDelegate {
     switch message {
     case .templateParamsAndUserAttributes:
       Task {
-        await passTemplatesToWebView(from: paywall)
+        await self.passTemplatesToWebView(from: paywall)
       }
     case .onReady(let paywalljsVersion):
       delegate?.paywall.paywalljsVersion = paywalljsVersion
       Task {
-        await didLoadWebView(for: paywall)
+        await self.didLoadWebView(for: paywall)
       }
     case .close:
       hapticFeedback()
@@ -75,8 +75,8 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// Passes the templated variables and params to the webview.
   ///
   /// This is called every paywall open incase variables like user attributes have changed.
-  private func passTemplatesToWebView(from paywall: Paywall) async {
-    let templates = TemplateLogic.getBase64EncodedTemplates(
+  nonisolated private func passTemplatesToWebView(from paywall: Paywall) async {
+    let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
       withParams: delegate?.eventData?.parameters
     )
@@ -110,26 +110,28 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   /// Passes in the HTML substitutions, templates and other scripts to make the webview
   /// feel native.
-  private func didLoadWebView(for paywall: Paywall) async {
-    if let paywallInfo = delegate?.paywallInfo {
-      if paywall.webviewLoadingInfo.endAt == nil {
-        delegate?.paywall.webviewLoadingInfo.endAt = Date()
+  nonisolated private func didLoadWebView(for paywall: Paywall) async {
+    Task(priority: .utility) {
+      if let paywallInfo = await delegate?.paywallInfo {
+        if paywall.webviewLoadingInfo.endAt == nil {
+          await delegate?.paywall.webviewLoadingInfo.endAt = Date()
+        }
+
+        let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
+          state: .complete,
+          paywallInfo: paywallInfo
+        )
+        await Superwall.track(trackedEvent)
+
+        await SessionEventsManager.shared.triggerSession.trackWebviewLoad(
+          forPaywallId: paywallInfo.databaseId,
+          state: .end
+        )
       }
-
-      let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
-        state: .complete,
-        paywallInfo: paywallInfo
-      )
-      Superwall.track(trackedEvent)
-
-      SessionEventsManager.shared.triggerSession.trackWebviewLoad(
-        forPaywallId: paywallInfo.databaseId,
-        state: .end
-      )
     }
 
     let htmlSubstitutions = paywall.htmlSubstitutions
-    let templates = TemplateLogic.getBase64EncodedTemplates(
+    let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
       withParams: delegate?.eventData?.parameters
     )

@@ -16,7 +16,7 @@ final class StoreKitManager {
   }
 
   init(
-    productsManager: ProductsManager = ProductsManager(),
+    productsManager: ProductsManager = .shared,
     configManager: ConfigManager = .shared,
     receiptManager: ReceiptManager = ReceiptManager()
   ) {

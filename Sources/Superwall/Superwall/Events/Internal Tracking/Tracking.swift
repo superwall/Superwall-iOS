@@ -17,22 +17,20 @@ extension Superwall {
   ///   - trackableEvent: The event you want to track.
   ///   - customParameters: Any extra non-Superwall parameters that you want to track.
 	@discardableResult
-  static func track(_ event: Trackable) -> TrackingResult {
+  static func track(_ event: Trackable) async -> TrackingResult {
     // Get parameters to be sent to the delegate and stored in an event.
     let eventCreatedAt = Date()
-    let parameters = TrackingLogic.processParameters(
+    let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: eventCreatedAt
     )
 
     // For a trackable superwall event, send params to delegate
     if event is TrackableSuperwallEvent {
-      DispatchQueue.main.async {
-        delegate?.trackAnalyticsEvent?(
-          withName: event.rawName,
-          params: parameters.delegateParams
-        )
-      }
+      await shared.delegateAdapter.trackAnalyticsEvent(
+        withName: event.rawName,
+        params: parameters.delegateParams
+      )
       Logger.debug(
         logLevel: .debug,
         scope: .events,
@@ -46,7 +44,7 @@ extension Superwall {
       parameters: JSON(parameters.eventParams),
       createdAt: eventCreatedAt
     )
-		queue.enqueue(event: eventData.jsonData)
+		await queue.enqueue(event: eventData.jsonData)
     Storage.shared.coreDataManager.saveEventData(eventData)
 
     if event.canImplicitlyTriggerPaywall {

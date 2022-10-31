@@ -6,7 +6,31 @@ import Combine
 public final class Superwall: NSObject {
   // MARK: - Public Properties
   /// The delegate of the Paywall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
-  @objc public static var delegate: SuperwallDelegate?
+  @MainActor
+  public static var delegate: SuperwallDelegate? {
+    get {
+      return shared.delegateAdapter.swiftDelegate
+    }
+    set {
+      shared.delegateAdapter.swiftDelegate = newValue
+    }
+  }
+
+  /// The delegate of the Paywall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
+  @MainActor
+  @available(swift, obsoleted: 1.0)
+  @objc(delegate)
+  public static var objcDelegate: SuperwallDelegateObjc? {
+    get {
+      return shared.delegateAdapter.objcDelegate
+    }
+    set {
+      shared.delegateAdapter.objcDelegate = newValue
+    }
+  }
+
+  @MainActor
+  lazy var delegateAdapter = SuperwallDelegateAdapter()
 
   /// Properties stored about the user, set using ``Superwall/Superwall/setUserAttributes(_:)``.
   public static var userAttributes: [String: Any] {
@@ -19,7 +43,7 @@ public final class Superwall: NSObject {
     return PaywallManager.shared.presentedViewController
   }
 
-  /// A convenience variable to access and change the paywall options that you passed to ``configure(apiKey:delegate:options:)``.
+  /// A convenience variable to access and change the paywall options that you passed to ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5``.
   public static var options: SuperwallOptions {
     return shared.configManager.options
   }
@@ -42,8 +66,8 @@ public final class Superwall: NSObject {
   /// The ``PaywallInfo`` object stored from the latest paywall that was dismissed.
   var latestDismissedPaywallInfo: PaywallInfo?
 
-  /// Used as the reload function if a paywall takes to long to load. set in paywall.present
-  static var shared = Superwall(apiKey: nil)
+  /// The shared instance of superwall.
+  static var shared = Superwall()
 
   /// Used as a strong reference to any track function that doesn't directly return a publisher.
   static var trackCancellable: AnyCancellable?
@@ -56,10 +80,6 @@ public final class Superwall: NSObject {
 
   /// The window that presents the paywall.
   var presentingWindow: UIWindow?
-
-  /// Determines whether a product restoration has automatically occurred
-  /// after a transaction error.
-  var didTryToAutoRestore = false
 
   /// Determines whether a paywall has been presented in the session.
   var paywallWasPresentedThisSession = false
@@ -77,24 +97,9 @@ public final class Superwall: NSObject {
   }
 
   /// Determines whether the user has an active subscription. Performed on the main thread.
+  @MainActor
   var isUserSubscribed: Bool {
-    // Prevents deadlock when calling from main thread
-    if Thread.isMainThread {
-      return Superwall.delegate?.isUserSubscribed() ?? false
-    }
-
-    var isSubscribed = false
-
-    let dispatchGroup = DispatchGroup()
-    dispatchGroup.enter()
-
-    onMain {
-      isSubscribed = Superwall.delegate?.isUserSubscribed() ?? false
-      dispatchGroup.leave()
-    }
-
-    dispatchGroup.wait()
-    return isSubscribed
+    return Superwall.shared.delegateAdapter.isUserSubscribed() == true
   }
 
   /// The config manager.
@@ -103,12 +108,20 @@ public final class Superwall: NSObject {
   /// The identity manager.
   var identityManager: IdentityManager = .shared
 
+  @MainActor
+  private let transactionManager = TransactionManager()
+
+  /// Handles restoration logic
+  @MainActor
+  private lazy var restorationHandler = RestorationHandler()
+
   // MARK: - Private Functions
   private override init() {}
 
   private init(
     apiKey: String?,
-    delegate: SuperwallDelegate? = nil,
+    swiftDelegate: SuperwallDelegate? = nil,
+    objcDelegate: SuperwallDelegateObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
     super.init()
@@ -118,16 +131,15 @@ public final class Superwall: NSObject {
     Storage.shared.configure(apiKey: apiKey)
 
     // Initialise session events manager and app session manager on main thread
-    _ = SessionEventsManager.shared
+    // _ = SessionEventsManager.shared
     _ = AppSessionManager.shared
 
-    if delegate != nil {
-      Self.delegate = delegate
-    }
-
-    SKPaymentQueue.default().add(self)
     Storage.shared.recordAppInstall()
     Task {
+      await delegateAdapter.configure(
+        swiftDelegate: swiftDelegate,
+        objcDelegate: objcDelegate
+      )
       await configManager.fetchConfiguration(withOptions: options)
       await identityManager.configure()
     }
@@ -142,8 +154,9 @@ public final class Superwall: NSObject {
   ///   - delegate: A class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   /// - Returns: The newly configured ``Superwall/Superwall`` instance.
+
   @discardableResult
-  @objc public static func configure(
+  public static func configure(
     apiKey: String,
     delegate: SuperwallDelegate? = nil,
     options: SuperwallOptions? = nil
@@ -158,7 +171,40 @@ public final class Superwall: NSObject {
     }
     shared = Superwall(
       apiKey: apiKey,
-      delegate: delegate,
+      swiftDelegate: delegate,
+      objcDelegate: nil,
+      options: options
+    )
+    return shared
+  }
+
+  /// Objective-C only function that configures a shared instance of ``Superwall/Superwall`` for use throughout your app.
+  ///
+  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. For a tutorial on the best practices for implementing the delegate, we recommend checking out our <doc:GettingStarted> article.
+  /// - Parameters:
+  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
+  ///   - delegate: A class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
+  ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
+  /// - Returns: The newly configured ``Superwall/Superwall`` instance.
+  @discardableResult
+  @available(swift, obsoleted: 1.0)
+  @objc public static func configure(
+    apiKey: String,
+    delegate: SuperwallDelegateObjc? = nil,
+    options: SuperwallOptions? = nil
+  ) -> Superwall {
+    guard Storage.shared.apiKey.isEmpty else {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: "Superwall.configure called multiple times. Please make sure you only call this once on app launch."
+      )
+      return shared
+    }
+    shared = Superwall(
+      apiKey: apiKey,
+      swiftDelegate: nil,
+      objcDelegate: delegate,
       options: options
     )
     return shared
@@ -170,7 +216,7 @@ public final class Superwall: NSObject {
   ///
   /// Note: This will not reload any paywalls you've already preloaded via ``Superwall/Superwall/preloadPaywalls(forTriggers:)``.
   @objc public static func preloadAllPaywalls() {
-    Task {
+    Task.detached(priority: .userInitiated) {
       await shared.configManager.preloadAllPaywalls()
     }
   }
@@ -181,7 +227,7 @@ public final class Superwall: NSObject {
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
   @objc public static func preloadPaywalls(forEvents eventNames: Set<String>) {
-    Task {
+    Task.detached(priority: .userInitiated) {
       await shared.configManager.preloadPaywalls(for: eventNames)
     }
   }
@@ -258,24 +304,20 @@ extension Superwall: PaywallViewControllerDelegate {
         state: .closed
       )
     case .initiatePurchase(let productId):
-      guard let product = StoreKitManager.shared.productsById[productId] else {
-        return
-      }
-      paywallViewController.loadingState = .loadingPurchase
-      Superwall.delegate?.purchase(product: product)
-    case .initiateRestore:
-      await tryToRestore(
-        paywallViewController,
-        userInitiated: true
+      await transactionManager.purchase(
+        productId,
+        from: paywallViewController
       )
+    case .initiateRestore:
+      await restorationHandler.tryToRestore(paywallViewController)
     case .openedURL(let url):
-      Superwall.delegate?.willOpenURL?(url: url)
+      Superwall.shared.delegateAdapter.willOpenURL(url: url)
     case .openedUrlInSafari(let url):
-      Superwall.delegate?.willOpenURL?(url: url)
+      Superwall.shared.delegateAdapter.willOpenURL(url: url)
     case .openedDeepLink(let url):
-      Superwall.delegate?.willOpenDeepLink?(url: url)
+      Superwall.shared.delegateAdapter.willOpenDeepLink(url: url)
     case .custom(let string):
-      Superwall.delegate?.handleCustomPaywallAction?(withName: string)
+      Superwall.shared.delegateAdapter.handleCustomPaywallAction(withName: string)
     }
   }
 }

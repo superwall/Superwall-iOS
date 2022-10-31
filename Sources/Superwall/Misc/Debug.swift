@@ -74,7 +74,7 @@ enum Logger {
     info: [String: Any]? = nil,
     error: Swift.Error? = nil
   ) {
-    Task {
+    Task.detached(priority: .utility) {
       var output: [String] = []
       var dumping: [String: Any] = [:]
 
@@ -92,7 +92,7 @@ enum Logger {
         dumping["error"] = error
       }
 
-      await Superwall.delegate?.handleLog?(
+      await Superwall.shared.delegateAdapter.handleLog(
         level: logLevel.description,
         scope: scope.rawValue,
         message: message,

@@ -10,7 +10,7 @@ import UIKit
 import StoreKit
 import Combine
 
-final class TriggerSessionManager {
+actor TriggerSessionManager {
   weak var delegate: SessionEventsDelegate?
 
   /// Storage class. Can be injected via init for testing.
@@ -28,7 +28,9 @@ final class TriggerSessionManager {
   /// A local count for transactions used within the trigger session.
   private var transactionCount: TriggerSession.Transaction.Count?
 
-  private var cancellable: AnyCancellable?
+  @MainActor
+  private var observerCancellables: [AnyCancellable] = []
+  private var configListener: AnyCancellable?
 
   enum LoadState {
     case start
@@ -45,56 +47,68 @@ final class TriggerSessionManager {
     self.delegate = delegate
     self.storage = storage
     self.configManager = configManager
-    addObservers()
-    listenForConfig()
-  }
-
-  private func addObservers() {
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(applicationDidEnterBackground),
-      name: UIApplication.didEnterBackgroundNotification,
-      object: nil
-    )
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(applicationWillEnterForeground),
-      name: UIApplication.willEnterForegroundNotification,
-      object: nil
-    )
+    Task {
+      await listenForConfig()
+      await addObservers()
+    }
   }
 
   private func listenForConfig() {
-    cancellable = configManager.$config
+    configListener = configManager.$config
       .compactMap { $0 }
       .sink { [weak self] config in
-        self?.createSessions(from: config)
+        guard let self = self else {
+          return
+        }
+        Task {
+          await self.createSessions(from: config)
+        }
       }
   }
 
-  // MARK: - App Lifecycle
+  @MainActor
+  private func addObservers() async {
+    NotificationCenter.default
+      .publisher(for: UIApplication.willEnterForegroundNotification)
+      .sink { [weak self] _ in
+        Task {
+          await self?.willEnterForeground()
+        }
+      }
+      .store(in: &observerCancellables)
 
-  @objc private func applicationDidEnterBackground() {
-    activeTriggerSession?.endAt = Date()
-    enqueueCurrentTriggerSession()
+    NotificationCenter.default
+      .publisher(for: UIApplication.didEnterBackgroundNotification)
+      .sink { [weak self] _ in
+        Task {
+          await self?.didEnterBackground()
+        }
+      }
+      .store(in: &observerCancellables)
   }
 
-  @objc private func applicationWillEnterForeground() {
+  private func willEnterForeground() async {
     activeTriggerSession?.id = UUID().uuidString
     activeTriggerSession?.endAt = nil
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
+  }
+
+  private func didEnterBackground() async {
+    activeTriggerSession?.endAt = Date()
+    await enqueueCurrentTriggerSession()
   }
 
   // MARK: - Session Lifecycle
 
   /// Creates a session for each potential trigger on config and manual paywall presentation and sends them off to the server.
-  func createSessions(from config: Config) {
+  func createSessions(from config: Config) async {
     // Loop through triggers and create a session for each.
+    let isUserSubscribed = await Superwall.shared.isUserSubscribed
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
         configRequestId: configManager.config?.requestId,
         userAttributes: IdentityManager.shared.userAttributes,
-        isSubscribed: Superwall.shared.isUserSubscribed,
+        isSubscribed: isUserSubscribed,
         eventName: trigger.eventName,
         appSession: AppSessionManager.shared.appSession
       )
@@ -102,7 +116,7 @@ final class TriggerSessionManager {
     }
 
     // Send the sessions back to the server.
-    enqueuePendingTriggerSessions()
+    await enqueuePendingTriggerSessions()
   }
 
   /// Active a pending trigger session.
@@ -116,8 +130,8 @@ final class TriggerSessionManager {
     on presentingViewController: UIViewController? = nil,
     paywall: Paywall? = nil,
     triggerResult: TriggerResult?,
-    trackEvent: (Trackable) -> TrackingResult = Superwall.track
-  ) {
+    trackEvent: (Trackable) async -> TrackingResult = Superwall.track
+  ) async {
     guard let eventName = presentationInfo.eventName else {
       // The paywall is being presented by identifier and that's not supported.
       return
@@ -128,7 +142,7 @@ final class TriggerSessionManager {
         triggerResult: triggerResult,
         triggerName: eventName
       )
-      _ = trackEvent(trackedEvent)
+      _ = await trackEvent(trackedEvent)
     }
 
     guard var session = pendingTriggerSessions[eventName] else {
@@ -161,28 +175,28 @@ final class TriggerSessionManager {
     switch outcome.presentationOutcome {
     case .holdout,
       .noRuleMatch:
-      endSession()
+      await endSession()
     case .paywall:
-      enqueueCurrentTriggerSession()
+      await enqueueCurrentTriggerSession()
     }
   }
 
   /// Ends the active trigger session and resets it to `nil`.
-  func endSession() {
+  func endSession() async {
     guard var currentTriggerSession = activeTriggerSession else {
       return
     }
     // Send off current trigger session
     currentTriggerSession.endAt = Date()
     activeTriggerSession = currentTriggerSession
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
 
     // Recreate a pending trigger session
     let eventName = currentTriggerSession.trigger.eventName
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
       configRequestId: configManager.config?.requestId,
       userAttributes: IdentityManager.shared.userAttributes,
-      isSubscribed: Superwall.shared.isUserSubscribed,
+      isSubscribed: await Superwall.shared.isUserSubscribed,
       eventName: eventName,
       products: currentTriggerSession.products.allProducts,
       appSession: AppSessionManager.shared.appSession
@@ -195,33 +209,32 @@ final class TriggerSessionManager {
   }
 
   /// Queues the trigger session to be sent back to the server.
-  private func enqueueCurrentTriggerSession() {
+  private func enqueueCurrentTriggerSession() async {
     guard var triggerSession = activeTriggerSession else {
       return
     }
-
-    triggerSession.isSubscribed = Superwall.shared.isUserSubscribed
-    delegate?.enqueue(triggerSession)
+    triggerSession.isSubscribed = await Superwall.shared.isUserSubscribed
+    await delegate?.enqueue(triggerSession)
   }
 
   /// Queues all the pending trigger sessions to be sent back to the server.
-  private func enqueuePendingTriggerSessions() {
+  private func enqueuePendingTriggerSessions() async {
+    let isUserSubscribed = await Superwall.shared.isUserSubscribed
     for eventName in pendingTriggerSessions.keys {
       guard var pendingTriggerSession = pendingTriggerSessions[eventName] else {
         continue
       }
-      pendingTriggerSession.isSubscribed = Superwall.shared.isUserSubscribed
+      pendingTriggerSession.isSubscribed = isUserSubscribed
       pendingTriggerSessions[eventName] = pendingTriggerSession
     }
-
     let triggerSessionsArray = Array(pendingTriggerSessions.values)
-    delegate?.enqueue(triggerSessionsArray)
+    await delegate?.enqueue(triggerSessionsArray)
   }
 
   // MARK: - App Session
 
   /// Adds the latest app session to the trigger
-  func updateAppSession(to appSession: AppSession) {
+  func updateAppSession(to appSession: AppSession) async {
     activeTriggerSession?.appSession = appSession
 
     for eventName in pendingTriggerSessions.keys {
@@ -230,22 +243,22 @@ final class TriggerSessionManager {
       pendingTriggerSessions[eventName] = pendingTriggerSession
     }
 
-    enqueuePendingTriggerSessions()
-    enqueueCurrentTriggerSession()
+    await enqueuePendingTriggerSessions()
+    await enqueueCurrentTriggerSession()
   }
 
   // MARK: - Paywall
 
   /// Tracks when the paywall was opened
-  func trackPaywallOpen() {
+  func trackPaywallOpen() async {
     activeTriggerSession?.paywall?.action.openAt = Date()
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
   }
 
   /// Tracks when paywall was closed and then ends the session.
-  func trackPaywallClose() {
+  func trackPaywallClose() async {
     activeTriggerSession?.paywall?.action.closeAt = Date()
-    endSession()
+    await endSession()
   }
 
   // MARK: - Webview Load
@@ -254,7 +267,7 @@ final class TriggerSessionManager {
   func trackWebviewLoad(
     forPaywallId paywallId: String,
     state: LoadState
-  ) {
+  ) async {
     // Check the webview that's loading is for the active trigger session paywall.
     // Without this check preloading paywalls could intefere.
     guard paywallId == activeTriggerSession?.paywall?.databaseId else {
@@ -278,7 +291,7 @@ final class TriggerSessionManager {
         .failAt = Date()
     }
 
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
   }
 
   // MARK: - Paywall Response Load
@@ -287,7 +300,7 @@ final class TriggerSessionManager {
   func trackPaywallResponseLoad(
     forPaywallId paywallId: String?,
     state: LoadState
-  ) {
+  ) async {
     if paywallId == nil {
       return
     }
@@ -315,7 +328,7 @@ final class TriggerSessionManager {
         .failAt = Date()
     }
 
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
   }
 
   // MARK: - Products
@@ -324,7 +337,7 @@ final class TriggerSessionManager {
   func trackProductsLoad(
     forPaywallId paywallId: String,
     state: LoadState
-  ) {
+  ) async {
     guard paywallId == activeTriggerSession?.paywall?.databaseId else {
       return
     }
@@ -345,15 +358,14 @@ final class TriggerSessionManager {
         .loadingInfo?
         .failAt = Date()
     }
-
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
   }
 
   // MARK: - Transactions
 
   func trackBeginTransaction(
     of product: SKProduct
-  ) {
+  ) async {
     // Determine local transaction count, per trigger session.
     if transactionCount != nil {
       transactionCount?.start += 1
@@ -372,11 +384,11 @@ final class TriggerSessionManager {
       count: transactionCount,
       product: .init(from: product, index: productIndex)
     )
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
   }
 
   /// When a transaction error occurred.
-  func trackTransactionError() {
+  func trackTransactionError() async {
     transactionCount?.fail += 1
 
     activeTriggerSession?
@@ -391,14 +403,14 @@ final class TriggerSessionManager {
       .transaction?
       .status = .fail
 
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
 
     activeTriggerSession?
       .transaction = nil
   }
 
   /// When a transaction has been abandoned.
-  func trackTransactionAbandon() {
+  func trackTransactionAbandon() async {
     transactionCount?.abandon += 1
 
     activeTriggerSession?
@@ -413,7 +425,7 @@ final class TriggerSessionManager {
       .transaction?
       .endAt = Date()
 
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
 
     activeTriggerSession?
       .transaction = nil
@@ -421,10 +433,10 @@ final class TriggerSessionManager {
 
   /// When a transaction is restored. A restore is triggered without any other transaction occurring.
   func trackTransactionRestoration(
-    withId id: String?,
-    product: SKProduct,
+    withId id: String? = nil,
+    product: SKProduct? = nil,
     isFreeTrialAvailable: Bool
-  ) {
+  ) async {
     if transactionCount != nil {
       transactionCount?.restore += 1
     } else {
@@ -433,12 +445,17 @@ final class TriggerSessionManager {
 
     var transaction: TriggerSession.Transaction
 
-    let productIndex = activeTriggerSession?
-      .products
-      .allProducts
-      .firstIndex {
-        $0.productIdentifier == product.productIdentifier
-      } ?? 0
+    var transactingProduct: TriggerSession.Transaction.Product?
+
+    if let product = product {
+      let productIndex = activeTriggerSession?
+        .products
+        .allProducts
+        .firstIndex {
+          $0.productIdentifier == product.productIdentifier
+        } ?? 0
+      transactingProduct = .init(from: product, index: productIndex)
+    }
 
     let date = Date()
     transaction = .init(
@@ -447,19 +464,19 @@ final class TriggerSessionManager {
       endAt: date,
       count: transactionCount,
       status: .complete,
-      product: .init(from: product, index: productIndex)
+      product: transactingProduct
     )
 
     activeTriggerSession?
       .transaction = transaction
 
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
 
     activeTriggerSession?
       .transaction = nil
   }
 
-  func trackDeferredTransaction() {
+  func trackDeferredTransaction() async {
     transactionCount?.fail += 1
 
     activeTriggerSession?
@@ -473,7 +490,7 @@ final class TriggerSessionManager {
     activeTriggerSession?
       .transaction?
       .endAt = Date()
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
 
     activeTriggerSession?
       .transaction = nil
@@ -483,7 +500,7 @@ final class TriggerSessionManager {
     withId id: String?,
     for product: SKProduct,
     isFreeTrialAvailable: Bool
-  ) {
+  ) async {
     transactionCount?.complete += 1
 
     activeTriggerSession?
@@ -515,7 +532,7 @@ final class TriggerSessionManager {
       .transaction?
       .outcome = transactionOutcome
 
-    enqueueCurrentTriggerSession()
+    await enqueueCurrentTriggerSession()
 
     activeTriggerSession?
       .transaction = nil

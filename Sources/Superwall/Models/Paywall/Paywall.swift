@@ -230,6 +230,8 @@ extension Paywall: Equatable {
   }
 }
 
+// swiftlint:disable force_unwrapping
+
 // MARK: - Stubbable
 extension Paywall: Stubbable {
   static func stub() -> Paywall {

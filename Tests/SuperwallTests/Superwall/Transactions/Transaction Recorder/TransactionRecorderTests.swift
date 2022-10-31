@@ -10,28 +10,35 @@ import XCTest
 @testable import Superwall
 
 @available(iOS 14.0, *)
-final class TransactionManagerTests: XCTestCase {
-  func testRecordTransaction() {
-    let queue = SessionEventsQueueMock()
-    let delegate = SessionEventsDelegateMock(queue: queue)
+final class TransactionRecorderTests: XCTestCase {
+  func testRecordTransaction() async {
     let configRequestId = "abc"
     let configManager = ConfigManager()
     configManager.config = .stub()
+
+    let queue = MockSessionEventsQueue()
+    let sessionEventsManager = SessionEventsManager(
+      queue: queue,
+      configManager: configManager
+    )
 
     let appSessionId = "123"
     let appSession = AppSession.stub()
       .setting(\.id, to: appSessionId)
     let appSessionManager = AppSessionManagerMock(appSession: appSession)
 
-    let transactionManager = TransactionManager(
-      delegate: delegate,
+    let transactionRecorder = TransactionRecorder(
       configManager: configManager,
+      sessionEventsManager: sessionEventsManager,
       appSessionManager: appSessionManager
     )
 
     let transaction = MockSKPaymentTransaction(state: .purchased)
-    transactionManager.record(transaction)
+    await transactionRecorder.record(transaction)
 
-    XCTAssertFalse(queue.transactions.isEmpty)
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
+    let isTransactionsEmpty = await queue.transactions.isEmpty
+    XCTAssertFalse(isTransactionsEmpty)
   }
 }

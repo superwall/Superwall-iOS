@@ -86,7 +86,9 @@ extension SWWebView: WKNavigationDelegate {
 
     // Track paywall errors
     if statusCode >= 400 {
-      trackPaywallError()
+      Task {
+        await trackPaywallError()
+      }
       return decisionHandler(.cancel)
     }
 
@@ -112,17 +114,19 @@ extension SWWebView: WKNavigationDelegate {
     didFail navigation: WKNavigation!,
     withError error: Error
   ) {
-    trackPaywallError()
+    Task {
+      await trackPaywallError()
+    }
   }
 
-  func trackPaywallError() {
+  func trackPaywallError() async {
     delegate?.paywall.webviewLoadingInfo.failAt = Date()
 
     guard let paywallInfo = delegate?.paywallInfo else {
       return
     }
 
-    SessionEventsManager.shared.triggerSession.trackWebviewLoad(
+    await SessionEventsManager.shared.triggerSession.trackWebviewLoad(
       forPaywallId: paywallInfo.databaseId,
       state: .fail
     )
@@ -131,6 +135,6 @@ extension SWWebView: WKNavigationDelegate {
       state: .fail,
       paywallInfo: paywallInfo
     )
-    Superwall.track(trackedEvent)
+    await Superwall.track(trackedEvent)
   }
 }

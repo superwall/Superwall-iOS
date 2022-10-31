@@ -15,7 +15,7 @@ final class ReceiptManager {
   private let receiptData: () -> Data?
 
   init(
-    productsManager: ProductsManager = ProductsManager(),
+    productsManager: ProductsManager = .shared,
     receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData
   ) {
     self.productsManager = productsManager
@@ -29,7 +29,7 @@ final class ReceiptManager {
     }
     let purchases = payload.purchases
     let purchasedProductIds = Set(purchases.map { $0.productIdentifier })
-    
+
     do {
       let products = try await productsManager.getProducts(identifiers: purchasedProductIds)
 

@@ -12,7 +12,7 @@ extension Foundation.Bundle {
   /// Returns the resource bundle associated with the current Swift module.
   static var module: Bundle = {
     // This is your `target.path` (located in your `Package.swift`) by replacing all the `/` by the `_`.
-    let bundleName = "Paywall_Paywall"
+    let bundleName = "Superwall_Superwall"
     let candidates = [
       // Bundle should be present here when the package is linked into an App.
       Bundle.main.resourceURL,

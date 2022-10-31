@@ -9,8 +9,8 @@ import Foundation
 
 /// Options for configuring Superwall, including paywall presentation and appearance.
 ///
-/// Pass an instance of this class to ``Superwall/Superwall/configure(apiKey:delegate:options:)``.
-public final class SuperwallOptions: NSObject {
+/// Pass an instance of this class to ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5``.
+@objc public final class SuperwallOptions: NSObject {
   /// Configure the appearance and behaviour of paywalls.
   public var paywalls = PaywallOptions()
 

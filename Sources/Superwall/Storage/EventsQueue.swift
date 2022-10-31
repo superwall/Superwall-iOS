@@ -6,52 +6,63 @@
 //
 
 import UIKit
+import Combine
 
 /// Sends n analytical events to the Superwall servers every 20 seconds, where n is defined by `maxEventCount`.
 ///
 /// **Note**: this currently has a limit of 500 events per flush.
-final class EventsQueue {
-  private let serialQueue = DispatchQueue(label: "me.superwall.eventQueue")
+actor EventsQueue {
   private let maxEventCount = 50
   private var elements: [JSON] = []
-  private var timer: Timer?
+  private var timer: AnyCancellable?
+
+  @MainActor
+  private var resignActiveObserver: AnyCancellable?
 
   deinit {
-    timer?.invalidate()
+    timer?.cancel()
     timer = nil
-    NotificationCenter.default.removeObserver(self)
   }
 
   init() {
+    Task {
+      await setupTimer()
+      await addObserver()
+    }
+  }
+
+  private func setupTimer() {
     let timeInterval = Superwall.options.networkEnvironment == .release ? 20.0 : 1.0
-    timer = Timer.scheduledTimer(
-      timeInterval: timeInterval,
-      target: self,
-      selector: #selector(flush),
-      userInfo: nil,
-      repeats: true
-    )
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(flush),
-      name: UIApplication.willResignActiveNotification,
-      object: nil
-    )
+    timer = Timer
+      .publish(
+        every: timeInterval,
+        on: RunLoop.main,
+        in: .default
+      )
+      .autoconnect()
+      .sink { [weak self] _ in
+        guard let self = self else {
+          return
+        }
+        Task {
+          await self.flushInternal()
+        }
+      }
+  }
+
+  @MainActor
+  private func addObserver() async {
+    resignActiveObserver = NotificationCenter.default
+      .publisher(for: UIApplication.willResignActiveNotification)
+      .sink { [weak self] _ in
+        Task {
+          await self?.flushInternal()
+        }
+      }
   }
 
   func enqueue(event: JSON) {
-    serialQueue.async {
-      self.elements.append(event)
-    }
-  }
-
-  @objc private func flush() {
-    serialQueue.async { [weak self] in
-      guard let self = self else {
-        return
-      }
-      self.flushInternal()
-    }
+    elements.append(event)
   }
 
   private func flushInternal(depth: Int = 10) {

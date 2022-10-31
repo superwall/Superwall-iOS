@@ -6,88 +6,110 @@
 //
 
 import UIKit
+import Combine
+
+/// A protocol that defines the internal methods for `SessionEventsQueue`.
+///
+/// This is used to be able to inject a mock version for testing.
+protocol SessionEnqueuable: Actor {
+  var triggerSessions: [TriggerSession] { get set }
+  var transactions: [TransactionModel] { get }
+
+  func enqueue(_ triggerSession: TriggerSession)
+  func enqueue(_ triggerSessions: [TriggerSession])
+  func enqueue(_ transaction: TransactionModel)
+  func removeAllTriggerSessions()
+  func flushInternal(depth: Int)
+  func saveCacheToDisk()
+}
+
+extension SessionEnqueuable {
+  /// Used for testing purposes only
+  func removeAllTriggerSessions() {}
+}
 
 /// Sends n analytical events to the Superwall servers every 20 seconds, where n is defined by `maxEventCount`.
 ///
 /// **Note**: this currently has a limit of 500 events per flush.
-class SessionEventsQueue {
-  private let serialQueue = DispatchQueue(label: "me.superwall.sessionEventQueue")
+actor SessionEventsQueue: SessionEnqueuable {
   private let maxEventCount = 50
-  private var triggerSessions: [TriggerSession] = []
-  private var transactions: [TransactionModel] = []
-  private var timer: Timer?
+  var triggerSessions: [TriggerSession] = []
+  var transactions: [TransactionModel] = []
+  private var timer: AnyCancellable?
+  @MainActor
+  private var willResignActiveObserver: AnyCancellable?
   private lazy var lastTwentySessions = LimitedQueue<TriggerSession>(limit: 20)
   private lazy var lastTwentyTransactions = LimitedQueue<TransactionModel>(limit: 20)
 
   deinit {
-    timer?.invalidate()
+    timer?.cancel()
     timer = nil
-    NotificationCenter.default.removeObserver(self)
   }
 
   init() {
+    Task {
+      await setupTimer()
+      await addObserver()
+    }
+  }
+
+  private func setupTimer() {
     let timeInterval = Superwall.options.networkEnvironment == .release ? 20.0 : 1.0
-    timer = Timer.scheduledTimer(
-      timeInterval: timeInterval,
-      target: self,
-      selector: #selector(flush),
-      userInfo: nil,
-      repeats: true
-    )
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(flush),
-      name: UIApplication.willResignActiveNotification,
-      object: nil
-    )
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(saveCacheToDisk),
-      name: UIApplication.willResignActiveNotification,
-      object: nil
-    )
+    timer = Timer
+      .publish(
+        every: timeInterval,
+        on: RunLoop.main,
+        in: .default
+      )
+      .autoconnect()
+      .sink { [weak self] _ in
+        guard let self = self else {
+          return
+        }
+        Task {
+          await self.flushInternal(depth: 10)
+        }
+      }
+  }
+
+  @MainActor
+  private func addObserver() {
+    willResignActiveObserver = NotificationCenter.default
+      .publisher(for: UIApplication.willResignActiveNotification)
+      .sink { [weak self] _ in
+        guard let self = self else {
+          return
+        }
+        Task {
+          await self.willResignActive()
+        }
+      }
+  }
+
+  private func willResignActive() async {
+    flushInternal(depth: 10)
+    saveCacheToDisk()
   }
 
   func enqueue(_ triggerSession: TriggerSession) {
-    serialQueue.async { [weak self] in
-      guard let self = self else {
-        return
-      }
-      self.triggerSessions.append(triggerSession)
-      self.lastTwentySessions.enqueue(triggerSession)
-    }
+    triggerSessions.append(triggerSession)
+    lastTwentySessions.enqueue(triggerSession)
   }
 
   func enqueue(_ transaction: TransactionModel) {
-    serialQueue.async { [weak self] in
-      guard let self = self else {
-        return
-      }
-      self.transactions.append(transaction)
-      self.lastTwentyTransactions.enqueue(transaction)
-    }
+    transactions.append(transaction)
+    lastTwentyTransactions.enqueue(transaction)
   }
 
   func enqueue(_ triggerSessions: [TriggerSession]) {
-    serialQueue.async { [weak self] in
-      guard let self = self else {
-        return
-      }
-      self.triggerSessions += triggerSessions
+    self.triggerSessions += triggerSessions
 
-      for session in triggerSessions {
-        self.lastTwentySessions.enqueue(session)
-      }
+    for session in triggerSessions {
+      lastTwentySessions.enqueue(session)
     }
   }
 
-  @objc private func flush() {
-    serialQueue.async {
-      self.flushInternal()
-    }
-  }
-
-  private func flushInternal(depth: Int = 10) {
+  func flushInternal(depth: Int) {
     var triggerSessionsToSend: [TriggerSession] = []
     var transactionsToSend: [TransactionModel] = []
 
@@ -119,7 +141,7 @@ class SessionEventsQueue {
     }
   }
 
-  @objc private func saveCacheToDisk() {
+  func saveCacheToDisk() {
     saveLatestSessionsToDisk()
     saveLatestTransactionsToDisk()
   }

@@ -36,16 +36,14 @@ final class LoadingModel: ObservableObject {
     )
   }
 
-  @objc
-  private func applicationWillResignActive() {
+  @objc private func applicationWillResignActive() {
     guard delegate?.loadingState == .loadingPurchase else {
       return
     }
     movedUp = true
   }
 
-  @objc
-  private func applicationDidBecomeActive() {
+  @objc private func applicationDidBecomeActive() {
     guard delegate?.loadingState == .loadingPurchase else {
       return
     }

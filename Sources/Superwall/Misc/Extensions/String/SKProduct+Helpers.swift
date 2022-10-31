@@ -43,7 +43,7 @@ extension SKProduct {
   }
 
   var swProductTemplateVariablesJson: JSON {
-    return JSON(SWProductTemplateVariable(product: self).dictionary as Any)
+    return JSON(SWProductTemplateVariable(product: self).dictionary() as Any)
   }
 
   var swProduct: SWProduct {

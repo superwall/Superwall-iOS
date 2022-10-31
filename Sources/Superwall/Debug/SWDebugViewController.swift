@@ -333,7 +333,7 @@ final class SWDebugViewController: UIViewController {
       Logger.debug(
         logLevel: .error,
         scope: .debugViewController,
-        message: "Paywall Response is Nil",
+        message: "Paywall is nil",
         info: nil,
         error: nil
       )

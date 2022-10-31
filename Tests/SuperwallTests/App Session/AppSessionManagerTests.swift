@@ -4,72 +4,72 @@
 //
 //  Created by Yusuf Tör on 19/05/2022.
 //
+// swiftlint:disable all
 
 import XCTest
 @testable import Superwall
 
 class AppSessionManagerTests: XCTestCase {
-  func testAppWillResignActive() {
-    let queue = SessionEventsQueueMock()
-    let sessionEvents = SessionEventsManager(queue: queue)
-    let appManager = AppSessionManager(
-      sessionEventsManager: sessionEvents
-    )
+  func testAppWillResignActive() async {
+    let appManager = AppSessionManager()
     XCTAssertNil(appManager.appSession.endAt)
+    
+    try? await Task.sleep(nanoseconds: 10_000_000)
 
-    NotificationCenter.default.post(
+    await NotificationCenter.default.post(
       Notification(name: UIApplication.willResignActiveNotification)
     )
+    try? await Task.sleep(nanoseconds: 10_000_000)
 
     XCTAssertNotNil(appManager.appSession.endAt)
   }
 
-  func testAppWillTerminate() {
-    let queue = SessionEventsQueueMock()
-    let sessionEvents = SessionEventsManager(queue: queue)
-    let appManager = AppSessionManager(
-      sessionEventsManager: sessionEvents
-    )
+  func testAppWillTerminate() async {
+    let appManager = AppSessionManager()
     XCTAssertNil(appManager.appSession.endAt)
 
-    NotificationCenter.default.post(
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
+    await NotificationCenter.default.post(
       Notification(name: UIApplication.willTerminateNotification)
     )
+    try? await Task.sleep(nanoseconds: 10_000_000)
 
     XCTAssertNotNil(appManager.appSession.endAt)
   }
 
-  func testAppWillBecomeActive_newSession() {
-    let queue = SessionEventsQueueMock()
-    let sessionEvents = SessionEventsManager(queue: queue)
-    let appManager = AppSessionManager(
-      sessionEventsManager: sessionEvents
-    )
+  func testAppWillBecomeActive_newSession() async {
+    let appManager = AppSessionManager()
     let oldAppSession = appManager.appSession
 
-    NotificationCenter.default.post(
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
+    await NotificationCenter.default.post(
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
 
     XCTAssertNotEqual(appManager.appSession.id, oldAppSession.id)
   }
 
-  func testAppWillBecomeActive_closeAndOpen() {
-    let queue = SessionEventsQueueMock()
-    let sessionEvents = SessionEventsManager(queue: queue)
-    let appManager = AppSessionManager(
-      sessionEventsManager: sessionEvents
-    )
+  func testAppWillBecomeActive_closeAndOpen() async {
+    let appManager = AppSessionManager()
     let oldAppSession = appManager.appSession
 
-    NotificationCenter.default.post(
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
+    await NotificationCenter.default.post(
       Notification(name: UIApplication.willResignActiveNotification)
     )
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
     XCTAssertNotNil(appManager.appSession.endAt)
 
-    NotificationCenter.default.post(
+    await NotificationCenter.default.post(
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
+
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
     XCTAssertNil(appManager.appSession.endAt)
 
     XCTAssertEqual(appManager.appSession.id, oldAppSession.id)

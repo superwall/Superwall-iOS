@@ -14,7 +14,9 @@ class AppSessionManager {
 
   private(set) var appSession = AppSession() {
     didSet {
-      SessionEventsManager.shared.updateAppSession()
+      Task {
+        await SessionEventsManager.shared.updateAppSession()
+      }
     }
   }
   private let sessionEventsManager: SessionEventsManager
@@ -25,10 +27,13 @@ class AppSessionManager {
   /// Only directly initialise if testing otherwise use `AppSessionManager.shared`.
   init(sessionEventsManager: SessionEventsManager = SessionEventsManager.shared) {
     self.sessionEventsManager = sessionEventsManager
-    addActiveStateObservers()
+    Task {
+      await addActiveStateObservers()
+    }
     listenForAppSessionTimeout()
   }
 
+  @MainActor
   private func addActiveStateObservers() {
     NotificationCenter.default.addObserver(
       self,
@@ -59,7 +64,9 @@ class AppSessionManager {
   }
 
   @objc private func applicationWillResignActive() {
-    Superwall.track(InternalSuperwallEvent.AppClose())
+    Task.detached(priority: .utility) {
+      await Superwall.track(InternalSuperwallEvent.AppClose())
+    }
     lastAppClose = Date()
     appSession.endAt = Date()
   }
@@ -76,14 +83,20 @@ class AppSessionManager {
 
     if didStartNewSession {
       appSession = AppSession()
-      Superwall.track(InternalSuperwallEvent.SessionStart())
+      Task {
+        await Superwall.track(InternalSuperwallEvent.SessionStart())
+      }
     } else {
       appSession.endAt = nil
     }
-    Superwall.track(InternalSuperwallEvent.AppOpen())
+    Task.detached(priority: .userInitiated) {
+      await Superwall.track(InternalSuperwallEvent.AppOpen())
+    }
 
     if !didTrackLaunch {
-      Superwall.track(InternalSuperwallEvent.AppLaunch())
+      Task.detached(priority: .userInitiated) {
+        await Superwall.track(InternalSuperwallEvent.AppLaunch())
+      }
       didTrackLaunch = true
     }
 

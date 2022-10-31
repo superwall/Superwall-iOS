@@ -10,28 +10,30 @@ import XCTest
 @testable import Superwall
 
 final class TriggerSessionManagerTests: XCTestCase {
-  var queue: SessionEventsQueueMock!
+  var queue: SessionEnqueuable!
   var sessionManager: TriggerSessionManager!
   var sessionEventsDelegate: SessionEventsDelegateMock!
 
   override func setUp() {
-    queue = SessionEventsQueueMock()
+    queue = MockSessionEventsQueue()
     sessionEventsDelegate = SessionEventsDelegateMock(queue: queue)
     sessionManager = TriggerSessionManager(delegate: sessionEventsDelegate)
+    sessionEventsDelegate.triggerSession = sessionManager
   }
 
   // MARK: - Create Config
 
-  func testCreatePendingSessionsFromConfig() {
+  func testCreatePendingSessionsFromConfig() async {
     let eventName = "MyTrigger"
     let config = createConfig(forEventName: eventName)
 
     // When
-    sessionManager.createSessions(from: config)
+    await sessionManager.createSessions(from: config)
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    let names = queue.triggerSessions.map { $0.trigger.eventName }
+    let triggerSessionCount = await queue.triggerSessions.count
+    XCTAssertEqual(triggerSessionCount, 1)
+    let names = await queue.triggerSessions.map { $0.trigger.eventName }
     XCTAssertTrue(names.contains(eventName))
   }
 
@@ -60,46 +62,48 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   // MARK: - Activate Pending Session
 
-  func testActivatePendingSession_byIdentifier() {
+  func testActivatePendingSession_byIdentifier() async {
     // Given
     let eventName = "MyTrigger"
     let config = createConfig(forEventName: eventName)
-    sessionManager.createSessions(from: config)
+    await sessionManager.createSessions(from: config)
     
     // When
-    sessionManager.activateSession(
+    await sessionManager.activateSession(
       for: .fromIdentifier("123", freeTrialOverride: false),
       triggerResult: nil
     )
 
-    XCTAssertNil(queue.triggerSessions.last!.presentationOutcome)
+    let triggerSession = await queue.triggerSessions.last
+    XCTAssertNil(triggerSession?.presentationOutcome)
   }
 
-  func testActivatePendingSession_triggerNotFound() {
+  func testActivatePendingSession_triggerNotFound() async {
     // Given
     let eventName = "MyTrigger"
 
     let config = createConfig(forEventName: eventName)
-    sessionManager.createSessions(from: config)
+    await sessionManager.createSessions(from: config)
 
     let eventData: EventData = .stub()
       .setting(\.name, to: "AnotherTrigger")
 
     // When
-    sessionManager.activateSession(
+    await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       triggerResult: .triggerNotFound
     )
 
-    XCTAssertNil(queue.triggerSessions.last!.presentationOutcome)
+    let presentationOutcome = await queue.triggerSessions.last!.presentationOutcome
+    XCTAssertNil(presentationOutcome)
   }
 
-  func testActivatePendingSession() {
+  func testActivatePendingSession() async {
     // Given
     let eventName = "MyTrigger"
 
     let config = createConfig(forEventName: eventName)
-    sessionManager.createSessions(from: config)
+    await sessionManager.createSessions(from: config)
 
     let eventData: EventData = .stub()
       .setting(\.name, to: eventName)
@@ -115,21 +119,23 @@ final class TriggerSessionManagerTests: XCTestCase {
     )
 
     // When
-    sessionManager.activateSession(
+    await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       triggerResult: .paywall(experiment: experiment)
     )
 
-    XCTAssertEqual(queue.triggerSessions.count, 2)
-    XCTAssertNil(queue.triggerSessions.last!.endAt)
-    XCTAssertEqual(queue.triggerSessions.last!.presentationOutcome, .paywall)
+
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions.count, 2)
+    XCTAssertNil(triggerSessions.last!.endAt)
+    XCTAssertEqual(triggerSessions.last!.presentationOutcome, .paywall)
   }
 
-  func testActivatePendingSession_holdout() {
+  func testActivatePendingSession_holdout() async {
     // Given
     let eventName = "MyTrigger"
     let config = createConfig(forEventName: eventName)
-    sessionManager.createSessions(from: config)
+    await sessionManager.createSessions(from: config)
 
     let triggers = createTriggers(
       withName: eventName,
@@ -145,33 +151,35 @@ final class TriggerSessionManagerTests: XCTestCase {
       .setting(\.name, to: eventName)
 
     // When
-    sessionManager.activateSession(
+    await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       triggerResult: .holdout(experiment: experiment)
     )
-    
-    XCTAssertEqual(queue.triggerSessions.count, 2)
-    XCTAssertNotNil(queue.triggerSessions.last!.endAt)
-    XCTAssertEqual(queue.triggerSessions.last!.presentationOutcome, .holdout)
+
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions.count, 2)
+    XCTAssertNotNil(triggerSessions.last!.endAt)
+    XCTAssertEqual(triggerSessions.last!.presentationOutcome, .holdout)
   }
 
-  func testActivatePendingSession_noRuleMatch() {
+  func testActivatePendingSession_noRuleMatch() async {
     // Given
     let eventName = "MyTrigger"
     let config = createConfig(forEventName: eventName)
-    sessionManager.createSessions(from: config)
+    await sessionManager.createSessions(from: config)
     let eventData: EventData = .stub()
       .setting(\.name, to: eventName)
 
     // When
-    sessionManager.activateSession(
+    await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       triggerResult: .noRuleMatch
     )
 
-    XCTAssertEqual(queue.triggerSessions.count, 2)
-    XCTAssertNotNil(queue.triggerSessions.last!.endAt)
-    XCTAssertEqual(queue.triggerSessions.last!.presentationOutcome, .noRuleMatch)
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions.count, 2)
+    XCTAssertNotNil(triggerSessions.last!.endAt)
+    XCTAssertEqual(triggerSessions.last!.presentationOutcome, .noRuleMatch)
   }
 
   private func createTriggers(
@@ -199,26 +207,27 @@ final class TriggerSessionManagerTests: XCTestCase {
   }
 
   // MARK: - Ending Session
-  func testEndSession_noActiveSession() {
+  func testEndSession_noActiveSession() async {
     // Given
     let eventName = "MyTrigger"
     let config = createConfig(forEventName: eventName)
-    sessionManager.createSessions(from: config)
+    await sessionManager.createSessions(from: config)
 
 
     // When
-    sessionManager.endSession()
+    await sessionManager.endSession()
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNil(queue.triggerSessions[0].endAt)
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions.count, 1)
+    XCTAssertNil(triggerSessions[0].endAt)
   }
 
-  func testEndSession() {
+  func testEndSession() async {
     // Given
     let eventName = "MyTrigger"
     let config = createConfig(forEventName: eventName)
-    sessionManager.createSessions(from: config)
+    await sessionManager.createSessions(from: config)
 
     let eventData: EventData = .stub()
       .setting(\.name, to: eventName)
@@ -232,78 +241,86 @@ final class TriggerSessionManagerTests: XCTestCase {
       groupId: rawExperiment.groupId,
       variant: rawExperiment.variants.first!.toVariant()
     )
-    sessionManager.activateSession(
+    await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       triggerResult: .paywall(experiment: experiment)
     )
 
     // When
-    sessionManager.endSession()
+    await sessionManager.endSession()
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 3)
-    XCTAssertNil(queue.triggerSessions[0].endAt)
-    XCTAssertNil(queue.triggerSessions[1].endAt)
-    XCTAssertNotNil(queue.triggerSessions[2].endAt)
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions.count, 3)
+    XCTAssertNil(triggerSessions[0].endAt)
+    XCTAssertNil(triggerSessions[1].endAt)
+    XCTAssertNotNil(triggerSessions[2].endAt)
   }
 
   // MARK: - Update App Session
-  func testUpdateAppSession() {
+  func testUpdateAppSession() async {
     let appSession: AppSession = AppSession()
 
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
+    await activateSession(withPaywallId: paywallId)
 
-    XCTAssertEqual(queue.triggerSessions.count, 2)
-    XCTAssertNotEqual(queue.triggerSessions[0].appSession, appSession)
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions.count, 2)
+    XCTAssertNotEqual(triggerSessions[0].appSession, appSession)
 
-    queue.triggerSessions.removeAll()
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.updateAppSession(to: appSession)
+    await sessionManager.updateAppSession(to: appSession)
 
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertEqual(queue.triggerSessions[0].appSession, appSession)
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertEqual(triggerSessions2[0].appSession, appSession)
   }
 
   // MARK: - Paywall
-  func testPaywallOpen() {
+  func testPaywallOpen() async {
     // Given
-    activateSession()
+    await activateSession()
 
-    XCTAssertNil(queue.triggerSessions.last!.paywall?.action.openAt)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.paywall?.action.openAt)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackPaywallOpen()
+    await sessionManager.trackPaywallOpen()
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.first!.paywall?.action.openAt)
+
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.first!.paywall?.action.openAt)
   }
 
-  func testPaywallClose() {
+  func testPaywallClose() async {
     // Given
-    activateSession()
+    await activateSession()
 
-    XCTAssertNil(queue.triggerSessions.last!.paywall?.action.closeAt)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.paywall?.action.closeAt)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackPaywallClose()
+    await sessionManager.trackPaywallClose()
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.first!.paywall?.action.closeAt)
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.first!.paywall?.action.closeAt)
   }
 
   private func activateSession(
     withPaywallId paywallId: String = "123",
     products: [SWProduct] = [SWProduct(product: MockSkProduct())]
-  ) {
+  ) async {
     let eventName = "MyTrigger"
     let config = createConfig(forEventName: eventName)
-    sessionManager.createSessions(from: config)
+    await sessionManager.createSessions(from: config)
 
     let eventData: EventData = .stub()
       .setting(\.name, to: eventName)
@@ -315,7 +332,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     let paywallResponse: Paywall = .stub()
       .setting(\.databaseId, to: paywallId)
       .setting(\.swProducts, to: products)
-    sessionManager.activateSession(
+    await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       paywall: paywallResponse,
       triggerResult: .paywall(experiment: Experiment(
@@ -327,200 +344,225 @@ final class TriggerSessionManagerTests: XCTestCase {
   }
 
   // MARK: - Webview Load
-  func testWebviewLoad_start() {
+  func testWebviewLoad_start() async {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
+    await activateSession(withPaywallId: paywallId)
 
-    XCTAssertNil(queue.triggerSessions.last!.paywall?.webviewLoading.startAt)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.paywall?.webviewLoading.startAt)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackWebviewLoad(
+    await sessionManager.trackWebviewLoad(
       forPaywallId: paywallId,
       state: .start
     )
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.paywall?.webviewLoading.startAt)
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.paywall?.webviewLoading.startAt)
   }
 
-  func testWebviewLoad_end() {
+  func testWebviewLoad_end() async {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
+    await activateSession(withPaywallId: paywallId)
 
-    XCTAssertNil(queue.triggerSessions.last!.paywall?.webviewLoading.endAt)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.paywall?.webviewLoading.endAt)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackWebviewLoad(
+    await sessionManager.trackWebviewLoad(
       forPaywallId: paywallId,
       state: .end
     )
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.paywall?.webviewLoading.endAt)
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.paywall?.webviewLoading.endAt)
   }
 
-  func testWebviewLoad_fail() {
+  func testWebviewLoad_fail() async {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
+    await activateSession(withPaywallId: paywallId)
 
-    XCTAssertNil(queue.triggerSessions.last!.paywall?.webviewLoading.failAt)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.paywall?.webviewLoading.failAt)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackWebviewLoad(
+    await sessionManager.trackWebviewLoad(
       forPaywallId: paywallId,
       state: .fail
     )
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.paywall?.webviewLoading.failAt)
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.paywall?.webviewLoading.failAt)
   }
 
   // MARK: - Paywall Response Load
 
-  func testPaywallResponseLoad_start() {
+  func testPaywallResponseLoad_start() async {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
+    await activateSession(withPaywallId: paywallId)
 
-    XCTAssertNil(queue.triggerSessions.last!.paywall?.responseLoading.startAt)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.paywall?.responseLoading.startAt)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackPaywallResponseLoad(
+    await sessionManager.trackPaywallResponseLoad(
       forPaywallId: paywallId,
       state: .start
     )
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.paywall?.responseLoading.startAt)
+
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.paywall?.responseLoading.startAt)
   }
 
-  func testPaywallResponseLoad_end() {
+  func testPaywallResponseLoad_end() async {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
+    await activateSession(withPaywallId: paywallId)
 
-    XCTAssertNil(queue.triggerSessions.last!.paywall?.responseLoading.endAt)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.paywall?.responseLoading.endAt)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackPaywallResponseLoad(
+    await sessionManager.trackPaywallResponseLoad(
       forPaywallId: paywallId,
       state: .end
     )
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.paywall?.responseLoading.endAt)
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.paywall?.responseLoading.endAt)
   }
 
-  func testPaywallResponseLoad_fail() {
+  func testPaywallResponseLoad_fail() async {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
+    await activateSession(withPaywallId: paywallId)
 
-    XCTAssertNil(queue.triggerSessions.last!.paywall?.responseLoading.failAt)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.paywall?.responseLoading.failAt)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackPaywallResponseLoad(
+    await sessionManager.trackPaywallResponseLoad(
       forPaywallId: paywallId,
       state: .fail
     )
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.paywall?.responseLoading.failAt)
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.paywall?.responseLoading.failAt)
   }
 
   // MARK: - Products
 
-  func testProductsLoad_start() {
+  func testProductsLoad_start() async {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
+    await activateSession(withPaywallId: paywallId)
 
-    XCTAssertNil(queue.triggerSessions.last!.products.loadingInfo?.startAt)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.products.loadingInfo?.startAt)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackProductsLoad(
+    await sessionManager.trackProductsLoad(
       forPaywallId: paywallId,
       state: .start
     )
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.products.loadingInfo?.startAt)
+
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.products.loadingInfo?.startAt)
   }
 
-  func testProductsLoad_end() {
+  func testProductsLoad_end() async {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
+    await activateSession(withPaywallId: paywallId)
 
-    XCTAssertNil(queue.triggerSessions.last!.products.loadingInfo?.endAt)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.products.loadingInfo?.endAt)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackProductsLoad(
+    await sessionManager.trackProductsLoad(
       forPaywallId: paywallId,
       state: .end
     )
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.products.loadingInfo?.endAt)
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.products.loadingInfo?.endAt)
   }
 
-  func testProductsLoad_fail() {
+  func testProductsLoad_fail() async {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
+    await activateSession(withPaywallId: paywallId)
 
-    XCTAssertNil(queue.triggerSessions.last!.products.loadingInfo?.failAt)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.products.loadingInfo?.failAt)
+    await queue.removeAllTriggerSessions()
+
+    let triggerSessions21 = await queue.triggerSessions
+    print("Anything?", triggerSessions21)
 
     // When
-    sessionManager.trackProductsLoad(
+    await sessionManager.trackProductsLoad(
       forPaywallId: paywallId,
       state: .fail
     )
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.products.loadingInfo?.failAt)
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.products.loadingInfo?.failAt)
   }
 
   // MARK: - Transactions
 
-  func testBeginTransaction_firstTime() {
+  func testBeginTransaction_firstTime() async {
     // Given
     let primaryProduct = MockSkProduct(productIdentifier: "primary")
-    beginTransactionOf(primaryProduct: primaryProduct)
+    await beginTransactionOf(primaryProduct: primaryProduct)
 
     // Then
     let expectedTransactionCount = TriggerSession.Transaction.Count(start: 1)
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction?.startAt)
-    XCTAssertNil(queue.triggerSessions.last!.transaction?.endAt)
-    XCTAssertNil(queue.triggerSessions.last!.transaction?.status)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.count, expectedTransactionCount)
-    XCTAssertNil(queue.triggerSessions.last!.transaction?.outcome)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions.count, 1)
+    XCTAssertNotNil(triggerSessions.last!.transaction?.startAt)
+    XCTAssertNil(triggerSessions.last!.transaction?.endAt)
+    XCTAssertNil(triggerSessions.last!.transaction?.status)
+    XCTAssertEqual(triggerSessions.last!.transaction?.count, expectedTransactionCount)
+    XCTAssertNil(triggerSessions.last!.transaction?.outcome)
+    XCTAssertEqual(triggerSessions.last!.transaction?.product, .init(from: primaryProduct, index: 0))
   }
 
-  private func beginTransactionOf(primaryProduct product: MockSkProduct) {
+  private func beginTransactionOf(primaryProduct product: MockSkProduct) async {
     // Given
     let paywallId = "abc"
     let products = [
@@ -528,82 +570,92 @@ final class TriggerSessionManagerTests: XCTestCase {
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]
-    activateSession(
+    await activateSession(
       withPaywallId: paywallId,
       products: products
     )
 
-    XCTAssertNil(queue.triggerSessions.last!.transaction)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.transaction)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackBeginTransaction(of: product)
+    await sessionManager.trackBeginTransaction(of: product)
   }
 
-  func testBeginTransaction_secondTime() {
+  func testBeginTransaction_secondTime() async  {
     // Given
     let primaryProduct = MockSkProduct(productIdentifier: "primary")
-    beginTransactionOf(primaryProduct: primaryProduct)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction)
-    queue.triggerSessions.removeAll()
+    await beginTransactionOf(primaryProduct: primaryProduct)
+
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNotNil(triggerSessions.last!.transaction)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackBeginTransaction(of: primaryProduct)
+    await sessionManager.trackBeginTransaction(of: primaryProduct)
 
     // Then
     let expectedTransactionCount = TriggerSession.Transaction.Count(start: 2)
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction?.startAt)
-    XCTAssertNil(queue.triggerSessions.last!.transaction?.endAt)
-    XCTAssertNil(queue.triggerSessions.last!.transaction?.status)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.count, expectedTransactionCount)
-    XCTAssertNil(queue.triggerSessions.last!.transaction?.outcome)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.transaction?.startAt)
+    XCTAssertNil(triggerSessions2.last!.transaction?.endAt)
+    XCTAssertNil(triggerSessions2.last!.transaction?.status)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.count, expectedTransactionCount)
+    XCTAssertNil(triggerSessions2.last!.transaction?.outcome)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.product, .init(from: primaryProduct, index: 0))
   }
 
-  func testTransactionError() {
+  func testTransactionError() async {
     // Given
     let primaryProduct = MockSkProduct(productIdentifier: "primary")
-    beginTransactionOf(primaryProduct: primaryProduct)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction)
-    queue.triggerSessions.removeAll()
+    await beginTransactionOf(primaryProduct: primaryProduct)
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNotNil(triggerSessions.last!.transaction)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackTransactionError()
+    await sessionManager.trackTransactionError()
 
     // Then
     let expectedTransactionCount = TriggerSession.Transaction.Count(start: 1, fail: 1)
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction?.startAt)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction?.endAt)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.status, .fail)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.count, expectedTransactionCount)
-    XCTAssertNil(queue.triggerSessions.last!.transaction?.outcome)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.transaction?.startAt)
+    XCTAssertNotNil(triggerSessions2.last!.transaction?.endAt)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.status, .fail)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.count, expectedTransactionCount)
+    XCTAssertNil(triggerSessions2.last!.transaction?.outcome)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.product, .init(from: primaryProduct, index: 0))
   }
 
-  func testTransactionAbandon() {
+  func testTransactionAbandon() async {
     // Given
     let primaryProduct = MockSkProduct(productIdentifier: "primary")
-    beginTransactionOf(primaryProduct: primaryProduct)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction)
-    queue.triggerSessions.removeAll()
+    await beginTransactionOf(primaryProduct: primaryProduct)
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNotNil(triggerSessions.last!.transaction)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackTransactionAbandon()
+    await sessionManager.trackTransactionAbandon()
 
     // Then
     let expectedTransactionCount = TriggerSession.Transaction.Count(start: 1, abandon: 1)
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction?.startAt)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction?.endAt)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.status, .abandon)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.count, expectedTransactionCount)
-    XCTAssertNil(queue.triggerSessions.last!.transaction?.outcome)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.transaction?.startAt)
+    XCTAssertNotNil(triggerSessions2.last!.transaction?.endAt)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.status, .abandon)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.count, expectedTransactionCount)
+    XCTAssertNil(triggerSessions2.last!.transaction?.outcome)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.product, .init(from: primaryProduct, index: 0))
   }
 
-  func testTransactionRestoration_noPreviousTransactionActions() {
+  func testTransactionRestoration_noPreviousTransactionActions() async {
     // Given
     let paywallId = "abc"
     let primaryProduct = MockSkProduct(productIdentifier: "primary")
@@ -612,16 +664,17 @@ final class TriggerSessionManagerTests: XCTestCase {
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]
-    activateSession(
+    await activateSession(
       withPaywallId: paywallId,
       products: products
     )
 
-    XCTAssertNil(queue.triggerSessions.last!.transaction)
-    queue.triggerSessions.removeAll()
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNil(triggerSessions.last!.transaction)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackTransactionRestoration(
+    await sessionManager.trackTransactionRestoration(
       withId: "abc",
       product: primaryProduct,
       isFreeTrialAvailable: false
@@ -629,32 +682,38 @@ final class TriggerSessionManagerTests: XCTestCase {
 
     // Then
     let expectedTransactionCount = TriggerSession.Transaction.Count(restore: 1)
-    XCTAssertEqual(queue.triggerSessions.count, 1)
+
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
     XCTAssertEqual(
-      queue.triggerSessions.last!.transaction?.startAt,
-      queue.triggerSessions.last!.transaction?.endAt
+      triggerSessions2.last!.transaction?.startAt,
+      triggerSessions2.last!.transaction?.endAt
     )
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.status, .complete)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.count, expectedTransactionCount)
-    XCTAssertNil(queue.triggerSessions.last!.transaction?.outcome)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+    XCTAssertEqual(triggerSessions2.last!.transaction?.status, .complete)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.count, expectedTransactionCount)
+    XCTAssertNil(triggerSessions2.last!.transaction?.outcome)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.product, .init(from: primaryProduct, index: 0))
   }
 
-  func testTransactionRestoration_withPreviousTransactionActions() {
+  func testTransactionRestoration_withPreviousTransactionActions() async {
     // Given
     let primaryProduct = MockSkProduct(productIdentifier: "primary")
-    beginTransactionOf(primaryProduct: primaryProduct)
-    let oldTransaction = queue.triggerSessions.last!.transaction
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction)
+    await beginTransactionOf(primaryProduct: primaryProduct)
 
-    sessionManager.trackTransactionAbandon()
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction)
+    let triggerSessions = await queue.triggerSessions
+    let oldTransaction = triggerSessions.last!.transaction
+    XCTAssertNotNil(triggerSessions.last!.transaction)
 
-    queue.triggerSessions.removeAll()
+    await sessionManager.trackTransactionAbandon()
+
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertNotNil(triggerSessions2.last!.transaction)
+
+    await queue.removeAllTriggerSessions()
 
 
     // When
-    sessionManager.trackTransactionRestoration(
+    await sessionManager.trackTransactionRestoration(
       withId: "abc",
       product: primaryProduct,
       isFreeTrialAvailable: false
@@ -662,48 +721,56 @@ final class TriggerSessionManagerTests: XCTestCase {
 
     // Then
     let expectedTransactionCount = TriggerSession.Transaction.Count(start: 1, abandon: 1, restore: 1)
-    XCTAssertNotEqual(queue.triggerSessions.last?.id, oldTransaction?.id)
-    XCTAssertEqual(queue.triggerSessions.count, 1)
+
+    let triggerSessions3 = await queue.triggerSessions
+    XCTAssertNotEqual(triggerSessions3.last?.id, oldTransaction?.id)
+    XCTAssertEqual(triggerSessions3.count, 1)
     XCTAssertEqual(
-      queue.triggerSessions.last!.transaction?.startAt,
-      queue.triggerSessions.last!.transaction?.endAt
+      triggerSessions3.last!.transaction?.startAt,
+      triggerSessions3.last!.transaction?.endAt
     )
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.status, .complete)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.count, expectedTransactionCount)
-    XCTAssertNil(queue.triggerSessions.last!.transaction?.outcome)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+    XCTAssertEqual(triggerSessions3.last!.transaction?.status, .complete)
+    XCTAssertEqual(triggerSessions3.last!.transaction?.count, expectedTransactionCount)
+    XCTAssertNil(triggerSessions3.last!.transaction?.outcome)
+    XCTAssertEqual(triggerSessions3.last!.transaction?.product, .init(from: primaryProduct, index: 0))
   }
 
-  func testTransactionDeferred() {
+  func testTransactionDeferred() async {
     // Given
     let primaryProduct = MockSkProduct(productIdentifier: "primary")
-    beginTransactionOf(primaryProduct: primaryProduct)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction)
-    queue.triggerSessions.removeAll()
+    await beginTransactionOf(primaryProduct: primaryProduct)
+
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNotNil(triggerSessions.last!.transaction)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackDeferredTransaction()
+    await sessionManager.trackDeferredTransaction()
 
     // Then
     let expectedTransactionCount = TriggerSession.Transaction.Count(start: 1, fail: 1)
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction?.startAt)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction?.endAt)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.status, .fail)
-    XCTAssertNil(queue.triggerSessions.last!.transaction?.outcome)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.count, expectedTransactionCount)
+
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.transaction?.startAt)
+    XCTAssertNotNil(triggerSessions2.last!.transaction?.endAt)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.status, .fail)
+    XCTAssertNil(triggerSessions2.last!.transaction?.outcome)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.count, expectedTransactionCount)
   }
 
-  func testTransactionSucceeded() {
+  func testTransactionSucceeded() async {
     // Given
     let id = "abc"
     let primaryProduct = MockSkProduct(productIdentifier: "primary")
-    beginTransactionOf(primaryProduct: primaryProduct)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction)
-    queue.triggerSessions.removeAll()
+    await beginTransactionOf(primaryProduct: primaryProduct)
+
+    let triggerSessions = await queue.triggerSessions
+    XCTAssertNotNil(triggerSessions.last!.transaction)
+    await queue.removeAllTriggerSessions()
 
     // When
-    sessionManager.trackTransactionSucceeded(
+    await sessionManager.trackTransactionSucceeded(
       withId: id,
       for: primaryProduct,
       isFreeTrialAvailable: true
@@ -711,49 +778,64 @@ final class TriggerSessionManagerTests: XCTestCase {
 
     // Then
     let expectedTransactionCount = TriggerSession.Transaction.Count(start: 1, complete: 1)
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction?.id, id)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction?.startAt)
-    XCTAssertNotNil(queue.triggerSessions.last!.transaction?.endAt)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.status, .complete)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.outcome, .nonRecurringProductPurchase)
-    XCTAssertNotNil(queue.triggerSessions.last!.paywall?.action.convertedAt)
-    XCTAssertEqual(queue.triggerSessions.last!.transaction?.count, expectedTransactionCount)
+
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotNil(triggerSessions2.last!.transaction?.id, id)
+    XCTAssertNotNil(triggerSessions2.last!.transaction?.startAt)
+    XCTAssertNotNil(triggerSessions2.last!.transaction?.endAt)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.status, .complete)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.outcome, .nonRecurringProductPurchase)
+    XCTAssertNotNil(triggerSessions2.last!.paywall?.action.convertedAt)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.count, expectedTransactionCount)
   }
 
   // MARK: - App Lifecycle
 
-  func testAppDidEnterBackground() {
+  func testAppDidEnterBackground() async {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
-    let lastTriggerSession = queue.triggerSessions.last!
+    await activateSession(withPaywallId: paywallId)
+    let triggerSessions = await queue.triggerSessions
+    let lastTriggerSession = triggerSessions.last!
     XCTAssertNil(lastTriggerSession.endAt)
-    queue.triggerSessions.removeAll()
+    await queue.removeAllTriggerSessions()
 
     // When
-    NotificationCenter.default.post(Notification(name: UIApplication.didEnterBackgroundNotification))
+    await NotificationCenter.default.post(Notification(name: UIApplication.didEnterBackgroundNotification))
 
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertEqual(queue.triggerSessions.last?.id, lastTriggerSession.id)
-    XCTAssertNotNil(queue.triggerSessions.last!.endAt)
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertEqual(triggerSessions2.last?.id, lastTriggerSession.id)
+    XCTAssertNotNil(triggerSessions2.last!.endAt)
   }
 
-  func testAppDidEnterForeground() {
+  func testAppDidEnterForeground() async {
     // Given
     let paywallId = "abc"
-    activateSession(withPaywallId: paywallId)
-    let lastTriggerSession = queue.triggerSessions.last!
-    NotificationCenter.default.post(Notification(name: UIApplication.didEnterBackgroundNotification))
-    queue.triggerSessions.removeAll()
+    await activateSession(withPaywallId: paywallId)
+    let lastTriggerSession = await queue.triggerSessions.last!
+    await NotificationCenter.default.post(Notification(name: UIApplication.didEnterBackgroundNotification))
+
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
+    await queue.removeAllTriggerSessions()
+
+    let triggerSessions1 = await queue.triggerSessions
+    XCTAssertTrue(triggerSessions1.isEmpty)
 
     // When
-    NotificationCenter.default.post(Notification(name: UIApplication.willEnterForegroundNotification))
+    await NotificationCenter.default.post(Notification(name: UIApplication.willEnterForegroundNotification))
 
+    try? await Task.sleep(nanoseconds: 10_000_000)
     // Then
-    XCTAssertEqual(queue.triggerSessions.count, 1)
-    XCTAssertNotEqual(queue.triggerSessions.last?.id, lastTriggerSession.id)
-    XCTAssertNil(queue.triggerSessions.last!.endAt)
+    let triggerSessions2 = await queue.triggerSessions
+    XCTAssertEqual(triggerSessions2.count, 1)
+    XCTAssertNotEqual(triggerSessions2.last?.id, lastTriggerSession.id)
+    print("*****", triggerSessions2.last)
+    XCTAssertNil(triggerSessions2.last!.endAt)
   }
 }

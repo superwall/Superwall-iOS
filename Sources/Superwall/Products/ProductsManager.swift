@@ -15,8 +15,10 @@ import Foundation
 import StoreKit
 
 class ProductsManager: NSObject {
+  static let shared = ProductsManager()
+
 	private var cachedProductsByIdentifier: [String: SKProduct] = [:]
-	private let queue = DispatchQueue(label: "ProductsManager")
+	private let queue = DispatchQueue(label: "com.superwall.ProductsManager")
 	private var productsByRequests: [SKRequest: Set<String>] = [:]
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]

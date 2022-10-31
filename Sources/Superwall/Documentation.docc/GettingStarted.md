@@ -4,7 +4,7 @@ Configuring the SDK and its delegate.
 
 ## Overview
 
-To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Superwall/Superwall/configure(apiKey:delegate:options:)``. You pass this function a class that conforms to ``SuperwallDelegate``, which handles actions taken on the paywall. You can then present your paywall.
+To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5``. You pass this function a class that conforms to ``SuperwallDelegate``, which handles actions taken on the paywall. You can then present your paywall.
 
 ## Getting your API Key
 
@@ -17,7 +17,7 @@ On that page, you will see your **Public API Key**. Copy this for the next step.
 
 ### Configuring the SDK
 
-To configure the SDK, you call ``Superwall/Superwall/configure(apiKey:delegate:options:)`` from  `application(_:didFinishLaunchingWithOptions:)`. We recommended creating a service class **SuperwallService.swift** that handles your SDK configuration and delegate callbacks:
+To configure the SDK, you call ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5`` from  `application(_:didFinishLaunchingWithOptions:)`. We recommended creating a service class **SuperwallService.swift** that handles your SDK configuration and delegate callbacks:
 
 ```swift
 import Superwall

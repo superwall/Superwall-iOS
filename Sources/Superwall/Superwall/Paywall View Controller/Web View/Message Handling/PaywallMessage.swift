@@ -45,7 +45,7 @@ enum PaywallMessage: Decodable {
   case openDeepLink(url: URL)
   case purchase(productId: String)
   case custom(data: String)
-  
+
   private enum MessageTypes: String, Decodable {
     case onReady = "ping"
     case close
@@ -71,7 +71,7 @@ enum PaywallMessage: Decodable {
     case decoding(String)
   }
 
-  public init(from decoder: Decoder) throws {
+  init(from decoder: Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
     if let messageType = try? values.decode(MessageTypes.self, forKey: .messageType) {
       switch messageType {

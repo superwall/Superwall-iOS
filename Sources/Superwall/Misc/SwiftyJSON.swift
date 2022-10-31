@@ -76,7 +76,7 @@ enum Type: Int {
 // MARK: - JSON Base
 struct JSON {
 	init(codable: Codable) {
-		self.init(codable.dictionary as Any)
+		self.init(codable.dictionary() as Any)
 	}
 
   /**
