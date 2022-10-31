@@ -16,26 +16,42 @@ final class SuperwallService {
     return Superwall.userAttributes["firstName"] as? String ?? ""
   }
 
-  func initSuperwall() {
+  @MainActor
+  func initSuperwall() -> Bool {
     Superwall.configure(
       apiKey: apiKey,
       delegate: self
     )
+
+    /// Checking our logged in status.
+    return Superwall.isLoggedIn
   }
 
   static func logIn() async {
     do {
       try await Superwall.logIn(userId: "abc")
+    } catch let error as LogInError {
+      switch error {
+      case .alreadyLoggedIn:
+        print("The user is already logged in")
+      case .missingUserId:
+        print("A userId was not provided")
+      }
     } catch {
-      print("An error occurred logging in", error)
+      print("An unknown error occurred", error)
     }
   }
 
   static func logOut() async {
     do {
       try await Superwall.logOut()
+    } catch let error as LogoutError {
+      switch error {
+      case .notLoggedIn:
+        print("The user is not logged in")
+      }
     } catch {
-      print("An error occurred logging out", error)
+      print("An unknown error occurred", error)
     }
   }
 

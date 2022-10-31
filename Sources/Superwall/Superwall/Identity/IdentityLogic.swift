@@ -60,11 +60,11 @@ enum IdentityLogic {
   /// - If they are anonymous, IS first app open since install, existed PRE static, don't get assignments.
   /// - If they are anonymous, IS first app open since install, existed POST static, don't get assignments.
   static func shouldGetAssignments(
-    hasAccount: Bool,
+    isLoggedIn: Bool,
     accountExistedPreStaticConfig: Bool,
     isFirstAppOpen: Bool
   ) -> Bool {
-    if hasAccount {
+    if isLoggedIn {
       if accountExistedPreStaticConfig {
         return true
       }

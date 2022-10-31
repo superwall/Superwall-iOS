@@ -18,6 +18,11 @@ final class WelcomeViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    let isLoggedIn = SuperwallService.shared.initSuperwall()
+    if isLoggedIn {
+      next()
+    }
+
     textFieldBackgroundView.layer.cornerRadius = textFieldBackgroundView.frame.height / 2
     textField.delegate = self
     UINavigationBar.appearance().titleTextAttributes = [

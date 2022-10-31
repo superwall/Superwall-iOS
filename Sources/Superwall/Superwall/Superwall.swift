@@ -62,6 +62,16 @@ public final class Superwall: NSObject {
     return IdentityManager.shared.userId
   }
 
+  /// Indicates whether the user is logged in to the Superwall SDK.
+  ///
+  /// If you have previously called ``Superwall/Superwall/logIn(userId:)`` or
+  /// ``Superwall/Superwall/createAccount(userId:)``, this will return true.
+  ///
+  /// - Returns: A boolean indicating whether the user is logged in or not.
+  public static var isLoggedIn: Bool {
+    return IdentityManager.shared.isLoggedIn
+  }
+
   // MARK: - Internal Properties
   /// The ``PaywallInfo`` object stored from the latest paywall that was dismissed.
   var latestDismissedPaywallInfo: PaywallInfo?

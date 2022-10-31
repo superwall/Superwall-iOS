@@ -24,8 +24,14 @@ class IdentityManager {
     return appUserId ?? aliasId
   }
   var userAttributes: [String: Any] = [:]
+  var isLoggedIn: Bool {
+    return appUserId != nil
+  }
 
-  /// When `true`, the SDK is able to fire triggers.
+  /// Indicates whether the identity (i.e. anonymous or logged in with
+  /// assignments) has been retrieved.
+  ///
+  /// When `false`, the SDK is unable to present paywalls.
   private var identitySubject = CurrentValueSubject<Bool, Never>(false)
 
   /// A Publisher that only emits when `identitySubject` is `true`. When `true`,
@@ -56,12 +62,11 @@ class IdentityManager {
   func configure() async {
     await configManager.$config.hasValue()
 
-    let hasAccount = appUserId != nil
     let accountExistedPreStaticConfig = storage.neverCalledStaticConfig
     let isFirstAppOpen = !(storage.get(DidTrackFirstSeen.self) ?? false)
 
     if IdentityLogic.shouldGetAssignments(
-      hasAccount: hasAccount,
+      isLoggedIn: isLoggedIn,
       accountExistedPreStaticConfig: accountExistedPreStaticConfig,
       isFirstAppOpen: isFirstAppOpen
     ) {
