@@ -87,8 +87,8 @@ extension Sk1TransactionObserver: SKPaymentTransactionObserver {
             )
           }
         case .deferred,
-            .failed,
-            .purchasing:
+          .failed,
+          .purchasing:
           break
         default:
           break
