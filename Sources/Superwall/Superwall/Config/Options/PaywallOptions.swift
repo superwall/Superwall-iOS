@@ -8,7 +8,7 @@
 import Foundation
 
 /// Options for configuring the appearance and behavior of paywalls.
-public final class PaywallOptions {
+@objc public final class PaywallOptions: NSObject {
   /// Determines whether the paywall should use haptic feedback. Defaults to true.
   ///
   /// Haptic feedback occurs when a user purchases or restores a product, opens a URL from the paywall, or closes the paywall.
@@ -28,7 +28,7 @@ public final class PaywallOptions {
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
   public var restoreFailed = RestoreFailed()
 
-  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Superwall/Superwall/configure(apiKey:delegate:options:)``. Defaults to `true`.
+  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
   ///

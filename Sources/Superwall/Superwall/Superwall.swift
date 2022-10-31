@@ -43,7 +43,7 @@ public final class Superwall: NSObject {
     return PaywallManager.shared.presentedViewController
   }
 
-  /// A convenience variable to access and change the paywall options that you passed to ``Superwall/Superwall/configure(apiKey:delegate:options:)``.
+  /// A convenience variable to access and change the paywall options that you passed to ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5``.
   public static var options: SuperwallOptions {
     return shared.configManager.options
   }

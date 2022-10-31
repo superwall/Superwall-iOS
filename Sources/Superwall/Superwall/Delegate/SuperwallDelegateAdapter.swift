@@ -20,7 +20,7 @@ final class SuperwallDelegateAdapter {
   weak var swiftDelegate: SuperwallDelegate?
   weak var objcDelegate: SuperwallDelegateObjc?
 
-  /// Called on init of the Superwall instance via ``Superwall/Superwall/configure(apiKey:delegate:options:)-7cmf5``.
+  /// Called on init of the Superwall instance via ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5``.
   ///
   /// We check to see if the delegates being set are non-nil because they may have been set
   /// separately to the initial Superwall.config function.
