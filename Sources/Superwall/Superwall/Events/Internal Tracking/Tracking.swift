@@ -27,12 +27,10 @@ extension Superwall {
 
     // For a trackable superwall event, send params to delegate
     if event is TrackableSuperwallEvent {
-      await MainActor.run {
-        shared.delegateManager.trackAnalyticsEvent(
-          withName: event.rawName,
-          params: parameters.delegateParams
-        )
-      }
+      await shared.delegateAdapter.trackAnalyticsEvent(
+        withName: event.rawName,
+        params: parameters.delegateParams
+      )
       Logger.debug(
         logLevel: .debug,
         scope: .events,

@@ -251,6 +251,7 @@ enum InternalSuperwallEvent {
     }
     let paywallInfo: PaywallInfo
     let product: SKProduct?
+    let model: TransactionModel?
     var customParameters: [String: Any] = [:]
 
     func getSuperwallParameters() async -> [String: Any] {
@@ -259,7 +260,11 @@ enum InternalSuperwallEvent {
         .abandon,
         .complete,
         .restore:
-        return await paywallInfo.eventParams(forProduct: product)
+        var eventParams = await paywallInfo.eventParams(forProduct: product)
+        if let transactionDict = model?.dictionary(withSnakeCase: true) {
+          eventParams += transactionDict
+        }
+        return eventParams
       case .fail(let message):
         return await paywallInfo.eventParams(
           forProduct: product,

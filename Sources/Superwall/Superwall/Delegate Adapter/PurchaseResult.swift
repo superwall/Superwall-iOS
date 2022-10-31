@@ -8,10 +8,13 @@
 import Foundation
 
 /// An enum that defines the possible outcomes of attempting to purchase a product.
+///
+/// When implementing the ``SuperwallDelegate/purchase(product:)`` delegate
+/// method, all cases should be considered.
 public enum PurchaseResult {
   /// The purchase was cancelled.
   ///
-  /// In StoreKit 1, you can detect this by switching over the error code from the `.failed`
+  /// In StoreKit 1, you can detect this by switching over the error code enum from the `.failed`
   /// transaction state. The following cases should all be reported as a `.cancelled` state to
   /// Superwall:
   /// - `.overlayCancelled`,
@@ -20,8 +23,8 @@ public enum PurchaseResult {
   ///
   /// In StoreKit 2, this is the `.userCancelled` error state.
   ///
-  /// With RevenueCat, this is when the `userCancelled` boolean returned from the purchase
-  /// method is `true`.
+  /// With RevenueCat, this is when the `userCancelled` boolean returns `true` from the purchase
+  /// method.
   case cancelled
 
   /// The product was purchased.
@@ -33,7 +36,8 @@ public enum PurchaseResult {
   ///
   /// In StoreKit 2, this is the same as the `.pending` purchase result.
   ///
-  /// With RevenueCat, this is the same as the `.paymentPendingError`.
+  /// With RevenueCat, this is retrieved by switching over the the thrown error during purchase. This is
+  /// the same as `.paymentPendingError`.
   case pending
 
   /// The purchase failed for a reason other than the user cancelling or the payment pending.

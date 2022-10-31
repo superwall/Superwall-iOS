@@ -19,7 +19,7 @@ final class RestorationHandler {
 
     paywallViewController.loadingState = .loadingPurchase
 
-    let hasRestored = await Superwall.shared.delegateManager.restorePurchases()
+    let hasRestored = await Superwall.shared.delegateAdapter.restorePurchases()
 
     paywallViewController.loadingState = .ready
 
@@ -52,7 +52,8 @@ final class RestorationHandler {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .restore,
         paywallInfo: paywallInfo,
-        product: nil
+        product: nil,
+        model: nil
       )
       await Superwall.track(trackedEvent)
 

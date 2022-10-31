@@ -92,7 +92,7 @@ enum Logger {
         dumping["error"] = error
       }
 
-      await Superwall.shared.delegateManager.handleLog(
+      await Superwall.shared.delegateAdapter.handleLog(
         level: logLevel.description,
         scope: scope.rawValue,
         message: message,

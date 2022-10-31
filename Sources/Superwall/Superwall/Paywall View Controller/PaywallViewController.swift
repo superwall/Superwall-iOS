@@ -258,7 +258,7 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
     if calledDismiss {
       return
     }
-    Superwall.shared.delegateManager.willDismissPaywall()
+    Superwall.shared.delegateAdapter.willDismissPaywall()
 	}
 
 	override func viewDidDisappear(_ animated: Bool) {
@@ -632,13 +632,13 @@ extension PaywallViewController {
 		view.transform = .identity
 		webView.scrollView.contentOffset = CGPoint.zero
 
-		Superwall.shared.delegateManager.willPresentPaywall()
+		Superwall.shared.delegateAdapter.willPresentPaywall()
 		Superwall.shared.paywallWasPresentedThisSession = true
 	}
 
   private func presentationDidFinish() {
     isPresented = true
-		Superwall.shared.delegateManager.didPresentPaywall()
+		Superwall.shared.delegateAdapter.didPresentPaywall()
     Task(priority: .utility) {
       await trackOpen()
     }
@@ -707,7 +707,7 @@ extension PaywallViewController {
   ) {
     calledDismiss = true
     Superwall.shared.latestDismissedPaywallInfo = paywallInfo
-    Superwall.shared.delegateManager.willDismissPaywall()
+    Superwall.shared.delegateAdapter.willDismissPaywall()
 
     dismiss(animated: presentationIsAnimated) { [weak self] in
       self?.didDismiss(
@@ -726,7 +726,7 @@ extension PaywallViewController {
     isPresented = false
 
     GameControllerManager.shared.clearDelegate(self)
-    Superwall.shared.delegateManager.didDismissPaywall()
+    Superwall.shared.delegateAdapter.didDismissPaywall()
 
     if shouldSendDismissedState {
       paywallStatePublisher?.send(.dismissed(dismissalResult))

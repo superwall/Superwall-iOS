@@ -11,7 +11,7 @@ import Foundation
 /// Consists of a dictionary of product, user, and device data.
 struct Variables: Encodable {
   let user = JSON(IdentityManager.shared.userAttributes)
-  let device = JSON(DeviceHelper.shared.templateDevice.dictionary ?? [:])
+  let device = JSON(DeviceHelper.shared.templateDevice.dictionary() ?? [:])
   let params: JSON
   var primary: JSON = [:]
   var secondary: JSON = [:]

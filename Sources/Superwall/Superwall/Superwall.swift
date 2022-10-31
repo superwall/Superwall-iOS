@@ -9,10 +9,10 @@ public final class Superwall: NSObject {
   @MainActor
   public static var delegate: SuperwallDelegate? {
     get {
-      return shared.delegateManager.swiftDelegate
+      return shared.delegateAdapter.swiftDelegate
     }
     set {
-      shared.delegateManager.swiftDelegate = newValue
+      shared.delegateAdapter.swiftDelegate = newValue
     }
   }
 
@@ -22,15 +22,15 @@ public final class Superwall: NSObject {
   @objc(delegate)
   public static var objcDelegate: SuperwallDelegateObjc? {
     get {
-      return shared.delegateManager.objcDelegate
+      return shared.delegateAdapter.objcDelegate
     }
     set {
-      shared.delegateManager.objcDelegate = newValue
+      shared.delegateAdapter.objcDelegate = newValue
     }
   }
 
   @MainActor
-  lazy var delegateManager = SuperwallDelegateManager()
+  lazy var delegateAdapter = SuperwallDelegateAdapter()
 
   /// Properties stored about the user, set using ``Superwall/Superwall/setUserAttributes(_:)``.
   public static var userAttributes: [String: Any] {
@@ -99,7 +99,7 @@ public final class Superwall: NSObject {
   /// Determines whether the user has an active subscription. Performed on the main thread.
   @MainActor
   var isUserSubscribed: Bool {
-    return Superwall.shared.delegateManager.isUserSubscribed() == true
+    return Superwall.shared.delegateAdapter.isUserSubscribed() == true
   }
 
   /// The config manager.
@@ -136,7 +136,7 @@ public final class Superwall: NSObject {
 
     Storage.shared.recordAppInstall()
     Task {
-      await delegateManager.configure(
+      await delegateAdapter.configure(
         swiftDelegate: swiftDelegate,
         objcDelegate: objcDelegate
       )
@@ -311,13 +311,13 @@ extension Superwall: PaywallViewControllerDelegate {
     case .initiateRestore:
       await restorationHandler.tryToRestore(paywallViewController)
     case .openedURL(let url):
-      Superwall.shared.delegateManager.willOpenURL(url: url)
+      Superwall.shared.delegateAdapter.willOpenURL(url: url)
     case .openedUrlInSafari(let url):
-      Superwall.shared.delegateManager.willOpenURL(url: url)
+      Superwall.shared.delegateAdapter.willOpenURL(url: url)
     case .openedDeepLink(let url):
-      Superwall.shared.delegateManager.willOpenDeepLink(url: url)
+      Superwall.shared.delegateAdapter.willOpenDeepLink(url: url)
     case .custom(let string):
-      Superwall.shared.delegateManager.handleCustomPaywallAction(withName: string)
+      Superwall.shared.delegateAdapter.handleCustomPaywallAction(withName: string)
     }
   }
 }

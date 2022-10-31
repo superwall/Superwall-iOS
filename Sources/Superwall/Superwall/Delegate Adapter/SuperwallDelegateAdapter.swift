@@ -8,9 +8,9 @@
 import Foundation
 import StoreKit
 
-/// Manages the swift vs objective c delegate.
+/// An adapter between the internal SDK and the public swift/objective c delegate.
 @MainActor
-final class SuperwallDelegateManager {
+final class SuperwallDelegateAdapter {
   enum InternalPurchaseResult {
     case purchased
     case cancelled

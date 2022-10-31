@@ -34,12 +34,12 @@ final class TransactionRecorder {
     self.appSessionManager = appSessionManager
   }
 
-  func record(_ transaction: SKPaymentTransaction) async {
-    let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
-    let triggerSessionId = TransactionRecorderLogic.getTriggerSessionId(
-      transaction: transaction,
-      activeTriggerSession: triggerSession
-    )
+  /// Sends the transaction back to the server with other session events.
+  ///
+  /// - Returns: A model of the transaction
+  @discardableResult
+  func record(_ transaction: SKPaymentTransaction) async -> TransactionModel {
+    let triggerSessionId = await getTriggerSessionId()
 
     let transaction = TransactionModel(
       from: transaction,
@@ -48,24 +48,41 @@ final class TransactionRecorder {
       triggerSessionId: triggerSessionId
     )
 
-    await sessionEventsManager.enqueue(transaction)
+    Task.detached(priority: .utility) { [weak self] in
+      await self?.sessionEventsManager.enqueue(transaction)
+    }
+
+    return transaction
   }
 
+  /// Sends the transaction back to the server with other session events.
+  ///
+  /// - Returns: A model of the transaction
+  @discardableResult
   @available(iOS 15.0, *)
-  func record(_ transaction: Transaction) async {
+  func record(_ transaction: Transaction) async -> TransactionModel {
+    let triggerSessionId = await getTriggerSessionId()
+
+    let transaction = TransactionModel(
+      from: transaction,
+      configRequestId: configManager.config?.requestId ?? "",
+      appSessionId: appSessionManager.appSession.id,
+      triggerSessionId: triggerSessionId
+    )
+
+    Task.detached(priority: .utility) { [weak self] in
+      await self?.sessionEventsManager.enqueue(transaction)
+    }
+
+    return transaction
+  }
+
+  private func getTriggerSessionId() async -> String? {
     let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
     var triggerSessionId: String?
     if triggerSession?.transaction != nil {
       triggerSessionId = triggerSession?.id
     }
-
-    let transaction = TransactionModel(
-      from: transaction,
-      configRequestId: configManager.config?.requestId ?? "",
-      appSessionId: appSessionManager.appSession.id,
-      triggerSessionId: triggerSessionId
-    )
-
-    await sessionEventsManager.enqueue(transaction)
+    return triggerSessionId
   }
 }

@@ -12,7 +12,7 @@ protocol TransactionObserverDelegate: AnyObject {
   var transactionRecorder: TransactionRecorder { get }
 
   func trackTransactionDidSucceed(
-    withId id: String?,
+    _ transaction: TransactionModel,
     product: SKProduct
   ) async
 
@@ -62,36 +62,38 @@ extension Sk1TransactionObserver: SKPaymentTransactionObserver {
     updatedTransactions transactions: [SKPaymentTransaction]
   ) {
 		for transaction in transactions {
-      Task.detached(priority: .utility) {
-        await self.delegate?.transactionRecorder.record(transaction)
-      }
-
-			guard let product = StoreKitManager.shared.productsById[transaction.payment.productIdentifier] else {
-        return
-      }
-
-			switch transaction.transactionState {
-			case .purchased:
-        Task.detached(priority: .utility) {
-          await self.delegate?.trackTransactionDidSucceed(
-            withId: transaction.transactionIdentifier,
-            product: product
-          )
+      Task {
+        guard let transactionModel = await self.delegate?.transactionRecorder.record(transaction) else {
+          return
         }
-			case .restored:
-        Task.detached(priority: .utility) {
-          await self.delegate?.trackTransactionRestoration(
-            withId: transaction.transactionIdentifier,
-            product: product
-          )
+
+        guard let product = StoreKitManager.shared.productsById[transaction.payment.productIdentifier] else {
+          return
         }
-			case .deferred,
-        .failed,
-        .purchasing:
-        break
-			default:
-				break
-			}
+
+        switch transaction.transactionState {
+        case .purchased:
+          Task.detached(priority: .utility) {
+            await self.delegate?.trackTransactionDidSucceed(
+              transactionModel,
+              product: product
+            )
+          }
+        case .restored:
+          Task.detached(priority: .utility) {
+            await self.delegate?.trackTransactionRestoration(
+              withId: transaction.transactionIdentifier,
+              product: product
+            )
+          }
+        case .deferred,
+            .failed,
+            .purchasing:
+          break
+        default:
+          break
+        }
+      }
 		}
 	}
 }

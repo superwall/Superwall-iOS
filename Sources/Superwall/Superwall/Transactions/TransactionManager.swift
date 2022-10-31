@@ -11,7 +11,7 @@ import Combine
 
 @MainActor
 final class TransactionManager {
-  /// The transaction manager.
+  /// Sends all transactions back to the server.
   lazy var transactionRecorder = TransactionRecorder()
 
   /// The StoreKit 1 transaction observer.
@@ -70,7 +70,7 @@ final class TransactionManager {
       let purchaseStartDate = Date()
 
       paywallViewController.startTransactionTimeout()
-      let result = try await Superwall.shared.delegateManager.purchase(product: product)
+      let result = try await Superwall.shared.delegateAdapter.purchase(product: product)
       paywallViewController.cancelTransactionTimeout()
 
       if #available(iOS 15.0, *) {
@@ -131,7 +131,8 @@ final class TransactionManager {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .start,
         paywallInfo: paywallInfo,
-        product: product
+        product: product,
+        model: nil
       )
       await Superwall.track(trackedEvent)
     }
@@ -157,11 +158,11 @@ final class TransactionManager {
     guard transaction.purchaseDate >= purchaseStartDate else {
       return
     }
-    Task.detached(priority: .utility) {
-      await self.transactionRecorder.record(transaction)
-    }
+
+    let transactionModel = await transactionRecorder.record(transaction)
+
     await self.trackTransactionDidSucceed(
-      withId: "\(transaction.id)",
+      transactionModel,
       product: product
     )
   }
@@ -208,7 +209,8 @@ final class TransactionManager {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .abandon,
         paywallInfo: paywallInfo,
-        product: product
+        product: product,
+        model: nil
       )
       await Superwall.track(trackedEvent)
       await SessionEventsManager.shared.triggerSession.trackTransactionAbandon()
@@ -229,7 +231,8 @@ final class TransactionManager {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .fail(message: "Needs parental approval"),
         paywallInfo: paywallInfo,
-        product: nil
+        product: nil,
+        model: nil
       )
       await Superwall.track(trackedEvent)
       await SessionEventsManager.shared.triggerSession.trackDeferredTransaction()
@@ -262,7 +265,8 @@ final class TransactionManager {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .fail(message: error.localizedDescription),
         paywallInfo: paywallInfo,
-        product: product
+        product: product,
+        model: nil
       )
       await Superwall.track(trackedEvent)
       await SessionEventsManager.shared.triggerSession.trackTransactionError()
@@ -296,7 +300,7 @@ extension TransactionManager: TransactionObserverDelegate {
   }
 
   func trackTransactionDidSucceed(
-    withId id: String?,
+    _ transactionModel: TransactionModel,
     product: SKProduct
   ) async {
     guard lastProductPurchased == product else {
@@ -312,7 +316,7 @@ extension TransactionManager: TransactionObserverDelegate {
     let paywallInfo = paywallViewController.paywallInfo
     Task.detached(priority: .utility) {
       await SessionEventsManager.shared.triggerSession.trackTransactionSucceeded(
-        withId: id,
+        withId: transactionModel.storeTransactionId,
         for: product,
         isFreeTrialAvailable: didStartFreeTrial
       )
@@ -320,7 +324,8 @@ extension TransactionManager: TransactionObserverDelegate {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .complete,
         paywallInfo: paywallInfo,
-        product: product
+        product: product,
+        model: transactionModel
       )
       await Superwall.track(trackedEvent)
 

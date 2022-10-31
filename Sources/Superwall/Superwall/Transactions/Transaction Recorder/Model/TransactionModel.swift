@@ -70,9 +70,6 @@ struct TransactionModel: Codable {
   /// The bundle identifier for the app.
   var appBundleId: String?
 
-  /// The product identifier.
-  var productId: String?
-
   /// The identifier of the subscription group that the subscription belongs to.
   var subscriptionGroupId: String?
 
@@ -81,9 +78,6 @@ struct TransactionModel: Codable {
 
   /// The date the subscription expires or renews.
   var expirationDate: Date?
-
-  /// The number of consumable products purchased.
-  var purchasedQuantity: Int?
 
   /// A string that identifies an offer applied to the current subscription.
   var offerId: String?
@@ -127,11 +121,9 @@ struct TransactionModel: Codable {
     originalTransactionDate = transaction.originalPurchaseDate
     webOrderLineItemID = transaction.webOrderLineItemID
     appBundleId = transaction.appBundleID
-    productId = transaction.productID
     subscriptionGroupId = transaction.subscriptionGroupID
     isUpgraded = transaction.isUpgraded
     expirationDate = transaction.expirationDate
-    purchasedQuantity = transaction.purchasedQuantity
     offerId = transaction.offerID
     revocationDate = transaction.revocationDate
     appAccountToken = transaction.appAccountToken
