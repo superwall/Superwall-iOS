@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
 
-	s.name         = "Superwall"
+	s.name         = "SuperwallKit"
   s.version      = "3.0.0"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. superwall.com"
@@ -40,9 +40,9 @@ Pod::Spec.new do |s|
 
   s.source_files  = "Sources/**/*.{swift}"
   s.resource_bundles = {
-    "Superwall_Superwall" => [
-      "Sources/Superwall/*.xcassets",
-      "Sources/Superwall/**/*.xcdatamodeld"
+    "SuperwallKit_SuperwallKit" => [
+      "Sources/SuperwallKit/*.xcassets",
+      "Sources/SuperwallKIt/**/*.xcdatamodeld"
     ]
   }
   s.dependency 'ASN1Swift', '~> 1.2.3'
