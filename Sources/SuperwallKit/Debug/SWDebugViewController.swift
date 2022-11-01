@@ -417,8 +417,8 @@ final class SWDebugViewController: UIViewController {
             errorMessage = "The user was assigned to a holdout"
           case .noRuleMatch:
             errorMessage = "The user didn't match a rule"
-          case .triggerNotFound:
-            errorMessage = "Couldn't find trigger"
+          case .eventNotFound:
+            errorMessage = "Couldn't find event"
           case .error(let error):
             errorMessage = error.localizedDescription
             Logger.debug(

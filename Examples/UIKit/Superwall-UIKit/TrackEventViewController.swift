@@ -75,8 +75,8 @@ final class TrackEventViewController: UIViewController {
           print("The user is in a holdout group, with id \(experiment.id) and group id \(experiment.groupId)")
         case .noRuleMatch:
           print("The user did not match any rules")
-        case .triggerNotFound:
-          print("The trigger wasn't found on the dashboard.")
+        case .eventNotFound:
+          print("The event wasn't found in a campaign on the dashboard.")
         case .error(let error):
           print("Failed to present paywall. Consider a native paywall fallback", error)
         }
@@ -108,8 +108,8 @@ final class TrackEventViewController: UIViewController {
             print("The user did not match any rules")
           case .holdout(let experiment):
             print("The user is in a holdout group, with experiment id: \(experiment.id), group id: \(experiment.groupId), paywall id: \(experiment.variant.paywallId ?? "")")
-          case .triggerNotFound:
-            print("The trigger wasn't found on the dashboard.")
+          case .eventNotFound:
+            print("The event wasn't found in a campaign on the dashboard.")
           case .error(let error):
             print("Failed to present paywall. Consider a native paywall fallback", error)
           }

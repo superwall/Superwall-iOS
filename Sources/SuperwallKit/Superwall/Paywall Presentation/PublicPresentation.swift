@@ -225,11 +225,11 @@ public extension Superwall {
         userInfo: userInfo
       )
       completion?(error)
-    case .triggerNotFound:
+    case .eventNotFound:
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(
-          "Trigger Not Found",
-          value: "The specified trigger could not be found",
+          "Event Not Found",
+          value: "The specified event could not be found in a campaign",
           comment: ""
         )
       ]

@@ -2,7 +2,7 @@
 
 This app demonstrates how to use SuperwallKit with RevenueCat and UIKit. We've written a mini tutorial below to help you understand what's going on in the app.
 
-Usually, to integrate SuperwallKit into your app, you first need to have configured and enabled a paywall using the [Superwall Dashboard](https://superwall.com/dashboard). However, with this example app, we have already done that for you and provided a sample API key to get you up and running. When you integrate the SDK into your own app, you'll need to use your own API key for your own Superwall account. To do that, [sign up for a free account on Superwall](https://superwall.com/sign-up).
+Usually, to integrate SuperwallKit into your app, you first need to have configured a paywall using the [Superwall Dashboard](https://superwall.com/dashboard). However, with this example app, we have already done that for you and provided a sample API key to get you up and running. When you integrate the SDK into your own app, you'll need to use your own API key for your own Superwall account. To do that, [sign up for a free account on Superwall](https://superwall.com/sign-up).
 
 ## Features
 
@@ -10,8 +10,8 @@ Feature | Sample Project Location
 --- | ---
 🕹 Configuring SuperwallKit | [Services/SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L22)
 🕹 Configuring RevenueCat | [Services/RevenueCatService.swift](Superwall-UIKit+RevenueCat/Services/RevenueCatService.swift#L16)
+💰 Implementing the delegate using RevenueCat | [Services/SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L69)
 👉 Presenting a paywall | [TrackEventViewController.swift](Superwall-UIKit+RevenueCat/TrackEventViewController.swift#L59)
-💰 Purchasing with RevenueCat | [Services/SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L70)
 👥 Logging In | [Services/SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L31)
 👥 Logging Out | [Services/SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L46)
 
@@ -32,7 +32,7 @@ Otherwise, you can download it from [https://github.com/realm/SwiftLint](https:/
 
 ## Getting Started
 
-Clone or download SuperwallKit from the [project home page](https://github.com/superwall-me/paywall-ios). Then, open **Superwall-UIKit+RevenueCat.xcodeproj** in Xcode and take a look at the code inside the [Superwall-UIKit+RevenueCat]() folder.
+Clone or download SuperwallKit from the [project home page](https://github.com/superwall-me/paywall-ios). Then, open **Superwall-UIKit+RevenueCat.xcodeproj** in Xcode and take a look at the code inside the [Superwall-UIKit+RevenueCat](Superwall-UIKit+RevenueCat) folder.
 
 Inside the [Services](Superwall-UIKit+RevenueCat/Services) folder, you'll see some helper classes. [SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift) handles the setup and delegate methods of the SDK. [RevenueCatService.swift](Superwall-UIKit+RevenueCat/Services/RevenueCatService.swift) handles purchasing, restoring and updating the user's subscription status.
 
@@ -48,7 +48,7 @@ Build and run the app and you'll see the welcome screen:
 
 SuperwallKit is [configured](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L20) on app launch, setting an `apiKey` and `delegate`.
 
-The SDK sends back events received from the paywall via the delegate methods in [SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift). You use these methods to make and restore purchases, react to analytical events, as well as tell Superwall whether the user has an active subscription. 
+The SDK sends back events received from the paywall via the delegate methods in [SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L69). You use these methods to make and restore purchases, react to analytical events, as well as tell Superwall whether the user has an active subscription. 
 
 ## Logging In
 
@@ -82,7 +82,7 @@ Tap the **Track Event** button and you'll see the paywall. If the event is disab
 
 ## Purchasing a subscription
 
-Tap the **Continue** button in the paywall and "purchase" a subscription. When the paywall dismisses, try triggering a paywall. You'll notice the buttons no longer show the paywall. The paywalls are only presented to users who haven't got an active subscription. To cancel the active subscription for an app that's using a storekit configuration file for testing, delete and reinstall the app.
+Tap the **Continue** button in the paywall and "purchase" a subscription. When the paywall dismisses, try tracking an event. You'll notice the buttons no longer show the paywall. The paywalls are only presented to users who haven't got an active subscription. To cancel the active subscription for an app that's using a storekit configuration file for testing, delete and reinstall the app.
 
 ## Support
 

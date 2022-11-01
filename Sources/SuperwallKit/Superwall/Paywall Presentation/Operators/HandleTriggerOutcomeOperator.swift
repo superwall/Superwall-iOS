@@ -43,8 +43,8 @@ extension AnyPublisher where Output == TriggerOutcomePipelineOutput, Failure == 
           triggerResult: input.triggerOutcome.result
         )
         paywallStatePublisher.send(.skipped(.noRuleMatch))
-      case .triggerNotFound:
-        paywallStatePublisher.send(.skipped(.triggerNotFound))
+      case .eventNotFound:
+        paywallStatePublisher.send(.skipped(.eventNotFound))
       case let .error(error):
         Logger.debug(
           logLevel: .error,

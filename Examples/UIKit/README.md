@@ -2,7 +2,7 @@
 
 This app demonstrates how to use SuperwallKit with UIKit. We've written a mini tutorial below to help you understand what's going on in the app.
 
-Usually, to integrate SuperwallKit into your app, you first need to have configured and enabled a paywall using the [Superwall Dashboard](https://superwall.com/dashboard). However, with this example app, we have already done that for you and provided a sample API key to get you up and running. When you integrate the SDK into your own app, you'll need to use your own API key for your own Superwall account. To do that, [sign up for a free account on Superwall](https://superwall.com/sign-up).
+Usually, to integrate SuperwallKit into your app, you first need to have configured a paywall using the [Superwall Dashboard](https://superwall.com/dashboard). However, with this example app, we have already done that for you and provided a sample API key to get you up and running. When you integrate the SDK into your own app, you'll need to use your own API key for your own Superwall account. To do that, [sign up for a free account on Superwall](https://superwall.com/sign-up).
 
 ## Features
 
@@ -81,7 +81,7 @@ Tap the **Track Event** button and you'll see the paywall. If the event is disab
 
 ## Purchasing a subscription
 
-Tap the **Continue** button in the paywall and "purchase" a subscription. When the paywall dismisses, try triggering a paywall. You'll notice the buttons no longer show the paywall. The paywalls are only presented to users who haven't got an active subscription. To cancel the active subscription for an app that's using a storekit configuration file for testing, delete and reinstall the app.
+Tap the **Continue** button in the paywall and "purchase" a subscription. When the paywall dismisses, try tracking an event. You'll notice the buttons no longer show the paywall. The paywalls are only presented to users who haven't got an active subscription. To cancel the active subscription for an app that's using a storekit configuration file for testing, delete and reinstall the app.
 
 ## Support
 

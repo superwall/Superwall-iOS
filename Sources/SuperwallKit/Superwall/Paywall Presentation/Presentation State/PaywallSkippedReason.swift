@@ -15,10 +15,11 @@ public enum PaywallSkippedReason {
   /// No rule was matched for this event.
   case noRuleMatch
 
-  /// A trigger was not found for this event.
+  /// This event was not found on the dashboard.
   ///
-  /// Please make sure the trigger is enabled on the dashboard and you have the correct spelling of the event.
-  case triggerNotFound
+  /// Please make sure you have added the event to a campaign on the dashboard and
+  /// double check its spelling.
+  case eventNotFound
 
   /// An error occurred.
   case error(Error)

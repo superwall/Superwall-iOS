@@ -95,7 +95,7 @@ enum AssignmentLogic {
         return Outcome(result: .noRuleMatch)
       }
     } else {
-      return Outcome(result: .triggerNotFound)
+      return Outcome(result: .eventNotFound)
     }
   }
 

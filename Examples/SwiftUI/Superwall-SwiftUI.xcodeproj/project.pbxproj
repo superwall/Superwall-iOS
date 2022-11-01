@@ -11,9 +11,6 @@
 		888F488827DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */; };
 		888F488C27DA6B10009C74A3 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F488B27DA6B10009C74A3 /* Images.xcassets */; };
 		888F488F27DA6B10009C74A3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */; };
-		888F489927DA6B10009C74A3 /* SuperwallSwiftUIExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F489827DA6B10009C74A3 /* SuperwallSwiftUIExampleTests.swift */; };
-		888F48A327DA6B10009C74A3 /* SuperwallSwiftUIExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48A227DA6B10009C74A3 /* SuperwallSwiftUIExampleUITests.swift */; };
-		888F48A527DA6B10009C74A3 /* SuperwallSwiftUIExampleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48A427DA6B10009C74A3 /* SuperwallSwiftUIExampleUITestsLaunchTests.swift */; };
 		888F48BD27DA71EA009C74A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48BC27DA71EA009C74A3 /* AppDelegate.swift */; };
 		888F48C327DB8584009C74A3 /* TrackEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48C227DB8584009C74A3 /* TrackEventView.swift */; };
 		888F48C827DBA47E009C74A3 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F48C727DBA47E009C74A3 /* Colors.xcassets */; };
@@ -32,33 +29,11 @@
 		88F9F1E327E21718004FCE83 /* InfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F9F1E227E21718004FCE83 /* InfoView.swift */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		888F489527DA6B10009C74A3 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 888F487C27DA6B0F009C74A3 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 888F488327DA6B0F009C74A3;
-			remoteInfo = SuperwallSwiftUIExample;
-		};
-		888F489F27DA6B10009C74A3 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 888F487C27DA6B0F009C74A3 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 888F488327DA6B0F009C74A3;
-			remoteInfo = SuperwallSwiftUIExample;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
 		888F488427DA6B0F009C74A3 /* Superwall-SwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Superwall-SwiftUI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallSwiftUIExampleApp.swift; sourceTree = "<group>"; };
 		888F488B27DA6B10009C74A3 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		888F489427DA6B10009C74A3 /* Superwall-SwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Superwall-SwiftUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		888F489827DA6B10009C74A3 /* SuperwallSwiftUIExampleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallSwiftUIExampleTests.swift; sourceTree = "<group>"; };
-		888F489E27DA6B10009C74A3 /* Superwall-SwiftUIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Superwall-SwiftUIUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		888F48A227DA6B10009C74A3 /* SuperwallSwiftUIExampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallSwiftUIExampleUITests.swift; sourceTree = "<group>"; };
-		888F48A427DA6B10009C74A3 /* SuperwallSwiftUIExampleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallSwiftUIExampleUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		888F48BC27DA71EA009C74A3 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		888F48BE27DA7352009C74A3 /* paywall-ios */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "paywall-ios"; path = ../..; sourceTree = "<group>"; };
 		888F48C227DB8584009C74A3 /* TrackEventView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventView.swift; sourceTree = "<group>"; };
@@ -89,20 +64,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		888F489127DA6B10009C74A3 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		888F489B27DA6B10009C74A3 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -111,8 +72,6 @@
 			children = (
 				888F48BE27DA7352009C74A3 /* paywall-ios */,
 				888F488627DA6B0F009C74A3 /* Superwall-SwiftUI */,
-				888F489727DA6B10009C74A3 /* Superwall-SwiftUITests */,
-				888F48A127DA6B10009C74A3 /* Superwall-SwiftUIUITests */,
 				888F488527DA6B0F009C74A3 /* Products */,
 				888F48B727DA6F7F009C74A3 /* Frameworks */,
 			);
@@ -122,8 +81,6 @@
 			isa = PBXGroup;
 			children = (
 				888F488427DA6B0F009C74A3 /* Superwall-SwiftUI.app */,
-				888F489427DA6B10009C74A3 /* Superwall-SwiftUITests.xctest */,
-				888F489E27DA6B10009C74A3 /* Superwall-SwiftUIUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -152,23 +109,6 @@
 				888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
-			sourceTree = "<group>";
-		};
-		888F489727DA6B10009C74A3 /* Superwall-SwiftUITests */ = {
-			isa = PBXGroup;
-			children = (
-				888F489827DA6B10009C74A3 /* SuperwallSwiftUIExampleTests.swift */,
-			);
-			path = "Superwall-SwiftUITests";
-			sourceTree = "<group>";
-		};
-		888F48A127DA6B10009C74A3 /* Superwall-SwiftUIUITests */ = {
-			isa = PBXGroup;
-			children = (
-				888F48A227DA6B10009C74A3 /* SuperwallSwiftUIExampleUITests.swift */,
-				888F48A427DA6B10009C74A3 /* SuperwallSwiftUIExampleUITestsLaunchTests.swift */,
-			);
-			path = "Superwall-SwiftUIUITests";
 			sourceTree = "<group>";
 		};
 		888F48B727DA6F7F009C74A3 /* Frameworks */ = {
@@ -252,42 +192,6 @@
 			productReference = 888F488427DA6B0F009C74A3 /* Superwall-SwiftUI.app */;
 			productType = "com.apple.product-type.application";
 		};
-		888F489327DA6B10009C74A3 /* Superwall-SwiftUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 888F48AB27DA6B10009C74A3 /* Build configuration list for PBXNativeTarget "Superwall-SwiftUITests" */;
-			buildPhases = (
-				888F489027DA6B10009C74A3 /* Sources */,
-				888F489127DA6B10009C74A3 /* Frameworks */,
-				888F489227DA6B10009C74A3 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				888F489627DA6B10009C74A3 /* PBXTargetDependency */,
-			);
-			name = "Superwall-SwiftUITests";
-			productName = SuperwallSwiftUIExampleTests;
-			productReference = 888F489427DA6B10009C74A3 /* Superwall-SwiftUITests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		888F489D27DA6B10009C74A3 /* Superwall-SwiftUIUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 888F48AE27DA6B10009C74A3 /* Build configuration list for PBXNativeTarget "Superwall-SwiftUIUITests" */;
-			buildPhases = (
-				888F489A27DA6B10009C74A3 /* Sources */,
-				888F489B27DA6B10009C74A3 /* Frameworks */,
-				888F489C27DA6B10009C74A3 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				888F48A027DA6B10009C74A3 /* PBXTargetDependency */,
-			);
-			name = "Superwall-SwiftUIUITests";
-			productName = SuperwallSwiftUIExampleUITests;
-			productReference = 888F489E27DA6B10009C74A3 /* Superwall-SwiftUIUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -300,14 +204,6 @@
 				TargetAttributes = {
 					888F488327DA6B0F009C74A3 = {
 						CreatedOnToolsVersion = 13.2.1;
-					};
-					888F489327DA6B10009C74A3 = {
-						CreatedOnToolsVersion = 13.2.1;
-						TestTargetID = 888F488327DA6B0F009C74A3;
-					};
-					888F489D27DA6B10009C74A3 = {
-						CreatedOnToolsVersion = 13.2.1;
-						TestTargetID = 888F488327DA6B0F009C74A3;
 					};
 				};
 			};
@@ -325,8 +221,6 @@
 			projectRoot = "";
 			targets = (
 				888F488327DA6B0F009C74A3 /* Superwall-SwiftUI */,
-				888F489327DA6B10009C74A3 /* Superwall-SwiftUITests */,
-				888F489D27DA6B10009C74A3 /* Superwall-SwiftUIUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -341,20 +235,6 @@
 				888F488F27DA6B10009C74A3 /* Preview Assets.xcassets in Resources */,
 				888F488C27DA6B10009C74A3 /* Images.xcassets in Resources */,
 				888F48DB27DBA8A9009C74A3 /* Rubik-Bold.ttf in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		888F489227DA6B10009C74A3 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		888F489C27DA6B10009C74A3 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -404,37 +284,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		888F489027DA6B10009C74A3 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				888F489927DA6B10009C74A3 /* SuperwallSwiftUIExampleTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		888F489A27DA6B10009C74A3 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				888F48A327DA6B10009C74A3 /* SuperwallSwiftUIExampleUITests.swift in Sources */,
-				888F48A527DA6B10009C74A3 /* SuperwallSwiftUIExampleUITestsLaunchTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		888F489627DA6B10009C74A3 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 888F488327DA6B0F009C74A3 /* Superwall-SwiftUI */;
-			targetProxy = 888F489527DA6B10009C74A3 /* PBXContainerItemProxy */;
-		};
-		888F48A027DA6B10009C74A3 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 888F488327DA6B0F009C74A3 /* Superwall-SwiftUI */;
-			targetProxy = 888F489F27DA6B10009C74A3 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		888F48A627DA6B10009C74A3 /* Debug */ = {
@@ -621,92 +471,6 @@
 			};
 			name = Release;
 		};
-		888F48AC27DA6B10009C74A3 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.superwall.SuperwallSwiftUIExampleTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Superwall-SwiftUIe.app/Superwall-SwiftUIe";
-			};
-			name = Debug;
-		};
-		888F48AD27DA6B10009C74A3 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.superwall.SuperwallSwiftUIExampleTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Superwall-SwiftUIe.app/Superwall-SwiftUIe";
-			};
-			name = Release;
-		};
-		888F48AF27DA6B10009C74A3 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.superwall.SuperwallSwiftUIExampleUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = SuperwallSwiftUIExample;
-			};
-			name = Debug;
-		};
-		888F48B027DA6B10009C74A3 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.superwall.SuperwallSwiftUIExampleUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = SuperwallSwiftUIExample;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -724,24 +488,6 @@
 			buildConfigurations = (
 				888F48A927DA6B10009C74A3 /* Debug */,
 				888F48AA27DA6B10009C74A3 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		888F48AB27DA6B10009C74A3 /* Build configuration list for PBXNativeTarget "Superwall-SwiftUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				888F48AC27DA6B10009C74A3 /* Debug */,
-				888F48AD27DA6B10009C74A3 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		888F48AE27DA6B10009C74A3 /* Build configuration list for PBXNativeTarget "Superwall-SwiftUIUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				888F48AF27DA6B10009C74A3 /* Debug */,
-				888F48B027DA6B10009C74A3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

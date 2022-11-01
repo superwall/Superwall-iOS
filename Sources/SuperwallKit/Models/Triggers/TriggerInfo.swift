@@ -94,10 +94,11 @@ public struct Experiment: Equatable, Hashable, Codable {
 ///
 /// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
 enum TriggerResult {
-  /// A trigger was not found for this event.
+  /// This event was not found on the dashboard.
   ///
-  /// Please make sure the trigger is enabled on the dashboard and you have the correct spelling of the event.
-  case triggerNotFound
+  /// Please make sure you have added the event to a campaign on the dashboard and
+  /// double check its spelling.
+  case eventNotFound
 
   /// No matching rule was found for this trigger so no paywall will be shown.
   case noRuleMatch

@@ -200,7 +200,7 @@ enum InternalSuperwallEvent {
           "result": "present",
           "trigger_name": triggerName
         ]
-      case .triggerNotFound,
+      case .eventNotFound,
         .error:
         return [:]
       }

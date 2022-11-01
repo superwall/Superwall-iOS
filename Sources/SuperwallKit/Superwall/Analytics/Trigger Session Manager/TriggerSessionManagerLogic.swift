@@ -41,7 +41,7 @@ enum TriggerSessionManagerLogic {
       }
       switch triggerResult {
       case .error,
-        .triggerNotFound:
+        .eventNotFound:
         // Error
         return nil
       case let .holdout(experiment):

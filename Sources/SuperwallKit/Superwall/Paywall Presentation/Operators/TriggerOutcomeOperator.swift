@@ -12,7 +12,7 @@ struct TriggerResultOutcome {
   enum Info {
     case paywall(ResponseIdentifiers)
     case holdout(Experiment)
-    case triggerNotFound
+    case eventNotFound
     case noRuleMatch
     case error(NSError)
   }
@@ -88,9 +88,9 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
         info: .noRuleMatch,
         result: triggerResult
       )
-    case .triggerNotFound:
+    case .eventNotFound:
       return TriggerResultOutcome(
-        info: .triggerNotFound,
+        info: .eventNotFound,
         result: triggerResult
       )
     case .error(let error):
