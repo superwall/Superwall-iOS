@@ -2,25 +2,27 @@
 
 This app demonstrates how to use SuperwallKit with RevenueCat. We've written a mini tutorial below to help you understand what's going on in the app.
 
-Usually, to integrate the SDK into your app, you first need to have configured and enabled a paywall using the [Superwall Dashboard](https://superwall.com/dashboard). However, with this example app, we have already done that for you and provided a sample API key to get you up and running. When you integrate the SDK into your own app, you'll need to use your own API key for your own Superwall account. To do that, [sign up for a free account on Superwall](https://superwall.com/sign-up).
+Usually, to integrate SuperwallKit into your app, you first need to have configured and enabled a paywall using the [Superwall Dashboard](https://superwall.com/dashboard). However, with this example app, we have already done that for you and provided a sample API key to get you up and running. When you integrate the SDK into your own app, you'll need to use your own API key for your own Superwall account. To do that, [sign up for a free account on Superwall](https://superwall.com/sign-up).
 
 ## Features
 
 Feature | Sample Project Location 
 --- | ---
-🕹 Configuring SuperwallKit | [Services/SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L20)
-👉 Explicitly Triggering a paywall | [ExplicitlyTriggerPaywallViewController.swift](Superwall-UIKit+RevenueCat/ExplicitlyTriggerPaywallViewController.swift#L43)
-👉 Implicitly Triggering a paywall | [ImplicitlyTriggerPaywallViewController.swift](Superwall-UIKit+RevenueCat/ImplicitlyTriggerPaywallViewController.swift#L19)
-👥 Identifying the user | [Services/SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L31)
+🕹 Configuring SuperwallKit | [Services/SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L22)
+🕹 Configuring RevenueCat | [Services/RevenueCatService.swift](Superwall-UIKit+RevenueCat/Services/RevenueCatService.swift#L16)
+👉 Presenting a paywall | [TrackEventViewController.swift](Superwall-UIKit+RevenueCat/TrackEventViewController.swift#L59)
+💰 Purchasing with RevenueCat | [Services/SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L70)
+👥 Logging In | [Services/SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L31)
+👥 Logging Out | [Services/SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L46)
 
 ## Requirements
 
 This example app uses:
 
 - UIKit
-- Xcode 13
-- iOS 15
-- Swift 5
+- Xcode 14
+- iOS 16
+- Swift 5.5
 
 You'll need to have SwiftLint installed. If you use Homebrew to install packages on your computer you run the following in the command line:
 
@@ -30,13 +32,13 @@ Otherwise, you can download it from [https://github.com/realm/SwiftLint](https:/
 
 ## Getting Started
 
-Clone or download the *Paywall* SDK from the [project home page](https://github.com/superwall-me/paywall-ios). Then, open **SuperwallUIKitExample.xcodeproj** in Xcode and take a look at the code inside the [SuperwallUIKitExample]() folder.
+Clone or download SuperwallKit from the [project home page](https://github.com/superwall-me/paywall-ios). Then, open **Superwall-UIKit+RevenueCat.xcodeproj** in Xcode and take a look at the code inside the [Superwall-UIKit+RevenueCat]() folder.
 
-Inside the [Services](SuperwallUIKitExample/Services) folder, you'll see some helper classes. [SuperwallService.swift](SuperwallUIKitExample/Services/SuperwallService.swift) handles the setup and delegate methods of the SDK, and [StoreKitService.swift](SuperwallUIKitExample/Services/StoreKitService.swift) handles the purchasing of in-app subscriptions.
+Inside the [Services](Superwall-UIKit+RevenueCat/Services) folder, you'll see some helper classes. [SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift) handles the setup and delegate methods of the SDK. [RevenueCatService.swift](Superwall-UIKit+RevenueCat/Services/RevenueCatService.swift) handles purchasing, restoring and updating the user's subscription status.
 
-[Products.storekit](SuperwallUIKitExample/Products.storekit) is a StoreKit configuration file that is used to mimic the setup of real products on App Store Connect. This is so you can make test purchases within the sample app without having to set up App Store Connect. In a production app, you will need real products configured in App Store Connect but you can also use a StoreKit configuration file for testing purposes if you wish.
+[Products.storekit](Superwall-UIKit+RevenueCat/Products.storekit) is a StoreKit configuration file that is used to mimic the setup of real products on App Store Connect. This is so you can make test purchases within the sample app without having to set up App Store Connect. In a production app, you will need real products configured in App Store Connect but you can also use a StoreKit configuration file for testing purposes if you wish.
 
-You'll see [Main.storyboard](SuperwallUIKitExample/Base.lproj/Main.storyboard) specifies the the layout of the app and other swift files handle the presentation of Paywalls.
+You'll see [Main.storyboard](Superwall-UIKit+RevenueCat/Base.lproj/Main.storyboard) specifies the the layout of the app and other swift files handle the presentation of Paywalls.
 
 Build and run the app and you'll see the welcome screen:
 
@@ -44,13 +46,15 @@ Build and run the app and you'll see the welcome screen:
   <img src="https://user-images.githubusercontent.com/3296904/161958142-c2f195b9-bd43-4f4e-9521-87c6fe4238ec.png" alt="The welcome screen" width="220px" />
 </p>
 
-The *Superwall* SDK is [configured](SuperwallUIKitExample/Services/SuperwallService.swift#L20) on app launch, setting an `apiKey` and `delegate`.
+SuperwallKit is [configured](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L20) on app launch, setting an `apiKey` and `delegate`.
 
-The SDK sends back events received from the paywall via the delegate methods in [SuperwallService.swift](SuperwallUIKitExample/Services/SuperwallService.swift). You use these methods to make and restore purchases, react to analytical events, as well as tell the SDK whether the user has an active subscription. 
+The SDK sends back events received from the paywall via the delegate methods in [SuperwallService.swift](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift). You use these methods to make and restore purchases, react to analytical events, as well as tell Superwall whether the user has an active subscription. 
 
-## Identifying a user
+## Logging In
 
-On the welcome screen, enter your name in the **text field** and tap **Continue**. This saves to the Superwall user attributes using   [Superwall.setUserAttributes(_:)](SuperwallUIKitExample/Services/SuperwallService.swift#L31). You don't need to set user attributes, but it can be useful if you want to recall information about the user on your paywall.
+On the welcome screen, enter your name in the **text field**. This saves to the Superwall user attributes using [Superwall.setUserAttributes(_:)](Superwall-UIKit+RevenueCat/Services/SuperwallService.swift#L31). You don't need to set user attributes, but it can be useful if you want to create a rule to present a paywall based on a specific attribute you've set. You can also recall user attributes on your paywall to personalise the messaging.
+
+Tap **Log In**. This logs the user in to Superwall (with a hardcoded userId that we've set), retrieving any paywalls that have already been assigned to them. If you were to create a new account you'd use `Superwall.createAccount(userId:)` instead.
 
 You'll see an overview screen:
 
@@ -58,37 +62,23 @@ You'll see an overview screen:
   <img src="https://user-images.githubusercontent.com/3296904/161960829-dfdc1319-571a-4784-b18f-bbb8c07f5a65.png" alt="The overview screen" width="220px" />
 </p>
 
-## Showing a Paywall
+## Presenting a Paywall
 
-Paywalls are created and enabled in the [Superwall Dashboard](https://superwall.com/dashboard) and are shown to users who don't have an active subscription. To show a paywall, you have two options: **explicitly triggering**, or **implicitly triggering**.
+To present a paywall, you **track** an event. 
 
-### Triggering a Paywall Explicitly
+On the [Superwall Dashboard](https://superwall.com/dashboard) you add this event and attach some presentation rules in a Campaign. For this app, we've already done this for you.
 
-Triggers enable you to retroactively decide where or when to show a paywall in your app.
+When an event is tracked, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall. Note that if the delegate method [isUserSubscribed()](Superwall-UIKit+RevenueCat/SuperwallService.swift#L91) returns `true`, a paywall will not show by default.
 
-A trigger is an analytics event you can wire up to specific rules in a Campaign on the [Superwall Dashboard](https://superwall.com/dashboard). The Superwall SDK listens for these analytics events and evaluates their rules to determine whether or not to show a paywall when the trigger is fired.
+By calling [Superwall.track(event:params:paywallOverrides:paywallState:)](Superwall-UIKit+RevenueCat/TrackEventViewController.swift#L59), you present a paywall in response to the event. For this app, the event is called "MyEvent".
 
-By calling [Superwall.track(event:onSkip:onPresent:onDismiss:)](SuperwallUIKitExample/ExplicitlyTriggerPaywallViewController.swift#L43), you explicitly trigger a paywall in response to an analytical event. In this app, we have tied an active trigger on the dashboard to the event "MyEvent". 
-
-Head back to the overview screen, and tap on **Explicitly Triggering a Paywall**. You'll see some explanatory text and a button that triggers the paywall:
+On screen you'll see some explanatory text and a button that tracks an event:
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/3296904/161961942-2b7ccf40-83d1-47c5-8f49-6fb409b17491.png" alt="Explicitly triggering a paywall" width="220px" />
+  <img src="https://user-images.githubusercontent.com/3296904/161961942-2b7ccf40-83d1-47c5-8f49-6fb409b17491.png" alt="Presenting a paywall" width="220px" />
 </p>
 
-Tap the **Trigger Paywall** button and you'll see the same paywall as before come up. If the trigger in the dashboard is disabled, this trigger would stop working.
-
-### Triggering a Paywall Implicitly
-
-If you don't need completion handlers for triggering a paywall, you can use [Superwall.track(_:_:)](SuperwallUIKitExample/ImplicitlyTriggerPaywallViewController.swift#L19).
-
-Head back to the overview screen, and tap on **Implicitly Triggering a Paywall**. You'll see some explanatory text, and two buttons that increment and reset a counter:
-
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/3296904/161962060-798c28a1-690c-46b0-b702-e273c80465f4.png" alt="Implicitly triggering a paywall" width="220px" />
-</p>
-
-Tap on increment 3 times. When the counter reaches 3, it will track an event, which will implicitly trigger a paywall. 
+Tap the **Track Event** button and you'll see the paywall. If the event is disabled on the dashboard, the paywall wouldn't show.
 
 ## Purchasing a subscription
 
@@ -96,6 +86,6 @@ Tap the **Continue** button in the paywall and "purchase" a subscription. When t
 
 ## Support
 
-For an in-depth explanation of how to use the *Superwall* SDK, you can [view our iOS SDK documentation](https://sdk.superwall.me/documentation/paywall/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
+For an in-depth explanation of how to use SuperwallKit, you can [view our iOS SDK documentation](https://sdk.superwall.me/documentation/paywall/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
 
 For general docs that include how to use the Superwall Dashboard, visit [docs.superwall.com](https://docs.superwall.com/docs).

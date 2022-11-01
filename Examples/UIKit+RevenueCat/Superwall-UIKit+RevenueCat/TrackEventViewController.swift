@@ -56,9 +56,7 @@ final class TrackEventViewController: UIViewController {
   }
 
   @IBAction private func trackEvent() {
-    Superwall.track(
-      event: "MyEvent"
-    ) { paywallState in
+    Superwall.track(event: "MyEvent") { paywallState in
       switch paywallState {
       case .presented(let paywallInfo):
         print("paywall info is", paywallInfo)

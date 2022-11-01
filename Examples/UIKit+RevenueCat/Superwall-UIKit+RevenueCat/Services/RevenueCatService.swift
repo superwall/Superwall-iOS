@@ -14,11 +14,12 @@ final class RevenueCatService {
   @Published var isSubscribed = false
 
   static func initPurchases() {
-    // Make sure to set usesStoreKit2IfAvailable to false
-    // if purchasing a product directly.
+    /*
+     Make sure to set usesStoreKit2IfAvailable to false
+     if purchasing a product directly.
+    */
     Purchases.configure(
       with: .init(withAPIKey: "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql")
-        .with(appUserID: "abc")
         .with(usesStoreKit2IfAvailable: false)
     )
   }
