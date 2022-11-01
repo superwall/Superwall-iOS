@@ -132,7 +132,7 @@ public extension Superwall {
     }
   }
 
-  /// Tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
+  /// Returns a publisher that tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
   ///
   /// This shows a paywall to the user when: An event you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.
   ///
@@ -153,7 +153,6 @@ public extension Superwall {
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil
   ) -> PaywallStatePublisher {
-    // TODO: CHECK THE NAME OF PUBLISHER VS TRACK. USING TRACK DEFAULTS TO THIS FUNC BUT
     return Future {
       let trackableEvent = UserInitiatedEvent.Track(
         rawName: event,
