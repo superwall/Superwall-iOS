@@ -11,7 +11,7 @@ import XCTest
 final class IdentityLogicTests: XCTestCase {
   func test_shouldGetAssignments_hasAccount_accountExistedPreStaticConfig() {
     let outcome = IdentityLogic.shouldGetAssignments(
-      hasAccount: true,
+      isLoggedIn: true,
       accountExistedPreStaticConfig: true,
       isFirstAppOpen: true
     )
@@ -20,7 +20,7 @@ final class IdentityLogicTests: XCTestCase {
 
   func test_shouldGetAssignments_isAnonymous_firstAppOpen_accountExistedPreStaticConfig() {
     let outcome = IdentityLogic.shouldGetAssignments(
-      hasAccount: false,
+      isLoggedIn: false,
       accountExistedPreStaticConfig: true,
       isFirstAppOpen: true
     )
@@ -29,7 +29,7 @@ final class IdentityLogicTests: XCTestCase {
 
   func test_shouldGetAssignments_hasAccount_noAccountPreStaticConfig() {
     let outcome = IdentityLogic.shouldGetAssignments(
-      hasAccount: true,
+      isLoggedIn: true,
       accountExistedPreStaticConfig: false,
       isFirstAppOpen: true
     )
@@ -38,7 +38,7 @@ final class IdentityLogicTests: XCTestCase {
 
   func test_shouldGetAssignments_isAnonymous_isFirstAppOpen() {
     let outcome = IdentityLogic.shouldGetAssignments(
-      hasAccount: false,
+      isLoggedIn: false,
       accountExistedPreStaticConfig: false,
       isFirstAppOpen: true
     )
@@ -47,7 +47,7 @@ final class IdentityLogicTests: XCTestCase {
 
   func test_shouldGetAssignments_isAnonymous_isNotFirstAppOpen_accountExistedPreStaticConfig() {
     let outcome = IdentityLogic.shouldGetAssignments(
-      hasAccount: false,
+      isLoggedIn: false,
       accountExistedPreStaticConfig: true,
       isFirstAppOpen: false
     )
@@ -56,7 +56,7 @@ final class IdentityLogicTests: XCTestCase {
 
   func test_shouldGetAssignments_isAnonymous_isNotFirstAppOpen_noAccountPreStaticConfig() {
     let outcome = IdentityLogic.shouldGetAssignments(
-      hasAccount: false,
+      isLoggedIn: false,
       accountExistedPreStaticConfig: false,
       isFirstAppOpen: false
     )

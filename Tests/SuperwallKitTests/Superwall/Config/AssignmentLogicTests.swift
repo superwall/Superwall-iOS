@@ -335,7 +335,7 @@ class AssignmentLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case .triggerNotFound = outcome.result else {
+    guard case .eventNotFound = outcome.result else {
       return XCTFail("Incorrect outcome. Expected unknown event")
     }
 

@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 21/07/2022.
 //
+// swiftlint:disable array_constructor
 
 import Foundation
 
@@ -238,7 +239,7 @@ enum ConfigLogic {
     let confirmedVariants = [Experiment.Variant](confirmedAssignments.values)
     let unconfirmedVariants = [Experiment.Variant](unconfirmedAssignments.values)
     let mergedVariants = confirmedVariants + unconfirmedVariants
-    var identifiers: Set<String> = []
+    var identifiers = Set<String>()
 
     for variant in mergedVariants {
       if variant.type == .treatment,
@@ -259,7 +260,7 @@ enum ConfigLogic {
     let groupedTriggerRules = getRulesPerTriggerGroup(from: triggers)
     let triggerExperimentIds = groupedTriggerRules.flatMap { $0.map { $0.experiment.id } }
 
-    var identifiers: Set<String> = []
+    var identifiers = Set<String>()
     for experimentId in triggerExperimentIds {
       guard let variant = mergedAssignments[experimentId] else {
         continue
@@ -272,7 +273,7 @@ enum ConfigLogic {
 
     return identifiers
   }
-  
+
   static func getTriggersByEventName(from triggers: Set<Trigger>) -> [String: Trigger] {
     let triggersDictionary = triggers.reduce([String: Trigger]()) { result, trigger in
       var result = result

@@ -91,7 +91,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      triggerResult: .triggerNotFound
+      triggerResult: .eventNotFound
     )
 
     let presentationOutcome = await queue.triggerSessions.last!.presentationOutcome

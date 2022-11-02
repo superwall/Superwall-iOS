@@ -23,7 +23,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       presentationInfo: .implicitTrigger(eventData),
       presentingViewController: nil,
       paywall: nil,
-      triggerResult: .triggerNotFound
+      triggerResult: .eventNotFound
     )
 
     XCTAssertNil(outcome)
