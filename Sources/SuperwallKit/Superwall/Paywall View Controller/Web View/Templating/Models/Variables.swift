@@ -40,7 +40,7 @@ struct Variables: Encodable {
   func templated() -> JSON {
     let template: [String: Any] = [
       "event_name": "template_variables",
-      "variables": dictionary ?? [:]
+      "variables": dictionary() ?? [:]
     ]
     return JSON(template)
   }

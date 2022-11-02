@@ -24,4 +24,4 @@ jobs:
         uses: xavierLowmiller/xcodegen-action@1.1.2
       - name: Run Tests
         run: |
-          xcodebuild -project Superwall.xcodeproj -scheme Superwall -sdk iphonesimulator -destination 'platform=iOS Simulator,OS=latest,name=iPhone 14 Pro' test
+          xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -sdk iphonesimulator -destination 'platform=iOS Simulator,OS=latest,name=iPhone 14 Pro' test
