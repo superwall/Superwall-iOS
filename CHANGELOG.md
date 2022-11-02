@@ -32,6 +32,8 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
   - `reset()`: Resets the `userId`, on-device paywall assignments, and data stored by Superwall. This can be called even if the user isn't logged in.
 - The identity API can be accessed using async/await or completion handlers.
 - New function `Superwall.publisher(forEvent:params:overrides)` which returns a `PaywallStatePublisher` (`AnyPublisher<PaywallState, Never>`) for those Combine lovers. By subscribing to this publisher, you can receive state updates of your paywall. We've updated our sample apps to show you how to use that.
+- Adds `Superwall.isLoggedIn` to check whether the user is logged in to the SDK or not. This will be true if you've previously called `logIn(userId:)` or `createAccount(userId:)`.
+- Adds a new sample app, UIKit+RevenueCat, which shows you how to use Superwall with RevenueCat.
 
 ### Fixes
 
