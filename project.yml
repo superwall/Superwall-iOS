@@ -1,4 +1,4 @@
-name: superwall
+name: SuperwallKit
 options:
   bundleIdentifer: com.superwall
 packages:
@@ -7,14 +7,14 @@ packages:
     from: 1.2.4
 
 targets:
-  Superwall:
+  SuperwallKit:
     scheme:
       testTargets:
-        - SuperwallTests
+        - SuperwallKitTests
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.Superwall"
+      PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.SuperwallKit"
     info:
-      path: Superwall.xcodeproj/Superwall_Info.plist
+      path: SuperwallKit.xcodeproj/SuperwallKit_Info.plist
       properties:
         CFBundleDevelopmentRegion: en
         CFBundleExecutable: "$(EXECUTABLE_NAME)"
@@ -32,18 +32,18 @@ targets:
     sources: [Sources/]
     dependencies:
       - package: ASN1Swift
-  SuperwallTests:
+  SuperwallKitTests:
     scheme: {}
     sources: [Tests/]
     type: bundle.unit-test
     platform: iOS
     dependencies:
-      - target: Superwall
+      - target: SuperwallKit
       - package: ASN1Swift
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: "me.superwall.SuperwallTests"
+      PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.SuperwallTests"
     info:
-      path: Superwall.xcodeproj/SuperwallTests_Info.plist
+      path: SuperwallKit.xcodeproj/SuperwallTests_Info.plist
       properties:
         CFBundleDevelopmentRegion: en
         CFBundleExecutable: "$(EXECUTABLE_NAME)"

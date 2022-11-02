@@ -29,7 +29,7 @@ jobs:
       env:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
       run: |
-        pod trunk push Superwall.podspec --allow-warnings
+        pod trunk push SuperwallKit.podspec --allow-warnings
 
   xcode12:
     needs: tag
@@ -48,10 +48,10 @@ jobs:
           sudo git pull
           sudo git checkout -b xcode-12-$(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)
           sudo python xcode12.py
-          sed -i '' "4s/.*/    s.version      = \"$(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)-xcode-12\"/" Superwall.podspec
+          sed -i '' "4s/.*/    s.version      = \"$(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)-xcode-12\"/" SuperwallKit.podspec
           sudo git add -A
           sudo git commit -m "xcode 12 support"
           sudo git push -u origin xcode-12-$(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)
           sudo git tag -a $(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)-xcode-12 -m "tags with latest version for xcode-12"
           sudo git push --tags || true
-          pod trunk push Superwall.podspec --allow-warnings
+          pod trunk push SuperwallKit.podspec --allow-warnings

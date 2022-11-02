@@ -6,7 +6,8 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ### Breaking Changes
 
-- Renames the package from `Paywall` to `Superwall`.
+- Renames the package from `Paywall` to `SuperwallKit`.
+- Renames the primary static class for integrating Superwall from `Paywall` to `Superwall`.
 - Sets the minimum iOS version to iOS 13.
 - Renames `preloadPaywalls(forTriggers:)` to `preloadPaywalls(forEvents:)`
 - Renames `configure(apiKey:userId:delegate:options:)` to `configure(apiKey:delegate:options:)`. This means you no longer provide a `userId` with configure. Instead you must use the new identity API detailed below.

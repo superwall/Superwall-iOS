@@ -1,11 +1,12 @@
 # Example Apps
 
-We have two example apps – one built in SwiftUI and another built using UIKit. They both have the same functionality and each has an accompanying tutorial that gives an overview of the app.
+We have three example apps – SwiftUI, UIKit, and UIKit with RevenueCat. They all have the same functionality and each has an accompanying tutorial that gives an overview of the app.
 
 Please select which app you'd like to use:
 
-- [SwiftUI Example App](SuperwallSwiftUIExample)
-- [UIKit Example App](SuperwallUIKitExample)
+- [SwiftUI Example App](SwiftUI)
+- [UIKit Example App](UIKit)
+- [UIKit+RevenueCat Example App](UIKit+RevenueCat)
 
 ## Support
 
