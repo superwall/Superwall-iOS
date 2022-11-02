@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Remove Xcodeproj
         run: |
-          rm -r Superwall.xcodeproj
+          rm -r SuperwallKit.xcodeproj
       - name: Cache DocC
         uses: actions/cache@v3
         id: cache-docc
@@ -37,7 +37,7 @@ jobs:
       - name: Build Doc Bundle 📗
         run: |
           echo "🚀 Starting to build documentation"
-          xcodebuild docbuild -scheme Superwall -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 Pro'
+          xcodebuild docbuild -scheme SuperwallKit -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 Pro'
       - name: Install DocC Renderer
         run: |
           git clone https://github.com/apple/swift-docc-render-artifact.git
@@ -55,7 +55,7 @@ jobs:
         run: |
           # we get the last commit message for this library and add current date
           cd swift-docc
-          swift run docc process-archive transform-for-static-hosting ../docbuild/Build/Products/Debug-iphonesimulator/Superwall.doccarchive --output-path ../web
+          swift run docc process-archive transform-for-static-hosting ../docbuild/Build/Products/Debug-iphonesimulator/SuperwallKit.doccarchive --output-path ../web
           cd ..
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'

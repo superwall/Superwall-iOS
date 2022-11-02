@@ -6,7 +6,8 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ### Breaking Changes
 
-- Renames the package from `Paywall` to `Superwall`.
+- Renames the package from `Paywall` to `SuperwallKit`.
+- Renames the primary static class for integrating Superwall from `Paywall` to `Superwall`.
 - Sets the minimum iOS version to iOS 13.
 - Renames `preloadPaywalls(forTriggers:)` to `preloadPaywalls(forEvents:)`
 - Renames `configure(apiKey:userId:delegate:options:)` to `configure(apiKey:delegate:options:)`. This means you no longer provide a `userId` with configure. Instead you must use the new identity API detailed below.
@@ -32,6 +33,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
   - `reset()`: Resets the `userId`, on-device paywall assignments, and data stored by Superwall. This can be called even if the user isn't logged in.
 - The identity API can be accessed using async/await or completion handlers.
 - New function `Superwall.publisher(forEvent:params:overrides)` which returns a `PaywallStatePublisher` (`AnyPublisher<PaywallState, Never>`) for those Combine lovers. By subscribing to this publisher, you can receive state updates of your paywall. We've updated our sample apps to show you how to use that.
+- Added `Superwall.isLoggedIn` to check whether the user is logged in to the SDK or not. This will be true if you've previously called `logIn(userId:)` or `createAccount(userId:)`.
 
 ### Fixes
 
