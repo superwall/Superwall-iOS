@@ -13,7 +13,7 @@ public extension Superwall {
   ///
   /// This links a `userId` to Superwall's automatically generated alias. Call this once after you've retrieved a userId.
   ///
-  /// The user will stay logged in until you call ``Superwall/Superwall/logOut()``. If you call this while they're already logged in, it will throw an error of type ``LogInError``.
+  /// The user will stay logged in until you call ``SuperwallKit/Superwall/logOut()``. If you call this while they're already logged in, it will throw an error of type ``LogInError``.
   ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
   ///  - Returns: The shared Superwall instance.
   ///  - Throws: An error of type ``LogInError``.
@@ -54,7 +54,7 @@ public extension Superwall {
   /// Creates an account with Superwall. This links a `userId` to Superwall's automatically generated alias.
   ///
   /// Call this as soon as you have a `userId`. If you are logging in an existing user, you should use
-  /// ``Superwall/Superwall/logIn(userId:)`` instead, as that will retrieve their assigned paywalls.
+  /// ``SuperwallKit/Superwall/logIn(userId:)`` instead, as that will retrieve their assigned paywalls.
   ///
   ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
   ///  - Returns: The shared Superwall instance.
@@ -68,7 +68,7 @@ public extension Superwall {
 
 // MARK: - Log Out
 public extension Superwall {
-  /// Logs out the user. This calls ``Superwall/Superwall/reset()``, which resets on-device paywall
+  /// Logs out the user. This calls ``SuperwallKit/Superwall/reset()``, which resets on-device paywall
   /// assignments and the `userId` stored by Superwall.
   ///
   /// You must call this method before attempting to log in a new user.
@@ -79,7 +79,7 @@ public extension Superwall {
     try await IdentityManager.shared.logOut()
   }
 
-  /// Logs out the user. This calls ``Superwall/Superwall/reset()``, which resets on-device paywall
+  /// Logs out the user. This calls ``SuperwallKit/Superwall/reset()``, which resets on-device paywall
   /// assignments and the `userId` stored by Superwall.
   ///
   /// You must call this method before attempting to log in a new user.
@@ -109,7 +109,7 @@ public extension Superwall {
   /// Resets the `userId`, on-device paywall assignments, and data stored
   /// by Superwall.
   ///
-  /// - Returns:The shared ``Superwall/Superwall`` instance on the main thread.
+  /// - Returns:The shared ``SuperwallKit/Superwall`` instance on the main thread.
   @discardableResult
   @objc static func reset() async -> Superwall {
     shared.lastSuccessfulPresentationRequest = nil
@@ -134,7 +134,7 @@ public extension Superwall {
   /// Asynchronously resets the `userId` and data stored by Superwall.
   ///
   /// - Parameters:
-  ///   - completion: A completion block that accepts the shared ``Superwall/Superwall`` object.
+  ///   - completion: A completion block that accepts the shared ``SuperwallKit/Superwall`` object.
   static func reset(completion: ((Superwall) -> Void)? = nil) {
     Task {
       await reset()

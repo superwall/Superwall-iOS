@@ -9,7 +9,7 @@ import Foundation
 
 /// Override the default behavior and products of a paywall.
 ///
-/// Provide an instance of this to ``Superwall/Superwall/track(event:params:paywallOverrides:paywallState:)``.
+/// Provide an instance of this to ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallState:)``.
 public struct PaywallOverrides {
   /// Defines the products to override on the paywall.
   ///
@@ -24,7 +24,7 @@ public struct PaywallOverrides {
 
   /// Override the default behavior and products of a paywall.
   ///
-  /// Provide an instance of this to ``Superwall/Superwall/track(event:params:paywallOverrides:paywallState:)``.
+  /// Provide an instance of this to ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallState:)``.
   ///
   /// - parameters:
   ///   - products: A ``PaywallProducts`` object defining the products to override on the paywall.

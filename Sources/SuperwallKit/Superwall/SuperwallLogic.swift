@@ -15,30 +15,22 @@ enum SuperwallLogic {
     case dontTriggerPaywall
   }
   static func canTriggerPaywall(
-    eventName: String,
+    event: Trackable,
     triggers: Set<String>,
     isPaywallPresented: Bool
   ) -> Outcome {
-    if let superwallEvent = SuperwallEvent(rawValue: eventName),
-      superwallEvent == .deepLink {
+    if let event = event as? TrackableSuperwallEvent,
+       case .deepLink(url: _) = event.superwallEvent {
       return .deepLinkTrigger
     }
 
     if isPaywallPresented {
       return .dontTriggerPaywall
     }
-    guard triggers.contains(eventName) else {
+    guard triggers.contains(event.rawName) else {
       return .dontTriggerPaywall
     }
 
-    if let superwallEvent = SuperwallEvent(rawValue: eventName) {
-      if superwallEvent.canImplicitlyTriggerPaywall {
-        return .triggerPaywall
-      } else {
-        return .disallowedEventAsTrigger
-      }
-    } else {
-      return .triggerPaywall
-    }
+    return .triggerPaywall
   }
 }

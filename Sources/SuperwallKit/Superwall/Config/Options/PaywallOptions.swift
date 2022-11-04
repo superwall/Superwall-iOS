@@ -28,12 +28,12 @@ import Foundation
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
   public var restoreFailed = RestoreFailed()
 
-  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5``. Defaults to `true`.
+  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
   ///
-  /// If you want to preload them at a later date, you can call ``Superwall/Superwall/preloadAllPaywalls()``
-  /// or ``Superwall/Superwall/preloadPaywalls(forEvents:)``
+  /// If you want to preload them at a later date, you can call ``SuperwallKit/Superwall/preloadAllPaywalls()``
+  /// or ``SuperwallKit/Superwall/preloadPaywalls(forEvents:)``
   public var shouldPreload = true
 
   /// Loads paywall template websites from disk, if available. Defaults to `true`.

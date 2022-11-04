@@ -20,7 +20,7 @@ final class SuperwallDelegateAdapter {
   weak var swiftDelegate: SuperwallDelegate?
   weak var objcDelegate: SuperwallDelegateObjc?
 
-  /// Called on init of the Superwall instance via ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5``.
+  /// Called on init of the Superwall instance via ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``.
   ///
   /// We check to see if the delegates being set are non-nil because they may have been set
   /// separately to the initial Superwall.config function.
@@ -152,14 +152,14 @@ final class SuperwallDelegateAdapter {
     }
   }
 
-  func trackAnalyticsEvent(
-    withName name: String,
+  func didTrackSuperwallEvent(
+    _ event: SuperwallEvent,
     params: [String: Any]
   ) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.trackAnalyticsEvent(withName: name, params: params)
+      swiftDelegate.didTrackSuperwallEvent(event)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.trackAnalyticsEvent?(withName: name, params: params)
+      objcDelegate.trackAnalyticsEvent?(withName: event.name, params: params)
     }
   }
 

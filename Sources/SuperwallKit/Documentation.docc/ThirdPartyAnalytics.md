@@ -4,7 +4,7 @@ Tracking events sent via the ``SuperwallDelegate`` in your own analytics.
 
 ## Overview
 
-Superwall automatically tracks events to do with the paywall for you (see ``SuperwallEvent`` for a full list). You can use ``Superwall/SuperwallDelegate/trackAnalyticsEvent(withName:params:)`` to send these events to your own analytics service, such as Mixpanel.
+Superwall automatically tracks events to do with the paywall for you (see ``SuperwallEvent`` for a full list). You can use ``SuperwallKit/SuperwallDelegate/trackAnalyticsEvent(withName:params:)`` to send these events to your own analytics service, such as Mixpanel.
 
 ## Tracking Analytical Events
 
@@ -46,7 +46,7 @@ func trackAnalyticsEvent(
     // Track your custom event
   case .deepLink:
     // Track your custom event
-  case .triggerFire:
+  case .trackEvent:
     // Track your custom event
   case .paywallOpen:
     // Track your custom event

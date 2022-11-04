@@ -82,17 +82,11 @@ extension SuperwallService: SuperwallDelegate {
     return StoreKitService.shared.isSubscribed.value
   }
 
-  func trackAnalyticsEvent(
-    withName name: String,
-    params: [String: Any]
-  ) {
-    guard let event = SuperwallEvent(rawValue: name) else {
-      return
-    }
-    print("analytics event called", event, params)
+  func didTrackSuperwallEvent(_ event: SuperwallEvent) {
+    print("analytics event called", event)
 
-    // Uncomment the following if you want to track the different analytics
-    // events received from the paywall:
+    // Uncomment the following if you want to track
+    // Superwall events:
 
     /*
     switch event {
@@ -108,53 +102,53 @@ extension SuperwallService: SuperwallDelegate {
       <#code#>
     case .appClose:
       <#code#>
-    case .deepLink:
+    case .deepLink(let url):
       <#code#>
-    case .triggerFire:
+    case .triggerFire(let eventName, let result):
       <#code#>
-    case .paywallOpen:
+    case .paywallOpen(let paywallInfo):
       <#code#>
-    case .paywallClose:
+    case .paywallClose(let paywallInfo):
       <#code#>
-    case .transactionStart:
+    case .transactionStart(let product, let paywallInfo):
       <#code#>
-    case .transactionFail:
+    case .transactionFail(let error, let paywallInfo):
       <#code#>
-    case .transactionAbandon:
+    case .transactionAbandon(let product, let paywallInfo):
       <#code#>
-    case .transactionComplete:
+    case .transactionComplete(let transaction, let product, let paywallInfo):
       <#code#>
-    case .subscriptionStart:
+    case .subscriptionStart(let product, let paywallInfo):
       <#code#>
-    case .freeTrialStart:
+    case .freeTrialStart(let product, let paywallInfo):
       <#code#>
-    case .transactionRestore:
+    case .transactionRestore(let paywallInfo):
       <#code#>
-    case .userAttributes:
+    case .userAttributes(let attributes):
       <#code#>
-    case .nonRecurringProductPurchase:
+    case .nonRecurringProductPurchase(let product, let paywallInfo):
       <#code#>
-    case .paywallResponseLoadStart:
+    case .paywallResponseLoadStart(let triggeredEventName):
       <#code#>
-    case .paywallResponseLoadNotFound:
+    case .paywallResponseLoadNotFound(let triggeredEventName):
       <#code#>
-    case .paywallResponseLoadFail:
+    case .paywallResponseLoadFail(let triggeredEventName):
       <#code#>
-    case .paywallResponseLoadComplete:
+    case .paywallResponseLoadComplete(let triggeredEventName, let paywallInfo):
       <#code#>
-    case .paywallWebviewLoadStart:
+    case .paywallWebviewLoadStart(let paywallInfo):
       <#code#>
-    case .paywallWebviewLoadFail:
+    case .paywallWebviewLoadFail(let paywallInfo):
       <#code#>
-    case .paywallWebviewLoadComplete:
+    case .paywallWebviewLoadComplete(let paywallInfo):
       <#code#>
-    case .paywallWebviewLoadTimeout:
+    case .paywallWebviewLoadTimeout(let paywallInfo):
       <#code#>
-    case .paywallProductsLoadStart:
+    case .paywallProductsLoadStart(let triggeredEventName, let paywallInfo):
       <#code#>
-    case .paywallProductsLoadFail:
+    case .paywallProductsLoadFail(let triggeredEventName, let paywallInfo):
       <#code#>
-    case .paywallProductsLoadComplete:
+    case .paywallProductsLoadComplete(let triggeredEventName):
       <#code#>
     }
     */

@@ -114,7 +114,7 @@ class IdentityManager {
     identitySubject.send(true)
   }
 
-  /// Logs user out and calls ``Superwall/Superwall/reset()``
+  /// Logs user out and calls ``SuperwallKit/Superwall/reset()``
   ///
   /// - Throws: An error of type``LogoutError``.
   /// if  the user isn't logged in.

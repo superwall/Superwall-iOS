@@ -32,7 +32,7 @@ public final class Superwall: NSObject {
   @MainActor
   lazy var delegateAdapter = SuperwallDelegateAdapter()
 
-  /// Properties stored about the user, set using ``Superwall/Superwall/setUserAttributes(_:)``.
+  /// Properties stored about the user, set using ``SuperwallKit/Superwall/setUserAttributes(_:)``.
   public static var userAttributes: [String: Any] {
     return shared.identityManager.userAttributes
   }
@@ -43,7 +43,7 @@ public final class Superwall: NSObject {
     return PaywallManager.shared.presentedViewController
   }
 
-  /// A convenience variable to access and change the paywall options that you passed to ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5``.
+  /// A convenience variable to access and change the paywall options that you passed to ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``.
   public static var options: SuperwallOptions {
     return shared.configManager.options
   }
@@ -56,7 +56,7 @@ public final class Superwall: NSObject {
   }
   /// The current user's id.
   ///
-  /// If you haven't called ``Superwall/Superwall/logIn(userId:)`` or ``Superwall/Superwall/createAccount(userId:)``,
+  /// If you haven't called ``SuperwallKit/Superwall/logIn(userId:)`` or ``SuperwallKit/Superwall/createAccount(userId:)``,
   /// this value will return an anonymous user id which is cached to disk
   public static var userId: String {
     return IdentityManager.shared.userId
@@ -64,8 +64,8 @@ public final class Superwall: NSObject {
 
   /// Indicates whether the user is logged in to the Superwall SDK.
   ///
-  /// If you have previously called ``Superwall/Superwall/logIn(userId:)`` or
-  /// ``Superwall/Superwall/createAccount(userId:)``, this will return true.
+  /// If you have previously called ``SuperwallKit/Superwall/logIn(userId:)`` or
+  /// ``SuperwallKit/Superwall/createAccount(userId:)``, this will return true.
   ///
   /// - Returns: A boolean indicating whether the user is logged in or not.
   public static var isLoggedIn: Bool {
@@ -156,14 +156,14 @@ public final class Superwall: NSObject {
   }
 
   // MARK: - Configuration
-  /// Configures a shared instance of ``Superwall/Superwall`` for use throughout your app.
+  /// Configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. For a tutorial on the best practices for implementing the delegate, we recommend checking out our <doc:GettingStarted> article.
   /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
   ///   - delegate: A class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
-  /// - Returns: The newly configured ``Superwall/Superwall`` instance.
+  /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
 
   @discardableResult
   public static func configure(
@@ -188,14 +188,14 @@ public final class Superwall: NSObject {
     return shared
   }
 
-  /// Objective-C only function that configures a shared instance of ``Superwall/Superwall`` for use throughout your app.
+  /// Objective-C only function that configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. For a tutorial on the best practices for implementing the delegate, we recommend checking out our <doc:GettingStarted> article.
   /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
   ///   - delegate: A class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
-  /// - Returns: The newly configured ``Superwall/Superwall`` instance.
+  /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
   @discardableResult
   @available(swift, obsoleted: 1.0)
   @objc public static func configure(
@@ -226,7 +226,7 @@ public final class Superwall: NSObject {
   ///
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
   ///
-  /// Note: This will not reload any paywalls you've already preloaded via ``Superwall/Superwall/preloadPaywalls(forTriggers:)``.
+  /// Note: This will not reload any paywalls you've already preloaded via ``SuperwallKit/Superwall/preloadPaywalls(forTriggers:)``.
   @objc public static func preloadAllPaywalls() {
     Task.detached(priority: .userInitiated) {
       await shared.configManager.preloadAllPaywalls()
@@ -274,13 +274,16 @@ extension Superwall {
   ///  - Parameters:
   ///     - event: The data of an analytical event data that could trigger a paywall.
   @MainActor
-  func handleImplicitTrigger(forEvent event: EventData) async {
+  func handleImplicitTrigger(
+    forEvent event: Trackable,
+    withData eventData: EventData
+  ) async {
     await IdentityManager.hasIdentity.async()
 
-    let presentationInfo: PresentationInfo = .implicitTrigger(event)
+    let presentationInfo: PresentationInfo = .implicitTrigger(eventData)
 
     let outcome = SuperwallLogic.canTriggerPaywall(
-      eventName: event.name,
+      event: event,
       triggers: Set(configManager.triggersByEventName.keys),
       isPaywallPresented: isPaywallPresented
     )

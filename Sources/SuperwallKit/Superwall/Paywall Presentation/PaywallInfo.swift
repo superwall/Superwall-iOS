@@ -11,7 +11,7 @@ import StoreKit
 
 /// Contains information about a given paywall.
 ///
-/// This is returned in the `paywallState` after presenting a paywall with ``Superwall/Superwall/track(event:params:paywallOverrides:paywallState:)``.
+/// This is returned in the `paywallState` after presenting a paywall with ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallState:)``.
 public final class PaywallInfo: NSObject {
   /// Superwall's internal ID for this paywall.
   let databaseId: String
@@ -27,6 +27,13 @@ public final class PaywallInfo: NSObject {
   /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
   public let experiment: Experiment?
 
+  //TODO: Comments here, should this be nil?
+  /// The trigger session ID.
+  public let triggerSessionId: String?
+
+  // TODO: Comments here
+  public let products: [Product]
+
   /// The name set for this paywall in Superwall's web dashboard.
   public let name: String
 
@@ -39,14 +46,11 @@ public final class PaywallInfo: NSObject {
   /// The Superwall internal id (for debugging) of the event that triggered this Paywall. Defaults to `nil` if `triggeredByEvent` is false.
   public let presentedByEventWithId: String?
 
-  /// The ISO date string (sorry) describing when the event triggered this paywall. Defaults to `nil` if `triggeredByEvent` is false.
+  /// The ISO date string describing when the event triggered this paywall. Defaults to `nil` if `triggeredByEvent` is false.
   public let presentedByEventAt: String?
 
   /// How the paywall was presented, either 'programmatically', 'identifier', or 'event'
   public let presentedBy: String
-
-  /// An array of product IDs that this paywall is displaying in `[Primary, Secondary, Tertiary]` order.
-  public let productIds: [String]
 
   /// An iso date string indicating when the paywall response began loading.
   public let responseLoadStartTime: String?
@@ -86,7 +90,7 @@ public final class PaywallInfo: NSObject {
     identifier: String,
     name: String,
     url: URL,
-    productIds: [String],
+    products: [Product],
     fromEventData eventData: EventData?,
     responseLoadStartTime: Date?,
     responseLoadCompleteTime: Date?,
@@ -96,18 +100,20 @@ public final class PaywallInfo: NSObject {
     productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
     experiment: Experiment? = nil,
-    paywalljsVersion: String? = nil
+    paywalljsVersion: String? = nil,
+    triggerSessionId: String? = nil
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
     self.name = name
     self.url = url
-    self.productIds = productIds
     self.presentedByEventWithName = eventData?.name
     self.presentedByEventAt = eventData?.createdAt.isoString
     self.presentedByEventWithId = eventData?.id.lowercased()
     self.experiment = experiment
     self.paywalljsVersion = paywalljsVersion
+    self.triggerSessionId = triggerSessionId
+    self.products = products
 
     if eventData != nil {
       self.presentedBy = "event"
@@ -149,6 +155,8 @@ public final class PaywallInfo: NSObject {
     forProduct product: SKProduct? = nil,
     otherParams: [String: Any]? = nil
   ) async -> [String: Any] {
+    let productIds = products.map { $0.id }
+
     var output: [String: Any] = [
       "paywall_database_id": databaseId,
       "paywalljs_version": paywalljsVersion as Any,
@@ -200,7 +208,7 @@ public final class PaywallInfo: NSObject {
     for (id, level) in levels.enumerated() {
       let key = "\(level)_product_id"
       output[key] = ""
-      if id < productIds.count {
+      if id < products.count {
         output[key] = productIds[id]
       }
     }

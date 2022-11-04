@@ -8,6 +8,34 @@
 import Foundation
 import StoreKit
 
+
+/*
+ Delegate params contains:
+ 1. App Session ID
+ 2. All cleaned superwall params (non nil)
+ 3. Cleaned Custom params that don't contain $ signs
+ */
+
+/*
+ Event params contain:
+ 1. App Session ID
+ 2. is_standard_event if it's a superwall event
+ 3. event_name
+ 4. superwall params with exra dollar signs attached
+ 5. custom params that don't contain $ signs
+ 6. event name
+ */
+
+/*
+ struct Event {
+  let event: SuperwallEvent
+  let appSessionId: String
+ }
+
+
+
+ */
+
 enum TrackingLogic {
   static func processParameters(
     fromTrackableEvent trackableEvent: Trackable,
@@ -25,7 +53,10 @@ enum TrackingLogic {
     ]
 
     // Add a special property if it's a superwall event
-    let isStandardEvent = SuperwallEvent(rawValue: eventName) != nil
+    var isStandardEvent = false
+    if trackableEvent is TrackableSuperwallEvent {
+      isStandardEvent = true
+    }
     var eventParams: [String: Any] = [
       "$is_standard_event": isStandardEvent,
       "$event_name": eventName

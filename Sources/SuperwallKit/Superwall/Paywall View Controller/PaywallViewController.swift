@@ -72,7 +72,7 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
   private weak var delegate: PaywallViewControllerDelegate?
 
   /// A publisher that emits ``PaywallState`` objects. These state objects feed back to
-  /// the caller of ``Superwall/Superwall/track(event:params:paywallOverrides:)``
+  /// the caller of ``SuperwallKit/Superwall/track(event:params:paywallOverrides:)``
   ///
   /// This publisher is set on presentation of the paywall.
   private var paywallStatePublisher: PassthroughSubject<PaywallState, Never>!

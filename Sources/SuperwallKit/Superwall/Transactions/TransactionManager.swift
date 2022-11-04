@@ -129,7 +129,7 @@ final class TransactionManager {
     Task.detached(priority: .utility) {
       await SessionEventsManager.shared.triggerSession.trackBeginTransaction(of: product)
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .start,
+        state: .start(product),
         paywallInfo: paywallInfo,
         product: product,
         model: nil
@@ -207,7 +207,7 @@ final class TransactionManager {
 
       let paywallInfo = await paywallViewController.paywallInfo
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .abandon,
+        state: .abandon(product),
         paywallInfo: paywallInfo,
         product: product,
         model: nil
@@ -229,7 +229,7 @@ final class TransactionManager {
     let paywallInfo = paywallViewController.paywallInfo
     Task.detached(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .fail(message: "Needs parental approval"),
+        state: .fail(.pending("Needs parental approval")),
         paywallInfo: paywallInfo,
         product: nil,
         model: nil
@@ -263,7 +263,7 @@ final class TransactionManager {
     let paywallInfo = paywallViewController.paywallInfo
     Task.detached(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .fail(message: error.localizedDescription),
+        state: .fail(.failure(error.localizedDescription, product)),
         paywallInfo: paywallInfo,
         product: product,
         model: nil
@@ -322,7 +322,7 @@ extension TransactionManager: TransactionObserverDelegate {
       )
 
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .complete,
+        state: .complete(product, transactionModel),
         paywallInfo: paywallInfo,
         product: product,
         model: transactionModel

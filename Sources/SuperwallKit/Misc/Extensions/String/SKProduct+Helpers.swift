@@ -7,6 +7,94 @@
 
 import StoreKit
 
+// TODO: Comment and move
+public struct Attributes {
+  let id: String
+
+  struct Price {
+    let raw: Decimal
+    let localized: String
+    let daily: String
+    let weekly: String
+    let monthly: String
+    let yearly: String
+  }
+  let price: Price
+
+  struct TrialPeriod {
+    let days: Int
+    let weeks: Int
+    let months: Int
+    let years: Int
+    let text: String
+    let endAt: Date?
+  }
+  var trialPeriod: TrialPeriod?
+
+  struct Period {
+    let alt: String
+    let ly: String
+    let unit: SKProduct.PeriodUnit
+    let days: Int
+    let weeks: Int
+    let months: Int
+    let years: Int
+  }
+  var period: Period?
+
+  let locale: String
+  var languageCode: String?
+
+  struct Currency {
+    let code: String?
+    let symbol: String?
+  }
+  let currency: Currency
+
+  init(product: SKProduct) {
+    id = product.productIdentifier
+    price = Price(
+      raw: product.price as Decimal,
+      localized: product.localizedPrice,
+      daily: product.dailyPrice,
+      weekly: product.weeklyPrice,
+      monthly: product.monthlyPrice,
+      yearly: product.yearlyPrice
+    )
+
+    if let endAt = product.trialPeriodEndDate {
+      trialPeriod = TrialPeriod(
+        days: product.trialPeriodDays,
+        weeks: product.trialPeriodWeeks,
+        months: product.trialPeriodMonths,
+        years: product.trialPeriodYears,
+        text: product.trialPeriodText,
+        endAt: endAt
+      )
+    }
+
+    if let subscriptionPeriod = product.subscriptionPeriod {
+      period = Period(
+        alt: product.localizedSubscriptionPeriod,
+        ly: "\(product.period)ly",
+        unit: subscriptionPeriod.unit,
+        days: product.periodDays,
+        weeks: product.periodWeeks,
+        months: product.periodMonths,
+        years: product.periodYears
+      )
+    }
+
+    locale = product.priceLocale.identifier
+    languageCode = product.priceLocale.languageCode
+
+    currency = Currency(
+      code: product.priceLocale.currencyCode,
+      symbol: product.priceLocale.currencySymbol
+    )
+  }
+}
+
 extension SKProduct {
   var attributes: [String: String] {
     return [
@@ -20,16 +108,16 @@ extension SKProduct {
       "dailyPrice": dailyPrice,
       "monthlyPrice": monthlyPrice,
       "yearlyPrice": yearlyPrice,
-      "trialPeriodDays": trialPeriodDays,
-      "trialPeriodWeeks": trialPeriodWeeks,
-      "trialPeriodMonths": trialPeriodMonths,
-      "trialPeriodYears": trialPeriodYears,
+      "trialPeriodDays": trialPeriodDaysString,
+      "trialPeriodWeeks": trialPeriodWeeksString,
+      "trialPeriodMonths": trialPeriodMonthsString,
+      "trialPeriodYears": trialPeriodYearsString,
       "trialPeriodText": trialPeriodText,
-      "trialPeriodEndDate": trialPeriodEndDate,
-      "periodDays": periodDays,
-      "periodWeeks": periodWeeks,
-      "periodMonths": periodMonths,
-      "periodYears": periodYears,
+      "trialPeriodEndDate": trialPeriodEndDateString,
+      "periodDays": periodDaysString,
+      "periodWeeks": periodWeeksString,
+      "periodMonths": periodMonthsString,
+      "periodYears": periodYearsString,
       "locale": priceLocale.identifier,
       "languageCode": priceLocale.languageCode ?? "n/a",
       "currencyCode": priceLocale.currencyCode ?? "n/a",
@@ -110,105 +198,121 @@ extension SKProduct {
     return ""
   }
 
-  var periodWeeks: String {
+  var periodWeeks: Int {
     guard let subscriptionPeriod = subscriptionPeriod else {
-      return ""
+      return 0
     }
 
     let numberOfUnits = subscriptionPeriod.numberOfUnits
 
     if subscriptionPeriod.unit == .day {
-      return "\(Int((1 * numberOfUnits) / 7))"
+      return (1 * numberOfUnits) / 7
     }
 
     if subscriptionPeriod.unit == .week {
-      return "\(Int(numberOfUnits))"
+      return numberOfUnits
     }
 
     if subscriptionPeriod.unit == .month {
-      return "\(Int(4 * numberOfUnits))"
+      return 4 * numberOfUnits
     }
 
     if subscriptionPeriod.unit == .year {
-      return "\(Int(52 * numberOfUnits))"
+      return 52 * numberOfUnits
     }
 
-    return "0"
+    return 0
   }
 
-  var periodMonths: String {
-    guard let subscriptionPeriod = subscriptionPeriod else {
-      return ""
-    }
-    let numberOfUnits = subscriptionPeriod.numberOfUnits
-
-    if subscriptionPeriod.unit == .day {
-      return "\(Int((1 * numberOfUnits) / 30))"
-    }
-
-    if subscriptionPeriod.unit == .week {
-      return "\(Int(numberOfUnits / 4))"
-    }
-
-    if subscriptionPeriod.unit == .month {
-      return "\(Int(numberOfUnits))"
-    }
-
-    if subscriptionPeriod.unit == .year {
-      return "\(Int(12 * numberOfUnits))"
-    }
-
-    return "0"
+  var periodWeeksString: String {
+    return "\(periodWeeks)"
   }
 
-  var periodYears: String {
+  var periodMonths: Int {
     guard let subscriptionPeriod = subscriptionPeriod else {
-      return ""
+      return 0
     }
     let numberOfUnits = subscriptionPeriod.numberOfUnits
 
     if subscriptionPeriod.unit == .day {
-      return "\(Int(numberOfUnits / 365))"
+      return (1 * numberOfUnits) / 30
     }
 
     if subscriptionPeriod.unit == .week {
-      return "\(Int(numberOfUnits / 52))"
+      return numberOfUnits / 4
     }
 
     if subscriptionPeriod.unit == .month {
-      return "\(Int(numberOfUnits / 12))"
+      return numberOfUnits
     }
 
     if subscriptionPeriod.unit == .year {
-      return "\(Int(numberOfUnits))"
+      return 12 * numberOfUnits
     }
 
-    return "0"
+    return 0
   }
 
-  var periodDays: String {
+  var periodMonthsString: String {
+    return "\(periodMonths)"
+  }
+
+  var periodYears: Int {
     guard let subscriptionPeriod = subscriptionPeriod else {
-      return ""
+      return 0
     }
     let numberOfUnits = subscriptionPeriod.numberOfUnits
 
     if subscriptionPeriod.unit == .day {
-      return "\(Int(1 * numberOfUnits))"
+      return numberOfUnits / 365
     }
 
     if subscriptionPeriod.unit == .week {
-      return "\(Int(7 * numberOfUnits))"
+      return numberOfUnits / 52
     }
 
     if subscriptionPeriod.unit == .month {
-      return "\(Int(30 * numberOfUnits))"
+      return numberOfUnits / 12
     }
 
     if subscriptionPeriod.unit == .year {
-      return "\(Int(365 * numberOfUnits))"
+      return numberOfUnits
     }
 
-    return "0"
+    return 0
+  }
+
+  var periodYearsString: String {
+    return "\(periodYears)"
+  }
+
+  var periodDays: Int {
+    guard let subscriptionPeriod = subscriptionPeriod else {
+      return 0
+    }
+    let numberOfUnits = subscriptionPeriod.numberOfUnits
+
+    if subscriptionPeriod.unit == .day {
+      return numberOfUnits
+    }
+
+    if subscriptionPeriod.unit == .week {
+      return 7 * numberOfUnits
+    }
+
+    if subscriptionPeriod.unit == .month {
+      return 30 * numberOfUnits
+    }
+
+    if subscriptionPeriod.unit == .year {
+      return 365 * numberOfUnits
+    }
+
+    return 0
+  }
+
+  var periodDaysString: String {
+    return "\(periodDays)"
   }
 
   var dailyPrice: String {
@@ -361,9 +465,9 @@ extension SKProduct {
     return introductoryPrice != nil
   }
 
-  var trialPeriodEndDate: String {
+  var trialPeriodEndDate: Date? {
     guard let trialPeriod = introductoryPrice?.subscriptionPeriod else {
-      return ""
+      return nil
     }
     let numberOfUnits = trialPeriod.numberOfUnits
 
@@ -380,123 +484,146 @@ extension SKProduct {
     case .year:
       dateComponent.year = numberOfUnits
     @unknown default:
-      return ""
+      return nil
     }
 
     guard let futureDate = Calendar.current.date(
       byAdding: dateComponent,
       to: currentDate
     ) else {
-      return ""
+      return nil
     }
 
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateStyle = .medium
-    dateFormatter.timeStyle = .none
-    dateFormatter.locale = .autoupdatingCurrent
-
-    return dateFormatter.string(from: futureDate)
+    return futureDate
   }
 
-  var trialPeriodDays: String {
+  var trialPeriodEndDateString: String {
+    if let trialPeriodEndDate = trialPeriodEndDate {
+      let dateFormatter = DateFormatter()
+      dateFormatter.dateStyle = .medium
+      dateFormatter.timeStyle = .none
+      dateFormatter.locale = .autoupdatingCurrent
+
+      return dateFormatter.string(from: trialPeriodEndDate)
+    }
+    return ""
+  }
+
+  var trialPeriodDays: Int {
     guard let trialPeriod = introductoryPrice?.subscriptionPeriod else {
-      return "0"
+      return 0
     }
 
     let numberOfUnits = trialPeriod.numberOfUnits
 
     if trialPeriod.unit == .day {
-      return "\(Int(1 * numberOfUnits))"
+      return Int(1 * numberOfUnits)
     }
 
     if trialPeriod.unit == .month {
-      return "\(Int(30 * numberOfUnits))"
+      return Int(30 * numberOfUnits)
     }
 
     if trialPeriod.unit == .week {
-      return "\(Int(7 * numberOfUnits))"
+      return Int(7 * numberOfUnits)
     }
 
     if trialPeriod.unit == .year {
-      return "\(Int(365 * numberOfUnits))"
+      return Int(365 * numberOfUnits)
     }
 
-    return "0"
+    return 0
   }
 
-  var trialPeriodWeeks: String {
+  var trialPeriodDaysString: String {
+    return "\(trialPeriodDays)"
+  }
+
+  var trialPeriodWeeks: Int {
     guard let trialPeriod = introductoryPrice?.subscriptionPeriod else {
-      return "0"
+      return 0
     }
     let numberOfUnits = trialPeriod.numberOfUnits
 
     if trialPeriod.unit == .day {
-      return "\(Int(numberOfUnits / 7))"
+      return Int(numberOfUnits / 7)
     }
 
     if trialPeriod.unit == .month {
-      return "\(4 * numberOfUnits)"
+      return 4 * numberOfUnits
     }
 
     if trialPeriod.unit == .week {
-      return "\(1 * numberOfUnits)"
+      return 1 * numberOfUnits
     }
 
     if trialPeriod.unit == .year {
-      return "\(52 * numberOfUnits)"
+      return 52 * numberOfUnits
     }
 
-    return "0"
+    return 0
   }
 
-  var trialPeriodMonths: String {
+  var trialPeriodWeeksString: String {
+    return "\(trialPeriodWeeks)"
+  }
+
+  var trialPeriodMonths: Int {
     guard let trialPeriod = introductoryPrice?.subscriptionPeriod else {
-      return "0"
+      return 0
     }
     let numberOfUnits = trialPeriod.numberOfUnits
 
     if trialPeriod.unit == .day {
-      return "\(Int(numberOfUnits / 30))"
+      return Int(numberOfUnits / 30)
     }
 
     if trialPeriod.unit == .month {
-      return "\(numberOfUnits * 1)"
+      return numberOfUnits * 1
     }
 
     if trialPeriod.unit == .week {
-      return "\(Int(numberOfUnits / 4))"
+      return Int(numberOfUnits / 4)
     }
 
     if trialPeriod.unit == .year {
-      return "\(numberOfUnits * 12)"
+      return numberOfUnits * 12
     }
 
-    return "0"
+    return 0
   }
 
-  var trialPeriodYears: String {
+  var trialPeriodMonthsString: String {
+    return "\(trialPeriodMonths)"
+  }
+
+  var trialPeriodYears: Int {
     guard let trialPeriod = introductoryPrice?.subscriptionPeriod else {
-      return "0"
+      return 0
     }
     let numberOfUnits = trialPeriod.numberOfUnits
 
     if trialPeriod.unit == .day {
-      return "\(Int(numberOfUnits / 365))"
+      return Int(numberOfUnits / 365)
     }
 
     if trialPeriod.unit == .month {
-      return "\(Int(numberOfUnits / 12))"
+      return Int(numberOfUnits / 12)
     }
 
     if trialPeriod.unit == .week {
-      return "\(Int(numberOfUnits / 52))"
+      return Int(numberOfUnits / 52)
     }
 
     if trialPeriod.unit == .year {
-      return "\(numberOfUnits)"
+      return numberOfUnits
     }
 
-    return "0"
+    return 0
+  }
+
+  var trialPeriodYearsString: String {
+    return "\(trialPeriodYears)"
   }
 
   var trialPeriodText: String {

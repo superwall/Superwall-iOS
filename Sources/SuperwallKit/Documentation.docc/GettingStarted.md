@@ -4,7 +4,7 @@ Configuring the SDK and its delegate.
 
 ## Overview
 
-To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5``. You pass this function a class that conforms to ``SuperwallDelegate``, which handles actions taken on the paywall. You can then present your paywall.
+To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``. You pass this function a class that conforms to ``SuperwallDelegate``, which handles actions taken on the paywall. You can then present your paywall.
 
 ## Getting your API Key
 
@@ -17,7 +17,7 @@ On that page, you will see your **Public API Key**. Copy this for the next step.
 
 ### Configuring the SDK
 
-To configure the SDK, you call ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5`` from  `application(_:didFinishLaunchingWithOptions:)`. We recommended creating a service class **SuperwallService.swift** that handles your SDK configuration and delegate callbacks:
+To configure the SDK, you call ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5`` from  `application(_:didFinishLaunchingWithOptions:)`. We recommended creating a service class **SuperwallService.swift** that handles your SDK configuration and delegate callbacks:
 
 ```swift
 import SuperwallKit
@@ -35,16 +35,16 @@ final class SuperwallService {
 }
 ```
 
-This configures a shared instance of ``Superwall/Superwall`` for use throughout your app and sets the delegate to the `SuperwallService` shared instance. Make sure to replace the `apiKey` with your Public API key that you just retrieved.
+This configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app and sets the delegate to the `SuperwallService` shared instance. Make sure to replace the `apiKey` with your Public API key that you just retrieved.
 
 
 ## Identity Management
 
 We generate a random user ID that persists internally until the user deletes/reinstalls your app.
 
-If you use your own user management system, you can call ``Superwall/Superwall/createAccount(userId:)`` when a user first creates an account, and ``Superwall/Superwall/logIn(userId:)`` if you're logging in an existing user. This will alias your `userId` with the anonymous Superwall ID enabling us to load the user's assigned paywalls.
+If you use your own user management system, you can call ``SuperwallKit/Superwall/createAccount(userId:)`` when a user first creates an account, and ``SuperwallKit/Superwall/logIn(userId:)`` if you're logging in an existing user. This will alias your `userId` with the anonymous Superwall ID enabling us to load the user's assigned paywalls.
 
-Calling ``Superwall/Superwall/logOut()`` or ``Superwall/Superwall/reset()`` will reset the on-device `userId` to a random ID and clear the paywall assignments.
+Calling ``SuperwallKit/Superwall/logOut()`` or ``SuperwallKit/Superwall/reset()`` will reset the on-device `userId` to a random ID and clear the paywall assignments.
 
 ## Setting the delegate
 

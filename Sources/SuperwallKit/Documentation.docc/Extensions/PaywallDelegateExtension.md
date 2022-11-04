@@ -1,4 +1,4 @@
-# ``Superwall/SuperwallDelegate``
+# ``SuperwallKit/SuperwallDelegate``
 
 @Metadata {
   @DocumentationExtension(mergeBehavior: append)
