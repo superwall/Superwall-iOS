@@ -647,9 +647,11 @@ extension PaywallViewController {
 	}
 
   private func promptSuperwallDelegate() {
+    let hasDelegate = (Superwall.shared.delegateAdapter.swiftDelegate != nil || Superwall.shared.delegateAdapter.objcDelegate != nil)
+      
     guard
       presentedViewController == nil,
-      Superwall.delegate == nil
+      hasDelegate == false
     else {
       return
     }
@@ -658,7 +660,7 @@ extension PaywallViewController {
       message: "Set Superwall.delegate to handle purchases, restores and more!",
       actionTitle: "Docs →",
       closeActionTitle: "Done",
-      onClose: {
+      action: {
         if let url = URL(
           string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate"
         ) {
