@@ -16,7 +16,7 @@ protocol TrackableSuperwallEvent: Trackable {
 
 extension TrackableSuperwallEvent {
   var rawName: String {
-    return superwallEvent.name
+    return String(describing: superwallEvent)
   }
 
   var canImplicitlyTriggerPaywall: Bool {

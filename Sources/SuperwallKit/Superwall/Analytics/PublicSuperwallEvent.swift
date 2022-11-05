@@ -122,70 +122,137 @@ public enum SuperwallEvent {
       return false
     }
   }
-  
-
-  public var name: String {
-    switch self {
-    case .firstSeen:
-      return "first_seen"
-    case .appOpen:
-      return "app_open"
-    case .appLaunch:
-      return "app_launch"
-    case .appInstall:
-      return "app_install"
-    case .sessionStart:
-      return "session_start"
-    case .appClose:
-      return "app_close"
-    case .deepLink:
-      return "deepLink_open"
-    case .triggerFire:
-      return "trigger_fire"
-    case .paywallOpen:
-      return "paywall_open"
-    case .paywallClose:
-      return "paywall_close"
-    case .transactionStart:
-      return "transaction_start"
-    case .transactionFail:
-      return "transaction_fail"
-    case .transactionAbandon:
-      return "transaction_abandon"
-    case .transactionComplete:
-      return "transaction_complete"
-    case .subscriptionStart:
-      return "subscription_start"
-    case .freeTrialStart:
-      return "freeTrial_start"
-    case .transactionRestore:
-      return "transaction_restore"
-    case .userAttributes:
-      return "user_attributes"
-    case .nonRecurringProductPurchase:
-      return "nonRecurringProduct_purchase"
-    case .paywallResponseLoadStart:
-      return "paywallResponseLoad_start"
-    case .paywallResponseLoadNotFound:
-      return "paywallResponseLoad_notFound"
-    case .paywallResponseLoadFail:
-      return "paywallResponseLoad_fail"
-    case .paywallResponseLoadComplete:
-      return "paywallResponseLoad_complete"
-    case .paywallWebviewLoadStart:
-      return "paywallWebviewLoad_start"
-    case .paywallWebviewLoadFail:
-      return "paywallWebviewLoad_fail"
-    case .paywallWebviewLoadComplete:
-      return "paywallWebviewLoad_complete"
-    case .paywallWebviewLoadTimeout:
-      return "paywallWebviewLoad_timeout"
-    case .paywallProductsLoadStart:
-      return "paywallProductsLoad_start"
-    case .paywallProductsLoadFail:
-      return "paywallProductsLoad_fail"
-    case .paywallProductsLoadComplete:
-      return "paywallProductsLoad_complete"
+}
+    
+extension SuperwallEvent: CustomStringConvertible {
+    public var params: [String: Any]? {
+        return backingData.params
     }
-  }
+    
+    public var description: String {
+        return backingData.description
+    }
+}
+
+// MARK: - Objective-C compatible `SuperwallEvent`
+
+@objc(SWKSuperwallEvent)
+public enum SuperwallEventObjc: Int {
+    case firstSeen
+    case appOpen
+    case appLaunch
+    case appInstall
+    case sessionStart
+    case appClose
+    case deepLink
+    case triggerFire
+    case paywallOpen
+    case paywallClose
+    case transactionStart
+    case transactionFail
+    case transactionAbandon
+    case transactionComplete
+    case subscriptionStart
+    case freeTrialStart
+    case transactionRestore
+    case userAttributes
+    case nonRecurringProductPurchase
+    case paywallResponseLoadStart
+    case paywallResponseLoadNotFound
+    case paywallResponseLoadFail
+    case paywallResponseLoadComplete
+    case paywallWebviewLoadStart
+    case paywallWebviewLoadFail
+    case paywallWebviewLoadComplete
+    case paywallWebviewLoadTimeout
+    case paywallProductsLoadStart
+    case paywallProductsLoadFail
+    case paywallProductsLoadComplete
+    
+    public init(event: SuperwallEvent) {
+        self = event.backingData.objcEvent
+    }
+}
+
+// MARK: - Backing data
+
+extension SuperwallEvent {
+    struct BackingData {
+        let objcEvent: SuperwallEventObjc
+        let params: [String: Any]?
+        let description: String
+        
+        init(objcEvent: SuperwallEventObjc, params: [String : Any]? = nil, description: String) {
+            self.objcEvent = objcEvent
+            self.params = params
+            self.description = description
+        }
+    }
+    
+    var backingData: BackingData {
+        #warning("TODO")
+        return .init(objcEvent: .firstSeen, description: "first_seen")
+//        switch self {
+//        case .firstSeen:
+//          return .init(objcEvent: .firstSeen, description: "first_seen")
+//        case .appOpen:
+//          return .init(objcEvent: .appOpen, description: "app_open")
+//        case .appLaunch:
+//          return .init(objcEvent: .appLaunch, description: "app_launch")
+//        case .appInstall:
+//          return .init(objcEvent: .appInstall, description: "app_install")
+//        case .sessionStart:
+//          return .init(objcEvent: .sessionStart, description: "session_start")
+//        case .appClose:
+//          return .init(objcEvent: .appClose, description: "app_close")
+//        case .deepLink(let url):
+//          return .init(objcEvent: .deepLink, params: <#T##[String : Any]?#>, description: "deepLink_open")
+//        case .triggerFire(let eventName, let result):
+//          return .init(objcEvent: .triggerFire, params: <#T##[String : Any]?#>, description: "trigger_fire")
+//        case .paywallOpen(let paywallInfo):
+//          return .init(objcEvent: .paywallOpen, params: <#T##[String : Any]?#>, description: "paywall_open")
+//        case .paywallClose(let paywallInfo):
+//          return .init(objcEvent: .paywallClose, params: <#T##[String : Any]?#>, description: "paywall_close")
+//        case .transactionStart(let product, let paywallInfo):
+//          return .init(objcEvent: .transactionStart, params: <#T##[String : Any]?#>, description: "transaction_start")
+//        case .transactionFail(let error, let paywallInfo):
+//          return .init(objcEvent: .transactionFail, params: <#T##[String : Any]?#>, description: "transaction_fail")
+//        case .transactionAbandon(let product, let paywallInfo):
+//          return .init(objcEvent: .transactionAbandon, params: <#T##[String : Any]?#>, description: "transaction_abandon")
+//        case .transactionComplete(let transaction, let product, let paywallInfo):
+//          return .init(objcEvent: .transactionComplete, params: <#T##[String : Any]?#>, description: "transaction_complete")
+//        case .subscriptionStart(let product, let paywallInfo):
+//          return .init(objcEvent: .subscriptionStart, params: <#T##[String : Any]?#>, description: "subscription_start")
+//        case .freeTrialStart(let product, let paywallInfo):
+//          return .init(objcEvent: .freeTrialStart, params: <#T##[String : Any]?#>, description: "freeTrial_start")
+//        case .transactionRestore(let paywallInfo):
+//          return .init(objcEvent: .transactionRestore, params: <#T##[String : Any]?#>, description: "transaction_restore")
+//        case .userAttributes(let attributes):
+//          return .init(objcEvent: .userAttributes, params: <#T##[String : Any]?#>, description: "user_attributes")
+//        case .nonRecurringProductPurchase(let product, let paywallInfo):
+//          return .init(objcEvent: .nonRecurringProductPurchase, params: <#T##[String : Any]?#>, description: "nonRecurringProduct_purchase")
+//        case .paywallResponseLoadStart(let triggeredEventName):
+//          return .init(objcEvent: .paywallResponseLoadStart, params: <#T##[String : Any]?#>, description: "paywallResponseLoad_start")
+//        case .paywallResponseLoadNotFound(let triggeredEventName):
+//          return .init(objcEvent: .paywallResponseLoadNotFound, params: <#T##[String : Any]?#>, description: "paywallResponseLoad_notFound")
+//        case .paywallResponseLoadFail(let triggeredEventName):
+//          return .init(objcEvent: .paywallResponseLoadFail, params: <#T##[String : Any]?#>, description: "paywallResponseLoad_fail")
+//        case .paywallResponseLoadComplete(let triggeredEventName, let paywallInfo):
+//          return .init(objcEvent: .paywallResponseLoadComplete, params: <#T##[String : Any]?#>, description: "paywallResponseLoad_complete")
+//        case .paywallWebviewLoadStart(let paywallInfo):
+//          return .init(objcEvent: .paywallWebviewLoadStart, params: <#T##[String : Any]?#>, description: "paywallWebviewLoad_start")
+//        case .paywallWebviewLoadFail(let paywallInfo):
+//          return .init(objcEvent: .paywallWebviewLoadFail, params: <#T##[String : Any]?#>, description: "paywallWebviewLoad_fail")
+//        case .paywallWebviewLoadComplete(let paywallInfo):
+//          return .init(objcEvent: .paywallWebviewLoadComplete, params: <#T##[String : Any]?#>, description: "paywallWebviewLoad_complete")
+//        case .paywallWebviewLoadTimeout(let paywallInfo):
+//          return .init(objcEvent: .paywallWebviewLoadTimeout, params: <#T##[String : Any]?#>, description: "paywallWebviewLoad_timeout")
+//        case .paywallProductsLoadStart(let triggeredEventName, let paywallInfo):
+//          return .init(objcEvent: .paywallProductsLoadStart, params: <#T##[String : Any]?#>, description: "paywallProductsLoad_start")
+//        case .paywallProductsLoadFail(let triggeredEventName, let paywallInfo):
+//          return .init(objcEvent: .paywallProductsLoadFail, params: <#T##[String : Any]?#>, description: "paywallProductsLoad_fail")
+//        case .paywallProductsLoadComplete(let triggeredEventName):
+//          return .init(objcEvent: .paywallProductsLoadComplete, params: <#T##[String : Any]?#>, description: "paywallProductsLoad_complete")
+//        }
+    }
 }

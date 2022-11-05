@@ -24,3 +24,12 @@ public enum PaywallSkippedReason {
   /// An error occurred.
   case error(Error)
 }
+
+/// Objective-C compatible enum for `PaywallDismissedResult.DismissState`
+@objc(SWKPaywallSkippedReason)
+public enum PaywallSkippedReasonObjc: Int {
+    case holdout
+    case noRuleMatch
+    case eventNotFound
+    case error
+}

@@ -33,7 +33,7 @@ public final class Superwall: NSObject {
   lazy var delegateAdapter = SuperwallDelegateAdapter()
 
   /// Properties stored about the user, set using ``SuperwallKit/Superwall/setUserAttributes(_:)``.
-  public static var userAttributes: [String: Any] {
+  @objc public static var userAttributes: [String: Any] {
     return shared.identityManager.userAttributes
   }
 
@@ -68,7 +68,7 @@ public final class Superwall: NSObject {
   /// ``SuperwallKit/Superwall/createAccount(userId:)``, this will return true.
   ///
   /// - Returns: A boolean indicating whether the user is logged in or not.
-  public static var isLoggedIn: Bool {
+  @objc public static var isLoggedIn: Bool {
     return IdentityManager.shared.isLoggedIn
   }
 

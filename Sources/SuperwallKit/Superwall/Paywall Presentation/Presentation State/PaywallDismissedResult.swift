@@ -40,3 +40,11 @@ public struct PaywallDismissedResult {
     )
   }
 }
+
+/// Objective-C compatible enum for `PaywallDismissedResult.DismissState`
+@objc(SWKPaywallDismissedResultState)
+public enum PaywallDismissedResultStateObjc: Int {
+    case purchased
+    case closed
+    case restored
+}
