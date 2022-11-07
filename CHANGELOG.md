@@ -6,7 +6,8 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ### Fixes
 
-- In a certain scenario, the completion blocks for triggering a paywall were being called on a background thread. This update fixes that.
+- Fixes a crash issue where the completion blocks for triggering a paywall were being called on a background thread in a specific scenario.
+- Fixes an issue where lazy properties were causing an occasional crash due to the use of multithreading.
 
 ---
 
