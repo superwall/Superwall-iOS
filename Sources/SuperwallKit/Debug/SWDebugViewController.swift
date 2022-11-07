@@ -122,7 +122,6 @@ final class SWDebugViewController: UIViewController {
 
   init() {
     super.init(nibName: nil, bundle: nil)
-    overrideUserInterfaceStyle = .dark
   }
 
   required init?(coder: NSCoder) {
@@ -461,7 +460,6 @@ final class SWDebugViewController: UIViewController {
 extension SWDebugViewController {
   func presentAlert(title: String?, message: String?, options: [AlertOption]) {
     let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
-    alertController.overrideUserInterfaceStyle = .dark
     alertController.view.tintColor = primaryColor
 
     for option in options {

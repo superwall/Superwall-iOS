@@ -39,6 +39,14 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ### Fixes
 
 - The API is now thread safe. By default the API uses background threads, dispatching to the main thread when necessary and when returning from completion blocks.
+
+---
+
+## 2.5.4
+
+### Fixes
+
+- Fixes a crash issue where the completion blocks for triggering a paywall were being called on a background thread in a specific scenario.
 - Fixes an issue where lazy properties were causing an occasional crash due to the use of multithreading.
 
 ---
