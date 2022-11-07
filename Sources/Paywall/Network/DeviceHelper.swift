@@ -11,12 +11,18 @@ import CoreTelephony
 
 class DeviceHelper {
   static let shared = DeviceHelper()
-  let reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, Api.hostDomain)
+
+  var locale: String {
+    LocalizationManager.shared.selectedLocale ?? Locale.autoupdatingCurrent.identifier
+  }
+  let appInstalledAtString: String
+
+  private let reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, Api.hostDomain)
   var appVersion: String {
     Bundle.main.releaseVersionNumber ?? ""
   }
 
-  lazy var osVersion: String = {
+  let osVersion: String = {
     let systemVersion = ProcessInfo.processInfo.operatingSystemVersion
     return String(
       format: "%ld.%ld.%ld",
@@ -24,7 +30,7 @@ class DeviceHelper {
     )
   }()
 
-  lazy var isMac: Bool = {
+  let isMac: Bool = {
     var output = false
     if #available(iOS 14.0, *) {
       output = ProcessInfo.processInfo.isiOSAppOnMac
@@ -32,17 +38,13 @@ class DeviceHelper {
     return output
   }()
 
-  lazy var model: String = {
+  let model: String = {
     UIDevice.modelName
   }()
 
-  lazy var vendorId: String = {
+  let vendorId: String = {
     UIDevice.current.identifierForVendor?.uuidString ?? ""
   }()
-
-  var locale: String {
-    LocalizationManager.shared.selectedLocale ?? Locale.autoupdatingCurrent.identifier
-  }
 
   var languageCode: String {
     Locale.autoupdatingCurrent.languageCode ?? ""
@@ -104,11 +106,11 @@ class DeviceHelper {
     return ProcessInfo.processInfo.isLowPowerModeEnabled ? "true" : "false"
   }
 
-  lazy var bundleId: String = {
+  let bundleId: String = {
     return Bundle.main.bundleIdentifier ?? ""
   }()
 
-  lazy var appInstallDate: Date? = {
+  private let appInstallDate: Date? = {
     guard let urlToDocumentsFolder = FileManager.default.urls(
       for: .documentDirectory,
       in: .userDomainMask
@@ -124,18 +126,14 @@ class DeviceHelper {
     return installDate
   }()
 
-  lazy var appInstalledAtString: String = {
-    return appInstallDate?.isoString ?? ""
-  }()
-
-  var daysSinceInstall: Int {
+  private var daysSinceInstall: Int {
     let fromDate = appInstallDate ?? Date()
     let toDate = Date()
     let numberOfDays = Calendar.current.dateComponents([.day], from: fromDate, to: toDate)
     return numberOfDays.day ?? 0
   }
 
-  private lazy var localDateFormatter: DateFormatter = {
+  private let localDateFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -144,7 +142,7 @@ class DeviceHelper {
     return formatter
   }()
 
-  private lazy var utcDateFormatter: DateFormatter = {
+  private let utcDateFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -153,7 +151,7 @@ class DeviceHelper {
     return formatter
   }()
 
-  private lazy var utcTimeFormatter: DateFormatter = {
+  private let utcTimeFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -162,7 +160,7 @@ class DeviceHelper {
     return formatter
   }()
 
-  private lazy var localDateTimeFormatter: DateFormatter = {
+  private let localDateTimeFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -171,7 +169,7 @@ class DeviceHelper {
     return formatter
   }()
 
-  private lazy var localTimeFormatter: DateFormatter = {
+  private let localTimeFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -180,7 +178,7 @@ class DeviceHelper {
     return formatter
   }()
 
-  private lazy var utcDateTimeFormatter: DateFormatter = {
+  private let utcDateTimeFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -189,38 +187,38 @@ class DeviceHelper {
     return formatter
   }()
 
-  var localDateString: String {
+  private var localDateString: String {
     return localDateFormatter.string(from: Date())
   }
 
-  var localTimeString: String {
+  private var localTimeString: String {
     return localTimeFormatter.string(from: Date())
   }
 
-  var localDateTimeString: String {
+  private var localDateTimeString: String {
     return localDateTimeFormatter.string(from: Date())
   }
 
-  var utcDateString: String {
+  private var utcDateString: String {
     return utcDateFormatter.string(from: Date())
   }
 
-  var utcTimeString: String {
+  private var utcTimeString: String {
     return utcTimeFormatter.string(from: Date())
   }
 
-  var utcDateTimeString: String {
+  private var utcDateTimeString: String {
     return utcDateTimeFormatter.string(from: Date())
   }
 
-  var minutesSinceInstall: Int {
+  private var minutesSinceInstall: Int {
     let fromDate = appInstallDate ?? Date()
     let toDate = Date()
     let numberOfMinutes = Calendar.current.dateComponents([.minute], from: fromDate, to: toDate)
     return numberOfMinutes.minute ?? 0
   }
 
-  var daysSinceLastPaywallView: Int? {
+  private var daysSinceLastPaywallView: Int? {
     guard let fromDate = Storage.shared.getLastPaywallView() else {
       return nil
     }
@@ -229,7 +227,7 @@ class DeviceHelper {
     return numberOfDays.day
   }
 
-  var minutesSinceLastPaywallView: Int? {
+  private var minutesSinceLastPaywallView: Int? {
     guard let fromDate = Storage.shared.getLastPaywallView() else {
       return nil
     }
@@ -238,7 +236,7 @@ class DeviceHelper {
     return numberOfMinutes.minute
   }
 
-  var totalPaywallViews: Int {
+  private var totalPaywallViews: Int {
     return Storage.shared.getTotalPaywallViews() ?? 0
   }
 
@@ -282,5 +280,9 @@ class DeviceHelper {
       utcDateTime: utcDateTimeString,
       localDateTime: localDateTimeString
     )
+  }
+
+  init() {
+    self.appInstalledAtString = appInstallDate?.isoString ?? ""
   }
 }
