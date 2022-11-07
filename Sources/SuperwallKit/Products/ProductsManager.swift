@@ -54,7 +54,9 @@ class ProductsManager: NSObject {
           info: ["product_ids": identifiers],
           error: nil
         )
-        completion(.success(productsAlreadyCachedSet))
+        DispatchQueue.main.async {
+          completion(.success(productsAlreadyCachedSet))
+        }
 				return
 			}
 
@@ -140,7 +142,9 @@ extension ProductsManager: SKProductsRequestDelegate {
 
 			self.cacheProducts(response.products)
 			for completion in completionBlocks {
-        completion(.success(Set(response.products)))
+        DispatchQueue.main.async {
+          completion(.success(Set(response.products)))
+        }
 			}
 		}
 	}
@@ -189,7 +193,9 @@ extension ProductsManager: SKProductsRequestDelegate {
 			self.completionHandlers.removeValue(forKey: products)
 			self.productsByRequests.removeValue(forKey: request)
 			for completion in completionBlocks {
-        completion(.failure(error))
+        DispatchQueue.main.async {
+          completion(.failure(error))
+        }
 			}
 		}
 		request.cancel()
