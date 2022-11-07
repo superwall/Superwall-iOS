@@ -15,8 +15,8 @@ final class RevenueCatService {
 
   static func initPurchases() {
     /*
-     Make sure to set usesStoreKit2IfAvailable to false
-     if purchasing a product directly.
+    Make sure to set usesStoreKit2IfAvailable to false
+    if purchasing a product directly.
     */
     Purchases.configure(
       with: .init(withAPIKey: "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql")

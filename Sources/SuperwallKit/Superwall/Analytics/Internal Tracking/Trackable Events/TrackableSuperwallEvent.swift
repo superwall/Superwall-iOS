@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 20/04/2022.
 //
-// swiftlint:disable:all type_body_length nesting
+// swiftlint:disable:all type_body_length nesting file_length
 
 import Foundation
 import StoreKit
@@ -269,7 +269,7 @@ enum InternalSuperwallEvent {
           product: .init(product: product),
           paywallInfo: paywallInfo
         )
-      case .complete(let product, let model):
+      case let .complete(product, model):
         return .transactionComplete(
           transaction: model,
           product: .init(product: product),

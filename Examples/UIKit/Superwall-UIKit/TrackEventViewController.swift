@@ -12,7 +12,7 @@ import Combine
 final class TrackEventViewController: UIViewController {
   @IBOutlet private var subscriptionLabel: UILabel!
   private var subscribedCancellable: AnyCancellable?
-  private var trackCancellable: AnyCancellable?
+  private var cancellable: AnyCancellable?
 
   static func fromStoryboard() -> TrackEventViewController {
     let storyboard = UIStoryboard(
@@ -87,8 +87,8 @@ final class TrackEventViewController: UIViewController {
   // The below function gives an example of how to track an event using Combine publishers:
   /*
   func trackEventUsingCombine() {
-    trackCancellable = Superwall
-      .track(event: "MyEvent")
+   cancellable = Superwall
+      .publisher(forEvent: "MyEvent")
       .sink { paywallState in
         switch paywallState {
         case .presented(let paywallInfo):

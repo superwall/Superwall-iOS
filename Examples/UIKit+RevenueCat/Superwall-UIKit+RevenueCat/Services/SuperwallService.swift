@@ -91,20 +91,17 @@ extension SuperwallService: SuperwallDelegate {
     return RevenueCatService.shared.isSubscribed
   }
 
-  func trackAnalyticsEvent(
-    withName name: String,
-    params: [String: Any]
-  ) {
-    guard let event = SuperwallEvent(rawValue: name) else {
-      return
-    }
-    print("analytics event called", event, params)
+  func didTrackSuperwallEvent(_ result: SuperwallEventResult) {
+    print("analytics event called", result.event.description)
 
-    // Uncomment the following if you want to track the different analytics
-    // events received from the paywall:
+    // Uncomment if you want to get a dictionary of params associated with the event:
+    // print(result.params)
+
+    // Uncomment the following if you want to track
+    // Superwall events:
 
     /*
-    switch event {
+    switch result.event {
     case .firstSeen:
       <#code#>
     case .appOpen:

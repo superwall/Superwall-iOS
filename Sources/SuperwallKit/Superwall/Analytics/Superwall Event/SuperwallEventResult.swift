@@ -10,8 +10,8 @@ import Foundation
 /// The internally tracked superwall event result.
 public struct SuperwallEventResult {
   /// The event that was tracked.
-  let event: SuperwallEvent
+  public let event: SuperwallEvent
 
   /// A dictionary of params associated with the event.
-  let rawParams: [String: Any]
+  public let params: [String: Any]
 }
