@@ -12,7 +12,7 @@ import Foundation
   /// Determines whether the paywall should use haptic feedback. Defaults to true.
   ///
   /// Haptic feedback occurs when a user purchases or restores a product, opens a URL from the paywall, or closes the paywall.
-  public var isHapticFeedbackEnabled = true
+  @objc public var isHapticFeedbackEnabled = true
 
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
   public struct RestoreFailed {
@@ -34,7 +34,7 @@ import Foundation
   ///
   /// If you want to preload them at a later date, you can call ``SuperwallKit/Superwall/preloadAllPaywalls()``
   /// or ``SuperwallKit/Superwall/preloadPaywalls(forEvents:)``
-  public var shouldPreload = true
+  @objc public var shouldPreload = true
 
   /// Loads paywall template websites from disk, if available. Defaults to `true`.
   ///
@@ -44,7 +44,7 @@ import Foundation
   /// Automatically dismisses the paywall when a product is purchased or restored. Defaults to `true`.
   ///
   /// Set this to `false` to prevent the paywall from dismissing on purchase/restore.
-  public var automaticallyDismiss = true
+  @objc public var automaticallyDismiss = true
 
   /// Defines the different types of views that can appear behind Apple's payment sheet during a transaction.
   public enum TransactionBackgroundView {

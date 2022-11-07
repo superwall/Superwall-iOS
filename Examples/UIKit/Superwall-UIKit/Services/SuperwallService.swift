@@ -84,7 +84,6 @@ extension SuperwallService: SuperwallDelegate {
 
   func didTrackSuperwallEvent(_ event: SuperwallEvent) {
     print("analytics event called", event)
-
     // Uncomment the following if you want to track
     // Superwall events:
 

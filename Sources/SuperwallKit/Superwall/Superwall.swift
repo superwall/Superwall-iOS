@@ -5,7 +5,7 @@ import Combine
 /// The primary class for integrating Superwall into your application. It provides access to all its featured via static functions and variables.
 public final class Superwall: NSObject {
   // MARK: - Public Properties
-  /// The delegate of the Paywall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
+  /// The delegate of the Superwall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
   @MainActor
   public static var delegate: SuperwallDelegate? {
     get {
@@ -16,7 +16,7 @@ public final class Superwall: NSObject {
     }
   }
 
-  /// The delegate of the Paywall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
+  /// The delegate of the Superwall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
   @MainActor
   @available(swift, obsoleted: 1.0)
   @objc(delegate)

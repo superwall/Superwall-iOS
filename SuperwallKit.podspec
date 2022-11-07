@@ -40,9 +40,9 @@ Pod::Spec.new do |s|
 
   s.source_files  = "Sources/**/*.{swift}"
   s.resource_bundles = {
-    "SuperwallKit_SuperwallKit" => [
+    "SuperwallKit" => [
       "Sources/SuperwallKit/*.xcassets",
-      "Sources/SuperwallKIt/**/*.xcdatamodeld"
+      "Sources/SuperwallKit/**/*.xcdatamodeld"
     ]
   }
   s.dependency 'ASN1Swift', '~> 1.2.3'
