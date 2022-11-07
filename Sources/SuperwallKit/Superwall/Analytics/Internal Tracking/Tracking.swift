@@ -29,7 +29,7 @@ extension Superwall {
     if let trackedEvent = event as? TrackableSuperwallEvent {
       let result = SuperwallEventResult(
         event: trackedEvent.superwallEvent,
-        rawParams: parameters.delegateParams
+        params: parameters.delegateParams
       )
 
       await shared.delegateAdapter.didTrackSuperwallEvent(result)

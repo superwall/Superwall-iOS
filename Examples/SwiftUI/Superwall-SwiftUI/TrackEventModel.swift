@@ -48,7 +48,7 @@ final class TrackEventModel {
   /*
   func trackEventUsingCombine() {
     cancellable = Superwall
-      .track(event: "MyEvent")
+      .publisher(forEvent: "MyEvent")
       .sink { paywallState in
        switch paywallState {
        case .presented(let paywallInfo):

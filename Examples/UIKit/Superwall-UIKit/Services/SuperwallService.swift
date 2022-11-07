@@ -82,13 +82,17 @@ extension SuperwallService: SuperwallDelegate {
     return StoreKitService.shared.isSubscribed.value
   }
 
-  func didTrackSuperwallEvent(_ event: SuperwallEvent) {
-    print("analytics event called", event)
+  func didTrackSuperwallEvent(_ result: SuperwallEventResult) {
+    print("analytics event called", result.event.description)
+
+    // Uncomment if you want to get a dictionary of params associated with the event:
+    // print(result.params)
+
     // Uncomment the following if you want to track
     // Superwall events:
 
     /*
-    switch event {
+    switch result.event {
     case .firstSeen:
       <#code#>
     case .appOpen:
