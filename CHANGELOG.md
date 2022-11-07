@@ -2,6 +2,14 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
+## 2.5.4
+
+### Fixes
+
+- In a certain scenario, the completion blocks for triggering a paywall were being called on a background thread. This update fixes that.
+
+---
+
 ## 2.5.3
 
 ### Fixes
