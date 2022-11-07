@@ -28,7 +28,7 @@ typedef void (^PurchaseCompletionHandler)(SKPaymentTransactionState state, NSErr
 - (void)purchaseProduct:(SKProduct *)product withCompletion:(nullable PurchaseCompletionHandler)completion;
 
 /// Restores purchases.
-- (BOOL)restorePurchases;
+- (void)restorePurchases;
 
 /// Forces the subscribe state to be updated.
 - (void)updateSubscribedState;

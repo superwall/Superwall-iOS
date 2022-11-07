@@ -25,11 +25,22 @@ public enum PaywallSkippedReason {
   case error(Error)
 }
 
-/// Objective-C compatible enum for `PaywallDismissedResult.DismissState`
+/// Objective-C compatible enum for ``PaywallDismissedResult/DismissState``
 @objc(SWKPaywallSkippedReason)
+/// The reason the paywall presentation was skipped.
 public enum PaywallSkippedReasonObjc: Int {
-    case holdout
-    case noRuleMatch
-    case eventNotFound
-    case error
+  /// The user was assigned to a holdout group.
+  case holdout
+
+  /// No rule was matched for this event.
+  case noRuleMatch
+
+  /// This event was not found on the dashboard.
+  ///
+  /// Please make sure you have added the event to a campaign on the dashboard and
+  /// double check its spelling.
+  case eventNotFound
+
+  /// An error occurred.
+  case error
 }

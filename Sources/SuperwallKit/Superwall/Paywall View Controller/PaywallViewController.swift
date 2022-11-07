@@ -607,7 +607,12 @@ extension PaywallViewController {
   }
 
   private func setPresentationStyle(withOverride presentationStyleOverride: PaywallPresentationStyle?) {
-    presentationStyle = presentationStyleOverride ?? paywall.presentation.style
+    if let presentationStyleOverride = presentationStyleOverride,
+       presentationStyleOverride != .none {
+      presentationStyle = presentationStyleOverride
+    } else {
+      presentationStyle = paywall.presentation.style
+    }
 
     switch presentationStyle {
     case .modal:
@@ -647,8 +652,8 @@ extension PaywallViewController {
 	}
 
   private func promptSuperwallDelegate() {
-    let hasDelegate = (Superwall.shared.delegateAdapter.swiftDelegate != nil || Superwall.shared.delegateAdapter.objcDelegate != nil)
-      
+    let hasDelegate = Superwall.shared.delegateAdapter.hasDelegate
+
     guard
       presentedViewController == nil,
       hasDelegate == false

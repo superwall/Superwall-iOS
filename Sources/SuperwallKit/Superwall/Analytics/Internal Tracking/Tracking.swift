@@ -27,11 +27,12 @@ extension Superwall {
 
     // For a trackable superwall event, send params to delegate
     if let trackedEvent = event as? TrackableSuperwallEvent {
-      
-      await shared.delegateAdapter.didTrackSuperwallEvent(
-        trackedEvent.superwallEvent,
-        params: parameters.delegateParams
+      let result = SuperwallEventResult(
+        event: trackedEvent.superwallEvent,
+        rawParams: parameters.delegateParams
       )
+
+      await shared.delegateAdapter.didTrackSuperwallEvent(result)
 
       Logger.debug(
         logLevel: .debug,

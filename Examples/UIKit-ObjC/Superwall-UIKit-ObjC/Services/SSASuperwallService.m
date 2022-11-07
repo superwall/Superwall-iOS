@@ -81,11 +81,11 @@ static inline PurchaseResult PurchaseResultFromTransactionState(SKPaymentTransac
 #pragma mark - Public Methods
 
 - (void)initialize {
-    // Configure Superwall.
-    [Superwall configureWithApiKey:kDemoAPIKey delegate:self options:nil];
-    
     // Load the current subscription state.
     [[SSAStoreKitService sharedService] updateSubscribedState];
+
+    // Configure Superwall.
+    [Superwall configureWithApiKey:kDemoAPIKey delegate:self options:nil];
 }
 
 - (void)logInWithCompletion:(nullable void (^)(void))completion {
@@ -159,7 +159,7 @@ static inline PurchaseResult PurchaseResultFromTransactionState(SKPaymentTransac
 - (void)didTrackSuperwallEvent:(enum SWKSuperwallEvent)event params:(NSDictionary<NSString *,id> *)params
 {
     NSLog(@"Analytics event called %@", @(event));
-    
+      
     // Uncomment the following if you want to track the different analytics events received from the paywall:
     
 //    switch (event) {
