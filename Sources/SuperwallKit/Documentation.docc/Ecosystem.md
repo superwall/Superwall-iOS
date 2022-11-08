@@ -18,7 +18,7 @@ Events and Rules are grouped in a concept we call **Campaigns**.
 
 Paywalls and Campaigns are all defined in the [Superwall Dashboard](https://superwall.com/dashboard). If you don't already have a Superwall account, you can [sign up for free](https://superwall.com/sign-up).
 
-Integrating the Superwall SDK into your app is usually the last time you'll have to write paywall related code.
+Integrating SuperwallKit into your app is usually the last time you'll have to write paywall related code.
 
 This allows you to iterate on 5 key aspects of your monetization flow, without shipping app updates:
 
@@ -27,13 +27,12 @@ This allows you to iterate on 5 key aspects of your monetization flow, without s
 - Placement
 - Pricing
 - Discounts
-- Paywalls
 
-All paywalls are websites. Superwall uses a script called **Paywall.js** to turn these websites into paywall templates. The SDK loads the websites inside a `UIWebView` and executes javascript on them to replace text and template product information. This gives you the flexibility to turn any design into a paywall and update it remotely.
+All paywalls are websites. Superwall uses a script called **Paywall.js** to turn these websites into paywall templates. SuperwallKit loads the websites inside a `UIWebView` and executes javascript on them to replace text and template product information. This gives you the flexibility to turn any design into a paywall and update it remotely.
 
 Since building websites can be tedious, we maintain a growing list of highly converting paywall templates for you to choose from. These designs are used by some of the biggest apps on the App Store and are perfect to get you up and running in no time.
 
-However, if you'd like to build your own paywall website from scratch, we recommend using Webflow. We maintain a [clonable Webflow template](https://webflow.com/website/45-Paywall-Elements?ref=showcase-search&searchValue=superwall) that includes ~50 of the most prominent paywall elements we've seen across thousands of apps, which you're welcome to use.
+However, if you'd like to build your own paywall website from scratch, we recommend using Webflow. We maintain a [cloneable Webflow template](https://webflow.com/website/45-Paywall-Elements?ref=showcase-search&searchValue=superwall) that includes ~50 of the most prominent paywall elements we've seen across thousands of apps, which you're welcome to use.
 
 ## Rules
 
@@ -45,11 +44,11 @@ Rule evaluations happen client side, so no network requests are fired to determi
 
 Events are added to campaigns and are tracked via the SDK. The SDK listens for these events and evaluates their rules to determine whether or not to show a paywall.
 
-## Inner workings of the SDK
+## Inner workings of SuperwallKit
 
-The following diagram describes the inner workings of the Superwall SDK and your app:
+The following diagram describes the inner workings of SuperwallKit and your app:
 
 ![How Superwall works](apiDiagram.png)
 
 
-Read <doc:GettingStarted> to learn how to integrate the SDK into your app.
+Read <doc:GettingStarted> to learn how to integrate SuperwallKit into your app.

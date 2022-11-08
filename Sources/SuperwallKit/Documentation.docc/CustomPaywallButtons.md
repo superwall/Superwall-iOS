@@ -8,7 +8,7 @@ The SDK automatically recognizes elements in the paywall tagged with `data-pw-re
 
 However, the SDK also lets you add your own custom identifiers to buttons, allowing you to tie any button tap in your paywall to logic in your application.
 
-For example, simply adding `data-pw-custom="help_center"` to a button in your HTML paywall gives you the opportunity to present a help center whenever that button is pressed. To set this up, implement the ``SuperwallDelegate/handleCustomPaywallAction(withName:)`` in your ``SuperwallDelegate``:
+For example, simply adding `data-pw-custom="help_center"` to a button in your HTML paywall gives you the opportunity to present a help center whenever that button is pressed. To set this up, implement the ``SuperwallDelegate/handleCustomPaywallAction(withName:)-b8fk`` in your ``SuperwallDelegate``:
 
 ```swift
 extension SuperwallService: SuperwallDelegate {
