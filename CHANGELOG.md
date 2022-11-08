@@ -83,14 +83,12 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ### Fixes
 
 - Shimmer view is no longer visible beneath a paywall's `WKWebView` when there is no `body` or `html` background color set
-  <<<<<<< HEAD
 - Previously calls to `Paywall.preloadPaywalls(forTriggers:)` before `Paywall.config()` finished were ignored. This has been fixed.
 - If a user had already bought a product within a subscription group, they were still being offered a free trial on other products within that group. This is incorrect logic and this update fixes that.
 - # Fixed a bug where `Paywall.reset()` couldn't be called on a background thread.
 - Previously, calling `Paywall.preloadPaywalls(forTriggers:)` before `Paywall.config()` finished would not work. This has been fixed.
 - Previously, if a user purchases a product within a subscription group, they would still be offered a free trial on other products within that group. This has been fixed.
 - Fixes a bug where `Paywall.reset()` couldn't be called on a background thread.
-  > > > > > > > master
 
 ---
 
