@@ -51,7 +51,7 @@ extension Superwall {
     Storage.shared.coreDataManager.saveEventData(eventData)
 
     if event.canImplicitlyTriggerPaywall {
-      Task {
+      Task.detached {
         await shared.handleImplicitTrigger(
           forEvent: event,
           withData: eventData
