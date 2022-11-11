@@ -17,19 +17,19 @@
 @implementation SSASceneDelegate
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
-    [self handleURLContexts:connectionOptions.URLContexts];
+  [self handleURLContexts:connectionOptions.URLContexts];
 }
 
 - (void)scene:(UIScene *)scene openURLContexts:(NSSet<UIOpenURLContext *> *)URLContexts {
-    [self handleURLContexts:URLContexts];
+  [self handleURLContexts:URLContexts];
 }
 
 #pragma mark - Deep linking
 
 - (void)handleURLContexts:(NSSet<UIOpenURLContext *> *)URLContexts {
-    [URLContexts enumerateObjectsUsingBlock:^(UIOpenURLContext * _Nonnull context, BOOL * _Nonnull stop) {
-        [[SSASuperwallService sharedService] handleDeepLinkWithURL:context.URL];
-    }];
+  [URLContexts enumerateObjectsUsingBlock:^(UIOpenURLContext * _Nonnull context, BOOL * _Nonnull stop) {
+    [[SSASuperwallService sharedService] handleDeepLinkWithURL:context.URL];
+  }];
 }
 
 @end

@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "889FAA5F27FC530200CB6EF5"
-               BuildableName = "Superwall-UIKit.app"
-               BlueprintName = "Superwall-UIKit"
-               ReferencedContainer = "container:Superwall-UIKit.xcodeproj">
+               BuildableName = "Superwall-UIKit-Swift.app"
+               BlueprintName = "Superwall-UIKit-Swift"
+               ReferencedContainer = "container:Superwall-UIKit-Swift.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,13 +45,13 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "889FAA5F27FC530200CB6EF5"
-            BuildableName = "Superwall-UIKit.app"
-            BlueprintName = "Superwall-UIKit"
-            ReferencedContainer = "container:Superwall-UIKit.xcodeproj">
+            BuildableName = "Superwall-UIKit-Swift.app"
+            BlueprintName = "Superwall-UIKit-Swift"
+            ReferencedContainer = "container:Superwall-UIKit-Swift.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
-         identifier = "../../SuperwallUIKitExample/Products.storekit">
+         identifier = "../../Superwall-UIKit-Swift/Products.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
@@ -65,9 +65,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "889FAA5F27FC530200CB6EF5"
-            BuildableName = "Superwall-UIKit.app"
-            BlueprintName = "Superwall-UIKit"
-            ReferencedContainer = "container:Superwall-UIKit.xcodeproj">
+            BuildableName = "Superwall-UIKit-Swift.app"
+            BlueprintName = "Superwall-UIKit-Swift"
+            ReferencedContainer = "container:Superwall-UIKit-Swift.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

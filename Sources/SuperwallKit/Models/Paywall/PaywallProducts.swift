@@ -11,7 +11,8 @@ import StoreKit
 /// Defines primary, secondary and tertiary products to be used on the paywall.
 ///
 /// Pass an instance of this to ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallState:)`` to replace your remotely defined products.
-@objc public class PaywallProducts: NSObject {
+@objc(SWKPaywallProducts)
+public class PaywallProducts: NSObject {
   /// The primary product for the paywall.
   var primary: SKProduct?
 

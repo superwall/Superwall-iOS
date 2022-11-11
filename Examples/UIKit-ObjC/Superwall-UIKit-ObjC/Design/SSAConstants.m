@@ -17,28 +17,28 @@ CGFloat const SSAConstantsTextStyleBody = 17.0;
 @implementation SSAConstants
 
 + (UIColor *)primaryColor {
-    return [UIColor ssa_tealColor];
+  return [UIColor ssa_tealColor];
 }
 
 + (NSDictionary<NSAttributedStringKey,id> *)navigationBarTitleTextAttributes {
-    return @{
-        NSForegroundColorAttributeName: [UIColor whiteColor],
-        NSFontAttributeName: [SSAConstants fontWithTextStyle:SSAConstantsTextStyleBody fontWeight:SSAConstantsFontWeightRegular]
-    };
+  return @{
+    NSForegroundColorAttributeName: [UIColor whiteColor],
+    NSFontAttributeName: [SSAConstants fontWithTextStyle:SSAConstantsTextStyleBody fontWeight:SSAConstantsFontWeightRegular]
+  };
 }
 
 + (UIFont *)fontWithTextStyle:(SSAConstantsTextStyle)textStyle fontWeight:(SSAConstantsFontWeight)fontWeight {
-    switch (fontWeight) {
-        case SSAConstantsFontWeightRegular:
-            return [UIFont ssa_rubikWithSize:textStyle];
-            break;
-        case SSAConstantsFontWeightBold:
-            return [UIFont ssa_rubikBoldWithSize:textStyle];
-            break;
-        default:
-            return [UIFont ssa_rubikWithSize:textStyle];
-            break;
-    }
+  switch (fontWeight) {
+    case SSAConstantsFontWeightRegular:
+      return [UIFont ssa_rubikWithSize:textStyle];
+      break;
+    case SSAConstantsFontWeightBold:
+      return [UIFont ssa_rubikBoldWithSize:textStyle];
+      break;
+    default:
+      return [UIFont ssa_rubikWithSize:textStyle];
+      break;
+  }
 }
 
 @end

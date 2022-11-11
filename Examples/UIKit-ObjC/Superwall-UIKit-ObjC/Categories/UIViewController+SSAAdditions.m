@@ -10,7 +10,7 @@
 @implementation UIViewController (SSAAdditions)
 
 + (instancetype)ssa_storyboardViewController {
-    return [[UIStoryboard storyboardWithName:@"Main" bundle:nil] instantiateViewControllerWithIdentifier:NSStringFromClass([self class])];
+  return [[UIStoryboard storyboardWithName:@"Main" bundle:nil] instantiateViewControllerWithIdentifier:NSStringFromClass([self class])];
 }
 
 @end

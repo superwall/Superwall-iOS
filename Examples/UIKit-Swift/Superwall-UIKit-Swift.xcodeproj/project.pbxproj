@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		884D982029114FAB0013225F /* SuperwallKit in Frameworks */ = {isa = PBXBuildFile; productRef = 884D981F29114FAB0013225F /* SuperwallKit */; };
+		543280D1291E003500213238 /* SuperwallKit in Frameworks */ = {isa = PBXBuildFile; productRef = 543280D0291E003500213238 /* SuperwallKit */; };
 		889FAA6427FC530200CB6EF5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA6327FC530200CB6EF5 /* AppDelegate.swift */; };
 		889FAA6627FC530200CB6EF5 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA6527FC530200CB6EF5 /* SceneDelegate.swift */; };
 		889FAA6827FC530200CB6EF5 /* WelcomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA6727FC530200CB6EF5 /* WelcomeViewController.swift */; };
@@ -26,7 +26,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		889FAA6027FC530200CB6EF5 /* Superwall-UIKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Superwall-UIKit.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		543280CF291E002B00213238 /* paywall-ios */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "paywall-ios"; path = ../..; sourceTree = "<group>"; };
+		889FAA6027FC530200CB6EF5 /* Superwall-UIKit-Swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Superwall-UIKit-Swift.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		889FAA6327FC530200CB6EF5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		889FAA6527FC530200CB6EF5 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		889FAA6727FC530200CB6EF5 /* WelcomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeViewController.swift; sourceTree = "<group>"; };
@@ -44,7 +45,6 @@
 		889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventViewController.swift; sourceTree = "<group>"; };
 		889FAA9C27FDADD000CB6EF5 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
 		88A801D128EB15E2004244CA /* SuperwallService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperwallService.swift; sourceTree = "<group>"; };
-		88B5FED12847ABCA009F36E2 /* paywall-ios */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "paywall-ios"; path = ../..; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,7 +52,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				884D982029114FAB0013225F /* SuperwallKit in Frameworks */,
+				543280D1291E003500213238 /* SuperwallKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -62,8 +62,8 @@
 		889FAA5727FC530200CB6EF5 = {
 			isa = PBXGroup;
 			children = (
-				88B5FED12847ABCA009F36E2 /* paywall-ios */,
-				889FAA6227FC530200CB6EF5 /* Superwall-UIKit */,
+				543280CF291E002B00213238 /* paywall-ios */,
+				889FAA6227FC530200CB6EF5 /* Superwall-UIKit-Swift */,
 				889FAA6127FC530200CB6EF5 /* Products */,
 				889FAA8B27FC58D700CB6EF5 /* Frameworks */,
 			);
@@ -72,12 +72,12 @@
 		889FAA6127FC530200CB6EF5 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				889FAA6027FC530200CB6EF5 /* Superwall-UIKit.app */,
+				889FAA6027FC530200CB6EF5 /* Superwall-UIKit-Swift.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		889FAA6227FC530200CB6EF5 /* Superwall-UIKit */ = {
+		889FAA6227FC530200CB6EF5 /* Superwall-UIKit-Swift */ = {
 			isa = PBXGroup;
 			children = (
 				889FAA7727FC531B00CB6EF5 /* Design */,
@@ -91,7 +91,7 @@
 				889FAA6E27FC530200CB6EF5 /* LaunchScreen.storyboard */,
 				889FAA7127FC530200CB6EF5 /* Info.plist */,
 			);
-			path = "Superwall-UIKit";
+			path = "Superwall-UIKit-Swift";
 			sourceTree = "<group>";
 		};
 		889FAA7727FC531B00CB6EF5 /* Design */ = {
@@ -143,9 +143,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		889FAA5F27FC530200CB6EF5 /* Superwall-UIKit */ = {
+		889FAA5F27FC530200CB6EF5 /* Superwall-UIKit-Swift */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 889FAA7427FC530200CB6EF5 /* Build configuration list for PBXNativeTarget "Superwall-UIKit" */;
+			buildConfigurationList = 889FAA7427FC530200CB6EF5 /* Build configuration list for PBXNativeTarget "Superwall-UIKit-Swift" */;
 			buildPhases = (
 				889FAA8727FC57D400CB6EF5 /* SwiftLint */,
 				889FAA5C27FC530200CB6EF5 /* Sources */,
@@ -156,12 +156,12 @@
 			);
 			dependencies = (
 			);
-			name = "Superwall-UIKit";
+			name = "Superwall-UIKit-Swift";
 			packageProductDependencies = (
-				884D981F29114FAB0013225F /* SuperwallKit */,
+				543280D0291E003500213238 /* SuperwallKit */,
 			);
 			productName = SuperwallUIKitExample;
-			productReference = 889FAA6027FC530200CB6EF5 /* Superwall-UIKit.app */;
+			productReference = 889FAA6027FC530200CB6EF5 /* Superwall-UIKit-Swift.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -179,7 +179,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 889FAA5B27FC530200CB6EF5 /* Build configuration list for PBXProject "Superwall-UIKit" */;
+			buildConfigurationList = 889FAA5B27FC530200CB6EF5 /* Build configuration list for PBXProject "Superwall-UIKit-Swift" */;
 			compatibilityVersion = "Xcode 13.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -194,7 +194,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				889FAA5F27FC530200CB6EF5 /* Superwall-UIKit */,
+				889FAA5F27FC530200CB6EF5 /* Superwall-UIKit-Swift */,
 			);
 		};
 /* End PBXProject section */
@@ -398,7 +398,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Superwall-UIKit/Info.plist";
+				INFOPLIST_FILE = "Superwall-UIKit-Swift/Info.plist";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -429,7 +429,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Superwall-UIKit/Info.plist";
+				INFOPLIST_FILE = "Superwall-UIKit-Swift/Info.plist";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -454,7 +454,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		889FAA5B27FC530200CB6EF5 /* Build configuration list for PBXProject "Superwall-UIKit" */ = {
+		889FAA5B27FC530200CB6EF5 /* Build configuration list for PBXProject "Superwall-UIKit-Swift" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				889FAA7227FC530200CB6EF5 /* Debug */,
@@ -463,7 +463,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		889FAA7427FC530200CB6EF5 /* Build configuration list for PBXNativeTarget "Superwall-UIKit" */ = {
+		889FAA7427FC530200CB6EF5 /* Build configuration list for PBXNativeTarget "Superwall-UIKit-Swift" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				889FAA7527FC530200CB6EF5 /* Debug */,
@@ -475,7 +475,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		884D981F29114FAB0013225F /* SuperwallKit */ = {
+		543280D0291E003500213238 /* SuperwallKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SuperwallKit;
 		};

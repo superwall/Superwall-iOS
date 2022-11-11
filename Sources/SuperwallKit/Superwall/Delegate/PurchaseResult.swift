@@ -54,7 +54,7 @@ public enum PurchaseResult {
 */
 
 /// An Objective-C-only enum that defines the possible outcomes of attempting to purchase a product.
-@objc(PurchaseResult)
+@objc(SWKPurchaseResult)
 public enum PurchaseResultObjc: Int {
   /// The purchase was cancelled.
   ///

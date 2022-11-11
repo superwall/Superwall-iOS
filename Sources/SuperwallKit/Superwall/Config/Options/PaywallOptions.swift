@@ -8,7 +8,9 @@
 import Foundation
 
 /// Options for configuring the appearance and behavior of paywalls.
-@objc public final class PaywallOptions: NSObject {
+@objc(SWKPaywallOptions)
+@objcMembers
+public final class PaywallOptions: NSObject {
   /// Determines whether the paywall should use haptic feedback. Defaults to true.
   ///
   /// Haptic feedback occurs when a user purchases or restores a product, opens a URL from the paywall, or closes the paywall.
