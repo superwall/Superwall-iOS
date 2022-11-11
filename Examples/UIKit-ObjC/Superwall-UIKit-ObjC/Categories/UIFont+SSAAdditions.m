@@ -10,11 +10,11 @@
 @implementation UIFont (SSAAdditions)
 
 + (UIFont *)ssa_rubikWithSize:(CGFloat)size {
-    return [UIFont fontWithName:@"Rubik-Regular" size:size];
+  return [UIFont fontWithName:@"Rubik-Regular" size:size];
 }
 
 + (UIFont *)ssa_rubikBoldWithSize:(CGFloat)size {
-    return [UIFont fontWithName:@"Rubik-Bold" size:size];
+  return [UIFont fontWithName:@"Rubik-Bold" size:size];
 }
 
 @end

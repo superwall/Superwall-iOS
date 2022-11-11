@@ -608,7 +608,7 @@ extension PaywallViewController {
 
   private func setPresentationStyle(withOverride presentationStyleOverride: PaywallPresentationStyle?) {
     if let presentationStyleOverride = presentationStyleOverride,
-       presentationStyleOverride != .none {
+      presentationStyleOverride != .none {
       presentationStyle = presentationStyleOverride
     } else {
       presentationStyle = paywall.presentation.style

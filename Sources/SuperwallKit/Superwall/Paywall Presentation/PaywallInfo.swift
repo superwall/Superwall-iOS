@@ -12,6 +12,8 @@ import StoreKit
 /// Contains information about a given paywall.
 ///
 /// This is returned in the `paywallState` after presenting a paywall with ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallState:)``.
+@objc(SWKPaywallInfo)
+@objcMembers
 public final class PaywallInfo: NSObject {
   /// Superwall's internal ID for this paywall.
   let databaseId: String
@@ -27,7 +29,7 @@ public final class PaywallInfo: NSObject {
   /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
   public let experiment: Experiment?
 
-  //TODO: Comments here, should this be nil?
+  // TODO: Comments here, should this be nil?
   /// The trigger session ID.
   public let triggerSessionId: String?
 

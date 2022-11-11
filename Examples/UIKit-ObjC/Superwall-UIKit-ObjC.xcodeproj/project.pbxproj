@@ -82,7 +82,9 @@
 				54B0D5572911DEB500733072 /* Products */,
 				54B0D5742911DFF700733072 /* Frameworks */,
 			);
+			indentWidth = 2;
 			sourceTree = "<group>";
+			tabWidth = 2;
 		};
 		54B0D5572911DEB500733072 /* Products */ = {
 			isa = PBXGroup;
@@ -112,16 +114,20 @@
 				54B0D56A2911DEB500733072 /* Info.plist */,
 				54B0D56B2911DEB500733072 /* main.m */,
 			);
+			indentWidth = 2;
 			path = "Superwall-UIKit-ObjC";
 			sourceTree = "<group>";
+			tabWidth = 2;
 		};
 		54B0D5722911DFAB00733072 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
 				54B0D5732911DFAB00733072 /* paywall-ios */,
 			);
+			indentWidth = 2;
 			name = Packages;
 			sourceTree = "<group>";
+			tabWidth = 2;
 		};
 		54B0D5742911DFF700733072 /* Frameworks */ = {
 			isa = PBXGroup;

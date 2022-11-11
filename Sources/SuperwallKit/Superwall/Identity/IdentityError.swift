@@ -8,7 +8,7 @@
 import Foundation
 
 /// The error returned when trying to create an account.
-@objc (SWKIdentityError)
+@objc(SWKIdentityError)
 public enum IdentityError: Int, Error {
   /// The user is already logged in.
   case alreadyLoggedIn
@@ -18,7 +18,7 @@ public enum IdentityError: Int, Error {
 }
 
 /// The error returned when trying to logout a user out.
-@objc (SWKLogoutError)
+@objc(SWKLogoutError)
 public enum LogoutError: Int, Error {
   /// The user isn't logged in.
   case notLoggedIn

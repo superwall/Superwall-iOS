@@ -10,7 +10,7 @@
 @implementation UIColor (SSAAdditions)
 
 + (UIColor *)ssa_tealColor {
-    return [UIColor colorNamed:@"PrimaryTeal"];
+  return [UIColor colorNamed:@"PrimaryTeal"];
 }
 
 @end

@@ -7,7 +7,7 @@
 
 import StoreKit
 
-// TODO: Comment and move
+// TODO: Comment and move, check public availability of properties
 public struct Attributes {
   let id: String
 
@@ -33,6 +33,7 @@ public struct Attributes {
 
   struct Period {
     let alt: String
+    // swiftlint:disable:next identifier_name
     let ly: String
     let unit: SKProduct.PeriodUnit
     let days: Int
