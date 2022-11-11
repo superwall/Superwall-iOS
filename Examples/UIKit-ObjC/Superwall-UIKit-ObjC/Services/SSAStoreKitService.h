@@ -25,7 +25,11 @@ typedef void (^PurchaseCompletionHandler)(SKPaymentTransactionState state, NSErr
 + (SSAStoreKitService *)sharedService;
 
 /// Purchases the provided `SKProduct` instance and provides a completion block with the resulting state and optional error.
-- (void)purchaseProduct:(SKProduct *)product withCompletion:(nullable PurchaseCompletionHandler)completion;
+/// - Parameters:
+///   - product: Product to be purchased.
+///   - completion: Completion block containing the transaction state and error if one occurred.
+/// - Returns: Boolean value indicating whether the product is able to be purchased. Only 1 product with the same identifier may be purchased at a time.
+- (BOOL)purchaseProduct:(SKProduct *)product withCompletion:(nullable PurchaseCompletionHandler)completion;
 
 /// Restores purchases.
 - (void)restorePurchases;

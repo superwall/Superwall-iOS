@@ -44,19 +44,23 @@ NSNotificationName const SSAStoreKitServiceDidUpdateSubscribedState = @"SSAStore
 
 #pragma mark - Public
 
-- (void)purchaseProduct:(SKProduct *)product withCompletion:(nullable PurchaseCompletionHandler)completion {
+- (BOOL)purchaseProduct:(SKProduct *)product withCompletion:(nullable PurchaseCompletionHandler)completion {
   // For the simplicity of this sample app, we're only going to allow the purchase of the same product one at a time. More details here: https://www.revenuecat.com/blog/storekit-is-broken/
   BOOL transactionInProgress = [self.completionHandlersByProductIdentifier.allKeys containsObject:product.productIdentifier];
 
-  if (transactionInProgress == NO) {
-    if (completion) {
-      // Add the completion handler for use in the delegate method later.
-      [self.completionHandlersByProductIdentifier addEntriesFromDictionary:@{ product.productIdentifier : completion }];
-    }
-
-    SKPayment *payment = [SKPayment paymentWithProduct:product];
-    [[SKPaymentQueue defaultQueue] addPayment:payment];
+  if (transactionInProgress) {
+    return NO;
   }
+
+  if (completion) {
+    // Add the completion handler for use in the delegate method later.
+    [self.completionHandlersByProductIdentifier addEntriesFromDictionary:@{ product.productIdentifier : completion }];
+  }
+
+  SKPayment *payment = [SKPayment paymentWithProduct:product];
+  [[SKPaymentQueue defaultQueue] addPayment:payment];
+
+  return YES;
 }
 
 - (void)restorePurchases {
@@ -82,6 +86,28 @@ NSNotificationName const SSAStoreKitServiceDidUpdateSubscribedState = @"SSAStore
   }
 }
 
+- (void)paymentQueueDidFinishTransaction:(SKPaymentTransaction *)transaction subscribed:(BOOL)subscribed {
+  // Get the completion handler associated with the product identifier (which we're using as a proxy for the transaction).
+  NSString *productIdentifier = transaction.payment.productIdentifier;
+
+  // Get the completion handler.
+  PurchaseCompletionHandler completion = self.completionHandlersByProductIdentifier[productIdentifier];
+
+  // Remove the completion handler.
+  [self.completionHandlersByProductIdentifier removeObjectForKey:productIdentifier];
+
+  // Clean up the transaction queue.
+  [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+
+  // Change the subscribed state.
+  self.subscribed = subscribed;
+
+  // Execute the completion handler if one exists for this product identifier.
+  if (completion) {
+    completion(transaction.transactionState, transaction.error);
+  }
+}
+
 #pragma mark - SKPaymentTransactionObserver
 
 - (void)paymentQueue:(nonnull SKPaymentQueue *)queue updatedTransactions:(nonnull NSArray<SKPaymentTransaction *> *)transactions {
@@ -89,38 +115,21 @@ NSNotificationName const SSAStoreKitServiceDidUpdateSubscribedState = @"SSAStore
   dispatch_async(dispatch_get_main_queue(), ^{
     [transactions enumerateObjectsUsingBlock:^(SKPaymentTransaction * _Nonnull transaction, NSUInteger idx, BOOL * _Nonnull stop) {
 
-      // Get the completion handler associated with the product identifier (which we're using as a proxy for the transaction).
-      NSString *productIdentifier = transaction.payment.productIdentifier;
-      PurchaseCompletionHandler completion = weakSelf.completionHandlersByProductIdentifier[productIdentifier];
-
-      // Change the subscribe if successfully purchased.
+      // Change the subscribe state and perform clean up if needed.
       switch (transaction.transactionState) {
         case SKPaymentTransactionStateDeferred:
-          [weakSelf.completionHandlersByProductIdentifier removeObjectForKey:productIdentifier];
+        case SKPaymentTransactionStatePurchasing:
+          // no-op; these states precede the following transaction states.
           break;
         case SKPaymentTransactionStatePurchased:
-          weakSelf.subscribed = YES;
-          [weakSelf.completionHandlersByProductIdentifier removeObjectForKey:productIdentifier];
-          // Clean up the transaction queue.
-          [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-          break;
         case SKPaymentTransactionStateRestored:
-          weakSelf.subscribed = YES;
-          // Clean up the transaction queue.
-          [weakSelf.completionHandlersByProductIdentifier removeObjectForKey:productIdentifier];
-          [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+          [weakSelf paymentQueueDidFinishTransaction:transaction subscribed:YES];
           break;
         case SKPaymentTransactionStateFailed:
-          [weakSelf.completionHandlersByProductIdentifier removeObjectForKey:productIdentifier];
-          [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+          [weakSelf paymentQueueDidFinishTransaction:transaction subscribed:NO];
           break;
         default:
           break;
-      }
-
-      // Execute the completion handler if one exists for this product identifier.
-      if (completion) {
-        completion(transaction.transactionState, transaction.error);
       }
     }];
   });
