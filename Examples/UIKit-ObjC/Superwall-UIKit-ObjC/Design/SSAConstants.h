@@ -17,8 +17,8 @@ extern CGFloat const SSAConstantsTextStyleTitle1;
 extern CGFloat const SSAConstantsTextStyleBody;
 
 typedef NS_ENUM(NSInteger, SSAConstantsFontWeight) {
-    SSAConstantsFontWeightRegular,
-    SSAConstantsFontWeightBold
+  SSAConstantsFontWeightRegular,
+  SSAConstantsFontWeightBold
 };
 
 #pragma mark - SSAConstants

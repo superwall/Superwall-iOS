@@ -3,7 +3,7 @@ import StoreKit
 import Combine
 
 /// The primary class for integrating Superwall into your application. It provides access to all its featured via static functions and variables.
-public final class Superwall: NSObject {
+@objcMembers public final class Superwall: NSObject {
   // MARK: - Public Properties
   /// The delegate of the Superwall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
   @MainActor
@@ -33,7 +33,7 @@ public final class Superwall: NSObject {
   lazy var delegateAdapter = SuperwallDelegateAdapter()
 
   /// Properties stored about the user, set using ``SuperwallKit/Superwall/setUserAttributes(_:)``.
-  @objc public static var userAttributes: [String: Any] {
+  public static var userAttributes: [String: Any] {
     return shared.identityManager.userAttributes
   }
 
@@ -68,7 +68,7 @@ public final class Superwall: NSObject {
   /// ``SuperwallKit/Superwall/createAccount(userId:)``, this will return true.
   ///
   /// - Returns: A boolean indicating whether the user is logged in or not.
-  @objc public static var isLoggedIn: Bool {
+  public static var isLoggedIn: Bool {
     return IdentityManager.shared.isLoggedIn
   }
 

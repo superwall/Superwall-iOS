@@ -40,7 +40,7 @@ public enum SuperwallEvent {
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case deepLink(url: URL)
 
-  //TODO: Rename this
+  // TODO: Rename this
   /// When a trigger is fired.
   case triggerFire(eventName: String, result: TriggerResult)
 
