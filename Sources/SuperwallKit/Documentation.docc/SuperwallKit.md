@@ -1,4 +1,4 @@
-# ``Superwall``
+# ``SuperwallKit``
 
 The client SDK for [Superwall](https://superwall.com), a service that lets you remotely configure, present and iterate paywalls – helping you find winners quickly.
 

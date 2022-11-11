@@ -62,7 +62,7 @@ public final class Superwall: NSObject {
     return IdentityManager.shared.userId
   }
 
-  /// Indicates whether the user is logged in to the Superwall SDK.
+  /// Indicates whether the user is logged in to Superwall.
   ///
   /// If you have previously called ``SuperwallKit/Superwall/logIn(userId:)`` or
   /// ``SuperwallKit/Superwall/createAccount(userId:)``, this will return true.
