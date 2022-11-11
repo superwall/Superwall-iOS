@@ -25,7 +25,7 @@ The ``SuperwallKit/Superwall`` class is used to access all the features of the S
 ### Presenting and Dismissing a Paywall
 
 - <doc:TrackingEvents>
-- ``track(event:params:paywallOverrides:paywallState:)``
+- ``track(event:params:paywallOverrides:paywallHandler:)``
 - ``publisher(forEvent:params:paywallOverrides:)``
 - ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``dismiss()``

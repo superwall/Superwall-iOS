@@ -13,7 +13,7 @@
     <img src="https://img.shields.io/badge/pod-compatible-informational" alt="Cocoapods Compatible">
   </a>
   <a href="https://superwall.com/">
-    <img src="https://img.shields.io/badge/ios%20version-%3E%3D%2011.2-blueviolet" alt="iOS Versions Supported">
+    <img src="https://img.shields.io/badge/ios%20version-%3E%3D%2013.0-blueviolet" alt="iOS Versions Supported">
   </a>
   <a href="https://github.com/superwall-me/paywall-ios/blob/master/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-green/" alt="MIT License">
@@ -30,9 +30,9 @@
 
 [Superwall](https://superwall.com/) lets you remotely configure every aspect of your paywall — helping you find winners quickly.
 
-## Superwall.framework
+## SuperwallKit.framework
 
-**Superwall** is the open source SDK for Superwall, providing a wrapper around `Webkit` for presenting and creating paywalls. It interacts with the Superwall backend letting you easily iterate paywalls on the fly in `Swift` or `Objective-C`!
+**SuperwallKit** is the open source SDK for Superwall, providing a wrapper around `WebKit` for presenting and creating paywalls. It interacts with the Superwall backend letting you easily iterate paywalls on the fly in `Swift` or `Objective-C`!
 
 ## Features
 |   | Superwall |
@@ -58,8 +58,8 @@ See our [Migration Guide](M)
 The preferred installation method is with [Swift Package Manager](https://swift.org/package-manager/). This is a tool for automating the distribution of Swift code and is integrated into the swift compiler. In Xcode, do the following:
 
 - Select **File ▸ Add Packages...**
-- Search for `https://github.com/superwall-me/paywall-ios` in the search bar.
-- Set the **Dependency Rule** to **Up to Next Major Version** with the lower bound set to **2.0.0**.
+- Search for `https://github.com/superwall-me/SuperwallKit-iOS` in the search bar.
+- Set the **Dependency Rule** to **Up to Next Major Version** with the lower bound set to **3.0.0**.
 - Make sure your project name is selected in **Add to Project**.
 - Then, **Add Package**.
 
@@ -69,7 +69,7 @@ The preferred installation method is with [Swift Package Manager](https://swift.
 To include the *Superwall* SDK in your app, add the following to your Podfile:
 
 ```
-pod 'Superwall', '< 3.0.0'
+pod 'SuperwallKit', '< 4.0.0'
 ```
 
 Then, run `pod install`.
