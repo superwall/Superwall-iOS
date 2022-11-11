@@ -11,7 +11,8 @@ import Foundation
 ///
 /// Pass an instance of this class to ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``.
 @objc(SWKSuperwallOptions)
-@objcMembers public final class SuperwallOptions: NSObject {
+@objcMembers
+public final class SuperwallOptions: NSObject {
   /// Configure the appearance and behaviour of paywalls.
   public var paywalls = PaywallOptions()
 

@@ -9,7 +9,8 @@ import Foundation
 
 /// The internally tracked superwall event result.
 @objc(SWKSuperwallEventResult)
-@objcMembers public class SuperwallEventResult: NSObject {
+@objcMembers
+public class SuperwallEventResult: NSObject {
   /// The event that was tracked.
   public let event: SuperwallEvent
 
@@ -27,7 +28,7 @@ import Foundation
   /// - Parameters:
   ///   - event: The event that was tracked.
   ///   - params: A dictionary of params associated with the event.
-  public init(event: SuperwallEvent, params: [String : Any]) {
+  public init(event: SuperwallEvent, params: [String: Any]) {
     self.event = event
     self.params = params
   }

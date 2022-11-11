@@ -13,7 +13,8 @@ import StoreKit
 ///
 /// This is returned in the `paywallState` after presenting a paywall with ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallState:)``.
 @objc(SWKPaywallInfo)
-@objcMembers public final class PaywallInfo: NSObject {
+@objcMembers
+public final class PaywallInfo: NSObject {
   /// Superwall's internal ID for this paywall.
   let databaseId: String
 
