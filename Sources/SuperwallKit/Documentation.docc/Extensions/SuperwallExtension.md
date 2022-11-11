@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ``SuperwallKit/Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5`` to configure the SDK.
+The ``SuperwallKit/Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-65jyx`` to configure the SDK.
 
 ## Topics
 
@@ -10,25 +10,31 @@ The ``SuperwallKit/Superwall`` class is used to access all the features of the S
 
 - <doc:GettingStarted>
 - <doc:Ecosystem>
-- ``configure(apiKey:delegate:options:)``
+- ``configure(apiKey:delegate:options:)-65jyx``
+- ``configure(apiKey:delegate:options:)-48l7e``
 - ``SuperwallDelegate``
+- ``SuperwallDelegateObjc``
 - ``delegate``
+- ``objcDelegate``
 - ``SuperwallOptions``
 - ``PaywallOptions``
 - ``options``
 - ``preloadAllPaywalls()``
-- ``preloadPaywalls(forTriggers:)``
+- ``preloadPaywalls(forEvents:)``
 
 ### Presenting and Dismissing a Paywall
 
 - <doc:TrackingEvents>
 - ``track(event:params:paywallOverrides:paywallState:)``
-- ``track(event:params:paywallOverrides:)``
+- ``publisher(forEvent:params:paywallOverrides:)``
 - ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``dismiss()``
 - ``dismiss(_:)``
 - ``PaywallInfo``
 - ``SuperwallEvent``
+- ``SuperwallEventObjc``
+- ``PaywallSkippedReason``
+- ``PaywallSkippedReasonObjc``
 
 ### In-App Previews
 
@@ -56,7 +62,7 @@ The ``SuperwallKit/Superwall`` class is used to access all the features of the S
 
 ### Logging
 
-- ``SuperwallDelegate/handleLog(level:scope:message:info:error:)``
+- ``SuperwallDelegate/handleLog(level:scope:message:info:error:)-9kmai``
 
 ### Customization
 
@@ -66,3 +72,4 @@ The ``SuperwallKit/Superwall`` class is used to access all the features of the S
 - ``presentedViewController``
 - ``latestPaywallInfo``
 - ``userId``
+- ``isLoggedIn``

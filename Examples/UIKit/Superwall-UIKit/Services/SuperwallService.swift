@@ -16,7 +16,7 @@ final class SuperwallService {
     return Superwall.userAttributes["firstName"] as? String ?? ""
   }
 
-  static func initSuperwall() -> Bool {
+  static func initialize() -> Bool {
     Superwall.configure(
       apiKey: apiKey,
       delegate: shared
@@ -29,7 +29,7 @@ final class SuperwallService {
   static func logIn() async {
     do {
       try await Superwall.logIn(userId: "abc")
-    } catch let error as LogInError {
+    } catch let error as IdentityError {
       switch error {
       case .alreadyLoggedIn:
         print("The user is already logged in")

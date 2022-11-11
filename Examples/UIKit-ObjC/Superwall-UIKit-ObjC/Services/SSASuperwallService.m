@@ -91,10 +91,10 @@ static inline PurchaseResult PurchaseResultFromTransactionState(SKPaymentTransac
 - (void)logInWithCompletion:(nullable void (^)(void))completion {
     [Superwall logInUserId:kDemoUserId completionHandler:^(Superwall * _Nullable superwall, NSError * _Nullable error) {
         switch (error.code) {
-            case SWKLogInErrorAlreadyLoggedIn:
+            case SWKIdentityErrorAlreadyLoggedIn:
                 NSLog(@"The user is already logged in");
                 break;
-            case SWKLogInErrorMissingUserId:
+            case SWKIdentityErrorMissingUserId:
                 NSLog(@"The provided userId was empty");
                 break;
             default:

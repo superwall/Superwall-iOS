@@ -48,6 +48,9 @@
 💯 | Well maintained - [frequent releases](https://github.com/superwall-me/paywall-ios/releases)
 📮 | Great support - email a founder: jake@superwall.com
 
+## Migration Guides
+See our [Migration Guide](M)
+
 ## Installation
 
 ### Swift Package Manager

@@ -41,7 +41,7 @@ public enum SuperwallEventObjc: Int {
   /// This event can be used to trigger a paywall. Just add the `deepLink_open` event to a campaign.
   case deepLink
 
-  /// When a trigger is fired.
+  /// When a tracked event triggers a paywall.
   case triggerFire
 
   /// When a paywall is opened.
@@ -62,14 +62,14 @@ public enum SuperwallEventObjc: Int {
   /// When the user completes checkout in the payment sheet and any product was purchased.
   case transactionComplete
 
+  /// When the user successfully restores their purchases.
+  case transactionRestore
+
   /// When the user successfully completes a transaction for a subscription product with no introductory offers.
   case subscriptionStart
 
   /// When the user successfully completes a transaction for a subscription product with an introductory offer.
   case freeTrialStart
-
-  /// When the user successfully restores their purchases.
-  case transactionRestore
 
   /// When the user attributes are set.
   case userAttributes

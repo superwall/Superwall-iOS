@@ -13,7 +13,7 @@ final class RevenueCatService {
   static let shared = RevenueCatService()
   @Published var isSubscribed = false
 
-  static func initPurchases() {
+  static func initialize() {
     /*
     Make sure to set usesStoreKit2IfAvailable to false
     if purchasing a product directly.
@@ -22,6 +22,9 @@ final class RevenueCatService {
       with: .init(withAPIKey: "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql")
         .with(usesStoreKit2IfAvailable: false)
     )
+    Task {
+      await shared.updateSubscriptionStatus()
+    }
   }
 
   static func restorePurchases() async -> Bool {
@@ -36,8 +39,7 @@ final class RevenueCatService {
   func purchase(_ product: SKProduct) async throws -> Bool {
     let storeProduct = StoreProduct(sk1Product: product)
     let (_, customerInfo, userCancelled) = try await Purchases.shared.purchase(product: storeProduct)
-    let isSubscribed = customerInfo.entitlements.active["pro"] != nil
-    self.isSubscribed = isSubscribed
+    self.isSubscribed = customerInfo.entitlements.active["pro"] != nil
     return userCancelled
   }
 

@@ -8,8 +8,8 @@
 import Foundation
 
 /// The error returned when trying to create an account.
-@objc (SWKCreateAccountError)
-public enum CreateAccountError: Int, Error {
+@objc (SWKIdentityError)
+public enum IdentityError: Int, Error {
   /// The user is already logged in.
   case alreadyLoggedIn
 
@@ -22,14 +22,4 @@ public enum CreateAccountError: Int, Error {
 public enum LogoutError: Int, Error {
   /// The user isn't logged in.
   case notLoggedIn
-}
-
-/// The error returned when trying to log a user in.
-@objc (SWKLogInError)
-public enum LogInError: Int, Error {
-  /// The user is already logged in.
-  case alreadyLoggedIn
-
-  /// The `userId` that was provided was empty.
-  case missingUserId
 }
