@@ -12,16 +12,17 @@ import RevenueCat
 final class SuperwallService {
   static let shared = SuperwallService()
   #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
-  private let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
+  private static let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
   static var name: String {
     return Superwall.userAttributes["firstName"] as? String ?? ""
   }
 
-  @MainActor
   func initSuperwall() -> Bool {
+    let options = PaywallOptions()
+    options.isHapticFeedbackEnabled = false
     Superwall.configure(
       apiKey: apiKey,
-      delegate: self
+      delegate: shared
     )
 
     // Checking our logged in status.
@@ -91,20 +92,17 @@ extension SuperwallService: SuperwallDelegate {
     return RevenueCatService.shared.isSubscribed
   }
 
-  func trackAnalyticsEvent(
-    withName name: String,
-    params: [String: Any]
-  ) {
-    guard let event = SuperwallEvent(rawValue: name) else {
-      return
-    }
-    print("analytics event called", event, params)
+  func didTrackSuperwallEvent(_ result: SuperwallEventResult) {
+    print("analytics event called", result.event.description)
 
-    // Uncomment the following if you want to track the different analytics
-    // events received from the paywall:
+    // Uncomment if you want to get a dictionary of params associated with the event:
+    // print(result.params)
+
+    // Uncomment the following if you want to track
+    // Superwall events:
 
     /*
-    switch event {
+    switch result.event {
     case .firstSeen:
       <#code#>
     case .appOpen:

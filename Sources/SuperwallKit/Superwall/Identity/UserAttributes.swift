@@ -57,6 +57,24 @@ public extension Superwall {
     }
   }
 
+  /// The Objective-C method for removing user attributes for use in your paywalls and the dashboard. **Note**: Please use ``SuperwallKit/Superwall/setUserAttributes(_:)`` in the form ["someKey": nil] if you're using Swift.
+  ///
+  /// - Parameter key: An array containing the keys you wish to remove from the user attributes dictionary.
+  ///
+  ///  Example:
+  ///  ```
+  ///  [Superwall removeUserAttributes:@[@"key1", @"key2"]];
+  ///  ```
+  @available(swift, obsoleted: 1.0)
+  @objc static func removeUserAttributes(_ keys: [String]) {
+    let userAttributes: [String: Any?] = keys.reduce([:]) { dictionary, key in
+      var dictionary = dictionary
+      dictionary[key] = nil
+      return dictionary
+    }
+    setUserAttributes(userAttributes)
+  }
+
   private static func mergeAttributes(_ attributes: [String: Any?]) {
     var customAttributes: [String: Any] = [:]
 

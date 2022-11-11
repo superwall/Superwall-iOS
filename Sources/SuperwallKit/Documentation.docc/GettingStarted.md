@@ -4,7 +4,7 @@ Configuring the SDK and its delegate.
 
 ## Overview
 
-To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``. You pass this function a class that conforms to ``SuperwallDelegate``, which handles actions taken on the paywall. You can then present your paywall.
+To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-65jyx``. You pass this function a class that conforms to ``SuperwallDelegate``, which handles actions taken on the paywall. You can then present your paywall.
 
 ## Getting your API Key
 

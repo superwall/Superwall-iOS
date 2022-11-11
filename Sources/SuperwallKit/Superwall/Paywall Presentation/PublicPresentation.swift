@@ -72,9 +72,9 @@ public extension Superwall {
     products: PaywallProducts? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
-    onSkip: ((Error?) -> Void)? = nil,
+    onSkip: ((PaywallSkippedReasonObjc, Error?) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
+    onDismiss: ((PaywallDismissedResultStateObjc, String?, PaywallInfo) -> Void)? = nil
   ) {
     let overrides = PaywallOverrides(
       products: products,
@@ -178,31 +178,32 @@ public extension Superwall {
   ///   - completion: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo`` object containing information about the paywall.
   private static func onDismissConverter(
     _ result: PaywallDismissedResult,
-    completion: (Bool, String?, PaywallInfo) -> Void
+    completion: (PaywallDismissedResultStateObjc, String?, PaywallInfo) -> Void
   ) {
     switch result.state {
     case .closed:
-      completion(false, nil, result.paywallInfo)
+      completion(.closed, nil, result.paywallInfo)
     case .purchased(productId: let productId):
-      completion(true, productId, result.paywallInfo)
+      completion(.purchased, productId, result.paywallInfo)
     case .restored:
-      completion(true, nil, result.paywallInfo)
+      completion(.restored, nil, result.paywallInfo)
     }
   }
 
   private static func onSkipConverter(
     reason: PaywallSkippedReason,
-    completion: ((Error?) -> Void)?
+    completion: ((PaywallSkippedReasonObjc, Error?) -> Void)?
   ) {
     switch reason {
     case .holdout(let experiment):
       let userInfo: [String: Any] = [
         "experimentId": experiment.id,
         "variantId": experiment.variant.id,
+        "groupId": experiment.groupId,
         NSLocalizedDescriptionKey: NSLocalizedString(
           "Trigger Holdout",
           value: "This user was assigned to a holdout in a trigger experiment",
-          comment: "ExperimentId: \(experiment.id), VariantId: \(experiment.variant.id)"
+          comment: "ExperimentId: \(experiment.id), VariantId: \(experiment.variant.id), GroupId: \(experiment.groupId)"
         )
       ]
       let error = NSError(
@@ -210,7 +211,7 @@ public extension Superwall {
         code: 4001,
         userInfo: userInfo
       )
-      completion?(error)
+      completion?(.holdout, error)
     case .noRuleMatch:
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(
@@ -224,7 +225,7 @@ public extension Superwall {
         code: 4000,
         userInfo: userInfo
       )
-      completion?(error)
+      completion?(.noRuleMatch, error)
     case .eventNotFound:
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(
@@ -238,9 +239,9 @@ public extension Superwall {
         code: 404,
         userInfo: userInfo
       )
-      completion?(error)
+      completion?(.eventNotFound, error)
     case .error(let error):
-      completion?(error)
+      completion?(.error, error)
     }
   }
 }

@@ -607,7 +607,12 @@ extension PaywallViewController {
   }
 
   private func setPresentationStyle(withOverride presentationStyleOverride: PaywallPresentationStyle?) {
-    presentationStyle = presentationStyleOverride ?? paywall.presentation.style
+    if let presentationStyleOverride = presentationStyleOverride,
+      presentationStyleOverride != .none {
+      presentationStyle = presentationStyleOverride
+    } else {
+      presentationStyle = paywall.presentation.style
+    }
 
     switch presentationStyle {
     case .modal:
@@ -647,9 +652,11 @@ extension PaywallViewController {
 	}
 
   private func promptSuperwallDelegate() {
+    let hasDelegate = Superwall.shared.delegateAdapter.hasDelegate
+
     guard
       presentedViewController == nil,
-      Superwall.delegate == nil
+      hasDelegate == false
     else {
       return
     }
@@ -658,7 +665,7 @@ extension PaywallViewController {
       message: "Set Superwall.delegate to handle purchases, restores and more!",
       actionTitle: "Docs →",
       closeActionTitle: "Done",
-      onClose: {
+      action: {
         if let url = URL(
           string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate"
         ) {

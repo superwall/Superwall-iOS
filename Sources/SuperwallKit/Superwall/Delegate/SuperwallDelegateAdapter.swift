@@ -11,12 +11,14 @@ import StoreKit
 /// An adapter between the internal SDK and the public swift/objective c delegate.
 @MainActor
 final class SuperwallDelegateAdapter {
+  var hasDelegate: Bool {
+    return swiftDelegate != nil || objcDelegate != nil
+  }
   enum InternalPurchaseResult {
     case purchased
     case cancelled
     case pending
   }
-
   weak var swiftDelegate: SuperwallDelegate?
   weak var objcDelegate: SuperwallDelegateObjc?
 
@@ -152,14 +154,11 @@ final class SuperwallDelegateAdapter {
     }
   }
 
-  func didTrackSuperwallEvent(
-    _ event: SuperwallEvent,
-    params: [String: Any]
-  ) {
+  func didTrackSuperwallEvent(_ result: SuperwallEventResult) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.didTrackSuperwallEvent(event)
+      swiftDelegate.didTrackSuperwallEvent(result)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.trackAnalyticsEvent?(withName: event.name, params: params)
+      objcDelegate.didTrackSuperwallEventResult?(result)
     }
   }
 

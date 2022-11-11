@@ -3,9 +3,10 @@ import StoreKit
 import Combine
 
 /// The primary class for integrating Superwall into your application. It provides access to all its featured via static functions and variables.
+@objcMembers
 public final class Superwall: NSObject {
   // MARK: - Public Properties
-  /// The delegate of the Paywall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
+  /// The delegate of the Superwall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
   @MainActor
   public static var delegate: SuperwallDelegate? {
     get {
@@ -16,7 +17,7 @@ public final class Superwall: NSObject {
     }
   }
 
-  /// The delegate of the Paywall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
+  /// The delegate of the Superwall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
   @MainActor
   @available(swift, obsoleted: 1.0)
   @objc(delegate)
@@ -62,7 +63,7 @@ public final class Superwall: NSObject {
     return IdentityManager.shared.userId
   }
 
-  /// Indicates whether the user is logged in to the Superwall SDK.
+  /// Indicates whether the user is logged in to Superwall.
   ///
   /// If you have previously called ``SuperwallKit/Superwall/logIn(userId:)`` or
   /// ``SuperwallKit/Superwall/createAccount(userId:)``, this will return true.
@@ -198,7 +199,7 @@ public final class Superwall: NSObject {
   /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
   @discardableResult
   @available(swift, obsoleted: 1.0)
-  @objc public static func configure(
+  public static func configure(
     apiKey: String,
     delegate: SuperwallDelegateObjc? = nil,
     options: SuperwallOptions? = nil
@@ -227,7 +228,7 @@ public final class Superwall: NSObject {
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded via ``SuperwallKit/Superwall/preloadPaywalls(forTriggers:)``.
-  @objc public static func preloadAllPaywalls() {
+  public static func preloadAllPaywalls() {
     Task.detached(priority: .userInitiated) {
       await shared.configManager.preloadAllPaywalls()
     }
@@ -238,7 +239,7 @@ public final class Superwall: NSObject {
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
-  @objc public static func preloadPaywalls(forEvents eventNames: Set<String>) {
+  public static func preloadPaywalls(forEvents eventNames: Set<String>) {
     Task.detached(priority: .userInitiated) {
       await shared.configManager.preloadPaywalls(for: eventNames)
     }
@@ -248,7 +249,7 @@ public final class Superwall: NSObject {
   /// Handles a deep link sent to your app to open a preview of your paywall.
   ///
   /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
-  @objc public static func handleDeepLink(_ url: URL) {
+  public static func handleDeepLink(_ url: URL) {
     Task.detached(priority: .utility) {
       await track(InternalSuperwallEvent.DeepLink(url: url))
     }
