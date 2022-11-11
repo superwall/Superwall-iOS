@@ -20,7 +20,7 @@ enum SuperwallLogic {
     isPaywallPresented: Bool
   ) -> Outcome {
     if let event = event as? TrackableSuperwallEvent,
-       case .deepLink(url: _) = event.superwallEvent {
+      case .deepLink(url: _) = event.superwallEvent {
       return .deepLinkTrigger
     }
 
