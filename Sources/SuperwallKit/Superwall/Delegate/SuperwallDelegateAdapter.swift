@@ -158,7 +158,7 @@ final class SuperwallDelegateAdapter {
     if let swiftDelegate = swiftDelegate {
       swiftDelegate.didTrackSuperwallEvent(result)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.didTrackSuperwallEvent?(SuperwallEventObjc(event: result.event), params: result.params)
+      objcDelegate.didTrackSuperwallEventResult?(result)
     }
   }
 

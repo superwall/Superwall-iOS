@@ -156,13 +156,13 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
   [[SSAStoreKitService sharedService] restorePurchases];
 }
 
-- (void)didTrackSuperwallEvent:(enum SWKSuperwallEvent)event params:(NSDictionary<NSString *,id> *)params
+- (void)didTrackSuperwallEventResult:(SWKSuperwallEventResult *)result
 {
-  NSLog(@"Analytics event called %@", @(event));
+  NSLog(@"Analytics event called %@", @(result.event));
 
   // Uncomment the following if you want to track the different analytics events received from the paywall:
 
-  //  switch (event) {
+  //  switch (result.event) {
   //    case SWKSuperwallEventFirstSeen:
   //      <#code#>
   //      break;
