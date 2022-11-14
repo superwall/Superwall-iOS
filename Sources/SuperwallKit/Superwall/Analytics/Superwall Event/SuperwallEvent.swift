@@ -9,7 +9,7 @@ import Foundation
 
 /// Analytical events that are automatically tracked by Superwall.
 ///
-/// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/didTrackSuperwallEvent(_:)-6fcb9``.
+/// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/didTrackSuperwallEvent(_:)-n6x1``.
 public enum SuperwallEvent {
   /// When the user is first seen in the app, regardless of whether the user is logged in or not.
   case firstSeen

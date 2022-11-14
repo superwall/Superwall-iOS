@@ -10,7 +10,7 @@ Events are added to campaigns on the [Superwall Dashboard](https://superwall.com
 
 When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
 
-In addition to your own events, you can add the Superwall events `app_install`, `app_launch`, and `session_start` to a campaign. See [automatically tracked events](<doc:AutomaticallyTrackedEvents>) for more.
+In addition to your own events, you can add the Superwall events `app_install`, `app_launch`, and `session_start` to a campaign. See [automatically tracked events](<doc:SuperwallEvents>) for more.
 
 ## Presenting a Paywall
 

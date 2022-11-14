@@ -14,7 +14,7 @@
 
 ### Optional Methods
 
-- ``didTrackSuperwallEvent(_:)-6fcb9``
+- ``didTrackSuperwallEvent(_:)-n6x1``
 - ``handleCustomPaywallAction(withName:)-41i56``
 - ``handleLog(level:scope:message:info:error:)-9kmai``
 - ``willDismissPaywall()-4nfcc``

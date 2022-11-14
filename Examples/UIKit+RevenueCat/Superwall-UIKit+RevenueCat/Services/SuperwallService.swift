@@ -11,7 +11,6 @@ import RevenueCat
 
 final class SuperwallService {
   static let shared = SuperwallService()
-  @Published var isSubscribed = false
   #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
   private static let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
   static var name: String {
@@ -23,35 +22,12 @@ final class SuperwallService {
       apiKey: apiKey,
       delegate: shared
     )
-
-    Purchases.configure(
-      with: .init(withAPIKey: "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql")
-        .with(usesStoreKit2IfAvailable: false)
-    )
-    Task {
-      await shared.updateSubscriptionStatus()
-    }
     
     // Checking our logged in status.
     return Superwall.isLoggedIn
   }
 
-  func updateSubscriptionStatus() async {
-    do {
-      let customerInfo = try await Purchases.shared.customerInfo()
-      isSubscribed = customerInfo.entitlements.active["pro"] != nil
-    } catch {
-      print("Couldn't get customer info", error)
-    }
-  }
-
   static func logIn() async {
-    do {
-      _ = try await Purchases.shared.logIn("abc")
-    } catch {
-      // handle error
-    }
-
     do {
       try await Superwall.logIn(userId: "abc")
     } catch let error as IdentityError {
@@ -67,11 +43,6 @@ final class SuperwallService {
   }
 
   static func logOut() async {
-    do {
-      _ = try await Purchases.shared.logOut()
-    } catch {
-      // handle error
-    }
     do {
       try await Superwall.logOut()
     } catch let error as LogoutError {
@@ -97,9 +68,7 @@ final class SuperwallService {
 extension SuperwallService: SuperwallDelegate {
   func purchase(product: SKProduct) async -> PurchaseResult {
     do {
-      let storeProduct = StoreProduct(sk1Product: product)
-      let (_, customerInfo, userCancelled) = try await Purchases.shared.purchase(product: storeProduct)
-      self.isSubscribed = customerInfo.entitlements.active["pro"] != nil
+      let userCancelled = try await RevenueCatService.shared.purchase(product)
       return userCancelled ? .cancelled : .purchased
     } catch let error as ErrorCode {
       switch error {
@@ -114,28 +83,23 @@ extension SuperwallService: SuperwallDelegate {
   }
 
   func restorePurchases() async -> Bool {
-    do {
-      let customerInfo = try await Purchases.shared.restorePurchases()
-      return customerInfo.entitlements.active["pro"] != nil
-    } catch {
-      return false
-    }
+    return await RevenueCatService.restorePurchases()
   }
 
   func isUserSubscribed() -> Bool {
-    return isSubscribed
+    return RevenueCatService.shared.isSubscribed
   }
 
-  func didTrackSuperwallEvent(_ result: SuperwallEventResult) {
-    print("analytics event called", result.event.description)
+  func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
+    print("analytics event called", info.event.description)
 
     // Uncomment if you want to get a dictionary of params associated with the event:
-    // print(result.params)
+    // print(info.params)
 
     // Uncomment the following if you want to track
     // Superwall events:
     /*
-    switch result.event {
+    switch info.event {
     case .firstSeen:
       <#code#>
     case .appOpen:

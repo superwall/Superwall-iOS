@@ -15,8 +15,9 @@ final class RevenueCatService {
 
   static func initialize() {
     /*
+    Some versions of revenuecat enable StoreKit 2 by default.
     Make sure to set usesStoreKit2IfAvailable to false
-    if purchasing a product directly.
+    if purchasing a product directly otherwise the purchase could fail.
     */
     Purchases.configure(
       with: .init(withAPIKey: "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql")
