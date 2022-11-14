@@ -87,6 +87,9 @@ Check out our sample apps for a hands-on demonstration of the SDK:
 - [SwiftUI Example App](Examples/SuperwallSwiftUIExample)
 - [UIKit Example App](Examples/SuperwallUIKitExample)
 
+## Migrating to v3
+- See our [Migration Guide](https://docs.superwall.com/v3.0/docs/migrating-to-v3)
+
 ## Contributing
 
 Please see the [CONTRIBUTING](.github/CONTRIBUTING.md) file for how to help.
