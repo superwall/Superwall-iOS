@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21225" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Q5H-aZ-jXR">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Q5H-aZ-jXR">
     <device id="retina6_5" orientation="portrait" appearance="light"/>
     <dependencies>
-        <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21207"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
@@ -41,7 +40,7 @@
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JiM-l3-bQZ">
                                         <rect key="frame" x="20" y="0.0" width="374" height="76"/>
-                                        <string key="text">Welcome! Enter your name to get started. Your name will be added to the Paywall user attributes, which can then be accessed and displayed within your paywall.</string>
+                                        <string key="text">Welcome! Enter your name to get started. Your name will be added to the Superwall user attributes, which can then be accessed and displayed within your paywall.</string>
                                         <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
                                         <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <nil key="highlightedColor"/>
@@ -153,11 +152,11 @@
                                 <rect key="frame" x="20" y="63.999999999999986" width="374" height="170.66666666666663"/>
                                 <string key="text">The button below tracks an event "MyEvent".
 
-This event is added as a trigger in a campaign on the Superwall dashboard.
+This event has been added to a campaign on the Superwall dashboard.
 
-When this event is tracked, the trigger is fired, which evaluates the rules set in the campaign.
+When this event is tracked, the rules in the campaign are evaluated.
 
-This causes a paywall to show.</string>
+The rules match and cause a paywall to show.</string>
                                 <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
@@ -247,7 +246,7 @@ This causes a paywall to show.</string>
     <resources>
         <image name="logo" width="115" height="17"/>
         <namedColor name="Neutral">
-            <color red="0.054901960784313725" green="0.058823529411764705" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.054999999701976776" green="0.059000000357627869" blue="0.071000002324581146" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
         <namedColor name="PrimaryTeal">
             <color red="0.60399997234344482" green="0.98799997568130493" blue="0.94499999284744263" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

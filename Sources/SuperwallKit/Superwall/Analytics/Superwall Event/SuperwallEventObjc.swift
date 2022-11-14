@@ -41,7 +41,7 @@ public enum SuperwallEventObjc: Int {
   /// This event can be used to trigger a paywall. Just add the `deepLink_open` event to a campaign.
   case deepLink
 
-  /// When a tracked event triggers a paywall.
+  /// When the tracked event matches an event added as a paywall trigger in a campaign.
   case triggerFire
 
   /// When a paywall is opened.
