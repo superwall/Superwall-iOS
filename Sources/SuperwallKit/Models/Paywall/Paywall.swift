@@ -208,7 +208,7 @@ struct Paywall: Decodable {
       identifier: identifier,
       name: name,
       url: url,
-      productIds: productIds,
+      products: products,
       fromEventData: fromEvent,
       responseLoadStartTime: responseLoadingInfo.startAt,
       responseLoadCompleteTime: responseLoadingInfo.endAt,

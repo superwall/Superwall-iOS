@@ -78,16 +78,16 @@ class IdentityManager {
 
   /// Logs user in and waits for config then assignments.
   ///
-  /// - Throws: An error of type ``LogInError``.
+  /// - Throws: An error of type ``IdentityError``.
   func logIn(userId: String) async throws {
     guard appUserId == nil else {
-      throw LogInError.alreadyLoggedIn
+      throw IdentityError.alreadyLoggedIn
     }
 
     identitySubject.send(false)
 
     guard let appUserId = sanitize(userId: userId) else {
-      throw LogInError.missingUserId
+      throw IdentityError.missingUserId
     }
     self.appUserId = appUserId
 
@@ -99,22 +99,22 @@ class IdentityManager {
 
   /// Create an account but don't wait for assignments before returning.
   ///
-  /// - Throws: An error of type ``CreateAccountError``.
+  /// - Throws: An error of type ``IdentityError``.
   func createAccount(userId: String) throws {
     guard appUserId == nil else {
-      throw CreateAccountError.alreadyLoggedIn
+      throw IdentityError.alreadyLoggedIn
     }
     identitySubject.send(false)
 
     guard let appUserId = sanitize(userId: userId) else {
-      throw CreateAccountError.missingUserId
+      throw IdentityError.missingUserId
     }
     self.appUserId = appUserId
 
     identitySubject.send(true)
   }
 
-  /// Logs user out and calls ``Superwall/Superwall/reset()``
+  /// Logs user out and calls ``SuperwallKit/Superwall/reset()``
   ///
   /// - Throws: An error of type``LogoutError``.
   /// if  the user isn't logged in.

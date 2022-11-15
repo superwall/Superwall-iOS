@@ -25,7 +25,10 @@ enum TrackingLogic {
     ]
 
     // Add a special property if it's a superwall event
-    let isStandardEvent = SuperwallEvent(rawValue: eventName) != nil
+    var isStandardEvent = false
+    if trackableEvent is TrackableSuperwallEvent {
+      isStandardEvent = true
+    }
     var eventParams: [String: Any] = [
       "$is_standard_event": isStandardEvent,
       "$event_name": eventName

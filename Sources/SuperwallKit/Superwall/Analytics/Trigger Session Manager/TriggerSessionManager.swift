@@ -137,14 +137,6 @@ actor TriggerSessionManager {
       return
     }
 
-    if let triggerResult = triggerResult {
-      let trackedEvent = InternalSuperwallEvent.TriggerFire(
-        triggerResult: triggerResult,
-        triggerName: eventName
-      )
-      _ = await trackEvent(trackedEvent)
-    }
-
     guard var session = pendingTriggerSessions[eventName] else {
       return
     }
@@ -171,6 +163,14 @@ actor TriggerSessionManager {
 
     self.activeTriggerSession = session
     pendingTriggerSessions[eventName] = nil
+
+    if let triggerResult = triggerResult {
+      let trackedEvent = InternalSuperwallEvent.TriggerFire(
+        triggerResult: triggerResult,
+        triggerName: eventName
+      )
+      _ = await trackEvent(trackedEvent)
+    }
 
     switch outcome.presentationOutcome {
     case .holdout,

@@ -11,16 +11,18 @@ import StoreKit
 /// An adapter between the internal SDK and the public swift/objective c delegate.
 @MainActor
 final class SuperwallDelegateAdapter {
+  var hasDelegate: Bool {
+    return swiftDelegate != nil || objcDelegate != nil
+  }
   enum InternalPurchaseResult {
     case purchased
     case cancelled
     case pending
   }
-
   weak var swiftDelegate: SuperwallDelegate?
   weak var objcDelegate: SuperwallDelegateObjc?
 
-  /// Called on init of the Superwall instance via ``Superwall/Superwall/configure(apiKey:delegate:options:)-7doe5``.
+  /// Called on init of the Superwall instance via ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``.
   ///
   /// We check to see if the delegates being set are non-nil because they may have been set
   /// separately to the initial Superwall.config function.
@@ -152,14 +154,11 @@ final class SuperwallDelegateAdapter {
     }
   }
 
-  func trackAnalyticsEvent(
-    withName name: String,
-    params: [String: Any]
-  ) {
+  func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.trackAnalyticsEvent(withName: name, params: params)
+      swiftDelegate.didTrackSuperwallEvent(info)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.trackAnalyticsEvent?(withName: name, params: params)
+      objcDelegate.didTrackSuperwallEventInfo?(info)
     }
   }
 

@@ -13,7 +13,7 @@ import SwiftUI
 final class TrackEventViewController: UIViewController {
   @IBOutlet private var subscriptionLabel: UILabel!
   private var subscribedCancellable: AnyCancellable?
-  private var trackCancellable: AnyCancellable?
+  private var cancellable: AnyCancellable?
   @AppStorage("isSubscribed") private var isSubscribed = false
 
   static func fromStoryboard() -> TrackEventViewController {
@@ -36,11 +36,11 @@ final class TrackEventViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    subscribedCancellable = RevenueCatService.shared.$isSubscribed
+    subscribedCancellable = PaywallManager.shared.$isSubscribed
       .receive(on: RunLoop.main)
       .sink { [weak self] isSubscribed in
         if isSubscribed {
-          self?.subscriptionLabel.text = "You currently have an active subscription. Therefore, the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions."
+          self?.subscriptionLabel.text = "You currently have an active subscription. Therefore, the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions.\n\nYou will need to wait a few minutes until the subscription expires on RevenueCat's side before trying again."
         } else {
           self?.subscriptionLabel.text = "You do not have an active subscription so the paywall will show when clicking the button."
         }
@@ -50,7 +50,7 @@ final class TrackEventViewController: UIViewController {
 
   @IBAction private func logOut() {
     Task {
-      await SuperwallService.logOut()
+      await PaywallManager.shared.logOut()
       _ = navigationController?.popToRootViewController(animated: true)
     }
   }
@@ -87,8 +87,8 @@ final class TrackEventViewController: UIViewController {
   // The below function gives an example of how to track an event using Combine publishers:
   /*
   func trackEventUsingCombine() {
-    trackCancellable = Superwall
-      .track(event: "MyEvent")
+    cancellable = Superwall
+      .publisher(forEvent: "MyEvent")
       .sink { paywallState in
         switch paywallState {
         case .presented(let paywallInfo):

@@ -32,7 +32,7 @@ public extension Superwall {
     mergeAttributes(attributes)
   }
 
-  /// The Objective-C method for setting user attributes for use in your paywalls and the dashboard. **Note**: Please use ``Superwall/Superwall/setUserAttributes(_:)`` if you're using Swift.
+  /// The Objective-C method for setting user attributes for use in your paywalls and the dashboard. **Note**: Please use ``SuperwallKit/Superwall/setUserAttributes(_:)`` if you're using Swift.
   ///
   /// If the existing user attributes dictionary already has a value for a given property, the old value is overwritten. Other existing properties will not be affected.
   /// Useful for analytics and conditional paywall rules you may define in the web dashboard. They should not be used as a source of truth for sensitive information.
@@ -55,6 +55,24 @@ public extension Superwall {
     } else {
       mergeAttributes([:])
     }
+  }
+
+  /// The Objective-C method for removing user attributes for use in your paywalls and the dashboard. **Note**: Please use ``SuperwallKit/Superwall/setUserAttributes(_:)`` in the form `["someKey": nil]` if you're using Swift.
+  ///
+  ///  Example:
+  ///  ```
+  ///  [Superwall removeUserAttributes:@[@"key1", @"key2"]];
+  ///  ```
+  ///
+  /// - Parameter keys: An array containing the keys you wish to remove from the user attributes dictionary.
+  @available(swift, obsoleted: 1.0)
+  @objc static func removeUserAttributes(_ keys: [String]) {
+    let userAttributes: [String: Any?] = keys.reduce([:]) { dictionary, key in
+      var dictionary = dictionary
+      dictionary[key] = nil
+      return dictionary
+    }
+    setUserAttributes(userAttributes)
   }
 
   private static func mergeAttributes(_ attributes: [String: Any?]) {

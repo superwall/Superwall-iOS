@@ -10,13 +10,13 @@ Events are added to campaigns on the [Superwall Dashboard](https://superwall.com
 
 When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
 
-In addition to your own events, you can add the Superwall events `app_install`, `app_launch`, and `session_start` to a campaign. See [automatically tracked events](<doc:AutomaticallyTrackedEvents>) for more.
+In addition to your own events, you can add the Superwall events `app_install`, `app_launch`, and `session_start` to a campaign. See [automatically tracked events](<doc:SuperwallEvents>) for more.
 
 ## Presenting a Paywall
 
 When you sign up for a Superwall account, we give you an example paywall and campaign to test your integration. The example campaign contains an event called `campaign_trigger`, which you'll track in your app when you want to show the paywall.
 
-For both SwiftUI and UIKit apps, you use ``Superwall/Superwall/track(event:params:paywallOverrides:paywallState:)`` to track events:
+For both SwiftUI and UIKit apps, you use ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallHandler:)`` to track events:
 
 ```swift
 Superwall.track(

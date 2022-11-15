@@ -26,11 +26,14 @@ extension Superwall {
     )
 
     // For a trackable superwall event, send params to delegate
-    if event is TrackableSuperwallEvent {
-      await shared.delegateAdapter.trackAnalyticsEvent(
-        withName: event.rawName,
+    if let trackedEvent = event as? TrackableSuperwallEvent {
+      let info = SuperwallEventInfo(
+        event: trackedEvent.superwallEvent,
         params: parameters.delegateParams
       )
+
+      await shared.delegateAdapter.didTrackSuperwallEvent(info)
+
       Logger.debug(
         logLevel: .debug,
         scope: .events,
@@ -48,8 +51,11 @@ extension Superwall {
     Storage.shared.coreDataManager.saveEventData(eventData)
 
     if event.canImplicitlyTriggerPaywall {
-      Task {
-        await shared.handleImplicitTrigger(forEvent: eventData)
+      Task.detached {
+        await shared.handleImplicitTrigger(
+          forEvent: event,
+          withData: eventData
+        )
       }
 		}
 

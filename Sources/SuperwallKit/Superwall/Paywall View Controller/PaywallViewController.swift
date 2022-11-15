@@ -72,7 +72,7 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
   private weak var delegate: PaywallViewControllerDelegate?
 
   /// A publisher that emits ``PaywallState`` objects. These state objects feed back to
-  /// the caller of ``Superwall/Superwall/track(event:params:paywallOverrides:)``
+  /// the caller of ``SuperwallKit/Superwall/track(event:params:paywallOverrides:)``
   ///
   /// This publisher is set on presentation of the paywall.
   private var paywallStatePublisher: PassthroughSubject<PaywallState, Never>!
@@ -471,7 +471,19 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
       withTimeInterval: 5.0,
       repeats: false
     ) { [weak self] _ in
-      self?.toggleRefreshModal(isVisible: true)
+      guard let self = self else {
+        return
+      }
+      Task.detached(priority: .utility) {
+        let trackedEvent = await InternalSuperwallEvent.Transaction(
+          state: .timeout,
+          paywallInfo: self.paywallInfo,
+          product: nil,
+          model: nil
+        )
+        await Superwall.track(trackedEvent)
+      }
+      self.toggleRefreshModal(isVisible: true)
     }
   }
 
@@ -607,7 +619,12 @@ extension PaywallViewController {
   }
 
   private func setPresentationStyle(withOverride presentationStyleOverride: PaywallPresentationStyle?) {
-    presentationStyle = presentationStyleOverride ?? paywall.presentation.style
+    if let presentationStyleOverride = presentationStyleOverride,
+      presentationStyleOverride != .none {
+      presentationStyle = presentationStyleOverride
+    } else {
+      presentationStyle = paywall.presentation.style
+    }
 
     switch presentationStyle {
     case .modal:
@@ -647,9 +664,11 @@ extension PaywallViewController {
 	}
 
   private func promptSuperwallDelegate() {
+    let hasDelegate = Superwall.shared.delegateAdapter.hasDelegate
+
     guard
       presentedViewController == nil,
-      Superwall.delegate == nil
+      hasDelegate == false
     else {
       return
     }
@@ -658,7 +677,7 @@ extension PaywallViewController {
       message: "Set Superwall.delegate to handle purchases, restores and more!",
       actionTitle: "Docs →",
       closeActionTitle: "Done",
-      onClose: {
+      action: {
         if let url = URL(
           string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate"
         ) {

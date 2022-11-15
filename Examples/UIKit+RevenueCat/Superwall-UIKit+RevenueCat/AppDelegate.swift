@@ -13,10 +13,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    RevenueCatService.initPurchases()
-    Task {
-      await RevenueCatService.shared.updateSubscriptionStatus()
-    }
+    PaywallManager.configure()
     return true
   }
 

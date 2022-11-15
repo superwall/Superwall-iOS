@@ -1,6 +1,6 @@
 # CHANGELOG
 
-The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
+The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/SuperwallKit-iOS/releases) on GitHub.
 
 ## 3.0.0 (Upcoming Release)
 
@@ -34,11 +34,14 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 - The identity API can be accessed using async/await or completion handlers.
 - New function `Superwall.publisher(forEvent:params:overrides)` which returns a `PaywallStatePublisher` (`AnyPublisher<PaywallState, Never>`) for those Combine lovers. By subscribing to this publisher, you can receive state updates of your paywall. We've updated our sample apps to show you how to use that.
 - Adds `Superwall.isLoggedIn` to check whether the user is logged in to the SDK or not. This will be true if you've previously called `logIn(userId:)` or `createAccount(userId:)`.
-- Adds a new sample app, UIKit+RevenueCat, which shows you how to use Superwall with RevenueCat.
+- Adds a new example app, UIKit+RevenueCat, which shows you how to use Superwall with RevenueCat.
+- Adds a new Objective-C example app UIKit-Objc.
+- Adds an Objective-C-only function `removeUserAttributes(_:)` to remove user attributes. In Swift, to remove attributes you can pass in `nil` for a specific attribute in `setUserAttributes(_:)`.
 
 ### Fixes
 
 - The API is now thread safe. By default the API uses background threads, dispatching to the main thread when necessary and when returning from completion blocks.
+- The API is now fully compatible with Objective-C.
 
 ---
 
@@ -83,14 +86,12 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ### Fixes
 
 - Shimmer view is no longer visible beneath a paywall's `WKWebView` when there is no `body` or `html` background color set
-  <<<<<<< HEAD
 - Previously calls to `Paywall.preloadPaywalls(forTriggers:)` before `Paywall.config()` finished were ignored. This has been fixed.
 - If a user had already bought a product within a subscription group, they were still being offered a free trial on other products within that group. This is incorrect logic and this update fixes that.
 - # Fixed a bug where `Paywall.reset()` couldn't be called on a background thread.
 - Previously, calling `Paywall.preloadPaywalls(forTriggers:)` before `Paywall.config()` finished would not work. This has been fixed.
 - Previously, if a user purchases a product within a subscription group, they would still be offered a free trial on other products within that group. This has been fixed.
 - Fixes a bug where `Paywall.reset()` couldn't be called on a background thread.
-  > > > > > > > master
 
 ---
 

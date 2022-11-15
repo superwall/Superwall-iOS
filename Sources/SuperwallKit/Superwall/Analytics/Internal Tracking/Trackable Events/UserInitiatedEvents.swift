@@ -27,7 +27,8 @@ enum UserInitiatedEvent {
 
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
-
+  /*
+  // TODO: Check over this
   // MARK: - To be deprecated/deleted
   struct PushNotification: TrackableUserInitiatedEvent {
     enum State {
@@ -52,5 +53,5 @@ enum UserInitiatedEvent {
     let pushNotificationId: String?
     let canImplicitlyTriggerPaywall = true
     var customParameters: [String: Any] = [:]
-  }
+  }*/
 }

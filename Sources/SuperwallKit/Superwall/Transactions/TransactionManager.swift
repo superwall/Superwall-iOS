@@ -35,14 +35,6 @@ final class TransactionManager {
   /// The last product purchased.
   private var lastProductPurchased: SKProduct?
 
-  /*
-  var _storeKit2StorefrontListener: Any?
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
-  var storeKit2StorefrontListener: Sk2StorefrontListener {
-    return self._storeKit2StorefrontListener! as! StoreKit2StorefrontListener
-  }
-  */
-
   init() {
     if #available(iOS 15.0, *) {
       self._sk2TransactionObserver = Sk2TransactionObserver(delegate: self)
@@ -129,7 +121,7 @@ final class TransactionManager {
     Task.detached(priority: .utility) {
       await SessionEventsManager.shared.triggerSession.trackBeginTransaction(of: product)
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .start,
+        state: .start(product),
         paywallInfo: paywallInfo,
         product: product,
         model: nil
@@ -144,7 +136,7 @@ final class TransactionManager {
 
   /// An iOS 15-only function that checks for a transaction of the product.
   ///
-  /// We need this function because on iOS 15, the `Transaction.updates` listener doesn't notify us
+  /// We need this function because on iOS 15+, the `Transaction.updates` listener doesn't notify us
   /// of transactions for recent purchases.
   @available(iOS 15.0, *)
   private func checkForTransaction(
@@ -207,7 +199,7 @@ final class TransactionManager {
 
       let paywallInfo = await paywallViewController.paywallInfo
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .abandon,
+        state: .abandon(product),
         paywallInfo: paywallInfo,
         product: product,
         model: nil
@@ -229,7 +221,7 @@ final class TransactionManager {
     let paywallInfo = paywallViewController.paywallInfo
     Task.detached(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .fail(message: "Needs parental approval"),
+        state: .fail(.pending("Needs parental approval")),
         paywallInfo: paywallInfo,
         product: nil,
         model: nil
@@ -263,7 +255,7 @@ final class TransactionManager {
     let paywallInfo = paywallViewController.paywallInfo
     Task.detached(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .fail(message: error.localizedDescription),
+        state: .fail(.failure(error.localizedDescription, product)),
         paywallInfo: paywallInfo,
         product: product,
         model: nil
@@ -322,7 +314,7 @@ extension TransactionManager: TransactionObserverDelegate {
       )
 
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .complete,
+        state: .complete(product, transactionModel),
         paywallInfo: paywallInfo,
         product: product,
         model: transactionModel

@@ -4,9 +4,9 @@ Sending values from the game controller to the SDK
 
 ## Overview
 
-The Superwall SDK supports Game Controller input.
+SuperwallKit supports Game Controller input.
 
-To forward events to your paywall, simply call ``Superwall/Superwall/gamepadValueChanged(gamepad:element:)`` from your own gamepad's valueChanged handler:
+To forward events to your paywall, simply call ``SuperwallKit/Superwall/gamepadValueChanged(gamepad:element:)`` from your own gamepad's valueChanged handler:
 
 ```swift
 controller.extendedGamepad?.valueChangedHandler = { gamepad, element in

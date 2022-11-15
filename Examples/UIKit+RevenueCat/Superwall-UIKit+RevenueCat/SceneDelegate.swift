@@ -16,7 +16,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     options connectionOptions: UIScene.ConnectionOptions
   ) {
     for context in connectionOptions.urlContexts {
-      SuperwallService.handleDeepLink(context.url)
+      PaywallManager.handleDeepLink(context.url)
     }
   }
 
@@ -26,7 +26,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     openURLContexts URLContexts: Set<UIOpenURLContext>
   ) {
     for context in URLContexts {
-      SuperwallService.handleDeepLink(context.url)
+      PaywallManager.handleDeepLink(context.url)
     }
   }
 }

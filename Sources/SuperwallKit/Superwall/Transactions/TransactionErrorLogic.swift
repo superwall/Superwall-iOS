@@ -8,6 +8,11 @@
 import Foundation
 import StoreKit
 
+public enum TransactionError: Error {
+  case pending(String)
+  case failure(String, SKProduct)
+}
+
 enum TransactionErrorLogic {
   enum ErrorOutcome {
     case cancelled
