@@ -52,12 +52,7 @@ enum InternalSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .userAttributes(customParameters)
     }
-    func getSuperwallParameters() async -> [String: Any] {
-      // TODO: REmove? Is this necessary?
-      return [
-        "application_installed_at": DeviceHelper.shared.appInstalledAtString
-      ]
-    }
+    func getSuperwallParameters() async -> [String: Any] { [:] }
     var customParameters: [String: Any] = [:]
   }
 
@@ -192,21 +187,29 @@ enum InternalSuperwallEvent {
     var customParameters: [String: Any] = [:]
 
     func getSuperwallParameters() async -> [String: Any] {
+      var params: [String: Any] = [
+        "trigger_name": triggerName
+      ]
+
+      if let triggerSession = await SessionEventsManager.shared.triggerSession.activeTriggerSession {
+        params["trigger_session_id"] = triggerSession.id
+      }
+
       switch triggerResult {
       case .noRuleMatch:
-        return [
+        return params + [
           "result": "no_rule_match",
           "trigger_name": triggerName
         ]
       case .holdout(let experiment):
-        return [
+        return params + [
           "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
           "result": "holdout",
           "trigger_name": triggerName
         ]
       case let .paywall(experiment):
-        return [
+        return params + [
           "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
           "paywall_identifier": experiment.variant.paywallId as Any,
@@ -249,6 +252,7 @@ enum InternalSuperwallEvent {
       case abandon(SKProduct)
       case complete(SKProduct, TransactionModel)
       case restore
+      case timeout
     }
     let state: State
 
@@ -277,6 +281,8 @@ enum InternalSuperwallEvent {
         )
       case .restore:
         return .transactionRestore(paywallInfo: paywallInfo)
+      case .timeout:
+        return .transactionTimeout(paywallInfo: paywallInfo)
       }
     }
     let paywallInfo: PaywallInfo
@@ -289,7 +295,8 @@ enum InternalSuperwallEvent {
       case .start,
         .abandon,
         .complete,
-        .restore:
+        .restore,
+        .timeout:
         var eventParams = await paywallInfo.eventParams(forProduct: product)
         if let transactionDict = model?.dictionary(withSnakeCase: true) {
           eventParams += transactionDict

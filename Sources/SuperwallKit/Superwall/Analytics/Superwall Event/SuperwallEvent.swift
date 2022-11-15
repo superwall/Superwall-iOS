@@ -9,7 +9,7 @@ import Foundation
 
 /// Analytical events that are automatically tracked by Superwall.
 ///
-/// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/didTrackSuperwallEvent(_:)-6fcb9``.
+/// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/didTrackSuperwallEvent(_:)-n6x1``.
 public enum SuperwallEvent {
   /// When the user is first seen in the app, regardless of whether the user is logged in or not.
   case firstSeen
@@ -40,8 +40,9 @@ public enum SuperwallEvent {
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case deepLink(url: URL)
 
-  // TODO: Rename this
-  /// When a trigger is fired.
+  /// When the tracked event matches an event added as a paywall trigger in a campaign.
+  ///
+  /// The result of firing the trigger is accessible in the `result` associated value.
   case triggerFire(eventName: String, result: TriggerResult)
 
   /// When a paywall is opened.
@@ -51,31 +52,34 @@ public enum SuperwallEvent {
   case paywallClose(paywallInfo: PaywallInfo)
 
   /// When the payment sheet is displayed to the user.
-  case transactionStart(product: Attributes, paywallInfo: PaywallInfo)
+  case transactionStart(product: TransactionProduct, paywallInfo: PaywallInfo)
 
   /// When the payment sheet fails to complete a transaction (ignores user canceling the transaction).
   case transactionFail(error: TransactionError, paywallInfo: PaywallInfo)
 
   /// When the user cancels a transaction.
-  case transactionAbandon(product: Attributes, paywallInfo: PaywallInfo)
+  case transactionAbandon(product: TransactionProduct, paywallInfo: PaywallInfo)
 
   /// When the user completes checkout in the payment sheet and any product was purchased.
-  case transactionComplete(transaction: TransactionModel, product: Attributes, paywallInfo: PaywallInfo)
+  case transactionComplete(transaction: TransactionModel, product: TransactionProduct, paywallInfo: PaywallInfo)
 
   /// When the user successfully completes a transaction for a subscription product with no introductory offers.
-  case subscriptionStart(product: Attributes, paywallInfo: PaywallInfo)
+  case subscriptionStart(product: TransactionProduct, paywallInfo: PaywallInfo)
 
   /// When the user successfully completes a transaction for a subscription product with an introductory offer.
-  case freeTrialStart(product: Attributes, paywallInfo: PaywallInfo)
+  case freeTrialStart(product: TransactionProduct, paywallInfo: PaywallInfo)
 
   /// When the user successfully restores their purchases.
   case transactionRestore(paywallInfo: PaywallInfo)
+
+  /// When the transaction took > 5 seconds to show the payment sheet.
+  case transactionTimeout(paywallInfo: PaywallInfo)
 
   /// When the user attributes are set.
   case userAttributes(_ attributes: [String: Any])
 
   /// When the user purchased a non recurring product.
-  case nonRecurringProductPurchase(product: Attributes, paywallInfo: PaywallInfo)
+  case nonRecurringProductPurchase(product: TransactionProduct, paywallInfo: PaywallInfo)
 
   /// When a paywall's request to Superwall's servers has started.
   case paywallResponseLoadStart(triggeredEventName: String?)
@@ -174,6 +178,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .transactionFail, description: "transaction_fail")
     case .transactionAbandon:
       return .init(objcEvent: .transactionAbandon, description: "transaction_abandon")
+    case .transactionTimeout:
+      return .init(objcEvent: .transactionTimeout, description: "transaction_timeout")
     case .transactionComplete:
       return .init(objcEvent: .transactionComplete, description: "transaction_complete")
     case .subscriptionStart:

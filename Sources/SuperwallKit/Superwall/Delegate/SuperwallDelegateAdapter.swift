@@ -154,11 +154,11 @@ final class SuperwallDelegateAdapter {
     }
   }
 
-  func didTrackSuperwallEvent(_ result: SuperwallEventResult) {
+  func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.didTrackSuperwallEvent(result)
+      swiftDelegate.didTrackSuperwallEvent(info)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.didTrackSuperwallEventResult?(result)
+      objcDelegate.didTrackSuperwallEventInfo?(info)
     }
   }
 

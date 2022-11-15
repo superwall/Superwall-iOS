@@ -11,7 +11,7 @@ import StoreKit
 
 /// Contains information about a given paywall.
 ///
-/// This is returned in the `paywallState` after presenting a paywall with ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallState:)``.
+/// This is returned in the `paywallState` after presenting a paywall with ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallHandler:)``.
 @objc(SWKPaywallInfo)
 @objcMembers
 public final class PaywallInfo: NSObject {

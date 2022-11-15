@@ -35,14 +35,6 @@ final class TransactionManager {
   /// The last product purchased.
   private var lastProductPurchased: SKProduct?
 
-  /*
-  var _storeKit2StorefrontListener: Any?
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
-  var storeKit2StorefrontListener: Sk2StorefrontListener {
-    return self._storeKit2StorefrontListener! as! StoreKit2StorefrontListener
-  }
-  */
-
   init() {
     if #available(iOS 15.0, *) {
       self._sk2TransactionObserver = Sk2TransactionObserver(delegate: self)
@@ -144,7 +136,7 @@ final class TransactionManager {
 
   /// An iOS 15-only function that checks for a transaction of the product.
   ///
-  /// We need this function because on iOS 15, the `Transaction.updates` listener doesn't notify us
+  /// We need this function because on iOS 15+, the `Transaction.updates` listener doesn't notify us
   /// of transactions for recent purchases.
   @available(iOS 15.0, *)
   private func checkForTransaction(

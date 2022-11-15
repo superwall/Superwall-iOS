@@ -1,4 +1,4 @@
-# Contributing to Superwall
+# Contributing to SuperwallKit
 
 We want to make contributing to this project as easy and transparent as
 possible, and actively welcome your pull requests. If you run into problems,
@@ -48,7 +48,7 @@ Every time a commit that has a change in swift code is pushed to GitHub, a GitHu
 ### Documentation
 Public classes and methods must contain detailed documentation.
 
-All documentation is compiled using [DocC](https://github.com/apple/swift-docc) and hosted on [GitHub-Pages](https://pages.github.com). This is then accessible via our [iOS SDK documentation](https://sdk.superwall.me/documentation/paywall/). You can also view this in Xcode by selecting **Product ▸ Build Documentation**.
+All documentation is compiled using [DocC](https://github.com/apple/swift-docc) and hosted on [GitHub-Pages](https://pages.github.com). This is then accessible via our [iOS SDK documentation](https://sdk.superwall.me/documentation/SuperwallKit/). You can also view this in Xcode by selecting **Product ▸ Build Documentation**.
 
 ## Editing the code
 
@@ -78,4 +78,4 @@ We use GitHub issues to track public bugs. Please ensure your description is cle
 
 ## License
 
-By contributing to `Superwall`, you agree that your contributions will be licensed under the LICENSE file in the root directory of this source tree.
+By contributing to `SuperwallKit`, you agree that your contributions will be licensed under the LICENSE file in the root directory of this source tree.

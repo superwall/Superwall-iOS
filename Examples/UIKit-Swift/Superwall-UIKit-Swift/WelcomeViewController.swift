@@ -18,7 +18,7 @@ final class WelcomeViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    let isLoggedIn = SuperwallService.initSuperwall()
+    let isLoggedIn = SuperwallService.initialize()
     if isLoggedIn {
       next()
     }

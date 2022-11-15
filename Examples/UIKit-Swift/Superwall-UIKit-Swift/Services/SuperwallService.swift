@@ -16,7 +16,7 @@ final class SuperwallService {
     return Superwall.userAttributes["firstName"] as? String ?? ""
   }
 
-  static func initSuperwall() -> Bool {
+  static func initialize() -> Bool {
     Superwall.configure(
       apiKey: apiKey,
       delegate: shared
@@ -29,7 +29,7 @@ final class SuperwallService {
   static func logIn() async {
     do {
       try await Superwall.logIn(userId: "abc")
-    } catch let error as LogInError {
+    } catch let error as IdentityError {
       switch error {
       case .alreadyLoggedIn:
         print("The user is already logged in")
@@ -81,17 +81,17 @@ extension SuperwallService: SuperwallDelegate {
     return StoreKitService.shared.isSubscribed.value
   }
 
-  func didTrackSuperwallEvent(_ result: SuperwallEventResult) {
-    print("analytics event called", result.event.description)
+  func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
+    print("analytics event called", info.event.description)
 
     // Uncomment if you want to get a dictionary of params associated with the event:
-    // print(result.params)
+    // print(info.params)
 
     // Uncomment the following if you want to track
     // Superwall events:
 
     /*
-    switch result.event {
+    switch info.event {
     case .firstSeen:
       <#code#>
     case .appOpen:
@@ -119,6 +119,8 @@ extension SuperwallService: SuperwallDelegate {
     case .transactionAbandon(let product, let paywallInfo):
       <#code#>
     case .transactionComplete(let transaction, let product, let paywallInfo):
+      <#code#>
+    case .transactionTimeout(let paywallInfo):
       <#code#>
     case .subscriptionStart(let product, let paywallInfo):
       <#code#>

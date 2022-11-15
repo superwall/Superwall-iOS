@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8803502E29112B250061D870 /* RevenueCatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8803502D29112B250061D870 /* RevenueCatService.swift */; };
 		8803503129112D520061D870 /* SuperwallKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8803503029112D520061D870 /* SuperwallKit */; };
+		8824B8DB29229EA6001AFC9A /* PaywallManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8824B8DA29229EA6001AFC9A /* PaywallManager.swift */; };
 		884D981729112F9E0013225F /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 884D981629112F9E0013225F /* RevenueCat */; };
 		884D981929113EEE0013225F /* StoreKitTestCertificate.cer in Resources */ = {isa = PBXBuildFile; fileRef = 884D981829113EEE0013225F /* StoreKitTestCertificate.cer */; };
 		884D981A29113F580013225F /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 889FAA9C27FDADD000CB6EF5 /* Products.storekit */; };
@@ -25,11 +25,10 @@
 		889FAA8327FC53FF00CB6EF5 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA8227FC53FF00CB6EF5 /* Colors.swift */; };
 		889FAA8527FC557100CB6EF5 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 889FAA8427FC557100CB6EF5 /* Colors.xcassets */; };
 		889FAA9927FC939400CB6EF5 /* TrackEventViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */; };
-		88A801D228EB15E2004244CA /* SuperwallService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A801D128EB15E2004244CA /* SuperwallService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		8803502D29112B250061D870 /* RevenueCatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatService.swift; sourceTree = "<group>"; };
+		8824B8DA29229EA6001AFC9A /* PaywallManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallManager.swift; sourceTree = "<group>"; };
 		884D981829113EEE0013225F /* StoreKitTestCertificate.cer */ = {isa = PBXFileReference; lastKnownFileType = file; path = StoreKitTestCertificate.cer; sourceTree = SOURCE_ROOT; };
 		889FAA6027FC530200CB6EF5 /* Superwall-UIKit+RevenueCat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Superwall-UIKit+RevenueCat.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		889FAA6327FC530200CB6EF5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -47,7 +46,6 @@
 		889FAA8427FC557100CB6EF5 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
 		889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventViewController.swift; sourceTree = "<group>"; };
 		889FAA9C27FDADD000CB6EF5 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
-		88A801D128EB15E2004244CA /* SuperwallService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperwallService.swift; sourceTree = "<group>"; };
 		88B5FED12847ABCA009F36E2 /* paywall-ios */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "paywall-ios"; path = ../..; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -86,10 +84,10 @@
 			isa = PBXGroup;
 			children = (
 				889FAA7727FC531B00CB6EF5 /* Design */,
-				889FAA8A27FC585800CB6EF5 /* Services */,
 				889FAA9C27FDADD000CB6EF5 /* Products.storekit */,
 				884D981829113EEE0013225F /* StoreKitTestCertificate.cer */,
 				889FAA6327FC530200CB6EF5 /* AppDelegate.swift */,
+				8824B8DA29229EA6001AFC9A /* PaywallManager.swift */,
 				889FAA6527FC530200CB6EF5 /* SceneDelegate.swift */,
 				889FAA6727FC530200CB6EF5 /* WelcomeViewController.swift */,
 				889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */,
@@ -128,15 +126,6 @@
 				889FAA8427FC557100CB6EF5 /* Colors.xcassets */,
 			);
 			path = Assets;
-			sourceTree = "<group>";
-		};
-		889FAA8A27FC585800CB6EF5 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				8803502D29112B250061D870 /* RevenueCatService.swift */,
-				88A801D128EB15E2004244CA /* SuperwallService.swift */,
-			);
-			path = Services;
 			sourceTree = "<group>";
 		};
 		889FAA8B27FC58D700CB6EF5 /* Frameworks */ = {
@@ -254,12 +243,11 @@
 				889FAA7927FC532E00CB6EF5 /* Font.swift in Sources */,
 				889FAA8327FC53FF00CB6EF5 /* Colors.swift in Sources */,
 				889FAA8127FC53EB00CB6EF5 /* Styles.swift in Sources */,
-				8803502E29112B250061D870 /* RevenueCatService.swift in Sources */,
 				889FAA6827FC530200CB6EF5 /* WelcomeViewController.swift in Sources */,
 				889FAA9927FC939400CB6EF5 /* TrackEventViewController.swift in Sources */,
 				889FAA6427FC530200CB6EF5 /* AppDelegate.swift in Sources */,
+				8824B8DB29229EA6001AFC9A /* PaywallManager.swift in Sources */,
 				889FAA6627FC530200CB6EF5 /* SceneDelegate.swift in Sources */,
-				88A801D228EB15E2004244CA /* SuperwallService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

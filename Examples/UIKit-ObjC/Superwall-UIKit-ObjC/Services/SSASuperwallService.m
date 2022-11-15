@@ -91,10 +91,10 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 - (void)logInWithCompletion:(nullable void (^)(void))completion {
   [Superwall logInUserId:kDemoUserId completionHandler:^(Superwall * _Nullable superwall, NSError * _Nullable error) {
     switch (error.code) {
-      case SWKLogInErrorAlreadyLoggedIn:
+      case SWKIdentityErrorAlreadyLoggedIn:
         NSLog(@"The user is already logged in");
         break;
-      case SWKLogInErrorMissingUserId:
+      case SWKIdentityErrorMissingUserId:
         NSLog(@"The provided userId was empty");
         break;
       default:
@@ -156,13 +156,12 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
   [[SSAStoreKitService sharedService] restorePurchases];
 }
 
-- (void)didTrackSuperwallEventResult:(SWKSuperwallEventResult *)result
-{
-  NSLog(@"Analytics event called %@", @(result.event));
+- (void)didTrackSuperwallEventInfo:(SWKSuperwallEventInfo *)info {
+  NSLog(@"Analytics event called %@", @(info.event));
 
   // Uncomment the following if you want to track the different analytics events received from the paywall:
 
-  //  switch (result.event) {
+  //  switch (info.event) {
   //    case SWKSuperwallEventFirstSeen:
   //      <#code#>
   //      break;
@@ -212,6 +211,9 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
   //      <#code#>
   //      break;
   //    case SWKSuperwallEventTransactionRestore:
+  //      <#code#>
+  //      break;
+  //    case SWKSuperwallEventTransactionTimeout:
   //      <#code#>
   //      break;
   //    case SWKSuperwallEventUserAttributes:

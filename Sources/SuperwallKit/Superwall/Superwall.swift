@@ -44,7 +44,7 @@ public final class Superwall: NSObject {
     return PaywallManager.shared.presentedViewController
   }
 
-  /// A convenience variable to access and change the paywall options that you passed to ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``.
+  /// A convenience variable to access and change the paywall options that you passed to ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-65jyx``.
   public static var options: SuperwallOptions {
     return shared.configManager.options
   }
@@ -227,7 +227,7 @@ public final class Superwall: NSObject {
   ///
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
   ///
-  /// Note: This will not reload any paywalls you've already preloaded via ``SuperwallKit/Superwall/preloadPaywalls(forTriggers:)``.
+  /// Note: This will not reload any paywalls you've already preloaded via ``SuperwallKit/Superwall/preloadPaywalls(forEvents:)``.
   public static func preloadAllPaywalls() {
     Task.detached(priority: .userInitiated) {
       await shared.configManager.preloadAllPaywalls()

@@ -7,10 +7,10 @@
 
 import Foundation
 
-/// The internally tracked superwall event result.
-@objc(SWKSuperwallEventResult)
+/// Contains information about the internally tracked superwall event.
+@objc(SWKSuperwallEventInfo)
 @objcMembers
-public final class SuperwallEventResult: NSObject {
+public final class SuperwallEventInfo: NSObject {
   /// The event that was tracked.
   public let event: SuperwallEvent
 

@@ -13,10 +13,10 @@ public extension Superwall {
   ///
   /// This links a `userId` to Superwall's automatically generated alias. Call this once after you've retrieved a userId.
   ///
-  /// The user will stay logged in until you call ``SuperwallKit/Superwall/logOut()``. If you call this while they're already logged in, it will throw an error of type ``LogInError``.
+  /// The user will stay logged in until you call ``SuperwallKit/Superwall/logOut()``. If you call this while they're already logged in, it will throw an error of type ``IdentityError``.
   ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
   ///  - Returns: The shared Superwall instance.
-  ///  - Throws: An error of type ``LogInError``.
+  ///  - Throws: An error of type ``IdentityError``.
   @discardableResult
   @objc static func logIn(userId: String) async throws -> Superwall {
     try await IdentityManager.shared.logIn(userId: userId)
@@ -29,10 +29,10 @@ public extension Superwall {
   ///  - Parameters:
   ///   - userId: Your user's unique identifier, as defined by your backend system.
   ///   - completion: A completion block that accepts a `Result` enum. Its success value is
-  ///   the shared Superwall instance, and its failure error is of type ``LogInError``.
+  ///   the shared Superwall instance, and its failure error is of type ``IdentityError``.
   static func logIn(
     userId: String,
-    completion: ((Result<Superwall, LogInError>) -> Void)?
+    completion: ((Result<Superwall, IdentityError>) -> Void)?
   ) {
     Task {
       do {
@@ -40,7 +40,7 @@ public extension Superwall {
         await MainActor.run {
           completion?(.success(shared))
         }
-      } catch let error as LogInError {
+      } catch let error as IdentityError {
         await MainActor.run {
           completion?(.failure(error))
         }
@@ -58,7 +58,7 @@ public extension Superwall {
   ///
   ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
   ///  - Returns: The shared Superwall instance.
-  ///  - Throws: An error of type ``CreateAccountError``.
+  ///  - Throws: An error of type ``IdentityError``.
   @discardableResult
   @objc static func createAccount(userId: String) throws -> Superwall {
     try IdentityManager.shared.createAccount(userId: userId)
@@ -109,7 +109,7 @@ public extension Superwall {
   /// Resets the `userId`, on-device paywall assignments, and data stored
   /// by Superwall.
   ///
-  /// - Returns:The shared ``SuperwallKit/Superwall`` instance on the main thread.
+  /// - Returns:The shared ``SuperwallKit/Superwall`` instance.
   @discardableResult
   @objc static func reset() async -> Superwall {
     shared.lastSuccessfulPresentationRequest = nil
