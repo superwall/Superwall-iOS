@@ -120,6 +120,8 @@ extension SuperwallService: SuperwallDelegate {
       <#code#>
     case .transactionComplete(let transaction, let product, let paywallInfo):
       <#code#>
+    case .transactionTimeout(let paywallInfo):
+      <#code#>
     case .subscriptionStart(let product, let paywallInfo):
       <#code#>
     case .freeTrialStart(let product, let paywallInfo):

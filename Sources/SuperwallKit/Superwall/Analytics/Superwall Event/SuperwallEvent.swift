@@ -72,6 +72,9 @@ public enum SuperwallEvent {
   /// When the user successfully restores their purchases.
   case transactionRestore(paywallInfo: PaywallInfo)
 
+  /// When the transaction took > 5 seconds to show the payment sheet.
+  case transactionTimeout(paywallInfo: PaywallInfo)
+
   /// When the user attributes are set.
   case userAttributes(_ attributes: [String: Any])
 
@@ -175,6 +178,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .transactionFail, description: "transaction_fail")
     case .transactionAbandon:
       return .init(objcEvent: .transactionAbandon, description: "transaction_abandon")
+    case .transactionTimeout:
+      return .init(objcEvent: .transactionTimeout, description: "transaction_timeout")
     case .transactionComplete:
       return .init(objcEvent: .transactionComplete, description: "transaction_complete")
     case .subscriptionStart:

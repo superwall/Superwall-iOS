@@ -186,53 +186,55 @@ extension PaywallManager: SuperwallDelegate {
       <#code#>
     case .appClose:
       <#code#>
-    case .deepLink:
+    case .deepLink(let url):
       <#code#>
-    case .triggerFire:
+    case .triggerFire(let eventName, let result):
       <#code#>
-    case .paywallOpen:
+    case .paywallOpen(let paywallInfo):
       <#code#>
-    case .paywallClose:
+    case .paywallClose(let paywallInfo):
       <#code#>
-    case .transactionStart:
+    case .transactionStart(let product, let paywallInfo):
       <#code#>
-    case .transactionFail:
+    case .transactionFail(let error, let paywallInfo):
       <#code#>
-    case .transactionAbandon:
+    case .transactionAbandon(let product, let paywallInfo):
       <#code#>
-    case .transactionComplete:
+    case .transactionComplete(let transaction, let product, let paywallInfo):
       <#code#>
-    case .subscriptionStart:
+    case .transactionTimeout(let paywallInfo):
       <#code#>
-    case .freeTrialStart:
+    case .subscriptionStart(let product, let paywallInfo):
       <#code#>
-    case .transactionRestore:
+    case .freeTrialStart(let product, let paywallInfo):
       <#code#>
-    case .userAttributes:
+    case .transactionRestore(let paywallInfo):
       <#code#>
-    case .nonRecurringProductPurchase:
+    case .userAttributes(let attributes):
       <#code#>
-    case .paywallResponseLoadStart:
+    case .nonRecurringProductPurchase(let product, let paywallInfo):
       <#code#>
-    case .paywallResponseLoadNotFound:
+    case .paywallResponseLoadStart(let triggeredEventName):
       <#code#>
-    case .paywallResponseLoadFail:
+    case .paywallResponseLoadNotFound(let triggeredEventName):
       <#code#>
-    case .paywallResponseLoadComplete:
+    case .paywallResponseLoadFail(let triggeredEventName):
       <#code#>
-    case .paywallWebviewLoadStart:
+    case .paywallResponseLoadComplete(let triggeredEventName, let paywallInfo):
       <#code#>
-    case .paywallWebviewLoadFail:
+    case .paywallWebviewLoadStart(let paywallInfo):
       <#code#>
-    case .paywallWebviewLoadComplete:
+    case .paywallWebviewLoadFail(let paywallInfo):
       <#code#>
-    case .paywallWebviewLoadTimeout:
+    case .paywallWebviewLoadComplete(let paywallInfo):
       <#code#>
-    case .paywallProductsLoadStart:
+    case .paywallWebviewLoadTimeout(let paywallInfo):
       <#code#>
-    case .paywallProductsLoadFail:
+    case .paywallProductsLoadStart(let triggeredEventName, let paywallInfo):
       <#code#>
-    case .paywallProductsLoadComplete:
+    case .paywallProductsLoadFail(let triggeredEventName, let paywallInfo):
+      <#code#>
+    case .paywallProductsLoadComplete(let triggeredEventName):
       <#code#>
     }
     */

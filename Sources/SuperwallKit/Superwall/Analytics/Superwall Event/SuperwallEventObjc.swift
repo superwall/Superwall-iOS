@@ -65,6 +65,9 @@ public enum SuperwallEventObjc: Int {
   /// When the user successfully restores their purchases.
   case transactionRestore
 
+  /// When a transaction takes > 5 seconds to show the payment sheet.
+  case transactionTimeout
+
   /// When the user successfully completes a transaction for a subscription product with no introductory offers.
   case subscriptionStart
 

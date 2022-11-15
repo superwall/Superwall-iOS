@@ -213,6 +213,9 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
   //    case SWKSuperwallEventTransactionRestore:
   //      <#code#>
   //      break;
+  //    case SWKSuperwallEventTransactionTimeout:
+  //      <#code#>
+  //      break;
   //    case SWKSuperwallEventUserAttributes:
   //      <#code#>
   //      break;

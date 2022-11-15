@@ -471,7 +471,19 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
       withTimeInterval: 5.0,
       repeats: false
     ) { [weak self] _ in
-      self?.toggleRefreshModal(isVisible: true)
+      guard let self = self else {
+        return
+      }
+      Task.detached(priority: .utility) {
+        let trackedEvent = await InternalSuperwallEvent.Transaction(
+          state: .timeout,
+          paywallInfo: self.paywallInfo,
+          product: nil,
+          model: nil
+        )
+        await Superwall.track(trackedEvent)
+      }
+      self.toggleRefreshModal(isVisible: true)
     }
   }
 
