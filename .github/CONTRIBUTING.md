@@ -12,8 +12,9 @@ please open an issue on GitHub.
 4. If you've changed APIs, update the documentation.
 5. Ensure the test suite passes.
 6. Make sure your code lints (see below).
-7. Tag @yusuftor, @jakemore, and @anglinb in the pull request.
+7. Tag @yusuftor, @jakemor, and @anglinb in the pull request.
 8. Add an entry to the [CHANGELOG.md](../CHANGELOG.md) for any breaking changes, enhancements, or bug fixes.
+9. After the PR is merged, delete the branch.
 
 ## Coding Style
 
