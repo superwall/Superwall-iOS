@@ -81,11 +81,12 @@ public struct TransactionProduct {
     /// For example, "1 year".
     public let alt: String
 
-    // swiftlint:disable:next identifier_name
+    // swiftlint:disable identifier_name
     /// The subscription period with -ly added on the end.
     ///
     /// For example, "weekly".
     public let ly: String
+    // swiftlint:enable identifier_name
 
     /// The value representing the duration of the product interval, from a day up to a year.
     ///
