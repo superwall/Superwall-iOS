@@ -52,12 +52,7 @@ enum InternalSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .userAttributes(customParameters)
     }
-    func getSuperwallParameters() async -> [String: Any] {
-      // TODO: REmove? Is this necessary?
-      return [
-        "application_installed_at": DeviceHelper.shared.appInstalledAtString
-      ]
-    }
+    func getSuperwallParameters() async -> [String: Any] { [:] }
     var customParameters: [String: Any] = [:]
   }
 
