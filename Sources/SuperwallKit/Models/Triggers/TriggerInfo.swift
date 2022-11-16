@@ -17,11 +17,11 @@ import Foundation
 /// they are in a holdout group.
 ///
 /// To learn more, read <doc:Ecosystem>.
-public struct Experiment: Equatable, Hashable, Codable {
+public struct Experiment: Equatable, Hashable, Codable, Sendable {
   public typealias ID = String
 
-  public struct Variant: Equatable, Hashable, Codable {
-    public enum VariantType: String, Codable, Hashable {
+  public struct Variant: Equatable, Hashable, Codable, Sendable {
+    public enum VariantType: String, Codable, Hashable, Sendable {
       case treatment = "TREATMENT"
       case holdout = "HOLDOUT"
 
@@ -97,7 +97,7 @@ public struct Experiment: Equatable, Hashable, Codable {
 /// The result of a trigger.
 ///
 /// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
-public enum TriggerResult {
+public enum TriggerResult: Sendable {
   /// This event was not found on the dashboard.
   ///
   /// Please make sure you have added the event to a campaign on the dashboard and

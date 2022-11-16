@@ -15,12 +15,9 @@ public extension Superwall {
   ///
   /// The user will stay logged in until you call ``SuperwallKit/Superwall/logOut()``. If you call this while they're already logged in, it will throw an error of type ``IdentityError``.
   ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
-  ///  - Returns: The shared Superwall instance.
   ///  - Throws: An error of type ``IdentityError``.
-  @discardableResult
-  @objc static func logIn(userId: String) async throws -> Superwall {
+  @objc static func logIn(userId: String) async throws {
     try await IdentityManager.shared.logIn(userId: userId)
-    return shared
   }
 
   /// Logs in a user with their `userId` to retrieve paywalls that they've been assigned to.
@@ -32,13 +29,13 @@ public extension Superwall {
   ///   the shared Superwall instance, and its failure error is of type ``IdentityError``.
   static func logIn(
     userId: String,
-    completion: ((Result<Superwall, IdentityError>) -> Void)?
+    completion: ((Result<Void, IdentityError>) -> Void)?
   ) {
     Task {
       do {
-        let shared = try await logIn(userId: userId)
+        try await logIn(userId: userId)
         await MainActor.run {
-          completion?(.success(shared))
+          completion?(.success(()))
         }
       } catch let error as IdentityError {
         await MainActor.run {
@@ -57,12 +54,9 @@ public extension Superwall {
   /// ``SuperwallKit/Superwall/logIn(userId:)`` instead, as that will retrieve their assigned paywalls.
   ///
   ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
-  ///  - Returns: The shared Superwall instance.
   ///  - Throws: An error of type ``IdentityError``.
-  @discardableResult
-  @objc static func createAccount(userId: String) throws -> Superwall {
+  @objc static func createAccount(userId: String) throws {
     try IdentityManager.shared.createAccount(userId: userId)
-    return shared
   }
 }
 
@@ -108,10 +102,7 @@ public extension Superwall {
 public extension Superwall {
   /// Resets the `userId`, on-device paywall assignments, and data stored
   /// by Superwall.
-  ///
-  /// - Returns:The shared ``SuperwallKit/Superwall`` instance.
-  @discardableResult
-  @objc static func reset() async -> Superwall {
+  @objc static func reset() async {
     shared.lastSuccessfulPresentationRequest = nil
     shared.latestDismissedPaywallInfo = nil
     shared.presentationPublisher?.cancel()
@@ -125,21 +116,17 @@ public extension Superwall {
 
     ConfigManager.shared.reset()
     IdentityManager.shared.reset()
-
-    return await MainActor.run {
-      return shared
-    }
   }
 
   /// Asynchronously resets the `userId` and data stored by Superwall.
   ///
   /// - Parameters:
-  ///   - completion: A completion block that accepts the shared ``SuperwallKit/Superwall`` object.
-  static func reset(completion: ((Superwall) -> Void)? = nil) {
+  ///   - completion: A completion block that is called when reset has completed.
+  static func reset(completion: (() -> Void)? = nil) {
     Task {
       await reset()
       await MainActor.run {
-        completion?(shared)
+        completion?()
       }
     }
   }

@@ -87,7 +87,7 @@ final class TrackEventViewController: UIViewController {
   // The below function gives an example of how to track an event using Combine publishers:
   /*
   func trackEventUsingCombine() {
-   cancellable = Superwall
+    cancellable = Superwall
       .publisher(forEvent: "MyEvent")
       .sink { paywallState in
         switch paywallState {

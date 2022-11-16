@@ -31,7 +31,7 @@ public final class Superwall: NSObject {
   }
 
   @MainActor
-  lazy var delegateAdapter = SuperwallDelegateAdapter()
+  let delegateAdapter = SuperwallDelegateAdapter()
 
   /// Properties stored about the user, set using ``SuperwallKit/Superwall/setUserAttributes(_:)``.
   public static var userAttributes: [String: Any] {
@@ -139,20 +139,26 @@ public final class Superwall: NSObject {
     guard let apiKey = apiKey else {
       return
     }
-    Storage.shared.configure(apiKey: apiKey)
 
-    // Initialise session events manager and app session manager on main thread
-    // _ = SessionEventsManager.shared
-    _ = AppSessionManager.shared
-
-    Storage.shared.recordAppInstall()
+    // This task runs on a background thread, even if called from a main thread.
+    // This is because the function isn't marked to run on the main thread,
+    // therefore, we don't need to make this detached.
     Task {
-      await delegateAdapter.configure(
-        swiftDelegate: swiftDelegate,
-        objcDelegate: objcDelegate
-      )
-      await configManager.fetchConfiguration(withOptions: options)
-      await identityManager.configure()
+      Storage.shared.configure(apiKey: apiKey)
+
+      // Initialise session events manager and app session manager on main thread
+      // _ = SessionEventsManager.shared
+      await MainActor.run {
+        _ = AppSessionManager.shared
+        self.delegateAdapter.configure(
+          swiftDelegate: swiftDelegate,
+          objcDelegate: objcDelegate
+        )
+      }
+
+      Storage.shared.recordAppInstall()
+      await self.configManager.fetchConfiguration(withOptions: options)
+      await self.identityManager.configure()
     }
   }
 

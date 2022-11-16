@@ -91,6 +91,7 @@ struct Endpoint<Response: Decodable> {
       "X-Request-Id": requestId,
       "X-Bundle-ID": DeviceHelper.shared.bundleId,
       "X-Low-Power-Mode": DeviceHelper.shared.isLowPowerModeEnabled,
+      "X-Is-Sandbox": DeviceHelper.shared.isSandbox,
       "Content-Type": "application/json"
     ]
 

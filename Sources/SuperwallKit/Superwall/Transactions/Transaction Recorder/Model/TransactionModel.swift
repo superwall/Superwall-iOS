@@ -9,7 +9,7 @@ import Foundation
 import StoreKit
 
 // TODO: Add comments
-public struct TransactionModel: Codable {
+public struct TransactionModel: Codable, Sendable {
   /// A string that uniquely identifies the transaction.
   private var id = UUID().uuidString
 

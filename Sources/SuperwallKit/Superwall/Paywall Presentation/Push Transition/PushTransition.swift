@@ -13,7 +13,7 @@ enum TransitionState {
 }
 
 final class PushTransition: NSObject, UIViewControllerAnimatedTransitioning {
-  var state: TransitionState
+  let state: TransitionState
   var animator: UIViewImplicitlyAnimating?
 
   init(state: TransitionState) {

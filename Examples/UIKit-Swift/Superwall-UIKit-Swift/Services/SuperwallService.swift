@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 05/04/2022.
 //
+// swiftlint:disable convenience_type
 
 import SuperwallKit
 import StoreKit

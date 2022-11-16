@@ -7,13 +7,13 @@
 
 import Foundation
 
-public enum ProductType: String, Codable {
+public enum ProductType: String, Codable, Sendable {
   case primary
   case secondary
   case tertiary
 }
 
-public struct Product: Codable {
+public struct Product: Codable, Sendable {
   public var type: ProductType
   public var id: String
 

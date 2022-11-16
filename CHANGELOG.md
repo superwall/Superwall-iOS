@@ -40,7 +40,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- The API is now thread safe. By default the API uses background threads, dispatching to the main thread when necessary and when returning from completion blocks.
+- The API uses background threads wherever possible, dispatching to the main thread only when necessary and when returning from completion blocks.
 - The API is now fully compatible with Objective-C.
 
 ---
