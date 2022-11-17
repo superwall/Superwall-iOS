@@ -201,3 +201,9 @@ extension ProductsManager: SKProductsRequestDelegate {
 		request.cancel()
 	}
 }
+
+// MARK: - Sendable
+// @unchecked because:
+// - It has mutable state, but it's made thread-safe through `queue`.
+// - It's non-final, but only because we mock it.
+extension ProductsManager: @unchecked Sendable {}

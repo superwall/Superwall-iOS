@@ -31,7 +31,7 @@ public final class Superwall: NSObject {
   }
 
   @MainActor
-  lazy var delegateAdapter = SuperwallDelegateAdapter()
+  let delegateAdapter = SuperwallDelegateAdapter()
 
   /// Properties stored about the user, set using ``SuperwallKit/Superwall/setUserAttributes(_:)``.
   public static var userAttributes: [String: Any] {
@@ -139,20 +139,26 @@ public final class Superwall: NSObject {
     guard let apiKey = apiKey else {
       return
     }
-    Storage.shared.configure(apiKey: apiKey)
 
-    // Initialise session events manager and app session manager on main thread
-    // _ = SessionEventsManager.shared
-    _ = AppSessionManager.shared
-
-    Storage.shared.recordAppInstall()
+    // This task runs on a background thread, even if called from a main thread.
+    // This is because the function isn't marked to run on the main thread,
+    // therefore, we don't need to make this detached.
     Task {
-      await delegateAdapter.configure(
-        swiftDelegate: swiftDelegate,
-        objcDelegate: objcDelegate
-      )
-      await configManager.fetchConfiguration(withOptions: options)
-      await identityManager.configure()
+      Storage.shared.configure(apiKey: apiKey)
+
+      // Initialise session events manager and app session manager on main thread
+      // _ = SessionEventsManager.shared
+      await MainActor.run {
+        _ = AppSessionManager.shared
+        self.delegateAdapter.configure(
+          swiftDelegate: swiftDelegate,
+          objcDelegate: objcDelegate
+        )
+      }
+
+      Storage.shared.recordAppInstall()
+      await self.configManager.fetchConfiguration(withOptions: options)
+      await self.identityManager.configure()
     }
   }
 
@@ -165,7 +171,6 @@ public final class Superwall: NSObject {
   ///   - delegate: A class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
-
   @discardableResult
   public static func configure(
     apiKey: String,
@@ -328,7 +333,7 @@ extension Superwall: PaywallViewControllerDelegate {
     // TODO: log this
     switch paywallEvent {
     case .closed:
-      self.dismiss(
+      dismiss(
         paywallViewController,
         state: .closed
       )
@@ -340,13 +345,13 @@ extension Superwall: PaywallViewControllerDelegate {
     case .initiateRestore:
       await restorationHandler.tryToRestore(paywallViewController)
     case .openedURL(let url):
-      Superwall.shared.delegateAdapter.willOpenURL(url: url)
+      delegateAdapter.willOpenURL(url: url)
     case .openedUrlInSafari(let url):
-      Superwall.shared.delegateAdapter.willOpenURL(url: url)
+      delegateAdapter.willOpenURL(url: url)
     case .openedDeepLink(let url):
-      Superwall.shared.delegateAdapter.willOpenDeepLink(url: url)
+      delegateAdapter.willOpenDeepLink(url: url)
     case .custom(let string):
-      Superwall.shared.delegateAdapter.handleCustomPaywallAction(withName: string)
+      delegateAdapter.handleCustomPaywallAction(withName: string)
     }
   }
 }

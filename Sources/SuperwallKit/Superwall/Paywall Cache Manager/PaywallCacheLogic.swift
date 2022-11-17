@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum PaywallCacheLogic {
+enum PaywallCacheLogic: Sendable {
   static func key(
     forIdentifier identifier: String?,
     locale: String = DeviceHelper.shared.locale

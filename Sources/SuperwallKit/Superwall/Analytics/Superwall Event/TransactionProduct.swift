@@ -9,11 +9,11 @@ import Foundation
 import StoreKit
 
 /// The product involved in the transaction.
-public struct TransactionProduct {
+public struct TransactionProduct: Sendable {
   /// The product identifier.
   public let id: String
 
-  public struct Price {
+  public struct Price: Sendable {
     /// The raw price of the product.
     ///
     /// For example, "29.99".
@@ -49,7 +49,7 @@ public struct TransactionProduct {
   public let price: Price
 
   /// The trial period of the product
-  public struct TrialPeriod {
+  public struct TrialPeriod: Sendable {
     /// The number of days the trial period lasts.
     public let days: Int
 
@@ -75,7 +75,7 @@ public struct TransactionProduct {
   public var trialPeriod: TrialPeriod?
 
   /// The subscription period of the product.
-  public struct Period {
+  public struct Period: Sendable {
     /// The shortened representation of the duration of the subscription.
     ///
     /// For example, "1 year".
@@ -118,7 +118,7 @@ public struct TransactionProduct {
   public var languageCode: String?
 
   /// The currency of the product.
-  public struct Currency {
+  public struct Currency: Sendable {
     /// The currency code of the product.
     ///
     /// For example, for “zh-Hant-HK”, returns “HKD”.

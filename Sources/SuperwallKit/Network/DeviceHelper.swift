@@ -106,6 +106,20 @@ class DeviceHelper {
     return Bundle.main.bundleIdentifier ?? ""
   }()
 
+  /// Returns true if built with the debug flag, or using TestFlight.
+  let isSandbox: String = {
+    #if DEBUG
+      return "\(true)"
+    #else
+
+    guard let url = Bundle.main.appStoreReceiptURL else {
+      return "\(false)"
+    }
+
+    return "\(url.path.contains("sandboxReceipt"))"
+    #endif
+  }()
+
   private let appInstallDate: Date? = {
     guard let urlToDocumentsFolder = FileManager.default.urls(
       for: .documentDirectory,

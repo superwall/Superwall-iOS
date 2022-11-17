@@ -76,37 +76,33 @@ final class SWWebView: WKWebView {
 extension SWWebView: WKNavigationDelegate {
   func webView(
     _ webView: WKWebView,
-    decidePolicyFor navigationResponse: WKNavigationResponse,
-    decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
-  ) {
+    decidePolicyFor navigationResponse: WKNavigationResponse
+  ) async -> WKNavigationResponsePolicy {
     guard let statusCode = (navigationResponse.response as? HTTPURLResponse)?.statusCode else {
       // if there's no http status code to act on, exit and allow navigation
-      return decisionHandler(.allow)
+      return .allow
     }
 
     // Track paywall errors
     if statusCode >= 400 {
-      Task {
-        await trackPaywallError()
-      }
-      return decisionHandler(.cancel)
+      await trackPaywallError()
+      return .cancel
     }
 
-    decisionHandler(.allow)
+    return .allow
   }
 
   func webView(
     _ webView: WKWebView,
-    decidePolicyFor navigationAction: WKNavigationAction,
-    decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
-  ) {
+    decidePolicyFor navigationAction: WKNavigationAction
+  ) async -> WKNavigationActionPolicy {
     if webView.isLoading {
-      return decisionHandler(.allow)
+      return .allow
     }
     if navigationAction.navigationType == .reload {
-      return decisionHandler(.allow)
+      return .allow
     }
-    decisionHandler(.cancel)
+    return .cancel
   }
 
   func webView(

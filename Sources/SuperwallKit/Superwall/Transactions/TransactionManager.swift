@@ -9,7 +9,6 @@ import StoreKit
 import UIKit
 import Combine
 
-@MainActor
 final class TransactionManager {
   /// Sends all transactions back to the server.
   lazy var transactionRecorder = TransactionRecorder()
@@ -56,14 +55,14 @@ final class TransactionManager {
     guard let product = StoreKitManager.shared.productsById[productId] else {
       return
     }
-    prepareToStartTransaction(of: product, from: paywallViewController)
+    await prepareToStartTransaction(of: product, from: paywallViewController)
 
     do {
       let purchaseStartDate = Date()
 
-      paywallViewController.startTransactionTimeout()
+      await paywallViewController.startTransactionTimeout()
       let result = try await Superwall.shared.delegateAdapter.purchase(product: product)
-      paywallViewController.cancelTransactionTimeout()
+      await paywallViewController.cancelTransactionTimeout()
 
       if #available(iOS 15.0, *) {
         await checkForTransaction(of: product, since: purchaseStartDate)
@@ -71,9 +70,9 @@ final class TransactionManager {
 
       switch result {
       case .purchased:
-        didPurchase(product, from: paywallViewController)
+        await didPurchase(product, from: paywallViewController)
       case .pending:
-        handlePendingTransaction(from: paywallViewController)
+        await handlePendingTransaction(from: paywallViewController)
       case .cancelled:
         trackCancelled(product: product, from: paywallViewController)
       }
@@ -86,7 +85,7 @@ final class TransactionManager {
           from: paywallViewController
         )
       case .presentAlert:
-        presentAlert(
+        await presentAlert(
           forError: error,
           product: product,
           paywallViewController: paywallViewController
@@ -94,13 +93,14 @@ final class TransactionManager {
       }
     }
 
-    paywallViewController.loadingState = .ready
+    await MainActor.run {
+      paywallViewController.loadingState = .ready
+    }
   }
 
   /// Cancels the transaction timeout when the application resigns active.
   ///
   /// When the purchase sheet appears, the application resigns active.
-
 
   // MARK: - Transaction lifecycle
 
@@ -108,7 +108,7 @@ final class TransactionManager {
   private func prepareToStartTransaction(
     of product: SKProduct,
     from paywallViewController: PaywallViewController
-  ) {
+  ) async {
     Logger.debug(
       logLevel: .debug,
       scope: .paywallTransactions,
@@ -117,7 +117,7 @@ final class TransactionManager {
       error: nil
     )
 
-    let paywallInfo = paywallViewController.paywallInfo
+    let paywallInfo = await paywallViewController.paywallInfo
     Task.detached(priority: .utility) {
       await SessionEventsManager.shared.triggerSession.trackBeginTransaction(of: product)
       let trackedEvent = InternalSuperwallEvent.Transaction(
@@ -131,7 +131,9 @@ final class TransactionManager {
 
     lastProductPurchased = product
     lastPaywallViewController = paywallViewController
-    paywallViewController.loadingState = .loadingPurchase
+    await MainActor.run {
+      paywallViewController.loadingState = .loadingPurchase
+    }
   }
 
   /// An iOS 15-only function that checks for a transaction of the product.
@@ -163,7 +165,7 @@ final class TransactionManager {
   private func didPurchase(
     _ product: SKProduct,
     from paywallViewController: PaywallViewController
-  ) {
+  ) async {
     Logger.debug(
       logLevel: .debug,
       scope: .paywallTransactions,
@@ -177,7 +179,7 @@ final class TransactionManager {
     guard Superwall.options.paywalls.automaticallyDismiss else {
       return
     }
-    Superwall.shared.dismiss(
+    await Superwall.shared.dismiss(
       paywallViewController,
       state: .purchased(productId: product.productIdentifier)
     )
@@ -209,7 +211,7 @@ final class TransactionManager {
     }
   }
 
-  private func handlePendingTransaction(from paywallViewController: PaywallViewController) {
+  private func handlePendingTransaction(from paywallViewController: PaywallViewController) async {
     Logger.debug(
       logLevel: .debug,
       scope: .paywallTransactions,
@@ -218,7 +220,7 @@ final class TransactionManager {
       error: nil
     )
 
-    let paywallInfo = paywallViewController.paywallInfo
+    let paywallInfo = await paywallViewController.paywallInfo
     Task.detached(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .fail(.pending("Needs parental approval")),
@@ -230,7 +232,7 @@ final class TransactionManager {
       await SessionEventsManager.shared.triggerSession.trackDeferredTransaction()
     }
 
-    paywallViewController.presentAlert(
+    await paywallViewController.presentAlert(
       title: "Waiting for Approval",
       message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved."
     )
@@ -240,7 +242,7 @@ final class TransactionManager {
     forError error: Error,
     product: SKProduct,
     paywallViewController: PaywallViewController
-  ) {
+  ) async {
     Logger.debug(
       logLevel: .debug,
       scope: .paywallTransactions,
@@ -252,7 +254,7 @@ final class TransactionManager {
       error: error
     )
 
-    let paywallInfo = paywallViewController.paywallInfo
+    let paywallInfo = await paywallViewController.paywallInfo
     Task.detached(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .fail(.failure(error.localizedDescription, product)),
@@ -264,7 +266,7 @@ final class TransactionManager {
       await SessionEventsManager.shared.triggerSession.trackTransactionError()
     }
 
-    paywallViewController.presentAlert(
+    await paywallViewController.presentAlert(
       title: "An error occurred",
       message: error.localizedDescription
     )
@@ -281,7 +283,7 @@ extension TransactionManager: TransactionObserverDelegate {
       return
     }
 
-    let paywallShowingFreeTrial = paywallViewController.paywall.isFreeTrialAvailable == true
+    let paywallShowingFreeTrial = await paywallViewController.paywall.isFreeTrialAvailable == true
     let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
 
     await SessionEventsManager.shared.triggerSession.trackTransactionRestoration(
@@ -302,10 +304,10 @@ extension TransactionManager: TransactionObserverDelegate {
       return
     }
 
-    let paywallShowingFreeTrial = paywallViewController.paywall.isFreeTrialAvailable == true
+    let paywallShowingFreeTrial = await paywallViewController.paywall.isFreeTrialAvailable == true
     let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
 
-    let paywallInfo = paywallViewController.paywallInfo
+    let paywallInfo = await paywallViewController.paywallInfo
     Task.detached(priority: .utility) {
       await SessionEventsManager.shared.triggerSession.trackTransactionSucceeded(
         withId: transactionModel.storeTransactionId,

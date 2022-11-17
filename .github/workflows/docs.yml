@@ -37,7 +37,7 @@ jobs:
       - name: Build Doc Bundle 📗
         run: |
           echo "🚀 Starting to build documentation"
-          xcodebuild docbuild -scheme SuperwallKit -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 Pro'
+          xcodebuild docbuild -scheme SuperwallKit -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 14 Pro'
       - name: Install DocC Renderer
         run: |
           git clone https://github.com/apple/swift-docc-render-artifact.git

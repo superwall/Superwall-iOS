@@ -14,7 +14,7 @@ import StoreKit
 /// This is returned in the `paywallState` after presenting a paywall with ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallHandler:)``.
 @objc(SWKPaywallInfo)
 @objcMembers
-public final class PaywallInfo: NSObject {
+public final class PaywallInfo: NSObject, Sendable {
   /// Superwall's internal ID for this paywall.
   let databaseId: String
 
@@ -29,11 +29,7 @@ public final class PaywallInfo: NSObject {
   /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
   public let experiment: Experiment?
 
-  // TODO: Comments here, should this be nil?
-  /// The trigger session ID.
-  public let triggerSessionId: String?
-
-  // TODO: Comments here
+  /// The products associated with the paywall.
   public let products: [Product]
 
   /// The name set for this paywall in Superwall's web dashboard.
@@ -102,8 +98,7 @@ public final class PaywallInfo: NSObject {
     productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
     experiment: Experiment? = nil,
-    paywalljsVersion: String? = nil,
-    triggerSessionId: String? = nil
+    paywalljsVersion: String? = nil
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -114,7 +109,6 @@ public final class PaywallInfo: NSObject {
     self.presentedByEventWithId = eventData?.id.lowercased()
     self.experiment = experiment
     self.paywalljsVersion = paywalljsVersion
-    self.triggerSessionId = triggerSessionId
     self.products = products
 
     if eventData != nil {

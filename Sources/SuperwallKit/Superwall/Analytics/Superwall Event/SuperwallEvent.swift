@@ -217,3 +217,7 @@ extension SuperwallEvent {
     }
   }
 }
+
+// This is unchecked because of the use of `Any` in `[String: Any]` user attributes.
+// Everything else is Sendable except that.
+extension SuperwallEvent: @unchecked Sendable {}

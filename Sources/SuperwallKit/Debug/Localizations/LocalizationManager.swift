@@ -9,7 +9,7 @@ import Foundation
 
 final class LocalizationManager {
 	static let shared = LocalizationManager()
-	var popularLocales = ["de_DE", "es_US"]
+	let popularLocales = ["de_DE", "es_US"]
 	var selectedLocale: String?
 
 	lazy var localizationGroupings: [LocalizationGrouping] = {

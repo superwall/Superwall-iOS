@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class PaywallCache {
+final class PaywallCache: Sendable {
   func getPaywallViewController(
     withIdentifier identifier: String?
   ) -> PaywallViewController? {
