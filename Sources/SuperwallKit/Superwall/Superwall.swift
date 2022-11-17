@@ -171,7 +171,6 @@ public final class Superwall: NSObject {
   ///   - delegate: A class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
-
   @discardableResult
   public static func configure(
     apiKey: String,

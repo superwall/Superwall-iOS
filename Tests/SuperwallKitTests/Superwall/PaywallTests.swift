@@ -11,14 +11,16 @@ import XCTest
 class SuperwallTests: XCTestCase {
   func test_configureCalledTwice() async {
     let superwall = Superwall.configure(apiKey: "abc")
-    let superwall2 = Superwall.configure(apiKey: "abc")
-
     Superwall.shared.configManager = ConfigManagerMock()
     Superwall.shared.identityManager = IdentityManagerMock()
-
     let twoHundredMilliseconds = UInt64(200_000_000)
     try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+    let superwall2 = Superwall.configure(apiKey: "abc")
 
+
+    print(superwall, superwall2)
+    try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+    print(superwall, superwall2)
     XCTAssertEqual(superwall, superwall2)
   }
 }
