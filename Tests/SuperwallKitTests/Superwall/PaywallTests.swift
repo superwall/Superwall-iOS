@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 23/06/2022.
 //
+// swiftlint:disable all
 
 import XCTest
 @testable import SuperwallKit
@@ -20,7 +21,6 @@ class SuperwallTests: XCTestCase {
 
     print(superwall, superwall2)
     try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
-    print(superwall, superwall2)
     XCTAssertEqual(superwall, superwall2)
   }
 }
