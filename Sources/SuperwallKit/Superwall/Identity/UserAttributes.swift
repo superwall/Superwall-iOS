@@ -76,22 +76,22 @@ public extension Superwall {
   }
 
   private static func mergeAttributes(_ attributes: [String: Any?]) {
-    var customAttributes: [String: Any] = [:]
-
-    for key in attributes.keys {
-      if let value = attributes[key] {
-        if key.starts(with: "$") {
-          // preserve $ for Superwall-only values
-          continue
-        }
-        customAttributes[key] = value
-      }
-    }
-
-    let trackableEvent = InternalSuperwallEvent.Attributes(
-      customParameters: customAttributes
-    )
     Task {
+      var customAttributes: [String: Any] = [:]
+
+      for key in attributes.keys {
+        if let value = attributes[key] {
+          if key.starts(with: "$") {
+            // preserve $ for Superwall-only values
+            continue
+          }
+          customAttributes[key] = value
+        }
+      }
+
+      let trackableEvent = InternalSuperwallEvent.Attributes(
+        customParameters: customAttributes
+      )
       let result = await track(trackableEvent)
       let eventParams = result.parameters.eventParams
       IdentityManager.shared.mergeUserAttributes(eventParams)

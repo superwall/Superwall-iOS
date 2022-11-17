@@ -13,7 +13,7 @@ enum AsyncError: Error {
 }
 
 extension Publisher {
-  /// Returns the first value of the publisher
+  /// Waits for the first value of the publisher.
   func asyncNoValue() async {
     _ = await withCheckedContinuation { continuation in
       var cancellable: AnyCancellable?
@@ -28,7 +28,7 @@ extension Publisher {
     }
   }
 
-  /// Returns the first value of the publisher
+  /// Waits and returns the first value of the publisher.
   @discardableResult
   func async() async -> Output {
     await withCheckedContinuation { continuation in

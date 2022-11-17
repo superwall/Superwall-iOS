@@ -53,6 +53,7 @@ The ``SuperwallKit/Superwall`` class is used to access all the features of the S
 - ``reset(completion:)``
 - ``setUserAttributes(_:)``
 - ``setUserAttributesDictionary(_:)``
+- ``removeUserAttributes(_:)``
 - ``userAttributes``
 
 ### Game Controller

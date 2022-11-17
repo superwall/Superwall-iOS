@@ -45,7 +45,6 @@ actor PaywallRequestManager {
         let paywall = try await request.publisher
           .getRawPaywall()
           .addProducts()
-          .map { $0.paywall }
           .throwableAsync()
 
         paywallsByHash[requestHash] = paywall

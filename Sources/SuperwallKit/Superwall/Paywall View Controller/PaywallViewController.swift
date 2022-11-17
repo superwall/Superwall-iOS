@@ -41,7 +41,7 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
   var eventData: EventData?
 
   /// The cache key for the view controller.
-  var cacheKey: String
+  nonisolated let cacheKey: String
 
   /// Determines whether the paywall is presented or not.
   var isActive: Bool {

@@ -334,7 +334,7 @@ extension Superwall: PaywallViewControllerDelegate {
     // TODO: log this
     switch paywallEvent {
     case .closed:
-      self.dismiss(
+      dismiss(
         paywallViewController,
         state: .closed
       )
@@ -346,13 +346,13 @@ extension Superwall: PaywallViewControllerDelegate {
     case .initiateRestore:
       await restorationHandler.tryToRestore(paywallViewController)
     case .openedURL(let url):
-      Superwall.shared.delegateAdapter.willOpenURL(url: url)
+      delegateAdapter.willOpenURL(url: url)
     case .openedUrlInSafari(let url):
-      Superwall.shared.delegateAdapter.willOpenURL(url: url)
+      delegateAdapter.willOpenURL(url: url)
     case .openedDeepLink(let url):
-      Superwall.shared.delegateAdapter.willOpenDeepLink(url: url)
+      delegateAdapter.willOpenDeepLink(url: url)
     case .custom(let string):
-      Superwall.shared.delegateAdapter.handleCustomPaywallAction(withName: string)
+      delegateAdapter.handleCustomPaywallAction(withName: string)
     }
   }
 }

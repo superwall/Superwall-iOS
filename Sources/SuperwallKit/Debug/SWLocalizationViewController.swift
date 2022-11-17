@@ -69,7 +69,7 @@ final class SWLocalizationViewController: UITableViewController {
 extension SWLocalizationViewController {
 	override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 		completion(rowModels[indexPath.section].localizations[indexPath.row].locale)
-		dismiss(animated: true, completion: nil)
+		dismiss(animated: true)
 	}
 
 	override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {

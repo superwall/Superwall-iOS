@@ -11,7 +11,7 @@ import Foundation
 typealias PipelineData = (paywall: Paywall, request: PaywallRequest)
 
 extension AnyPublisher where Output == PipelineData, Failure == Error {
-  func addProducts() -> AnyPublisher<Output, Failure> {
+  func addProducts() -> AnyPublisher<Paywall, Failure> {
     asyncMap { input in
       await trackProductsLoadStart(
         paywall: input.paywall,
@@ -27,6 +27,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
       )
       return input
     }
+    .map { $0.paywall }
     .eraseToAnyPublisher()
   }
 
