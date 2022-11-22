@@ -9,6 +9,13 @@ import Foundation
 import StoreKit
 
 enum TrackingLogic {
+  enum ImplicitTriggerOutcome {
+    case triggerPaywall
+    case deepLinkTrigger
+    case disallowedEventAsTrigger
+    case dontTriggerPaywall
+  }
+
   static func processParameters(
     fromTrackableEvent trackableEvent: Trackable,
     eventCreatedAt: Date,
@@ -101,5 +108,25 @@ enum TrackingLogic {
         }
       }
     }
+  }
+
+  static func canTriggerPaywall(
+    _ event: Trackable,
+    triggers: Set<String>,
+    isPaywallPresented: Bool
+  ) -> ImplicitTriggerOutcome {
+    if let event = event as? TrackableSuperwallEvent,
+      case .deepLink(url: _) = event.superwallEvent {
+      return .deepLinkTrigger
+    }
+
+    if isPaywallPresented {
+      return .dontTriggerPaywall
+    }
+    guard triggers.contains(event.rawName) else {
+      return .dontTriggerPaywall
+    }
+
+    return .triggerPaywall
   }
 }

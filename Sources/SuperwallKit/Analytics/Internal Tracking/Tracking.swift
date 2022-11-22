@@ -65,4 +65,50 @@ extension Superwall {
     )
 		return result
   }
+
+  /// Attemps to implicitly trigger a paywall for a given analytical event.
+  ///
+  ///  - Parameters:
+  ///     - event: The tracked event.
+  ///     - eventData: The event data that could trigger a paywall.
+  @MainActor
+  func handleImplicitTrigger(
+    forEvent event: Trackable,
+    withData eventData: EventData
+  ) async {
+    await IdentityManager.hasIdentity.async()
+
+    let presentationInfo: PresentationInfo = .implicitTrigger(eventData)
+
+    let outcome = TrackingLogic.canTriggerPaywall(
+      event,
+      triggers: Set(configManager.triggersByEventName.keys),
+      isPaywallPresented: isPaywallPresented
+    )
+
+    switch outcome {
+    case .deepLinkTrigger:
+      if isPaywallPresented {
+        await Superwall.dismiss()
+      }
+      let presentationRequest = PresentationRequest(presentationInfo: presentationInfo)
+      await internallyPresent(presentationRequest).asyncNoValue()
+    case .triggerPaywall:
+      // delay in case they are presenting a view controller alongside an event they are calling
+      let twoHundredMilliseconds = UInt64(200_000_000)
+      try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+      let presentationRequest = PresentationRequest(presentationInfo: presentationInfo)
+      await internallyPresent(presentationRequest).asyncNoValue()
+    case .disallowedEventAsTrigger:
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: "Event Used as Trigger",
+        info: ["message": "You can't use events as triggers"],
+        error: nil
+      )
+    case .dontTriggerPaywall:
+      return
+    }
+  }
 }

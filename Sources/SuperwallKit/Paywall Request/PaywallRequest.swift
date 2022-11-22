@@ -27,7 +27,6 @@ struct PaywallRequest {
   /// Overrides within the paywall.
   var overrides = Overrides()
 
-
   /// The products to substitute into the response.
   var substituteProducts: PaywallProducts?
 

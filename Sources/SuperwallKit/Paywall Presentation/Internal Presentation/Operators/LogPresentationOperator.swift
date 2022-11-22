@@ -11,7 +11,7 @@ import Combine
 typealias DebugInfo = [String: Any]
 
 extension AnyPublisher where Output == PresentationRequest, Failure == Error {
-  func logPresentation() -> AnyPublisher<(PresentationRequest, DebugInfo), Failure> {
+  func logPresentation(_ message: String) -> AnyPublisher<(PresentationRequest, DebugInfo), Failure> {
     map { request in
       let eventData = request.presentationInfo.eventData
       let debugInfo: [String: Any] = [
@@ -22,7 +22,7 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
       Logger.debug(
         logLevel: .debug,
         scope: .paywallPresentation,
-        message: "Called Superwall.track",
+        message: message,
         info: debugInfo
       )
       return (request, debugInfo)

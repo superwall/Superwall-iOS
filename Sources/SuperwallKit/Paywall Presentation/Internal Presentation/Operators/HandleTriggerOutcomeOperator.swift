@@ -8,39 +8,38 @@
 import Foundation
 import Combine
 
-struct TriggerOutcomeResponsePipelineOutput {
+struct TriggerResultResponsePipelineOutput {
   let request: PresentationRequest
-  let triggerOutcome: TriggerResultOutcome
+  let triggerResult: TriggerResult
   let debugInfo: DebugInfo
-  let responseIdentifiers: ResponseIdentifiers
+  let experiment: Experiment
 }
 
-extension AnyPublisher where Output == TriggerOutcomePipelineOutput, Failure == Error {
-  func handleTriggerOutcome(
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
-    configManager: ConfigManager = .shared
-  ) -> AnyPublisher<TriggerOutcomeResponsePipelineOutput, Error> {
+extension AnyPublisher where Output == TriggerResultPipelineOutput, Failure == Error {
+  func handleTriggerResult(
+    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+  ) -> AnyPublisher<TriggerResultResponsePipelineOutput, Error> {
     asyncMap { input in
-      switch input.triggerOutcome.info {
-      case .paywall(let responseIdentifiers):
-        return TriggerOutcomeResponsePipelineOutput(
+      switch input.triggerResult {
+      case .paywall(let experiment):
+        return TriggerResultResponsePipelineOutput(
           request: input.request,
-          triggerOutcome: input.triggerOutcome,
+          triggerResult: input.triggerResult,
           debugInfo: input.debugInfo,
-          responseIdentifiers: responseIdentifiers
+          experiment: experiment
         )
       case .holdout(let experiment):
         await SessionEventsManager.shared.triggerSession.activateSession(
           for: input.request.presentationInfo,
           on: input.request.presentingViewController,
-          triggerResult: input.triggerOutcome.result
+          triggerResult: input.triggerResult
         )
         paywallStatePublisher.send(.skipped(.holdout(experiment)))
       case .noRuleMatch:
         await SessionEventsManager.shared.triggerSession.activateSession(
           for: input.request.presentationInfo,
           on: input.request.presentingViewController,
-          triggerResult: input.triggerOutcome.result
+          triggerResult: input.triggerResult
         )
         paywallStatePublisher.send(.skipped(.noRuleMatch))
       case .eventNotFound:

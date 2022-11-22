@@ -21,7 +21,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<PresentablePipelineOutput, Error> {
     asyncMap { input in
-      if await InternalPresentationLogic.shouldNotDisplayPaywall(
+      if await InternalPresentationLogic.shouldNotPresentPaywall(
         isUserSubscribed: Superwall.shared.isUserSubscribed,
         isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
         shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus,
@@ -34,7 +34,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         for: input.request.presentationInfo,
         on: input.request.presentingViewController,
         paywall: input.paywallViewController.paywall,
-        triggerResult: input.triggerOutcome.result
+        triggerResult: input.triggerResult
       )
 
       if input.request.presentingViewController == nil {

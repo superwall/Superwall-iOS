@@ -262,64 +262,15 @@ public final class Superwall: NSObject {
       await SWDebugManager.shared.handle(deepLinkUrl: url)
     }
   }
-}
 
-extension Superwall {
-	// TODO: create debugger manager class
-
+  // MARK: - Overrides
+  
 	/// Overrides the default device locale for testing purposes.
   ///
   /// You can also preview your paywall in different locales using the in-app debugger. See <doc:InAppPreviews> for more.
 	///  - Parameter localeIdentifier: The locale identifier for the language you would like to test.
 	public static func localizationOverride(localeIdentifier: String? = nil) {
 		LocalizationManager.shared.selectedLocale = localeIdentifier
-	}
-
-  /// Attemps to implicitly trigger a paywall for a given analytical event.
-  ///
-  ///  - Parameters:
-  ///     - event: The data of an analytical event data that could trigger a paywall.
-  @MainActor
-  func handleImplicitTrigger(
-    forEvent event: Trackable,
-    withData eventData: EventData
-  ) async {
-    await IdentityManager.hasIdentity.async()
-
-    let presentationInfo: PresentationInfo = .implicitTrigger(eventData)
-
-    let outcome = SuperwallLogic.canTriggerPaywall(
-      event: event,
-      triggers: Set(configManager.triggersByEventName.keys),
-      isPaywallPresented: isPaywallPresented
-    )
-
-    switch outcome {
-    case .deepLinkTrigger:
-      if isPaywallPresented {
-        await Superwall.dismiss()
-      }
-      let presentationRequest = PresentationRequest(presentationInfo: presentationInfo)
-      await Superwall.shared.internallyPresent(presentationRequest)
-        .asyncNoValue()
-    case .triggerPaywall:
-      // delay in case they are presenting a view controller alongside an event they are calling
-      let twoHundredMilliseconds = UInt64(200_000_000)
-      try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
-      let presentationRequest = PresentationRequest(presentationInfo: presentationInfo)
-      await Superwall.shared.internallyPresent(presentationRequest)
-        .asyncNoValue()
-    case .disallowedEventAsTrigger:
-      Logger.debug(
-        logLevel: .warn,
-        scope: .superwallCore,
-        message: "Event Used as Trigger",
-        info: ["message": "You can't use events as triggers"],
-        error: nil
-      )
-    case .dontTriggerPaywall:
-      return
-    }
 	}
 }
 

@@ -37,6 +37,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds a new example app, UIKit+RevenueCat, which shows you how to use Superwall with RevenueCat.
 - Adds a new Objective-C example app UIKit-Objc.
 - Adds an Objective-C-only function `removeUserAttributes(_:)` to remove user attributes. In Swift, to remove attributes you can pass in `nil` for a specific attribute in `setUserAttributes(_:)`.
+- Adds `getTrackResult(forEvent:params:)`. This returns a `TrackResult` which tells you the result of tracking an event, without actually tracking it. This is useful if you want to figure out whether a paywall will show in the future.
 
 ### Fixes
 

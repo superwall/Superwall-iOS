@@ -8,22 +8,22 @@
 import Foundation
 import Combine
 
-struct TriggerOutcomePipelineOutput {
+struct TriggerResultPipelineOutput {
   let request: PresentationRequest
-  let triggerOutcome: TriggerResultOutcome
+  let triggerResult: TriggerResult
   let debugInfo: DebugInfo
 }
 
 extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Error {
-  func confirmAssignment(configManager: ConfigManager = .shared) -> AnyPublisher<TriggerOutcomePipelineOutput, Failure> {
+  func confirmAssignment(configManager: ConfigManager = .shared) -> AnyPublisher<TriggerResultPipelineOutput, Failure> {
     map { input in
       if let confirmableAssignment = input.confirmableAssignment {
         configManager.confirmAssignment(confirmableAssignment)
       }
 
-      return TriggerOutcomePipelineOutput(
+      return TriggerResultPipelineOutput(
         request: input.request,
-        triggerOutcome: input.triggerOutcome,
+        triggerResult: input.triggerResult,
         debugInfo: input.debugInfo
       )
     }

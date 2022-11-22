@@ -8,7 +8,11 @@
 import Foundation
 
 enum InternalPresentationLogic {
-  static func shouldNotDisplayPaywall(
+  /// Checks for paywall presentation overrides before checking the user's subscription
+  /// status to determine whether or not to show the paywall.
+  ///
+  /// - Returns: A boolean that is `true` when the paywall should NOT be presented.
+  static func shouldNotPresentPaywall(
     isUserSubscribed: Bool,
     isDebuggerLaunched: Bool,
     shouldIgnoreSubscriptionStatus: Bool?,

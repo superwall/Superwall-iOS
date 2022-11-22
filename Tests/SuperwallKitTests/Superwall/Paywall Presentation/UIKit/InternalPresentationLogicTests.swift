@@ -10,7 +10,7 @@ import XCTest
 
 final class InternalPresentationLogicTests: XCTestCase {
   func test_shouldNotDisplayPaywall_debuggerLaunched() {
-    let outcome = InternalPresentationLogic.shouldNotDisplayPaywall(
+    let outcome = InternalPresentationLogic.shouldNotPresentPaywall(
       isUserSubscribed: true,
       isDebuggerLaunched: true,
       shouldIgnoreSubscriptionStatus: false,
@@ -20,7 +20,7 @@ final class InternalPresentationLogicTests: XCTestCase {
   }
 
   func test_shouldNotDisplayPaywall_noPresentationCondition_userIsNotSubscribed() {
-    let outcome = InternalPresentationLogic.shouldNotDisplayPaywall(
+    let outcome = InternalPresentationLogic.shouldNotPresentPaywall(
       isUserSubscribed: false,
       isDebuggerLaunched: false,
       shouldIgnoreSubscriptionStatus: false,
@@ -30,7 +30,7 @@ final class InternalPresentationLogicTests: XCTestCase {
   }
 
   func test_shouldNotDisplayPaywall_noPresentationCondition_shouldIgnoreSubscriptionStatus() {
-    let outcome = InternalPresentationLogic.shouldNotDisplayPaywall(
+    let outcome = InternalPresentationLogic.shouldNotPresentPaywall(
       isUserSubscribed: true,
       isDebuggerLaunched: false,
       shouldIgnoreSubscriptionStatus: true,
@@ -40,7 +40,7 @@ final class InternalPresentationLogicTests: XCTestCase {
   }
 
   func test_shouldNotDisplayPaywall_noPresentationCondition_shouldNotIgnoreSubscriptionStatus() {
-    let outcome = InternalPresentationLogic.shouldNotDisplayPaywall(
+    let outcome = InternalPresentationLogic.shouldNotPresentPaywall(
       isUserSubscribed: true,
       isDebuggerLaunched: false,
       shouldIgnoreSubscriptionStatus: false,
@@ -50,7 +50,7 @@ final class InternalPresentationLogicTests: XCTestCase {
   }
 
   func test_shouldNotDisplayPaywall_presentationCondition_always() {
-    let outcome = InternalPresentationLogic.shouldNotDisplayPaywall(
+    let outcome = InternalPresentationLogic.shouldNotPresentPaywall(
       isUserSubscribed: true,
       isDebuggerLaunched: false,
       shouldIgnoreSubscriptionStatus: false,
@@ -60,7 +60,7 @@ final class InternalPresentationLogicTests: XCTestCase {
   }
 
   func test_shouldNotDisplayPaywall_presentationCondition_checkSubscription() {
-    let outcome = InternalPresentationLogic.shouldNotDisplayPaywall(
+    let outcome = InternalPresentationLogic.shouldNotPresentPaywall(
       isUserSubscribed: true,
       isDebuggerLaunched: false,
       shouldIgnoreSubscriptionStatus: false,

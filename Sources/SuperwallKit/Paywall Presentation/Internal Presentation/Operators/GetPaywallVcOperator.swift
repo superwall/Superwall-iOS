@@ -10,20 +10,24 @@ import Combine
 
 struct PaywallVcPipelineOutput {
   let request: PresentationRequest
-  let triggerOutcome: TriggerResultOutcome
+  let triggerResult: TriggerResult
   let debugInfo: DebugInfo
   let paywallViewController: PaywallViewController
 }
 
-extension AnyPublisher where Output == TriggerOutcomeResponsePipelineOutput, Failure == Error {
+extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Failure == Error {
   func getPaywallViewController(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<PaywallVcPipelineOutput, Error> {
     asyncMap { input in
       let isDebuggerLaunched = await SWDebugManager.shared.isDebuggerLaunched
+      let responseIdentifiers = ResponseIdentifiers(
+        paywallId: input.experiment.variant.paywallId,
+        experiment: input.experiment
+      )
       let paywallRequest = PaywallRequest(
         eventData: input.request.presentationInfo.eventData,
-        responseIdentifiers: input.responseIdentifiers,
+        responseIdentifiers: responseIdentifiers,
         overrides: .init(
           products: input.request.paywallOverrides?.products,
           isFreeTrial: input.request.presentationInfo.freeTrialOverride
@@ -49,13 +53,13 @@ extension AnyPublisher where Output == TriggerOutcomeResponsePipelineOutput, Fai
 
         let output = PaywallVcPipelineOutput(
           request: input.request,
-          triggerOutcome: input.triggerOutcome,
+          triggerResult: input.triggerResult,
           debugInfo: input.debugInfo,
           paywallViewController: paywallViewController
         )
         return output
       } catch {
-        if await InternalPresentationLogic.shouldNotDisplayPaywall(
+        if await InternalPresentationLogic.shouldNotPresentPaywall(
           isUserSubscribed: Superwall.shared.isUserSubscribed,
           isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
           shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus

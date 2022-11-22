@@ -8,31 +8,19 @@
 import Foundation
 import Combine
 
-struct TriggerResultOutcome {
-  enum Info {
-    case paywall(ResponseIdentifiers)
-    case holdout(Experiment)
-    case eventNotFound
-    case noRuleMatch
-    case error(NSError)
-  }
-  let info: Info
-  var result: TriggerResult?
-}
-
 struct AssignmentPipelineOutput {
   let request: PresentationRequest
-  let triggerOutcome: TriggerResultOutcome
+  let triggerResult: TriggerResult
   var confirmableAssignment: ConfirmableAssignment?
   let debugInfo: DebugInfo
 }
 
 extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure == Error {
-  func getTriggerOutcome(
+  func getTriggerResult(
     configManager: ConfigManager = .shared,
     storage: Storage = .shared
   ) -> AnyPublisher<AssignmentPipelineOutput, Failure> {
-    map { request, debugInfo in
+    tryMap { request, debugInfo in
       if let eventData = request.presentationInfo.eventData {
         let assignmentOutcome = AssignmentLogic.getOutcome(
           forEvent: eventData,
@@ -41,23 +29,20 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
           storage: storage
         )
         let confirmableAssignment = assignmentOutcome.confirmableAssignment
-        let triggerOutcome = getTriggerOutcome(forResult: assignmentOutcome.result)
 
         return AssignmentPipelineOutput(
           request: request,
-          triggerOutcome: triggerOutcome,
+          triggerResult: assignmentOutcome.result,
           confirmableAssignment: confirmableAssignment,
           debugInfo: debugInfo
         )
       } else {
-        let identifiers = ResponseIdentifiers(paywallId: request.presentationInfo.identifier)
-        let triggerOutcome = TriggerResultOutcome(
-          info: .paywall(identifiers)
-        )
-
+        guard let paywallId = request.presentationInfo.identifier else {
+          throw PresentationPipelineError.cancelled
+        }
         return AssignmentPipelineOutput(
           request: request,
-          triggerOutcome: triggerOutcome,
+          triggerResult: .paywall(experiment: .presentById(paywallId)),
           debugInfo: debugInfo
         )
       }
@@ -65,6 +50,7 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
     .eraseToAnyPublisher()
   }
 
+  /*
   private func getTriggerOutcome(
     forResult triggerResult: TriggerResult
   ) -> TriggerResultOutcome {
@@ -99,5 +85,5 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
         result: triggerResult
       )
     }
-  }
+  }*/
 }

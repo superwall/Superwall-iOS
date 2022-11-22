@@ -92,9 +92,18 @@ public struct Experiment: Equatable, Hashable, Codable, Sendable {
     try container.encode(variant.type, forKey: .variantType)
     try container.encodeIfPresent(variant.paywallId, forKey: .paywallId)
   }
+
+  /// A special experiment created for paywalls presented by ID. Only used internally.
+  static func presentById(_ id: String) -> Experiment {
+    return Experiment(
+      id: id,
+      groupId: "",
+      variant: Variant(id: "", type: .treatment, paywallId: id)
+    )
+  }
 }
 
-/// The result of a trigger.
+/// The result of a paywall trigger.
 ///
 /// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
 public enum TriggerResult: Sendable {
@@ -107,22 +116,27 @@ public enum TriggerResult: Sendable {
   /// No matching rule was found for this trigger so no paywall will be shown.
   case noRuleMatch
 
-  /// A matching rule was found and this user was shown a paywall
+  /// A matching rule was found and this user will be shown a paywall.
   ///
   /// - Parameters:
-  ///   - experiment: The experiment associated with the trigger
+  ///   - experiment: The experiment associated with the trigger.
   case paywall(experiment: Experiment)
 
-  /// A matching rule was found and this user was assigned to a holdout group so was not shown a paywall.
+  /// A matching rule was found and this user was assigned to a holdout group so will not be shown a paywall.
   ///
   /// - Parameters:
-  ///   - experiment: The experiment  associated with the trigger
+  ///   - experiment: The experiment  associated with the trigger.
   case holdout(experiment: Experiment)
 
-  /// An error occurred.
+  /// An error occurred and the user will not be shown a paywall.
   ///
   /// If the error code is `101`, it means that no view controller could be found to present on. Otherwise a network failure may have occurred.
   ///
-  /// In these instances, consider fallilng back to a native paywall.
+  /// In these instances, consider fallng back to a native paywall.
   case error(NSError)
 }
+
+/// The result of a tracking an event.
+///
+/// Contains the possible cases resulting from tracking an event.
+public typealias TrackResult = TriggerResult

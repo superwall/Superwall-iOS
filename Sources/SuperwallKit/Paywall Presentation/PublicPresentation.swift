@@ -170,6 +170,52 @@ public extension Superwall {
     .eraseToAnyPublisher()
   }
 
+  /// Get the result of tracking an event.
+  ///
+  /// Use this function if you want to preemptively get the result of tracking
+  /// an event.
+  ///
+  /// This is useful for when you want to know whether a particular event will
+  /// present a paywall in the future.
+  ///
+  /// Note that this method does not present a paywall. To do that, use
+  /// ``track(event:params:paywallOverrides:paywallHandler:)``.
+  ///
+  /// - Parameters:
+  ///     - event: The name of the event you want to track.
+  ///     - params: Optional parameters you'd like to pass with your event.
+  ///
+  /// - Returns: A ``TrackResult`` that indicates the result of tracking an event.
+  static func getTrackResult(
+    forEvent event: String,
+    params: [String: Any]? = nil
+  ) async -> TrackResult {
+    let eventCreatedAt = Date()
+
+    let trackableEvent = UserInitiatedEvent.Track(
+      rawName: event,
+      canImplicitlyTriggerPaywall: false,
+      customParameters: params ?? [:]
+    )
+
+    let parameters = await TrackingLogic.processParameters(
+      fromTrackableEvent: trackableEvent,
+      eventCreatedAt: eventCreatedAt
+    )
+
+    let eventData = EventData(
+      name: event,
+      parameters: JSON(parameters.eventParams),
+      createdAt: eventCreatedAt
+    )
+
+    let presentationRequest = PresentationRequest(
+      presentationInfo: .explicitTrigger(eventData)
+    )
+
+    return await getTrackResult(for: presentationRequest)
+  }
+
   /// Converts dismissal result from enums with associated values, to old objective-c compatible way
   ///
   /// - Parameters:
