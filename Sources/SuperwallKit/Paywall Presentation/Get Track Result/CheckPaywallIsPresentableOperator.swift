@@ -8,7 +8,7 @@
 import Combine
 
 extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error {
-  /// Checks whether the paywall can present, ignoring status of debugger.
+  /// Checks whether the paywall can present based on pipeline parameters, ignoring status of debugger.
   func checkPaywallIsPresentable() -> AnyPublisher<TriggerResult, Error> {
     asyncMap { input in
       if await InternalPresentationLogic.shouldNotPresentPaywall(

@@ -11,6 +11,10 @@ import Combine
 typealias DebugInfo = [String: Any]
 
 extension AnyPublisher where Output == PresentationRequest, Failure == Error {
+  /// Logs the presentation request with a custom message and gets debug info for the event.
+  ///
+  /// - Parameters:
+  ///     - message: A message to log.
   func logPresentation(_ message: String) -> AnyPublisher<(PresentationRequest, DebugInfo), Failure> {
     map { request in
       let eventData = request.presentationInfo.eventData

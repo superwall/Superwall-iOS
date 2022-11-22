@@ -16,6 +16,7 @@ struct AssignmentPipelineOutput {
 }
 
 extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure == Error {
+  /// Gets the trigger result of the event and the confirmable assignment.
   func getTriggerResult(
     configManager: ConfigManager = .shared,
     storage: Storage = .shared

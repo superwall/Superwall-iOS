@@ -15,6 +15,7 @@ struct TriggerResultPipelineOutput {
 }
 
 extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Error {
+  /// Confirms the paywall assignment, if it exists.
   func confirmAssignment(configManager: ConfigManager = .shared) -> AnyPublisher<TriggerResultPipelineOutput, Failure> {
     map { input in
       if let confirmableAssignment = input.confirmableAssignment {

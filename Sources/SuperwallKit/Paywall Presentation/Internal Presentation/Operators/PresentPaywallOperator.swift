@@ -9,6 +9,13 @@ import UIKit
 import Combine
 
 extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Error {
+  /// Presents the paywall view controller, stores the presentation request for future use,
+  /// and sends back a `presented` state to the paywall state publisher.
+  ///
+  /// - Parameters:
+  ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
+  ///
+  /// - Returns: A publisher that contains info for the next pipeline operator.
   func presentPaywall(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     _ presentationSubject: PresentationSubject

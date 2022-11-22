@@ -21,6 +21,7 @@ extension Superwall {
   ///   - request: A presentation request of type `PresentationRequest` to feed into a presentation pipeline.
   /// - Returns: A publisher that outputs a ``PaywallState``.
   func internallyPresent(_ request: PresentationRequest) -> PaywallStatePublisher {
+    /// A passthrough subject which sends the paywall state back to the client.
     let paywallStatePublisher = PassthroughSubject<PaywallState, Never>()
     let presentationSubject = PresentationSubject(request)
 

@@ -8,7 +8,7 @@
 import Combine
 
 extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Failure == Error {
-  /// This gets the paywall view controller without checking for obstacles that may prevent it
+  /// Gets the paywall view controller without checking for obstacles that may prevent it
   /// from showing when an event is tracked.
   func getPaywallViewControllerNoChecks() -> AnyPublisher<PaywallVcPipelineOutput, Error> {
     asyncMap { input in

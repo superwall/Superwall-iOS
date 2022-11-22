@@ -16,6 +16,14 @@ struct TriggerResultResponsePipelineOutput {
 }
 
 extension AnyPublisher where Output == TriggerResultPipelineOutput, Failure == Error {
+  /// Switches over the trigger result. The pipeline continues if a paywall will show.
+  /// Otherwise, it sends a `skipped` state to the paywall state publisher and cancels
+  /// the pipeline.
+  /// 
+  /// - Parameters:
+  ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
+  ///
+  /// - Returns: A publisher that contains info for the next pipeline operator.
   func handleTriggerResult(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<TriggerResultResponsePipelineOutput, Error> {

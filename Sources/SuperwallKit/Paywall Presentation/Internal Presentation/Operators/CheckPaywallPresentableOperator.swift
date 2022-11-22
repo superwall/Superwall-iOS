@@ -16,7 +16,16 @@ struct PresentablePipelineOutput {
   let presenter: UIViewController
 }
 
+// TODO: Check whether the errors thrown here are passed back to the state publisher
+
 extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error {
+  /// Checks conditions for whether the paywall can present before accessing a window on
+  /// which the paywall can present.
+  ///
+  /// - Parameters:
+  ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
+  ///
+  /// - Returns: A publisher that contains info for the next pipeline operator.
   func checkPaywallIsPresentable(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<PresentablePipelineOutput, Error> {

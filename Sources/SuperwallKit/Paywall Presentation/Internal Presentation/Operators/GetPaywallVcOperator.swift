@@ -16,6 +16,14 @@ struct PaywallVcPipelineOutput {
 }
 
 extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Failure == Error {
+  /// Requests the paywall view controller to present. If an error occurred during this,
+  /// or a paywall is already presented, it cancels the pipeline and sends an `error`
+  /// state to the paywall state publisher.
+  ///
+  /// - Parameters:
+  ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
+  ///
+  /// - Returns: A publisher that contains info for the next pipeline operator.
   func getPaywallViewController(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<PaywallVcPipelineOutput, Error> {

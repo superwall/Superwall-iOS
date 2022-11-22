@@ -10,7 +10,7 @@ import Combine
 
 extension AnyPublisher where Output == TriggerResultPipelineOutput, Failure == Error {
   /// Checks whether the trigger result indicates that a paywall should show.
-  func checkPaywallTriggerResult() -> AnyPublisher<TriggerResultResponsePipelineOutput, Error> {
+  func checkForPaywallResult() -> AnyPublisher<TriggerResultResponsePipelineOutput, Error> {
     tryMap { input in
       switch input.triggerResult {
       case .paywall(let experiment):

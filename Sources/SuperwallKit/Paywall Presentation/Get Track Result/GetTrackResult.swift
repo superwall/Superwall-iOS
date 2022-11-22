@@ -31,7 +31,7 @@ extension Superwall {
         )
       }
       .eraseToAnyPublisher()
-      .checkPaywallTriggerResult()
+      .checkForPaywallResult()
       .getPaywallViewControllerNoChecks()
       .checkPaywallIsPresentable()
       .async()
