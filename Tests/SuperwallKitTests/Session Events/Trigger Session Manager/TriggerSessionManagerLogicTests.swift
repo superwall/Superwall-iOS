@@ -53,7 +53,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: viewController,
       paywall: nil,
-      triggerResult: .holdout(experiment: experiment)
+      triggerResult: .holdout(experiment)
     )
 
     XCTAssertEqual(outcome?.presentationOutcome, .holdout)
@@ -99,7 +99,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: nil,
       paywall: paywallResponse,
-      triggerResult: .holdout(experiment: experiment)
+      triggerResult: .holdout(experiment)
     )
 
     print("***", paywallResponse.isFreeTrialAvailable)
@@ -170,7 +170,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: viewController,
       paywall: nil,
-      triggerResult: .paywall(experiment: experiment)
+      triggerResult: .paywall(experiment)
     )
 
     XCTAssertEqual(outcome?.presentationOutcome, .paywall)
@@ -213,7 +213,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       presentationInfo: presentationInfo,
       presentingViewController: viewController,
       paywall: nil,
-      triggerResult: .paywall(experiment: experiment)
+      triggerResult: .paywall(experiment)
     )
 
     XCTAssertEqual(outcome?.presentationOutcome, .paywall)

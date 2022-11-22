@@ -121,7 +121,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      triggerResult: .paywall(experiment: experiment)
+      triggerResult: .paywall(experiment)
     )
 
 
@@ -153,7 +153,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      triggerResult: .holdout(experiment: experiment)
+      triggerResult: .holdout(experiment)
     )
 
     let triggerSessions = await queue.triggerSessions
@@ -243,7 +243,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     )
     await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      triggerResult: .paywall(experiment: experiment)
+      triggerResult: .paywall(experiment)
     )
 
     // When
@@ -335,7 +335,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       paywall: paywallResponse,
-      triggerResult: .paywall(experiment: Experiment(
+      triggerResult: .paywall(
+        Experiment(
          id: experiment.id,
         groupId: experiment.groupId,
         variant: experiment.variants.first!.toVariant()
