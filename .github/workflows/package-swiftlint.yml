@@ -8,6 +8,10 @@ on:
       - '!Examples/**'
       - '**/*.swift'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   Package-SwiftLint:
     # The type of runner that the job will run on

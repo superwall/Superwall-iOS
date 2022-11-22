@@ -7,6 +7,10 @@ on:
       - 'Examples/.swiftlint.yml'
       - 'Examples/**/*.swift'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   Example-Projects-SwiftLint:
     # The type of runner that the job will run on
