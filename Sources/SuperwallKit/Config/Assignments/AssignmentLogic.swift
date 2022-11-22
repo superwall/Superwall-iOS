@@ -72,7 +72,7 @@ enum AssignmentLogic {
           return Outcome(
             confirmableAssignment: confirmableAssignment,
             result: .holdout(
-              experiment: Experiment(
+              Experiment(
                 id: rule.experiment.id,
                 groupId: rule.experiment.groupId,
                 variant: variant
@@ -83,7 +83,7 @@ enum AssignmentLogic {
           return Outcome(
             confirmableAssignment: confirmableAssignment,
             result: .paywall(
-              experiment: Experiment(
+              Experiment(
                 id: rule.experiment.id,
                 groupId: rule.experiment.groupId,
                 variant: variant

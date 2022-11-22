@@ -10,7 +10,7 @@ Events are added to campaigns on the [Superwall Dashboard](https://superwall.com
 
 When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
 
-In addition to your own events, you can add the Superwall events `app_install`, `app_launch`, and `session_start` to a campaign. See [automatically tracked events](<doc:SuperwallEvents>) for more.
+In addition to your own events, you can add the Superwall events `app_install`, `app_launch`, `session_start`, and `deepLink_open` to a campaign. See [automatically tracked events](<doc:SuperwallEvents>) for more.
 
 ## Presenting a Paywall
 
@@ -32,7 +32,7 @@ Superwall.track(
 }
 ```
 
-In this example, you're tracking the event `campaign_trigger`. You then utilize the optional `paywallState` callback to handle the paywall presentation state. You can also pass parameters to be used in rules and overrides to replace default paywall functionality.
+In this example, you're tracking the event `campaign_trigger`. You then utilize the optional `paywallHandler` callback to handle the paywall presentation state. You can also pass parameters to be used in rules and overrides to replace default paywall functionality.
 
 We recommend tracking all of your analytical events to Superwall. That way you can retroactively add a paywall to any of your events, should you decide to.
 

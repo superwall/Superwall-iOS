@@ -26,6 +26,8 @@ The ``SuperwallKit/Superwall`` class is used to access all the features of the S
 
 - <doc:TrackingEvents>
 - ``track(event:params:paywallOverrides:paywallHandler:)``
+- ``getTrackResult(forEvent:params:)``
+- ``getTrackInfo(forEvent:params:)``
 - ``publisher(forEvent:params:paywallOverrides:)``
 - ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``dismiss()``

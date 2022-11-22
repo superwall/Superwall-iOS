@@ -43,7 +43,7 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
         }
         return AssignmentPipelineOutput(
           request: request,
-          triggerResult: .paywall(experiment: .presentById(paywallId)),
+          triggerResult: .paywall(.presentById(paywallId)),
           debugInfo: debugInfo
         )
       }
