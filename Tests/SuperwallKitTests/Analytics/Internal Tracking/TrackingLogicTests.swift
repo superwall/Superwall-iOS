@@ -326,4 +326,42 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertNil(parameters.delegateParams["myCustomParam"])
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
+
+  // MARK: - didStartNewSession
+
+  func testDidStartNewSession_canTriggerPaywall_paywallAlreadyPresented() {
+    let outcome = TrackingLogic.canTriggerPaywall(
+      InternalSuperwallEvent.AppInstall(),
+      triggers: Set(["app_install"]),
+      isPaywallPresented: true
+    )
+    XCTAssertEqual(outcome, .dontTriggerPaywall)
+  }
+
+  func testDidStartNewSession_canTriggerPaywall_isntTrigger() {
+    let outcome = TrackingLogic.canTriggerPaywall(
+      InternalSuperwallEvent.AppInstall(),
+      triggers: [],
+      isPaywallPresented: false
+    )
+    XCTAssertEqual(outcome, .dontTriggerPaywall)
+  }
+
+  func testDidStartNewSession_canTriggerPaywall_isAllowedInternalEvent() {
+    let outcome = TrackingLogic.canTriggerPaywall(
+      InternalSuperwallEvent.AppInstall(),
+      triggers: ["app_install"],
+      isPaywallPresented: false
+    )
+    XCTAssertEqual(outcome, .triggerPaywall)
+  }
+
+  func testDidStartNewSession_canTriggerPaywall_isNotInternalEvent() {
+    let outcome = TrackingLogic.canTriggerPaywall(
+      UserInitiatedEvent.Track(rawName: "random_event", canImplicitlyTriggerPaywall: true),
+      triggers: ["random_event"],
+      isPaywallPresented: false
+    )
+    XCTAssertEqual(outcome, .triggerPaywall)
+  }
 }
