@@ -25,7 +25,7 @@ class ProductsManager: NSObject {
 
   func getProducts(identifiers: Set<String>) async throws -> Set<SKProduct> {
     return try await withCheckedThrowingContinuation { continuation in
-      self.products(withIdentifiers: identifiers) { result in
+      products(withIdentifiers: identifiers) { result in
         continuation.resume(with: result)
       }
     }
@@ -141,6 +141,17 @@ extension ProductsManager: SKProductsRequestDelegate {
 			self.productsByRequests.removeValue(forKey: request)
 
 			self.cacheProducts(response.products)
+
+      if response.products.isEmpty,
+        !requestProducts.isEmpty {
+        Logger.debug(
+          logLevel: .error,
+          scope: .productsManager,
+          message: "No products retrieved. Visit https://superwall.com/l/no-products to diagnose.",
+          error: nil
+        )
+      }
+
 			for completion in completionBlocks {
         DispatchQueue.main.async {
           completion(.success(Set(response.products)))
@@ -169,17 +180,17 @@ extension ProductsManager: SKProductsRequestDelegate {
         info: ["request": request.debugDescription],
         error: error
       )
-			guard let products = self.productsByRequests[request] else {
+			guard let products = productsByRequests[request] else {
 				Logger.debug(
           logLevel: .error,
           scope: .productsManager,
-          message: "Requested Products Not Found",
+          message: "Requested Products Not Found.",
           info: ["request": request.debugDescription],
           error: error
         )
 				return
 			}
-			guard let completionBlocks = self.completionHandlers[products] else {
+			guard let completionBlocks = completionHandlers[products] else {
 				Logger.debug(
           logLevel: .error,
           scope: .productsManager,
@@ -190,8 +201,8 @@ extension ProductsManager: SKProductsRequestDelegate {
 				return
 			}
 
-			self.completionHandlers.removeValue(forKey: products)
-			self.productsByRequests.removeValue(forKey: request)
+			completionHandlers.removeValue(forKey: products)
+      productsByRequests.removeValue(forKey: request)
 			for completion in completionBlocks {
         DispatchQueue.main.async {
           completion(.failure(error))

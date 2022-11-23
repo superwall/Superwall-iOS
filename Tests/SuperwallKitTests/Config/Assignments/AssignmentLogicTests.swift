@@ -45,7 +45,7 @@ class AssignmentLogicTests: XCTestCase {
     let storage = StorageMock()
 
     // MARK: When
-    let outcome = AssignmentLogic.getOutcome(
+    let outcome = AssignmentLogic.evaluateRules(
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
@@ -53,7 +53,7 @@ class AssignmentLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case let .holdout(returnedExperiment) = outcome.result else {
+    guard case let .holdout(returnedExperiment) = outcome.triggerResult else {
       return XCTFail("Incorrect outcome. Expected a holdout")
     }
     XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
@@ -104,7 +104,7 @@ class AssignmentLogicTests: XCTestCase {
     let storage = StorageMock()
 
     // MARK: When
-    let outcome = AssignmentLogic.getOutcome(
+    let outcome = AssignmentLogic.evaluateRules(
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
@@ -112,7 +112,7 @@ class AssignmentLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case let .paywall(experiment: returnedExperiment) = outcome.result else {
+    guard case let .paywall(experiment: returnedExperiment) = outcome.triggerResult else {
       return XCTFail("Incorrect outcome. Expected a holdout")
     }
     XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
@@ -161,7 +161,7 @@ class AssignmentLogicTests: XCTestCase {
     let storage = StorageMock(confirmedAssignments: [rawExperiment.id: variant])
 
     // MARK: When
-    let outcome = AssignmentLogic.getOutcome(
+    let outcome = AssignmentLogic.evaluateRules(
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
@@ -169,7 +169,7 @@ class AssignmentLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case let .paywall(experiment: returnedExperiment) = outcome.result else {
+    guard case let .paywall(experiment: returnedExperiment) = outcome.triggerResult else {
       return XCTFail("Incorrect outcome. Expected a holdout")
     }
     XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
@@ -220,7 +220,7 @@ class AssignmentLogicTests: XCTestCase {
     ]
 
     // MARK: When
-    let outcome = AssignmentLogic.getOutcome(
+    let outcome = AssignmentLogic.evaluateRules(
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
@@ -228,7 +228,7 @@ class AssignmentLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case let .paywall(experiment: returnedExperiment) = outcome.result else {
+    guard case let .paywall(experiment: returnedExperiment) = outcome.triggerResult else {
       return XCTFail("Incorrect outcome. Expected a holdout")
     }
     XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
@@ -276,7 +276,7 @@ class AssignmentLogicTests: XCTestCase {
     ]
 
     // MARK: When
-    let outcome = AssignmentLogic.getOutcome(
+    let outcome = AssignmentLogic.evaluateRules(
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
@@ -284,7 +284,7 @@ class AssignmentLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case .noRuleMatch = outcome.result else {
+    guard case .noRuleMatch = outcome.triggerResult else {
       return XCTFail("Incorrect outcome. Expected noRuleMatch")
     }
     let confirmableAssignments = outcome.confirmableAssignment
@@ -327,7 +327,7 @@ class AssignmentLogicTests: XCTestCase {
     ]
 
     // MARK: When
-    let outcome = AssignmentLogic.getOutcome(
+    let outcome = AssignmentLogic.evaluateRules(
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
@@ -335,7 +335,7 @@ class AssignmentLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case .eventNotFound = outcome.result else {
+    guard case .eventNotFound = outcome.triggerResult else {
       return XCTFail("Incorrect outcome. Expected unknown event")
     }
 

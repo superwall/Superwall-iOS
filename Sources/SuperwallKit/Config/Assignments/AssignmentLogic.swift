@@ -15,17 +15,20 @@ struct ConfirmableAssignment: Equatable {
 enum AssignmentLogic {
   struct Outcome {
     var confirmableAssignment: ConfirmableAssignment?
-    var result: TriggerResult
+    var triggerResult: TriggerResult
   }
 
-  /// Determines the outcome of an event based on given triggers. It also determines whether there is an assignment to confirm based on the rule.
+  /// Determines the outcome of an event based on given triggers. It also determines
+  /// whether there is an assignment to confirm based on the rule.
   ///
-  /// This first finds a trigger for a given event name. Then it determines whether any of the rules of the triggers match for that event.
-  /// It takes that rule and checks the disk for a confirmed variant assignment for the rule's experiment ID. If there isn't one, it checks the unconfirmed assignments.
+  /// This first finds a trigger for a given event name. Then it determines whether any of the
+  /// rules of the triggers match for that event.
+  /// It takes that rule and checks the disk for a confirmed variant assignment for the rule's
+  /// experiment ID. If there isn't one, it checks the unconfirmed assignments.
   /// Then it returns the result of the event given the assignment.
   ///
   /// - Returns: An assignment to confirm, if available.
-  static func getOutcome(
+  static func evaluateRules(
     forEvent event: EventData,
     triggers: [String: Trigger],
     configManager: ConfigManager = .shared,
@@ -64,14 +67,14 @@ enum AssignmentLogic {
             code: 404,
             userInfo: userInfo
           )
-          return Outcome(result: .error(error))
+          return Outcome(triggerResult: .error(error))
         }
 
         switch variant.type {
         case .holdout:
           return Outcome(
             confirmableAssignment: confirmableAssignment,
-            result: .holdout(
+            triggerResult: .holdout(
               Experiment(
                 id: rule.experiment.id,
                 groupId: rule.experiment.groupId,
@@ -82,7 +85,7 @@ enum AssignmentLogic {
         case .treatment:
           return Outcome(
             confirmableAssignment: confirmableAssignment,
-            result: .paywall(
+            triggerResult: .paywall(
               Experiment(
                 id: rule.experiment.id,
                 groupId: rule.experiment.groupId,
@@ -92,10 +95,10 @@ enum AssignmentLogic {
           )
         }
       } else {
-        return Outcome(result: .noRuleMatch)
+        return Outcome(triggerResult: .noRuleMatch)
       }
     } else {
-      return Outcome(result: .eventNotFound)
+      return Outcome(triggerResult: .eventNotFound)
     }
   }
 

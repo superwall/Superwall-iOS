@@ -22,7 +22,7 @@ extension Superwall {
       .eraseToAnyPublisher()
       .awaitIdentity()
       .logPresentation("Called Superwall.getTrackResult")
-      .getTriggerResult()
+      .evaluateRules()
       .compactMap { input in
         return TriggerResultPipelineOutput(
           request: input.request,

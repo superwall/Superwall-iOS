@@ -30,7 +30,7 @@ extension Superwall {
       .awaitIdentity()
       .logPresentation("Called Superwall.track")
       .checkForDebugger()
-      .getTriggerResult()
+      .evaluateRules()
       .confirmAssignment()
       .handleTriggerResult(paywallStatePublisher)
       .getPaywallViewController(paywallStatePublisher)

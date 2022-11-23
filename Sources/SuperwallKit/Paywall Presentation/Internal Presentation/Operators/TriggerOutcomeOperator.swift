@@ -16,24 +16,24 @@ struct AssignmentPipelineOutput {
 }
 
 extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure == Error {
-  /// Gets the trigger result of the event and the confirmable assignment.
-  func getTriggerResult(
+  /// Evaluates the rules from the campaign that the event belongs to. This retrieves the trigger result and the confirmable assignment.
+  func evaluateRules(
     configManager: ConfigManager = .shared,
     storage: Storage = .shared
   ) -> AnyPublisher<AssignmentPipelineOutput, Failure> {
     tryMap { request, debugInfo in
       if let eventData = request.presentationInfo.eventData {
-        let assignmentOutcome = AssignmentLogic.getOutcome(
+        let eventOutcome = AssignmentLogic.evaluateRules(
           forEvent: eventData,
           triggers: ConfigManager.shared.triggersByEventName,
           configManager: configManager,
           storage: storage
         )
-        let confirmableAssignment = assignmentOutcome.confirmableAssignment
+        let confirmableAssignment = eventOutcome.confirmableAssignment
 
         return AssignmentPipelineOutput(
           request: request,
-          triggerResult: assignmentOutcome.result,
+          triggerResult: eventOutcome.triggerResult,
           confirmableAssignment: confirmableAssignment,
           debugInfo: debugInfo
         )
