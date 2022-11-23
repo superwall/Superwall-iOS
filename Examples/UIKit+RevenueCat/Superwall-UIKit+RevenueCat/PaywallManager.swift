@@ -25,7 +25,7 @@ final class PaywallManager: NSObject {
   private static let revenueCatApiKey = "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql"
   private static let superwallApiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
 
-  #warning("Replace with your own pro revenuecat entitlement:")
+  #warning("Replace with your own RevenueCat entitlement:")
   private let proEntitlement = "pro"
 
   override init() {

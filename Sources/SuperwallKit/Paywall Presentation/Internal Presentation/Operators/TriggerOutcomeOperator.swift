@@ -39,6 +39,8 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
         )
       } else {
         guard let paywallId = request.presentationInfo.identifier else {
+          // This error will never be thrown. Just preferring this
+          // to force unwrapping.
           throw PresentationPipelineError.cancelled
         }
         return AssignmentPipelineOutput(
@@ -50,41 +52,4 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
     }
     .eraseToAnyPublisher()
   }
-
-  /*
-  private func getTriggerOutcome(
-    forResult triggerResult: TriggerResult
-  ) -> TriggerResultOutcome {
-    switch triggerResult {
-    case .paywall(let experiment):
-      let identifiers = ResponseIdentifiers(
-        paywallId: experiment.variant.paywallId,
-        experiment: experiment
-      )
-      return TriggerResultOutcome(
-        info: .paywall(identifiers),
-        result: triggerResult
-      )
-    case let .holdout(experiment):
-      return TriggerResultOutcome(
-        info: .holdout(experiment),
-        result: triggerResult
-      )
-    case .noRuleMatch:
-      return TriggerResultOutcome(
-        info: .noRuleMatch,
-        result: triggerResult
-      )
-    case .eventNotFound:
-      return TriggerResultOutcome(
-        info: .eventNotFound,
-        result: triggerResult
-      )
-    case .error(let error):
-      return TriggerResultOutcome(
-        info: .error(error),
-        result: triggerResult
-      )
-    }
-  }*/
 }

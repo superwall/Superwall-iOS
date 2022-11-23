@@ -56,6 +56,15 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
             message: "Paywall Already Presented",
             info: ["message": "Superwall.shared.isPaywallPresented is true"]
           )
+          let error = InternalPresentationLogic.presentationError(
+            domain: "SWPresentationError",
+            code: 101,
+            title: "Paywall Already Presented",
+            value: "You can only present one paywall at a time."
+          )
+          let state: PaywallState = .skipped(.error(error))
+          paywallStatePublisher.send(state)
+          paywallStatePublisher.send(completion: .finished)
           throw PresentationPipelineError.cancelled
         }
 
@@ -72,6 +81,9 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
           isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
           shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus
         ) {
+          let state: PaywallState = .skipped(.userIsSubscribed)
+          paywallStatePublisher.send(state)
+          paywallStatePublisher.send(completion: .finished)
           throw PresentationPipelineError.cancelled
         }
 
@@ -83,6 +95,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
           error: error
         )
         paywallStatePublisher.send(.skipped(.error(error)))
+        paywallStatePublisher.send(completion: .finished)
         throw PresentationPipelineError.cancelled
       }
     }

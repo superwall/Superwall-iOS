@@ -418,6 +418,8 @@ final class SWDebugViewController: UIViewController {
             errorMessage = "The user didn't match a rule"
           case .eventNotFound:
             errorMessage = "Couldn't find event"
+          case .userIsSubscribed:
+            errorMessage = "The user is subscribed."
           case .error(let error):
             errorMessage = error.localizedDescription
             Logger.debug(

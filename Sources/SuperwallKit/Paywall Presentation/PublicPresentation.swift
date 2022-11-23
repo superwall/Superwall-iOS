@@ -63,7 +63,7 @@ public extension Superwall {
   ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
   ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo`` object containing information about the paywall.
   ///   - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo`` object containing information about the paywall.
-  ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts an `NSError?` with more details. It is recommended to check the error code to handle the onSkip callback. If the error code is `4000`, it means the user didn't match any rules. If the error code is `4001` it means the user is in a holdout group. Otherwise, a `404` error code means an error occurred.
+  ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.
   @available(swift, obsoleted: 1.0)
   @objc static func track(
     event: String,
@@ -71,7 +71,7 @@ public extension Superwall {
     products: PaywallProducts? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
-    onSkip: ((PaywallSkippedReasonObjc, Error?) -> Void)? = nil,
+    onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: ((PaywallDismissedResultStateObjc, String?, PaywallInfo) -> Void)? = nil
   ) {
@@ -262,7 +262,7 @@ public extension Superwall {
 
   private static func onSkipConverter(
     reason: PaywallSkippedReason,
-    completion: ((PaywallSkippedReasonObjc, Error?) -> Void)?
+    completion: ((PaywallSkippedReasonObjc, NSError) -> Void)?
   ) {
     switch reason {
     case .holdout(let experiment):
@@ -271,8 +271,8 @@ public extension Superwall {
         "variantId": experiment.variant.id,
         "groupId": experiment.groupId,
         NSLocalizedDescriptionKey: NSLocalizedString(
-          "Trigger Holdout",
-          value: "This user was assigned to a holdout in a trigger experiment",
+          "Holdout",
+          value: "This user was assigned to a holdout. This means the paywall will not show.",
           comment: "ExperimentId: \(experiment.id), VariantId: \(experiment.variant.id), GroupId: \(experiment.groupId)"
         )
       ]
@@ -310,8 +310,22 @@ public extension Superwall {
         userInfo: userInfo
       )
       completion?(.eventNotFound, error)
+    case .userIsSubscribed:
+      let userInfo: [String: Any] = [
+        NSLocalizedDescriptionKey: NSLocalizedString(
+          "User Is Subscribed",
+          value: "The value returned in the isUserSubscribed() delegate method is true. By default, paywalls do not show to users who are already subscribed. You can override this behavior in the paywall editor.",
+          comment: ""
+        )
+      ]
+      let error = NSError(
+        domain: "com.superwall",
+        code: 4002,
+        userInfo: userInfo
+      )
+      completion?(.userIsSubscribed, error)
     case .error(let error):
-      completion?(.error, error)
+      completion?(.error, error as NSError)
     }
   }
 }

@@ -16,8 +16,6 @@ struct PresentablePipelineOutput {
   let presenter: UIViewController
 }
 
-// TODO: Check whether the errors thrown here are passed back to the state publisher
-
 extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error {
   /// Checks conditions for whether the paywall can present before accessing a window on
   /// which the paywall can present.
@@ -36,6 +34,9 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus,
         presentationCondition: input.paywallViewController.paywall.presentation.condition
       ) {
+        let state: PaywallState = .skipped(.userIsSubscribed)
+        paywallStatePublisher.send(state)
+        paywallStatePublisher.send(completion: .finished)
         throw PresentationPipelineError.cancelled
       }
 
@@ -58,21 +59,20 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         Logger.debug(
           logLevel: .error,
           scope: .paywallPresentation,
-          message: "No Presentor to Present Paywall",
+          message: "No Presenter To Present Paywall",
           info: input.debugInfo,
           error: nil
         )
-        if await !Superwall.shared.isPaywallPresented {
-          let error = InternalPresentationLogic.presentationError(
-            domain: "SWPresentationError",
-            code: 101,
-            title: "No UIViewController to present paywall on",
-            value: "This usually happens when you call this method before a window was made key and visible."
-          )
-          let state: PaywallState = .skipped(.error(error))
-          paywallStatePublisher.send(state)
-          paywallStatePublisher.send(completion: .finished)
-        }
+
+        let error = InternalPresentationLogic.presentationError(
+          domain: "SWPresentationError",
+          code: 101,
+          title: "No UIViewController to present paywall on",
+          value: "This usually happens when you call this method before a window was made key and visible."
+        )
+        let state: PaywallState = .skipped(.error(error))
+        paywallStatePublisher.send(state)
+        paywallStatePublisher.send(completion: .finished)
         throw PresentationPipelineError.cancelled
       }
 

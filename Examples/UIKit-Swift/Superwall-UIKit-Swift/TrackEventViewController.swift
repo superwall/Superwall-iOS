@@ -77,6 +77,8 @@ final class TrackEventViewController: UIViewController {
           print("The user did not match any rules")
         case .eventNotFound:
           print("The event wasn't found in a campaign on the dashboard.")
+        case .userIsSubscribed:
+          print("The user is subscribed.")
         case .error(let error):
           print("Failed to present paywall. Consider a native paywall fallback", error)
         }

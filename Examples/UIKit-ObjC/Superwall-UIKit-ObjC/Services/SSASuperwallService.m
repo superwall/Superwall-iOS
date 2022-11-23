@@ -89,7 +89,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 }
 
 - (void)logInWithCompletion:(nullable void (^)(void))completion {
-  [Superwall logInUserId:kDemoUserId completionHandler:^(Superwall * _Nullable superwall, NSError * _Nullable error) {
+  [Superwall logInUserId:kDemoUserId completionHandler:^(NSError * _Nullable error) {
     switch (error.code) {
       case SWKIdentityErrorAlreadyLoggedIn:
         NSLog(@"The user is already logged in");

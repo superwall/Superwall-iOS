@@ -96,6 +96,9 @@
     case SWKPaywallSkippedReasonError:
       NSLog(@"Failed to present paywall. Consider a native paywall fallback. %@", error.localizedDescription);
       break;
+    case SWKPaywallSkippedReasonUserIsSubscribed:
+      NSLog(@"The user is subscribed. %@", error.localizedDescription);
+      break;
   }
 }
 

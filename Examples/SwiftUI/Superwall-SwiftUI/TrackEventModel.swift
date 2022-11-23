@@ -33,6 +33,8 @@ final class TrackEventModel {
           print("The user is in a holdout group, with experiment id: \(experiment.id), group id: \(experiment.groupId), paywall id: \(experiment.variant.paywallId ?? "")")
         case .eventNotFound:
           print("The event wasn't found in a campaign on the dashboard.")
+        case .userIsSubscribed:
+          print("The user is subscribed.")
         case .error(let error):
           print("Failed to present paywall. Consider a native paywall fallback", error)
         }
