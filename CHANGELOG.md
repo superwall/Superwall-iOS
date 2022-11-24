@@ -2,6 +2,14 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
+## 2.5.6
+
+### Fixes
+
+- Fixes a bug found in the previous version. Disabling the preloading of paywalls for specific triggers via remote config now works correctly.
+
+---
+
 ## 2.5.5
 
 ### Fixes
