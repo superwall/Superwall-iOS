@@ -27,7 +27,7 @@ final class SWWebView: WKWebView {
     let preferences = WKPreferences()
     if #available(iOS 15.0, *) {
       if !DeviceHelper.shared.isMac {
-        preferences.isTextInteractionEnabled = false // ignore-xcode-12
+//         preferences.isTextInteractionEnabled = false // ignore-xcode-12
       }
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true
