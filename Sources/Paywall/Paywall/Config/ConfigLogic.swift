@@ -134,6 +134,20 @@ enum ConfigLogic {
     )
   }
 
+  /// Removes any triggers whose preloading has been remotely disabled.
+  static func filterTriggers(
+    _ triggers: Set<Trigger>,
+    removing preloadingDisabled: PreloadingDisabled
+  ) -> Set<Trigger> {
+    if preloadingDisabled.all {
+      return []
+    }
+
+    return triggers.filter {
+      !preloadingDisabled.triggers.contains($0.eventName)
+    }
+  }
+
   /// Loops through assignments retrieved from the server to get variants by id.
   /// Returns updated confirmed/unconfirmed assignments to save.
   static func transferAssignmentsFromServerToDisk(
@@ -238,6 +252,7 @@ enum ConfigLogic {
     confirmedAssignments: [Experiment.ID: Experiment.Variant],
     unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
   ) -> Set<String> {
+
     let mergedAssignments = confirmedAssignments.merging(unconfirmedAssignments)
     let groupedTriggerRules = getRulesPerTriggerGroup(from: triggers)
     let triggerExperimentIds = groupedTriggerRules.flatMap { $0.map { $0.experiment.id } }

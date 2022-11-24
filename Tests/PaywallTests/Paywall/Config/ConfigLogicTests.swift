@@ -845,4 +845,67 @@ final class ConfigLogicTests: XCTestCase {
     )
     XCTAssertEqual(ids, [paywallId1])
   }
+
+  // MARK: - Filter Triggers
+
+  func test_filterTriggers_noTriggers() {
+    let disabled = PreloadingDisabled(
+      all: true,
+      triggers: ["app_open"]
+    )
+    let triggers = ConfigLogic.filterTriggers(
+      [],
+      removing: disabled
+    )
+    XCTAssertTrue(triggers.isEmpty)
+  }
+
+  func test_filterTriggers_disableAll() {
+    let disabled = PreloadingDisabled(
+      all: true,
+      triggers: []
+    )
+    let triggers: Set<Trigger > = [
+      Trigger(eventName: "app_open", rules: []),
+      Trigger(eventName: "campaign_trigger", rules: [.stub()])
+    ]
+    let filteredTriggers = ConfigLogic.filterTriggers(
+      triggers,
+      removing: disabled
+    )
+    XCTAssertTrue(filteredTriggers.isEmpty)
+  }
+
+  func test_filterTriggers_disableSome() {
+    let disabled = PreloadingDisabled(
+      all: false,
+      triggers: ["app_open"]
+    )
+    let triggers: Set<Trigger > = [
+      Trigger(eventName: "app_open", rules: []),
+      Trigger(eventName: "campaign_trigger", rules: [.stub()])
+    ]
+    let filteredTriggers = ConfigLogic.filterTriggers(
+      triggers,
+      removing: disabled
+    )
+    XCTAssertEqual(filteredTriggers.count, 1)
+    XCTAssertEqual(filteredTriggers.first!.eventName, "campaign_trigger")
+  }
+
+  func test_filterTriggers_disableNone() {
+    let disabled = PreloadingDisabled(
+      all: false,
+      triggers: []
+    )
+    let triggers: Set<Trigger > = [
+      Trigger(eventName: "app_open", rules: []),
+      Trigger(eventName: "campaign_trigger", rules: [.stub()])
+    ]
+    let filteredTriggers = ConfigLogic.filterTriggers(
+      triggers,
+      removing: disabled
+    )
+    XCTAssertEqual(filteredTriggers.count, 2)
+  }
 }
