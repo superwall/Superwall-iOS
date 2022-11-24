@@ -265,7 +265,6 @@ enum ConfigLogic {
     confirmedAssignments: [Experiment.ID: Experiment.Variant],
     unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
   ) -> Set<String> {
-
     let mergedAssignments = confirmedAssignments.merging(unconfirmedAssignments)
     let groupedTriggerRules = getRulesPerTriggerGroup(from: triggers)
     let triggerExperimentIds = groupedTriggerRules.flatMap { $0.map { $0.experiment.id } }

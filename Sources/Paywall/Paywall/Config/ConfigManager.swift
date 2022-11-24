@@ -206,7 +206,7 @@ class ConfigManager {
     }
     let confirmedAssignments = storage.getConfirmedAssignments()
     return ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
+      forTriggers: preloadableTriggers,
       confirmedAssignments: confirmedAssignments,
       unconfirmedAssignments: unconfirmedAssignments
     )
