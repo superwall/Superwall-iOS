@@ -37,6 +37,26 @@ final class ConfigLogicTests: XCTestCase {
     }
   }
 
+  func test_chooseVariant_manyVariants_zeroSum() {
+    do {
+      let options: [VariantOption] = [
+        .stub()
+        .setting(\.percentage, to: 0),
+        .stub()
+        .setting(\.percentage, to: 0)
+      ]
+      let variant = try ConfigLogic.chooseVariant(
+        from: options,
+        randomiser: { range in
+          // Force choosing the first variant
+          return 0
+        }
+      )
+    } catch {
+      XCTFail("Shouldn't fail")
+    }
+  }
+
   func test_chooseVariant_oneActiveVariant_chooseFirst() {
     do {
       let options: [VariantOption] = [

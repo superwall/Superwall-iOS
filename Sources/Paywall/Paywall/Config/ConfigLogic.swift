@@ -41,6 +41,19 @@ enum ConfigLogic {
       partialResult + variant.percentage
     }
 
+    // Something went wrong on the dashboard, where all variants
+    // have 0% set. Choose a random one.
+    if variantSum == 0 {
+      // Choose a random variant
+      let randomVariantIndex = randomiser(0..<variants.count)
+      let variant = variants[randomVariantIndex]
+      return .init(
+        id: variant.id,
+        type: variant.type,
+        paywallId: variant.paywallId
+      )
+    }
+
     // Choose a random percentage e.g. 21
     let randomPercentage = randomiser(0..<variantSum)
 
