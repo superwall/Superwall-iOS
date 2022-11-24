@@ -15,6 +15,7 @@ struct Config: Decodable {
   var locales: Set<String>
   var appSessionTimeout: Milliseconds
   var featureFlags: FeatureFlags
+  var preloadingDisabled: PreloadingDisabled
 
   var requestId: String?
 
@@ -26,6 +27,7 @@ struct Config: Decodable {
     case localization
     case appSessionTimeout = "appSessionTimeoutMs"
     case featureFlags = "toggles"
+    case preloadingDisabled = "disablePreload"
   }
 
   init(from decoder: Decoder) throws {
@@ -37,6 +39,7 @@ struct Config: Decodable {
     postback = try values.decode(PostbackRequest.self, forKey: .postback)
     appSessionTimeout = try values.decode(Milliseconds.self, forKey: .appSessionTimeout)
     featureFlags = try FeatureFlags(from: decoder)
+    preloadingDisabled = try values.decode(PreloadingDisabled.self, forKey: .preloadingDisabled)
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
@@ -49,7 +52,8 @@ struct Config: Decodable {
     postback: PostbackRequest,
     locales: Set<String>,
     appSessionTimeout: Milliseconds,
-    featureFlags: FeatureFlags
+    featureFlags: FeatureFlags,
+    preloadingDisabled: PreloadingDisabled
   ) {
     self.triggers = triggers
     self.paywalls = paywalls
@@ -58,6 +62,7 @@ struct Config: Decodable {
     self.locales = locales
     self.appSessionTimeout = appSessionTimeout
     self.featureFlags = featureFlags
+    self.preloadingDisabled = preloadingDisabled
   }
 }
 
@@ -71,7 +76,8 @@ extension Config: Stubbable {
       postback: .stub(),
       locales: [],
       appSessionTimeout: 3600000,
-      featureFlags: .stub()
+      featureFlags: .stub(),
+      preloadingDisabled: .stub()
     )
   }
 }

@@ -46,6 +46,18 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ---
 
+## 2.5.5
+
+### Fixes
+
+- Fixes a crash when all variants of a campaign rule are set to 0%.
+
+### Enhancements
+
+- Adds ablity to disable the preloading of paywalls from specific triggers via config.
+
+---
+
 ## 2.5.4
 
 ### Fixes
