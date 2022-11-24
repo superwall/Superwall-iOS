@@ -161,9 +161,16 @@ class ConfigManager {
 
   // MARK: - Preloading Paywalls
   private func getTreatmentPaywallIds(from triggers: Set<Trigger>) -> Set<String> {
+    let preloadableTriggers = ConfigLogic.filterTriggers(
+      triggers,
+      removing: config.preloadingDisabled
+    )
+    if preloadableTriggers.isEmpty {
+      return []
+    }
     let confirmedAssignments = storage.getConfirmedAssignments()
     return ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
+      forTriggers: preloadableTriggers,
       confirmedAssignments: confirmedAssignments,
       unconfirmedAssignments: unconfirmedAssignments
     )
@@ -182,10 +189,13 @@ class ConfigManager {
   /// Preloads paywalls referenced by triggers.
   func preloadAllPaywalls() async {
     let config = await $config.hasValue()
-
+    let triggers = ConfigLogic.filterTriggers(
+      config.triggers,
+      removing: config.preloadingDisabled
+    )
     let confirmedAssignments = storage.getConfirmedAssignments()
     let paywallIds = ConfigLogic.getAllActiveTreatmentPaywallIds(
-      fromTriggers: config.triggers,
+      fromTriggers: triggers,
       confirmedAssignments: confirmedAssignments,
       unconfirmedAssignments: unconfirmedAssignments
     )
