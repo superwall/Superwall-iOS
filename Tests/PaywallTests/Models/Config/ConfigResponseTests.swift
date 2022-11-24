@@ -410,6 +410,10 @@ let response = #"""
     "dns_resolution": [{
       "hostname": "www.fitnessai.com"
     }]
+  },
+  "disable_preload": {
+    "all": false,
+    "triggers": []
   }
 }
 """#

@@ -41,6 +41,19 @@ enum ConfigLogic {
       partialResult + variant.percentage
     }
 
+    // Something went wrong on the dashboard, where all variants
+    // have 0% set. Choose a random one.
+    if variantSum == 0 {
+      // Choose a random variant
+      let randomVariantIndex = randomiser(0..<variants.count)
+      let variant = variants[randomVariantIndex]
+      return .init(
+        id: variant.id,
+        type: variant.type,
+        paywallId: variant.paywallId
+      )
+    }
+
     // Choose a random percentage e.g. 21
     let randomPercentage = randomiser(0..<variantSum)
 
@@ -132,6 +145,20 @@ enum ConfigLogic {
       confirmedAssignments: confirmedAssignments,
       unconfirmedAssignments: unconfirmedAssignments
     )
+  }
+
+  /// Removes any triggers whose preloading has been remotely disabled.
+  static func filterTriggers(
+    _ triggers: Set<Trigger>,
+    removing preloadingDisabled: PreloadingDisabled
+  ) -> Set<Trigger> {
+    if preloadingDisabled.all {
+      return []
+    }
+
+    return triggers.filter {
+      !preloadingDisabled.triggers.contains($0.eventName)
+    }
   }
 
   /// Loops through assignments retrieved from the server to get variants by id.
@@ -238,6 +265,7 @@ enum ConfigLogic {
     confirmedAssignments: [Experiment.ID: Experiment.Variant],
     unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
   ) -> Set<String> {
+
     let mergedAssignments = confirmedAssignments.merging(unconfirmedAssignments)
     let groupedTriggerRules = getRulesPerTriggerGroup(from: triggers)
     let triggerExperimentIds = groupedTriggerRules.flatMap { $0.map { $0.experiment.id } }

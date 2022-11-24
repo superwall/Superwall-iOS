@@ -175,7 +175,14 @@ class ConfigManager {
   }
 
   private func getAllActiveTreatmentPaywallIds() -> Set<String> {
-    guard let triggers = config?.triggers else {
+    guard let config = config else {
+      return []
+    }
+    let triggers = ConfigLogic.filterTriggers(
+      config.triggers,
+      removing: config.preloadingDisabled
+    )
+    if triggers.isEmpty {
       return []
     }
     let confirmedAssignments = storage.getConfirmedAssignments()
@@ -187,6 +194,16 @@ class ConfigManager {
   }
 
   private func getTreatmentPaywallIds(from triggers: Set<Trigger>) -> Set<String> {
+    guard let config = config else {
+      return []
+    }
+    let preloadableTriggers = ConfigLogic.filterTriggers(
+      triggers,
+      removing: config.preloadingDisabled
+    )
+    if preloadableTriggers.isEmpty {
+      return []
+    }
     let confirmedAssignments = storage.getConfirmedAssignments()
     return ConfigLogic.getActiveTreatmentPaywallIds(
       forTriggers: triggers,
@@ -245,8 +262,8 @@ class ConfigManager {
       handlePreloadPaywallsPreConfig(forTriggers: triggerNames)
       return
     }
-    let triggersToPreload = config.triggers.filter { triggerNames.contains($0.eventName) }
-    let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
+    let triggers = config.triggers.filter { triggerNames.contains($0.eventName) }
+    let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggers)
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
   }
 
