@@ -161,6 +161,9 @@ class ConfigManager {
 
   // MARK: - Preloading Paywalls
   private func getTreatmentPaywallIds(from triggers: Set<Trigger>) -> Set<String> {
+    guard let config = config else {
+      return []
+    }
     let preloadableTriggers = ConfigLogic.filterTriggers(
       triggers,
       removing: config.preloadingDisabled
