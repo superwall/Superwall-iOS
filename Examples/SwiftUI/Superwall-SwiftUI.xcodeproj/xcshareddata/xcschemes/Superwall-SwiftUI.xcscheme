@@ -71,7 +71,7 @@
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
-         identifier = "../../SuperwallSwiftUIExample/Products.storekit">
+         identifier = "../../Superwall-SwiftUI/Superwall_SwiftUI-Products.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction

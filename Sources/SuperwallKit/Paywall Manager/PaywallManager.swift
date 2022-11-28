@@ -50,8 +50,11 @@ final class PaywallManager {
 
     if cached,
       let viewController = self.cache.getPaywallViewController(withIdentifier: paywall.identifier) {
-      // Set paywall again incase products have been substituted into paywall.
-      viewController.paywall = paywall
+      // Set product-related vars again incase products have been substituted into paywall.
+      viewController.paywall.products = paywall.products
+      viewController.paywall.productIds = paywall.productIds
+      viewController.paywall.productVariables = paywall.productVariables
+      viewController.paywall.productsLoadingInfo = paywall.productsLoadingInfo
       return viewController
     }
 

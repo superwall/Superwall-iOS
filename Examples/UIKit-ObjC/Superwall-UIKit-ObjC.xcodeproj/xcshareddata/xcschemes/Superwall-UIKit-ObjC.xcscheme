@@ -51,7 +51,7 @@
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
-         identifier = "../../Superwall-UIKit-ObjC/Products.storekit">
+         identifier = "../../Superwall-UIKit-ObjC/Superwall_UIKit-Objc-Products.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction

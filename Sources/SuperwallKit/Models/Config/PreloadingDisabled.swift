@@ -7,18 +7,18 @@
 
 import Foundation
 
- struct PreloadingDisabled: Codable {
-   let all: Bool
-   let triggers: Set<String>
- }
+struct PreloadingDisabled: Codable {
+  let all: Bool
+  let triggers: Set<String>
+}
 
- // MARK: - Stubbable
+// MARK: - Stubbable
 
- extension PreloadingDisabled: Stubbable {
-   static func stub() -> PreloadingDisabled {
-     return PreloadingDisabled(
-       all: false,
-       triggers: []
-     )
-   }
- }
+extension PreloadingDisabled: Stubbable {
+  static func stub() -> PreloadingDisabled {
+    return PreloadingDisabled(
+      all: false,
+      triggers: []
+    )
+  }
+}

@@ -25,7 +25,7 @@
 		54B0D59F29144D9100733072 /* SSASuperwallService.m in Sources */ = {isa = PBXBuildFile; fileRef = 54B0D59E29144D9100733072 /* SSASuperwallService.m */; };
 		54B0D5A629162B2300733072 /* SSATrackEventViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 54B0D5A529162B2300733072 /* SSATrackEventViewController.m */; };
 		54B0D5A929162B5200733072 /* UIViewController+SSAAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 54B0D5A829162B5200733072 /* UIViewController+SSAAdditions.m */; };
-		54B0D5AC2916FA4400733072 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 54B0D5AB2916FA4400733072 /* Products.storekit */; };
+		54B0D5AC2916FA4400733072 /* Superwall_UIKit-Objc-Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 54B0D5AB2916FA4400733072 /* Superwall_UIKit-Objc-Products.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -59,7 +59,7 @@
 		54B0D5A529162B2300733072 /* SSATrackEventViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SSATrackEventViewController.m; sourceTree = "<group>"; };
 		54B0D5A729162B5200733072 /* UIViewController+SSAAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIViewController+SSAAdditions.h"; sourceTree = "<group>"; };
 		54B0D5A829162B5200733072 /* UIViewController+SSAAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+SSAAdditions.m"; sourceTree = "<group>"; };
-		54B0D5AB2916FA4400733072 /* Products.storekit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
+		54B0D5AB2916FA4400733072 /* Superwall_UIKit-Objc-Products.storekit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Superwall_UIKit-Objc-Products.storekit"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,7 +108,7 @@
 				54B0D5602911DEB500733072 /* SSAWelcomeViewController.m */,
 				54B0D5A429162B2300733072 /* SSATrackEventViewController.h */,
 				54B0D5A529162B2300733072 /* SSATrackEventViewController.m */,
-				54B0D5AB2916FA4400733072 /* Products.storekit */,
+				54B0D5AB2916FA4400733072 /* Superwall_UIKit-Objc-Products.storekit */,
 				54B0D5622911DEB500733072 /* Main.storyboard */,
 				54B0D5672911DEB500733072 /* LaunchScreen.storyboard */,
 				54B0D56A2911DEB500733072 /* Info.plist */,
@@ -249,7 +249,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				54B0D5AC2916FA4400733072 /* Products.storekit in Resources */,
+				54B0D5AC2916FA4400733072 /* Superwall_UIKit-Objc-Products.storekit in Resources */,
 				54B0D5692911DEB500733072 /* LaunchScreen.storyboard in Resources */,
 				54B0D5832911E10C00733072 /* Rubik-Bold.ttf in Resources */,
 				54B0D5872911E10C00733072 /* Images.xcassets in Resources */,

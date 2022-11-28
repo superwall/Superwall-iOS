@@ -43,7 +43,7 @@
 		889FAA8427FC557100CB6EF5 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
 		889FAA8E27FC596700CB6EF5 /* StoreKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitService.swift; sourceTree = "<group>"; };
 		889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventViewController.swift; sourceTree = "<group>"; };
-		889FAA9C27FDADD000CB6EF5 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
+		889FAA9C27FDADD000CB6EF5 /* Superwall_UIKit-Swift-Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Superwall_UIKit-Swift-Products.storekit"; sourceTree = "<group>"; };
 		88A801D128EB15E2004244CA /* SuperwallService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperwallService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -82,7 +82,7 @@
 			children = (
 				889FAA7727FC531B00CB6EF5 /* Design */,
 				889FAA8A27FC585800CB6EF5 /* Services */,
-				889FAA9C27FDADD000CB6EF5 /* Products.storekit */,
+				889FAA9C27FDADD000CB6EF5 /* Superwall_UIKit-Swift-Products.storekit */,
 				889FAA6327FC530200CB6EF5 /* AppDelegate.swift */,
 				889FAA6527FC530200CB6EF5 /* SceneDelegate.swift */,
 				889FAA6727FC530200CB6EF5 /* WelcomeViewController.swift */,

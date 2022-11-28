@@ -836,7 +836,6 @@ final class TriggerSessionManagerTests: XCTestCase {
     let triggerSessions2 = await queue.triggerSessions
     XCTAssertEqual(triggerSessions2.count, 1)
     XCTAssertNotEqual(triggerSessions2.last?.id, lastTriggerSession.id)
-    print("*****", triggerSessions2.last)
     XCTAssertNil(triggerSessions2.last!.endAt)
   }
 }

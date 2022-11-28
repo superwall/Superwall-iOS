@@ -264,7 +264,7 @@ public final class Superwall: NSObject {
   }
 
   // MARK: - Overrides
-  
+
 	/// Overrides the default device locale for testing purposes.
   ///
   /// You can also preview your paywall in different locales using the in-app debugger. See <doc:InAppPreviews> for more.

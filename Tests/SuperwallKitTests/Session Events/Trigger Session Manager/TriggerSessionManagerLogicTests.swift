@@ -102,7 +102,6 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       triggerResult: .holdout(experiment)
     )
 
-    print("***", paywallResponse.isFreeTrialAvailable)
     XCTAssertEqual(outcome?.presentationOutcome, .holdout)
 
     XCTAssertEqual(outcome?.trigger.eventId, eventData.id)

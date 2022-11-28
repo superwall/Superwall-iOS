@@ -35,7 +35,7 @@ Clone or download the SuperwallKit from the [project home page](https://github.c
 
 Inside the [Services](Superwall-SwiftUI/Services) folder, you'll see some helper classes. [SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift) handles the setup and delegate methods of the SDK, and [StoreKitService.swift](Superwall-SwiftUI/Services/StoreKitService.swift) handles the purchasing of in-app subscriptions.
 
-[Products.storekit](Superwall-SwiftUI/Products.storekit) is a StoreKit configuration file that is used to mimic the setup of real products on App Store Connect. This is so you can make test purchases within the sample app without having to set up App Store Connect. In a production app, you will need real products configured in App Store Connect but you can also use a StoreKit configuration file for testing purposes if you wish.
+[Superwall_SwiftUI-Products.storekit](Superwall-SwiftUI/Superwall_SwiftUI-Products.storekit) is a StoreKit configuration file that is used to mimic the setup of real products on App Store Connect. This is so you can make test purchases within the sample app without having to set up App Store Connect. In a production app, you will need real products configured in App Store Connect but you can also use a StoreKit configuration file for testing purposes if you wish.
 
 You'll see a few different SwiftUI files that handle the layout of the app and presenting of paywalls.
 

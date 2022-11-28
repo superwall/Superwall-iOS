@@ -112,22 +112,23 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// feel native.
   nonisolated private func didLoadWebView(for paywall: Paywall) async {
     Task(priority: .utility) {
-      if let paywallInfo = await delegate?.paywallInfo {
-        if paywall.webviewLoadingInfo.endAt == nil {
-          await delegate?.paywall.webviewLoadingInfo.endAt = Date()
-        }
-
-        let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
-          state: .complete,
-          paywallInfo: paywallInfo
-        )
-        await Superwall.track(trackedEvent)
-
-        await SessionEventsManager.shared.triggerSession.trackWebviewLoad(
-          forPaywallId: paywallInfo.databaseId,
-          state: .end
-        )
+      guard let delegate = await self.delegate else {
+        return
       }
+
+      delegate.paywall.webviewLoadingInfo.endAt = Date()
+
+      let paywallInfo = delegate.paywallInfo
+      let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
+        state: .complete,
+        paywallInfo: paywallInfo
+      )
+      await Superwall.track(trackedEvent)
+
+      await SessionEventsManager.shared.triggerSession.trackWebviewLoad(
+        forPaywallId: paywallInfo.databaseId,
+        state: .end
+      )
     }
 
     let htmlSubstitutions = paywall.htmlSubstitutions

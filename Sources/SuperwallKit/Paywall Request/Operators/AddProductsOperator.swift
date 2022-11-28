@@ -13,10 +13,9 @@ typealias PipelineData = (paywall: Paywall, request: PaywallRequest)
 extension AnyPublisher where Output == PipelineData, Failure == Error {
   func addProducts() -> AnyPublisher<Paywall, Failure> {
     asyncMap { input in
-      await trackProductsLoadStart(
-        paywall: input.paywall,
-        event: input.request.eventData
-      )
+      var input = input
+      input.paywall.productsLoadingInfo.startAt = Date()
+      await trackProductsLoadStart(input)
       return input
     }
     .flatMap(getProducts)
@@ -67,17 +66,14 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
   }
 
   // MARK: - Analytics
-  private func trackProductsLoadStart(
-    paywall: Paywall,
-    event: EventData?
-  ) async {
-    var paywall = paywall
-    paywall.productsLoadingInfo.startAt = Date()
-    let paywallInfo = paywall.getInfo(fromEvent: event)
+  private func trackProductsLoadStart(_ input: PipelineData) async {
+    var input = input
+    input.paywall.productsLoadingInfo.startAt = Date()
+    let paywallInfo = input.paywall.getInfo(fromEvent: input.request.eventData)
     let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
       state: .start,
       paywallInfo: paywallInfo,
-      eventData: event
+      eventData: input.request.eventData
     )
     await Superwall.track(productLoadEvent)
 
