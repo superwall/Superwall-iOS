@@ -869,16 +869,17 @@ final class ConfigLogicTests: XCTestCase {
   func test_getTriggerDictionary() {
     let firstTrigger: Trigger = .stub()
       .setting(\.eventName, to: "abc")
-
+    
     let secondTrigger: Trigger = .stub()
       .setting(\.eventName, to: "def")
-
+    
     let triggers: Set<Trigger> = [
       firstTrigger, secondTrigger
     ]
     let dictionary = ConfigLogic.getTriggersByEventName(from: triggers)
     XCTAssertEqual(dictionary["abc"], firstTrigger)
     XCTAssertEqual(dictionary["def"], secondTrigger)
+  }
   // MARK: - Filter Triggers
 
   func test_filterTriggers_noTriggers() {
