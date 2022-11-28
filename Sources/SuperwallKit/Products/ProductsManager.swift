@@ -148,7 +148,7 @@ extension ProductsManager: SKProductsRequestDelegate {
           logLevel: .error,
           scope: .productsManager,
           message: "No products retrieved. Visit https://superwall.com/l/no-products to diagnose.",
-          error: nil
+          info: ["product_ids": requestProducts.description]
         )
       }
 
