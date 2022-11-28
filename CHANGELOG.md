@@ -38,11 +38,13 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds a new Objective-C example app UIKit-Objc.
 - Adds an Objective-C-only function `removeUserAttributes(_:)` to remove user attributes. In Swift, to remove attributes you can pass in `nil` for a specific attribute in `setUserAttributes(_:)`.
 - Adds `getTrackResult(forEvent:params:)`. This returns a `TrackResult` which tells you the result of tracking an event, without actually tracking it. This is useful if you want to figure out whether a paywall will show in the future.
+- Logs when products fail to load with a link to help diagnose the cause.
 
 ### Fixes
 
 - The API uses background threads wherever possible, dispatching to the main thread only when necessary and when returning from completion blocks.
 - The API is now fully compatible with Objective-C.
+- Bugfixes for loading and fail times of the webview and products.
 
 ---
 
