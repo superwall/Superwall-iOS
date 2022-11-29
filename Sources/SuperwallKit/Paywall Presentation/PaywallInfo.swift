@@ -56,6 +56,9 @@ public final class PaywallInfo: NSObject, Sendable {
   /// An iso date string indicating when the paywall response finished loading.
   public let responseLoadCompleteTime: String?
 
+  /// An iso date string indicating when the paywall response failed to load.
+  public let responseLoadFailTime: String?
+
   /// The time it took to load the paywall response.
   public let responseLoadDuration: TimeInterval?
 
@@ -64,6 +67,9 @@ public final class PaywallInfo: NSObject, Sendable {
 
   /// An iso date string indicating when the paywall webview finished loading.
   public let webViewLoadCompleteTime: String?
+
+  /// An iso date string indicating when the paywall webview failed to load.
+  public let webViewLoadFailTime: String?
 
   /// The time it took to load the paywall website.
   public let webViewLoadDuration: TimeInterval?
@@ -92,8 +98,10 @@ public final class PaywallInfo: NSObject, Sendable {
     fromEventData eventData: EventData?,
     responseLoadStartTime: Date?,
     responseLoadCompleteTime: Date?,
+    responseLoadFailTime: Date?,
     webViewLoadStartTime: Date?,
     webViewLoadCompleteTime: Date?,
+    webViewLoadFailTime: Date?,
     productsLoadStartTime: Date?,
     productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
@@ -119,6 +127,7 @@ public final class PaywallInfo: NSObject, Sendable {
 
     self.responseLoadStartTime = responseLoadStartTime?.isoString ?? ""
     self.responseLoadCompleteTime = responseLoadStartTime?.isoString ?? ""
+    self.responseLoadFailTime = responseLoadFailTime?.isoString ?? ""
 
     if let startTime = responseLoadStartTime,
       let endTime = responseLoadCompleteTime {
@@ -129,6 +138,8 @@ public final class PaywallInfo: NSObject, Sendable {
 
     self.webViewLoadStartTime = webViewLoadStartTime?.isoString ?? ""
     self.webViewLoadCompleteTime = webViewLoadCompleteTime?.isoString ?? ""
+    self.webViewLoadFailTime = webViewLoadFailTime?.isoString ?? ""
+
     if let startTime = webViewLoadStartTime,
       let endTime = webViewLoadCompleteTime {
       self.webViewLoadDuration = endTime.timeIntervalSince1970 - startTime.timeIntervalSince1970
@@ -139,6 +150,7 @@ public final class PaywallInfo: NSObject, Sendable {
     self.productsLoadStartTime = productsLoadStartTime?.isoString ?? ""
     self.productsLoadCompleteTime = productsLoadCompleteTime?.isoString ?? ""
     self.productsLoadFailTime = productsLoadFailTime?.isoString ?? ""
+
     if let startTime = productsLoadStartTime,
       let endTime = productsLoadCompleteTime {
       self.productsLoadDuration = endTime.timeIntervalSince1970 - startTime.timeIntervalSince1970
