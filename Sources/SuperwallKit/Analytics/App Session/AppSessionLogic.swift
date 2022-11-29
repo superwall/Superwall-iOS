@@ -17,12 +17,12 @@ enum AppSessionLogic {
     _ lastAppClose: Date?,
     withSessionTimeout timeout: Milliseconds?
   ) -> Bool {
-    let anHourAgo = 3600000.0
+    let anHourAgo: Milliseconds = 3600000.0
     let timeout = timeout ?? anHourAgo
 
     let delta: TimeInterval
     if let lastAppClose = lastAppClose {
-      delta = -lastAppClose.timeIntervalSinceNow
+      delta = -lastAppClose.timeIntervalSinceNow*1000
     } else {
       delta = timeout + 1
     }
