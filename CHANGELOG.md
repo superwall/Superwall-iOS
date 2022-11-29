@@ -45,6 +45,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - The API uses background threads wherever possible, dispatching to the main thread only when necessary and when returning from completion blocks.
 - The API is now fully compatible with Objective-C.
 - Bugfixes for loading and fail times of the webview and products.
+- Fixes the internal `appSessionId` that gets passed to Superwall analytics. This wasn't being refreshed as often as it should have been.
 
 ---
 
