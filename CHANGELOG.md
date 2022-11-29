@@ -48,6 +48,14 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ---
 
+## 2.5.6
+
+### Fixes
+
+- Fixes a bug found in the previous version. Disabling the preloading of paywalls for specific triggers via remote config now works correctly.
+
+---
+
 ## 2.5.5
 
 ### Fixes
