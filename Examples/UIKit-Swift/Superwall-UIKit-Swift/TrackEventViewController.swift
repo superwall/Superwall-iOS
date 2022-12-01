@@ -34,7 +34,7 @@ final class TrackEventViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    subscribedCancellable = StoreKitService.shared.isSubscribed
+    subscribedCancellable = StoreKitService.shared.$isSubscribed
       .receive(on: RunLoop.main)
       .sink { [weak self] isSubscribed in
         if isSubscribed {

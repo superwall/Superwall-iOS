@@ -12,14 +12,16 @@ enum ExpressionEvaluator {
   static func evaluateExpression(
     fromRule rule: TriggerRule,
     eventData: EventData,
-    storage: Storage = Storage.shared
+    storage: Storage = Storage.shared,
+    isPreemptive: Bool
   ) -> Bool {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
       let shouldFire = ExpressionEvaluatorLogic.shouldFire(
         forOccurrence: rule.occurrence,
         ruleMatched: true,
-        storage: storage
+        storage: storage,
+        isPreemptive: isPreemptive
       )
       return shouldFire
     }
@@ -65,7 +67,8 @@ enum ExpressionEvaluator {
     let shouldFire = ExpressionEvaluatorLogic.shouldFire(
       forOccurrence: rule.occurrence,
       ruleMatched: isMatched,
-      storage: storage
+      storage: storage,
+      isPreemptive: isPreemptive
     )
 
     return shouldFire

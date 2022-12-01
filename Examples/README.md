@@ -1,12 +1,13 @@
 # Example Apps
 
-We have three example apps – SwiftUI, UIKit, and UIKit with RevenueCat. They all have the same functionality and each has an accompanying tutorial that gives an overview of the app.
+We have four example apps – Swift-UIKit with RevenueCat, Swift-UIKit (with StoreKit), SwiftUI, and Objective-C + UIKit. They all have the same functionality and each has an accompanying tutorial that gives an overview of the app.
 
 Please select which app you'd like to use:
 
+- [Swift-UIKit with RevenueCat Example App](UIKit+RevenueCat)
+- [Swift-UIKit with StoreKit Example App](UIKit-Swift)
 - [SwiftUI Example App](SwiftUI)
-- [UIKit Example App](UIKit)
-- [UIKit+RevenueCat Example App](UIKit+RevenueCat)
+- [Objective-C-UIKit](UIKit+RevenueCat)
 
 ## Support
 

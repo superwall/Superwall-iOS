@@ -6,12 +6,16 @@
 //
 
 import StoreKit
-import Combine
 import SuperwallKit
 
 final class StoreKitService: NSObject, ObservableObject {
   static let shared = StoreKitService()
-  var isSubscribed = CurrentValueSubject<Bool, Never>(false)
+  @Published var isSubscribed = false {
+    didSet {
+      UserDefaults.standard.set(isSubscribed, forKey: kIsSubscribed)
+    }
+  }
+  private let kIsSubscribed = "isSubscribed"
   var completion: ((PurchaseResult) -> Void)?
   enum StoreError: Error {
     case failedVerification
@@ -19,6 +23,7 @@ final class StoreKitService: NSObject, ObservableObject {
 
   override init() {
     super.init()
+    isSubscribed = UserDefaults.standard.bool(forKey: kIsSubscribed)
     SKPaymentQueue.default().add(self)
   }
 
@@ -39,7 +44,7 @@ final class StoreKitService: NSObject, ObservableObject {
 
     refresh.start()
     if refresh.receiptProperties?.isEmpty == false {
-      isSubscribed.send(true)
+      isSubscribed = true
       return true
     }
     return false
@@ -55,11 +60,11 @@ final class StoreKitService: NSObject, ObservableObject {
         continue
       }
       if transaction.revocationDate == nil {
-        isSubscribed.send(true)
+        isSubscribed = true
         return
       }
     }
-    isSubscribed.send(false)
+    isSubscribed = false
   }
 }
 
@@ -72,7 +77,7 @@ extension StoreKitService: SKPaymentTransactionObserver {
     for transaction in transactions {
       switch transaction.transactionState {
       case .purchased:
-        isSubscribed.send(true)
+        isSubscribed = true
         SKPaymentQueue.default().finishTransaction(transaction)
         completion?(.purchased)
         completion = nil
@@ -99,14 +104,11 @@ extension StoreKitService: SKPaymentTransactionObserver {
         completion?(.pending)
         completion = nil
       case .restored:
+        isSubscribed = true
         SKPaymentQueue.default().finishTransaction(transaction)
       default:
         break
       }
     }
-  }
-
-  func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
-    isSubscribed.send(true)
   }
 }

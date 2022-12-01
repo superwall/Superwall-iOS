@@ -11,7 +11,8 @@ enum ExpressionEvaluatorLogic {
   static func shouldFire(
     forOccurrence occurrence: TriggerRuleOccurrence?,
     ruleMatched: Bool,
-    storage: Storage
+    storage: Storage,
+    isPreemptive: Bool
   ) -> Bool {
     if ruleMatched {
       guard let occurrence = occurrence else {
@@ -29,7 +30,8 @@ enum ExpressionEvaluatorLogic {
         ) + 1
       let shouldFire = count <= occurrence.maxCount
 
-      if shouldFire {
+      if shouldFire,
+        !isPreemptive {
         storage.coreDataManager.save(triggerRuleOccurrence: occurrence)
       }
 

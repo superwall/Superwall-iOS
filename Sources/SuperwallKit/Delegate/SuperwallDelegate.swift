@@ -39,7 +39,8 @@ public protocol SuperwallDelegate: AnyObject {
   /// - Returns: A boolean that indicates whether or not the user has an active subscription.
   func isUserSubscribed() -> Bool
 
-	/// Called when the user taps a button on your paywall that has a `data-pw-custom` tag attached.
+	/// Called when the user taps an element on your paywall that has the click action `Custom action`,
+  /// or a `data-pw-custom` tag attached.
   ///
   /// To learn more about using this function, see <doc:CustomPaywallButtons>. To learn about the types of tags that can
   /// be attached to elements on your paywall, see [Data Tags](https://docs.superwall.com/docs/data-tags).

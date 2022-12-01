@@ -107,8 +107,7 @@ public extension Superwall {
     shared.latestDismissedPaywallInfo = nil
     shared.presentationPublisher?.cancel()
     shared.presentationPublisher = nil
-    trackCancellable?.cancel()
-    trackCancellable = nil
+    trackCancellables.removeAll()
 
     IdentityManager.shared.clear()
     Storage.shared.clear()

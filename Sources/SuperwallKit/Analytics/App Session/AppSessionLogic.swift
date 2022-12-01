@@ -22,7 +22,7 @@ enum AppSessionLogic {
 
     let delta: TimeInterval
     if let lastAppClose = lastAppClose {
-      delta = -lastAppClose.timeIntervalSinceNow*1000
+      delta = -lastAppClose.timeIntervalSinceNow * 1000
     } else {
       delta = timeout + 1
     }

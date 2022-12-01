@@ -40,13 +40,6 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         throw PresentationPipelineError.cancelled
       }
 
-      await SessionEventsManager.shared.triggerSession.activateSession(
-        for: input.request.presentationInfo,
-        on: input.request.presentingViewController,
-        paywall: input.paywallViewController.paywall,
-        triggerResult: input.triggerResult
-      )
-
       if input.request.presentingViewController == nil {
         await Superwall.shared.createPresentingWindowIfNeeded()
       }
@@ -75,6 +68,13 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         paywallStatePublisher.send(completion: .finished)
         throw PresentationPipelineError.cancelled
       }
+
+      await SessionEventsManager.shared.triggerSession.activateSession(
+        for: input.request.presentationInfo,
+        on: input.request.presentingViewController,
+        paywall: input.paywallViewController.paywall,
+        triggerResult: input.triggerResult
+      )
 
       return PresentablePipelineOutput(
         request: input.request,

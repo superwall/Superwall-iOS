@@ -82,12 +82,11 @@ public extension Superwall {
       presentationStyleOverride: presentationStyleOverride
     )
 
-    trackCancellable = publisher(
-      forEvent: event,
+    track(
+      event: event,
       params: params,
       paywallOverrides: overrides
-    )
-    .sink { state in
+    ) { state in
       switch state {
       case .presented(let paywallInfo):
         onPresent?(paywallInfo)
@@ -122,14 +121,24 @@ public extension Superwall {
     paywallOverrides: PaywallOverrides? = nil,
     paywallHandler: ((PaywallState) -> Void)? = nil
   ) {
-    trackCancellable = publisher(
+    // swiftlint:disable implicitly_unwrapped_optional
+    var cancellable: AnyCancellable!
+    // swiftlint:enable implicitly_unwrapped_optional
+
+    cancellable = publisher(
       forEvent: event,
       params: params,
       paywallOverrides: paywallOverrides
     )
-    .sink { state in
-      paywallHandler?(state)
-    }
+    .sink(
+      receiveCompletion: { _ in
+        self.trackCancellables.remove(cancellable)
+      }, receiveValue: { state in
+        paywallHandler?(state)
+      }
+    )
+
+    cancellable.store(in: &trackCancellables)
   }
 
   /// Returns a publisher that tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.

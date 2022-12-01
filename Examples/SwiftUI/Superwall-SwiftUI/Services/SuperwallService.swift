@@ -19,7 +19,7 @@ final class SuperwallService {
   }
   var isLoggedIn = CurrentValueSubject<Bool, Never>(false)
 
-  static func initialize() {
+  static func configure() {
     Superwall.configure(
       apiKey: apiKey,
       delegate: shared
@@ -78,7 +78,7 @@ extension SuperwallService: SuperwallDelegate {
   }
 
   func isUserSubscribed() -> Bool {
-    return StoreKitService.shared.isSubscribed.value
+    return StoreKitService.shared.isSubscribed
   }
 
   func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {

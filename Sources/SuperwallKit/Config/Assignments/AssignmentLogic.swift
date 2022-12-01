@@ -32,12 +32,14 @@ enum AssignmentLogic {
     forEvent event: EventData,
     triggers: [String: Trigger],
     configManager: ConfigManager = .shared,
-    storage: Storage = .shared
+    storage: Storage = .shared,
+    isPreemptive: Bool
   ) -> Outcome {
     if let trigger = triggers[event.name] {
       if let rule = findMatchingRule(
         for: event,
-        withTrigger: trigger
+        withTrigger: trigger,
+        isPreemptive: isPreemptive
       ) {
         let variant: Experiment.Variant
         var confirmableAssignment: ConfirmableAssignment?
@@ -104,12 +106,14 @@ enum AssignmentLogic {
 
   static func findMatchingRule(
     for event: EventData,
-    withTrigger trigger: Trigger
+    withTrigger trigger: Trigger,
+    isPreemptive: Bool
   ) -> TriggerRule? {
     for rule in trigger.rules {
       if ExpressionEvaluator.evaluateExpression(
         fromRule: rule,
-        eventData: event
+        eventData: event,
+        isPreemptive: isPreemptive
       ) {
         return rule
       }

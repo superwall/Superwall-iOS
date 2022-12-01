@@ -12,11 +12,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    SuperwallService.initialize()
-
-    Task {
-      await StoreKitService.shared.loadSubscriptionState()
-    }
+    SuperwallService.configure()
     return true
   }
 }

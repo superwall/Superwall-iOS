@@ -80,8 +80,10 @@ public final class Superwall: NSObject {
   /// The shared instance of superwall.
   static var shared = Superwall()
 
-  /// Used as a strong reference to any track function that doesn't directly return a publisher.
-  static var trackCancellable: AnyCancellable?
+  /// Used to store any track function that doesn't directly return a publisher.
+  ///
+  /// Cancellables are removed from here on completion of tracking publisher
+  static var trackCancellables: Set<AnyCancellable> = []
 
   /// The publisher from the last paywall presentation.
   var presentationPublisher: AnyCancellable?

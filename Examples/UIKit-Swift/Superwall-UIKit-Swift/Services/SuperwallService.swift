@@ -18,6 +18,10 @@ final class SuperwallService {
   }
 
   static func initialize() -> Bool {
+    Task {
+      await StoreKitService.shared.loadSubscriptionState()
+    }
+
     Superwall.configure(
       apiKey: apiKey,
       delegate: shared
@@ -79,7 +83,7 @@ extension SuperwallService: SuperwallDelegate {
   }
 
   func isUserSubscribed() -> Bool {
-    return StoreKitService.shared.isSubscribed.value
+    return StoreKitService.shared.isSubscribed
   }
 
   func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
