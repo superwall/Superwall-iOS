@@ -46,7 +46,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
 
       // Make sure there's a presenter. If there isn't throw an error if no paywall is being presented
       let providedViewController = input.request.presentingViewController
-      let rootViewController = await Superwall.shared.presentingWindow?.rootViewController
+      let rootViewController = await Superwall.shared.presentationItems.window?.rootViewController
 
       guard let presenter = (providedViewController ?? rootViewController) else {
         Logger.debug(
@@ -90,22 +90,23 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
 extension Superwall {
   @MainActor
   fileprivate func createPresentingWindowIfNeeded() {
-    guard presentingWindow == nil else {
+    guard presentationItems.window == nil else {
       return
     }
     let activeWindow = UIApplication.shared.activeWindow
+    var presentingWindow: UIWindow?
 
     if let windowScene = activeWindow?.windowScene {
       presentingWindow = UIWindow(windowScene: windowScene)
     }
 
     presentingWindow?.rootViewController = UIViewController()
-    presentingWindow?.windowLevel = .normal
     presentingWindow?.makeKeyAndVisible()
+
+    presentationItems.window = presentingWindow
   }
 
   func destroyPresentingWindow() {
-    presentingWindow?.isHidden = true
-    presentingWindow = nil
+    presentationItems.window = nil
   }
 }

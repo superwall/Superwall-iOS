@@ -72,7 +72,7 @@ class Storage {
   }
 
   /// Clears data that is user specific.
-  func clear() {
+  func reset() {
     coreDataManager.deleteAllEntities()
     cache.cleanUserFiles()
     confirmedAssignments = nil

@@ -34,6 +34,13 @@ final class TransactionManager {
   /// The last product purchased.
   private var lastProductPurchased: SKProduct?
 
+  deinit {
+    if #available(iOS 15.0, *) {
+      sk2TransactionObserver.cancelTasks()
+      self._sk2TransactionObserver = nil
+    }
+  }
+
   init() {
     if #available(iOS 15.0, *) {
       self._sk2TransactionObserver = Sk2TransactionObserver(delegate: self)

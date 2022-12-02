@@ -25,6 +25,10 @@ protocol TransactionObserverDelegate: AnyObject {
 final class Sk1TransactionObserver: NSObject {
   weak var delegate: TransactionObserverDelegate?
 
+  deinit {
+    SKPaymentQueue.default().remove(self)
+  }
+
   init(delegate: TransactionObserverDelegate) {
     self.delegate = delegate
     super.init()

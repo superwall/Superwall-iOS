@@ -103,18 +103,12 @@ public extension Superwall {
   /// Resets the `userId`, on-device paywall assignments, and data stored
   /// by Superwall.
   @objc static func reset() async {
-    shared.lastSuccessfulPresentationRequest = nil
-    shared.latestDismissedPaywallInfo = nil
-    shared.presentationPublisher?.cancel()
-    shared.presentationPublisher = nil
-    trackCancellables.removeAll()
-
-    IdentityManager.shared.clear()
-    Storage.shared.clear()
-    await PaywallManager.shared.clearCache()
-
-    ConfigManager.shared.reset()
+    shared.presentationItems.reset()
     IdentityManager.shared.reset()
+    Storage.shared.reset()
+    await PaywallManager.shared.resetCache()
+    ConfigManager.shared.reset()
+    IdentityManager.shared.didSetIdentity()
   }
 
   /// Asynchronously resets the `userId` and data stored by Superwall.

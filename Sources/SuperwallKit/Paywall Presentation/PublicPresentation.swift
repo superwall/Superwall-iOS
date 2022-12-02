@@ -132,13 +132,13 @@ public extension Superwall {
     )
     .sink(
       receiveCompletion: { _ in
-        self.trackCancellables.remove(cancellable)
+        self.shared.presentationItems.cancellables.remove(cancellable)
       }, receiveValue: { state in
         paywallHandler?(state)
       }
     )
 
-    cancellable.store(in: &trackCancellables)
+    cancellable.store(in: &shared.presentationItems.cancellables)
   }
 
   /// Returns a publisher that tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.

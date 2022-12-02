@@ -53,7 +53,7 @@ public final class Superwall: NSObject {
   @MainActor
   public static var latestPaywallInfo: PaywallInfo? {
     let presentedPaywallInfo = PaywallManager.shared.presentedViewController?.paywallInfo
-    return presentedPaywallInfo ?? shared.latestDismissedPaywallInfo
+    return presentedPaywallInfo ?? shared.presentationItems.paywallInfo
   }
   /// The current user's id.
   ///
@@ -74,28 +74,11 @@ public final class Superwall: NSObject {
   }
 
   // MARK: - Internal Properties
-  /// The ``PaywallInfo`` object stored from the latest paywall that was dismissed.
-  var latestDismissedPaywallInfo: PaywallInfo?
-
   /// The shared instance of superwall.
   static var shared = Superwall()
 
-  /// Used to store any track function that doesn't directly return a publisher.
-  ///
-  /// Cancellables are removed from here on completion of tracking publisher
-  static var trackCancellables: Set<AnyCancellable> = []
-
-  /// The publisher from the last paywall presentation.
-  var presentationPublisher: AnyCancellable?
-
-  /// The request that triggered the last successful paywall presentation.
-  var lastSuccessfulPresentationRequest: PresentationRequest?
-
-  /// The window that presents the paywall.
-  var presentingWindow: UIWindow?
-
-  /// Determines whether a paywall has been presented in the session.
-  var paywallWasPresentedThisSession = false
+  /// Items involved in the presentation of paywalls.
+  var presentationItems = PresentationItems()
 
   /// The presented paywall view controller.
   @MainActor

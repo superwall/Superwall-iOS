@@ -25,7 +25,11 @@ extension Superwall {
     let paywallStatePublisher = PassthroughSubject<PaywallState, Never>()
     let presentationSubject = PresentationSubject(request)
 
-    self.presentationPublisher = presentationSubject
+    // swiftlint:disable implicitly_unwrapped_optional
+    var presentationPublisher: AnyCancellable!
+    // swiftlint:enable implicitly_unwrapped_optional
+
+    presentationPublisher = presentationSubject
       .eraseToAnyPublisher()
       .awaitIdentity()
       .logPresentation("Called Superwall.track")
@@ -35,11 +39,17 @@ extension Superwall {
       .handleTriggerResult(paywallStatePublisher)
       .getPaywallViewController(paywallStatePublisher)
       .checkPaywallIsPresentable(paywallStatePublisher)
-      .presentPaywall(paywallStatePublisher, presentationSubject)
+      .presentPaywall(paywallStatePublisher)
+      .storePresentationObjects(presentationSubject)
       .sink(
-        receiveCompletion: { _ in },
+        receiveCompletion: { [weak self] _ in
+          // When the pipeline completes, remove its reference.
+          self?.presentationItems.cancellables.remove(presentationPublisher)
+        },
         receiveValue: { _ in }
       )
+
+    presentationPublisher.store(in: &presentationItems.cancellables)
 
     return paywallStatePublisher
       .eraseToAnyPublisher()
@@ -49,10 +59,12 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   - presentationPublisher: The publisher created in the `internallyPresent(request:)` function to kick off the presentation pipeline.
-  func presentAgain(using presentationPublisher: PresentationSubject) async {
-    guard let request = Superwall.shared.lastSuccessfulPresentationRequest else {
+  func presentAgain() async {
+    guard let lastPresentationItems = presentationItems.last else {
       return
     }
+
+    // Remove the currently presenting paywall from cache.
     await MainActor.run {
       if let presentingPaywallIdentifier = Superwall.shared.paywallViewController?.paywall.identifier {
         PaywallManager.shared.removePaywall(withIdentifier: presentingPaywallIdentifier)
@@ -61,7 +73,7 @@ extension Superwall {
 
     // Resend both the identity and request again to run the presentation pipeline again.
     IdentityManager.shared.resendIdentity()
-    presentationPublisher.send(request)
+    lastPresentationItems.subject.send(lastPresentationItems.request)
   }
 
 

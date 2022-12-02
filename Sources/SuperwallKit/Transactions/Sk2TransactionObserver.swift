@@ -18,6 +18,10 @@ final class Sk2TransactionObserver {
   }
 
   deinit {
+    cancelTasks()
+  }
+
+  func cancelTasks() {
     // Cancel the update handling task when you deinitialize the class.
     updates?.cancel()
   }

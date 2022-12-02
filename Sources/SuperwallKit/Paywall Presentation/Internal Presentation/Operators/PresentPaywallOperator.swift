@@ -17,8 +17,7 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
   ///
   /// - Returns: A publisher that contains info for the next pipeline operator.
   func presentPaywall(
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
-    _ presentationSubject: PresentationSubject
+    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<PresentablePipelineOutput, Error> {
     flatMap { input in
       Future { promise in
@@ -28,13 +27,12 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
               on: input.presenter,
               eventData: input.request.presentationInfo.eventData,
               presentationStyleOverride: input.request.paywallOverrides?.presentationStyle,
-              paywallStatePublisher: paywallStatePublisher,
-              presentationPublisher: presentationSubject
+              paywallStatePublisher: paywallStatePublisher
             ) { isPresented in
               if isPresented {
-                Superwall.shared.lastSuccessfulPresentationRequest = input.request
                 let state: PaywallState = .presented(input.paywallViewController.paywallInfo)
                 paywallStatePublisher.send(state)
+                promise(.success(input))
               } else {
                 Logger.debug(
                   logLevel: .info,
@@ -42,8 +40,9 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
                   message: "Paywall Already Presented",
                   info: input.debugInfo
                 )
+                paywallStatePublisher.send(completion: .finished)
+                promise(.failure(PresentationPipelineError.cancelled))
               }
-              promise(.success(input))
             }
           }
         }

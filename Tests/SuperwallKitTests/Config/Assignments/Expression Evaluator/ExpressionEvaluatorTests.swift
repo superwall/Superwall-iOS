@@ -12,7 +12,7 @@ import XCTest
 
 final class ExpressionEvaluatorTests: XCTestCase {
   override class func setUp() {
-    Storage.shared.clear()
+    Storage.shared.reset()
   }
 
   func testExpressionMatchesAll() {

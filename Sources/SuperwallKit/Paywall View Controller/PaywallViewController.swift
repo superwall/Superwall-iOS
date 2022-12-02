@@ -77,12 +77,6 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
   /// This publisher is set on presentation of the paywall.
   private var paywallStatePublisher: PassthroughSubject<PaywallState, Never>!
 
-  /// A `CurrentValueSubject` that emits ``PresentationRequest`` objects.
-  /// This can be used to refresh the paywall.
-  ///
-  /// This publisher is set on presentation of the paywall.
-  private var presentationPublisher: PresentationSubject!
-
   /// Defines whether the view controller is being presented or not.
   private var isPresented = false
 
@@ -313,7 +307,7 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
       shouldSendDismissedState: false
     ) {
       Task {
-        await Superwall.shared.presentAgain(using: self.presentationPublisher)
+        await Superwall.shared.presentAgain()
       }
     }
   }
@@ -591,7 +585,6 @@ extension PaywallViewController {
     eventData: EventData?,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
-    presentationPublisher: PresentationSubject,
     completion: @escaping (Bool) -> Void
   ) {
     if Superwall.shared.isPaywallPresented
@@ -605,7 +598,6 @@ extension PaywallViewController {
 
     self.eventData = eventData
     self.paywallStatePublisher = paywallStatePublisher
-    self.presentationPublisher = presentationPublisher
 
     setPresentationStyle(withOverride: presentationStyleOverride)
 
@@ -650,7 +642,6 @@ extension PaywallViewController {
 		webView.scrollView.contentOffset = CGPoint.zero
 
 		Superwall.shared.delegateAdapter.willPresentPaywall()
-		Superwall.shared.paywallWasPresentedThisSession = true
 	}
 
   private func presentationDidFinish() {
@@ -725,7 +716,7 @@ extension PaywallViewController {
     completion: (() -> Void)? = nil
   ) {
     calledDismiss = true
-    Superwall.shared.latestDismissedPaywallInfo = paywallInfo
+    Superwall.shared.presentationItems.paywallInfo = paywallInfo
     Superwall.shared.delegateAdapter.willDismissPaywall()
 
     dismiss(animated: presentationIsAnimated) { [weak self] in

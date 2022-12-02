@@ -73,7 +73,7 @@ class IdentityManager {
       await configManager.getAssignments()
     }
 
-    identitySubject.send(true)
+    didSetIdentity()
   }
 
   /// Logs user in and waits for config then assignments.
@@ -94,7 +94,7 @@ class IdentityManager {
     await configManager.$config.hasValue()
     await configManager.getAssignments()
 
-    identitySubject.send(true)
+    didSetIdentity()
   }
 
   /// Create an account but don't wait for assignments before returning.
@@ -111,7 +111,7 @@ class IdentityManager {
     }
     self.appUserId = appUserId
 
-    identitySubject.send(true)
+    didSetIdentity()
   }
 
   /// Logs user out and calls ``SuperwallKit/Superwall/reset()``
@@ -127,7 +127,7 @@ class IdentityManager {
   }
 
   /// Clears all stored user-specific variables.
-  func clear() {
+  func reset() {
     identitySubject.send(false)
     appUserId = nil
     aliasId = IdentityLogic.generateAlias()
@@ -154,7 +154,7 @@ class IdentityManager {
 
   /// Sends a `true` value to the `identitySubject` in order to fire
   /// triggers after reset.
-  func reset() {
+  func didSetIdentity() {
     identitySubject.send(true)
   }
 

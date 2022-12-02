@@ -17,7 +17,7 @@ final class SuperwallService {
     return Superwall.userAttributes["firstName"] as? String ?? ""
   }
 
-  static func initialize() -> Bool {
+  static func configure() -> Bool {
     Task {
       await StoreKitService.shared.loadSubscriptionState()
     }
