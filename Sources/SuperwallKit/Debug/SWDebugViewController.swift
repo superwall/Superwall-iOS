@@ -393,7 +393,11 @@ final class SWDebugViewController: UIViewController {
         paywallIdentifier,
         freeTrialOverride: freeTrialAvailable
       ),
-      presentingViewController: self
+      presentingViewController: self,
+      injections: .init(
+        isDebuggerLaunched: true,
+        isUserSubscribed: false
+      )
     )
 
     cancellable = Superwall.shared

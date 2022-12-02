@@ -23,6 +23,7 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
         "fromEvent": eventData.debugDescription as Any,
         "cached": request.cached
       ]
+
       Logger.debug(
         logLevel: .debug,
         scope: .paywallPresentation,

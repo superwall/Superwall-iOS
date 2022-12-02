@@ -95,7 +95,7 @@ public final class Superwall: NSObject {
   /// Determines whether the user has an active subscription. Performed on the main thread.
   @MainActor
   var isUserSubscribed: Bool {
-    return Superwall.shared.delegateAdapter.isUserSubscribed() == true
+    return Superwall.shared.delegateAdapter.isUserSubscribed()
   }
 
   /// The config manager.

@@ -8,7 +8,13 @@
 import Foundation
 import Combine
 
-extension AnyPublisher where Output == TriggerResultPipelineOutput, Failure == Error {
+struct TriggerResultPipelineOutput {
+  let request: PresentationRequest
+  let triggerResult: TriggerResult
+  let debugInfo: DebugInfo
+}
+
+extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Error {
   /// Checks whether the trigger result indicates that a paywall should show.
   func checkForPaywallResult() -> AnyPublisher<TriggerResultResponsePipelineOutput, Error> {
     tryMap { input in
@@ -18,6 +24,7 @@ extension AnyPublisher where Output == TriggerResultPipelineOutput, Failure == E
           request: input.request,
           triggerResult: input.triggerResult,
           debugInfo: input.debugInfo,
+          confirmableAssignment: nil,
           experiment: experiment
         )
       default:

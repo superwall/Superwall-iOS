@@ -48,9 +48,6 @@
 💯 | Well maintained - [frequent releases](https://github.com/superwall-me/paywall-ios/releases)
 📮 | Great support - email a founder: jake@superwall.com
 
-## Migration Guides
-See our [Migration Guide](M)
-
 ## Installation
 
 ### Swift Package Manager
@@ -78,16 +75,19 @@ Then, run `pod install`.
 
 [Sign up for a free account on Superwall](https://superwall.com/sign-up) and [read our docs](https://docs.superwall.com/docs).
 
-You can also [view our iOS SDK docs](https://sdk.superwall.me/documentation/paywall/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
+You can also [view our iOS SDK docs](https://sdk.superwall.me/documentation/SuperwallKit/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
 
 Read our Kodeco (Ray Wenderlich) tutorial: [Superwall: Remote Paywall Configuration on iOS](https://www.kodeco.com/31484602-superwall-remote-paywall-configuration-on-ios)
 
 Check out our sample apps for a hands-on demonstration of the SDK:
 
-- [SwiftUI Example App](Examples/SuperwallSwiftUIExample)
-- [UIKit Example App](Examples/SuperwallUIKitExample)
+- [Swift-UIKit with RevenueCat Example App](Examples/UIKit+RevenueCat)
+- [Swift-UIKit with StoreKit Example App](Examples/UIKit-Swift)
+- [SwiftUI Example App](Examples/SwiftUI)
+- [Objective-C-UIKit](Examples/UIKit+RevenueCat)
 
 ## Migrating to v3
+
 - See our [Migration Guide](https://docs.superwall.com/v3.0/docs/migrating-to-v3)
 
 ## Contributing

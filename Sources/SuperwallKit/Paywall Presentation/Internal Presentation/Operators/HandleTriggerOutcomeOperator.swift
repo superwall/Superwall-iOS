@@ -12,10 +12,11 @@ struct TriggerResultResponsePipelineOutput {
   let request: PresentationRequest
   let triggerResult: TriggerResult
   let debugInfo: DebugInfo
+  let confirmableAssignment: ConfirmableAssignment?
   let experiment: Experiment
 }
 
-extension AnyPublisher where Output == TriggerResultPipelineOutput, Failure == Error {
+extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Error {
   /// Switches over the trigger result. The pipeline continues if a paywall will show.
   /// Otherwise, it sends a `skipped` state to the paywall state publisher and cancels
   /// the pipeline.
@@ -34,17 +35,20 @@ extension AnyPublisher where Output == TriggerResultPipelineOutput, Failure == E
           request: input.request,
           triggerResult: input.triggerResult,
           debugInfo: input.debugInfo,
+          confirmableAssignment: input.confirmableAssignment,
           experiment: experiment
         )
       case .holdout(let experiment):
-        await SessionEventsManager.shared.triggerSession.activateSession(
+        let sessionEventsManager = input.request.injections.sessionEventsManager
+        await sessionEventsManager.triggerSession.activateSession(
           for: input.request.presentationInfo,
           on: input.request.presentingViewController,
           triggerResult: input.triggerResult
         )
         paywallStatePublisher.send(.skipped(.holdout(experiment)))
       case .noRuleMatch:
-        await SessionEventsManager.shared.triggerSession.activateSession(
+        let sessionEventsManager = input.request.injections.sessionEventsManager
+        await sessionEventsManager.triggerSession.activateSession(
           for: input.request.presentationInfo,
           on: input.request.presentingViewController,
           triggerResult: input.triggerResult

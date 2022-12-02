@@ -14,6 +14,7 @@ struct PresentablePipelineOutput {
   let debugInfo: DebugInfo
   let paywallViewController: PaywallViewController
   let presenter: UIViewController
+  let confirmableAssignment: ConfirmableAssignment?
 }
 
 extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error {
@@ -28,11 +29,13 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<PresentablePipelineOutput, Error> {
     asyncMap { input in
-      if await InternalPresentationLogic.shouldNotPresentPaywall(
-        isUserSubscribed: Superwall.shared.isUserSubscribed,
-        isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
-        shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus,
-        presentationCondition: input.paywallViewController.paywall.presentation.condition
+      if await InternalPresentationLogic.userSubscribedAndNotOverridden(
+        isUserSubscribed: input.request.injections.isUserSubscribed,
+        overrides: .init(
+          isDebuggerLaunched: input.request.injections.isDebuggerLaunched,
+          shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus,
+          presentationCondition: input.paywallViewController.paywall.presentation.condition
+        )
       ) {
         let state: PaywallState = .skipped(.userIsSubscribed)
         paywallStatePublisher.send(state)
@@ -41,12 +44,12 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
       }
 
       if input.request.presentingViewController == nil {
-        await Superwall.shared.createPresentingWindowIfNeeded()
+        await input.request.injections.superwall.createPresentingWindowIfNeeded()
       }
 
       // Make sure there's a presenter. If there isn't throw an error if no paywall is being presented
       let providedViewController = input.request.presentingViewController
-      let rootViewController = await Superwall.shared.presentationItems.window?.rootViewController
+      let rootViewController = await input.request.injections.superwall.presentationItems.window?.rootViewController
 
       guard let presenter = (providedViewController ?? rootViewController) else {
         Logger.debug(
@@ -69,7 +72,8 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         throw PresentationPipelineError.cancelled
       }
 
-      await SessionEventsManager.shared.triggerSession.activateSession(
+      let sessionEventsManager = input.request.injections.sessionEventsManager
+      await sessionEventsManager.triggerSession.activateSession(
         for: input.request.presentationInfo,
         on: input.request.presentingViewController,
         paywall: input.paywallViewController.paywall,
@@ -80,7 +84,8 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         request: input.request,
         debugInfo: input.debugInfo,
         paywallViewController: input.paywallViewController,
-        presenter: presenter
+        presenter: presenter,
+        confirmableAssignment: input.confirmableAssignment
       )
     }
     .eraseToAnyPublisher()

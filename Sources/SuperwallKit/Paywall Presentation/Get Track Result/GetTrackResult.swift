@@ -23,14 +23,6 @@ extension Superwall {
       .awaitIdentity()
       .logPresentation("Called Superwall.getTrackResult")
       .evaluateRules(isPreemptive: true)
-      .compactMap { input in
-        return TriggerResultPipelineOutput(
-          request: input.request,
-          triggerResult: input.triggerResult,
-          debugInfo: input.debugInfo
-        )
-      }
-      .eraseToAnyPublisher()
       .checkForPaywallResult()
       .getPaywallViewControllerNoChecks()
       .checkPaywallIsPresentable()

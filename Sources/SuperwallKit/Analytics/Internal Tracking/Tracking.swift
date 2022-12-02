@@ -91,13 +91,25 @@ extension Superwall {
       if isPaywallPresented {
         await Superwall.dismiss()
       }
-      let presentationRequest = PresentationRequest(presentationInfo: presentationInfo)
+      let presentationRequest = PresentationRequest(
+        presentationInfo: presentationInfo,
+        injections: .init(
+          isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
+          isUserSubscribed: isUserSubscribed
+        )
+      )
       await internallyPresent(presentationRequest).asyncNoValue()
     case .triggerPaywall:
       // delay in case they are presenting a view controller alongside an event they are calling
       let twoHundredMilliseconds = UInt64(200_000_000)
       try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
-      let presentationRequest = PresentationRequest(presentationInfo: presentationInfo)
+      let presentationRequest = PresentationRequest(
+        presentationInfo: presentationInfo,
+        injections: .init(
+          isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
+          isUserSubscribed: isUserSubscribed
+        )
+      )
       await internallyPresent(presentationRequest).asyncNoValue()
     case .disallowedEventAsTrigger:
       Logger.debug(

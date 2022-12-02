@@ -22,7 +22,7 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
         request: input.request,
         subject: presentationSubject
       )
-      Superwall.shared.presentationItems.last = lastPaywallPresentation
+      input.request.injections.superwall.presentationItems.last = lastPaywallPresentation
       presentationSubject.send(completion: .finished)
       return input
     }

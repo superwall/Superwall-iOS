@@ -22,6 +22,17 @@ struct PresentationRequest {
   /// Overrides the default behavior and products of a paywall.
   var paywallOverrides: PaywallOverrides?
 
+  struct Injections {
+    var configManager: ConfigManager = .shared
+    var storage: Storage = .shared
+    var sessionEventsManager: SessionEventsManager = .shared
+    var paywallManager: PaywallManager = .shared
+    var superwall: Superwall = .shared
+    let isDebuggerLaunched: Bool
+    let isUserSubscribed: Bool
+  }
+  var injections: Injections
+
   /// A `Just` publisher that that emits the request object once and finishes.
   var publisher: AnyPublisher<Self, Error> {
     Just(self)
