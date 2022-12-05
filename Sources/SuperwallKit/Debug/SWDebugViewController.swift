@@ -445,19 +445,9 @@ final class SWDebugViewController: UIViewController {
       }
   }
 
-  var oldTintColor: UIColor? = UIColor.systemBlue
-
-  override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-    let view = UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self])
-    oldTintColor = view.tintColor
-    view.tintColor = primaryColor
-  }
-
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
     PaywallManager.shared.resetCache()
-    UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = oldTintColor
     SWDebugManager.shared.isDebuggerLaunched = false
     LocalizationManager.shared.selectedLocale = nil
   }
@@ -466,7 +456,6 @@ final class SWDebugViewController: UIViewController {
 extension SWDebugViewController {
   func presentAlert(title: String?, message: String?, options: [AlertOption]) {
     let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
-    alertController.view.tintColor = primaryColor
 
     for option in options {
       let action = UIAlertAction(
@@ -481,13 +470,11 @@ extension SWDebugViewController {
     }
 
     alertController.addAction(UIAlertAction(title: "Close", style: .cancel, handler: nil))
-    alertController.view.tintColor = primaryColor
+    alertController.view.tintColor = .black
 
     present(
       alertController,
       animated: true
-    ) {
-      alertController.view.tintColor = primaryColor
-    }
+    )
   }
 }
