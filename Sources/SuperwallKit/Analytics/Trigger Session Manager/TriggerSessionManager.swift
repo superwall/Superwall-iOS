@@ -133,7 +133,8 @@ actor TriggerSessionManager {
     trackEvent: (Trackable) async -> TrackingResult = Superwall.track
   ) async {
     guard let eventName = presentationInfo.eventName else {
-      // The paywall is being presented by identifier and that's not supported.
+      // The paywall is being presented by identifier, which is what the debugger uses,
+      // and that's not supported.
       return
     }
 

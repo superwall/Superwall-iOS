@@ -31,7 +31,7 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
           triggers: ConfigManager.shared.triggersByEventName,
           configManager: request.injections.configManager,
           storage: request.injections.storage,
-          isPreemptive: isPreemptive || request.injections.isDebuggerLaunched
+          isPreemptive: isPreemptive
         )
         let confirmableAssignment = eventOutcome.confirmableAssignment
 
@@ -42,6 +42,7 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
           debugInfo: debugInfo
         )
       } else {
+        // Called if the debugger is shown.
         guard let paywallId = request.presentationInfo.identifier else {
           // This error will never be thrown. Just preferring this
           // to force unwrapping.

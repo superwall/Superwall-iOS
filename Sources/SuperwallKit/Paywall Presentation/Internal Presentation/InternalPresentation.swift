@@ -40,7 +40,7 @@ extension Superwall {
       .handleTriggerResult(paywallStatePublisher)
       .getPaywallViewController(paywallStatePublisher)
       .checkPaywallIsPresentable(paywallStatePublisher)
-      .confirmAssignment()
+      .confirmPaywallAssignment()
       .presentPaywall(paywallStatePublisher)
       .storePresentationObjects(presentationSubject)
       .sink(
@@ -54,6 +54,7 @@ extension Superwall {
     presentationPublisher.store(in: &presentationItems.cancellables)
 
     return paywallStatePublisher
+      .receive(on: RunLoop.main)
       .eraseToAnyPublisher()
   }
 
