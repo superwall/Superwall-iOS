@@ -27,6 +27,14 @@ enum AssignmentLogic {
   /// experiment ID. If there isn't one, it checks the unconfirmed assignments.
   /// Then it returns the result of the event given the assignment.
   ///
+  /// - Parameters:
+  ///   - event: The tracked event
+  ///   - triggers: The triggers from config.
+  ///   - configManager: A `ConfigManager` object used for dependency injection.
+  ///   - storage: A `Storage` object used for dependency injection.
+  ///   - isPreemptive: A boolean that indicates whether the rule is being preemptively
+  ///   evaluated. Setting this to `true` prevents the rule's occurrence count from being incremented
+  ///   in Core Data.
   /// - Returns: An assignment to confirm, if available.
   static func evaluateRules(
     forEvent event: EventData,
@@ -35,72 +43,72 @@ enum AssignmentLogic {
     storage: Storage = .shared,
     isPreemptive: Bool
   ) -> Outcome {
-    if let trigger = triggers[event.name] {
-      if let rule = findMatchingRule(
-        for: event,
-        withTrigger: trigger,
-        isPreemptive: isPreemptive
-      ) {
-        let variant: Experiment.Variant
-        var confirmableAssignment: ConfirmableAssignment?
-
-        // For a matching rule there will be an unconfirmed (in-memory) or confirmed (on disk) variant assignment.
-        // First check the disk, otherwise check memory.
-        let confirmedAssignments = storage.getConfirmedAssignments()
-        if let confirmedVariant = confirmedAssignments[rule.experiment.id] {
-          variant = confirmedVariant
-        } else if let unconfirmedVariant = configManager.unconfirmedAssignments[rule.experiment.id] {
-          confirmableAssignment = ConfirmableAssignment(
-            experimentId: rule.experiment.id,
-            variant: unconfirmedVariant
-          )
-          variant = unconfirmedVariant
-        } else {
-          // If no variant in memory or disk, 
-          let userInfo: [String: Any] = [
-            NSLocalizedDescriptionKey: NSLocalizedString(
-              "Not Found",
-              value: "There isn't a paywall configured to show in this context",
-              comment: ""
-            )
-          ]
-          let error = NSError(
-            domain: "SWPaywallNotFound",
-            code: 404,
-            userInfo: userInfo
-          )
-          return Outcome(triggerResult: .error(error))
-        }
-
-        switch variant.type {
-        case .holdout:
-          return Outcome(
-            confirmableAssignment: confirmableAssignment,
-            triggerResult: .holdout(
-              Experiment(
-                id: rule.experiment.id,
-                groupId: rule.experiment.groupId,
-                variant: variant
-              )
-            )
-          )
-        case .treatment:
-          return Outcome(
-            confirmableAssignment: confirmableAssignment,
-            triggerResult: .paywall(
-              Experiment(
-                id: rule.experiment.id,
-                groupId: rule.experiment.groupId,
-                variant: variant
-              )
-            )
-          )
-        }
-      } else {
-        return Outcome(triggerResult: .noRuleMatch)
-      }
-    } else {
+    guard let trigger = triggers[event.name] else {
       return Outcome(triggerResult: .eventNotFound)
+    }
+
+    guard let rule = findMatchingRule(
+      for: event,
+      withTrigger: trigger,
+      isPreemptive: isPreemptive
+    ) else {
+      return Outcome(triggerResult: .noRuleMatch)
+    }
+
+    let variant: Experiment.Variant
+    var confirmableAssignment: ConfirmableAssignment?
+
+    // For a matching rule there will be an unconfirmed (in-memory) or confirmed (on disk) variant assignment.
+    // First check the disk, otherwise check memory.
+    let confirmedAssignments = storage.getConfirmedAssignments()
+    if let confirmedVariant = confirmedAssignments[rule.experiment.id] {
+      variant = confirmedVariant
+    } else if let unconfirmedVariant = configManager.unconfirmedAssignments[rule.experiment.id] {
+      confirmableAssignment = ConfirmableAssignment(
+        experimentId: rule.experiment.id,
+        variant: unconfirmedVariant
+      )
+      variant = unconfirmedVariant
+    } else {
+      // If no variant in memory or disk
+      let userInfo: [String: Any] = [
+        NSLocalizedDescriptionKey: NSLocalizedString(
+          "Not Found",
+          value: "There isn't a paywall configured to show in this context",
+          comment: ""
+        )
+      ]
+      let error = NSError(
+        domain: "SWPaywallNotFound",
+        code: 404,
+        userInfo: userInfo
+      )
+      return Outcome(triggerResult: .error(error))
+    }
+
+    switch variant.type {
+    case .holdout:
+      return Outcome(
+        confirmableAssignment: confirmableAssignment,
+        triggerResult: .holdout(
+          Experiment(
+            id: rule.experiment.id,
+            groupId: rule.experiment.groupId,
+            variant: variant
+          )
+        )
+      )
+    case .treatment:
+      return Outcome(
+        confirmableAssignment: confirmableAssignment,
+        triggerResult: .paywall(
+          Experiment(
+            id: rule.experiment.id,
+            groupId: rule.experiment.groupId,
+            variant: variant
+          )
+        )
+      )
     }
   }
 

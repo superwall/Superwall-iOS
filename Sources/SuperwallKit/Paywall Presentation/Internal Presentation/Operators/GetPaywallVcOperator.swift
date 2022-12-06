@@ -13,6 +13,7 @@ struct PaywallVcPipelineOutput {
   let triggerResult: TriggerResult
   let debugInfo: DebugInfo
   let paywallViewController: PaywallViewController
+  let confirmableAssignment: ConfirmableAssignment?
 }
 
 extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Failure == Error {
@@ -28,7 +29,6 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<PaywallVcPipelineOutput, Error> {
     asyncMap { input in
-      let isDebuggerLaunched = await SWDebugManager.shared.isDebuggerLaunched
       let responseIdentifiers = ResponseIdentifiers(
         paywallId: input.experiment.variant.paywallId,
         experiment: input.experiment
@@ -43,13 +43,14 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
       )
 
       do {
-        let paywallViewController = try await PaywallManager.shared.getPaywallViewController(
+        let paywallManager = input.request.injections.paywallManager
+        let paywallViewController = try await paywallManager.getPaywallViewController(
           from: paywallRequest,
-          cached: input.request.cached && !isDebuggerLaunched
+          cached: input.request.cached && !input.request.injections.isDebuggerLaunched
         )
 
         // if there's a paywall being presented, don't do anything
-        if await Superwall.shared.isPaywallPresented {
+        if input.request.injections.isPaywallPresented {
           Logger.debug(
             logLevel: .error,
             scope: .paywallPresentation,
@@ -58,7 +59,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
           )
           let error = InternalPresentationLogic.presentationError(
             domain: "SWPresentationError",
-            code: 101,
+            code: 102,
             title: "Paywall Already Presented",
             value: "You can only present one paywall at a time."
           )
@@ -72,14 +73,17 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
           request: input.request,
           triggerResult: input.triggerResult,
           debugInfo: input.debugInfo,
-          paywallViewController: paywallViewController
+          paywallViewController: paywallViewController,
+          confirmableAssignment: input.confirmableAssignment
         )
         return output
       } catch {
-        if await InternalPresentationLogic.shouldNotPresentPaywall(
-          isUserSubscribed: Superwall.shared.isUserSubscribed,
-          isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
-          shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus
+        if InternalPresentationLogic.userSubscribedAndNotOverridden(
+          isUserSubscribed: input.request.injections.isUserSubscribed,
+          overrides: .init(
+            isDebuggerLaunched: input.request.injections.isDebuggerLaunched,
+            shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus
+          )
         ) {
           let state: PaywallState = .skipped(.userIsSubscribed)
           paywallStatePublisher.send(state)

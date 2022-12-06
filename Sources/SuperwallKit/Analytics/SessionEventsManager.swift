@@ -16,7 +16,7 @@ protocol SessionEventsDelegate: AnyObject {
   func enqueue(_ transaction: TransactionModel) async
 }
 
-final class SessionEventsManager {
+class SessionEventsManager {
   /// The shared instance of the class
   static let shared = SessionEventsManager()
 

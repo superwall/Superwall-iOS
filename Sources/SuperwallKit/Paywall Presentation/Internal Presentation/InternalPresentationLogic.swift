@@ -8,17 +8,21 @@
 import Foundation
 
 enum InternalPresentationLogic {
-  /// Checks for paywall presentation overrides before checking the user's subscription
-  /// status to determine whether or not to show the paywall.
+  struct UserSubscriptionOverrides {
+    let isDebuggerLaunched: Bool
+    let shouldIgnoreSubscriptionStatus: Bool?
+    var presentationCondition: PresentationCondition?
+  }
+  /// Returns a booleans indicating whether the user is subscribed and their subscription status
+  /// hasn't been overridden by the provided arguments.
   ///
-  /// - Returns: A boolean that is `true` when the paywall should NOT be presented.
-  static func shouldNotPresentPaywall(
+  /// - Returns: A boolean that is `true` when the user is subscribed and their subscription
+  /// status hasn't been overridden.
+  static func userSubscribedAndNotOverridden(
     isUserSubscribed: Bool,
-    isDebuggerLaunched: Bool,
-    shouldIgnoreSubscriptionStatus: Bool?,
-    presentationCondition: PresentationCondition? = nil
+    overrides: UserSubscriptionOverrides
   ) -> Bool {
-    if isDebuggerLaunched {
+    if overrides.isDebuggerLaunched {
       return false
     }
 
@@ -26,13 +30,13 @@ enum InternalPresentationLogic {
       guard isUserSubscribed else {
         return false
       }
-      if shouldIgnoreSubscriptionStatus ?? false {
+      if overrides.shouldIgnoreSubscriptionStatus ?? false {
         return false
       }
       return true
     }
 
-    guard let presentationCondition = presentationCondition else {
+    guard let presentationCondition = overrides.presentationCondition else {
       return checkSubscriptionStatus()
     }
 

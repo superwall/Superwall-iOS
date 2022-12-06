@@ -49,7 +49,8 @@ class AssignmentLogicTests: XCTestCase {
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
-      storage: storage
+      storage: storage,
+      isPreemptive: false
     )
 
     // MARK: Then
@@ -108,7 +109,8 @@ class AssignmentLogicTests: XCTestCase {
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
-      storage: storage
+      storage: storage,
+      isPreemptive: false
     )
 
     // MARK: Then
@@ -165,7 +167,8 @@ class AssignmentLogicTests: XCTestCase {
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
-      storage: storage
+      storage: storage,
+      isPreemptive: false
     )
 
     // MARK: Then
@@ -224,7 +227,8 @@ class AssignmentLogicTests: XCTestCase {
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
-      storage: storage
+      storage: storage,
+      isPreemptive: false
     )
 
     // MARK: Then
@@ -280,7 +284,8 @@ class AssignmentLogicTests: XCTestCase {
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
-      storage: storage
+      storage: storage,
+      isPreemptive: false
     )
 
     // MARK: Then
@@ -331,7 +336,8 @@ class AssignmentLogicTests: XCTestCase {
       forEvent: eventData,
       triggers: triggers,
       configManager: configManager,
-      storage: storage
+      storage: storage,
+      isPreemptive: false
     )
 
     // MARK: Then

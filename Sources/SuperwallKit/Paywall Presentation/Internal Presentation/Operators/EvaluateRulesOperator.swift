@@ -23,18 +23,14 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
   ///   - storgate: A `Storage` object used for dependency injection.
   ///   - isPreemptive: A boolean that determines whether the rules are being evaluated before actually tracking an event.
   ///   If `true`, then it doesn't save the occurrence count of the rule.
-  func evaluateRules(
-    configManager: ConfigManager = .shared,
-    storage: Storage = .shared,
-    isPreemptive: Bool = false
-  ) -> AnyPublisher<AssignmentPipelineOutput, Failure> {
+  func evaluateRules(isPreemptive: Bool = false) -> AnyPublisher<AssignmentPipelineOutput, Failure> {
     tryMap { request, debugInfo in
       if let eventData = request.presentationInfo.eventData {
         let eventOutcome = AssignmentLogic.evaluateRules(
           forEvent: eventData,
-          triggers: ConfigManager.shared.triggersByEventName,
-          configManager: configManager,
-          storage: storage,
+          triggers: request.injections.configManager.triggersByEventName,
+          configManager: request.injections.configManager,
+          storage: request.injections.storage,
           isPreemptive: isPreemptive
         )
         let confirmableAssignment = eventOutcome.confirmableAssignment
@@ -46,6 +42,7 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
           debugInfo: debugInfo
         )
       } else {
+        // Called if the debugger is shown.
         guard let paywallId = request.presentationInfo.identifier else {
           // This error will never be thrown. Just preferring this
           // to force unwrapping.

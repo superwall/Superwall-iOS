@@ -4,6 +4,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.0.0 (Upcoming Release)
 
+Welcome to `SuperwallKit` v3.0, the framework formally known as `Paywall`!
+
+This update is a major release, containing lots of breaking changes, enhancements and some bug fixes. We're excited for you to use it!
+
+We understand that transitions between major SDK releases can become frustrating, so we've made a [migration guide](https://docs.superwall.com/v3.0/docs/migrating-to-v3) to make your life easier. We've also updated out [sample apps](Examples) to v3, including RevenueCat+SuperwallKit and Objective-C apps. For new users, we've created a [Quick Start Guide](https://docs.superwall.com/v3.0/docs/quick-start) to get up and running in no time. Finally, we recommend you check out our [updated docs](https://docs.superwall.com/docs).
+
 ### Breaking Changes
 
 - Renames the package from `Paywall` to `SuperwallKit`.

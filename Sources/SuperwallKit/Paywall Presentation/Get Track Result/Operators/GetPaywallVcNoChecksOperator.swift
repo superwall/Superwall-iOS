@@ -26,7 +26,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
       )
 
       do {
-        let paywallViewController = try await PaywallManager.shared.getPaywallViewController(
+        let paywallViewController = try await input.request.injections.paywallManager.getPaywallViewController(
           from: paywallRequest,
           cached: input.request.cached
         )
@@ -35,7 +35,8 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
           request: input.request,
           triggerResult: input.triggerResult,
           debugInfo: input.debugInfo,
-          paywallViewController: paywallViewController
+          paywallViewController: paywallViewController,
+          confirmableAssignment: nil
         )
         return output
       } catch {

@@ -9,15 +9,13 @@ import Foundation
 import UIKit
 
 @MainActor
-final class PaywallManager {
+class PaywallManager {
 	static let shared = PaywallManager()
   var presentedViewController: PaywallViewController? {
     return PaywallViewController.cache.first { $0.isActive }
 	}
 
   private var cache = PaywallCache()
-
-  private init() {}
 
 	func removePaywall(withIdentifier identifier: String?) {
     cache.removePaywall(

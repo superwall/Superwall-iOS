@@ -33,12 +33,14 @@ extension Superwall {
       .eraseToAnyPublisher()
       .awaitIdentity()
       .logPresentation("Called Superwall.track")
-      .checkForDebugger()
+      .checkDebuggerPresentation(paywallStatePublisher)
       .evaluateRules()
-      .confirmAssignment()
+      .checkUserSubscription(paywallStatePublisher)
+      .confirmHoldoutAssignment()
       .handleTriggerResult(paywallStatePublisher)
       .getPaywallViewController(paywallStatePublisher)
       .checkPaywallIsPresentable(paywallStatePublisher)
+      .confirmPaywallAssignment()
       .presentPaywall(paywallStatePublisher)
       .storePresentationObjects(presentationSubject)
       .sink(
@@ -52,6 +54,7 @@ extension Superwall {
     presentationPublisher.store(in: &presentationItems.cancellables)
 
     return paywallStatePublisher
+      .receive(on: RunLoop.main)
       .eraseToAnyPublisher()
   }
 
