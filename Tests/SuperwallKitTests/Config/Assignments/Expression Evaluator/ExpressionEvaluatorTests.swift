@@ -20,7 +20,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
       fromRule: .stub()
         .setting(\.expression, to: nil)
         .setting(\.expressionJs, to: nil),
-      eventData: .stub()
+      eventData: .stub(),
+      isPreemptive: false
     )
     XCTAssertTrue(result)
   }
@@ -32,7 +33,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "user.a == \"b\""),
-      eventData: EventData(name: "ss", parameters: [:], createdAt: Date())
+      eventData: EventData(name: "ss", parameters: [:], createdAt: Date()),
+      isPreemptive: false
     )
     XCTAssertTrue(result)
   }
@@ -42,7 +44,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "params.a == \"b\""),
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
+      isPreemptive: false
     )
     XCTAssertTrue(result)
   }
@@ -52,7 +55,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "device.platform == \"iOS\""),
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
+      isPreemptive: false
     )
     XCTAssertTrue(result)
   }
@@ -62,7 +66,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let result = ExpressionEvaluator.evaluateExpression(
         fromRule: .stub()
           .setting(\.expression, to: "device.platform == \"Android\""),
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
+        isPreemptive: false
     )
     XCTAssertFalse(result)
   }
@@ -72,7 +77,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "a == \"b\""),
-      eventData: .stub()
+      eventData: .stub(),
+      isPreemptive: false
     )
     XCTAssertFalse(result)
   }
@@ -97,7 +103,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(){ return true }; superwallEvaluator"),
-      eventData: .stub()
+      eventData: .stub(),
+      isPreemptive: false
     )
     XCTAssertTrue(result)
   }
@@ -106,7 +113,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator"),
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
+      isPreemptive: false
     )
     XCTAssertTrue(result)
   }
@@ -115,7 +123,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator"),
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
+      isPreemptive: false
     )
     XCTAssertTrue(result)
   }
@@ -124,7 +133,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(values) { return 1 == 1 }; superwallEvaluator"),
-      eventData: .stub()
+      eventData: .stub(),
+      isPreemptive: false
     )
     XCTAssertTrue(result)
   }
@@ -147,7 +157,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let result = ExpressionEvaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: ""),
-      eventData: .stub()
+      eventData: .stub(),
+      isPreemptive: false
     )
     XCTAssertFalse(result)
   }

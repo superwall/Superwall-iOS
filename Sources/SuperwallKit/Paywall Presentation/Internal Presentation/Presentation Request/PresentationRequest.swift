@@ -28,8 +28,10 @@ struct PresentationRequest {
     var sessionEventsManager: SessionEventsManager = .shared
     var paywallManager: PaywallManager = .shared
     var superwall: Superwall = .shared
-    let isDebuggerLaunched: Bool
-    let isUserSubscribed: Bool
+    var logger: Loggable.Type = Logger.self
+    var isDebuggerLaunched: Bool
+    var isUserSubscribed: Bool
+    var isPaywallPresented: Bool
   }
   var injections: Injections
 
@@ -38,5 +40,18 @@ struct PresentationRequest {
     Just(self)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
+  }
+}
+
+extension PresentationRequest: Stubbable {
+  static func stub() -> PresentationRequest {
+    return PresentationRequest(
+      presentationInfo: .explicitTrigger(.stub()),
+      injections: .init(
+        isDebuggerLaunched: false,
+        isUserSubscribed: false,
+        isPaywallPresented: false
+      )
+    )
   }
 }

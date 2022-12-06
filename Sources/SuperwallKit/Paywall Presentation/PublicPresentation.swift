@@ -170,13 +170,14 @@ public extension Superwall {
       )
       let result = await track(trackableEvent)
 
-      let injections = PresentationRequest.Injections(
-        isDebuggerLaunched: await SWDebugManager.shared.isDebuggerLaunched,
-        isUserSubscribed: await shared.isUserSubscribed
+      let injections = await PresentationRequest.Injections(
+        isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
+        isUserSubscribed: shared.isUserSubscribed,
+        isPaywallPresented: shared.isPaywallPresented
       )
       return (result, injections)
     }
-    .flatMap { (result, injections) in
+    .flatMap { result, injections in
       let presentationRequest = PresentationRequest(
         presentationInfo: .explicitTrigger(result.data),
         paywallOverrides: paywallOverrides,
@@ -226,9 +227,10 @@ public extension Superwall {
       createdAt: eventCreatedAt
     )
 
-    let injections = await PresentationRequest.Injections(
+    let injections = PresentationRequest.Injections(
       isDebuggerLaunched: false,
-      isUserSubscribed: shared.isUserSubscribed
+      isUserSubscribed: await shared.isUserSubscribed,
+      isPaywallPresented: false
     )
     let presentationRequest = PresentationRequest(
       presentationInfo: .explicitTrigger(eventData),

@@ -95,7 +95,8 @@ extension Superwall {
         presentationInfo: presentationInfo,
         injections: .init(
           isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
-          isUserSubscribed: isUserSubscribed
+          isUserSubscribed: isUserSubscribed,
+          isPaywallPresented: isPaywallPresented
         )
       )
       await internallyPresent(presentationRequest).asyncNoValue()
@@ -107,7 +108,8 @@ extension Superwall {
         presentationInfo: presentationInfo,
         injections: .init(
           isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
-          isUserSubscribed: isUserSubscribed
+          isUserSubscribed: isUserSubscribed,
+          isPaywallPresented: isPaywallPresented
         )
       )
       await internallyPresent(presentationRequest).asyncNoValue()

@@ -396,7 +396,8 @@ final class SWDebugViewController: UIViewController {
       presentingViewController: self,
       injections: .init(
         isDebuggerLaunched: true,
-        isUserSubscribed: false
+        isUserSubscribed: false,
+        isPaywallPresented: Superwall.shared.isPaywallPresented
       )
     )
 

@@ -28,7 +28,7 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
       if let eventData = request.presentationInfo.eventData {
         let eventOutcome = AssignmentLogic.evaluateRules(
           forEvent: eventData,
-          triggers: ConfigManager.shared.triggersByEventName,
+          triggers: request.injections.configManager.triggersByEventName,
           configManager: request.injections.configManager,
           storage: request.injections.storage,
           isPreemptive: isPreemptive

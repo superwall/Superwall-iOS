@@ -12,9 +12,11 @@ final class InternalPresentationLogicTests: XCTestCase {
   func test_shouldNotDisplayPaywall_debuggerLaunched() {
     let outcome = InternalPresentationLogic.userSubscribedAndNotOverridden(
       isUserSubscribed: true,
-      isDebuggerLaunched: true,
-      shouldIgnoreSubscriptionStatus: false,
-      presentationCondition: .checkUserSubscription
+      overrides: .init(
+        isDebuggerLaunched: true,
+        shouldIgnoreSubscriptionStatus: false,
+        presentationCondition: .checkUserSubscription
+      )
     )
     XCTAssertFalse(outcome)
   }
@@ -22,9 +24,10 @@ final class InternalPresentationLogicTests: XCTestCase {
   func test_shouldNotDisplayPaywall_noPresentationCondition_userIsNotSubscribed() {
     let outcome = InternalPresentationLogic.userSubscribedAndNotOverridden(
       isUserSubscribed: false,
-      isDebuggerLaunched: false,
-      shouldIgnoreSubscriptionStatus: false,
-      presentationCondition: nil
+      overrides: .init(
+        isDebuggerLaunched: false,
+        shouldIgnoreSubscriptionStatus: false
+      )
     )
     XCTAssertFalse(outcome)
   }
@@ -32,9 +35,10 @@ final class InternalPresentationLogicTests: XCTestCase {
   func test_shouldNotDisplayPaywall_noPresentationCondition_shouldIgnoreSubscriptionStatus() {
     let outcome = InternalPresentationLogic.userSubscribedAndNotOverridden(
       isUserSubscribed: true,
-      isDebuggerLaunched: false,
-      shouldIgnoreSubscriptionStatus: true,
-      presentationCondition: nil
+      overrides: .init(
+        isDebuggerLaunched: false,
+        shouldIgnoreSubscriptionStatus: true
+      )
     )
     XCTAssertFalse(outcome)
   }
@@ -42,9 +46,10 @@ final class InternalPresentationLogicTests: XCTestCase {
   func test_shouldNotDisplayPaywall_noPresentationCondition_shouldNotIgnoreSubscriptionStatus() {
     let outcome = InternalPresentationLogic.userSubscribedAndNotOverridden(
       isUserSubscribed: true,
-      isDebuggerLaunched: false,
-      shouldIgnoreSubscriptionStatus: false,
-      presentationCondition: nil
+      overrides: .init(
+        isDebuggerLaunched: false,
+        shouldIgnoreSubscriptionStatus: false
+      )
     )
     XCTAssertTrue(outcome)
   }
@@ -52,9 +57,11 @@ final class InternalPresentationLogicTests: XCTestCase {
   func test_shouldNotDisplayPaywall_presentationCondition_always() {
     let outcome = InternalPresentationLogic.userSubscribedAndNotOverridden(
       isUserSubscribed: true,
-      isDebuggerLaunched: false,
-      shouldIgnoreSubscriptionStatus: false,
-      presentationCondition: .always
+      overrides: .init(
+        isDebuggerLaunched: false,
+        shouldIgnoreSubscriptionStatus: false,
+        presentationCondition: .always
+      )
     )
     XCTAssertFalse(outcome)
   }
@@ -62,9 +69,11 @@ final class InternalPresentationLogicTests: XCTestCase {
   func test_shouldNotDisplayPaywall_presentationCondition_checkSubscription() {
     let outcome = InternalPresentationLogic.userSubscribedAndNotOverridden(
       isUserSubscribed: true,
-      isDebuggerLaunched: false,
-      shouldIgnoreSubscriptionStatus: false,
-      presentationCondition: .checkUserSubscription
+      overrides: .init(
+        isDebuggerLaunched: false,
+        shouldIgnoreSubscriptionStatus: false,
+        presentationCondition: .checkUserSubscription
+      )
     )
     XCTAssertTrue(outcome)
   }

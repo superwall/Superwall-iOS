@@ -24,7 +24,7 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
         "cached": request.cached
       ]
 
-      Logger.debug(
+      request.injections.logger.debug(
         logLevel: .debug,
         scope: .paywallPresentation,
         message: message,

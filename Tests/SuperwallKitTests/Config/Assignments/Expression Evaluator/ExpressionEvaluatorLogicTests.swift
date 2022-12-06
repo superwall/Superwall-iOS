@@ -16,7 +16,8 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
     let shouldFire = ExpressionEvaluatorLogic.shouldFire(
       forOccurrence: .stub(),
       ruleMatched: false,
-      storage: storage
+      storage: storage,
+      isPreemptive: false
     )
     XCTAssertFalse(shouldFire)
   }
@@ -26,7 +27,8 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
     let shouldFire = ExpressionEvaluatorLogic.shouldFire(
       forOccurrence: nil,
       ruleMatched: true,
-      storage: storage
+      storage: storage,
+      isPreemptive: false
     )
     XCTAssertTrue(shouldFire)
   }
@@ -38,7 +40,8 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
       forOccurrence: .stub()
         .setting(\.maxCount, to: 1),
       ruleMatched: true,
-      storage: storage
+      storage: storage,
+      isPreemptive: false
     )
     XCTAssertFalse(shouldFire)
   }
@@ -50,7 +53,8 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
       forOccurrence: .stub()
         .setting(\.maxCount, to: 1),
       ruleMatched: true,
-      storage: storage
+      storage: storage,
+      isPreemptive: false
     )
     XCTAssertTrue(shouldFire)
   }
@@ -62,7 +66,8 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
       forOccurrence: .stub()
         .setting(\.maxCount, to: 4),
       ruleMatched: true,
-      storage: storage
+      storage: storage,
+      isPreemptive: false
     )
     XCTAssertTrue(shouldFire)
   }

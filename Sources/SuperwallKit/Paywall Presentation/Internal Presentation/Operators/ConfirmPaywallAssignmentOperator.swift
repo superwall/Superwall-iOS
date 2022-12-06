@@ -14,15 +14,15 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
   /// This is split from the holdout assignment because overrides can make the
   /// paywall present even if the user is subscribed. We only know the overrides
   /// at this point.
-  func confirmPaywallAssignment(configManager: ConfigManager = .shared) -> AnyPublisher<PresentablePipelineOutput, Failure> {
-   map { input in
+  func confirmPaywallAssignment() -> AnyPublisher<PresentablePipelineOutput, Failure> {
+    map { input in
       // Debuggers shouldn't confirm assignments.
-     if input.request.injections.isDebuggerLaunched {
+      if input.request.injections.isDebuggerLaunched {
         return input
       }
 
       if let confirmableAssignment = input.confirmableAssignment {
-        configManager.confirmAssignment(confirmableAssignment)
+        input.request.injections.configManager.confirmAssignment(confirmableAssignment)
       }
       return input
     }

@@ -62,7 +62,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
 
         let error = InternalPresentationLogic.presentationError(
           domain: "SWPresentationError",
-          code: 101,
+          code: 103,
           title: "No UIViewController to present paywall on",
           value: "This usually happens when you call this method before a window was made key and visible."
         )

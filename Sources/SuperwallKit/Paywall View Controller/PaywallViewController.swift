@@ -26,7 +26,7 @@ enum PaywallLoadingState {
   case ready
 }
 
-final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegate {
+class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegate {
   // MARK: - Internal Properties
   override var preferredStatusBarStyle: UIStatusBarStyle {
     if let isDark = view.backgroundColor?.isDarkColor, isDark {
@@ -540,46 +540,9 @@ final class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingD
       }
     )
 	}
-}
 
-// MARK: - PaywallMessageHandlerDelegate
-extension PaywallViewController: PaywallMessageHandlerDelegate {
-  func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
-    Task {
-      await delegate?.eventDidOccur(
-        paywallEvent,
-        on: self
-      )
-    }
-  }
+  // MARK: - Presentation Logic
 
-  func presentSafariInApp(_ url: URL) {
-    let safariVC = SFSafariViewController(url: url)
-    safariVC.delegate = self
-    self.isSafariVCPresented = true
-    present(safariVC, animated: true)
-  }
-
-  func presentSafariExternal(_ url: URL) {
-    UIApplication.shared.open(url)
-  }
-
-  func openDeepLink(_ url: URL) {
-    dismiss(
-      .withResult(
-        paywallInfo: paywallInfo,
-        state: .closed
-      ),
-      shouldSendDismissedState: true
-    ) { [weak self] in
-      self?.eventDidOccur(.openedDeepLink(url: url))
-      UIApplication.shared.open(url)
-    }
-  }
-}
-
-// MARK: - Presentation Logic
-extension PaywallViewController {
   func present(
     on presenter: UIViewController,
     eventData: EventData?,
@@ -633,26 +596,26 @@ extension PaywallViewController {
     }
   }
 
-	private func prepareForPresentation() {
-		willMove(toParent: nil)
-		view.removeFromSuperview()
-		removeFromParent()
-		view.alpha = 1.0
-		view.transform = .identity
-		webView.scrollView.contentOffset = CGPoint.zero
+  private func prepareForPresentation() {
+    willMove(toParent: nil)
+    view.removeFromSuperview()
+    removeFromParent()
+    view.alpha = 1.0
+    view.transform = .identity
+    webView.scrollView.contentOffset = CGPoint.zero
 
-		Superwall.shared.delegateAdapter.willPresentPaywall()
-	}
+    Superwall.shared.delegateAdapter.willPresentPaywall()
+  }
 
   private func presentationDidFinish() {
     isPresented = true
-		Superwall.shared.delegateAdapter.didPresentPaywall()
+    Superwall.shared.delegateAdapter.didPresentPaywall()
     Task(priority: .utility) {
       await trackOpen()
     }
     GameControllerManager.shared.setDelegate(self)
     promptSuperwallDelegate()
-	}
+  }
 
   private func promptSuperwallDelegate() {
     let hasDelegate = Superwall.shared.delegateAdapter.hasDelegate
@@ -704,6 +667,42 @@ extension PaywallViewController {
         loadingState != .loadingResponse {
         self?.loadingState = .ready
       }
+    }
+  }
+}
+
+// MARK: - PaywallMessageHandlerDelegate
+extension PaywallViewController: PaywallMessageHandlerDelegate {
+  func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
+    Task {
+      await delegate?.eventDidOccur(
+        paywallEvent,
+        on: self
+      )
+    }
+  }
+
+  func presentSafariInApp(_ url: URL) {
+    let safariVC = SFSafariViewController(url: url)
+    safariVC.delegate = self
+    self.isSafariVCPresented = true
+    present(safariVC, animated: true)
+  }
+
+  func presentSafariExternal(_ url: URL) {
+    UIApplication.shared.open(url)
+  }
+
+  func openDeepLink(_ url: URL) {
+    dismiss(
+      .withResult(
+        paywallInfo: paywallInfo,
+        state: .closed
+      ),
+      shouldSendDismissedState: true
+    ) { [weak self] in
+      self?.eventDidOccur(.openedDeepLink(url: url))
+      UIApplication.shared.open(url)
     }
   }
 }
@@ -779,16 +778,6 @@ extension PaywallViewController: GameControllerDelegate {
       message: "Received Event",
       info: ["payload": payload],
       error: nil
-    )
-  }
-}
-
-// MARK: - Stubbable
-extension PaywallViewController: Stubbable {
-  static func stub() -> PaywallViewController {
-    return PaywallViewController(
-      paywall: .stub(),
-      delegate: nil
     )
   }
 }

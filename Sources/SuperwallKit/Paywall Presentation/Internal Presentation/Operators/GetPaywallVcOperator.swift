@@ -50,7 +50,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         )
 
         // if there's a paywall being presented, don't do anything
-        if await Superwall.shared.isPaywallPresented {
+        if input.request.injections.isPaywallPresented {
           Logger.debug(
             logLevel: .error,
             scope: .paywallPresentation,
@@ -59,7 +59,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
           )
           let error = InternalPresentationLogic.presentationError(
             domain: "SWPresentationError",
-            code: 101,
+            code: 102,
             title: "Paywall Already Presented",
             value: "You can only present one paywall at a time."
           )
@@ -78,8 +78,8 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         )
         return output
       } catch {
-        if await InternalPresentationLogic.userSubscribedAndNotOverridden(
-          isUserSubscribed: Superwall.shared.isUserSubscribed,
+        if InternalPresentationLogic.userSubscribedAndNotOverridden(
+          isUserSubscribed: input.request.injections.isUserSubscribed,
           overrides: .init(
             isDebuggerLaunched: input.request.injections.isDebuggerLaunched,
             shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus

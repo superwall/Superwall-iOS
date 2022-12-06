@@ -7,7 +7,40 @@
 
 import Foundation
 
-enum Logger {
+protocol Loggable {
+  static func shouldPrint(
+    logLevel: LogLevel,
+    scope: LogScope
+  ) -> Bool
+
+  static func debug(
+    logLevel: LogLevel,
+    scope: LogScope,
+    message: String?,
+    info: [String: Any]?,
+    error: Swift.Error?
+  )
+}
+
+extension Loggable {
+  static func debug(
+    logLevel: LogLevel,
+    scope: LogScope,
+    message: String? = nil,
+    info: [String: Any]? = nil,
+    error: Swift.Error? = nil
+  ) {
+    debug(
+      logLevel: logLevel,
+      scope: scope,
+      message: message,
+      info: info,
+      error: error
+    )
+  }
+}
+
+enum Logger: Loggable {
 	static func shouldPrint(
     logLevel: LogLevel,
     scope: LogScope

@@ -34,12 +34,19 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
                 paywallStatePublisher.send(state)
                 promise(.success(input))
               } else {
-                Logger.debug(
+                input.request.injections.logger.debug(
                   logLevel: .info,
                   scope: .paywallPresentation,
                   message: "Paywall Already Presented",
                   info: input.debugInfo
                 )
+                let error = InternalPresentationLogic.presentationError(
+                  domain: "SWPresentationError",
+                  code: 102,
+                  title: "Paywall Already Presented",
+                  value: "Trying to present paywall while another paywall is presented."
+                )
+                paywallStatePublisher.send(.skipped(.error(error)))
                 paywallStatePublisher.send(completion: .finished)
                 promise(.failure(PresentationPipelineError.cancelled))
               }

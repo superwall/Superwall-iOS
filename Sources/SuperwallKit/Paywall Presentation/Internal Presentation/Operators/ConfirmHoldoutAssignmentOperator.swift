@@ -13,12 +13,12 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
   ///
   /// We can't confirm a paywall assignment here because there may be factors that prevent
   /// it from showing later on.
-  func confirmAssignmentIfHoldout(configManager: ConfigManager = .shared) -> AnyPublisher<AssignmentPipelineOutput, Failure> {
+  func confirmHoldoutAssignment() -> AnyPublisher<AssignmentPipelineOutput, Failure> {
     map { input in
       switch input.triggerResult {
       case .holdout:
         if let confirmableAssignment = input.confirmableAssignment {
-          configManager.confirmAssignment(confirmableAssignment)
+          input.request.injections.configManager.confirmAssignment(confirmableAssignment)
         }
       default:
         break
