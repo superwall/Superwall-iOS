@@ -17,9 +17,9 @@ struct PostbackProduct: Codable {
   var productVariables: JSON
   var product: SWProduct
 
-  init(product: SKProduct) {
+  init(product: StoreProduct) {
     self.identifier = product.productIdentifier
     self.productVariables = product.swProductTemplateVariablesJson
-    self.product = SWProduct(product: product)
+    self.product = product.swProduct
   }
 }

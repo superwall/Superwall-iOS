@@ -8,8 +8,25 @@
 import Foundation
 import StoreKit
 
-@MainActor
 final class RestorationHandler {
+  private let storeKitManager: StoreKitManager
+  private let sessionEventsManager: SessionEventsManager
+  private let configManager: ConfigManager
+  private let superwall: Superwall.Type
+
+  init(
+    storeKitManager: StoreKitManager,
+    sessionEventsManager: SessionEventsManager,
+    configManager: ConfigManager,
+    superwall: Superwall.Type = Superwall.self
+  ) {
+    self.storeKitManager = storeKitManager
+    self.sessionEventsManager = sessionEventsManager
+    self.configManager = configManager
+    self.superwall = superwall
+  }
+
+  @MainActor
   func tryToRestore(_ paywallViewController: PaywallViewController) async {
     Logger.debug(
       logLevel: .debug,
@@ -19,11 +36,25 @@ final class RestorationHandler {
 
     paywallViewController.loadingState = .loadingPurchase
 
-    let hasRestored = await Superwall.shared.delegateAdapter.restorePurchases()
+    // TODO: Change delegate function to just be whether the restoring of purchases succeeded or not. Not whether they have a subscription!
+    let hasRestored = await storeKitManager.coordinator.txnRestorer.restorePurchases()
+    var isUserSubscribed = false
+
+    if hasRestored {
+      // TODO: Check that receipt has refreshed before here, especially when restoring a sandbox purchase on device. Could it get here before receipt has refreshed? We don't want that!
+      await storeKitManager.loadPurchasedProducts()
+
+      let productIds = paywallViewController.paywall.productIds
+      let productEntitlements = configManager.getEntitlements(forProductIds: productIds)
+
+      isUserSubscribed = storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(toEntitlements: productEntitlements)
+    }
 
     paywallViewController.loadingState = .ready
 
-    if hasRestored {
+    // TODO: Look over the tracking of the restore here
+    if hasRestored,
+      isUserSubscribed {
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
@@ -38,16 +69,16 @@ final class RestorationHandler {
       )
 
       paywallViewController.presentAlert(
-        title: Superwall.options.paywalls.restoreFailed.title,
-        message: Superwall.options.paywalls.restoreFailed.message,
-        closeActionTitle: Superwall.options.paywalls.restoreFailed.closeButtonTitle
+        title: superwall.options.paywalls.restoreFailed.title,
+        message: superwall.options.paywalls.restoreFailed.message,
+        closeActionTitle: superwall.options.paywalls.restoreFailed.closeButtonTitle
       )
     }
   }
 
+  @MainActor
   private func transactionWasRestored(paywallViewController: PaywallViewController) {
     let paywallInfo = paywallViewController.paywallInfo
-    let isFreeTrialAvailable = paywallViewController.paywall.isFreeTrialAvailable == true
     Task.detached(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .restore,
@@ -55,19 +86,18 @@ final class RestorationHandler {
         product: nil,
         model: nil
       )
-      await Superwall.track(trackedEvent)
+      await self.superwall.track(trackedEvent)
 
       // If on iOS 15+ we don't use the Sk1 transaction observer.
       // So will need to track transactions here.
       if #available(iOS 15.0, *) {
-        await SessionEventsManager.shared.triggerSession.trackTransactionRestoration(
-          isFreeTrialAvailable: isFreeTrialAvailable
-        )
+        // TODO: Why are we doing this when we did stuff earlier in restore didn't we or at least in the sk1 one?
+        await self.sessionEventsManager.triggerSession.trackTransactionRestoration()
       }
     }
 
     if Superwall.options.paywalls.automaticallyDismiss {
-      Superwall.shared.dismiss(paywallViewController, state: .restored)
+      superwall.shared.dismiss(paywallViewController, state: .restored)
     } else {
       paywallViewController.loadingState = .ready
     }

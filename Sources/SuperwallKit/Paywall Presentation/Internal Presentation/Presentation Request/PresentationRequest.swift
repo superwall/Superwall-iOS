@@ -23,10 +23,10 @@ struct PresentationRequest {
   var paywallOverrides: PaywallOverrides?
 
   struct Injections {
-    var configManager: ConfigManager = .shared
-    var storage: Storage = .shared
-    var sessionEventsManager: SessionEventsManager = .shared
-    var paywallManager: PaywallManager = .shared
+    var configManager: ConfigManager
+    var storage: Storage
+    var sessionEventsManager: SessionEventsManager
+    var paywallManager: PaywallManager
     var superwall: Superwall = .shared
     var logger: Loggable.Type = Logger.self
     var isDebuggerLaunched: Bool
@@ -45,9 +45,30 @@ struct PresentationRequest {
 
 extension PresentationRequest: Stubbable {
   static func stub() -> PresentationRequest {
+    let storage = Storage()
+    let paywallManager = PaywallManager()
+    let network = Network()
+    let configManager = ConfigManager(
+      options: nil,
+      storage: storage,
+      network: network,
+      paywallManager: paywallManager
+    )
+    let appSessionManager = AppSessionManager(configManager: configManager)
+
     return PresentationRequest(
       presentationInfo: .explicitTrigger(.stub()),
       injections: .init(
+        configManager: configManager,
+        storage: storage,
+        sessionEventsManager: SessionEventsManager(
+          storage: storage,
+          network: network,
+          configManager: configManager,
+          appSessionManager: appSessionManager,
+          identityManager: IdentityManager(storage: storage, configManager: configManager)
+        ),
+        paywallManager: paywallManager,
         isDebuggerLaunched: false,
         isUserSubscribed: false,
         isPaywallPresented: false

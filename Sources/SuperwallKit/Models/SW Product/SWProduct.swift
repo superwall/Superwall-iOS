@@ -23,7 +23,7 @@ struct SWProduct: Codable {
   var subscriptionPeriod: SWProductSubscriptionPeriod?
   var introductoryPrice: SWProductDiscount?
 
-  init(product: SKProduct) {
+  init(product: SK1Product) {
     localizedDescription = product.localizedDescription
     localizedTitle = product.localizedTitle
     price = product.price as Decimal
@@ -50,6 +50,38 @@ struct SWProduct: Codable {
     }
     if let discount = product.introductoryPrice {
       introductoryPrice = SWProductDiscount(discount: discount)
+    }
+  }
+
+  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+  init(product: SK2Product) {
+    localizedDescription = product.description
+    localizedTitle = product.displayName
+    price = product.price
+    priceLocale = product.priceFormatStyle.locale.identifier
+    productIdentifier = product.id
+    isDownloadable = false
+    downloadContentLengths = []
+    contentVersion = ""
+    downloadContentVersion = ""
+
+    isFamilyShareable = product.isFamilyShareable
+
+
+    discounts = product.subscription?.promotionalOffers.map { offer in
+      SWProductDiscount(offer: offer, fromProduct: product)
+    }
+
+    subscriptionGroupIdentifier = product.subscription?.subscriptionGroupID
+
+    if let subscription = product.subscription {
+      subscriptionPeriod = SWProductSubscriptionPeriod(
+        period: subscription.subscriptionPeriod,
+        numberOfPeriods: 1
+      )
+    }
+    if let offer = product.subscription?.introductoryOffer {
+      introductoryPrice = SWProductDiscount(offer: offer, fromProduct: product)
     }
   }
 }

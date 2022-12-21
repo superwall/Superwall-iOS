@@ -45,16 +45,15 @@ extension Superwall {
       .storePresentationObjects(presentationSubject)
       .sink(
         receiveCompletion: { [weak self] _ in
-          // When the pipeline completes, remove its reference.
           self?.presentationItems.cancellables.remove(presentationPublisher)
         },
         receiveValue: { _ in }
       )
 
-    presentationPublisher.store(in: &presentationItems.cancellables)
+    presentationPublisher?.store(in: &presentationItems.cancellables)
 
     return paywallStatePublisher
-      .receive(on: RunLoop.main)
+      .receive(on: DispatchQueue.main)
       .eraseToAnyPublisher()
   }
 

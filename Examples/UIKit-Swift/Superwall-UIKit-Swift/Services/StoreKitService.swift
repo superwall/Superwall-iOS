@@ -77,6 +77,7 @@ extension StoreKitService: SKPaymentTransactionObserver {
     for transaction in transactions {
       switch transaction.transactionState {
       case .purchased:
+        // TODO: Verify receipts.
         isSubscribed = true
         SKPaymentQueue.default().finishTransaction(transaction)
         completion?(.purchased)

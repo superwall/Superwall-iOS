@@ -69,10 +69,10 @@ enum TriggerSessions: Storable {
 
 enum Transactions: Storable {
   static var key: String {
-    "store.transactions"
+    "store.transactions.v2"
   }
   static var directory: SearchPathDirectory = .cache
-  typealias Value = [TransactionModel]
+  typealias Value = [StoreTransaction]
 }
 
 enum Version: Storable {

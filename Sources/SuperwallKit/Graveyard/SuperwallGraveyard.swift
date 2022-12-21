@@ -11,21 +11,10 @@ public extension Superwall {
   // MARK: - Unavailable methods
   @available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
   @discardableResult
-  static func configure(
-    apiKey: String,
-    userId: String?,
-    delegate: SuperwallDelegate? = nil,
-    options: SuperwallOptions? = nil
-  ) -> Superwall {
-    return shared
-  }
-
-  @available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
-  @discardableResult
   @objc static func configure(
     apiKey: String,
     userId: String?,
-    delegate: SuperwallDelegateObjc? = nil,
+    delegate: SuperwallDelegate? = nil,
     options: SuperwallOptions? = nil
   ) -> Superwall {
     return shared

@@ -218,7 +218,7 @@ enum ConfigLogic {
   static func getStaticPaywall(
     withId paywallId: String?,
     config: Config?,
-    deviceHelper: DeviceHelper = .shared
+    deviceHelper: DeviceHelper
   ) -> Paywall? {
     guard let paywallId = paywallId else {
       return nil

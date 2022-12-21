@@ -12,23 +12,16 @@ import StoreKit
 final class SuperwallService {
   static let shared = SuperwallService()
   #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
-  private static let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
+  private static let apiKey = "pk_e85ec09a2dfe4f52581478543143ae67f4f76e7a6d51714c"
   static var name: String {
     return Superwall.userAttributes["firstName"] as? String ?? ""
   }
 
-  static func configure() -> Bool {
-    Task {
-      await StoreKitService.shared.loadSubscriptionState()
-    }
-
+  static func configure(){
     Superwall.configure(
       apiKey: apiKey,
       delegate: shared
     )
-
-    // Checking our logged in status.
-    return Superwall.isLoggedIn
   }
 
   static func logIn() async {
@@ -68,10 +61,9 @@ final class SuperwallService {
   }
 }
 
-// MARK: - Superwall Delegate
-extension SuperwallService: SuperwallDelegate {
+extension SuperwallService: SuperwallPurchasingDelegate {
   func purchase(product: SKProduct) async -> PurchaseResult {
-    return await withCheckedContinuation { continuation in
+  return await withCheckedContinuation { continuation in
       StoreKitService.shared.purchase(product) { result in
         continuation.resume(with: .success(result))
       }
@@ -82,10 +74,13 @@ extension SuperwallService: SuperwallDelegate {
     return StoreKitService.shared.restorePurchases()
   }
 
-  func isUserSubscribed() -> Bool {
-    return StoreKitService.shared.isSubscribed
+  func isUserSubscribed(toEntitlements entitlements: Set<String>) -> Bool {
+    return false//StoreKitService.shared.isSubscribed
   }
+}
 
+// MARK: - Superwall Delegate
+extension SuperwallService: SuperwallDelegate {
   func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
     print("analytics event called", info.event.description)
 

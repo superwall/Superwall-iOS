@@ -203,7 +203,7 @@ extension Endpoint where Response == Paywall {
 
 // MARK: - PaywallsResponse
 extension Endpoint where Response == Paywalls {
-  static func paywalls() -> Self {
+  static var paywalls: Self {
     return Endpoint(
       components: Components(
         host: Api.Base.host,

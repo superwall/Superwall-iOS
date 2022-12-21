@@ -14,13 +14,13 @@ import StoreKit
 @objc(SWKPaywallProducts)
 public class PaywallProducts: NSObject {
   /// The primary product for the paywall.
-  var primary: SKProduct?
+  var primary: StoreProduct?
 
   /// The secondary product for the paywall.
-  var secondary: SKProduct?
+  var secondary: StoreProduct?
 
   /// The tertiary product for the paywall.
-  var tertiary: SKProduct?
+  var tertiary: StoreProduct?
 
   var ids: [String] = []
 
@@ -33,9 +33,9 @@ public class PaywallProducts: NSObject {
   ///   - secondary: The secondary product for the paywall.
   ///   - tertiary: The tertiary product for the paywall.
   public init(
-    primary: SKProduct? = nil,
-    secondary: SKProduct? = nil,
-    tertiary: SKProduct? = nil
+    primary: StoreProduct? = nil,
+    secondary: StoreProduct? = nil,
+    tertiary: StoreProduct? = nil
   ) {
     self.primary = primary
     self.secondary = secondary

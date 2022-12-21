@@ -9,24 +9,25 @@ import UIKit
 import Combine
 
 class AppSessionManager {
-  static let shared = AppSessionManager()
   var appSessionTimeout: Milliseconds?
+  unowned var sessionEventsManager: SessionEventsManager!
 
   private(set) var appSession = AppSession() {
     didSet {
       Task {
-        await SessionEventsManager.shared.updateAppSession()
+        await sessionEventsManager.updateAppSession(appSession)
       }
     }
   }
-  private let sessionEventsManager: SessionEventsManager
   private var lastAppClose: Date?
   private var didTrackLaunch = false
   private var cancellable: AnyCancellable?
 
-  /// Only directly initialise if testing otherwise use `AppSessionManager.shared`.
-  init(sessionEventsManager: SessionEventsManager = SessionEventsManager.shared) {
-    self.sessionEventsManager = sessionEventsManager
+  private let configManager: ConfigManager
+
+  /// **Note**: Remember to initialise sessionEventsManager separately after init!
+  init(configManager: ConfigManager) {
+    self.configManager = configManager
     Task {
       await addActiveStateObservers()
     }
@@ -56,7 +57,7 @@ class AppSessionManager {
   }
 
   private func listenForAppSessionTimeout() {
-    cancellable = ConfigManager.shared.$config
+    cancellable = configManager.$config
       .compactMap { $0 }
       .sink { [weak self] config in
         self?.appSessionTimeout = config.appSessionTimeout

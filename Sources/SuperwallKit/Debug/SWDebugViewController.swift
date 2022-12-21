@@ -119,8 +119,10 @@ final class SWDebugViewController: UIViewController {
   var paywalls: [Paywall] = []
   var previewViewContent: UIView?
   private var cancellable: AnyCancellable?
+  private let storeKitManager: StoreKitManager
 
-  init() {
+  init(storeKitManager: StoreKitManager = Superwall.shared.storeKitManager) {
+    self.storeKitManager = storeKitManager
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -218,7 +220,7 @@ final class SWDebugViewController: UIViewController {
       let request = PaywallRequest(responseIdentifiers: .init(paywallId: paywallId))
       var paywall = try await PaywallRequestManager.shared.getPaywall(from: request)
 
-      let productVariables = await StoreKitManager.shared.getProductVariables(for: paywall)
+      let productVariables = await storeKitManager.getProductVariables(for: paywall)
       paywall.productVariables = productVariables
 
       self.paywall = paywall
@@ -338,13 +340,11 @@ final class SWDebugViewController: UIViewController {
       )
       return
     }
-    guard let (productsById, _) = try? await StoreKitManager.shared
-      .getProducts(withIds: paywall.productIds)
-    else {
+    guard let (productsById, _) = try? await storeKitManager.getProducts(withIds: paywall.productIds) else {
       return
     }
 
-    var products: [SKProduct] = []
+    var products: [StoreProduct] = []
     for id in paywall.productIds {
       if let product = productsById[id] {
         products.append(product)

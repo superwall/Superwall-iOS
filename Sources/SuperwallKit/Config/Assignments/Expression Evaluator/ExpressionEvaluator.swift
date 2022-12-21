@@ -8,16 +8,29 @@
 import Foundation
 import JavaScriptCore
 
-enum ExpressionEvaluator {
-  static func evaluateExpression(
+struct ExpressionEvaluator {
+  private let storage: Storage
+  private let identityManager: IdentityManager
+  private let deviceHelper: DeviceHelper
+
+  init(
+    storage: Storage,
+    identityManager: IdentityManager,
+    deviceHelper: DeviceHelper
+  ) {
+    self.storage = storage
+    self.identityManager = identityManager
+    self.deviceHelper = deviceHelper
+  }
+
+  func evaluateExpression(
     fromRule rule: TriggerRule,
     eventData: EventData,
-    storage: Storage = Storage.shared,
     isPreemptive: Bool
   ) -> Bool {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
-      let shouldFire = ExpressionEvaluatorLogic.shouldFire(
+      let shouldFire = shouldFire(
         forOccurrence: rule.occurrence,
         ruleMatched: true,
         storage: storage,
@@ -51,8 +64,7 @@ enum ExpressionEvaluator {
 
     guard let postfix = getPostfix(
       forRule: rule,
-      withEventData: eventData,
-      storage: storage
+      withEventData: eventData
     ) else {
       return false
     }
@@ -64,7 +76,7 @@ enum ExpressionEvaluator {
 
     let isMatched = result?.toString() == "true"
 
-    let shouldFire = ExpressionEvaluatorLogic.shouldFire(
+    let shouldFire = shouldFire(
       forOccurrence: rule.occurrence,
       ruleMatched: isMatched,
       storage: storage,
@@ -74,14 +86,13 @@ enum ExpressionEvaluator {
     return shouldFire
   }
 
-  private static func getPostfix(
+  private func getPostfix(
     forRule rule: TriggerRule,
-    withEventData eventData: EventData,
-    storage: Storage
+    withEventData eventData: EventData
   ) -> String? {
     let values = JSON([
-      "user": IdentityManager.shared.userAttributes,
-      "device": DeviceHelper.shared.templateDevice.toDictionary(),
+      "user": identityManager.userAttributes,
+      "device": deviceHelper.templateDevice.toDictionary(),
       "params": eventData.parameters
     ])
 
@@ -105,5 +116,38 @@ enum ExpressionEvaluator {
       return nil
     }
     return nil
+  }
+
+  private func shouldFire(
+    forOccurrence occurrence: TriggerRuleOccurrence?,
+    ruleMatched: Bool,
+    storage: Storage,
+    isPreemptive: Bool
+  ) -> Bool {
+    if ruleMatched {
+      guard let occurrence = occurrence else {
+        Logger.debug(
+          logLevel: .debug,
+          scope: .paywallPresentation,
+          message: "No occurrence parameter found for trigger rule."
+        )
+        return true
+      }
+      let count = storage
+        .coreDataManager
+        .countTriggerRuleOccurrences(
+          for: occurrence
+        ) + 1
+      let shouldFire = count <= occurrence.maxCount
+
+      if shouldFire,
+        !isPreemptive {
+        storage.coreDataManager.save(triggerRuleOccurrence: occurrence)
+      }
+
+      return shouldFire
+    }
+
+    return false
   }
 }

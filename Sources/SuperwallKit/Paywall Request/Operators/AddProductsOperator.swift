@@ -33,7 +33,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
   private func getProducts(_ input: PipelineData) -> AnyPublisher<PipelineData, Error> {
     Future {
       do {
-        let result = try await StoreKitManager.shared.getProducts(
+        let result = try await Superwall.shared.storeKitManager.getProducts(
           withIds: input.paywall.productIds,
           responseProducts: input.paywall.products,
           substituting: input.request.substituteProducts

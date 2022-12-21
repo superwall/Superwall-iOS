@@ -8,9 +8,6 @@
 import Foundation
 
 class Storage {
-  /// The shared `Storage` instance.
-  static let shared = Storage()
-
   /// The interface that manages core data.
   let coreDataManager: CoreDataManager
 

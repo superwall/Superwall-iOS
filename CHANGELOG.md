@@ -48,6 +48,7 @@ We understand that transitions between major SDK releases can become frustrating
 
 ### Fixes
 
+- Fixes a caching issue where the paywall was still showing in free trial mode when it shouldn't have. This was happening if you had purchased a free trial, let it expire, then reopened the paywall. Note that in Sandbox environments this issue may still occur due to introductory offers not being added to a receipt until after a purchase. 
 - The API uses background threads wherever possible, dispatching to the main thread only when necessary and when returning from completion blocks.
 - The API is now fully compatible with Objective-C.
 - Bugfixes for loading and fail times of the webview and products.

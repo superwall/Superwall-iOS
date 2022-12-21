@@ -28,7 +28,7 @@ enum PaywallLogic {
   static func requestHash(
     identifier: String? = nil,
     event: EventData? = nil,
-    locale: String = DeviceHelper.shared.locale
+    locale: String
   ) -> String {
     let id = identifier ?? event?.name ?? "$called_manually"
     return "\(id)_\(locale)"
@@ -75,9 +75,9 @@ enum PaywallLogic {
 
   static func getVariablesAndFreeTrial(
     fromProducts products: [Product],
-    productsById: [String: SKProduct],
+    productsById: [String: StoreProduct],
     isFreeTrialAvailableOverride: Bool?,
-    isFreeTrialAvailable: @escaping (SKProduct) -> Bool = StoreKitManager.shared.isFreeTrialAvailable(for:)
+    isFreeTrialAvailable: @escaping (StoreProduct) -> Bool = Superwall.shared.storeKitManager.isFreeTrialAvailable(for:)
   ) -> ProductProcessingOutcome {
     var productVariables: [ProductVariable] = []
     var swTemplateProductVariables: [ProductVariable] = []
@@ -86,25 +86,25 @@ enum PaywallLogic {
 
     for product in products {
       // Get skproduct
-      guard let appleProduct = productsById[product.id] else {
+      guard let storeProduct = productsById[product.id] else {
         continue
       }
-      orderedSwProducts.append(appleProduct.swProduct)
+      orderedSwProducts.append(storeProduct.swProduct)
 
       let productVariable = ProductVariable(
         type: product.type,
-        attributes: appleProduct.attributesJson
+        attributes: storeProduct.attributesJson
       )
       productVariables.append(productVariable)
 
       let swTemplateProductVariable = ProductVariable(
         type: product.type,
-        attributes: appleProduct.swProductTemplateVariablesJson
+        attributes: storeProduct.swProductTemplateVariablesJson
       )
       swTemplateProductVariables.append(swTemplateProductVariable)
 
       if product.type == .primary {
-        hasFreeTrial = isFreeTrialAvailable(appleProduct)
+        hasFreeTrial = isFreeTrialAvailable(storeProduct)
 
         // use the override if it is set
         if let freeTrialOverride = isFreeTrialAvailableOverride {

@@ -10,10 +10,8 @@ import SystemConfiguration
 import CoreTelephony
 
 class DeviceHelper {
-  static let shared = DeviceHelper()
-
   var locale: String {
-    LocalizationManager.shared.selectedLocale ?? Locale.autoupdatingCurrent.identifier
+    localizationManager.selectedLocale ?? Locale.autoupdatingCurrent.identifier
   }
   let appInstalledAtString: String
 
@@ -229,7 +227,7 @@ class DeviceHelper {
   }
 
   private var daysSinceLastPaywallView: Int? {
-    guard let fromDate = Storage.shared.get(LastPaywallView.self) else {
+    guard let fromDate = storage.get(LastPaywallView.self) else {
       return nil
     }
     let toDate = Date()
@@ -238,7 +236,7 @@ class DeviceHelper {
   }
 
   private var minutesSinceLastPaywallView: Int? {
-    guard let fromDate = Storage.shared.get(LastPaywallView.self) else {
+    guard let fromDate = storage.get(LastPaywallView.self) else {
       return nil
     }
     let toDate = Date()
@@ -247,16 +245,16 @@ class DeviceHelper {
   }
 
   private var totalPaywallViews: Int {
-    return Storage.shared.get(TotalPaywallViews.self) ?? 0
+    return storage.get(TotalPaywallViews.self) ?? 0
   }
 
   var templateDevice: DeviceTemplate {
-    let aliases = [IdentityManager.shared.aliasId]
+    let aliases = [identityManager.aliasId]
 
     return DeviceTemplate(
-      publicApiKey: Storage.shared.apiKey,
+      publicApiKey: storage.apiKey,
       platform: isMac ? "macOS" : "iOS",
-      appUserId: IdentityManager.shared.appUserId ?? "",
+      appUserId: identityManager.appUserId ?? "",
       aliases: aliases,
       vendorId: vendorId,
       appVersion: appVersion,
@@ -287,7 +285,18 @@ class DeviceHelper {
     )
   }
 
-  init() {
+  private let storage: Storage
+  private let identityManager: IdentityManager
+  private let localizationManager: LocalizationManager
+
+  init(
+    storage: Storage,
+    identityManager: IdentityManager,
+    localizationManager: LocalizationManager
+  ) {
+    self.storage = storage
+    self.identityManager = identityManager
+    self.localizationManager = localizationManager
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
   }
 }

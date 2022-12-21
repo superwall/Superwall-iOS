@@ -35,7 +35,10 @@ let package = Package(
           package: "ASN1Swift"
         )
       ],
-      exclude: ["BundleHelper.swift"]
+      exclude: ["Resources/BundleHelper.swift"],
+      resources: [
+        .process("Resources/Certificates"),
+      ]
     ),
     .testTarget(
       name: "SuperwallKitTests",

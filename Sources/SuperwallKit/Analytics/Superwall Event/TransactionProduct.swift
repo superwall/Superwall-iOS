@@ -91,7 +91,7 @@ public struct TransactionProduct: Sendable {
     /// The value representing the duration of the product interval, from a day up to a year.
     ///
     /// For example, `.day`.
-    public let unit: SKProduct.PeriodUnit
+    public let unit: SubscriptionPeriod.Unit
 
     /// The number of days the subscription lasts.
     public let days: Int
@@ -133,7 +133,7 @@ public struct TransactionProduct: Sendable {
   /// The currency of the product.
   public let currency: Currency
 
-  init(product: SKProduct) {
+  init(product: StoreProduct) {
     id = product.productIdentifier
     price = Price(
       raw: product.price as Decimal,
@@ -167,12 +167,12 @@ public struct TransactionProduct: Sendable {
       )
     }
 
-    locale = product.priceLocale.identifier
-    languageCode = product.priceLocale.languageCode
+    locale = product.locale
+    languageCode = product.languageCode
 
     currency = Currency(
-      code: product.priceLocale.currencyCode,
-      symbol: product.priceLocale.currencySymbol
+      code: product.currencyCode,
+      symbol: product.currencySymbol
     )
   }
 }

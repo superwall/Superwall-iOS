@@ -10,7 +10,7 @@ import StoreKit
 
 public enum TransactionError: Error {
   case pending(String)
-  case failure(String, SKProduct)
+  case failure(String, StoreProduct)
 }
 
 enum TransactionErrorLogic {

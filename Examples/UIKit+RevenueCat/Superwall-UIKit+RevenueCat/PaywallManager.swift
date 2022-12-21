@@ -23,7 +23,7 @@ final class PaywallManager: NSObject {
 
   #warning("Replace these with your API keys:")
   private static let revenueCatApiKey = "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql"
-  private static let superwallApiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
+  private static let superwallApiKey = "pk_e85ec09a2dfe4f52581478543143ae67f4f76e7a6d51714c"
 
   #warning("Replace with your own RevenueCat entitlement:")
   private let proEntitlement = "pro"
@@ -37,12 +37,16 @@ final class PaywallManager: NSObject {
   ///
   /// Call this on `application(_:didFinishLaunchingWithOptions:)`
   static func configure() {
-    Purchases.configure(withAPIKey: revenueCatApiKey)
+    Purchases.configure(
+      with: .init(withAPIKey: revenueCatApiKey)
+        .with(usesStoreKit2IfAvailable: true)
+    )
     Purchases.shared.delegate = shared
 
     Superwall.configure(
       apiKey: superwallApiKey,
-      delegate: shared
+      delegate: shared,
+      purchasingDelegate: shared
     )
   }
 
@@ -97,6 +101,38 @@ final class PaywallManager: NSObject {
   static func setName(to name: String) {
     Superwall.setUserAttributes(["firstName": name])
   }
+
+  /// Purchases a product with RevenueCat.
+   ///
+ /// - Returns: A boolean indicating whether the user cancelled or not.
+   private func purchase(_ product: SKProduct) async throws -> Bool {
+     let storeProduct = RevenueCat.StoreProduct(sk1Product: product)
+    let (_, customerInfo, userCancelled) = try await Purchases.shared.purchase(product: storeProduct)
+     updateSubscriptionStatus(using: customerInfo)
+     return userCancelled
+   }
+}
+
+extension PaywallManager: SuperwallPurchasingDelegate {
+  func isUserSubscribed(toEntitlements entitlements: Set<String>) -> Bool {
+    return false
+  }
+
+  func purchase(product: SKProduct) async -> PurchaseResult {
+    do {
+      let userCancelled = try await purchase(product)
+      return userCancelled ? .cancelled : .purchased
+    } catch let error as ErrorCode {
+      switch error {
+      case .paymentPendingError:
+        return .pending
+      default:
+        return .failed(error)
+    }
+   } catch {
+    return .failed(error)
+    }
+  }
 }
 
 // MARK: - Purchases Delegate
@@ -123,37 +159,11 @@ extension PaywallManager: PurchasesDelegate {
       return false
     }
   }
-
-  /// Purchases a product with RevenueCat.
-  ///
-  /// - Returns: A boolean indicating whether the user cancelled or not.
-  private func purchase(_ product: SKProduct) async throws -> Bool {
-    let storeProduct = StoreProduct(sk1Product: product)
-    let (_, customerInfo, userCancelled) = try await Purchases.shared.purchase(product: storeProduct)
-    updateSubscriptionStatus(using: customerInfo)
-    return userCancelled
-  }
 }
 
 // MARK: - Superwall Delegate
 extension PaywallManager: SuperwallDelegate {
-  /// Purchase a product from a paywall.
-  func purchase(product: SKProduct) async -> PurchaseResult {
-    do {
-      let userCancelled = try await purchase(product)
-      return userCancelled ? .cancelled : .purchased
-    } catch let error as ErrorCode {
-      switch error {
-      case .paymentPendingError:
-        return .pending
-      default:
-        return .failed(error)
-      }
-    } catch {
-      return .failed(error)
-    }
-  }
-
+  
   /// Restore purchases
   func restorePurchases() async -> Bool {
     return await restore()

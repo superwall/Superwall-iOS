@@ -23,6 +23,7 @@ public enum LogScope: String {
   case productsManager
   case storeKitManager
   case events
+  case receipts
   case superwallCore
   case paywallPresentation
   case paywallTransactions

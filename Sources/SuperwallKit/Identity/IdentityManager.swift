@@ -9,7 +9,6 @@ import Foundation
 import Combine
 
 class IdentityManager {
-  static let shared = IdentityManager()
   var aliasId: String {
     didSet {
       saveIds()
@@ -36,8 +35,8 @@ class IdentityManager {
 
   /// A Publisher that only emits when `identitySubject` is `true`. When `true`,
   /// it means the SDK is ready to fire triggers.
-  static var hasIdentity: AnyPublisher<Bool, Error> {
-    shared.identitySubject
+  var hasIdentity: AnyPublisher<Bool, Error> {
+    identitySubject
       .filter { $0 == true }
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
@@ -48,8 +47,8 @@ class IdentityManager {
 
   /// Only use init for testing purposes. Otherwise use `shared`.
   init(
-    storage: Storage = .shared,
-    configManager: ConfigManager = .shared
+    storage: Storage,
+    configManager: ConfigManager
   ) {
     self.storage = storage
     self.configManager = configManager

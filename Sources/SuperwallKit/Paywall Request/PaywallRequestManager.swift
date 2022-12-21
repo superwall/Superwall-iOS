@@ -12,6 +12,11 @@ actor PaywallRequestManager {
   static let shared = PaywallRequestManager()
   private var activeTasks: [String: Task<Paywall, Error>] = [:]
   private var paywallsByHash: [String: Paywall] = [:]
+  private let storeKitManager: StoreKitManager
+
+  init(storeKitManager: StoreKitManager = Superwall.shared.storeKitManager) {
+    self.storeKitManager = storeKitManager
+  }
 
   ///  Gets a paywall from a given request.
   ///
@@ -30,10 +35,17 @@ actor PaywallRequestManager {
     let debuggerNotLaunched = await !SWDebugManager.shared.isDebuggerLaunched
     let shouldUseCache = notSubstitutingProducts && debuggerNotLaunched
 
-    if var response = paywallsByHash[requestHash],
+    if var paywall = paywallsByHash[requestHash],
       shouldUseCache {
-      response.experiment = request.responseIdentifiers.experiment
-      return response
+      if let primaryProduct = paywall.products.first(where: { $0.type == .primary }),
+        let storeProduct = storeKitManager.productsById[primaryProduct.id] {
+        let isFreeTrialAvailable = storeKitManager.isFreeTrialAvailable(for: storeProduct)
+        paywall.isFreeTrialAvailable = isFreeTrialAvailable
+      }
+
+      // TODO: WHy do we add experiment again here?
+      paywall.experiment = request.responseIdentifiers.experiment
+      return paywall
     }
 
     if let existingTask = activeTasks[requestHash] {

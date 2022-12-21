@@ -10,14 +10,12 @@ import UIKit
 import Combine
 
 class Network {
-  static let shared = Network()
   private let urlSession: CustomURLSession
   private var applicationStatePublisher: AnyPublisher<UIApplication.State, Never> {
     UIApplication.shared.publisher(for: \.applicationState)
       .eraseToAnyPublisher()
   }
 
-  /// Only use init when testing, for all other times use `Network.shared`.
   init(urlSession: CustomURLSession = CustomURLSession()) {
     self.urlSession = urlSession
   }
@@ -79,7 +77,7 @@ class Network {
 
   func getPaywalls() async throws -> [Paywall] {
     do {
-      let response = try await urlSession.request(.paywalls(), isForDebugging: true)
+      let response = try await urlSession.request(.paywalls, isForDebugging: true)
       return response.paywalls
     } catch {
       Logger.debug(
@@ -94,14 +92,13 @@ class Network {
 
   func getConfig(
     withRequestId requestId: String,
-    configManager: ConfigManager = .shared,
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
   ) async throws -> Config {
-  // Suspend until app is in foreground.
+    // Suspend until app is in foreground.
     let applicationStatePublisher = injectedApplicationStatePublisher ?? self.applicationStatePublisher
 
     await applicationStatePublisher
-      .subscribe(on: RunLoop.main)
+      .subscribe(on: DispatchQueue.main)
       .filter { $0 != .background }
       .eraseToAnyPublisher()
       .async()

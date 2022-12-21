@@ -22,4 +22,18 @@ extension Bundle {
   var applicationQuerySchemes: [String] {
     return infoDictionary?["LSApplicationQueriesSchemes"] as? [String] ?? []
   }
+
+  var receiptSpecificAppVersion: String? {
+    #if targetEnvironment(macCatalyst) || os(macOS)
+    let dictKey: String = "CFBundleShortVersionString"
+    #else
+    let dictKey: String = "CFBundleVersion"
+    #endif
+
+    guard let version = infoDictionary?[dictKey] as? String else {
+      return nil
+    }
+
+    return version
+  }
 }

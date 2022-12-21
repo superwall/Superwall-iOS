@@ -677,8 +677,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     await sessionManager.trackTransactionRestoration(
       withId: "abc",
-      product: primaryProduct,
-      isFreeTrialAvailable: false
+      product: primaryProduct
     )
 
     // Then
@@ -716,8 +715,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     await sessionManager.trackTransactionRestoration(
       withId: "abc",
-      product: primaryProduct,
-      isFreeTrialAvailable: false
+      product: primaryProduct
     )
 
     // Then
@@ -773,8 +771,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     await sessionManager.trackTransactionSucceeded(
       withId: id,
-      for: primaryProduct,
-      isFreeTrialAvailable: true
+      for: primaryProduct
     )
 
     // Then

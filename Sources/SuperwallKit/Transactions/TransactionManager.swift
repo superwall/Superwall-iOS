@@ -10,46 +10,21 @@ import UIKit
 import Combine
 
 final class TransactionManager {
-  /// Sends all transactions back to the server.
-  lazy var transactionRecorder = TransactionRecorder()
-
-  /// The StoreKit 1 transaction observer.
-  private var sk1TransactionObserver: Sk1TransactionObserver?
-
-  /// The StoreKit 2 transaction observer.
-  ///
-  /// This has to be `Any` as we can't restrict stored properties to
-  /// an iOS version with`@available`.
-  private var _sk2TransactionObserver: Any?
-
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
-  private var sk2TransactionObserver: Sk2TransactionObserver {
-    // swiftlint:disable:next force_cast force_unwrapping
-    return _sk2TransactionObserver! as! Sk2TransactionObserver
-  }
+  private let storeKitManager: StoreKitManager
+  private let sessionEventsManager: SessionEventsManager
 
   /// The paywall view controller that the last product was purchased from.
   private var lastPaywallViewController: PaywallViewController?
 
-  /// The last product purchased.
-  private var lastProductPurchased: SKProduct?
-
-  deinit {
-    if #available(iOS 15.0, *) {
-      sk2TransactionObserver.cancelTasks()
-      self._sk2TransactionObserver = nil
-    }
+  init(
+    storeKitManager: StoreKitManager,
+    sessionEventsManager: SessionEventsManager
+  ) {
+    self.storeKitManager = storeKitManager
+    self.sessionEventsManager = sessionEventsManager
   }
 
-  init() {
-    if #available(iOS 15.0, *) {
-      self._sk2TransactionObserver = Sk2TransactionObserver(delegate: self)
-    } else {
-      sk1TransactionObserver = Sk1TransactionObserver(delegate: self)
-    }
-  }
-
-  /// Purchases the given product and handles the callback appropriately.
+  /// Purchases the given product and handles the result appropriately.
   ///
   /// - Parameters:
   ///   - productId: The ID of the product to purchase.
@@ -59,31 +34,24 @@ final class TransactionManager {
     _ productId: String,
     from paywallViewController: PaywallViewController
   ) async {
-    guard let product = StoreKitManager.shared.productsById[productId] else {
+    guard let product = storeKitManager.productsById[productId] else {
       return
     }
+
     await prepareToStartTransaction(of: product, from: paywallViewController)
 
-    do {
-      let purchaseStartDate = Date()
+    await paywallViewController.startTransactionTimeout()
+    let result = await PurchaseManager.purchase(product: product, using: storeKitManager.coordinator)
+    await paywallViewController.cancelTransactionTimeout()
 
-      await paywallViewController.startTransactionTimeout()
-      let result = try await Superwall.shared.delegateAdapter.purchase(product: product)
-      await paywallViewController.cancelTransactionTimeout()
-
-      if #available(iOS 15.0, *) {
-        await checkForTransaction(of: product, since: purchaseStartDate)
-      }
-
-      switch result {
-      case .purchased:
-        await didPurchase(product, from: paywallViewController)
-      case .pending:
-        await handlePendingTransaction(from: paywallViewController)
-      case .cancelled:
-        trackCancelled(product: product, from: paywallViewController)
-      }
-    } catch {
+    switch result {
+    case .purchased(let transaction):
+      await didPurchase(
+        product,
+        from: paywallViewController,
+        transaction: transaction
+      )
+    case .failed(let error):
       let outcome = TransactionErrorLogic.handle(error)
       switch outcome {
       case .cancelled:
@@ -98,6 +66,10 @@ final class TransactionManager {
           paywallViewController: paywallViewController
         )
       }
+    case .pending:
+      await handlePendingTransaction(from: paywallViewController)
+    case .cancelled:
+      trackCancelled(product: product, from: paywallViewController)
     }
 
     await MainActor.run {
@@ -113,7 +85,7 @@ final class TransactionManager {
 
   /// Tracks the analytics and logs the start of the transaction.
   private func prepareToStartTransaction(
-    of product: SKProduct,
+    of product: StoreProduct,
     from paywallViewController: PaywallViewController
   ) async {
     Logger.debug(
@@ -126,7 +98,7 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.paywallInfo
     Task.detached(priority: .utility) {
-      await SessionEventsManager.shared.triggerSession.trackBeginTransaction(of: product)
+      await self.sessionEventsManager.triggerSession.trackBeginTransaction(of: product)
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .start(product),
         paywallInfo: paywallInfo,
@@ -136,42 +108,17 @@ final class TransactionManager {
       await Superwall.track(trackedEvent)
     }
 
-    lastProductPurchased = product
     lastPaywallViewController = paywallViewController
     await MainActor.run {
       paywallViewController.loadingState = .loadingPurchase
     }
   }
 
-  /// An iOS 15-only function that checks for a transaction of the product.
-  ///
-  /// We need this function because on iOS 15+, the `Transaction.updates` listener doesn't notify us
-  /// of transactions for recent purchases.
-  @available(iOS 15.0, *)
-  private func checkForTransaction(
-    of product: SKProduct,
-    since purchaseStartDate: Date
-  ) async {
-    let transaction = await Transaction.latest(for: product.productIdentifier)
-    guard case let .verified(transaction) = transaction else {
-      return
-    }
-    guard transaction.purchaseDate >= purchaseStartDate else {
-      return
-    }
-
-    let transactionModel = await transactionRecorder.record(transaction)
-
-    await self.trackTransactionDidSucceed(
-      transactionModel,
-      product: product
-    )
-  }
-
   /// Dismisses the view controller, if the developer hasn't disabled the option.
   private func didPurchase(
-    _ product: SKProduct,
-    from paywallViewController: PaywallViewController
+    _ product: StoreProduct,
+    from paywallViewController: PaywallViewController,
+    transaction: StoreTransaction
   ) async {
     Logger.debug(
       logLevel: .debug,
@@ -183,6 +130,16 @@ final class TransactionManager {
       ],
       error: nil
     )
+    Task.detached(priority: .background) {
+      await self.sessionEventsManager.enqueue(transaction)
+    }
+    await storeKitManager.loadPurchasedProducts()
+
+    await trackTransactionDidSucceed(
+      transaction,
+      product: product
+    )
+
     guard Superwall.options.paywalls.automaticallyDismiss else {
       return
     }
@@ -194,7 +151,7 @@ final class TransactionManager {
 
   /// Track the cancelled
   private func trackCancelled(
-    product: SKProduct,
+    product: StoreProduct,
     from paywallViewController: PaywallViewController
   ) {
     Task.detached(priority: .utility) {
@@ -214,7 +171,7 @@ final class TransactionManager {
         model: nil
       )
       await Superwall.track(trackedEvent)
-      await SessionEventsManager.shared.triggerSession.trackTransactionAbandon()
+      await self.sessionEventsManager.triggerSession.trackTransactionAbandon()
     }
   }
 
@@ -236,7 +193,7 @@ final class TransactionManager {
         model: nil
       )
       await Superwall.track(trackedEvent)
-      await SessionEventsManager.shared.triggerSession.trackDeferredTransaction()
+      await self.sessionEventsManager.triggerSession.trackDeferredTransaction()
     }
 
     await paywallViewController.presentAlert(
@@ -247,7 +204,7 @@ final class TransactionManager {
 
   private func presentAlert(
     forError error: Error,
-    product: SKProduct,
+    product: StoreProduct,
     paywallViewController: PaywallViewController
   ) async {
     Logger.debug(
@@ -270,7 +227,7 @@ final class TransactionManager {
         model: nil
       )
       await Superwall.track(trackedEvent)
-      await SessionEventsManager.shared.triggerSession.trackTransactionError()
+      await self.sessionEventsManager.triggerSession.trackTransactionError()
     }
 
     await paywallViewController.presentAlert(
@@ -278,35 +235,11 @@ final class TransactionManager {
       message: error.localizedDescription
     )
   }
-}
-
-// MARK: - Transaction Observer Delegate
-extension TransactionManager: TransactionObserverDelegate {
-  func trackTransactionRestoration(
-    withId transactionId: String?,
-    product: SKProduct
-  ) async {
-    guard let paywallViewController = lastPaywallViewController else {
-      return
-    }
-
-    let paywallShowingFreeTrial = await paywallViewController.paywall.isFreeTrialAvailable == true
-    let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
-
-    await SessionEventsManager.shared.triggerSession.trackTransactionRestoration(
-      withId: transactionId,
-      product: product,
-      isFreeTrialAvailable: didStartFreeTrial
-    )
-  }
 
   func trackTransactionDidSucceed(
-    _ transactionModel: TransactionModel,
-    product: SKProduct
+    _ transactionModel: StoreTransaction,
+    product: StoreProduct
   ) async {
-    guard lastProductPurchased == product else {
-      return
-    }
     guard let paywallViewController = lastPaywallViewController else {
       return
     }
@@ -315,8 +248,8 @@ extension TransactionManager: TransactionObserverDelegate {
     let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
 
     let paywallInfo = await paywallViewController.paywallInfo
-    Task.detached(priority: .utility) {
-      await SessionEventsManager.shared.triggerSession.trackTransactionSucceeded(
+    Task.detached(priority: .background) {
+      await self.sessionEventsManager.triggerSession.trackTransactionSucceeded(
         withId: transactionModel.storeTransactionId,
         for: product,
         isFreeTrialAvailable: didStartFreeTrial
@@ -352,8 +285,24 @@ extension TransactionManager: TransactionObserverDelegate {
         await Superwall.track(trackedEvent)
       }
     }
-
-    lastProductPurchased = nil
     lastPaywallViewController = nil
   }
 }
+
+/*
+// MARK: - Transaction Observer Delegate
+extension TransactionManager: TransactionObserverDelegate {
+  func trackTransactionRestoration(
+    withId transactionId: String?,
+    product: StoreProduct
+  ) async {
+    guard let paywallViewController = lastPaywallViewController else {
+      return
+    }
+
+    
+  }
+
+
+}
+*/

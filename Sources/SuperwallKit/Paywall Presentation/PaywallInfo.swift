@@ -160,7 +160,7 @@ public final class PaywallInfo: NSObject, Sendable {
   }
 
   func eventParams(
-    forProduct product: SKProduct? = nil,
+    forProduct product: StoreProduct? = nil,
     otherParams: [String: Any]? = nil
   ) async -> [String: Any] {
     let productIds = products.map { $0.id }

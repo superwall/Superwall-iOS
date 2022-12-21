@@ -13,17 +13,16 @@ import Combine
 actor TriggerSessionManager {
   weak var delegate: SessionEventsDelegate?
 
-  /// Storage class. Can be injected via init for testing.
-  private let storage: Storage
-
-  /// Config Manager class. Can be injected via init for testing.
-  private let configManager: ConfigManager
-
   /// The list of all potential trigger sessions, keyed by the trigger event name, created after receiving the config.
   private var pendingTriggerSessions: [String: TriggerSession] = [:]
 
   /// The active trigger session.
   var activeTriggerSession: TriggerSession?
+
+  private let storage: Storage
+  private let configManager: ConfigManager
+  private let appSessionManager: AppSessionManager
+  private let identityManager: IdentityManager
 
   /// A local count for transactions used within the trigger session.
   private var transactionCount: TriggerSession.Transaction.Count?
@@ -40,13 +39,17 @@ actor TriggerSessionManager {
 
   /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
   init(
-    delegate: SessionEventsDelegate?,
-    storage: Storage = .shared,
-    configManager: ConfigManager = .shared
+    delegate: SessionEventsDelegate,
+    storage: Storage,
+    configManager: ConfigManager,
+    appSessionManager: AppSessionManager,
+    identityManager: IdentityManager
   ) {
     self.delegate = delegate
     self.storage = storage
     self.configManager = configManager
+    self.appSessionManager = appSessionManager
+    self.identityManager = identityManager
     Task {
       await listenForConfig()
       await addObservers()
@@ -107,10 +110,10 @@ actor TriggerSessionManager {
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
         configRequestId: configManager.config?.requestId,
-        userAttributes: IdentityManager.shared.userAttributes,
+        userAttributes: identityManager.userAttributes,
         isSubscribed: isUserSubscribed,
         eventName: trigger.eventName,
-        appSession: AppSessionManager.shared.appSession
+        appSession: appSessionManager.appSession
       )
       pendingTriggerSessions[trigger.eventName] = pendingTriggerSession
     }
@@ -151,7 +154,7 @@ actor TriggerSessionManager {
     }
 
     // Update trigger session
-    session.userAttributes = JSON(IdentityManager.shared.userAttributes)
+    session.userAttributes = JSON(identityManager.userAttributes)
     session.presentationOutcome = outcome.presentationOutcome
     session.trigger = outcome.trigger
     session.paywall = outcome.paywall
@@ -160,7 +163,7 @@ actor TriggerSessionManager {
       loadingInfo: paywall?.productsLoadingInfo
     )
 
-    session.appSession = AppSessionManager.shared.appSession
+    session.appSession = appSessionManager.appSession
 
     self.activeTriggerSession = session
     pendingTriggerSessions[eventName] = nil
@@ -196,11 +199,11 @@ actor TriggerSessionManager {
     let eventName = currentTriggerSession.trigger.eventName
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
       configRequestId: configManager.config?.requestId,
-      userAttributes: IdentityManager.shared.userAttributes,
+      userAttributes: identityManager.userAttributes,
       isSubscribed: await Superwall.shared.isUserSubscribed,
       eventName: eventName,
       products: currentTriggerSession.products.allProducts,
-      appSession: AppSessionManager.shared.appSession
+      appSession: appSessionManager.appSession
     )
     pendingTriggerSessions[eventName] = pendingTriggerSession
 
@@ -365,7 +368,7 @@ actor TriggerSessionManager {
   // MARK: - Transactions
 
   func trackBeginTransaction(
-    of product: SKProduct
+    of product: StoreProduct
   ) async {
     // Determine local transaction count, per trigger session.
     if transactionCount != nil {
@@ -435,8 +438,7 @@ actor TriggerSessionManager {
   /// When a transaction is restored. A restore is triggered without any other transaction occurring.
   func trackTransactionRestoration(
     withId id: String? = nil,
-    product: SKProduct? = nil,
-    isFreeTrialAvailable: Bool
+    product: StoreProduct? = nil
   ) async {
     if transactionCount != nil {
       transactionCount?.restore += 1
@@ -499,7 +501,7 @@ actor TriggerSessionManager {
 
   func trackTransactionSucceeded(
     withId id: String?,
-    for product: SKProduct,
+    for product: StoreProduct,
     isFreeTrialAvailable: Bool
   ) async {
     transactionCount?.complete += 1

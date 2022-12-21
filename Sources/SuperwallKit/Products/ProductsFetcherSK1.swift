@@ -14,22 +14,12 @@
 import Foundation
 import StoreKit
 
-class ProductsManager: NSObject {
-  static let shared = ProductsManager()
-
+class ProductsFetcherSK1: NSObject {
 	private var cachedProductsByIdentifier: [String: SKProduct] = [:]
 	private let queue = DispatchQueue(label: "com.superwall.ProductsManager")
 	private var productsByRequests: [SKRequest: Set<String>] = [:]
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
-
-  func getProducts(identifiers: Set<String>) async throws -> Set<SKProduct> {
-    return try await withCheckedThrowingContinuation { continuation in
-      products(withIdentifiers: identifiers) { result in
-        continuation.resume(with: result)
-      }
-    }
-  }
 
 	private func products(
     withIdentifiers identifiers: Set<String>,
@@ -106,7 +96,7 @@ class ProductsManager: NSObject {
 }
 
 // MARK: - SKProductsRequestDelegate
-extension ProductsManager: SKProductsRequestDelegate {
+extension ProductsFetcherSK1: SKProductsRequestDelegate {
 	func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
 		queue.async { [self] in
 			Logger.debug(
@@ -213,8 +203,29 @@ extension ProductsManager: SKProductsRequestDelegate {
 	}
 }
 
+// MARK: - ProductsFetcher
+extension ProductsFetcherSK1: ProductsFetcher {
+  /// Gets StoreKit 1 products from identifiers.
+  ///
+  /// - Parameters:
+  ///   - identifiers: A `Set` of product identifiers.
+  /// - Returns: A `Set` of `StoreProducts`.
+  /// - Throws: An error if it couldn't retrieve the products.
+  func products(identifiers: Set<String>) async throws -> Set<StoreProduct> {
+    let sk1Products = try await withCheckedThrowingContinuation { continuation in
+      products(withIdentifiers: identifiers) { result in
+        continuation.resume(with: result)
+      }
+    }
+    let storeProducts = Set(sk1Products.map {
+      StoreProduct.from(product: SK1StoreProduct(sk1Product: $0))
+    })
+    return storeProducts
+  }
+}
+
 // MARK: - Sendable
 // @unchecked because:
 // - It has mutable state, but it's made thread-safe through `queue`.
 // - It's non-final, but only because we mock it.
-extension ProductsManager: @unchecked Sendable {}
+extension ProductsFetcherSK1: @unchecked Sendable {}

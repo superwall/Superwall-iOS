@@ -10,8 +10,8 @@ import Foundation
 /// Corresponds to the variables in the paywall editor.
 /// Consists of a dictionary of product, user, and device data.
 struct Variables: Encodable {
-  let user = JSON(IdentityManager.shared.userAttributes)
-  let device = JSON(DeviceHelper.shared.templateDevice.dictionary() ?? [:])
+  let user: JSON
+  let device: JSON
   let params: JSON
   var primary: JSON = [:]
   var secondary: JSON = [:]
@@ -19,9 +19,13 @@ struct Variables: Encodable {
 
   init(
     productVariables: [ProductVariable]?,
-    params: JSON?
+    params: JSON?,
+    userAttributes: [String: Any],
+    templateDeviceDictionary: [String: Any]?
   ) {
     self.params = params ?? [:]
+    self.user = JSON(userAttributes)
+    self.device = JSON(templateDeviceDictionary ?? [:])
     guard let productVariables = productVariables else {
       return
     }

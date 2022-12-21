@@ -1,28 +1,29 @@
 import Foundation
-import StoreKit
+import Combine
 
 final class StoreKitManager {
-	static let shared = StoreKitManager()
-  var productsById: [String: SKProduct] = [:]
+  var productsById: [String: StoreProduct] = [:]
+  unowned var configManager: ConfigManager!
 
-  private var hasLoadedPurchasedProducts = false
-  private let productsManager: ProductsManager
-  private let configManager: ConfigManager
-  private let receiptManager: ReceiptManager
+  private lazy var receiptManager = ReceiptManager(delegate: self)
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
-    let substituteProductsById: [String: SKProduct]
+    let substituteProductsById: [String: StoreProduct]
     let products: [Product]
   }
 
-  init(
-    productsManager: ProductsManager = .shared,
-    configManager: ConfigManager = .shared,
-    receiptManager: ReceiptManager = ReceiptManager()
-  ) {
-    self.productsManager = productsManager
+  // Force unwrapping because it's always be around but we need
+  // to use self during init.
+  var coordinator: StoreKitCoordinator!
+
+  init(purchasingDelegateAdapter: SuperwallPurchasingDelegateAdapter,
+       configManager: ConfigManager) {
     self.configManager = configManager
-    self.receiptManager = receiptManager
+    self.coordinator = StoreKitCoordinator(
+      purchasingDelegateAdapter: purchasingDelegateAdapter,
+      subscriptionStatusHandler: self,
+      finishTransactions: configManager.options.finishTransactions
+    )
   }
 
 	func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
@@ -32,10 +33,10 @@ final class StoreKitManager {
     var variables: [ProductVariable] = []
 
     for product in paywall.products {
-      if let skProduct = output.productsById[product.id] {
+      if let storeProduct = output.productsById[product.id] {
         let variable = ProductVariable(
           type: product.type,
-          attributes: skProduct.attributesJson
+          attributes: storeProduct.attributesJson
         )
         variables.append(variable)
       }
@@ -44,11 +45,21 @@ final class StoreKitManager {
     return variables
 	}
 
-  func loadPurchasedProducts() async {
-    guard let purchasedProduct = await receiptManager.loadPurchasedProducts() else {
-      return
+  /// This refreshes the device receipt.
+  ///
+  /// - Warning: This will prompt the user to log in, so only do this on
+  /// when restoring.
+  func refreshReceipt() async -> Bool {
+    return await receiptManager.refreshReceipt()
+  }
+
+  @discardableResult
+  func loadPurchasedProducts() async -> Bool {
+    guard let purchasedProducts = await receiptManager.loadPurchasedProducts() else {
+      return false
     }
-    purchasedProduct.forEach { productsById[$0.productIdentifier] = $0 }
+    purchasedProducts.forEach { productsById[$0.productIdentifier] = $0 }
+    return true
   }
 
   /// Determines whether a free trial is available based on the product the user is purchasing.
@@ -56,7 +67,7 @@ final class StoreKitManager {
   /// A free trial is available if the user hasn't already purchased within the subscription group of the
   /// supplied product. If it isn't a subscription-based product or there are other issues retrieving the products,
   /// the outcome will default to whether or not the user has already purchased that product.
-  func isFreeTrialAvailable(for product: SKProduct) -> Bool {
+  func isFreeTrialAvailable(for product: StoreProduct) -> Bool {
     return receiptManager.isFreeTrialAvailable(for: product)
   }
 
@@ -64,14 +75,15 @@ final class StoreKitManager {
     withIds responseProductIds: [String],
     responseProducts: [Product] = [],
     substituting substituteProducts: PaywallProducts? = nil
-  ) async throws -> (productsById: [String: SKProduct], products: [Product]) {
+  ) async throws -> (productsById: [String: StoreProduct], products: [Product]) {
     let processingResult = removeAndStore(
       substituteProducts: substituteProducts,
       fromResponseProductIds: responseProductIds,
       responseProducts: responseProducts
     )
 
-    let products = try await productsManager.getProducts(identifiers: processingResult.productIdsToLoad)
+    let products = try await products(identifiers: processingResult.productIdsToLoad)
+
     var productsById = processingResult.substituteProductsById
 
     for product in products {
@@ -90,11 +102,11 @@ final class StoreKitManager {
     responseProducts: [Product]
   ) -> ProductProcessingResult {
     var responseProductIds = responseProductIds
-    var substituteProductsById: [String: SKProduct] = [:]
+    var substituteProductsById: [String: StoreProduct] = [:]
     var products: [Product] = responseProducts
 
     func storeAndSubstitute(
-      _ product: SKProduct,
+      _ product: StoreProduct,
       type: ProductType,
       index: Int
     ) {
@@ -133,5 +145,31 @@ final class StoreKitManager {
       substituteProductsById: substituteProductsById,
       products: products
     )
+  }
+}
+
+// MARK: - ReceiptManagerDelegate
+extension StoreKitManager: ProductsFetcher {
+  func products(identifiers: Set<String>) async throws -> Set<StoreProduct> {
+    return try await coordinator.productFetcher.products(identifiers: identifiers)
+  }
+}
+
+// MARK: - Subscription Status Checker
+extension StoreKitManager: SubscriptionStatusChecker {
+  func isSubscribed(toEntitlements entitlements: Set<Entitlement>) -> Bool {
+    // TODO: Maybe store active entitlements/purchases in memory until had a chance to get config, until reset is called.
+    guard let config = configManager.config else {
+      return false
+    }
+
+    // If not looking for subscription to a specific entitlement, or no
+    // entitlements are set up in config, just check for any active purchases.
+    if entitlements.isEmpty || config.entitlements.isEmpty {
+      return !receiptManager.activePurchases.isEmpty
+    }
+
+    // Otherwise, check whether there are any active entitlements.
+    return !receiptManager.activeEntitlements.isEmpty
   }
 }

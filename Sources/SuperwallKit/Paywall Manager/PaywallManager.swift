@@ -8,25 +8,46 @@
 import Foundation
 import UIKit
 
-@MainActor
 class PaywallManager {
-	static let shared = PaywallManager()
+  @MainActor
   var presentedViewController: PaywallViewController? {
     return PaywallViewController.cache.first { $0.isActive }
 	}
 
-  private var cache = PaywallCache()
+  @MainActor
+  private let cache: PaywallCache
 
+  private let deviceHelper: DeviceHelper
+  private let sessionEventsManager: SessionEventsManager
+  private let storage: Storage
+  private let paywallManager: PaywallManager
+
+  init(
+    deviceHelper: DeviceHelper,
+    sessionEventsManager: SessionEventsManager,
+    storage: Storage,
+    paywallManager: PaywallManager
+  ) {
+    self.deviceHelper = deviceHelper
+    self.sessionEventsManager = sessionEventsManager
+    self.storage = storage
+    self.paywallManager = paywallManager
+    self.cache = PaywallCache(deviceLocaleString: deviceHelper.locale)
+  }
+
+  @MainActor
 	func removePaywall(withIdentifier identifier: String?) {
     cache.removePaywall(
       withIdentifier: identifier
     )
 	}
 
+  @MainActor
 	func removePaywallViewController(_ viewController: PaywallViewController) {
     cache.removePaywall(withViewController: viewController)
 	}
 
+  @MainActor
 	func resetCache() {
 		cache.clearCache()
 	}
@@ -40,7 +61,8 @@ class PaywallManager {
   ///   - presentationInfo: Info concerning the cause of the paywall presentation and data associated with it.
   ///   - cached: Whether or not the paywall is cached.
   ///   - completion: A completion block called with the resulting paywall view controller.
-	func getPaywallViewController(
+  @MainActor
+  func getPaywallViewController(
     from request: PaywallRequest,
     cached: Bool
   ) async throws -> PaywallViewController {
@@ -53,12 +75,19 @@ class PaywallManager {
       viewController.paywall.productIds = paywall.productIds
       viewController.paywall.productVariables = paywall.productVariables
       viewController.paywall.productsLoadingInfo = paywall.productsLoadingInfo
+
+      // Set free trial again as this needs to be refreshed every time.
+      viewController.paywall.isFreeTrialAvailable = paywall.isFreeTrialAvailable
       return viewController
     }
 
     let paywallViewController = PaywallViewController(
       paywall: paywall,
-      delegate: Superwall.shared
+      delegate: Superwall.shared,
+      deviceHelper: deviceHelper,
+      sessionEventsManager: sessionEventsManager,
+      storage: storage,
+      paywallManager: paywallManager
     )
 
     if let window = UIApplication.shared.activeWindow {

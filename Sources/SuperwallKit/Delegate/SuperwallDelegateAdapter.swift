@@ -6,58 +6,59 @@
 //
 
 import Foundation
-import StoreKit
+import Combine
 
 /// An adapter between the internal SDK and the public swift/objective c delegate.
-@MainActor
-final class SuperwallDelegateAdapter {
+final class SuperwallPurchasingDelegateAdapter {
   var hasDelegate: Bool {
     return swiftDelegate != nil || objcDelegate != nil
   }
-  enum InternalPurchaseResult {
-    case purchased
-    case cancelled
-    case pending
-  }
-  weak var swiftDelegate: SuperwallDelegate?
-  weak var objcDelegate: SuperwallDelegateObjc?
+  weak var swiftDelegate: SuperwallPurchasingDelegate?
+  weak var objcDelegate: SuperwallPurchasingDelegateObjc?
 
-  /// Called on init of the Superwall instance via ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``.
+/// Called on init of the Superwall instance via ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``.
   ///
   /// We check to see if the delegates being set are non-nil because they may have been set
   /// separately to the initial Superwall.config function.
-  func configure(
-    swiftDelegate: SuperwallDelegate?,
-    objcDelegate: SuperwallDelegateObjc?
+  init(
+    swiftDelegate: SuperwallPurchasingDelegate?,
+    objcDelegate: SuperwallPurchasingDelegateObjc?
   ) {
-    if let swiftDelegate = swiftDelegate {
-      self.swiftDelegate = swiftDelegate
-    }
-    if let objcDelegate = objcDelegate {
-      self.objcDelegate = objcDelegate
-    }
+    self.swiftDelegate = swiftDelegate
+    self.objcDelegate = objcDelegate
   }
+}
 
-  func purchase(
-    product: SKProduct
-  ) async throws -> InternalPurchaseResult {
+// MARK: - User Subscription Handling
+extension SuperwallPurchasingDelegateAdapter: SubscriptionStatusChecker {
+  @MainActor
+  func isSubscribed(toEntitlements entitlements: Set<Entitlement>) -> Bool {
+    let entitlementNames = Set(entitlements.map { $0.name })
     if let swiftDelegate = swiftDelegate {
-      let result = await swiftDelegate.purchase(product: product)
-      switch result {
-      case .cancelled:
-        return .cancelled
-      case .purchased:
-        return .purchased
-      case .pending:
-        return .pending
-      case .failed(let error):
-        throw error
-      }
+      return swiftDelegate.isUserSubscribed(toEntitlements: entitlementNames)
     } else if let objcDelegate = objcDelegate {
-      return try await withCheckedThrowingContinuation { continuation in
+      return objcDelegate.isUserSubscribed(toEntitlements: entitlementNames)
+    }
+    return false
+  }
+}
+
+// MARK: - Product Purchaser
+extension SuperwallPurchasingDelegateAdapter: ProductPurchaser {
+  @MainActor
+  func purchase(
+    product: StoreProduct
+  ) async -> PurchaseResult {
+    guard let product = product.sk1Product else {
+      return .failed(PurchaseError.productUnavailable)
+    }
+    if let swiftDelegate = swiftDelegate {
+      return await swiftDelegate.purchase(product: product)
+    } else if let objcDelegate = objcDelegate {
+      return await withCheckedContinuation { continuation in
         objcDelegate.purchase(product: product) { result, error in
           if let error = error {
-            continuation.resume(throwing: error)
+            continuation.resume(returning: .failed(error))
           } else {
             switch result {
             case .purchased:
@@ -75,7 +76,11 @@ final class SuperwallDelegateAdapter {
     }
     return .cancelled
   }
+}
 
+// MARK: - TransactionRestorer
+extension SuperwallPurchasingDelegateAdapter: TransactionRestorer {
+  @MainActor
   func restorePurchases() async -> Bool {
     if let swiftDelegate = swiftDelegate {
       return await swiftDelegate.restorePurchases()
@@ -87,104 +92,5 @@ final class SuperwallDelegateAdapter {
       }
     }
     return false
-  }
-
-  func isUserSubscribed() -> Bool {
-    if let swiftDelegate = swiftDelegate {
-      return swiftDelegate.isUserSubscribed()
-    } else if let objcDelegate = objcDelegate {
-      return objcDelegate.isUserSubscribed()
-    }
-    return false
-  }
-
-  func handleCustomPaywallAction(withName name: String) {
-    if let swiftDelegate = swiftDelegate {
-      swiftDelegate.handleCustomPaywallAction(withName: name)
-    } else if let objcDelegate = objcDelegate {
-      objcDelegate.handleCustomPaywallAction?(withName: name)
-    }
-  }
-
-  func willDismissPaywall() {
-    if let swiftDelegate = swiftDelegate {
-      swiftDelegate.willDismissPaywall()
-    } else if let objcDelegate = objcDelegate {
-      objcDelegate.willDismissPaywall?()
-    }
-  }
-
-  func willPresentPaywall() {
-    if let swiftDelegate = swiftDelegate {
-      swiftDelegate.willPresentPaywall()
-    } else if let objcDelegate = objcDelegate {
-      objcDelegate.willPresentPaywall?()
-    }
-  }
-
-  func didDismissPaywall() {
-    if let swiftDelegate = swiftDelegate {
-      swiftDelegate.didDismissPaywall()
-    } else if let objcDelegate = objcDelegate {
-      objcDelegate.didDismissPaywall?()
-    }
-  }
-
-  func didPresentPaywall() {
-    if let swiftDelegate = swiftDelegate {
-      swiftDelegate.didPresentPaywall()
-    } else if let objcDelegate = objcDelegate {
-      objcDelegate.didPresentPaywall?()
-    }
-  }
-
-  func willOpenURL(url: URL) {
-    if let swiftDelegate = swiftDelegate {
-      swiftDelegate.willOpenURL(url: url)
-    } else if let objcDelegate = objcDelegate {
-      objcDelegate.willOpenURL?(url: url)
-    }
-  }
-
-  func willOpenDeepLink(url: URL) {
-    if let swiftDelegate = swiftDelegate {
-      swiftDelegate.willOpenDeepLink(url: url)
-    } else if let objcDelegate = objcDelegate {
-      objcDelegate.willOpenDeepLink?(url: url)
-    }
-  }
-
-  func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
-    if let swiftDelegate = swiftDelegate {
-      swiftDelegate.didTrackSuperwallEvent(info)
-    } else if let objcDelegate = objcDelegate {
-      objcDelegate.didTrackSuperwallEventInfo?(info)
-    }
-  }
-
-  func handleLog(
-    level: String,
-    scope: String,
-    message: String?,
-    info: [String: Any]?,
-    error: Swift.Error?
-  ) {
-    if let swiftDelegate = swiftDelegate {
-      swiftDelegate.handleLog(
-        level: level,
-        scope: scope,
-        message: message,
-        info: info,
-        error: error
-      )
-    } else if let objcDelegate = objcDelegate {
-      objcDelegate.handleLog?(
-        level: level,
-        scope: scope,
-        message: message,
-        info: info,
-        error: error
-      )
-    }
   }
 }

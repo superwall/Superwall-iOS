@@ -32,7 +32,7 @@ extension Superwall {
         params: parameters.delegateParams
       )
 
-      await shared.delegateAdapter.didTrackSuperwallEvent(info)
+      await delegate?.didTrackSuperwallEventInfo?(info)
 
       Logger.debug(
         logLevel: .debug,

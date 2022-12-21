@@ -8,14 +8,11 @@
 import UIKit
 
 class ConfigManager {
-  /// The shared ConfigManager instance
-  static let shared = ConfigManager()
-
   /// The configuration of the Superwall dashboard
   @Published var config: Config?
 
   /// Options for configuring the SDK.
-  var options = SuperwallOptions()
+  @Published var options = SuperwallOptions()
 
   /// A dictionary of triggers by their event name.
   var triggersByEventName: [String: Trigger] = [:]
@@ -25,34 +22,35 @@ class ConfigManager {
   /// When the trigger is fired, the assignment is confirmed and stored to disk.
   var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
+  unowned var storeKitManager: StoreKitManager!
+
   private let storage: Storage
   private let network: Network
   private let paywallManager: PaywallManager
 
   init(
-    storage: Storage = .shared,
-    network: Network = .shared,
-    paywallManager: PaywallManager = .shared
+    options: SuperwallOptions?,
+    storage: Storage,
+    network: Network,
+    paywallManager: PaywallManager
   ) {
+    if let options = options {
+      self.options = options
+    }
     self.storage = storage
     self.network = network
     self.paywallManager = paywallManager
   }
 
-  func fetchConfiguration(
-    withOptions options: SuperwallOptions?,
-    requestId: String = UUID().uuidString
-  ) async {
-    self.options = options ?? self.options
-
+  func fetchConfiguration(requestId: String = UUID().uuidString) async {
     do {
       let config = try await network.getConfig(withRequestId: requestId)
       Task { await sendProductsBack(from: config) }
 
       triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
       choosePaywallVariants(from: config.triggers)
-      await StoreKitManager.shared.loadPurchasedProducts()
       self.config = config
+      await storeKitManager.loadPurchasedProducts()
       Task { await preloadPaywalls() }
     } catch {
       Logger.debug(
@@ -73,6 +71,24 @@ class ConfigManager {
     unconfirmedAssignments.removeAll()
     choosePaywallVariants(from: config.triggers)
     Task { await preloadPaywalls() }
+  }
+
+  func getEntitlements(forProductIds productIds: [String]) -> Set<Entitlement> {
+    guard let config = config else {
+      return []
+    }
+
+    var productEntitlements: Set<Entitlement> = []
+
+    for entitlement in config.entitlements {
+      for productId in productIds {
+        if entitlement.productIds.contains(productId) {
+          productEntitlements.insert(entitlement)
+        }
+      }
+    }
+
+    return productEntitlements
   }
 
   // MARK: - Assignments
@@ -238,7 +254,7 @@ class ConfigManager {
       try await Task.sleep(nanoseconds: nanosecondDelay)
 
       let productIds = config.postback.productsToPostBack.map { $0.identifier }
-      let products = try await StoreKitManager.shared.getProducts(withIds: productIds)
+      let products = try await storeKitManager.getProducts(withIds: productIds)
       let postbackProducts = products.productsById.values.map(PostbackProduct.init)
       let postback = Postback(products: postbackProducts)
       await network.sendPostback(postback)

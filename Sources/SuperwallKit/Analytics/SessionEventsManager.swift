@@ -9,19 +9,16 @@ import UIKit
 import Combine
 
 protocol SessionEventsDelegate: AnyObject {
-  var triggerSession: TriggerSessionManager { get }
+  var triggerSession: TriggerSessionManager! { get }
 
   func enqueue(_ triggerSession: TriggerSession) async
   func enqueue(_ triggerSessions: [TriggerSession]) async
-  func enqueue(_ transaction: TransactionModel) async
+  func enqueue(_ transaction: StoreTransaction) async
 }
 
 class SessionEventsManager {
-  /// The shared instance of the class
-  static let shared = SessionEventsManager()
-
   /// The trigger session manager.
-  lazy var triggerSession = TriggerSessionManager(delegate: self)
+  let triggerSession: TriggerSessionManager!
 
   /// A queue of trigger session events that get sent to the server.
   private let queue: SessionEnqueuable
@@ -41,14 +38,23 @@ class SessionEventsManager {
   /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
   init(
     queue: SessionEnqueuable = SessionEventsQueue(),
-    storage: Storage = .shared,
-    network: Network = .shared,
-    configManager: ConfigManager = .shared
+    storage: Storage,
+    network: Network,
+    configManager: ConfigManager,
+    appSessionManager: AppSessionManager,
+    identityManager: IdentityManager
   ) {
     self.queue = queue
     self.storage = storage
     self.network = network
     self.configManager = configManager
+    self.triggerSession = TriggerSessionManager(
+      delegate: self,
+      storage: storage,
+      configManager: configManager,
+      appSessionManager: appSessionManager,
+      identityManager: identityManager
+    )
 
     Task {
       await postCachedSessionEvents()
@@ -81,9 +87,7 @@ class SessionEventsManager {
 
   /// This only updates the app session in the trigger sessions.
   /// For transactions, the latest app session id is grabbed when the next transaction occurs.
-  func updateAppSession(
-    _ appSession: AppSession = AppSessionManager.shared.appSession
-  ) async {
+  func updateAppSession(_ appSession: AppSession) async {
     await triggerSession.updateAppSession(to: appSession)
   }
 }
@@ -104,7 +108,7 @@ extension SessionEventsManager: SessionEventsDelegate {
     await queue.enqueue(triggerSessions)
   }
 
-  func enqueue(_ transaction: TransactionModel) async {
+  func enqueue(_ transaction: StoreTransaction) async {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }

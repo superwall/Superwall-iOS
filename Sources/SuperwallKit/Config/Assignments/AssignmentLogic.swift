@@ -39,8 +39,8 @@ enum AssignmentLogic {
   static func evaluateRules(
     forEvent event: EventData,
     triggers: [String: Trigger],
-    configManager: ConfigManager = .shared,
-    storage: Storage = .shared,
+    configManager: ConfigManager,
+    storage: Storage,
     isPreemptive: Bool
   ) -> Outcome {
     guard let trigger = triggers[event.name] else {

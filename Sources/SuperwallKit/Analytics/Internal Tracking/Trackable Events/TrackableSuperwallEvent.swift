@@ -247,10 +247,10 @@ enum InternalSuperwallEvent {
 
   struct Transaction: TrackableSuperwallEvent {
     enum State {
-      case start(SKProduct)
+      case start(StoreProduct)
       case fail(TransactionError)
-      case abandon(SKProduct)
-      case complete(SKProduct, TransactionModel)
+      case abandon(StoreProduct)
+      case complete(StoreProduct, StoreTransaction)
       case restore
       case timeout
     }
@@ -260,7 +260,7 @@ enum InternalSuperwallEvent {
       switch state {
       case .start(let product):
         return .transactionStart(
-          product: .init(product: product),
+          product: product,
           paywallInfo: paywallInfo
         )
       case .fail(let error):
@@ -270,13 +270,13 @@ enum InternalSuperwallEvent {
         )
       case .abandon(let product):
         return .transactionAbandon(
-          product: .init(product: product),
+          product: product,
           paywallInfo: paywallInfo
         )
       case let .complete(product, model):
         return .transactionComplete(
           transaction: model,
-          product: .init(product: product),
+          product: product,
           paywallInfo: paywallInfo
         )
       case .restore:
@@ -286,8 +286,8 @@ enum InternalSuperwallEvent {
       }
     }
     let paywallInfo: PaywallInfo
-    let product: SKProduct?
-    let model: TransactionModel?
+    let product: StoreProduct?
+    let model: StoreTransaction?
     var customParameters: [String: Any] = [:]
 
     func getSuperwallParameters() async -> [String: Any] {
@@ -313,10 +313,10 @@ enum InternalSuperwallEvent {
 
   struct SubscriptionStart: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
-      return .subscriptionStart(product: .init(product: product), paywallInfo: paywallInfo)
+      return .subscriptionStart(product: product, paywallInfo: paywallInfo)
     }
     let paywallInfo: PaywallInfo
-    let product: SKProduct
+    let product: StoreProduct
     var customParameters: [String: Any] = [:]
 
     func getSuperwallParameters() async -> [String: Any] {
@@ -327,12 +327,12 @@ enum InternalSuperwallEvent {
   struct FreeTrialStart: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .freeTrialStart(
-        product: .init(product: product),
+        product: product,
         paywallInfo: paywallInfo
       )
     }
     let paywallInfo: PaywallInfo
-    let product: SKProduct
+    let product: StoreProduct
     var customParameters: [String: Any] = [:]
 
     func getSuperwallParameters() async -> [String: Any] {
@@ -348,7 +348,7 @@ enum InternalSuperwallEvent {
       )
     }
     let paywallInfo: PaywallInfo
-    let product: SKProduct
+    let product: StoreProduct
     var customParameters: [String: Any] = [:]
 
     func getSuperwallParameters() async -> [String: Any] {

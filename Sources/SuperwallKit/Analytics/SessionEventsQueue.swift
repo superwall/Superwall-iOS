@@ -13,11 +13,11 @@ import Combine
 /// This is used to be able to inject a mock version for testing.
 protocol SessionEnqueuable: Actor {
   var triggerSessions: [TriggerSession] { get set }
-  var transactions: [TransactionModel] { get }
+  var transactions: [StoreTransaction] { get }
 
   func enqueue(_ triggerSession: TriggerSession)
   func enqueue(_ triggerSessions: [TriggerSession])
-  func enqueue(_ transaction: TransactionModel)
+  func enqueue(_ transaction: StoreTransaction)
   func removeAllTriggerSessions()
   func flushInternal(depth: Int)
   func saveCacheToDisk()
@@ -34,12 +34,12 @@ extension SessionEnqueuable {
 actor SessionEventsQueue: SessionEnqueuable {
   private let maxEventCount = 50
   var triggerSessions: [TriggerSession] = []
-  var transactions: [TransactionModel] = []
+  var transactions: [StoreTransaction] = []
   private var timer: AnyCancellable?
   @MainActor
   private var willResignActiveObserver: AnyCancellable?
   private lazy var lastTwentySessions = LimitedQueue<TriggerSession>(limit: 20)
-  private lazy var lastTwentyTransactions = LimitedQueue<TransactionModel>(limit: 20)
+  private lazy var lastTwentyTransactions = LimitedQueue<StoreTransaction>(limit: 20)
 
   deinit {
     timer?.cancel()
@@ -96,7 +96,7 @@ actor SessionEventsQueue: SessionEnqueuable {
     lastTwentySessions.enqueue(triggerSession)
   }
 
-  func enqueue(_ transaction: TransactionModel) {
+  func enqueue(_ transaction: StoreTransaction) {
     transactions.append(transaction)
     lastTwentyTransactions.enqueue(transaction)
   }
@@ -111,7 +111,7 @@ actor SessionEventsQueue: SessionEnqueuable {
 
   func flushInternal(depth: Int) {
     var triggerSessionsToSend: [TriggerSession] = []
-    var transactionsToSend: [TransactionModel] = []
+    var transactionsToSend: [StoreTransaction] = []
 
     var i = 0
     while i < maxEventCount && !triggerSessions.isEmpty {

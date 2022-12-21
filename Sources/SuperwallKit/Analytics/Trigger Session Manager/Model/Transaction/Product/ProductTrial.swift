@@ -51,7 +51,7 @@ extension TriggerSession.Transaction.Product {
       monthlyPrice = try values.decodeIfPresent(String.self, forKey: .daily)
       yearlyPrice = try values.decodeIfPresent(String.self, forKey: .daily)
 
-      let unit = try values.decodeIfPresent(SWProductSubscriptionPeriod.Unit.self, forKey: .periodUnit)
+      let unit = try values.decodeIfPresent(SubscriptionPeriod.Unit.self, forKey: .periodUnit)
       let count = try values.decodeIfPresent(Int.self, forKey: .periodCount)
       let days = try values.decodeIfPresent(Int.self, forKey: .periodDays)
 

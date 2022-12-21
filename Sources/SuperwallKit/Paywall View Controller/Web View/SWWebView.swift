@@ -16,8 +16,19 @@ protocol SWWebViewDelegate: AnyObject {
 final class SWWebView: WKWebView {
   lazy var messageHandler = PaywallMessageHandler(delegate: delegate)
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
+  private let deviceHelper: DeviceHelper
+  private let wkConfig: WKWebViewConfiguration
+  private let sessionEventsManager: SessionEventsManager
 
-  private var wkConfig: WKWebViewConfiguration = {
+  init(
+    delegate: SWWebViewDelegate & PaywallMessageHandlerDelegate,
+    deviceHelper: DeviceHelper,
+    sessionEventsManager: SessionEventsManager
+  ) {
+    self.deviceHelper = deviceHelper
+    self.delegate = delegate
+    self.sessionEventsManager = sessionEventsManager
+
     let config = WKWebViewConfiguration()
     config.allowsInlineMediaPlayback = true
     config.allowsAirPlayForMediaPlayback = true
@@ -26,17 +37,14 @@ final class SWWebView: WKWebView {
 
     let preferences = WKPreferences()
     if #available(iOS 15.0, *) {
-      if !DeviceHelper.shared.isMac {
+      if !deviceHelper.isMac {
         preferences.isTextInteractionEnabled = false // ignore-xcode-12
       }
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true
     config.preferences = preferences
-    return config
-  }()
+    wkConfig = config
 
-  init(delegate: SWWebViewDelegate & PaywallMessageHandlerDelegate) {
-    self.delegate = delegate
     super.init(
       frame: .zero,
       configuration: wkConfig
@@ -122,7 +130,7 @@ extension SWWebView: WKNavigationDelegate {
       return
     }
 
-    await SessionEventsManager.shared.triggerSession.trackWebviewLoad(
+    await sessionEventsManager.triggerSession.trackWebviewLoad(
       forPaywallId: paywallInfo.databaseId,
       state: .fail
     )
