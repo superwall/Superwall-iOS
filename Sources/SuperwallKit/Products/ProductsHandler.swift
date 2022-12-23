@@ -36,7 +36,8 @@ protocol TransactionRestorer: AnyObject {
 
 protocol SubscriptionStatusChecker: AnyObject {
   // TODO: Should this be async?
-  func isSubscribed(toEntitlements entitlements: Set<Entitlement>) -> Bool
+  /// Determines the subscription status of the user.
+  func isSubscribed() -> Bool
 }
 
 // TODO: Add generics to make sure the correct StoreProduct is purchased rather than guards
@@ -49,12 +50,14 @@ struct StoreKitCoordinator {
   // Using unowned here because we will always have a subscriptionStatusHandler
   // but since this is the class that created the coordinator, we don't want to
   // create a strong reference cycle.
-  unowned var subscriptionStatusHandler: SubscriptionStatusChecker
+  unowned let subscriptionStatusHandler: SubscriptionStatusChecker
 
   init(
     purchasingDelegateAdapter: SuperwallPurchasingDelegateAdapter,
-    subscriptionStatusHandler: StoreKitManager,
-    finishTransactions: Bool
+    storeKitManager: StoreKitManager,
+    finishTransactions: Bool,
+    sessionEventsManager: SessionEventsManager,
+    factory: StoreTransactionFactory
   ) {
     let hasDelegate = purchasingDelegateAdapter.hasDelegate
 
@@ -66,42 +69,62 @@ struct StoreKitCoordinator {
         // Have to rely on the delegate to purchase because
         self.productPurchaser = purchasingDelegateAdapter
         self.productFetcher = ProductsFetcherSK1()
-        self.txnChecker = ProductPurchaserSK2()
+        self.txnChecker = ProductPurchaserSK2(
+          storeKitManager: storeKitManager,
+          sessionEventsManager: sessionEventsManager,
+          factory: factory
+        )
         self.txnRestorer = purchasingDelegateAdapter
-        self.subscriptionStatusHandler = purchasingDelegateAdapter
+        self.subscriptionStatusHandler = storeKitManager
 
       } else {
         self.productPurchaser = purchasingDelegateAdapter
         self.productFetcher = ProductsFetcherSK1()
-        self.txnChecker = ProductPurchaserSK1()
+        self.txnChecker = ProductPurchaserSK1(
+          storeKitManager: storeKitManager,
+          sessionEventsManager: sessionEventsManager,
+          factory: factory
+        )
         self.txnRestorer = purchasingDelegateAdapter
-        self.subscriptionStatusHandler = purchasingDelegateAdapter
+        self.subscriptionStatusHandler = storeKitManager
       }
     } else {
       if #available(iOS 15.0, tvOS 15.0, watchOS 8.0, *) {
         if finishTransactions {
-          let purchaser = ProductPurchaserSK2()
+          let purchaser = ProductPurchaserSK2(
+            storeKitManager: storeKitManager,
+            sessionEventsManager: sessionEventsManager,
+            factory: factory
+          )
           self.productPurchaser = purchaser
           self.productFetcher = ProductsFetcherSK2()
           self.txnChecker = purchaser
           self.txnRestorer = purchaser
-          self.subscriptionStatusHandler = subscriptionStatusHandler
+          self.subscriptionStatusHandler = storeKitManager
         } else {
-          let purchaser = ProductPurchaserSK1()
+          let purchaser = ProductPurchaserSK1(
+            storeKitManager: storeKitManager,
+            sessionEventsManager: sessionEventsManager,
+            factory: factory
+          )
           self.productPurchaser = purchaser
           self.productFetcher = ProductsFetcherSK1()
           self.txnChecker = purchaser
           self.txnRestorer = purchaser
-          self.subscriptionStatusHandler = subscriptionStatusHandler
+          self.subscriptionStatusHandler = storeKitManager
         }
       } else {
         // Regardless of finishing transactions.
-        let purchaser = ProductPurchaserSK1()
+        let purchaser = ProductPurchaserSK1(
+          storeKitManager: storeKitManager,
+          sessionEventsManager: sessionEventsManager,
+          factory: factory
+        )
         self.productPurchaser = purchaser
         self.productFetcher = ProductsFetcherSK1()
         self.txnChecker = purchaser
         self.txnRestorer = purchaser
-        self.subscriptionStatusHandler = subscriptionStatusHandler
+        self.subscriptionStatusHandler = storeKitManager
       }
     }
 

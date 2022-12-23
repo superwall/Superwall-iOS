@@ -17,7 +17,7 @@ final class SuperwallService {
     return Superwall.userAttributes["firstName"] as? String ?? ""
   }
 
-  static func configure(){
+  static func configure() {
     Superwall.configure(
       apiKey: apiKey,
       delegate: shared
@@ -74,7 +74,7 @@ extension SuperwallService: SuperwallPurchasingDelegate {
     return StoreKitService.shared.restorePurchases()
   }
 
-  func isUserSubscribed(toEntitlements entitlements: Set<String>) -> Bool {
+  func isUserSubscribed() -> Bool {
     return false//StoreKitService.shared.isSubscribed
   }
 }

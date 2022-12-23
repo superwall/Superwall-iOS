@@ -179,7 +179,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertEqual(outcome?.trigger.eventParameters, eventData.parameters)
     XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventData.createdAt)
     XCTAssertEqual(outcome?.trigger.type, .explicit)
-    XCTAssertEqual(outcome?.trigger.presentedOn, "SWDebugViewController")
+    XCTAssertEqual(outcome?.trigger.presentedOn, "DebugViewController")
     XCTAssertEqual(outcome?.trigger.experiment, experiment)
     XCTAssertNil(outcome?.paywall)
   }
@@ -221,7 +221,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     XCTAssertEqual(outcome?.trigger.eventName, eventName)
     XCTAssertEqual(outcome?.trigger.eventCreatedAt, eventCreatedAt)
     XCTAssertEqual(outcome?.trigger.type, .explicit)
-    XCTAssertEqual(outcome?.trigger.presentedOn, "SWDebugViewController")
+    XCTAssertEqual(outcome?.trigger.presentedOn, "DebugViewController")
     XCTAssertEqual(outcome?.trigger.experiment, experiment)
     XCTAssertNil(outcome?.paywall)
   }
@@ -242,7 +242,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
 
     XCTAssertEqual(outcome?.trigger.eventName, eventName)
     XCTAssertEqual(outcome?.trigger.type, .explicit)
-    XCTAssertEqual(outcome?.trigger.presentedOn, "SWDebugViewController")
+    XCTAssertEqual(outcome?.trigger.presentedOn, "DebugViewController")
     XCTAssertNil(outcome?.trigger.experiment)
     XCTAssertNil(outcome?.paywall)
   }

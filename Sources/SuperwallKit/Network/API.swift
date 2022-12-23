@@ -7,30 +7,42 @@
 
 import Foundation
 
-enum Api {
+struct Api {
+  let hostDomain: String
+  let base: Base
+  let collector: Collector
+
   static let version1 = "/api/v1/"
   static let scheme = "https"
 
-  static var hostDomain: String {
-    switch Superwall.options.networkEnvironment {
-    case .release:
-      return "superwall.me"
-    case .releaseCandidate:
-      return "superwallcanary.com"
-    case .developer:
-      return "superwall.dev"
+  init(configManager: ConfigManager) {
+    let networkEnvironment = configManager.options.networkEnvironment
+    self.base = Base(networkEnvironment: networkEnvironment)
+    self.collector = Collector(networkEnvironment: networkEnvironment)
+    self.hostDomain = networkEnvironment.hostDomain
+  }
+
+  struct Base {
+    private let networkEnvironment: SuperwallOptions.NetworkEnvironment
+
+    init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
+      self.networkEnvironment = networkEnvironment
+    }
+
+    var host: String {
+      return networkEnvironment.baseHost
     }
   }
 
-  enum Base {
-    static var host: String {
-      return "api.\(hostDomain)"
-    }
-  }
+  struct Collector {
+    private let networkEnvironment: SuperwallOptions.NetworkEnvironment
 
-  enum Collector {
-    static var host: String {
-      return "collector.\(hostDomain)"
+    init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
+      self.networkEnvironment = networkEnvironment
+    }
+
+    var host: String {
+      return networkEnvironment.collectorHost
     }
   }
 }

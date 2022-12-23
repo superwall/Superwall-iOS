@@ -22,24 +22,30 @@ class ConfigManager {
   /// When the trigger is fired, the assignment is confirmed and stored to disk.
   var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
-  unowned var storeKitManager: StoreKitManager!
+  private unowned let storeKitManager: StoreKitManager
+  private unowned let storage: Storage
+  private unowned let network: Network
+  private unowned let paywallManager: PaywallManager
+  private unowned var deviceHelper: DeviceHelper!
+  private let factory: RequestFactory
 
-  private let storage: Storage
-  private let network: Network
-  private let paywallManager: PaywallManager
-
+  /// **NOTE**: Remember to call `postInit`after init.
   init(
-    options: SuperwallOptions?,
+    storeKitManager: StoreKitManager,
     storage: Storage,
     network: Network,
-    paywallManager: PaywallManager
+    paywallManager: PaywallManager,
+    factory: RequestFactory
   ) {
-    if let options = options {
-      self.options = options
-    }
+    self.storeKitManager = storeKitManager
     self.storage = storage
     self.network = network
     self.paywallManager = paywallManager
+    self.factory = factory
+  }
+
+  func postInit(deviceHelper: DeviceHelper) {
+    self.deviceHelper = deviceHelper
   }
 
   func fetchConfiguration(requestId: String = UUID().uuidString) async {
@@ -71,24 +77,6 @@ class ConfigManager {
     unconfirmedAssignments.removeAll()
     choosePaywallVariants(from: config.triggers)
     Task { await preloadPaywalls() }
-  }
-
-  func getEntitlements(forProductIds productIds: [String]) -> Set<Entitlement> {
-    guard let config = config else {
-      return []
-    }
-
-    var productEntitlements: Set<Entitlement> = []
-
-    for entitlement in config.entitlements {
-      for productId in productIds {
-        if entitlement.productIds.contains(productId) {
-          productEntitlements.insert(entitlement)
-        }
-      }
-    }
-
-    return productEntitlements
   }
 
   // MARK: - Assignments
@@ -154,7 +142,8 @@ class ConfigManager {
   func getStaticPaywall(withId paywallId: String?) -> Paywall? {
     return ConfigLogic.getStaticPaywall(
       withId: paywallId,
-      config: config
+      config: config,
+      deviceLocale: deviceHelper.locale
     )
   }
 
@@ -233,7 +222,7 @@ class ConfigManager {
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) {
     for identifier in paywallIdentifiers {
       Task {
-        let request = PaywallRequest(responseIdentifiers: .init(paywallId: identifier))
+        let request = factory.makePaywallRequest(withId: identifier)
         _ = try? await paywallManager.getPaywallViewController(
           from: request,
           cached: true

@@ -12,7 +12,9 @@ enum TemplateLogic {
   /// webview.
   static func getBase64EncodedTemplates(
     from paywall: Paywall,
-    withParams params: JSON?
+    withParams params: JSON?,
+    identityManager: IdentityManager,
+    deviceHelper: DeviceHelper
   ) -> String {
     let productsTemplate = ProductTemplate(
       eventName: "products",
@@ -21,7 +23,9 @@ enum TemplateLogic {
 
     let variablesTemplate = Variables(
       productVariables: paywall.productVariables,
-      params: params
+      params: params,
+      userAttributes: identityManager.userAttributes,
+      templateDeviceDictionary: deviceHelper.templateDevice.dictionary()
     ).templated()
 
     let freeTrialTemplate = FreeTrialTemplate(

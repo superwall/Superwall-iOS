@@ -9,20 +9,17 @@ import Foundation
 import StoreKit
 
 final class RestorationHandler {
-  private let storeKitManager: StoreKitManager
-  private let sessionEventsManager: SessionEventsManager
-  private let configManager: ConfigManager
+  private unowned let storeKitManager: StoreKitManager
+  private unowned let sessionEventsManager: SessionEventsManager
   private let superwall: Superwall.Type
 
   init(
     storeKitManager: StoreKitManager,
     sessionEventsManager: SessionEventsManager,
-    configManager: ConfigManager,
     superwall: Superwall.Type = Superwall.self
   ) {
     self.storeKitManager = storeKitManager
     self.sessionEventsManager = sessionEventsManager
-    self.configManager = configManager
     self.superwall = superwall
   }
 
@@ -36,18 +33,13 @@ final class RestorationHandler {
 
     paywallViewController.loadingState = .loadingPurchase
 
-    // TODO: Change delegate function to just be whether the restoring of purchases succeeded or not. Not whether they have a subscription!
     let hasRestored = await storeKitManager.coordinator.txnRestorer.restorePurchases()
     var isUserSubscribed = false
 
     if hasRestored {
       // TODO: Check that receipt has refreshed before here, especially when restoring a sandbox purchase on device. Could it get here before receipt has refreshed? We don't want that!
       await storeKitManager.loadPurchasedProducts()
-
-      let productIds = paywallViewController.paywall.productIds
-      let productEntitlements = configManager.getEntitlements(forProductIds: productIds)
-
-      isUserSubscribed = storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(toEntitlements: productEntitlements)
+      isUserSubscribed = storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed()
     }
 
     paywallViewController.loadingState = .ready

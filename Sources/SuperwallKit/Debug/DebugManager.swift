@@ -8,12 +8,23 @@
 import Foundation
 import UIKit
 
-@MainActor
-final class SWDebugManager {
-	var viewController: SWDebugViewController?
-  static let shared = SWDebugManager()
+final class DebugManager {
+  @MainActor
+	var viewController: DebugViewController?
 	var isDebuggerLaunched = false
 
+  private unowned let storage: Storage
+  private let factory: ViewControllerFactory
+
+  init(
+    storage: Storage,
+    factory: ViewControllerFactory
+  ) {
+    self.storage = storage
+    self.factory = factory
+  }
+
+  @MainActor
   func handle(deepLinkUrl: URL) {
     guard let launchDebugger = SWDebugManagerLogic.getQueryItemValue(
       fromUrl: deepLinkUrl,
@@ -31,7 +42,7 @@ final class SWDebugManager {
       return
     }
 
-    Storage.shared.apiKey = debugKey
+    storage.apiKey = debugKey
 
     let paywallId = SWDebugManagerLogic.getQueryItemValue(
       fromUrl: deepLinkUrl,
@@ -47,6 +58,7 @@ final class SWDebugManager {
   /// If you call `Superwall.handleDeepLink(url)` from `application(_:, open:, options:)` in your `AppDelegate`, this function is called automatically after scanning your debug QR code in Superwall's web dashboard.
   ///
   /// Remember to add your URL scheme in settings for QR code scanning to work.
+  @MainActor
   func launchDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
     if Superwall.shared.isPaywallPresented {
       await Superwall.dismiss()
@@ -63,6 +75,7 @@ final class SWDebugManager {
 		}
 	}
 
+  @MainActor
 	func presentDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
 		isDebuggerLaunched = true
 		if let viewController = viewController {
@@ -73,9 +86,7 @@ final class SWDebugManager {
         animated: true
       )
 		} else {
-			let viewController = SWDebugViewController()
-			viewController.paywallDatabaseId = paywallDatabaseId
-			viewController.modalPresentationStyle = .overFullScreen
+      let viewController = factory.makeDebugViewController(withDatabaseId: paywallDatabaseId)
 			UIViewController.topMostViewController?.present(
         viewController,
         animated: true,
@@ -85,6 +96,7 @@ final class SWDebugManager {
 		}
 	}
 
+  @MainActor
   func closeDebugger(animated: Bool) async {
     func dismissViewController() async {
       return await withCheckedContinuation { continuation in

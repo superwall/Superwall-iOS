@@ -13,25 +13,22 @@ class PaywallManager {
   var presentedViewController: PaywallViewController? {
     return PaywallViewController.cache.first { $0.isActive }
 	}
+  private unowned let paywallRequestManager: PaywallRequestManager
+  private var cache: PaywallCache!
 
-  @MainActor
-  private let cache: PaywallCache
+  private let factory: ViewControllerFactory
 
-  private let deviceHelper: DeviceHelper
-  private let sessionEventsManager: SessionEventsManager
-  private let storage: Storage
-  private let paywallManager: PaywallManager
-
+  /// **NOTE**: Remember to call `postInit` after init.
   init(
-    deviceHelper: DeviceHelper,
-    sessionEventsManager: SessionEventsManager,
-    storage: Storage,
-    paywallManager: PaywallManager
+    factory: ViewControllerFactory,
+    paywallRequestManager: PaywallRequestManager
   ) {
-    self.deviceHelper = deviceHelper
-    self.sessionEventsManager = sessionEventsManager
-    self.storage = storage
-    self.paywallManager = paywallManager
+    self.factory = factory
+    self.paywallRequestManager = paywallRequestManager
+  }
+
+  /// Initialises variables that can't be immediately init'd.
+  func postInit(deviceHelper: DeviceHelper) {
     self.cache = PaywallCache(deviceLocaleString: deviceHelper.locale)
   }
 
@@ -66,7 +63,7 @@ class PaywallManager {
     from request: PaywallRequest,
     cached: Bool
   ) async throws -> PaywallViewController {
-    let paywall = try await PaywallRequestManager.shared.getPaywall(from: request)
+    let paywall = try await paywallRequestManager.getPaywall(from: request)
 
     if cached,
       let viewController = self.cache.getPaywallViewController(withIdentifier: paywall.identifier) {
@@ -81,14 +78,8 @@ class PaywallManager {
       return viewController
     }
 
-    let paywallViewController = PaywallViewController(
-      paywall: paywall,
-      delegate: Superwall.shared,
-      deviceHelper: deviceHelper,
-      sessionEventsManager: sessionEventsManager,
-      storage: storage,
-      paywallManager: paywallManager
-    )
+    // TODO: Check no circular ref between paywallmanager and paywallvc
+    let paywallViewController = factory.makePaywallViewController(for: paywall)
 
     if let window = UIApplication.shared.activeWindow {
       paywallViewController.view.alpha = 0.01

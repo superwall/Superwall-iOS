@@ -168,20 +168,17 @@ public extension Superwall {
         canImplicitlyTriggerPaywall: false,
         customParameters: params ?? [:]
       )
-      let result = await track(trackableEvent)
-
-      let injections = await PresentationRequest.Injections(
-        isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
-        isUserSubscribed: shared.isUserSubscribed,
-        isPaywallPresented: shared.isPaywallPresented
-      )
-      return (result, injections)
+      let trackResult = await track(trackableEvent)
+      let isPaywallPresented = await shared.isPaywallPresented
+      return (trackResult, isPaywallPresented)
     }
-    .flatMap { result, injections in
-      let presentationRequest = PresentationRequest(
-        presentationInfo: .explicitTrigger(result.data),
+    .flatMap { trackResult, isPaywallPresented in
+      let presentationRequest = shared.dependencyContainer.makePresentationRequest(
+        .explicitTrigger(trackResult.data),
         paywallOverrides: paywallOverrides,
-        injections: injections
+        isDebuggerLaunched: shared.dependencyContainer.debugManager.isDebuggerLaunched,
+        isUserSubscribed: shared.dependencyContainer.storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(),
+        isPaywallPresented: isPaywallPresented
       )
       return shared.internallyPresent(presentationRequest)
     }
@@ -218,7 +215,8 @@ public extension Superwall {
 
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: trackableEvent,
-      eventCreatedAt: eventCreatedAt
+      eventCreatedAt: eventCreatedAt,
+      appSessionId: shared.dependencyContainer.appSessionManager.appSession.id
     )
 
     let eventData = EventData(
@@ -227,14 +225,11 @@ public extension Superwall {
       createdAt: eventCreatedAt
     )
 
-    let injections = PresentationRequest.Injections(
+    let presentationRequest = shared.dependencyContainer.makePresentationRequest(
+      .explicitTrigger(eventData),
       isDebuggerLaunched: false,
-      isUserSubscribed: await shared.isUserSubscribed,
+      isUserSubscribed: shared.dependencyContainer.storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(),
       isPaywallPresented: false
-    )
-    let presentationRequest = PresentationRequest(
-      presentationInfo: .explicitTrigger(eventData),
-      injections: injections
     )
 
     return await getTrackResult(for: presentationRequest)

@@ -201,7 +201,8 @@ struct Paywall: Decodable {
   }
 
   func getInfo(
-    fromEvent: EventData?
+    fromEvent: EventData?,
+    sessionEventsManager: SessionEventsManager
   ) -> PaywallInfo {
     return PaywallInfo(
       databaseId: databaseId,
@@ -220,7 +221,8 @@ struct Paywall: Decodable {
       productsLoadFailTime: productsLoadingInfo.failAt,
       productsLoadCompleteTime: productsLoadingInfo.endAt,
       experiment: experiment,
-      paywalljsVersion: paywalljsVersion
+      paywalljsVersion: paywalljsVersion,
+      sessionEventsManager: sessionEventsManager
     )
   }
 }

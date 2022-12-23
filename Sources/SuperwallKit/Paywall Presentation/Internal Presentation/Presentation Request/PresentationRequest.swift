@@ -23,12 +23,17 @@ struct PresentationRequest {
   var paywallOverrides: PaywallOverrides?
 
   struct Injections {
-    var configManager: ConfigManager
-    var storage: Storage
-    var sessionEventsManager: SessionEventsManager
-    var paywallManager: PaywallManager
-    var superwall: Superwall = .shared
-    var logger: Loggable.Type = Logger.self
+    unowned let configManager: ConfigManager
+    unowned let storage: Storage
+    unowned let sessionEventsManager: SessionEventsManager
+    unowned let paywallManager: PaywallManager
+    unowned let superwall: Superwall = .shared
+    let logger: Loggable.Type = Logger.self
+    unowned let storeKitManager: StoreKitManager
+    unowned let network: Network
+    unowned let debugManager: DebugManager
+    unowned let identityManager: IdentityManager
+    unowned let deviceHelper: DeviceHelper
     var isDebuggerLaunched: Bool
     var isUserSubscribed: Bool
     var isPaywallPresented: Bool
@@ -45,34 +50,14 @@ struct PresentationRequest {
 
 extension PresentationRequest: Stubbable {
   static func stub() -> PresentationRequest {
-    let storage = Storage()
-    let paywallManager = PaywallManager()
-    let network = Network()
-    let configManager = ConfigManager(
-      options: nil,
-      storage: storage,
-      network: network,
-      paywallManager: paywallManager
-    )
-    let appSessionManager = AppSessionManager(configManager: configManager)
-
-    return PresentationRequest(
-      presentationInfo: .explicitTrigger(.stub()),
-      injections: .init(
-        configManager: configManager,
-        storage: storage,
-        sessionEventsManager: SessionEventsManager(
-          storage: storage,
-          network: network,
-          configManager: configManager,
-          appSessionManager: appSessionManager,
-          identityManager: IdentityManager(storage: storage, configManager: configManager)
-        ),
-        paywallManager: paywallManager,
-        isDebuggerLaunched: false,
-        isUserSubscribed: false,
-        isPaywallPresented: false
-      )
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    return dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      paywallOverrides: nil,
+      presentingViewController: nil,
+      isDebuggerLaunched: false,
+      isUserSubscribed: false,
+      isPaywallPresented: false
     )
   }
 }

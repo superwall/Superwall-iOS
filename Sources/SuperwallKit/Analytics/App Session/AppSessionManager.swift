@@ -10,7 +10,6 @@ import Combine
 
 class AppSessionManager {
   var appSessionTimeout: Milliseconds?
-  unowned var sessionEventsManager: SessionEventsManager!
 
   private(set) var appSession = AppSession() {
     didSet {
@@ -23,15 +22,26 @@ class AppSessionManager {
   private var didTrackLaunch = false
   private var cancellable: AnyCancellable?
 
-  private let configManager: ConfigManager
+  private unowned let configManager: ConfigManager
+  private unowned let storage: Storage
+  private unowned var sessionEventsManager: SessionEventsManager!
 
-  /// **Note**: Remember to initialise sessionEventsManager separately after init!
-  init(configManager: ConfigManager) {
+  /// **Note**: Remember to call `postInit` after init.
+  init(
+    configManager: ConfigManager,
+    storage: Storage
+  ) {
     self.configManager = configManager
+    self.storage = storage
     Task {
       await addActiveStateObservers()
     }
     listenForAppSessionTimeout()
+  }
+
+  /// Initialises variables that can't be immediately init'd.
+  func postInit(sessionEventsManager: SessionEventsManager) {
+    self.sessionEventsManager = sessionEventsManager
   }
 
   @MainActor
@@ -101,6 +111,6 @@ class AppSessionManager {
       didTrackLaunch = true
     }
 
-    Storage.shared.recordFirstSeenTracked()
+    storage.recordFirstSeenTracked()
   }
 }

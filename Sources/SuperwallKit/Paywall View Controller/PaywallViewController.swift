@@ -49,11 +49,14 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
   }
 
   /// The web view that the paywall is displayed in.
-  let webView: SWWebView
+  var webView: SWWebView!
 
   /// The paywall info
   var paywallInfo: PaywallInfo {
-    return paywall.getInfo(fromEvent: eventData)
+    return paywall.getInfo(
+      fromEvent: eventData,
+      sessionEventsManager: sessionEventsManager
+    )
   }
 
   /// The loading state of the paywall.
@@ -149,10 +152,10 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     )
   }()
 
-  private let sessionEventsManager: SessionEventsManager
-  private let storage: Storage
-  private let deviceHelper: DeviceHelper
-  private let paywallManager: PaywallManager
+  private unowned let sessionEventsManager: SessionEventsManager
+  private unowned let storage: Storage
+  private unowned let deviceHelper: DeviceHelper
+  private unowned let paywallManager: PaywallManager
 
 	// MARK: - View Lifecycle
 
@@ -162,7 +165,8 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     deviceHelper: DeviceHelper,
     sessionEventsManager: SessionEventsManager,
     storage: Storage,
-    paywallManager: PaywallManager
+    paywallManager: PaywallManager,
+    identityManager: IdentityManager
   ) {
     self.cacheKey = PaywallCacheLogic.key(
       forIdentifier: paywall.identifier,
@@ -174,12 +178,15 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     self.storage = storage
     self.paywall = paywall
     self.paywallManager = paywallManager
-    webView = SWWebView(
-      delegate: self,
-      deviceHelper: deviceHelper
-    )
+
     presentationStyle = paywall.presentation.style
     super.init(nibName: nil, bundle: nil)
+    webView = SWWebView(
+      delegate: self,
+      deviceHelper: deviceHelper,
+      sessionEventsManager: sessionEventsManager,
+      identityManager: identityManager
+    )
     PaywallViewController.cache.insert(self)
     observeWillResignActive()
 	}

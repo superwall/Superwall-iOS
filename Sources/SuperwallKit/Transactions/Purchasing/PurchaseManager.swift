@@ -28,22 +28,24 @@ enum PurchaseError: LocalizedError {
   }
 }
 
-enum PurchaseManager {
+struct PurchaseManager {
+  unowned let storeKitManager: StoreKitManager
+
   /// Purchases products.
   ///
   /// If on iOS 15 and the dev hasn't disabled the finishing of transactions, the
   /// products are retrieved and purchased using StoreKit 2, otherwise using StoreKit 1.
-  static func purchase(
-    product: StoreProduct,
-    using coordinator: StoreKitCoordinator
-  ) async -> InternalPurchaseResult {
+  func purchase(product: StoreProduct) async -> InternalPurchaseResult {
     let purchaseStartAt = Date()
-    let result = await coordinator.productPurchaser.purchase(product: product)
+    let result = await storeKitManager.coordinator.productPurchaser.purchase(product: product)
+
+    // TODO: Should this only be in debug?
+    await storeKitManager.refreshReceipt()
 
     switch result {
     case .purchased:
       do {
-        let transaction = try await coordinator.txnChecker.getAndValidateTransaction(
+        let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateTransaction(
           of: product.productIdentifier,
           since: purchaseStartAt
         )

@@ -44,7 +44,6 @@ final class ReceiptManager: NSObject {
     let purchases = payload.purchases
     self.purchases = purchases
     activePurchases = purchases.filter { $0.isActive }
-    setActiveEntitlements()
 
     let purchasedProductIds = Set(purchases.map { $0.productIdentifier })
 
@@ -62,24 +61,6 @@ final class ReceiptManager: NSObject {
     } catch {
       return nil
     }
-  }
-
-  private func setActiveEntitlements() {
-    guard let entitlements = ConfigManager.shared.config?.entitlements else {
-      self.activeEntitlements = []
-      return
-    }
-
-    var activeEntitlements: Set<Entitlement> = []
-    for activePurchase in activePurchases {
-      let activeProductId = activePurchase.productIdentifier
-      guard let entitlement = entitlements.first(where: { $0.productIds.contains(where: { $0 == activeProductId}) }) else {
-        continue
-      }
-      activeEntitlements.insert(entitlement)
-    }
-
-    self.activeEntitlements = activeEntitlements
   }
 
   /// Determines whether a free trial is available based on the product the user is purchasing.

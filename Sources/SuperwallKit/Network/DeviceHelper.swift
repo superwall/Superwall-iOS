@@ -15,7 +15,7 @@ class DeviceHelper {
   }
   let appInstalledAtString: String
 
-  private let reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, Api.hostDomain)
+  private let reachability: SCNetworkReachability?
   var appVersion: String {
     Bundle.main.releaseVersionNumber ?? ""
   }
@@ -284,19 +284,24 @@ class DeviceHelper {
       localDateTime: localDateTimeString
     )
   }
+  
+  unowned var identityManager: IdentityManager!
+  private unowned let storage: Storage
+  private unowned let localizationManager: LocalizationManager
 
-  private let storage: Storage
-  private let identityManager: IdentityManager
-  private let localizationManager: LocalizationManager
-
+  // TODO: Clean up all postInits
   init(
+    api: Api,
     storage: Storage,
-    identityManager: IdentityManager,
     localizationManager: LocalizationManager
   ) {
     self.storage = storage
-    self.identityManager = identityManager
     self.localizationManager = localizationManager
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
+    reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.hostDomain)
+  }
+
+  func postInit(identityManager: IdentityManager) {
+    self.identityManager = identityManager
   }
 }

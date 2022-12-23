@@ -10,8 +10,9 @@ import UIKit
 import Combine
 
 final class TransactionManager {
-  private let storeKitManager: StoreKitManager
-  private let sessionEventsManager: SessionEventsManager
+  private unowned let storeKitManager: StoreKitManager
+  private unowned let sessionEventsManager: SessionEventsManager
+  private let purchaseManager: PurchaseManager
 
   /// The paywall view controller that the last product was purchased from.
   private var lastPaywallViewController: PaywallViewController?
@@ -22,6 +23,7 @@ final class TransactionManager {
   ) {
     self.storeKitManager = storeKitManager
     self.sessionEventsManager = sessionEventsManager
+    purchaseManager = PurchaseManager(storeKitManager: storeKitManager)
   }
 
   /// Purchases the given product and handles the result appropriately.
@@ -41,7 +43,7 @@ final class TransactionManager {
     await prepareToStartTransaction(of: product, from: paywallViewController)
 
     await paywallViewController.startTransactionTimeout()
-    let result = await PurchaseManager.purchase(product: product, using: storeKitManager.coordinator)
+    let result = await purchaseManager.purchase(product: product)
     await paywallViewController.cancelTransactionTimeout()
 
     switch result {

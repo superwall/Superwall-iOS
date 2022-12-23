@@ -23,6 +23,8 @@ class Storage {
   /// This means that we'll need to wait for assignments before firing triggers.
   var neverCalledStaticConfig = false
 
+  unowned var deviceHelper: DeviceHelper!
+
   /// The confirmed assignments for the user loaded from the cache.
   private var confirmedAssignments: [Experiment.ID: Experiment.Variant]?
 
@@ -30,6 +32,8 @@ class Storage {
   private let cache: Cache
 
   // MARK: - Configuration
+
+  /// **NOTE**: After init'ing, call `postInit`
   init(
     cache: Cache = Cache(),
     coreDataManager: CoreDataManager = CoreDataManager()
@@ -37,6 +41,10 @@ class Storage {
     self.cache = cache
     self.coreDataManager = coreDataManager
     self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true
+  }
+
+  func postInit(deviceHelper: DeviceHelper) {
+    self.deviceHelper = deviceHelper
   }
 
   func configure(apiKey: String) {
@@ -100,7 +108,7 @@ class Storage {
       return
     }
     Task {
-      _ = await trackEvent(InternalSuperwallEvent.AppInstall())
+      _ = await trackEvent(InternalSuperwallEvent.AppInstall(deviceHelper: deviceHelper))
     }
     save(true, forType: DidTrackAppInstall.self)
   }

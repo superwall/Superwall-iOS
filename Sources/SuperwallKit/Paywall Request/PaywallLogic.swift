@@ -73,11 +73,12 @@ enum PaywallLogic {
     return error
   }
 
+  // TODO: Check over this dependency bit
   static func getVariablesAndFreeTrial(
     fromProducts products: [Product],
     productsById: [String: StoreProduct],
     isFreeTrialAvailableOverride: Bool?,
-    isFreeTrialAvailable: @escaping (StoreProduct) -> Bool = Superwall.shared.storeKitManager.isFreeTrialAvailable(for:)
+    isFreeTrialAvailable: @escaping (StoreProduct) -> Bool
   ) -> ProductProcessingOutcome {
     var productVariables: [ProductVariable] = []
     var swTemplateProductVariables: [ProductVariable] = []

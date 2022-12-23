@@ -19,7 +19,8 @@ enum IdentityLogic {
 
   static func mergeAttributes(
     _ newAttributes: [String: Any],
-    with oldAttributes: [String: Any]
+    with oldAttributes: [String: Any],
+    appInstalledAtString: String
   ) -> [String: Any] {
     var mergedAttributes = oldAttributes
 
@@ -45,7 +46,7 @@ enum IdentityLogic {
     }
 
     // we want camel case
-    mergedAttributes["applicationInstalledAt"] = DeviceHelper.shared.appInstalledAtString
+    mergedAttributes["applicationInstalledAt"] = appInstalledAtString
 
     return mergedAttributes
   }

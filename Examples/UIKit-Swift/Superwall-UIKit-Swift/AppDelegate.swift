@@ -17,7 +17,9 @@ class StoreKit2TransactionListener {
   func listenForTransactions() {
     self.taskHandle = Task { [weak self] in
       for await result in StoreKit.Transaction.updates {
-        guard let self = self else { break }
+        guard let self = self else {
+          break
+        }
 
         print("TRANSACTION HERE")
       }
@@ -33,10 +35,12 @@ class StoreKit2TransactionListener {
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
+  var storekitlistener = StoreKit2TransactionListener()
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+   // storekitlistener.listenForTransactions()
     SuperwallService.configure()
     return true
   }

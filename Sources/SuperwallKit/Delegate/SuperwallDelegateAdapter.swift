@@ -32,12 +32,11 @@ final class SuperwallPurchasingDelegateAdapter {
 // MARK: - User Subscription Handling
 extension SuperwallPurchasingDelegateAdapter: SubscriptionStatusChecker {
   @MainActor
-  func isSubscribed(toEntitlements entitlements: Set<Entitlement>) -> Bool {
-    let entitlementNames = Set(entitlements.map { $0.name })
+  func isSubscribed() -> Bool {
     if let swiftDelegate = swiftDelegate {
-      return swiftDelegate.isUserSubscribed(toEntitlements: entitlementNames)
+      return swiftDelegate.isUserSubscribed()
     } else if let objcDelegate = objcDelegate {
-      return objcDelegate.isUserSubscribed(toEntitlements: entitlementNames)
+      return objcDelegate.isUserSubscribed()
     }
     return false
   }

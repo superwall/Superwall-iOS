@@ -25,7 +25,7 @@ struct AlertOption {
 
 // swiftlint:disable:all type_body_length
 @MainActor
-final class SWDebugViewController: UIViewController {
+final class DebugViewController: UIViewController {
   var logoImageView: UIImageView = {
     let superwallLogo = UIImage(named: "superwall_logo", in: Bundle.module, compatibleWith: nil)!
     let imageView = UIImageView(image: superwallLogo)
@@ -119,10 +119,31 @@ final class SWDebugViewController: UIViewController {
   var paywalls: [Paywall] = []
   var previewViewContent: UIView?
   private var cancellable: AnyCancellable?
-  private let storeKitManager: StoreKitManager
 
-  init(storeKitManager: StoreKitManager = Superwall.shared.storeKitManager) {
+  private unowned let storeKitManager: StoreKitManager
+  private unowned let network: Network
+  private unowned let paywallRequestManager: PaywallRequestManager
+  private unowned let paywallManager: PaywallManager
+  private unowned let localizationManager: LocalizationManager
+  private unowned let debugManager: DebugManager
+  private let factory: RequestFactory & ViewControllerFactory
+
+  init(
+    storeKitManager: StoreKitManager,
+    network: Network,
+    paywallRequestManager: PaywallRequestManager,
+    paywallManager: PaywallManager,
+    localizationManager: LocalizationManager,
+    debugManager: DebugManager,
+    factory: RequestFactory & ViewControllerFactory
+  ) {
     self.storeKitManager = storeKitManager
+    self.network = network
+    self.paywallRequestManager = paywallRequestManager
+    self.paywallManager = paywallManager
+    self.localizationManager = localizationManager
+    self.debugManager = debugManager
+    self.factory = factory
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -186,7 +207,7 @@ final class SWDebugViewController: UIViewController {
 
     if paywalls.isEmpty {
       do {
-        paywalls = try await Network.shared.getPaywalls()
+        paywalls = try await network.getPaywalls()
         await finishLoadingPreview()
       } catch {
         Logger.debug(
@@ -217,8 +238,8 @@ final class SWDebugViewController: UIViewController {
     }
 
     do {
-      let request = PaywallRequest(responseIdentifiers: .init(paywallId: paywallId))
-      var paywall = try await PaywallRequestManager.shared.getPaywall(from: request)
+      let request = factory.makePaywallRequest(withId: paywallId)
+      var paywall = try await paywallRequestManager.getPaywall(from: request)
 
       let productVariables = await storeKitManager.getProductVariables(for: paywall)
       paywall.productVariables = productVariables
@@ -243,7 +264,7 @@ final class SWDebugViewController: UIViewController {
       return
     }
 
-    let child = PaywallViewController(paywall: paywall)
+    let child = factory.makePaywallViewController(for: paywall)
     addChild(child)
     previewContainerView.insertSubview(child.view, at: 0)
     previewViewContent = child.view
@@ -308,7 +329,7 @@ final class SWDebugViewController: UIViewController {
 
   @objc func pressedExitButton() {
     Task {
-      await SWDebugManager.shared.closeDebugger(animated: false)
+      await debugManager.closeDebugger(animated: false)
     }
   }
 
@@ -320,8 +341,8 @@ final class SWDebugViewController: UIViewController {
   }
 
 	func showLocalizationPicker() async {
-		let viewController = SWLocalizationViewController { [weak self] locale in
-			LocalizationManager.shared.selectedLocale = locale
+    let viewController = SWLocalizationViewController(localizationManager: localizationManager) { [weak self] locale in
+      self?.localizationManager.selectedLocale = locale
       Task { await self?.loadPreview() }
 		}
 
@@ -388,18 +409,18 @@ final class SWDebugViewController: UIViewController {
     bottomButton.setImage(nil, for: .normal)
     bottomButton.showLoading = true
 
-    let presentationRequest = PresentationRequest(
-      presentationInfo: .fromIdentifier(
+    let presentationRequest = factory.makePresentationRequest(
+      .fromIdentifier(
         paywallIdentifier,
         freeTrialOverride: freeTrialAvailable
       ),
+      paywallOverrides: nil,
       presentingViewController: self,
-      injections: .init(
-        isDebuggerLaunched: true,
-        isUserSubscribed: false,
-        isPaywallPresented: Superwall.shared.isPaywallPresented
-      )
+      isDebuggerLaunched: true,
+      isUserSubscribed: false,
+      isPaywallPresented: Superwall.shared.isPaywallPresented
     )
+
 
     cancellable = Superwall.shared
       .internallyPresent(presentationRequest)
@@ -448,13 +469,13 @@ final class SWDebugViewController: UIViewController {
 
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
-    PaywallManager.shared.resetCache()
-    SWDebugManager.shared.isDebuggerLaunched = false
-    LocalizationManager.shared.selectedLocale = nil
+    paywallManager.resetCache()
+    debugManager.isDebuggerLaunched = false
+    localizationManager.selectedLocale = nil
   }
 }
 
-extension SWDebugViewController {
+extension DebugViewController {
   func presentAlert(title: String?, message: String?, options: [AlertOption]) {
     let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
 

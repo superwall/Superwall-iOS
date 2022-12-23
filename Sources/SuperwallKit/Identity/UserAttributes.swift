@@ -94,7 +94,7 @@ public extension Superwall {
       )
       let result = await track(trackableEvent)
       let eventParams = result.parameters.eventParams
-      IdentityManager.shared.mergeUserAttributes(eventParams)
+      shared.dependencyContainer.identityManager.mergeUserAttributes(eventParams)
     }
   }
 }

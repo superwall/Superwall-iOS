@@ -33,12 +33,20 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         paywallId: input.experiment.variant.paywallId,
         experiment: input.experiment
       )
+      let injections = input.request.injections
       let paywallRequest = PaywallRequest(
         eventData: input.request.presentationInfo.eventData,
         responseIdentifiers: responseIdentifiers,
         overrides: .init(
           products: input.request.paywallOverrides?.products,
           isFreeTrial: input.request.presentationInfo.freeTrialOverride
+        ),
+        injections: .init(
+          sessionEventsManager: injections.sessionEventsManager,
+          storeKitManager: injections.storeKitManager,
+          configManager: injections.configManager,
+          network: injections.network,
+          debugManager: injections.debugManager
         )
       )
 

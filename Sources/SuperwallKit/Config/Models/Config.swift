@@ -16,7 +16,6 @@ struct Config: Decodable {
   var appSessionTimeout: Milliseconds
   var featureFlags: FeatureFlags
   var preloadingDisabled: PreloadingDisabled
-  var entitlements: [Entitlement]
   var requestId: String?
 
   enum CodingKeys: String, CodingKey {
@@ -28,7 +27,6 @@ struct Config: Decodable {
     case appSessionTimeout = "appSessionTimeoutMs"
     case featureFlags = "toggles"
     case preloadingDisabled = "disablePreload"
-    case entitlements = "entitlements"
   }
 
   init(from decoder: Decoder) throws {
@@ -41,7 +39,6 @@ struct Config: Decodable {
     appSessionTimeout = try values.decode(Milliseconds.self, forKey: .appSessionTimeout)
     featureFlags = try FeatureFlags(from: decoder)
     preloadingDisabled = try values.decode(PreloadingDisabled.self, forKey: .preloadingDisabled)
-    entitlements = try values.decodeIfPresent([Entitlement].self, forKey: .entitlements) ?? []
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
@@ -55,8 +52,7 @@ struct Config: Decodable {
     locales: Set<String>,
     appSessionTimeout: Milliseconds,
     featureFlags: FeatureFlags,
-    preloadingDisabled: PreloadingDisabled,
-    entitlements: [Entitlement]
+    preloadingDisabled: PreloadingDisabled
   ) {
     self.triggers = triggers
     self.paywalls = paywalls
@@ -66,7 +62,6 @@ struct Config: Decodable {
     self.appSessionTimeout = appSessionTimeout
     self.featureFlags = featureFlags
     self.preloadingDisabled = preloadingDisabled
-    self.entitlements = entitlements
   }
 }
 
@@ -81,8 +76,7 @@ extension Config: Stubbable {
       locales: [],
       appSessionTimeout: 3600000,
       featureFlags: .stub(),
-      preloadingDisabled: .stub(),
-      entitlements: []
+      preloadingDisabled: .stub()
     )
   }
 }

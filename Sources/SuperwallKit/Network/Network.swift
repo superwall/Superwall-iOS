@@ -15,14 +15,19 @@ class Network {
     UIApplication.shared.publisher(for: \.applicationState)
       .eraseToAnyPublisher()
   }
+  private let factory: ApiFactory
 
-  init(urlSession: CustomURLSession = CustomURLSession()) {
+  init(
+    urlSession: CustomURLSession = CustomURLSession(),
+    factory: ApiFactory
+  ) {
     self.urlSession = urlSession
+    self.factory = factory
   }
 
   func sendEvents(events: EventsRequest) async {
     do {
-      let result = try await urlSession.request(.events(eventsRequest: events))
+      let result = try await urlSession.request(.events(eventsRequest: events, factory: factory))
       switch result.status {
       case .ok:
         break
@@ -50,7 +55,9 @@ class Network {
     fromEvent event: EventData? = nil
   ) async throws -> Paywall {
     do {
-      return try await urlSession.request(.paywall(withIdentifier: identifier, fromEvent: event))
+      return try await urlSession.request(
+        .paywall(withIdentifier: identifier, fromEvent: event, factory: factory)
+      )
     } catch {
       if identifier == nil {
         Logger.debug(
@@ -77,7 +84,10 @@ class Network {
 
   func getPaywalls() async throws -> [Paywall] {
     do {
-      let response = try await urlSession.request(.paywalls, isForDebugging: true)
+      let response = try await urlSession.request(
+        .paywalls(factory: factory),
+        isForDebugging: true
+      )
       return response.paywalls
     } catch {
       Logger.debug(
@@ -104,7 +114,7 @@ class Network {
       .async()
 
     do {
-      var config = try await urlSession.request(.config(requestId: requestId))
+      var config = try await urlSession.request(.config(requestId: requestId, factory: factory))
       config.requestId = requestId
       return config
     } catch {
@@ -120,7 +130,7 @@ class Network {
 
   func confirmAssignments(_ confirmableAssignments: AssignmentPostback) async {
     do {
-      try await urlSession.request(.confirmAssignments(confirmableAssignments))
+      try await urlSession.request(.confirmAssignments(confirmableAssignments, factory: factory))
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -134,7 +144,7 @@ class Network {
 
   func getAssignments() async throws -> [Assignment] {
     do {
-      let result = try await urlSession.request(.assignments)
+      let result = try await urlSession.request(.assignments(factory: factory))
       return result.assignments
     } catch {
       Logger.debug(
@@ -149,7 +159,7 @@ class Network {
 
   func sendSessionEvents(_ session: SessionEventsRequest) async {
     do {
-      let result = try await urlSession.request(.sessionEvents(session))
+      let result = try await urlSession.request(.sessionEvents(session, factory: factory))
       switch result.status {
       case .ok:
         break
@@ -174,7 +184,7 @@ class Network {
 
   func sendPostback(_ postback: Postback) async {
     do {
-      try await urlSession.request(.assignments)
+      try await urlSession.request(.assignments(factory: factory))
     } catch {
       Logger.debug(
         logLevel: .error,

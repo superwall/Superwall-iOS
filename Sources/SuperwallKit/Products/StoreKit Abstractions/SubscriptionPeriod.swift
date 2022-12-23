@@ -28,7 +28,7 @@ public final class SubscriptionPeriod: NSObject {
 
   /// Units of time used to describe subscription periods.
   @objc(SWKSubscriptionPeriodUnit)
-  public enum Unit: Int, Codable {
+  public enum Unit: Int, Codable, Sendable {
     /// A subscription period unit of a day.
     case day = 0
     /// A subscription period unit of a week.

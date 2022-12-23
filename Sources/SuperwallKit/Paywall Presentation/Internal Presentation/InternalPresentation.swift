@@ -69,12 +69,12 @@ extension Superwall {
     // Remove the currently presenting paywall from cache.
     await MainActor.run {
       if let presentingPaywallIdentifier = Superwall.shared.paywallViewController?.paywall.identifier {
-        PaywallManager.shared.removePaywall(withIdentifier: presentingPaywallIdentifier)
+        dependencyContainer.paywallManager.removePaywall(withIdentifier: presentingPaywallIdentifier)
       }
     }
 
     // Resend both the identity and request again to run the presentation pipeline again.
-    IdentityManager.shared.resendIdentity()
+    dependencyContainer.identityManager.resendIdentity()
     lastPresentationItems.subject.send(lastPresentationItems.request)
   }
 

@@ -9,13 +9,19 @@ import Foundation
 import Combine
 
 actor PaywallRequestManager {
-  static let shared = PaywallRequestManager()
+  unowned let storeKitManager: StoreKitManager
+  unowned var deviceHelper: DeviceHelper!
+
   private var activeTasks: [String: Task<Paywall, Error>] = [:]
   private var paywallsByHash: [String: Paywall] = [:]
-  private let storeKitManager: StoreKitManager
 
-  init(storeKitManager: StoreKitManager = Superwall.shared.storeKitManager) {
+  init(
+    storeKitManager: StoreKitManager) {
     self.storeKitManager = storeKitManager
+  }
+
+  func postInit(deviceHelper: DeviceHelper) {
+    self.deviceHelper = deviceHelper
   }
 
   ///  Gets a paywall from a given request.
@@ -28,15 +34,17 @@ actor PaywallRequestManager {
   func getPaywall(from request: PaywallRequest) async throws -> Paywall {
     let requestHash = PaywallLogic.requestHash(
       identifier: request.responseIdentifiers.paywallId,
-      event: request.eventData
+      event: request.eventData,
+      locale: deviceHelper.locale
     )
 
-    let notSubstitutingProducts = request.substituteProducts == nil
-    let debuggerNotLaunched = await !SWDebugManager.shared.isDebuggerLaunched
+    let notSubstitutingProducts = request.overrides.products == nil
+    let debuggerNotLaunched = !request.injections.debugManager.isDebuggerLaunched
     let shouldUseCache = notSubstitutingProducts && debuggerNotLaunched
 
     if var paywall = paywallsByHash[requestHash],
       shouldUseCache {
+      // Calculate whether there's a free trial available
       if let primaryProduct = paywall.products.first(where: { $0.type == .primary }),
         let storeProduct = storeKitManager.productsById[primaryProduct.id] {
         let isFreeTrialAvailable = storeKitManager.isFreeTrialAvailable(for: storeProduct)

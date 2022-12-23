@@ -9,7 +9,8 @@ import Foundation
 
 enum LocalizationLogic {
   static func getSortedLocalizations(
-    forLocales localeIds: [String]
+    forLocales localeIds: [String],
+    popularLocales: [String]
   ) -> [LocalizationOption] {
     var localizations: [LocalizationOption] = []
     let currentLocale = Locale.autoupdatingCurrent
@@ -36,7 +37,8 @@ enum LocalizationLogic {
       let localizationOption = LocalizationOption(
         language: localizedLanguage,
         country: country,
-        locale: localeId
+        locale: localeId,
+        popularLocales: popularLocales
       )
       localizations.append(localizationOption)
     }

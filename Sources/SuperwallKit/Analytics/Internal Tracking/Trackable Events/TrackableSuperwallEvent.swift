@@ -34,10 +34,11 @@ enum InternalSuperwallEvent {
 
   struct AppInstall: TrackableSuperwallEvent {
     let superwallEvent: SuperwallEvent = .appInstall
+    unowned let deviceHelper: DeviceHelper
     var customParameters: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       return [
-        "application_installed_at": DeviceHelper.shared.appInstalledAtString
+        "application_installed_at": deviceHelper.appInstalledAtString
       ]
     }
   }
@@ -185,13 +186,14 @@ enum InternalSuperwallEvent {
     }
     let triggerName: String
     var customParameters: [String: Any] = [:]
+    unowned let sessionEventsManager: SessionEventsManager
 
     func getSuperwallParameters() async -> [String: Any] {
       var params: [String: Any] = [
         "trigger_name": triggerName
       ]
 
-      if let triggerSession = await SessionEventsManager.shared.triggerSession.activeTriggerSession {
+      if let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession {
         params["trigger_session_id"] = triggerSession.id
       }
 

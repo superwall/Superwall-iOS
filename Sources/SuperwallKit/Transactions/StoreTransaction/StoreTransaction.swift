@@ -64,24 +64,34 @@ public final class StoreTransaction: NSObject, StoreTransactionType, Encodable {
     self.triggerSessionId = triggerSessionId
   }
 
-  static func create(from sk2Transaction: SK1Transaction) async -> StoreTransaction {
-    let triggerSession = await SessionEventsManager.shared.triggerSession.activeTriggerSession
+  static func create(
+    from sk2Transaction: SK1Transaction,
+    sessionEventsManager: SessionEventsManager,
+    configManager: ConfigManager,
+    appSessionManager: AppSessionManager
+  ) async -> StoreTransaction {
+    let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
     let storeTransaction = StoreTransaction(
       SK1StoreTransaction(transaction: sk2Transaction),
-      configRequestId: ConfigManager.shared.config?.requestId ?? "",
-      appSessionId: AppSessionManager.shared.appSession.id,
+      configRequestId: configManager.config?.requestId ?? "",
+      appSessionId: appSessionManager.appSession.id,
       triggerSessionId: triggerSession?.id
     )
     return storeTransaction
   }
 
   @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-  static func create(from sk2Transaction: SK2Transaction) async -> StoreTransaction {
-    let triggerSession = await SessionEventsManager.shared.triggerSession.activeTriggerSession
+  static func create(
+    from sk2Transaction: SK2Transaction,
+    sessionEventsManager: SessionEventsManager,
+    configManager: ConfigManager,
+    appSessionManager: AppSessionManager
+  ) async -> StoreTransaction {
+    let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
     let storeTransaction = StoreTransaction(
       SK2StoreTransaction(transaction: sk2Transaction),
-      configRequestId: ConfigManager.shared.config?.requestId ?? "",
-      appSessionId: AppSessionManager.shared.appSession.id,
+      configRequestId: configManager.config?.requestId ?? "",
+      appSessionId: appSessionManager.appSession.id,
       triggerSessionId: triggerSession?.id
     )
     return storeTransaction

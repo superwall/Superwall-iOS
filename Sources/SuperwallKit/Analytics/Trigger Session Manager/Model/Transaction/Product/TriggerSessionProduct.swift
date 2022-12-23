@@ -90,7 +90,7 @@ extension TriggerSession.Transaction {
           type: introductoryPrice.type
         )
 
-        self.introductoryRedeemable = Superwall.shared.storeKitManager.isFreeTrialAvailable(for: product)
+        self.introductoryRedeemable = Superwall.shared.dependencyContainer.storeKitManager.isFreeTrialAvailable(for: product)
         self.hasIntroductoryOffer = true
       } else {
         self.hasIntroductoryOffer = false

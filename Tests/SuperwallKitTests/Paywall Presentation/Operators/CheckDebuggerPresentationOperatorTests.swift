@@ -168,7 +168,7 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
 
   func test_checkDebuggerPresentation_presentingOnDebugger() async {
     let identifier = "abc"
-    let debugger = await SWDebugViewController()
+    let debugger = await DebugViewController()
     let request = PresentationRequest(
       presentationInfo: .fromIdentifier(identifier, freeTrialOverride: false),
       presentingViewController: debugger,

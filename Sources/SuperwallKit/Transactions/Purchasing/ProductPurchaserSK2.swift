@@ -11,24 +11,22 @@ import StoreKit
 @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 final class ProductPurchaserSK2: ProductPurchaser {
   private var updates: Task<Void, Never>?
-  private let storeKitManager: StoreKitManager
-  private let sessionEventsManager: SessionEventsManager
+  private unowned let storeKitManager: StoreKitManager
+  private unowned let sessionEventsManager: SessionEventsManager
+  private let factory: StoreTransactionFactory
 
   init(
     storeKitManager: StoreKitManager,
-    sessionEventsManager: SessionEventsManager
+    sessionEventsManager: SessionEventsManager,
+    factory: StoreTransactionFactory
   ) {
     self.storeKitManager = storeKitManager
     self.sessionEventsManager = sessionEventsManager
+    self.factory = factory
     observeTransactionUpdates()
   }
 
   deinit {
-    cancelTasks()
-  }
-
-  func cancelTasks() {
-    // Cancel the update handling task when you deinitialize the class.
     updates?.cancel()
   }
 
@@ -71,12 +69,13 @@ final class ProductPurchaserSK2: ProductPurchaser {
         guard case .verified(let transaction) = verificationResult else {
           return
         }
-        // Change this to not use Superwall.options
+        // TODO: Change this to not use Superwall.options
         if Superwall.options.finishTransactions {
           await transaction.finish()
         }
-        let storeTransaction = await StoreTransaction.create(from: transaction)
+        let storeTransaction = await factory.makeStoreTransaction(from: transaction)
         await sessionEventsManager.enqueue(storeTransaction)
+        await storeKitManager.loadPurchasedProducts()
       }
     }
   }
@@ -100,7 +99,7 @@ extension ProductPurchaserSK2: TransactionChecker {
     guard transaction.purchaseDate >= purchaseStartDate else {
       throw PurchaseError.noTransactionDetected
     }
-    return await StoreTransaction.create(from: transaction)
+    return await factory.makeStoreTransaction(from: transaction)
   }
 }
 

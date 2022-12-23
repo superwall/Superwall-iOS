@@ -14,7 +14,7 @@ struct LocalizationOption: Codable {
   var description: String
   var isPopular: Bool {
     let isEnglish = locale == "en"
-    let isInPopularLocales = LocalizationManager.shared.popularLocales.contains(locale)
+    let isInPopularLocales = popularLocales.contains(locale)
     return isInPopularLocales || isEnglish
   }
   var sectionTitle: String {
@@ -30,15 +30,18 @@ struct LocalizationOption: Codable {
   var sortDescription: String {
     return "\(isPopular ? "a" : "b") \(description)"
   }
+  private let popularLocales: [String]
 
   init(
     language: String,
     country: String?,
-    locale: String
+    locale: String,
+    popularLocales: [String]
   ) {
     self.language = language
     self.country = country
     self.locale = locale
+    self.popularLocales = popularLocales
 
     if let country = country {
       self.description = "\(language) (\(country))"

@@ -17,7 +17,7 @@ public extension Superwall {
   ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
   ///  - Throws: An error of type ``IdentityError``.
   @objc static func logIn(userId: String) async throws {
-    try await IdentityManager.shared.logIn(userId: userId)
+    try await shared.dependencyContainer.identityManager.logIn(userId: userId)
   }
 
   /// Logs in a user with their `userId` to retrieve paywalls that they've been assigned to.
@@ -56,7 +56,7 @@ public extension Superwall {
   ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
   ///  - Throws: An error of type ``IdentityError``.
   @objc static func createAccount(userId: String) throws {
-    try IdentityManager.shared.createAccount(userId: userId)
+    try shared.dependencyContainer.identityManager.createAccount(userId: userId)
   }
 }
 
@@ -70,7 +70,7 @@ public extension Superwall {
   ///
   ///  - Throws: An error of type ``LogoutError``.
   @objc static func logOut() async throws {
-    try await IdentityManager.shared.logOut()
+    try await shared.dependencyContainer.identityManager.logOut()
   }
 
   /// Logs out the user. This calls ``SuperwallKit/Superwall/reset()``, which resets on-device paywall
@@ -104,11 +104,11 @@ public extension Superwall {
   /// by Superwall.
   @objc static func reset() async {
     shared.presentationItems.reset()
-    IdentityManager.shared.reset()
-    Storage.shared.reset()
-    await PaywallManager.shared.resetCache()
-    ConfigManager.shared.reset()
-    IdentityManager.shared.didSetIdentity()
+    shared.dependencyContainer.identityManager.reset()
+    shared.dependencyContainer.storage.reset()
+    await shared.dependencyContainer.paywallManager.resetCache()
+    shared.dependencyContainer.configManager.reset()
+    shared.dependencyContainer.identityManager.didSetIdentity()
   }
 
   /// Asynchronously resets the `userId` and data stored by Superwall.

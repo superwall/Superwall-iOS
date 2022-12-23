@@ -18,47 +18,39 @@ protocol SessionEventsDelegate: AnyObject {
 
 class SessionEventsManager {
   /// The trigger session manager.
-  let triggerSession: TriggerSessionManager!
+  var triggerSession: TriggerSessionManager!
 
   /// A queue of trigger session events that get sent to the server.
   private let queue: SessionEnqueuable
 
-  /// Network class. Can be injected via init for testing.
-  private let network: Network
-
-  /// Storage class. Can be injected via init for testing.
-  private let storage: Storage
-
-  /// Storage class. Can be injected via init for testing.
-  private let configManager: ConfigManager
-
   private var cancellables: [AnyCancellable] = []
 
+  private unowned let network: Network
+  private unowned let storage: Storage
+  private unowned let configManager: ConfigManager
+  private let factory: TriggerSessionManagerFactory
 
-  /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
+  /// Remember to call postInit
   init(
-    queue: SessionEnqueuable = SessionEventsQueue(),
+    queue: SessionEnqueuable,
     storage: Storage,
     network: Network,
     configManager: ConfigManager,
-    appSessionManager: AppSessionManager,
-    identityManager: IdentityManager
+    factory: TriggerSessionManagerFactory
   ) {
     self.queue = queue
     self.storage = storage
     self.network = network
     self.configManager = configManager
-    self.triggerSession = TriggerSessionManager(
-      delegate: self,
-      storage: storage,
-      configManager: configManager,
-      appSessionManager: appSessionManager,
-      identityManager: identityManager
-    )
+    self.factory = factory
 
     Task {
       await postCachedSessionEvents()
     }
+  }
+
+  func postInit() {
+    self.triggerSession = factory.makeTriggerSessionManager()
   }
 
   /// Gets the last 20 cached trigger sessions and transactions from the last time the app was terminated,

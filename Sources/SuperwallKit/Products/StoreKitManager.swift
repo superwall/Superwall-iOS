@@ -3,7 +3,6 @@ import Combine
 
 final class StoreKitManager {
   var productsById: [String: StoreProduct] = [:]
-  unowned var configManager: ConfigManager!
 
   private lazy var receiptManager = ReceiptManager(delegate: self)
   private struct ProductProcessingResult {
@@ -14,16 +13,11 @@ final class StoreKitManager {
 
   // Force unwrapping because it's always be around but we need
   // to use self during init.
-  var coordinator: StoreKitCoordinator!
+  lazy var coordinator = factory.makeStoreKitCoordinator()
+  private let factory: StoreKitCoordinatorFactory
 
-  init(purchasingDelegateAdapter: SuperwallPurchasingDelegateAdapter,
-       configManager: ConfigManager) {
-    self.configManager = configManager
-    self.coordinator = StoreKitCoordinator(
-      purchasingDelegateAdapter: purchasingDelegateAdapter,
-      subscriptionStatusHandler: self,
-      finishTransactions: configManager.options.finishTransactions
-    )
+  init(factory: StoreKitCoordinatorFactory) {
+    self.factory = factory
   }
 
 	func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
@@ -49,6 +43,7 @@ final class StoreKitManager {
   ///
   /// - Warning: This will prompt the user to log in, so only do this on
   /// when restoring.
+  @discardableResult
   func refreshReceipt() async -> Bool {
     return await receiptManager.refreshReceipt()
   }
@@ -157,19 +152,8 @@ extension StoreKitManager: ProductsFetcher {
 
 // MARK: - Subscription Status Checker
 extension StoreKitManager: SubscriptionStatusChecker {
-  func isSubscribed(toEntitlements entitlements: Set<Entitlement>) -> Bool {
-    // TODO: Maybe store active entitlements/purchases in memory until had a chance to get config, until reset is called.
-    guard let config = configManager.config else {
-      return false
-    }
-
-    // If not looking for subscription to a specific entitlement, or no
-    // entitlements are set up in config, just check for any active purchases.
-    if entitlements.isEmpty || config.entitlements.isEmpty {
-      return !receiptManager.activePurchases.isEmpty
-    }
-
-    // Otherwise, check whether there are any active entitlements.
-    return !receiptManager.activeEntitlements.isEmpty
+  /// Do not call this directly.
+  func isSubscribed() -> Bool {
+    return !receiptManager.activePurchases.isEmpty
   }
 }

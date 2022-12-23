@@ -11,7 +11,6 @@ import StoreKit
 import Combine
 
 actor TriggerSessionManager {
-  weak var delegate: SessionEventsDelegate?
 
   /// The list of all potential trigger sessions, keyed by the trigger event name, created after receiving the config.
   private var pendingTriggerSessions: [String: TriggerSession] = [:]
@@ -19,10 +18,11 @@ actor TriggerSessionManager {
   /// The active trigger session.
   var activeTriggerSession: TriggerSession?
 
-  private let storage: Storage
-  private let configManager: ConfigManager
-  private let appSessionManager: AppSessionManager
-  private let identityManager: IdentityManager
+  private unowned let storage: Storage
+  private unowned let configManager: ConfigManager
+  private unowned let appSessionManager: AppSessionManager
+  private unowned let identityManager: IdentityManager
+  private unowned let delegate: SessionEventsManager
 
   /// A local count for transactions used within the trigger session.
   private var transactionCount: TriggerSession.Transaction.Count?
@@ -39,7 +39,7 @@ actor TriggerSessionManager {
 
   /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
   init(
-    delegate: SessionEventsDelegate,
+    delegate: SessionEventsManager,
     storage: Storage,
     configManager: ConfigManager,
     appSessionManager: AppSessionManager,
@@ -106,7 +106,7 @@ actor TriggerSessionManager {
   /// Creates a session for each potential trigger on config and manual paywall presentation and sends them off to the server.
   func createSessions(from config: Config) async {
     // Loop through triggers and create a session for each.
-    let isUserSubscribed = await Superwall.shared.isUserSubscribed
+    let isUserSubscribed = Superwall.shared.hasActiveSubscription
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
         configRequestId: configManager.config?.requestId,
@@ -171,7 +171,8 @@ actor TriggerSessionManager {
     if let triggerResult = triggerResult {
       let trackedEvent = InternalSuperwallEvent.TriggerFire(
         triggerResult: triggerResult,
-        triggerName: eventName
+        triggerName: eventName,
+        sessionEventsManager: delegate
       )
       _ = await trackEvent(trackedEvent)
     }
@@ -200,7 +201,7 @@ actor TriggerSessionManager {
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
       configRequestId: configManager.config?.requestId,
       userAttributes: identityManager.userAttributes,
-      isSubscribed: await Superwall.shared.isUserSubscribed,
+      isSubscribed: Superwall.shared.hasActiveSubscription,
       eventName: eventName,
       products: currentTriggerSession.products.allProducts,
       appSession: appSessionManager.appSession
@@ -217,13 +218,13 @@ actor TriggerSessionManager {
     guard var triggerSession = activeTriggerSession else {
       return
     }
-    triggerSession.isSubscribed = await Superwall.shared.isUserSubscribed
-    await delegate?.enqueue(triggerSession)
+    triggerSession.isSubscribed = Superwall.shared.hasActiveSubscription
+    await delegate.enqueue(triggerSession)
   }
 
   /// Queues all the pending trigger sessions to be sent back to the server.
   private func enqueuePendingTriggerSessions() async {
-    let isUserSubscribed = await Superwall.shared.isUserSubscribed
+    let isUserSubscribed = Superwall.shared.hasActiveSubscription
     for eventName in pendingTriggerSessions.keys {
       guard var pendingTriggerSession = pendingTriggerSessions[eventName] else {
         continue
@@ -232,7 +233,7 @@ actor TriggerSessionManager {
       pendingTriggerSessions[eventName] = pendingTriggerSession
     }
     let triggerSessionsArray = Array(pendingTriggerSessions.values)
-    await delegate?.enqueue(triggerSessionsArray)
+    await delegate.enqueue(triggerSessionsArray)
   }
 
   // MARK: - App Session

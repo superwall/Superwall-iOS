@@ -54,5 +54,5 @@ public protocol SuperwallPurchasingDelegate: AnyObject {
   ///   dashboard. This may or may not be empty, depending on whether you've added products to
   ///   an entitlement.
   /// - Returns: A boolean that indicates whether or not the user has an active subscription.
-  func isUserSubscribed(toEntitlements entitlements: Set<String>) -> Bool
+  func isUserSubscribed() -> Bool
 }

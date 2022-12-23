@@ -14,20 +14,27 @@ protocol SWWebViewDelegate: AnyObject {
 }
 
 final class SWWebView: WKWebView {
-  lazy var messageHandler = PaywallMessageHandler(delegate: delegate)
+  let messageHandler: PaywallMessageHandler
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
-  private let deviceHelper: DeviceHelper
   private let wkConfig: WKWebViewConfiguration
-  private let sessionEventsManager: SessionEventsManager
+  private unowned let deviceHelper: DeviceHelper
+  private unowned let sessionEventsManager: SessionEventsManager
 
   init(
     delegate: SWWebViewDelegate & PaywallMessageHandlerDelegate,
     deviceHelper: DeviceHelper,
-    sessionEventsManager: SessionEventsManager
+    sessionEventsManager: SessionEventsManager,
+    identityManager: IdentityManager
   ) {
     self.deviceHelper = deviceHelper
     self.delegate = delegate
     self.sessionEventsManager = sessionEventsManager
+    self.messageHandler = PaywallMessageHandler(
+      delegate: delegate,
+      sessionEventsManager: sessionEventsManager,
+      deviceHelper: deviceHelper,
+      identityManager: identityManager
+    )
 
     let config = WKWebViewConfiguration()
     config.allowsInlineMediaPlayback = true

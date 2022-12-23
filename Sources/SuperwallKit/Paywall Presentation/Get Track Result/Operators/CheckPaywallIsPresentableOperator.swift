@@ -13,7 +13,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
     asyncMap { input in
       // TODO: Change value here
       if await InternalPresentationLogic.userSubscribedAndNotOverridden(
-        isUserSubscribed: input.request.injections.superwall.isUserSubscribed,
+        isUserSubscribed: input.request.injections.isUserSubscribed,
         overrides: .init(
           isDebuggerLaunched: false,
           shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus,

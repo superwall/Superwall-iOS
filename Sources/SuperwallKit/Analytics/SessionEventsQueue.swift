@@ -40,13 +40,23 @@ actor SessionEventsQueue: SessionEnqueuable {
   private var willResignActiveObserver: AnyCancellable?
   private lazy var lastTwentySessions = LimitedQueue<TriggerSession>(limit: 20)
   private lazy var lastTwentyTransactions = LimitedQueue<StoreTransaction>(limit: 20)
+  private unowned let storage: Storage
+  private unowned let network: Network
+  private unowned let configManager: ConfigManager
 
   deinit {
     timer?.cancel()
     timer = nil
   }
 
-  init() {
+  init(
+    storage: Storage,
+    network: Network,
+    configManager: ConfigManager
+  ) {
+    self.storage = storage
+    self.network = network
+    self.configManager = configManager
     Task {
       await setupTimer()
       await addObserver()
@@ -54,7 +64,7 @@ actor SessionEventsQueue: SessionEnqueuable {
   }
 
   private func setupTimer() {
-    let timeInterval = Superwall.options.networkEnvironment == .release ? 20.0 : 1.0
+    let timeInterval = configManager.options.networkEnvironment == .release ? 20.0 : 1.0
     timer = Timer
       .publish(
         every: timeInterval,
@@ -132,7 +142,7 @@ actor SessionEventsQueue: SessionEnqueuable {
         transactions: transactionsToSend
       )
       Task {
-        await Network.shared.sendSessionEvents(sessionEvents)
+        await network.sendSessionEvents(sessionEvents)
       }
     }
 
@@ -148,11 +158,11 @@ actor SessionEventsQueue: SessionEnqueuable {
 
   private func saveLatestSessionsToDisk() {
     let sessions = lastTwentySessions.getArray()
-    Storage.shared.save(sessions, forType: TriggerSessions.self)
+    storage.save(sessions, forType: TriggerSessions.self)
   }
 
   private func saveLatestTransactionsToDisk() {
     let transactions = lastTwentyTransactions.getArray()
-    Storage.shared.save(transactions, forType: Transactions.self)
+    storage.save(transactions, forType: Transactions.self)
   }
 }
