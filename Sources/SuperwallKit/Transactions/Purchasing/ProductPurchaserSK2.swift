@@ -69,7 +69,7 @@ final class ProductPurchaserSK2: ProductPurchaser {
         guard case .verified(let transaction) = verificationResult else {
           return
         }
-        // TODO: Change this to not use Superwall.options
+        // TODO: TRANSACTIONS CREATED OUTSIDE OF APP DO NOT GET CALLED BACK HERE SO WE CAN'T FINISH THEM. WEIRDLY IT WORKS IN REVENUECAT. WHY??????
         if Superwall.options.finishTransactions {
           await transaction.finish()
         }
