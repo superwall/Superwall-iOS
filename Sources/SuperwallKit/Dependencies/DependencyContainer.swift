@@ -44,16 +44,17 @@ final class DependencyContainer {
     objcPurchasingDelegate: SuperwallPurchasingDelegateObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
+    storeKitManager = StoreKitManager(factory: self)
     purchasingDelegateAdapter = SuperwallPurchasingDelegateAdapter(
       swiftDelegate: swiftPurchasingDelegate,
-      objcDelegate: objcPurchasingDelegate
+      objcDelegate: objcPurchasingDelegate,
+      storeKitManager: storeKitManager
     )
 
     localizationManager = LocalizationManager()
     storage = Storage()
     network = Network(factory: self)
 
-    storeKitManager = StoreKitManager(factory: self)
     paywallRequestManager = PaywallRequestManager(
       storeKitManager: storeKitManager
     )

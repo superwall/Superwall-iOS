@@ -54,45 +54,32 @@ struct StoreKitCoordinator {
       )
       self.txnRestorer = purchasingDelegateAdapter
       self.subscriptionStatusHandler = purchasingDelegateAdapter
+    } else if #available(iOS 15.0, tvOS 15.0, watchOS 8.0, *),
+      finishTransactions {
+      // Use SK2 when Superwall handles everything on iOS 15+.
+      let purchaser = ProductPurchaserSK2(
+        storeKitManager: storeKitManager,
+        sessionEventsManager: sessionEventsManager,
+        factory: factory
+      )
+      self.productPurchaser = purchaser
+      self.productFetcher = ProductsFetcherSK2()
+      self.txnChecker = purchaser
+      self.txnRestorer = purchaser
+      self.subscriptionStatusHandler = storeKitManager
     } else {
-      if #available(iOS 15.0, tvOS 15.0, watchOS 8.0, *) {
-        if finishTransactions {
-          let purchaser = ProductPurchaserSK2(
-            storeKitManager: storeKitManager,
-            sessionEventsManager: sessionEventsManager,
-            factory: factory
-          )
-          self.productPurchaser = purchaser
-          self.productFetcher = ProductsFetcherSK2()
-          self.txnChecker = purchaser
-          self.txnRestorer = purchaser
-          self.subscriptionStatusHandler = storeKitManager
-        } else {
-          let purchaser = ProductPurchaserSK1(
-            storeKitManager: storeKitManager,
-            sessionEventsManager: sessionEventsManager,
-            factory: factory
-          )
-          self.productPurchaser = purchaser
-          self.productFetcher = ProductsFetcherSK1()
-          self.txnChecker = purchaser
-          self.txnRestorer = purchaser
-          self.subscriptionStatusHandler = storeKitManager
-        }
-      } else {
-        // We have to use SK1 on <iOS 15, regardless of whether
-        // we finish transactions.
-        let purchaser = ProductPurchaserSK1(
-          storeKitManager: storeKitManager,
-          sessionEventsManager: sessionEventsManager,
-          factory: factory
-        )
-        self.productPurchaser = purchaser
-        self.productFetcher = ProductsFetcherSK1()
-        self.txnChecker = purchaser
-        self.txnRestorer = purchaser
-        self.subscriptionStatusHandler = storeKitManager
-      }
+      // Use SK1 on <iOS 15 or when the user is finishing
+      // transactions themselves.
+      let purchaser = ProductPurchaserSK1(
+        storeKitManager: storeKitManager,
+        sessionEventsManager: sessionEventsManager,
+        factory: factory
+      )
+      self.productPurchaser = purchaser
+      self.productFetcher = ProductsFetcherSK1()
+      self.txnChecker = purchaser
+      self.txnRestorer = purchaser
+      self.subscriptionStatusHandler = storeKitManager
     }
   }
 }

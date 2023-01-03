@@ -52,6 +52,7 @@ final class StoreKitManager {
     return await receiptManager.refreshReceipt()
   }
 
+  /// Loads the purchased products from the receipt and stores them in `productsById`.
   @discardableResult
   func loadPurchasedProducts() async -> Bool {
     guard let purchasedProducts = await receiptManager.loadPurchasedProducts() else {

@@ -37,7 +37,6 @@ final class RestorationHandler {
     var isUserSubscribed = false
 
     if hasRestored {
-      // TODO: Check that receipt has refreshed before here, especially when restoring a sandbox purchase on device. Could it get here before receipt has refreshed? We don't want that!
       await storeKitManager.loadPurchasedProducts()
       isUserSubscribed = storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed()
     }

@@ -17,6 +17,7 @@ final class ProductPurchaserSK1: NSObject {
   private unowned let storeKitManager: StoreKitManager
   private unowned let sessionEventsManager: SessionEventsManager
   private let factory: StoreTransactionFactory
+  private var activeTask: Task<Void, Never>?
 
   enum StoreError: Error {
     case failedVerification
@@ -109,14 +110,18 @@ extension ProductPurchaserSK1: TransactionChecker {
 
 // MARK: - TransactionRestorer
 extension ProductPurchaserSK1: TransactionRestorer {
-  // TODO: RESTORING NOT CALLING ANY OF THE OBSERVERS. NEED TO TEST WITH SANDBOX: https://stackoverflow.com/questions/64278964/xcode-12-ios-14-storekit-restore-purchase-testing
   func restorePurchases() async -> Bool {
-    return await withCheckedContinuation { continuation in
-      SKPaymentQueue.default().restoreCompletedTransactions()
+    let result = await withCheckedContinuation { continuation in
+      // Using restoreCompletedTransactions instead of just refreshing
+      // the receipt so that RC can pick up on the restored products,
+      // if observing. It will also refresh the receipt on device.
       restoreCompletion = { completed in
         return continuation.resume(returning: completed)
       }
+      SKPaymentQueue.default().restoreCompletedTransactions()
     }
+    restoreCompletion = nil
+    return result
   }
 }
 
@@ -128,8 +133,15 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       scope: .paywallTransactions,
       message: "Restore Completed Transactions Finished"
     )
-    //TODO: Why is this called before transactions?
-    restoreCompletion?(true)
+    Task {
+      // We wait until the transaction updates have processed
+      // Then we can return true. Otherwise it returns true
+      // immediately before the task has finished.
+      if let activeTask = activeTask {
+        await activeTask.value
+      }
+      restoreCompletion?(true)
+    }
   }
 
   func paymentQueue(
@@ -142,14 +154,19 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       message: "Restore Completed Transactions Failed With Error",
       error: error
     )
-    restoreCompletion?(false)
+    Task {
+      if let activeTask = activeTask {
+        await activeTask.value
+      }
+      restoreCompletion?(false)
+    }
   }
 
   func paymentQueue(
     _ queue: SKPaymentQueue,
     updatedTransactions transactions: [SKPaymentTransaction]
   ) {
-    Task {
+    activeTask = Task {
       let isPaywallPresented = await Superwall.shared.isPaywallPresented
       for transaction in transactions {
         lastTransaction = transaction
@@ -162,6 +179,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         }
       }
       await loadPurchasedProductsIfPossible(from: transactions)
+      activeTask = nil
     }
   }
 

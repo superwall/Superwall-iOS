@@ -15,6 +15,7 @@ final class SuperwallPurchasingDelegateAdapter {
   }
   weak var swiftDelegate: SuperwallPurchasingDelegate?
   weak var objcDelegate: SuperwallPurchasingDelegateObjc?
+  unowned let storeKitManager: StoreKitManager
 
 /// Called on init of the Superwall instance via ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``.
   ///
@@ -22,10 +23,12 @@ final class SuperwallPurchasingDelegateAdapter {
   /// separately to the initial Superwall.config function.
   init(
     swiftDelegate: SuperwallPurchasingDelegate?,
-    objcDelegate: SuperwallPurchasingDelegateObjc?
+    objcDelegate: SuperwallPurchasingDelegateObjc?,
+    storeKitManager: StoreKitManager
   ) {
     self.swiftDelegate = swiftDelegate
     self.objcDelegate = objcDelegate
+    self.storeKitManager = storeKitManager
   }
 }
 
@@ -81,15 +84,20 @@ extension SuperwallPurchasingDelegateAdapter: ProductPurchaser {
 extension SuperwallPurchasingDelegateAdapter: TransactionRestorer {
   @MainActor
   func restorePurchases() async -> Bool {
+    var didRestore = false
     if let swiftDelegate = swiftDelegate {
-      return await swiftDelegate.restorePurchases()
+      didRestore = await swiftDelegate.restorePurchases()
     } else if let objcDelegate = objcDelegate {
-      return await withCheckedContinuation { continuation in
+      didRestore = await withCheckedContinuation { continuation in
         objcDelegate.restorePurchases { didRestore in
           continuation.resume(returning: didRestore)
         }
       }
     }
-    return false
+    
+    // They may have refreshed the receipt themselves, but this is just
+    // incase...
+    await storeKitManager.refreshReceipt()
+    return didRestore
   }
 }

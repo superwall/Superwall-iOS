@@ -35,6 +35,7 @@ final class TrackEventViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
+    // TODO: This briefly shows that there isn't an active subscription. Need to store the last value until its overwritten.
     subscribedCancellable = Superwall.shared.$hasActiveSubscription
       .receive(on: DispatchQueue.main)
       .sink { [weak self] hasActiveSubscription in
