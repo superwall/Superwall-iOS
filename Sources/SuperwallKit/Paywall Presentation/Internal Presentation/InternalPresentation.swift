@@ -25,11 +25,7 @@ extension Superwall {
     let paywallStatePublisher = PassthroughSubject<PaywallState, Never>()
     let presentationSubject = PresentationSubject(request)
 
-    // swiftlint:disable implicitly_unwrapped_optional
-    var presentationPublisher: AnyCancellable!
-    // swiftlint:enable implicitly_unwrapped_optional
-
-    presentationPublisher = presentationSubject
+    presentationSubject
       .eraseToAnyPublisher()
       .awaitIdentity()
       .logPresentation("Called Superwall.track")
@@ -43,14 +39,10 @@ extension Superwall {
       .confirmPaywallAssignment()
       .presentPaywall(paywallStatePublisher)
       .storePresentationObjects(presentationSubject)
-      .sink(
-        receiveCompletion: { [weak self] _ in
-          self?.presentationItems.cancellables.remove(presentationPublisher)
-        },
+      .subscribe(Subscribers.Sink(
+        receiveCompletion: { _ in },
         receiveValue: { _ in }
-      )
-
-    presentationPublisher?.store(in: &presentationItems.cancellables)
+      ))
 
     return paywallStatePublisher
       .receive(on: DispatchQueue.main)

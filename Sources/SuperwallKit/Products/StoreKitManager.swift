@@ -11,8 +11,6 @@ final class StoreKitManager {
     let products: [Product]
   }
 
-  // Force unwrapping because it's always be around but we need
-  // to use self during init.
   lazy var coordinator = factory.makeStoreKitCoordinator()
   private let factory: StoreKitCoordinatorFactory
 

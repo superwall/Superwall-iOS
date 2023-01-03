@@ -32,27 +32,10 @@ public protocol SuperwallPurchasingDelegate: AnyObject {
   /// - Returns: A boolean that's `true` if the user's purchases were restored or `false` if they weren't.
   func restorePurchases() async -> Bool
 
-  /// Decides whether a paywall should be presented based on whether the user is subscribed to any
-  /// entitlements.
-  ///
-  /// Entitlements are subscription levels that products belong to, which you may have set up on the
-  /// Superwall dashboard. For example, you may have "bronze", "silver" and "gold" entitlement levels
-  /// within your app.
-  ///
-  /// You need to determine whether a user has a subscription to any of the of the entitlements in the
-  /// `entitlements` parameter.
-  ///
-  /// If you're using RevenueCat, these entitlements should match the entitlements set in RevenueCat.
-  ///
-  /// If you do not use entitlements within your app, just return whether the user has any active
+  /// Decides whether a paywall should be presented based on whether the user has an active
   /// subscription.
   ///
   /// - Warning: A paywall will never show if this function returns `true`.
-  ///
-  /// - Parameters:
-  ///   - entitlements: An array of entitlements that your products belong to on the Superwall
-  ///   dashboard. This may or may not be empty, depending on whether you've added products to
-  ///   an entitlement.
   /// - Returns: A boolean that indicates whether or not the user has an active subscription.
   func isUserSubscribed() -> Bool
 }

@@ -42,14 +42,22 @@ protocol SubscriptionStatusChecker: AnyObject {
 
 // TODO: Add generics to make sure the correct StoreProduct is purchased rather than guards
 struct StoreKitCoordinator {
+  /// Purchases the product.
   let productPurchaser: ProductPurchaser
+
+  /// Fetches the products.
   let productFetcher: ProductsFetcher
+
+  /// Gets and validates transactions.
   let txnChecker: TransactionChecker
+
+  /// Restores purchases.
   let txnRestorer: TransactionRestorer
 
   // Using unowned here because we will always have a subscriptionStatusHandler
-  // but since this is the class that created the coordinator, we don't want to
-  // create a strong reference cycle.
+  // but since this is sometimes the class that created the coordinator, we
+  // don't want to create a strong reference cycle.
+  /// Checks if the user is subscribed.
   unowned let subscriptionStatusHandler: SubscriptionStatusChecker
 
   init(
@@ -75,7 +83,7 @@ struct StoreKitCoordinator {
           factory: factory
         )
         self.txnRestorer = purchasingDelegateAdapter
-        self.subscriptionStatusHandler = storeKitManager
+        self.subscriptionStatusHandler = purchasingDelegateAdapter
 
       } else {
         self.productPurchaser = purchasingDelegateAdapter
@@ -86,7 +94,7 @@ struct StoreKitCoordinator {
           factory: factory
         )
         self.txnRestorer = purchasingDelegateAdapter
-        self.subscriptionStatusHandler = storeKitManager
+        self.subscriptionStatusHandler = purchasingDelegateAdapter
       }
     } else {
       if #available(iOS 15.0, tvOS 15.0, watchOS 8.0, *) {
@@ -127,6 +135,5 @@ struct StoreKitCoordinator {
         self.subscriptionStatusHandler = storeKitManager
       }
     }
-
   }
 }
