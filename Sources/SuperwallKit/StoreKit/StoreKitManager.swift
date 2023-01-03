@@ -11,11 +11,17 @@ final class StoreKitManager {
     let products: [Product]
   }
 
-  lazy var coordinator = factory.makeStoreKitCoordinator()
+  /// Coordinates: The purchasing, restoring and retrieving of products; the checking
+  /// of transactions; and the determining of the user's subscription status.
+  var coordinator: StoreKitCoordinator!
   private let factory: StoreKitCoordinatorFactory
 
   init(factory: StoreKitCoordinatorFactory) {
     self.factory = factory
+  }
+
+  func postInit() {
+    coordinator = factory.makeStoreKitCoordinator()
   }
 
 	func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
@@ -40,7 +46,7 @@ final class StoreKitManager {
   /// This refreshes the device receipt.
   ///
   /// - Warning: This will prompt the user to log in, so only do this on
-  /// when restoring.
+  /// when restoring or after purchasing.
   @discardableResult
   func refreshReceipt() async -> Bool {
     return await receiptManager.refreshReceipt()

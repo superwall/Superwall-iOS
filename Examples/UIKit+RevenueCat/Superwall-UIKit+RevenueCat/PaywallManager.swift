@@ -103,13 +103,13 @@ final class PaywallManager: NSObject {
   }
 
   /// Purchases a product with RevenueCat.
- /// - Returns: A boolean indicating whether the user cancelled or not.
-   private func purchase(_ product: SKProduct) async throws -> Bool {
-     let storeProduct = RevenueCat.StoreProduct(sk1Product: product)
-     let (_, customerInfo, userCancelled) = try await Purchases.shared.purchase(product: storeProduct)
-     updateSubscriptionStatus(using: customerInfo)
-     return userCancelled
-   }
+  /// - Returns: A boolean indicating whether the user cancelled or not.
+  private func purchase(_ product: SKProduct) async throws -> Bool {
+    let storeProduct = RevenueCat.StoreProduct(sk1Product: product)
+    let (_, customerInfo, userCancelled) = try await Purchases.shared.purchase(product: storeProduct)
+    updateSubscriptionStatus(using: customerInfo)
+    return userCancelled
+  }
 }
 
 extension PaywallManager: SuperwallPurchasingDelegate {
@@ -132,9 +132,9 @@ extension PaywallManager: SuperwallPurchasingDelegate {
         return .pending
       default:
         return .failed(error)
-    }
-   } catch {
-    return .failed(error)
+      }
+    } catch {
+      return .failed(error)
     }
   }
 }
@@ -156,9 +156,8 @@ extension PaywallManager: PurchasesDelegate {
   /// - Returns: A boolean indicating whether the user restored a purchase or not.
   private func restore() async -> Bool {
     do {
-      let customerInfo = try await Purchases.shared.restorePurchases()
-      updateSubscriptionStatus(using: customerInfo)
-      return customerInfo.entitlements.active[proEntitlement] != nil
+      _ = try await Purchases.shared.restorePurchases()
+      return true
     } catch {
       return false
     }
@@ -167,7 +166,7 @@ extension PaywallManager: PurchasesDelegate {
 
 // MARK: - Superwall Delegate
 extension PaywallManager: SuperwallDelegate {
-  func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
+  func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {
     print("analytics event called", info.event.description)
 
     // Uncomment if you want to get a dictionary of params associated with the event:

@@ -7,52 +7,15 @@
 
 import UIKit
 
-protocol ViewControllerFactory {
-  func makePaywallViewController(for paywall: Paywall) -> PaywallViewController
-  func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
-}
-
-protocol RequestFactory {
-  func makePaywallRequest(withId paywallId: String) -> PaywallRequest
-
-  func makePresentationRequest(
-    _ presentationInfo: PresentationInfo,
-    paywallOverrides: PaywallOverrides?,
-    presentingViewController: UIViewController?,
-    isDebuggerLaunched: Bool,
-    isUserSubscribed: Bool,
-    isPaywallPresented: Bool
-  ) -> PresentationRequest
-}
-
-protocol TriggerSessionManagerFactory {
-  func makeTriggerSessionManager() -> TriggerSessionManager
-}
-
-protocol StoreKitCoordinatorFactory {
-  func makeStoreKitCoordinator() -> StoreKitCoordinator
-}
-
-protocol ApiFactory {
-  var api: Api! { get }
-  var storage: Storage! { get }
-  var deviceHelper: DeviceHelper! { get }
-  var configManager: ConfigManager! { get }
-  var identityManager: IdentityManager! { get }
-
-  func makeHeaders(
-    fromRequest request: URLRequest,
-    requestId: String,
-    forDebugging isForDebugging: Bool
-  ) -> [String: String]
-}
-
-protocol StoreTransactionFactory {
-  @available(iOS 15.0, *)
-  func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction
-  func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction
-}
-
+/// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
+///
+/// This conforms to protocol factory methods which can be used to make objects that have
+/// dependencies injected into them.
+///
+/// Objects only need `unowned` references to the dependencies injected into them because
+/// `DependencyContainer` is owned by the `Superwall` class.
+///
+/// Idea taken from: [swiftbysundell.com](https://www.swiftbysundell.com/articles/dependency-injection-using-factories-in-swift/)
 final class DependencyContainer {
   /// The purchasing delegate adapter. Routes swift vs. objective-c callbacks.
   var purchasingDelegateAdapter: SuperwallPurchasingDelegateAdapter!
@@ -168,6 +131,9 @@ final class DependencyContainer {
     )
 
      // MARK: Post Init
+    // We have to call postInit on some of the objects to avoid
+    // retain cycles.
+    storeKitManager.postInit()
     sessionEventsManager.postInit()
     storage.postInit(deviceHelper: deviceHelper)
     deviceHelper.postInit(identityManager: identityManager)
