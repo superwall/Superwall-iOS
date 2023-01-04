@@ -2,6 +2,14 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
+## 2.5.7
+
+### Fixes
+
+- Fixes a bug that prevented the determination of a new app session from being calculated properly.
+
+---
+
 ## 2.5.6
 
 ### Fixes
