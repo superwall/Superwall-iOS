@@ -1,6 +1,6 @@
 //
 //  PaywallLogicTests.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 09/03/2022.
 //
@@ -13,7 +13,7 @@ import XCTest
 class AppSessionLogicTests: XCTestCase {
   @available(iOS 13, *)
   func testDidStartNewSession_noTimeout() {
-    let threeHoursAgo = Date().advanced(by: -7200000)
+    let threeHoursAgo = Date().advanced(by: -10800)
     let sessionDidStart = AppSessionLogic.didStartNewSession(
       threeHoursAgo,
       withSessionTimeout: nil
@@ -23,7 +23,7 @@ class AppSessionLogicTests: XCTestCase {
 
   @available(iOS 13, *)
   func testDidStartNewSession_noTimeout_lastAppClosedFiftyMinsAgo() {
-    let fiftyMinsAgo = Date().advanced(by: -3000000)
+    let fiftyMinsAgo = Date().advanced(by: -3000)
     let sessionDidStart = AppSessionLogic.didStartNewSession(
       fiftyMinsAgo,
       withSessionTimeout: nil
@@ -42,7 +42,7 @@ class AppSessionLogicTests: XCTestCase {
 
   @available(iOS 13, *)
   func testDidStartNewSession_lastAppClosedThirtyMinsAgo() {
-    let thirtyMinsAgo = Date().advanced(by: -1800000)
+    let thirtyMinsAgo = Date().advanced(by: -1800)
     let timeout = 3600000.0
     let sessionDidStart = AppSessionLogic.didStartNewSession(
       thirtyMinsAgo,
@@ -50,10 +50,10 @@ class AppSessionLogicTests: XCTestCase {
     )
     XCTAssertFalse(sessionDidStart)
   }
-  
+
   @available(iOS 13, *)
   func testDidStartNewSession_lastAppClosedThreeHoursAgo() {
-    let threeHoursAgo = Date().advanced(by: -7200000)
+    let threeHoursAgo = Date().advanced(by: -10800)
     let timeout = 3600000.0
     let sessionDidStart = AppSessionLogic.didStartNewSession(
       threeHoursAgo,
