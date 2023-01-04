@@ -180,6 +180,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       }
       await loadPurchasedProductsIfPossible(from: transactions)
       activeTask = nil
+      // TODO: These could get overwritten. Add to set instead
     }
   }
 

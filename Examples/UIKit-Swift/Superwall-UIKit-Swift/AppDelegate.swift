@@ -8,39 +8,12 @@
 import UIKit
 import StoreKit
 
-
-@available(iOS 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *)
-class StoreKit2TransactionListener {
-
-  private(set) var taskHandle: Task<Void, Never>?
-
-  func listenForTransactions() {
-    self.taskHandle = Task { [weak self] in
-      for await result in StoreKit.Transaction.updates {
-        guard let self = self else {
-          break
-        }
-
-        print("TRANSACTION HERE")
-      }
-    }
-  }
-
-  deinit {
-    self.taskHandle?.cancel()
-    self.taskHandle = nil
-  }
-
-}
-
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
-  var storekitlistener = StoreKit2TransactionListener()
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-   // storekitlistener.listenForTransactions()
     SuperwallService.configure()
     return true
   }

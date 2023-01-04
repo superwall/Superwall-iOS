@@ -38,13 +38,16 @@ struct StoreKitCoordinator {
     let hasDelegate = purchasingDelegateAdapter.hasDelegate
 
     if hasDelegate {
-      // If delegate exists, finishTransactions will always be false and SK1 must be used.
-      // After testing, it turns out we can't use SK2 here because:
+      // If delegate exists, finishTransactions will always be false and SK1 must be used
+      // for both Superwall and in the developer's purchasing delegate. No mixing and matching
+      // of SK1 and SK2.
+      // In addition, after testing, it turns out we can't use SK2 here because:
       // 1. If there are unfinished StoreKit transaction updates on app open, only the first
       //    listener is given the updates. This means that our listener can interfere with
       //    the clients listener (if they're using SK2) and their transactions may not even show up!
       // 2. If they use an SK1 listener, their listener could finish the txns before
-      //    ours. Which means that we will never see the unfinished transactions.
+      //    ours. Which means that we will never see the unfinished transactions or we'll see only
+      //    a few of them.
       self.productPurchaser = purchasingDelegateAdapter
       self.productFetcher = ProductsFetcherSK1()
       self.txnChecker = ProductPurchaserSK1(

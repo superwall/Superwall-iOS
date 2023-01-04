@@ -133,10 +133,6 @@ public final class Superwall: NSObject, ObservableObject {
       options: options
     )
 
-    // TODO: Inject here
-
-    
-
     super.init()
 
     // This task runs on a background thread, even if called from a main thread.

@@ -62,6 +62,7 @@ public extension Superwall {
 
 // MARK: - Log Out
 public extension Superwall {
+  // TODO: What happens to the user subscription on logout??
   /// Logs out the user. This calls ``SuperwallKit/Superwall/reset()``, which resets on-device paywall
   /// assignments and the `userId` stored by Superwall.
   ///

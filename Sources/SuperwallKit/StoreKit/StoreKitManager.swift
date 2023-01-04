@@ -3,8 +3,6 @@ import Combine
 
 final class StoreKitManager {
   var productsById: [String: StoreProduct] = [:]
-
-  private lazy var receiptManager = ReceiptManager(delegate: self)
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
     let substituteProductsById: [String: StoreProduct]
@@ -14,6 +12,7 @@ final class StoreKitManager {
   /// Coordinates: The purchasing, restoring and retrieving of products; the checking
   /// of transactions; and the determining of the user's subscription status.
   var coordinator: StoreKitCoordinator!
+  private var receiptManager: ReceiptManager!
   private let factory: StoreKitCoordinatorFactory
 
   init(factory: StoreKitCoordinatorFactory) {
@@ -22,6 +21,7 @@ final class StoreKitManager {
 
   func postInit() {
     coordinator = factory.makeStoreKitCoordinator()
+    receiptManager = ReceiptManager(delegate: self)
   }
 
 	func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
@@ -52,14 +52,9 @@ final class StoreKitManager {
     return await receiptManager.refreshReceipt()
   }
 
-  /// Loads the purchased products from the receipt and stores them in `productsById`.
-  @discardableResult
-  func loadPurchasedProducts() async -> Bool {
-    guard let purchasedProducts = await receiptManager.loadPurchasedProducts() else {
-      return false
-    }
-    purchasedProducts.forEach { productsById[$0.productIdentifier] = $0 }
-    return true
+  /// Loads the purchased products from the receipt,
+  func loadPurchasedProducts() async {
+    await receiptManager.loadPurchasedProducts()
   }
 
   /// Determines whether a free trial is available based on the product the user is purchasing.

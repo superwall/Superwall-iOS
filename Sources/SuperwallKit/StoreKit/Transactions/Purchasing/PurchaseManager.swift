@@ -39,7 +39,7 @@ struct PurchaseManager {
     let purchaseStartAt = Date()
     let result = await storeKitManager.coordinator.productPurchaser.purchase(product: product)
 
-    // TODO: Should this only be in debug?
+    // TODO: Should this only be in debug? Maybe not at all?
     await storeKitManager.refreshReceipt()
 
     switch result {
