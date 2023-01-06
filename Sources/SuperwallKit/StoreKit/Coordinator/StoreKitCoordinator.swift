@@ -43,20 +43,20 @@ struct StoreKitCoordinator {
     storeKitManager: StoreKitManager,
     factory: StoreTransactionFactory & ProductPurchaserFactory
   ) {
+    self.productFetcher = ProductsFetcherSK1()
+
     let hasDelegate = delegateAdapter.hasDelegate
+    let sk1ProductPurchaser = factory.makeSK1ProductPurchaser()
 
     if hasDelegate {
       self.productPurchaser = delegateAdapter
-      self.productFetcher = ProductsFetcherSK1()
-      self.txnChecker = factory.makeSK1ProductPurchaser()
+      self.txnChecker = sk1ProductPurchaser
       self.txnRestorer = delegateAdapter
       self.subscriptionStatusHandler = delegateAdapter
     } else {
-      let purchaser = factory.makeSK1ProductPurchaser()
-      self.productPurchaser = purchaser
-      self.productFetcher = ProductsFetcherSK1()
-      self.txnChecker = purchaser
-      self.txnRestorer = purchaser
+      self.productPurchaser = sk1ProductPurchaser
+      self.txnChecker = sk1ProductPurchaser
+      self.txnRestorer = sk1ProductPurchaser
       self.subscriptionStatusHandler = storeKitManager
     }
   }
