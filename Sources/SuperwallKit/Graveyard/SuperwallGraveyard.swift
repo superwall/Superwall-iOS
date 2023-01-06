@@ -9,7 +9,8 @@ import UIKit
 
 public extension Superwall {
   // MARK: - Unavailable methods
-  @available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
+  // TODO: Fix deprecation here
+  /*@available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
   @discardableResult
   @objc static func configure(
     apiKey: String,
@@ -18,7 +19,7 @@ public extension Superwall {
     options: SuperwallOptions? = nil
   ) -> Superwall {
     return shared
-  }
+  }*/
 
   @available(*, unavailable, message: "This has been removed. Please use login(userId:) or createAccount(userId:).")
   @discardableResult

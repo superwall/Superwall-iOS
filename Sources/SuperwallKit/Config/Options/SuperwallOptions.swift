@@ -65,29 +65,4 @@ public final class SuperwallOptions: NSObject {
   }
   /// The log scope and level to print to the console.
   public var logging = Logging()
-
-  /// Tells the SDK whether to finish transactions for products purchased on the paywall.
-  /// Defaults to `true`. **If this is `false` you must finish transactions yourself.**
-  ///
-  /// This is automatically set to `false` if you implement the ``Superwall/purchasingDelegate``.
-  ///
-  /// By default, Superwall finishes all transactions, handling all the purchasing logic for
-  /// paywalls. Setting this to `false` won't finish any transactions.
-  ///
-  /// This is useful in the following scenarios:
-  ///
-  /// - Purchasing with RevenueCat outside of Superwall.
-  /// Make sure to set `usesStoreKit2IfAvailable` to `false` and do not use
-  /// Observer Mode when configuring the RevenueCat SDK.
-  /// This way RevenueCat will detect and finish all transactions on device for you and there will
-  /// be no interference between SDKs:
-  /// ```
-  /// Purchases.configure(
-  ///   with: .init(withAPIKey: revenueCatApiKey)
-  ///     .with(usesStoreKit2IfAvailable: false)
-  /// )
-  /// ```
-  /// - Purchasing using StoreKit outside of Superwall. You must only use StoreKit 1 and you
-  /// must finish the transactions.
-  public var finishTransactions = true
 }

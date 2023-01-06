@@ -17,8 +17,6 @@ import UIKit
 ///
 /// Idea taken from: [swiftbysundell.com](https://www.swiftbysundell.com/articles/dependency-injection-using-factories-in-swift/)
 final class DependencyContainer {
-  /// The purchasing delegate adapter. Routes swift vs. objective-c callbacks.
-  var purchasingDelegateAdapter: SuperwallPurchasingDelegateAdapter!
   var configManager: ConfigManager!
   var identityManager: IdentityManager!
   var storeKitManager: StoreKitManager!
@@ -36,21 +34,19 @@ final class DependencyContainer {
   var api: Api!
   var transactionManager: TransactionManager!
   var restorationHandler: RestorationHandler!
+  var delegateAdapter: SuperwallDelegateAdapter!
 
   init(
     apiKey: String,
-    delegate: SuperwallDelegate? = nil,
-    swiftPurchasingDelegate: SuperwallPurchasingDelegate? = nil,
-    objcPurchasingDelegate: SuperwallPurchasingDelegateObjc? = nil,
+    swiftDelegate: SuperwallDelegate? = nil,
+    objcDelegate: SuperwallDelegateObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
     storeKitManager = StoreKitManager(factory: self)
-    purchasingDelegateAdapter = SuperwallPurchasingDelegateAdapter(
-      swiftDelegate: swiftPurchasingDelegate,
-      objcDelegate: objcPurchasingDelegate,
-      storeKitManager: storeKitManager
+    delegateAdapter = SuperwallDelegateAdapter(
+      swiftDelegate: swiftDelegate,
+      objcDelegate: objcDelegate
     )
-
     localizationManager = LocalizationManager()
     storage = Storage()
     network = Network(factory: self)
@@ -73,11 +69,6 @@ final class DependencyContainer {
 
     if let options = options {
       configManager.options = options
-    }
-    // If there is a purchasing delegate set, we must never finish transactions.
-    // That is up to the developer to do with their purchasing logic.
-    if purchasingDelegateAdapter.hasDelegate {
-      configManager.options.finishTransactions = false
     }
 
     api = Api(configManager: configManager)
@@ -148,7 +139,6 @@ final class DependencyContainer {
   }
 }
 
-
 // MARK: - ViewControllerFactory
 extension DependencyContainer: ViewControllerFactory {
   func makePaywallViewController(for paywall: Paywall) -> PaywallViewController {
@@ -199,8 +189,8 @@ extension DependencyContainer: RequestFactory {
     _ presentationInfo: PresentationInfo,
     paywallOverrides: PaywallOverrides? = nil,
     presentingViewController: UIViewController? = nil,
-    isDebuggerLaunched: Bool,
-    isUserSubscribed: Bool,
+    isDebuggerLaunched: Bool? = nil,
+    isUserSubscribed: Bool? = nil,
     isPaywallPresented: Bool
   ) -> PresentationRequest {
     return PresentationRequest(
@@ -216,8 +206,8 @@ extension DependencyContainer: RequestFactory {
         debugManager: debugManager,
         identityManager: identityManager,
         deviceHelper: deviceHelper,
-        isDebuggerLaunched: isDebuggerLaunched,
-        isUserSubscribed: isUserSubscribed,
+        isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
+        isUserSubscribed: isUserSubscribed ?? storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(),
         isPaywallPresented: isPaywallPresented
       )
     )
@@ -279,9 +269,8 @@ extension DependencyContainer: TriggerSessionManagerFactory {
 extension DependencyContainer: StoreKitCoordinatorFactory {
   func makeStoreKitCoordinator() -> StoreKitCoordinator {
     return StoreKitCoordinator(
-      purchasingDelegateAdapter: purchasingDelegateAdapter,
+      delegateAdapter: delegateAdapter,
       storeKitManager: storeKitManager,
-      finishTransactions: configManager.options.finishTransactions,
       factory: self
     )
   }

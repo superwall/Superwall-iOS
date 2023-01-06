@@ -9,22 +9,28 @@ public final class Superwall: NSObject, ObservableObject {
   /// The optional purchasing delegate of the Superwall instance. Set this in
   /// ``configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``
   /// when you want to manually handle the purchasing logic within your app.
-  public static var purchasingDelegate: SuperwallPurchasingDelegate? {
-    return shared.dependencyContainer.purchasingDelegateAdapter.swiftDelegate
+  public static var delegate: SuperwallDelegate? {
+    get {
+      return shared.dependencyContainer.delegateAdapter.swiftDelegate
+    }
+    set {
+      shared.dependencyContainer.delegateAdapter.swiftDelegate = newValue
+    }
   }
 
   /// The optional purchasing delegate of the Superwall instance. Set this in
   /// ``configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``
   /// when you want to manually handle the purchasing logic within your app.
   @available(swift, obsoleted: 1.0)
-  @objc(purchasingDelegate)
-  public static var objcPurchasingDelegate: SuperwallPurchasingDelegateObjc? {
-    return shared.dependencyContainer.purchasingDelegateAdapter.objcDelegate
+  @objc(delegate)
+  public static var objcDelegate: SuperwallDelegateObjc? {
+    get {
+      return shared.dependencyContainer.delegateAdapter.objcDelegate
+    }
+    set {
+      shared.dependencyContainer.delegateAdapter.objcDelegate = newValue
+    }
   }
-
-  /// An optional delegate of the Superwall instance. The delegate is responsible for handling callbacks
-  /// from the SDK in response to certain events that happen on the paywall.
-  public static var delegate: SuperwallDelegate?
 
   /// Properties stored about the user, set using ``SuperwallKit/Superwall/setUserAttributes(_:)``.
   public static var userAttributes: [String: Any] {
@@ -131,30 +137,25 @@ public final class Superwall: NSObject, ObservableObject {
 
   private init(
     apiKey: String,
-    delegate: SuperwallDelegate? = nil,
-    swiftPurchasingDelegate: SuperwallPurchasingDelegate? = nil,
-    objcPurchasingDelegate: SuperwallPurchasingDelegateObjc? = nil,
+    swiftDelegate: SuperwallDelegate? = nil,
+    objcDelegate: SuperwallDelegateObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
     dependencyContainer = DependencyContainer(
       apiKey: apiKey,
-      delegate: delegate,
-      swiftPurchasingDelegate: swiftPurchasingDelegate,
-      objcPurchasingDelegate: objcPurchasingDelegate,
+      swiftDelegate: swiftDelegate,
+      objcDelegate: objcDelegate,
       options: options
     )
     hasActiveSubscription = dependencyContainer.storage.get(SubscriptionStatus.self) ?? false
 
     super.init()
-    print("has active subsc", self.hasActiveSubscription)
 
     // This task runs on a background thread, even if called from a main thread.
     // This is because the function isn't marked to run on the main thread,
     // therefore, we don't need to make this detached.
     Task {
       dependencyContainer.storage.configure(apiKey: apiKey)
-
-      Superwall.delegate = delegate
 
       dependencyContainer.storage.recordAppInstall()
 
@@ -176,7 +177,6 @@ public final class Superwall: NSObject, ObservableObject {
   public static func configure(
     apiKey: String,
     delegate: SuperwallDelegate? = nil,
-    purchasingDelegate: SuperwallPurchasingDelegate? = nil,
     options: SuperwallOptions? = nil
   ) -> Superwall {
     guard superwall == nil else {
@@ -189,9 +189,8 @@ public final class Superwall: NSObject, ObservableObject {
     }
     superwall = Superwall(
       apiKey: apiKey,
-      delegate: delegate,
-      swiftPurchasingDelegate: purchasingDelegate,
-      objcPurchasingDelegate: nil,
+      swiftDelegate: delegate,
+      objcDelegate: nil,
       options: options
     )
     return shared
@@ -209,8 +208,7 @@ public final class Superwall: NSObject, ObservableObject {
   @available(swift, obsoleted: 1.0)
   public static func configure(
     apiKey: String,
-    delegate: SuperwallDelegate? = nil,
-    purchasingDelegate: SuperwallPurchasingDelegateObjc? = nil,
+    delegate: SuperwallDelegateObjc? = nil,
     options: SuperwallOptions? = nil
   ) -> Superwall {
     guard superwall == nil else {
@@ -223,9 +221,8 @@ public final class Superwall: NSObject, ObservableObject {
     }
     superwall = Superwall(
       apiKey: apiKey,
-      delegate: delegate,
-      swiftPurchasingDelegate: nil,
-      objcPurchasingDelegate: purchasingDelegate,
+      swiftDelegate: nil,
+      objcDelegate: delegate,
       options: options
     )
 
@@ -302,13 +299,13 @@ extension Superwall: PaywallViewControllerDelegate {
     case .initiateRestore:
       await dependencyContainer.restorationHandler.tryToRestore(paywallViewController)
     case .openedURL(let url):
-      Superwall.delegate?.willOpenURL?(url: url)
+      dependencyContainer.delegateAdapter?.willOpenURL(url: url)
     case .openedUrlInSafari(let url):
-      Superwall.delegate?.willOpenURL?(url: url)
+      dependencyContainer.delegateAdapter?.willOpenURL(url: url)
     case .openedDeepLink(let url):
-      Superwall.delegate?.willOpenDeepLink?(url: url)
+      dependencyContainer.delegateAdapter?.willOpenDeepLink(url: url)
     case .custom(let string):
-      Superwall.delegate?.handleCustomPaywallAction?(withName: string)
+      dependencyContainer.delegateAdapter?.handleCustomPaywallAction(withName: string)
     }
   }
 }

@@ -61,27 +61,9 @@ final class SuperwallService {
   }
 }
 
-extension SuperwallService: SuperwallPurchasingDelegate {
-  func purchase(product: SKProduct) async -> PurchaseResult {
-  return await withCheckedContinuation { continuation in
-      StoreKitService.shared.purchase(product) { result in
-        continuation.resume(with: .success(result))
-      }
-    }
-  }
-
-  func restorePurchases() async -> Bool {
-    return StoreKitService.shared.restorePurchases()
-  }
-
-  func isUserSubscribed() -> Bool {
-    return false//StoreKitService.shared.isSubscribed
-  }
-}
-
 // MARK: - Superwall Delegate
 extension SuperwallService: SuperwallDelegate {
-  func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
+  func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {
     print("analytics event called", info.event.description)
 
     // Uncomment if you want to get a dictionary of params associated with the event:

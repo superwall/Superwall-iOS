@@ -169,8 +169,6 @@ public extension Superwall {
       let presentationRequest = shared.dependencyContainer.makePresentationRequest(
         .explicitTrigger(trackResult.data),
         paywallOverrides: paywallOverrides,
-        isDebuggerLaunched: shared.dependencyContainer.debugManager.isDebuggerLaunched,
-        isUserSubscribed: shared.dependencyContainer.storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(),
         isPaywallPresented: isPaywallPresented
       )
       return shared.internallyPresent(presentationRequest)
@@ -221,7 +219,6 @@ public extension Superwall {
     let presentationRequest = shared.dependencyContainer.makePresentationRequest(
       .explicitTrigger(eventData),
       isDebuggerLaunched: false,
-      isUserSubscribed: shared.dependencyContainer.storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(),
       isPaywallPresented: false
     )
 

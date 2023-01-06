@@ -279,7 +279,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     if calledDismiss {
       return
     }
-    Superwall.delegate?.willDismissPaywall?()
+    Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall()
 	}
 
 	override func viewDidDisappear(_ animated: Bool) {
@@ -634,43 +634,17 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     view.transform = .identity
     webView.scrollView.contentOffset = CGPoint.zero
 
-    Superwall.delegate?.willPresentPaywall?()
+    Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall()
   }
 
   private func presentationDidFinish() {
     isPresented = true
-    Superwall.delegate?.didPresentPaywall?()
+    Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall()
     Task(priority: .utility) {
       await trackOpen()
     }
     GameControllerManager.shared.setDelegate(self)
-    // TODO: THIS:
-    // promptSuperwallDelegate()
   }
-
-  // TODO: Deal with this:
-  /*
-  private func promptSuperwallDelegate() {
-    guard
-      presentedViewController == nil,
-      Superwall.delegate != nil
-    else {
-      return
-    }
-    presentAlert(
-      title: "Almost Done...",
-      message: "Set Superwall.delegate to handle purchases, restores and more!",
-      actionTitle: "Docs →",
-      closeActionTitle: "Done",
-      action: {
-        if let url = URL(
-          string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate"
-        ) {
-          UIApplication.shared.open(url)
-        }
-      }
-    )
-  }*/
 
   @MainActor
   func presentAlert(
@@ -747,7 +721,7 @@ extension PaywallViewController {
   ) {
     calledDismiss = true
     Superwall.shared.presentationItems.paywallInfo = paywallInfo
-    Superwall.delegate?.willDismissPaywall?()
+    Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall()
 
     dismiss(animated: presentationIsAnimated) { [weak self] in
       guard let self = self else {
@@ -772,7 +746,7 @@ extension PaywallViewController {
     isPresented = false
 
     GameControllerManager.shared.clearDelegate(self)
-    Superwall.delegate?.didDismissPaywall?()
+    Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall()
 
     if shouldSendDismissedState {
       paywallStatePublisher?.send(.dismissed(dismissalResult))

@@ -31,7 +31,7 @@ extension Superwall {
         params: parameters.delegateParams
       )
 
-      await delegate?.didTrackSuperwallEventInfo?(info)
+      await shared.dependencyContainer.delegateAdapter.didTrackSuperwallEventInfo(info)
 
       Logger.debug(
         logLevel: .debug,
@@ -92,8 +92,6 @@ extension Superwall {
       }
       let presentationRequest = dependencyContainer.makePresentationRequest(
         presentationInfo,
-        isDebuggerLaunched: dependencyContainer.debugManager.isDebuggerLaunched,
-        isUserSubscribed: dependencyContainer.storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(),
         isPaywallPresented: isPaywallPresented
       )
       await internallyPresent(presentationRequest).asyncNoValue()
@@ -103,8 +101,6 @@ extension Superwall {
       try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
       let presentationRequest = dependencyContainer.makePresentationRequest(
         presentationInfo,
-        isDebuggerLaunched: dependencyContainer.debugManager.isDebuggerLaunched,
-        isUserSubscribed: dependencyContainer.storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(),
         isPaywallPresented: isPaywallPresented
       )
       await internallyPresent(presentationRequest).asyncNoValue()

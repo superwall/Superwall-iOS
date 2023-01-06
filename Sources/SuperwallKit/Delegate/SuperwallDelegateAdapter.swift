@@ -9,53 +9,162 @@ import Foundation
 import Combine
 
 /// An adapter between the internal SDK and the public swift/objective c delegate.
-final class SuperwallPurchasingDelegateAdapter {
+final class SuperwallDelegateAdapter {
   var hasDelegate: Bool {
-    return swiftDelegate != nil || objcDelegate != nil
+    return swiftDelegate?.subscriptionController() != nil
+      || objcDelegate?.subscriptionController?() != nil
   }
-  weak var swiftDelegate: SuperwallPurchasingDelegate?
-  weak var objcDelegate: SuperwallPurchasingDelegateObjc?
-  unowned let storeKitManager: StoreKitManager
+  weak var swiftDelegate: SuperwallDelegate?
+  weak var objcDelegate: SuperwallDelegateObjc?
 
 /// Called on init of the Superwall instance via ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``.
   ///
   /// We check to see if the delegates being set are non-nil because they may have been set
   /// separately to the initial Superwall.config function.
   init(
-    swiftDelegate: SuperwallPurchasingDelegate?,
-    objcDelegate: SuperwallPurchasingDelegateObjc?,
-    storeKitManager: StoreKitManager
+    swiftDelegate: SuperwallDelegate?,
+    objcDelegate: SuperwallDelegateObjc?
   ) {
     self.swiftDelegate = swiftDelegate
     self.objcDelegate = objcDelegate
-    self.storeKitManager = storeKitManager
+  }
+
+  @MainActor
+  func handleCustomPaywallAction(withName name: String) {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.handleCustomPaywallAction(withName: name)
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.handleCustomPaywallAction?(withName: name)
+    }
+  }
+
+  @MainActor
+  func willDismissPaywall() {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.willDismissPaywall()
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.willDismissPaywall?()
+    }
+  }
+
+  @MainActor
+  func willPresentPaywall() {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.willPresentPaywall()
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.willPresentPaywall?()
+    }
+  }
+
+  @MainActor
+  func didDismissPaywall() {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.didDismissPaywall()
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.didDismissPaywall?()
+    }
+  }
+
+  @MainActor
+  func didPresentPaywall() {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.didPresentPaywall()
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.didPresentPaywall?()
+    }
+  }
+
+  @MainActor
+  func willOpenURL(url: URL) {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.willOpenURL(url: url)
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.willOpenURL?(url: url)
+    }
+  }
+
+  @MainActor
+  func willOpenDeepLink(url: URL) {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.willOpenDeepLink(url: url)
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.willOpenDeepLink?(url: url)
+    }
+  }
+
+  @MainActor
+  func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.didTrackSuperwallEventInfo(info)
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.didTrackSuperwallEventInfo?(info)
+    }
+  }
+
+  @MainActor
+  func handleLog(
+    level: String,
+    scope: String,
+    message: String?,
+    info: [String: Any]?,
+    error: Swift.Error?
+  ) {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.handleLog(
+        level: level,
+        scope: scope,
+        message: message,
+        info: info,
+        error: error
+      )
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.handleLog?(
+        level: level,
+        scope: scope,
+        message: message,
+        info: info,
+        error: error
+      )
+    }
   }
 }
 
 // MARK: - User Subscription Handling
-extension SuperwallPurchasingDelegateAdapter: SubscriptionStatusChecker {
+extension SuperwallDelegateAdapter: SubscriptionStatusChecker {
   @MainActor
   func isSubscribed() -> Bool {
     if let swiftDelegate = swiftDelegate {
-      return swiftDelegate.isUserSubscribed()
+      guard let subscriptionController = swiftDelegate.subscriptionController() else {
+        return false
+      }
+      return subscriptionController.isUserSubscribed()
     } else if let objcDelegate = objcDelegate {
-      return objcDelegate.isUserSubscribed()
+      guard let subscriptionController = objcDelegate.subscriptionController?() else {
+        return false
+      }
+      return subscriptionController.isUserSubscribed()
     }
     return false
   }
 }
 
 // MARK: - Product Purchaser
-extension SuperwallPurchasingDelegateAdapter: ProductPurchaser {
+extension SuperwallDelegateAdapter: ProductPurchaser {
   @MainActor
   func purchase(
     product: StoreProduct
   ) async -> PurchaseResult {
     if let swiftDelegate = swiftDelegate {
-      return await swiftDelegate.purchase(product: product.underlyingSK1Product)
+      guard let subscriptionController = swiftDelegate.subscriptionController() else {
+        return .cancelled
+      }
+      return await subscriptionController.purchase(product: product.underlyingSK1Product)
     } else if let objcDelegate = objcDelegate {
+      guard let subscriptionController = objcDelegate.subscriptionController?() else {
+        return .cancelled
+      }
       return await withCheckedContinuation { continuation in
-        objcDelegate.purchase(product: product.underlyingSK1Product) { result, error in
+        subscriptionController.purchase(product: product.underlyingSK1Product) { result, error in
           if let error = error {
             continuation.resume(returning: .failed(error))
           } else {
@@ -78,23 +187,25 @@ extension SuperwallPurchasingDelegateAdapter: ProductPurchaser {
 }
 
 // MARK: - TransactionRestorer
-extension SuperwallPurchasingDelegateAdapter: TransactionRestorer {
+extension SuperwallDelegateAdapter: TransactionRestorer {
   @MainActor
   func restorePurchases() async -> Bool {
     var didRestore = false
     if let swiftDelegate = swiftDelegate {
-      didRestore = await swiftDelegate.restorePurchases()
+      guard let subscriptionController = swiftDelegate.subscriptionController() else {
+        return false
+      }
+      didRestore = await subscriptionController.restorePurchases()
     } else if let objcDelegate = objcDelegate {
+      guard let subscriptionController = objcDelegate.subscriptionController?() else {
+        return false
+      }
       didRestore = await withCheckedContinuation { continuation in
-        objcDelegate.restorePurchases { didRestore in
+        subscriptionController.restorePurchases { didRestore in
           continuation.resume(returning: didRestore)
         }
       }
     }
-    
-    // They may have refreshed the receipt themselves, but this is just
-    // incase...
-    await storeKitManager.refreshReceipt()
     return didRestore
   }
 }

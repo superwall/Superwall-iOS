@@ -19,8 +19,8 @@ protocol RequestFactory {
     _ presentationInfo: PresentationInfo,
     paywallOverrides: PaywallOverrides?,
     presentingViewController: UIViewController?,
-    isDebuggerLaunched: Bool,
-    isUserSubscribed: Bool,
+    isDebuggerLaunched: Bool?,
+    isUserSubscribed: Bool?,
     isPaywallPresented: Bool
   ) -> PresentationRequest
 }

@@ -56,7 +56,6 @@ extension PresentationRequest: Stubbable {
       paywallOverrides: nil,
       presentingViewController: nil,
       isDebuggerLaunched: false,
-      isUserSubscribed: false,
       isPaywallPresented: false
     )
   }

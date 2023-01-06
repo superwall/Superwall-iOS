@@ -39,19 +39,18 @@ struct StoreKitCoordinator {
   unowned let subscriptionStatusHandler: SubscriptionStatusChecker
 
   init(
-    purchasingDelegateAdapter: SuperwallPurchasingDelegateAdapter,
+    delegateAdapter: SuperwallDelegateAdapter,
     storeKitManager: StoreKitManager,
-    finishTransactions: Bool,
     factory: StoreTransactionFactory & ProductPurchaserFactory
   ) {
-    let hasDelegate = purchasingDelegateAdapter.hasDelegate
+    let hasDelegate = delegateAdapter.hasDelegate
 
     if hasDelegate {
-      self.productPurchaser = purchasingDelegateAdapter
+      self.productPurchaser = delegateAdapter
       self.productFetcher = ProductsFetcherSK1()
       self.txnChecker = factory.makeSK1ProductPurchaser()
-      self.txnRestorer = purchasingDelegateAdapter
-      self.subscriptionStatusHandler = purchasingDelegateAdapter
+      self.txnRestorer = delegateAdapter
+      self.subscriptionStatusHandler = delegateAdapter
     } else {
       let purchaser = factory.makeSK1ProductPurchaser()
       self.productPurchaser = purchaser

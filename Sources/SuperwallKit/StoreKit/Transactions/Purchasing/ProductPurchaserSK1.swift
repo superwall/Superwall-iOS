@@ -245,7 +245,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   /// Finishes transactions if the transaction state is appropriate and
   /// ``SuperwallOptions/finishTransactions`` is `true`.
   private func finishIfPossible(_ transaction: SKPaymentTransaction) {
-    guard Superwall.options.finishTransactions else {
+    guard Superwall.shared.dependencyContainer.delegateAdapter.hasDelegate else {
       return
     }
 

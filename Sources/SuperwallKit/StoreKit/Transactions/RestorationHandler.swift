@@ -34,6 +34,12 @@ final class RestorationHandler {
     paywallViewController.loadingState = .loadingPurchase
 
     let hasRestored = await storeKitManager.coordinator.txnRestorer.restorePurchases()
+
+    // TODO: Check position of this:
+    // They may have refreshed the receipt themselves, but this is just
+    // incase...
+    await storeKitManager.refreshReceipt()
+
     var isUserSubscribed = false
 
     if hasRestored {
