@@ -66,13 +66,13 @@ public final class SuperwallOptions: NSObject {
   /// The log scope and level to print to the console.
   public var logging = Logging()
 
-  // TODO: Maybe make it more explicit that this is false when haspurchasingDelegate:
   /// Tells the SDK whether to finish transactions for products purchased on the paywall.
   /// Defaults to `true`. **If this is `false` you must finish transactions yourself.**
   ///
-  /// By default, Superwall finishes all transactions. This is because it handles all the
-  /// purchasing logic for paywalls, using StoreKit 2 when available. Setting this to
-  /// `false` will make Superwall use StoreKit 1 and won't finish any transactions.
+  /// This is automatically set to `false` if you implement the ``Superwall/purchasingDelegate``.
+  ///
+  /// By default, Superwall finishes all transactions, handling all the purchasing logic for
+  /// paywalls. Setting this to `false` won't finish any transactions.
   ///
   /// This is useful in the following scenarios:
   ///

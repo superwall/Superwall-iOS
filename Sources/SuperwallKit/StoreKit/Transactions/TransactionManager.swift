@@ -57,7 +57,7 @@ final class TransactionManager {
       let outcome = TransactionErrorLogic.handle(error)
       switch outcome {
       case .cancelled:
-        trackCancelled(
+        await trackCancelled(
           product: product,
           from: paywallViewController
         )
@@ -71,11 +71,7 @@ final class TransactionManager {
     case .pending:
       await handlePendingTransaction(from: paywallViewController)
     case .cancelled:
-      trackCancelled(product: product, from: paywallViewController)
-    }
-
-    await MainActor.run {
-      paywallViewController.loadingState = .ready
+      await trackCancelled(product: product, from: paywallViewController)
     }
   }
 
@@ -142,20 +138,19 @@ final class TransactionManager {
       product: product
     )
 
-    guard Superwall.options.paywalls.automaticallyDismiss else {
-      return
+    if Superwall.options.paywalls.automaticallyDismiss {
+      await Superwall.shared.dismiss(
+        paywallViewController,
+        state: .purchased(productId: product.productIdentifier)
+      )
     }
-    await Superwall.shared.dismiss(
-      paywallViewController,
-      state: .purchased(productId: product.productIdentifier)
-    )
   }
 
   /// Track the cancelled
   private func trackCancelled(
     product: StoreProduct,
     from paywallViewController: PaywallViewController
-  ) {
+  ) async {
     Task.detached(priority: .utility) {
       Logger.debug(
         logLevel: .debug,
@@ -174,6 +169,10 @@ final class TransactionManager {
       )
       await Superwall.track(trackedEvent)
       await self.sessionEventsManager.triggerSession.trackTransactionAbandon()
+    }
+
+    await MainActor.run {
+      paywallViewController.loadingState = .ready
     }
   }
 

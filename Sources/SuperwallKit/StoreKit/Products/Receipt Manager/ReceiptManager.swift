@@ -16,9 +16,8 @@ final class ReceiptManager: NSObject {
       Superwall.shared.hasActiveSubscription = !activePurchases.isEmpty
     }
   }
-  var activeEntitlements: Set<Entitlement> = []
 
-  private var restoreCompletion: ((Bool) -> Void)?
+  private var receiptRefreshCompletion: ((Bool) -> Void)?
   private weak var delegate: ProductsFetcher?
   private let receiptData: () -> Data?
 
@@ -31,7 +30,7 @@ final class ReceiptManager: NSObject {
   }
 
   /// Loads purchased products from the receipt, storing the purchased subscription group identifiers,
-  /// purchases, active purchases, and active entitlements.
+  /// purchases and active purchases.
   @discardableResult
   func loadPurchasedProducts() async -> Set<StoreProduct>? {
     guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
@@ -93,7 +92,7 @@ final class ReceiptManager: NSObject {
       let refresh = SKReceiptRefreshRequest()
       refresh.delegate = self
       refresh.start()
-      restoreCompletion = { completed in
+      receiptRefreshCompletion = { completed in
         continuation.resume(returning: completed)
       }
     }
@@ -127,7 +126,7 @@ extension ReceiptManager: SKRequestDelegate {
       message: "Receipt refresh request finished.",
       info: ["request": request]
     )
-    restoreCompletion?(true)
+    receiptRefreshCompletion?(true)
     request.cancel()
   }
 
@@ -142,7 +141,7 @@ extension ReceiptManager: SKRequestDelegate {
       info: ["request": request],
       error: error
     )
-    restoreCompletion?(false)
+    receiptRefreshCompletion?(false)
     request.cancel()
   }
 }

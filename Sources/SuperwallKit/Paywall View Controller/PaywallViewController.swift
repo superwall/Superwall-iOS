@@ -750,7 +750,13 @@ extension PaywallViewController {
     Superwall.delegate?.willDismissPaywall?()
 
     dismiss(animated: presentationIsAnimated) { [weak self] in
-      self?.didDismiss(
+      guard let self = self else {
+        return
+      }
+      if self.loadingState == .loadingPurchase {
+        self.loadingState = .ready
+      }
+      self.didDismiss(
         dismissalResult,
         shouldSendDismissedState: shouldSendDismissedState,
         completion: completion

@@ -47,8 +47,10 @@ protocol ApiFactory {
   ) -> [String: String]
 }
 
+protocol ProductPurchaserFactory {
+  func makeSK1ProductPurchaser() -> ProductPurchaserSK1
+}
+
 protocol StoreTransactionFactory {
-  @available(iOS 15.0, *)
-  func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction
   func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction
 }

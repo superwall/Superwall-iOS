@@ -282,7 +282,6 @@ extension DependencyContainer: StoreKitCoordinatorFactory {
       purchasingDelegateAdapter: purchasingDelegateAdapter,
       storeKitManager: storeKitManager,
       finishTransactions: configManager.options.finishTransactions,
-      sessionEventsManager: sessionEventsManager,
       factory: self
     )
   }
@@ -290,22 +289,24 @@ extension DependencyContainer: StoreKitCoordinatorFactory {
 
 // MARK: - StoreTransactionFactory
 extension DependencyContainer: StoreTransactionFactory {
-  @available(iOS 15.0, *)
-  func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction {
-    return await StoreTransaction.create(
-      from: transaction,
-      sessionEventsManager: sessionEventsManager,
-      configManager: configManager,
-      appSessionManager: appSessionManager
+  func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction {
+    let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
+    return  StoreTransaction(
+      transaction: transaction,
+      configRequestId: configManager.config?.requestId ?? "",
+      appSessionId: appSessionManager.appSession.id,
+      triggerSessionId: triggerSession?.id
     )
   }
+}
 
-  func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction {
-    return await StoreTransaction.create(
-      from: transaction,
+// MARK: - Product Purchaser Factory
+extension DependencyContainer: ProductPurchaserFactory {
+  func makeSK1ProductPurchaser() -> ProductPurchaserSK1 {
+    return ProductPurchaserSK1(
+      storeKitManager: storeKitManager,
       sessionEventsManager: sessionEventsManager,
-      configManager: configManager,
-      appSessionManager: appSessionManager
+      factory: self
     )
   }
 }

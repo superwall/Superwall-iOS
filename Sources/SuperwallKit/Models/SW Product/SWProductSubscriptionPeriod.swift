@@ -79,23 +79,6 @@ struct SWProductSubscriptionPeriod: Codable {
     }
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-  init(period: StoreKit.Product.SubscriptionPeriod, numberOfPeriods: Int) {
-    self.numberOfUnits = period.value * numberOfPeriods
-    switch period.unit {
-    case .day:
-      self.unit = .day
-    case .week:
-      self.unit = .week
-    case .month:
-      self.unit = .month
-    case .year:
-      self.unit = .year
-    @unknown default:
-      self.unit = .unknown
-    }
-  }
-
   var numberOfUnitsDouble: Double {
     return Double(numberOfUnits)
   }

@@ -6,18 +6,24 @@ import Combine
 @objcMembers
 public final class Superwall: NSObject, ObservableObject {
   // MARK: - Public Properties
+  /// The optional purchasing delegate of the Superwall instance. Set this in
+  /// ``configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``
+  /// when you want to manually handle the purchasing logic within your app.
   public static var purchasingDelegate: SuperwallPurchasingDelegate? {
     return shared.dependencyContainer.purchasingDelegateAdapter.swiftDelegate
   }
 
-  /// The optional purchasing delegate of the Superwall instance. By implementing this
+  /// The optional purchasing delegate of the Superwall instance. Set this in
+  /// ``configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``
+  /// when you want to manually handle the purchasing logic within your app.
   @available(swift, obsoleted: 1.0)
   @objc(purchasingDelegate)
   public static var objcPurchasingDelegate: SuperwallPurchasingDelegateObjc? {
     return shared.dependencyContainer.purchasingDelegateAdapter.objcDelegate
   }
 
-  /// The delegate of the Superwall instance. The delegate is responsible for handling callbacks from the SDK in response to certain events that happen on the paywall.
+  /// An optional delegate of the Superwall instance. The delegate is responsible for handling callbacks
+  /// from the SDK in response to certain events that happen on the paywall.
   public static var delegate: SuperwallDelegate?
 
   /// Properties stored about the user, set using ``SuperwallKit/Superwall/setUserAttributes(_:)``.
@@ -36,7 +42,7 @@ public final class Superwall: NSObject, ObservableObject {
     return shared.dependencyContainer.configManager.options
   }
 
-  /// The ``PaywallInfo`` object of the most recently presented view controller.
+  /// The ``PaywallInfo`` object of the most recentl```y presented view controller.
   @MainActor
   public static var latestPaywallInfo: PaywallInfo? {
     let presentedPaywallInfo = shared.dependencyContainer.paywallManager.presentedViewController?.paywallInfo
@@ -61,16 +67,21 @@ public final class Superwall: NSObject, ObservableObject {
     return shared.dependencyContainer.identityManager.isLoggedIn
   }
 
-  // TODO: Store value in memory
-  // This is kept up to date by the ReceiptManager:
-  /// A publisher that indicates whether the user has any active subscription.
+  /// A published property that indicates whether the user has any active subscriptions.
   ///
-  /// If you're using Combine or SwiftUI, you can subcribe/bind to this to get
+  /// Its value is stored in memory and synced with the active purchases on device.
+  ///
+  /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
   /// notified whenever the user's subscription status changes.
   ///
-  /// If you have implemented the ``purchasingDelegate`` then use
+  /// If you have implemented the ``purchasingDelegate``, you should rely
+  /// on your own subscription status.
   @Published
-  public var hasActiveSubscription = false
+  public var hasActiveSubscription = false {
+    didSet {
+      dependencyContainer.storage.save(hasActiveSubscription, forType: SubscriptionStatus.self)
+    }
+  }
 
   /// Returns `true` if Superwall has already been initialized through
   /// ``configure(apiKey:userId:delegate:options:)`` or one of is overloads.
@@ -132,8 +143,10 @@ public final class Superwall: NSObject, ObservableObject {
       objcPurchasingDelegate: objcPurchasingDelegate,
       options: options
     )
+    hasActiveSubscription = dependencyContainer.storage.get(SubscriptionStatus.self) ?? false
 
     super.init()
+    print("has active subsc", self.hasActiveSubscription)
 
     // This task runs on a background thread, even if called from a main thread.
     // This is because the function isn't marked to run on the main thread,
@@ -149,13 +162,6 @@ public final class Superwall: NSObject, ObservableObject {
       await dependencyContainer.identityManager.configure()
     }
   }
-
-  /*
-   1. Superwall.shared.isSubscribed = A published property that is true if the user has any active subscription.
-   3. Superwall.isSubscribed(to: "entitlement") <- Determines whether the user has an active subscription for that level of entitlement.
-
-   TODO: If someone purchases outside of superwall, we need to make sure we are kept in the loop!
-   */
 
   // MARK: - Configuration
   /// Configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.

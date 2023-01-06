@@ -25,11 +25,4 @@ public final class StorePayment: NSObject, Encodable, Sendable {
     self.quantity = payment.quantity
     self.discountIdentifier = payment.paymentDiscount?.identifier
   }
-
-  @available(iOS 15.0, *)
-  init(from transaction: Transaction) {
-    self.productIdentifier = transaction.productID
-    self.quantity = transaction.purchasedQuantity
-    self.discountIdentifier = nil
-  }
 }

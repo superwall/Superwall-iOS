@@ -8,6 +8,18 @@
 import Foundation
 import StoreKit
 
+/// The Objective-C only delegate protocol that handles Superwall's purchasing logic.
+///
+/// By default, the Superwall SDK handles all purchasing logic. However,
+/// if you've implemented the ``Superwall/purchasingDelegate``,  in
+/// ``Superwall/configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``,
+/// you'll need to handle the purchasing logic yourself.
+///
+/// The methods are called from the SDK to determine user subscription status and
+/// purchase or restore a product.
+///
+/// To learn how to conform to the purchasing delegate in your app
+/// and best practices, see <doc:GettingStarted>.
 @MainActor
 @objc(SWKSuperwallPurchasingDelegate)
 public protocol SuperwallPurchasingDelegateObjc: AnyObject {
@@ -28,33 +40,16 @@ public protocol SuperwallPurchasingDelegateObjc: AnyObject {
 
   /// Called when the user initiates a restore.
   ///
-  /// Add your restore logic here.
+  /// Add your restore logic here  and call the completion block with its result.
   ///
   /// - Parameters:
   ///   - completion: Call the completion with `true` if the user's purchases were restored or `false` if they weren't.
   @objc func restorePurchases(completion: @escaping (Bool) -> Void)
 
-  /// Decides whether a paywall should be presented based on whether the user is subscribed to any
-  /// entitlements.
-  ///
-  /// Entitlements are subscription levels that products belong to, which you may have set up on the
-  /// Superwall dashboard. For example, you may have "bronze", "silver" and "gold" entitlement levels
-  /// within your app.
-  ///
-  /// You need to determine whether a user has a subscription to any of the of the entitlements in the
-  /// `entitlements` parameter.
-  ///
-  /// If you're using RevenueCat, these entitlements should match the entitlements set in RevenueCat.
-  ///
-  /// If you do not use entitlements within your app, just return whether the user has any active
+  /// Decides whether a paywall should be presented based on whether the user has an active
   /// subscription.
   ///
   /// - Warning: A paywall will never show if this function returns `true`.
-  ///
-  /// - Parameters:
-  ///   - entitlements: An array of entitlements that your products belong to on the Superwall
-  ///   dashboard. This may or may not be empty, depending on whether you've added products to
-  ///   an entitlement.
   /// - Returns: A boolean that indicates whether or not the user has an active subscription.
   @objc func isUserSubscribed() -> Bool
 }

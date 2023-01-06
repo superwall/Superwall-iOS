@@ -7,11 +7,13 @@
 
 import Foundation
 
-extension String{
+extension String {
   func rfc3339date() -> Date? {
     let date = rfc3339DateFormatter.date(from: self)
     return date
   }
+
+
 }
 
 fileprivate var rfc3339DateFormatter: ISO8601DateFormatter = {

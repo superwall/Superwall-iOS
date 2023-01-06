@@ -5,96 +5,44 @@
 //  Created by Yusuf Tör on 07/12/2022.
 //
 
-import Foundation
 import StoreKit
 
 /// TypeAlias to StoreKit 1's Transaction type, called `StoreKit/SKPaymentTransaction`
 public typealias SK1Transaction = SKPaymentTransaction
-
-/// TypeAlias to StoreKit 2's Transaction type, called `StoreKit.Transaction`
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-public typealias SK2Transaction = StoreKit.Transaction
 
 @objc(SWKStoreTransaction)
 @objcMembers
 public final class StoreTransaction: NSObject, StoreTransactionType, Encodable {
   /// A string that uniquely identifies the transaction. Used on the server.
   private let id = UUID().uuidString
-  private let transaction: StoreTransactionType
 
   public let configRequestId: String
   public let appSessionId: String
   public let triggerSessionId: String?
 
-  public var transactionDate: Date? { transaction.transactionDate }
-  public var originalTransactionIdentifier: String { transaction.originalTransactionIdentifier }
-  public var state: StoreTransactionState { transaction.state }
-  public var storeTransactionId: String? { transaction.storeTransactionId}
-  public var payment: StorePayment { transaction.payment }
-  public var originalTransactionDate: Date? { transaction.originalTransactionDate }
-  public var webOrderLineItemID: String? { transaction.webOrderLineItemID }
-  public var appBundleId: String? { transaction.appBundleId }
-  public var subscriptionGroupId: String? { transaction.subscriptionGroupId }
-  public var isUpgraded: Bool? { transaction.isUpgraded }
-  public var expirationDate: Date? { transaction.expirationDate }
-  public var offerId: String? { transaction.offerId }
-  public var revocationDate: Date? { transaction.revocationDate }
-  public var appAccountToken: UUID? { transaction.appAccountToken }
-
-  /// Returns the `SKPaymentTransaction` if this `StoreTransaction` represents a `SKPaymentTransaction`.
-  public var sk1Transaction: SK1Transaction? {
-    return (self.transaction as? SK1StoreTransaction)?.underlyingSK1Transaction
-  }
-
-  /// Returns the `StoreKit.Transaction` if this `StoreTransaction` represents a `StoreKit.Transaction`.
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-  public var sk2Transaction: SK2Transaction? {
-    return (self.transaction as? SK2StoreTransaction)?.underlyingSK2Transaction
-  }
+  public let underlyingSK1Transaction: SK1Transaction
+  public let transactionDate: Date?
+  public let originalTransactionIdentifier: String
+  public let state: StoreTransactionState
+  public let storeTransactionId: String?
+  public let payment: StorePayment
 
   init(
-    _ transaction: StoreTransactionType,
+    transaction: SK1Transaction,
     configRequestId: String,
     appSessionId: String,
     triggerSessionId: String?
   ) {
-    self.transaction = transaction
+    self.underlyingSK1Transaction = transaction
     self.configRequestId = configRequestId
     self.appSessionId = appSessionId
     self.triggerSessionId = triggerSessionId
-  }
 
-  static func create(
-    from sk2Transaction: SK1Transaction,
-    sessionEventsManager: SessionEventsManager,
-    configManager: ConfigManager,
-    appSessionManager: AppSessionManager
-  ) async -> StoreTransaction {
-    let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
-    let storeTransaction = StoreTransaction(
-      SK1StoreTransaction(transaction: sk2Transaction),
-      configRequestId: configManager.config?.requestId ?? "",
-      appSessionId: appSessionManager.appSession.id,
-      triggerSessionId: triggerSession?.id
-    )
-    return storeTransaction
-  }
-
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-  static func create(
-    from sk2Transaction: SK2Transaction,
-    sessionEventsManager: SessionEventsManager,
-    configManager: ConfigManager,
-    appSessionManager: AppSessionManager
-  ) async -> StoreTransaction {
-    let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
-    let storeTransaction = StoreTransaction(
-      SK2StoreTransaction(transaction: sk2Transaction),
-      configRequestId: configManager.config?.requestId ?? "",
-      appSessionId: appSessionManager.appSession.id,
-      triggerSessionId: triggerSession?.id
-    )
-    return storeTransaction
+    transactionDate = transaction.transactionDate
+    originalTransactionIdentifier = transaction.transactionID
+    state = StoreTransactionState(from: transaction.transactionState)
+    storeTransactionId = transaction.transactionIdentifier
+    payment = StorePayment(from: transaction.payment)
   }
 
   public enum CodingKeys: String, CodingKey {
@@ -107,15 +55,6 @@ public final class StoreTransaction: NSObject, StoreTransactionType, Encodable {
     case state
     case storeTransactionId
     case payment
-    case originalTransactionDate
-    case webOrderLineItemID
-    case appBundleId
-    case subscriptionGroupId
-    case isUpgraded
-    case expirationDate
-    case offerId
-    case revocationDate
-    case appAccountToken
   }
 
   public func encode(to encoder: Encoder) throws {
@@ -128,15 +67,16 @@ public final class StoreTransaction: NSObject, StoreTransactionType, Encodable {
     try container.encode(state, forKey: .state)
     try container.encodeIfPresent(storeTransactionId, forKey: .storeTransactionId)
     try container.encode(payment, forKey: .payment)
-    try container.encodeIfPresent(originalTransactionDate, forKey: .originalTransactionDate)
-    try container.encodeIfPresent(webOrderLineItemID, forKey: .webOrderLineItemID)
-    try container.encodeIfPresent(appBundleId, forKey: .appBundleId)
-    try container.encodeIfPresent(subscriptionGroupId, forKey: .subscriptionGroupId)
-    try container.encodeIfPresent(isUpgraded, forKey: .isUpgraded)
-    try container.encodeIfPresent(expirationDate, forKey: .expirationDate)
-    try container.encodeIfPresent(offerId, forKey: .offerId)
-    try container.encodeIfPresent(revocationDate, forKey: .revocationDate)
-    try container.encodeIfPresent(appAccountToken, forKey: .appAccountToken)
     try container.encode(id, forKey: .id)
+  }
+}
+
+extension SKPaymentTransaction {
+  fileprivate var transactionID: String {
+    guard let identifier = self.transactionIdentifier else {
+      return UUID().uuidString
+    }
+
+    return identifier
   }
 }

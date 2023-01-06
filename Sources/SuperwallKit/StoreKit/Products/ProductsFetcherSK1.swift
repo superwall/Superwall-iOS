@@ -218,7 +218,7 @@ extension ProductsFetcherSK1: ProductsFetcher {
       }
     }
     let storeProducts = Set(sk1Products.map {
-      StoreProduct.from(product: SK1StoreProduct(sk1Product: $0))
+      StoreProduct(sk1Product: $0)
     })
     return storeProducts
   }

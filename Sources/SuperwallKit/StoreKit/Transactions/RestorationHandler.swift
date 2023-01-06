@@ -41,22 +41,19 @@ final class RestorationHandler {
       isUserSubscribed = storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed()
     }
 
-    paywallViewController.loadingState = .ready
-
-    // TODO: Look over the tracking of the restore here
     if hasRestored,
       isUserSubscribed {
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
-        message: "Transaction Restored"
+        message: "Transactions Restored"
       )
       transactionWasRestored(paywallViewController: paywallViewController)
     } else {
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
-        message: "Transaction Failed to Restore"
+        message: "Transactions Failed to Restore"
       )
 
       paywallViewController.presentAlert(
@@ -78,19 +75,10 @@ final class RestorationHandler {
         model: nil
       )
       await self.superwall.track(trackedEvent)
-
-      // If on iOS 15+ we don't use the Sk1 transaction observer.
-      // So will need to track transactions here.
-      if #available(iOS 15.0, *) {
-        // TODO: Why are we doing this when we did stuff earlier in restore didn't we or at least in the sk1 one?
-        await self.sessionEventsManager.triggerSession.trackTransactionRestoration()
-      }
     }
 
     if Superwall.options.paywalls.automaticallyDismiss {
       superwall.shared.dismiss(paywallViewController, state: .restored)
-    } else {
-      paywallViewController.loadingState = .ready
     }
   }
 }

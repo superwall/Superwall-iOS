@@ -31,10 +31,6 @@ enum PurchaseError: LocalizedError {
 struct PurchaseManager {
   unowned let storeKitManager: StoreKitManager
 
-  /// Purchases products.
-  ///
-  /// If on iOS 15 and the dev hasn't disabled the finishing of transactions, the
-  /// products are retrieved and purchased using StoreKit 2, otherwise using StoreKit 1.
   func purchase(product: StoreProduct) async -> InternalPurchaseResult {
     let purchaseStartAt = Date()
     let result = await storeKitManager.coordinator.productPurchaser.purchase(product: product)

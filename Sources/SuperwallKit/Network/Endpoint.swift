@@ -49,6 +49,7 @@ struct Endpoint<Response: Decodable> {
     }
 
     var request = URLRequest(url: url)
+    request.cachePolicy = .reloadRevalidatingCacheData
     request.httpMethod = method.rawValue
 
     if let bodyData = components?.bodyData {
@@ -67,6 +68,8 @@ struct Endpoint<Response: Decodable> {
         forHTTPHeaderField: header.key
       )
     }
+
+  //  request.setValue(The last-modified date from the prev request here, forHTTPHeaderField: "If-Modified-Since")
 
     return request
   }

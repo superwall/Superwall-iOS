@@ -51,14 +51,11 @@ extension SuperwallPurchasingDelegateAdapter: ProductPurchaser {
   func purchase(
     product: StoreProduct
   ) async -> PurchaseResult {
-    guard let product = product.sk1Product else {
-      return .failed(PurchaseError.productUnavailable)
-    }
     if let swiftDelegate = swiftDelegate {
-      return await swiftDelegate.purchase(product: product)
+      return await swiftDelegate.purchase(product: product.underlyingSK1Product)
     } else if let objcDelegate = objcDelegate {
       return await withCheckedContinuation { continuation in
-        objcDelegate.purchase(product: product) { result, error in
+        objcDelegate.purchase(product: product.underlyingSK1Product) { result, error in
           if let error = error {
             continuation.resume(returning: .failed(error))
           } else {

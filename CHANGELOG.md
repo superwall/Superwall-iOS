@@ -53,6 +53,8 @@ We understand that transitions between major SDK releases can become frustrating
 - The API is now fully compatible with Objective-C.
 - Bugfixes for loading and fail times of the webview and products.
 - Fixes the internal `appSessionId` that gets passed to Superwall analytics. This wasn't being refreshed as often as it should have been.
+- Setting the `PaywallOption` `automaticallyDismiss` to `false` now keeps the loading indicator visible after restoring and successfully purchasing until you manually dismiss the paywall.
+- Improves the speed of requests by changing the cache policy of requests to our servers.
 
 ---
 

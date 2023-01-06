@@ -8,7 +8,7 @@
 import UIKit
 
 class CustomURLSession {
-  private let urlSession = URLSession(configuration: .ephemeral)
+  private let urlSession = URLSession(configuration: .default)
 
   enum NetworkError: LocalizedError {
     case unknown

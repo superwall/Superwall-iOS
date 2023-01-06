@@ -12,21 +12,24 @@ enum AppSessionLogic {
   ///
   /// - Parameters:
   ///   - lastAppClose: The date when the app was last closed.
-  ///   - timeout: The timeout for the session, as defined by the config, in milliseconds.
+  ///   - timeout: The timeout for the session, as defined by the config, in milliseconds. By default, this value is 1 hour.
   static func didStartNewSession(
     _ lastAppClose: Date?,
     withSessionTimeout timeout: Milliseconds?
   ) -> Bool {
-    let anHourAgo: Milliseconds = 3600000.0
-    let timeout = timeout ?? anHourAgo
+    // Set the timeout value as provided, or with a default of 1 hour.
+    let timeout = timeout ?? 3600000.0
 
-    let delta: TimeInterval
-    if let lastAppClose = lastAppClose {
-      delta = -lastAppClose.timeIntervalSinceNow * 1000
-    } else {
-      delta = timeout + 1
+    // If the app has never been closed, we've started a new session.
+    guard let lastAppClose = lastAppClose else {
+      return true
     }
 
-    return delta > timeout
+    // Determine the elapsed duration between now and the last app close (in milliseconds).
+    let elapsedDuration = -lastAppClose.timeIntervalSinceNowInMilliseconds
+
+    // If it's been longer than the provided session timeout duration, we should consider
+    // this the start of a new session.
+    return elapsedDuration > timeout
   }
 }

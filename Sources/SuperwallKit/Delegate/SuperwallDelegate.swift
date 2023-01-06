@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// The objective-c only delegate protocol that handles Superwall lifecycle events.
+/// The delegate protocol that handles Superwall lifecycle events.
 ///
 /// The delegate methods receive callbacks from the SDK in response to certain events that happen on the paywall.
 /// It contains some required and some optional methods. To learn how to conform to the delegate in your app and

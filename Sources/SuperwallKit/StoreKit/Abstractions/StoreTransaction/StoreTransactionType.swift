@@ -22,34 +22,6 @@ protocol StoreTransactionType: Sendable {
 
   /// Info about the payment associated with the transaction
   var payment: StorePayment { get }
-
-  // MARK: iOS 15 only properties
-  /// The date of purchase for the original transaction.
-  var originalTransactionDate: Date? { get }
-
-  /// The date of purchase for the original transaction.
-  var webOrderLineItemID: String? { get }
-
-  /// The bundle identifier for the app.
-  var appBundleId: String? { get }
-
-  /// The identifier of the subscription group that the subscription belongs to.
-  var subscriptionGroupId: String? { get }
-
-  /// A Boolean that indicates whether the user upgraded to another subscription.
-  var isUpgraded: Bool? { get }
-
-  /// The date the subscription expires or renews.
-  var expirationDate: Date? { get }
-
-  /// A string that identifies an offer applied to the current subscription.
-  var offerId: String? { get }
-
-  /// The date that App Store refunded the transaction or revoked it from family sharing.
-  var revocationDate: Date? { get }
-
-  /// A UUID that associates the transaction with a user on your own service.
-  var appAccountToken: UUID? { get }
 }
 
 public enum StoreTransactionState: String, Codable, Sendable {

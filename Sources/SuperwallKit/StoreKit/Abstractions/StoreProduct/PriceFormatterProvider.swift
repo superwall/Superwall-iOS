@@ -38,27 +38,4 @@ final class PriceFormatterProvider {
     }
     return formatter
   }
-
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-  func priceFormatterForSK2(withCurrencyCode currencyCode: String) -> NumberFormatter {
-    func makePriceFormatterForSK2(with currencyCode: String) -> NumberFormatter {
-      let formatter = NumberFormatter()
-      formatter.numberStyle = .currency
-      formatter.locale = .autoupdatingCurrent
-      formatter.currencyCode = currencyCode
-      return formatter
-    }
-
-    guard
-      let formatter = cachedPriceFormatterForSK2,
-      formatter.currencyCode == currencyCode
-    else {
-      let newFormatter = makePriceFormatterForSK2(with: currencyCode)
-      cachedPriceFormatterForSK2 = newFormatter
-
-      return newFormatter
-    }
-
-    return formatter
-  }
 }

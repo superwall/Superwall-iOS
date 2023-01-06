@@ -8,10 +8,17 @@
 import Foundation
 import StoreKit
 
-/// The delegate protocol that handles Superwall lifecycle events.
+/// The delegate protocol that handles Superwall's purchasing logic.
 ///
-/// The delegate methods receive callbacks from the SDK in response to certain events that happen on the paywall.
-/// It contains some required and some optional methods. To learn how to conform to the delegate in your app
+/// By default, the Superwall SDK handles all purchasing logic. However,
+/// if you've implemented the ``Superwall/purchasingDelegate``,  in
+/// ``Superwall/configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``,
+/// you'll need to handle the purchasing logic yourself.
+///
+/// The methods are called from the SDK to determine user subscription status and
+/// purchase or restore a product.
+///
+/// To learn how to conform to the purchasing delegate in your app
 /// and best practices, see <doc:GettingStarted>.
 @MainActor
 public protocol SuperwallPurchasingDelegate: AnyObject {
@@ -22,7 +29,8 @@ public protocol SuperwallPurchasingDelegate: AnyObject {
   /// - Parameters:
   ///   - product: The `SKProduct` the user would like to purchase.
   ///
-  /// - Returns: A``PurchaseResult`` object, which is the result of your purchase logic. **Note**: Make sure you handle all cases of ``PurchaseResult``.
+  /// - Returns: A``PurchaseResult`` object, which is the result of your purchase logic.
+  /// **Note**: Make sure you handle all cases of ``PurchaseResult``.
   func purchase(product: SKProduct) async -> PurchaseResult
 
   /// Called when the user initiates a restore.
