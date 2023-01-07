@@ -17,6 +17,7 @@ final class ProductPurchaserSK1: NSObject {
 
   private unowned let storeKitManager: StoreKitManager
   private unowned let sessionEventsManager: SessionEventsManager
+  private unowned let delegateAdapter: SuperwallDelegateAdapter
   private let factory: StoreTransactionFactory
 
   /// Used to serialise the async paymentqueue calls when restoring.
@@ -33,10 +34,12 @@ final class ProductPurchaserSK1: NSObject {
   init(
     storeKitManager: StoreKitManager,
     sessionEventsManager: SessionEventsManager,
+    delegateAdapter: SuperwallDelegateAdapter,
     factory: StoreTransactionFactory
   ) {
     self.storeKitManager = storeKitManager
     self.sessionEventsManager = sessionEventsManager
+    self.delegateAdapter = delegateAdapter
     self.factory = factory
     super.init()
     SKPaymentQueue.default().add(self)
@@ -242,10 +245,9 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     }
   }
 
-  /// Finishes transactions if the transaction state is appropriate and
-  /// ``SuperwallOptions/finishTransactions`` is `true`.
+  /// Finishes transactions only if the delegate doesn't return a ``SubscriptionController``.
   private func finishIfPossible(_ transaction: SKPaymentTransaction) {
-    guard Superwall.shared.dependencyContainer.delegateAdapter.hasDelegate else {
+    if delegateAdapter.hasSubscriptionController {
       return
     }
 

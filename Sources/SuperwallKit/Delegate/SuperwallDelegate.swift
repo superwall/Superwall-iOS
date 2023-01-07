@@ -101,7 +101,7 @@ public extension SuperwallDelegate {
 
   func willOpenDeepLink(url: URL) {}
 
-  func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {}
+  func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {}
 
   func handleLog(
     level: String,

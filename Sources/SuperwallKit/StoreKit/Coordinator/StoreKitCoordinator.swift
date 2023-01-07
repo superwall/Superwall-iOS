@@ -35,9 +35,9 @@ struct StoreKitCoordinator {
     let sk1ProductPurchaser = factory.makeSK1ProductPurchaser()
     self.txnChecker = sk1ProductPurchaser
 
-    let hasDelegate = delegateAdapter.hasDelegate
+    let hasSubscriptionController = delegateAdapter.hasSubscriptionController
 
-    if hasDelegate {
+    if hasSubscriptionController {
       self.productPurchaser = delegateAdapter
       self.txnRestorer = delegateAdapter
       self.subscriptionStatusHandler = delegateAdapter

@@ -295,6 +295,7 @@ extension DependencyContainer: ProductPurchaserFactory {
     return ProductPurchaserSK1(
       storeKitManager: storeKitManager,
       sessionEventsManager: sessionEventsManager,
+      delegateAdapter: delegateAdapter,
       factory: self
     )
   }

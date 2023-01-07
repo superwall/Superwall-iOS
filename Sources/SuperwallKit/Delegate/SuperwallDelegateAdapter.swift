@@ -10,7 +10,7 @@ import Combine
 
 /// An adapter between the internal SDK and the public swift/objective c delegate.
 final class SuperwallDelegateAdapter {
-  var hasDelegate: Bool {
+  var hasSubscriptionController: Bool {
     return swiftDelegate?.subscriptionController() != nil
       || objcDelegate?.subscriptionController?() != nil
   }
