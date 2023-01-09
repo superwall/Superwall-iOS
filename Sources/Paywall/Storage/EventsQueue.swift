@@ -40,6 +40,10 @@ final class EventsQueue {
   }
 
   func enqueue(event: JSON) {
+    if !Paywall.options.isTrackedUserDataCollected,
+      event["parameters"]["$is_standard_event"] == false {
+      return
+    }
     serialQueue.async {
       self.elements.append(event)
     }

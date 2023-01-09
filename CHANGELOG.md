@@ -2,6 +2,12 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
+## 2.5.7
+
+### Enhancements
+
+- Adds a data privacy `PaywallOption` called `isTrackedUserDataCollected`. When `false`, this prevents non-Superwall events and properties from being sent back to the superwall servers.
+
 ## 2.5.6
 
 ### Fixes
