@@ -40,7 +40,7 @@ final class EventsQueue {
   }
 
   func enqueue(event: JSON) {
-    if !Paywall.options.isTrackedUserDataCollected,
+    if !Paywall.options.isExternalDataCollectionEnabled,
       event["parameters"]["$is_standard_event"] == false {
       return
     }

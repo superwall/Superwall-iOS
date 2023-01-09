@@ -16,11 +16,12 @@ public class PaywallOptions: NSObject {
   /// Haptic feedback occurs when a user purchases or restores a product, opens a URL from the paywall, or closes the paywall.
   public var isHapticFeedbackEnabled = true
 
-  /// Sends non-Superwall tracked events and properties back to the Superwall servers. Defaults to `true`.
+  /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
+  /// Defaults to `true`.
   ///
-  /// Set this to `false` if you want enhanced user privacy. Setting this to `false` will not affect
+  /// Set this to `false` to stop external data collection. This will not affect
   /// your ability to create triggers based on properties.
-  public var isTrackedUserDataCollected = true
+  public var isExternalDataCollectionEnabled = true
 
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
   public struct RestoreFailed {

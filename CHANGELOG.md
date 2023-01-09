@@ -6,7 +6,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 ### Enhancements
 
-- Adds a data privacy `PaywallOption` called `isTrackedUserDataCollected`. When `false`, this prevents non-Superwall events and properties from being sent back to the superwall servers.
+- Adds a data privacy `PaywallOption` called `isExternalDataCollectionEnabled`. When `false`, this prevents non-Superwall events and properties from being sent back to the superwall servers.
 
 ## 2.5.6
 
