@@ -50,8 +50,6 @@ actor PaywallRequestManager {
         let isFreeTrialAvailable = storeKitManager.isFreeTrialAvailable(for: storeProduct)
         paywall.isFreeTrialAvailable = isFreeTrialAvailable
       }
-
-      // TODO: WHy do we add experiment again here?
       paywall.experiment = request.responseIdentifiers.experiment
       return paywall
     }

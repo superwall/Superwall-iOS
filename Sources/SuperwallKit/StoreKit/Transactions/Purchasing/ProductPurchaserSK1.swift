@@ -192,7 +192,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         purchasing.completion?(.failed(error))
       }
     case .deferred:
-      // TODO: Are we going to track pending subscriptions as a transaction or not? Currently it doesn't.
       purchasing.completion?(.pending)
     default:
       break
