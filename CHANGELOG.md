@@ -8,6 +8,12 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 - Adds `isExternalDataCollectionEnabled` data privacy `PaywallOption`. When `false`, prevents non-Superwall events and properties from being sent back to the superwall servers.
 
+### Fixes
+
+- Fixes a bug that prevented the correct calculation of a new app session.
+
+---
+
 ## 2.5.6
 
 ### Fixes
