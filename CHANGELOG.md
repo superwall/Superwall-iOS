@@ -12,7 +12,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ### Fixes
 
 - Fixes a bug that prevented the correct calculation of a new app session.
-- Fixes missing loading and fail times of the webview and products.
+- Fixes missing loading times of the webview and products.
 
 ---
 
