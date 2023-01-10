@@ -2,7 +2,7 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
-## 2.5.7
+## 2.5.8
 
 ### Enhancements
 
@@ -13,7 +13,6 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 
 - Fixes a bug that prevented the correct calculation of a new app session.
 - Fixes missing loading times of the webview and products.
-- Adds OSX version to podspec.
 
 ---
 
