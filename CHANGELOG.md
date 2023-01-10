@@ -7,6 +7,7 @@ The changelog for `Paywall`. Also see the [releases](https://github.com/superwal
 ### Enhancements
 
 - Adds `isExternalDataCollectionEnabled` data privacy `PaywallOption`. When `false`, prevents non-Superwall events and properties from being sent back to the superwall servers.
+- Adds an `X-Is-Sandbox` header to all requests such that sandbox data doesn't affect your production analytics on superwall.com.
 
 ### Fixes
 
