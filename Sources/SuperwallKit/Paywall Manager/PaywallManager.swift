@@ -70,11 +70,11 @@ class PaywallManager {
       // Set product-related vars again incase products have been substituted into paywall.
       viewController.paywall.products = paywall.products
       viewController.paywall.productIds = paywall.productIds
+      viewController.paywall.swProducts = paywall.swProducts
       viewController.paywall.productVariables = paywall.productVariables
-      viewController.paywall.productsLoadingInfo = paywall.productsLoadingInfo
-
-      // Set free trial again as this needs to be refreshed every time.
+      viewController.paywall.swProductVariablesTemplate = paywall.swProductVariablesTemplate
       viewController.paywall.isFreeTrialAvailable = paywall.isFreeTrialAvailable
+      viewController.paywall.productsLoadingInfo = paywall.productsLoadingInfo
       return viewController
     }
 

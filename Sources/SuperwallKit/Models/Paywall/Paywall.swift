@@ -175,7 +175,7 @@ struct Paywall: Decodable {
     productsLoadingInfo: LoadingInfo,
     paywalljsVersion: String,
     swProducts: [SWProduct]? = [],
-    variables: [ProductVariable]? = [],
+    productVariables: [ProductVariable]? = [],
     swTemplateProductVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false
   ) {
@@ -195,7 +195,7 @@ struct Paywall: Decodable {
     self.productsLoadingInfo = productsLoadingInfo
     self.paywalljsVersion = paywalljsVersion
     self.swProducts = swProducts
-    self.productVariables = variables
+    self.productVariables = productVariables
     self.swProductVariablesTemplate = swTemplateProductVariables
     self.isFreeTrialAvailable = isFreeTrialAvailable
   }

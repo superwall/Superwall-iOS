@@ -18,11 +18,11 @@ public final class SuperwallOptions: NSObject {
 
   /// **WARNING**: Only use this enum to set `Superwall.networkEnvironment` if told so explicitly by the Superwall team.
   public enum NetworkEnvironment {
-    /// Default: Use the standard latest environment.
+    /// Default: Uses the standard latest environment.
     case release
-    /// **WARNING**: Use a release candidate environment.
+    /// **WARNING**: Uses a release candidate environment.
     case releaseCandidate
-    /// **WARNING**: Use the nightly build environment.
+    /// **WARNING**: Uses the nightly build environment.
     case developer
 
     var hostDomain: String {
@@ -49,6 +49,13 @@ public final class SuperwallOptions: NSObject {
   ///  Defaults to `.release`. You should under no circumstance change this unless you
   ///  received the go-ahead from the Superwall team.
   public var networkEnvironment: NetworkEnvironment = .release
+
+  /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
+  /// Defaults to `true`.
+  ///
+  /// Set this to `false` to stop external data collection. This will not affect
+  /// your ability to create triggers based on properties.
+  public var isExternalDataCollectionEnabled = true
 
   /// Forwards events from the game controller to the paywall. Defaults to `false`.
   ///
