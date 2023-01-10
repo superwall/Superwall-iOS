@@ -2,6 +2,21 @@
 
 The changelog for `Paywall`. Also see the [releases](https://github.com/superwall-me/paywall-ios/releases) on GitHub.
 
+## 2.5.7
+
+### Enhancements
+
+- Adds `isExternalDataCollectionEnabled` data privacy `PaywallOption`. When `false`, prevents non-Superwall events and properties from being sent back to the superwall servers.
+- Adds an `X-Is-Sandbox` header to all requests such that sandbox data doesn't affect your production analytics on superwall.com.
+
+### Fixes
+
+- Fixes a bug that prevented the correct calculation of a new app session.
+- Fixes missing loading times of the webview and products.
+- Adds OSX version to podspec.
+
+---
+
 ## 2.5.6
 
 ### Fixes

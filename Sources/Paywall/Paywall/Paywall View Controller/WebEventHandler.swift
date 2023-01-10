@@ -113,25 +113,26 @@ final class WebEventHandler: WebEventDelegate {
       guard let self = self else {
         return
       }
-      if let paywallInfo = self.delegate?.paywallInfo {
-        if paywallResponse.webViewLoadCompleteTime == nil {
-          self.delegate?.paywallResponse.webViewLoadCompleteTime = Date()
-        }
-
-        let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
-          state: .complete,
-          paywallInfo: paywallInfo
-        )
-        Paywall.track(trackedEvent)
-
-        SessionEventsManager.shared.triggerSession.trackWebviewLoad(
-          forPaywallId: paywallInfo.id,
-          state: .end
-        )
+      guard let delegate = self.delegate else {
+        return
+      }
+      if paywallResponse.webViewLoadCompleteTime == nil {
+        delegate.paywallResponse.webViewLoadCompleteTime = Date()
       }
 
+      let trackedEvent = SuperwallEvent.PaywallWebviewLoad(
+        state: .complete,
+        paywallInfo: delegate.paywallInfo
+      )
+      Paywall.track(trackedEvent)
+
+      SessionEventsManager.shared.triggerSession.trackWebviewLoad(
+        forPaywallId: delegate.paywallInfo.id,
+        state: .end
+      )
+
       let params = paywallResponse.getBase64EventsString(
-        params: self.delegate?.presentationInfo?.eventData?.parameters
+        params: delegate.presentationInfo?.eventData?.parameters
       )
       let jsEvent = paywallResponse.paywalljsEvent
       let scriptSrc = """
@@ -148,7 +149,7 @@ final class WebEventHandler: WebEventDelegate {
       )
 
       DispatchQueue.main.async {
-        self.delegate?.webView.evaluateJavaScript(scriptSrc) { _, error in
+        delegate.webView.evaluateJavaScript(scriptSrc) { _, error in
           if let error = error {
             Logger.debug(
               logLevel: .error,
@@ -158,7 +159,7 @@ final class WebEventHandler: WebEventDelegate {
               error: error
             )
           }
-          self.delegate?.loadingState = .ready
+          delegate.loadingState = .ready
         }
 
         // block selection
@@ -172,13 +173,13 @@ final class WebEventHandler: WebEventDelegate {
           injectionTime: .atDocumentEnd,
           forMainFrameOnly: true
         )
-        self.delegate?.webView.configuration.userContentController.addUserScript(selectionScript)
+        delegate.webView.configuration.userContentController.addUserScript(selectionScript)
 
         let preventSelection = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
-        self.delegate?.webView.evaluateJavaScript(preventSelection)
+        delegate.webView.evaluateJavaScript(preventSelection)
 
         let preventZoom: String = "var meta = document.createElement('meta');" + "meta.name = 'viewport';" + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';" + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
-        self.delegate?.webView.evaluateJavaScript(preventZoom)
+        delegate.webView.evaluateJavaScript(preventZoom)
       }
     }
   }

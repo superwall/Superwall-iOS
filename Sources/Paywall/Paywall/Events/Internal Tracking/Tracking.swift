@@ -46,7 +46,7 @@ extension Paywall {
       parameters: JSON(parameters.eventParams),
       createdAt: eventCreatedAt
     )
-		queue.enqueue(event: eventData.jsonData)
+    queue.enqueue(event: event, jsonData: eventData.jsonData)
     Storage.shared.coreDataManager.saveEventData(eventData)
 
     if event.canImplicitlyTriggerPaywall {

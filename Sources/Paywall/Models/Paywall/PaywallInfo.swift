@@ -172,7 +172,7 @@ public final class PaywallInfo: NSObject {
       "paywall_webview_load_duration": webViewLoadDuration as Any,
       "paywall_products_load_start_time": productsLoadStartTime as Any,
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
-      "paywall_products_load_fail_time": productsLoadCompleteTime as Any,
+      "paywall_products_load_fail_time": productsLoadFailTime as Any,
       "paywall_products_load_duration": productsLoadDuration as Any
     ]
 

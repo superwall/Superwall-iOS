@@ -173,7 +173,7 @@ final class PaywallResponseManager: NSObject {
 
     let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
       state: .start,
-      paywallInfo: paywallInfo,
+      paywallInfo: response.getPaywallInfo(fromEvent: event),
       eventData: event
     )
     Paywall.track(productLoadEvent)
@@ -239,7 +239,21 @@ final class PaywallResponseManager: NSObject {
       Paywall.isFreeTrialAvailableOverride = nil
     }
 
-      // cache the response for later if we haven't substituted products.
+    response.productsLoadCompleteTime = Date()
+
+    let paywallInfo = response.getPaywallInfo(fromEvent: event)
+    SessionEventsManager.shared.triggerSession.trackProductsLoad(
+      forPaywallId: paywallInfo.id,
+      state: .end
+    )
+    let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
+      state: .complete,
+      paywallInfo: paywallInfo,
+      eventData: event
+    )
+    Paywall.track(productLoadEvent)
+
+    // cache the response for later if we haven't substituted products.
     if isNotSubstitutingProducts {
       self.responsesByHash[paywallRequestHash] = .success(response)
     }
@@ -255,19 +269,5 @@ final class PaywallResponseManager: NSObject {
 
     // reset the handler cache
     self.handlersByHash.removeValue(forKey: paywallRequestHash)
-
-    response.productsLoadCompleteTime = Date()
-
-    let paywallInfo = response.getPaywallInfo(fromEvent: event)
-    SessionEventsManager.shared.triggerSession.trackProductsLoad(
-      forPaywallId: paywallInfo.id,
-      state: .end
-    )
-    let productLoadEvent = SuperwallEvent.PaywallProductsLoad(
-      state: .complete,
-      paywallInfo: paywallInfo,
-      eventData: event
-    )
-    Paywall.track(productLoadEvent)
   }
 }

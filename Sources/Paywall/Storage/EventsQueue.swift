@@ -39,10 +39,25 @@ final class EventsQueue {
     )
   }
 
-  func enqueue(event: JSON) {
-    serialQueue.async {
-      self.elements.append(event)
+  func enqueue(event: Trackable, jsonData: JSON) {
+    guard externalDataCollectionAllowed(from: event) else {
+      return
     }
+    serialQueue.async {
+      self.elements.append(jsonData)
+    }
+  }
+
+  private func externalDataCollectionAllowed(from event: Trackable) -> Bool {
+    if Paywall.options.isExternalDataCollectionEnabled {
+      return true
+    }
+    if event is SuperwallEvent.TriggerFire
+      || event is SuperwallEvent.Attributes
+      || event is UserInitiatedEvent.Track {
+      return false
+    }
+    return true
   }
 
   @objc private func flush() {
