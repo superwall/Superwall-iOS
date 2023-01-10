@@ -288,8 +288,7 @@ class DeviceHelper {
   unowned var identityManager: IdentityManager!
   private unowned let storage: Storage
   private unowned let localizationManager: LocalizationManager
-
-  // TODO: Clean up all postInits
+  
   init(
     api: Api,
     storage: Storage,

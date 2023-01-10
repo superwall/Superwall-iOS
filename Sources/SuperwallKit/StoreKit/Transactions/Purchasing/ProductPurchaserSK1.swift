@@ -9,23 +9,24 @@ import Foundation
 import StoreKit
 
 final class ProductPurchaserSK1: NSObject {
-  /// The last transaction
-  private var lastTransaction: SKPaymentTransaction?
-  private var purchasingProductId: String?
-  private var purchaseCompletion: ((PurchaseResult) -> Void)?
+  // MARK: Purchasing
+  final class Purchasing {
+    var completion: ((PurchaseResult) -> Void)?
+    var transaction: SKPaymentTransaction?
+    var productId: String?
+  }
+  private let purchasing = Purchasing()
+
+  // MARK: - Restoration
+  /// Used to serialise the async `SKPaymentQueue` calls when restoring.
+  private let restorationQueueGroup = DispatchGroup()
   private var restoreCompletion: ((Bool) -> Void)?
 
+  // MARK: Dependencies
   private unowned let storeKitManager: StoreKitManager
   private unowned let sessionEventsManager: SessionEventsManager
   private unowned let delegateAdapter: SuperwallDelegateAdapter
   private let factory: StoreTransactionFactory
-
-  /// Used to serialise the async paymentqueue calls when restoring.
-  private let paymentQueueGroup = DispatchGroup()
-
-  enum StoreError: Error {
-    case failedVerification
-  }
 
   deinit {
     SKPaymentQueue.default().remove(self)
@@ -51,17 +52,18 @@ extension ProductPurchaserSK1: ProductPurchaser {
   /// Purchases a product, waiting for the completion block to be fired and
   /// returning a purchase result.
   func purchase(product: StoreProduct) async -> PurchaseResult {
-    purchasingProductId = product.productIdentifier
+    purchasing.productId = product.productIdentifier
 
     return await withCheckedContinuation { continuation in
       let payment = SKPayment(product: product.underlyingSK1Product)
-      self.purchaseCompletion = { [weak self] result in
+
+      purchasing.completion = { [weak self] result in
         guard let self = self else {
           return
         }
         continuation.resume(returning: result)
-        self.purchasingProductId = nil
-        self.purchaseCompletion = nil
+        self.purchasing.productId = nil
+        self.purchasing.completion = nil
       }
       SKPaymentQueue.default().add(payment)
     }
@@ -80,32 +82,17 @@ extension ProductPurchaserSK1: TransactionChecker {
     of productId: String,
     since startAt: Date
   ) async throws -> StoreTransaction {
-    guard let lastTransaction = lastTransaction else {
+    guard let transaction = purchasing.transaction else {
       throw PurchaseError.noTransactionDetected
     }
-    guard lastTransaction.payment.productIdentifier == productId else {
-      throw PurchaseError.noTransactionDetected
-    }
-    guard lastTransaction.transactionState == .purchased else {
-      throw PurchaseError.noTransactionDetected
-    }
-    guard let transactionDate = lastTransaction.transactionDate else {
-      throw PurchaseError.noTransactionDetected
-    }
-    guard transactionDate >= startAt else {
-      throw PurchaseError.noTransactionDetected
-    }
+    try ProductPurchaserLogic.validate(
+      lastTransaction: transaction,
+      withProductId: productId,
+      since: startAt
+    )
 
-    // Validation
-    guard let localReceipt = try? InAppReceipt() else {
-      throw PurchaseError.unverifiedTransaction
-    }
-    guard localReceipt.isValid else {
-      throw PurchaseError.unverifiedTransaction
-    }
-
-    let storeTransaction = await factory.makeStoreTransaction(from: lastTransaction)
-    self.lastTransaction = nil
+    let storeTransaction = await factory.makeStoreTransaction(from: transaction)
+    self.purchasing.transaction = nil
 
     return storeTransaction
   }
@@ -136,7 +123,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       scope: .paywallTransactions,
       message: "Restore Completed Transactions Finished"
     )
-    paymentQueueGroup.notify(queue: .main) { [weak self] in
+    restorationQueueGroup.notify(queue: .main) { [weak self] in
       self?.restoreCompletion?(true)
     }
   }
@@ -151,7 +138,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       message: "Restore Completed Transactions Failed With Error",
       error: error
     )
-    paymentQueueGroup.notify(queue: .main) { [weak self] in
+    restorationQueueGroup.notify(queue: .main) { [weak self] in
       self?.restoreCompletion?(false)
     }
   }
@@ -160,11 +147,10 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     _ queue: SKPaymentQueue,
     updatedTransactions transactions: [SKPaymentTransaction]
   ) {
-    paymentQueueGroup.enter()
+    restorationQueueGroup.enter()
     Task {
       let isPaywallPresented = await Superwall.shared.isPaywallPresented
       for transaction in transactions {
-        lastTransaction = transaction
         updatePurchaseCompletionBlock(for: transaction)
         await checkForRestoration(transaction, isPaywallPresented: isPaywallPresented)
         finishIfPossible(transaction)
@@ -174,32 +160,22 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         }
       }
       await loadPurchasedProductsIfPossible(from: transactions)
-      paymentQueueGroup.leave()
+      restorationQueueGroup.leave()
     }
   }
 
   // MARK: - Private API
 
-  /// Loads purchased products in the StoreKitManager if a purchase or restore has occurred.
-  private func loadPurchasedProductsIfPossible(from transactions: [SKPaymentTransaction]) async {
-    if transactions.first(
-      where: { $0.transactionState == .purchased || $0.transactionState == .restored }
-    ) == nil {
-      return
-    }
-    await storeKitManager.loadPurchasedProducts()
-  }
-
-  /// Sends a `PurchaseResult` to the completion block if a product has been purchased.
+  /// Sends a `PurchaseResult` to the completion block and stores the latest purchased transaction.
   private func updatePurchaseCompletionBlock(for transaction: SKPaymentTransaction) {
-    guard purchasingProductId == transaction.payment.productIdentifier else {
+    guard purchasing.productId == transaction.payment.productIdentifier else {
       return
     }
+
     switch transaction.transactionState {
     case .purchased:
-      Task {
-        purchaseCompletion?(.purchased)
-      }
+      purchasing.transaction = transaction
+      purchasing.completion?(.purchased)
     case .failed:
       if let error = transaction.error {
         if let error = error as? SKError {
@@ -207,17 +183,17 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           case .overlayTimeout,
             .paymentCancelled,
             .overlayCancelled:
-            purchaseCompletion?(.cancelled)
+            purchasing.completion?(.cancelled)
             return
           default:
             break
           }
         }
-        purchaseCompletion?(.failed(error))
+        purchasing.completion?(.failed(error))
       }
     case .deferred:
       // TODO: Are we going to track pending subscriptions as a transaction or not? Currently it doesn't.
-      purchaseCompletion?(.pending)
+      purchasing.completion?(.pending)
     default:
       break
     }
@@ -266,4 +242,15 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     let storeTransaction = await factory.makeStoreTransaction(from: transaction)
     await sessionEventsManager.enqueue(storeTransaction)
   }
+
+  /// Loads purchased products in the StoreKitManager if a purchase or restore has occurred.
+  private func loadPurchasedProductsIfPossible(from transactions: [SKPaymentTransaction]) async {
+    if transactions.first(
+      where: { $0.transactionState == .purchased || $0.transactionState == .restored }
+    ) == nil {
+      return
+    }
+    await storeKitManager.loadPurchasedProducts()
+  }
+
 }

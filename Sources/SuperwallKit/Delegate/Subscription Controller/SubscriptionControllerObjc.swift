@@ -8,18 +8,15 @@
 import Foundation
 import StoreKit
 
-// TODO: Change the description here and in the swift  one
-/// The Objective-C only delegate protocol that handles Superwall's purchasing logic.
+/// The Objective-C only protocol that handles Superwall's subscription-related logic.
 ///
-/// By default, the Superwall SDK handles all purchasing logic. However,
-/// if you've implemented the ``Superwall/purchasingDelegate``,  in
-/// ``Superwall/configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``,
-/// you'll need to handle the purchasing logic yourself.
+/// By default, the Superwall SDK handles all subscription-related logic.
 ///
-/// The methods are called from the SDK to determine user subscription status and
-/// purchase or restore a product.
+/// However, if you'd like more control, you can return a ``SubscriptionControllerObjc`` in
+/// the delegate when configuring the SDK via
+/// ``Superwall/configure(apiKey:delegate:options:)-48l7e``.
 ///
-/// To learn how to conform to the purchasing delegate in your app
+/// To learn how to implement the ``SubscriptionControllerObjc`` in your app
 /// and best practices, see <doc:GettingStarted>.
 @MainActor
 @objc(SWKSubscriptionController)

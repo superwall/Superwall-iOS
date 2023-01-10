@@ -5,6 +5,8 @@
 //  Created by Yusuf Tör on 05/04/2022.
 //
 
+// Uncomment if you're implementing the SubscriptionController in SuperwallService.swift:
+/*
 import StoreKit
 import SuperwallKit
 
@@ -113,3 +115,4 @@ extension StoreKitService: SKPaymentTransactionObserver {
     }
   }
 }
+*/

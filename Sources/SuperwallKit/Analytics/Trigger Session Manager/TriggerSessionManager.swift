@@ -480,7 +480,7 @@ actor TriggerSessionManager {
       .transaction = nil
   }
 
-  func trackDeferredTransaction() async {
+  func trackPendingTransaction() async {
     transactionCount?.fail += 1
 
     activeTriggerSession?

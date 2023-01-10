@@ -56,6 +56,7 @@ class ConfigManager {
       triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
       choosePaywallVariants(from: config.triggers)
       self.config = config
+      // TODO: We might want to refresh the receipt here, didn't seem to update when the purchases were cleared. See what RC do. 
       await storeKitManager.loadPurchasedProducts()
       Task { await preloadPaywalls() }
     } catch {

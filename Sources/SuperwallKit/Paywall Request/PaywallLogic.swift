@@ -73,7 +73,6 @@ enum PaywallLogic {
     return error
   }
 
-  // TODO: Check over this dependency bit
   static func getVariablesAndFreeTrial(
     fromProducts products: [Product],
     productsById: [String: StoreProduct],

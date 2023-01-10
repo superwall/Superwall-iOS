@@ -194,7 +194,7 @@ final class TransactionManager {
         model: nil
       )
       await Superwall.track(trackedEvent)
-      await self.sessionEventsManager.triggerSession.trackDeferredTransaction()
+      await self.sessionEventsManager.triggerSession.trackPendingTransaction()
     }
 
     await paywallViewController.presentAlert(

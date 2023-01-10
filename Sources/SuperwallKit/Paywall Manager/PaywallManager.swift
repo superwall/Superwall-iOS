@@ -78,7 +78,6 @@ class PaywallManager {
       return viewController
     }
 
-    // TODO: Check no circular ref between paywallmanager and paywallvc
     let paywallViewController = factory.makePaywallViewController(for: paywall)
 
     if let window = UIApplication.shared.activeWindow {

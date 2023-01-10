@@ -744,7 +744,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     await queue.removeAllTriggerSessions()
 
     // When
-    await sessionManager.trackDeferredTransaction()
+    await sessionManager.trackPendingTransaction()
 
     // Then
     let expectedTransactionCount = TriggerSession.Transaction.Count(start: 1, fail: 1)

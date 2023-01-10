@@ -139,4 +139,33 @@ extension SuperwallService: SuperwallDelegate {
     }
     */
   }
+
+  // Superwall handles subscription logic by default. However, if you'd
+  // like more control you can handle it yourself.
+  // Uncomment if you would like to handle purchasing yourself:
+  /*
+  func subscriptionController() -> SubscriptionController? {
+    return self
+  }*/
 }
+
+// Uncomment if you would like to handle purchasing yourself:
+/*
+extension SuperwallService: SubscriptionController {
+  func purchase(product: SKProduct) async -> PurchaseResult {
+    return await withCheckedContinuation { continuation in
+      StoreKitService.shared.purchase(product) { result in
+        continuation.resume(with: .success(result))
+      }
+    }
+  }
+
+  func restorePurchases() async -> Bool {
+    return StoreKitService.shared.restorePurchases()
+  }
+
+  func isUserSubscribed() -> Bool {
+    return StoreKitService.shared.isSubscribed
+  }
+}
+*/
