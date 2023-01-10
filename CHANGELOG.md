@@ -58,6 +58,20 @@ We understand that transitions between major SDK releases can become frustrating
 
 ---
 
+## 2.5.8
+
+### Enhancements
+
+- Adds `isExternalDataCollectionEnabled` data privacy `PaywallOption`. When `false`, prevents non-Superwall events and properties from being sent back to the superwall servers.
+- Adds an `X-Is-Sandbox` header to all requests such that sandbox data doesn't affect your production analytics on superwall.com.
+
+### Fixes
+
+- Fixes a bug that prevented the correct calculation of a new app session.
+- Fixes missing loading times of the webview and products.
+
+---
+
 ## 2.5.6
 
 ### Fixes

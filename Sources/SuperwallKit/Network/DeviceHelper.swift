@@ -107,11 +107,11 @@ class DeviceHelper {
   /// Returns true if built with the debug flag, or using TestFlight.
   let isSandbox: String = {
     #if DEBUG
-      return "\(true)"
+      return "true"
     #else
 
     guard let url = Bundle.main.appStoreReceiptURL else {
-      return "\(false)"
+      return "false"
     }
 
     return "\(url.path.contains("sandboxReceipt"))"
