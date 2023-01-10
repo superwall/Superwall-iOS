@@ -252,7 +252,7 @@ final class PaywallResponseManager: NSObject {
       eventData: event
     )
     Paywall.track(productLoadEvent)
-    
+
     // cache the response for later if we haven't substituted products.
     if isNotSubstitutingProducts {
       self.responsesByHash[paywallRequestHash] = .success(response)
