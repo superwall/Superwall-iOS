@@ -75,9 +75,9 @@ public final class Superwall: NSObject, ObservableObject {
     return shared.dependencyContainer.identityManager.isLoggedIn
   }
 
-  /// A published property that indicates whether the user has any active subscriptions.
+  /// A published property that indicates whether the device has any active subscriptions.
   ///
-  /// Its value is stored in memory and synced with the active purchases on device.
+  /// Its value is stored on disk and synced with the active purchases on device.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
   /// notified whenever the user's subscription status changes.
