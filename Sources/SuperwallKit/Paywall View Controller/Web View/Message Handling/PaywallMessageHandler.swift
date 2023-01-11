@@ -47,8 +47,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       logLevel: .debug,
       scope: .paywallViewController,
       message: "Handle Message",
-      info: ["message": message],
-      error: nil
+      info: ["message": message]
     )
 
     guard let paywall = delegate?.paywall else {

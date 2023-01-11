@@ -15,6 +15,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
     set {
       shared.dependencyContainer.delegateAdapter.swiftDelegate = newValue
+      shared.dependencyContainer.storeKitManager.coordinator.didToggleDelegate()
     }
   }
 
@@ -29,6 +30,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
     set {
       shared.dependencyContainer.delegateAdapter.objcDelegate = newValue
+      shared.dependencyContainer.storeKitManager.coordinator.didToggleDelegate()
     }
   }
 
@@ -283,7 +285,13 @@ extension Superwall: PaywallViewControllerDelegate {
     _ paywallEvent: PaywallWebEvent,
     on paywallViewController: PaywallViewController
   ) async {
-    // TODO: log this
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallViewController,
+      message: "Event Did Occur",
+      info: ["event": paywallEvent]
+    )
+
     switch paywallEvent {
     case .closed:
       dismiss(

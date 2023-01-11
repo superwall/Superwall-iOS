@@ -10,33 +10,36 @@ import Foundation
 /// Coordinates the purchasing, restoring and retrieving of products; the checking
 /// of transactions; and the determining of the user's subscription status.
 struct StoreKitCoordinator {
-  /// Purchases the product.
-  let productPurchaser: ProductPurchaser
-
   /// Fetches the products.
   let productFetcher: ProductsFetcher
 
   /// Gets and validates transactions.
-  let txnChecker: TransactionChecker
+  let txnChecker: TransactionChecker & ProductPurchaser & TransactionRestorer
+
+  /// Purchases the product.
+  var productPurchaser: ProductPurchaser
 
   /// Restores purchases.
-  let txnRestorer: TransactionRestorer
+  var txnRestorer: TransactionRestorer
 
   /// Checks if the user is subscribed.
-  unowned let subscriptionStatusHandler: SubscriptionStatusChecker
+  unowned var subscriptionStatusHandler: SubscriptionStatusChecker
+  unowned let delegateAdapter: SuperwallDelegateAdapter
+  unowned let storeKitManager: StoreKitManager
 
   init(
     delegateAdapter: SuperwallDelegateAdapter,
     storeKitManager: StoreKitManager,
     factory: StoreTransactionFactory & ProductPurchaserFactory
   ) {
+    self.delegateAdapter = delegateAdapter
+    self.storeKitManager = storeKitManager
     self.productFetcher = ProductsFetcherSK1()
 
     let sk1ProductPurchaser = factory.makeSK1ProductPurchaser()
     self.txnChecker = sk1ProductPurchaser
 
     let hasSubscriptionController = delegateAdapter.hasSubscriptionController
-
     if hasSubscriptionController {
       self.productPurchaser = delegateAdapter
       self.txnRestorer = delegateAdapter
@@ -44,6 +47,22 @@ struct StoreKitCoordinator {
     } else {
       self.productPurchaser = sk1ProductPurchaser
       self.txnRestorer = sk1ProductPurchaser
+      self.subscriptionStatusHandler = storeKitManager
+    }
+  }
+
+  /// Updates which classes handle subscription-related logic.
+  ///
+  /// Called when a user updates the delegate.
+  mutating func didToggleDelegate() {
+    let hasSubscriptionController = delegateAdapter.hasSubscriptionController
+    if hasSubscriptionController {
+      self.productPurchaser = delegateAdapter
+      self.txnRestorer = delegateAdapter
+      self.subscriptionStatusHandler = delegateAdapter
+    } else {
+      self.productPurchaser = txnChecker
+      self.txnRestorer = txnChecker
       self.subscriptionStatusHandler = storeKitManager
     }
   }
