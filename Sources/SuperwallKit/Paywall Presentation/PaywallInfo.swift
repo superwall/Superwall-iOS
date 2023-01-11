@@ -89,6 +89,8 @@ public final class PaywallInfo: NSObject {
   /// The paywall.js version installed on the paywall website.
   public let paywalljsVersion: String?
 
+  public let isFreeTrialAvailable: Bool
+
   private unowned let sessionEventsManager: SessionEventsManager
 
   init(
@@ -109,6 +111,7 @@ public final class PaywallInfo: NSObject {
     productsLoadCompleteTime: Date?,
     experiment: Experiment? = nil,
     paywalljsVersion: String? = nil,
+    isFreeTrialAvailable: Bool,
     sessionEventsManager: SessionEventsManager
   ) {
     self.databaseId = databaseId
@@ -121,6 +124,7 @@ public final class PaywallInfo: NSObject {
     self.experiment = experiment
     self.paywalljsVersion = paywalljsVersion
     self.products = products
+    self.isFreeTrialAvailable = isFreeTrialAvailable
 
     if eventData != nil {
       self.presentedBy = "event"
@@ -189,7 +193,8 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_start_time": productsLoadStartTime as Any,
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
       "paywall_products_load_fail_time": productsLoadFailTime as Any,
-      "paywall_products_load_duration": productsLoadDuration as Any
+      "paywall_products_load_duration": productsLoadDuration as Any,
+      "is_free_trial_available": isFreeTrialAvailable as Any
     ]
 
     if let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession,

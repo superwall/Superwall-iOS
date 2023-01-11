@@ -222,6 +222,7 @@ struct Paywall: Decodable {
       productsLoadCompleteTime: productsLoadingInfo.endAt,
       experiment: experiment,
       paywalljsVersion: paywalljsVersion,
+      isFreeTrialAvailable: isFreeTrialAvailable,
       sessionEventsManager: sessionEventsManager
     )
   }

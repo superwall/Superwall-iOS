@@ -82,8 +82,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
   /// notified whenever the user's subscription status changes.
   ///
-  /// If you have implemented the ``purchasingDelegate``, you should rely
-  /// on your own subscription status.
+  /// If you are returning a ``SubscriptionController`` in the
+  /// ``SuperwallDelegate``, you should rely on your own subscription status instead.
   @Published
   public var hasActiveSubscription = false {
     didSet {
@@ -92,15 +92,18 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Returns `true` if Superwall has already been initialized through
-  /// ``configure(apiKey:userId:delegate:options:)`` or one of is overloads.
+  /// ``configure(apiKey:delegate:options:)-65jyx`` or one of is overloads.
   public static var isConfigured: Bool {
-    superwall != nil
+    if superwall == nil {
+      return false
+    }
+    return superwall?.dependencyContainer.configManager.config != nil
   }
 
   /// The configured shared instance of ``Superwall``.
   ///
   /// - Warning: This method will crash with `fatalError` if ``Superwall`` has
-  /// not been initialized through ``configure(apiKey:userId:delegate:options:)``
+  /// not been initialized through ``configure(apiKey:delegate:options:)-65jyx``
   /// or one of its overloads. If there's a chance that may have not happened yet, you can use
   /// ``isConfigured`` to check if it's safe to call.
   /// ### Related symbols

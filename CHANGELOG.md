@@ -46,6 +46,8 @@ We understand that transitions between major SDK releases can become frustrating
 - Adds `getTrackResult(forEvent:params:)`. This returns a `TrackResult` which tells you the result of tracking an event, without actually tracking it. This is useful if you want to figure out whether a paywall will show in the future.
 - Logs when products fail to load with a link to help diagnose the cause.
 - Adds a `hasActiveSubscription` property, which you can check to determine whether Superwall detects an active subscription. Its value is stored on disk and synced with the active purchases on device. If you're using Combine or SwiftUI, you can subscribe or bind to this to get notified whenever the user's subscription status changes. If you're implementing your own `SubscriptionController`, you should rely on your own logic to determine subscription status.
+- Adds `Superwall.isConfigured`. A boolean which you can use to check whether Superwall is configured and ready to present paywalls.
+- Adds `isFreeTrialAvailable` to `PaywallInfo`.
 
 ### Fixes
 
