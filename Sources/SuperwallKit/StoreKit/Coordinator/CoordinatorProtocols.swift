@@ -35,7 +35,7 @@ protocol TransactionRestorer: AnyObject {
 }
 
 protocol SubscriptionStatusChecker: AnyObject {
-  // TODO: Should this be async?
+  // TODO: Should this be async? Need to check RC issue where: https://stackoverflow.com/questions/74720389/can-i-check-a-user-subscription-variable-bool-from-a-paywalldelegate-extension/74730140#74730140
   /// Determines the subscription status of the user.
   func isSubscribed() -> Bool
 }

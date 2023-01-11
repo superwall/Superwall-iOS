@@ -49,11 +49,21 @@ final class StoreKitManager {
   /// when restoring or after purchasing.
   @discardableResult
   func refreshReceipt() async -> Bool {
+    Logger.debug(
+      logLevel: .debug,
+      scope: .storeKitManager,
+      message: "Refreshing App Store receipt."
+    )
     return await receiptManager.refreshReceipt()
   }
 
   /// Loads the purchased products from the receipt,
   func loadPurchasedProducts() async {
+    Logger.debug(
+      logLevel: .debug,
+      scope: .storeKitManager,
+      message: "Loading purchased products from the App Store receipt."
+    )
     await receiptManager.loadPurchasedProducts()
   }
 

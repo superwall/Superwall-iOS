@@ -20,7 +20,6 @@ final class DependencyContainer {
   var configManager: ConfigManager!
   var identityManager: IdentityManager!
   var storeKitManager: StoreKitManager!
-  // TODO: Make sure this is loaded straight away:
   var appSessionManager: AppSessionManager!
   var sessionEventsManager: SessionEventsManager!
   var storage: Storage!

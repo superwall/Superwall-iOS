@@ -225,7 +225,6 @@ public final class Superwall: NSObject, ObservableObject {
       objcDelegate: delegate,
       options: options
     )
-
     return shared
   }
 

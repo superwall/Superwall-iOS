@@ -19,7 +19,7 @@ class AppSessionManager {
     }
   }
   private var lastAppClose: Date?
-  private var didTrackLaunch = false
+  private var didTrackAppLaunch = false
   private var cancellable: AnyCancellable?
 
   private unowned let configManager: ConfigManager
@@ -44,6 +44,7 @@ class AppSessionManager {
     self.sessionEventsManager = sessionEventsManager
   }
 
+  // MARK: - Listeners
   @MainActor
   private func addActiveStateObservers() {
     NotificationCenter.default.addObserver(
@@ -70,7 +71,16 @@ class AppSessionManager {
     cancellable = configManager.$config
       .compactMap { $0 }
       .sink { [weak self] config in
-        self?.appSessionTimeout = config.appSessionTimeout
+        guard let self = self else {
+          return
+        }
+        self.appSessionTimeout = config.appSessionTimeout
+
+        // Account for fact that dev may have delayed the init of Superwall
+        // such that applicationDidBecomeActive() doesn't activate.
+        if !self.didTrackAppLaunch {
+          self.sessionCouldRefresh()
+        }
       }
   }
 
@@ -87,6 +97,22 @@ class AppSessionManager {
   }
 
   @objc private func applicationDidBecomeActive() {
+    Task.detached(priority: .userInitiated) {
+      await Superwall.track(InternalSuperwallEvent.AppOpen())
+    }
+    sessionCouldRefresh()
+  }
+
+  // MARK: - Logic
+
+  /// Tries to track a new app session, app launch, and first seen.
+  private func sessionCouldRefresh() {
+    detectNewSession()
+    trackAppLaunch()
+    storage.recordFirstSeenTracked()
+  }
+
+  private func detectNewSession() {
     let didStartNewSession = AppSessionLogic.didStartNewSession(
       lastAppClose,
       withSessionTimeout: appSessionTimeout
@@ -100,17 +126,15 @@ class AppSessionManager {
     } else {
       appSession.endAt = nil
     }
+  }
+
+  private func trackAppLaunch() {
+    if didTrackAppLaunch {
+      return
+    }
     Task.detached(priority: .userInitiated) {
-      await Superwall.track(InternalSuperwallEvent.AppOpen())
+      await Superwall.track(InternalSuperwallEvent.AppLaunch())
     }
-
-    if !didTrackLaunch {
-      Task.detached(priority: .userInitiated) {
-        await Superwall.track(InternalSuperwallEvent.AppLaunch())
-      }
-      didTrackLaunch = true
-    }
-
-    storage.recordFirstSeenTracked()
+    didTrackAppLaunch = true
   }
 }
