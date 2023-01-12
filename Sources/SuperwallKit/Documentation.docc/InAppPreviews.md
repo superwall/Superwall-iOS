@@ -4,7 +4,7 @@ Previewing a paywall on device from the Superwall dashboard.
 
 ## Overview
 
-You can preview your paywall on-device before going live by utilizing paywall previews. First, you need to add a custom URL scheme to your app. Then you need to handle the deep link when your app is opened via deep link using ``SuperwallKit/Superwall/handleDeepLink(_:)``. You can then preview your paywall by accessing your paywall from the dashboard, clicking the preview button, and scanning the QR code that appears.
+You can preview your paywall on-device before going live by utilizing paywall previews. First, you need to add a custom URL scheme to your app. Then you need to handle the deep link when your app is opened via deep link using ``Superwall/handleDeepLink(_:)``. You can then preview your paywall by accessing your paywall from the dashboard, clicking the preview button, and scanning the QR code that appears.
 
 ## Adding a Custom URL Scheme
 
@@ -14,7 +14,7 @@ In your `info.plist`, you'll need to add a custom URL scheme for your app:
 
 You can view [Apple's documentation](https://developer.apple.com/documentation/xcode/defining-a-custom-url-scheme-for-your-app) to learn more about how to do that.
 
-Then, you'll need to handle the deep link within your app using ``SuperwallKit/Superwall/handleDeepLink(_:)``. We recommend adding this to your `SuperwallService.swift` file that handles all Superwall related functions:
+Then, you'll need to handle the deep link within your app using ``Superwall/handleDeepLink(_:)``. We recommend adding this to your `SuperwallService.swift` file that handles all Superwall related functions:
 
 ```swift
 extension SuperwallService {

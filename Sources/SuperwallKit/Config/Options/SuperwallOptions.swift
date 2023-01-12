@@ -9,7 +9,7 @@ import Foundation
 
 /// Options for configuring Superwall, including paywall presentation and appearance.
 ///
-/// Pass an instance of this class to ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``.
+/// Pass an instance of this class to ``Superwall/configure(apiKey:delegate:options:)-65jyx``.
 @objc(SWKSuperwallOptions)
 @objcMembers
 public final class SuperwallOptions: NSObject {
@@ -59,7 +59,7 @@ public final class SuperwallOptions: NSObject {
 
   /// Forwards events from the game controller to the paywall. Defaults to `false`.
   ///
-  /// Set this to `true` to forward events from the Game Controller to the Paywall via ``SuperwallKit/Superwall/gamepadValueChanged(gamepad:element:)``.
+  /// Set this to `true` to forward events from the Game Controller to the Paywall via ``Superwall/gamepadValueChanged(gamepad:element:)``.
   public var isGameControllerEnabled = false
 
   /// Configuration for printing to the console.

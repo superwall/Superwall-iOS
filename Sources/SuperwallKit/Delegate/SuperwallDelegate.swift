@@ -10,6 +10,9 @@ import Foundation
 /// The delegate protocol that handles Superwall lifecycle events.
 ///
 /// The delegate methods receive callbacks from the SDK in response to certain events that happen on the paywall.
+///
+/// You pass this in when configuring the SDK via ``Superwall/configure(apiKey:delegate:options:)-65jyx``.
+/// 
 /// To learn how to conform to the delegate in your app and best practices, see <doc:AdvancedConfiguration>.
 public protocol SuperwallDelegate: AnyObject {
   func subscriptionController() -> SubscriptionController?

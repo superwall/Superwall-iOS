@@ -6,7 +6,7 @@ Set user attributes for use in your paywalls and the dashboard.
 
 You can display information about the user on the paywall by setting user attributes.
 
-You do this by passing a `[String: Any?]` dictionary of attributes to ``SuperwallKit/Superwall/setUserAttributes(_:)``:
+You do this by passing a `[String: Any?]` dictionary of attributes to ``Superwall/setUserAttributes(_:)``:
 
 ```swift
 extension SuperwallService {

@@ -10,12 +10,15 @@ The ``SuperwallKit/Superwall`` class is used to access all the features of the S
 
 - <doc:GettingStarted>
 - <doc:Ecosystem>
+- <doc:AdvancedConfiguration>
 - ``configure(apiKey:delegate:options:)-65jyx``
 - ``configure(apiKey:delegate:options:)-48l7e``
 - ``SuperwallDelegate``
 - ``SuperwallDelegateObjc``
 - ``delegate``
 - ``objcDelegate``
+- ``SubscriptionController``
+- ``SubscriptionControllerObjc``
 - ``SuperwallOptions``
 - ``PaywallOptions``
 - ``options``
@@ -27,6 +30,7 @@ The ``SuperwallKit/Superwall`` class is used to access all the features of the S
 - <doc:TrackingEvents>
 - ``track(event:params:paywallOverrides:paywallHandler:)``
 - ``getTrackResult(forEvent:params:)``
+- ``getTrackResult(forEvent:params:completion:)``
 - ``getTrackInfo(forEvent:params:)``
 - ``publisher(forEvent:params:paywallOverrides:)``
 - ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
@@ -66,6 +70,9 @@ The ``SuperwallKit/Superwall`` class is used to access all the features of the S
 ### Logging
 
 - ``SuperwallDelegate/handleLog(level:scope:message:info:error:)-9kmai``
+- ``LogLevel``
+- ``LogScope``
+- ``SuperwallOptions/Logging-swift.struct``
 
 ### Customization
 
@@ -76,3 +83,5 @@ The ``SuperwallKit/Superwall`` class is used to access all the features of the S
 - ``latestPaywallInfo``
 - ``userId``
 - ``isLoggedIn``
+- ``isConfigured``
+- ``hasActiveSubscription``

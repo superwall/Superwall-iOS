@@ -18,7 +18,7 @@ import StoreKit
 /// ``Superwall/configure(apiKey:delegate:options:)-65jyx``.
 ///
 /// To learn how to implement the ``SubscriptionController`` in your app
-/// and best practices, see <doc:GettingStarted>.
+/// and best practices, see <doc:AdvancedConfiguration>.
 @MainActor
 public protocol SubscriptionController: AnyObject {
   /// Called when the user initiates purchasing of a product.

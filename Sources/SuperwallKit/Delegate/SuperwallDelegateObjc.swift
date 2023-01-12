@@ -10,6 +10,9 @@ import Foundation
 /// The objective-c only delegate protocol that handles Superwall lifecycle events.
 ///
 /// The delegate methods receive callbacks from the SDK in response to certain events that happen on the paywall.
+///
+/// You pass this in when configuring the SDK via ``Superwall/configure(apiKey:delegate:options:)-48l7e``.
+///
 /// To learn how to conform to the delegate in your app and best practices, see <doc:AdvancedConfiguration>.
 @objc(SWKSuperwallDelegate)
 public protocol SuperwallDelegateObjc: AnyObject {

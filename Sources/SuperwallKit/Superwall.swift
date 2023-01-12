@@ -91,8 +91,8 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Returns `true` if Superwall has already been initialized through
-  /// ``configure(apiKey:delegate:options:)-65jyx`` or one of is overloads.
+  /// Returns `true` if Superwall has finished configuring via
+  /// ``configure(apiKey:delegate:options:)-65jyx``.
   public static var isConfigured: Bool {
     if superwall == nil {
       return false
@@ -103,8 +103,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// The configured shared instance of ``Superwall``.
   ///
   /// - Warning: This method will crash with `fatalError` if ``Superwall`` has
-  /// not been initialized through ``configure(apiKey:delegate:options:)-65jyx``
-  /// or one of its overloads. If there's a chance that may have not happened yet, you can use
+  /// not been initialized through ``configure(apiKey:delegate:options:)-65jyx``.
+  /// If there's a chance that may have not happened yet, you can use
   /// ``isConfigured`` to check if it's safe to call.
   /// ### Related symbols
   /// - ``isConfigured``

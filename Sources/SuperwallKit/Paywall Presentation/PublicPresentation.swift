@@ -176,7 +176,7 @@ public extension Superwall {
     .eraseToAnyPublisher()
   }
 
-  /// Get the result of tracking an event.
+  /// Preemptively get the result of tracking an event.
   ///
   /// Use this function if you want to preemptively get the result of tracking
   /// an event.
@@ -225,7 +225,7 @@ public extension Superwall {
     return await getTrackResult(for: presentationRequest)
   }
 
-  /// Get the result of tracking an event.
+  /// Preemptively get the result of tracking an event.
   ///
   /// Use this function if you want to preemptively get the result of tracking
   /// an event.

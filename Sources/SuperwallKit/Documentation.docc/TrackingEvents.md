@@ -16,7 +16,7 @@ In addition to your own events, you can add the Superwall events `app_install`, 
 
 When you sign up for a Superwall account, we give you an example paywall and campaign to test your integration. The example campaign contains an event called `campaign_trigger`, which you'll track in your app when you want to show the paywall.
 
-For both SwiftUI and UIKit apps, you use ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallHandler:)`` to track events:
+You use ``Superwall/track(event:params:paywallOverrides:paywallHandler:)`` to track events:
 
 ```swift
 Superwall.track(event: "campaign_trigger") { paywallState in
@@ -33,8 +33,6 @@ Superwall.track(event: "campaign_trigger") { paywallState in
 In this example, you're tracking the event `campaign_trigger`. You then utilize the optional `paywallHandler` callback to handle the paywall presentation state. You can also pass parameters to be used in rules and overrides to replace default paywall functionality.
 
 We recommend tracking all of your analytical events to Superwall. That way you can retroactively add a paywall to any of your events, should you decide to.
-
-Note: From Swift
 
 ## Integrating with Existing Analytics
 

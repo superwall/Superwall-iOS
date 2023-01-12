@@ -81,7 +81,7 @@ extension SuperwallService: SuperwallDelegate {
     return StoreKitService.shared.isSubscribed
   }
 
-  func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
+  func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {
     print("analytics event called", info.event.description)
 
     // Uncomment if you want to get a dictionary of params associated with the event:
