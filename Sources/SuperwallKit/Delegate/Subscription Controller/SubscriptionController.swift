@@ -8,7 +8,6 @@
 import Foundation
 import StoreKit
 
-// TODO: Change the docs -> Advanced blah blah for subscription controller
 /// The protocol that handles Superwall's subscription-related logic.
 ///
 /// By default, the Superwall SDK handles all subscription-related logic.

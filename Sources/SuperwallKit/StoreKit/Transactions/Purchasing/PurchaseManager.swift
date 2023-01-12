@@ -37,9 +37,7 @@ struct PurchaseManager {
 
     switch result {
     case .purchased:
-      // TODO: Write somewhere that the app's subscription status is device specific
-      // TODO: Mention that the free trial may still show in sandbox after a user makes a free trial (but doesnt purchase) because receipt only present after a purchase: https://developer.apple.com/documentation/storekit/in-app_purchase/original_api_for_in-app_purchase/validating_receipts_with_the_app_store
-      /// Always refreshing
+      /// Always refreshing. Not sure this is 100% necessary but this is what RC do...
       await storeKitManager.refreshReceipt()
       do {
         let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateTransaction(
