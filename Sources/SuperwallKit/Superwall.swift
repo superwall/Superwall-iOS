@@ -91,14 +91,13 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Returns `true` if Superwall has finished configuring via
+  /// A published property that is `true` when Superwall has finished configuring via
   /// ``configure(apiKey:delegate:options:)-65jyx``.
-  public static var isConfigured: Bool {
-    if superwall == nil {
-      return false
-    }
-    return superwall?.dependencyContainer.configManager.config != nil
-  }
+  ///
+  /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
+  /// notified whenever the user's subscription status changes.
+  @Published
+  public var isConfigured = false
 
   /// The configured shared instance of ``Superwall``.
   ///
@@ -153,8 +152,10 @@ public final class Superwall: NSObject, ObservableObject {
       options: options
     )
     hasActiveSubscription = dependencyContainer.storage.get(SubscriptionStatus.self) ?? false
-
+    
     super.init()
+
+    listenForConfig()
 
     // This task runs on a background thread, even if called from a main thread.
     // This is because the function isn't marked to run on the main thread,
@@ -167,6 +168,20 @@ public final class Superwall: NSObject, ObservableObject {
       await dependencyContainer.configManager.fetchConfiguration()
       await dependencyContainer.identityManager.configure()
     }
+  }
+
+  /// Listens to config and updates ``isConfigured`` when it receives a non-nil value
+  /// for config.
+  private func listenForConfig() {
+    dependencyContainer.configManager.$config
+      .compactMap { $0 }
+      .first()
+      .subscribe(Subscribers.Sink(
+        receiveCompletion: { _ in },
+        receiveValue: { config in
+          self.isConfigured = config != nil
+        }
+      ))
   }
 
   // MARK: - Configuration

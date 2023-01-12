@@ -20,9 +20,12 @@ final class WelcomeViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    if Superwall.isLoggedIn {
-      next()
-    }
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(superwallDidConfigure),
+      name: Notification.Name("SuperwallDidConfigure"),
+      object: nil
+    )
 
     textFieldBackgroundView.layer.cornerRadius = textFieldBackgroundView.frame.height / 2
     textField.delegate = self
@@ -31,6 +34,13 @@ final class WelcomeViewController: UIViewController {
       .font: UIFont.rubikBold(.five)
     ]
     navigationController?.interactivePopGestureRecognizer?.isEnabled = false
+  }
+
+  @objc
+  private func superwallDidConfigure() {
+    if Superwall.isLoggedIn {
+      next()
+    }
   }
 
   @IBAction private func logIn() {
