@@ -11,6 +11,7 @@
 //
 //  Created by Nacho Soto on 12/20/21.
 //  Updated by Yusuf Tör from Superwall on 11/8/22.
+// swiftlint:disable type_body_length file_length
 
 import Foundation
 import StoreKit

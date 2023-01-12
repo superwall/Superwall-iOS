@@ -37,7 +37,7 @@ let package = Package(
       ],
       exclude: ["Resources/BundleHelper.swift"],
       resources: [
-        .process("Resources/Certificates"),
+        .process("Resources/Certificates")
       ]
     ),
     .testTarget(

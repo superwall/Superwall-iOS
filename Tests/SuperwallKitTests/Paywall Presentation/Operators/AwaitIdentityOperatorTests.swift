@@ -11,6 +11,7 @@ import Combine
 
 final class AwaitIdentityOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
+  let identityManager = IdentityManager(deviceHelper: ., storage: <#T##Storage#>, configManager: <#T##ConfigManager#>)
 
   override func setUp() async throws {
     IdentityManager.shared.reset()

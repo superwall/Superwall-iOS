@@ -12,11 +12,9 @@ extension String {
     let date = rfc3339DateFormatter.date(from: self)
     return date
   }
-
-
 }
 
-fileprivate var rfc3339DateFormatter: ISO8601DateFormatter = {
+private var rfc3339DateFormatter: ISO8601DateFormatter = {
   let formatter = ISO8601DateFormatter()
   formatter.formatOptions = .withInternetDateTime
   formatter.timeZone = TimeZone(abbreviation: "UTC")

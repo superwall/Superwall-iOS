@@ -5,6 +5,8 @@
 //  Created by Pavel Tikhonenko on 19/01/17.
 //  Copyright © 2017-2021 Pavel Tikhonenko. All rights reserved.
 //
+// swiftlint:disable force_unwrapping force_cast cyclomatic_complexity
+
 #if os(iOS) || os(tvOS)
 import UIKit
 #elseif os(watchOS)
@@ -22,8 +24,7 @@ extension InAppReceipt {
   /// Determine whether receipt is valid or not
   ///
   /// - Returns:`true` if the receipt is valid, otherwise `false`
-  var isValid: Bool
-  {
+  var isValid: Bool {
     do {
       try validate()
       return true
@@ -34,19 +35,19 @@ extension InAppReceipt {
 
   /// Computed SHA-1 hash, used to validate the receipt.
   private var computedHash: Data {
-      let uuidData = guid()
-      let opaqueData = opaqueValue
-      let bundleIdData = bundleIdentifierData
+    let uuidData = guid()
+    let opaqueData = opaqueValue
+    let bundleIdData = bundleIdentifierData
 
-      var hash = [UInt8](repeating: 0, count:Int(CC_SHA1_DIGEST_LENGTH))
-      var ctx = CC_SHA1_CTX()
-      CC_SHA1_Init(&ctx)
-      CC_SHA1_Update(&ctx, Array<UInt8>(uuidData), CC_LONG(uuidData.count))
-      CC_SHA1_Update(&ctx, Array<UInt8>(opaqueData), CC_LONG(opaqueData.count))
-      CC_SHA1_Update(&ctx, Array<UInt8>(bundleIdData), CC_LONG(bundleIdData.count))
-      CC_SHA1_Final(&hash, &ctx)
+    var hash = [UInt8](repeating: 0, count: Int(CC_SHA1_DIGEST_LENGTH))
+    var ctx = CC_SHA1_CTX()
+    CC_SHA1_Init(&ctx)
+    CC_SHA1_Update(&ctx, [UInt8](uuidData), CC_LONG(uuidData.count))
+    CC_SHA1_Update(&ctx, [UInt8](opaqueData), CC_LONG(opaqueData.count))
+    CC_SHA1_Update(&ctx, [UInt8](bundleIdData), CC_LONG(bundleIdData.count))
+    CC_SHA1_Final(&hash, &ctx)
 
-      return Data(hash)
+    return Data(hash)
   }
 
   /// Validate In App Receipt
@@ -97,8 +98,8 @@ extension InAppReceipt {
   /// - throws: An error in the InAppReceipt domain, if verification fails
   private func verifyBundleVersion() throws {
     guard
-      let v = Bundle.main.receiptSpecificAppVersion,
-      v == appVersion
+      let version = Bundle.main.receiptSpecificAppVersion,
+      version == appVersion
     else {
       throw IARError.validationFailed(reason: .bundleVersionVerification)
     }
@@ -156,7 +157,7 @@ extension InAppReceipt {
       throw IARError.validationFailed(reason: .signatureValidation(.unableToLoadAppleIncRootCertificate))
     }
 
-    guard let iTunesCertSec =  SecCertificateCreateWithData(nil, iTunesCertData as CFData) else {
+    guard let iTunesCertSec = SecCertificateCreateWithData(nil, iTunesCertData as CFData) else {
       throw IARError.validationFailed(reason: .signatureValidation(.unableToLoadiTunesCertificate))
     }
 
@@ -191,7 +192,7 @@ extension InAppReceipt {
       throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
     }
 
-    var secTrustResult: SecTrustResultType = SecTrustResultType.unspecified
+    var secTrustResult = SecTrustResultType.unspecified
 
     if #available(OSX 10.14, tvOS 12.0, *) {
       var error: CFError?
@@ -228,11 +229,15 @@ extension InAppReceipt {
     let keyDict: [String: Any] = [
       kSecAttrKeyClass as String: kSecAttrKeyClassPublic,
       kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
-      kSecAttrKeySizeInBits as String: 2048,
+      kSecAttrKeySizeInBits as String: 2048
     ]
 
-    guard let iTunesPublicKeySec = SecKeyCreateWithData(iTunesPublicKeyContainer as CFData, keyDict as CFDictionary, nil) else {
-        throw IARError.validationFailed(reason: .signatureValidation(.unableToLoadAppleIncPublicSecKey))
+    guard let iTunesPublicKeySec = SecKeyCreateWithData(
+      iTunesPublicKeyContainer as CFData,
+      keyDict as CFDictionary,
+      nil
+    ) else {
+      throw IARError.validationFailed(reason: .signatureValidation(.unableToLoadAppleIncPublicSecKey))
     }
 
     var umErrorCF: Unmanaged<CFError>?
@@ -245,18 +250,18 @@ extension InAppReceipt {
   }
 }
 
-fileprivate func guid() -> Data {
+private func guid() -> Data {
 #if os(watchOS)
-    var uuidBytes = WKInterfaceDevice.current().identifierForVendor!.uuid
-    return Data(bytes: &uuidBytes, count: MemoryLayout.size(ofValue: uuidBytes))
+  var uuidBytes = WKInterfaceDevice.current().identifierForVendor!.uuid
+  return Data(bytes: &uuidBytes, count: MemoryLayout.size(ofValue: uuidBytes))
 #elseif !targetEnvironment(macCatalyst) && (os(iOS) || os(tvOS))
-    var uuidBytes = UIDevice.current.identifierForVendor!.uuid
-    return Data(bytes: &uuidBytes, count: MemoryLayout.size(ofValue: uuidBytes))
+  var uuidBytes = UIDevice.current.identifierForVendor!.uuid
+  return Data(bytes: &uuidBytes, count: MemoryLayout.size(ofValue: uuidBytes))
 #elseif targetEnvironment(macCatalyst) || os(macOS)
 
   if let guid = getMacAddress() {
     return guid
-  } else{
+  } else {
     assertionFailure("Failed to retrieve guid")
   }
 
@@ -276,7 +281,13 @@ func getMacAddress() -> Data? {
 
   defer { IOObjectRelease(service) }
 
-  if let cftype = IORegistryEntrySearchCFProperty(service, kIOServicePlane, "IOMACAddress" as CFString, kCFAllocatorDefault, IOOptionBits(kIORegistryIterateRecursively | kIORegistryIterateParents)) {
+  if let cftype = IORegistryEntrySearchCFProperty(
+    service,
+    kIOServicePlane,
+    "IOMACAddress" as CFString,
+    kCFAllocatorDefault,
+    IOOptionBits(kIORegistryIterateRecursively | kIORegistryIterateParents)
+  ) {
     return (cftype as? Data)
   }
 
@@ -284,11 +295,11 @@ func getMacAddress() -> Data? {
 }
 
 func ioService(named name: String, wantBuiltIn: Bool) -> io_service_t? {
-  let main_port: mach_port_t
+  let mainPort: mach_port_t
   if #available(macOS 12.0, macCatalyst 15.0, *) {
-    main_port = kIOMainPortDefault
+    mainPort = kIOMainPortDefault
   } else {
-    main_port = 0 // the kIOMasterPortDefault symbol is unavailable on xcode 14 and later.
+    mainPort = 0 // the kIOMasterPortDefault symbol is unavailable on xcode 14 and later.
   }
   var iterator = io_iterator_t()
 
@@ -298,9 +309,10 @@ func ioService(named name: String, wantBuiltIn: Bool) -> io_service_t? {
     }
   }
 
-  guard let matchingDict = IOBSDNameMatching(main_port, 0, name),
-      IOServiceGetMatchingServices(main_port, matchingDict as CFDictionary, &iterator) == KERN_SUCCESS,
-      iterator != IO_OBJECT_NULL
+  guard
+    let matchingDict = IOBSDNameMatching(mainPort, 0, name),
+    IOServiceGetMatchingServices(mainPort, matchingDict as CFDictionary, &iterator) == KERN_SUCCESS,
+    iterator != IO_OBJECT_NULL
   else {
     return nil
   }

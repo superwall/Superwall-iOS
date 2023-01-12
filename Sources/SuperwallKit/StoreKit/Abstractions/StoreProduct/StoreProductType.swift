@@ -27,7 +27,7 @@ protocol StoreProductType {
 
   var swProduct: SWProduct { get }
 
-  var localizedPrice: String { get}
+  var localizedPrice: String { get }
 
   var localizedSubscriptionPeriod: String { get }
 

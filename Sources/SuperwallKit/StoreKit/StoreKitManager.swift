@@ -9,11 +9,13 @@ final class StoreKitManager {
     let products: [Product]
   }
 
+  private let factory: StoreKitCoordinatorFactory
+  // swiftlint:disable implicitly_unwrapped_optional
   /// Coordinates: The purchasing, restoring and retrieving of products; the checking
   /// of transactions; and the determining of the user's subscription status.
   var coordinator: StoreKitCoordinator!
   private var receiptManager: ReceiptManager!
-  private let factory: StoreKitCoordinatorFactory
+  // swiftlint:enable implicitly_unwrapped_optional
 
   init(factory: StoreKitCoordinatorFactory) {
     self.factory = factory

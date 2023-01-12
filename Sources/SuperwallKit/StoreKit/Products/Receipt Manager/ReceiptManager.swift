@@ -42,7 +42,9 @@ final class ReceiptManager: NSObject {
 
     let purchases = payload.purchases
     self.purchases = purchases
-    activePurchases = purchases.filter { $0.isActive }
+    await MainActor.run {
+      activePurchases = purchases.filter { $0.isActive }
+    }
 
     let purchasedProductIds = Set(purchases.map { $0.productIdentifier })
 

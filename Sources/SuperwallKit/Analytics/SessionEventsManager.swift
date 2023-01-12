@@ -9,7 +9,9 @@ import UIKit
 import Combine
 
 protocol SessionEventsDelegate: AnyObject {
+  // swiftlint:disable implicitly_unwrapped_optional
   var triggerSession: TriggerSessionManager! { get }
+  // swiftlint:enable implicitly_unwrapped_optional
 
   func enqueue(_ triggerSession: TriggerSession) async
   func enqueue(_ triggerSessions: [TriggerSession]) async
@@ -17,8 +19,10 @@ protocol SessionEventsDelegate: AnyObject {
 }
 
 class SessionEventsManager {
+  // swiftlint:disable implicitly_unwrapped_optional
   /// The trigger session manager.
   var triggerSession: TriggerSessionManager!
+  // swiftlint:enable implicitly_unwrapped_optional
 
   /// A queue of trigger session events that get sent to the server.
   private let queue: SessionEnqueuable

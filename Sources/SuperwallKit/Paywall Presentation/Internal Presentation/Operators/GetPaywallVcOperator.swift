@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 26/09/2022.
 //
+// swiftlint:disable function_body_length
 
 import UIKit
 import Combine

@@ -14,7 +14,10 @@ class PaywallManager {
     return PaywallViewController.cache.first { $0.isActive }
 	}
   private unowned let paywallRequestManager: PaywallRequestManager
+
+  // swiftlint:disable implicitly_unwrapped_optional
   private var cache: PaywallCache!
+  // swiftlint:enable implicitly_unwrapped_optional
 
   private let factory: ViewControllerFactory
 

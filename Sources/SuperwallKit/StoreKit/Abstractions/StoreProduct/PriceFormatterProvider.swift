@@ -32,7 +32,7 @@ final class PriceFormatterProvider {
       let formatter = cachedPriceFormatterForSK1,
       formatter.locale == locale
     else {
-      let newFormatter =  makePriceFormatterForSK1(with: locale)
+      let newFormatter = makePriceFormatterForSK1(with: locale)
       cachedPriceFormatterForSK1 = newFormatter
       return newFormatter
     }

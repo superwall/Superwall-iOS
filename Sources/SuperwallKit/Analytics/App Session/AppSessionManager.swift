@@ -24,7 +24,10 @@ class AppSessionManager {
 
   private unowned let configManager: ConfigManager
   private unowned let storage: Storage
+
+  // swiftlint:disable implicitly_unwrapped_optional
   private unowned var sessionEventsManager: SessionEventsManager!
+  // swiftlint:enable implicitly_unwrapped_optional
 
   /// **Note**: Remember to call `postInit` after init.
   init(

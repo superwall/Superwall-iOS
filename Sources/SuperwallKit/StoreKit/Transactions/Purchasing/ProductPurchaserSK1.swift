@@ -228,8 +228,8 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
 
     switch transaction.transactionState {
     case .purchased,
-        .failed,
-        .restored:
+      .failed,
+      .restored:
       SKPaymentQueue.default().finishTransaction(transaction)
     default:
       break
@@ -251,5 +251,4 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     }
     await storeKitManager.loadPurchasedProducts()
   }
-
 }

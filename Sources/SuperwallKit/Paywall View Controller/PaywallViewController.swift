@@ -4,7 +4,7 @@
 //
 //  Created by brian on 7/21/21.
 //
-// swiftlint:disable file_length trailing_closure implicitly_unwrapped_optional type_body_length
+// swiftlint:disable file_length implicitly_unwrapped_optional type_body_length
 
 import WebKit
 import UIKit

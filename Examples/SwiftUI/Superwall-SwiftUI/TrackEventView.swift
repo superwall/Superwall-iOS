@@ -10,7 +10,6 @@ import SuperwallKit
 
 struct TrackEventView: View {
   @Binding var isLoggedIn: Bool
-  @StateObject private var store = StoreKitService.shared
   private let model = TrackEventModel()
 
   init(isLoggedIn: Binding<Bool>) {

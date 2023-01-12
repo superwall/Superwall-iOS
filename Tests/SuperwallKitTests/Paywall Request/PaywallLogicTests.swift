@@ -80,7 +80,8 @@ class PaywallLogicTests: XCTestCase {
     let response = PaywallLogic.getVariablesAndFreeTrial(
       fromProducts: [],
       productsById: [:],
-      isFreeTrialAvailableOverride: nil
+      isFreeTrialAvailableOverride: nil,
+      isFreeTrialAvailable: { product in return false }
     )
 
     let expectation = ProductProcessingOutcome(
@@ -108,12 +109,13 @@ class PaywallLogicTests: XCTestCase {
       identifier: skProductId,
       price: "1.99"
     )
-    let productsById = [skProductId: skProduct]
+    let productsById = [skProductId: StoreProduct(sk1Product: skProduct)]
     
     let response = PaywallLogic.getVariablesAndFreeTrial(
       fromProducts: products,
       productsById: productsById,
-      isFreeTrialAvailableOverride: nil
+      isFreeTrialAvailableOverride: nil,
+      isFreeTrialAvailable: { product in return false }
     )
 
     let expectation = ProductProcessingOutcome(
@@ -142,13 +144,14 @@ class PaywallLogicTests: XCTestCase {
       identifier: productId,
       price: "1.99"
     )
-    let productsById = [productId: skProduct]
+    let productsById = [productId: StoreProduct(sk1Product: skProduct)]
 
     // When
     let response = PaywallLogic.getVariablesAndFreeTrial(
       fromProducts: products,
       productsById: productsById,
-      isFreeTrialAvailableOverride: nil
+      isFreeTrialAvailableOverride: nil,
+      isFreeTrialAvailable: { product in return false }
     )
 
     // Then
@@ -182,7 +185,7 @@ class PaywallLogicTests: XCTestCase {
       price: "1.99",
       introductoryPrice: mockIntroPeriod
     )
-    let productsById = [productId: skProduct]
+    let productsById = [productId: StoreProduct(sk1Product: skProduct)]
 
     
     // When
@@ -226,7 +229,7 @@ class PaywallLogicTests: XCTestCase {
       price: "1.99",
       introductoryPrice: mockIntroPeriod
     )
-    let productsById = [productId: skProduct]
+    let productsById = [productId: StoreProduct(sk1Product: skProduct)]
 
     // When
     let response = PaywallLogic.getVariablesAndFreeTrial(
@@ -269,7 +272,7 @@ class PaywallLogicTests: XCTestCase {
       price: "1.99",
       introductoryPrice: mockIntroPeriod
     )
-    let productsById = [productId: skProduct]
+    let productsById = [productId: StoreProduct(sk1Product: skProduct)]
 
     // When
     let response = PaywallLogic.getVariablesAndFreeTrial(

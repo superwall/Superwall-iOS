@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 07/12/2022.
 //
+// swiftlint:disable strict_fileprivate
 
 import StoreKit
 

@@ -46,7 +46,9 @@ struct InAppReceiptPayload: ASN1Decodable {
   }
 
   init(from decoder: Decoder) throws {
+    // swiftlint:disable force_cast
     let asn1d = decoder as! ASN1DecoderProtocol
+    // swiftlint:enable force_cast
     let rawData: Data = try asn1d.extractValueData()
     var bundleIdentifier = ""
     var appVersion = ""
@@ -82,7 +84,10 @@ struct InAppReceiptPayload: ASN1Decodable {
         case InAppReceiptField.receiptHash:
           receiptHash = valueContainer.valueData
         case InAppReceiptField.expirationDate:
-          let expirationDateString = try valueContainer.decode(String.self, template: .universal(ASN1Identifier.Tag.ia5String))
+          let expirationDateString = try valueContainer.decode(
+            String.self,
+            template: .universal(ASN1Identifier.Tag.ia5String)
+          )
           expirationDate = expirationDateString.rfc3339date()
         default:
           break

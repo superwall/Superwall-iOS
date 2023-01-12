@@ -11,7 +11,6 @@ import StoreKit
 import Combine
 
 actor TriggerSessionManager {
-
   /// The list of all potential trigger sessions, keyed by the trigger event name, created after receiving the config.
   private var pendingTriggerSessions: [String: TriggerSession] = [:]
 
@@ -37,7 +36,6 @@ actor TriggerSessionManager {
     case fail
   }
 
-  /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
   init(
     delegate: SessionEventsManager,
     storage: Storage,

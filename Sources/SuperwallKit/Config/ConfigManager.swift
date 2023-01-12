@@ -26,7 +26,9 @@ class ConfigManager {
   private unowned let storage: Storage
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
+  // swiftlint:disable implicitly_unwrapped_optional
   private unowned var deviceHelper: DeviceHelper!
+  // swiftlint:enable implicitly_unwrapped_optional
   private let factory: RequestFactory
 
   /// **NOTE**: Remember to call `postInit`after init.

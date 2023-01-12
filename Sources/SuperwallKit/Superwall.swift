@@ -133,8 +133,10 @@ public final class Superwall: NSObject, ObservableObject {
     return paywallViewController != nil
   }
 
+  // swiftlint:disable implicitly_unwrapped_optional
   /// Handles all dependencies.
   var dependencyContainer: DependencyContainer!
+  // swiftlint:enable implicitly_unwrapped_optional
 
   // MARK: - Private Functions
   private override init() {}
@@ -152,7 +154,7 @@ public final class Superwall: NSObject, ObservableObject {
       options: options
     )
     hasActiveSubscription = dependencyContainer.storage.get(SubscriptionStatus.self) ?? false
-    
+
     super.init()
 
     listenForConfig()
@@ -176,6 +178,7 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.configManager.$config
       .compactMap { $0 }
       .first()
+      .receive(on: DispatchQueue.main)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
         receiveValue: { config in

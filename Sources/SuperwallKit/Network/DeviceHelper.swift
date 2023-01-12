@@ -284,11 +284,14 @@ class DeviceHelper {
       localDateTime: localDateTimeString
     )
   }
-  
-  unowned var identityManager: IdentityManager!
+
   private unowned let storage: Storage
   private unowned let localizationManager: LocalizationManager
-  
+
+  // swiftlint:disable implicitly_unwrapped_optional
+  unowned var identityManager: IdentityManager!
+  // swiftlint:enable implicitly_unwrapped_optional
+
   init(
     api: Api,
     storage: Storage,

@@ -13,7 +13,9 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   var eventData: EventData? { get }
   var paywall: Paywall { get set }
   var paywallInfo: PaywallInfo { get }
+  // swiftlint:disable implicitly_unwrapped_optional
   var webView: SWWebView! { get }
+  // swiftlint:enable implicitly_unwrapped_optional
   var loadingState: PaywallLoadingState { get set }
   var isActive: Bool { get }
 

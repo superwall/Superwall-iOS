@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 23/12/2022.
 //
+// swiftlint:disable function_body_length
 
 import UIKit
 
@@ -17,6 +18,7 @@ import UIKit
 ///
 /// Idea taken from: [swiftbysundell.com](https://www.swiftbysundell.com/articles/dependency-injection-using-factories-in-swift/)
 final class DependencyContainer {
+  // swiftlint:disable implicitly_unwrapped_optional
   var configManager: ConfigManager!
   var identityManager: IdentityManager!
   var storeKitManager: StoreKitManager!
@@ -34,6 +36,7 @@ final class DependencyContainer {
   var transactionManager: TransactionManager!
   var restorationHandler: RestorationHandler!
   var delegateAdapter: SuperwallDelegateAdapter!
+  // swiftlint:enable implicitly_unwrapped_optional
 
   init(
     apiKey: String,
@@ -110,7 +113,7 @@ final class DependencyContainer {
       storage: storage,
       factory: self
     )
-    
+
     transactionManager = TransactionManager(
       storeKitManager: storeKitManager,
       sessionEventsManager: sessionEventsManager
@@ -121,7 +124,8 @@ final class DependencyContainer {
       sessionEventsManager: sessionEventsManager
     )
 
-     // MARK: Post Init
+    // MARK: Post Init
+
     // We have to call postInit on some of the objects to avoid
     // retain cycles.
     storeKitManager.postInit()

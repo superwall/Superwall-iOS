@@ -11,6 +11,7 @@
 //
 //  Created by Nacho Soto on 1/17/22.
 //  Updated by Yusuf Tör from Superwall on 11/8/22.
+// swiftlint:disable strict_fileprivate
 
 import StoreKit
 
@@ -62,11 +63,11 @@ public final class StoreProductDiscount: NSObject, StoreProductDiscountType {
     static func from(sk1Discount: SK1ProductDiscount) -> Self? {
       switch sk1Discount.type {
       case .introductory:
-          return .introductory
+        return .introductory
       case .subscription:
-          return .promotional
+        return .promotional
       @unknown default:
-          return nil
+        return nil
       }
     }
   }

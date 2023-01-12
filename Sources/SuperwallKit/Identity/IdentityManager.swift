@@ -46,7 +46,6 @@ class IdentityManager {
   private unowned let storage: Storage
   private unowned let configManager: ConfigManager
 
-  /// Only use init for testing purposes. Otherwise use `shared`.
   init(
     deviceHelper: DeviceHelper,
     storage: Storage,

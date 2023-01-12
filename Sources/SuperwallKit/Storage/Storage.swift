@@ -23,7 +23,9 @@ class Storage {
   /// This means that we'll need to wait for assignments before firing triggers.
   var neverCalledStaticConfig = false
 
+  // swiftlint:disable implicitly_unwrapped_optional
   unowned var deviceHelper: DeviceHelper!
+  // swiftlint:enable implicitly_unwrapped_optional
 
   /// The confirmed assignments for the user loaded from the cache.
   private var confirmedAssignments: [Experiment.ID: Experiment.Variant]?

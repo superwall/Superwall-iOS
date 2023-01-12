@@ -10,13 +10,15 @@ import Combine
 
 actor PaywallRequestManager {
   unowned let storeKitManager: StoreKitManager
+
+  // swiftlint:disable implicitly_unwrapped_optional
   unowned var deviceHelper: DeviceHelper!
+  // swiftlint:enable implicitly_unwrapped_optional
 
   private var activeTasks: [String: Task<Paywall, Error>] = [:]
   private var paywallsByHash: [String: Paywall] = [:]
 
-  init(
-    storeKitManager: StoreKitManager) {
+  init(storeKitManager: StoreKitManager) {
     self.storeKitManager = storeKitManager
   }
 

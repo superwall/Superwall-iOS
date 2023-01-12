@@ -8,7 +8,7 @@
 import Foundation
 import ASN1Swift
 
-struct InAppReceiptField {
+enum InAppReceiptField {
   static let environment: Int32 = 0 // Sandbox, Production, ProductionSandbox
   static let bundleIdentifier: Int32 = 2
   static let appVersion: Int32 = 3
@@ -109,28 +109,23 @@ extension InAppReceipt {
   }
 
   /// signature for validation
-  var signature: Data?
-  {
+  var signature: Data? {
     return receipt.signatureData
   }
 
-  var worldwideDeveloperCertificateData: Data?
-  {
+  var worldwideDeveloperCertificateData: Data? {
     return receipt.worldwideDeveloperCertificateData
   }
 
-  var iTunesCertificateData: Data?
-  {
+  var iTunesCertificateData: Data? {
     return receipt.iTunesCertificateData
   }
 
-  var iTunesPublicKeyData: Data?
-  {
+  var iTunesPublicKeyData: Data? {
     return receipt.iTunesPublicKeyData
   }
 
-  var payloadRawData: Data
-  {
+  var payloadRawData: Data {
     return payload.rawData
   }
 }

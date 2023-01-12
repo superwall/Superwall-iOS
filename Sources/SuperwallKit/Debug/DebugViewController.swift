@@ -344,7 +344,7 @@ final class DebugViewController: UIViewController {
     let viewController = SWLocalizationViewController(localizationManager: localizationManager) { [weak self] locale in
       self?.localizationManager.selectedLocale = locale
       Task { await self?.loadPreview() }
-		}
+    }
 
 		let navController = UINavigationController(rootViewController: viewController)
 		await present(navController, animated: true)

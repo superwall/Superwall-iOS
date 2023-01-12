@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 24/03/2022.
 //
+// swiftlint:disable force_cast implicitly_unwrapped_optional
 
 import Foundation
 import ASN1Swift
@@ -45,7 +46,6 @@ struct InAppPurchase: ASN1Decodable, Hashable {
   var purchaseDate: Date
 
   init(from decoder: Decoder) throws {
-    // swiftlint:disable:next force_cast
     var container = try decoder.unkeyedContainer() as! ASN1UnkeyedDecodingContainerProtocol
 
     var productIdentifier = ""
@@ -64,15 +64,18 @@ struct InAppPurchase: ASN1Decodable, Hashable {
         case InAppReceiptField.productIdentifier:
           productIdentifier = try valueContainer.decode(String.self)
         case InAppReceiptField.purchaseDate:
-          let purchaseDateString = try valueContainer.decode(String.self, template: .universal(ASN1Identifier.Tag.ia5String))
+          let purchaseDateString = try valueContainer.decode(
+            String.self,
+            template: .universal(ASN1Identifier.Tag.ia5String)
+          )
           purchaseDate = purchaseDateString.rfc3339date()
         case InAppReceiptField.subscriptionExpirationDate:
           let str = try valueContainer.decode(String.self, template: .universal(ASN1Identifier.Tag.ia5String))
-          let subscriptionExpirationDateString = str == "" ? nil : str
+          let subscriptionExpirationDateString = str.isEmpty ? nil : str
           subscriptionExpirationDate = subscriptionExpirationDateString?.rfc3339date()
         case InAppReceiptField.cancellationDate:
           let str = try valueContainer.decode(String.self, template: .universal(ASN1Identifier.Tag.ia5String))
-          let cancellationDateString = str == "" ? nil : str
+          let cancellationDateString = str.isEmpty ? nil : str
           cancellationDate = cancellationDateString?.rfc3339date()
         default:
           break
