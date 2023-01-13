@@ -14,7 +14,12 @@ final class AppSessionManagerMock: AppSessionManager {
     return internalAppSession
   }
 
-  init(appSession: AppSession) {
+  init(
+    appSession: AppSession,
+    configManager: ConfigManager,
+    storage: Storage
+  ) {
     internalAppSession = appSession
+    super.init(configManager: configManager, storage: storage)
   }
 }

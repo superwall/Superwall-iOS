@@ -9,7 +9,10 @@ import Foundation
 @testable import SuperwallKit
 
 final class SessionEventsDelegateMock: SessionEventsDelegate {
-  var triggerSession = TriggerSessionManager(delegate: nil)
+  var triggerSession: TriggerSessionManager! = {
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    return dependencyContainer.makeTriggerSessionManager()
+  }()
 
   var queue: SessionEnqueuable
 
@@ -25,7 +28,7 @@ final class SessionEventsDelegateMock: SessionEventsDelegate {
     await queue.enqueue(triggerSessions)
   }
 
-  func enqueue(_ transaction: TransactionModel) async {
+  func enqueue(_ transaction: StoreTransaction) async {
     await queue.enqueue(transaction)
   }
 }

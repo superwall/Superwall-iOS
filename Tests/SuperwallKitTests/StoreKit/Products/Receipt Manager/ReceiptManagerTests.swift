@@ -11,30 +11,49 @@ import XCTest
 
 class ReceiptManagerTests: XCTestCase {
   // MARK: - loadPurchasedProducts
+  private func makeStoreKitManager(with productsFetcher: ProductsFetcherSK1) -> StoreKitManager {
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let coordinator = StoreKitCoordinator(
+      delegateAdapter: dependencyContainer.delegateAdapter,
+      storeKitManager: dependencyContainer.storeKitManager,
+      factory: dependencyContainer,
+      productsFetcher: productsFetcher
+    )
+    let storeKitCoordinatorFactoryMock = StoreKitCoordinatorFactoryMock(
+      coordinator: coordinator
+    )
+    return StoreKitManager(factory: storeKitCoordinatorFactoryMock)
+  }
 
   func test_loadPurchasedProducts_nilProducts() async {
     let product = MockSkProduct(subscriptionGroupIdentifier: "abc")
-    let productsManager = ProductsManagerMock(productCompletionResult: .success([product]))
-    let getReceiptData: () -> Data = {
-      return MockReceiptData.newReceipt
-    }
-    let receiptManager = ReceiptManager(
-      productsManager: productsManager,
-      receiptData: getReceiptData
+    let productsFetcher = ProductsFetcherSK1Mock(
+      productCompletionResult: .success([StoreProduct(sk1Product: product)])
     )
+    let manager = makeStoreKitManager(with: productsFetcher)
+
+    let receiptManager = ReceiptManager(
+      delegate: manager
+    )
+
     _ = await receiptManager.loadPurchasedProducts()
     XCTAssertEqual(receiptManager.purchasedSubscriptionGroupIds, ["abc"])
   }
 
   func test_loadPurchasedProducts_productError() async {
-    let productsManager = ProductsManagerMock(productCompletionResult: .failure(TestError("error")))
+    let productsFetcher = ProductsFetcherSK1Mock(
+      productCompletionResult: .failure(TestError("error"))
+    )
+    let manager = makeStoreKitManager(with: productsFetcher)
+
     let getReceiptData: () -> Data = {
       return MockReceiptData.newReceipt
     }
     let receiptManager = ReceiptManager(
-      productsManager: productsManager,
+      delegate: manager,
       receiptData: getReceiptData
     )
+
     _ = await receiptManager.loadPurchasedProducts()
     XCTAssertNil(receiptManager.purchasedSubscriptionGroupIds)
   }

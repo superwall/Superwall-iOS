@@ -11,12 +11,27 @@ import XCTest
 import StoreKit
 
 class StoreKitManagerTests: XCTestCase {
+  private func makeStoreKitManager(with productsFetcher: ProductsFetcherSK1) -> StoreKitManager {
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let coordinator = StoreKitCoordinator(
+      delegateAdapter: dependencyContainer.delegateAdapter,
+      storeKitManager: dependencyContainer.storeKitManager,
+      factory: dependencyContainer,
+      productsFetcher: productsFetcher
+    )
+    let storeKitCoordinatorFactoryMock = StoreKitCoordinatorFactoryMock(
+      coordinator: coordinator
+    )
+    return StoreKitManager(factory: storeKitCoordinatorFactoryMock)
+  }
+  
   func test_getProducts_primaryProduct() async {
-    let manager = StoreKitManager()
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let manager = dependencyContainer.storeKitManager!
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = PaywallProducts(
-      primary: primary
+      primary: StoreProduct(sk1Product: primary)
     )
 
     do {
@@ -30,13 +45,14 @@ class StoreKitManagerTests: XCTestCase {
   }
 
   func test_getProducts_primaryAndTertiaryProduct() async {
-    let manager = StoreKitManager()
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let manager = dependencyContainer.storeKitManager!
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let tertiary = MockSkProduct(productIdentifier: "def")
     let substituteProducts = PaywallProducts(
-      primary: primary,
-      tertiary: tertiary
+      primary: StoreProduct(sk1Product: primary),
+      tertiary: StoreProduct(sk1Product: tertiary)
     )
 
     do {
@@ -54,15 +70,16 @@ class StoreKitManagerTests: XCTestCase {
   }
 
   func test_getProducts_primarySecondaryTertiaryProduct() async {
-    let manager = StoreKitManager()
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let manager = dependencyContainer.storeKitManager!
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let secondary = MockSkProduct(productIdentifier: "def")
     let tertiary = MockSkProduct(productIdentifier: "ghi")
     let substituteProducts = PaywallProducts(
-      primary: primary,
-      secondary: secondary,
-      tertiary: tertiary
+      primary: StoreProduct(sk1Product: primary),
+      secondary: StoreProduct(sk1Product: secondary),
+      tertiary: StoreProduct(sk1Product: tertiary)
     )
 
     do {
@@ -84,13 +101,13 @@ class StoreKitManagerTests: XCTestCase {
   }
 
   func test_getProducts_substitutePrimaryProduct_oneResponseProduct() async {
-    let productsResult: Result<Set<SKProduct>, Error> = .success([])
-    let productsManager = ProductsManagerMock(productCompletionResult: productsResult)
-    let manager = StoreKitManager(productsManager: productsManager)
+    let productsResult: Result<Set<StoreProduct>, Error> = .success([])
+    let productsFetcher = ProductsFetcherSK1Mock(productCompletionResult: productsResult)
+    let manager = makeStoreKitManager(with: productsFetcher)
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = PaywallProducts(
-      primary: primary
+      primary: StoreProduct(sk1Product: primary)
     )
 
     do {
@@ -106,15 +123,15 @@ class StoreKitManagerTests: XCTestCase {
 
   func test_getProducts_substitutePrimaryProduct_twoResponseProducts() async {
     let responseProduct2 = MockSkProduct(productIdentifier: "2")
-    let productsResult: Result<Set<SKProduct>, Error> = .success([
-      responseProduct2
+    let productsResult: Result<Set<StoreProduct>, Error> = .success([
+      StoreProduct(sk1Product: responseProduct2)
     ])
-    let productsManager = ProductsManagerMock(productCompletionResult: productsResult)
-    let manager = StoreKitManager(productsManager: productsManager)
+    let productsFetcher = ProductsFetcherSK1Mock(productCompletionResult: productsResult)
+    let manager = makeStoreKitManager(with: productsFetcher)
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = PaywallProducts(
-      primary: primary
+      primary: StoreProduct(sk1Product: primary)
     )
 
     do {

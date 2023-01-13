@@ -14,13 +14,32 @@
 import Foundation
 import StoreKit
 
-class ProductsFetcherSK1: NSObject {
+class ProductsFetcherSK1: NSObject, ProductsFetcher {
 	private var cachedProductsByIdentifier: [String: SKProduct] = [:]
 	private let queue = DispatchQueue(label: "com.superwall.ProductsManager")
 	private var productsByRequests: [SKRequest: Set<String>] = [:]
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
 
+  // MARK: - ProductsFetcher
+  /// Gets StoreKit 1 products from identifiers.
+  ///
+  /// - Parameters:
+  ///   - identifiers: A `Set` of product identifiers.
+  /// - Returns: A `Set` of `StoreProducts`.
+  /// - Throws: An error if it couldn't retrieve the products.
+  func products(identifiers: Set<String>) async throws -> Set<StoreProduct> {
+    let sk1Products = try await withCheckedThrowingContinuation { continuation in
+      products(withIdentifiers: identifiers) { result in
+        continuation.resume(with: result)
+      }
+    }
+    let storeProducts = Set(sk1Products.map {
+      StoreProduct(sk1Product: $0)
+    })
+    return storeProducts
+  }
+  
 	private func products(
     withIdentifiers identifiers: Set<String>,
     completion: @escaping ProductRequestCompletionBlock
@@ -201,27 +220,6 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 		}
 		request.cancel()
 	}
-}
-
-// MARK: - ProductsFetcher
-extension ProductsFetcherSK1: ProductsFetcher {
-  /// Gets StoreKit 1 products from identifiers.
-  ///
-  /// - Parameters:
-  ///   - identifiers: A `Set` of product identifiers.
-  /// - Returns: A `Set` of `StoreProducts`.
-  /// - Throws: An error if it couldn't retrieve the products.
-  func products(identifiers: Set<String>) async throws -> Set<StoreProduct> {
-    let sk1Products = try await withCheckedThrowingContinuation { continuation in
-      products(withIdentifiers: identifiers) { result in
-        continuation.resume(with: result)
-      }
-    }
-    let storeProducts = Set(sk1Products.map {
-      StoreProduct(sk1Product: $0)
-    })
-    return storeProducts
-  }
 }
 
 // MARK: - Sendable

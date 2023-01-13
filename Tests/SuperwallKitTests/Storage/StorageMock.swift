@@ -12,13 +12,13 @@ import Foundation
 @available(iOS 14.0, *)
 final class StorageMock: Storage {
   var internalCachedTriggerSessions: [TriggerSession]
-  var internalCachedTransactions: [TransactionModel]
+  var internalCachedTransactions: [StoreTransaction]
   var internalConfirmedAssignments: [Experiment.ID: Experiment.Variant]
   var didClearCachedSessionEvents = false
 
   init(
     internalCachedTriggerSessions: [TriggerSession] = [],
-    internalCachedTransactions: [TransactionModel] = [],
+    internalCachedTransactions: [StoreTransaction] = [],
     coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock(),
     confirmedAssignments: [Experiment.ID : Experiment.Variant] = [:],
     cache: Cache = Cache()

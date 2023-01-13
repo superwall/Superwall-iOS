@@ -81,3 +81,15 @@ extension SKPaymentTransaction {
     return identifier
   }
 }
+
+// MARK: - Stubbable
+extension StoreTransaction: Stubbable {
+  static func stub() -> StoreTransaction {
+    return StoreTransaction(
+      transaction: SK1Transaction(),
+      configRequestId: "",
+      appSessionId: "",
+      triggerSessionId: ""
+    )
+  }
+}

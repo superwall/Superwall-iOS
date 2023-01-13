@@ -13,11 +13,26 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
   func test_confirmHoldoutAssignment_notHoldout() async {
-    let configManager = ConfigManagerMock()
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let configManager = ConfigManagerMock(
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      paywallManager: dependencyContainer.paywallManager,
+      factory: dependencyContainer
+    )
     let request = PresentationRequest(
       presentationInfo: .explicitTrigger(.stub()),
       injections: .init(
         configManager: configManager,
+        storage: dependencyContainer.storage,
+        sessionEventsManager: dependencyContainer.sessionEventsManager,
+        paywallManager: dependencyContainer.paywallManager,
+        storeKitManager: dependencyContainer.storeKitManager,
+        network: dependencyContainer.network,
+        debugManager: dependencyContainer.debugManager,
+        identityManager: dependencyContainer.identityManager,
+        deviceHelper: dependencyContainer.deviceHelper,
         isDebuggerLaunched: false,
         isUserSubscribed: false,
         isPaywallPresented: false
@@ -48,11 +63,26 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
   }
 
   func test_confirmHoldoutAssignment_holdout_noConfirmableAssignments() async {
-    let configManager = ConfigManagerMock()
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let configManager = ConfigManagerMock(
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      paywallManager: dependencyContainer.paywallManager,
+      factory: dependencyContainer
+    )
     let request = PresentationRequest(
       presentationInfo: .explicitTrigger(.stub()),
       injections: .init(
         configManager: configManager,
+        storage: dependencyContainer.storage,
+        sessionEventsManager: dependencyContainer.sessionEventsManager,
+        paywallManager: dependencyContainer.paywallManager,
+        storeKitManager: dependencyContainer.storeKitManager,
+        network: dependencyContainer.network,
+        debugManager: dependencyContainer.debugManager,
+        identityManager: dependencyContainer.identityManager,
+        deviceHelper: dependencyContainer.deviceHelper,
         isDebuggerLaunched: false,
         isUserSubscribed: false,
         isPaywallPresented: false
@@ -84,11 +114,26 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
   }
 
   func test_confirmHoldoutAssignment_holdout_hasConfirmableAssignments() async {
-    let configManager = ConfigManagerMock()
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let configManager = ConfigManagerMock(
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      paywallManager: dependencyContainer.paywallManager,
+      factory: dependencyContainer
+    )
     let request = PresentationRequest(
       presentationInfo: .explicitTrigger(.stub()),
       injections: .init(
         configManager: configManager,
+        storage: dependencyContainer.storage,
+        sessionEventsManager: dependencyContainer.sessionEventsManager,
+        paywallManager: dependencyContainer.paywallManager,
+        storeKitManager: dependencyContainer.storeKitManager,
+        network: dependencyContainer.network,
+        debugManager: dependencyContainer.debugManager,
+        identityManager: dependencyContainer.identityManager,
+        deviceHelper: dependencyContainer.deviceHelper,
         isDebuggerLaunched: false,
         isUserSubscribed: false,
         isPaywallPresented: false

@@ -155,14 +155,14 @@ final class StoreKitManager {
   }
 }
 
-// MARK: - ReceiptManagerDelegate
+// MARK: - ProductsFetcher
 extension StoreKitManager: ProductsFetcher {
   func products(identifiers: Set<String>) async throws -> Set<StoreProduct> {
     return try await coordinator.productFetcher.products(identifiers: identifiers)
   }
 }
 
-// MARK: - Subscription Status Checker
+// MARK: - SubscriptionStatusChecker
 extension StoreKitManager: SubscriptionStatusChecker {
   /// Do not call this directly.
   func isSubscribed() -> Bool {

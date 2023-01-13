@@ -30,11 +30,12 @@ struct StoreKitCoordinator {
   init(
     delegateAdapter: SuperwallDelegateAdapter,
     storeKitManager: StoreKitManager,
-    factory: StoreTransactionFactory & ProductPurchaserFactory
+    factory: StoreTransactionFactory & ProductPurchaserFactory,
+    productsFetcher: ProductsFetcher = ProductsFetcherSK1()
   ) {
     self.delegateAdapter = delegateAdapter
     self.storeKitManager = storeKitManager
-    self.productFetcher = ProductsFetcherSK1()
+    self.productFetcher = productsFetcher
 
     let sk1ProductPurchaser = factory.makeSK1ProductPurchaser()
     self.txnChecker = sk1ProductPurchaser

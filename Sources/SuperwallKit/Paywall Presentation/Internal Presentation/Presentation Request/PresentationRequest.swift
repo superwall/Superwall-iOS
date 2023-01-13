@@ -23,12 +23,12 @@ struct PresentationRequest {
   var paywallOverrides: PaywallOverrides?
 
   struct Injections {
-    unowned let configManager: ConfigManager
+    unowned var configManager: ConfigManager
     unowned let storage: Storage
     unowned let sessionEventsManager: SessionEventsManager
-    unowned let paywallManager: PaywallManager
+    unowned var paywallManager: PaywallManager
     unowned let superwall: Superwall = .shared
-    let logger: Loggable.Type = Logger.self
+    var logger: Loggable.Type = Logger.self
     unowned let storeKitManager: StoreKitManager
     unowned let network: Network
     unowned let debugManager: DebugManager

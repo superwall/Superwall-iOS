@@ -33,7 +33,6 @@ struct ExpressionEvaluator {
       let shouldFire = shouldFire(
         forOccurrence: rule.occurrence,
         ruleMatched: true,
-        storage: storage,
         isPreemptive: isPreemptive
       )
       return shouldFire
@@ -79,7 +78,6 @@ struct ExpressionEvaluator {
     let shouldFire = shouldFire(
       forOccurrence: rule.occurrence,
       ruleMatched: isMatched,
-      storage: storage,
       isPreemptive: isPreemptive
     )
 
@@ -118,10 +116,9 @@ struct ExpressionEvaluator {
     return nil
   }
 
-  private func shouldFire(
+  func shouldFire(
     forOccurrence occurrence: TriggerRuleOccurrence?,
     ruleMatched: Bool,
-    storage: Storage,
     isPreemptive: Bool
   ) -> Bool {
     if ruleMatched {

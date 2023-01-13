@@ -10,7 +10,7 @@ import Foundation
 
 actor MockSessionEventsQueue: SessionEnqueuable {
   var triggerSessions: [TriggerSession] = []
-  var transactions: [TransactionModel] = []
+  var transactions: [StoreTransaction] = []
 
   func enqueue(_ triggerSession: TriggerSession) {
     debugPrint("trigger sesss", triggerSession)
@@ -21,7 +21,7 @@ actor MockSessionEventsQueue: SessionEnqueuable {
     self.triggerSessions += triggerSessions
   }
 
-  func enqueue(_ transaction: TransactionModel) {
+  func enqueue(_ transaction: StoreTransaction) {
     transactions.append(transaction)
   }
 

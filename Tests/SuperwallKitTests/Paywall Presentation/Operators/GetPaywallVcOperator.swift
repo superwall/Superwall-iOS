@@ -40,7 +40,11 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let paywallManager = PaywallManagerMock()
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let paywallManager = PaywallManagerMock(
+      factory: dependencyContainer,
+      paywallRequestManager: dependencyContainer.paywallRequestManager
+    )
     paywallManager.getPaywallError = PresentationPipelineError.cancelled
 
     let request = PresentationRequest.stub()
@@ -109,7 +113,11 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let paywallManager = PaywallManagerMock()
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let paywallManager = PaywallManagerMock(
+      factory: dependencyContainer,
+      paywallRequestManager: dependencyContainer.paywallRequestManager
+    )
     paywallManager.getPaywallError = PresentationPipelineError.cancelled
 
     let request = PresentationRequest.stub()
@@ -178,8 +186,12 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let paywallManager = PaywallManagerMock()
-    paywallManager.getPaywallVc = PaywallViewController(paywall: .stub())
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let paywallManager = PaywallManagerMock(
+      factory: dependencyContainer,
+      paywallRequestManager: dependencyContainer.paywallRequestManager
+    )
+    paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(for: .stub())
 
     let request = PresentationRequest.stub()
       .setting(\.injections.paywallManager, to: paywallManager)
@@ -232,8 +244,12 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let paywallManager = PaywallManagerMock()
-    paywallManager.getPaywallVc = PaywallViewController(paywall: .stub())
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let paywallManager = PaywallManagerMock(
+      factory: dependencyContainer,
+      paywallRequestManager: dependencyContainer.paywallRequestManager
+    )
+    paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(for: .stub())
 
     let request = PresentationRequest.stub()
       .setting(\.injections.paywallManager, to: paywallManager)

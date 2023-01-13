@@ -20,7 +20,7 @@ final class TrackingLogicTests: XCTestCase {
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: Date(),
-      storage: storage
+      appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
@@ -57,7 +57,7 @@ final class TrackingLogicTests: XCTestCase {
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: Date(),
-      storage: storage
+      appSessionId: "abc"
     )
 
     XCTAssertFalse(parameters.eventParams["$is_standard_event"] as! Bool)
@@ -97,7 +97,8 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt
+      eventCreatedAt: event.eventData!.createdAt,
+      appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
@@ -124,7 +125,8 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt
+      eventCreatedAt: event.eventData!.createdAt,
+      appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
@@ -155,7 +157,8 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt
+      eventCreatedAt: event.eventData!.createdAt,
+      appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
@@ -186,7 +189,8 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt
+      eventCreatedAt: event.eventData!.createdAt,
+      appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
@@ -217,7 +221,8 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt
+      eventCreatedAt: event.eventData!.createdAt,
+      appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
@@ -249,7 +254,8 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt
+      eventCreatedAt: event.eventData!.createdAt,
+      appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
@@ -281,7 +287,8 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt
+      eventCreatedAt: event.eventData!.createdAt,
+      appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
@@ -312,7 +319,8 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt
+      eventCreatedAt: event.eventData!.createdAt,
+      appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
@@ -330,8 +338,9 @@ final class TrackingLogicTests: XCTestCase {
   // MARK: - didStartNewSession
 
   func testDidStartNewSession_canTriggerPaywall_paywallAlreadyPresented() {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(),
+      InternalSuperwallEvent.AppInstall(deviceHelper: dependencyContainer.deviceHelper),
       triggers: Set(["app_install"]),
       isPaywallPresented: true
     )
@@ -339,8 +348,9 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func testDidStartNewSession_canTriggerPaywall_isntTrigger() {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(),
+      InternalSuperwallEvent.AppInstall(deviceHelper: dependencyContainer.deviceHelper),
       triggers: [],
       isPaywallPresented: false
     )
@@ -348,8 +358,9 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func testDidStartNewSession_canTriggerPaywall_isAllowedInternalEvent() {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(),
+      InternalSuperwallEvent.AppInstall(deviceHelper: dependencyContainer.deviceHelper),
       triggers: ["app_install"],
       isPaywallPresented: false
     )
@@ -357,6 +368,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func testDidStartNewSession_canTriggerPaywall_isNotInternalEvent() {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let outcome = TrackingLogic.canTriggerPaywall(
       UserInitiatedEvent.Track(rawName: "random_event", canImplicitlyTriggerPaywall: true),
       triggers: ["random_event"],

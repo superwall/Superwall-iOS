@@ -18,13 +18,12 @@ final class NetworkTests: XCTestCase {
     completion: @escaping () -> Void
   ) async {
     let task = Task {
-      let network = Network(urlSession: urlSession)
-      let configManager = ConfigManager()
+      let dependencyContainer = DependencyContainer(apiKey: "abc")
+      let network = Network(urlSession: urlSession, factory: dependencyContainer)
       let requestId = "abc"
 
       _ = try? await network.getConfig(
         withRequestId: requestId,
-        configManager: configManager,
         injectedApplicationStatePublisher: injectedApplicationStatePublisher
       )
       completion()
@@ -56,15 +55,14 @@ final class NetworkTests: XCTestCase {
 
   func test_config_inForeground() async {
     let urlSession = CustomURLSessionMock()
-    let network = Network(urlSession: urlSession)
-    let configManager = ConfigManager()
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let network = Network(urlSession: urlSession, factory: dependencyContainer)
     let requestId = "abc"
     let publisher = Just(UIApplication.State.active)
       .eraseToAnyPublisher()
 
     _ = try? await network.getConfig(
       withRequestId: requestId,
-      configManager: configManager,
       injectedApplicationStatePublisher: publisher
     )
     XCTAssertTrue(urlSession.didRequest)

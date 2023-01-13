@@ -13,11 +13,13 @@ final class StorePresentationObjectsOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
   func test_storePresentationObjects() {
+    let dependencyContainer = DependencyContainer(apiKey: "")
+
     let request = PresentationRequest.stub()
     let input = PresentablePipelineOutput(
       request: request,
       debugInfo: [:],
-      paywallViewController: PaywallViewController(paywall: .stub()),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
       presenter: UIViewController(),
       confirmableAssignment: nil
     )

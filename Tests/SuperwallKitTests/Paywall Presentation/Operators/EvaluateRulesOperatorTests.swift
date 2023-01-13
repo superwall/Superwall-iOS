@@ -13,10 +13,20 @@ final class EvaluateRulesOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
   func test_evaluateRules_isDebugger() async {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let identifier = "abc"
     let request = PresentationRequest(
       presentationInfo: .fromIdentifier(identifier, freeTrialOverride: false),
       injections: .init(
+        configManager: dependencyContainer.configManager,
+        storage: dependencyContainer.storage,
+        sessionEventsManager: dependencyContainer.sessionEventsManager,
+        paywallManager: dependencyContainer.paywallManager,
+        storeKitManager: dependencyContainer.storeKitManager,
+        network: dependencyContainer.network,
+        debugManager: dependencyContainer.debugManager,
+        identityManager: dependencyContainer.identityManager,
+        deviceHelper: dependencyContainer.deviceHelper,
         isDebuggerLaunched: true,
         isUserSubscribed: false,
         isPaywallPresented: false
@@ -54,9 +64,19 @@ final class EvaluateRulesOperatorTests: XCTestCase {
   }
 
   func test_evaluateRules_isNotDebugger() async {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let request = PresentationRequest(
       presentationInfo: .explicitTrigger(.stub()),
       injections: .init(
+        configManager: dependencyContainer.configManager,
+        storage: dependencyContainer.storage,
+        sessionEventsManager: dependencyContainer.sessionEventsManager,
+        paywallManager: dependencyContainer.paywallManager,
+        storeKitManager: dependencyContainer.storeKitManager,
+        network: dependencyContainer.network,
+        debugManager: dependencyContainer.debugManager,
+        identityManager: dependencyContainer.identityManager,
+        deviceHelper: dependencyContainer.deviceHelper,
         isDebuggerLaunched: false,
         isUserSubscribed: false,
         isPaywallPresented: false
