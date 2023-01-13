@@ -43,7 +43,10 @@ final class AwaitIdentityOperatorTests: XCTestCase {
   func test_waitingForIdentity_hasIdentity() async {
     let expectation = expectation(description: "Got identity")
 
-    CurrentValueSubject(PresentationRequest.stub())
+    let stub = PresentationRequest.stub()
+      .setting(\.injections.identityManager, to: identityManager)
+
+    CurrentValueSubject(stub)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
       .awaitIdentity()

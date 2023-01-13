@@ -24,7 +24,7 @@ class StoreKitManagerTests: XCTestCase {
     )
     return StoreKitManager(factory: storeKitCoordinatorFactoryMock)
   }
-  
+
   func test_getProducts_primaryProduct() async {
     let dependencyContainer = DependencyContainer(apiKey: "abc")
     let manager = dependencyContainer.storeKitManager!
@@ -36,7 +36,7 @@ class StoreKitManagerTests: XCTestCase {
 
     do {
       let (productsById, products) = try await manager.getProducts(withIds: [], substituting: substituteProducts)
-      XCTAssertEqual(productsById[primary.productIdentifier], primary)
+      XCTAssertEqual(productsById[primary.productIdentifier]?.underlyingSK1Product, primary)
       XCTAssertEqual(products.first!.id, primary.productIdentifier)
       XCTAssertEqual(products.first!.type, .primary)
     } catch {
@@ -57,11 +57,11 @@ class StoreKitManagerTests: XCTestCase {
 
     do {
       let (productsById, products) = try await manager.getProducts(withIds: [], substituting: substituteProducts)
-      XCTAssertEqual(productsById[primary.productIdentifier], primary)
+      XCTAssertEqual(productsById[primary.productIdentifier]?.underlyingSK1Product, primary)
       XCTAssertEqual(products[0].id, primary.productIdentifier)
       XCTAssertEqual(products[0].type, .primary)
 
-      XCTAssertEqual(productsById[tertiary.productIdentifier], tertiary)
+      XCTAssertEqual(productsById[tertiary.productIdentifier]?.underlyingSK1Product, tertiary)
       XCTAssertEqual(products[1].id, tertiary.productIdentifier)
       XCTAssertEqual(products[1].type, .tertiary)
     } catch {
@@ -84,15 +84,15 @@ class StoreKitManagerTests: XCTestCase {
 
     do {
       let (productsById, products) = try await manager.getProducts(withIds: [], substituting: substituteProducts)
-      XCTAssertEqual(productsById[primary.productIdentifier], primary)
+      XCTAssertEqual(productsById[primary.productIdentifier]?.underlyingSK1Product, primary)
       XCTAssertEqual(products[0].id, primary.productIdentifier)
       XCTAssertEqual(products[0].type, .primary)
 
-      XCTAssertEqual(productsById[secondary.productIdentifier], secondary)
+      XCTAssertEqual(productsById[secondary.productIdentifier]?.underlyingSK1Product, secondary)
       XCTAssertEqual(products[1].id, secondary.productIdentifier)
       XCTAssertEqual(products[1].type, .secondary)
 
-      XCTAssertEqual(productsById[tertiary.productIdentifier], tertiary)
+      XCTAssertEqual(productsById[tertiary.productIdentifier]?.underlyingSK1Product, tertiary)
       XCTAssertEqual(products[2].id, tertiary.productIdentifier)
       XCTAssertEqual(products[2].type, .tertiary)
     } catch {

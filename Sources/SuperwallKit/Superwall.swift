@@ -110,7 +110,12 @@ public final class Superwall: NSObject, ObservableObject {
   @objc(sharedSuperwall)
   public static var shared: Superwall {
     guard let superwall = superwall else {
-      fatalError("Superwall has not been configured. Please call Superwall.configure()")
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "Superwall has not been configured. Please call Superwall.configure()"
+      )
+      return Superwall()
     }
     return superwall
   }
@@ -139,7 +144,9 @@ public final class Superwall: NSObject, ObservableObject {
   // swiftlint:enable implicitly_unwrapped_optional
 
   // MARK: - Private Functions
-  private override init() {}
+  private override init() {
+    dependencyContainer = DependencyContainer(apiKey: "")
+  }
 
   private init(
     apiKey: String,
@@ -188,14 +195,14 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   // MARK: - Configuration
-  /// Configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.
+  /// Configures a shared instance of ``Superwall`` for use throughout your app.
   ///
-  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. For a tutorial on the best practices for implementing the delegate, we recommend checking out our <doc:GettingStarted> article.
+  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
   /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
-  ///   - delegate: A class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
+  ///   - delegate: An optional class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
-  /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
+  /// - Returns: The newly configured ``Superwall`` instance.
   @discardableResult
   public static func configure(
     apiKey: String,
@@ -221,10 +228,10 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Objective-C only function that configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.
   ///
-  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. For a tutorial on the best practices for implementing the delegate, we recommend checking out our <doc:GettingStarted> article.
+  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
   /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
-  ///   - delegate: A class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
+  ///   - delegate: An optional class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
   @discardableResult

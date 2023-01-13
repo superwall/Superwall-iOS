@@ -27,12 +27,12 @@ struct PresentationRequest {
     unowned let storage: Storage
     unowned let sessionEventsManager: SessionEventsManager
     unowned var paywallManager: PaywallManager
-    unowned let superwall: Superwall = .shared
+    unowned var superwall: Superwall = .shared
     var logger: Loggable.Type = Logger.self
     unowned let storeKitManager: StoreKitManager
     unowned let network: Network
     unowned let debugManager: DebugManager
-    unowned let identityManager: IdentityManager
+    unowned var identityManager: IdentityManager
     unowned let deviceHelper: DeviceHelper
     var isDebuggerLaunched: Bool
     var isUserSubscribed: Bool

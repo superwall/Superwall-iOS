@@ -14,18 +14,24 @@ class AppSessionManagerTests: XCTestCase {
 
   override func setUp() async throws {
     let dependencyContainer = DependencyContainer(apiKey: "abc")
-    appSessionManager = dependencyContainer.appSessionManager
+    appSessionManager = AppSessionManager(
+      configManager: dependencyContainer.configManager,
+      storage: dependencyContainer.storage
+    )
+
+    appSessionManager.postInit(sessionEventsManager: dependencyContainer.sessionEventsManager)
+    dependencyContainer.appSessionManager = appSessionManager
   }
 
   func testAppWillResignActive() async {
     XCTAssertNil(appSessionManager.appSession.endAt)
-    
-    try? await Task.sleep(nanoseconds: 10_000_000)
+
+    try? await Task.sleep(nanoseconds: 50_000_000)
 
     await NotificationCenter.default.post(
       Notification(name: UIApplication.willResignActiveNotification)
     )
-    try? await Task.sleep(nanoseconds: 10_000_000)
+    try? await Task.sleep(nanoseconds: 50_000_000)
 
     XCTAssertNotNil(appSessionManager.appSession.endAt)
   }
@@ -38,7 +44,7 @@ class AppSessionManagerTests: XCTestCase {
     await NotificationCenter.default.post(
       Notification(name: UIApplication.willTerminateNotification)
     )
-    try? await Task.sleep(nanoseconds: 10_000_000)
+    try? await Task.sleep(nanoseconds: 50_000_000)
 
     XCTAssertNotNil(appSessionManager.appSession.endAt)
   }

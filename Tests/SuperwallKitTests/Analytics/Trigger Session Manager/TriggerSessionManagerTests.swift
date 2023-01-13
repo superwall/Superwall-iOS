@@ -17,7 +17,16 @@ final class TriggerSessionManagerTests: XCTestCase {
   override func setUp() {
     queue = MockSessionEventsQueue()
     sessionEventsDelegate = SessionEventsDelegateMock(queue: queue)
-    sessionManager = TriggerSessionManager(delegate: sessionEventsDelegate)
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    
+    sessionManager = TriggerSessionManager(
+      delegate: sessionEventsDelegate,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      storage: dependencyContainer.storage,
+      configManager: dependencyContainer.configManager,
+      appSessionManager: dependencyContainer.appSessionManager,
+      identityManager: dependencyContainer.identityManager
+    )
     sessionEventsDelegate.triggerSession = sessionManager
   }
 
@@ -547,7 +556,7 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testBeginTransaction_firstTime() async {
     // Given
-    let primaryProduct = MockSkProduct(productIdentifier: "primary")
+    let primaryProduct = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "primary"))
     await beginTransactionOf(primaryProduct: primaryProduct)
 
     // Then
@@ -563,11 +572,11 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertEqual(triggerSessions.last!.transaction?.product, .init(from: primaryProduct, index: 0))
   }
 
-  private func beginTransactionOf(primaryProduct product: MockSkProduct) async {
+  private func beginTransactionOf(primaryProduct product: StoreProduct) async {
     // Given
     let paywallId = "abc"
     let products = [
-      SWProduct(product: product),
+      SWProduct(product: product.underlyingSK1Product),
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]
@@ -586,7 +595,7 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testBeginTransaction_secondTime() async  {
     // Given
-    let primaryProduct = MockSkProduct(productIdentifier: "primary")
+    let primaryProduct = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "primary"))
     await beginTransactionOf(primaryProduct: primaryProduct)
 
     let triggerSessions = await queue.triggerSessions
@@ -611,7 +620,7 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testTransactionError() async {
     // Given
-    let primaryProduct = MockSkProduct(productIdentifier: "primary")
+    let primaryProduct = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "primary"))
     await beginTransactionOf(primaryProduct: primaryProduct)
     let triggerSessions = await queue.triggerSessions
     XCTAssertNotNil(triggerSessions.last!.transaction)
@@ -635,7 +644,7 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testTransactionAbandon() async {
     // Given
-    let primaryProduct = MockSkProduct(productIdentifier: "primary")
+    let primaryProduct = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "primary"))
     await beginTransactionOf(primaryProduct: primaryProduct)
     let triggerSessions = await queue.triggerSessions
     XCTAssertNotNil(triggerSessions.last!.transaction)
@@ -659,9 +668,9 @@ final class TriggerSessionManagerTests: XCTestCase {
   func testTransactionRestoration_noPreviousTransactionActions() async {
     // Given
     let paywallId = "abc"
-    let primaryProduct = MockSkProduct(productIdentifier: "primary")
+    let primaryProduct =  StoreProduct(sk1Product: MockSkProduct(productIdentifier: "primary"))
     let products = [
-      SWProduct(product: primaryProduct),
+      SWProduct(product: primaryProduct.underlyingSK1Product),
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]
@@ -697,7 +706,7 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testTransactionRestoration_withPreviousTransactionActions() async {
     // Given
-    let primaryProduct = MockSkProduct(productIdentifier: "primary")
+    let primaryProduct =  StoreProduct(sk1Product: MockSkProduct(productIdentifier: "primary"))
     await beginTransactionOf(primaryProduct: primaryProduct)
 
     let triggerSessions = await queue.triggerSessions
@@ -736,7 +745,7 @@ final class TriggerSessionManagerTests: XCTestCase {
 
   func testTransactionDeferred() async {
     // Given
-    let primaryProduct = MockSkProduct(productIdentifier: "primary")
+    let primaryProduct =  StoreProduct(sk1Product: MockSkProduct(productIdentifier: "primary"))
     await beginTransactionOf(primaryProduct: primaryProduct)
 
     let triggerSessions = await queue.triggerSessions
@@ -761,7 +770,7 @@ final class TriggerSessionManagerTests: XCTestCase {
   func testTransactionSucceeded() async {
     // Given
     let id = "abc"
-    let primaryProduct = MockSkProduct(productIdentifier: "primary")
+    let primaryProduct =  StoreProduct(sk1Product: MockSkProduct(productIdentifier: "primary"))
     await beginTransactionOf(primaryProduct: primaryProduct)
 
     let triggerSessions = await queue.triggerSessions
@@ -771,7 +780,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     await sessionManager.trackTransactionSucceeded(
       withId: id,
-      for: primaryProduct
+      for: primaryProduct,
+      isFreeTrialAvailable: false
     )
 
     // Then

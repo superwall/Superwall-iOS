@@ -47,7 +47,8 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       parameters: [:],
       createdAt: Date()
     )
-    let viewController = SWDebugViewController()
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let viewController = dependencyContainer.makeDebugViewController(withDatabaseId: nil)
 
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .explicitTrigger(eventData),
@@ -164,7 +165,10 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       parameters: [:],
       createdAt: Date()
     )
-    let viewController = SWDebugViewController()
+
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let viewController = dependencyContainer.makeDebugViewController(withDatabaseId: nil)
+
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .explicitTrigger(eventData),
       presentingViewController: viewController,
@@ -205,7 +209,8 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       .setting(\.id, to: eventId)
       .setting(\.createdAt, to: eventCreatedAt)
 
-    let viewController = SWDebugViewController()
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let viewController = dependencyContainer.makeDebugViewController(withDatabaseId: nil)
 
     let presentationInfo = PresentationInfo.explicitTrigger(event)
     let outcome = TriggerSessionManagerLogic.outcome(
@@ -230,7 +235,9 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
   func testIdentifierPaywall_noPaywallResponse() {
     let eventName = "manual_present"
 
-    let viewController = SWDebugViewController()
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let viewController = dependencyContainer.makeDebugViewController(withDatabaseId: nil)
+
     let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: .fromIdentifier("identifier", freeTrialOverride: false),
       presentingViewController: viewController,
@@ -252,7 +259,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
     let product = MockSkProduct()
 
     let outcome = TriggerSessionManagerLogic.getTransactionOutcome(
-      for: product,
+      for: StoreProduct(sk1Product: product),
       isFreeTrialAvailable: false
     )
 
@@ -260,10 +267,11 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
   }
 
   func testGetTransactionOutcome_hasFreeTrial() {
-    let product = MockSkProduct(subscriptionPeriod: .init())
+    let period = SKProductSubscriptionPeriodMock()
+    let product = MockSkProduct(subscriptionPeriod: period)
 
     let outcome = TriggerSessionManagerLogic.getTransactionOutcome(
-      for: product,
+      for: StoreProduct(sk1Product: product),
       isFreeTrialAvailable: true
     )
 
@@ -271,10 +279,11 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
   }
 
   func testGetTransactionOutcome_noFreeTrial() {
-    let product = MockSkProduct(subscriptionPeriod: .init())
+    let period = SKProductSubscriptionPeriodMock()
+    let product = MockSkProduct(subscriptionPeriod: period)
 
     let outcome = TriggerSessionManagerLogic.getTransactionOutcome(
-      for: product,
+      for: StoreProduct(sk1Product: product),
       isFreeTrialAvailable: false
     )
     

@@ -70,7 +70,7 @@ class AppSessionManager {
     )
   }
 
-  private func listenForAppSessionTimeout() {
+  func listenForAppSessionTimeout() {
     cancellable = configManager.$config
       .compactMap { $0 }
       .sink { [weak self] config in

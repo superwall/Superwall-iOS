@@ -11,6 +11,7 @@ import Combine
 
 final class CheckPaywallPresentableOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
+  let superwall = Superwall.shared
 
   @MainActor
   func test_checkPaywallIsPresentable_userIsSubscribed() async {
@@ -99,12 +100,17 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let request = PresentationRequest.stub()
+    // TODO: Fix this. Before I set superwall to a strong ref?
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let request = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      isDebuggerLaunched: false,
+      isUserSubscribed: false,
+      isPaywallPresented: false
+    )
       .setting(\.presentingViewController, to: nil)
       .setting(\.injections.superwall.presentationItems.window, to: UIWindow())
-      .setting(\.injections.isUserSubscribed, to: false)
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
     let input = PaywallVcPipelineOutput(
       request: request,
       triggerResult: .paywall(experiment),

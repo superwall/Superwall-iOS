@@ -13,8 +13,8 @@ struct RawFeatureFlag: Decodable {
 }
 
 struct FeatureFlags: Decodable {
-  let enableSessionEvents: Bool
-  let enablePostback: Bool
+  var enableSessionEvents: Bool
+  var enablePostback: Bool
 
   enum CodingKeys: String, CodingKey {
     case toggles

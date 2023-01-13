@@ -258,8 +258,10 @@ extension DependencyContainer: ApiFactory {
 // MARK: - TriggerSessionManager
 extension DependencyContainer: TriggerSessionManagerFactory {
   func makeTriggerSessionManager() -> TriggerSessionManager {
+    // Separating delegate and sessionEventsManager to support testing.
     return TriggerSessionManager(
       delegate: sessionEventsManager,
+      sessionEventsManager: sessionEventsManager,
       storage: storage,
       configManager: configManager,
       appSessionManager: appSessionManager,

@@ -21,7 +21,8 @@ actor TriggerSessionManager {
   private unowned let configManager: ConfigManager
   private unowned let appSessionManager: AppSessionManager
   private unowned let identityManager: IdentityManager
-  private unowned let delegate: SessionEventsManager
+  private unowned let delegate: SessionEventsDelegate
+  private unowned let sessionEventsManager: SessionEventsManager
 
   /// A local count for transactions used within the trigger session.
   private var transactionCount: TriggerSession.Transaction.Count?
@@ -37,13 +38,15 @@ actor TriggerSessionManager {
   }
 
   init(
-    delegate: SessionEventsManager,
+    delegate: SessionEventsDelegate,
+    sessionEventsManager: SessionEventsManager,
     storage: Storage,
     configManager: ConfigManager,
     appSessionManager: AppSessionManager,
     identityManager: IdentityManager
   ) {
     self.delegate = delegate
+    self.sessionEventsManager = sessionEventsManager
     self.storage = storage
     self.configManager = configManager
     self.appSessionManager = appSessionManager
@@ -170,7 +173,7 @@ actor TriggerSessionManager {
       let trackedEvent = InternalSuperwallEvent.TriggerFire(
         triggerResult: triggerResult,
         triggerName: eventName,
-        sessionEventsManager: delegate
+        sessionEventsManager: sessionEventsManager
       )
       _ = await trackEvent(trackedEvent)
     }
