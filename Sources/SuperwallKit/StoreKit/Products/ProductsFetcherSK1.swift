@@ -39,7 +39,7 @@ class ProductsFetcherSK1: NSObject, ProductsFetcher {
     })
     return storeProducts
   }
-  
+
 	private func products(
     withIdentifiers identifiers: Set<String>,
     completion: @escaping ProductRequestCompletionBlock
