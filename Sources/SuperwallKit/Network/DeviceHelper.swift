@@ -10,14 +10,12 @@ import SystemConfiguration
 import CoreTelephony
 
 class DeviceHelper {
-  static let shared = DeviceHelper()
-
   var locale: String {
-    LocalizationManager.shared.selectedLocale ?? Locale.autoupdatingCurrent.identifier
+    localizationManager.selectedLocale ?? Locale.autoupdatingCurrent.identifier
   }
   let appInstalledAtString: String
 
-  private let reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, Api.hostDomain)
+  private let reachability: SCNetworkReachability?
   var appVersion: String {
     Bundle.main.releaseVersionNumber ?? ""
   }
@@ -109,11 +107,11 @@ class DeviceHelper {
   /// Returns true if built with the debug flag, or using TestFlight.
   let isSandbox: String = {
     #if DEBUG
-      return "\(true)"
+      return "true"
     #else
 
     guard let url = Bundle.main.appStoreReceiptURL else {
-      return "\(false)"
+      return "false"
     }
 
     return "\(url.path.contains("sandboxReceipt"))"
@@ -229,7 +227,7 @@ class DeviceHelper {
   }
 
   private var daysSinceLastPaywallView: Int? {
-    guard let fromDate = Storage.shared.get(LastPaywallView.self) else {
+    guard let fromDate = storage.get(LastPaywallView.self) else {
       return nil
     }
     let toDate = Date()
@@ -238,7 +236,7 @@ class DeviceHelper {
   }
 
   private var minutesSinceLastPaywallView: Int? {
-    guard let fromDate = Storage.shared.get(LastPaywallView.self) else {
+    guard let fromDate = storage.get(LastPaywallView.self) else {
       return nil
     }
     let toDate = Date()
@@ -247,16 +245,16 @@ class DeviceHelper {
   }
 
   private var totalPaywallViews: Int {
-    return Storage.shared.get(TotalPaywallViews.self) ?? 0
+    return storage.get(TotalPaywallViews.self) ?? 0
   }
 
   var templateDevice: DeviceTemplate {
-    let aliases = [IdentityManager.shared.aliasId]
+    let aliases = [identityManager.aliasId]
 
     return DeviceTemplate(
-      publicApiKey: Storage.shared.apiKey,
+      publicApiKey: storage.apiKey,
       platform: isMac ? "macOS" : "iOS",
-      appUserId: IdentityManager.shared.appUserId ?? "",
+      appUserId: identityManager.appUserId ?? "",
       aliases: aliases,
       vendorId: vendorId,
       appVersion: appVersion,
@@ -287,7 +285,25 @@ class DeviceHelper {
     )
   }
 
-  init() {
+  private unowned let storage: Storage
+  private unowned let localizationManager: LocalizationManager
+
+  // swiftlint:disable implicitly_unwrapped_optional
+  unowned var identityManager: IdentityManager!
+  // swiftlint:enable implicitly_unwrapped_optional
+
+  init(
+    api: Api,
+    storage: Storage,
+    localizationManager: LocalizationManager
+  ) {
+    self.storage = storage
+    self.localizationManager = localizationManager
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
+    reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.hostDomain)
+  }
+
+  func postInit(identityManager: IdentityManager) {
+    self.identityManager = identityManager
   }
 }

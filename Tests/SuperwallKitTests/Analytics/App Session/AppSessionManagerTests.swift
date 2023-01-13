@@ -10,37 +10,47 @@ import XCTest
 @testable import SuperwallKit
 
 class AppSessionManagerTests: XCTestCase {
+  var appSessionManager: AppSessionManager!
+
+  override func setUp() async throws {
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    appSessionManager = AppSessionManager(
+      configManager: dependencyContainer.configManager,
+      storage: dependencyContainer.storage
+    )
+
+    appSessionManager.postInit(sessionEventsManager: dependencyContainer.sessionEventsManager)
+    dependencyContainer.appSessionManager = appSessionManager
+  }
+
   func testAppWillResignActive() async {
-    let appManager = AppSessionManager()
-    XCTAssertNil(appManager.appSession.endAt)
-    
-    try? await Task.sleep(nanoseconds: 10_000_000)
+    XCTAssertNil(appSessionManager.appSession.endAt)
+
+    try? await Task.sleep(nanoseconds: 50_000_000)
 
     await NotificationCenter.default.post(
       Notification(name: UIApplication.willResignActiveNotification)
     )
-    try? await Task.sleep(nanoseconds: 10_000_000)
+    try? await Task.sleep(nanoseconds: 50_000_000)
 
-    XCTAssertNotNil(appManager.appSession.endAt)
+    XCTAssertNotNil(appSessionManager.appSession.endAt)
   }
 
   func testAppWillTerminate() async {
-    let appManager = AppSessionManager()
-    XCTAssertNil(appManager.appSession.endAt)
+    XCTAssertNil(appSessionManager.appSession.endAt)
 
     try? await Task.sleep(nanoseconds: 10_000_000)
 
     await NotificationCenter.default.post(
       Notification(name: UIApplication.willTerminateNotification)
     )
-    try? await Task.sleep(nanoseconds: 10_000_000)
+    try? await Task.sleep(nanoseconds: 50_000_000)
 
-    XCTAssertNotNil(appManager.appSession.endAt)
+    XCTAssertNotNil(appSessionManager.appSession.endAt)
   }
 
   func testAppWillBecomeActive_newSession() async {
-    let appManager = AppSessionManager()
-    let oldAppSession = appManager.appSession
+    let oldAppSession = appSessionManager.appSession
 
     try? await Task.sleep(nanoseconds: 10_000_000)
 
@@ -48,12 +58,11 @@ class AppSessionManagerTests: XCTestCase {
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
 
-    XCTAssertNotEqual(appManager.appSession.id, oldAppSession.id)
+    XCTAssertNotEqual(appSessionManager.appSession.id, oldAppSession.id)
   }
 
   func testAppWillBecomeActive_closeAndOpen() async {
-    let appManager = AppSessionManager()
-    let oldAppSession = appManager.appSession
+    let oldAppSession = appSessionManager.appSession
 
     try? await Task.sleep(nanoseconds: 10_000_000)
 
@@ -62,7 +71,7 @@ class AppSessionManagerTests: XCTestCase {
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
 
-    XCTAssertNotNil(appManager.appSession.endAt)
+    XCTAssertNotNil(appSessionManager.appSession.endAt)
 
     await NotificationCenter.default.post(
       Notification(name: UIApplication.didBecomeActiveNotification)
@@ -70,8 +79,8 @@ class AppSessionManagerTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 10_000_000)
 
-    XCTAssertNil(appManager.appSession.endAt)
+    XCTAssertNil(appSessionManager.appSession.endAt)
 
-    XCTAssertEqual(appManager.appSession.id, oldAppSession.id)
+    XCTAssertEqual(appSessionManager.appSession.id, oldAppSession.id)
   }
 }

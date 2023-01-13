@@ -10,7 +10,7 @@ import Foundation
 enum PaywallCacheLogic: Sendable {
   static func key(
     forIdentifier identifier: String?,
-    locale: String = DeviceHelper.shared.locale
+    locale: String
   ) -> String {
     let id = identifier ?? "$no_id"
     return "\(id)_\(locale)"

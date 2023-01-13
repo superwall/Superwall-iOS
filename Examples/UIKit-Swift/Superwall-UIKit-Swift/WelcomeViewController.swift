@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SuperwallKit
 
 final class WelcomeViewController: UIViewController {
   @IBOutlet private var textFieldBackgroundView: UIView!
@@ -18,8 +19,7 @@ final class WelcomeViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    let isLoggedIn = SuperwallService.configure()
-    if isLoggedIn {
+    if Superwall.isLoggedIn {
       next()
     }
 

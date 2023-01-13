@@ -24,7 +24,7 @@ struct SWSubscriptionTemplateVariable: Encodable {
 
   init(
     type: TemplateType,
-    product: SKProduct
+    product: SK1Product
   ) {
     let swProduct = SWProduct(product: product)
     self.type = type

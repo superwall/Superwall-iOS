@@ -14,7 +14,7 @@ import StoreKit
 /// This is returned in the `paywallState` after presenting a paywall with ``SuperwallKit/Superwall/track(event:params:paywallOverrides:paywallHandler:)``.
 @objc(SWKPaywallInfo)
 @objcMembers
-public final class PaywallInfo: NSObject, Sendable {
+public final class PaywallInfo: NSObject {
   /// Superwall's internal ID for this paywall.
   let databaseId: String
 
@@ -89,6 +89,10 @@ public final class PaywallInfo: NSObject, Sendable {
   /// The paywall.js version installed on the paywall website.
   public let paywalljsVersion: String?
 
+  public let isFreeTrialAvailable: Bool
+
+  private unowned let sessionEventsManager: SessionEventsManager
+
   init(
     databaseId: String,
     identifier: String,
@@ -106,7 +110,9 @@ public final class PaywallInfo: NSObject, Sendable {
     productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
     experiment: Experiment? = nil,
-    paywalljsVersion: String? = nil
+    paywalljsVersion: String? = nil,
+    isFreeTrialAvailable: Bool,
+    sessionEventsManager: SessionEventsManager
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -118,6 +124,7 @@ public final class PaywallInfo: NSObject, Sendable {
     self.experiment = experiment
     self.paywalljsVersion = paywalljsVersion
     self.products = products
+    self.isFreeTrialAvailable = isFreeTrialAvailable
 
     if eventData != nil {
       self.presentedBy = "event"
@@ -157,10 +164,11 @@ public final class PaywallInfo: NSObject, Sendable {
     } else {
       self.productsLoadDuration = nil
     }
+    self.sessionEventsManager = sessionEventsManager
   }
 
   func eventParams(
-    forProduct product: SKProduct? = nil,
+    forProduct product: StoreProduct? = nil,
     otherParams: [String: Any]? = nil
   ) async -> [String: Any] {
     let productIds = products.map { $0.id }
@@ -185,10 +193,11 @@ public final class PaywallInfo: NSObject, Sendable {
       "paywall_products_load_start_time": productsLoadStartTime as Any,
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
       "paywall_products_load_fail_time": productsLoadFailTime as Any,
-      "paywall_products_load_duration": productsLoadDuration as Any
+      "paywall_products_load_duration": productsLoadDuration as Any,
+      "is_free_trial_available": isFreeTrialAvailable as Any
     ]
 
-    if let triggerSession = await SessionEventsManager.shared.triggerSession.activeTriggerSession,
+    if let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession,
       let databaseId = triggerSession.paywall?.databaseId,
       databaseId == self.databaseId {
       output["trigger_session_id"] = triggerSession.id

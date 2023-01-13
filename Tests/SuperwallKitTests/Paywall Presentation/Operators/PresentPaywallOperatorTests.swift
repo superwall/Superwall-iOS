@@ -27,8 +27,15 @@ final class PresentPaywallOperatorTests: XCTestCase {
       }
     }
     .store(in: &cancellables)
-
-    let paywallVc = PaywallViewControllerMock(paywall: .stub())
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      identityManager: dependencyContainer.identityManager
+    )
     paywallVc.shouldPresent = true
 
     let input = PresentablePipelineOutput(
@@ -83,7 +90,15 @@ final class PresentPaywallOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let paywallVc = PaywallViewControllerMock(paywall: .stub())
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      identityManager: dependencyContainer.identityManager
+    )
     paywallVc.shouldPresent = false
 
     let input = PresentablePipelineOutput(

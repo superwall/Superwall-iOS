@@ -112,7 +112,7 @@ enum TriggerSessionManagerLogic {
   }
 
   static func getTransactionOutcome(
-    for product: SKProduct,
+    for product: StoreProduct,
     isFreeTrialAvailable: Bool
   ) -> TriggerSession.Transaction.Outcome {
     if product.subscriptionPeriod == nil {

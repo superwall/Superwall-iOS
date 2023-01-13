@@ -23,12 +23,17 @@ struct PresentationRequest {
   var paywallOverrides: PaywallOverrides?
 
   struct Injections {
-    var configManager: ConfigManager = .shared
-    var storage: Storage = .shared
-    var sessionEventsManager: SessionEventsManager = .shared
-    var paywallManager: PaywallManager = .shared
-    var superwall: Superwall = .shared
+    unowned var configManager: ConfigManager
+    unowned let storage: Storage
+    unowned let sessionEventsManager: SessionEventsManager
+    unowned var paywallManager: PaywallManager
+    unowned var superwall: Superwall = .shared
     var logger: Loggable.Type = Logger.self
+    unowned let storeKitManager: StoreKitManager
+    unowned let network: Network
+    unowned let debugManager: DebugManager
+    unowned var identityManager: IdentityManager
+    unowned let deviceHelper: DeviceHelper
     var isDebuggerLaunched: Bool
     var isUserSubscribed: Bool
     var isPaywallPresented: Bool
@@ -45,13 +50,13 @@ struct PresentationRequest {
 
 extension PresentationRequest: Stubbable {
   static func stub() -> PresentationRequest {
-    return PresentationRequest(
-      presentationInfo: .explicitTrigger(.stub()),
-      injections: .init(
-        isDebuggerLaunched: false,
-        isUserSubscribed: false,
-        isPaywallPresented: false
-      )
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    return dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      paywallOverrides: nil,
+      presentingViewController: nil,
+      isDebuggerLaunched: false,
+      isPaywallPresented: false
     )
   }
 }

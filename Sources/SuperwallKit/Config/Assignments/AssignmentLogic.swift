@@ -12,7 +12,12 @@ struct ConfirmableAssignment: Equatable {
   let variant: Experiment.Variant
 }
 
-enum AssignmentLogic {
+struct AssignmentLogic {
+  unowned let configManager: ConfigManager
+  unowned let storage: Storage
+  unowned let identityManager: IdentityManager
+  unowned let deviceHelper: DeviceHelper
+
   struct Outcome {
     var confirmableAssignment: ConfirmableAssignment?
     var triggerResult: TriggerResult
@@ -36,11 +41,9 @@ enum AssignmentLogic {
   ///   evaluated. Setting this to `true` prevents the rule's occurrence count from being incremented
   ///   in Core Data.
   /// - Returns: An assignment to confirm, if available.
-  static func evaluateRules(
+  func evaluateRules(
     forEvent event: EventData,
     triggers: [String: Trigger],
-    configManager: ConfigManager = .shared,
-    storage: Storage = .shared,
     isPreemptive: Bool
   ) -> Outcome {
     guard let trigger = triggers[event.name] else {
@@ -112,13 +115,18 @@ enum AssignmentLogic {
     }
   }
 
-  static func findMatchingRule(
+  func findMatchingRule(
     for event: EventData,
     withTrigger trigger: Trigger,
     isPreemptive: Bool
   ) -> TriggerRule? {
+    let expressionEvaluator = ExpressionEvaluator(
+      storage: storage,
+      identityManager: identityManager,
+      deviceHelper: deviceHelper
+    )
     for rule in trigger.rules {
-      if ExpressionEvaluator.evaluateExpression(
+      if expressionEvaluator.evaluateExpression(
         fromRule: rule,
         eventData: event,
         isPreemptive: isPreemptive

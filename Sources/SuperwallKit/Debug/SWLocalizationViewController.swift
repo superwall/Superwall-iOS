@@ -10,13 +10,13 @@ import UIKit
 
 final class SWLocalizationViewController: UITableViewController {
 	var rowModels: [LocalizationGrouping] {
-		return LocalizationManager.shared.localizationGroupings(forSearchTerm: searchBar.text)
+		return localizationManager.localizationGroupings(forSearchTerm: searchBar.text)
 	}
 
 	var completion: (String) -> Void
 
 	lazy var allRowModels: [LocalizationGrouping] = {
-		return LocalizationManager.shared.localizationGroupings
+		return localizationManager.localizationGroupings
 	}()
 
 	lazy var searchBar: UISearchBar = {
@@ -30,8 +30,14 @@ final class SWLocalizationViewController: UITableViewController {
 		return searchBar
 	}()
 
-	init(completion: @escaping (String) -> Void) {
+  private unowned let localizationManager: LocalizationManager
+
+	init(
+    localizationManager: LocalizationManager,
+    completion: @escaping (String) -> Void
+  ) {
 		self.completion = completion
+    self.localizationManager = localizationManager
 		super.init(nibName: nil, bundle: nil)
 	}
 

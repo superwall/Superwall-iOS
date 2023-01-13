@@ -4,7 +4,7 @@
 //
 //  Created by brian on 7/21/21.
 //
-// swiftlint:disable file_length trailing_closure implicitly_unwrapped_optional type_body_length
+// swiftlint:disable file_length implicitly_unwrapped_optional type_body_length
 
 import WebKit
 import UIKit
@@ -49,11 +49,14 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
   }
 
   /// The web view that the paywall is displayed in.
-  lazy var webView = SWWebView(delegate: self)
+  var webView: SWWebView!
 
   /// The paywall info
   var paywallInfo: PaywallInfo {
-    return paywall.getInfo(fromEvent: eventData)
+    return paywall.getInfo(
+      fromEvent: eventData,
+      sessionEventsManager: sessionEventsManager
+    )
   }
 
   /// The loading state of the paywall.
@@ -149,17 +152,41 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     )
   }()
 
+  private unowned let sessionEventsManager: SessionEventsManager
+  private unowned let storage: Storage
+  private unowned let deviceHelper: DeviceHelper
+  private unowned let paywallManager: PaywallManager
+
 	// MARK: - View Lifecycle
 
 	init(
     paywall: Paywall,
-    delegate: PaywallViewControllerDelegate? = nil
+    delegate: PaywallViewControllerDelegate? = nil,
+    deviceHelper: DeviceHelper,
+    sessionEventsManager: SessionEventsManager,
+    storage: Storage,
+    paywallManager: PaywallManager,
+    identityManager: IdentityManager
   ) {
-    self.cacheKey = PaywallCacheLogic.key(forIdentifier: paywall.identifier)
+    self.cacheKey = PaywallCacheLogic.key(
+      forIdentifier: paywall.identifier,
+      locale: deviceHelper.locale
+    )
+    self.deviceHelper = deviceHelper
 		self.delegate = delegate
+    self.sessionEventsManager = sessionEventsManager
+    self.storage = storage
     self.paywall = paywall
+    self.paywallManager = paywallManager
+
     presentationStyle = paywall.presentation.style
     super.init(nibName: nil, bundle: nil)
+    webView = SWWebView(
+      delegate: self,
+      deviceHelper: deviceHelper,
+      sessionEventsManager: sessionEventsManager,
+      identityManager: identityManager
+    )
     PaywallViewController.cache.insert(self)
     observeWillResignActive()
 	}
@@ -231,7 +258,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     }
 
     if #available(iOS 15.0, *),
-      !DeviceHelper.shared.isMac {
+      !deviceHelper.isMac {
       webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
     }
 
@@ -252,7 +279,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     if calledDismiss {
       return
     }
-    Superwall.shared.delegateAdapter.willDismissPaywall()
+    Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall()
 	}
 
 	override func viewDidDisappear(_ animated: Bool) {
@@ -269,7 +296,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     }
 
     if #available(iOS 15.0, *),
-      !DeviceHelper.shared.isMac {
+      !deviceHelper.isMac {
       webView.setAllMediaPlaybackSuspended(true) // ignore-xcode-12
     }
 
@@ -286,8 +313,8 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 	}
 
   nonisolated private func trackOpen() async {
-    await SessionEventsManager.shared.triggerSession.trackPaywallOpen()
-    Storage.shared.trackPaywallOpen()
+    await sessionEventsManager.triggerSession.trackPaywallOpen()
+    storage.trackPaywallOpen()
     let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
     await Superwall.track(trackedEvent)
   }
@@ -295,7 +322,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
   nonisolated private func trackClose() async {
     let trackedEvent = await InternalSuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
     await Superwall.track(trackedEvent)
-    await SessionEventsManager.shared.triggerSession.trackPaywallClose()
+    await sessionEventsManager.triggerSession.trackPaywallClose()
   }
 
   @objc private func pressedRefreshPaywall() {
@@ -319,8 +346,11 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
         state: .closed
       ),
       shouldSendDismissedState: true
-    ) {
-      PaywallManager.shared.removePaywallViewController(self)
+    ) { [weak self] in
+      guard let self = self else {
+        return
+      }
+      self.paywallManager.removePaywallViewController(self)
     }
   }
 
@@ -337,7 +367,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
         paywallInfo: paywallInfo
       )
       await Superwall.track(trackedEvent)
-      await SessionEventsManager.shared.triggerSession.trackWebviewLoad(
+      await sessionEventsManager.triggerSession.trackWebviewLoad(
         forPaywallId: paywallInfo.databaseId,
         state: .start
       )
@@ -604,41 +634,16 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     view.transform = .identity
     webView.scrollView.contentOffset = CGPoint.zero
 
-    Superwall.shared.delegateAdapter.willPresentPaywall()
+    Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall()
   }
 
   private func presentationDidFinish() {
     isPresented = true
-    Superwall.shared.delegateAdapter.didPresentPaywall()
+    Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall()
     Task(priority: .utility) {
       await trackOpen()
     }
     GameControllerManager.shared.setDelegate(self)
-    promptSuperwallDelegate()
-  }
-
-  private func promptSuperwallDelegate() {
-    let hasDelegate = Superwall.shared.delegateAdapter.hasDelegate
-
-    guard
-      presentedViewController == nil,
-      hasDelegate == false
-    else {
-      return
-    }
-    presentAlert(
-      title: "Almost Done...",
-      message: "Set Superwall.delegate to handle purchases, restores and more!",
-      actionTitle: "Docs →",
-      closeActionTitle: "Done",
-      action: {
-        if let url = URL(
-          string: "https://docs.superwall.com/docs/configuring-the-sdk#conforming-to-the-delegate"
-        ) {
-          UIApplication.shared.open(url)
-        }
-      }
-    )
   }
 
   @MainActor
@@ -716,10 +721,16 @@ extension PaywallViewController {
   ) {
     calledDismiss = true
     Superwall.shared.presentationItems.paywallInfo = paywallInfo
-    Superwall.shared.delegateAdapter.willDismissPaywall()
+    Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall()
 
     dismiss(animated: presentationIsAnimated) { [weak self] in
-      self?.didDismiss(
+      guard let self = self else {
+        return
+      }
+      if self.loadingState == .loadingPurchase {
+        self.loadingState = .ready
+      }
+      self.didDismiss(
         dismissalResult,
         shouldSendDismissedState: shouldSendDismissedState,
         completion: completion
@@ -735,7 +746,7 @@ extension PaywallViewController {
     isPresented = false
 
     GameControllerManager.shared.clearDelegate(self)
-    Superwall.shared.delegateAdapter.didDismissPaywall()
+    Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall()
 
     if shouldSendDismissedState {
       paywallStatePublisher?.send(.dismissed(dismissalResult))

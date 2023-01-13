@@ -121,24 +121,17 @@ public extension Superwall {
     paywallOverrides: PaywallOverrides? = nil,
     paywallHandler: ((PaywallState) -> Void)? = nil
   ) {
-    // swiftlint:disable implicitly_unwrapped_optional
-    var cancellable: AnyCancellable!
-    // swiftlint:enable implicitly_unwrapped_optional
-
-    cancellable = publisher(
+    publisher(
       forEvent: event,
       params: params,
       paywallOverrides: paywallOverrides
     )
-    .sink(
-      receiveCompletion: { _ in
-        self.shared.presentationItems.cancellables.remove(cancellable)
-      }, receiveValue: { state in
+    .subscribe(Subscribers.Sink(
+      receiveCompletion: { _ in },
+      receiveValue: { state in
         paywallHandler?(state)
       }
-    )
-
-    cancellable.store(in: &shared.presentationItems.cancellables)
+    ))
   }
 
   /// Returns a publisher that tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -168,27 +161,22 @@ public extension Superwall {
         canImplicitlyTriggerPaywall: false,
         customParameters: params ?? [:]
       )
-      let result = await track(trackableEvent)
-
-      let injections = await PresentationRequest.Injections(
-        isDebuggerLaunched: SWDebugManager.shared.isDebuggerLaunched,
-        isUserSubscribed: shared.isUserSubscribed,
-        isPaywallPresented: shared.isPaywallPresented
-      )
-      return (result, injections)
+      let trackResult = await track(trackableEvent)
+      let isPaywallPresented = await shared.isPaywallPresented
+      return (trackResult, isPaywallPresented)
     }
-    .flatMap { result, injections in
-      let presentationRequest = PresentationRequest(
-        presentationInfo: .explicitTrigger(result.data),
+    .flatMap { trackResult, isPaywallPresented in
+      let presentationRequest = shared.dependencyContainer.makePresentationRequest(
+        .explicitTrigger(trackResult.data),
         paywallOverrides: paywallOverrides,
-        injections: injections
+        isPaywallPresented: isPaywallPresented
       )
       return shared.internallyPresent(presentationRequest)
     }
     .eraseToAnyPublisher()
   }
 
-  /// Get the result of tracking an event.
+  /// Preemptively get the result of tracking an event.
   ///
   /// Use this function if you want to preemptively get the result of tracking
   /// an event.
@@ -218,7 +206,8 @@ public extension Superwall {
 
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: trackableEvent,
-      eventCreatedAt: eventCreatedAt
+      eventCreatedAt: eventCreatedAt,
+      appSessionId: shared.dependencyContainer.appSessionManager.appSession.id
     )
 
     let eventData = EventData(
@@ -227,20 +216,16 @@ public extension Superwall {
       createdAt: eventCreatedAt
     )
 
-    let injections = PresentationRequest.Injections(
+    let presentationRequest = shared.dependencyContainer.makePresentationRequest(
+      .explicitTrigger(eventData),
       isDebuggerLaunched: false,
-      isUserSubscribed: await shared.isUserSubscribed,
       isPaywallPresented: false
-    )
-    let presentationRequest = PresentationRequest(
-      presentationInfo: .explicitTrigger(eventData),
-      injections: injections
     )
 
     return await getTrackResult(for: presentationRequest)
   }
 
-  /// Get the result of tracking an event.
+  /// Preemptively get the result of tracking an event.
   ///
   /// Use this function if you want to preemptively get the result of tracking
   /// an event.

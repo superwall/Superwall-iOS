@@ -13,16 +13,21 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
     asyncMap { request in
       await trackResponseStarted(
         paywallId: request.responseIdentifiers.paywallId,
-        event: request.eventData
+        event: request.eventData,
+        sessionEventsManager: request.injections.sessionEventsManager
       )
       return request
     }
     .flatMap(getCachedResponseOrLoad)
     .asyncMap {
-      let paywallInfo = $0.paywall.getInfo(fromEvent: $0.request.eventData)
+      let paywallInfo = $0.paywall.getInfo(
+        fromEvent: $0.request.eventData,
+        sessionEventsManager: $0.request.injections.sessionEventsManager
+      )
       await trackResponseLoaded(
         paywallInfo,
-        event: $0.request.eventData
+        event: $0.request.eventData,
+        sessionEventsManager: $0.request.injections.sessionEventsManager
       )
       return $0
     }
@@ -39,16 +44,16 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
       var paywall: Paywall
 
       do {
-        if let staticPaywall = ConfigManager.shared.getStaticPaywall(withId: paywallId) {
+        if let staticPaywall = request.injections.configManager.getStaticPaywall(withId: paywallId) {
           paywall = staticPaywall
         } else {
-          paywall = try await Network.shared.getPaywall(
+          paywall = try await request.injections.network.getPaywall(
             withId: paywallId,
             fromEvent: event
           )
         }
       } catch {
-        await SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
+        await request.injections.sessionEventsManager.triggerSession.trackPaywallResponseLoad(
           forPaywallId: request.responseIdentifiers.paywallId,
           state: .fail
         )
@@ -71,9 +76,10 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
   // MARK: - Analytics
   private func trackResponseStarted(
     paywallId: String?,
-    event: EventData?
+    event: EventData?,
+    sessionEventsManager: SessionEventsManager
   ) async {
-    await SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
+    await sessionEventsManager.triggerSession.trackPaywallResponseLoad(
       forPaywallId: paywallId,
       state: .start
     )
@@ -86,7 +92,8 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
 
   private func trackResponseLoaded(
     _ paywallInfo: PaywallInfo,
-    event: EventData?
+    event: EventData?,
+    sessionEventsManager: SessionEventsManager
   ) async {
     let responseLoadEvent = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: paywallInfo),
@@ -94,7 +101,7 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
     )
     await Superwall.track(responseLoadEvent)
 
-    await SessionEventsManager.shared.triggerSession.trackPaywallResponseLoad(
+    await sessionEventsManager.triggerSession.trackPaywallResponseLoad(
       forPaywallId: paywallInfo.databaseId,
       state: .end
     )

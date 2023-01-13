@@ -9,50 +9,52 @@ import UIKit
 import Combine
 
 protocol SessionEventsDelegate: AnyObject {
-  var triggerSession: TriggerSessionManager { get }
+  // swiftlint:disable implicitly_unwrapped_optional
+  var triggerSession: TriggerSessionManager! { get }
+  // swiftlint:enable implicitly_unwrapped_optional
 
   func enqueue(_ triggerSession: TriggerSession) async
   func enqueue(_ triggerSessions: [TriggerSession]) async
-  func enqueue(_ transaction: TransactionModel) async
+  func enqueue(_ transaction: StoreTransaction) async
 }
 
 class SessionEventsManager {
-  /// The shared instance of the class
-  static let shared = SessionEventsManager()
-
+  // swiftlint:disable implicitly_unwrapped_optional
   /// The trigger session manager.
-  lazy var triggerSession = TriggerSessionManager(delegate: self)
+  var triggerSession: TriggerSessionManager!
+  // swiftlint:enable implicitly_unwrapped_optional
 
   /// A queue of trigger session events that get sent to the server.
   private let queue: SessionEnqueuable
 
-  /// Network class. Can be injected via init for testing.
-  private let network: Network
-
-  /// Storage class. Can be injected via init for testing.
-  private let storage: Storage
-
-  /// Storage class. Can be injected via init for testing.
-  private let configManager: ConfigManager
-
   private var cancellables: [AnyCancellable] = []
 
+  private unowned let network: Network
+  private unowned let storage: Storage
+  private unowned let configManager: ConfigManager
+  private let factory: TriggerSessionManagerFactory
 
-  /// Only instantiate this if you're testing. Otherwise use `SessionEvents.shared`.
+  /// Remember to call postInit
   init(
-    queue: SessionEnqueuable = SessionEventsQueue(),
-    storage: Storage = .shared,
-    network: Network = .shared,
-    configManager: ConfigManager = .shared
+    queue: SessionEnqueuable,
+    storage: Storage,
+    network: Network,
+    configManager: ConfigManager,
+    factory: TriggerSessionManagerFactory
   ) {
     self.queue = queue
     self.storage = storage
     self.network = network
     self.configManager = configManager
+    self.factory = factory
 
     Task {
       await postCachedSessionEvents()
     }
+  }
+
+  func postInit() {
+    self.triggerSession = factory.makeTriggerSessionManager()
   }
 
   /// Gets the last 20 cached trigger sessions and transactions from the last time the app was terminated,
@@ -81,9 +83,7 @@ class SessionEventsManager {
 
   /// This only updates the app session in the trigger sessions.
   /// For transactions, the latest app session id is grabbed when the next transaction occurs.
-  func updateAppSession(
-    _ appSession: AppSession = AppSessionManager.shared.appSession
-  ) async {
+  func updateAppSession(_ appSession: AppSession) async {
     await triggerSession.updateAppSession(to: appSession)
   }
 }
@@ -104,7 +104,7 @@ extension SessionEventsManager: SessionEventsDelegate {
     await queue.enqueue(triggerSessions)
   }
 
-  func enqueue(_ transaction: TransactionModel) async {
+  func enqueue(_ transaction: StoreTransaction) async {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {
       return
     }

@@ -8,6 +8,7 @@
 import SuperwallKit
 import StoreKit
 import RevenueCat
+import Combine
 
 final class PaywallManager: NSObject {
   static let shared = PaywallManager()
@@ -25,8 +26,7 @@ final class PaywallManager: NSObject {
   private static let revenueCatApiKey = "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql"
   private static let superwallApiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
 
-  #warning("Replace with your own RevenueCat entitlement:")
-  private let proEntitlement = "pro"
+  private var cancellables: Set<AnyCancellable> = []
 
   override init() {
     isSubscribed = UserDefaults.standard.bool(forKey: kIsSubscribed)
@@ -37,13 +37,41 @@ final class PaywallManager: NSObject {
   ///
   /// Call this on `application(_:didFinishLaunchingWithOptions:)`
   static func configure() {
-    Purchases.configure(withAPIKey: revenueCatApiKey)
+    Purchases.configure(
+      with: .init(withAPIKey: revenueCatApiKey)
+        .with(usesStoreKit2IfAvailable: false)
+    )
     Purchases.shared.delegate = shared
 
-    Superwall.configure(
-      apiKey: superwallApiKey,
-      delegate: shared
-    )
+    // We retrieve the subscription status from RevenueCat before
+    // configuring Superwall to prevent session_start events from
+    // incorrectly firing due to an incorrect subscription status.
+    Purchases.shared.getCustomerInfo { customerInfo, _ in
+      if let customerInfo {
+        shared.updateSubscriptionStatus(using: customerInfo)
+      }
+
+      Superwall.configure(
+        apiKey: superwallApiKey,
+        delegate: shared
+      )
+
+      shared.notifyWhenConfigured()
+    }
+  }
+
+  private func notifyWhenConfigured() {
+    Superwall.shared.$isConfigured
+      .receive(on: DispatchQueue.main)
+      .sink { isConfigured in
+        if isConfigured {
+          NotificationCenter.default.post(
+            name: Notification.Name("SuperwallDidConfigure"),
+            object: nil
+          )
+        }
+      }
+      .store(in: &cancellables)
   }
 
   /// Logs the user in to both RevenueCat and Superwall with the specified `userId`.
@@ -97,47 +125,28 @@ final class PaywallManager: NSObject {
   static func setName(to name: String) {
     Superwall.setUserAttributes(["firstName": name])
   }
-}
-
-// MARK: - Purchases Delegate
-extension PaywallManager: PurchasesDelegate {
-  /// Handles updated CustomerInfo received from RevenueCat.
-  func purchases(_ purchases: Purchases, receivedUpdated customerInfo: CustomerInfo) {
-    updateSubscriptionStatus(using: customerInfo)
-  }
-
-  /// Updates the subscription status in response to customer info received from RevenueCat.
-  private func updateSubscriptionStatus(using customerInfo: CustomerInfo) {
-    isSubscribed = customerInfo.entitlements.active[proEntitlement] != nil
-  }
-
-  /// Restores purchases and updates subscription status.
-  ///
-  /// - Returns: A boolean indicating whether the user restored a purchase or not.
-  private func restore() async -> Bool {
-    do {
-      let customerInfo = try await Purchases.shared.restorePurchases()
-      updateSubscriptionStatus(using: customerInfo)
-      return customerInfo.entitlements.active[proEntitlement] != nil
-    } catch {
-      return false
-    }
-  }
 
   /// Purchases a product with RevenueCat.
-  ///
   /// - Returns: A boolean indicating whether the user cancelled or not.
   private func purchase(_ product: SKProduct) async throws -> Bool {
-    let storeProduct = StoreProduct(sk1Product: product)
+    let storeProduct = RevenueCat.StoreProduct(sk1Product: product)
     let (_, customerInfo, userCancelled) = try await Purchases.shared.purchase(product: storeProduct)
     updateSubscriptionStatus(using: customerInfo)
     return userCancelled
   }
 }
 
-// MARK: - Superwall Delegate
-extension PaywallManager: SuperwallDelegate {
-  /// Purchase a product from a paywall.
+// MARK: - SubscriptionController
+extension PaywallManager: SubscriptionController {
+  /// Restore purchases
+  func restorePurchases() async -> Bool {
+    return await restore()
+  }
+
+  func isUserSubscribed() -> Bool {
+    return isSubscribed
+  }
+
   func purchase(product: SKProduct) async -> PurchaseResult {
     do {
       let userCancelled = try await purchase(product)
@@ -153,18 +162,40 @@ extension PaywallManager: SuperwallDelegate {
       return .failed(error)
     }
   }
+}
 
-  /// Restore purchases
-  func restorePurchases() async -> Bool {
-    return await restore()
+// MARK: - Purchases Delegate
+extension PaywallManager: PurchasesDelegate {
+  /// Handles updated CustomerInfo received from RevenueCat.
+  func purchases(_ purchases: Purchases, receivedUpdated customerInfo: CustomerInfo) {
+    updateSubscriptionStatus(using: customerInfo)
   }
 
-  /// Lets Superwall know whether the user is subscribed or not.
-  func isUserSubscribed() -> Bool {
-    return isSubscribed
+  /// Updates the subscription status in response to customer info received from RevenueCat.
+  private func updateSubscriptionStatus(using customerInfo: CustomerInfo) {
+    isSubscribed = !customerInfo.entitlements.active.isEmpty
   }
 
-  func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
+  /// Restores purchases and updates subscription status.
+  ///
+  /// - Returns: A boolean indicating whether the user restored a purchase or not.
+  private func restore() async -> Bool {
+    do {
+      _ = try await Purchases.shared.restorePurchases()
+      return true
+    } catch {
+      return false
+    }
+  }
+}
+
+// MARK: - Superwall Delegate
+extension PaywallManager: SuperwallDelegate {
+  func subscriptionController() -> SubscriptionController? {
+    return self
+  }
+
+  func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {
     print("analytics event called", info.event.description)
 
     // Uncomment if you want to get a dictionary of params associated with the event:

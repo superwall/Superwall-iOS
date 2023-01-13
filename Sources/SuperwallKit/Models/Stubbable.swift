@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Creates a stub of a class to be used in tests only.
 protocol Stubbable: KeyPathWritable {
   static func stub() -> Self
 }

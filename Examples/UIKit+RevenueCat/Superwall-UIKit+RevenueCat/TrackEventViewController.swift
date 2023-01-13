@@ -37,7 +37,7 @@ final class TrackEventViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     subscribedCancellable = PaywallManager.shared.$isSubscribed
-      .receive(on: RunLoop.main)
+      .receive(on: DispatchQueue.main)
       .sink { [weak self] isSubscribed in
         if isSubscribed {
           self?.subscriptionLabel.text = "You currently have an active subscription. Therefore, the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions.\n\nYou will need to wait a few minutes until the subscription expires on RevenueCat's side before trying again."

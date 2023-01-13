@@ -42,7 +42,7 @@
             }
           ],
           "productID" : "sk.superwall.annual.89.99_7",
-          "recurringSubscriptionPeriod" : "P1Y",
+          "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "sw_8999_yr",
           "subscriptionGroupID" : "CC896C93",
           "type" : "RecurringSubscription"

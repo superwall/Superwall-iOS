@@ -9,9 +9,22 @@ import Foundation
 import Combine
 
 actor PaywallRequestManager {
-  static let shared = PaywallRequestManager()
+  unowned let storeKitManager: StoreKitManager
+
+  // swiftlint:disable implicitly_unwrapped_optional
+  unowned var deviceHelper: DeviceHelper!
+  // swiftlint:enable implicitly_unwrapped_optional
+
   private var activeTasks: [String: Task<Paywall, Error>] = [:]
   private var paywallsByHash: [String: Paywall] = [:]
+
+  init(storeKitManager: StoreKitManager) {
+    self.storeKitManager = storeKitManager
+  }
+
+  func postInit(deviceHelper: DeviceHelper) {
+    self.deviceHelper = deviceHelper
+  }
 
   ///  Gets a paywall from a given request.
   ///
@@ -23,17 +36,24 @@ actor PaywallRequestManager {
   func getPaywall(from request: PaywallRequest) async throws -> Paywall {
     let requestHash = PaywallLogic.requestHash(
       identifier: request.responseIdentifiers.paywallId,
-      event: request.eventData
+      event: request.eventData,
+      locale: deviceHelper.locale
     )
 
-    let notSubstitutingProducts = request.substituteProducts == nil
-    let debuggerNotLaunched = await !SWDebugManager.shared.isDebuggerLaunched
+    let notSubstitutingProducts = request.overrides.products == nil
+    let debuggerNotLaunched = !request.injections.debugManager.isDebuggerLaunched
     let shouldUseCache = notSubstitutingProducts && debuggerNotLaunched
 
-    if var response = paywallsByHash[requestHash],
+    if var paywall = paywallsByHash[requestHash],
       shouldUseCache {
-      response.experiment = request.responseIdentifiers.experiment
-      return response
+      // Calculate whether there's a free trial available
+      if let primaryProduct = paywall.products.first(where: { $0.type == .primary }),
+        let storeProduct = storeKitManager.productsById[primaryProduct.id] {
+        let isFreeTrialAvailable = storeKitManager.isFreeTrialAvailable(for: storeProduct)
+        paywall.isFreeTrialAvailable = isFreeTrialAvailable
+      }
+      paywall.experiment = request.responseIdentifiers.experiment
+      return paywall
     }
 
     if let existingTask = activeTasks[requestHash] {

@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 28/04/2022.
 //
+// swiftlint:disable line_length
 
 import Foundation
 import StoreKit
@@ -38,7 +39,7 @@ extension TriggerSession.Transaction {
       let priceDescription: String
 
       /// Equivalent to SKProductDiscount.Type
-      let type: SWProductDiscount.DiscountType?
+      let type: StoreProductDiscount.DiscountType
     }
     var discount: Discount?
 
@@ -46,14 +47,14 @@ extension TriggerSession.Transaction {
     let introductoryRedeemable: Bool
 
     init(
-      from product: SKProduct,
+      from product: StoreProduct,
       index: Int
     ) {
       self.index = index
       self.identifier = product.productIdentifier
-      self.language = product.priceLocale.languageCode
-      self.currency = product.priceLocale.currencySymbol
-      self.region = product.priceLocale.regionCode
+      self.language = product.languageCode
+      self.currency = product.currencySymbol
+      self.region = product.regionCode
       self.price = .init(
         description: product.price.description,
         daily: product.dailyPrice,
@@ -62,36 +63,27 @@ extension TriggerSession.Transaction {
         yearly: product.yearlyPrice
       )
 
-      let swProduct = SWProduct(product: product)
-
-
-      if let subscriptionPeriod = swProduct.subscriptionPeriod {
+      if let subscriptionPeriod = product.subscriptionPeriod {
         self.period = .init(
           unit: subscriptionPeriod.unit,
-          count: subscriptionPeriod.numberOfUnits,
+          count: subscriptionPeriod.value,
           days: Int(subscriptionPeriod.daysPerUnit)
         )
       }
 
-      if let introductoryPrice = swProduct.introductoryPrice {
+      if let introductoryPrice = product.introductoryDiscount {
         let trialSubscriptionPeriod = introductoryPrice.subscriptionPeriod
-
-        let trialPrice = SWPriceTemplateVariable(
-          value: introductoryPrice.price,
-          locale: product.priceLocale,
-          period: trialSubscriptionPeriod
-        )
 
         self.trial = .init(
           period: .init(
             unit: trialSubscriptionPeriod.unit,
-            count: trialSubscriptionPeriod.numberOfUnits,
+            count: trialSubscriptionPeriod.value,
             days: Int(trialSubscriptionPeriod.daysPerUnit)
           ),
-          dailyPrice: trialPrice.daily?.raw?.value.description,
-          weeklyPrice: trialPrice.weekly?.raw?.value.description,
-          monthlyPrice: trialPrice.monthly?.raw?.value.description,
-          yearlyPrice: trialPrice.yearly?.raw?.value.description
+          dailyPrice: trialSubscriptionPeriod.pricePerDay(withTotalPrice: introductoryPrice.price).description,
+          weeklyPrice: trialSubscriptionPeriod.pricePerWeek(withTotalPrice: introductoryPrice.price).description,
+          monthlyPrice: trialSubscriptionPeriod.pricePerMonth(withTotalPrice: introductoryPrice.price).description,
+          yearlyPrice: trialSubscriptionPeriod.pricePerYear(withTotalPrice: introductoryPrice.price).description
         )
 
         self.discount = .init(
@@ -99,7 +91,7 @@ extension TriggerSession.Transaction {
           type: introductoryPrice.type
         )
 
-        self.introductoryRedeemable = StoreKitManager.shared.isFreeTrialAvailable(for: product)
+        self.introductoryRedeemable = Superwall.shared.dependencyContainer.storeKitManager.isFreeTrialAvailable(for: product)
         self.hasIntroductoryOffer = true
       } else {
         self.hasIntroductoryOffer = false
@@ -117,7 +109,7 @@ extension TriggerSession.Transaction {
       hasIntroductoryOffer = try values.decode(Bool.self, forKey: .hasIntroductoryOffer)
       introductoryRedeemable = try values.decode(Bool.self, forKey: .introductoryRedeemable)
 
-      let unit = try values.decodeIfPresent(SWProductSubscriptionPeriod.Unit.self, forKey: .periodUnit)
+      let unit = try values.decodeIfPresent(SubscriptionPeriod.Unit.self, forKey: .periodUnit)
       let count = try values.decodeIfPresent(Int.self, forKey: .periodCount)
       let days = try values.decodeIfPresent(Int.self, forKey: .periodDays)
 
@@ -128,7 +120,7 @@ extension TriggerSession.Transaction {
       }
 
       let discountPrice = try values.decodeIfPresent(String.self, forKey: .discountPrice)
-      let discountType = try values.decodeIfPresent(SWProductDiscount.DiscountType.self, forKey: .discountType)
+      let discountType = try values.decodeIfPresent(StoreProductDiscount.DiscountType.self, forKey: .discountType)
 
       if let discountPrice = discountPrice,
         let discountType = discountType {

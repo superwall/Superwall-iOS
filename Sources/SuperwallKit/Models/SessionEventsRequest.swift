@@ -9,5 +9,5 @@ import Foundation
 
 struct SessionEventsRequest: Encodable {
   var triggerSessions: [TriggerSession]
-  var transactions: [TransactionModel]
+  var transactions: [StoreTransaction]
 }

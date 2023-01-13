@@ -7,10 +7,9 @@
 
 import UIKit
 import Foundation
-import StoreKit
 
 final class SWConsoleViewController: UIViewController {
-  var products: [SKProduct] = []
+  var products: [StoreProduct] = []
   var tableViewCellData: [(String, String)] = []
 
   lazy var productPicker: UIPickerView = {
@@ -36,7 +35,7 @@ final class SWConsoleViewController: UIViewController {
     return tableView
   }()
 
-  init(products: [SKProduct]) {
+  init(products: [StoreProduct]) {
     super.init(nibName: nil, bundle: nil)
     self.products = products
   }

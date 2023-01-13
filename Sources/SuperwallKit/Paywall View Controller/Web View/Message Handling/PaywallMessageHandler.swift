@@ -13,7 +13,9 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   var eventData: EventData? { get }
   var paywall: Paywall { get set }
   var paywallInfo: PaywallInfo { get }
-  var webView: SWWebView { get }
+  // swiftlint:disable implicitly_unwrapped_optional
+  var webView: SWWebView! { get }
+  // swiftlint:enable implicitly_unwrapped_optional
   var loadingState: PaywallLoadingState { get set }
   var isActive: Bool { get }
 
@@ -26,9 +28,20 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
 @MainActor
 final class PaywallMessageHandler: WebEventDelegate {
   weak var delegate: PaywallMessageHandlerDelegate?
+  private unowned let sessionEventsManager: SessionEventsManager
+  private unowned let deviceHelper: DeviceHelper
+  private unowned let identityManager: IdentityManager
 
-  init(delegate: PaywallMessageHandlerDelegate?) {
+  init(
+    delegate: PaywallMessageHandlerDelegate?,
+    sessionEventsManager: SessionEventsManager,
+    deviceHelper: DeviceHelper,
+    identityManager: IdentityManager
+  ) {
     self.delegate = delegate
+    self.sessionEventsManager = sessionEventsManager
+    self.deviceHelper = deviceHelper
+    self.identityManager = identityManager
   }
 
   func handle(_ message: PaywallMessage) {
@@ -36,8 +49,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       logLevel: .debug,
       scope: .paywallViewController,
       message: "Handle Message",
-      info: ["message": message],
-      error: nil
+      info: ["message": message]
     )
 
     guard let paywall = delegate?.paywall else {
@@ -78,7 +90,9 @@ final class PaywallMessageHandler: WebEventDelegate {
   nonisolated private func passTemplatesToWebView(from paywall: Paywall) async {
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
-      withParams: delegate?.eventData?.parameters
+      withParams: delegate?.eventData?.parameters,
+      identityManager: identityManager,
+      deviceHelper: deviceHelper
     )
 
     let templateScript = """
@@ -125,7 +139,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
       await Superwall.track(trackedEvent)
 
-      await SessionEventsManager.shared.triggerSession.trackWebviewLoad(
+      await sessionEventsManager.triggerSession.trackWebviewLoad(
         forPaywallId: paywallInfo.databaseId,
         state: .end
       )
@@ -134,7 +148,9 @@ final class PaywallMessageHandler: WebEventDelegate {
     let htmlSubstitutions = paywall.htmlSubstitutions
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
-      withParams: delegate?.eventData?.parameters
+      withParams: delegate?.eventData?.parameters,
+      identityManager: identityManager,
+      deviceHelper: deviceHelper
     )
     let scriptSrc = """
       window.paywall.accept64('\(templates)');

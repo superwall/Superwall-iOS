@@ -21,7 +21,7 @@ struct SWProductTemplateVariable: Encodable {
   var currencyCode: String?
   var currencySymbol: String?
 
-  init(product: SKProduct) {
+  init(product: SK1Product) {
     self.locale = product.priceLocale.identifier
     self.languageCode = product.priceLocale.languageCode
     self.currencyCode = product.priceLocale.currencyCode

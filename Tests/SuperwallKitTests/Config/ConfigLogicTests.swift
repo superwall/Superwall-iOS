@@ -484,7 +484,7 @@ final class ConfigLogicTests: XCTestCase {
     let response = ConfigLogic.getStaticPaywall(
       withId: nil,
       config: .stub(),
-      deviceHelper: .shared
+      deviceLocale: "en_GB"
     )
     XCTAssertNil(response)
   }
@@ -493,29 +493,26 @@ final class ConfigLogicTests: XCTestCase {
     let response = ConfigLogic.getStaticPaywall(
       withId: "abc",
       config: nil,
-      deviceHelper: .shared
+      deviceLocale: "en_GB"
     )
     XCTAssertNil(response)
   }
 
   func test_getStaticPaywall_deviceLocaleSpecifiedInConfig() {
     let locale = "en_GB"
-    let deviceHelper = DeviceHelperMock()
-    deviceHelper.internalLocale = locale
-
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let response = ConfigLogic.getStaticPaywall(
       withId: "abc",
       config: .stub()
         .setting(\.locales, to: [locale]),
-      deviceHelper: deviceHelper
+      deviceLocale: locale
     )
     XCTAssertNil(response)
   }
 
   func test_getStaticPaywall_shortLocaleContainsEn() {
     let paywallId = "abc"
-    let deviceHelper = DeviceHelperMock()
-    deviceHelper.internalLocale = "en_GB"
+    let locale = "en_GB"
     let config: Config = .stub()
       .setting(\.locales, to: ["de_DE"])
       .setting(\.paywalls, to: [
@@ -527,7 +524,7 @@ final class ConfigLogicTests: XCTestCase {
     let response = ConfigLogic.getStaticPaywall(
       withId: paywallId,
       config: config,
-      deviceHelper: deviceHelper
+      deviceLocale: locale
     )
 
     XCTAssertEqual(response, config.paywalls[1])
@@ -535,8 +532,7 @@ final class ConfigLogicTests: XCTestCase {
 
   func test_getStaticPaywall_shortLocaleNotContainedInConfig() {
     let paywallId = "abc"
-    let deviceHelper = DeviceHelperMock()
-    deviceHelper.internalLocale = "de_DE"
+    let locale = "de_DE"
     let config: Config = .stub()
       .setting(\.locales, to: [])
       .setting(\.paywalls, to: [
@@ -548,7 +544,7 @@ final class ConfigLogicTests: XCTestCase {
     let response = ConfigLogic.getStaticPaywall(
       withId: paywallId,
       config: config,
-      deviceHelper: deviceHelper
+      deviceLocale: locale
     )
 
     XCTAssertEqual(response, config.paywalls[1])
@@ -556,8 +552,7 @@ final class ConfigLogicTests: XCTestCase {
 
   func test_getStaticPaywallResponse_shortLocaleContainedInConfig() {
     let paywallId = "abc"
-    let deviceHelper = DeviceHelperMock()
-    deviceHelper.internalLocale = "de_DE"
+    let locale = "de_DE"
     let config: Config = .stub()
       .setting(\.locales, to: ["de"])
       .setting(\.paywalls, to: [
@@ -569,7 +564,7 @@ final class ConfigLogicTests: XCTestCase {
     let response = ConfigLogic.getStaticPaywall(
       withId: paywallId,
       config: config,
-      deviceHelper: deviceHelper
+      deviceLocale: locale
     )
 
     XCTAssertNil(response)

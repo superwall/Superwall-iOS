@@ -218,7 +218,7 @@ enum ConfigLogic {
   static func getStaticPaywall(
     withId paywallId: String?,
     config: Config?,
-    deviceHelper: DeviceHelper = .shared
+    deviceLocale: String
   ) -> Paywall? {
     guard let paywallId = paywallId else {
       return nil
@@ -228,10 +228,10 @@ enum ConfigLogic {
     }
 
     // If the available locales contains the exact device locale, load the response the old way.
-    if config.locales.contains(deviceHelper.locale) {
+    if config.locales.contains(deviceLocale) {
       return nil
     } else {
-      guard let shortLocaleElement = deviceHelper.locale.split(separator: "_").first else {
+      guard let shortLocaleElement = deviceLocale.split(separator: "_").first else {
         return nil
       }
       let shortLocale = String(shortLocaleElement)

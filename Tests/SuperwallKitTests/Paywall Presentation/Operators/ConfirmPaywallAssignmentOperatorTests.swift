@@ -14,7 +14,14 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
 
   @MainActor
   func test_confirmPaywallAssignment_debuggerLaunched() async {
-    let configManager = ConfigManagerMock()
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let configManager = ConfigManagerMock(
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      paywallManager: dependencyContainer.paywallManager,
+      factory: dependencyContainer
+    )
     let request = PresentationRequest.stub()
       .setting(\.injections.isDebuggerLaunched, to: true)
       .setting(\.injections.configManager, to: configManager)
@@ -22,7 +29,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     let input = PresentablePipelineOutput(
       request: request,
       debugInfo: [:],
-      paywallViewController: PaywallViewController(paywall: .stub()),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
       presenter: UIViewController(),
       confirmableAssignment: ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
     )
@@ -47,7 +54,14 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
 
   @MainActor
   func test_confirmPaywallAssignment_noAssignment() async {
-    let configManager = ConfigManagerMock()
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let configManager = ConfigManagerMock(
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      paywallManager: dependencyContainer.paywallManager,
+      factory: dependencyContainer
+    )
     let request = PresentationRequest.stub()
       .setting(\.injections.isDebuggerLaunched, to: false)
       .setting(\.injections.configManager, to: configManager)
@@ -55,7 +69,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     let input = PresentablePipelineOutput(
       request: request,
       debugInfo: [:],
-      paywallViewController: PaywallViewController(paywall: .stub()),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
       presenter: UIViewController(),
       confirmableAssignment: nil
     )
@@ -80,7 +94,14 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
 
   @MainActor
   func test_confirmPaywallAssignment_confirmAssignment() async {
-    let configManager = ConfigManagerMock()
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let configManager = ConfigManagerMock(
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      paywallManager: dependencyContainer.paywallManager,
+      factory: dependencyContainer
+    )
     let request = PresentationRequest.stub()
       .setting(\.injections.isDebuggerLaunched, to: false)
       .setting(\.injections.configManager, to: configManager)
@@ -88,7 +109,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     let input = PresentablePipelineOutput(
       request: request,
       debugInfo: [:],
-      paywallViewController: PaywallViewController(paywall: .stub()),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
       presenter: UIViewController(),
       confirmableAssignment: ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
     )

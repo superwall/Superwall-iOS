@@ -8,8 +8,14 @@
 import Foundation
 
 enum SearchPathDirectory {
+  /// Saves to the caches directory, which can be cleared by
+  /// the system at any time.
   case cache
+
+  /// Specific to the user.
   case userSpecificDocuments
+
+  /// Specific to the app as a whole.
   case appSpecificDocuments
 }
 
@@ -69,10 +75,10 @@ enum TriggerSessions: Storable {
 
 enum Transactions: Storable {
   static var key: String {
-    "store.transactions"
+    "store.transactions.v2"
   }
   static var directory: SearchPathDirectory = .cache
-  typealias Value = [TransactionModel]
+  typealias Value = [StoreTransaction]
 }
 
 enum Version: Storable {
@@ -113,4 +119,12 @@ enum SdkVersion: Storable {
   }
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = String
+}
+
+enum SubscriptionStatus: Storable {
+  static var key: String {
+    "store.subscriptionStatus"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
 }

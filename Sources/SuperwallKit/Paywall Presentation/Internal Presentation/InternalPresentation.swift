@@ -25,11 +25,7 @@ extension Superwall {
     let paywallStatePublisher = PassthroughSubject<PaywallState, Never>()
     let presentationSubject = PresentationSubject(request)
 
-    // swiftlint:disable implicitly_unwrapped_optional
-    var presentationPublisher: AnyCancellable!
-    // swiftlint:enable implicitly_unwrapped_optional
-
-    presentationPublisher = presentationSubject
+    presentationSubject
       .eraseToAnyPublisher()
       .awaitIdentity()
       .logPresentation("Called Superwall.track")
@@ -43,18 +39,13 @@ extension Superwall {
       .confirmPaywallAssignment()
       .presentPaywall(paywallStatePublisher)
       .storePresentationObjects(presentationSubject)
-      .sink(
-        receiveCompletion: { [weak self] _ in
-          // When the pipeline completes, remove its reference.
-          self?.presentationItems.cancellables.remove(presentationPublisher)
-        },
+      .subscribe(Subscribers.Sink(
+        receiveCompletion: { _ in },
         receiveValue: { _ in }
-      )
-
-    presentationPublisher.store(in: &presentationItems.cancellables)
+      ))
 
     return paywallStatePublisher
-      .receive(on: RunLoop.main)
+      .receive(on: DispatchQueue.main)
       .eraseToAnyPublisher()
   }
 
@@ -70,12 +61,12 @@ extension Superwall {
     // Remove the currently presenting paywall from cache.
     await MainActor.run {
       if let presentingPaywallIdentifier = Superwall.shared.paywallViewController?.paywall.identifier {
-        PaywallManager.shared.removePaywall(withIdentifier: presentingPaywallIdentifier)
+        dependencyContainer.paywallManager.removePaywall(withIdentifier: presentingPaywallIdentifier)
       }
     }
 
     // Resend both the identity and request again to run the presentation pipeline again.
-    IdentityManager.shared.resendIdentity()
+    dependencyContainer.identityManager.resendIdentity()
     lastPresentationItems.subject.send(lastPresentationItems.request)
   }
 

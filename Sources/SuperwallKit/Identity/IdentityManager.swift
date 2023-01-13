@@ -9,7 +9,6 @@ import Foundation
 import Combine
 
 class IdentityManager {
-  static let shared = IdentityManager()
   var aliasId: String {
     didSet {
       saveIds()
@@ -36,21 +35,23 @@ class IdentityManager {
 
   /// A Publisher that only emits when `identitySubject` is `true`. When `true`,
   /// it means the SDK is ready to fire triggers.
-  static var hasIdentity: AnyPublisher<Bool, Error> {
-    shared.identitySubject
+  var hasIdentity: AnyPublisher<Bool, Error> {
+    identitySubject
       .filter { $0 == true }
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
   }
 
-  private let storage: Storage
-  private let configManager: ConfigManager
+  private unowned let deviceHelper: DeviceHelper
+  private unowned let storage: Storage
+  private unowned let configManager: ConfigManager
 
-  /// Only use init for testing purposes. Otherwise use `shared`.
   init(
-    storage: Storage = .shared,
-    configManager: ConfigManager = .shared
+    deviceHelper: DeviceHelper,
+    storage: Storage,
+    configManager: ConfigManager
   ) {
+    self.deviceHelper = deviceHelper
     self.storage = storage
     self.configManager = configManager
     self.appUserId = storage.get(AppUserId.self)
@@ -138,7 +139,8 @@ class IdentityManager {
   func mergeUserAttributes(_ newUserAttributes: [String: Any]) {
     let mergedAttributes = IdentityLogic.mergeAttributes(
       newUserAttributes,
-      with: userAttributes
+      with: userAttributes,
+      appInstalledAtString: deviceHelper.appInstalledAtString
     )
     storage.save(mergedAttributes, forType: UserAttributes.self)
     userAttributes = mergedAttributes

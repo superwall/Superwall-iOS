@@ -11,12 +11,15 @@ import XCTest
 @testable import SuperwallKit
 
 final class ExpressionEvaluatorTests: XCTestCase {
-  override class func setUp() {
-    Storage.shared.reset()
-  }
-
   func testExpressionMatchesAll() {
-    let result = ExpressionEvaluator.evaluateExpression(
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    dependencyContainer.storage.reset()
+    let evaluator = ExpressionEvaluator(
+      storage: dependencyContainer.storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    let result = evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: nil)
         .setting(\.expressionJs, to: nil),
@@ -29,8 +32,15 @@ final class ExpressionEvaluatorTests: XCTestCase {
   // MARK: - Expression
 
   func testExpressionEvaluator_expressionTrue() {
-    IdentityManager.shared.userAttributes = ["a": "b"]
-    let result = ExpressionEvaluator.evaluateExpression(
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    dependencyContainer.storage.reset()
+    let evaluator = ExpressionEvaluator(
+      storage: dependencyContainer.storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    dependencyContainer.identityManager.userAttributes = ["a": "b"]
+    let result = evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "user.a == \"b\""),
       eventData: EventData(name: "ss", parameters: [:], createdAt: Date()),
@@ -40,8 +50,15 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionParams() {
-    IdentityManager.shared.userAttributes = [:]
-    let result = ExpressionEvaluator.evaluateExpression(
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    dependencyContainer.storage.reset()
+    let evaluator = ExpressionEvaluator(
+      storage: dependencyContainer.storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    dependencyContainer.identityManager.userAttributes = [:]
+    let result = evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "params.a == \"b\""),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
@@ -51,8 +68,15 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionDeviceTrue() {
-    IdentityManager.shared.userAttributes = [:]
-    let result = ExpressionEvaluator.evaluateExpression(
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    dependencyContainer.storage.reset()
+    let evaluator = ExpressionEvaluator(
+      storage: dependencyContainer.storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    dependencyContainer.identityManager.userAttributes = [:]
+    let result = evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "device.platform == \"iOS\""),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
@@ -62,8 +86,15 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionDeviceFalse() {
-    IdentityManager.shared.userAttributes = [:]
-    let result = ExpressionEvaluator.evaluateExpression(
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    dependencyContainer.storage.reset()
+    let evaluator = ExpressionEvaluator(
+      storage: dependencyContainer.storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    dependencyContainer.identityManager.userAttributes = [:]
+    let result = evaluator.evaluateExpression(
         fromRule: .stub()
           .setting(\.expression, to: "device.platform == \"Android\""),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
@@ -73,8 +104,15 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionFalse() {
-    IdentityManager.shared.userAttributes = [:]
-    let result = ExpressionEvaluator.evaluateExpression(
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    dependencyContainer.storage.reset()
+    let evaluator = ExpressionEvaluator(
+      storage: dependencyContainer.storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    dependencyContainer.identityManager.userAttributes = [:]
+    let result = evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "a == \"b\""),
       eventData: .stub(),
@@ -100,7 +138,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
   // MARK: - ExpressionJS
 
   func testExpressionEvaluator_expressionJSTrue() {
-    let result = ExpressionEvaluator.evaluateExpression(
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let evaluator = ExpressionEvaluator(
+      storage: dependencyContainer.storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    let result = evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(){ return true }; superwallEvaluator"),
       eventData: .stub(),
@@ -110,7 +154,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionJSValues_true() {
-    let result = ExpressionEvaluator.evaluateExpression(
+      let dependencyContainer = DependencyContainer(apiKey: "")
+      let evaluator = ExpressionEvaluator(
+        storage: dependencyContainer.storage,
+        identityManager: dependencyContainer.identityManager,
+        deviceHelper: dependencyContainer.deviceHelper
+      )
+    let result = evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator"),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
@@ -120,7 +170,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionJSValues_false() {
-    let result = ExpressionEvaluator.evaluateExpression(
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let evaluator = ExpressionEvaluator(
+      storage: dependencyContainer.storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    let result = evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator"),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
@@ -130,7 +186,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionJSNumbers() {
-    let result = ExpressionEvaluator.evaluateExpression(
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let evaluator = ExpressionEvaluator(
+      storage: dependencyContainer.storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    let result = evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(values) { return 1 == 1 }; superwallEvaluator"),
       eventData: .stub(),
@@ -154,7 +216,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }*/
 
   func testExpressionEvaluator_expressionJSEmpty() {
-    let result = ExpressionEvaluator.evaluateExpression(
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    let evaluator = ExpressionEvaluator(
+      storage: dependencyContainer.storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    let result = evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: ""),
       eventData: .stub(),

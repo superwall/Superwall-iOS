@@ -11,9 +11,13 @@ import Combine
 
 final class AwaitIdentityOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
-
+  let identityManager: IdentityManager = {
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    return dependencyContainer.identityManager
+  }()
+  
   override func setUp() async throws {
-    IdentityManager.shared.reset()
+    identityManager.reset()
   }
 
   func test_waitingForIdentity_noIdentity() async {
@@ -39,7 +43,10 @@ final class AwaitIdentityOperatorTests: XCTestCase {
   func test_waitingForIdentity_hasIdentity() async {
     let expectation = expectation(description: "Got identity")
 
-    CurrentValueSubject(PresentationRequest.stub())
+    let stub = PresentationRequest.stub()
+      .setting(\.injections.identityManager, to: identityManager)
+
+    CurrentValueSubject(stub)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
       .awaitIdentity()
@@ -52,7 +59,7 @@ final class AwaitIdentityOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    IdentityManager.shared.didSetIdentity()
+    identityManager.didSetIdentity()
 
     wait(for: [expectation], timeout: 0.1)
   }

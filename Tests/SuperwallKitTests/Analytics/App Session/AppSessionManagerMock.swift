@@ -14,7 +14,16 @@ final class AppSessionManagerMock: AppSessionManager {
     return internalAppSession
   }
 
-  init(appSession: AppSession) {
+  init(
+    appSession: AppSession,
+    configManager: ConfigManager,
+    storage: Storage
+  ) {
     internalAppSession = appSession
+    super.init(configManager: configManager, storage: storage)
+  }
+
+  override func listenForAppSessionTimeout() {
+    // Overriding so we don't get ny issues when setting config manually.
   }
 }

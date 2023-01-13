@@ -9,27 +9,17 @@ import UIKit
 
 public extension Superwall {
   // MARK: - Unavailable methods
-  @available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
+  // TODO: Fix deprecation here
+  /*@available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
   @discardableResult
-  static func configure(
+  @objc static func configure(
     apiKey: String,
     userId: String?,
     delegate: SuperwallDelegate? = nil,
     options: SuperwallOptions? = nil
   ) -> Superwall {
     return shared
-  }
-
-  @available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
-  @discardableResult
-  @objc static func configure(
-    apiKey: String,
-    userId: String?,
-    delegate: SuperwallDelegateObjc? = nil,
-    options: SuperwallOptions? = nil
-  ) -> Superwall {
-    return shared
-  }
+  }*/
 
   @available(*, unavailable, message: "This has been removed. Please use login(userId:) or createAccount(userId:).")
   @discardableResult

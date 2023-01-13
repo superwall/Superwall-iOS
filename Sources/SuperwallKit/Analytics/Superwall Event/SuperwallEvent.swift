@@ -9,7 +9,7 @@ import Foundation
 
 /// Analytical events that are automatically tracked by Superwall.
 ///
-/// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/didTrackSuperwallEvent(_:)-n6x1``.
+/// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/didTrackSuperwallEventInfo(_:)-98lxw``.
 public enum SuperwallEvent {
   /// When the user is first seen in the app, regardless of whether the user is logged in or not.
   case firstSeen
@@ -52,22 +52,22 @@ public enum SuperwallEvent {
   case paywallClose(paywallInfo: PaywallInfo)
 
   /// When the payment sheet is displayed to the user.
-  case transactionStart(product: TransactionProduct, paywallInfo: PaywallInfo)
+  case transactionStart(product: StoreProduct, paywallInfo: PaywallInfo)
 
   /// When the payment sheet fails to complete a transaction (ignores user canceling the transaction).
   case transactionFail(error: TransactionError, paywallInfo: PaywallInfo)
 
   /// When the user cancels a transaction.
-  case transactionAbandon(product: TransactionProduct, paywallInfo: PaywallInfo)
+  case transactionAbandon(product: StoreProduct, paywallInfo: PaywallInfo)
 
   /// When the user completes checkout in the payment sheet and any product was purchased.
-  case transactionComplete(transaction: TransactionModel, product: TransactionProduct, paywallInfo: PaywallInfo)
+  case transactionComplete(transaction: StoreTransaction, product: StoreProduct, paywallInfo: PaywallInfo)
 
   /// When the user successfully completes a transaction for a subscription product with no introductory offers.
-  case subscriptionStart(product: TransactionProduct, paywallInfo: PaywallInfo)
+  case subscriptionStart(product: StoreProduct, paywallInfo: PaywallInfo)
 
   /// When the user successfully completes a transaction for a subscription product with an introductory offer.
-  case freeTrialStart(product: TransactionProduct, paywallInfo: PaywallInfo)
+  case freeTrialStart(product: StoreProduct, paywallInfo: PaywallInfo)
 
   /// When the user successfully restores their purchases.
   case transactionRestore(paywallInfo: PaywallInfo)

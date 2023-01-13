@@ -12,7 +12,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
   func checkPaywallIsPresentable() -> AnyPublisher<TriggerResult, Error> {
     asyncMap { input in
       if await InternalPresentationLogic.userSubscribedAndNotOverridden(
-        isUserSubscribed: input.request.injections.superwall.isUserSubscribed,
+        isUserSubscribed: input.request.injections.isUserSubscribed,
         overrides: .init(
           isDebuggerLaunched: false,
           shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus,

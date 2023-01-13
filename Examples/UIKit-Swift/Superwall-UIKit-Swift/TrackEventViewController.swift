@@ -34,10 +34,11 @@ final class TrackEventViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    subscribedCancellable = StoreKitService.shared.$isSubscribed
-      .receive(on: RunLoop.main)
-      .sink { [weak self] isSubscribed in
-        if isSubscribed {
+
+    subscribedCancellable = Superwall.shared.$hasActiveSubscription
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] hasActiveSubscription in
+        if hasActiveSubscription {
           self?.subscriptionLabel.text = "You currently have an active subscription. Therefore, the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions."
         } else {
           self?.subscriptionLabel.text = "You do not have an active subscription so the paywall will show when clicking the button."

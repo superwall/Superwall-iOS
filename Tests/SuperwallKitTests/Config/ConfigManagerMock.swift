@@ -17,8 +17,4 @@ final class ConfigManagerMock: ConfigManager {
   ) {
     confirmedAssignment = true
   }
-
-  override func fetchConfiguration(withOptions options: SuperwallOptions?, requestId: String = UUID().uuidString) async {
-    return
-  }
 }

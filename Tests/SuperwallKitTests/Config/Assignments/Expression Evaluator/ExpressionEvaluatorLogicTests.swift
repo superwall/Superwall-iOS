@@ -12,61 +12,86 @@ import XCTest
 @available(iOS 14.0, *)
 final class ExpressionEvaluatorLogicTests: XCTestCase {
   func testShouldFire_noMatch() {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let storage = StorageMock()
-    let shouldFire = ExpressionEvaluatorLogic.shouldFire(
+    let evaluator = ExpressionEvaluator(
+      storage: storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    let shouldFire = evaluator.shouldFire(
       forOccurrence: .stub(),
       ruleMatched: false,
-      storage: storage,
       isPreemptive: false
     )
     XCTAssertFalse(shouldFire)
   }
 
   func testShouldFire_noOccurrenceRule() {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let storage = StorageMock()
-    let shouldFire = ExpressionEvaluatorLogic.shouldFire(
+    let evaluator = ExpressionEvaluator(
+      storage: storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    let shouldFire = evaluator.shouldFire(
       forOccurrence: nil,
       ruleMatched: true,
-      storage: storage,
       isPreemptive: false
     )
     XCTAssertTrue(shouldFire)
   }
 
   func testShouldFire_shouldntFire_maxCountGTCount() {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let coreDataManagerMock = CoreDataManagerFakeDataMock(internalOccurrenceCount: 1)
     let storage = StorageMock(coreDataManager: coreDataManagerMock)
-    let shouldFire = ExpressionEvaluatorLogic.shouldFire(
+    let evaluator = ExpressionEvaluator(
+      storage: storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    let shouldFire = evaluator.shouldFire(
       forOccurrence: .stub()
         .setting(\.maxCount, to: 1),
       ruleMatched: true,
-      storage: storage,
       isPreemptive: false
     )
     XCTAssertFalse(shouldFire)
   }
 
   func testShouldFire_shouldFire_maxCountEqualToCount() {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let coreDataManagerMock = CoreDataManagerFakeDataMock(internalOccurrenceCount: 0)
     let storage = StorageMock(coreDataManager: coreDataManagerMock)
-    let shouldFire = ExpressionEvaluatorLogic.shouldFire(
+    let evaluator = ExpressionEvaluator(
+      storage: storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    let shouldFire = evaluator.shouldFire(
       forOccurrence: .stub()
         .setting(\.maxCount, to: 1),
       ruleMatched: true,
-      storage: storage,
       isPreemptive: false
     )
     XCTAssertTrue(shouldFire)
   }
 
   func testShouldFire_shouldFire_maxCountLtCount() {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let coreDataManagerMock = CoreDataManagerFakeDataMock(internalOccurrenceCount: 1)
     let storage = StorageMock(coreDataManager: coreDataManagerMock)
-    let shouldFire = ExpressionEvaluatorLogic.shouldFire(
+    let evaluator = ExpressionEvaluator(
+      storage: storage,
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper
+    )
+    let shouldFire = evaluator.shouldFire(
       forOccurrence: .stub()
         .setting(\.maxCount, to: 4),
       ruleMatched: true,
-      storage: storage,
       isPreemptive: false
     )
     XCTAssertTrue(shouldFire)

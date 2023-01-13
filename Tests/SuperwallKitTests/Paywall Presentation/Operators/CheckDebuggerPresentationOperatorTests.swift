@@ -44,9 +44,11 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
   }
 
   func test_checkDebuggerPresentation_debuggerLaunched_presentingOnDebugger() async {
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let debugViewController = await dependencyContainer.makeDebugViewController(withDatabaseId: "abc")
     let request = PresentationRequest.stub()
       .setting(\.injections.isDebuggerLaunched, to: true)
-      .setting(\.presentingViewController, to: await SWDebugViewController())
+      .setting(\.presentingViewController, to: debugViewController)
 
     let debugInfo: [String: Any] = [:]
 
@@ -168,7 +170,7 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
 
   func test_checkDebuggerPresentation_presentingOnDebugger() async {
     let identifier = "abc"
-    let debugger = await SWDebugViewController()
+    let debugger = await DebugViewController()
     let request = PresentationRequest(
       presentationInfo: .fromIdentifier(identifier, freeTrialOverride: false),
       presentingViewController: debugger,

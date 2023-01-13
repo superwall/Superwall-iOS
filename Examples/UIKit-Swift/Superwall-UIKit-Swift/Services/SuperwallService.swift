@@ -17,18 +17,11 @@ final class SuperwallService {
     return Superwall.userAttributes["firstName"] as? String ?? ""
   }
 
-  static func configure() -> Bool {
-    Task {
-      await StoreKitService.shared.loadSubscriptionState()
-    }
-
+  static func configure() {
     Superwall.configure(
       apiKey: apiKey,
       delegate: shared
     )
-
-    // Checking our logged in status.
-    return Superwall.isLoggedIn
   }
 
   static func logIn() async {
@@ -70,23 +63,7 @@ final class SuperwallService {
 
 // MARK: - Superwall Delegate
 extension SuperwallService: SuperwallDelegate {
-  func purchase(product: SKProduct) async -> PurchaseResult {
-    return await withCheckedContinuation { continuation in
-      StoreKitService.shared.purchase(product) { result in
-        continuation.resume(with: .success(result))
-      }
-    }
-  }
-
-  func restorePurchases() async -> Bool {
-    return StoreKitService.shared.restorePurchases()
-  }
-
-  func isUserSubscribed() -> Bool {
-    return StoreKitService.shared.isSubscribed
-  }
-
-  func didTrackSuperwallEvent(_ info: SuperwallEventInfo) {
+  func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {
     print("analytics event called", info.event.description)
 
     // Uncomment if you want to get a dictionary of params associated with the event:
@@ -162,4 +139,33 @@ extension SuperwallService: SuperwallDelegate {
     }
     */
   }
+
+  // Superwall handles subscription logic by default. However, if you'd
+  // like more control you can handle it yourself.
+  // Uncomment if you would like to handle purchasing yourself:
+  /*
+  func subscriptionController() -> SubscriptionController? {
+    return self
+  }*/
 }
+
+// Uncomment if you would like to handle purchasing yourself:
+/*
+extension SuperwallService: SubscriptionController {
+  func purchase(product: SKProduct) async -> PurchaseResult {
+    return await withCheckedContinuation { continuation in
+      StoreKitService.shared.purchase(product) { result in
+        continuation.resume(with: .success(result))
+      }
+    }
+  }
+
+  func restorePurchases() async -> Bool {
+    return StoreKitService.shared.restorePurchases()
+  }
+
+  func isUserSubscribed() -> Bool {
+    return StoreKitService.shared.isSubscribed
+  }
+}
+*/

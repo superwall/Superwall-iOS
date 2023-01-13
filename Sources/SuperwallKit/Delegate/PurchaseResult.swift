@@ -6,6 +6,14 @@
 //
 
 import Foundation
+import StoreKit
+
+enum InternalPurchaseResult {
+  case purchased(StoreTransaction)
+  case cancelled
+  case pending
+  case failed(Error)
+}
 
 /// An enum that defines the possible outcomes of attempting to purchase a product.
 ///
@@ -34,8 +42,6 @@ public enum PurchaseResult {
   ///
   /// In StoreKit 1, this is the same as the `.deferred` transaction state.
   ///
-  /// In StoreKit 2, this is the same as the `.pending` purchase result.
-  ///
   /// With RevenueCat, this is retrieved by switching over the the thrown error during purchase. This is
   /// the same as `.paymentPendingError`.
   case pending
@@ -47,11 +53,6 @@ public enum PurchaseResult {
 }
 
 // MARK: - Objective-C Only
-
-/*
-  Note: In the following enum we don't mention StoreKit 2. This is because StoreKit 2
-  isn't supported by Objective-c.
-*/
 
 /// An Objective-C-only enum that defines the possible outcomes of attempting to purchase a product.
 @objc(SWKPurchaseResult)

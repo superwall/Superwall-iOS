@@ -8,13 +8,15 @@
 import Foundation
 
 final class LocalizationManager {
-	static let shared = LocalizationManager()
 	let popularLocales = ["de_DE", "es_US"]
 	var selectedLocale: String?
 
 	lazy var localizationGroupings: [LocalizationGrouping] = {
 		let localeIds = Locale.availableIdentifiers
-    let sortedLocalizations = LocalizationLogic.getSortedLocalizations(forLocales: localeIds)
+    let sortedLocalizations = LocalizationLogic.getSortedLocalizations(
+      forLocales: localeIds,
+      popularLocales: popularLocales
+    )
     let groupings = LocalizationLogic.getGroupings(for: sortedLocalizations)
 
     return groupings

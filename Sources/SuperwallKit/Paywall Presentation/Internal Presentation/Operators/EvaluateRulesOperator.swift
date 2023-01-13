@@ -26,11 +26,15 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
   func evaluateRules(isPreemptive: Bool = false) -> AnyPublisher<AssignmentPipelineOutput, Failure> {
     tryMap { request, debugInfo in
       if let eventData = request.presentationInfo.eventData {
-        let eventOutcome = AssignmentLogic.evaluateRules(
-          forEvent: eventData,
-          triggers: request.injections.configManager.triggersByEventName,
+        let assignmentLogic = AssignmentLogic(
           configManager: request.injections.configManager,
           storage: request.injections.storage,
+          identityManager: request.injections.identityManager,
+          deviceHelper: request.injections.deviceHelper
+        )
+        let eventOutcome = assignmentLogic.evaluateRules(
+          forEvent: eventData,
+          triggers: request.injections.configManager.triggersByEventName,
           isPreemptive: isPreemptive
         )
         let confirmableAssignment = eventOutcome.confirmableAssignment

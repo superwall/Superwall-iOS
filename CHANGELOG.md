@@ -20,12 +20,12 @@ We understand that transitions between major SDK releases can become frustrating
 - Changes `PaywallOptions` to `SuperwallOptions`. This now clearly defines which of the options are explicit to paywalls vs other configuration options within the SDK.
 - Renames `Superwall.trigger(event:)` to `Superwall.track(event:)`. We found that having separate implicit (`Superwall.track(event:)`) and explicit (`Superwall.trigger(event:)`) trigger functions caused confusion. So from now on, you'll just use `Superwall.track(event:)` for all events within your app.
 - Renames `Paywall.EventName` to `SuperwallEvent` and removes `.manualPresent` as a `SuperwallEvent`.
-- Renames `PaywallDelegate` to `SuperwallDelegate` (if you're using Swift) or `SuperwallDelegateObjc` (if you're using Objective-C).
-
-- For Swift users, this changes the delegate method `purchase(product:)` to an async function that returns a `PurchaseResult`. Here, you need to return the result of the user attempting to purchase a product, making sure you handle all cases of `PurchaseResult`: `.purchased`, `.cancelled`, `.pending`, `failed(Error)`.
+- Renames `PaywallDelegate` to `SuperwallDelegate`.
+- Superwall automatically handles all subscription-related logic, meaning that it's no longer a requirement to implement any of the delegate methods. Note that if you're using RevenueCat, you will still need to use the delegate methods. This is because the Superwall-handled subscription status is App Store account-specific, whereas RevenueCat is logged in user-specific. If this isn't a problem, you can just set RevenueCat in observer mode and we'll take care of the rest :)
+- Moves purchasing logic from the delegate into a protocol called `SubscriptionController`. You return your `SubscriptionController` from the delegate method `subscriptionController()`.
+- For Swift users, this changes the `SubscriptionController` method `purchase(product:)` to an async function that returns a `PurchaseResult`. Here, you need to return the result of the user attempting to purchase a product, making sure you handle all cases of `PurchaseResult`: `.purchased`, `.cancelled`, `.pending`, `failed(Error)`.
 - For Objective-C users, this changes the delegate method `purchase(product:)` to `purchase(product:completion:)`. You call the completion block with the result of the user attempting to purchase a product, making sure you handle all cases of `PurchaseResultObjc`: `.purchased`, `.cancelled`, `.pending`, `failed`. When you have a purchasing error, you need to call the completion block with the `.failed` case along with the error.
 - Changes `restorePurchases()` to an async function that returns a boolean instead of having a completion block.
-
 - Removes `identify(userId:)` in favor of the new Identity API detailed below.
 - Removes `Paywall.load(identifier:)`. This was being used to preload a paywall by identifier.
 - Removes `.triggerPaywall()` for SwiftUI apps. Instead, SwiftUI users should now use the UIKit function `Superwall.track()`. Take a look at our SwiftUI example app to see how that works.
@@ -45,13 +45,32 @@ We understand that transitions between major SDK releases can become frustrating
 - Adds an Objective-C-only function `removeUserAttributes(_:)` to remove user attributes. In Swift, to remove attributes you can pass in `nil` for a specific attribute in `setUserAttributes(_:)`.
 - Adds `getTrackResult(forEvent:params:)`. This returns a `TrackResult` which tells you the result of tracking an event, without actually tracking it. This is useful if you want to figure out whether a paywall will show in the future.
 - Logs when products fail to load with a link to help diagnose the cause.
+- Adds a published property `hasActiveSubscription`, which you can check to determine whether Superwall detects an active subscription. Its value is stored on disk and synced with the active purchases on device. If you're using Combine or SwiftUI, you can subscribe or bind to this to get notified whenever the user's subscription status changes. If you're implementing your own `SubscriptionController`, you should rely on your own logic to determine subscription status.
+- Adds a published property `isConfigured`. This is a boolean which you can use to check whether Superwall is configured and ready to present paywalls.
+- Adds `isFreeTrialAvailable` to `PaywallInfo`.
 
 ### Fixes
 
+- Fixes a caching issue where the paywall was still showing in free trial mode when it shouldn't have. This was happening if you had purchased a free trial, let it expire, then reopened the paywall. Note that in Sandbox environments this issue may still occur due to introductory offers not being added to a receipt until after a purchase.
 - The API uses background threads wherever possible, dispatching to the main thread only when necessary and when returning from completion blocks.
 - The API is now fully compatible with Objective-C.
-- Bugfixes for loading and fail times of the webview and products.
-- Fixes the internal `appSessionId` that gets passed to Superwall analytics. This wasn't being refreshed as often as it should have been.
+- Setting the `PaywallOption` `automaticallyDismiss` to `false` now keeps the loading indicator visible after restoring and successfully purchasing until you manually dismiss the paywall.
+- Improves the speed of requests by changing the cache policy of requests to our servers.
+- Fixes `session_start`, `app_launch` and `first_seen` not being tracked if the SDK was initialised a few seconds after app launch.
+
+---
+
+## 2.5.8
+
+### Enhancements
+
+- Adds `isExternalDataCollectionEnabled` data privacy `PaywallOption`. When `false`, prevents non-Superwall events and properties from being sent back to the superwall servers.
+- Adds an `X-Is-Sandbox` header to all requests such that sandbox data doesn't affect your production analytics on superwall.com.
+
+### Fixes
+
+- Fixes a bug that prevented the correct calculation of a new app session.
+- Fixes missing loading times of the webview and products.
 
 ---
 

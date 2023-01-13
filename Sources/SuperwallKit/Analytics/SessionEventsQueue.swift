@@ -13,11 +13,11 @@ import Combine
 /// This is used to be able to inject a mock version for testing.
 protocol SessionEnqueuable: Actor {
   var triggerSessions: [TriggerSession] { get set }
-  var transactions: [TransactionModel] { get }
+  var transactions: [StoreTransaction] { get }
 
   func enqueue(_ triggerSession: TriggerSession)
   func enqueue(_ triggerSessions: [TriggerSession])
-  func enqueue(_ transaction: TransactionModel)
+  func enqueue(_ transaction: StoreTransaction)
   func removeAllTriggerSessions()
   func flushInternal(depth: Int)
   func saveCacheToDisk()
@@ -34,19 +34,29 @@ extension SessionEnqueuable {
 actor SessionEventsQueue: SessionEnqueuable {
   private let maxEventCount = 50
   var triggerSessions: [TriggerSession] = []
-  var transactions: [TransactionModel] = []
+  var transactions: [StoreTransaction] = []
   private var timer: AnyCancellable?
   @MainActor
   private var willResignActiveObserver: AnyCancellable?
   private lazy var lastTwentySessions = LimitedQueue<TriggerSession>(limit: 20)
-  private lazy var lastTwentyTransactions = LimitedQueue<TransactionModel>(limit: 20)
+  private lazy var lastTwentyTransactions = LimitedQueue<StoreTransaction>(limit: 20)
+  private unowned let storage: Storage
+  private unowned let network: Network
+  private unowned let configManager: ConfigManager
 
   deinit {
     timer?.cancel()
     timer = nil
   }
 
-  init() {
+  init(
+    storage: Storage,
+    network: Network,
+    configManager: ConfigManager
+  ) {
+    self.storage = storage
+    self.network = network
+    self.configManager = configManager
     Task {
       await setupTimer()
       await addObserver()
@@ -54,7 +64,7 @@ actor SessionEventsQueue: SessionEnqueuable {
   }
 
   private func setupTimer() {
-    let timeInterval = Superwall.options.networkEnvironment == .release ? 20.0 : 1.0
+    let timeInterval = configManager.options.networkEnvironment == .release ? 20.0 : 1.0
     timer = Timer
       .publish(
         every: timeInterval,
@@ -96,7 +106,7 @@ actor SessionEventsQueue: SessionEnqueuable {
     lastTwentySessions.enqueue(triggerSession)
   }
 
-  func enqueue(_ transaction: TransactionModel) {
+  func enqueue(_ transaction: StoreTransaction) {
     transactions.append(transaction)
     lastTwentyTransactions.enqueue(transaction)
   }
@@ -111,7 +121,7 @@ actor SessionEventsQueue: SessionEnqueuable {
 
   func flushInternal(depth: Int) {
     var triggerSessionsToSend: [TriggerSession] = []
-    var transactionsToSend: [TransactionModel] = []
+    var transactionsToSend: [StoreTransaction] = []
 
     var i = 0
     while i < maxEventCount && !triggerSessions.isEmpty {
@@ -132,7 +142,7 @@ actor SessionEventsQueue: SessionEnqueuable {
         transactions: transactionsToSend
       )
       Task {
-        await Network.shared.sendSessionEvents(sessionEvents)
+        await network.sendSessionEvents(sessionEvents)
       }
     }
 
@@ -148,11 +158,11 @@ actor SessionEventsQueue: SessionEnqueuable {
 
   private func saveLatestSessionsToDisk() {
     let sessions = lastTwentySessions.getArray()
-    Storage.shared.save(sessions, forType: TriggerSessions.self)
+    storage.save(sessions, forType: TriggerSessions.self)
   }
 
   private func saveLatestTransactionsToDisk() {
     let transactions = lastTwentyTransactions.getArray()
-    Storage.shared.save(transactions, forType: Transactions.self)
+    storage.save(transactions, forType: Transactions.self)
   }
 }

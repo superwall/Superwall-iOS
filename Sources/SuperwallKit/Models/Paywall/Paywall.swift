@@ -175,7 +175,7 @@ struct Paywall: Decodable {
     productsLoadingInfo: LoadingInfo,
     paywalljsVersion: String,
     swProducts: [SWProduct]? = [],
-    variables: [ProductVariable]? = [],
+    productVariables: [ProductVariable]? = [],
     swTemplateProductVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false
   ) {
@@ -195,13 +195,14 @@ struct Paywall: Decodable {
     self.productsLoadingInfo = productsLoadingInfo
     self.paywalljsVersion = paywalljsVersion
     self.swProducts = swProducts
-    self.productVariables = variables
+    self.productVariables = productVariables
     self.swProductVariablesTemplate = swTemplateProductVariables
     self.isFreeTrialAvailable = isFreeTrialAvailable
   }
 
   func getInfo(
-    fromEvent: EventData?
+    fromEvent: EventData?,
+    sessionEventsManager: SessionEventsManager
   ) -> PaywallInfo {
     return PaywallInfo(
       databaseId: databaseId,
@@ -220,7 +221,9 @@ struct Paywall: Decodable {
       productsLoadFailTime: productsLoadingInfo.failAt,
       productsLoadCompleteTime: productsLoadingInfo.endAt,
       experiment: experiment,
-      paywalljsVersion: paywalljsVersion
+      paywalljsVersion: paywalljsVersion,
+      isFreeTrialAvailable: isFreeTrialAvailable,
+      sessionEventsManager: sessionEventsManager
     )
   }
 }

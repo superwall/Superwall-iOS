@@ -13,9 +13,19 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
   func test_checkUserSubscription_notPaywall_userSubscribed() async {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let request = PresentationRequest(
       presentationInfo: .explicitTrigger(.stub()),
       injections: .init(
+        configManager: dependencyContainer.configManager,
+        storage: dependencyContainer.storage,
+        sessionEventsManager: dependencyContainer.sessionEventsManager,
+        paywallManager: dependencyContainer.paywallManager,
+        storeKitManager: dependencyContainer.storeKitManager,
+        network: dependencyContainer.network,
+        debugManager: dependencyContainer.debugManager,
+        identityManager: dependencyContainer.identityManager,
+        deviceHelper: dependencyContainer.deviceHelper,
         isDebuggerLaunched: false,
         isUserSubscribed: true,
         isPaywallPresented: false
@@ -70,13 +80,12 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
   }
 
   func test_checkUserSubscription_paywall() async {
-    let request = PresentationRequest(
-      presentationInfo: .explicitTrigger(.stub()),
-      injections: .init(
-        isDebuggerLaunched: false,
-        isUserSubscribed: false,
-        isPaywallPresented: false
-      )
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let request = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      isDebuggerLaunched: false,
+      isUserSubscribed: false,
+      isPaywallPresented: false
     )
 
     let input = AssignmentPipelineOutput(
@@ -112,9 +121,19 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
   }
 
   func test_checkUserSubscription_notPaywall_userNotSubscribed() async {
+    let dependencyContainer = DependencyContainer(apiKey: "")
     let request = PresentationRequest(
       presentationInfo: .explicitTrigger(.stub()),
       injections: .init(
+        configManager: dependencyContainer.configManager,
+        storage: dependencyContainer.storage,
+        sessionEventsManager: dependencyContainer.sessionEventsManager,
+        paywallManager: dependencyContainer.paywallManager,
+        storeKitManager: dependencyContainer.storeKitManager,
+        network: dependencyContainer.network,
+        debugManager: dependencyContainer.debugManager,
+        identityManager: dependencyContainer.identityManager,
+        deviceHelper: dependencyContainer.deviceHelper,
         isDebuggerLaunched: false,
         isUserSubscribed: false,
         isPaywallPresented: false

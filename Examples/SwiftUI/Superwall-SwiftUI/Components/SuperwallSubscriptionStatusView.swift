@@ -6,12 +6,13 @@
 //
 
 import SwiftUI
+import SuperwallKit
 
 struct SuperwallSubscriptionStatusView: View {
-  @StateObject private var store = StoreKitService.shared
+  @StateObject private var superwall = Superwall.shared
   var text: String {
     return SuperwallSubscriptionStatusLogic.text(
-      isSubscribed: store.isSubscribed
+      isSubscribed: superwall.hasActiveSubscription
     )
   }
 

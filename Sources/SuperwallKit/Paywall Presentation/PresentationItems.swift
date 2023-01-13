@@ -9,12 +9,6 @@ import UIKit
 import Combine
 
 final class PresentationItems {
-  /// Used to store the publishers from ``track(event:params:paywallOverrides:paywallHandler:)``
-  /// and its internal presentation subject so that they don't instantly deallocate.
-  ///
-  /// They are removed from here on completion of the publisher.
-  var cancellables: Set<AnyCancellable> = []
-
   /// The publisher and request involved in the last successful paywall presentation request.
   var last: LastPresentationItems?
 
@@ -25,7 +19,6 @@ final class PresentationItems {
   var window: UIWindow?
 
   func reset() {
-    cancellables.removeAll()
     last = nil
     window = nil
     paywallInfo = nil

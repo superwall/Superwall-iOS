@@ -10,18 +10,16 @@
 import XCTest
 @testable import SuperwallKit
 
+@MainActor
 class PaywallCacheTests: XCTestCase {
-  let paywallCache = PaywallCache()
-
-  override func setUp() {
-    paywallCache.clearCache()
-  }
-
   func testSaveAndRetrievePaywall() throws {
     // Given
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let locale = dependencyContainer.deviceHelper.locale
+    let paywallCache = PaywallCache(deviceLocaleString: locale)
     let id = "myid"
-    let key = PaywallCacheLogic.key(forIdentifier: id)
-    let paywall = PaywallViewController(paywall: .stub())
+    let key = PaywallCacheLogic.key(forIdentifier: id, locale: locale)
+    let paywall = dependencyContainer.makePaywallViewController(for: .stub())
     paywall.cacheKey = key
 
     // When
@@ -35,9 +33,12 @@ class PaywallCacheTests: XCTestCase {
 
   func testSaveAndRemovePaywall_withId() {
     // Given
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let locale = dependencyContainer.deviceHelper.locale
+    let paywallCache = PaywallCache(deviceLocaleString: locale)
     let id = "myid"
-    let key = PaywallCacheLogic.key(forIdentifier: id)
-    let paywall = PaywallViewController(paywall: .stub())
+    let key = PaywallCacheLogic.key(forIdentifier: id, locale: locale)
+    let paywall = dependencyContainer.makePaywallViewController(for: .stub())
     paywall.cacheKey = key
 
     // When
@@ -59,13 +60,17 @@ class PaywallCacheTests: XCTestCase {
 
   func testSaveAndRemovePaywall_withVc() {
     // Given
-    let paywallVc = PaywallViewController(paywall: .stub())
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let locale = dependencyContainer.deviceHelper.locale
+    let paywallCache = PaywallCache(deviceLocaleString: locale)
+    let paywallVc = dependencyContainer.makePaywallViewController(for: .stub())
 
     // When
     PaywallViewController.cache.insert(paywallVc)
 
     let key = PaywallCacheLogic.key(
-      forIdentifier: paywallVc.paywall.identifier
+      forIdentifier: paywallVc.paywall.identifier,
+      locale: locale
     )
 
     var cachedPaywallVc = paywallCache.getPaywall(withKey: key)
@@ -82,31 +87,35 @@ class PaywallCacheTests: XCTestCase {
 
   func testClearCache() {
     // Given
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let locale = dependencyContainer.deviceHelper.locale
+    let paywallCache = PaywallCache(deviceLocaleString: locale)
     let paywallId1 = "id1"
-    let key1 = PaywallCacheLogic.key(forIdentifier: paywallId1)
-    let paywall1 = PaywallViewController(paywall: .stub())
+    let key1 = PaywallCacheLogic.key(forIdentifier: paywallId1, locale: locale)
+
+    let paywall1 = dependencyContainer.makePaywallViewController(for: .stub())
     paywall1.cacheKey = key1
 
     let paywallId2 = "id2"
-    let key2 = PaywallCacheLogic.key(forIdentifier: paywallId2)
-    let paywall2 = PaywallViewController(paywall: .stub())
+    let key2 = PaywallCacheLogic.key(forIdentifier: paywallId2, locale: locale)
+    let paywall2 = dependencyContainer.makePaywallViewController(for: .stub())
     paywall2.cacheKey = key2
 
     // When
     PaywallViewController.cache.insert(paywall1)
     PaywallViewController.cache.insert(paywall2)
 
-    let cachedPaywall1 = self.paywallCache.getPaywall(withKey: key1)
-    let cachedPaywall2 = self.paywallCache.getPaywall(withKey: key2)
+    let cachedPaywall1 = paywallCache.getPaywall(withKey: key1)
+    let cachedPaywall2 = paywallCache.getPaywall(withKey: key2)
 
     XCTAssertEqual(cachedPaywall1, paywall1)
     XCTAssertEqual(cachedPaywall2, paywall2)
 
-    self.paywallCache.clearCache()
+    paywallCache.clearCache()
 
     // Then
-    let nilPaywall1 = self.paywallCache.getPaywall(withKey: key1)
-    let nilPaywall2 = self.paywallCache.getPaywall(withKey: key2)
+    let nilPaywall1 = paywallCache.getPaywall(withKey: key1)
+    let nilPaywall2 = paywallCache.getPaywall(withKey: key2)
 
     XCTAssertNil(nilPaywall1)
     XCTAssertNil(nilPaywall2)
@@ -114,9 +123,10 @@ class PaywallCacheTests: XCTestCase {
 
   func testViewControllers() {
     // Given
-    let paywall1 = PaywallViewController(paywall: .stub())
+    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let paywall1 = dependencyContainer.makePaywallViewController(for: .stub())
     paywall1.cacheKey = "myid1"
-    let paywall2 = PaywallViewController(paywall: .stub())
+    let paywall2 = dependencyContainer.makePaywallViewController(for: .stub())
     paywall2.cacheKey = "myid2"
 
     // When

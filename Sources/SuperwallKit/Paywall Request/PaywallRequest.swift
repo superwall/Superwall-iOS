@@ -27,8 +27,14 @@ struct PaywallRequest {
   /// Overrides within the paywall.
   var overrides = Overrides()
 
-  /// The products to substitute into the response.
-  var substituteProducts: PaywallProducts?
+  struct Injections {
+    unowned let sessionEventsManager: SessionEventsManager
+    unowned let storeKitManager: StoreKitManager
+    unowned let configManager: ConfigManager
+    unowned let network: Network
+    unowned let debugManager: DebugManager
+  }
+  let injections: Injections
 
   /// The request publisher that fires just once.
   var publisher: AnyPublisher<Self, Error> {

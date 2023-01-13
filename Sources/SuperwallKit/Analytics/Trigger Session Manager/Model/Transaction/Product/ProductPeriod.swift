@@ -11,7 +11,7 @@ import StoreKit
 extension TriggerSession.Transaction.Product {
   struct Period: Codable, Equatable {
     /// Matches SKProduct.PeriodUnit
-    let unit: SWProductSubscriptionPeriod.Unit
+    let unit: SubscriptionPeriod.Unit
 
     /// Matches SKProductSubscriptionPeriod.numberOfUnits
     let count: Int

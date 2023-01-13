@@ -19,10 +19,10 @@ enum TrackingLogic {
   static func processParameters(
     fromTrackableEvent trackableEvent: Trackable,
     eventCreatedAt: Date,
-    storage: Storage = Storage.shared
+    appSessionId: String
   ) async -> TrackingParameters {
     var superwallParameters = await trackableEvent.getSuperwallParameters()
-    superwallParameters["app_session_id"] = AppSessionManager.shared.appSession.id
+    superwallParameters["app_session_id"] = appSessionId
 
     let customParameters = trackableEvent.customParameters
     let eventName = trackableEvent.rawName

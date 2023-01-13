@@ -19,10 +19,8 @@ final class NetworkMock: Network {
   override func sendSessionEvents(_ session: SessionEventsRequest) async {
     sentSessionEvents = session
   }
-
   override func getConfig(
     withRequestId requestId: String,
-    configManager: ConfigManager = .shared,
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
   ) async throws -> Config {
     getConfigCalled = true

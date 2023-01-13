@@ -1,6 +1,6 @@
 //
 //  PaywallLogicTests.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 09/03/2022.
 //

@@ -23,7 +23,7 @@ struct SWProduct: Codable {
   var subscriptionPeriod: SWProductSubscriptionPeriod?
   var introductoryPrice: SWProductDiscount?
 
-  init(product: SKProduct) {
+  init(product: SK1Product) {
     localizedDescription = product.localizedDescription
     localizedTitle = product.localizedTitle
     price = product.price as Decimal
