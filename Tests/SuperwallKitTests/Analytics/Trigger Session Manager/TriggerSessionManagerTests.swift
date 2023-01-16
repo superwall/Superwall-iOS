@@ -830,7 +830,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     let lastTriggerSession = await queue.triggerSessions.last!
     await NotificationCenter.default.post(Notification(name: UIApplication.didEnterBackgroundNotification))
 
-    try? await Task.sleep(nanoseconds: 10_000_000)
+    try? await Task.sleep(nanoseconds: 100_000_000)
 
     await queue.removeAllTriggerSessions()
 
@@ -840,9 +840,12 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     await NotificationCenter.default.post(Notification(name: UIApplication.willEnterForegroundNotification))
 
-    try? await Task.sleep(nanoseconds: 10_000_000)
+    try? await Task.sleep(nanoseconds: 100_000_000)
     // Then
     let triggerSessions2 = await queue.triggerSessions
+    
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
     XCTAssertEqual(triggerSessions2.count, 1)
     XCTAssertNotEqual(triggerSessions2.last?.id, lastTriggerSession.id)
     XCTAssertNil(triggerSessions2.last!.endAt)
