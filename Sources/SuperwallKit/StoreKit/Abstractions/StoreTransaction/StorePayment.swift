@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 27/05/2022.
 //
@@ -24,5 +24,12 @@ public final class StorePayment: NSObject, Encodable, Sendable {
     self.productIdentifier = payment.productIdentifier
     self.quantity = payment.quantity
     self.discountIdentifier = payment.paymentDiscount?.identifier
+  }
+
+  @available(iOS 15.0, *)
+  init(from transaction: Transaction) {
+    self.productIdentifier = transaction.productID
+    self.quantity = transaction.purchasedQuantity
+    self.discountIdentifier = nil
   }
 }

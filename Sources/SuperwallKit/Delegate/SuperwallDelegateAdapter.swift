@@ -156,15 +156,21 @@ extension SuperwallDelegateAdapter: ProductPurchaser {
   ) async -> PurchaseResult {
     if let swiftDelegate = swiftDelegate {
       guard let subscriptionController = swiftDelegate.subscriptionController() else {
-        return .cancelled
+        return .failed(PurchaseError.noSubscriptionController)
       }
-      return await subscriptionController.purchase(product: product.underlyingSK1Product)
+      guard let sk1Product = product.sk1Product else {
+        return .failed(PurchaseError.productUnavailable)
+      }
+      return await subscriptionController.purchase(product: sk1Product)
     } else if let objcDelegate = objcDelegate {
       guard let subscriptionController = objcDelegate.subscriptionController?() else {
-        return .cancelled
+        return .failed(PurchaseError.noSubscriptionController)
+      }
+      guard let sk1Product = product.sk1Product else {
+        return .failed(PurchaseError.productUnavailable)
       }
       return await withCheckedContinuation { continuation in
-        subscriptionController.purchase(product: product.underlyingSK1Product) { result, error in
+        subscriptionController.purchase(product: sk1Product) { result, error in
           if let error = error {
             continuation.resume(returning: .failed(error))
           } else {

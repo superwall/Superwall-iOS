@@ -30,12 +30,31 @@ struct SWProductTemplateVariable: Encodable {
 
     let subscription = SWSubscriptionTemplateVariable(type: .subscription, product: product)
     let trial = SWSubscriptionTemplateVariable(type: .trial, product: product)
-    // let discount = SWSubscriptionTemplateVariable(type: .discount, product: product)
+    let discount = SWSubscriptionTemplateVariable(type: .discount, product: product)
     let lifetime = SWSubscriptionTemplateVariable(type: .lifetime, product: product)
 
     self.subscription = subscription.exists ? subscription : nil
     self.trial = trial.exists ? trial : nil
-    // self.discount = discount.exists ? discount : nil
+    self.discount = discount.exists ? discount : nil
+    self.lifetime = lifetime.exists ? lifetime : nil
+  }
+
+  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+  init(product: SK2Product) {
+    self.locale = product.priceFormatStyle.locale.identifier
+    self.languageCode = product.priceFormatStyle.locale.languageCode
+    self.currencyCode = product.priceFormatStyle.locale.currencyCode
+    self.currencySymbol = product.priceFormatStyle.locale.currencySymbol
+    self.identifier = product.id
+
+    let subscription = SWSubscriptionTemplateVariable(type: .subscription, product: product)
+    let trial = SWSubscriptionTemplateVariable(type: .trial, product: product)
+    let discount = SWSubscriptionTemplateVariable(type: .discount, product: product)
+    let lifetime = SWSubscriptionTemplateVariable(type: .lifetime, product: product)
+
+    self.subscription = subscription.exists ? subscription : nil
+    self.trial = trial.exists ? trial : nil
+    self.discount = discount.exists ? discount : nil
     self.lifetime = lifetime.exists ? lifetime : nil
   }
 }

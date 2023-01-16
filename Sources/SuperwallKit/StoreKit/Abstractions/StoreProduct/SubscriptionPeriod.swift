@@ -82,6 +82,16 @@ public final class SubscriptionPeriod: NSObject {
       .normalized()
   }
 
+  @available(iOS 15.0, tvOS 15.0, watchOS 8, *)
+  static func from(sk2SubscriptionPeriod: StoreKit.Product.SubscriptionPeriod) -> SubscriptionPeriod? {
+    guard let unit = SubscriptionPeriod.Unit.from(sk2PeriodUnit: sk2SubscriptionPeriod.unit) else {
+      return nil
+    }
+
+    return .init(value: sk2SubscriptionPeriod.value, unit: unit)
+      .normalized()
+  }
+
   /// This function simplifies large numbers of days into months and large numbers
   /// of months into years if there are no leftover units after the conversion.
   ///
@@ -119,10 +129,8 @@ extension SubscriptionPeriod {
     }() * Decimal(value)
 
     return (price as NSDecimalNumber)
-      .dividing(
-        by: periodsPerDay as NSDecimalNumber,
-        withBehavior: Self.roundingBehavior
-      ) as Decimal
+      .dividing(by: periodsPerDay as NSDecimalNumber,
+                withBehavior: Self.roundingBehavior) as Decimal
   }
 
   func pricePerWeek(withTotalPrice price: Decimal) -> Decimal {
@@ -136,10 +144,8 @@ extension SubscriptionPeriod {
     }() * Decimal(value)
 
     return (price as NSDecimalNumber)
-      .dividing(
-        by: periodsPerDay as NSDecimalNumber,
-        withBehavior: Self.roundingBehavior
-      ) as Decimal
+      .dividing(by: periodsPerDay as NSDecimalNumber,
+                withBehavior: Self.roundingBehavior) as Decimal
   }
 
   func pricePerMonth(withTotalPrice price: Decimal) -> Decimal {
@@ -153,10 +159,8 @@ extension SubscriptionPeriod {
     }() * Decimal(self.value)
 
     return (price as NSDecimalNumber)
-      .dividing(
-        by: periodsPerMonth as NSDecimalNumber,
-        withBehavior: Self.roundingBehavior
-      ) as Decimal
+      .dividing(by: periodsPerMonth as NSDecimalNumber,
+                withBehavior: Self.roundingBehavior) as Decimal
   }
 
   func pricePerYear(withTotalPrice price: Decimal) -> Decimal {
@@ -170,10 +174,8 @@ extension SubscriptionPeriod {
     }() * Decimal(self.value)
 
     return (price as NSDecimalNumber)
-      .dividing(
-        by: periodsPerYear as NSDecimalNumber,
-        withBehavior: Self.roundingBehavior
-      ) as Decimal
+      .dividing(by: periodsPerYear as NSDecimalNumber,
+                withBehavior: Self.roundingBehavior) as Decimal
   }
 
   private static let roundingBehavior = NSDecimalNumberHandler(
@@ -186,9 +188,20 @@ extension SubscriptionPeriod {
   )
 }
 
-private extension SubscriptionPeriod.Unit {
+fileprivate extension SubscriptionPeriod.Unit {
   static func from(sk1PeriodUnit: SK1Product.PeriodUnit) -> Self? {
     switch sk1PeriodUnit {
+    case .day: return .day
+    case .week: return .week
+    case .month: return .month
+    case .year: return .year
+    @unknown default: return nil
+    }
+  }
+
+  @available(iOS 15.0, tvOS 15.0, watchOS 8, *)
+  static func from(sk2PeriodUnit: StoreKit.Product.SubscriptionPeriod.Unit) -> Self? {
+    switch sk2PeriodUnit {
     case .day: return .day
     case .week: return .week
     case .month: return .month

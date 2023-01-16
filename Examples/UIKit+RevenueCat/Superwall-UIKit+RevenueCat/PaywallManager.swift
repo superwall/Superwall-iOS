@@ -26,8 +26,6 @@ final class PaywallManager: NSObject {
   private static let revenueCatApiKey = "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql"
   private static let superwallApiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
 
-  private var cancellables: Set<AnyCancellable> = []
-
   override init() {
     isSubscribed = UserDefaults.standard.bool(forKey: kIsSubscribed)
     super.init()
@@ -55,23 +53,7 @@ final class PaywallManager: NSObject {
         apiKey: superwallApiKey,
         delegate: shared
       )
-
-      shared.notifyWhenConfigured()
     }
-  }
-
-  private func notifyWhenConfigured() {
-    Superwall.shared.$isConfigured
-      .receive(on: DispatchQueue.main)
-      .sink { isConfigured in
-        if isConfigured {
-          NotificationCenter.default.post(
-            name: Notification.Name("SuperwallDidConfigure"),
-            object: nil
-          )
-        }
-      }
-      .store(in: &cancellables)
   }
 
   /// Logs the user in to both RevenueCat and Superwall with the specified `userId`.
@@ -129,8 +111,8 @@ final class PaywallManager: NSObject {
   /// Purchases a product with RevenueCat.
   /// - Returns: A boolean indicating whether the user cancelled or not.
   private func purchase(_ product: SKProduct) async throws -> Bool {
-    let storeProduct = RevenueCat.StoreProduct(sk1Product: product)
-    let (_, customerInfo, userCancelled) = try await Purchases.shared.purchase(product: storeProduct)
+    let product = await Purchases.shared.products([product.productIdentifier]).first!
+    let (_, customerInfo, userCancelled) = try await Purchases.shared.purchase(product: product)
     updateSubscriptionStatus(using: customerInfo)
     return userCancelled
   }

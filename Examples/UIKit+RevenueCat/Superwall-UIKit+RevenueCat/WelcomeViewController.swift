@@ -11,7 +11,7 @@ import SuperwallKit
 final class WelcomeViewController: UIViewController {
   @IBOutlet private var textFieldBackgroundView: UIView!
   @IBOutlet private var textField: UITextField!
-
+  private var isLoggedIn = false
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationController?.isNavigationBarHidden = true
@@ -20,12 +20,11 @@ final class WelcomeViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(superwallDidConfigure),
-      name: Notification.Name("SuperwallDidConfigure"),
-      object: nil
-    )
+    isLoggedIn = UserDefaults.standard.bool(forKey: "IsLoggedIn")
+    print("***", isLoggedIn)
+    if isLoggedIn {
+      next()
+    }
 
     textFieldBackgroundView.layer.cornerRadius = textFieldBackgroundView.frame.height / 2
     textField.delegate = self
@@ -36,20 +35,15 @@ final class WelcomeViewController: UIViewController {
     navigationController?.interactivePopGestureRecognizer?.isEnabled = false
   }
 
-  @objc
-  private func superwallDidConfigure() {
-    if Superwall.isLoggedIn {
-      next()
-    }
-  }
-
   @IBAction private func logIn() {
+    UserDefaults.standard.setValue(true, forKey: "IsLoggedIn")
     Task {
       if let name = textField.text {
         PaywallManager.setName(to: name)
       }
       let userId = "abc"
       await PaywallManager.logIn(userId: userId)
+
       next()
     }
   }
