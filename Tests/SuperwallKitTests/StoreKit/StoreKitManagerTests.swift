@@ -22,7 +22,10 @@ class StoreKitManagerTests: XCTestCase {
     let storeKitCoordinatorFactoryMock = StoreKitCoordinatorFactoryMock(
       coordinator: coordinator
     )
-    return StoreKitManager(factory: storeKitCoordinatorFactoryMock)
+    let storeKitManager = StoreKitManager(factory: storeKitCoordinatorFactoryMock)
+    storeKitManager.postInit()
+
+    return storeKitManager
   }
 
   func test_getProducts_primaryProduct() async {
@@ -113,7 +116,7 @@ class StoreKitManagerTests: XCTestCase {
     do {
       let (productsById, products) = try await manager.getProducts(withIds: ["1"], substituting: substituteProducts)
       XCTAssertEqual(productsById.count, 1)
-      XCTAssertEqual(productsById[primary.productIdentifier], primary)
+      XCTAssertEqual(productsById[primary.productIdentifier]?.underlyingSK1Product, primary)
       XCTAssertEqual(products.first!.id, primary.productIdentifier)
       XCTAssertEqual(products.first!.type, .primary)
     } catch {
@@ -137,11 +140,11 @@ class StoreKitManagerTests: XCTestCase {
     do {
       let (productsById, products) = try await manager.getProducts(withIds: ["1", "2"], substituting: substituteProducts)
       XCTAssertEqual(productsById.count, 2)
-      XCTAssertEqual(productsById[primary.productIdentifier], primary)
+      XCTAssertEqual(productsById[primary.productIdentifier]?.underlyingSK1Product, primary)
       XCTAssertEqual(products.count, 1)
       XCTAssertEqual(products.first!.id, primary.productIdentifier)
       XCTAssertEqual(products.first!.type, .primary)
-      XCTAssertEqual(productsById["2"], responseProduct2)
+      XCTAssertEqual(productsById["2"]?.underlyingSK1Product, responseProduct2)
     } catch {
       XCTFail("couldn't get products")
     }

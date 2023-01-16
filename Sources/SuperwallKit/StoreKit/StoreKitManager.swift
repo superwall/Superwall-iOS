@@ -17,10 +17,12 @@ final class StoreKitManager {
   private var receiptManager: ReceiptManager!
   // swiftlint:enable implicitly_unwrapped_optional
 
+  /// **NOTE:** Remember to call `postInit()` after init
   init(factory: StoreKitCoordinatorFactory) {
     self.factory = factory
   }
 
+  ///  Separated from init to stop circular references during init.
   func postInit() {
     coordinator = factory.makeStoreKitCoordinator()
     receiptManager = ReceiptManager(delegate: self)

@@ -12,11 +12,11 @@ import StoreKit
 
 @available(iOS 14.0, *)
 final class ProductPurchaserSK1Tests: XCTestCase {
-  let dependencyContainer = DependencyContainer(apiKey: "")
-  var sessionEventsManager: SessionEventsManager!
-  
   func test_recordTransaction() async {
-    // Given
+    // MARK: Given
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    
+    // Set up App Session
     let appSessionId = "123"
     let appSession = AppSession.stub()
       .setting(\.id, to: appSessionId)
@@ -26,18 +26,25 @@ final class ProductPurchaserSK1Tests: XCTestCase {
       storage: dependencyContainer.storage
     )
 
+    // Set up Session Events Manager
     let queue = MockSessionEventsQueue()
-    sessionEventsManager = SessionEventsManager(
+    let sessionEventsManager = SessionEventsManager(
       queue: queue,
       storage: dependencyContainer.storage,
-      network: Network(factory: dependencyContainer),
+      network: dependencyContainer.network,
       configManager:  dependencyContainer.configManager,
       factory: dependencyContainer
     )
+
+    // Switch dependency container properties
     dependencyContainer.sessionEventsManager = sessionEventsManager
+    dependencyContainer.appSessionManager = appSessionManager
+    // Sleeping so that old managers  can deinit
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
+    // Fire postInits
     sessionEventsManager.postInit()
     appSessionManager.postInit(sessionEventsManager: sessionEventsManager)
-    dependencyContainer.appSessionManager = appSessionManager
 
     dependencyContainer.configManager.config =  .stub()
 
@@ -49,13 +56,13 @@ final class ProductPurchaserSK1Tests: XCTestCase {
     )
     let paymentQueue = SKPaymentQueue.default()
 
-    // When
+    // MARK: When
     let transaction = MockSKPaymentTransaction(state: .purchased)
     productPurchaser.paymentQueue(paymentQueue, updatedTransactions: [transaction])
 
     try? await Task.sleep(nanoseconds: 100_000_000)
 
-    // Then
+    // MARK: Then
     let isTransactionsEmpty = await queue.transactions.isEmpty
     XCTAssertFalse(isTransactionsEmpty)
   }
