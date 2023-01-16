@@ -64,6 +64,9 @@ final class ProductPurchaserSK1Tests: XCTestCase {
 
     // MARK: Then
     let isTransactionsEmpty = await queue.transactions.isEmpty
+
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    
     XCTAssertFalse(isTransactionsEmpty)
   }
 }
