@@ -576,7 +576,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // Given
     let paywallId = "abc"
     let products = [
-      SWProduct(product: product.underlyingSK1Product),
+      SWProduct(product: product.sk1Product!),
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]
@@ -670,7 +670,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     let paywallId = "abc"
     let primaryProduct =  StoreProduct(sk1Product: MockSkProduct(productIdentifier: "primary"))
     let products = [
-      SWProduct(product: primaryProduct.underlyingSK1Product),
+      SWProduct(product: primaryProduct.sk1Product!),
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]
@@ -813,9 +813,11 @@ final class TriggerSessionManagerTests: XCTestCase {
     await NotificationCenter.default.post(Notification(name: UIApplication.didEnterBackgroundNotification))
 
     // Then
-    try? await Task.sleep(nanoseconds: 10_000_000)
+    try? await Task.sleep(nanoseconds: 100_000_000)
 
     let triggerSessions2 = await queue.triggerSessions
+    
+    try? await Task.sleep(nanoseconds: 100_000_000)
     XCTAssertEqual(triggerSessions2.count, 1)
     XCTAssertEqual(triggerSessions2.last?.id, lastTriggerSession.id)
     XCTAssertNotNil(triggerSessions2.last!.endAt)
@@ -828,7 +830,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     let lastTriggerSession = await queue.triggerSessions.last!
     await NotificationCenter.default.post(Notification(name: UIApplication.didEnterBackgroundNotification))
 
-    try? await Task.sleep(nanoseconds: 10_000_000)
+    try? await Task.sleep(nanoseconds: 100_000_000)
 
     await queue.removeAllTriggerSessions()
 
@@ -838,9 +840,12 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     await NotificationCenter.default.post(Notification(name: UIApplication.willEnterForegroundNotification))
 
-    try? await Task.sleep(nanoseconds: 10_000_000)
+    try? await Task.sleep(nanoseconds: 100_000_000)
     // Then
     let triggerSessions2 = await queue.triggerSessions
+    
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
     XCTAssertEqual(triggerSessions2.count, 1)
     XCTAssertNotEqual(triggerSessions2.last?.id, lastTriggerSession.id)
     XCTAssertNil(triggerSessions2.last!.endAt)

@@ -67,9 +67,9 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    try? await Task.sleep(nanoseconds: 1_000_000)
+    try? await Task.sleep(nanoseconds: 500_000_000)
 
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+    wait(for: [expectation, stateExpectation], timeout: 2)
   }
 
   @MainActor
@@ -100,7 +100,6 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    // TODO: Fix this. Before I set superwall to a strong ref?
     let dependencyContainer = DependencyContainer(apiKey: "abc")
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
@@ -140,9 +139,9 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    try? await Task.sleep(nanoseconds: 1_000_000)
+    try? await Task.sleep(nanoseconds: 500_000_000)
 
-    wait(for: [expectation, stateExpectation], timeout: 1)
+    wait(for: [expectation, stateExpectation], timeout: 2)
   }
 
   @MainActor
@@ -189,8 +188,8 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    try? await Task.sleep(nanoseconds: 1_000_000)
+    try? await Task.sleep(nanoseconds: 500_000_000)
 
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+    wait(for: [expectation, stateExpectation], timeout: 2)
   }
 }

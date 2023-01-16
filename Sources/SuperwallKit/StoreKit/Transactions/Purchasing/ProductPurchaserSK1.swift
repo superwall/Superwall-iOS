@@ -52,10 +52,13 @@ extension ProductPurchaserSK1: ProductPurchaser {
   /// Purchases a product, waiting for the completion block to be fired and
   /// returning a purchase result.
   func purchase(product: StoreProduct) async -> PurchaseResult {
+    guard let sk1Product = product.sk1Product else {
+      return .failed(PurchaseError.productUnavailable)
+    }
     purchasing.productId = product.productIdentifier
 
     return await withCheckedContinuation { continuation in
-      let payment = SKPayment(product: product.underlyingSK1Product)
+      let payment = SKPayment(product: sk1Product)
 
       purchasing.completion = { [weak self] result in
         guard let self = self else {

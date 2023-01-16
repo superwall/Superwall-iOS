@@ -22,7 +22,10 @@ class ReceiptManagerTests: XCTestCase {
     let storeKitCoordinatorFactoryMock = StoreKitCoordinatorFactoryMock(
       coordinator: coordinator
     )
-    return StoreKitManager(factory: storeKitCoordinatorFactoryMock)
+    let storeKitManager = StoreKitManager(factory: storeKitCoordinatorFactoryMock)
+    storeKitManager.postInit()
+
+    return storeKitManager
   }
 
   func test_loadPurchasedProducts_nilProducts() async {
@@ -32,8 +35,12 @@ class ReceiptManagerTests: XCTestCase {
     )
     let manager = makeStoreKitManager(with: productsFetcher)
 
+    let getReceiptData: () -> Data = {
+      return MockReceiptData.newReceipt
+    }
     let receiptManager = ReceiptManager(
-      delegate: manager
+      delegate: manager,
+      receiptData: getReceiptData
     )
 
     _ = await receiptManager.loadPurchasedProducts()

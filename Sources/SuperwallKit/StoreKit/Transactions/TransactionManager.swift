@@ -238,7 +238,7 @@ final class TransactionManager {
   }
 
   func trackTransactionDidSucceed(
-    _ transactionModel: StoreTransaction,
+    _ transaction: StoreTransaction,
     product: StoreProduct
   ) async {
     guard let paywallViewController = lastPaywallViewController else {
@@ -251,16 +251,16 @@ final class TransactionManager {
     let paywallInfo = await paywallViewController.paywallInfo
     Task.detached(priority: .background) {
       await self.sessionEventsManager.triggerSession.trackTransactionSucceeded(
-        withId: transactionModel.storeTransactionId,
+        withId: transaction.storeTransactionId,
         for: product,
         isFreeTrialAvailable: didStartFreeTrial
       )
 
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .complete(product, transactionModel),
+        state: .complete(product, transaction),
         paywallInfo: paywallInfo,
         product: product,
-        model: transactionModel
+        model: transaction
       )
       await Superwall.track(trackedEvent)
 
@@ -289,21 +289,3 @@ final class TransactionManager {
     lastPaywallViewController = nil
   }
 }
-
-/*
-// MARK: - Transaction Observer Delegate
-extension TransactionManager: TransactionObserverDelegate {
-  func trackTransactionRestoration(
-    withId transactionId: String?,
-    product: StoreProduct
-  ) async {
-    guard let paywallViewController = lastPaywallViewController else {
-      return
-    }
-
-    
-  }
-
-
-}
-*/

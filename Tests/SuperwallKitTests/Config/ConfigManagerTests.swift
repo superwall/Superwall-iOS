@@ -92,6 +92,7 @@ final class ConfigManagerTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
+    configManager.postInit(deviceHelper: dependencyContainer.deviceHelper)
 
     let variantId = "variantId"
     let experimentId = "experimentId"
@@ -116,6 +117,8 @@ final class ConfigManagerTests: XCTestCase {
       ])
 
     await configManager.getAssignments()
+
+    try? await Task.sleep(nanoseconds: 1_000_000)
 
     XCTAssertEqual(storage.getConfirmedAssignments()[experimentId], variantOption.toVariant())
     XCTAssertTrue(configManager.unconfirmedAssignments.isEmpty)

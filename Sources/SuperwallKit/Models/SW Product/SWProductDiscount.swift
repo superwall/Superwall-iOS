@@ -59,4 +59,39 @@ struct SWProductDiscount: Codable {
       self.type = .unknown
     }
   }
+
+  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+  init(
+    offer: StoreKit.Product.SubscriptionOffer,
+    fromProduct product: SK2Product
+  ) {
+    price = offer.price
+    priceLocale = product.priceFormatStyle.locale.identifier
+    identifier = offer.id
+    subscriptionPeriod = SWProductSubscriptionPeriod(
+      period: offer.period,
+      numberOfPeriods: offer.periodCount
+    )
+    numberOfPeriods = offer.periodCount
+
+    switch offer.paymentMode {
+    case .freeTrial:
+      self.paymentMode = .freeTrial
+    case .payAsYouGo:
+      self.paymentMode = .payAsYouGo
+    case .payUpFront:
+      self.paymentMode = .payUpFront
+    default:
+      self.paymentMode = .unknown
+    }
+
+    switch offer.type {
+    case .introductory:
+      self.type = .introductory
+    case .promotional:
+      self.type = .subscription
+    default:
+      self.type = .unknown
+    }
+  }
 }

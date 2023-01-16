@@ -75,4 +75,59 @@ struct SWSubscriptionTemplateVariable: Encodable {
 
     self.exists = false
   }
+
+  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+  init(
+    type: TemplateType,
+    product: SK2Product
+  ) {
+    let swProduct = SWProduct(product: product)
+    self.type = type
+
+    switch type {
+    case .subscription:
+      if let subscriptionPeriod = swProduct.subscriptionPeriod {
+        self.identifier = swProduct.productIdentifier
+        self.period = SWPeriodTemplateVariable(
+          period: subscriptionPeriod,
+          locale: product.priceFormatStyle.locale
+        )
+        self.price = SWPriceTemplateVariable(
+          value: swProduct.price,
+          locale: product.priceFormatStyle.locale,
+          period: subscriptionPeriod
+        )
+        return
+      }
+    case .trial:
+      if let discount = swProduct.introductoryPrice {
+        self.identifier = discount.identifier
+        if discount.price != 0 {
+          self.price = SWPriceTemplateVariable(
+            value: discount.price,
+            locale: product.priceFormatStyle.locale,
+            period: discount.subscriptionPeriod
+          )
+        }
+        self.period = SWPeriodTemplateVariable(
+          period: discount.subscriptionPeriod,
+          locale: product.priceFormatStyle.locale
+        )
+        return
+      }
+    case .discount:
+      break
+    case .lifetime:
+      if swProduct.subscriptionPeriod == nil {
+        self.exists = true
+        self.price = SWPriceTemplateVariable(
+          value: swProduct.price,
+          locale: product.priceFormatStyle.locale,
+          period: nil
+        )
+      }
+    }
+
+    self.exists = false
+  }
 }
