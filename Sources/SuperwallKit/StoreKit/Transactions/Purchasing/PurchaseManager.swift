@@ -13,6 +13,7 @@ enum PurchaseError: LocalizedError {
   case unknown
   case noTransactionDetected
   case unverifiedTransaction
+  case noSubscriptionController
 
   var errorDescription: String? {
     switch self {
@@ -22,6 +23,8 @@ enum PurchaseError: LocalizedError {
       return "No receipt was found on device for the product transaction."
     case .unverifiedTransaction:
       return "The product transaction could not be verified."
+    case .noSubscriptionController:
+      return "No Subscription Controller found."
     case .unknown:
       return "An unknown error occurred."
     }
@@ -31,31 +34,56 @@ enum PurchaseError: LocalizedError {
 struct PurchaseManager {
   unowned let storeKitManager: StoreKitManager
 
+  /// Purchases the product and then checks for a transaction,
   func purchase(product: StoreProduct) async -> InternalPurchaseResult {
     let purchaseStartAt = Date()
     let result = await storeKitManager.coordinator.productPurchaser.purchase(product: product)
 
+    if let transactionResult = await checkForTransaction(
+      result,
+      product: product,
+      startAt: purchaseStartAt
+    ) {
+      return transactionResult
+    }
+
     switch result {
-    case .purchased:
-      /// Always refreshing. Not sure this is 100% necessary but this is what RC do...
-      await storeKitManager.refreshReceipt()
-      do {
-        let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateTransaction(
-          of: product.productIdentifier,
-          since: purchaseStartAt
-        )
-        return .purchased(transaction)
-      } catch let error as PurchaseError {
-        return .failed(error)
-      } catch {
-        return .failed(PurchaseError.unknown)
-      }
     case .failed(let error):
       return .failed(error)
     case .pending:
       return .pending
     case .cancelled:
       return .cancelled
+    case .purchased:
+      // Won't get called because it'll be handled when we
+      // check the transaction above.
+      return .failed(PurchaseError.noTransactionDetected)
+    }
+  }
+
+  /// Called to double check people aren't cheating the system.
+  private func checkForTransaction(
+    _ result: PurchaseResult,
+    product: StoreProduct,
+    startAt: Date
+  ) async -> InternalPurchaseResult? {
+    do {
+      let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateTransaction(
+        of: product.productIdentifier,
+        since: startAt
+      )
+      return .purchased(transaction)
+    } catch {
+      // If an error occured, it could be because they actually didn't
+      // purchase. In which case we return nil.
+      guard case .purchased = result else {
+        return nil
+      }
+      if let error = error as? PurchaseError {
+        return .failed(error)
+      } else {
+        return .failed(PurchaseError.unknown)
+      }
     }
   }
 }

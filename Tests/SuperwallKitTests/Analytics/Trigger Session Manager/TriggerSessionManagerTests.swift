@@ -576,7 +576,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // Given
     let paywallId = "abc"
     let products = [
-      SWProduct(product: product.underlyingSK1Product),
+      SWProduct(product: product.sk1Product!),
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]
@@ -670,7 +670,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     let paywallId = "abc"
     let primaryProduct =  StoreProduct(sk1Product: MockSkProduct(productIdentifier: "primary"))
     let products = [
-      SWProduct(product: primaryProduct.underlyingSK1Product),
+      SWProduct(product: primaryProduct.sk1Product!),
       SWProduct(product: MockSkProduct()),
       SWProduct(product: MockSkProduct())
     ]

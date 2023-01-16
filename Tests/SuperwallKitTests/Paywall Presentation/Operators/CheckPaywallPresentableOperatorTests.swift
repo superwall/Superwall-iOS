@@ -67,7 +67,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    try? await Task.sleep(nanoseconds: 1_000_000)
+    try? await Task.sleep(nanoseconds: 500_000_000)
 
     wait(for: [expectation, stateExpectation], timeout: 2)
   }
@@ -139,7 +139,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    try? await Task.sleep(nanoseconds: 100_000_000)
+    try? await Task.sleep(nanoseconds: 500_000_000)
 
     wait(for: [expectation, stateExpectation], timeout: 2)
   }
@@ -188,7 +188,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    try? await Task.sleep(nanoseconds: 100_000_000)
+    try? await Task.sleep(nanoseconds: 500_000_000)
 
     wait(for: [expectation, stateExpectation], timeout: 2)
   }
