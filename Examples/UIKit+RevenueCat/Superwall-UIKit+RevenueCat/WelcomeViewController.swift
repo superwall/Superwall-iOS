@@ -21,7 +21,7 @@ final class WelcomeViewController: UIViewController {
     super.viewDidLoad()
 
     isLoggedIn = UserDefaults.standard.bool(forKey: "IsLoggedIn")
-    print("***", isLoggedIn)
+    
     if isLoggedIn {
       next()
     }
