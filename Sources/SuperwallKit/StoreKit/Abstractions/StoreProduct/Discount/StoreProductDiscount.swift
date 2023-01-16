@@ -11,6 +11,7 @@
 //
 //  Created by Joshua Liebowitz on 7/2/21.
 //  Updated by Yusuf Tör from Superwall on 11/8/22.
+// swiftlint:disable strict_fileprivate
 
 import StoreKit
 
@@ -69,8 +70,8 @@ public final class StoreProductDiscount: NSObject, StoreProductDiscountType {
   /// Creates an instance from any `StoreProductDiscountType`.
   /// If `discount` is already a wrapped `StoreProductDiscount` then this returns it instead.
   static func from(discount: StoreProductDiscountType) -> StoreProductDiscount {
-      return discount as? StoreProductDiscount
-      ?? StoreProductDiscount(discount)
+    return discount as? StoreProductDiscount
+    ?? StoreProductDiscount(discount)
   }
 
   public override func isEqual(_ object: Any?) -> Bool {
@@ -89,7 +90,7 @@ extension StoreProductDiscount {
   /// - Note: this is meant for  Objective-C. For Swift, use ``price`` instead.
   @objc(price)
   public var priceDecimalNumber: NSDecimalNumber {
-      return self.price as NSDecimalNumber
+    return self.price as NSDecimalNumber
   }
 }
 
@@ -157,11 +158,11 @@ extension StoreProductDiscount.DiscountType {
   static func from(sk1Discount: SK1ProductDiscount) -> Self? {
     switch sk1Discount.type {
     case .introductory:
-        return .introductory
+      return .introductory
     case .subscription:
-        return .promotional
+      return .promotional
     @unknown default:
-        return nil
+      return nil
     }
   }
 
@@ -178,6 +179,7 @@ extension StoreProductDiscount.DiscountType {
   }
 }
 
+// MARK: - Identifiable
 extension StoreProductDiscount: Identifiable {
   /// The stable identity of the entity associated with this instance.
   public var id: Data { return Data(discount: self) }

@@ -4,26 +4,27 @@
 //
 //  Created by Yusuf Tör on 07/12/2022.
 //
+// swiftlint:disable strict_fileprivate
 
 import StoreKit
 
 struct SK1StoreTransaction: StoreTransactionType {
   let underlyingSK1Transaction: SK1Transaction
 
-  public let transactionDate: Date?
-  public let originalTransactionIdentifier: String
-  public let state: StoreTransactionState
-  public let storeTransactionId: String?
-  public let originalTransactionDate: Date?
-  public let webOrderLineItemID: String?
-  public let appBundleId: String?
-  public let subscriptionGroupId: String?
-  public let isUpgraded: Bool?
-  public let expirationDate: Date?
-  public let offerId: String?
-  public let revocationDate: Date?
-  public let appAccountToken: UUID?
-  public let payment: StorePayment
+  let transactionDate: Date?
+  let originalTransactionIdentifier: String
+  let state: StoreTransactionState
+  let storeTransactionId: String?
+  let originalTransactionDate: Date?
+  let webOrderLineItemID: String?
+  let appBundleId: String?
+  let subscriptionGroupId: String?
+  let isUpgraded: Bool?
+  let expirationDate: Date?
+  let offerId: String?
+  let revocationDate: Date?
+  let appAccountToken: UUID?
+  let payment: StorePayment
 
   init(transaction: SK1Transaction) {
     self.underlyingSK1Transaction = transaction

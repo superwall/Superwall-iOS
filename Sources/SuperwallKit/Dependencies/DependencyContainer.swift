@@ -292,7 +292,7 @@ extension DependencyContainer: StoreTransactionFactory {
       triggerSessionId: triggerSession?.id
     )
   }
-  
+
   @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction {
     let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession

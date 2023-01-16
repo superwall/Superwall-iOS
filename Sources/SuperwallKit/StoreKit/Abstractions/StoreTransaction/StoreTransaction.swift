@@ -4,7 +4,6 @@
 //
 //  Created by Yusuf Tör on 07/12/2022.
 //
-// swiftlint:disable strict_fileprivate
 
 import Foundation
 import StoreKit
@@ -30,7 +29,7 @@ public final class StoreTransaction: NSObject, StoreTransactionType, Encodable {
   public var transactionDate: Date? { transaction.transactionDate }
   public var originalTransactionIdentifier: String { transaction.originalTransactionIdentifier }
   public var state: StoreTransactionState { transaction.state }
-  public var storeTransactionId: String? { transaction.storeTransactionId}
+  public var storeTransactionId: String? { transaction.storeTransactionId }
   public var payment: StorePayment { transaction.payment }
   public var originalTransactionDate: Date? { transaction.originalTransactionDate }
   public var webOrderLineItemID: String? { transaction.webOrderLineItemID }
