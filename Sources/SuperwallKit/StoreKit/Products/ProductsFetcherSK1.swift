@@ -20,6 +20,9 @@ class ProductsFetcherSK1: NSObject, ProductsFetcher {
 	private var productsByRequests: [SKRequest: Set<String>] = [:]
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
+  enum ProductError: Error {
+    case didNotRetrieve
+  }
 
   // MARK: - ProductsFetcher
   /// Gets StoreKit 1 products from identifiers.
@@ -149,8 +152,6 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 			self.completionHandlers.removeValue(forKey: requestProducts)
 			self.productsByRequests.removeValue(forKey: request)
 
-			self.cacheProducts(response.products)
-
       if response.products.isEmpty,
         !requestProducts.isEmpty {
         Logger.debug(
@@ -159,13 +160,20 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
           message: "No products retrieved. Visit https://superwall.com/l/no-products to diagnose.",
           info: ["product_ids": requestProducts.description]
         )
-      }
-
-			for completion in completionBlocks {
-        DispatchQueue.main.async {
-          completion(.success(Set(response.products)))
+        for completion in completionBlocks {
+          DispatchQueue.main.async {
+            completion(.failure(ProductError.didNotRetrieve))
+          }
         }
-			}
+      } else {
+        self.cacheProducts(response.products)
+
+        for completion in completionBlocks {
+          DispatchQueue.main.async {
+            completion(.success(Set(response.products)))
+          }
+        }
+      }
 		}
 	}
 
