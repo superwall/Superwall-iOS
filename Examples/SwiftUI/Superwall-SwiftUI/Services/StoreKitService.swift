@@ -19,6 +19,7 @@ final class StoreKitService: NSObject, ObservableObject {
   }
   private let kIsSubscribed = "isSubscribed"
   var completion: ((PurchaseResult) -> Void)?
+  private var receiptRefreshCompletion: ((Bool) -> Void)?
   enum StoreError: Error {
     case failedVerification
   }
@@ -29,27 +30,26 @@ final class StoreKitService: NSObject, ObservableObject {
     SKPaymentQueue.default().add(self)
   }
 
-  func purchase(
-    _ product: SKProduct,
-    completion: @escaping (PurchaseResult) -> Void
-  ) {
-    let payment = SKPayment(product: product)
-    self.completion = completion
-    SKPaymentQueue.default().add(payment)
+  func purchase(_ product: SKProduct) async -> PurchaseResult {
+    return await withCheckedContinuation { continuation in
+      let payment = SKPayment(product: product)
+      self.completion = { result in
+        continuation.resume(with: .success(result))
+      }
+      SKPaymentQueue.default().add(payment)
+    }
   }
 
-  func restorePurchases() -> Bool {
-    let refresh = SKReceiptRefreshRequest()
-    defer {
-      refresh.cancel()
+  func restorePurchases() async -> Bool {
+    let isRefreshed = await withCheckedContinuation { continuation in
+      let refresh = SKReceiptRefreshRequest()
+      refresh.delegate = self
+      refresh.start()
+      receiptRefreshCompletion = { completed in
+        continuation.resume(returning: completed)
+      }
     }
-
-    refresh.start()
-    if refresh.receiptProperties?.isEmpty == false {
-      isSubscribed = true
-      return true
-    }
-    return false
+    return isRefreshed
   }
 
   func loadSubscriptionState() async {
@@ -70,6 +70,25 @@ final class StoreKitService: NSObject, ObservableObject {
   }
 }
 
+// MARK: - SKRequestDelegate
+extension StoreKitService: SKRequestDelegate {
+  func requestDidFinish(_ request: SKRequest) {
+    guard request is SKReceiptRefreshRequest else {
+      return
+    }
+    receiptRefreshCompletion?(true)
+    request.cancel()
+  }
+
+  func request(_ request: SKRequest, didFailWithError error: Error) {
+    guard request is SKReceiptRefreshRequest else {
+      return
+    }
+    receiptRefreshCompletion?(false)
+    request.cancel()
+  }
+}
+
 // MARK: - SKPaymentTransactionObserver
 extension StoreKitService: SKPaymentTransactionObserver {
   func paymentQueue(
@@ -79,6 +98,7 @@ extension StoreKitService: SKPaymentTransactionObserver {
     for transaction in transactions {
       switch transaction.transactionState {
       case .purchased:
+        // TODO: Verify receipts.
         isSubscribed = true
         SKPaymentQueue.default().finishTransaction(transaction)
         completion?(.purchased)

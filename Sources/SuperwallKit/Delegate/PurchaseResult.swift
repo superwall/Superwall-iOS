@@ -19,7 +19,7 @@ enum InternalPurchaseResult {
 ///
 /// When implementing the ``SuperwallDelegate/purchase(product:)`` delegate
 /// method, all cases should be considered.
-public enum PurchaseResult {
+public enum PurchaseResult: Sendable {
   /// The purchase was cancelled.
   ///
   /// In StoreKit 1, you can detect this by switching over the error code enum from the `.failed`
@@ -56,7 +56,7 @@ public enum PurchaseResult {
 
 /// An Objective-C-only enum that defines the possible outcomes of attempting to purchase a product.
 @objc(SWKPurchaseResult)
-public enum PurchaseResultObjc: Int {
+public enum PurchaseResultObjc: Int, Sendable {
   /// The purchase was cancelled.
   ///
   /// In StoreKit 1, you can detect this by switching over the error code from the `.failed`

@@ -11,7 +11,7 @@ import SuperwallKit
 final class WelcomeViewController: UIViewController {
   @IBOutlet private var textFieldBackgroundView: UIView!
   @IBOutlet private var textField: UITextField!
-
+  private var isLoggedIn = false
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationController?.isNavigationBarHidden = true
@@ -19,7 +19,10 @@ final class WelcomeViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    if Superwall.isLoggedIn {
+
+    isLoggedIn = UserDefaults.standard.bool(forKey: "IsLoggedIn")
+
+    if isLoggedIn {
       next()
     }
 
@@ -33,6 +36,7 @@ final class WelcomeViewController: UIViewController {
   }
 
   @IBAction private func logIn() {
+    UserDefaults.standard.setValue(true, forKey: "IsLoggedIn")
     Task {
       if let name = textField.text {
         SuperwallService.setName(to: name)

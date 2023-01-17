@@ -244,7 +244,7 @@ extension InAppReceipt {
 
     guard let alg = receipt.digestAlgorithm,
     SecKeyVerifySignature(iTunesPublicKeySec, alg, payloadRawData as CFData, signature as CFData, &umErrorCF) else {
-      let error = umErrorCF?.takeRetainedValue() as Error? as NSError?
+      // let error = umErrorCF?.takeRetainedValue() as Error? as NSError?
       throw IARError.validationFailed(reason: .signatureValidation(.invalidSignature))
     }
   }

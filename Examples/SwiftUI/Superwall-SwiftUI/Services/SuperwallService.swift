@@ -9,7 +9,6 @@ import SuperwallKit
 import StoreKit
 import Combine
 
-// swiftlint:disable:next convenience_type
 final class SuperwallService {
   #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
   static let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
@@ -20,10 +19,18 @@ final class SuperwallService {
   var isLoggedIn = CurrentValueSubject<Bool, Never>(false)
 
   static func configure() {
-    Superwall.configure(
-      apiKey: apiKey,
-      delegate: shared
-    )
+    // Superwall handles subscription logic by default. However, if you'd
+    // like more control you can handle it yourself via the SubscriptionController
+    // in the delegate. If you're doing that, uncomment the following and other comments
+    // further down:
+
+    // Task {
+    // await StoreKitService.shared.loadSubscriptionState()*/
+      Superwall.configure(
+        apiKey: apiKey,
+        delegate: shared
+      )
+    // }
 
     // Getting our logged in status to Superwall.
     shared.isLoggedIn.send(Superwall.isLoggedIn)
@@ -142,32 +149,24 @@ extension SuperwallService: SuperwallDelegate {
     */
   }
 
-  // Superwall handles subscription logic by default. However, if you'd
-  // like more control you can handle it yourself.
-  // Uncomment if you would like to handle purchasing yourself:
+  // Uncomment if you would like to handle subscription-related logic yourself:
   /*
   func subscriptionController() -> SubscriptionController? {
     return self
-  }*/
+  }
 }
 
-// Uncomment if you would like to handle purchasing yourself:
-/*
 extension SuperwallService: SubscriptionController {
   func purchase(product: SKProduct) async -> PurchaseResult {
-    return await withCheckedContinuation { continuation in
-      StoreKitService.shared.purchase(product) { result in
-        continuation.resume(with: .success(result))
-      }
-    }
+    return await StoreKitService.shared.purchase(product)
   }
 
   func restorePurchases() async -> Bool {
-    return StoreKitService.shared.restorePurchases()
+    return await StoreKitService.shared.restorePurchases()
   }
 
   func isUserSubscribed() -> Bool {
     return StoreKitService.shared.isSubscribed
   }
+  */
 }
-*/

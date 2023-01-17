@@ -58,12 +58,11 @@ final class PaywallManager: NSObject {
 
   /// Logs the user in to both RevenueCat and Superwall with the specified `userId`.
   ///
-  /// Call this when you retrieve a userId.
+  /// Call this when your user needs to log in.
   static func logIn(userId: String) async {
     do {
       let (customerInfo, _) = try await Purchases.shared.logIn(userId)
       shared.updateSubscriptionStatus(using: customerInfo)
-
       try await Superwall.logIn(userId: userId)
     } catch let error as IdentityError {
       switch error {
@@ -163,7 +162,8 @@ extension PaywallManager: PurchasesDelegate {
   /// - Returns: A boolean indicating whether the user restored a purchase or not.
   private func restore() async -> Bool {
     do {
-      _ = try await Purchases.shared.restorePurchases()
+      let customerInfo = try await Purchases.shared.restorePurchases()
+      updateSubscriptionStatus(using: customerInfo)
       return true
     } catch {
       return false
