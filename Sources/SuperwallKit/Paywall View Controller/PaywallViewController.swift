@@ -247,71 +247,6 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     ])
   }
 
-  override func viewWillAppear(_ animated: Bool) {
-		super.viewWillAppear(animated)
-
-    guard isActive else {
-      return
-    }
-    if isSafariVCPresented {
-      return
-    }
-
-    if #available(iOS 15.0, *),
-      !deviceHelper.isMac {
-      webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
-    }
-
-    // if the loading state is ready, re-template user attributes.
-    if loadingState == .ready {
-      webView.messageHandler.handle(.templateParamsAndUserAttributes)
-    }
-	}
-
-	override func viewWillDisappear(_ animated: Bool) {
-		super.viewWillDisappear(animated)
-    guard isPresented else {
-      return
-    }
-    if isSafariVCPresented {
-      return
-    }
-    if calledDismiss {
-      return
-    }
-    Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall()
-	}
-
-	override func viewDidDisappear(_ animated: Bool) {
-		super.viewDidDisappear(animated)
-
-    guard isPresented else {
-      return
-    }
-    if isSafariVCPresented {
-      return
-    }
-    Task(priority: .utility) {
-      await trackClose()
-    }
-
-    if #available(iOS 15.0, *),
-      !deviceHelper.isMac {
-      webView.setAllMediaPlaybackSuspended(true) // ignore-xcode-12
-    }
-
-    if !calledDismiss {
-      didDismiss(
-        .withResult(
-          paywallInfo: paywallInfo,
-          state: .closed
-        )
-      )
-    }
-
-    calledDismiss = false
-	}
-
   nonisolated private func trackOpen() async {
     await sessionEventsManager.triggerSession.trackPaywallOpen()
     storage.trackPaywallOpen()
@@ -594,6 +529,10 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 
     setPresentationStyle(withOverride: presentationStyleOverride)
 
+    if loadingState == .ready {
+      webView.messageHandler.handle(.templateParamsAndUserAttributes)
+    }
+
     presenter.present(
       self,
       animated: presentationIsAnimated
@@ -712,23 +651,77 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 }
 
-// MARK: - Dismiss Logic
+// MARK: - View Lifecycle
 extension PaywallViewController {
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    guard isActive else {
+      return
+    }
+    if isSafariVCPresented {
+      return
+    }
+
+    if #available(iOS 15.0, *),
+      !deviceHelper.isMac {
+      webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
+    }
+  }
+
+  override func viewWillDisappear(_ animated: Bool) {
+    super.viewWillDisappear(animated)
+    guard isPresented else {
+      return
+    }
+    if isSafariVCPresented {
+      return
+    }
+    if calledDismiss {
+      return
+    }
+    willDismiss()
+  }
+
+  override func viewDidDisappear(_ animated: Bool) {
+    super.viewDidDisappear(animated)
+
+    guard isPresented else {
+      return
+    }
+    if isSafariVCPresented {
+      return
+    }
+    Task(priority: .utility) {
+      await trackClose()
+    }
+
+    if #available(iOS 15.0, *),
+      !deviceHelper.isMac {
+      webView.setAllMediaPlaybackSuspended(true) // ignore-xcode-12
+    }
+
+    if !calledDismiss {
+      didDismiss(
+        .withResult(
+          paywallInfo: paywallInfo,
+          state: .closed
+        )
+      )
+    }
+
+    calledDismiss = false
+  }
+
   func dismiss(
     _ dismissalResult: PaywallDismissedResult,
     shouldSendDismissedState: Bool = true,
     completion: (() -> Void)? = nil
   ) {
     calledDismiss = true
-    Superwall.shared.presentationItems.paywallInfo = paywallInfo
-    Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall()
-
+    willDismiss()
     dismiss(animated: presentationIsAnimated) { [weak self] in
       guard let self = self else {
         return
-      }
-      if self.loadingState == .loadingPurchase {
-        self.loadingState = .ready
       }
       self.didDismiss(
         dismissalResult,
@@ -738,11 +731,20 @@ extension PaywallViewController {
     }
   }
 
+  private func willDismiss() {
+    Superwall.shared.presentationItems.paywallInfo = paywallInfo
+    Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall()
+  }
+
   private func didDismiss(
     _ dismissalResult: PaywallDismissedResult,
     shouldSendDismissedState: Bool = true,
     completion: (() -> Void)? = nil
   ) {
+    if self.loadingState == .loadingPurchase {
+      self.loadingState = .ready
+    }
+
     isPresented = false
 
     GameControllerManager.shared.clearDelegate(self)

@@ -50,9 +50,6 @@ extension Superwall {
   }
 
   /// Presents the paywall again by sending the previous presentation request to the presentation publisher.
-  ///
-  /// - Parameters:
-  ///   - presentationPublisher: The publisher created in the `internallyPresent(request:)` function to kick off the presentation pipeline.
   func presentAgain() async {
     guard let lastPresentationItems = presentationItems.last else {
       return
@@ -69,7 +66,6 @@ extension Superwall {
     dependencyContainer.identityManager.resendIdentity()
     lastPresentationItems.subject.send(lastPresentationItems.request)
   }
-
 
   @MainActor
   func dismiss(

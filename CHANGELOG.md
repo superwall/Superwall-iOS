@@ -57,6 +57,7 @@ We understand that transitions between major SDK releases can become frustrating
 - Setting the `PaywallOption` `automaticallyDismiss` to `false` now keeps the loading indicator visible after restoring and successfully purchasing until you manually dismiss the paywall.
 - Improves the speed of requests by changing the cache policy of requests to our servers.
 - Fixes `session_start`, `app_launch` and `first_seen` not being tracked if the SDK was initialised a few seconds after app launch.
+- Stops the unnecessary retemplating of paywall variables when coming back to the paywall after visiting a link via the in-app browser.
 
 ---
 
