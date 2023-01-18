@@ -20,7 +20,11 @@ extension Superwall {
   /// - Parameters:
   ///   - request: A presentation request of type `PresentationRequest` to feed into a presentation pipeline.
   /// - Returns: A publisher that outputs a ``PaywallState``.
-  func internallyPresent(_ request: PresentationRequest) -> PaywallStatePublisher {
+  @discardableResult
+  func internallyPresent(
+    _ request: PresentationRequest,
+    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never> = .init()
+  ) -> PaywallStatePublisher {
     /// A passthrough subject which sends the paywall state back to the client.
     let paywallStatePublisher = PassthroughSubject<PaywallState, Never>()
     let presentationSubject = PresentationSubject(request)
@@ -38,7 +42,7 @@ extension Superwall {
       .checkPaywallIsPresentable(paywallStatePublisher)
       .confirmPaywallAssignment()
       .presentPaywall(paywallStatePublisher)
-      .storePresentationObjects(presentationSubject)
+      .storePresentationObjects(presentationSubject, paywallStatePublisher)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
         receiveValue: { _ in }
@@ -62,9 +66,12 @@ extension Superwall {
       }
     }
 
-    // Resend both the identity and request again to run the presentation pipeline again.
-    dependencyContainer.identityManager.resendIdentity()
-    lastPresentationItems.subject.send(lastPresentationItems.request)
+    // Resend the request and pass in the state publisher so it can continue
+    // to send updates.
+    internallyPresent(
+      lastPresentationItems.request,
+      lastPresentationItems.statePublisher
+    )
   }
 
   @MainActor

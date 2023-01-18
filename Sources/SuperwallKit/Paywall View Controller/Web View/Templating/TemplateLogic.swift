@@ -13,20 +13,17 @@ enum TemplateLogic {
   static func getBase64EncodedTemplates(
     from paywall: Paywall,
     withParams params: JSON?,
-    identityManager: IdentityManager,
-    deviceHelper: DeviceHelper
+    factory: VariablesFactory
   ) -> String {
     let productsTemplate = ProductTemplate(
       eventName: "products",
       products: paywall.products
     )
 
-    let variablesTemplate = Variables(
+    let variablesTemplate = factory.makeJsonVariables(
       productVariables: paywall.productVariables,
-      params: params,
-      userAttributes: identityManager.userAttributes,
-      templateDeviceDictionary: deviceHelper.templateDevice.dictionary()
-    ).templated()
+      params: params
+    )
 
     let freeTrialTemplate = FreeTrialTemplate(
       eventName: "template_substitutions_prefix",

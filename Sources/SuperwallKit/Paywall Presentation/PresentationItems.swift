@@ -27,9 +27,9 @@ final class PresentationItems {
 
 /// Items involved in the last successful paywall presentation request.
 struct LastPresentationItems {
-  /// The last successful paywall presentation request.
+  /// The last paywall presentation request.
   let request: PresentationRequest
 
-  /// The last sucessful presentation subject.
-  let subject: PresentationSubject
+  /// The last state publisher.
+  let statePublisher: PassthroughSubject<PaywallState, Never>
 }

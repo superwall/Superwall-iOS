@@ -13,9 +13,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   var eventData: EventData? { get }
   var paywall: Paywall { get set }
   var paywallInfo: PaywallInfo { get }
-  // swiftlint:disable implicitly_unwrapped_optional
-  var webView: SWWebView! { get }
-  // swiftlint:enable implicitly_unwrapped_optional
+  var webView: SWWebView { get }
   var loadingState: PaywallLoadingState { get set }
   var isActive: Bool { get }
 
@@ -29,19 +27,14 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
 final class PaywallMessageHandler: WebEventDelegate {
   weak var delegate: PaywallMessageHandlerDelegate?
   private unowned let sessionEventsManager: SessionEventsManager
-  private unowned let deviceHelper: DeviceHelper
-  private unowned let identityManager: IdentityManager
+  private let factory: VariablesFactory
 
   init(
-    delegate: PaywallMessageHandlerDelegate?,
     sessionEventsManager: SessionEventsManager,
-    deviceHelper: DeviceHelper,
-    identityManager: IdentityManager
+    factory: VariablesFactory
   ) {
-    self.delegate = delegate
     self.sessionEventsManager = sessionEventsManager
-    self.deviceHelper = deviceHelper
-    self.identityManager = identityManager
+    self.factory = factory
   }
 
   func handle(_ message: PaywallMessage) {
@@ -51,7 +44,6 @@ final class PaywallMessageHandler: WebEventDelegate {
       message: "Handle Message",
       info: ["message": message]
     )
-
     guard let paywall = delegate?.paywall else {
       return
     }
@@ -91,8 +83,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
       withParams: delegate?.eventData?.parameters,
-      identityManager: identityManager,
-      deviceHelper: deviceHelper
+      factory: factory
     )
 
     let templateScript = """
@@ -149,8 +140,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
       withParams: delegate?.eventData?.parameters,
-      identityManager: identityManager,
-      deviceHelper: deviceHelper
+      factory: factory
     )
     let scriptSrc = """
       window.paywall.accept64('\(templates)');

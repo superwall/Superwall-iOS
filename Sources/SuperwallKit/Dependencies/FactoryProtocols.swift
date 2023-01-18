@@ -8,8 +8,16 @@
 import UIKit
 
 protocol ViewControllerFactory {
+  @MainActor
   func makePaywallViewController(for paywall: Paywall) -> PaywallViewController
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
+}
+
+protocol VariablesFactory {
+  func makeJsonVariables(
+    productVariables: [ProductVariable]?,
+    params: JSON?
+  ) -> JSON
 }
 
 protocol RequestFactory {

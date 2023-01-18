@@ -16,11 +16,14 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   ///
   /// - Returns: A publisher that contains info for the next pipeline operator.
-  func storePresentationObjects(_ presentationSubject: PresentationSubject) -> AnyPublisher<PresentablePipelineOutput, Error> {
+  func storePresentationObjects(
+    _ presentationSubject: PresentationSubject,
+    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+  ) -> AnyPublisher<PresentablePipelineOutput, Error> {
     map { input in
       let lastPaywallPresentation = LastPresentationItems(
         request: input.request,
-        subject: presentationSubject
+        statePublisher: paywallStatePublisher
       )
       input.request.injections.superwall.presentationItems.last = lastPaywallPresentation
       presentationSubject.send(completion: .finished)

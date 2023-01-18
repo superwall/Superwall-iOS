@@ -144,16 +144,31 @@ final class DependencyContainer {
 
 // MARK: - ViewControllerFactory
 extension DependencyContainer: ViewControllerFactory {
+  @MainActor
   func makePaywallViewController(for paywall: Paywall) -> PaywallViewController {
-    return PaywallViewController(
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: sessionEventsManager,
+      factory: self
+    )
+    let webView = SWWebView(
+      isMac: deviceHelper.isMac,
+      sessionEventsManager: sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallViewController = PaywallViewController(
       paywall: paywall,
       delegate: Superwall.shared,
       deviceHelper: deviceHelper,
       sessionEventsManager: sessionEventsManager,
       storage: storage,
       paywallManager: paywallManager,
-      identityManager: identityManager
+      webView: webView
     )
+
+    webView.delegate = paywallViewController
+    messageHandler.delegate = paywallViewController
+
+    return paywallViewController
   }
 
   @MainActor
@@ -170,6 +185,17 @@ extension DependencyContainer: ViewControllerFactory {
     viewController.paywallDatabaseId = id
     viewController.modalPresentationStyle = .overFullScreen
     return viewController
+  }
+}
+
+extension DependencyContainer: VariablesFactory {
+  func makeJsonVariables(productVariables: [ProductVariable]?, params: JSON?) -> JSON {
+    return Variables(
+      productVariables: productVariables,
+      params: params,
+      userAttributes: identityManager.userAttributes,
+      templateDeviceDictionary: deviceHelper.templateDevice.dictionary()
+    ).templated()
   }
 }
 

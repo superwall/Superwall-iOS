@@ -49,7 +49,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
   }
 
   /// The web view that the paywall is displayed in.
-  var webView: SWWebView!
+  let webView: SWWebView
 
   /// The paywall info
   var paywallInfo: PaywallInfo {
@@ -166,7 +166,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     sessionEventsManager: SessionEventsManager,
     storage: Storage,
     paywallManager: PaywallManager,
-    identityManager: IdentityManager
+    webView: SWWebView
   ) {
     self.cacheKey = PaywallCacheLogic.key(
       forIdentifier: paywall.identifier,
@@ -178,15 +178,10 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     self.storage = storage
     self.paywall = paywall
     self.paywallManager = paywallManager
+    self.webView = webView
 
     presentationStyle = paywall.presentation.style
     super.init(nibName: nil, bundle: nil)
-    webView = SWWebView(
-      delegate: self,
-      deviceHelper: deviceHelper,
-      sessionEventsManager: sessionEventsManager,
-      identityManager: identityManager
-    )
     PaywallViewController.cache.insert(self)
     observeWillResignActive()
 	}

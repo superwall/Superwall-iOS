@@ -146,14 +146,6 @@ class IdentityManager {
     userAttributes = mergedAttributes
   }
 
-  /// Resends the last stored value of the `identitySubject`.
-  ///
-  /// Used to present a paywall again.
-  func resendIdentity() {
-    let identityValue = identitySubject.value
-    identitySubject.send(identityValue)
-  }
-
   /// Sends a `true` value to the `identitySubject` in order to fire
   /// triggers after reset.
   func didSetIdentity() {

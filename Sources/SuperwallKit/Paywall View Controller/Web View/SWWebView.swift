@@ -17,24 +17,17 @@ final class SWWebView: WKWebView {
   let messageHandler: PaywallMessageHandler
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
   private let wkConfig: WKWebViewConfiguration
-  private unowned let deviceHelper: DeviceHelper
+  private let isMac: Bool
   private unowned let sessionEventsManager: SessionEventsManager
 
   init(
-    delegate: SWWebViewDelegate & PaywallMessageHandlerDelegate,
-    deviceHelper: DeviceHelper,
+    isMac: Bool,
     sessionEventsManager: SessionEventsManager,
-    identityManager: IdentityManager
+    messageHandler: PaywallMessageHandler
   ) {
-    self.deviceHelper = deviceHelper
-    self.delegate = delegate
+    self.isMac = isMac
     self.sessionEventsManager = sessionEventsManager
-    self.messageHandler = PaywallMessageHandler(
-      delegate: delegate,
-      sessionEventsManager: sessionEventsManager,
-      deviceHelper: deviceHelper,
-      identityManager: identityManager
-    )
+    self.messageHandler = messageHandler
 
     let config = WKWebViewConfiguration()
     config.allowsInlineMediaPlayback = true
@@ -43,10 +36,9 @@ final class SWWebView: WKWebView {
     config.mediaTypesRequiringUserActionForPlayback = []
 
     let preferences = WKPreferences()
-    if #available(iOS 15.0, *) {
-      if !deviceHelper.isMac {
-        preferences.isTextInteractionEnabled = false // ignore-xcode-12
-      }
+    if #available(iOS 15.0, *),
+      !isMac {
+      preferences.isTextInteractionEnabled = false // ignore-xcode-12
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true
     config.preferences = preferences
