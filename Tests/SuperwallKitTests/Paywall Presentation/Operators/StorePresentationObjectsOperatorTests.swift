@@ -12,6 +12,7 @@ import Combine
 final class StorePresentationObjectsOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
+  @MainActor
   func test_storePresentationObjects() {
     let dependencyContainer = DependencyContainer(apiKey: "")
 
@@ -44,7 +45,7 @@ final class StorePresentationObjectsOperatorTests: XCTestCase {
     CurrentValueSubject(input)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
-      .storePresentationObjects(subject)
+      .storePresentationObjects(subject, .init())
       .eraseToAnyPublisher()
       .sink(
         receiveCompletion: { _ in },

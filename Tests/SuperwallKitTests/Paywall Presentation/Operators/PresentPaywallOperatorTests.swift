@@ -12,6 +12,7 @@ import Combine
 final class PresentPaywallOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
+  @MainActor
   func test_presentPaywall_isPresented() {
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -28,14 +29,28 @@ final class PresentPaywallOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
     let dependencyContainer = DependencyContainer(apiKey: "")
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
     let paywallVc = PaywallViewControllerMock(
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       storage: dependencyContainer.storage,
       paywallManager: dependencyContainer.paywallManager,
-      identityManager: dependencyContainer.identityManager
+      webView: webView
     )
+
+    webView.delegate = paywallVc
+    messageHandler.delegate = paywallVc
+
     paywallVc.shouldPresent = true
 
     let input = PresentablePipelineOutput(
@@ -63,6 +78,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
     wait(for: [expectation, stateExpectation], timeout: 0.1)
   }
 
+  @MainActor
   func test_presentPaywall_isNotPresented() {
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -91,15 +107,27 @@ final class PresentPaywallOperatorTests: XCTestCase {
     .store(in: &cancellables)
 
     let dependencyContainer = DependencyContainer(apiKey: "")
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
     let paywallVc = PaywallViewControllerMock(
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       storage: dependencyContainer.storage,
       paywallManager: dependencyContainer.paywallManager,
-      identityManager: dependencyContainer.identityManager
+      webView: webView
     )
     paywallVc.shouldPresent = false
+    webView.delegate = paywallVc
+    messageHandler.delegate = paywallVc
 
     let input = PresentablePipelineOutput(
       request: .stub(),
