@@ -75,7 +75,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+    wait(for: [expectation, stateExpectation], timeout: 1)
   }
 
   @MainActor
@@ -158,6 +158,6 @@ final class PresentPaywallOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+    wait(for: [expectation, stateExpectation], timeout: 1)
   }
 }

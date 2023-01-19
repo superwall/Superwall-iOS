@@ -33,7 +33,8 @@ public protocol SubscriptionController: AnyObject {
 
   /// Called when the user initiates a restore.
   ///
-  /// Add your restore logic here and return its result.
+  /// Add your restore logic here, making sure that the user's subscription status is updated after restore,
+  /// and return its result.
   ///
   /// - Returns: A boolean that's `true` if the user's purchases were restored or `false` if they weren't.
   func restorePurchases() async -> Bool

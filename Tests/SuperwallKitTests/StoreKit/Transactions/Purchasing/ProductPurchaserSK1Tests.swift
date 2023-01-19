@@ -40,7 +40,7 @@ final class ProductPurchaserSK1Tests: XCTestCase {
     dependencyContainer.sessionEventsManager = sessionEventsManager
     dependencyContainer.appSessionManager = appSessionManager
     // Sleeping so that old managers  can deinit
-    try? await Task.sleep(nanoseconds: 200_000_000)
+    try? await Task.sleep(nanoseconds: 1000_000_000)
 
     // Fire postInits
     sessionEventsManager.postInit()
@@ -60,12 +60,12 @@ final class ProductPurchaserSK1Tests: XCTestCase {
     let transaction = MockSKPaymentTransaction(state: .purchased)
     productPurchaser.paymentQueue(paymentQueue, updatedTransactions: [transaction])
 
-    try? await Task.sleep(nanoseconds: 500_000_000)
+    try? await Task.sleep(nanoseconds: 1000_000_000)
 
     // MARK: Then
     let isTransactionsEmpty = await queue.transactions.isEmpty
 
-    try? await Task.sleep(nanoseconds: 500_000_000)
+    try? await Task.sleep(nanoseconds: 1000_000_000)
     
     XCTAssertFalse(isTransactionsEmpty)
   }

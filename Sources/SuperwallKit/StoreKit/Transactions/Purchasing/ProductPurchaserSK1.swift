@@ -19,7 +19,7 @@ final class ProductPurchaserSK1: NSObject {
 
   // MARK: - Restoration
   /// Used to serialise the async `SKPaymentQueue` calls when restoring.
-  private let restorationQueueGroup = DispatchGroup()
+  private let restorationDispatchGroup = DispatchGroup()
   private var restoreCompletion: ((Bool) -> Void)?
 
   // MARK: Dependencies
@@ -126,7 +126,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       scope: .paywallTransactions,
       message: "Restore Completed Transactions Finished"
     )
-    restorationQueueGroup.notify(queue: .main) { [weak self] in
+    restorationDispatchGroup.notify(queue: .main) { [weak self] in
       self?.restoreCompletion?(true)
     }
   }
@@ -141,7 +141,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       message: "Restore Completed Transactions Failed With Error",
       error: error
     )
-    restorationQueueGroup.notify(queue: .main) { [weak self] in
+    restorationDispatchGroup.notify(queue: .main) { [weak self] in
       self?.restoreCompletion?(false)
     }
   }
@@ -150,7 +150,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     _ queue: SKPaymentQueue,
     updatedTransactions transactions: [SKPaymentTransaction]
   ) {
-    restorationQueueGroup.enter()
+    restorationDispatchGroup.enter()
     Task {
       let isPaywallPresented = await Superwall.shared.isPaywallPresented
       for transaction in transactions {
@@ -163,7 +163,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         }
       }
       await loadPurchasedProductsIfPossible(from: transactions)
-      restorationQueueGroup.leave()
+      restorationDispatchGroup.leave()
     }
   }
 

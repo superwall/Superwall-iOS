@@ -18,11 +18,11 @@ final class StoreKitService: NSObject, ObservableObject {
     }
   }
   private let kIsSubscribed = "isSubscribed"
-  var completion: ((PurchaseResult) -> Void)?
-  private var receiptRefreshCompletion: ((Bool) -> Void)?
   enum StoreError: Error {
     case failedVerification
   }
+  private var purchaseCompletion: ((PurchaseResult) -> Void)?
+  private var restoreCompletion: ((Bool) -> Void)?
 
   override init() {
     super.init()
@@ -33,7 +33,7 @@ final class StoreKitService: NSObject, ObservableObject {
   func purchase(_ product: SKProduct) async -> PurchaseResult {
     return await withCheckedContinuation { continuation in
       let payment = SKPayment(product: product)
-      self.completion = { result in
+      self.purchaseCompletion = { result in
         continuation.resume(with: .success(result))
       }
       SKPaymentQueue.default().add(payment)
@@ -41,24 +41,23 @@ final class StoreKitService: NSObject, ObservableObject {
   }
 
   func restorePurchases() async -> Bool {
-    let isRefreshed = await withCheckedContinuation { continuation in
-      let refresh = SKReceiptRefreshRequest()
-      refresh.delegate = self
-      refresh.start()
-      receiptRefreshCompletion = { completed in
-        continuation.resume(returning: completed)
+    let result = await withCheckedContinuation { continuation in
+      // Using restoreCompletedTransactions instead of just refreshing
+      // the receipt so that RC can pick up on the restored products,
+      // if observing. It will also refresh the receipt on device.
+      restoreCompletion = { completed in
+        return continuation.resume(returning: completed)
       }
+      SKPaymentQueue.default().restoreCompletedTransactions()
     }
-    return isRefreshed
+    restoreCompletion = nil
+    await loadSubscriptionState()
+    return result
   }
 
   func loadSubscriptionState() async {
     for await result in Transaction.currentEntitlements {
       guard case .verified(let transaction) = result else {
-        continue
-      }
-      if let expirationDate = transaction.expirationDate,
-        expirationDate < Date() {
         continue
       }
       if transaction.revocationDate == nil {
@@ -70,27 +69,19 @@ final class StoreKitService: NSObject, ObservableObject {
   }
 }
 
-// MARK: - SKRequestDelegate
-extension StoreKitService: SKRequestDelegate {
-  func requestDidFinish(_ request: SKRequest) {
-    guard request is SKReceiptRefreshRequest else {
-      return
-    }
-    receiptRefreshCompletion?(true)
-    request.cancel()
-  }
-
-  func request(_ request: SKRequest, didFailWithError error: Error) {
-    guard request is SKReceiptRefreshRequest else {
-      return
-    }
-    receiptRefreshCompletion?(false)
-    request.cancel()
-  }
-}
-
 // MARK: - SKPaymentTransactionObserver
 extension StoreKitService: SKPaymentTransactionObserver {
+  func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
+     restoreCompletion?(true)
+   }
+
+   func paymentQueue(
+     _ queue: SKPaymentQueue,
+     restoreCompletedTransactionsFailedWithError error: Error
+   ) {
+     restoreCompletion?(false)
+   }
+
   func paymentQueue(
     _ queue: SKPaymentQueue,
     updatedTransactions transactions: [SKPaymentTransaction]
@@ -101,8 +92,8 @@ extension StoreKitService: SKPaymentTransactionObserver {
         // TODO: Verify receipts.
         isSubscribed = true
         SKPaymentQueue.default().finishTransaction(transaction)
-        completion?(.purchased)
-        completion = nil
+        purchaseCompletion?(.purchased)
+        purchaseCompletion = nil
       case .failed:
         if let error = transaction.error {
           if let error = error as? SKError {
@@ -110,23 +101,22 @@ extension StoreKitService: SKPaymentTransactionObserver {
             case .overlayTimeout,
               .paymentCancelled,
               .overlayCancelled:
-              completion?(.cancelled)
-              completion = nil
+              purchaseCompletion?(.cancelled)
+              purchaseCompletion = nil
               SKPaymentQueue.default().finishTransaction(transaction)
               return
             default:
               break
             }
           }
-          completion?(.failed(error))
-          completion = nil
+          purchaseCompletion?(.failed(error))
+          purchaseCompletion = nil
         }
         SKPaymentQueue.default().finishTransaction(transaction)
       case .deferred:
-        completion?(.pending)
-        completion = nil
+        purchaseCompletion?(.pending)
+        purchaseCompletion = nil
       case .restored:
-        isSubscribed = true
         SKPaymentQueue.default().finishTransaction(transaction)
       default:
         break

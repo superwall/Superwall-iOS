@@ -38,8 +38,9 @@ public protocol SubscriptionControllerObjc: AnyObject {
 
   /// Called when the user initiates a restore.
   ///
-  /// Add your restore logic here  and call the completion block with its result.
-  ///
+  /// Add your restore logic here, making sure that the user's subscription status is updated after restore,
+  /// and return its result.
+  /// 
   /// - Parameters:
   ///   - completion: Call the completion with `true` if the user's purchases were restored or `false` if they weren't.
   @objc func restorePurchases(completion: @escaping (Bool) -> Void)
