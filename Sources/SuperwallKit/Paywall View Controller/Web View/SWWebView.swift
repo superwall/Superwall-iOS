@@ -13,7 +13,7 @@ protocol SWWebViewDelegate: AnyObject {
   var paywallInfo: PaywallInfo { get }
 }
 
-final class SWWebView: WKWebView {
+class SWWebView: WKWebView {
   let messageHandler: PaywallMessageHandler
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
   private let wkConfig: WKWebViewConfiguration
