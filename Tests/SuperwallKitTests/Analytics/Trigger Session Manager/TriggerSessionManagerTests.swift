@@ -13,12 +13,17 @@ final class TriggerSessionManagerTests: XCTestCase {
   var queue: SessionEnqueuable!
   var sessionManager: TriggerSessionManager!
   var sessionEventsDelegate: SessionEventsDelegateMock!
+  var dependencyContainer: DependencyContainer!
 
   override func setUp() {
-    queue = MockSessionEventsQueue()
-    sessionEventsDelegate = SessionEventsDelegateMock(queue: queue)
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    dependencyContainer = DependencyContainer(apiKey: "")
     
+    queue = MockSessionEventsQueue()
+    sessionEventsDelegate = SessionEventsDelegateMock(
+      queue: queue,
+      factory: dependencyContainer
+    )
+
     sessionManager = TriggerSessionManager(
       delegate: sessionEventsDelegate,
       sessionEventsManager: dependencyContainer.sessionEventsManager,

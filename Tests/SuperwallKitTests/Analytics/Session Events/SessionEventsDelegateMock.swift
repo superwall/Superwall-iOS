@@ -9,15 +9,15 @@ import Foundation
 @testable import SuperwallKit
 
 final class SessionEventsDelegateMock: SessionEventsDelegate {
-  var triggerSession: TriggerSessionManager! = {
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
-    return dependencyContainer.makeTriggerSessionManager()
-  }()
-
   var queue: SessionEnqueuable
+  var triggerSession: TriggerSessionManager!
 
-  init(queue: SessionEnqueuable) {
+  init(
+    queue: SessionEnqueuable,
+    factory: TriggerSessionManagerFactory
+  ) {
     self.queue = queue
+    self.triggerSession = factory.makeTriggerSessionManager()
   }
 
   func enqueue(_ triggerSession: TriggerSession) async {
