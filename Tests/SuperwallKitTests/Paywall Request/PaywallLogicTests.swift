@@ -140,11 +140,14 @@ class PaywallLogicTests: XCTestCase {
       id: productId
     )]
 
-    let skProduct = SKProduct(
-      identifier: productId,
-      price: "1.99"
+    let product = StoreProduct(
+      sk1Product:
+        SKProduct(
+          identifier: productId,
+          price: "1.99"
+        )
     )
-    let productsById = [productId: StoreProduct(sk1Product: skProduct)]
+    let productsById = [productId: product]
 
     // When
     let response = PaywallLogic.getVariablesAndFreeTrial(
@@ -158,11 +161,11 @@ class PaywallLogicTests: XCTestCase {
 
     let expectedProductVariables = [ProductVariable(
       type: productType,
-      attributes: skProduct.attributesJson
+      attributes: product.attributesJson
     )]
     let expectedSwProductVariables = [ProductVariable(
       type: productType,
-      attributes: skProduct.swProductTemplateVariablesJson
+      attributes: product.swProductTemplateVariablesJson
     )]
     XCTAssertFalse(response.isFreeTrialAvailable)
     XCTAssertEqual(response.productVariables, expectedProductVariables)
@@ -180,12 +183,16 @@ class PaywallLogicTests: XCTestCase {
     let mockIntroPeriod = MockIntroductoryPeriod(
       testSubscriptionPeriod: MockSubscriptionPeriod()
     )
-    let skProduct = SKProduct(
-      identifier: productId,
-      price: "1.99",
-      introductoryPrice: mockIntroPeriod
+
+    let product = StoreProduct(
+      sk1Product:
+        SKProduct(
+          identifier: productId,
+          price: "1.99",
+          introductoryPrice: mockIntroPeriod
+        )
     )
-    let productsById = [productId: StoreProduct(sk1Product: skProduct)]
+    let productsById = [productId: product]
 
     
     // When
@@ -201,11 +208,11 @@ class PaywallLogicTests: XCTestCase {
     // Then
     let expectedProductVariables = [ProductVariable(
       type: productType,
-      attributes: skProduct.attributesJson
+      attributes: product.attributesJson
     )]
     let expectedSwProductVariables = [ProductVariable(
       type: productType,
-      attributes: skProduct.swProductTemplateVariablesJson
+      attributes: product.swProductTemplateVariablesJson
     )]
 
     XCTAssertFalse(response.isFreeTrialAvailable)
@@ -224,12 +231,15 @@ class PaywallLogicTests: XCTestCase {
     let mockIntroPeriod = MockIntroductoryPeriod(
       testSubscriptionPeriod: MockSubscriptionPeriod()
     )
-    let skProduct = SKProduct(
-      identifier: productId,
-      price: "1.99",
-      introductoryPrice: mockIntroPeriod
+    let product = StoreProduct(
+      sk1Product:
+        SKProduct(
+          identifier: productId,
+          price: "1.99",
+          introductoryPrice: mockIntroPeriod
+        )
     )
-    let productsById = [productId: StoreProduct(sk1Product: skProduct)]
+    let productsById = [productId: product]
 
     // When
     let response = PaywallLogic.getVariablesAndFreeTrial(
@@ -244,11 +254,11 @@ class PaywallLogicTests: XCTestCase {
     // Then
     let expectedVariables = [ProductVariable(
       type: productType,
-      attributes: skProduct.attributesJson
+      attributes: product.attributesJson
     )]
     let expectedProductVariables = [ProductVariable(
       type: productType,
-      attributes: skProduct.swProductTemplateVariablesJson
+      attributes: product.swProductTemplateVariablesJson
     )]
 
     XCTAssertTrue(response.isFreeTrialAvailable)
@@ -267,12 +277,15 @@ class PaywallLogicTests: XCTestCase {
     let mockIntroPeriod = MockIntroductoryPeriod(
       testSubscriptionPeriod: MockSubscriptionPeriod()
     )
-    let skProduct = SKProduct(
-      identifier: productId,
-      price: "1.99",
-      introductoryPrice: mockIntroPeriod
+    let product = StoreProduct(
+      sk1Product:
+        SKProduct(
+          identifier: productId,
+          price: "1.99",
+          introductoryPrice: mockIntroPeriod
+        )
     )
-    let productsById = [productId: StoreProduct(sk1Product: skProduct)]
+    let productsById = [productId: product]
 
     // When
     let response = PaywallLogic.getVariablesAndFreeTrial(
@@ -287,11 +300,11 @@ class PaywallLogicTests: XCTestCase {
     // Then
     let expectedProductVariables = [ProductVariable(
       type: productType,
-      attributes: skProduct.attributesJson
+      attributes: product.attributesJson
     )]
     let expectedSwProductVariables = [ProductVariable(
       type: productType,
-      attributes: skProduct.swProductTemplateVariablesJson
+      attributes: product.swProductTemplateVariablesJson
     )]
 
     XCTAssertTrue(response.isFreeTrialAvailable)
