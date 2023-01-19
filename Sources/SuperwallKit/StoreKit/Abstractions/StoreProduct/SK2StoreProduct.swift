@@ -110,7 +110,11 @@ struct SK2StoreProduct: StoreProductType {
     }
 
     if subscriptionPeriod.unit == .month {
-      return "month"
+      if subscriptionPeriod.value == 3 {
+        return "quarter"
+      } else {
+        return "month"
+      }
     }
 
     if subscriptionPeriod.unit == .week {
