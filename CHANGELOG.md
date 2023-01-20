@@ -59,6 +59,7 @@ We understand that transitions between major SDK releases can become frustrating
 - Improves the speed of requests by changing the cache policy of requests to our servers.
 - Fixes `session_start`, `app_launch` and `first_seen` not being tracked if the SDK was initialised a few seconds after app launch.
 - Stops the unnecessary retemplating of paywall variables when coming back to the paywall after visiting a link via the in-app browser.
+- Removes the transaction timeout popup. This was causing a raft of issues so we now rely on overlayTimeout to cancel the transaction flow.
 
 ---
 

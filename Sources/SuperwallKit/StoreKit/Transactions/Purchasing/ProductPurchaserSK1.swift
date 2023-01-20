@@ -18,9 +18,16 @@ final class ProductPurchaserSK1: NSObject {
   private let purchasing = Purchasing()
 
   // MARK: - Restoration
-  /// Used to serialise the async `SKPaymentQueue` calls when restoring.
-  private let restorationDispatchGroup = DispatchGroup()
-  private var restoreCompletion: ((Bool) -> Void)?
+  final class Restoration {
+    var completion: ((Bool) -> Void)?
+    var dispatchGroup = DispatchGroup()
+    /// Used to serialise the async `SKPaymentQueue` calls when restoring.
+    var queue = DispatchQueue(
+      label: "com.superwall.restoration",
+      qos: .userInitiated
+    )
+  }
+  private let restoration = Restoration()
 
   // MARK: Dependencies
   private unowned let storeKitManager: StoreKitManager
@@ -108,12 +115,12 @@ extension ProductPurchaserSK1: TransactionRestorer {
       // Using restoreCompletedTransactions instead of just refreshing
       // the receipt so that RC can pick up on the restored products,
       // if observing. It will also refresh the receipt on device.
-      restoreCompletion = { completed in
+      restoration.completion = { completed in
         return continuation.resume(returning: completed)
       }
       SKPaymentQueue.default().restoreCompletedTransactions()
     }
-    restoreCompletion = nil
+    restoration.completion = nil
     return result
   }
 }
@@ -126,8 +133,8 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       scope: .paywallTransactions,
       message: "Restore Completed Transactions Finished"
     )
-    restorationDispatchGroup.notify(queue: .main) { [weak self] in
-      self?.restoreCompletion?(true)
+    restoration.dispatchGroup.notify(queue: restoration.queue) { [weak self] in
+      self?.restoration.completion?(true)
     }
   }
 
@@ -141,8 +148,8 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       message: "Restore Completed Transactions Failed With Error",
       error: error
     )
-    restorationDispatchGroup.notify(queue: .main) { [weak self] in
-      self?.restoreCompletion?(false)
+    restoration.dispatchGroup.notify(queue: restoration.queue) { [weak self] in
+      self?.restoration.completion?(false)
     }
   }
 
@@ -150,10 +157,12 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     _ queue: SKPaymentQueue,
     updatedTransactions transactions: [SKPaymentTransaction]
   ) {
-    restorationDispatchGroup.enter()
+    restoration.dispatchGroup.enter()
     Task {
       let isPaywallPresented = await Superwall.shared.isPaywallPresented
+      let paywallViewController = await Superwall.shared.paywallViewController
       for transaction in transactions {
+        await checkForTimeout(of: transaction, in: paywallViewController)
         updatePurchaseCompletionBlock(for: transaction)
         await checkForRestoration(transaction, isPaywallPresented: isPaywallPresented)
         finishIfPossible(transaction)
@@ -163,11 +172,44 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         }
       }
       await loadPurchasedProductsIfPossible(from: transactions)
-      restorationDispatchGroup.leave()
+      restoration.dispatchGroup.leave()
     }
   }
 
   // MARK: - Private API
+
+  private func checkForTimeout(
+    of transaction: SKPaymentTransaction,
+    in paywallViewController: PaywallViewController?
+  ) async {
+    guard #available(iOS 14, *) else {
+      return
+    }
+    guard let paywallViewController = paywallViewController else {
+      return
+    }
+    switch transaction.transactionState {
+    case .failed:
+      if let error = transaction.error {
+        if let error = error as? SKError {
+          switch error.code {
+          case .overlayTimeout:
+            let trackedEvent = await InternalSuperwallEvent.Transaction(
+              state: .timeout,
+              paywallInfo: paywallViewController.paywallInfo,
+              product: nil,
+              model: nil
+            )
+            await Superwall.track(trackedEvent)
+          default:
+            break
+          }
+        }
+      }
+    default:
+      break
+    }
+  }
 
   /// Sends a `PurchaseResult` to the completion block and stores the latest purchased transaction.
   private func updatePurchaseCompletionBlock(for transaction: SKPaymentTransaction) {

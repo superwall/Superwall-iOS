@@ -42,9 +42,7 @@ final class TransactionManager {
 
     await prepareToStartTransaction(of: product, from: paywallViewController)
 
-    await paywallViewController.startTransactionTimeout()
     let result = await purchaseManager.purchase(product: product)
-    await paywallViewController.cancelTransactionTimeout()
 
     switch result {
     case .purchased(let transaction):
