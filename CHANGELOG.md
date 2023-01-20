@@ -29,6 +29,7 @@ We understand that transitions between major SDK releases can become frustrating
 - Removes `identify(userId:)` in favor of the new Identity API detailed below.
 - Removes `Paywall.load(identifier:)`. This was being used to preload a paywall by identifier.
 - Removes `.triggerPaywall()` for SwiftUI apps. Instead, SwiftUI users should now use the UIKit function `Superwall.track()`. Take a look at our SwiftUI example app to see how that works.
+- Changes the `period` and `periodly` attributes for 2, 3 and 6 month products. Previously, the `period` would be "month", and the `periodly` would be "monthly" for all three. Now the `period` returns "2 months", "quarter", "6 months" and the `periodly` returns "every 2 months", "quarterly", and "every 6 months".
 
 ### Enhancements
 

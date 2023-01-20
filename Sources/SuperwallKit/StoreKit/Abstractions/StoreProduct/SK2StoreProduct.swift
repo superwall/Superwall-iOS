@@ -110,9 +110,14 @@ struct SK2StoreProduct: StoreProductType {
     }
 
     if subscriptionPeriod.unit == .month {
-      if subscriptionPeriod.value == 3 {
+      switch subscriptionPeriod.value {
+      case 2:
+        return "2 months"
+      case 3:
         return "quarter"
-      } else {
+      case 6:
+        return "6 months"
+      default:
         return "month"
       }
     }
@@ -127,6 +132,24 @@ struct SK2StoreProduct: StoreProductType {
 
     return ""
   }
+
+  var periodly: String {
+    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+      return ""
+    }
+
+    if subscriptionPeriod.unit == .month {
+      switch subscriptionPeriod.value {
+      case 2, 6:
+        return "every \(period)"
+      default:
+        break
+      }
+    }
+
+    return "\(period)ly"
+  }
+
 
   var periodWeeks: Int {
     guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {

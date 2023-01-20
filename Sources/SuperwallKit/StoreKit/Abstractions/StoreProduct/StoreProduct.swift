@@ -52,7 +52,7 @@ public final class StoreProduct: NSObject, StoreProductType {
       "periodAlt": localizedSubscriptionPeriod,
       "localizedPeriod": localizedSubscriptionPeriod,
       "period": period,
-      "periodly": "\(period)ly",
+      "periodly": periodly,
       "weeklyPrice": weeklyPrice,
       "dailyPrice": dailyPrice,
       "monthlyPrice": monthlyPrice,
@@ -97,6 +97,10 @@ public final class StoreProduct: NSObject, StoreProductType {
 
   public var period: String {
     product.period
+  }
+
+  public var periodly: String {
+    product.periodly
   }
 
   public var periodWeeks: Int {
