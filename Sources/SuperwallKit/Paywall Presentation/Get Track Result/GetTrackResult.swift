@@ -8,10 +8,34 @@
 import Foundation
 import Combine
 
-enum GetTrackResultError: Error {
+enum GetTrackResultError: Error, Equatable {
   case willNotPresent(TriggerResult)
   case userIsSubscribed
   case paywallNotAvailable
+
+  static func == (lhs: GetTrackResultError, rhs: GetTrackResultError) -> Bool {
+    switch lhs {
+    case .willNotPresent:
+      guard case .willNotPresent(_) = rhs else {
+        return false
+      }
+      return true
+    case .userIsSubscribed:
+      switch rhs {
+      case .userIsSubscribed:
+        return true
+      default:
+        return false
+      }
+    case .paywallNotAvailable:
+      switch rhs {
+      case .paywallNotAvailable:
+        return true
+      default:
+        return false
+      }
+    }
+  }
 }
 
 extension Superwall {

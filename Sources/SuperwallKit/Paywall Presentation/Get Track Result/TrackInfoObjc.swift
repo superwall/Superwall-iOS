@@ -11,7 +11,7 @@ import Foundation
 ///
 /// Contains the possible cases resulting from tracking an event.
 @objc(SWKTrackResult)
-public enum TrackResultObjc: Int, Sendable {
+public enum TrackResultObjc: Int, Sendable, Equatable {
   case eventNotFound
   case noRuleMatch
   case paywall

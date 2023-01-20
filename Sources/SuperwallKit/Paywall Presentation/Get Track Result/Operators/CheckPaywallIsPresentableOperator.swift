@@ -23,7 +23,6 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
       }
       return input.triggerResult
     }
-    .replaceNil(with: .eventNotFound)
     .eraseToAnyPublisher()
   }
 }
