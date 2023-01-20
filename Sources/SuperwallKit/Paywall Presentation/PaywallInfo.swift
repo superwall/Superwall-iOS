@@ -251,6 +251,8 @@ public final class PaywallInfo: NSObject {
   }
 }
 
+// swiftlint:disable force_unwrapping
+// MARK: - Stubbable
 extension PaywallInfo: Stubbable {
   static func stub() -> PaywallInfo {
     let dependencyContainer = DependencyContainer(apiKey: "")
