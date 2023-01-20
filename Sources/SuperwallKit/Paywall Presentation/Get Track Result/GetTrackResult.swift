@@ -16,7 +16,7 @@ enum GetTrackResultError: Error, Equatable {
   static func == (lhs: GetTrackResultError, rhs: GetTrackResultError) -> Bool {
     switch lhs {
     case .willNotPresent:
-      guard case .willNotPresent(_) = rhs else {
+      guard case .willNotPresent = rhs else {
         return false
       }
       return true
