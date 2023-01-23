@@ -9,7 +9,7 @@ import Foundation
 
 /// Used to override the presentation style of the paywall set on the dashboard.
 @objc(SWKPaywallPresentationStyle)
-public enum PaywallPresentationStyle: Int, Decodable {
+public enum PaywallPresentationStyle: Int, Decodable, Sendable {
   /// A view presentation style that uses the modal presentation style `.pageSheet`.
   case modal
   /// A view presentation style in which the presented paywall slides up to cover the screen.

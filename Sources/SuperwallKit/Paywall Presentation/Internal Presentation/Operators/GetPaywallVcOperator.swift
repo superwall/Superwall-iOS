@@ -72,6 +72,10 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
             title: "Paywall Already Presented",
             value: "You can only present one paywall at a time."
           )
+          Task.detached(priority: .utility) {
+            let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .alreadyPresented(error))
+            await Superwall.track(trackedEvent)
+          }
           let state: PaywallState = .skipped(.error(error))
           paywallStatePublisher.send(state)
           paywallStatePublisher.send(completion: .finished)
@@ -94,6 +98,10 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
             shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus
           )
         ) {
+          Task.detached(priority: .utility) {
+            let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .userIsSubscribed)
+            await Superwall.track(trackedEvent)
+          }
           let state: PaywallState = .skipped(.userIsSubscribed)
           paywallStatePublisher.send(state)
           paywallStatePublisher.send(completion: .finished)
@@ -107,6 +115,10 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
           info: input.debugInfo,
           error: error
         )
+        Task.detached(priority: .utility) {
+          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPaywallViewController(error))
+          await Superwall.track(trackedEvent)
+        }
         paywallStatePublisher.send(.skipped(.error(error)))
         paywallStatePublisher.send(completion: .finished)
         throw PresentationPipelineError.cancelled

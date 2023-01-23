@@ -8,7 +8,7 @@
 import Foundation
 
 /// The possible scope of logs to print to the console.
-public enum LogScope: String {
+public enum LogScope: String, Sendable {
   case localizationManager
   case bounceButton
   case coreData

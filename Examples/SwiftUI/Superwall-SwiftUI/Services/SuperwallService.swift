@@ -80,7 +80,6 @@ extension SuperwallService: SuperwallDelegate {
 
     // Uncomment the following if you want to track
     // Superwall events:
-
     /*
     switch info.event {
     case .firstSeen:
@@ -144,6 +143,8 @@ extension SuperwallService: SuperwallDelegate {
     case .paywallProductsLoadFail(let triggeredEventName, let paywallInfo):
       <#code#>
     case .paywallProductsLoadComplete(let triggeredEventName):
+      <#code#>
+    case .paywallPresentationFail(reason: let reason):
       <#code#>
     }
     */

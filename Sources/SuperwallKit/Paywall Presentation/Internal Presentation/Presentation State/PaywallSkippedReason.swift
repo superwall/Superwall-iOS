@@ -8,7 +8,7 @@
 import Foundation
 
 /// The reason the paywall presentation was skipped.
-public enum PaywallSkippedReason {
+public enum PaywallSkippedReason: Sendable {
   /// The user was assigned to a holdout.
   ///
   /// A holdout is a control group which you can analyse against
@@ -45,7 +45,7 @@ public enum PaywallSkippedReason {
 /// Objective-C compatible enum for ``PaywallDismissedResult/DismissState``
 /// The reason the paywall presentation was skipped.
 @objc(SWKPaywallSkippedReason)
-public enum PaywallSkippedReasonObjc: Int {
+public enum PaywallSkippedReasonObjc: Int, Sendable {
   /// The user was assigned to a holdout group.
   case holdout
 

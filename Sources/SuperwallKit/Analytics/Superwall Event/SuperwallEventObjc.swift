@@ -113,6 +113,30 @@ public enum SuperwallEventObjc: Int {
   /// When the request to load the paywall's products completed.
   case paywallProductsLoadComplete
 
+  /// Trying to present paywall when debugger is launched.
+  case paywallPresentationFailDebuggerLaunched
+
+  /// Trying to present paywall when debugger is launched.
+  case paywallPresentationFailUserIsSubscribed
+
+  /// The user is in a holdout group.
+  case paywallPresentationFailInHoldout
+
+  /// No rules defined in the campaign for the event matched.
+  case paywallPresentationFailNoRuleMatch
+
+  /// The event provided was not found in any campaign on the dashboard.
+  case paywallPresentationFailEventNotFound
+
+  /// There was an error getting the paywall view controller.
+  case paywallPresentationFailNoPaywallViewController
+
+  /// There isn't a view to present the paywall on.
+  case paywallPresentationFailNoPresenter
+
+  /// There's already a paywall presented.
+  case paywallPresentationFailAlreadyPresented
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
