@@ -49,6 +49,7 @@ We understand that transitions between major SDK releases can become frustrating
 - Adds a published property `hasActiveSubscription`, which you can check to determine whether Superwall detects an active subscription. Its value is stored on disk and synced with the active purchases on device. If you're using Combine or SwiftUI, you can subscribe or bind to this to get notified whenever the user's subscription status changes. If you're implementing your own `SubscriptionController`, you should rely on your own logic to determine subscription status.
 - Adds a published property `isConfigured`. This is a boolean which you can use to check whether Superwall is configured and ready to present paywalls.
 - Adds `isFreeTrialAvailable` to `PaywallInfo`.
+- Tracks whenever the paywall isn't presented for easier debugging.
 
 ### Fixes
 
