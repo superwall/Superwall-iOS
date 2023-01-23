@@ -1,6 +1,6 @@
 #!/bin/bash
 # Place this file in `.git/hooks/`
 xcodegen
-git add Paywall.xcodeproj
-sed -i '' "4s/.*/    s.version      = \"$(sed -n 21p ./Sources/Paywall/Misc/Constants.swift)\"/" Paywall.podspec
-git add Paywall.podspec
+git add SuperwallKit.xcodeproj
+sed -i '' "4s/.*/    s.version      = \"$(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)\"/" SuperwallKit.podspec
+git add SuperwallKit.podspec

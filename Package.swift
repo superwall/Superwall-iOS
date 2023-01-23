@@ -4,17 +4,17 @@
 import PackageDescription
 
 let package = Package(
-  name: "Paywall",
+  name: "SuperwallKit",
   platforms: [
-    .iOS("11.2"),
+    .iOS(.v13),
     .macOS(.v10_12),
     .watchOS("6.2")
   ],
   products: [
     // Products define the executables and libraries a package produces, and make them visible to other packages.
     .library(
-      name: "Paywall",
-      targets: ["Paywall"]
+      name: "SuperwallKit",
+      targets: ["SuperwallKit"]
     )
   ],
   dependencies: [
@@ -28,18 +28,21 @@ let package = Package(
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.
     // Targets can depend on other targets in this package, and on products in packages this package depends on.
     .target(
-      name: "Paywall",
+      name: "SuperwallKit",
       dependencies: [
         .product(
           name: "ASN1Swift",
           package: "ASN1Swift"
         )
       ],
-      exclude: ["BundleHelper.swift"]
+      exclude: ["Resources/BundleHelper.swift"],
+      resources: [
+        .process("Resources/Certificates")
+      ]
     ),
     .testTarget(
-      name: "PaywallTests",
-      dependencies: ["Paywall"]
+      name: "SuperwallKitTests",
+      dependencies: ["SuperwallKit"]
     )
   ]
 )

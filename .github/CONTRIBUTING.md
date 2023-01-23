@@ -1,4 +1,4 @@
-# Contributing to Paywall
+# Contributing to SuperwallKit
 
 We want to make contributing to this project as easy and transparent as
 possible, and actively welcome your pull requests. If you run into problems,
@@ -12,8 +12,9 @@ please open an issue on GitHub.
 4. If you've changed APIs, update the documentation.
 5. Ensure the test suite passes.
 6. Make sure your code lints (see below).
-7. Tag @yusuftor, @jakemore, and @anglinb in the pull request.
+7. Tag @yusuftor, @jakemor, and @anglinb in the pull request.
 8. Add an entry to the [CHANGELOG.md](../CHANGELOG.md) for any breaking changes, enhancements, or bug fixes.
+9. After the PR is merged, delete the branch.
 
 ## Coding Style
 
@@ -48,7 +49,7 @@ Every time a commit that has a change in swift code is pushed to GitHub, a GitHu
 ### Documentation
 Public classes and methods must contain detailed documentation.
 
-All documentation is compiled using [DocC](https://github.com/apple/swift-docc) and hosted on [GitHub-Pages](https://pages.github.com). This is then accessible via our [iOS SDK documentation](https://sdk.superwall.me/documentation/paywall/). You can also view this in Xcode by selecting **Product ▸ Build Documentation**.
+All documentation is compiled using [DocC](https://github.com/apple/swift-docc) and hosted on [GitHub-Pages](https://pages.github.com). This is then accessible via our [iOS SDK documentation](https://sdk.superwall.me/documentation/SuperwallKit/). You can also view this in Xcode by selecting **Product ▸ Build Documentation**.
 
 ## Editing the code
 
@@ -64,7 +65,7 @@ All pull requests are set to merge into `develop`, with the exception of a hotfi
 
 Name your branch `feature/<feature name>` for consistency.
 
-When we're ready to cut a new release, we update the `sdkVersion` in [Constants.swift](/Sources/Paywall/Misc/Constants.swift) and merge `develop` into `master`. This runs some GitHub actions to tag the release, build the docs, and push to cocoapods.
+When we're ready to cut a new release, we update the `sdkVersion` in [Constants.swift](/Sources/Superwall/Misc/Constants.swift) and merge `develop` into `master`. This runs some GitHub actions to tag the release, build the docs, and push to cocoapods.
 
 ## Testing
 
@@ -78,4 +79,4 @@ We use GitHub issues to track public bugs. Please ensure your description is cle
 
 ## License
 
-By contributing to `Paywall`, you agree that your contributions will be licensed under the LICENSE file in the root directory of this source tree.
+By contributing to `SuperwallKit`, you agree that your contributions will be licensed under the LICENSE file in the root directory of this source tree.

@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "ASN1Swift",
+        "repositoryURL": "https://github.com/tikhop/ASN1Swift",
+        "state": {
+          "branch": null,
+          "revision": "b53bee03a942623db25afc5bfb80227b2cb3b425",
+          "version": "1.2.4"
+        }
+      },
+      {
+        "package": "RevenueCat",
+        "repositoryURL": "https://github.com/RevenueCat/purchases-ios.git",
+        "state": {
+          "branch": null,
+          "revision": "b1132d43125832409934f0fe5c8642ceb37d60b9",
+          "version": "4.14.3"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

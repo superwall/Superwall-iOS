@@ -1,20 +1,20 @@
-name: Paywall
+name: SuperwallKit
 options:
-  bundleIdentifer: me.superwall
+  bundleIdentifer: com.superwall
 packages:
   ASN1Swift:
     url: https://github.com/tikhop/ASN1Swift
     from: 1.2.4
 
 targets:
-  Paywall:
+  SuperwallKit:
     scheme:
       testTargets:
-        - PaywallTests
+        - SuperwallKitTests
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: "me.superwall.Paywall"
+      PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.SuperwallKit"
     info:
-      path: Paywall.xcodeproj/Paywall_Info.plist
+      path: SuperwallKit.xcodeproj/SuperwallKit_Info.plist
       properties:
         CFBundleDevelopmentRegion: en
         CFBundleExecutable: "$(EXECUTABLE_NAME)"
@@ -28,22 +28,22 @@ targets:
         NSPrincipalClass: ""
     type: framework
     platform: iOS
-    deploymentTarget: "11.2"
+    deploymentTarget: "13.0"
     sources: [Sources/]
     dependencies:
       - package: ASN1Swift
-  PaywallTests:
+  SuperwallKitTests:
     scheme: {}
     sources: [Tests/]
     type: bundle.unit-test
     platform: iOS
     dependencies:
-      - target: Paywall
+      - target: SuperwallKit
       - package: ASN1Swift
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: "me.superwall.PaywallTests"
+      PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.SuperwallTests"
     info:
-      path: Paywall.xcodeproj/PaywallTests_Info.plist
+      path: SuperwallKit.xcodeproj/SuperwallTests_Info.plist
       properties:
         CFBundleDevelopmentRegion: en
         CFBundleExecutable: "$(EXECUTABLE_NAME)"
@@ -55,9 +55,3 @@ targets:
         CFBundleSignature: ????
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSPrincipalClass: ""
-
-  #Paywall_Paywall:
-  #   type: bundle
-  #  platform: iOS
-  #  deploymentTarget: "11.2"
-  # sources: [Sources/Paywall/Assets.xcassets]

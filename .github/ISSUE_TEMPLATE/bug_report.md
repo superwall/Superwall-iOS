@@ -14,7 +14,7 @@ assignees: ''
 
 ### General information
 
-- `Paywall` version:
+- `Superwall` version:
 - iOS version(s):
 - CocoaPods/Carthage version (if applicable):
 - Xcode version:

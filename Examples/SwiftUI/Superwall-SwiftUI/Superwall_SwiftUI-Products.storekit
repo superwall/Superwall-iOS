@@ -1,0 +1,57 @@
+{
+  "identifier" : "88130D01",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_compatibilityTimeRate" : 6,
+    "_timeRate" : 15
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "49A58F4B",
+      "localizations" : [
+
+      ],
+      "name" : "Example Subscription Group",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "89.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "301B442B",
+          "introductoryOffer" : {
+            "internalID" : "2A4CC7D6",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "with a free 7 day trial",
+              "displayName" : "Yearly Subscription",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "sk.superwall.annual.89.99_7",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "sw_8999_yr",
+          "subscriptionGroupID" : "49A58F4B",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 2,
+    "minor" : 0
+  }
+}
