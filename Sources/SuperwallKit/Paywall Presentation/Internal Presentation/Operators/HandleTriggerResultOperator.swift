@@ -46,7 +46,9 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
           triggerResult: input.triggerResult
         )
         Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .holdout(experiment))
+          let trackedEvent = InternalSuperwallEvent.UnableToPresent(
+            state: .holdout(experiment)
+          )
           await Superwall.track(trackedEvent)
         }
         paywallStatePublisher.send(.skipped(.holdout(experiment)))
@@ -77,7 +79,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
           error: error
         )
         Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPaywallViewController(error))
+          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPaywallViewController)
           await Superwall.track(trackedEvent)
         }
         paywallStatePublisher.send(.skipped(.error(error)))

@@ -25,11 +25,11 @@ public enum PaywallPresentationFailureReason {
   case eventNotFound
 
   /// There was an error getting the paywall view controller.
-  case noPaywallViewController(Error)
+  case noPaywallViewController
 
   /// There isn't a view to present the paywall on.
-  case noPresenter(Error)
+  case noPresenter
 
   /// There's already a paywall presented.
-  case alreadyPresented(Error)
+  case alreadyPresented
 }

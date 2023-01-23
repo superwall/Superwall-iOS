@@ -38,7 +38,9 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         )
       ) {
         Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .userIsSubscribed)
+          let trackedEvent = InternalSuperwallEvent.UnableToPresent(
+            state: .userIsSubscribed
+          )
           await Superwall.track(trackedEvent)
         }
         let state: PaywallState = .skipped(.userIsSubscribed)
@@ -71,7 +73,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
           value: "This usually happens when you call this method before a window was made key and visible."
         )
         Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPresenter(error))
+          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPresenter)
           await Superwall.track(trackedEvent)
         }
         let state: PaywallState = .skipped(.error(error))

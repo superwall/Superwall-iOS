@@ -73,7 +73,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
             value: "You can only present one paywall at a time."
           )
           Task.detached(priority: .utility) {
-            let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .alreadyPresented(error))
+            let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .alreadyPresented)
             await Superwall.track(trackedEvent)
           }
           let state: PaywallState = .skipped(.error(error))
@@ -116,7 +116,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
           error: error
         )
         Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPaywallViewController(error))
+          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPaywallViewController)
           await Superwall.track(trackedEvent)
         }
         paywallStatePublisher.send(.skipped(.error(error)))
