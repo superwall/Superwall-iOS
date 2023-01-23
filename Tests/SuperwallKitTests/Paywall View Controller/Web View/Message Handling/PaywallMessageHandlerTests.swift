@@ -52,7 +52,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
     messageHandler.delegate = delegate
     messageHandler.handle(.onReady(paywallJsVersion: "2"))
 
-    try? await Task.sleep(nanoseconds: 100_000_000)
+    try? await Task.sleep(nanoseconds: 500_000_000)
 
     XCTAssertEqual(delegate.paywall.paywalljsVersion, "2")
     XCTAssertTrue(webView.willHandleJs)

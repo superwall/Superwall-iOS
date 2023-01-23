@@ -12,7 +12,7 @@ public enum PaywallPresentationFailureReason {
   /// Trying to present paywall when debugger is launched.
   case debuggerLaunched
 
-  /// The user is already subscribed.
+  /// The user is subscribed.
   case userIsSubscribed
 
   /// The user is in a holdout group.

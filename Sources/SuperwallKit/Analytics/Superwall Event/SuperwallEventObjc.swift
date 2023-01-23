@@ -117,7 +117,7 @@ public enum SuperwallEventObjc: Int {
   /// Trying to present paywall when debugger is launched.
   case paywallPresentationFailDebuggerLaunched
 
-  /// Trying to present paywall when debugger is launched.
+  /// The user is subscribed.
   case paywallPresentationFailUserIsSubscribed
 
   /// The user is in a holdout group.

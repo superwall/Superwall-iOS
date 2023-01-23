@@ -37,4 +37,10 @@ Event Name | Action | Can Present Paywalls
 `paywallProductsLoad_start` | When the request to load the paywall's products started. | *no*
 `paywallProductsLoad_fail` | When the request to load the paywall's products failed. | *no*
 `paywallProductsLoad_complete` | When the request to load the paywall's products completed. | *no*
-`user_attributes` | When the user attributes are set. | *no*
+`paywallPresentationFail_userIsSubscribed` | When trying to present the paywall but the user is subscribed. | *no*
+`paywallPresentationFail_holdout` | When trying to present the paywall but the user is in a holdout group. | *no*
+`paywallPresentationFail_eventNotFound` | When trying to present the paywall but the event provided was not found in any campaign on the dashboard. | *no*
+`paywallPresentationFail_debuggerLaunched` | When trying to present the paywall but the debugger is launched. | *no*
+`paywallPresentationFail_alreadyPresented` | When trying to present the paywall but there's already a paywall presented. | *no*
+`paywallPresentationFail_noPresenter` | When trying to present the paywall but there isn't a view to present the paywall on. | *no*
+`paywallPresentationFail_noPaywallViewController` | When trying to present the paywall but there was an error getting the paywall view controller. | *no*
