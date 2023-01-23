@@ -19,12 +19,12 @@ jobs:
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           sudo git pull
           echo "\n\n\n- - - - - VERSION - - - - -\n\n\n"
-          sed -n 21p ./Sources/Superwall/Misc/Constants.swift
+          sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift
           echo "\n\n\n- - - - - END VERSION - - - - -\n\n\n"
-          sudo git tag -a $(sed -n 21p ./Sources/Superwall/Misc/Constants.swift) -m "tags with latest version"
+          sudo git tag -a $(sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift) -m "tags with latest version"
           sudo git push --tags || true
-          sudo git checkout -b release/$(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)
-          sudo git push -u origin release/$(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)
+          sudo git checkout -b release/$(sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift)
+          sudo git push -u origin release/$(sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift)
 
   cocoapods:
     needs: tag
@@ -52,12 +52,12 @@ jobs:
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           sudo git pull
-          sudo git checkout -b xcode12/$(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)
+          sudo git checkout -b xcode12/$(sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift)
           sudo python xcode12.py
-          sed -i '' "4s/.*/    s.version      = \"$(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)-xcode-12\"/" SuperwallKit.podspec
+          sed -i '' "4s/.*/    s.version      = \"$(sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift)-xcode-12\"/" SuperwallKit.podspec
           sudo git add -A
           sudo git commit -m "xcode 12 support"
-          sudo git push -u origin xcode12/$(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)
-          sudo git tag -a $(sed -n 21p ./Sources/Superwall/Misc/Constants.swift)-xcode-12 -m "tags with latest version for xcode-12"
+          sudo git push -u origin xcode12/$(sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift)
+          sudo git tag -a $(sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift)-xcode-12 -m "tags with latest version for xcode-12"
           sudo git push --tags || true
           pod trunk push SuperwallKit.podspec --allow-warnings
