@@ -82,7 +82,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
         }
         paywallStatePublisher.send(.skipped(.error(error)))
       }
-      
+
       paywallStatePublisher.send(completion: .finished)
       throw PresentationPipelineError.cancelled
     }

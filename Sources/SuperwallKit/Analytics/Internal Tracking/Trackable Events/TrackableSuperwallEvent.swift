@@ -232,7 +232,7 @@ enum InternalSuperwallEvent {
       return .paywallPresentationFail(reason: state)
     }
     var customParameters: [String: Any] = [:]
-    func getSuperwallParameters() async -> [String : Any] { [:] }
+    func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
   struct PaywallOpen: TrackableSuperwallEvent {

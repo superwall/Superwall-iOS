@@ -220,21 +220,45 @@ extension SuperwallEvent {
     case .paywallPresentationFail(reason: let reason):
       switch reason {
       case .userIsSubscribed:
-        return .init(objcEvent: .paywallPresentationFailUserIsSubscribed, description: "paywallPresentationFail_userIsSubscribed")
+        return .init(
+          objcEvent: .paywallPresentationFailUserIsSubscribed,
+          description: "paywallPresentationFail_userIsSubscribed"
+        )
       case .holdout:
-        return .init(objcEvent: .paywallPresentationFailInHoldout, description: "paywallPresentationFail_holdout")
+        return .init(
+          objcEvent: .paywallPresentationFailInHoldout,
+          description: "paywallPresentationFail_holdout"
+        )
       case .noRuleMatch:
-        return .init(objcEvent: .paywallPresentationFailNoRuleMatch, description: "paywallPresentationFail_noRuleMatch")
+        return .init(
+          objcEvent: .paywallPresentationFailNoRuleMatch,
+          description: "paywallPresentationFail_noRuleMatch"
+        )
       case .eventNotFound:
-        return .init(objcEvent: .paywallPresentationFailEventNotFound, description: "paywallPresentationFail_eventNotFound")
+        return .init(
+          objcEvent: .paywallPresentationFailEventNotFound,
+          description: "paywallPresentationFail_eventNotFound"
+        )
       case .debuggerLaunched:
-        return .init(objcEvent: .paywallPresentationFailDebuggerLaunched, description: "paywallPresentationFail_debuggerLaunched")
+        return .init(
+          objcEvent: .paywallPresentationFailDebuggerLaunched,
+          description: "paywallPresentationFail_debuggerLaunched"
+        )
       case .alreadyPresented:
-        return .init(objcEvent: .paywallPresentationFailAlreadyPresented, description: "paywallPresentationFail_alreadyPresented")
+        return .init(
+          objcEvent: .paywallPresentationFailAlreadyPresented,
+          description: "paywallPresentationFail_alreadyPresented"
+        )
       case .noPresenter:
-        return .init(objcEvent: .paywallPresentationFailNoPresenter, description: "paywallPresentationFail_noPresenter")
+        return .init(
+          objcEvent: .paywallPresentationFailNoPresenter,
+          description: "paywallPresentationFail_noPresenter"
+        )
       case .noPaywallViewController:
-        return .init(objcEvent: .paywallPresentationFailNoPaywallViewController, description: "paywallPresentationFail_noPaywallViewController")
+        return .init(
+          objcEvent: .paywallPresentationFailNoPaywallViewController,
+          description: "paywallPresentationFail_noPaywallViewController"
+        )
       }
     }
   }
