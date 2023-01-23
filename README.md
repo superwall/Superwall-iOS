@@ -89,11 +89,11 @@ Then, run `pod install`.
 
 ## Getting Started
 
+### With v3
+
 [Sign up for a free account on Superwall](https://superwall.com/sign-up) and [read our docs](https://docs.superwall.com/v3.0/docs).
 
-You can also [view our iOS SDK docs](https://sdk.superwall.me/documentation/SuperwallKit/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
-
-Read our Kodeco (Ray Wenderlich) tutorial: [Superwall: Remote Paywall Configuration on iOS](https://www.kodeco.com/31484602-superwall-remote-paywall-configuration-on-ios)
+You can also [view our iOS SDK docs](https://sdk.superwall.me/documentation/superwallkit/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
 
 Check out our sample apps for a hands-on demonstration of the SDK:
 
@@ -101,6 +101,14 @@ Check out our sample apps for a hands-on demonstration of the SDK:
 - [Swift-UIKit with StoreKit Example App](Examples/UIKit-Swift)
 - [SwiftUI Example App](Examples/SwiftUI)
 - [Objective-C-UIKit](Examples/UIKit+RevenueCat)
+
+### With v2
+
+[Sign up for a free account on Superwall](https://superwall.com/sign-up) and [read our docs](https://docs.superwall.com/docs).
+
+You can also [view our iOS SDK docs](https://sdk.superwall.me/documentation/paywall/).
+
+Read our Kodeco (Ray Wenderlich) tutorial: [Superwall: Remote Paywall Configuration on iOS](https://www.kodeco.com/31484602-superwall-remote-paywall-configuration-on-ios)
 
 ## Contributing
 
