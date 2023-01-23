@@ -9,7 +9,7 @@ import Foundation
 import CoreData
 
 class CoreDataStack {
-  static let modelName = "Model"
+  static let modelName = "SuperwallKit_Model"
 
   static let managedObject: NSManagedObjectModel = {
     guard let modelUrl = Bundle.module.url(

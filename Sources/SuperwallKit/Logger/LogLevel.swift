@@ -9,7 +9,7 @@ import Foundation
 
 /// Specifies the detail of the logs returned from the SDK to the console.
 @objc(SWKLogLevel)
-public enum LogLevel: Int, CustomStringConvertible {
+public enum LogLevel: Int, CustomStringConvertible, Sendable {
   /// Prints all logs from the SDK to the console. Useful for debugging your app if something isn't working as expected.
   case debug = 10
   /// Prints errors, warnings, and useful information from the SDK to the console.

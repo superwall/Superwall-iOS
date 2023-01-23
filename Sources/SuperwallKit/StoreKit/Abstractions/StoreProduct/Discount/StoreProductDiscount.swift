@@ -31,7 +31,7 @@ public final class StoreProductDiscount: NSObject, StoreProductDiscountType {
   /// The payment mode for a `StoreProductDiscount`
   /// Indicates how the product discount price is charged.
   @objc(SWKPaymentMode)
-  public enum PaymentMode: Int {
+  public enum PaymentMode: Int, Sendable {
     /// Price is charged one or more times
     case payAsYouGo = 0
     /// Price is charged once in advance
@@ -45,7 +45,7 @@ public final class StoreProductDiscount: NSObject, StoreProductDiscountType {
   /// Wraps  `Product.SubscriptionOffer.OfferType` if this `StoreProductDiscount` represents
   /// a `Product.SubscriptionOffer`.
   @objc(SWKDiscountType)
-  public enum DiscountType: Int, Codable {
+  public enum DiscountType: Int, Codable, Sendable {
     /// Introductory offer
     case introductory = 0
     /// Promotional offer for subscriptions

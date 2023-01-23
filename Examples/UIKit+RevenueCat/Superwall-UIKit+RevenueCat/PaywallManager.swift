@@ -249,6 +249,8 @@ extension PaywallManager: SuperwallDelegate {
       <#code#>
     case .paywallProductsLoadComplete(let triggeredEventName):
       <#code#>
+    case .paywallPresentationFail(reason: let reason):
+      <#code#>
     }
     */
   }

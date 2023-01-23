@@ -23,6 +23,10 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
             title: "Debugger Is Presented",
             value: "Trying to present paywall when debugger is launched."
           )
+          Task.detached(priority: .utility) {
+            let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .debuggerLaunched)
+            await Superwall.track(trackedEvent)
+          }
           let state: PaywallState = .skipped(.error(error))
           paywallStatePublisher.send(state)
           paywallStatePublisher.send(completion: .finished)

@@ -20,7 +20,7 @@ import StoreKit
 /// For example, if the unit is  `.month`, and the value is `3`, the subscription period is three months.
 @objc(SWKSubscriptionPeriod)
 @objcMembers
-public final class SubscriptionPeriod: NSObject {
+public final class SubscriptionPeriod: NSObject, Sendable {
   /// The number of period units.
   public let value: Int
   /// The increment of time that a subscription period is specified in.
