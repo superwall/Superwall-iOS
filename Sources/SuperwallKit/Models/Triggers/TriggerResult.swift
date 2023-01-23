@@ -15,7 +15,7 @@ public typealias TrackResult = TriggerResult
 /// The result of a paywall trigger.
 ///
 /// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
-public enum TriggerResult: Sendable {
+public enum TriggerResult: Sendable, Equatable {
   /// This event was not found on the dashboard.
   ///
   /// Please make sure you have added the event to a campaign on the dashboard and

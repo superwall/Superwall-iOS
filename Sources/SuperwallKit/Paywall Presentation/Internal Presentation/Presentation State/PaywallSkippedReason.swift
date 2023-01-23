@@ -28,10 +28,14 @@ public enum PaywallSkippedReason {
 
   /// The user is subscribed.
   ///
-  /// The value returned in the ``SuperwallDelegate/isUserSubscribed()`` delegate
-  /// method is `true`. By default, paywalls do not show to users who are already subscribed.
+  /// If you're letting SuperwallKit handle subscription-related logic, this means that the user has
+  /// an active purchase.
   ///
-  /// You can override this behavior in the paywall editor.
+  /// If you're returning a ``SubscriptionController`` in the delegate, this means your
+  /// ``SubscriptionController/isUserSubscribed()`` method is returning `true`.
+  ///
+  /// By default, paywalls do not show to users who are already subscribed. You can override this
+  /// behavior in the paywall editor.
   case userIsSubscribed
 
   /// An error occurred.
@@ -56,8 +60,14 @@ public enum PaywallSkippedReasonObjc: Int {
 
   /// The user is subscribed.
   ///
-  /// The value returned in the ``SuperwallDelegateObjc/isUserSubscribed()`` delegate
-  /// method is `true`. Therefore, a paywall will not show.
+  /// If you're letting SuperwallKit handle subscription-related logic, this means that the user has
+  /// an active purchase.
+  ///
+  /// If you're returning a ``SubscriptionController`` in the delegate, this means your
+  /// ``SubscriptionController/isUserSubscribed()`` method is returning `true`.
+  ///
+  /// By default, paywalls do not show to users who are already subscribed. You can override this
+  /// behavior in the paywall editor.
   case userIsSubscribed
 
   /// An error occurred.

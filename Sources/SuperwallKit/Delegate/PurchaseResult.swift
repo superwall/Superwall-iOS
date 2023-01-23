@@ -17,7 +17,7 @@ enum InternalPurchaseResult {
 
 /// An enum that defines the possible outcomes of attempting to purchase a product.
 ///
-/// When implementing the ``SuperwallDelegate/purchase(product:)`` delegate
+/// When implementing the ``SubscriptionController/purchase(product:)`` delegate
 /// method, all cases should be considered.
 public enum PurchaseResult: Sendable {
   /// The purchase was cancelled.

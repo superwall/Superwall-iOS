@@ -250,3 +250,30 @@ public final class PaywallInfo: NSObject {
     return output
   }
 }
+
+// swiftlint:disable force_unwrapping
+// MARK: - Stubbable
+extension PaywallInfo: Stubbable {
+  static func stub() -> PaywallInfo {
+    let dependencyContainer = DependencyContainer(apiKey: "")
+    return PaywallInfo(
+      databaseId: "abc",
+      identifier: "1",
+      name: "Test",
+      url: URL(string: "https://www.google.com")!,
+      products: [],
+      fromEventData: nil,
+      responseLoadStartTime: nil,
+      responseLoadCompleteTime: nil,
+      responseLoadFailTime: nil,
+      webViewLoadStartTime: nil,
+      webViewLoadCompleteTime: nil,
+      webViewLoadFailTime: nil,
+      productsLoadStartTime: nil,
+      productsLoadFailTime: nil,
+      productsLoadCompleteTime: nil,
+      isFreeTrialAvailable: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager
+    )
+  }
+}

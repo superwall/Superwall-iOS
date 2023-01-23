@@ -110,6 +110,14 @@ public final class Superwall: NSObject, ObservableObject {
   @objc(sharedSuperwall)
   public static var shared: Superwall {
     guard let superwall = superwall else {
+      #if DEBUG
+      // Code only executes when tests are running in a debug environment.
+      // This avoids lots of irrelevent error messages printed to console about Superwall not
+      // being configured, which slows down the tests.
+      if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+        return Superwall()
+      }
+      #endif
       Logger.debug(
         logLevel: .error,
         scope: .superwallCore,

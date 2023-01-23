@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum PaywallWebEvent {
+enum PaywallWebEvent: Equatable {
   case closed
   case initiatePurchase(productId: String)
   case initiateRestore

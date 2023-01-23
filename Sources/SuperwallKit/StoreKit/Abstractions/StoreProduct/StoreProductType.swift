@@ -33,6 +33,8 @@ protocol StoreProductType {
 
   var period: String { get }
 
+  var periodly: String { get }
+
   var periodWeeks: Int { get }
 
   var periodWeeksString: String { get }

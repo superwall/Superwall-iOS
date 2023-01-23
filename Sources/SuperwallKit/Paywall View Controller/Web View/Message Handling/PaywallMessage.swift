@@ -35,7 +35,7 @@ struct PayloadMessages: Decodable {
   }
 }
 
-enum PaywallMessage: Decodable {
+enum PaywallMessage: Decodable, Equatable {
   case onReady(paywallJsVersion: String)
 	case templateParamsAndUserAttributes
   case close

@@ -102,3 +102,18 @@ public struct Experiment: Equatable, Hashable, Codable, Sendable {
     )
   }
 }
+
+// MARK: - Stubbable
+extension Experiment: Stubbable {
+  static func stub() -> Experiment {
+    return .init(
+      id: "a",
+      groupId: "b",
+      variant: .init(
+        id: "c",
+        type: .treatment,
+        paywallId: "d"
+      )
+    )
+  }
+}
