@@ -115,7 +115,7 @@ public final class Superwall: NSObject, ObservableObject {
       // This avoids lots of irrelevent error messages printed to console about Superwall not
       // being configured, which slows down the tests.
       if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
-          return Superwall()
+        return Superwall()
       }
       #endif
       Logger.debug(
