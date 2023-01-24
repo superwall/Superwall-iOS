@@ -227,13 +227,22 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       if let error = transaction.error {
         if let error = error as? SKError {
           switch error.code {
-          case .overlayTimeout,
-            .paymentCancelled,
+          case .paymentCancelled,
             .overlayCancelled:
             purchasing.completion?(.cancelled)
             return
           default:
             break
+          }
+
+          if #available(iOS 14, *) {
+            switch error.code {
+            case .overlayTimeout:
+              purchasing.completion?(.cancelled)
+              return
+            default:
+              break
+            }
           }
         }
         purchasing.completion?(.failed(error))
