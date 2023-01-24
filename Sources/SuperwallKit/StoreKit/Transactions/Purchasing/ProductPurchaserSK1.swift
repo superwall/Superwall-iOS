@@ -90,7 +90,7 @@ extension ProductPurchaserSK1: TransactionChecker {
   /// Read more in [Apple's docs](https://developer.apple.com/documentation/storekit/in-app_purchase/original_api_for_in-app_purchase/choosing_a_receipt_validation_technique#//apple_ref/doc/uid/TP40010573).
   func getAndValidateTransaction(
     of productId: String,
-    since startAt: Date
+    since startAt: Date?
   ) async throws -> StoreTransaction {
     guard let transaction = purchasing.transaction else {
       throw PurchaseError.noTransactionDetected

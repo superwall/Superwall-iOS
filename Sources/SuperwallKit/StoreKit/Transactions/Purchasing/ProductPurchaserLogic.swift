@@ -12,7 +12,7 @@ enum ProductPurchaserLogic {
   static func validate(
     lastTransaction: SKPaymentTransaction,
     withProductId productId: String,
-    since startAt: Date
+    since startAt: Date?
   ) throws {
     guard lastTransaction.payment.productIdentifier == productId else {
       throw PurchaseError.noTransactionDetected
@@ -23,8 +23,10 @@ enum ProductPurchaserLogic {
     guard let transactionDate = lastTransaction.transactionDate else {
       throw PurchaseError.noTransactionDetected
     }
-    guard transactionDate >= startAt else {
-      throw PurchaseError.noTransactionDetected
+    if let startAt = startAt {
+      guard transactionDate >= startAt else {
+        throw PurchaseError.noTransactionDetected
+      }
     }
 
     // Validation

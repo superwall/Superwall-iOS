@@ -11,7 +11,7 @@ protocol TransactionChecker: AnyObject {
   /// Gets and validates a transaction of a product.
   func getAndValidateTransaction(
     of productId: String,
-    since purchaseStartDate: Date
+    since purchaseStartDate: Date?
   ) async throws -> StoreTransaction
 }
 
