@@ -50,21 +50,19 @@ public enum PurchaseResult: Sendable, Equatable {
   ///
   /// Send the `Error` back to Superwall to alert the user.
   case failed(Error)
-  
+
   public static func == (lhs: PurchaseResult, rhs: PurchaseResult) -> Bool {
-    switch lhs {
-    case .cancelled:
-      return rhs == .cancelled
-    case .purchased:
-      return rhs == .purchased
-    case .pending:
-      return rhs == .pending
-    case .failed(let error):
-      guard case let .failed(rhsError) = rhs else {
-        return false
-      }
-      return error.localizedDescription == rhsError.localizedDescription
+    switch (lhs, rhs) {
+    case (.cancelled, .cancelled),
+      (.purchased, .purchased),
+      (.pending, .pending):
+      return true
+    case let (.failed(error), .failed(error2)):
+      return error.localizedDescription == error2.localizedDescription
+    default:
+      return false
     }
+
   }
 }
 

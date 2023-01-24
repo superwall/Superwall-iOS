@@ -14,26 +14,13 @@ enum GetTrackResultError: Error, Equatable {
   case paywallNotAvailable
 
   static func == (lhs: GetTrackResultError, rhs: GetTrackResultError) -> Bool {
-    switch lhs {
-    case .willNotPresent:
-      guard case .willNotPresent = rhs else {
-        return false
-      }
+    switch (lhs, rhs) {
+    case (.willNotPresent, .willNotPresent),
+      (.userIsSubscribed, .userIsSubscribed),
+      (.paywallNotAvailable, .paywallNotAvailable):
       return true
-    case .userIsSubscribed:
-      switch rhs {
-      case .userIsSubscribed:
-        return true
-      default:
-        return false
-      }
-    case .paywallNotAvailable:
-      switch rhs {
-      case .paywallNotAvailable:
-        return true
-      default:
-        return false
-      }
+    default:
+      return false
     }
   }
 }
