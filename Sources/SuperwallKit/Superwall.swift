@@ -95,18 +95,14 @@ public final class Superwall: NSObject, ObservableObject {
   /// ``configure(apiKey:delegate:options:)-65jyx``.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
-  /// notified whenever the user's subscription status changes.
+  /// notified when configuration has completed.
   @Published
   public var isConfigured = false
 
   /// The configured shared instance of ``Superwall``.
   ///
-  /// - Warning: This method will crash with `fatalError` if ``Superwall`` has
-  /// not been initialized through ``configure(apiKey:delegate:options:)-65jyx``.
-  /// If there's a chance that may have not happened yet, you can use
-  /// ``isConfigured`` to check if it's safe to call.
-  /// ### Related symbols
-  /// - ``isConfigured``
+  /// - Warning: You must call ``configure(apiKey:delegate:options:)-65jyx``
+  /// to initialize ``Superwall`` before using this.
   @objc(sharedInstance)
   public static var shared: Superwall {
     guard let superwall = superwall else {
