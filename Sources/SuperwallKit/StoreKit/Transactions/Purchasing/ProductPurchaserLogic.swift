@@ -20,11 +20,9 @@ enum ProductPurchaserLogic {
     guard lastTransaction.transactionState == .purchased else {
       throw PurchaseError.noTransactionDetected
     }
-    guard let transactionDate = lastTransaction.transactionDate else {
-      throw PurchaseError.noTransactionDetected
-    }
-    if let startAt = startAt {
-      guard transactionDate >= startAt else {
+    if let startAt = startAt,
+      let lastTransactionDate = lastTransaction.transactionDate {
+      guard lastTransactionDate >= startAt else {
         throw PurchaseError.noTransactionDetected
       }
     }
