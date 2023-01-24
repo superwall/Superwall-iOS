@@ -78,7 +78,7 @@ struct PurchaseManager {
       // transactions came in since we made the purchase request.
 
       //TODO: What happens if it's pending and they do the flow above?
-      let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateTransaction(
+      let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateLatestTransaction(
         of: product.productIdentifier,
         since: result == .purchased ? nil : startAt
       )

@@ -12,12 +12,11 @@ final class ProductPurchaserSK1: NSObject {
   // MARK: Purchasing
   final class Purchasing {
     var completion: ((PurchaseResult) -> Void)?
-    var transaction: SKPaymentTransaction?
     var productId: String?
   }
   private let purchasing = Purchasing()
 
-  // MARK: - Restoration
+  // MARK: Restoration
   final class Restoration {
     var completion: ((Bool) -> Void)?
     var dispatchGroup = DispatchGroup()
@@ -28,6 +27,9 @@ final class ProductPurchaserSK1: NSObject {
     )
   }
   private let restoration = Restoration()
+
+  /// The latest transaction, used for purchasing and verifying purchases.
+  private var latestTransaction: SKPaymentTransaction?
 
   // MARK: Dependencies
   private unowned let storeKitManager: StoreKitManager
@@ -88,21 +90,21 @@ extension ProductPurchaserSK1: TransactionChecker {
   /// The receipts are updated on successful purchase.
   ///
   /// Read more in [Apple's docs](https://developer.apple.com/documentation/storekit/in-app_purchase/original_api_for_in-app_purchase/choosing_a_receipt_validation_technique#//apple_ref/doc/uid/TP40010573).
-  func getAndValidateTransaction(
+  func getAndValidateLatestTransaction(
     of productId: String,
-    since startAt: Date?
+    since purchasedAt: Date?
   ) async throws -> StoreTransaction {
-    guard let transaction = purchasing.transaction else {
+    guard let latestTransaction = latestTransaction else {
       throw PurchaseError.noTransactionDetected
     }
     try ProductPurchaserLogic.validate(
-      lastTransaction: transaction,
+      latestTransaction: latestTransaction,
       withProductId: productId,
-      since: startAt
+      since: purchasedAt
     )
 
-    let storeTransaction = await factory.makeStoreTransaction(from: transaction)
-    self.purchasing.transaction = nil
+    let storeTransaction = await factory.makeStoreTransaction(from: latestTransaction)
+    self.latestTransaction = nil
 
     return storeTransaction
   }
@@ -219,7 +221,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
 
     switch transaction.transactionState {
     case .purchased:
-      purchasing.transaction = transaction
       purchasing.completion?(.purchased)
     case .failed:
       if let error = transaction.error {

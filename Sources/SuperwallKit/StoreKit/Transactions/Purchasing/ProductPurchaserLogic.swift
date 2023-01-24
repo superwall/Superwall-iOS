@@ -10,19 +10,19 @@ import StoreKit
 
 enum ProductPurchaserLogic {
   static func validate(
-    lastTransaction: SKPaymentTransaction,
+    latestTransaction: SKPaymentTransaction,
     withProductId productId: String,
-    since startAt: Date?
+    since purchasedAt: Date?
   ) throws {
-    guard lastTransaction.payment.productIdentifier == productId else {
+    guard latestTransaction.payment.productIdentifier == productId else {
       throw PurchaseError.noTransactionDetected
     }
-    guard lastTransaction.transactionState == .purchased else {
+    guard latestTransaction.transactionState == .purchased else {
       throw PurchaseError.noTransactionDetected
     }
-    if let startAt = startAt,
-      let lastTransactionDate = lastTransaction.transactionDate {
-      guard lastTransactionDate >= startAt else {
+    if let purchasedAt = purchasedAt,
+      let latestTransactionDate = latestTransaction.transactionDate {
+      guard latestTransactionDate >= purchasedAt else {
         throw PurchaseError.noTransactionDetected
       }
     }
