@@ -41,11 +41,11 @@ struct StoreKitCoordinator {
 
     let sk1ProductPurchaser = factory.makeSK1ProductPurchaser()
 
-    /*if #available(iOS 15.0, *) {
+    if #available(iOS 15.0, *) {
       self.txnChecker = TransactionVerifierSK2(factory: factory)
-    } else {*/
+    } else {
       self.txnChecker = sk1ProductPurchaser
-    //}
+    }
 
     let hasSubscriptionController = delegateAdapter.hasSubscriptionController
     if hasSubscriptionController {
