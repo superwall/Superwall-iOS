@@ -128,8 +128,6 @@ final class DependencyContainer {
 
     // We have to call postInit on some of the objects to avoid
     // retain cycles.
-    storeKitManager.postInit()
-    sessionEventsManager.postInit()
     storage.postInit(deviceHelper: deviceHelper)
     deviceHelper.postInit(identityManager: identityManager)
     configManager.postInit(deviceHelper: deviceHelper)
@@ -247,8 +245,7 @@ extension DependencyContainer: RequestFactory {
 extension DependencyContainer: ApiFactory {
   func makeHeaders(
     fromRequest request: URLRequest,
-    requestId: String,
-    forDebugging isForDebugging: Bool
+    requestId: String
   ) -> [String: String] {
     let auth = "Bearer \(storage.apiKey)"
     let headers = [

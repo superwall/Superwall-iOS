@@ -107,7 +107,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// ``isConfigured`` to check if it's safe to call.
   /// ### Related symbols
   /// - ``isConfigured``
-  @objc(sharedSuperwall)
+  @objc(sharedInstance)
   public static var shared: Superwall {
     guard let superwall = superwall else {
       #if DEBUG
@@ -146,31 +146,30 @@ public final class Superwall: NSObject, ObservableObject {
     return paywallViewController != nil
   }
 
-  // swiftlint:disable implicitly_unwrapped_optional
   /// Handles all dependencies.
-  var dependencyContainer: DependencyContainer!
-  // swiftlint:enable implicitly_unwrapped_optional
+  let dependencyContainer: DependencyContainer
 
   // MARK: - Private Functions
-  private override init() {
-    dependencyContainer = DependencyContainer(apiKey: "")
+  init(dependencyContainer: DependencyContainer = DependencyContainer(apiKey: "")) {
+    self.dependencyContainer = dependencyContainer
+    super.init()
   }
 
-  private init(
+  private convenience init(
     apiKey: String,
     swiftDelegate: SuperwallDelegate? = nil,
     objcDelegate: SuperwallDelegateObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
-    dependencyContainer = DependencyContainer(
+    let dependencyContainer = DependencyContainer(
       apiKey: apiKey,
       swiftDelegate: swiftDelegate,
       objcDelegate: objcDelegate,
       options: options
     )
-    hasActiveSubscription = dependencyContainer.storage.get(SubscriptionStatus.self) ?? false
+    self.init(dependencyContainer: dependencyContainer)
 
-    super.init()
+    hasActiveSubscription = dependencyContainer.storage.get(SubscriptionStatus.self) ?? false
 
     listenForConfig()
 

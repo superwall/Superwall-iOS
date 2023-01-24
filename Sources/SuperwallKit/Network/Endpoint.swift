@@ -26,7 +26,7 @@ struct Endpoint<Response: Decodable> {
   var requestId: String = UUID().uuidString
   let factory: ApiFactory
 
-  func makeRequest(forDebugging isForDebugging: Bool) -> URLRequest? {
+  func makeRequest() -> URLRequest? {
     let url: URL
 
     if let components = components {
@@ -58,8 +58,7 @@ struct Endpoint<Response: Decodable> {
 
     let headers = factory.makeHeaders(
       fromRequest: request,
-      requestId: requestId,
-      forDebugging: isForDebugging
+      requestId: requestId
     )
 
     for header in headers {

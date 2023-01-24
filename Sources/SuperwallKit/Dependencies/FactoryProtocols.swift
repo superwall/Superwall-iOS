@@ -53,8 +53,7 @@ protocol ApiFactory {
 
   func makeHeaders(
     fromRequest request: URLRequest,
-    requestId: String,
-    forDebugging isForDebugging: Bool
+    requestId: String
   ) -> [String: String]
 }
 

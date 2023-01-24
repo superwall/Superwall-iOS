@@ -2,46 +2,36 @@ import Foundation
 import Combine
 
 final class StoreKitManager {
-  var productsById: [String: StoreProduct] = [:]
+  /// Coordinates: The purchasing, restoring and retrieving of products; the checking
+  /// of transactions; and the determining of the user's subscription status.
+  lazy var coordinator = factory.makeStoreKitCoordinator()
+  private let factory: StoreKitCoordinatorFactory
+  private lazy var receiptManager: ReceiptManager = ReceiptManager(delegate: self)
+
+  private(set) var productsById: [String: StoreProduct] = [:]
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
     let substituteProductsById: [String: StoreProduct]
     let products: [Product]
   }
 
-  private let factory: StoreKitCoordinatorFactory
-  // swiftlint:disable implicitly_unwrapped_optional
-  /// Coordinates: The purchasing, restoring and retrieving of products; the checking
-  /// of transactions; and the determining of the user's subscription status.
-  var coordinator: StoreKitCoordinator!
-  private var receiptManager: ReceiptManager!
-  // swiftlint:enable implicitly_unwrapped_optional
-
-  /// **NOTE:** Remember to call `postInit()` after init
   init(factory: StoreKitCoordinatorFactory) {
     self.factory = factory
-  }
-
-  ///  Separated from init to stop circular references during init.
-  func postInit() {
-    coordinator = factory.makeStoreKitCoordinator()
-    receiptManager = ReceiptManager(delegate: self)
   }
 
 	func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
     guard let output = try? await getProducts(withIds: paywall.productIds) else {
       return []
     }
-    var variables: [ProductVariable] = []
 
-    for product in paywall.products {
-      if let storeProduct = output.productsById[product.id] {
-        let variable = ProductVariable(
-          type: product.type,
-          attributes: storeProduct.attributesJson
-        )
-        variables.append(variable)
+    let variables = paywall.products.compactMap { product -> ProductVariable? in
+      guard let storeProduct = output.productsById[product.id] else {
+        return nil
       }
+      return ProductVariable(
+        type: product.type,
+        attributes: storeProduct.attributesJson
+      )
     }
 
     return variables

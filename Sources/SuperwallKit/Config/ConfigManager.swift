@@ -26,7 +26,7 @@ class ConfigManager {
   private unowned let storage: Storage
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
-  // swiftlint:disable implicitly_unwrapped_optional
+
   private unowned var deviceHelper: DeviceHelper!
   // swiftlint:enable implicitly_unwrapped_optional
   private let factory: RequestFactory
@@ -50,9 +50,9 @@ class ConfigManager {
     self.deviceHelper = deviceHelper
   }
 
-  func fetchConfiguration(requestId: String = UUID().uuidString) async {
+  func fetchConfiguration() async {
     do {
-      let config = try await network.getConfig(withRequestId: requestId)
+      let config = try await network.getConfig()
       Task { await sendProductsBack(from: config) }
 
       triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
