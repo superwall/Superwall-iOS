@@ -4,7 +4,6 @@
 //
 //  Created by Yusuf Tör on 23/12/2022.
 //
-// swiftlint:disable function_body_length
 
 import UIKit
 

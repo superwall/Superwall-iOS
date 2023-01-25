@@ -62,7 +62,6 @@ public enum PurchaseResult: Sendable, Equatable {
     default:
       return false
     }
-
   }
 }
 

@@ -90,7 +90,7 @@ class Storage {
     }
 
     Task {
-      await Superwall.track(InternalSuperwallEvent.FirstSeen())
+      await Superwall.shared.track(InternalSuperwallEvent.FirstSeen())
     }
     save(true, forType: DidTrackFirstSeen.self)
 		didTrackFirstSeen = true
@@ -98,7 +98,7 @@ class Storage {
 
   /// Records the app install
   func recordAppInstall(
-    trackEvent: @escaping (Trackable) async -> TrackingResult = Superwall.track
+    trackEvent: @escaping (Trackable) async -> TrackingResult = Superwall.shared.track
   ) {
     let didTrackAppInstall = get(DidTrackAppInstall.self) ?? false
     if didTrackAppInstall {

@@ -79,7 +79,7 @@ final class RestorationManager {
         product: nil,
         model: nil
       )
-      await self.superwall.track(trackedEvent)
+      await self.superwall.shared.track(trackedEvent)
     }
 
     if Superwall.options.paywalls.automaticallyDismiss {

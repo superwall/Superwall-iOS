@@ -101,7 +101,7 @@ final class TransactionManager {
         product: product,
         model: nil
       )
-      await Superwall.track(trackedEvent)
+      await Superwall.shared.track(trackedEvent)
     }
 
     lastPaywallViewController = paywallViewController
@@ -165,7 +165,7 @@ final class TransactionManager {
         product: product,
         model: nil
       )
-      await Superwall.track(trackedEvent)
+      await Superwall.shared.track(trackedEvent)
       await self.sessionEventsManager.triggerSession.trackTransactionAbandon()
     }
 
@@ -191,7 +191,7 @@ final class TransactionManager {
         product: nil,
         model: nil
       )
-      await Superwall.track(trackedEvent)
+      await Superwall.shared.track(trackedEvent)
       await self.sessionEventsManager.triggerSession.trackPendingTransaction()
     }
 
@@ -225,7 +225,7 @@ final class TransactionManager {
         product: product,
         model: nil
       )
-      await Superwall.track(trackedEvent)
+      await Superwall.shared.track(trackedEvent)
       await self.sessionEventsManager.triggerSession.trackTransactionError()
     }
 
@@ -260,14 +260,14 @@ final class TransactionManager {
         product: product,
         model: transaction
       )
-      await Superwall.track(trackedEvent)
+      await Superwall.shared.track(trackedEvent)
 
       if product.subscriptionPeriod == nil {
         let trackedEvent = InternalSuperwallEvent.NonRecurringProductPurchase(
           paywallInfo: paywallInfo,
           product: product
         )
-        await Superwall.track(trackedEvent)
+        await Superwall.shared.track(trackedEvent)
       }
 
       if didStartFreeTrial {
@@ -275,13 +275,13 @@ final class TransactionManager {
           paywallInfo: paywallInfo,
           product: product
         )
-        await Superwall.track(trackedEvent)
+        await Superwall.shared.track(trackedEvent)
       } else {
         let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
           paywallInfo: paywallInfo,
           product: product
         )
-        await Superwall.track(trackedEvent)
+        await Superwall.shared.track(trackedEvent)
       }
     }
     lastPaywallViewController = nil

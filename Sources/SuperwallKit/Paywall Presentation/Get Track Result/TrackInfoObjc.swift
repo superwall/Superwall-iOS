@@ -12,10 +12,22 @@ import Foundation
 /// Contains the possible cases resulting from tracking an event.
 @objc(SWKTrackResult)
 public enum TrackResultObjc: Int, Sendable, Equatable {
+  /// This event was not found on the dashboard.
+  ///
+  /// Please make sure you have added the event to a campaign on the dashboard and
+  /// double check its spelling.
   case eventNotFound
+
+  /// No matching rule was found for this trigger so no paywall will be shown.
   case noRuleMatch
+
+  /// A matching rule was found and this user will be shown a paywall.
   case paywall
+
+  /// A matching rule was found and this user was assigned to a holdout group so will not be shown a paywall.
   case holdout
+
+  /// An error occurred and the user will not be shown a paywall.
   case error
 }
 

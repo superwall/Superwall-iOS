@@ -87,7 +87,7 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
       state: .start,
       eventData: event
     )
-    await Superwall.track(trackedEvent)
+    await Superwall.shared.track(trackedEvent)
   }
 
   private func trackResponseLoaded(
@@ -99,7 +99,7 @@ extension AnyPublisher where Output == PaywallRequest, Failure == Error {
       state: .complete(paywallInfo: paywallInfo),
       eventData: event
     )
-    await Superwall.track(responseLoadEvent)
+    await Superwall.shared.track(responseLoadEvent)
 
     await sessionEventsManager.triggerSession.trackPaywallResponseLoad(
       forPaywallId: paywallInfo.databaseId,

@@ -48,7 +48,7 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
                 )
                 Task.detached(priority: .utility) {
                   let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .alreadyPresented)
-                  await Superwall.track(trackedEvent)
+                  await input.request.injections.superwall.track(trackedEvent)
                 }
                 paywallStatePublisher.send(.skipped(.error(error)))
                 paywallStatePublisher.send(completion: .finished)

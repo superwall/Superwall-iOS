@@ -217,12 +217,12 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     await sessionEventsManager.triggerSession.trackPaywallOpen()
     storage.trackPaywallOpen()
     let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
-    await Superwall.track(trackedEvent)
+    await Superwall.shared.track(trackedEvent)
   }
 
   nonisolated private func trackClose() async {
     let trackedEvent = await InternalSuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
-    await Superwall.track(trackedEvent)
+    await Superwall.shared.track(trackedEvent)
     await sessionEventsManager.triggerSession.trackPaywallClose()
   }
 
@@ -265,9 +265,9 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     Task(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
         state: .start,
-        paywallInfo: paywallInfo
+        paywallInfo: self.paywallInfo
       )
-      await Superwall.track(trackedEvent)
+      await Superwall.shared.track(trackedEvent)
       await sessionEventsManager.triggerSession.trackWebviewLoad(
         forPaywallId: paywallInfo.databaseId,
         state: .start
@@ -407,7 +407,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
             state: .timeout,
             paywallInfo: self.paywallInfo
           )
-          await Superwall.track(trackedEvent)
+          await Superwall.shared.track(trackedEvent)
         }
 
         UIView.springAnimate(withDuration: 2) {

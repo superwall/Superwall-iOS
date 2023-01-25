@@ -237,11 +237,12 @@ class ConfigManager {
     guard config.featureFlags.enablePostback else {
       return
     }
-    let oneSecond = UInt64(1_000_000_000)
-    let nanosecondDelay = UInt64(config.postback.postbackDelay) * oneSecond
+    let milliseconds = 1000
+    let nanoseconds = UInt64(milliseconds * 1_000_000)
+    let duration = UInt64(config.postback.postbackDelay) * nanoseconds
 
     do {
-      try await Task.sleep(nanoseconds: nanosecondDelay)
+      try await Task.sleep(nanoseconds: duration)
 
       let productIds = config.postback.productsToPostBack.map { $0.identifier }
       let products = try await storeKitManager.getProducts(withIds: productIds)

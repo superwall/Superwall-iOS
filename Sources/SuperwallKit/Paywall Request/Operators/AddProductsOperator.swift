@@ -88,7 +88,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
       paywallInfo: paywallInfo,
       eventData: input.request.eventData
     )
-    await Superwall.track(productLoadEvent)
+    await Superwall.shared.track(productLoadEvent)
 
     await input.request.injections.sessionEventsManager.triggerSession.trackProductsLoad(
       forPaywallId: paywallInfo.databaseId,
@@ -106,7 +106,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
       paywallInfo: paywallInfo,
       eventData: event
     )
-    await Superwall.track(productLoadEvent)
+    await Superwall.shared.track(productLoadEvent)
 
     await sessionEventsManager.triggerSession.trackProductsLoad(
       forPaywallId: paywallInfo.databaseId,
@@ -132,6 +132,6 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
       paywallInfo: paywallInfo,
       eventData: event
     )
-    await Superwall.track(productLoadEvent)
+    await Superwall.shared.track(productLoadEvent)
   }
 }

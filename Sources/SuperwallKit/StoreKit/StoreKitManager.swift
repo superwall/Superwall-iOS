@@ -6,7 +6,7 @@ final class StoreKitManager {
   /// of transactions; and the determining of the user's subscription status.
   lazy var coordinator = factory.makeStoreKitCoordinator()
   private unowned let factory: StoreKitCoordinatorFactory
-  private lazy var receiptManager: ReceiptManager = ReceiptManager(delegate: self)
+  private lazy var receiptManager = ReceiptManager(delegate: self)
 
   private(set) var productsById: [String: StoreProduct] = [:]
   private struct ProductProcessingResult {

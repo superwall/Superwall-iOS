@@ -203,7 +203,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
               product: nil,
               model: nil
             )
-            await Superwall.track(trackedEvent)
+            await Superwall.shared.track(trackedEvent)
           default:
             break
           }
