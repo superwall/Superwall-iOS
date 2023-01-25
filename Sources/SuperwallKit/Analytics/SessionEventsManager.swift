@@ -28,9 +28,8 @@ class SessionEventsManager {
   private unowned let network: Network
   private unowned let storage: Storage
   private unowned let configManager: ConfigManager
-  private let factory: TriggerSessionManagerFactory
+  private unowned let factory: TriggerSessionManagerFactory
 
-  /// Remember to call postInit
   init(
     queue: SessionEnqueuable,
     storage: Storage,

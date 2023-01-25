@@ -9,21 +9,18 @@ import Foundation
 import Combine
 
 actor PaywallRequestManager {
-  unowned let storeKitManager: StoreKitManager
-
-  // swiftlint:disable implicitly_unwrapped_optional
-  unowned var deviceHelper: DeviceHelper!
-  // swiftlint:enable implicitly_unwrapped_optional
+  private unowned let storeKitManager: StoreKitManager
+  private unowned let factory: DeviceInfoFactory
 
   private var activeTasks: [String: Task<Paywall, Error>] = [:]
   private var paywallsByHash: [String: Paywall] = [:]
 
-  init(storeKitManager: StoreKitManager) {
+  init(
+    storeKitManager: StoreKitManager,
+    factory: DeviceInfoFactory
+  ) {
     self.storeKitManager = storeKitManager
-  }
-
-  func postInit(deviceHelper: DeviceHelper) {
-    self.deviceHelper = deviceHelper
+    self.factory = factory
   }
 
   ///  Gets a paywall from a given request.
@@ -34,10 +31,11 @@ actor PaywallRequestManager {
   ///     - request: A request to get a paywall.
   ///  - Returns A paywall.
   func getPaywall(from request: PaywallRequest) async throws -> Paywall {
+    let deviceInfo = factory.makeDeviceInfo()
     let requestHash = PaywallLogic.requestHash(
       identifier: request.responseIdentifiers.paywallId,
       event: request.eventData,
-      locale: deviceHelper.locale
+      locale: deviceInfo.locale
     )
 
     let notSubstitutingProducts = request.overrides.products == nil

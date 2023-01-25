@@ -15,31 +15,20 @@ class PaywallManager {
 	}
   private unowned let paywallRequestManager: PaywallRequestManager
 
-  // swiftlint:disable implicitly_unwrapped_optional
-  private var cache: PaywallCache!
-  // swiftlint:enable implicitly_unwrapped_optional
+  private lazy var cache: PaywallCache = factory.makeCache()
+  private let factory: ViewControllerFactory & CacheFactory
 
-  private let factory: ViewControllerFactory
-
-  /// **NOTE**: Remember to call `postInit` after init.
   init(
-    factory: ViewControllerFactory,
+    factory: ViewControllerFactory & CacheFactory,
     paywallRequestManager: PaywallRequestManager
   ) {
     self.factory = factory
     self.paywallRequestManager = paywallRequestManager
   }
 
-  /// Initialises variables that can't be immediately init'd.
-  func postInit(deviceHelper: DeviceHelper) {
-    self.cache = PaywallCache(deviceLocaleString: deviceHelper.locale)
-  }
-
   @MainActor
-	func removePaywall(withIdentifier identifier: String?) {
-    cache.removePaywall(
-      withIdentifier: identifier
-    )
+	func removePaywall(identifier: String?) {
+    cache.removePaywall(identifier: identifier)
 	}
 
   @MainActor

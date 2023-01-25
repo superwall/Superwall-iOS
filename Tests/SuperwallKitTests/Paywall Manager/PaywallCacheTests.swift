@@ -48,9 +48,7 @@ class PaywallCacheTests: XCTestCase {
 
     XCTAssertEqual(cachedPaywall, paywall)
 
-    paywallCache.removePaywall(
-      withIdentifier: id
-    )
+    paywallCache.removePaywall(identifier: id)
 
     // Then
     cachedPaywall = paywallCache.getPaywall(withKey: key)

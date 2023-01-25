@@ -11,15 +11,15 @@ import XCTest
 
 class AppSessionManagerTests: XCTestCase {
   var appSessionManager: AppSessionManager!
+  let delegate = AppManagerDelegateMock()
 
   override func setUp() async throws {
     let dependencyContainer = DependencyContainer(apiKey: "abc")
     appSessionManager = AppSessionManager(
       configManager: dependencyContainer.configManager,
-      storage: dependencyContainer.storage
+      storage: dependencyContainer.storage,
+      delegate: delegate
     )
-
-    appSessionManager.postInit(sessionEventsManager: dependencyContainer.sessionEventsManager)
     dependencyContainer.appSessionManager = appSessionManager
   }
 

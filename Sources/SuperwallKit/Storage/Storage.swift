@@ -23,30 +23,25 @@ class Storage {
   /// This means that we'll need to wait for assignments before firing triggers.
   var neverCalledStaticConfig = false
 
-  // swiftlint:disable implicitly_unwrapped_optional
-  unowned var deviceHelper: DeviceHelper!
-  // swiftlint:enable implicitly_unwrapped_optional
-
   /// The confirmed assignments for the user loaded from the cache.
   private var confirmedAssignments: [Experiment.ID: Experiment.Variant]?
 
   /// The disk cache.
   private let cache: Cache
 
+  private unowned let factory: DeviceInfoFactory
+
   // MARK: - Configuration
 
-  /// **NOTE**: After init'ing, call `postInit`
   init(
+    factory: DeviceInfoFactory,
     cache: Cache = Cache(),
     coreDataManager: CoreDataManager = CoreDataManager()
   ) {
     self.cache = cache
     self.coreDataManager = coreDataManager
     self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true
-  }
-
-  func postInit(deviceHelper: DeviceHelper) {
-    self.deviceHelper = deviceHelper
+    self.factory = factory
   }
 
   func configure(apiKey: String) {
@@ -110,7 +105,9 @@ class Storage {
       return
     }
     Task {
-      _ = await trackEvent(InternalSuperwallEvent.AppInstall(deviceHelper: deviceHelper))
+      let deviceInfo = factory.makeDeviceInfo()
+      let event = InternalSuperwallEvent.AppInstall(appInstalledAtString: deviceInfo.appInstalledAtString)
+      _ = await trackEvent(event)
     }
     save(true, forType: DidTrackAppInstall.self)
   }

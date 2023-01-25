@@ -5,7 +5,7 @@ final class StoreKitManager {
   /// Coordinates: The purchasing, restoring and retrieving of products; the checking
   /// of transactions; and the determining of the user's subscription status.
   lazy var coordinator = factory.makeStoreKitCoordinator()
-  private let factory: StoreKitCoordinatorFactory
+  private unowned let factory: StoreKitCoordinatorFactory
   private lazy var receiptManager: ReceiptManager = ReceiptManager(delegate: self)
 
   private(set) var productsById: [String: StoreProduct] = [:]

@@ -12,7 +12,7 @@ class ConfigManager {
   @Published var config: Config?
 
   /// Options for configuring the SDK.
-  @Published var options = SuperwallOptions()
+  var options = SuperwallOptions()
 
   /// A dictionary of triggers by their event name.
   var triggersByEventName: [String: Trigger] = [:]
@@ -27,27 +27,24 @@ class ConfigManager {
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
 
-  private unowned var deviceHelper: DeviceHelper!
-  // swiftlint:enable implicitly_unwrapped_optional
-  private let factory: RequestFactory
+  private let factory: RequestFactory & DeviceInfoFactory
 
-  /// **NOTE**: Remember to call `postInit`after init.
   init(
+    options: SuperwallOptions?,
     storeKitManager: StoreKitManager,
     storage: Storage,
     network: Network,
     paywallManager: PaywallManager,
-    factory: RequestFactory
+    factory: RequestFactory & DeviceInfoFactory
   ) {
+    if let options = options {
+      self.options = options
+    }
     self.storeKitManager = storeKitManager
     self.storage = storage
     self.network = network
     self.paywallManager = paywallManager
     self.factory = factory
-  }
-
-  func postInit(deviceHelper: DeviceHelper) {
-    self.deviceHelper = deviceHelper
   }
 
   func fetchConfiguration() async {
@@ -143,10 +140,11 @@ class ConfigManager {
 
   /// Gets the paywall response from the static config, if the device locale starts with "en" and no more specific version can be found.
   func getStaticPaywall(withId paywallId: String?) -> Paywall? {
+    let deviceInfo = factory.makeDeviceInfo()
     return ConfigLogic.getStaticPaywall(
       withId: paywallId,
       config: config,
-      deviceLocale: deviceHelper.locale
+      deviceLocale: deviceInfo.locale
     )
   }
 

@@ -16,6 +16,12 @@ final class StorageMock: Storage {
   var internalConfirmedAssignments: [Experiment.ID: Experiment.Variant]
   var didClearCachedSessionEvents = false
 
+  class DeviceInfoFactoryMock: DeviceInfoFactory {
+    func makeDeviceInfo() -> DeviceInfo {
+      return DeviceInfo(appInstalledAtString: "a", locale: "b")
+    }
+  }
+
   init(
     internalCachedTriggerSessions: [TriggerSession] = [],
     internalCachedTransactions: [StoreTransaction] = [],
@@ -27,7 +33,7 @@ final class StorageMock: Storage {
     self.internalCachedTransactions = internalCachedTransactions
     self.internalConfirmedAssignments = confirmedAssignments
 
-    super.init(cache: cache, coreDataManager: coreDataManager)
+    super.init(factory: DeviceInfoFactoryMock(), cache: cache, coreDataManager: coreDataManager)
   }
 
   override func get<Key>(_ keyType: Key.Type) -> Key.Value? where Key : Storable {

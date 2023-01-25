@@ -8,7 +8,7 @@
 import Foundation
 import StoreKit
 
-final class RestorationHandler {
+final class RestorationManager {
   private unowned let storeKitManager: StoreKitManager
   private unowned let sessionEventsManager: SessionEventsManager
   private let superwall: Superwall.Type

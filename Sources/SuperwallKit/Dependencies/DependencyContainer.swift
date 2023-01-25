@@ -34,7 +34,7 @@ final class DependencyContainer {
   var debugManager: DebugManager!
   var api: Api!
   var transactionManager: TransactionManager!
-  var restorationHandler: RestorationHandler!
+  var restorationManager: RestorationManager!
   var delegateAdapter: SuperwallDelegateAdapter!
   // swiftlint:enable implicitly_unwrapped_optional
 
@@ -50,11 +50,12 @@ final class DependencyContainer {
       objcDelegate: objcDelegate
     )
     localizationManager = LocalizationManager()
-    storage = Storage()
+    storage = Storage(factory: self)
     network = Network(factory: self)
 
     paywallRequestManager = PaywallRequestManager(
-      storeKitManager: storeKitManager
+      storeKitManager: storeKitManager,
+      factory: self
     )
     paywallManager = PaywallManager(
       factory: self,
@@ -62,6 +63,7 @@ final class DependencyContainer {
     )
 
     configManager = ConfigManager(
+      options: options,
       storeKitManager: storeKitManager,
       storage: storage,
       network: network,
@@ -69,16 +71,13 @@ final class DependencyContainer {
       factory: self
     )
 
-    if let options = options {
-      configManager.options = options
-    }
-
-    api = Api(configManager: configManager)
+    api = Api(networkEnvironment: configManager.options.networkEnvironment)
 
     deviceHelper = DeviceHelper(
       api: api,
       storage: storage,
-      localizationManager: localizationManager
+      localizationManager: localizationManager,
+      factory: self
     )
 
     queue = EventsQueue(
@@ -88,7 +87,8 @@ final class DependencyContainer {
 
     appSessionManager = AppSessionManager(
       configManager: configManager,
-      storage: storage
+      storage: storage,
+      delegate: self
     )
 
     identityManager = IdentityManager(
@@ -119,24 +119,44 @@ final class DependencyContainer {
       sessionEventsManager: sessionEventsManager
     )
 
-    restorationHandler = RestorationHandler(
+    restorationManager = RestorationManager(
       storeKitManager: storeKitManager,
       sessionEventsManager: sessionEventsManager
     )
+  }
+}
 
-    // MARK: Post Init
+// MARK: - IdentityInfoFactory
+extension DependencyContainer: IdentityInfoFactory {
+  func makeIdentityInfo() -> IdentityInfo {
+    return IdentityInfo(
+      aliasId: identityManager.aliasId,
+      appUserId: identityManager.appUserId
+    )
+  }
+}
 
-    // We have to call postInit on some of the objects to avoid
-    // retain cycles.
-    storage.postInit(deviceHelper: deviceHelper)
-    deviceHelper.postInit(identityManager: identityManager)
-    configManager.postInit(deviceHelper: deviceHelper)
-    paywallManager.postInit(deviceHelper: deviceHelper)
-    appSessionManager.postInit(sessionEventsManager: sessionEventsManager)
+// MARK: - AppManagerDelegate
+extension DependencyContainer: AppManagerDelegate {
+  func didUpdateAppSession(_ appSession: AppSession) async {
+    await sessionEventsManager.updateAppSession(appSession)
+  }
+}
 
-    Task {
-      await paywallRequestManager.postInit(deviceHelper: deviceHelper)
-    }
+// MARK: - CacheFactory
+extension DependencyContainer: CacheFactory {
+  func makeCache() -> PaywallCache {
+    return PaywallCache(deviceLocaleString: deviceHelper.locale)
+  }
+}
+
+// MARK: - DeviceInfofactory
+extension DependencyContainer: DeviceInfoFactory {
+  func makeDeviceInfo() -> DeviceInfo {
+    return DeviceInfo(
+      appInstalledAtString: deviceHelper.appInstalledAtString,
+      locale: deviceHelper.locale
+    )
   }
 }
 

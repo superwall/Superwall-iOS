@@ -31,9 +31,7 @@ final class PaywallCache: Sendable {
   }
 
   @MainActor
-  func removePaywall(
-    withIdentifier identifier: String?
-  ) {
+  func removePaywall(identifier: String?) {
     if let viewController = getPaywallViewController(withIdentifier: identifier) {
       PaywallViewController.cache.remove(viewController)
     }

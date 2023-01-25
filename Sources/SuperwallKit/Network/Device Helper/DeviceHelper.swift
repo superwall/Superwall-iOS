@@ -249,12 +249,13 @@ class DeviceHelper {
   }
 
   var templateDevice: DeviceTemplate {
-    let aliases = [identityManager.aliasId]
+    let identityInfo = factory.makeIdentityInfo()
+    let aliases = [identityInfo.aliasId]
 
     return DeviceTemplate(
       publicApiKey: storage.apiKey,
       platform: isMac ? "macOS" : "iOS",
-      appUserId: identityManager.appUserId ?? "",
+      appUserId: identityInfo.appUserId ?? "",
       aliases: aliases,
       vendorId: vendorId,
       appVersion: appVersion,
@@ -287,23 +288,18 @@ class DeviceHelper {
 
   private unowned let storage: Storage
   private unowned let localizationManager: LocalizationManager
-
-  // swiftlint:disable implicitly_unwrapped_optional
-  unowned var identityManager: IdentityManager!
-  // swiftlint:enable implicitly_unwrapped_optional
+  private unowned let factory: IdentityInfoFactory
 
   init(
     api: Api,
     storage: Storage,
-    localizationManager: LocalizationManager
+    localizationManager: LocalizationManager,
+    factory: IdentityInfoFactory
   ) {
     self.storage = storage
     self.localizationManager = localizationManager
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
+    self.factory = factory
     reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.hostDomain)
-  }
-
-  func postInit(identityManager: IdentityManager) {
-    self.identityManager = identityManager
   }
 }

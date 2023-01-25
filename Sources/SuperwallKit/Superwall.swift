@@ -335,7 +335,7 @@ extension Superwall: PaywallViewControllerDelegate {
         from: paywallViewController
       )
     case .initiateRestore:
-      await dependencyContainer.restorationHandler.tryToRestore(paywallViewController)
+      await dependencyContainer.restorationManager.tryToRestore(paywallViewController)
     case .openedURL(let url):
       dependencyContainer.delegateAdapter?.willOpenURL(url: url)
     case .openedUrlInSafari(let url):

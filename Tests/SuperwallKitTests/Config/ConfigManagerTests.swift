@@ -24,6 +24,7 @@ final class ConfigManagerTests: XCTestCase {
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
@@ -47,13 +48,13 @@ final class ConfigManagerTests: XCTestCase {
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
-    configManager.config = nil
 
     await configManager.getAssignments()
 
@@ -66,6 +67,7 @@ final class ConfigManagerTests: XCTestCase {
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
@@ -86,13 +88,13 @@ final class ConfigManagerTests: XCTestCase {
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
-    configManager.postInit(deviceHelper: dependencyContainer.deviceHelper)
 
     let variantId = "variantId"
     let experimentId = "experimentId"

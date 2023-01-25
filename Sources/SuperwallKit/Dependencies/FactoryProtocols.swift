@@ -7,20 +7,24 @@
 
 import UIKit
 
-protocol ViewControllerFactory {
+protocol ViewControllerFactory: AnyObject {
   @MainActor
   func makePaywallViewController(for paywall: Paywall) -> PaywallViewController
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
 }
 
-protocol VariablesFactory {
+protocol CacheFactory: AnyObject {
+  func makeCache() -> PaywallCache
+}
+
+protocol VariablesFactory: AnyObject {
   func makeJsonVariables(
     productVariables: [ProductVariable]?,
     params: JSON?
   ) -> JSON
 }
 
-protocol RequestFactory {
+protocol RequestFactory: AnyObject {
   func makePaywallRequest(withId paywallId: String) -> PaywallRequest
 
   func makePresentationRequest(
@@ -33,15 +37,23 @@ protocol RequestFactory {
   ) -> PresentationRequest
 }
 
-protocol TriggerSessionManagerFactory {
+protocol TriggerSessionManagerFactory: AnyObject {
   func makeTriggerSessionManager() -> TriggerSessionManager
 }
 
-protocol StoreKitCoordinatorFactory {
+protocol StoreKitCoordinatorFactory: AnyObject {
   func makeStoreKitCoordinator() -> StoreKitCoordinator
 }
 
-protocol ApiFactory {
+protocol IdentityInfoFactory: AnyObject {
+  func makeIdentityInfo() -> IdentityInfo
+}
+
+protocol DeviceInfoFactory: AnyObject {
+  func makeDeviceInfo() -> DeviceInfo
+}
+
+protocol ApiFactory: AnyObject {
   // swiftlint:disable implicitly_unwrapped_optional
   // TODO: Think of an alternative way such that we don't need to do this:
   var api: Api! { get }
@@ -57,11 +69,11 @@ protocol ApiFactory {
   ) -> [String: String]
 }
 
-protocol ProductPurchaserFactory {
+protocol ProductPurchaserFactory: AnyObject {
   func makeSK1ProductPurchaser() -> ProductPurchaserSK1
 }
 
-protocol StoreTransactionFactory {
+protocol StoreTransactionFactory: AnyObject {
   func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction
 
   @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)

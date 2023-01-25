@@ -8,8 +8,12 @@
 import Foundation
 @testable import SuperwallKit
 
-struct StoreKitCoordinatorFactoryMock: StoreKitCoordinatorFactory {
+final class StoreKitCoordinatorFactoryMock: StoreKitCoordinatorFactory {
   let coordinator: StoreKitCoordinator
+
+  init(coordinator: StoreKitCoordinator) {
+    self.coordinator = coordinator
+  }
 
   func makeStoreKitCoordinator() -> StoreKitCoordinator {
     return coordinator
