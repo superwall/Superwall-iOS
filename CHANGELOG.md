@@ -10,9 +10,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes issue where paywallOverrides weren't being used.
 - Fixes bug in `<iOS 14` where the spinner wasn't appearing when transacting.
-- Fixes issue where PaywallOverrides weren't being passed in to the paywall.
+- Fixes bug where PaywallOverrides weren't being passed in to the paywall.
+- Fixes bug where purchasing, deleting then reinstalling your app, and tapping a purchase button would throw an error.
 
 
 ## 3.0.0-beta.1
