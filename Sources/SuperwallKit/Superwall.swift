@@ -4,7 +4,9 @@ import Foundation
 import StoreKit
 import Combine
 
-/// The primary class for integrating Superwall into your application. It provides access to all its featured via static functions and variables.
+/// The primary class for integrating Superwall into your application. After configuring via
+/// ``configure(apiKey:delegate:options:)-65jyx``, It provides access to
+/// all its featured via instance functions and variables.
 @objcMembers
 public final class Superwall: NSObject, ObservableObject {
   // MARK: - Public Properties
