@@ -421,7 +421,6 @@ final class DebugViewController: UIViewController {
       isPaywallPresented: Superwall.shared.isPaywallPresented
     )
 
-
     cancellable = Superwall.shared
       .internallyPresent(presentationRequest)
       .sink { state in

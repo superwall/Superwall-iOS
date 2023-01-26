@@ -25,7 +25,7 @@ class PaywallCacheTests: XCTestCase {
     // When
     PaywallViewController.cache.insert(paywall)
 
-    let cachedPaywall = paywallCache.getPaywall(withKey: key)
+    let cachedPaywall = paywallCache.getPaywallViewController(key: key)
 
     // Then
     XCTAssertEqual(cachedPaywall, paywall)
@@ -44,14 +44,14 @@ class PaywallCacheTests: XCTestCase {
     // When
     PaywallViewController.cache.insert(paywall)
 
-    var cachedPaywall = paywallCache.getPaywall(withKey: key)
+    var cachedPaywall = paywallCache.getPaywallViewController(key: key)
 
     XCTAssertEqual(cachedPaywall, paywall)
 
-    paywallCache.removePaywall(identifier: id)
+    paywallCache.removePaywallViewController(identifier: id)
 
     // Then
-    cachedPaywall = paywallCache.getPaywall(withKey: key)
+    cachedPaywall = paywallCache.getPaywallViewController(key: key)
 
     XCTAssertNil(cachedPaywall)
   }
@@ -71,14 +71,14 @@ class PaywallCacheTests: XCTestCase {
       locale: locale
     )
 
-    var cachedPaywallVc = paywallCache.getPaywall(withKey: key)
+    var cachedPaywallVc = paywallCache.getPaywallViewController(key: key)
 
     XCTAssertEqual(cachedPaywallVc, paywallVc)
 
-    paywallCache.removePaywall(withViewController: paywallVc)
+    paywallCache.removePaywallViewController(paywallVc)
 
     // Then
-    cachedPaywallVc = paywallCache.getPaywall(withKey: key)
+    cachedPaywallVc = paywallCache.getPaywallViewController(key: key)
 
     XCTAssertNil(cachedPaywallVc)
   }
@@ -103,8 +103,8 @@ class PaywallCacheTests: XCTestCase {
     PaywallViewController.cache.insert(paywall1)
     PaywallViewController.cache.insert(paywall2)
 
-    let cachedPaywall1 = paywallCache.getPaywall(withKey: key1)
-    let cachedPaywall2 = paywallCache.getPaywall(withKey: key2)
+    let cachedPaywall1 = paywallCache.getPaywallViewController(key: key1)
+    let cachedPaywall2 = paywallCache.getPaywallViewController(key: key2)
 
     XCTAssertEqual(cachedPaywall1, paywall1)
     XCTAssertEqual(cachedPaywall2, paywall2)
@@ -112,8 +112,8 @@ class PaywallCacheTests: XCTestCase {
     paywallCache.clearCache()
 
     // Then
-    let nilPaywall1 = paywallCache.getPaywall(withKey: key1)
-    let nilPaywall2 = paywallCache.getPaywall(withKey: key2)
+    let nilPaywall1 = paywallCache.getPaywallViewController(key: key1)
+    let nilPaywall2 = paywallCache.getPaywallViewController(key: key2)
 
     XCTAssertNil(nilPaywall1)
     XCTAssertNil(nilPaywall2)

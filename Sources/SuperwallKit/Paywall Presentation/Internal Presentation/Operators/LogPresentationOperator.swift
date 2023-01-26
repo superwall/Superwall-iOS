@@ -20,8 +20,7 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
       let eventData = request.presentationInfo.eventData
       let debugInfo: [String: Any] = [
         "on": request.presentingViewController.debugDescription,
-        "fromEvent": eventData.debugDescription as Any,
-        "cached": request.cached
+        "fromEvent": eventData.debugDescription as Any
       ]
 
       request.injections.logger.debug(

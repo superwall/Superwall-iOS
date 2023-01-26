@@ -14,9 +14,9 @@ class PaywallManager {
     return PaywallViewController.cache.first { $0.isActive }
 	}
   private unowned let paywallRequestManager: PaywallRequestManager
+  private unowned let factory: ViewControllerFactory & CacheFactory
 
   private lazy var cache: PaywallCache = factory.makeCache()
-  private let factory: ViewControllerFactory & CacheFactory
 
   init(
     factory: ViewControllerFactory & CacheFactory,
@@ -28,12 +28,12 @@ class PaywallManager {
 
   @MainActor
 	func removePaywall(identifier: String?) {
-    cache.removePaywall(identifier: identifier)
+    cache.removePaywallViewController(identifier: identifier)
 	}
 
   @MainActor
 	func removePaywallViewController(_ viewController: PaywallViewController) {
-    cache.removePaywall(withViewController: viewController)
+    cache.removePaywallViewController(viewController)
 	}
 
   @MainActor
@@ -53,12 +53,12 @@ class PaywallManager {
   @MainActor
   func getPaywallViewController(
     from request: PaywallRequest,
-    cached: Bool
+    cached: Bool = true
   ) async throws -> PaywallViewController {
     let paywall = try await paywallRequestManager.getPaywall(from: request)
 
     if cached,
-      let viewController = self.cache.getPaywallViewController(withIdentifier: paywall.identifier) {
+      let viewController = self.cache.getPaywallViewController(identifier: paywall.identifier) {
       // Set product-related vars again incase products have been substituted into paywall.
       viewController.paywall.products = paywall.products
       viewController.paywall.productIds = paywall.productIds

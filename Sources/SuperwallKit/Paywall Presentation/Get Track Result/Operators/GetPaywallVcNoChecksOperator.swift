@@ -35,8 +35,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
 
       do {
         let paywallViewController = try await input.request.injections.paywallManager.getPaywallViewController(
-          from: paywallRequest,
-          cached: input.request.cached
+          from: paywallRequest
         )
 
         let output = PaywallVcPipelineOutput(

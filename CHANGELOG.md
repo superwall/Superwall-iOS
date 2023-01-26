@@ -2,7 +2,14 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/SuperwallKit-iOS/releases) on GitHub.
 
-## 3.0.0 (Upcoming Release)
+## 3.0.0-beta.2 
+
+### Fixes
+
+- Fixes issue where paywallOverrides weren't being used.
+
+
+## 3.0.0-beta.1
 
 Welcome to `SuperwallKit` v3.0, the framework formally known as `Paywall`!
 

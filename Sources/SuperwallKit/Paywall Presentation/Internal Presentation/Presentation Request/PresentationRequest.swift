@@ -16,9 +16,6 @@ struct PresentationRequest {
   /// The view controller to present the paywall on, if any.
   var presentingViewController: UIViewController?
 
-  /// Defines whether to retrieve the cached paywall. Defaults to `true`.
-  var cached = true
-
   /// Overrides the default behavior and products of a paywall.
   var paywallOverrides: PaywallOverrides?
 

@@ -242,6 +242,7 @@ extension DependencyContainer: RequestFactory {
     return PresentationRequest(
       presentationInfo: presentationInfo,
       presentingViewController: presentingViewController,
+      paywallOverrides: paywallOverrides,
       injections: .init(
         configManager: configManager,
         storage: storage,

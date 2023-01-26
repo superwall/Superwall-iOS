@@ -55,7 +55,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         let paywallManager = input.request.injections.paywallManager
         let paywallViewController = try await paywallManager.getPaywallViewController(
           from: paywallRequest,
-          cached: input.request.cached && !input.request.injections.isDebuggerLaunched
+          cached: !input.request.injections.isDebuggerLaunched
         )
 
         // if there's a paywall being presented, don't do anything

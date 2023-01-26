@@ -224,10 +224,7 @@ class ConfigManager {
     for identifier in paywallIdentifiers {
       Task {
         let request = factory.makePaywallRequest(withId: identifier)
-        _ = try? await paywallManager.getPaywallViewController(
-          from: request,
-          cached: true
-        )
+        _ = try? await paywallManager.getPaywallViewController(from: request)
       }
     }
   }
