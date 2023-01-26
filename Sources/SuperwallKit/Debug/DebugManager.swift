@@ -55,13 +55,14 @@ final class DebugManager {
 
 	/// Launches the debugger for you to preview paywalls.
   ///
-  /// If you call `Superwall.handleDeepLink(url)` from `application(_:, open:, options:)` in your `AppDelegate`, this function is called automatically after scanning your debug QR code in Superwall's web dashboard.
+  /// If you call ``Superwall/handleDeepLink(_:)`` from `application(_:open:options:)` in your
+  /// `AppDelegate`, this function is called automatically after scanning your debug QR code in Superwall's web dashboard.
   ///
   /// Remember to add your URL scheme in settings for QR code scanning to work.
   @MainActor
   func launchDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
     if Superwall.shared.isPaywallPresented {
-      await Superwall.dismiss()
+      await Superwall.shared.dismiss()
       await launchDebugger(withPaywallId: paywallDatabaseId)
 		} else {
 			if viewController == nil {

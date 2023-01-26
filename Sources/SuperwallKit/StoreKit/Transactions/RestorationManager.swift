@@ -11,16 +11,13 @@ import StoreKit
 final class RestorationManager {
   private unowned let storeKitManager: StoreKitManager
   private unowned let sessionEventsManager: SessionEventsManager
-  private let superwall: Superwall.Type
 
   init(
     storeKitManager: StoreKitManager,
-    sessionEventsManager: SessionEventsManager,
-    superwall: Superwall.Type = Superwall.self
+    sessionEventsManager: SessionEventsManager
   ) {
     self.storeKitManager = storeKitManager
     self.sessionEventsManager = sessionEventsManager
-    self.superwall = superwall
   }
 
   @MainActor
@@ -62,9 +59,9 @@ final class RestorationManager {
       )
 
       paywallViewController.presentAlert(
-        title: superwall.options.paywalls.restoreFailed.title,
-        message: superwall.options.paywalls.restoreFailed.message,
-        closeActionTitle: superwall.options.paywalls.restoreFailed.closeButtonTitle
+        title: Superwall.shared.options.paywalls.restoreFailed.title,
+        message: Superwall.shared.options.paywalls.restoreFailed.message,
+        closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle
       )
     }
   }
@@ -79,11 +76,11 @@ final class RestorationManager {
         product: nil,
         model: nil
       )
-      await self.superwall.shared.track(trackedEvent)
+      await Superwall.shared.track(trackedEvent)
     }
 
-    if Superwall.options.paywalls.automaticallyDismiss {
-      superwall.shared.dismiss(paywallViewController, state: .restored)
+    if Superwall.shared.options.paywalls.automaticallyDismiss {
+      Superwall.shared.dismiss(paywallViewController, state: .restored)
     }
   }
 }

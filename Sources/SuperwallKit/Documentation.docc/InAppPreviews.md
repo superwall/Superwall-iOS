@@ -19,7 +19,7 @@ Then, you'll need to handle the deep link within your app using ``Superwall/hand
 ```swift
 extension SuperwallService {
   static func handleDeepLink(_ url: URL) {
-    Superwall.handleDeepLink(url)
+    Superwall.shared.handleDeepLink(url)
   }
 }
 ```

@@ -22,7 +22,7 @@ extension SuperwallService {
       "username": user.username,
       "profilePic": user.profilePicUrl
     ]
-    Superwall.setUserAttributes(attributes)
+    Superwall.shared.setUserAttributes(attributes)
   }
 }
 ```

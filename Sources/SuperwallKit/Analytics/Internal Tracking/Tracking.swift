@@ -88,7 +88,7 @@ extension Superwall {
     switch outcome {
     case .deepLinkTrigger:
       if isPaywallPresented {
-        await Superwall.dismiss()
+        await dismiss()
       }
       let presentationRequest = dependencyContainer.makePresentationRequest(
         presentationInfo,

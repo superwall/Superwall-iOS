@@ -32,7 +32,7 @@ extension Superwall {
     presentationSubject
       .eraseToAnyPublisher()
       .awaitIdentity()
-      .logPresentation("Called Superwall.track")
+      .logPresentation("Called Superwall.shared.track")
       .checkDebuggerPresentation(paywallStatePublisher)
       .evaluateRules()
       .checkUserSubscription(paywallStatePublisher)

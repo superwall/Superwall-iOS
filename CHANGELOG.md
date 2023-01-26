@@ -4,17 +4,19 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.0.0-beta.2
 
+### Breaking Changes
+
+- Moves all functions and variables to the `shared` instance for consistency, e.g. it's now `Superwall.shared.track()` instead of `Superwall.track()`.
+
 ### Enhancements
 
-- Moves all types to the `Superwall.shared` instance for consistency, e.g. `Superwall.shared.track()`. Static methods are now meant as a convenience, i.e. you can still use `Superwall.track()`.
-- Readds `Superwall.logLevel` as a top level static convenience variable so you can easily change the log level.
+- Readds `Superwall.shared.logLevel` as a top level static convenience variable so you can easily change the log level.
 
 ### Fixes
 
 - Fixes bug in `<iOS 14` where the spinner wasn't appearing when transacting.
 - Fixes bug where PaywallOverrides weren't being passed in to the paywall.
 - Fixes bug where purchasing, deleting then reinstalling your app, and tapping a purchase button would throw an error.
-
 
 ## 3.0.0-beta.1
 

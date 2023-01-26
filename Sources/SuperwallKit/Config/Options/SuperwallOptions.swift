@@ -16,7 +16,7 @@ public final class SuperwallOptions: NSObject {
   /// Configures the appearance and behaviour of paywalls.
   public var paywalls = PaywallOptions()
 
-  /// **WARNING**: Only use this enum to set `Superwall.networkEnvironment` if told so explicitly by the Superwall team.
+  /// **WARNING**: Only use this enum to set ``SuperwallOptions/networkEnvironment-swift.property`` if told so explicitly by the Superwall team.
   public enum NetworkEnvironment {
     /// Default: Uses the standard latest environment.
     case release

@@ -45,9 +45,10 @@ enum Logger: Loggable {
     logLevel: LogLevel,
     scope: LogScope
   ) -> Bool {
-    let exceedsCurrentLogLevel = logLevel.rawValue >= (Superwall.options.logging.level?.rawValue ?? 99)
-    let isInScope = Superwall.options.logging.scopes.contains(scope)
-    let allLogsActive = Superwall.options.logging.scopes.contains(.all)
+    let logging = Superwall.shared.options.logging
+    let exceedsCurrentLogLevel = logLevel.rawValue >= (logging.level?.rawValue ?? 99)
+    let isInScope = logging.scopes.contains(scope)
+    let allLogsActive = logging.scopes.contains(.all)
 
     return exceedsCurrentLogLevel
       && (isInScope || allLogsActive)

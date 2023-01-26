@@ -56,7 +56,7 @@ final class TrackEventViewController: UIViewController {
   }
 
   @IBAction private func trackEvent() {
-    Superwall.track(
+    Superwall.shared.track(
       event: "MyEvent"
     ) { paywallState in
       switch paywallState {

@@ -7,6 +7,7 @@
 
   ],
   "settings" : {
+    "_billingIssuesEnabled" : false,
     "_compatibilityTimeRate" : 6,
     "_timeRate" : 15
   },

@@ -136,7 +136,7 @@ final class TransactionManager {
       product: product
     )
 
-    if Superwall.options.paywalls.automaticallyDismiss {
+    if Superwall.shared.options.paywalls.automaticallyDismiss {
       await Superwall.shared.dismiss(
         paywallViewController,
         state: .purchased(productId: product.productIdentifier)

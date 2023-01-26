@@ -274,7 +274,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       )
     }
 
-    if Superwall.options.paywalls.useCachedTemplates {
+    if Superwall.shared.options.paywalls.useCachedTemplates {
       let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
       webView.load(request)
     } else {
@@ -350,7 +350,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 
   private func addLoadingView() {
     guard
-      let background = Superwall.options.paywalls.transactionBackgroundView,
+      let background = Superwall.shared.options.paywalls.transactionBackgroundView,
       background == .spinner
     else {
       return

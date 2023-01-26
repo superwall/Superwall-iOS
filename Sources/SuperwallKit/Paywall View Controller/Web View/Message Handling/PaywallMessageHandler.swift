@@ -264,10 +264,10 @@ final class PaywallMessageHandler: WebEventDelegate {
   }
 
   private func hapticFeedback() {
-    guard Superwall.options.paywalls.isHapticFeedbackEnabled else {
+    guard Superwall.shared.options.paywalls.isHapticFeedbackEnabled else {
       return
     }
-    if Superwall.options.isGameControllerEnabled {
+    if Superwall.shared.options.isGameControllerEnabled {
       return
     }
     UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)
