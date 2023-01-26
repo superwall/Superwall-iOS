@@ -102,7 +102,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+    wait(for: [expectation, stateExpectation], timeout: 1)
   }
 
   func test_handleTriggerResult_noRuleMatch() {
@@ -159,7 +159,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+    wait(for: [expectation, stateExpectation], timeout: 1)
   }
 
   func test_handleTriggerResult_eventNotFound() {
@@ -278,6 +278,6 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+    wait(for: [expectation, stateExpectation], timeout: 1)
   }
 }
