@@ -10,17 +10,17 @@ import Foundation
 final class LocalizationManager {
 	let popularLocales = ["de_DE", "es_US"]
 	var selectedLocale: String?
+	let localizationGroupings: [LocalizationGrouping]
 
-	lazy var localizationGroupings: [LocalizationGrouping] = {
-		let localeIds = Locale.availableIdentifiers
+  init() {
+    let localeIds = Locale.availableIdentifiers
     let sortedLocalizations = LocalizationLogic.getSortedLocalizations(
       forLocales: localeIds,
       popularLocales: popularLocales
     )
-    let groupings = LocalizationLogic.getGroupings(for: sortedLocalizations)
-
-    return groupings
-	}()
+    let localizationGroupings = LocalizationLogic.getGroupings(for: sortedLocalizations)
+    self.localizationGroupings = localizationGroupings
+  }
 
 	func localizationGroupings(forSearchTerm searchTerm: String?) -> [LocalizationGrouping] {
 		let query = searchTerm?.lowercased() ?? ""

@@ -15,9 +15,7 @@ final class PaywallCache: Sendable {
   }
 
   @MainActor
-  func getPaywallViewController(
-    withIdentifier identifier: String?
-  ) -> PaywallViewController? {
+  func getPaywallViewController(identifier: String?) -> PaywallViewController? {
     let key = PaywallCacheLogic.key(
       forIdentifier: identifier,
       locale: deviceLocaleString
@@ -26,21 +24,19 @@ final class PaywallCache: Sendable {
   }
 
   @MainActor
-  func getPaywall(withKey key: String) -> PaywallViewController? {
+  func getPaywallViewController(key: String) -> PaywallViewController? {
     return PaywallViewController.cache.first { $0.cacheKey == key }
   }
 
   @MainActor
-  func removePaywall(
-    withIdentifier identifier: String?
-  ) {
-    if let viewController = getPaywallViewController(withIdentifier: identifier) {
+  func removePaywallViewController(identifier: String?) {
+    if let viewController = getPaywallViewController(identifier: identifier) {
       PaywallViewController.cache.remove(viewController)
     }
   }
 
   @MainActor
-  func removePaywall(withViewController viewController: PaywallViewController) {
+  func removePaywallViewController(_ viewController: PaywallViewController) {
     PaywallViewController.cache.remove(viewController)
   }
 

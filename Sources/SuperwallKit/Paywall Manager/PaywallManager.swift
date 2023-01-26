@@ -14,37 +14,26 @@ class PaywallManager {
     return PaywallViewController.cache.first { $0.isActive }
 	}
   private unowned let paywallRequestManager: PaywallRequestManager
+  private unowned let factory: ViewControllerFactory & CacheFactory
 
-  // swiftlint:disable implicitly_unwrapped_optional
-  private var cache: PaywallCache!
-  // swiftlint:enable implicitly_unwrapped_optional
+  private lazy var cache: PaywallCache = factory.makeCache()
 
-  private let factory: ViewControllerFactory
-
-  /// **NOTE**: Remember to call `postInit` after init.
   init(
-    factory: ViewControllerFactory,
+    factory: ViewControllerFactory & CacheFactory,
     paywallRequestManager: PaywallRequestManager
   ) {
     self.factory = factory
     self.paywallRequestManager = paywallRequestManager
   }
 
-  /// Initialises variables that can't be immediately init'd.
-  func postInit(deviceHelper: DeviceHelper) {
-    self.cache = PaywallCache(deviceLocaleString: deviceHelper.locale)
-  }
-
   @MainActor
-	func removePaywall(withIdentifier identifier: String?) {
-    cache.removePaywall(
-      withIdentifier: identifier
-    )
+	func removePaywall(identifier: String?) {
+    cache.removePaywallViewController(identifier: identifier)
 	}
 
   @MainActor
 	func removePaywallViewController(_ viewController: PaywallViewController) {
-    cache.removePaywall(withViewController: viewController)
+    cache.removePaywallViewController(viewController)
 	}
 
   @MainActor
@@ -64,12 +53,12 @@ class PaywallManager {
   @MainActor
   func getPaywallViewController(
     from request: PaywallRequest,
-    cached: Bool
+    cached: Bool = true
   ) async throws -> PaywallViewController {
     let paywall = try await paywallRequestManager.getPaywall(from: request)
 
     if cached,
-      let viewController = self.cache.getPaywallViewController(withIdentifier: paywall.identifier) {
+      let viewController = self.cache.getPaywallViewController(identifier: paywall.identifier) {
       // Set product-related vars again incase products have been substituted into paywall.
       viewController.paywall.products = paywall.products
       viewController.paywall.productIds = paywall.productIds

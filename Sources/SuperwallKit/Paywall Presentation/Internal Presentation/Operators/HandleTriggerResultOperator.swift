@@ -49,7 +49,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
           let trackedEvent = InternalSuperwallEvent.UnableToPresent(
             state: .holdout(experiment)
           )
-          await Superwall.track(trackedEvent)
+          await input.request.injections.superwall.track(trackedEvent)
         }
         paywallStatePublisher.send(.skipped(.holdout(experiment)))
       case .noRuleMatch:
@@ -61,13 +61,13 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
         )
         Task.detached(priority: .utility) {
           let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noRuleMatch)
-          await Superwall.track(trackedEvent)
+          await input.request.injections.superwall.track(trackedEvent)
         }
         paywallStatePublisher.send(.skipped(.noRuleMatch))
       case .eventNotFound:
         Task.detached(priority: .utility) {
           let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .eventNotFound)
-          await Superwall.track(trackedEvent)
+          await input.request.injections.superwall.track(trackedEvent)
         }
         paywallStatePublisher.send(.skipped(.eventNotFound))
       case let .error(error):
@@ -80,7 +80,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
         )
         Task.detached(priority: .utility) {
           let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPaywallViewController)
-          await Superwall.track(trackedEvent)
+          await input.request.injections.superwall.track(trackedEvent)
         }
         paywallStatePublisher.send(.skipped(.error(error)))
       }

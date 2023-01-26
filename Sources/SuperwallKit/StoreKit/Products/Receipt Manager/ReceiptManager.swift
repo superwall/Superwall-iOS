@@ -101,16 +101,6 @@ final class ReceiptManager: NSObject {
     return isRefreshed
   }
 
-  func addSubscriptionGroupId(_ id: String?) {
-    guard let id = id else {
-      return
-    }
-    if var purchasedSubscriptionGroupIds = purchasedSubscriptionGroupIds {
-      purchasedSubscriptionGroupIds.insert(id)
-    }
-    purchasedSubscriptionGroupIds = [id]
-  }
-
   /// Determines whether the purchases already contain the given product ID.
   func hasPurchasedProduct(withId productId: String) -> Bool {
     return purchases.first { $0.productIdentifier == productId } != nil

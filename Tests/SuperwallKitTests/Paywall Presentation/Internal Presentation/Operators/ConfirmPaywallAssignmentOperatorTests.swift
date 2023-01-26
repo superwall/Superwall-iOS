@@ -16,6 +16,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
   func test_confirmPaywallAssignment_debuggerLaunched() async {
     let dependencyContainer = DependencyContainer(apiKey: "")
     let configManager = ConfigManagerMock(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
@@ -56,6 +57,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
   func test_confirmPaywallAssignment_noAssignment() async {
     let dependencyContainer = DependencyContainer(apiKey: "")
     let configManager = ConfigManagerMock(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
@@ -96,6 +98,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
   func test_confirmPaywallAssignment_confirmAssignment() async {
     let dependencyContainer = DependencyContainer(apiKey: "")
     let configManager = ConfigManagerMock(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,

@@ -62,7 +62,7 @@ extension Superwall {
     // Remove the currently presenting paywall from cache.
     await MainActor.run {
       if let presentingPaywallIdentifier = Superwall.shared.paywallViewController?.paywall.identifier {
-        dependencyContainer.paywallManager.removePaywall(withIdentifier: presentingPaywallIdentifier)
+        dependencyContainer.paywallManager.removePaywall(identifier: presentingPaywallIdentifier)
       }
     }
 

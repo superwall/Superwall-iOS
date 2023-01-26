@@ -138,6 +138,6 @@ extension SWWebView: WKNavigationDelegate {
       state: .fail,
       paywallInfo: paywallInfo
     )
-    await Superwall.track(trackedEvent)
+    await Superwall.shared.track(trackedEvent)
   }
 }

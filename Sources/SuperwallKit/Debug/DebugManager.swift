@@ -14,7 +14,7 @@ final class DebugManager {
 	var isDebuggerLaunched = false
 
   private unowned let storage: Storage
-  private let factory: ViewControllerFactory
+  private unowned let factory: ViewControllerFactory
 
   init(
     storage: Storage,

@@ -17,7 +17,8 @@ import Foundation
 /// they are in a holdout group.
 ///
 /// To learn more, read <doc:Ecosystem>.
-public struct Experiment: Equatable, Hashable, Codable, Sendable {
+@objcMembers
+public final class Experiment: Codable, Sendable {
   public typealias ID = String
 
   public struct Variant: Equatable, Hashable, Codable, Sendable {
@@ -100,6 +101,24 @@ public struct Experiment: Equatable, Hashable, Codable, Sendable {
       groupId: "",
       variant: Variant(id: "", type: .treatment, paywallId: id)
     )
+  }
+}
+
+// MARK: - Equatable
+extension Experiment: Equatable {
+  public static func == (lhs: Experiment, rhs: Experiment) -> Bool {
+    return lhs.groupId == rhs.groupId
+    && lhs.id == rhs.id
+    && lhs.variant == rhs.variant
+  }
+}
+
+// MARK: - Hashable
+extension Experiment: Hashable {
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(variant)
+    hasher.combine(id)
+    hasher.combine(groupId)
   }
 }
 

@@ -15,6 +15,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
   func test_confirmHoldoutAssignment_notHoldout() async {
     let dependencyContainer = DependencyContainer(apiKey: "")
     let configManager = ConfigManagerMock(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
@@ -65,6 +66,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
   func test_confirmHoldoutAssignment_holdout_noConfirmableAssignments() async {
     let dependencyContainer = DependencyContainer(apiKey: "")
     let configManager = ConfigManagerMock(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
@@ -116,6 +118,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
   func test_confirmHoldoutAssignment_holdout_hasConfirmableAssignments() async {
     let dependencyContainer = DependencyContainer(apiKey: "")
     let configManager = ConfigManagerMock(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,

@@ -224,7 +224,15 @@ public final class StoreProduct: NSObject, StoreProductType {
     product.regionCode
   }
 
-  public var price: Decimal {
+  /// The discount price of the product in the local currency.
+  /// - Note: this is meant for  Objective-C. For Swift, use ``price`` instead.
+  @objc(price)
+  @available(swift, obsoleted: 1.0)
+  public var objcPrice: NSDecimalNumber {
+    return product.price as NSDecimalNumber
+  }
+
+  @nonobjc public var price: Decimal {
     product.price
   }
 

@@ -22,7 +22,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
         if input.request.injections.isUserSubscribed {
           Task.detached(priority: .utility) {
             let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .userIsSubscribed)
-            await Superwall.track(trackedEvent)
+            await input.request.injections.superwall.track(trackedEvent)
           }
           paywallStatePublisher.send(.skipped(.userIsSubscribed))
           paywallStatePublisher.send(completion: .finished)

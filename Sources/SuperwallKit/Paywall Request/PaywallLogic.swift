@@ -37,7 +37,7 @@ enum PaywallLogic {
   static func handlePaywallError(
     _ error: Error,
     forEvent event: EventData?,
-    trackEvent: @escaping (Trackable) async -> TrackingResult = Superwall.track
+    trackEvent: @escaping (Trackable) async -> TrackingResult = Superwall.shared.track
   ) -> NSError {
     if let error = error as? CustomURLSession.NetworkError,
       error == .notFound {

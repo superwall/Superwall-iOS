@@ -128,7 +128,7 @@ final class PaywallMessageHandler: WebEventDelegate {
         state: .complete,
         paywallInfo: paywallInfo
       )
-      await Superwall.track(trackedEvent)
+      await Superwall.shared.track(trackedEvent)
 
       await sessionEventsManager.triggerSession.trackWebviewLoad(
         forPaywallId: paywallInfo.databaseId,

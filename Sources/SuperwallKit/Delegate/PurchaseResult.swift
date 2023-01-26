@@ -19,7 +19,7 @@ enum InternalPurchaseResult {
 ///
 /// When implementing the ``SubscriptionController/purchase(product:)`` delegate
 /// method, all cases should be considered.
-public enum PurchaseResult: Sendable {
+public enum PurchaseResult: Sendable, Equatable {
   /// The purchase was cancelled.
   ///
   /// In StoreKit 1, you can detect this by switching over the error code enum from the `.failed`
@@ -50,13 +50,26 @@ public enum PurchaseResult: Sendable {
   ///
   /// Send the `Error` back to Superwall to alert the user.
   case failed(Error)
+
+  public static func == (lhs: PurchaseResult, rhs: PurchaseResult) -> Bool {
+    switch (lhs, rhs) {
+    case (.cancelled, .cancelled),
+      (.purchased, .purchased),
+      (.pending, .pending):
+      return true
+    case let (.failed(error), .failed(error2)):
+      return error.localizedDescription == error2.localizedDescription
+    default:
+      return false
+    }
+  }
 }
 
 // MARK: - Objective-C Only
 
 /// An Objective-C-only enum that defines the possible outcomes of attempting to purchase a product.
 @objc(SWKPurchaseResult)
-public enum PurchaseResultObjc: Int, Sendable {
+public enum PurchaseResultObjc: Int, Sendable, Equatable {
   /// The purchase was cancelled.
   ///
   /// In StoreKit 1, you can detect this by switching over the error code from the `.failed`

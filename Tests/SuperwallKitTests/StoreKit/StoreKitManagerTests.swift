@@ -11,6 +11,8 @@ import XCTest
 import StoreKit
 
 class StoreKitManagerTests: XCTestCase {
+  var storeKitCoordinatorFactoryMock: StoreKitCoordinatorFactoryMock!
+
   private func makeStoreKitManager(with productsFetcher: ProductsFetcherSK1) -> StoreKitManager {
     let dependencyContainer = DependencyContainer(apiKey: "")
     let coordinator = StoreKitCoordinator(
@@ -19,11 +21,10 @@ class StoreKitManagerTests: XCTestCase {
       factory: dependencyContainer,
       productsFetcher: productsFetcher
     )
-    let storeKitCoordinatorFactoryMock = StoreKitCoordinatorFactoryMock(
+    storeKitCoordinatorFactoryMock = StoreKitCoordinatorFactoryMock(
       coordinator: coordinator
     )
     let storeKitManager = StoreKitManager(factory: storeKitCoordinatorFactoryMock)
-    storeKitManager.postInit()
 
     return storeKitManager
   }

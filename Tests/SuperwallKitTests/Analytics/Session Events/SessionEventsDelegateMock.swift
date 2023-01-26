@@ -10,7 +10,7 @@ import Foundation
 
 final class SessionEventsDelegateMock: SessionEventsDelegate {
   var queue: SessionEnqueuable
-  var triggerSession: TriggerSessionManager!
+  var triggerSession: TriggerSessionManager
 
   init(
     queue: SessionEnqueuable,

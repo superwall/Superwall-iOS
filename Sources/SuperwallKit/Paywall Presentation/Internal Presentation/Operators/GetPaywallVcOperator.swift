@@ -55,7 +55,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         let paywallManager = input.request.injections.paywallManager
         let paywallViewController = try await paywallManager.getPaywallViewController(
           from: paywallRequest,
-          cached: input.request.cached && !input.request.injections.isDebuggerLaunched
+          cached: !input.request.injections.isDebuggerLaunched
         )
 
         // if there's a paywall being presented, don't do anything
@@ -74,7 +74,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
           )
           Task.detached(priority: .utility) {
             let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .alreadyPresented)
-            await Superwall.track(trackedEvent)
+            await input.request.injections.superwall.track(trackedEvent)
           }
           let state: PaywallState = .skipped(.error(error))
           paywallStatePublisher.send(state)
@@ -100,7 +100,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         ) {
           Task.detached(priority: .utility) {
             let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .userIsSubscribed)
-            await Superwall.track(trackedEvent)
+            await input.request.injections.superwall.track(trackedEvent)
           }
           let state: PaywallState = .skipped(.userIsSubscribed)
           paywallStatePublisher.send(state)
@@ -117,7 +117,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         )
         Task.detached(priority: .utility) {
           let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPaywallViewController)
-          await Superwall.track(trackedEvent)
+          await input.request.injections.superwall.track(trackedEvent)
         }
         paywallStatePublisher.send(.skipped(.error(error)))
         paywallStatePublisher.send(completion: .finished)

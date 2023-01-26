@@ -41,7 +41,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
           let trackedEvent = InternalSuperwallEvent.UnableToPresent(
             state: .userIsSubscribed
           )
-          await Superwall.track(trackedEvent)
+          await input.request.injections.superwall.track(trackedEvent)
         }
         let state: PaywallState = .skipped(.userIsSubscribed)
         paywallStatePublisher.send(state)
@@ -74,7 +74,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         )
         Task.detached(priority: .utility) {
           let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPresenter)
-          await Superwall.track(trackedEvent)
+          await input.request.injections.superwall.track(trackedEvent)
         }
         let state: PaywallState = .skipped(.error(error))
         paywallStatePublisher.send(state)

@@ -1,3 +1,5 @@
+// swiftlint:disable file_length
+
 import Foundation
 import StoreKit
 import Combine
@@ -9,13 +11,13 @@ public final class Superwall: NSObject, ObservableObject {
   /// The optional purchasing delegate of the Superwall instance. Set this in
   /// ``configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``
   /// when you want to manually handle the purchasing logic within your app.
-  public static var delegate: SuperwallDelegate? {
+  public var delegate: SuperwallDelegate? {
     get {
-      return shared.dependencyContainer.delegateAdapter.swiftDelegate
+      return dependencyContainer.delegateAdapter.swiftDelegate
     }
     set {
-      shared.dependencyContainer.delegateAdapter.swiftDelegate = newValue
-      shared.dependencyContainer.storeKitManager.coordinator.didToggleDelegate()
+      dependencyContainer.delegateAdapter.swiftDelegate = newValue
+      dependencyContainer.storeKitManager.coordinator.didToggleDelegate()
     }
   }
 
@@ -24,55 +26,63 @@ public final class Superwall: NSObject, ObservableObject {
   /// when you want to manually handle the purchasing logic within your app.
   @available(swift, obsoleted: 1.0)
   @objc(delegate)
-  public static var objcDelegate: SuperwallDelegateObjc? {
+  public var objcDelegate: SuperwallDelegateObjc? {
     get {
-      return shared.dependencyContainer.delegateAdapter.objcDelegate
+      return objcDelegateGetter()
     }
     set {
-      shared.dependencyContainer.delegateAdapter.objcDelegate = newValue
-      shared.dependencyContainer.storeKitManager.coordinator.didToggleDelegate()
+      objcDelegateSetter(newValue)
     }
   }
 
+  private func objcDelegateGetter() -> SuperwallDelegateObjc? {
+    dependencyContainer.delegateAdapter.objcDelegate
+  }
+
+  private func objcDelegateSetter(_ newValue: SuperwallDelegateObjc?) {
+    dependencyContainer.delegateAdapter.objcDelegate = newValue
+    dependencyContainer.storeKitManager.coordinator.didToggleDelegate()
+  }
+
   /// Properties stored about the user, set using ``SuperwallKit/Superwall/setUserAttributes(_:)``.
-  public static var userAttributes: [String: Any] {
-    return shared.dependencyContainer.identityManager.userAttributes
+  public var userAttributes: [String: Any] {
+    return dependencyContainer.identityManager.userAttributes
   }
 
   /// The presented paywall view controller.
   @MainActor
-  public static var presentedViewController: UIViewController? {
-    return shared.dependencyContainer.paywallManager.presentedViewController
+  public var presentedViewController: UIViewController? {
+    return dependencyContainer.paywallManager.presentedViewController
   }
 
   /// A convenience variable to access and change the paywall options that you passed to ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-65jyx``.
-  public static var options: SuperwallOptions {
-    return shared.dependencyContainer.configManager.options
+  public var options: SuperwallOptions {
+    return dependencyContainer.configManager.options
   }
 
-  /// The ``PaywallInfo`` object of the most recentl```y presented view controller.
+  /// The ``PaywallInfo`` object of the most recently presented view controller.
   @MainActor
-  public static var latestPaywallInfo: PaywallInfo? {
-    let presentedPaywallInfo = shared.dependencyContainer.paywallManager.presentedViewController?.paywallInfo
-    return presentedPaywallInfo ?? shared.presentationItems.paywallInfo
+  public var latestPaywallInfo: PaywallInfo? {
+    let presentedPaywallInfo = dependencyContainer.paywallManager.presentedViewController?.paywallInfo
+    return presentedPaywallInfo ?? presentationItems.paywallInfo
   }
 
   /// The current user's id.
   ///
   /// If you haven't called ``SuperwallKit/Superwall/logIn(userId:)`` or ``SuperwallKit/Superwall/createAccount(userId:)``,
   /// this value will return an anonymous user id which is cached to disk
-  public static var userId: String {
-    return shared.dependencyContainer.identityManager.userId
+  public var userId: String {
+    return dependencyContainer.identityManager.userId
   }
 
   /// Indicates whether the user is logged in to Superwall.
   ///
-  /// If you have previously called ``SuperwallKit/Superwall/logIn(userId:)`` or
-  /// ``SuperwallKit/Superwall/createAccount(userId:)``, this will return true.
+  /// If you have previously called ``Superwall/logIn(userId:)`` or
+  /// ``Superwall/createAccount(userId:)``, this will return true.
   ///
   /// - Returns: A boolean indicating whether the user is logged in or not.
-  public static var isLoggedIn: Bool {
-    return shared.dependencyContainer.identityManager.isLoggedIn
+  public var isLoggedIn: Bool {
+    return dependencyContainer.identityManager.isLoggedIn
   }
 
   /// A published property that indicates whether the device has any active subscriptions.
@@ -95,19 +105,15 @@ public final class Superwall: NSObject, ObservableObject {
   /// ``configure(apiKey:delegate:options:)-65jyx``.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
-  /// notified whenever the user's subscription status changes.
+  /// notified when configuration has completed.
   @Published
   public var isConfigured = false
 
   /// The configured shared instance of ``Superwall``.
   ///
-  /// - Warning: This method will crash with `fatalError` if ``Superwall`` has
-  /// not been initialized through ``configure(apiKey:delegate:options:)-65jyx``.
-  /// If there's a chance that may have not happened yet, you can use
-  /// ``isConfigured`` to check if it's safe to call.
-  /// ### Related symbols
-  /// - ``isConfigured``
-  @objc(sharedSuperwall)
+  /// - Warning: You must call ``configure(apiKey:delegate:options:)-65jyx``
+  /// to initialize ``Superwall`` before using this.
+  @objc(sharedInstance)
   public static var shared: Superwall {
     guard let superwall = superwall else {
       #if DEBUG
@@ -146,31 +152,30 @@ public final class Superwall: NSObject, ObservableObject {
     return paywallViewController != nil
   }
 
-  // swiftlint:disable implicitly_unwrapped_optional
   /// Handles all dependencies.
-  var dependencyContainer: DependencyContainer!
-  // swiftlint:enable implicitly_unwrapped_optional
+  let dependencyContainer: DependencyContainer
 
   // MARK: - Private Functions
-  private override init() {
-    dependencyContainer = DependencyContainer(apiKey: "")
+  init(dependencyContainer: DependencyContainer = DependencyContainer(apiKey: "")) {
+    self.dependencyContainer = dependencyContainer
+    super.init()
   }
 
-  private init(
+  private convenience init(
     apiKey: String,
     swiftDelegate: SuperwallDelegate? = nil,
     objcDelegate: SuperwallDelegateObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
-    dependencyContainer = DependencyContainer(
+    let dependencyContainer = DependencyContainer(
       apiKey: apiKey,
       swiftDelegate: swiftDelegate,
       objcDelegate: objcDelegate,
       options: options
     )
-    hasActiveSubscription = dependencyContainer.storage.get(SubscriptionStatus.self) ?? false
+    self.init(dependencyContainer: dependencyContainer)
 
-    super.init()
+    hasActiveSubscription = dependencyContainer.storage.get(SubscriptionStatus.self) ?? false
 
     listenForConfig()
 
@@ -273,9 +278,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded via ``SuperwallKit/Superwall/preloadPaywalls(forEvents:)``.
-  public static func preloadAllPaywalls() {
-    Task.detached(priority: .userInitiated) {
-      await shared.dependencyContainer.configManager.preloadAllPaywalls()
+  public func preloadAllPaywalls() {
+    Task { [weak self] in
+      await self?.dependencyContainer.configManager.preloadAllPaywalls()
     }
   }
 
@@ -284,9 +289,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
-  public static func preloadPaywalls(forEvents eventNames: Set<String>) {
-    Task.detached(priority: .userInitiated) {
-      await shared.dependencyContainer.configManager.preloadPaywalls(for: eventNames)
+  public func preloadPaywalls(forEvents eventNames: Set<String>) {
+    Task { [weak self] in
+      await self?.dependencyContainer.configManager.preloadPaywalls(for: eventNames)
     }
   }
 
@@ -294,12 +299,10 @@ public final class Superwall: NSObject, ObservableObject {
   /// Handles a deep link sent to your app to open a preview of your paywall.
   ///
   /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
-  public static func handleDeepLink(_ url: URL) {
-    Task.detached(priority: .utility) {
-      await track(InternalSuperwallEvent.DeepLink(url: url))
-    }
+  public func handleDeepLink(_ url: URL) {
     Task {
-      await shared.dependencyContainer.debugManager.handle(deepLinkUrl: url)
+      await track(InternalSuperwallEvent.DeepLink(url: url))
+      await dependencyContainer.debugManager.handle(deepLinkUrl: url)
     }
   }
 
@@ -309,8 +312,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// You can also preview your paywall in different locales using the in-app debugger. See <doc:InAppPreviews> for more.
 	///  - Parameter localeIdentifier: The locale identifier for the language you would like to test.
-	public static func localizationOverride(localeIdentifier: String? = nil) {
-    shared.dependencyContainer.localizationManager.selectedLocale = localeIdentifier
+	public func localizationOverride(localeIdentifier: String? = nil) {
+    dependencyContainer.localizationManager.selectedLocale = localeIdentifier
 	}
 }
 
@@ -340,7 +343,7 @@ extension Superwall: PaywallViewControllerDelegate {
         from: paywallViewController
       )
     case .initiateRestore:
-      await dependencyContainer.restorationHandler.tryToRestore(paywallViewController)
+      await dependencyContainer.restorationManager.tryToRestore(paywallViewController)
     case .openedURL(let url):
       dependencyContainer.delegateAdapter?.willOpenURL(url: url)
     case .openedUrlInSafari(let url):
@@ -350,5 +353,102 @@ extension Superwall: PaywallViewControllerDelegate {
     case .custom(let string):
       dependencyContainer.delegateAdapter?.handleCustomPaywallAction(withName: string)
     }
+  }
+}
+
+// MARK: - Static API Conveniences
+extension Superwall {
+  /// The optional purchasing delegate of the Superwall instance. Set this in
+  /// ``configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``
+  /// when you want to manually handle the purchasing logic within your app.
+  public static var delegate: SuperwallDelegate? {
+    shared.delegate
+  }
+
+  /// The optional purchasing delegate of the Superwall instance. Set this in
+  /// ``configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``
+  /// when you want to manually handle the purchasing logic within your app.
+  @available(swift, obsoleted: 1.0)
+  @objc(delegate)
+  public static var objcDelegate: SuperwallDelegateObjc? {
+    get {
+      return shared.objcDelegateGetter()
+    }
+    set {
+      shared.objcDelegateSetter(newValue)
+    }
+  }
+
+  /// Properties stored about the user, set using ``SuperwallKit/Superwall/setUserAttributes(_:)``.
+  public static var userAttributes: [String: Any] {
+    shared.userAttributes
+  }
+
+  /// The presented paywall view controller.
+  @MainActor
+  public static var presentedViewController: UIViewController? {
+    shared.presentedViewController
+  }
+
+  /// A convenience variable to access and change the paywall options that you passed to ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-65jyx``.
+  public static var options: SuperwallOptions {
+    shared.options
+  }
+
+  /// The ``PaywallInfo`` object of the most recently presented view controller.
+  @MainActor
+  public static var latestPaywallInfo: PaywallInfo? {
+    shared.latestPaywallInfo
+  }
+
+  /// The current user's id.
+  ///
+  /// If you haven't called ``SuperwallKit/Superwall/logIn(userId:)`` or ``SuperwallKit/Superwall/createAccount(userId:)``,
+  /// this value will return an anonymous user id which is cached to disk
+  public static var userId: String {
+    shared.userId
+  }
+
+  /// Indicates whether the user is logged in to Superwall.
+  ///
+  /// If you have previously called ``SuperwallKit/Superwall/logIn(userId:)`` or
+  /// ``SuperwallKit/Superwall/createAccount(userId:)``, this will return true.
+  ///
+  /// - Returns: A boolean indicating whether the user is logged in or not.
+  public static var isLoggedIn: Bool {
+    shared.isLoggedIn
+  }
+
+  /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard.
+  ///
+  /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
+  ///
+  /// Note: This will not reload any paywalls you've already preloaded via ``SuperwallKit/Superwall/preloadPaywalls(forEvents:)``.
+  public static func preloadAllPaywalls() {
+    shared.preloadAllPaywalls()
+  }
+
+  /// Preloads paywalls for specific event names.
+  ///
+  /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
+  ///
+  /// Note: This will not reload any paywalls you've already preloaded.
+  public static func preloadPaywalls(forEvents eventNames: Set<String>) {
+    shared.preloadPaywalls(forEvents: eventNames)
+  }
+
+  /// Handles a deep link sent to your app to open a preview of your paywall.
+  ///
+  /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
+  public static func handleDeepLink(_ url: URL) {
+    shared.handleDeepLink(url)
+  }
+
+  /// Overrides the default device locale for testing purposes.
+  ///
+  /// You can also preview your paywall in different locales using the in-app debugger. See <doc:InAppPreviews> for more.
+  ///  - Parameter localeIdentifier: The locale identifier for the language you would like to test.
+  public static func localizationOverride(localeIdentifier: String? = nil) {
+    shared.localizationOverride(localeIdentifier: localeIdentifier)
   }
 }

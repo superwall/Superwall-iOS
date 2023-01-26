@@ -23,7 +23,6 @@ final class NetworkTests: XCTestCase {
       let requestId = "abc"
 
       _ = try? await network.getConfig(
-        withRequestId: requestId,
         injectedApplicationStatePublisher: injectedApplicationStatePublisher
       )
       completion()
@@ -62,7 +61,6 @@ final class NetworkTests: XCTestCase {
       .eraseToAnyPublisher()
 
     _ = try? await network.getConfig(
-      withRequestId: requestId,
       injectedApplicationStatePublisher: publisher
     )
     XCTAssertTrue(urlSession.didRequest)

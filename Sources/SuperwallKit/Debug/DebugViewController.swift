@@ -124,8 +124,8 @@ final class DebugViewController: UIViewController {
   private unowned let network: Network
   private unowned let paywallRequestManager: PaywallRequestManager
   private unowned let paywallManager: PaywallManager
-  private unowned let localizationManager: LocalizationManager
   private unowned let debugManager: DebugManager
+  private let localizationManager: LocalizationManager
   private let factory: RequestFactory & ViewControllerFactory
 
   init(
@@ -420,7 +420,6 @@ final class DebugViewController: UIViewController {
       isUserSubscribed: false,
       isPaywallPresented: Superwall.shared.isPaywallPresented
     )
-
 
     cancellable = Superwall.shared
       .internallyPresent(presentationRequest)

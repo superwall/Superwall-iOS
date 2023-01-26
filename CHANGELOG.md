@@ -2,7 +2,20 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/SuperwallKit-iOS/releases) on GitHub.
 
-## 3.0.0 (Upcoming Release)
+## 3.0.0-beta.2
+
+### Enhancements
+
+- Moves all types to the `Superwall.shared` instance for consistency, e.g. `Superwall.shared.track()`. Static methods are now meant as a convenience, i.e. you can still use `Superwall.track()`.
+
+### Fixes
+
+- Fixes bug in `<iOS 14` where the spinner wasn't appearing when transacting.
+- Fixes bug where PaywallOverrides weren't being passed in to the paywall.
+- Fixes bug where purchasing, deleting then reinstalling your app, and tapping a purchase button would throw an error.
+
+
+## 3.0.0-beta.1
 
 Welcome to `SuperwallKit` v3.0, the framework formally known as `Paywall`!
 

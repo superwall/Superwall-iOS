@@ -8,13 +8,17 @@
 import UIKit
 import Combine
 
+protocol AppManagerDelegate: AnyObject {
+  func didUpdateAppSession(_ appSession: AppSession) async
+}
+
 class AppSessionManager {
   var appSessionTimeout: Milliseconds?
 
   private(set) var appSession = AppSession() {
     didSet {
       Task {
-        await sessionEventsManager.updateAppSession(appSession)
+        await delegate.didUpdateAppSession(appSession)
       }
     }
   }
@@ -24,27 +28,20 @@ class AppSessionManager {
 
   private unowned let configManager: ConfigManager
   private unowned let storage: Storage
+  private unowned let delegate: AppManagerDelegate
 
-  // swiftlint:disable implicitly_unwrapped_optional
-  private unowned var sessionEventsManager: SessionEventsManager!
-  // swiftlint:enable implicitly_unwrapped_optional
-
-  /// **Note**: Remember to call `postInit` after init.
   init(
     configManager: ConfigManager,
-    storage: Storage
+    storage: Storage,
+    delegate: AppManagerDelegate
   ) {
     self.configManager = configManager
     self.storage = storage
+    self.delegate = delegate
     Task {
       await addActiveStateObservers()
     }
     listenForAppSessionTimeout()
-  }
-
-  /// Initialises variables that can't be immediately init'd.
-  func postInit(sessionEventsManager: SessionEventsManager) {
-    self.sessionEventsManager = sessionEventsManager
   }
 
   // MARK: - Listeners
@@ -89,7 +86,7 @@ class AppSessionManager {
 
   @objc private func applicationWillResignActive() {
     Task.detached(priority: .utility) {
-      await Superwall.track(InternalSuperwallEvent.AppClose())
+      await Superwall.shared.track(InternalSuperwallEvent.AppClose())
     }
     lastAppClose = Date()
     appSession.endAt = Date()
@@ -101,7 +98,7 @@ class AppSessionManager {
 
   @objc private func applicationDidBecomeActive() {
     Task.detached(priority: .userInitiated) {
-      await Superwall.track(InternalSuperwallEvent.AppOpen())
+      await Superwall.shared.track(InternalSuperwallEvent.AppOpen())
     }
     sessionCouldRefresh()
   }
@@ -124,7 +121,7 @@ class AppSessionManager {
     if didStartNewSession {
       appSession = AppSession()
       Task.detached(priority: .userInitiated) {
-        await Superwall.track(InternalSuperwallEvent.SessionStart())
+        await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
       }
     } else {
       appSession.endAt = nil
@@ -136,7 +133,7 @@ class AppSessionManager {
       return
     }
     Task.detached(priority: .userInitiated) {
-      await Superwall.track(InternalSuperwallEvent.AppLaunch())
+      await Superwall.shared.track(InternalSuperwallEvent.AppLaunch())
     }
     didTrackAppLaunch = true
   }
