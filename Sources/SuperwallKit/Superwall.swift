@@ -358,6 +358,16 @@ extension Superwall: PaywallViewControllerDelegate {
 
 // MARK: - Static API Conveniences
 extension Superwall {
+  /// Defines the minimum log level to print to the console. Defaults to `warn`.
+  public static var logLevel: LogLevel? {
+    get {
+      shared.options.logging.level
+    }
+    set {
+      shared.options.logging.level = newValue
+    }
+  }
+
   /// The optional purchasing delegate of the Superwall instance. Set this in
   /// ``configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``
   /// when you want to manually handle the purchasing logic within your app.

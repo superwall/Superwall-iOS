@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Moves all types to the `Superwall.shared` instance for consistency, e.g. `Superwall.shared.track()`. Static methods are now meant as a convenience, i.e. you can still use `Superwall.track()`.
+- Readds `Superwall.logLevel` as a top level static convenience variable so you can easily change the log level.
 
 ### Fixes
 
