@@ -21,7 +21,7 @@ final class WelcomeViewController: UIViewController {
     super.viewDidLoad()
 
     isLoggedIn = UserDefaults.standard.bool(forKey: "IsLoggedIn")
-    
+
     if isLoggedIn {
       next()
     }
@@ -42,7 +42,7 @@ final class WelcomeViewController: UIViewController {
         PaywallManager.setName(to: name)
       }
       let userId = "abc"
-      await PaywallManager.logIn(userId: userId)
+      await PaywallManager.shared.logIn(userId: userId)
 
       next()
     }

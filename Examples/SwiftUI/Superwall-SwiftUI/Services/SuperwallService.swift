@@ -14,7 +14,7 @@ final class SuperwallService {
   static let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
   static let shared = SuperwallService()
   static var name: String {
-    return Superwall.userAttributes["firstName"] as? String ?? ""
+    return Superwall.shared.userAttributes["firstName"] as? String ?? ""
   }
   var isLoggedIn = CurrentValueSubject<Bool, Never>(false)
 
@@ -33,12 +33,12 @@ final class SuperwallService {
     // }
 
     // Getting our logged in status to Superwall.
-    shared.isLoggedIn.send(Superwall.isLoggedIn)
+    shared.isLoggedIn.send(Superwall.shared.isLoggedIn)
   }
 
   static func logIn() async {
     do {
-      try await Superwall.logIn(userId: "abc")
+      try await Superwall.shared.logIn(userId: "abc")
     } catch let error as IdentityError {
       switch error {
       case .missingUserId:
@@ -53,7 +53,7 @@ final class SuperwallService {
 
   static func logOut() async {
     do {
-      try await Superwall.logOut()
+      try await Superwall.shared.logOut()
     } catch LogoutError.notLoggedIn {
       print("The user is not logged in")
     } catch {
@@ -62,11 +62,11 @@ final class SuperwallService {
   }
 
   static func handleDeepLink(_ url: URL) {
-    Superwall.handleDeepLink(url)
+    Superwall.shared.handleDeepLink(url)
   }
 
   static func setName(to name: String) {
-    Superwall.setUserAttributes(["firstName": name])
+    Superwall.shared.setUserAttributes(["firstName": name])
   }
 }
 

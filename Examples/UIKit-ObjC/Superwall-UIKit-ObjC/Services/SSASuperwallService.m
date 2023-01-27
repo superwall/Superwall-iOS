@@ -66,16 +66,16 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 #pragma mark - Public Properties
 
 - (BOOL)isLoggedIn {
-  return Superwall.isLoggedIn;
+  return [Superwall sharedInstance].isLoggedIn;
 }
 
 - (nullable NSString *)name {
-  return Superwall.userAttributes[kUserAttributesFirstNameKey];
+  return [Superwall sharedInstance].userAttributes[kUserAttributesFirstNameKey];
 }
 
 - (void)setName:(nullable NSString *)name {
   id userAttributeFirstName = name ? : [NSNull null];
-  [Superwall setUserAttributesDictionary:@{ kUserAttributesFirstNameKey : userAttributeFirstName }];
+  [[Superwall sharedInstance] setUserAttributesDictionary:@{ kUserAttributesFirstNameKey : userAttributeFirstName }];
 }
 
 #pragma mark - Public Methods
@@ -89,7 +89,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 }
 
 - (void)logInWithCompletion:(nullable void (^)(void))completion {
-  [Superwall logInUserId:kDemoUserId completionHandler:^(NSError * _Nullable error) {
+  [[Superwall sharedInstance] logInUserId:kDemoUserId completionHandler:^(NSError * _Nullable error) {
     switch (error.code) {
       case SWKIdentityErrorAlreadyLoggedIn:
         NSLog(@"The user is already logged in");
@@ -111,7 +111,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 }
 
 - (void)logOutWithCompletion:(nullable void (^)(void))completion {
-  [Superwall logOutWithCompletionHandler:^(NSError * _Nullable error) {
+  [[Superwall sharedInstance] logOutWithCompletionHandler:^(NSError * _Nullable error) {
     switch (error.code) {
       case SWKLogoutErrorNotLoggedIn:
         NSLog(@"The user is not logged in");
@@ -130,7 +130,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 }
 
 - (void)handleDeepLinkWithURL:(NSURL *)URL {
-  [Superwall handleDeepLink:URL];
+  [[Superwall sharedInstance] handleDeepLink:URL];
 }
 
 #pragma mark - SuperwallDelegate

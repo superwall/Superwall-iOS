@@ -13,7 +13,7 @@ import Combine
 final class PaywallManager: NSObject {
   static let shared = PaywallManager()
   static var name: String {
-    return Superwall.userAttributes["firstName"] as? String ?? ""
+    return Superwall.shared.userAttributes["firstName"] as? String ?? ""
   }
   @Published var isSubscribed = false {
     didSet {
@@ -59,11 +59,11 @@ final class PaywallManager: NSObject {
   /// Logs the user in to both RevenueCat and Superwall with the specified `userId`.
   ///
   /// Call this when your user needs to log in.
-  static func logIn(userId: String) async {
+  func logIn(userId: String) async {
     do {
       let (customerInfo, _) = try await Purchases.shared.logIn(userId)
-      shared.updateSubscriptionStatus(using: customerInfo)
-      try await Superwall.logIn(userId: userId)
+      updateSubscriptionStatus(using: customerInfo)
+      try await Superwall.shared.logIn(userId: userId)
     } catch let error as IdentityError {
       switch error {
       case .alreadyLoggedIn:
@@ -83,7 +83,7 @@ final class PaywallManager: NSObject {
     do {
       let customerInfo = try await Purchases.shared.logOut()
       updateSubscriptionStatus(using: customerInfo)
-      try await Superwall.logOut()
+      try await Superwall.shared.logOut()
     } catch let error as LogoutError {
       switch error {
       case .notLoggedIn:
@@ -99,18 +99,18 @@ final class PaywallManager: NSObject {
   /// [See here](https://docs.superwall.com/v3.0/docs/in-app-paywall-previews#handling-deep-links)
   /// for information on how to call this function in your app.
   static func handleDeepLink(_ url: URL) {
-    Superwall.handleDeepLink(url)
+    Superwall.shared.handleDeepLink(url)
   }
 
   /// Settting Superwall attributes.
   static func setName(to name: String) {
-    Superwall.setUserAttributes(["firstName": name])
+    Superwall.shared.setUserAttributes(["firstName": name])
   }
 
   /// Purchases a product with RevenueCat.
   /// - Returns: A boolean indicating whether the user cancelled or not.
   private func purchase(_ product: SKProduct) async throws -> Bool {
-    let product = await Purchases.shared.products([product.productIdentifier]).first!
+    let product = RevenueCat.StoreProduct(sk1Product: product)
     let (_, customerInfo, userCancelled) = try await Purchases.shared.purchase(product: product)
     updateSubscriptionStatus(using: customerInfo)
     return userCancelled
