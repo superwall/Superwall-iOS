@@ -1,5 +1,3 @@
-// swiftlint:disable file_length
-
 import Foundation
 import StoreKit
 import Combine
@@ -11,7 +9,7 @@ import Combine
 public final class Superwall: NSObject, ObservableObject {
   // MARK: - Public Properties
   /// The optional purchasing delegate of the Superwall instance. Set this in
-  /// ``configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``
+  /// ``configure(apiKey:delegate:options:)-65jyx``
   /// when you want to manually handle the purchasing logic within your app.
   public var delegate: SuperwallDelegate? {
     get {
@@ -24,7 +22,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// The optional purchasing delegate of the Superwall instance. Set this in
-  /// ``configure(apiKey:delegate:purchasingDelegate:options:)-3jysg``
+  /// ``configure(apiKey:delegate:options:)-65jyx``
   /// when you want to manually handle the purchasing logic within your app.
   @available(swift, obsoleted: 1.0)
   @objc(delegate)

@@ -161,101 +161,125 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 
   // Uncomment the following if you want to track the different analytics events received from the paywall:
 
-  //  switch (info.event) {
-  //    case SWKSuperwallEventFirstSeen:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventAppOpen:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventAppLaunch:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventAppInstall:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventSessionStart:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventAppClose:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventDeepLink:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventTriggerFire:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallOpen:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallClose:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventTransactionStart:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventTransactionFail:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventTransactionAbandon:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventTransactionComplete:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventSubscriptionStart:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventFreeTrialStart:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventTransactionRestore:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventTransactionTimeout:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventUserAttributes:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventNonRecurringProductPurchase:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallResponseLoadStart:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallResponseLoadNotFound:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallResponseLoadFail:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallResponseLoadComplete:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallWebviewLoadStart:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallWebviewLoadFail:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallWebviewLoadComplete:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallWebviewLoadTimeout:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallProductsLoadStart:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallProductsLoadFail:
-  //      <#code#>
-  //      break;
-  //    case SWKSuperwallEventPaywallProductsLoadComplete:
-  //      <#code#>
-  //      break;
-  //  }
+//  switch (info.event) {
+//    case SWKSuperwallEventFirstSeen:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventAppOpen:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventAppLaunch:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventAppInstall:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventSessionStart:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventAppClose:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventDeepLink:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventTriggerFire:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallOpen:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallClose:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventTransactionStart:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventTransactionFail:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventTransactionAbandon:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventTransactionComplete:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventSubscriptionStart:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventFreeTrialStart:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventTransactionRestore:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventTransactionTimeout:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventUserAttributes:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventNonRecurringProductPurchase:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallResponseLoadStart:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallResponseLoadNotFound:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallResponseLoadFail:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallResponseLoadComplete:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallWebviewLoadStart:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallWebviewLoadFail:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallWebviewLoadComplete:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallWebviewLoadTimeout:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallProductsLoadStart:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallProductsLoadFail:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallProductsLoadComplete:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallPresentationFailInHoldout:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallPresentationFailNoPresenter:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallPresentationFailAlreadyPresented:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallPresentationFailDebuggerLaunched:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallPresentationFailNoRuleMatch:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallPresentationFailEventNotFound:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallPresentationFailUserIsSubscribed:
+//      <#code#>
+//      break;
+//    case SWKSuperwallEventPaywallPresentationFailNoPaywallViewController:
+//      <#code#>
+//      break
+//  }
 }
 
 @end

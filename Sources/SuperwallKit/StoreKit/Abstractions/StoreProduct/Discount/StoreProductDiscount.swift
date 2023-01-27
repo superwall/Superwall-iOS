@@ -94,7 +94,7 @@ public final class StoreProductDiscount: NSObject, StoreProductDiscountType {
 }
 
 extension StoreProductDiscount {
-  /// Used to represent `StoreProductDiscount/id`.
+  /// Used to represent ``id``.
   public struct Data: Hashable {
     private var offerIdentifier: String?
     private var currencyCode: String?

@@ -37,14 +37,17 @@ public final class StoreProduct: NSObject, StoreProductType {
     return (product as? SK2StoreProduct)?.underlyingSK2Product
   }
 
+  /// The product identifier
   public var productIdentifier: String {
     product.productIdentifier
   }
 
+  /// The product's subscription group id
   public var subscriptionGroupIdentifier: String? {
     return product.subscriptionGroupIdentifier
   }
 
+  /// All the attributes that can be referenced in Superwall rules.
   public var attributes: [String: String] {
     return [
       "rawPrice": "\(price)",
@@ -75,26 +78,35 @@ public final class StoreProduct: NSObject, StoreProductType {
     ]
   }
 
+  /// The JSON representation of ``attributes``
   var attributesJson: JSON {
     return JSON(attributes)
   }
 
+  /// An internally used Superwall representation of ``attributes``.
   var swProductTemplateVariablesJson: JSON {
     product.swProductTemplateVariablesJson
   }
 
+  /// An internally used Superwall representation of the product.
   var swProduct: SWProduct {
     product.swProduct
   }
 
+  /// The localized price.
   public var localizedPrice: String {
     product.localizedPrice
   }
 
+  /// The localized subscription period.
   public var localizedSubscriptionPeriod: String {
     product.localizedSubscriptionPeriod
   }
 
+  /// The subscription period unit, e.g. week.
+  ///
+  /// This returns week, day, month, 2 months, quarter, 6 months and year
+  /// depending on the number of units.
   public var period: String {
     product.period
   }
@@ -103,147 +115,180 @@ public final class StoreProduct: NSObject, StoreProductType {
     product.periodly
   }
 
+  /// The number of weeks in the product's subscription period.
   public var periodWeeks: Int {
     product.periodWeeks
   }
 
+  /// The string value of the number of weeks in the product's subscription period.
   public var periodWeeksString: String {
     product.periodWeeksString
   }
 
+  /// The number of months in the product's subscription period.
   public var periodMonths: Int {
     product.periodMonths
   }
 
+  /// The string value of the number of months in the product's subscription period.
   public var periodMonthsString: String {
     product.periodMonthsString
   }
 
+  /// The number of years in the product's subscription period.
   public var periodYears: Int {
     product.periodYears
   }
 
+  /// The string value of the number of years in the product's subscription period.
   public var periodYearsString: String {
     product.periodYearsString
   }
 
+  /// The number of days in the product's subscription period.
   public var periodDays: Int {
     product.periodDays
   }
 
+  /// The string value of the number of days in the product's subscription period.
   public var periodDaysString: String {
     product.periodDaysString
   }
 
+  /// The product's localized daily price.
   public var dailyPrice: String {
     product.dailyPrice
   }
 
+  /// The product's localized weekly price.
   public var weeklyPrice: String {
     product.weeklyPrice
   }
 
+  /// The product's localized monthly price.
   public var monthlyPrice: String {
     product.monthlyPrice
   }
 
+  /// The product's localized yearly price.
   public var yearlyPrice: String {
     product.yearlyPrice
   }
 
+  /// A boolean indicating whether the product has an introductory price.
   public var hasFreeTrial: Bool {
     product.hasFreeTrial
   }
 
+  /// The product's trial period end date.
   public var trialPeriodEndDate: Date? {
     product.trialPeriodEndDate
   }
 
+  /// The product's trial period end date formatted using `DateFormatter.Style.medium`
   public var trialPeriodEndDateString: String {
     product.trialPeriodEndDateString
   }
 
+  /// The product's introductory price duration in days.
   public var trialPeriodDays: Int {
     product.trialPeriodDays
   }
 
+  /// The product's string value of the introductory price duration in days.
   public var trialPeriodDaysString: String {
     product.trialPeriodDaysString
   }
 
+  /// The product's introductory price duration in weeks.
   public var trialPeriodWeeks: Int {
     product.trialPeriodWeeks
   }
 
+  /// The product's string value of the introductory price duration in weeks.
   public var trialPeriodWeeksString: String {
     product.trialPeriodWeeksString
   }
 
+  /// The product's introductory price duration in months.
   public var trialPeriodMonths: Int {
     product.trialPeriodMonths
   }
 
+  /// The product's string value of the introductory price duration in months.
   public var trialPeriodMonthsString: String {
     product.trialPeriodMonthsString
   }
 
+  /// The product's introductory price duration in years.
   public var trialPeriodYears: Int {
     product.trialPeriodYears
   }
 
+  /// The product's string value of the introductory price duration in years.
   public var trialPeriodYearsString: String {
     product.trialPeriodYearsString
   }
 
+  /// The product's introductory price duration in days, e.g. 7-day.
   public var trialPeriodText: String {
     product.trialPeriodText
   }
 
+  /// The product's locale.
   public var locale: String {
     product.locale
   }
 
+  /// The language code of the product's locale.
   public var languageCode: String? {
     product.languageCode
   }
 
+  /// The currency code of the product's locale.
   public var currencyCode: String? {
     product.currencyCode
   }
 
+  /// The currency symbol of the product's locale.
   public var currencySymbol: String? {
     product.currencySymbol
   }
 
+  /// A boolean that indicates whether the product is family shareable.
   @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 8.0, *)
   public var isFamilyShareable: Bool {
     product.isFamilyShareable
   }
 
+  /// The region code of the product's price locale.
   public var regionCode: String? {
     product.regionCode
   }
 
-  /// The discount price of the product in the local currency.
-  /// - Note: this is meant for  Objective-C. For Swift, use ``price`` instead.
+  /// The price of the product in the local currency.
   @objc(price)
   @available(swift, obsoleted: 1.0)
   public var objcPrice: NSDecimalNumber {
     return product.price as NSDecimalNumber
   }
 
+  /// The price of the product in the local currency.
   @nonobjc public var price: Decimal {
     product.price
   }
 
+  /// The product's subscription period.
   public var subscriptionPeriod: SubscriptionPeriod? {
     product.subscriptionPeriod
   }
 
+  /// The product's introductory discount.
   public var introductoryDiscount: StoreProductDiscount? {
     product.introductoryDiscount
   }
 
+  /// The discounts associated with the product.
   public var discounts: [StoreProductDiscount] {
     product.discounts
   }
@@ -253,7 +298,6 @@ public final class StoreProduct: NSObject, StoreProductType {
   }
 
   /// Designated initializer.
-  /// - SeeAlso: `StoreProduct/from(product:)` to wrap an instance of `StoreProduct`
   private init(_ product: StoreProductType) {
     self.product = product
   }

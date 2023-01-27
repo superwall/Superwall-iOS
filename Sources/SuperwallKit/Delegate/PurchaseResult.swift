@@ -95,7 +95,7 @@ public enum PurchaseResultObjc: Int, Sendable, Equatable {
 
   /// The purchase failed for a reason other than the user cancelling or the payment pending.
   ///
-  /// Send the `Error` back in the ``SuperwallDelegateObjc/purchase(product:completion:)``
+  /// Send the `Error` back in the ``SubscriptionControllerObjc/purchase(product:completion:)``
   /// completion block to Superwall to alert the user.
   case failed
 }
