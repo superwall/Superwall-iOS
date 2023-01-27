@@ -24,7 +24,9 @@ public final class PaywallOptions: NSObject {
   public var isExternalDataCollectionEnabled = true
 
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
-  public struct RestoreFailed {
+
+  @objc(SWKRestoreFailed)
+  public final class RestoreFailed: NSObject {
     /// The title of the alert presented to the user when restoring a transaction fails. Defaults to `No Subscription Found`.
     public var title = "No Subscription Found"
 
@@ -57,6 +59,7 @@ public final class PaywallOptions: NSObject {
 
   /// Defines the different types of views that can appear behind Apple's payment sheet during a transaction.
 
+  @objc(SWKTransactionBackgroundView)
   public enum TransactionBackgroundView: Int, Sendable {
     /// This shows your paywall background color overlayed with an activity indicator.
     case spinner
