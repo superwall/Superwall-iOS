@@ -11,6 +11,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Readds `Superwall.shared.logLevel` as a top level static convenience variable so you can easily change the log level.
+- Adds `isLoggedIn` to user properties, which means you can create a rule based on whether the user is logged in vs. whether they're anonymous.
 
 ### Fixes
 
