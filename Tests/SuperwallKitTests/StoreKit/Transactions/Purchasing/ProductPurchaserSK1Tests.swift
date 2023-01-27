@@ -15,7 +15,7 @@ final class ProductPurchaserSK1Tests: XCTestCase {
   // TODO: Can't use this because the recording is done on a background priority thread. Github computer keeps failing this, despite it actually passing on the computer.
   /*func test_recordTransaction() async {
     // MARK: Given
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     
     // Set up App Session
     let appSessionId = "123"

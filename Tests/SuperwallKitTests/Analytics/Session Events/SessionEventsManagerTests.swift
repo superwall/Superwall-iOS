@@ -17,7 +17,7 @@ final class SessionEventsManagerTests: XCTestCase {
       internalCachedTriggerSessions: [],
       internalCachedTransactions: []
     )
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let network = NetworkMock(factory: dependencyContainer)
     _ = SessionEventsManager(
       queue: SessionEventsQueue(
@@ -40,8 +40,8 @@ final class SessionEventsManagerTests: XCTestCase {
 
   func testPostCachedSessionEvents_triggerSessionsOnly() async {
     let storage = StorageMock(internalCachedTriggerSessions: [.stub()])
-    let dependencyContainer = DependencyContainer(apiKey: "")
-    let configManager = dependencyContainer.configManager!
+    let dependencyContainer = DependencyContainer()
+    let configManager = dependencyContainer.configManager
     configManager.config = .stub()
 
     let network = NetworkMock(factory: dependencyContainer)
@@ -70,8 +70,8 @@ final class SessionEventsManagerTests: XCTestCase {
       internalCachedTriggerSessions: [.stub()],
       internalCachedTransactions: [.stub()]
     )
-    let dependencyContainer = DependencyContainer(apiKey: "")
-    let configManager = dependencyContainer.configManager!
+    let dependencyContainer = DependencyContainer()
+    let configManager = dependencyContainer.configManager
     configManager.config = .stub()
 
     let network = NetworkMock(factory: dependencyContainer)
@@ -100,8 +100,8 @@ final class SessionEventsManagerTests: XCTestCase {
       internalCachedTriggerSessions: [],
       internalCachedTransactions: [.stub()]
     )
-    let dependencyContainer = DependencyContainer(apiKey: "")
-    let configManager = dependencyContainer.configManager!
+    let dependencyContainer = DependencyContainer()
+    let configManager = dependencyContainer.configManager
     configManager.config = .stub()
 
     let network = NetworkMock(factory: dependencyContainer)

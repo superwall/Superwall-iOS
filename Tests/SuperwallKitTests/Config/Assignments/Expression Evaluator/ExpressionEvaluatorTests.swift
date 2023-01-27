@@ -12,12 +12,11 @@ import XCTest
 
 final class ExpressionEvaluatorTests: XCTestCase {
   func testExpressionMatchesAll() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
     let result = evaluator.evaluateExpression(
       fromRule: .stub()
@@ -32,12 +31,11 @@ final class ExpressionEvaluatorTests: XCTestCase {
   // MARK: - Expression
 
   func testExpressionEvaluator_expressionTrue() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
     dependencyContainer.identityManager.userAttributes = ["a": "b"]
     let result = evaluator.evaluateExpression(
@@ -50,12 +48,11 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionParams() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
     dependencyContainer.identityManager.userAttributes = [:]
     let result = evaluator.evaluateExpression(
@@ -68,12 +65,11 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionDeviceTrue() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
     dependencyContainer.identityManager.userAttributes = [:]
     let result = evaluator.evaluateExpression(
@@ -86,12 +82,11 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionDeviceFalse() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
     dependencyContainer.identityManager.userAttributes = [:]
     let result = evaluator.evaluateExpression(
@@ -104,12 +99,11 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionFalse() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
     dependencyContainer.identityManager.userAttributes = [:]
     let result = evaluator.evaluateExpression(
@@ -138,11 +132,10 @@ final class ExpressionEvaluatorTests: XCTestCase {
   // MARK: - ExpressionJS
 
   func testExpressionEvaluator_expressionJSTrue() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
     let result = evaluator.evaluateExpression(
       fromRule: .stub()
@@ -154,11 +147,10 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionJSValues_true() {
-      let dependencyContainer = DependencyContainer(apiKey: "")
+      let dependencyContainer = DependencyContainer()
       let evaluator = ExpressionEvaluator(
         storage: dependencyContainer.storage,
-        identityManager: dependencyContainer.identityManager,
-        deviceHelper: dependencyContainer.deviceHelper
+        factory: dependencyContainer
       )
     let result = evaluator.evaluateExpression(
       fromRule: .stub()
@@ -170,11 +162,10 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionJSValues_false() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
     let result = evaluator.evaluateExpression(
       fromRule: .stub()
@@ -186,11 +177,10 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }
 
   func testExpressionEvaluator_expressionJSNumbers() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
     let result = evaluator.evaluateExpression(
       fromRule: .stub()
@@ -216,11 +206,10 @@ final class ExpressionEvaluatorTests: XCTestCase {
   }*/
 
   func testExpressionEvaluator_expressionJSEmpty() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
     let result = evaluator.evaluateExpression(
       fromRule: .stub()

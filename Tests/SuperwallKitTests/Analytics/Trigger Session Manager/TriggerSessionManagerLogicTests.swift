@@ -47,7 +47,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       parameters: [:],
       createdAt: Date()
     )
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let viewController = dependencyContainer.makeDebugViewController(withDatabaseId: nil)
 
     let outcome = TriggerSessionManagerLogic.outcome(
@@ -166,7 +166,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       createdAt: Date()
     )
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let viewController = dependencyContainer.makeDebugViewController(withDatabaseId: nil)
 
     let outcome = TriggerSessionManagerLogic.outcome(
@@ -209,7 +209,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
       .setting(\.id, to: eventId)
       .setting(\.createdAt, to: eventCreatedAt)
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let viewController = dependencyContainer.makeDebugViewController(withDatabaseId: nil)
 
     let presentationInfo = PresentationInfo.explicitTrigger(event)
@@ -235,7 +235,7 @@ final class TriggerSessionManagerLogicTests: XCTestCase {
   func testIdentifierPaywall_noPaywallResponse() {
     let eventName = "manual_present"
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let viewController = dependencyContainer.makeDebugViewController(withDatabaseId: nil)
 
     let outcome = TriggerSessionManagerLogic.outcome(

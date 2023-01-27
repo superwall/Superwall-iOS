@@ -11,7 +11,7 @@ import XCTest
 final class PaywallMessageHandlerTests: XCTestCase {
   @MainActor
   func test_handleTemplateParams() async {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       factory: dependencyContainer
@@ -35,7 +35,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
 
   @MainActor
   func test_onReady() async {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       factory: dependencyContainer
@@ -60,7 +60,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
 
   @MainActor
   func test_close() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       factory: dependencyContainer
@@ -82,7 +82,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
 
   @MainActor
   func test_openUrl() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       factory: dependencyContainer
@@ -106,7 +106,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
 
   @MainActor
   func test_openUrlInSafari() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       factory: dependencyContainer
@@ -130,7 +130,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
 
   @MainActor
   func test_openDeepLink() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       factory: dependencyContainer
@@ -154,7 +154,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
 
   @MainActor
   func test_restore() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       factory: dependencyContainer
@@ -176,7 +176,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
 
   @MainActor
   func test_purchaseProduct() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       factory: dependencyContainer
@@ -199,7 +199,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
 
   @MainActor
   func test_custom() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       factory: dependencyContainer

@@ -223,7 +223,11 @@ class ConfigManager {
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) {
     for identifier in paywallIdentifiers {
       Task {
-        let request = factory.makePaywallRequest(withId: identifier)
+        let request = factory.makePaywallRequest(
+          eventData: nil,
+          responseIdentifiers: .init(paywallId: identifier),
+          overrides: nil
+        )
         _ = try? await paywallManager.getPaywallViewController(from: request)
       }
     }

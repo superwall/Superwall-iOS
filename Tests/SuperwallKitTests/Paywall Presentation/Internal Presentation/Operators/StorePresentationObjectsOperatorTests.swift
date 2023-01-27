@@ -14,7 +14,7 @@ final class StorePresentationObjectsOperatorTests: XCTestCase {
 
   @MainActor
   func test_storePresentationObjects() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
 
     let request = PresentationRequest.stub()
     let input = PresentablePipelineOutput(

@@ -65,8 +65,6 @@ final class TemplateLogicTests: XCTestCase {
     let json = try! JSON(data: encodedData)
     let jsonArray = json.array!
 
-    print(jsonArray)
-
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")
     XCTAssertEqual(jsonArray[0]["products"][0]["productId"].stringValue, products.first!.id)
@@ -123,8 +121,6 @@ final class TemplateLogicTests: XCTestCase {
     let encodedData = Data(base64Encoded: encodedTemplates)!
     let json = try! JSON(data: encodedData)
     let jsonArray = json.array!
-
-    print(jsonArray)
 
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")
@@ -190,8 +186,6 @@ final class TemplateLogicTests: XCTestCase {
     let encodedData = Data(base64Encoded: encodedTemplates)!
     let json = try! JSON(data: encodedData)
     let jsonArray = json.array!
-
-    print(jsonArray)
 
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")
@@ -267,8 +261,6 @@ final class TemplateLogicTests: XCTestCase {
     let encodedData = Data(base64Encoded: encodedTemplates)!
     let json = try! JSON(data: encodedData)
     let jsonArray = json.array!
-
-    print(jsonArray)
 
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")

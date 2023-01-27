@@ -12,7 +12,7 @@ import Combine
 final class AwaitIdentityOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
   let identityManager: IdentityManager = {
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let dependencyContainer = DependencyContainer()
     return dependencyContainer.identityManager
   }()
   
@@ -44,7 +44,7 @@ final class AwaitIdentityOperatorTests: XCTestCase {
     let expectation = expectation(description: "Got identity")
 
     let stub = PresentationRequest.stub()
-      .setting(\.injections.identityManager, to: identityManager)
+      .setting(\.dependencyContainer.identityManager, to: identityManager)
 
     CurrentValueSubject(stub)
       .setFailureType(to: Error.self)

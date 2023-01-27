@@ -14,7 +14,7 @@ class StoreKitManagerTests: XCTestCase {
   var storeKitCoordinatorFactoryMock: StoreKitCoordinatorFactoryMock!
 
   private func makeStoreKitManager(with productsFetcher: ProductsFetcherSK1) -> StoreKitManager {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let coordinator = StoreKitCoordinator(
       delegateAdapter: dependencyContainer.delegateAdapter,
       storeKitManager: dependencyContainer.storeKitManager,
@@ -30,8 +30,8 @@ class StoreKitManagerTests: XCTestCase {
   }
 
   func test_getProducts_primaryProduct() async {
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
-    let manager = dependencyContainer.storeKitManager!
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.storeKitManager
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = PaywallProducts(
@@ -49,8 +49,8 @@ class StoreKitManagerTests: XCTestCase {
   }
 
   func test_getProducts_primaryAndTertiaryProduct() async {
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
-    let manager = dependencyContainer.storeKitManager!
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.storeKitManager
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let tertiary = MockSkProduct(productIdentifier: "def")
@@ -74,8 +74,8 @@ class StoreKitManagerTests: XCTestCase {
   }
 
   func test_getProducts_primarySecondaryTertiaryProduct() async {
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
-    let manager = dependencyContainer.storeKitManager!
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.storeKitManager
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let secondary = MockSkProduct(productIdentifier: "def")

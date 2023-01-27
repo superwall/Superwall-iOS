@@ -20,7 +20,7 @@ final class ConfigManagerTests: XCTestCase {
       experimentId: experimentId,
       variant: variant
     )
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
@@ -44,7 +44,7 @@ final class ConfigManagerTests: XCTestCase {
   // MARK: - Load Assignments
 
   func test_loadAssignments_noConfig() async {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
@@ -63,7 +63,7 @@ final class ConfigManagerTests: XCTestCase {
   }
 
   func test_loadAssignments_noTriggers() async {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
@@ -84,7 +84,7 @@ final class ConfigManagerTests: XCTestCase {
   }
 
   func test_loadAssignments_saveAssignmentsFromServer() async {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(

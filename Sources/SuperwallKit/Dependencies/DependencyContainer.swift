@@ -17,111 +17,87 @@ import UIKit
 ///
 /// Idea taken from: [swiftbysundell.com](https://www.swiftbysundell.com/articles/dependency-injection-using-factories-in-swift/)
 final class DependencyContainer {
-  // swiftlint:disable implicitly_unwrapped_optional
-  var configManager: ConfigManager!
-  var identityManager: IdentityManager!
-  var storeKitManager: StoreKitManager!
-  var appSessionManager: AppSessionManager!
-  var sessionEventsManager: SessionEventsManager!
-  var storage: Storage!
-  var network: Network!
-  var paywallManager: PaywallManager!
-  var paywallRequestManager: PaywallRequestManager!
-  var deviceHelper: DeviceHelper!
-  var localizationManager: LocalizationManager!
-  var queue: EventsQueue!
-  var debugManager: DebugManager!
-  var api: Api!
-  var transactionManager: TransactionManager!
-  var restorationManager: RestorationManager!
-  var delegateAdapter: SuperwallDelegateAdapter!
-  // swiftlint:enable implicitly_unwrapped_optional
+  lazy var storeKitManager = StoreKitManager(factory: self)
+  let delegateAdapter: SuperwallDelegateAdapter
+  lazy var localizationManager = LocalizationManager()
+  lazy var storage = Storage(factory: self)
+  lazy var network = Network(factory: self)
+  lazy var paywallRequestManager = PaywallRequestManager(
+    storeKitManager: storeKitManager,
+    factory: self
+  )
+  lazy var paywallManager = PaywallManager(
+    factory: self,
+    paywallRequestManager: paywallRequestManager
+  )
+  lazy var configManager = ConfigManager(
+    options: options,
+    storeKitManager: storeKitManager,
+    storage: storage,
+    network: network,
+    paywallManager: paywallManager,
+    factory: self
+  )
+  lazy var api = Api(networkEnvironment: configManager.options.networkEnvironment)
+  lazy var deviceHelper = DeviceHelper(
+    api: api,
+    storage: storage,
+    localizationManager: localizationManager,
+    factory: self
+  )
+  lazy var queue = EventsQueue(
+    network: network,
+    configManager: configManager
+  )
+  lazy var appSessionManager = AppSessionManager(
+    configManager: configManager,
+    storage: storage,
+    delegate: self
+  )
+  lazy var identityManager = IdentityManager(
+    deviceHelper: deviceHelper,
+    storage: storage,
+    configManager: configManager
+  )
+  lazy var sessionEventsManager = SessionEventsManager(
+    queue: SessionEventsQueue(
+      storage: storage,
+      network: network,
+      configManager: configManager
+    ),
+    storage: storage,
+    network: network,
+    configManager: configManager,
+    factory: self
+  )
+  lazy var debugManager = DebugManager(
+    storage: storage,
+    factory: self
+  )
+  lazy var transactionManager = TransactionManager(
+    storeKitManager: storeKitManager,
+    sessionEventsManager: sessionEventsManager
+  )
+  lazy var restorationManager = RestorationManager(
+    storeKitManager: storeKitManager,
+    sessionEventsManager: sessionEventsManager
+  )
+  private let options: SuperwallOptions?
 
   init(
-    apiKey: String,
     swiftDelegate: SuperwallDelegate? = nil,
     objcDelegate: SuperwallDelegateObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
-    storeKitManager = StoreKitManager(factory: self)
     delegateAdapter = SuperwallDelegateAdapter(
       swiftDelegate: swiftDelegate,
       objcDelegate: objcDelegate
     )
-    localizationManager = LocalizationManager()
-    storage = Storage(factory: self)
-    network = Network(factory: self)
+    self.options = options
 
-    paywallRequestManager = PaywallRequestManager(
-      storeKitManager: storeKitManager,
-      factory: self
-    )
-    paywallManager = PaywallManager(
-      factory: self,
-      paywallRequestManager: paywallRequestManager
-    )
-
-    configManager = ConfigManager(
-      options: options,
-      storeKitManager: storeKitManager,
-      storage: storage,
-      network: network,
-      paywallManager: paywallManager,
-      factory: self
-    )
-
-    api = Api(networkEnvironment: configManager.options.networkEnvironment)
-
-    deviceHelper = DeviceHelper(
-      api: api,
-      storage: storage,
-      localizationManager: localizationManager,
-      factory: self
-    )
-
-    queue = EventsQueue(
-      network: network,
-      configManager: configManager
-    )
-
-    appSessionManager = AppSessionManager(
-      configManager: configManager,
-      storage: storage,
-      delegate: self
-    )
-
-    identityManager = IdentityManager(
-      deviceHelper: deviceHelper,
-      storage: storage,
-      configManager: configManager
-    )
-
-    sessionEventsManager = SessionEventsManager(
-      queue: SessionEventsQueue(
-        storage: storage,
-        network: network,
-        configManager: configManager
-      ),
-      storage: storage,
-      network: network,
-      configManager: configManager,
-      factory: self
-    )
-
-    debugManager = DebugManager(
-      storage: storage,
-      factory: self
-    )
-
-    transactionManager = TransactionManager(
-      storeKitManager: storeKitManager,
-      sessionEventsManager: sessionEventsManager
-    )
-
-    restorationManager = RestorationManager(
-      storeKitManager: storeKitManager,
-      sessionEventsManager: sessionEventsManager
-    )
+    // Make sure this lazy var is initialised immediately
+    // due to needing session tracking.
+    _ = appSessionManager
   }
 }
 
@@ -218,16 +194,15 @@ extension DependencyContainer: VariablesFactory {
 
 // MARK: - PaywallRequestFactory
 extension DependencyContainer: RequestFactory {
-  func makePaywallRequest(withId paywallId: String) -> PaywallRequest {
+  func makePaywallRequest(
+    eventData: EventData? = nil,
+    responseIdentifiers: ResponseIdentifiers,
+    overrides: PaywallRequest.Overrides? = nil
+  ) -> PaywallRequest {
     return PaywallRequest(
-      responseIdentifiers: .init(paywallId: paywallId),
-      injections: .init(
-        sessionEventsManager: sessionEventsManager,
-        storeKitManager: storeKitManager,
-        configManager: configManager,
-        network: network,
-        debugManager: debugManager
-      )
+      eventData: eventData,
+      responseIdentifiers: responseIdentifiers,
+      dependencyContainer: self
     )
   }
 
@@ -243,20 +218,12 @@ extension DependencyContainer: RequestFactory {
       presentationInfo: presentationInfo,
       presentingViewController: presentingViewController,
       paywallOverrides: paywallOverrides,
-      injections: .init(
-        configManager: configManager,
-        storage: storage,
-        sessionEventsManager: sessionEventsManager,
-        paywallManager: paywallManager,
-        storeKitManager: storeKitManager,
-        network: network,
-        debugManager: debugManager,
-        identityManager: identityManager,
-        deviceHelper: deviceHelper,
+      flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
         isUserSubscribed: isUserSubscribed ?? storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(),
         isPaywallPresented: isPaywallPresented
-      )
+      ),
+      dependencyContainer: self
     )
   }
 }
@@ -296,6 +263,19 @@ extension DependencyContainer: ApiFactory {
     ]
 
     return headers
+  }
+}
+
+// MARK: - Rule Params
+extension DependencyContainer: RuleAttributesFactory {
+  func makeRuleAttributes() -> RuleAttributes {
+    var userAttributes = identityManager.userAttributes
+    userAttributes["isLoggedIn"] = identityManager.isLoggedIn
+
+    return RuleAttributes(
+      user: userAttributes,
+      device: deviceHelper.templateDevice.toDictionary()
+    )
   }
 }
 

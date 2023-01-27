@@ -14,7 +14,7 @@ import XCTest
 class PaywallCacheTests: XCTestCase {
   func testSaveAndRetrievePaywall() throws {
     // Given
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let dependencyContainer = DependencyContainer()
     let locale = dependencyContainer.deviceHelper.locale
     let paywallCache = PaywallCache(deviceLocaleString: locale)
     let id = "myid"
@@ -33,7 +33,7 @@ class PaywallCacheTests: XCTestCase {
 
   func testSaveAndRemovePaywall_withId() {
     // Given
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let dependencyContainer = DependencyContainer()
     let locale = dependencyContainer.deviceHelper.locale
     let paywallCache = PaywallCache(deviceLocaleString: locale)
     let id = "myid"
@@ -58,7 +58,7 @@ class PaywallCacheTests: XCTestCase {
 
   func testSaveAndRemovePaywall_withVc() {
     // Given
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let dependencyContainer = DependencyContainer()
     let locale = dependencyContainer.deviceHelper.locale
     let paywallCache = PaywallCache(deviceLocaleString: locale)
     let paywallVc = dependencyContainer.makePaywallViewController(for: .stub())
@@ -85,7 +85,7 @@ class PaywallCacheTests: XCTestCase {
 
   func testClearCache() {
     // Given
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let dependencyContainer = DependencyContainer()
     let locale = dependencyContainer.deviceHelper.locale
     let paywallCache = PaywallCache(deviceLocaleString: locale)
     let paywallId1 = "id1"
@@ -121,7 +121,7 @@ class PaywallCacheTests: XCTestCase {
 
   func testViewControllers() {
     // Given
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let dependencyContainer = DependencyContainer()
     let paywall1 = dependencyContainer.makePaywallViewController(for: .stub())
     paywall1.cacheKey = "myid1"
     let paywall2 = dependencyContainer.makePaywallViewController(for: .stub())

@@ -46,7 +46,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Properties stored about the user, set using ``SuperwallKit/Superwall/setUserAttributes(_:)``.
+  /// Properties stored about the user, set using ``setUserAttributes(_:)``.
   public var userAttributes: [String: Any] {
     return dependencyContainer.identityManager.userAttributes
   }
@@ -57,7 +57,8 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.paywallManager.presentedViewController
   }
 
-  /// A convenience variable to access and change the paywall options that you passed to ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-65jyx``.
+  /// A convenience variable to access and change the paywall options that you passed
+  /// to ``configure(apiKey:delegate:options:)-65jyx``.
   public var options: SuperwallOptions {
     return dependencyContainer.configManager.options
   }
@@ -71,7 +72,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// The current user's id.
   ///
-  /// If you haven't called ``SuperwallKit/Superwall/logIn(userId:)`` or ``SuperwallKit/Superwall/createAccount(userId:)``,
+  /// If you haven't called ``logIn(userId:)`` or ``createAccount(userId:)``,
   /// this value will return an anonymous user id which is cached to disk
   public var userId: String {
     return dependencyContainer.identityManager.userId
@@ -79,8 +80,8 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Indicates whether the user is logged in to Superwall.
   ///
-  /// If you have previously called ``Superwall/logIn(userId:)`` or
-  /// ``Superwall/createAccount(userId:)``, this will return true.
+  /// If you have previously called ``logIn(userId:)`` or
+  /// ``createAccount(userId:)``, this will return true.
   ///
   /// - Returns: A boolean indicating whether the user is logged in or not.
   public var isLoggedIn: Bool {
@@ -123,7 +124,9 @@ public final class Superwall: NSObject, ObservableObject {
       // This avoids lots of irrelevent error messages printed to console about Superwall not
       // being configured, which slows down the tests.
       if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
-        return Superwall()
+        let superwall = Superwall()
+        self.superwall = superwall
+        return superwall
       }
       #endif
       Logger.debug(
@@ -158,7 +161,7 @@ public final class Superwall: NSObject, ObservableObject {
   let dependencyContainer: DependencyContainer
 
   // MARK: - Private Functions
-  init(dependencyContainer: DependencyContainer = DependencyContainer(apiKey: "")) {
+  init(dependencyContainer: DependencyContainer = DependencyContainer()) {
     self.dependencyContainer = dependencyContainer
     super.init()
   }
@@ -170,7 +173,6 @@ public final class Superwall: NSObject, ObservableObject {
     options: SuperwallOptions? = nil
   ) {
     let dependencyContainer = DependencyContainer(
-      apiKey: apiKey,
       swiftDelegate: swiftDelegate,
       objcDelegate: objcDelegate,
       options: options
@@ -283,7 +285,7 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
   ///
-  /// Note: This will not reload any paywalls you've already preloaded via ``SuperwallKit/Superwall/preloadPaywalls(forEvents:)``.
+  /// Note: This will not reload any paywalls you've already preloaded via ``preloadPaywalls(forEvents:)``.
   public func preloadAllPaywalls() {
     Task { [weak self] in
       await self?.dependencyContainer.configManager.preloadAllPaywalls()
@@ -351,13 +353,13 @@ extension Superwall: PaywallViewControllerDelegate {
     case .initiateRestore:
       await dependencyContainer.restorationManager.tryToRestore(paywallViewController)
     case .openedURL(let url):
-      dependencyContainer.delegateAdapter?.willOpenURL(url: url)
+      dependencyContainer.delegateAdapter.willOpenURL(url: url)
     case .openedUrlInSafari(let url):
-      dependencyContainer.delegateAdapter?.willOpenURL(url: url)
+      dependencyContainer.delegateAdapter.willOpenURL(url: url)
     case .openedDeepLink(let url):
-      dependencyContainer.delegateAdapter?.willOpenDeepLink(url: url)
+      dependencyContainer.delegateAdapter.willOpenDeepLink(url: url)
     case .custom(let string):
-      dependencyContainer.delegateAdapter?.handleCustomPaywallAction(withName: string)
+      dependencyContainer.delegateAdapter.handleCustomPaywallAction(withName: string)
     }
   }
 }

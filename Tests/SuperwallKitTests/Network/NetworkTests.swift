@@ -18,7 +18,7 @@ final class NetworkTests: XCTestCase {
     completion: @escaping () -> Void
   ) async {
     let task = Task {
-      let dependencyContainer = DependencyContainer(apiKey: "abc")
+      let dependencyContainer = DependencyContainer()
       let network = Network(urlSession: urlSession, factory: dependencyContainer)
       let requestId = "abc"
 
@@ -54,7 +54,7 @@ final class NetworkTests: XCTestCase {
 
   func test_config_inForeground() async {
     let urlSession = CustomURLSessionMock()
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let dependencyContainer = DependencyContainer()
     let network = Network(urlSession: urlSession, factory: dependencyContainer)
     let requestId = "abc"
     let publisher = Just(UIApplication.State.active)

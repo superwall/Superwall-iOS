@@ -238,7 +238,11 @@ final class DebugViewController: UIViewController {
     }
 
     do {
-      let request = factory.makePaywallRequest(withId: paywallId)
+      let request = factory.makePaywallRequest(
+        eventData: nil,
+        responseIdentifiers: .init(paywallId: paywallId),
+        overrides: nil
+      )
       var paywall = try await paywallRequestManager.getPaywall(from: request)
 
       let productVariables = await storeKitManager.getProductVariables(for: paywall)

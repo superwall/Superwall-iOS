@@ -14,7 +14,7 @@ class ReceiptManagerTests: XCTestCase {
   
   // MARK: - loadPurchasedProducts
   private func makeStoreKitManager(with productsFetcher: ProductsFetcherSK1) -> StoreKitManager {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let coordinator = StoreKitCoordinator(
       delegateAdapter: dependencyContainer.delegateAdapter,
       storeKitManager: dependencyContainer.storeKitManager,

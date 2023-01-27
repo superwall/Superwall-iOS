@@ -25,7 +25,11 @@ protocol VariablesFactory: AnyObject {
 }
 
 protocol RequestFactory: AnyObject {
-  func makePaywallRequest(withId paywallId: String) -> PaywallRequest
+  func makePaywallRequest(
+    eventData: EventData?,
+    responseIdentifiers: ResponseIdentifiers,
+    overrides: PaywallRequest.Overrides?
+  ) -> PaywallRequest
 
   func makePresentationRequest(
     _ presentationInfo: PresentationInfo,
@@ -35,6 +39,10 @@ protocol RequestFactory: AnyObject {
     isUserSubscribed: Bool?,
     isPaywallPresented: Bool
   ) -> PresentationRequest
+}
+
+protocol RuleAttributesFactory: AnyObject {
+  func makeRuleAttributes() -> RuleAttributes
 }
 
 protocol TriggerSessionManagerFactory: AnyObject {
@@ -54,14 +62,12 @@ protocol DeviceInfoFactory: AnyObject {
 }
 
 protocol ApiFactory: AnyObject {
-  // swiftlint:disable implicitly_unwrapped_optional
   // TODO: Think of an alternative way such that we don't need to do this:
-  var api: Api! { get }
-  var storage: Storage! { get }
-  var deviceHelper: DeviceHelper! { get }
-  var configManager: ConfigManager! { get }
-  var identityManager: IdentityManager! { get }
-  // swiftlint:enable implicitly_unwrapped_optional
+  var api: Api { get }
+  var storage: Storage { get }
+  var deviceHelper: DeviceHelper { get }
+  var configManager: ConfigManager { get }
+  var identityManager: IdentityManager { get }
 
   func makeHeaders(
     fromRequest request: URLRequest,
