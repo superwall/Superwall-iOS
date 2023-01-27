@@ -28,8 +28,9 @@ final class NetworkTests: XCTestCase {
       completion()
     }
 
-    let twoHundredMilliseconds = UInt64(200_000_000)
-    try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+    let milliseconds = 200
+    let nanoseconds = UInt64(milliseconds * 1_000_000)
+    try? await Task.sleep(nanoseconds: nanoseconds)
 
     task.cancel()
   }

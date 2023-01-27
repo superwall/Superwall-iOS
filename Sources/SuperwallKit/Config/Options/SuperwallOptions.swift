@@ -63,7 +63,7 @@ public final class SuperwallOptions: NSObject {
   public var isGameControllerEnabled = false
 
   /// Configuration for printing to the console.
-  public struct Logging {
+  public final class Logging: NSObject {
     /// Defines the minimum log level to print to the console. Defaults to `warn`.
     public var level: LogLevel? = .warn
 

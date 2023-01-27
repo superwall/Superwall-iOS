@@ -56,7 +56,8 @@ public final class PaywallOptions: NSObject {
   public var automaticallyDismiss = true
 
   /// Defines the different types of views that can appear behind Apple's payment sheet during a transaction.
-  public enum TransactionBackgroundView: Sendable {
+
+  public enum TransactionBackgroundView: Int, Sendable {
     /// This shows your paywall background color overlayed with an activity indicator.
     case spinner
   }

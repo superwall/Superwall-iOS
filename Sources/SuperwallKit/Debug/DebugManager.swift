@@ -66,8 +66,9 @@ final class DebugManager {
       await launchDebugger(withPaywallId: paywallDatabaseId)
 		} else {
 			if viewController == nil {
-        let twoHundredMilliseconds = UInt64(200_000_000)
-        try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+        let milliseconds = 200
+        let nanoseconds = UInt64(milliseconds * 1_000_000)
+        try? await Task.sleep(nanoseconds: nanoseconds)
         await presentDebugger(withPaywallId: paywallDatabaseId)
 			} else {
         await closeDebugger(animated: true)

@@ -8,7 +8,8 @@
 import Foundation
 
 /// The possible scope of logs to print to the console.
-public enum LogScope: String, Sendable {
+@objc(SWKLogScope)
+public enum LogScope: Int, Sendable, CustomStringConvertible {
   case localizationManager
   case bounceButton
   case coreData
@@ -30,4 +31,51 @@ public enum LogScope: String, Sendable {
   case paywallViewController
   case cache
   case all
+
+  public var description: String {
+    switch self {
+    case .localizationManager:
+      return "localizationManager"
+    case .bounceButton:
+      return "bounceButton"
+    case .coreData:
+      return "coreData"
+    case .configManager:
+      return "configManager"
+    case .debugManager:
+      return "debugManager"
+    case .debugViewController:
+      return "debugViewController"
+    case .localizationViewController:
+      return "localizationViewController"
+    case .gameControllerManager:
+      return "gameControllerManager"
+    case .device:
+      return "device"
+    case .network:
+      return "network"
+    case .paywallEvents:
+      return "paywallEvents"
+    case .productsManager:
+      return "productsManager"
+    case .storeKitManager:
+      return "storeKitManager"
+    case .events:
+      return "events"
+    case .receipts:
+      return "receipts"
+    case .superwallCore:
+      return "superwallCore"
+    case .paywallPresentation:
+      return "paywallPresentation"
+    case .paywallTransactions:
+      return "paywallTransactions"
+    case .paywallViewController:
+      return "paywallViewController"
+    case .cache:
+      return "cache"
+    case .all:
+      return "all"
+    }
+  }
 }

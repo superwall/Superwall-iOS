@@ -81,7 +81,7 @@ enum Logger: Loggable {
 
       await Superwall.shared.dependencyContainer.delegateAdapter.handleLog(
         level: logLevel.description,
-        scope: scope.rawValue,
+        scope: scope.description,
         message: message,
         info: info,
         error: error

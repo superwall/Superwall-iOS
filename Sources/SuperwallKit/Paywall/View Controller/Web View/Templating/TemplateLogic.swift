@@ -61,7 +61,7 @@ enum TemplateLogic {
     var variables: [String: Any] = [:]
 
     for variable in swProductTemplateVariables {
-      variables[variable.type.rawValue] = JSON(variable.attributes)
+      variables[variable.type.description] = JSON(variable.attributes)
     }
 
     // swiftlint:disable:next array_constructor

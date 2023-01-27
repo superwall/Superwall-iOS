@@ -106,9 +106,13 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
-    let request = PresentationRequest.stub()
-      .setting(\.flags.isDebuggerLaunched, to: false)
-      .setting(\.dependencyContainer.configManager, to: configManager)
+    dependencyContainer.configManager = configManager
+
+    let request = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      isDebuggerLaunched: false,
+      isPaywallPresented: false
+    )
 
     let input = PresentablePipelineOutput(
       request: request,

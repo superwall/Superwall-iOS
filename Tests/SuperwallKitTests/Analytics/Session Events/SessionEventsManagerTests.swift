@@ -31,8 +31,9 @@ final class SessionEventsManagerTests: XCTestCase {
       factory: dependencyContainer
     )
 
-    let twoHundredMilliseconds = UInt64(200_000_000)
-    try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+    let milliseconds = 200
+    let nanoseconds = UInt64(milliseconds * 1_000_000)
+    try? await Task.sleep(nanoseconds: nanoseconds)
 
     XCTAssertNil(network.sentSessionEvents)
     XCTAssertFalse(storage.didClearCachedSessionEvents)
@@ -57,8 +58,9 @@ final class SessionEventsManagerTests: XCTestCase {
       factory: dependencyContainer
     )
 
-    let twoHundredMilliseconds = UInt64(200_000_000)
-    try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+    let milliseconds = 200
+    let nanoseconds = UInt64(milliseconds * 1_000_000)
+    try? await Task.sleep(nanoseconds: nanoseconds)
 
     XCTAssertTrue(network.sentSessionEvents!.transactions.isEmpty)
     XCTAssertFalse(network.sentSessionEvents!.triggerSessions.isEmpty)
@@ -87,8 +89,9 @@ final class SessionEventsManagerTests: XCTestCase {
       factory: dependencyContainer
     )
 
-    let twoHundredMilliseconds = UInt64(200_000_000)
-    try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+    let milliseconds = 200
+    let nanoseconds = UInt64(milliseconds * 1_000_000)
+    try? await Task.sleep(nanoseconds: nanoseconds)
 
     XCTAssertFalse(network.sentSessionEvents!.transactions.isEmpty)
     XCTAssertFalse(network.sentSessionEvents!.triggerSessions.isEmpty)
@@ -117,8 +120,9 @@ final class SessionEventsManagerTests: XCTestCase {
       factory: dependencyContainer
     )
 
-    let twoHundredMilliseconds = UInt64(200_000_000)
-    try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+    let milliseconds = 200
+    let nanoseconds = UInt64(milliseconds * 1_000_000)
+    try? await Task.sleep(nanoseconds: nanoseconds)
 
     XCTAssertFalse(network.sentSessionEvents!.transactions.isEmpty)
     XCTAssertTrue(network.sentSessionEvents!.triggerSessions.isEmpty)
