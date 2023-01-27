@@ -274,6 +274,7 @@ extension DependencyContainer: ApiFactory {
       "X-Platform-Environment": "SDK",
       "X-App-User-ID": identityManager.appUserId ?? "",
       "X-Alias-ID": identityManager.aliasId,
+      "X-URL-Scheme": deviceHelper.urlScheme,
       "X-Vendor-ID": deviceHelper.vendorId,
       "X-App-Version": deviceHelper.appVersion,
       "X-OS-Version": deviceHelper.osVersion,

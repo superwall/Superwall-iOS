@@ -119,6 +119,22 @@ class DeviceHelper {
     #endif
   }()
 
+  /// The first URL scheme defined in the Info.plist. Assumes there's only one.
+  let urlScheme: String = {
+    guard let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]] else {
+      return ""
+    }
+
+    var result = ""
+    if let urlTypeDictionary = urlTypes.first,
+      let urlSchemes = urlTypeDictionary["CFBundleURLSchemes"] as? [String],
+      let urlScheme = urlSchemes.first {
+      result = urlScheme
+    }
+
+    return result
+  }()
+
   private let appInstallDate: Date? = {
     guard let urlToDocumentsFolder = FileManager.default.urls(
       for: .documentDirectory,
