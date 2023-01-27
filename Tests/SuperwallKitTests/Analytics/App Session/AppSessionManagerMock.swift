@@ -8,6 +8,10 @@
 import Foundation
 @testable import SuperwallKit
 
+class AppManagerDelegateMock: AppManagerDelegate {
+  func didUpdateAppSession(_ appSession: AppSession) async {}
+}
+
 final class AppSessionManagerMock: AppSessionManager {
   var internalAppSession: AppSession
   override var appSession: AppSession {
@@ -20,7 +24,7 @@ final class AppSessionManagerMock: AppSessionManager {
     storage: Storage
   ) {
     internalAppSession = appSession
-    super.init(configManager: configManager, storage: storage)
+    super.init(configManager: configManager, storage: storage, delegate: AppManagerDelegateMock())
   }
 
   override func listenForAppSessionTimeout() {

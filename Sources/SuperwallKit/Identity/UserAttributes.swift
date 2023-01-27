@@ -22,13 +22,13 @@ public extension Superwall {
   ///   "username": user.username,
   ///   "profilePic": user.profilePicUrl
   ///  ]
-  /// Superwall.setUserAttributes(attributes)
+  /// Superwall.shared.setUserAttributes(attributes)
   ///  ```
   /// See <doc:SettingUserAttributes> for more.
   ///
   ///
   /// - Parameter custom: A `[String: Any?]` map used to describe any custom attributes you'd like to store to the user. Remember, keys begining with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
-  static func setUserAttributes(_ attributes: [String: Any?]) {
+  func setUserAttributes(_ attributes: [String: Any?]) {
     mergeAttributes(attributes)
   }
 
@@ -47,7 +47,7 @@ public extension Superwall {
   ///  [Superwall setUserAttributesDictionary: userAttributes];
   ///  ```
   @available(swift, obsoleted: 1.0)
-  @objc static func setUserAttributesDictionary(_ attributes: NSDictionary) {
+  @objc func setUserAttributesDictionary(_ attributes: NSDictionary) {
     if let anyAttributes = attributes as? [String: Any] {
       mergeAttributes(anyAttributes)
     } else if let anyAttributes = attributes as? [String: Any?] {
@@ -66,7 +66,7 @@ public extension Superwall {
   ///
   /// - Parameter keys: An array containing the keys you wish to remove from the user attributes dictionary.
   @available(swift, obsoleted: 1.0)
-  @objc static func removeUserAttributes(_ keys: [String]) {
+  @objc func removeUserAttributes(_ keys: [String]) {
     let userAttributes: [String: Any?] = keys.reduce([:]) { dictionary, key in
       var dictionary = dictionary
       dictionary[key] = nil
@@ -75,7 +75,7 @@ public extension Superwall {
     setUserAttributes(userAttributes)
   }
 
-  private static func mergeAttributes(_ attributes: [String: Any?]) {
+  private func mergeAttributes(_ attributes: [String: Any?]) {
     Task {
       var customAttributes: [String: Any] = [:]
 
@@ -94,7 +94,7 @@ public extension Superwall {
       )
       let result = await track(trackableEvent)
       let eventParams = result.parameters.eventParams
-      shared.dependencyContainer.identityManager.mergeUserAttributes(eventParams)
+      dependencyContainer.identityManager.mergeUserAttributes(eventParams)
     }
   }
 }

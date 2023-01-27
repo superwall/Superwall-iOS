@@ -72,15 +72,15 @@ final class StoreKitService: NSObject, ObservableObject {
 // MARK: - SKPaymentTransactionObserver
 extension StoreKitService: SKPaymentTransactionObserver {
   func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
-     restoreCompletion?(true)
-   }
+    restoreCompletion?(true)
+  }
 
-   func paymentQueue(
-     _ queue: SKPaymentQueue,
-     restoreCompletedTransactionsFailedWithError error: Error
-   ) {
-     restoreCompletion?(false)
-   }
+  func paymentQueue(
+    _ queue: SKPaymentQueue,
+    restoreCompletedTransactionsFailedWithError error: Error
+  ) {
+    restoreCompletion?(false)
+  }
 
   func paymentQueue(
     _ queue: SKPaymentQueue,

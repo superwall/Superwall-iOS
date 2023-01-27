@@ -11,26 +11,6 @@ import CoreData
 
 @available(iOS 14.0, *)
 final class CoreDataStackMock: CoreDataStack {
-  override init() {
-      super.init()
-      let container = NSPersistentContainer(
-        name: CoreDataStack.modelName,
-        managedObjectModel: CoreDataStack.managedObject
-      )
-
-      let persistentStoreDescription = NSPersistentStoreDescription()
-      persistentStoreDescription.type = NSSQLiteStoreType
-      container.persistentStoreDescriptions = [persistentStoreDescription]
-
-      container.loadPersistentStores { _, error in
-        if let error = error as NSError? {
-          fatalError("Unresolved error \(error), \(error.userInfo)")
-        }
-      }
-
-      persistentContainer = container
-    }
-
   func deleteAllEntities(named entityName: String) {
     let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: entityName)
     let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)

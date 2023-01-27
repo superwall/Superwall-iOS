@@ -73,7 +73,7 @@ actor EventsQueue {
   }
 
   private func externalDataCollectionAllowed(from event: Trackable) -> Bool {
-    if Superwall.options.isExternalDataCollectionEnabled {
+    if Superwall.shared.options.isExternalDataCollectionEnabled {
       return true
     }
     if event is InternalSuperwallEvent.TriggerFire

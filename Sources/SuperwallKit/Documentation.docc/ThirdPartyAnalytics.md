@@ -79,6 +79,8 @@ extension SuperwallService: SuperwallDelegate {
       break
     case .paywallProductsLoadComplete(let triggeredEventName):
       break
+    case .paywallPresentationFail(reason: let reason):
+      break
     }
   }
 }

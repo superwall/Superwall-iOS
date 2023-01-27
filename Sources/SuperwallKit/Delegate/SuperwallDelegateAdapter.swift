@@ -20,7 +20,7 @@ final class SuperwallDelegateAdapter {
 /// Called on init of the Superwall instance via ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-7doe5``.
   ///
   /// We check to see if the delegates being set are non-nil because they may have been set
-  /// separately to the initial Superwall.config function.
+  /// separately to the initial ``Superwall/configure(apiKey:delegate:options:)-65jyx`` function.
   init(
     swiftDelegate: SuperwallDelegate?,
     objcDelegate: SuperwallDelegateObjc?

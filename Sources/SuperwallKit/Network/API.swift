@@ -15,8 +15,7 @@ struct Api {
   static let version1 = "/api/v1/"
   static let scheme = "https"
 
-  init(configManager: ConfigManager) {
-    let networkEnvironment = configManager.options.networkEnvironment
+  init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
     self.base = Base(networkEnvironment: networkEnvironment)
     self.collector = Collector(networkEnvironment: networkEnvironment)
     self.hostDomain = networkEnvironment.hostDomain

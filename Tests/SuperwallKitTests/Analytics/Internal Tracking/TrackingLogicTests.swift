@@ -338,9 +338,8 @@ final class TrackingLogicTests: XCTestCase {
   // MARK: - didStartNewSession
 
   func testDidStartNewSession_canTriggerPaywall_paywallAlreadyPresented() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(deviceHelper: dependencyContainer.deviceHelper),
+      InternalSuperwallEvent.AppInstall(appInstalledAtString: ""),
       triggers: Set(["app_install"]),
       isPaywallPresented: true
     )
@@ -348,9 +347,8 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func testDidStartNewSession_canTriggerPaywall_isntTrigger() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(deviceHelper: dependencyContainer.deviceHelper),
+      InternalSuperwallEvent.AppInstall(appInstalledAtString: ""),
       triggers: [],
       isPaywallPresented: false
     )
@@ -358,9 +356,8 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func testDidStartNewSession_canTriggerPaywall_isAllowedInternalEvent() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(deviceHelper: dependencyContainer.deviceHelper),
+      InternalSuperwallEvent.AppInstall(appInstalledAtString: ""),
       triggers: ["app_install"],
       isPaywallPresented: false
     )
@@ -368,7 +365,6 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func testDidStartNewSession_canTriggerPaywall_isNotInternalEvent() {
-    let dependencyContainer = DependencyContainer(apiKey: "")
     let outcome = TrackingLogic.canTriggerPaywall(
       UserInitiatedEvent.Track(rawName: "random_event", canImplicitlyTriggerPaywall: true),
       triggers: ["random_event"],

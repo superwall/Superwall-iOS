@@ -20,7 +20,7 @@ final class GameControllerManager: NSObject {
 	weak var delegate: GameControllerDelegate?
 
   func setDelegate(_ delegate: GameControllerDelegate) {
-    guard Superwall.options.isGameControllerEnabled else {
+    guard Superwall.shared.options.isGameControllerEnabled else {
       return
     }
     self.delegate = delegate
@@ -28,7 +28,7 @@ final class GameControllerManager: NSObject {
 
   func clearDelegate(_ delegate: PaywallViewController?) {
     guard
-      Superwall.options.isGameControllerEnabled,
+      Superwall.shared.options.isGameControllerEnabled,
       self.delegate == delegate
     else {
       return
@@ -69,7 +69,7 @@ final class GameControllerManager: NSObject {
     gamepad: GCExtendedGamepad,
     element: GCControllerElement
   ) {
-    guard Superwall.options.isGameControllerEnabled else {
+    guard Superwall.shared.options.isGameControllerEnabled else {
       return
     }
 

@@ -18,19 +18,19 @@ final class NetworkTests: XCTestCase {
     completion: @escaping () -> Void
   ) async {
     let task = Task {
-      let dependencyContainer = DependencyContainer(apiKey: "abc")
+      let dependencyContainer = DependencyContainer()
       let network = Network(urlSession: urlSession, factory: dependencyContainer)
       let requestId = "abc"
 
       _ = try? await network.getConfig(
-        withRequestId: requestId,
         injectedApplicationStatePublisher: injectedApplicationStatePublisher
       )
       completion()
     }
 
-    let twoHundredMilliseconds = UInt64(200_000_000)
-    try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+    let milliseconds = 200
+    let nanoseconds = UInt64(milliseconds * 1_000_000)
+    try? await Task.sleep(nanoseconds: nanoseconds)
 
     task.cancel()
   }
@@ -55,14 +55,13 @@ final class NetworkTests: XCTestCase {
 
   func test_config_inForeground() async {
     let urlSession = CustomURLSessionMock()
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    let dependencyContainer = DependencyContainer()
     let network = Network(urlSession: urlSession, factory: dependencyContainer)
     let requestId = "abc"
     let publisher = Just(UIApplication.State.active)
       .eraseToAnyPublisher()
 
     _ = try? await network.getConfig(
-      withRequestId: requestId,
       injectedApplicationStatePublisher: publisher
     )
     XCTAssertTrue(urlSession.didRequest)

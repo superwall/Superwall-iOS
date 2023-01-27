@@ -16,7 +16,7 @@ public final class SuperwallOptions: NSObject {
   /// Configures the appearance and behaviour of paywalls.
   public var paywalls = PaywallOptions()
 
-  /// **WARNING**: Only use this enum to set `Superwall.networkEnvironment` if told so explicitly by the Superwall team.
+  /// **WARNING**: Only use this enum to set ``SuperwallOptions/networkEnvironment-swift.property`` if told so explicitly by the Superwall team.
   public enum NetworkEnvironment {
     /// Default: Uses the standard latest environment.
     case release
@@ -63,7 +63,7 @@ public final class SuperwallOptions: NSObject {
   public var isGameControllerEnabled = false
 
   /// Configuration for printing to the console.
-  public struct Logging {
+  public final class Logging: NSObject {
     /// Defines the minimum log level to print to the console. Defaults to `warn`.
     public var level: LogLevel? = .warn
 

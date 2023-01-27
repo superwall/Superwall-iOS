@@ -19,7 +19,7 @@ When you sign up for a Superwall account, we give you an example paywall and cam
 You use ``Superwall/track(event:params:paywallOverrides:paywallHandler:)`` to track events:
 
 ```swift
-Superwall.track(event: "campaign_trigger") { paywallState in
+Superwall.shared.track(event: "campaign_trigger") { paywallState in
   switch paywallState {
   case .presented(let paywallInfo):
     break
@@ -51,7 +51,7 @@ final class Analytics {
     params: [String: Any]
   ) {
     // Superwall
-    Superwall.track(
+    Superwall.shared.track(
       event: event,
       params: params
     )

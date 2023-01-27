@@ -34,11 +34,11 @@ enum InternalSuperwallEvent {
 
   struct AppInstall: TrackableSuperwallEvent {
     let superwallEvent: SuperwallEvent = .appInstall
-    unowned let deviceHelper: DeviceHelper
+    let appInstalledAtString: String
     var customParameters: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       return [
-        "application_installed_at": deviceHelper.appInstalledAtString
+        "application_installed_at": appInstalledAtString
       ]
     }
   }

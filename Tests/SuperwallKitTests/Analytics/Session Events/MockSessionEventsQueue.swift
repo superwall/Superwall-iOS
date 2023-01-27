@@ -13,7 +13,6 @@ actor MockSessionEventsQueue: SessionEnqueuable {
   var transactions: [StoreTransaction] = []
 
   func enqueue(_ triggerSession: TriggerSession) {
-    debugPrint("trigger sesss", triggerSession)
     triggerSessions.append(triggerSession)
   }
 

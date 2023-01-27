@@ -12,7 +12,7 @@ final class TrackEventModel {
   // private var cancellable: AnyCancellable?
 
   func trackEvent() {
-    Superwall.track(event: "MyEvent") { paywallState in
+    Superwall.shared.track(event: "MyEvent") { paywallState in
       switch paywallState {
       case .presented(let paywallInfo):
         print("paywall info is", paywallInfo)

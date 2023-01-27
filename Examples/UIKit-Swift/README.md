@@ -50,9 +50,9 @@ The SDK sends back events received from the paywall via the delegate methods in 
 
 ## Logging In
 
-On the welcome screen, enter your name in the **text field**This saves to the Superwall user attributes using [Superwall.setUserAttributes(_:)](Superwall-UIKit-Swift/Services/SuperwallService.swift#L63). You don't need to set user attributes, but it can be useful if you want to create a rule to present a paywall based on a specific attribute you've set. You can also recall user attributes on your paywall to personalise the messaging.
+On the welcome screen, enter your name in the **text field**This saves to the Superwall user attributes using [Superwall.shared.setUserAttributes(_:)](Superwall-UIKit-Swift/Services/SuperwallService.swift#L63). You don't need to set user attributes, but it can be useful if you want to create a rule to present a paywall based on a specific attribute you've set. You can also recall user attributes on your paywall to personalise the messaging.
 
-Tap **Log In**. This logs the user in to Superwall (with a hardcoded userId that we've set), retrieving any paywalls that have already been assigned to them. If you were to create a new account you'd use `Superwall.createAccount(userId:)` instead.
+Tap **Log In**. This logs the user in to Superwall (with a hardcoded userId that we've set), retrieving any paywalls that have already been assigned to them. If you were to create a new account you'd use `Superwall.shared.createAccount(userId:)` instead.
 
 
 You'll see an overview screen:
@@ -69,7 +69,7 @@ On the [Superwall Dashboard](https://superwall.com/dashboard) you add this event
 
 When an event is tracked, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall. Note that if the delegate method [isUserSubscribed()](Superwall-UIKit-Swift/SuperwallService.swift#L82) returns `true`, a paywall will not show by default.
 
-By calling [Superwall.track(event:params:paywallOverrides:paywallHandler:)](Superwall-UIKit-Swift/TrackEventViewController.swift#L57), you present a paywall in response to the event. For this app, the event is called "MyEvent".
+By calling [Superwall.shared.track(event:params:paywallOverrides:paywallHandler:)](Superwall-UIKit-Swift/TrackEventViewController.swift#L57), you present a paywall in response to the event. For this app, the event is called "MyEvent".
 
 On screen you'll see some explanatory text and a button that tracks an event:
 

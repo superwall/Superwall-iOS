@@ -10,20 +10,21 @@ import XCTest
 @testable import SuperwallKit
 
 class ReceiptManagerTests: XCTestCase {
+  var storeKitCoordinatorFactoryMock: StoreKitCoordinatorFactoryMock!
+  
   // MARK: - loadPurchasedProducts
   private func makeStoreKitManager(with productsFetcher: ProductsFetcherSK1) -> StoreKitManager {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let coordinator = StoreKitCoordinator(
       delegateAdapter: dependencyContainer.delegateAdapter,
       storeKitManager: dependencyContainer.storeKitManager,
       factory: dependencyContainer,
       productsFetcher: productsFetcher
     )
-    let storeKitCoordinatorFactoryMock = StoreKitCoordinatorFactoryMock(
+    storeKitCoordinatorFactoryMock = StoreKitCoordinatorFactoryMock(
       coordinator: coordinator
     )
     let storeKitManager = StoreKitManager(factory: storeKitCoordinatorFactoryMock)
-    storeKitManager.postInit()
 
     return storeKitManager
   }

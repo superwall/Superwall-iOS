@@ -424,7 +424,6 @@ final class ConfigTypeTests: XCTestCase {
       Config.self,
       from: response.data(using: .utf8)!
     )
-    print(parsedResponse)
     XCTAssertTrue(parsedResponse.featureFlags.enableSessionEvents)
 
     guard let trigger = parsedResponse.triggers.filter({ $0.eventName == "MyEvent" }).first

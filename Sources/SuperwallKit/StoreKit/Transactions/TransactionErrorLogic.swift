@@ -29,14 +29,23 @@ enum TransactionErrorLogic {
         break
       }
     }
+
     if let error = error as? SKError {
       switch error.code {
       case .overlayCancelled,
-        .paymentCancelled,
-        .overlayTimeout:
+        .paymentCancelled:
         return .cancelled
       default:
         break
+      }
+
+      if #available(iOS 14, *) {
+        switch error.code {
+        case .overlayTimeout:
+          return .cancelled
+        default:
+          break
+        }
       }
     }
 

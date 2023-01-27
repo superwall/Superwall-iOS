@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension View {
-  @available(*, unavailable, message: "Please use the UIKit function Superwall.track(...) instead.")
+  @available(*, unavailable, message: "Please use the UIKit function Superwall.shared.track(...) instead.")
   public func triggerPaywall(
     forEvent event: String,
     withParams params: [String: Any]? = nil,

@@ -134,7 +134,7 @@ actor TriggerSessionManager {
     on presentingViewController: UIViewController? = nil,
     paywall: Paywall? = nil,
     triggerResult: TriggerResult?,
-    trackEvent: (Trackable) async -> TrackingResult = Superwall.track
+    trackEvent: (Trackable) async -> TrackingResult = Superwall.shared.track
   ) async {
     guard let eventName = presentationInfo.eventName else {
       // The paywall is being presented by identifier, which is what the debugger uses,

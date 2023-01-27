@@ -15,13 +15,13 @@ extension Superwall {
   ///   - trackableEvent: The event you want to track.
   ///   - customParameters: Any extra non-Superwall parameters that you want to track.
 	@discardableResult
-  static func track(_ event: Trackable) async -> TrackingResult {
+  func track(_ event: Trackable) async -> TrackingResult {
     // Get parameters to be sent to the delegate and stored in an event.
     let eventCreatedAt = Date()
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       eventCreatedAt: eventCreatedAt,
-      appSessionId: shared.dependencyContainer.appSessionManager.appSession.id
+      appSessionId: dependencyContainer.appSessionManager.appSession.id
     )
 
     // For a trackable superwall event, send params to delegate
@@ -31,7 +31,7 @@ extension Superwall {
         params: parameters.delegateParams
       )
 
-      await shared.dependencyContainer.delegateAdapter.didTrackSuperwallEventInfo(info)
+      await dependencyContainer.delegateAdapter.didTrackSuperwallEventInfo(info)
 
       Logger.debug(
         logLevel: .debug,
@@ -46,12 +46,12 @@ extension Superwall {
       parameters: JSON(parameters.eventParams),
       createdAt: eventCreatedAt
     )
-    await shared.dependencyContainer.queue.enqueue(event: eventData.jsonData)
-    shared.dependencyContainer.storage.coreDataManager.saveEventData(eventData)
+    await dependencyContainer.queue.enqueue(event: eventData.jsonData)
+    dependencyContainer.storage.coreDataManager.saveEventData(eventData)
 
     if event.canImplicitlyTriggerPaywall {
-      Task.detached {
-        await shared.handleImplicitTrigger(
+      Task.detached { [weak self] in
+        await self?.handleImplicitTrigger(
           forEvent: event,
           withData: eventData
         )
@@ -88,7 +88,7 @@ extension Superwall {
     switch outcome {
     case .deepLinkTrigger:
       if isPaywallPresented {
-        await Superwall.dismiss()
+        await dismiss()
       }
       let presentationRequest = dependencyContainer.makePresentationRequest(
         presentationInfo,
@@ -97,8 +97,9 @@ extension Superwall {
       await internallyPresent(presentationRequest).asyncNoValue()
     case .triggerPaywall:
       // delay in case they are presenting a view controller alongside an event they are calling
-      let twoHundredMilliseconds = UInt64(200_000_000)
-      try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+      let milliseconds = 200
+      let nanoseconds = UInt64(milliseconds * 1_000_000)
+      try? await Task.sleep(nanoseconds: nanoseconds)
       let presentationRequest = dependencyContainer.makePresentationRequest(
         presentationInfo,
         isPaywallPresented: isPaywallPresented

@@ -65,12 +65,10 @@ final class TemplateLogicTests: XCTestCase {
     let json = try! JSON(data: encodedData)
     let jsonArray = json.array!
 
-    print(jsonArray)
-
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")
     XCTAssertEqual(jsonArray[0]["products"][0]["productId"].stringValue, products.first!.id)
-    XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, products.first!.type.rawValue)
+    XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, products.first!.type.description)
     XCTAssertEqual(jsonArray[0]["products"].count, 1)
 
     XCTAssertEqual(jsonArray[1]["event_name"], "template_variables")
@@ -124,12 +122,10 @@ final class TemplateLogicTests: XCTestCase {
     let json = try! JSON(data: encodedData)
     let jsonArray = json.array!
 
-    print(jsonArray)
-
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")
     XCTAssertEqual(jsonArray[0]["products"][0]["productId"].stringValue, products.first!.id)
-    XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, products.first!.type.rawValue)
+    XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, products.first!.type.description)
     XCTAssertEqual(jsonArray[0]["products"].count, 1)
 
     XCTAssertEqual(jsonArray[1]["event_name"], "template_variables")
@@ -191,16 +187,14 @@ final class TemplateLogicTests: XCTestCase {
     let json = try! JSON(data: encodedData)
     let jsonArray = json.array!
 
-    print(jsonArray)
-
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")
     XCTAssertEqual(jsonArray[0]["products"][0]["productId"].stringValue, products.first!.id)
-    XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, products.first!.type.rawValue)
+    XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, products.first!.type.description)
     XCTAssertEqual(jsonArray[0]["products"][1]["productId"].stringValue, products[1].id)
-    XCTAssertEqual(jsonArray[0]["products"][1]["product"].stringValue, products[1].type.rawValue)
+    XCTAssertEqual(jsonArray[0]["products"][1]["product"].stringValue, products[1].type.description)
     XCTAssertEqual(jsonArray[0]["products"][2]["productId"].stringValue, products[2].id)
-    XCTAssertEqual(jsonArray[0]["products"][2]["product"].stringValue, products[2].type.rawValue)
+    XCTAssertEqual(jsonArray[0]["products"][2]["product"].stringValue, products[2].type.description)
     XCTAssertEqual(jsonArray[0]["products"].count, 3)
 
     XCTAssertEqual(jsonArray[1]["event_name"], "template_variables")
@@ -268,16 +262,14 @@ final class TemplateLogicTests: XCTestCase {
     let json = try! JSON(data: encodedData)
     let jsonArray = json.array!
 
-    print(jsonArray)
-
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")
     XCTAssertEqual(jsonArray[0]["products"][0]["productId"].stringValue, products.first!.id)
-    XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, products.first!.type.rawValue)
+    XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, products.first!.type.description)
     XCTAssertEqual(jsonArray[0]["products"][1]["productId"].stringValue, products[1].id)
-    XCTAssertEqual(jsonArray[0]["products"][1]["product"].stringValue, products[1].type.rawValue)
+    XCTAssertEqual(jsonArray[0]["products"][1]["product"].stringValue, products[1].type.description)
     XCTAssertEqual(jsonArray[0]["products"][2]["productId"].stringValue, products[2].id)
-    XCTAssertEqual(jsonArray[0]["products"][2]["product"].stringValue, products[2].type.rawValue)
+    XCTAssertEqual(jsonArray[0]["products"][2]["product"].stringValue, products[2].type.description)
     XCTAssertEqual(jsonArray[0]["products"].count, 3)
 
     XCTAssertEqual(jsonArray[1]["event_name"], "template_variables")

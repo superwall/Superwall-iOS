@@ -37,6 +37,7 @@ struct PurchaseManager {
   /// Purchases the product and then checks for a transaction,
   func purchase(product: StoreProduct) async -> InternalPurchaseResult {
     let purchaseStartAt = Date()
+
     let result = await storeKitManager.coordinator.productPurchaser.purchase(product: product)
 
     if let transactionResult = await checkForTransaction(
@@ -68,9 +69,18 @@ struct PurchaseManager {
     startAt: Date
   ) async -> InternalPurchaseResult? {
     do {
-      let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateTransaction(
+      // If the product was reported purchased, we just check it's valid.
+      // This is because someone may have reinstalled app and now gone to
+      // purchase without restoring. In this case, it returns a purchased
+      // product immediately whose date is in the past.
+      //
+      // If the product wasn't reported purchase, we need to see if any
+      // transactions came in since we made the purchase request.
+
+      // TODO: What happens if it's pending and they do the flow above?
+      let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateLatestTransaction(
         of: product.productIdentifier,
-        since: startAt
+        since: result == .purchased ? nil : startAt
       )
       return .purchased(transaction)
     } catch {

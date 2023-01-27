@@ -7,7 +7,7 @@
 
 import GameController
 
-public extension Superwall {
+extension Superwall {
   /// Forwards Game controller events to the paywall.
   ///
   /// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`
@@ -18,7 +18,7 @@ public extension Superwall {
   ///   - gamepad: The extended Gamepad controller profile.
   ///   - element: The game controller element.
   @MainActor
-  static func gamepadValueChanged(
+  public func gamepadValueChanged(
     gamepad: GCExtendedGamepad,
     element: GCControllerElement
   ) {

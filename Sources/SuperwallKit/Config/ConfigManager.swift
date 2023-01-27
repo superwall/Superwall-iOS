@@ -12,7 +12,7 @@ class ConfigManager {
   @Published var config: Config?
 
   /// Options for configuring the SDK.
-  @Published var options = SuperwallOptions()
+  var options = SuperwallOptions()
 
   /// A dictionary of triggers by their event name.
   var triggersByEventName: [String: Trigger] = [:]
@@ -26,19 +26,20 @@ class ConfigManager {
   private unowned let storage: Storage
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
-  // swiftlint:disable implicitly_unwrapped_optional
-  private unowned var deviceHelper: DeviceHelper!
-  // swiftlint:enable implicitly_unwrapped_optional
-  private let factory: RequestFactory
 
-  /// **NOTE**: Remember to call `postInit`after init.
+  private let factory: RequestFactory & DeviceInfoFactory
+
   init(
+    options: SuperwallOptions?,
     storeKitManager: StoreKitManager,
     storage: Storage,
     network: Network,
     paywallManager: PaywallManager,
-    factory: RequestFactory
+    factory: RequestFactory & DeviceInfoFactory
   ) {
+    if let options = options {
+      self.options = options
+    }
     self.storeKitManager = storeKitManager
     self.storage = storage
     self.network = network
@@ -46,13 +47,9 @@ class ConfigManager {
     self.factory = factory
   }
 
-  func postInit(deviceHelper: DeviceHelper) {
-    self.deviceHelper = deviceHelper
-  }
-
-  func fetchConfiguration(requestId: String = UUID().uuidString) async {
+  func fetchConfiguration() async {
     do {
-      let config = try await network.getConfig(withRequestId: requestId)
+      let config = try await network.getConfig()
       Task { await sendProductsBack(from: config) }
 
       triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
@@ -114,7 +111,7 @@ class ConfigManager {
         )
       }
 
-      if Superwall.options.paywalls.shouldPreload {
+      if Superwall.shared.options.paywalls.shouldPreload {
         Task { await preloadAllPaywalls() }
       }
     } catch {
@@ -143,10 +140,11 @@ class ConfigManager {
 
   /// Gets the paywall response from the static config, if the device locale starts with "en" and no more specific version can be found.
   func getStaticPaywall(withId paywallId: String?) -> Paywall? {
+    let deviceInfo = factory.makeDeviceInfo()
     return ConfigLogic.getStaticPaywall(
       withId: paywallId,
       config: config,
-      deviceLocale: deviceHelper.locale
+      deviceLocale: deviceInfo.locale
     )
   }
 
@@ -191,7 +189,7 @@ class ConfigManager {
   ///
   /// A developer can disable preloading of paywalls by setting ``SuperwallOptions/shouldPreloadPaywalls``.
   private func preloadPaywalls() async {
-    guard Superwall.options.paywalls.shouldPreload else {
+    guard Superwall.shared.options.paywalls.shouldPreload else {
       return
     }
     await preloadAllPaywalls()
@@ -225,11 +223,12 @@ class ConfigManager {
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) {
     for identifier in paywallIdentifiers {
       Task {
-        let request = factory.makePaywallRequest(withId: identifier)
-        _ = try? await paywallManager.getPaywallViewController(
-          from: request,
-          cached: true
+        let request = factory.makePaywallRequest(
+          eventData: nil,
+          responseIdentifiers: .init(paywallId: identifier),
+          overrides: nil
         )
+        _ = try? await paywallManager.getPaywallViewController(from: request)
       }
     }
   }
@@ -239,11 +238,12 @@ class ConfigManager {
     guard config.featureFlags.enablePostback else {
       return
     }
-    let oneSecond = UInt64(1_000_000_000)
-    let nanosecondDelay = UInt64(config.postback.postbackDelay) * oneSecond
+    let milliseconds = 1000
+    let nanoseconds = UInt64(milliseconds * 1_000_000)
+    let duration = UInt64(config.postback.postbackDelay) * nanoseconds
 
     do {
-      try await Task.sleep(nanoseconds: nanosecondDelay)
+      try await Task.sleep(nanoseconds: duration)
 
       let productIds = config.postback.productsToPostBack.map { $0.identifier }
       let products = try await storeKitManager.getProducts(withIds: productIds)

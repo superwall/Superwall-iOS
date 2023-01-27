@@ -37,7 +37,7 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggers = [eventName: trigger]
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let variant = variantOption.toVariant()
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
@@ -45,11 +45,10 @@ class AssignmentLogicTests: XCTestCase {
     let storage = StorageMock()
 
     // MARK: When
-    let assignmentLogic = AssignmentLogic(
+    let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
     let outcome = assignmentLogic.evaluateRules(
       forEvent: eventData,
@@ -101,17 +100,16 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggers = [eventName: trigger]
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let variant = variantOption.toVariant()
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
     let storage = StorageMock()
-    let assignmentLogic = AssignmentLogic(
+    let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
 
     // MARK: When
@@ -166,14 +164,13 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggers = [eventName: trigger]
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let variant = variantOption.toVariant()
     let storage = StorageMock(confirmedAssignments: [rawExperiment.id: variant])
-    let assignmentLogic = AssignmentLogic(
+    let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
 
     // MARK: When
@@ -224,7 +221,7 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggers = [eventName: trigger]
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let variant = variantOption.toVariant()
     let variant2 = variantOption
       .setting(\.paywallId, to: "123")
@@ -233,11 +230,10 @@ class AssignmentLogicTests: XCTestCase {
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant2
     ]
-    let assignmentLogic = AssignmentLogic(
+    let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
 
     // MARK: When
@@ -288,17 +284,16 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggers = [eventName: trigger]
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let storage = StorageMock()
     let variant = variantOption.toVariant()
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
-    let assignmentLogic = AssignmentLogic(
+    let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
 
     // MARK: When
@@ -344,17 +339,16 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggers = [eventName: trigger]
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let storage = StorageMock()
     let variant = variantOption.toVariant()
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
-    let assignmentLogic = AssignmentLogic(
+    let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      identityManager: dependencyContainer.identityManager,
-      deviceHelper: dependencyContainer.deviceHelper
+      factory: dependencyContainer
     )
 
     // MARK: When

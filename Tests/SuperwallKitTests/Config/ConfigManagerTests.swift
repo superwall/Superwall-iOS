@@ -20,10 +20,11 @@ final class ConfigManagerTests: XCTestCase {
       experimentId: experimentId,
       variant: variant
     )
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
@@ -32,8 +33,9 @@ final class ConfigManagerTests: XCTestCase {
     )
     configManager.confirmAssignment(assignment)
 
-    let twoHundredMilliseconds = UInt64(200_000_000)
-    try? await Task.sleep(nanoseconds: twoHundredMilliseconds)
+    let milliseconds = 200
+    let nanoseconds = UInt64(milliseconds * 1_000_000)
+    try? await Task.sleep(nanoseconds: nanoseconds)
 
     XCTAssertTrue(network.assignmentsConfirmed)
     XCTAssertEqual(storage.getConfirmedAssignments()[experimentId], variant)
@@ -43,17 +45,17 @@ final class ConfigManagerTests: XCTestCase {
   // MARK: - Load Assignments
 
   func test_loadAssignments_noConfig() async {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
-    configManager.config = nil
 
     await configManager.getAssignments()
 
@@ -62,10 +64,11 @@ final class ConfigManagerTests: XCTestCase {
   }
 
   func test_loadAssignments_noTriggers() async {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
@@ -82,17 +85,17 @@ final class ConfigManagerTests: XCTestCase {
   }
 
   func test_loadAssignments_saveAssignmentsFromServer() async {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
-    configManager.postInit(deviceHelper: dependencyContainer.deviceHelper)
 
     let variantId = "variantId"
     let experimentId = "experimentId"

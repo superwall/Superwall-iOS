@@ -27,7 +27,7 @@ public enum SuperwallEvent {
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case appInstall
 
-  /// When the app is opened at least an hour since last  ``SuperwallEvent/appClose``.
+  /// When the app is opened at least an hour since last  ``appClose``.
   ///
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case sessionStart

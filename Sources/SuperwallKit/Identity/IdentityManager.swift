@@ -124,7 +124,7 @@ class IdentityManager {
       throw LogoutError.notLoggedIn
     }
 
-    await Superwall.reset()
+    await Superwall.shared.reset()
   }
 
   /// Clears all stored user-specific variables.

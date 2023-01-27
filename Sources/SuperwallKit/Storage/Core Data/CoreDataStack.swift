@@ -34,15 +34,20 @@ class CoreDataStack {
     return model
   }()
 
-  lazy var persistentContainer: NSPersistentContainer = {
-    let container = NSPersistentContainer(
+  var persistentContainer: NSPersistentContainer
+  let backgroundContext: NSManagedObjectContext
+  let mainContext: NSManagedObjectContext
+
+  init() {
+    // First load persistent container
+    let persistentContainer = NSPersistentContainer(
       name: Self.modelName,
       managedObjectModel: Self.managedObject
     )
 
     let dispatchGroup = DispatchGroup()
     dispatchGroup.enter()
-    container.loadPersistentStores { _, error in
+    persistentContainer.loadPersistentStores { _, error in
       if let error = error as NSError? {
         Logger.debug(
           logLevel: .error,
@@ -55,20 +60,17 @@ class CoreDataStack {
       dispatchGroup.leave()
     }
     dispatchGroup.wait()
-    return container
-  }()
+    self.persistentContainer = persistentContainer
 
-  lazy var backgroundContext: NSManagedObjectContext = {
-    let context = persistentContainer.newBackgroundContext()
-    context.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
-    return context
-  }()
+    // Then load background and main context
+    let backgroundContext = persistentContainer.newBackgroundContext()
+    backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
+    self.backgroundContext = backgroundContext
 
-  lazy var mainContext: NSManagedObjectContext = {
     let mainContext = persistentContainer.viewContext
     mainContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
-    return mainContext
-  }()
+    self.mainContext = mainContext
+  }
 
   func saveContext(
     _ context: NSManagedObjectContext,

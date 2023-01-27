@@ -28,7 +28,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
       }
     }
     .store(in: &cancellables)
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
@@ -106,7 +106,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,

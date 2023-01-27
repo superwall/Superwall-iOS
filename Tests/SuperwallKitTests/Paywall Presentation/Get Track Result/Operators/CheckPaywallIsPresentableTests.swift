@@ -16,10 +16,10 @@ final class CheckPaywallIsPresentableTests: XCTestCase {
   func test_checkPaywallIsPresentable_userIsSubscribed() async {
     let expectation = expectation(description: "Did throw")
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let paywallVcPipelineOutput = await PaywallVcPipelineOutput(
       request: .stub()
-        .setting(\.injections.isUserSubscribed, to: true),
+        .setting(\.flags.isUserSubscribed, to: true),
       triggerResult: .paywall(.stub()),
       debugInfo: [:],
       paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
@@ -56,11 +56,11 @@ final class CheckPaywallIsPresentableTests: XCTestCase {
   func test_checkPaywallIsPresentable_userNotSubscribed() async {
     let expectation = expectation(description: "Did throw")
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let triggerResult: TriggerResult = .paywall(.stub())
     let paywallVcPipelineOutput = await PaywallVcPipelineOutput(
       request: .stub()
-        .setting(\.injections.isUserSubscribed, to: false),
+        .setting(\.flags.isUserSubscribed, to: false),
       triggerResult: triggerResult,
       debugInfo: [:],
       paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),

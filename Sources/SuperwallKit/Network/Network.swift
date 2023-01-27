@@ -84,10 +84,7 @@ class Network {
 
   func getPaywalls() async throws -> [Paywall] {
     do {
-      let response = try await urlSession.request(
-        .paywalls(factory: factory),
-        isForDebugging: true
-      )
+      let response = try await urlSession.request(.paywalls(factory: factory))
       return response.paywalls
     } catch {
       Logger.debug(
@@ -101,7 +98,6 @@ class Network {
   }
 
   func getConfig(
-    withRequestId requestId: String,
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
   ) async throws -> Config {
     // Suspend until app is in foreground.
@@ -114,6 +110,7 @@ class Network {
       .async()
 
     do {
+      let requestId = UUID().uuidString
       var config = try await urlSession.request(.config(requestId: requestId, factory: factory))
       config.requestId = requestId
       return config

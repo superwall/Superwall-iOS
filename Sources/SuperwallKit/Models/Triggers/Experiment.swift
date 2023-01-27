@@ -17,18 +17,44 @@ import Foundation
 /// they are in a holdout group.
 ///
 /// To learn more, read <doc:Ecosystem>.
-public struct Experiment: Equatable, Hashable, Codable, Sendable {
+@objc(SWKExperiment)
+@objcMembers
+public final class Experiment: NSObject, Codable, Sendable {
   public typealias ID = String
 
-  public struct Variant: Equatable, Hashable, Codable, Sendable {
-    public enum VariantType: String, Codable, Hashable, Sendable {
-      case treatment = "TREATMENT"
-      case holdout = "HOLDOUT"
+  @objc(SWKVariant)
+  public final class Variant: NSObject, Codable, Sendable {
+    @objc(SWKVariantType)
+    public enum VariantType: Int, Codable, Hashable, Sendable {
+      case treatment
+      case holdout
+
+      enum InternalVariantType: String, Codable {
+        case treatment = "TREATMENT"
+        case holdout = "HOLDOUT"
+      }
+
+      public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+
+        switch self {
+        case .treatment:
+          try container.encode(InternalVariantType.treatment.rawValue)
+        case .holdout:
+          try container.encode(InternalVariantType.holdout.rawValue)
+        }
+      }
 
       public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        let rawValue = try container.decode(RawValue.self)
-        self = VariantType(rawValue: rawValue) ?? .treatment
+        let rawValue = try container.decode(String.self)
+        let internalVariantType = InternalVariantType(rawValue: rawValue) ?? .treatment
+        switch internalVariantType {
+        case .treatment:
+          self = .treatment
+        case .holdout:
+          self = .holdout
+        }
       }
     }
 
@@ -40,6 +66,21 @@ public struct Experiment: Equatable, Hashable, Codable, Sendable {
 
     /// The identifier of the paywall variant. Only valid when the variant `type` is `treatment`.
     public let paywallId: String?
+
+    init(id: String, type: VariantType, paywallId: String?) {
+      self.id = id
+      self.type = type
+      self.paywallId = paywallId
+    }
+
+    public override func isEqual(_ object: Any?) -> Bool {
+      guard let object = object as? Variant else {
+        return false
+      }
+      return id == object.id
+      && type == object.type
+      && paywallId == object.paywallId
+    }
   }
   /// The id of the experiment.
   public let id: Experiment.ID
@@ -101,6 +142,7 @@ public struct Experiment: Equatable, Hashable, Codable, Sendable {
       variant: Variant(id: "", type: .treatment, paywallId: id)
     )
   }
+
 }
 
 // MARK: - Stubbable

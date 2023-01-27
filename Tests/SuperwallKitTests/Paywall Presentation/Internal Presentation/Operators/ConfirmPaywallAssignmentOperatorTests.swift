@@ -14,17 +14,18 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
 
   @MainActor
   func test_confirmPaywallAssignment_debuggerLaunched() async {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
+    dependencyContainer.configManager = configManager
     let request = PresentationRequest.stub()
-      .setting(\.injections.isDebuggerLaunched, to: true)
-      .setting(\.injections.configManager, to: configManager)
+      .setting(\.flags.isDebuggerLaunched, to: true)
 
     let input = PresentablePipelineOutput(
       request: request,
@@ -54,17 +55,19 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
 
   @MainActor
   func test_confirmPaywallAssignment_noAssignment() async {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
+    dependencyContainer.configManager = configManager
+    
     let request = PresentationRequest.stub()
-      .setting(\.injections.isDebuggerLaunched, to: false)
-      .setting(\.injections.configManager, to: configManager)
+      .setting(\.flags.isDebuggerLaunched, to: false)
 
     let input = PresentablePipelineOutput(
       request: request,
@@ -94,17 +97,22 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
 
   @MainActor
   func test_confirmPaywallAssignment_confirmAssignment() async {
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
+      options: nil,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
-    let request = PresentationRequest.stub()
-      .setting(\.injections.isDebuggerLaunched, to: false)
-      .setting(\.injections.configManager, to: configManager)
+    dependencyContainer.configManager = configManager
+
+    let request = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      isDebuggerLaunched: false,
+      isPaywallPresented: false
+    )
 
     let input = PresentablePipelineOutput(
       request: request,

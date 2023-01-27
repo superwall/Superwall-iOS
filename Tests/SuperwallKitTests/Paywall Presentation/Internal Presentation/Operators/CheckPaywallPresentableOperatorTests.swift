@@ -34,9 +34,9 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       }
     }
     .store(in: &cancellables)
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let request = PresentationRequest.stub()
-      .setting(\.injections.isUserSubscribed, to: true)
+      .setting(\.flags.isUserSubscribed, to: true)
 
     let input = PaywallVcPipelineOutput(
       request: request,
@@ -100,16 +100,17 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let dependencyContainer = DependencyContainer(apiKey: "abc")
+    Superwall.shared.presentationItems.window = UIWindow()
+
+    let dependencyContainer = DependencyContainer()
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
       isUserSubscribed: false,
       isPaywallPresented: false
     )
-      .setting(\.presentingViewController, to: nil)
-      .setting(\.injections.superwall.presentationItems.window, to: UIWindow())
-
+    .setting(\.presentingViewController, to: nil)
+    
     let input = PaywallVcPipelineOutput(
       request: request,
       triggerResult: .paywall(experiment),
@@ -161,9 +162,9 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
 
     let request = PresentationRequest.stub()
       .setting(\.presentingViewController, to: UIViewController())
-      .setting(\.injections.isUserSubscribed, to: false)
+      .setting(\.flags.isUserSubscribed, to: false)
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let input = PaywallVcPipelineOutput(
       request: request,
       triggerResult: .paywall(experiment),

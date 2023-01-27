@@ -14,7 +14,7 @@ final class SuperwallService {
   #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
   private static let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
   static var name: String {
-    return Superwall.userAttributes["firstName"] as? String ?? ""
+    return Superwall.shared.userAttributes["firstName"] as? String ?? ""
   }
 
   static func configure() {
@@ -34,7 +34,7 @@ final class SuperwallService {
 
   static func logIn() async {
     do {
-      try await Superwall.logIn(userId: "abc")
+      try await Superwall.shared.logIn(userId: "abc")
     } catch let error as IdentityError {
       switch error {
       case .alreadyLoggedIn:
@@ -49,7 +49,7 @@ final class SuperwallService {
 
   static func logOut() async {
     do {
-      try await Superwall.logOut()
+      try await Superwall.shared.logOut()
     } catch let error as LogoutError {
       switch error {
       case .notLoggedIn:
@@ -61,11 +61,11 @@ final class SuperwallService {
   }
 
   static func handleDeepLink(_ url: URL) {
-    Superwall.handleDeepLink(url)
+    Superwall.shared.handleDeepLink(url)
   }
 
   static func setName(to name: String) {
-    Superwall.setUserAttributes(["firstName": name])
+    Superwall.shared.setUserAttributes(["firstName": name])
   }
 }
 

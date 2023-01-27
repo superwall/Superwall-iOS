@@ -16,7 +16,7 @@ final class TriggerSessionManagerTests: XCTestCase {
   var dependencyContainer: DependencyContainer!
 
   override func setUp() {
-    dependencyContainer = DependencyContainer(apiKey: "")
+    dependencyContainer = DependencyContainer()
     
     queue = MockSessionEventsQueue()
     sessionEventsDelegate = SessionEventsDelegateMock(
@@ -543,7 +543,6 @@ final class TriggerSessionManagerTests: XCTestCase {
     await queue.removeAllTriggerSessions()
 
     let triggerSessions21 = await queue.triggerSessions
-    print("Anything?", triggerSessions21)
 
     // When
     await sessionManager.trackProductsLoad(

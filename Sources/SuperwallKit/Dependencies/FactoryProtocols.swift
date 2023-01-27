@@ -7,21 +7,29 @@
 
 import UIKit
 
-protocol ViewControllerFactory {
+protocol ViewControllerFactory: AnyObject {
   @MainActor
   func makePaywallViewController(for paywall: Paywall) -> PaywallViewController
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
 }
 
-protocol VariablesFactory {
+protocol CacheFactory: AnyObject {
+  func makeCache() -> PaywallCache
+}
+
+protocol VariablesFactory: AnyObject {
   func makeJsonVariables(
     productVariables: [ProductVariable]?,
     params: JSON?
   ) -> JSON
 }
 
-protocol RequestFactory {
-  func makePaywallRequest(withId paywallId: String) -> PaywallRequest
+protocol RequestFactory: AnyObject {
+  func makePaywallRequest(
+    eventData: EventData?,
+    responseIdentifiers: ResponseIdentifiers,
+    overrides: PaywallRequest.Overrides?
+  ) -> PaywallRequest
 
   func makePresentationRequest(
     _ presentationInfo: PresentationInfo,
@@ -33,36 +41,45 @@ protocol RequestFactory {
   ) -> PresentationRequest
 }
 
-protocol TriggerSessionManagerFactory {
+protocol RuleAttributesFactory: AnyObject {
+  func makeRuleAttributes() -> RuleAttributes
+}
+
+protocol TriggerSessionManagerFactory: AnyObject {
   func makeTriggerSessionManager() -> TriggerSessionManager
 }
 
-protocol StoreKitCoordinatorFactory {
+protocol StoreKitCoordinatorFactory: AnyObject {
   func makeStoreKitCoordinator() -> StoreKitCoordinator
 }
 
-protocol ApiFactory {
-  // swiftlint:disable implicitly_unwrapped_optional
+protocol IdentityInfoFactory: AnyObject {
+  func makeIdentityInfo() -> IdentityInfo
+}
+
+protocol DeviceInfoFactory: AnyObject {
+  func makeDeviceInfo() -> DeviceInfo
+}
+
+protocol ApiFactory: AnyObject {
   // TODO: Think of an alternative way such that we don't need to do this:
-  var api: Api! { get }
-  var storage: Storage! { get }
-  var deviceHelper: DeviceHelper! { get }
-  var configManager: ConfigManager! { get }
-  var identityManager: IdentityManager! { get }
-  // swiftlint:enable implicitly_unwrapped_optional
+  var api: Api { get }
+  var storage: Storage { get }
+  var deviceHelper: DeviceHelper { get }
+  var configManager: ConfigManager { get }
+  var identityManager: IdentityManager { get }
 
   func makeHeaders(
     fromRequest request: URLRequest,
-    requestId: String,
-    forDebugging isForDebugging: Bool
+    requestId: String
   ) -> [String: String]
 }
 
-protocol ProductPurchaserFactory {
+protocol ProductPurchaserFactory: AnyObject {
   func makeSK1ProductPurchaser() -> ProductPurchaserSK1
 }
 
-protocol StoreTransactionFactory {
+protocol StoreTransactionFactory: AnyObject {
   func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction
 
   @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)

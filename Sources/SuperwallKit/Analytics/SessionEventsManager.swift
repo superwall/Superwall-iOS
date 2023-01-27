@@ -9,9 +9,7 @@ import UIKit
 import Combine
 
 protocol SessionEventsDelegate: AnyObject {
-  // swiftlint:disable implicitly_unwrapped_optional
-  var triggerSession: TriggerSessionManager! { get }
-  // swiftlint:enable implicitly_unwrapped_optional
+  var triggerSession: TriggerSessionManager { get }
 
   func enqueue(_ triggerSession: TriggerSession) async
   func enqueue(_ triggerSessions: [TriggerSession]) async
@@ -19,10 +17,8 @@ protocol SessionEventsDelegate: AnyObject {
 }
 
 class SessionEventsManager {
-  // swiftlint:disable implicitly_unwrapped_optional
   /// The trigger session manager.
-  var triggerSession: TriggerSessionManager!
-  // swiftlint:enable implicitly_unwrapped_optional
+  lazy var triggerSession = factory.makeTriggerSessionManager()
 
   /// A queue of trigger session events that get sent to the server.
   private let queue: SessionEnqueuable
@@ -32,9 +28,8 @@ class SessionEventsManager {
   private unowned let network: Network
   private unowned let storage: Storage
   private unowned let configManager: ConfigManager
-  private let factory: TriggerSessionManagerFactory
+  private unowned let factory: TriggerSessionManagerFactory
 
-  /// Remember to call postInit
   init(
     queue: SessionEnqueuable,
     storage: Storage,
@@ -51,10 +46,6 @@ class SessionEventsManager {
     Task {
       await postCachedSessionEvents()
     }
-  }
-
-  func postInit() {
-    self.triggerSession = factory.makeTriggerSessionManager()
   }
 
   /// Gets the last 20 cached trigger sessions and transactions from the last time the app was terminated,

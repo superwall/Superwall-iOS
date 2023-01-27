@@ -40,7 +40,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let paywallManager = PaywallManagerMock(
       factory: dependencyContainer,
       paywallRequestManager: dependencyContainer.paywallRequestManager
@@ -48,8 +48,8 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     paywallManager.getPaywallError = PresentationPipelineError.cancelled
 
     let request = PresentationRequest.stub()
-      .setting(\.injections.paywallManager, to: paywallManager)
-      .setting(\.injections.isUserSubscribed, to: true)
+      .setting(\.dependencyContainer.paywallManager, to: paywallManager)
+      .setting(\.flags.isUserSubscribed, to: true)
 
     let input = TriggerResultResponsePipelineOutput(
       request: request,
@@ -113,7 +113,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let paywallManager = PaywallManagerMock(
       factory: dependencyContainer,
       paywallRequestManager: dependencyContainer.paywallRequestManager
@@ -121,8 +121,8 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     paywallManager.getPaywallError = PresentationPipelineError.cancelled
 
     let request = PresentationRequest.stub()
-      .setting(\.injections.paywallManager, to: paywallManager)
-      .setting(\.injections.isUserSubscribed, to: false)
+      .setting(\.dependencyContainer.paywallManager, to: paywallManager)
+      .setting(\.flags.isUserSubscribed, to: false)
 
     let input = TriggerResultResponsePipelineOutput(
       request: request,
@@ -186,7 +186,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let paywallManager = PaywallManagerMock(
       factory: dependencyContainer,
       paywallRequestManager: dependencyContainer.paywallRequestManager
@@ -194,8 +194,8 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(for: .stub())
 
     let request = PresentationRequest.stub()
-      .setting(\.injections.paywallManager, to: paywallManager)
-      .setting(\.injections.isPaywallPresented, to: true)
+      .setting(\.dependencyContainer.paywallManager, to: paywallManager)
+      .setting(\.flags.isPaywallPresented, to: true)
 
     let input = TriggerResultResponsePipelineOutput(
       request: request,
@@ -244,7 +244,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let dependencyContainer = DependencyContainer(apiKey: "")
+    let dependencyContainer = DependencyContainer()
     let paywallManager = PaywallManagerMock(
       factory: dependencyContainer,
       paywallRequestManager: dependencyContainer.paywallRequestManager
@@ -252,8 +252,8 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(for: .stub())
 
     let request = PresentationRequest.stub()
-      .setting(\.injections.paywallManager, to: paywallManager)
-      .setting(\.injections.isPaywallPresented, to: false)
+      .setting(\.dependencyContainer.paywallManager, to: paywallManager)
+      .setting(\.flags.isPaywallPresented, to: false)
 
     let input = TriggerResultResponsePipelineOutput(
       request: request,
