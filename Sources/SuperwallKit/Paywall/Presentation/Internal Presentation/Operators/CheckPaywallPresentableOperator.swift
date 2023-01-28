@@ -83,7 +83,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
       }
 
       let sessionEventsManager = input.request.dependencyContainer.sessionEventsManager
-      await sessionEventsManager.triggerSession.activateSession(
+      await sessionEventsManager?.triggerSession.activateSession(
         for: input.request.presentationInfo,
         on: input.request.presentingViewController,
         paywall: input.paywallViewController.paywall,

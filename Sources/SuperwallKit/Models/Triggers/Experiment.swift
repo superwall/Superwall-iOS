@@ -142,7 +142,6 @@ public final class Experiment: NSObject, Codable, Sendable {
       variant: Variant(id: "", type: .treatment, paywallId: id)
     )
   }
-
 }
 
 // MARK: - Stubbable

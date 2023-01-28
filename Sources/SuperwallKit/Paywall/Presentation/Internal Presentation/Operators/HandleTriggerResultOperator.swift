@@ -40,7 +40,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
         )
       case .holdout(let experiment):
         let sessionEventsManager = input.request.dependencyContainer.sessionEventsManager
-        await sessionEventsManager.triggerSession.activateSession(
+        await sessionEventsManager?.triggerSession.activateSession(
           for: input.request.presentationInfo,
           on: input.request.presentingViewController,
           triggerResult: input.triggerResult
@@ -54,7 +54,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
         paywallStatePublisher.send(.skipped(.holdout(experiment)))
       case .noRuleMatch:
         let sessionEventsManager = input.request.dependencyContainer.sessionEventsManager
-        await sessionEventsManager.triggerSession.activateSession(
+        await sessionEventsManager?.triggerSession.activateSession(
           for: input.request.presentationInfo,
           on: input.request.presentingViewController,
           triggerResult: input.triggerResult
