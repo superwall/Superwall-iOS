@@ -32,9 +32,9 @@ actor EventsQueue {
   ) {
     self.network = network
     self.configManager = configManager
-    Task {
-      await setupTimer()
-      await addObserver()
+    Task { [weak self] in
+      await self?.setupTimer()
+      await self?.addObserver()
     }
   }
 

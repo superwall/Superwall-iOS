@@ -31,7 +31,7 @@ class StoreKitManagerTests: XCTestCase {
 
   func test_getProducts_primaryProduct() async {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.storeKitManager
+    let manager = dependencyContainer.storeKitManager!
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = PaywallProducts(
@@ -50,7 +50,7 @@ class StoreKitManagerTests: XCTestCase {
 
   func test_getProducts_primaryAndTertiaryProduct() async {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.storeKitManager
+    let manager = dependencyContainer.storeKitManager!
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let tertiary = MockSkProduct(productIdentifier: "def")
@@ -75,7 +75,7 @@ class StoreKitManagerTests: XCTestCase {
 
   func test_getProducts_primarySecondaryTertiaryProduct() async {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.storeKitManager
+    let manager = dependencyContainer.storeKitManager!
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let secondary = MockSkProduct(productIdentifier: "def")

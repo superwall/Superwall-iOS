@@ -63,11 +63,13 @@ protocol DeviceInfoFactory: AnyObject {
 
 protocol ApiFactory: AnyObject {
   // TODO: Think of an alternative way such that we don't need to do this:
-  var api: Api { get }
-  var storage: Storage { get }
-  var deviceHelper: DeviceHelper { get }
-  var configManager: ConfigManager { get }
-  var identityManager: IdentityManager { get }
+  // swiftlint:disable implicitly_unwrapped_optional
+  var api: Api! { get }
+  var storage: Storage! { get }
+  var deviceHelper: DeviceHelper! { get }
+  var configManager: ConfigManager! { get }
+  var identityManager: IdentityManager! { get }
+  // swiftlint:enable implicitly_unwrapped_optional
 
   func makeHeaders(
     fromRequest request: URLRequest,
