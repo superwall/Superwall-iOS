@@ -23,6 +23,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
+    try? await Task.sleep(nanoseconds: 10_000_000)
     dependencyContainer.configManager = configManager
     let request = PresentationRequest.stub()
       .setting(\.flags.isDebuggerLaunched, to: true)
@@ -64,6 +65,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
+    try? await Task.sleep(nanoseconds: 10_000_000)
     dependencyContainer.configManager = configManager
     
     let request = PresentationRequest.stub()
@@ -106,6 +108,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
+    try? await Task.sleep(nanoseconds: 10_000_000)
     dependencyContainer.configManager = configManager
 
     let request = dependencyContainer.makePresentationRequest(

@@ -23,6 +23,9 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
+
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
     dependencyContainer.configManager = configManager
 
     let request = dependencyContainer.makePresentationRequest(
@@ -65,6 +68,9 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
+
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
     dependencyContainer.configManager = configManager
 
     let request = dependencyContainer.makePresentationRequest(
@@ -109,7 +115,10 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
     dependencyContainer.configManager = configManager
+
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
