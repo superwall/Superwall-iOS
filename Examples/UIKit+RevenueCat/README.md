@@ -33,7 +33,7 @@ Otherwise, you can download it from [https://github.com/realm/SwiftLint](https:/
 
 ## Getting Started
 
-Clone or download SuperwallKit from the [project home page](https://github.com/superwall-me/paywall-ios). Then, open **Superwall-UIKit+RevenueCat.xcodeproj** in Xcode and take a look at the code inside the [Superwall-UIKit+RevenueCat](Superwall-UIKit+RevenueCat) folder.
+Clone or download SuperwallKit from the [project home page](https://github.com/superwall-me/Superwall-iOS). Then, open **Superwall-UIKit+RevenueCat.xcodeproj** in Xcode and take a look at the code inside the [Superwall-UIKit+RevenueCat](Superwall-UIKit+RevenueCat) folder.
 
 You'll see a helper file called [PaywallManager.swift](Superwall-UIKit+RevenueCat/PaywallManager.swift) which handles both SuperwallKit and RevenueCat. This includes configuration, delegation, purchasing, restoring and updating and maintaining the user's subscription status.
 

@@ -1,6 +1,6 @@
 # CHANGELOG
 
-The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/SuperwallKit-iOS/releases) on GitHub.
+The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
 ## 3.0.0-beta.3
 ### Fixes

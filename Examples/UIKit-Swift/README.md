@@ -30,7 +30,7 @@ Otherwise, you can download it from [https://github.com/realm/SwiftLint](https:/
 
 ## Getting Started
 
-Clone or download SuperwallKit from the [project home page](https://github.com/superwall-me/paywall-ios). Then, open **Superwall-UIKit-Swift.xcodeproj** in Xcode and take a look at the code inside the [Superwall-UIKit-Swift]() folder.
+Clone or download SuperwallKit from the [project home page](https://github.com/superwall-me/Superwall-iOS). Then, open **Superwall-UIKit-Swift.xcodeproj** in Xcode and take a look at the code inside the [Superwall-UIKit-Swift]() folder.
 
 Inside the [Services](Superwall-UIKit-Swift/Services) folder, you'll see some helper classes. [SuperwallService.swift](Superwall-UIKit-Swift/Services/SuperwallService.swift) handles the setup and delegate methods of the SDK, and [StoreKitService.swift](Superwall-UIKit-Swift/Services/StoreKitService.swift) handles the purchasing of in-app subscriptions.
 
