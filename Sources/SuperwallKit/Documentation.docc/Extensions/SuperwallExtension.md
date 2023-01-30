@@ -74,7 +74,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``SuperwallDelegate/handleLog(level:scope:message:info:error:)-9kmai``
 - ``LogLevel``
 - ``LogScope``
-- ``SuperwallOptions/Logging-swift.struct``
+- ``SuperwallOptions/Logging-swift.class``
 
 ### Customization
 

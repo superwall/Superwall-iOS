@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-beta.4
+
+### Enhancements
+
+- Adds `hasActiveSubscriptionDidChange(to:)` delegate function. If you're letting Superwall handle subscription logic you can use this to receive a callback whenever the user's internal subscription status changes. Otherwise, you can listen to the published `hasActiveSubscription` variable.
+
 ## 3.0.0-beta.3
 ### Fixes
 

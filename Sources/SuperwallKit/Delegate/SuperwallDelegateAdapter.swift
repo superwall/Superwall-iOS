@@ -101,6 +101,14 @@ final class SuperwallDelegateAdapter {
     }
   }
 
+  func hasActiveSubscriptionDidChange(to newValue: Bool) {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.hasActiveSubscriptionDidChange(to: newValue)
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.hasActiveSubscriptionDidChange?(to: newValue)
+    }
+  }
+
   @MainActor
   func handleLog(
     level: String,

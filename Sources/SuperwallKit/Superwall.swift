@@ -95,12 +95,20 @@ public final class Superwall: NSObject, ObservableObject {
   /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
   /// notified whenever the user's subscription status changes.
   ///
+  /// Otherwise, you can check the delegate function
+  /// ``SuperwallDelegate/hasActiveSubscriptionDidChange(to:)-1rmfo``
+  /// to receive a callback with the new value every time it changes.
+  ///
   /// If you are returning a ``SubscriptionController`` in the
   /// ``SuperwallDelegate``, you should rely on your own subscription status instead.
   @Published
   public var hasActiveSubscription = false {
     didSet {
       dependencyContainer.storage.save(hasActiveSubscription, forType: SubscriptionStatus.self)
+      if oldValue == hasActiveSubscription {
+        return
+      }
+      dependencyContainer.delegateAdapter.hasActiveSubscriptionDidChange(to: hasActiveSubscription)
     }
   }
 
