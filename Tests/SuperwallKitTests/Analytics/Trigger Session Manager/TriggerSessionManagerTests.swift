@@ -817,11 +817,11 @@ final class TriggerSessionManagerTests: XCTestCase {
     await NotificationCenter.default.post(Notification(name: UIApplication.didEnterBackgroundNotification))
 
     // Then
-    try? await Task.sleep(nanoseconds: 100_000_000)
+    try? await Task.sleep(nanoseconds: 500_000_000)
 
     let triggerSessions2 = await queue.triggerSessions
     
-    try? await Task.sleep(nanoseconds: 100_000_000)
+    try? await Task.sleep(nanoseconds: 500_000_000)
     XCTAssertEqual(triggerSessions2.count, 1)
     XCTAssertEqual(triggerSessions2.last?.id, lastTriggerSession.id)
     XCTAssertNotNil(triggerSessions2.last!.endAt)

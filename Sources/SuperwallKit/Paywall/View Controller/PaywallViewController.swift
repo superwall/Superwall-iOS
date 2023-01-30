@@ -233,9 +233,12 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
         state: .closed
       ),
       shouldSendDismissedState: false
-    ) {
+    ) { [weak self] in
+      guard let self = self else {
+        return
+      }
       Task {
-        await Superwall.shared.presentAgain()
+        await Superwall.shared.presentAgain(identifier: self.paywall.identifier)
       }
     }
   }

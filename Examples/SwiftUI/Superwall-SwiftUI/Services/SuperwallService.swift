@@ -25,12 +25,13 @@ final class SuperwallService {
     // further down:
 
     // Task {
-    // await StoreKitService.shared.loadSubscriptionState()*/
-      Superwall.configure(
-        apiKey: apiKey,
-        delegate: shared
-      )
+    //   await StoreKitService.shared.loadSubscriptionState()
     // }
+
+    Superwall.configure(
+      apiKey: apiKey,
+      delegate: shared
+    )
 
     // Getting our logged in status to Superwall.
     shared.isLoggedIn.send(Superwall.shared.isLoggedIn)

@@ -24,12 +24,13 @@ final class SuperwallService {
     // further down:
 
     // Task {
-    // await StoreKitService.shared.loadSubscriptionState()*/
-      Superwall.configure(
-        apiKey: apiKey,
-        delegate: shared
-      )
+    //   await StoreKitService.shared.loadSubscriptionState()
     // }
+
+    Superwall.configure(
+      apiKey: apiKey,
+      delegate: shared
+    )
   }
 
   static func logIn() async {
@@ -156,6 +157,7 @@ extension SuperwallService: SuperwallDelegate {
   }
 }
 
+// MARK: - SubscriptionController
 extension SuperwallService: SubscriptionController {
   func purchase(product: SKProduct) async -> PurchaseResult {
     return await StoreKitService.shared.purchase(product)

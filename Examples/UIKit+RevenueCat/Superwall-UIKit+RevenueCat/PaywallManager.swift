@@ -45,15 +45,17 @@ final class PaywallManager: NSObject {
     // configuring Superwall to prevent session_start events from
     // incorrectly firing due to an incorrect subscription status.
     Purchases.shared.getCustomerInfo { customerInfo, _ in
-      if let customerInfo {
-        shared.updateSubscriptionStatus(using: customerInfo)
+      DispatchQueue.main.async {
+        if let customerInfo {
+          shared.updateSubscriptionStatus(using: customerInfo)
+        }
       }
-
-      Superwall.configure(
-        apiKey: superwallApiKey,
-        delegate: shared
-      )
     }
+
+    Superwall.configure(
+      apiKey: superwallApiKey,
+      delegate: shared
+    )
   }
 
   /// Logs the user in to both RevenueCat and Superwall with the specified `userId`.
