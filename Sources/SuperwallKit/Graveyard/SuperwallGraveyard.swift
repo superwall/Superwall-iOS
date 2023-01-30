@@ -10,7 +10,7 @@ import UIKit
 public extension Superwall {
   // MARK: - Unavailable methods
   // TODO: Fix deprecation here
-  /*@available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
+  /*@available(*, unavailable, renamed: "configure(apiKey:delegate:options:completion:)")
   @discardableResult
   @objc static func configure(
     apiKey: String,

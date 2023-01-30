@@ -3,13 +3,13 @@ import StoreKit
 import Combine
 
 /// The primary class for integrating Superwall into your application. After configuring via
-/// ``configure(apiKey:delegate:options:)-65jyx``, It provides access to
+/// ``configure(apiKey:delegate:options:completion:)-7fafw``, It provides access to
 /// all its featured via instance functions and variables.
 @objcMembers
 public final class Superwall: NSObject, ObservableObject {
   // MARK: - Public Properties
   /// The optional purchasing delegate of the Superwall instance. Set this in
-  /// ``configure(apiKey:delegate:options:)-65jyx``
+  /// ``configure(apiKey:delegate:options:completion:)-7fafw``
   /// when you want to manually handle the purchasing logic within your app.
   public var delegate: SuperwallDelegate? {
     get {
@@ -22,7 +22,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// The optional purchasing delegate of the Superwall instance. Set this in
-  /// ``configure(apiKey:delegate:options:)-65jyx``
+  /// ``configure(apiKey:delegate:options:completion:)-7fafw``
   /// when you want to manually handle the purchasing logic within your app.
   @available(swift, obsoleted: 1.0)
   @objc(delegate)
@@ -58,7 +58,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// A convenience variable to access and change the paywall options that you passed
-  /// to ``configure(apiKey:delegate:options:)-65jyx``.
+  /// to ``configure(apiKey:delegate:options:completion:)-7fafw``.
   public var options: SuperwallOptions {
     return dependencyContainer.configManager.options
   }
@@ -113,16 +113,19 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// A published property that is `true` when Superwall has finished configuring via
-  /// ``configure(apiKey:delegate:options:)-65jyx``.
+  /// ``configure(apiKey:delegate:options:completion:)-7fafw``.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
   /// notified when configuration has completed.
+  ///
+  /// Alternatively, you can use the completion handler from
+  /// ``configure(apiKey:delegate:options:completion:)-7fafw``.
   @Published
   public var isConfigured = false
 
   /// The configured shared instance of ``Superwall``.
   ///
-  /// - Warning: You must call ``configure(apiKey:delegate:options:)-65jyx``
+  /// - Warning: You must call ``configure(apiKey:delegate:options:completion:)-7fafw``
   /// to initialize ``Superwall`` before using this.
   @objc(sharedInstance)
   public static var shared: Superwall {
@@ -178,7 +181,8 @@ public final class Superwall: NSObject, ObservableObject {
     apiKey: String,
     swiftDelegate: SuperwallDelegate? = nil,
     objcDelegate: SuperwallDelegateObjc? = nil,
-    options: SuperwallOptions? = nil
+    options: SuperwallOptions? = nil,
+    completion: (() -> Void)?
   ) {
     let dependencyContainer = DependencyContainer(
       swiftDelegate: swiftDelegate,
@@ -201,6 +205,10 @@ public final class Superwall: NSObject, ObservableObject {
 
       await dependencyContainer.configManager.fetchConfiguration()
       await dependencyContainer.identityManager.configure()
+
+      await MainActor.run {
+        completion?()
+      }
     }
   }
 
@@ -231,12 +239,15 @@ public final class Superwall: NSObject, ObservableObject {
   ///   callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior
   ///   of the paywall.
+  ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
+  ///   Alternatively, you can subscribe to the published variable ``isConfigured``.
   /// - Returns: The newly configured ``Superwall`` instance.
   @discardableResult
   public static func configure(
     apiKey: String,
     delegate: SuperwallDelegate? = nil,
-    options: SuperwallOptions? = nil
+    options: SuperwallOptions? = nil,
+    completion: (() -> Void)? = nil
   ) -> Superwall {
     guard superwall == nil else {
       Logger.debug(
@@ -250,7 +261,8 @@ public final class Superwall: NSObject, ObservableObject {
       apiKey: apiKey,
       swiftDelegate: delegate,
       objcDelegate: nil,
-      options: options
+      options: options,
+      completion: completion
     )
     return shared
   }
@@ -262,13 +274,15 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
   ///   - delegate: An optional class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
+  ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
   /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
   @discardableResult
   @available(swift, obsoleted: 1.0)
   public static func configure(
     apiKey: String,
     delegate: SuperwallDelegateObjc? = nil,
-    options: SuperwallOptions? = nil
+    options: SuperwallOptions? = nil,
+    completion: (() -> Void)? = nil
   ) -> Superwall {
     guard superwall == nil else {
       Logger.debug(
@@ -282,7 +296,8 @@ public final class Superwall: NSObject, ObservableObject {
       apiKey: apiKey,
       swiftDelegate: nil,
       objcDelegate: delegate,
-      options: options
+      options: options,
+      completion: completion
     )
     return shared
   }

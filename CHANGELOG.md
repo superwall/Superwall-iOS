@@ -6,7 +6,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds `hasActiveSubscriptionDidChange(to:)` delegate function. If you're letting Superwall handle subscription logic you can use this to receive a callback whenever the user's internal subscription status changes. Otherwise, you can listen to the published `hasActiveSubscription` variable.
+- Adds `hasActiveSubscriptionDidChange(to:)` delegate function. If you're letting Superwall handle subscription logic you can use this to receive a callback whenever the user's internal subscription status changes. You can also listen to the published `hasActiveSubscription` variable.
+- Adds a completion handler to `Superwall.configure(...)` that lets you know when Superwall has finished configuring. You can also listen to the published `isConfigured` variable.
 
 ## 3.0.0-beta.3
 ### Fixes

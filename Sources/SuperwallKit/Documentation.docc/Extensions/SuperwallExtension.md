@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ``Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Superwall/configure(apiKey:delegate:options:)-65jyx`` to configure the SDK.
+The ``Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw`` to configure the SDK.
 
 ## Topics
 
@@ -11,8 +11,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - <doc:GettingStarted>
 - <doc:Ecosystem>
 - <doc:AdvancedConfiguration>
-- ``configure(apiKey:delegate:options:)-65jyx``
-- ``configure(apiKey:delegate:options:)-48l7e``
+- ``configure(apiKey:delegate:options:completion:)-7fafw``
+- ``configure(apiKey:delegate:options:completion:)-ogg1``
 - ``shared``
 - ``SuperwallDelegate``
 - ``SuperwallDelegateObjc``

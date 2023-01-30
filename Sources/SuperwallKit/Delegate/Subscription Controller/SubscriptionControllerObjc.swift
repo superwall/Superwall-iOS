@@ -14,7 +14,7 @@ import StoreKit
 ///
 /// However, if you'd like more control, you can return a ``SubscriptionControllerObjc`` in
 /// the delegate when configuring the SDK via
-/// ``Superwall/configure(apiKey:delegate:options:)-48l7e``.
+/// ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw``.
 ///
 /// To learn how to implement the ``SubscriptionControllerObjc`` in your app
 /// and best practices, see <doc:GettingStarted>.

@@ -13,7 +13,8 @@ import Foundation
 public final class PaywallOptions: NSObject {
   /// Determines whether the paywall should use haptic feedback. Defaults to true.
   ///
-  /// Haptic feedback occurs when a user purchases or restores a product, opens a URL from the paywall, or closes the paywall.
+  /// Haptic feedback occurs when a user purchases or restores a product, opens a URL
+  /// from the paywall, or closes the paywall.
   public var isHapticFeedbackEnabled = true
 
   /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
@@ -27,19 +28,22 @@ public final class PaywallOptions: NSObject {
 
   @objc(SWKRestoreFailed)
   public final class RestoreFailed: NSObject {
-    /// The title of the alert presented to the user when restoring a transaction fails. Defaults to `No Subscription Found`.
+    /// The title of the alert presented to the user when restoring a transaction fails. Defaults to
+    /// `No Subscription Found`.
     public var title = "No Subscription Found"
 
-    /// Defines the message of the alert presented to the user when restoring a transaction fails. Defaults to `We couldn't find an active subscription for your account.`
+    /// Defines the message of the alert presented to the user when restoring a transaction fails.
+    /// Defaults to `We couldn't find an active subscription for your account.`
     public var message = "We couldn't find an active subscription for your account."
 
-    /// Defines the title of the close button in the alert presented to the user when restoring a transaction fails. Defaults to `Okay`.
+    /// Defines the title of the close button in the alert presented to the user when restoring a
+    /// transaction fails. Defaults to `Okay`.
     public var closeButtonTitle = "Okay"
   }
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
   public var restoreFailed = RestoreFailed()
 
-  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``SuperwallKit/Superwall/configure(apiKey:delegate:options:)-65jyx``. Defaults to `true`.
+  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
   ///
@@ -49,7 +53,11 @@ public final class PaywallOptions: NSObject {
 
   /// Loads paywall template websites from disk, if available. Defaults to `true`.
   ///
-  /// When you save a change to your paywall in the Superwall dashboard, a key is appended to the end of your paywall website URL, e.g. `sw_cache_key=<Date saved>`. This is used to cache your paywall webpage to disk after it's first loaded. Superwall will continue to load the cached version of your paywall webpage unless the next time you make a change on the Superwall dashboard.
+  /// When you save a change to your paywall in the Superwall dashboard, a key is
+  /// appended to the end of your paywall website URL, e.g. `sw_cache_key=<Date saved>`.
+  /// This is used to cache your paywall webpage to disk after it's first loaded. Superwall will
+  /// continue to load the cached version of your paywall webpage unless the next time you
+  /// make a change on the Superwall dashboard.
   var useCachedTemplates = false
 
   /// Automatically dismisses the paywall when a product is purchased or restored. Defaults to `true`.
