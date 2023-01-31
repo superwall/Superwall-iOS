@@ -1,12 +1,12 @@
 import Foundation
 import Combine
 
-final class StoreKitManager {
+actor StoreKitManager {
   /// Coordinates: The purchasing, restoring and retrieving of products; the checking
   /// of transactions; and the determining of the user's subscription status.
-  lazy var coordinator = factory.makeStoreKitCoordinator()
-  private unowned let factory: StoreKitCoordinatorFactory
-  private lazy var receiptManager = ReceiptManager(delegate: self)
+  nonisolated lazy var coordinator = factory.makeStoreKitCoordinator()
+  private nonisolated unowned let factory: StoreKitCoordinatorFactory
+  private nonisolated lazy var receiptManager = ReceiptManager(delegate: self)
 
   private(set) var productsById: [String: StoreProduct] = [:]
   private struct ProductProcessingResult {
@@ -36,39 +36,6 @@ final class StoreKitManager {
 
     return variables
 	}
-
-  /// This refreshes the device receipt.
-  ///
-  /// - Warning: This will prompt the user to log in, so only do this on
-  /// when restoring or after purchasing.
-  @discardableResult
-  func refreshReceipt() async -> Bool {
-    Logger.debug(
-      logLevel: .debug,
-      scope: .storeKitManager,
-      message: "Refreshing App Store receipt."
-    )
-    return await receiptManager.refreshReceipt()
-  }
-
-  /// Loads the purchased products from the receipt,
-  func loadPurchasedProducts() async {
-    Logger.debug(
-      logLevel: .debug,
-      scope: .storeKitManager,
-      message: "Loading purchased products from the App Store receipt."
-    )
-    await receiptManager.loadPurchasedProducts()
-  }
-
-  /// Determines whether a free trial is available based on the product the user is purchasing.
-  ///
-  /// A free trial is available if the user hasn't already purchased within the subscription group of the
-  /// supplied product. If it isn't a subscription-based product or there are other issues retrieving the products,
-  /// the outcome will default to whether or not the user has already purchased that product.
-  func isFreeTrialAvailable(for product: StoreProduct) -> Bool {
-    return receiptManager.isFreeTrialAvailable(for: product)
-  }
 
   func getProducts(
     withIds responseProductIds: [String],
@@ -147,9 +114,46 @@ final class StoreKitManager {
   }
 }
 
+// MARK: - Receipt API
+
+extension StoreKitManager {
+  /// This refreshes the device receipt.
+  ///
+  /// - Warning: This will prompt the user to log in, so only do this on
+  /// when restoring or after purchasing.
+  @discardableResult
+  nonisolated func refreshReceipt() async -> Bool {
+    Logger.debug(
+      logLevel: .debug,
+      scope: .storeKitManager,
+      message: "Refreshing App Store receipt."
+    )
+    return await receiptManager.refreshReceipt()
+  }
+
+  /// Loads the purchased products from the receipt,
+  nonisolated func loadPurchasedProducts() async {
+    Logger.debug(
+      logLevel: .debug,
+      scope: .storeKitManager,
+      message: "Loading purchased products from the App Store receipt."
+    )
+    await receiptManager.loadPurchasedProducts()
+  }
+
+  /// Determines whether a free trial is available based on the product the user is purchasing.
+  ///
+  /// A free trial is available if the user hasn't already purchased within the subscription group of the
+  /// supplied product. If it isn't a subscription-based product or there are other issues retrieving the products,
+  /// the outcome will default to whether or not the user has already purchased that product.
+  nonisolated func isFreeTrialAvailable(for product: StoreProduct) -> Bool {
+    return receiptManager.isFreeTrialAvailable(for: product)
+  }
+}
+
 // MARK: - ProductsFetcher
 extension StoreKitManager: ProductsFetcher {
-  func products(identifiers: Set<String>) async throws -> Set<StoreProduct> {
+  nonisolated func products(identifiers: Set<String>) async throws -> Set<StoreProduct> {
     return try await coordinator.productFetcher.products(identifiers: identifiers)
   }
 }
@@ -157,7 +161,7 @@ extension StoreKitManager: ProductsFetcher {
 // MARK: - SubscriptionStatusChecker
 extension StoreKitManager: SubscriptionStatusChecker {
   /// Do not call this directly.
-  func isSubscribed() -> Bool {
+  nonisolated func isSubscribed() -> Bool {
     return !receiptManager.activePurchases.isEmpty
   }
 }

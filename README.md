@@ -66,7 +66,7 @@ The preferred installation method is with [Swift Package Manager](https://swift.
 
 - Select **File ▸ Add Packages...**
 - Search for `https://github.com/superwall-me/Superwall-iOS` in the search bar.
-- Set the **Dependency Rule** to **Up to Next Major Version** with the lower bound set to **3.0.0** (set this to 2.0.0 if you don't want to use the v3 beta).
+- Set the **Dependency Rule** to **branch** with the value set to **master**. If you're wanting to install v2.x, set the **Dependency Rule** to **Up to Next Major Version** with the lower bound set to **2.0.0**.
 - Make sure your project name is selected in **Add to Project**.
 - Then, **Add Package**.
 
@@ -76,7 +76,7 @@ The preferred installation method is with [Swift Package Manager](https://swift.
 To include the *Superwall* SDK in your app, add the following to your Podfile:
 
 ```
-pod 'SuperwallKit', '< 4.0.0'
+pod 'SuperwallKit', '3.0.0-beta.4'
 ```
 
 If you don't want to use the v3 beta, you'll need to add this instead:

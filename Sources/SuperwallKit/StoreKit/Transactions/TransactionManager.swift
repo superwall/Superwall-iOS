@@ -36,7 +36,7 @@ final class TransactionManager {
     _ productId: String,
     from paywallViewController: PaywallViewController
   ) async {
-    guard let product = storeKitManager.productsById[productId] else {
+    guard let product = await storeKitManager.productsById[productId] else {
       return
     }
 

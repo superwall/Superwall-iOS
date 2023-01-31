@@ -259,7 +259,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     _ transaction: SKPaymentTransaction,
     isPaywallPresented: Bool
   ) async {
-    guard let product = storeKitManager.productsById[transaction.payment.productIdentifier] else {
+    guard let product = await storeKitManager.productsById[transaction.payment.productIdentifier] else {
       return
     }
     guard isPaywallPresented else {
