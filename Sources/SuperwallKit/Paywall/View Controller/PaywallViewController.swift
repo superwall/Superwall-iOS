@@ -20,9 +20,19 @@ protocol PaywallViewControllerDelegate: AnyObject {
 }
 
 enum PaywallLoadingState {
+  /// The initial state of the paywall
   case unknown
+
+  /// When a purchase is loading
   case loadingPurchase
-  case loadingResponse
+
+  /// When the paywall URL is loading
+  case loadingURL
+
+  /// When the user has manually shown the spinner
+  case manualLoading
+
+  /// When everything has loaded.
   case ready
 }
 
@@ -285,17 +295,30 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       webView.load(request)
     }
 
-    loadingState = .loadingResponse
+    loadingState = .loadingURL
   }
 
   // MARK: - State Handling
+  func togglePaywallSpinner(isHidden: Bool) {
+    if isHidden {
+      if loadingState == .manualLoading {
+        loadingState = .ready
+      }
+    } else {
+      if loadingState == .ready {
+        loadingState = .manualLoading
+      }
+    }
+  }
+
 	func loadingStateDidChange(from oldValue: PaywallLoadingState) {
     switch loadingState {
     case .unknown:
       break
-    case .loadingPurchase:
+    case .loadingPurchase,
+      .manualLoading:
       addLoadingView()
-    case .loadingResponse:
+    case .loadingURL:
       addShimmerView()
       showRefreshButtonAfterTimeout(true)
       UIView.springAnimate {
@@ -304,11 +327,12 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       }
     case .ready:
       let translation = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
-      webView.transform = oldValue == .loadingPurchase ? .identity : translation
+      let spinnerDidShow = oldValue == .loadingPurchase || oldValue == .manualLoading
+      webView.transform = spinnerDidShow ? .identity : translation
       showRefreshButtonAfterTimeout(false)
       hideLoadingView()
 
-      if oldValue != .loadingPurchase {
+      if !spinnerDidShow {
         UIView.animate(
           withDuration: 1,
           delay: 0.25,
@@ -330,7 +354,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     guard shimmerView == nil else {
       return
     }
-    guard loadingState == .loadingResponse || loadingState == .unknown else {
+    guard loadingState == .loadingURL || loadingState == .unknown else {
       return
     }
     guard isActive || onPresent else {
@@ -540,7 +564,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 
     present(alertController, animated: true) { [weak self] in
       if let loadingState = self?.loadingState,
-        loadingState != .loadingResponse {
+        loadingState != .loadingURL {
         self?.loadingState = .ready
       }
     }
@@ -673,7 +697,8 @@ extension PaywallViewController {
     shouldSendDismissedState: Bool = true,
     completion: (() -> Void)? = nil
   ) {
-    if self.loadingState == .loadingPurchase {
+    let isShowingSpinner = loadingState == .loadingPurchase || loadingState == .manualLoading
+    if isShowingSpinner {
       self.loadingState = .ready
     }
 

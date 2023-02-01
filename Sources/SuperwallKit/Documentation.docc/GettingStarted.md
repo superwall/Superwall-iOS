@@ -17,18 +17,18 @@ On that page, you will see your **Public API Key**. Copy this for the next step.
 
 ### Configuring the SDK
 
-To configure the SDK, you must call ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw`` as soon as your app launches from `application(_:didFinishLaunchingWithOptions:)`. We recommended creating a service class **SuperwallService.swift** that handles your SDK configuration:
+To configure the SDK, you must call ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw`` as soon as your app launches from `application(_:didFinishLaunchingWithOptions:)`:
 
 ```swift
 import SuperwallKit
 
-final class SuperwallService {
-  private static let apiKey = "MYAPIKEY" // Replace this with your API Key
-  static let shared = SuperwallService()
-
-  static func initialize() {
-    Superwall.configure(apiKey: apiKey)
-  }
+final class AppDelegate: UIResponder, UIApplicationDelegate {
+  func application(
+    _ application: UIApplication, 
+    didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?
+  ) -> Bool {
+Superwall.configure(apiKey: "MYAPIKEY")  // Replace this with your API Key
+  )
 }
 ```
 
@@ -43,23 +43,6 @@ We generate a random user ID that persists internally until the user deletes/rei
 If you use your own user management system, call ``Superwall/createAccount(userId:)`` when a user first creates an account, and ``Superwall/logIn(userId:)`` if you're logging in an existing user. This will alias your `userId` with the anonymous Superwall ID enabling us to load the user's assigned paywalls.
 
 Calling ``Superwall/logOut()`` or ``Superwall/reset()`` will reset the on-device `userId` to a random ID and clear the on-device paywall assignments.
-
-## Configuring From the App Delegate
-
-Next, call `SuperwallService.initialize()` from `application(_:didFinishLaunchingWithOptions:)` in your App Delegate:
-
-```swift
-import SuperwallKit
-
-final class AppDelegate: UIResponder, UIApplicationDelegate {
-  func application(
-    _ application: UIApplication, 
-    didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?
-  ) -> Bool {
-    SuperwallService.initialize()
-  )
-}
-```
 
 You're now ready to track an event to present your first paywall. See <doc:TrackingEvents> for next steps.
 

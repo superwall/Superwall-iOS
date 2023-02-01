@@ -9,12 +9,16 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds `hasActiveSubscriptionDidChange(to:)` delegate function. If you're letting Superwall handle subscription logic you can use this to receive a callback whenever the user's internal subscription status changes. You can also listen to the published `hasActiveSubscription` variable.
 - Adds a completion handler to `Superwall.configure(...)` that lets you know when Superwall has finished configuring. You can also listen to the published `isConfigured` variable.
 - If you let Superwall handle your subscription-related logic, we now assume that a non-consumable product on your paywall is a lifetime subscription. If not, you'll need to return a `SubscriptionController` from the delegate.
+- `handleDeepLink(_:)` now returns a discardable `Bool` indicating whether the deep link was handled. If you're using `application(_:open:options:)` you can return its value there.
+- Adds `togglePaywallSpinner(isHidden:)` to arbitrarily toggle the loading spinner on and off. This is particularly useful when you're doing async work when performing a custom action in `handleCustomPaywallAction(withName:)`.
 
 ### Fixes
 
-- Fixes occasional race condition bug when loading products.
+- Fixes occasional thread safety related crash when loading products.
+- Reverts a issue from the last beta where the paywall spinner would move up before the payment sheet appeared.
 
 ## 3.0.0-beta.3
+
 ### Fixes
 
 - Fixes potential crash due to a using a lazy variable.

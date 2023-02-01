@@ -330,11 +330,14 @@ public final class Superwall: NSObject, ObservableObject {
   /// Handles a deep link sent to your app to open a preview of your paywall.
   ///
   /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
-  public func handleDeepLink(_ url: URL) {
+  ///
+  /// - Returns: A `Bool` that is `true` if the deep link was handled.
+  @discardableResult
+  public func handleDeepLink(_ url: URL) -> Bool {
     Task {
       await track(InternalSuperwallEvent.DeepLink(url: url))
-      await dependencyContainer.debugManager.handle(deepLinkUrl: url)
     }
+    return dependencyContainer.debugManager.handle(deepLinkUrl: url)
   }
 
   // MARK: - Overrides
@@ -346,6 +349,19 @@ public final class Superwall: NSObject, ObservableObject {
 	public func localizationOverride(localeIdentifier: String? = nil) {
     dependencyContainer.localizationManager.selectedLocale = localeIdentifier
 	}
+
+  /// Toggles the paywall loading spinner on and off.
+  ///
+  /// Use this when you want to do asynchronous work inside
+  /// ``SuperwallDelegate/handleCustomPaywallAction(withName:)-b8fk``.
+  public func togglePaywallSpinner(isHidden: Bool) {
+    Task { @MainActor in
+      guard let paywallViewController = dependencyContainer.paywallManager.presentedViewController else {
+        return
+      }
+      paywallViewController.togglePaywallSpinner(isHidden: isHidden)
+    }
+  }
 }
 
 // MARK: - PaywallViewControllerDelegate

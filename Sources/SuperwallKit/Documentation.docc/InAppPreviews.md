@@ -14,17 +14,7 @@ In your `info.plist`, you'll need to add a custom URL scheme for your app:
 
 You can view [Apple's documentation](https://developer.apple.com/documentation/xcode/defining-a-custom-url-scheme-for-your-app) to learn more about how to do that.
 
-Then, you'll need to handle the deep link within your app using ``Superwall/handleDeepLink(_:)``. We recommend adding this to your `SuperwallService.swift` file that handles all Superwall related functions:
-
-```swift
-extension SuperwallService {
-  static func handleDeepLink(_ url: URL) {
-    Superwall.shared.handleDeepLink(url)
-  }
-}
-```
-
-Then, you'll need to call this when your app is opened via a deep link. There are different ways to do this, depending on whether you're using a SceneDelegate, AppDelegate, or writing an app in SwiftUI.
+Then, you'll need to handle the deep link within your app using ``Superwall/handleDeepLink(_:)``. You'll need to call this when your app is opened via a deep link. There are different ways to do this, depending on whether you're using a SceneDelegate, AppDelegate, or writing an app in SwiftUI.
 
 ### Handling a Deep Link in SwiftUI
 
@@ -39,7 +29,7 @@ struct MyApp: App {
     WindowGroup {
       ContentView()
         .onOpenURL { url in
-          SuperwallService.handleDeepLink(url)
+          Superwall.shared.handleDeepLink(url)
         }
     }
   }
@@ -57,8 +47,7 @@ func application(
   _ app: UIApplication, 
   open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]
 ) -> Bool {
-  SuperwallService.handleDeepLink(url)
-  return true
+  return Superwall.shared.handleDeepLink(url)
 }
 ```
 
@@ -78,7 +67,7 @@ func scene(
   ...
   
   for context in connectionOptions.urlContexts {
-    SuperwallService.handleDeepLink(context.url)
+    Superwall.shared.handleDeepLink(context.url)
   }
 }
 
@@ -88,7 +77,7 @@ func scene(
   openURLContexts URLContexts: Set<UIOpenURLContext>
 ) {
   for context in URLContexts {
-    SuperwallService.handleDeepLink(context.url)
+    Superwall.shared.handleDeepLink(context.url)
   }
 }
 ```
