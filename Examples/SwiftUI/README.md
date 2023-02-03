@@ -8,11 +8,11 @@ Usually, to integrate SuperwallKit into your app, you first need to have configu
 
 Feature | Sample Project Location
 --- | ---
-🕹 Configuring SuperwallKit | [Services/SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift#L23)
+🕹 Configuring SuperwallKit | [Services/SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift#L31)
 👥 Implementing the delegate | [Services/SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift#L67)
-👉 Tracking an event | [TrackEventModel.swift](Superwall-SwiftUI/TrackEventModel.swift#L46)
-👥 Logging In | [Services/SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift#L32)
-👥 Logging Out | [Services/SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift#L47)
+👉 Tracking an event | [TrackEventModel.swift](Superwall-SwiftUI/TrackEventModel.swift#L15)
+👥 Identifying account | [Services/SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift#L31)
+👥 Resetting account | [Services/SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift#L54)
 
 ## Requirements
 
@@ -33,7 +33,7 @@ Otherwise, you can download it from [https://github.com/realm/SwiftLint](https:/
 
 Clone or download the SuperwallKit from the [project home page](https://github.com/superwall-me/Superwall-iOS). Then, open **Superwall-SwiftUI.xcodeproj** in Xcode and take a look at the code inside the [Superwall-SwiftUI](Superwall-SwiftUI) folder.
 
-Inside the [Services](Superwall-SwiftUI/Services) folder, you'll see some helper classes. [SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift) handles the setup and delegate methods of the SDK, and [StoreKitService.swift](Superwall-SwiftUI/Services/StoreKitService.swift) handles the purchasing of in-app subscriptions.
+Inside the [Services](Superwall-SwiftUI/Services) folder, you'll see some helper classes. [SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift) handles the setup and delegate methods of the SDK. All subscription-related logic is handled by the SDK but we have included a (commented out) example of how you might implement purchases yourself using StoreKit in [StoreKitService.swift](Superwall-SwiftUI/Services/StoreKitService.swift).
 
 [Superwall_SwiftUI-Products.storekit](Superwall-SwiftUI/Superwall_SwiftUI-Products.storekit) is a StoreKit configuration file that is used to mimic the setup of real products on App Store Connect. This is so you can make test purchases within the sample app without having to set up App Store Connect. In a production app, you will need real products configured in App Store Connect but you can also use a StoreKit configuration file for testing purposes if you wish.
 
@@ -45,7 +45,7 @@ Build and run the app and you'll see the welcome screen:
   <img src="https://i.imgur.com/jKkBBNW.png" alt="The welcome screen" width="220px" />
 </p>
 
-SuperwallKit is [configured](Superwall-SwiftUI/Services/SuperwallService.swift#L22) on app launch, setting an `apiKey` and `delegate`.
+SuperwallKit is [configured](Superwall-SwiftUI/Services/SuperwallService.swift#L31) on app launch, setting an `apiKey` and `delegate`.
 
 The SDK sends back events received from the paywall via the delegate methods in [SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift#L67). You use these methods to make and restore purchases, react to analytical events, as well as tell the SDK whether the user has an active subscription. 
 
@@ -53,7 +53,7 @@ The SDK sends back events received from the paywall via the delegate methods in 
 
 On the welcome screen, enter your name in the **text field**. This saves to the Superwall user attributes using [Superwall.shared.setUserAttributes(_:)](Superwall-SwiftUI/Services/SuperwallService.swift#L62). You don't need to set user attributes, but it can be useful if you want to create a rule to present a paywall based on a specific attribute you've set. You can also recall user attributes on your paywall to personalise the messaging.
 
-Tap **Log In**. This logs the user in to Superwall (with a hardcoded userId that we've set), retrieving any paywalls that have already been assigned to them. If you were to create a new account you'd use `Superwall.shared.createAccount(userId:)` instead.
+Tap **Log In**. This identifies the user (with a hardcoded userId that we've set), retrieving any paywalls that have already been assigned to them.
 
 You'll see an overview screen:
 
@@ -67,9 +67,9 @@ To present a paywall, you **track** an event.
 
 On the [Superwall Dashboard](https://superwall.com/dashboard) you add this event to a Campaign and attach some presentation rules. For this app, we've already done this for you.
 
-When an event is tracked, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall. Note that if the delegate method [isUserSubscribed()](Superwall-SwiftUI/SuperwallService.swift#L81) returns `true`, a paywall will not show by default.
+When an event is tracked, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall.
 
-By calling [Superwall.shared.track(event:params:paywallOverrides:paywallHandler:)](Superwall-SwiftUI/TrackEventModel.swift#L15), you present a paywall in response to the event. For this app, the event is called "MyEvent".
+By calling [Superwall.shared.track(event:params:paywallOverrides:paywallHandler:)](Superwall-SwiftUI/TrackEventModel.swift#L15), you present a paywall in response to the event. For this app, the event is called `campaign_trigger`.
 
 On screen you'll see some explanatory text and a button that tracks an event:
 
@@ -85,6 +85,6 @@ Tap the **Continue** button in the paywall and "purchase" a subscription. When t
 
 ## Support
 
-For an in-depth explanation of how to use the SuperwallKit, you can [view our iOS SDK documentation](https://sdk.superwall.me/documentation/paywall/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
+For an in-depth explanation of how to use the SuperwallKit, you can [view our iOS SDK documentation](https://sdk.superwall.me/documentation/superwallkit/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
 
 For general docs that include how to use the Superwall Dashboard, visit [docs.superwall.com](https://docs.superwall.com/docs).

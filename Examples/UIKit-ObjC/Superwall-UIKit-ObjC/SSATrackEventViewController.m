@@ -47,7 +47,7 @@
 
 - (IBAction)trackEvent:(id)sender {
   __weak typeof(self) weakSelf = self;
-  [[Superwall sharedInstance] trackWithEvent:@"MyEvent"
+  [[Superwall sharedInstance] trackWithEvent:@"campaign_trigger"
                      params:nil
                    products:nil
    ignoreSubscriptionStatus:NO
