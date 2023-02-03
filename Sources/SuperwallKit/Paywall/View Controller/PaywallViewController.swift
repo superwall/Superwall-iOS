@@ -620,7 +620,7 @@ extension PaywallViewController {
 
     if #available(iOS 15.0, *),
       !deviceHelper.isMac {
-      webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
+//       webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
     }
   }
 
@@ -653,7 +653,7 @@ extension PaywallViewController {
 
     if #available(iOS 15.0, *),
       !deviceHelper.isMac {
-      webView.setAllMediaPlaybackSuspended(true) // ignore-xcode-12
+//       webView.setAllMediaPlaybackSuspended(true) // ignore-xcode-12
     }
 
     if !calledDismiss {
