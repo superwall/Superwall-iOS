@@ -10,7 +10,7 @@ import UIKit
 public extension Superwall {
   // MARK: - Unavailable methods
   // TODO: Fix deprecation here
-  /*@available(*, unavailable, renamed: "configure(apiKey:delegate:options:)")
+  /*@available(*, unavailable, renamed: "configure(apiKey:delegate:options:completion:)")
   @discardableResult
   @objc static func configure(
     apiKey: String,
@@ -20,12 +20,6 @@ public extension Superwall {
   ) -> Superwall {
     return shared
   }*/
-
-  @available(*, unavailable, message: "This has been removed. Please use login(userId:) or createAccount(userId:).")
-  @discardableResult
-  @objc static func identify(userId: String) -> Superwall {
-    return shared
-  }
 
   @available(*, unavailable, renamed: "preloadPaywalls(forEvents:)")
   @objc static func preloadPaywalls(forTriggers triggers: Set<String>) {}

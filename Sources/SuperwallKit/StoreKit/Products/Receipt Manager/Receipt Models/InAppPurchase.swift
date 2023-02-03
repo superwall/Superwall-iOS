@@ -21,7 +21,13 @@ struct InAppPurchase: ASN1Decodable, Hashable {
   /// - Parameter date: The date in which the auto-renewable subscription should be active.
   /// - Returns: true if the latest auto-renewable subscription is active for the given date, false otherwise.
   var isActive: Bool {
-    assert(subscriptionExpirationDate != nil, "\(productIdentifier) is not an auto-renewable subscription.")
+    // If has no expiration date, assume it's a lifetime purchase.
+    // It might not be - it could be another non-consumable OR a
+    // consumable. But for those use cases they should handle the logic
+    // themselves.
+    if subscriptionExpirationDate == nil {
+      return true
+    }
     if cancellationDate != nil {
       return false
     }

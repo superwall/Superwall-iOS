@@ -73,7 +73,7 @@ class CoreDataManagerTests: XCTestCase {
   }
 
   // MARK: - Delete All Entities
-  func test_deleteAllEntities() {
+  func test_deleteAllEntities() async {
     // Save Event Data with Params
     let eventName = "abc"
     let eventData: EventData = .stub()
@@ -92,7 +92,7 @@ class CoreDataManagerTests: XCTestCase {
       expectation1.fulfill()
     }
 
-    waitForExpectations(timeout: 2.0) { error in
+    await waitForExpectations(timeout: 2.0) { error in
       XCTAssertNil(error, "Save did not occur")
     }
 
@@ -115,19 +115,12 @@ class CoreDataManagerTests: XCTestCase {
       expectation2.fulfill()
     }
 
-    waitForExpectations(timeout: 20.0) { error in
+    await waitForExpectations(timeout: 20.0) { error in
       XCTAssertNil(error, "Save did not occur")
     }
 
     // Delete All Entities
-    let expectation3 = expectation(description: "Delete entities")
-    coreDataManager.deleteAllEntities() {
-      expectation3.fulfill()
-    }
-
-    waitForExpectations(timeout: 2.0) { error in
-      XCTAssertNil(error, "Save did not occur")
-    }
+    await coreDataManager.deleteAllEntities()
 
     // Count triggers
     let occurrenceCount = coreDataManager.countTriggerRuleOccurrences(for: occurrence)

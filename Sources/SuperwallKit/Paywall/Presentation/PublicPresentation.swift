@@ -19,7 +19,7 @@ public extension Superwall {
 	/// - Parameters:
   ///   - completion: An optional completion block that gets called after the paywall is dismissed. Defaults to nil.
   @MainActor
-  func dismiss(_ completion: (() -> Void)? = nil) {
+  func dismiss(completion: (() -> Void)? = nil) {
 		guard let paywallViewController = paywallViewController else {
       return
     }

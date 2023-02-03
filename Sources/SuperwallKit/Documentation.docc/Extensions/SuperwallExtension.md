@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ``Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Superwall/configure(apiKey:delegate:options:)-65jyx`` to configure the SDK.
+The ``Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw`` to configure the SDK.
 
 ## Topics
 
@@ -11,8 +11,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - <doc:GettingStarted>
 - <doc:Ecosystem>
 - <doc:AdvancedConfiguration>
-- ``configure(apiKey:delegate:options:)-65jyx``
-- ``configure(apiKey:delegate:options:)-48l7e``
+- ``configure(apiKey:delegate:options:completion:)-7fafw``
+- ``configure(apiKey:delegate:options:completion:)-ogg1``
 - ``shared``
 - ``SuperwallDelegate``
 - ``SuperwallDelegateObjc``
@@ -36,7 +36,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``publisher(forEvent:params:paywallOverrides:)``
 - ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``dismiss()``
-- ``dismiss(_:)``
+- ``dismiss(completion:)``
 - ``PaywallInfo``
 - ``SuperwallEvent``
 - ``SuperwallEventObjc``
@@ -51,11 +51,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 ### Identifying a User
 
 - <doc:SettingUserAttributes>
-- ``createAccount(userId:)``
-- ``logIn(userId:)``
-- ``logIn(userId:completion:)``
-- ``logOut()``
-- ``logOut(completion:)``
+- ``identify(userId:options:)``
 - ``reset()``
 - ``reset(completion:)``
 - ``setUserAttributes(_:)``
@@ -74,11 +70,12 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``SuperwallDelegate/handleLog(level:scope:message:info:error:)-9kmai``
 - ``LogLevel``
 - ``LogScope``
-- ``SuperwallOptions/Logging-swift.struct``
+- ``SuperwallOptions/Logging-swift.class``
 
 ### Customization
 
 - ``localizationOverride(localeIdentifier:)``
+- ``togglePaywallSpinner(isHidden:)``
 
 ### Helper Variables
 - ``presentedViewController``

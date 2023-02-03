@@ -20,9 +20,13 @@ struct LoadingView: View {
         .scaleAnimation(for: model.scaleAmount)
         .bottomPaddingAnimation(for: model.padding)
         .listen(
-          to: model.$isHidden,
+          to: model.$movedUp,
           fromModel: model,
           maxPadding: proxy.size.height / 2
+        )
+        .listen(
+          to: model.$isHidden,
+          fromModel: model
         )
         .frame(
           maxWidth: .infinity,

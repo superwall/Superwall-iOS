@@ -11,12 +11,13 @@ import CoreData
 
 @available(iOS 14.0, *)
 final class CoreDataStackMock: CoreDataStack {
-  func deleteAllEntities(named entityName: String) {
+  func deleteAllEntities(named entityName: String, completion: () -> Void) {
     let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: entityName)
     let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
 
     do {
       try mainContext.executeAndMergeChanges(using: deleteRequest)
+      completion()
       print("Deleted entities")
     } catch let error as NSError {
       print("Error deleting!", error)

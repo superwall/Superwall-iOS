@@ -60,7 +60,7 @@ class CoreDataManager {
     }
   }
 
-  func deleteAllEntities(completion: (() -> Void)? = nil) {
+  func deleteAllEntities() async {
     let eventDataRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(
       entityName: ManagedEventData.entityName
     )
@@ -72,18 +72,20 @@ class CoreDataManager {
     let deleteOccurrenceRequest = NSBatchDeleteRequest(fetchRequest: occurrenceRequest)
 
     let container = coreDataStack.persistentContainer
-    container.performBackgroundTask { context in
-      do {
-        try context.executeAndMergeChanges(using: deleteEventDataRequest)
-        try context.executeAndMergeChanges(using: deleteOccurrenceRequest)
-        completion?()
-      } catch {
-        Logger.debug(
-          logLevel: .error,
-          scope: .coreData,
-          message: "Could not delete core data.",
-          error: error
-        )
+    await withCheckedContinuation { continuation in
+      container.performBackgroundTask { context in
+        do {
+          try context.executeAndMergeChanges(using: deleteEventDataRequest)
+          try context.executeAndMergeChanges(using: deleteOccurrenceRequest)
+        } catch {
+          Logger.debug(
+            logLevel: .error,
+            scope: .coreData,
+            message: "Could not delete core data.",
+            error: error
+          )
+        }
+        continuation.resume()
       }
     }
   }

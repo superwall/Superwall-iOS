@@ -27,7 +27,7 @@ class PaywallManager {
   }
 
   @MainActor
-	func removePaywall(identifier: String?) {
+	func removePaywallViewController(identifier: String?) {
     cache.removePaywallViewController(identifier: identifier)
 	}
 

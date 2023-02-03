@@ -24,22 +24,21 @@ final class DebugManager {
     self.factory = factory
   }
 
-  @MainActor
-  func handle(deepLinkUrl: URL) {
+  func handle(deepLinkUrl: URL) -> Bool {
     guard let launchDebugger = SWDebugManagerLogic.getQueryItemValue(
       fromUrl: deepLinkUrl,
       withName: .superwallDebug
     ) else {
-      return
+      return false
     }
     guard Bool(launchDebugger) == true else {
-      return
+      return false
     }
     guard let debugKey = SWDebugManagerLogic.getQueryItemValue(
       fromUrl: deepLinkUrl,
       withName: .token
     ) else {
-      return
+      return false
     }
 
     storage.apiKey = debugKey
@@ -51,6 +50,7 @@ final class DebugManager {
     Task {
       await self.launchDebugger(withPaywallId: paywallId)
     }
+    return true
   }
 
 	/// Launches the debugger for you to preview paywalls.

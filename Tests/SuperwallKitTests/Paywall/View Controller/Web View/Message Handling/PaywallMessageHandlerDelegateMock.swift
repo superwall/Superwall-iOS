@@ -29,7 +29,7 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   var webView: SuperwallKit.SWWebView
 
-  var loadingState: SuperwallKit.PaywallLoadingState = .loadingResponse
+  var loadingState: SuperwallKit.PaywallLoadingState = .loadingURL
 
   var isActive = false
 

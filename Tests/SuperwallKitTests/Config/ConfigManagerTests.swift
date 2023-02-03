@@ -57,7 +57,15 @@ final class ConfigManagerTests: XCTestCase {
       factory: dependencyContainer
     )
 
-    await configManager.getAssignments()
+    let expectation = expectation(description: "No assignments")
+    expectation.isInverted = true
+    Task {
+      await configManager.getAssignments()
+      expectation.fulfill()
+    }
+
+    await waitForExpectations(timeout: 1)
+
 
     XCTAssertTrue(storage.getConfirmedAssignments().isEmpty)
     XCTAssertTrue(configManager.unconfirmedAssignments.isEmpty)

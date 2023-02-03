@@ -15,14 +15,14 @@
   <a href="https://superwall.com/">
     <img src="https://img.shields.io/badge/ios%20version-%3E%3D%2013.0-blueviolet" alt="iOS Versions Supported">
   </a>
-  <a href="https://github.com/superwall-me/SuperwallKit-iOS/blob/master/LICENSE">
+  <a href="https://github.com/superwall-me/Superwall-iOS/blob/master/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-green/" alt="MIT License">
   </a>
   <a href="https://superwall.com/">
     <img src="https://img.shields.io/badge/community-active-9cf" alt="Community Active">
   </a>
   <a href="https://superwall.com/">
-    <img src="https://img.shields.io/github/v/tag/superwall-me/SuperwallKit-iOS" alt="Version Number">
+    <img src="https://img.shields.io/github/v/tag/superwall-me/Superwall-iOS" alt="Version Number">
   </a>
 </p>
 
@@ -55,7 +55,7 @@ We're in the process of releasing a new v3 version of the framework called **Sup
 ✏️ | A/B Testing - automatically calculate metrics for different paywalls
 📝 | [Online documentation](https://docs.superwall.com/v3.0/docs) up to date
 🔀 | [Integrations](https://docs.superwall.com/v3.0/docs) - over a dozen integrations to easily send conversion data where you need it
-💯 | Well maintained - [frequent releases](https://github.com/superwall-me/SuperwallKit-iOS/releases)
+💯 | Well maintained - [frequent releases](https://github.com/superwall-me/Superwall-iOS/releases)
 📮 | Great support - email a founder: jake@superwall.com
 
 ## Installation
@@ -65,8 +65,8 @@ We're in the process of releasing a new v3 version of the framework called **Sup
 The preferred installation method is with [Swift Package Manager](https://swift.org/package-manager/). This is a tool for automating the distribution of Swift code and is integrated into the swift compiler. In Xcode, do the following:
 
 - Select **File ▸ Add Packages...**
-- Search for `https://github.com/superwall-me/SuperwallKit-iOS` in the search bar.
-- Set the **Dependency Rule** to **Up to Next Major Version** with the lower bound set to **3.0.0** (set this to 2.0.0 if you don't want to use the v3 beta).
+- Search for `https://github.com/superwall-me/Superwall-iOS` in the search bar.
+- Set the **Dependency Rule** to **branch** with the value set to **master**. If you're wanting to install v2.x, set the **Dependency Rule** to **Up to Next Major Version** with the lower bound set to **2.0.0**.
 - Make sure your project name is selected in **Add to Project**.
 - Then, **Add Package**.
 
@@ -76,7 +76,7 @@ The preferred installation method is with [Swift Package Manager](https://swift.
 To include the *Superwall* SDK in your app, add the following to your Podfile:
 
 ```
-pod 'SuperwallKit', '< 4.0.0'
+pod 'SuperwallKit', '3.0.0-beta.4'
 ```
 
 If you don't want to use the v3 beta, you'll need to add this instead:

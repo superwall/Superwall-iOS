@@ -23,7 +23,7 @@ struct TrackEventView: View {
   var body: some View {
     VStack(spacing: 48) {
       InfoView(
-        text: "The button below tracks an event \"MyEvent\".\n\nThis event has been added to a campaign on the Superwall dashboard.\n\nWhen this event is tracked, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
+        text: "The button below tracks an event \"campaign_trigger\".\n\nThis event has been added to a campaign on the Superwall dashboard.\n\nWhen this event is tracked, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
       )
 
       Divider()

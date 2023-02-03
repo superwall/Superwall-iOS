@@ -92,6 +92,7 @@ class ConfigManager {
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
   func getAssignments() async {
+    await $config.hasValue()
     guard
       let triggers = config?.triggers,
       !triggers.isEmpty
