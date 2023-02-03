@@ -36,7 +36,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``publisher(forEvent:params:paywallOverrides:)``
 - ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``dismiss()``
-- ``dismiss(_:)``
+- ``dismiss(completion:)``
 - ``PaywallInfo``
 - ``SuperwallEvent``
 - ``SuperwallEventObjc``
@@ -51,11 +51,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 ### Identifying a User
 
 - <doc:SettingUserAttributes>
-- ``createAccount(userId:)``
-- ``logIn(userId:)``
-- ``logIn(userId:completion:)``
-- ``logOut()``
-- ``logOut(completion:)``
+- ``identify(userId:options:)``
 - ``reset()``
 - ``reset(completion:)``
 - ``setUserAttributes(_:)``
@@ -79,6 +75,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 ### Customization
 
 - ``localizationOverride(localeIdentifier:)``
+- ``togglePaywallSpinner(isHidden:)``
 
 ### Helper Variables
 - ``presentedViewController``

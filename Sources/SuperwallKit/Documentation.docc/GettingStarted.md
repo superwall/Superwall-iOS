@@ -40,9 +40,11 @@ Superwall handles all the subscription-related logic for you. However, if you'd 
 
 We generate a random user ID that persists internally until the user deletes/reinstalls your app.
 
-If you use your own user management system, call ``Superwall/createAccount(userId:)`` when a user first creates an account, and ``Superwall/logIn(userId:)`` if you're logging in an existing user. This will alias your `userId` with the anonymous Superwall ID enabling us to load the user's assigned paywalls.
+If you use your own user management system, call ``Superwall/identify(userId:options:)`` when a user creates or logs in to an account. This will alias your `userId` with the anonymous Superwall ID enabling us to load the user's assigned paywalls.
 
-Calling ``Superwall/logOut()`` or ``Superwall/reset()`` will reset the on-device `userId` to a random ID and clear the on-device paywall assignments.
+Calling ``Superwall/reset()`` will reset the on-device `userId` to a random ID and clear the on-device paywall assignments. Yuu should do this when logging out or wanting to reset the identity of anonymous users.
+
+- Note: You can pass an ``IdentityOptions`` object to ``Superwall/identify(userId:options:)``. This should only be used in advanced use cases. By setting the ``IdentityOptions/restorePaywallAssignments`` property of ``IdentityOptions`` to `true`, paywalls are prevented from showing until after paywall assignments have been restored. If you expect users of your app to switch accounts or delete/reinstall a lot, you'd set this when users log in to an existing account.
 
 You're now ready to track an event to present your first paywall. See <doc:TrackingEvents> for next steps.
 

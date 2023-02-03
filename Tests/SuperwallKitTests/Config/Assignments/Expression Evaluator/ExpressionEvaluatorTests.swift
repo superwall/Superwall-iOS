@@ -11,9 +11,9 @@ import XCTest
 @testable import SuperwallKit
 
 final class ExpressionEvaluatorTests: XCTestCase {
-  func testExpressionMatchesAll() {
+  func testExpressionMatchesAll() async {
     let dependencyContainer = DependencyContainer()
-    dependencyContainer.storage.reset()
+    await dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
@@ -30,9 +30,9 @@ final class ExpressionEvaluatorTests: XCTestCase {
 
   // MARK: - Expression
 
-  func testExpressionEvaluator_expressionTrue() {
+  func testExpressionEvaluator_expressionTrue() async  {
     let dependencyContainer = DependencyContainer()
-    dependencyContainer.storage.reset()
+    await dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
@@ -47,9 +47,9 @@ final class ExpressionEvaluatorTests: XCTestCase {
     XCTAssertTrue(result)
   }
 
-  func testExpressionEvaluator_expressionParams() {
+  func testExpressionEvaluator_expressionParams() async {
     let dependencyContainer = DependencyContainer()
-    dependencyContainer.storage.reset()
+    await dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
@@ -64,9 +64,9 @@ final class ExpressionEvaluatorTests: XCTestCase {
     XCTAssertTrue(result)
   }
 
-  func testExpressionEvaluator_expressionDeviceTrue() {
+  func testExpressionEvaluator_expressionDeviceTrue() async {
     let dependencyContainer = DependencyContainer()
-    dependencyContainer.storage.reset()
+    await dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
@@ -81,9 +81,9 @@ final class ExpressionEvaluatorTests: XCTestCase {
     XCTAssertTrue(result)
   }
 
-  func testExpressionEvaluator_expressionDeviceFalse() {
+  func testExpressionEvaluator_expressionDeviceFalse() async {
     let dependencyContainer = DependencyContainer()
-    dependencyContainer.storage.reset()
+    await dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
@@ -98,9 +98,9 @@ final class ExpressionEvaluatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testExpressionEvaluator_expressionFalse() {
+  func testExpressionEvaluator_expressionFalse() async {
     let dependencyContainer = DependencyContainer()
-    dependencyContainer.storage.reset()
+    await dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer

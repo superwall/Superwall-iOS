@@ -77,54 +77,58 @@ class IdentityManager {
     didSetIdentity()
   }
 
-  /// Logs user in and waits for config then assignments.
+  /// Create an account and may or may not wait for assignments before
+  /// returning.
   ///
   /// - Throws: An error of type ``IdentityError``.
-  func logIn(userId: String) async throws {
-    guard appUserId == nil else {
-      throw IdentityError.alreadyLoggedIn
+  func identify(
+    userId: String,
+    options: IdentityOptions?
+  ) async throws {
+    guard let sanitizedUserId = sanitize(userId: userId) else {
+      throw IdentityError.missingUserId
+    }
+
+    // If they're sending the same userId as before, then they're
+    // already logged in.
+    if appUserId == userId {
+      return
     }
 
     identitySubject.send(false)
 
-    guard let appUserId = sanitize(userId: userId) else {
-      throw IdentityError.missingUserId
-    }
-    self.appUserId = appUserId
+    let oldUserId = appUserId
 
-    await configManager.$config.hasValue()
-    await configManager.getAssignments()
-
-    didSetIdentity()
-  }
-
-  /// Create an account but don't wait for assignments before returning.
-  ///
-  /// - Throws: An error of type ``IdentityError``.
-  func createAccount(userId: String) throws {
-    guard appUserId == nil else {
-      throw IdentityError.alreadyLoggedIn
-    }
-    identitySubject.send(false)
-
-    guard let appUserId = sanitize(userId: userId) else {
-      throw IdentityError.missingUserId
-    }
-    self.appUserId = appUserId
-
-    didSetIdentity()
-  }
-
-  /// Logs user out and calls ``SuperwallKit/Superwall/reset()``
-  ///
-  /// - Throws: An error of type``LogoutError``.
-  /// if  the user isn't logged in.
-  func logOut() async throws {
-    if appUserId == nil {
-      throw LogoutError.notLoggedIn
+    // If user already logged in but identifying with a different
+    // different userId, reset everything first.
+    if oldUserId != nil,
+      userId != oldUserId {
+      await Superwall.shared.reset()
     }
 
-    await Superwall.shared.reset()
+    appUserId = sanitizedUserId
+
+    // If they have set restore paywall assignments to true,
+    // Wait for assignments before setting identity. Otherwise,
+    // get assignments in the background.
+
+    func getAssignmentsAsync() {
+      Task.detached {
+        await self.configManager.getAssignments()
+      }
+      didSetIdentity()
+    }
+
+    if let options = options {
+      if options.restorePaywallAssignments {
+        await configManager.getAssignments()
+        didSetIdentity()
+      } else {
+        getAssignmentsAsync()
+      }
+    } else {
+      getAssignmentsAsync()
+    }
   }
 
   /// Clears all stored user-specific variables.

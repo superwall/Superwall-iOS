@@ -85,15 +85,12 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
   [[SSAStoreKitService sharedService] updateSubscribedState];
 
   // Configure Superwall.
-  [Superwall configureWithApiKey:kDemoAPIKey delegate:self options:nil];
+  [Superwall configureWithApiKey:kDemoAPIKey delegate:self options:nil completion:nil];
 }
 
 - (void)logInWithCompletion:(nullable void (^)(void))completion {
-  [[Superwall sharedInstance] logInUserId:kDemoUserId completionHandler:^(NSError * _Nullable error) {
+  [[Superwall sharedInstance] identifyWithUserId:kDemoAPIKey options:nil completionHandler:^(NSError * _Nullable error) {
     switch (error.code) {
-      case SWKIdentityErrorAlreadyLoggedIn:
-        NSLog(@"The user is already logged in");
-        break;
       case SWKIdentityErrorMissingUserId:
         NSLog(@"The provided userId was empty");
         break;
@@ -102,31 +99,14 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
         break;
     }
 
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (completion) {
-        completion();
-      }
-    });
+    if (completion) {
+      completion();
+    }
   }];
 }
 
 - (void)logOutWithCompletion:(nullable void (^)(void))completion {
-  [[Superwall sharedInstance] logOutWithCompletionHandler:^(NSError * _Nullable error) {
-    switch (error.code) {
-      case SWKLogoutErrorNotLoggedIn:
-        NSLog(@"The user is not logged in");
-        break;
-      default:
-        NSLog(@"An unknown error occurred: %@", error.localizedDescription);
-        break;
-    }
-
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (completion) {
-        completion();
-      }
-    });
-  }];
+  [[Superwall sharedInstance] resetWithCompletionHandler:completion];
 }
 
 - (void)handleDeepLinkWithURL:(NSURL *)URL {

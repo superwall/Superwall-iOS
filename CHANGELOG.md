@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.0.0-beta.4
 
+### Breaking Changes
+
+- Moves back to using `Superwall.shared.identify(userId: userId)` and `reset()` instead of logIn/createAccount/logout/reset. This is so that it's easier for integration. However, you can now pass an `IdentityOptions` object to `identify(userId:options)`. This should only be used in advanced use cases. By setting the `restorePaywallAssignments` property of `IdentityOptions` to `true`, it prevents paywalls from showing until after paywall assignments have been restored. If you expect users of your app to switch accounts or delete/reinstall a lot, you'd set this when identifying an existing account.
+
 ### Enhancements
 
 - Adds `hasActiveSubscriptionDidChange(to:)` delegate function. If you're letting Superwall handle subscription logic you can use this to receive a callback whenever the user's internal subscription status changes. You can also listen to the published `hasActiveSubscription` variable.

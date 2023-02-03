@@ -65,11 +65,9 @@ final class PaywallManager: NSObject {
     do {
       let (customerInfo, _) = try await Purchases.shared.logIn(userId)
       updateSubscriptionStatus(using: customerInfo)
-      try await Superwall.shared.logIn(userId: userId)
+      try Superwall.shared.identify(userId: userId)
     } catch let error as IdentityError {
       switch error {
-      case .alreadyLoggedIn:
-        print("The user is already logged in to Superwall")
       case .missingUserId:
         print("The provided userId was empty")
       }
@@ -85,12 +83,7 @@ final class PaywallManager: NSObject {
     do {
       let customerInfo = try await Purchases.shared.logOut()
       updateSubscriptionStatus(using: customerInfo)
-      try await Superwall.shared.logOut()
-    } catch let error as LogoutError {
-      switch error {
-      case .notLoggedIn:
-        print("The user was not logged in to Superwall")
-      }
+      await Superwall.shared.reset()
     } catch {
       print("A RevenueCat error occurred", error)
     }

@@ -37,29 +37,21 @@ final class SuperwallService {
     shared.isLoggedIn.send(Superwall.shared.isLoggedIn)
   }
 
-  static func logIn() async {
+  static func identify() {
     do {
-      try await Superwall.shared.logIn(userId: "abc")
+      try Superwall.shared.identify(userId: "abc")
     } catch let error as IdentityError {
       switch error {
       case .missingUserId:
         print("The provided userId was empty")
-      case .alreadyLoggedIn:
-        print("The user is already logged in")
       }
     } catch {
       print("Unexpected error", error)
     }
   }
 
-  static func logOut() async {
-    do {
-      try await Superwall.shared.logOut()
-    } catch LogoutError.notLoggedIn {
-      print("The user is not logged in")
-    } catch {
-      print("Unexpected error", error)
-    }
+  static func reset() async {
+    await Superwall.shared.reset()
   }
 
   static func handleDeepLink(_ url: URL) {

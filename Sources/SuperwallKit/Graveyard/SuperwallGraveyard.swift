@@ -21,12 +21,6 @@ public extension Superwall {
     return shared
   }*/
 
-  @available(*, unavailable, message: "This has been removed. Please use login(userId:) or createAccount(userId:).")
-  @discardableResult
-  @objc static func identify(userId: String) -> Superwall {
-    return shared
-  }
-
   @available(*, unavailable, renamed: "preloadPaywalls(forEvents:)")
   @objc static func preloadPaywalls(forTriggers triggers: Set<String>) {}
 

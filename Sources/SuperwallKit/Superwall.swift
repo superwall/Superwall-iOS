@@ -1,3 +1,5 @@
+// swiftlint:disable file_length
+
 import Foundation
 import StoreKit
 import Combine
@@ -72,7 +74,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// The current user's id.
   ///
-  /// If you haven't called ``logIn(userId:)`` or ``createAccount(userId:)``,
+  /// If you haven't called ``identify(userId:options:)``,
   /// this value will return an anonymous user id which is cached to disk
   public var userId: String {
     return dependencyContainer.identityManager.userId
@@ -80,8 +82,8 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Indicates whether the user is logged in to Superwall.
   ///
-  /// If you have previously called ``logIn(userId:)`` or
-  /// ``createAccount(userId:)``, this will return true.
+  /// If you have previously called ``identify(userId:options:)``, this will
+  /// return `true`.
   ///
   /// - Returns: A boolean indicating whether the user is logged in or not.
   public var isLoggedIn: Bool {
@@ -237,7 +239,7 @@ public final class Superwall: NSObject, ObservableObject {
   ///   an account, you can [sign up for free](https://superwall.com/sign-up).
   ///   - delegate: An optional class that conforms to ``SuperwallDelegate``. The delegate methods receive
   ///   callbacks from the SDK in response to certain events on the paywall.
-  ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior
+  ///   - options: An optional ``SuperwallOptions`` object which allows you to customise the appearance and behavior
   ///   of the paywall.
   ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
   ///   Alternatively, you can subscribe to the published variable ``isConfigured``.
