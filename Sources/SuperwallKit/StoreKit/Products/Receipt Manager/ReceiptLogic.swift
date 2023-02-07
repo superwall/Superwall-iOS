@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import ASN1Swift
 
 enum ReceiptLogic {
   /// Gets the on-device receipt payload from the App Store Receipt URL.

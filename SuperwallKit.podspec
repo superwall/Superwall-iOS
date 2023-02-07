@@ -46,6 +46,5 @@ Pod::Spec.new do |s|
       "Sources/SuperwallKit/**/*.xcdatamodeld"
     ]
   }
-  s.dependency 'ASN1Swift', '~> 1.2.3'
 
 end
