@@ -14,7 +14,7 @@ struct OpacityAnimationModifier: ViewModifier {
   func body(content: Content) -> some View {
     content
       .opacity(amount)
-      .animation(.spring, value: amount)
+      .animation(.easeInOut, value: amount)
   }
 }
 
