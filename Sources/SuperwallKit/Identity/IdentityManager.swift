@@ -99,7 +99,7 @@ class IdentityManager {
 
     let oldUserId = appUserId
 
-    // If user already logged in but identifying with a different
+    // If user already logged in but identifying with a
     // different userId, reset everything first.
     if oldUserId != nil,
       userId != oldUserId {

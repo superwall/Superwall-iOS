@@ -31,7 +31,7 @@ extension Superwall {
 
     presentationSubject
       .eraseToAnyPublisher()
-      .awaitIdentity()
+      .waitToPresent()
       .logPresentation("Called Superwall.shared.track")
       .checkDebuggerPresentation(paywallStatePublisher)
       .evaluateRules()

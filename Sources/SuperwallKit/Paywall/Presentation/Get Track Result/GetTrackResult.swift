@@ -31,7 +31,7 @@ extension Superwall {
 
     return await presentationSubject
       .eraseToAnyPublisher()
-      .awaitIdentity()
+      .waitToPresent()
       .logPresentation("Called Superwall.shared.getTrackResult")
       .evaluateRules(isPreemptive: true)
       .checkForPaywallResult()

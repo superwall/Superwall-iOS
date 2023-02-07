@@ -76,7 +76,7 @@ The preferred installation method is with [Swift Package Manager](https://swift.
 To include the *Superwall* SDK in your app, add the following to your Podfile:
 
 ```
-pod 'SuperwallKit', '3.0.0-beta.4'
+pod 'SuperwallKit', '3.0.0-beta.5'
 ```
 
 If you don't want to use the v3 beta, you'll need to add this instead:

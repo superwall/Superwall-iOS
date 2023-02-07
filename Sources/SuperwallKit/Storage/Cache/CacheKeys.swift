@@ -121,7 +121,7 @@ enum SdkVersion: Storable {
   typealias Value = String
 }
 
-enum SubscriptionStatus: Storable {
+enum ActiveSubscriptionStatus: Storable {
   static var key: String {
     "store.subscriptionStatus"
   }

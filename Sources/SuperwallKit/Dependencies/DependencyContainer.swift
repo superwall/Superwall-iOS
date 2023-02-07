@@ -225,6 +225,7 @@ extension DependencyContainer: RequestFactory {
     return PaywallRequest(
       eventData: eventData,
       responseIdentifiers: responseIdentifiers,
+      overrides: overrides ?? PaywallRequest.Overrides(),
       dependencyContainer: self
     )
   }
@@ -243,7 +244,7 @@ extension DependencyContainer: RequestFactory {
       paywallOverrides: paywallOverrides,
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
-        isUserSubscribed: isUserSubscribed ?? storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(),
+        userSubscriptionStatus: Superwall.shared.internalSubscriptionStatus,
         isPaywallPresented: isPaywallPresented
       ),
       dependencyContainer: self

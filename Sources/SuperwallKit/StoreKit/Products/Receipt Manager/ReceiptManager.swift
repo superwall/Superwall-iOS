@@ -13,7 +13,14 @@ final class ReceiptManager: NSObject {
   var purchases: Set<InAppPurchase> = []
   var activePurchases: Set<InAppPurchase> = [] {
     didSet {
-      Superwall.shared.hasActiveSubscription = !activePurchases.isEmpty
+      if Superwall.shared.dependencyContainer.delegateAdapter.hasSubscriptionController {
+        return
+      }
+      if activePurchases.isEmpty {
+        Superwall.shared.setInternalSubscriptionStatus(to: .inactive)
+      } else {
+        Superwall.shared.setInternalSubscriptionStatus(to: .active)
+      }
     }
   }
 
@@ -29,14 +36,20 @@ final class ReceiptManager: NSObject {
     self.receiptData = receiptData
   }
 
+  //TODO: We're adding a check for subscription controller here and above. Better way to do this?
   /// Loads purchased products from the receipt, storing the purchased subscription group identifiers,
   /// purchases and active purchases.
   @discardableResult
   func loadPurchasedProducts() async -> Set<StoreProduct>? {
+    if Superwall.shared.dependencyContainer.delegateAdapter.hasSubscriptionController {
+      return nil
+    }
     guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
+      Superwall.shared.setInternalSubscriptionStatus(to: .inactive)
       return nil
     }
     guard let delegate = delegate else {
+      Superwall.shared.setInternalSubscriptionStatus(to: .inactive)
       return nil
     }
 

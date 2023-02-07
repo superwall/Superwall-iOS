@@ -101,11 +101,11 @@ final class SuperwallDelegateAdapter {
     }
   }
 
-  func hasActiveSubscriptionDidChange(to newValue: Bool) {
+  func subscriptionStatusDidChange(to newValue: SubscriptionStatus) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.hasActiveSubscriptionDidChange(to: newValue)
+      swiftDelegate.subscriptionStatusDidChange(to: newValue)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.hasActiveSubscriptionDidChange?(to: newValue)
+      objcDelegate.subscriptionStatusDidChange?(to: newValue)
     }
   }
 
@@ -134,25 +134,6 @@ final class SuperwallDelegateAdapter {
         error: error
       )
     }
-  }
-}
-
-// MARK: - User Subscription Handling
-extension SuperwallDelegateAdapter: SubscriptionStatusChecker {
-  @MainActor
-  func isSubscribed() -> Bool {
-    if let swiftDelegate = swiftDelegate {
-      guard let subscriptionController = swiftDelegate.subscriptionController() else {
-        return false
-      }
-      return subscriptionController.isUserSubscribed()
-    } else if let objcDelegate = objcDelegate {
-      guard let subscriptionController = objcDelegate.subscriptionController?() else {
-        return false
-      }
-      return subscriptionController.isUserSubscribed()
-    }
-    return false
   }
 }
 

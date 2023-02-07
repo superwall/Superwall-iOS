@@ -158,6 +158,8 @@ extension StoreKitManager: ProductsFetcher {
   }
 }
 
+/*
+TODO: SORT THIS OUT
 // MARK: - SubscriptionStatusChecker
 extension StoreKitManager: SubscriptionStatusChecker {
   /// Do not call this directly.
@@ -165,3 +167,4 @@ extension StoreKitManager: SubscriptionStatusChecker {
     return !receiptManager.activePurchases.isEmpty
   }
 }
+*/

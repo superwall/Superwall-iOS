@@ -19,7 +19,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
       case .paywall:
         return input
       default:
-        if input.request.flags.isUserSubscribed {
+        if input.request.flags.userSubscriptionStatus.value == .active {
           Task.detached(priority: .utility) {
             let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .userIsSubscribed)
             await Superwall.shared.track(trackedEvent)

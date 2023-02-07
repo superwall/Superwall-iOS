@@ -27,7 +27,7 @@ final class AwaitIdentityOperatorTests: XCTestCase {
     CurrentValueSubject(PresentationRequest.stub())
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
-      .awaitIdentity()
+      .waitToPresent()
       .eraseToAnyPublisher()
       .sink(
         receiveCompletion: { _ in },
@@ -49,7 +49,7 @@ final class AwaitIdentityOperatorTests: XCTestCase {
     CurrentValueSubject(stub)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
-      .awaitIdentity()
+      .waitToPresent()
       .eraseToAnyPublisher()
       .sink(
         receiveCompletion: { _ in },

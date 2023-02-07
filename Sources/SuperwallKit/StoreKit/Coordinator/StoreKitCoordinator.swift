@@ -23,7 +23,6 @@ struct StoreKitCoordinator {
   var txnRestorer: TransactionRestorer
 
   /// Checks if the user is subscribed.
-  unowned var subscriptionStatusHandler: SubscriptionStatusChecker
   unowned let delegateAdapter: SuperwallDelegateAdapter
   unowned let storeKitManager: StoreKitManager
   private let factory: StoreTransactionFactory & ProductPurchaserFactory
@@ -51,11 +50,9 @@ struct StoreKitCoordinator {
     if hasSubscriptionController {
       self.productPurchaser = delegateAdapter
       self.txnRestorer = delegateAdapter
-      self.subscriptionStatusHandler = delegateAdapter
     } else {
       self.productPurchaser = sk1ProductPurchaser
       self.txnRestorer = sk1ProductPurchaser
-      self.subscriptionStatusHandler = storeKitManager
     }
   }
 
@@ -67,12 +64,10 @@ struct StoreKitCoordinator {
     if hasSubscriptionController {
       self.productPurchaser = delegateAdapter
       self.txnRestorer = delegateAdapter
-      self.subscriptionStatusHandler = delegateAdapter
     } else {
       let sk1ProductPurchaser = factory.makeSK1ProductPurchaser()
       self.productPurchaser = sk1ProductPurchaser
       self.txnRestorer = sk1ProductPurchaser
-      self.subscriptionStatusHandler = storeKitManager
     }
   }
 }

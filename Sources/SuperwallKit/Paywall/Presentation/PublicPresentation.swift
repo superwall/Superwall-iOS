@@ -350,7 +350,7 @@ public extension Superwall {
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(
           "User Is Subscribed",
-          value: "The value returned in the isUserSubscribed() delegate method is true. By default, paywalls do not show to users who are already subscribed. You can override this behavior in the paywall editor.",
+          value: "The user subscription status is \"active\". By default, paywalls do not show to users who are already subscribed. You can override this behavior in the paywall editor.",
           comment: ""
         )
       ]

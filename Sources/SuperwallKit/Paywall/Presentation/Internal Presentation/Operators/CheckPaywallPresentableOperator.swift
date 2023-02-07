@@ -30,7 +30,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
   ) -> AnyPublisher<PresentablePipelineOutput, Error> {
     asyncMap { input in
       if await InternalPresentationLogic.userSubscribedAndNotOverridden(
-        isUserSubscribed: input.request.flags.isUserSubscribed,
+        isUserSubscribed: input.request.flags.userSubscriptionStatus.value == .active,
         overrides: .init(
           isDebuggerLaunched: input.request.flags.isDebuggerLaunched,
           shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus,

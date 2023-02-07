@@ -10,7 +10,7 @@ By default, Superwall handles all subscription-related logic. However, if you're
 
 ## Creating a Subscription Controller
 
-A subscription controller handles purchasing, restoring, and user subscription status via protocol methods that you implement. You return your subscription controller via a `subscriptionController()` method in the ``SuperwallDelegate``, which you pass in when configuring the SDK:
+A subscription controller handles purchasing and restoring via protocol methods that you implement. You return your subscription controller via a `subscriptionController()` method in the ``SuperwallDelegate``, which you pass in when configuring the SDK:
 
 ```swift
 import SuperwallKit
@@ -48,14 +48,6 @@ extension SuperwallService: SubscriptionController {
     // the success status of restoration.
     return false
   }
-
-  // 3
-  func isUserSubscribed() -> Bool {
-    // TODO: Return boolean indicating the user's subscription status.
-    // Ideally you will have a local state stored in UserDefaults
-    // indicating subscription status that's synced with revenuecat.
-    return false
-  }
 }
 ```
 
@@ -69,7 +61,13 @@ All methods of the ``SubscriptionController`` are mandatory and receive callback
 
 2. Restoring purchases. Make sure to call the completion block after you attempt to restore purchases to let the SDK know whether the restoration was successful or not.
 
-3. Telling the SDK whether the user has an active subscription. Replace this with a boolean indicating the user's subscription status. Ideally you will have a local state stored in UserDefaults indicating subscription status that's synced with the actual status.
+## Setting User Subscription Status
+
+In addition to creating a `SubscriptionController`, need to tell the SDK the user's subscription status. To do this, you need to use ``Superwall/setSubscriptionStatus(to:)``. This takes a ``SubscriptionStatus`` enum that has three possible cases:
+
+1.** `.unknown`**: This is the default value. In this state, paywalls will not show until the state changes to `.active` or `.inactive`.
+2. **`.active`**: Indicates that the user has an active subscription. Paywalls will not show in this state (unless you specifically set the paywall to ignore subscription status).
+3. **`.inactive`**: Indicates that the user doesn't have an active subscription.
 
 ## Passing in Superwall Options
 

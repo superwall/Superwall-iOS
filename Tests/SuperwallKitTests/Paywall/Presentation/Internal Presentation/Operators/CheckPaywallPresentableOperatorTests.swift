@@ -36,7 +36,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     .store(in: &cancellables)
     let dependencyContainer = DependencyContainer()
     let request = PresentationRequest.stub()
-      .setting(\.flags.isUserSubscribed, to: true)
+      .setting(\.flags.userSubscriptionStatus.value, to: .active)
 
     let input = PaywallVcPipelineOutput(
       request: request,
@@ -162,7 +162,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
 
     let request = PresentationRequest.stub()
       .setting(\.presentingViewController, to: UIViewController())
-      .setting(\.flags.isUserSubscribed, to: false)
+      .setting(\.flags.userSubscriptionStatus.value, to: .active)
 
     let dependencyContainer = DependencyContainer()
     let input = PaywallVcPipelineOutput(
