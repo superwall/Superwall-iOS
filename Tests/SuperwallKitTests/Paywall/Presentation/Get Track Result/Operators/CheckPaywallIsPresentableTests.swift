@@ -17,9 +17,11 @@ final class CheckPaywallIsPresentableTests: XCTestCase {
     let expectation = expectation(description: "Did throw")
 
     let dependencyContainer = DependencyContainer()
+    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+      .eraseToAnyPublisher()
     let paywallVcPipelineOutput = await PaywallVcPipelineOutput(
       request: .stub()
-        .setting(\.flags.isUserSubscribed, to: true),
+        .setting(\.flags.subscriptionStatus, to: publisher),
       triggerResult: .paywall(.stub()),
       debugInfo: [:],
       paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
@@ -58,9 +60,13 @@ final class CheckPaywallIsPresentableTests: XCTestCase {
 
     let dependencyContainer = DependencyContainer()
     let triggerResult: TriggerResult = .paywall(.stub())
+
+    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
+
     let paywallVcPipelineOutput = await PaywallVcPipelineOutput(
       request: .stub()
-        .setting(\.flags.isUserSubscribed, to: false),
+        .setting(\.flags.subscriptionStatus, to: publisher),
       triggerResult: triggerResult,
       debugInfo: [:],
       paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),

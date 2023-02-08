@@ -11,7 +11,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
   /// Checks whether the paywall can present based on whether the user is subscribed, ignoring status of debugger.
   func checkPaywallIsPresentable() -> AnyPublisher<TriggerResult, Error> {
     asyncMap { input in
-      let subscriptionStatus = await input.request.flags.userSubscriptionStatus.async()
+      let subscriptionStatus = await input.request.flags.subscriptionStatus.async()
       if await InternalPresentationLogic.userSubscribedAndNotOverridden(
         isUserSubscribed: subscriptionStatus == .active,
         overrides: .init(

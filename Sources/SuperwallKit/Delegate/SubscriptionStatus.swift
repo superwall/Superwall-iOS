@@ -9,7 +9,7 @@ import Foundation
 
 /// An enum representing the subscription status of the user.
 @objc(SWKSubscriptionStatus)
-public enum SubscriptionStatus: Int {
+public enum SubscriptionStatus: Int, Codable {
   /// The user has an active subscription.
   case active
 

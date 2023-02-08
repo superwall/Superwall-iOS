@@ -29,7 +29,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<PresentablePipelineOutput, Error> {
     asyncMap { input in
-      let subscriptionStatus = await input.request.flags.userSubscriptionStatus.async()
+      let subscriptionStatus = await input.request.flags.subscriptionStatus.async()
       if await InternalPresentationLogic.userSubscribedAndNotOverridden(
         isUserSubscribed: subscriptionStatus == .active,
         overrides: .init(

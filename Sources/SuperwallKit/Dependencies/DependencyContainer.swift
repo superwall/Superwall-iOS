@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
 ///
@@ -235,7 +236,7 @@ extension DependencyContainer: RequestFactory {
     paywallOverrides: PaywallOverrides? = nil,
     presentingViewController: UIViewController? = nil,
     isDebuggerLaunched: Bool? = nil,
-    isUserSubscribed: Bool? = nil,
+    subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>? = nil,
     isPaywallPresented: Bool
   ) -> PresentationRequest {
     return PresentationRequest(
@@ -244,7 +245,7 @@ extension DependencyContainer: RequestFactory {
       paywallOverrides: paywallOverrides,
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
-        userSubscriptionStatus: Superwall.shared.$subscriptionStatus,
+        subscriptionStatus: subscriptionStatus ?? Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
         isPaywallPresented: isPaywallPresented
       ),
       dependencyContainer: self

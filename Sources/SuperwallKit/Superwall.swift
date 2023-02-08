@@ -228,6 +228,7 @@ public final class Superwall: NSObject, ObservableObject {
 
     $subscriptionStatus
       .removeDuplicates()
+      .dropFirst()
       .eraseToAnyPublisher()
       .receive(on: DispatchQueue.main)
       .subscribe(Subscribers.Sink(

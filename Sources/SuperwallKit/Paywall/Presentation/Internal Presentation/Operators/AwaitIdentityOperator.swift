@@ -16,7 +16,7 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
       .flatMap { request in
         zip(
           request.dependencyContainer.identityManager.hasIdentity,
-          request.flags.userSubscriptionStatus
+          request.flags.subscriptionStatus
             .filter { $0 != .unknown }
             .setFailureType(to: Error.self)
             .eraseToAnyPublisher()
