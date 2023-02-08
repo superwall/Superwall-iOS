@@ -65,7 +65,6 @@ public protocol SuperwallDelegateObjc: AnyObject {
   @MainActor
   @objc optional func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo)
 
-  // TODO: Docs here
   /// Called when the property ``Superwall/subscriptionStatus`` changes.
   ///
   /// This is called whenever the subscription status of the user changes based on the on-device receipt.

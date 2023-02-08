@@ -43,7 +43,7 @@ final class TrackEventModel {
   }
 
   func logOut() async {
-    await SuperwallService.logOut()
+    await SuperwallService.reset()
   }
 
   // The below function gives an example of how to track an event using Combine publishers:

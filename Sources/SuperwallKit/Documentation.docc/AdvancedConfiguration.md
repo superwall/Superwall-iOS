@@ -63,10 +63,24 @@ All methods of the ``SubscriptionController`` are mandatory and receive callback
 
 ## Setting User Subscription Status
 
-In addition to creating a `SubscriptionController`, need to tell the SDK the user's subscription status. To do this, you need to use ``Superwall/setSubscriptionStatus(to:)``. This takes a ``SubscriptionStatus`` enum that has three possible cases:
+In addition to creating a `SubscriptionController`, you need to tell the SDK the user's subscription status every time it changes. To do this, you need to set ``Superwall/subscriptionStatus``:
 
-1.** `.unknown`**: This is the default value. In this state, paywalls will not show until the state changes to `.active` or `.inactive`.
+```
+  Superwall.shared.subscriptionStatus = .active
+```
+
+or
+
+```
+  Superwall.shared.subscriptionStatus = .inactive
+```
+
+This is a ``SubscriptionStatus`` enum that has three possible cases:
+
+1. **`.unknown`**: This is the default value. In this state, paywalls will not show until the state changes to `.active` or `.inactive`.
+
 2. **`.active`**: Indicates that the user has an active subscription. Paywalls will not show in this state (unless you specifically set the paywall to ignore subscription status).
+
 3. **`.inactive`**: Indicates that the user doesn't have an active subscription.
 
 ## Passing in Superwall Options

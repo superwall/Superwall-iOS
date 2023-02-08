@@ -133,6 +133,9 @@ extension StoreKitManager {
 
   /// Loads the purchased products from the receipt,
   nonisolated func loadPurchasedProducts() async {
+    if Superwall.shared.dependencyContainer.delegateAdapter.hasSubscriptionController {
+      return
+    }
     Logger.debug(
       logLevel: .debug,
       scope: .storeKitManager,
@@ -157,14 +160,3 @@ extension StoreKitManager: ProductsFetcher {
     return try await coordinator.productFetcher.products(identifiers: identifiers)
   }
 }
-
-/*
-TODO: SORT THIS OUT
-// MARK: - SubscriptionStatusChecker
-extension StoreKitManager: SubscriptionStatusChecker {
-  /// Do not call this directly.
-  nonisolated func isSubscribed() -> Bool {
-    return !receiptManager.activePurchases.isEmpty
-  }
-}
-*/

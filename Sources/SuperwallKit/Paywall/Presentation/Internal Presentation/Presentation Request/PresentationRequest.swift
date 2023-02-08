@@ -21,7 +21,7 @@ struct PresentationRequest {
 
   struct Flags {
     var isDebuggerLaunched: Bool
-    var userSubscriptionStatus: CurrentValueSubject<SubscriptionStatus, Never>
+    var userSubscriptionStatus: Published<SubscriptionStatus>.Publisher
     var isPaywallPresented: Bool
   }
   var flags: Flags

@@ -19,14 +19,13 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   - request: A presentation request of type `PresentationRequest` to feed into a presentation pipeline.
-  ///   - paywallStatePublisher: A publisher fed into the pipeline that sends state updates. Defaults to `init()` and used  by `presentAgain()` to pass in the existing state publisher.
+  ///   - paywallStatePublisher: A publisher fed into the pipeline that sends state updates. Defaults to `init()` and used by `presentAgain()` to pass in the existing state publisher.
   /// - Returns: A publisher that outputs a ``PaywallState``.
   @discardableResult
   func internallyPresent(
     _ request: PresentationRequest,
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never> = .init()
   ) -> PaywallStatePublisher {
-    /// A passthrough subject which sends the paywall state back to the client.
     let presentationSubject = PresentationSubject(request)
 
     presentationSubject

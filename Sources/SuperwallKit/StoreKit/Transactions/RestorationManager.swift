@@ -40,7 +40,7 @@ final class RestorationManager {
 
     if hasRestored {
       await storeKitManager.loadPurchasedProducts()
-      isUserSubscribed = Superwall.shared.internalSubscriptionStatus.value == .active
+      isUserSubscribed = Superwall.shared.subscriptionStatus == .active
     }
 
     if hasRestored,

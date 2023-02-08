@@ -126,5 +126,5 @@ enum ActiveSubscriptionStatus: Storable {
     "store.subscriptionStatus"
   }
   static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = Bool
+  typealias Value = SubscriptionStatus
 }

@@ -92,12 +92,15 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// A published property that indicates the subscription status of the user.
   ///
-  /// If you're letting Superwall handle subscription-related logic, its value will
-  /// be synced with the user's purchases on device. Otherwise, it will reflect
-  /// the status you pass in via ``setSubscriptionStatus(to:)``.
+  /// If you're handling subscription-related logic yourself via a
+  /// ``SubscriptionController``, you must set this property whenever
+  /// the subscription status of a user changes.
+  /// However, if you're letting Superwall handle subscription-related logic, its value will
+  /// be synced with the user's purchases on device.
   ///
   /// Paywalls will not show until the subscription status has been established.
-  /// During this time, it's value will default to `.unknown`.
+  /// On first install, it's value will default to `.unknown`. Afterwards, it'll default
+  /// to its cached value.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to it to get
   /// notified whenever the user's subscription status changes.
@@ -105,27 +108,10 @@ public final class Superwall: NSObject, ObservableObject {
   /// Otherwise, you can check the delegate function
   /// ``SuperwallDelegate/subscriptionStatusDidChange(to:)-24teh``
   /// to receive a callback with the new value every time it changes.
-  public var subscriptionStatus: AnyPublisher<SubscriptionStatus, Never> {
-    return internalSubscriptionStatus
-      .eraseToAnyPublisher()
-  }
-
-  /// **NOTE:** Do not set this directly. Use `setInternalSubscriptionStatus` instead.
-  var internalSubscriptionStatus: CurrentValueSubject<SubscriptionStatus, Never> = .init(.unknown)
-
-  /*
-   TODO: Copy bits of this
-
+  ///
+  /// To learn more, see <doc:AdvancedConfiguration>.
   @Published
-  public var hasActiveSubscription = false {
-    didSet {
-      dependencyContainer.storage.save(hasActiveSubscription, forType: ActiveSubscriptionStatus.self)
-      if oldValue == hasActiveSubscription {
-        return
-      }
-      dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: hasActiveSubscription)
-    }
-  }*/
+  public var subscriptionStatus: SubscriptionStatus = .unknown
 
   /// A published property that is `true` when Superwall has finished configuring via
   /// ``configure(apiKey:delegate:options:completion:)-7fafw``.
@@ -206,13 +192,8 @@ public final class Superwall: NSObject, ObservableObject {
     )
     self.init(dependencyContainer: dependencyContainer)
 
-    //hasActiveSubscription = dependencyContainer.storage.get(ActiveSubscriptionStatus.self) ?? false
+    subscriptionStatus = dependencyContainer.storage.get(ActiveSubscriptionStatus.self) ?? .unknown
 
-
-    /*
-     First time -> unknown -> inactive
-     Second time ->
-     */
     addListeners()
 
     // This task runs on a background thread, even if called from a main thread.
@@ -245,14 +226,23 @@ public final class Superwall: NSObject, ObservableObject {
         }
       ))
 
-    internalSubscriptionStatus
+    $subscriptionStatus
       .removeDuplicates()
       .eraseToAnyPublisher()
       .receive(on: DispatchQueue.main)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
-        receiveValue: { [weak self] value in
-          self?.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: value)
+        receiveValue: { [weak self] newValue in
+          guard let self = self else {
+            return
+          }
+          self.dependencyContainer.storage.save(newValue, forType: ActiveSubscriptionStatus.self)
+          self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
+
+          Task {
+            let event = InternalSuperwallEvent.SubscriptionStatusDidChange(subscriptionStatus: newValue)
+            await self.track(event)
+          }
         }
       ))
   }

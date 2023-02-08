@@ -85,7 +85,7 @@ class IdentityManager {
     userId: String,
     options: IdentityOptions?
   ) async throws {
-    guard let sanitizedUserId = sanitize(userId: userId) else {
+    guard let userId = sanitize(userId: userId) else {
       throw IdentityError.missingUserId
     }
 
@@ -106,7 +106,7 @@ class IdentityManager {
       await Superwall.shared.reset()
     }
 
-    appUserId = sanitizedUserId
+    appUserId = userId
 
     // If they have set restore paywall assignments to true,
     // Wait for assignments before setting identity. Otherwise,

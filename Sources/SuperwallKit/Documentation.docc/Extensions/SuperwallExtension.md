@@ -20,7 +20,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``objcDelegate``
 - ``SubscriptionController``
 - ``SubscriptionControllerObjc``
-- ``setSubscriptionStatus(to:)``
+- ``subscriptionStatus``
 - ``SuperwallOptions``
 - ``PaywallOptions``
 - ``options``

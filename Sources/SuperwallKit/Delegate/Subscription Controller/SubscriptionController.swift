@@ -17,7 +17,7 @@ import StoreKit
 /// ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw``.
 ///
 /// When implementing this, you also need to set the subscription status using
-/// ``Superwall/setSubscriptionStatus(to:)``.
+/// ``Superwall/subscriptionStatus``.
 ///
 /// To learn how to implement the ``SubscriptionController`` in your app
 /// and best practices, see <doc:AdvancedConfiguration>.

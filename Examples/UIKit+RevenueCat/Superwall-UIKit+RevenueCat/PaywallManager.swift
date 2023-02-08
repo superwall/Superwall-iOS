@@ -135,9 +135,9 @@ extension PaywallManager: PurchasesDelegate {
   /// Updates the subscription status in response to customer info received from RevenueCat.
   private func updateSubscriptionStatus(using customerInfo: CustomerInfo) {
     if customerInfo.entitlements.active.isEmpty {
-      Superwall.shared.setSubscriptionStatus(to: .inactive)
+      Superwall.shared.subscriptionStatus = .inactive
     } else {
-      Superwall.shared.setSubscriptionStatus(to: .active)
+      Superwall.shared.subscriptionStatus = .active
     }
   }
 

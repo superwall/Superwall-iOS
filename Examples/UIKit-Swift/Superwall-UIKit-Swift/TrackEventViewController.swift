@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 05/04/2022.
 //
+// swiftlint:disable force_cast
 
 import UIKit
 import SuperwallKit
@@ -22,7 +23,6 @@ final class TrackEventViewController: UIViewController {
     let controller = storyboard.instantiateViewController(
       withIdentifier: "TrackEventViewController"
     ) as! TrackEventViewController
-    // swiftlint:disable:previous force_cast
 
     return controller
   }
@@ -35,7 +35,7 @@ final class TrackEventViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    subscribedCancellable = Superwall.shared.subscriptionStatus
+    subscribedCancellable = Superwall.shared.$subscriptionStatus
       .receive(on: DispatchQueue.main)
       .sink { [weak self] status in
         switch status {

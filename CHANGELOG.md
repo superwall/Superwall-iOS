@@ -2,6 +2,16 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-beta.5
+
+### Breaking Changes
+
+- Removes `isUserSubscribed()` from the `SuperwallDelegate` and replaces this with a published instance variable `subscriptionStatus`. This is an enum that defaults to `.unknown` on first install and the cached value on subsequent app opens. If you're using a `SubscriptionController` to handle subscription-related logic, you must set `subscriptionStatus` every time the user's subscription status changes. If you're letting Superwall handle subscription-related logic, this value will be updated with the device receipt.
+
+### Enhancements
+
+- Adds a new event `SubscriptionStatusDidChange` which is logged on the dashboard.
+
 ## 3.0.0-beta.4
 
 ### Breaking Changes

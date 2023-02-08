@@ -84,8 +84,9 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         )
         return output
       } catch {
+        let subscriptionStatus = await input.request.flags.userSubscriptionStatus.async()
         if InternalPresentationLogic.userSubscribedAndNotOverridden(
-          isUserSubscribed: input.request.flags.userSubscriptionStatus.value == .active,
+          isUserSubscribed: subscriptionStatus == .active,
           overrides: .init(
             isDebuggerLaunched: input.request.flags.isDebuggerLaunched,
             shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus

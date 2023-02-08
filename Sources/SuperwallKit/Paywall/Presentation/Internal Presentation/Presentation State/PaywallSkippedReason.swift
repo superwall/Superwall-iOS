@@ -29,9 +29,8 @@ public enum PaywallSkippedReason: Sendable {
   /// The user is subscribed.
   ///
   /// This means ``Superwall/subscriptionStatus`` is set to `.active`. If you're
-  /// letting Superwall handle subscription-related logic, this will be based on the on-device
-  /// receipts. Otherwise it'll be based on the value you've passed into
-  /// ``Superwall/setSubscriptionStatus(to:)``.
+  /// letting Superwall handle subscription-related logic, it will be based on the on-device
+  /// receipts. Otherwise it'll be based on the value you've set.
   ///
   /// By default, paywalls do not show to users who are already subscribed. You can override this
   /// behavior in the paywall editor.
@@ -60,9 +59,8 @@ public enum PaywallSkippedReasonObjc: Int, Sendable {
   /// The user is subscribed.
   ///
   /// This means ``Superwall/subscriptionStatus`` is set to `.active`. If you're
-  /// letting Superwall handle subscription-related logic, this will be based on the on-device
-  /// receipts. Otherwise it'll be based on the value you've passed into
-  /// ``Superwall/setSubscriptionStatus(to:)``.
+  /// letting Superwall handle subscription-related logic, it will be based on the on-device
+  /// receipts. Otherwise it'll be based on the value you've set.
   ///
   /// By default, paywalls do not show to users who are already subscribed. You can override this
   /// behavior in the paywall editor.

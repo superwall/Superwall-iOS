@@ -244,7 +244,7 @@ extension DependencyContainer: RequestFactory {
       paywallOverrides: paywallOverrides,
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
-        userSubscriptionStatus: Superwall.shared.internalSubscriptionStatus,
+        userSubscriptionStatus: Superwall.shared.$subscriptionStatus,
         isPaywallPresented: isPaywallPresented
       ),
       dependencyContainer: self

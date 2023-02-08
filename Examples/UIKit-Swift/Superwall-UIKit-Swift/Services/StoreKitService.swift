@@ -6,8 +6,6 @@
 //
 
 // Uncomment if you're implementing the SubscriptionController in SuperwallService.swift:
-import SuperwallKit
-
 /*
 import StoreKit
 import SuperwallKit
@@ -17,9 +15,9 @@ final class StoreKitService: NSObject, ObservableObject {
   @Published var isSubscribed = false {
     didSet {
       if isSubscribed {
-        Superwall.shared.setSubscriptionStatus(to: .active)
+        Superwall.shared.subscriptionStatus = .active
       } else {
-        Superwall.shared.setSubscriptionStatus(to: .inactive)
+        Superwall.shared.subscriptionStatus = .inactive
       }
       UserDefaults.standard.set(isSubscribed, forKey: kIsSubscribed)
     }

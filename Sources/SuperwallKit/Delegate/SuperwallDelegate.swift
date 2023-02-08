@@ -65,12 +65,10 @@ public protocol SuperwallDelegate: AnyObject {
   @MainActor
   func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo)
 
-  // TODO: Update docs here:
   /// Called when the property ``Superwall/subscriptionStatus`` changes.
   ///
   /// If you're letting Superwall handle subscription-related logic, then this is based on
-  /// the device receipt. Otherwise, this will reflect the value that you pass into
-  /// ``Superwall/setSubscriptionStatus(to:)``.
+  /// the device receipt. Otherwise, this will reflect the value that you set.
   ///
   /// You can use this function to update the state of your application. Alternatively, you can
   /// use the published properties of ``Superwall/subscriptionStatus`` to react to
