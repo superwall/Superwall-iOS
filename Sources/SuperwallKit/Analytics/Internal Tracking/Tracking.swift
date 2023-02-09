@@ -96,10 +96,6 @@ extension Superwall {
       )
       await internallyPresent(presentationRequest).asyncNoValue()
     case .triggerPaywall:
-      // delay in case they are presenting a view controller alongside an event they are calling
-      let milliseconds = 200
-      let nanoseconds = UInt64(milliseconds * 1_000_000)
-      try? await Task.sleep(nanoseconds: nanoseconds)
       let presentationRequest = dependencyContainer.makePresentationRequest(
         presentationInfo,
         isPaywallPresented: isPaywallPresented

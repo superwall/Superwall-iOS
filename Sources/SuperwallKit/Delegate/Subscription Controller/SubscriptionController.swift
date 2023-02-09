@@ -16,6 +16,9 @@ import StoreKit
 /// the delegate when configuring the SDK via
 /// ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw``.
 ///
+/// When implementing this, you also need to set the subscription status using
+/// ``Superwall/subscriptionStatus``.
+///
 /// To learn how to implement the ``SubscriptionController`` in your app
 /// and best practices, see <doc:AdvancedConfiguration>.
 @MainActor
@@ -38,11 +41,4 @@ public protocol SubscriptionController: AnyObject {
   ///
   /// - Returns: A boolean that's `true` if the user's purchases were restored or `false` if they weren't.
   func restorePurchases() async -> Bool
-
-  /// Decides whether a paywall should be presented based on whether the user has an active
-  /// subscription.
-  ///
-  /// - Warning: A paywall will never show if this function returns `true`.
-  /// - Returns: A boolean that indicates whether or not the user has an active subscription.
-  func isUserSubscribed() -> Bool
 }

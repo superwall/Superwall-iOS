@@ -33,7 +33,7 @@ final class SuperwallService {
       delegate: shared
     )
 
-    // Getting our logged in status to Superwall.
+    // Getting our logged in status from Superwall.
     shared.isLoggedIn.send(Superwall.shared.isLoggedIn)
   }
 
@@ -157,10 +157,6 @@ extension SuperwallService: SubscriptionController {
 
   func restorePurchases() async -> Bool {
     return await StoreKitService.shared.restorePurchases()
-  }
-
-  func isUserSubscribed() -> Bool {
-    return StoreKitService.shared.isSubscribed
   }
   */
 }

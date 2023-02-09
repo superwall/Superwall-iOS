@@ -20,14 +20,19 @@ final class AwaitIdentityOperatorTests: XCTestCase {
     identityManager.reset()
   }
 
-  func test_waitingForIdentity_noIdentity() async {
+  func test_waitToPresent_noIdentity_unknownStatus() async {
     let expectation = expectation(description: "Got identity")
     expectation.isInverted = true
 
-    CurrentValueSubject(PresentationRequest.stub())
+    let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.unknown)
+      .eraseToAnyPublisher()
+    let request = PresentationRequest.stub()
+      .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
+
+    CurrentValueSubject(request)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
-      .awaitIdentity()
+      .waitToPresent()
       .eraseToAnyPublisher()
       .sink(
         receiveCompletion: { _ in },
@@ -40,16 +45,44 @@ final class AwaitIdentityOperatorTests: XCTestCase {
     wait(for: [expectation], timeout: 0.1)
   }
 
-  func test_waitingForIdentity_hasIdentity() async {
+  func test_waitToPresent_noIdentity_activeStatus() async {
+    let expectation = expectation(description: "Got identity")
+    expectation.isInverted = true
+
+    let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+      .eraseToAnyPublisher()
+    let request = PresentationRequest.stub()
+      .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
+
+    CurrentValueSubject(request)
+      .setFailureType(to: Error.self)
+      .eraseToAnyPublisher()
+      .waitToPresent()
+      .eraseToAnyPublisher()
+      .sink(
+        receiveCompletion: { _ in },
+        receiveValue: { _ in
+          expectation.fulfill()
+        }
+      )
+      .store(in: &cancellables)
+
+    wait(for: [expectation], timeout: 0.1)
+  }
+
+  func test_waitToPresent_hasIdentity_activeStatus() async {
     let expectation = expectation(description: "Got identity")
 
+    let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+      .eraseToAnyPublisher()
     let stub = PresentationRequest.stub()
       .setting(\.dependencyContainer.identityManager, to: identityManager)
+      .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
     CurrentValueSubject(stub)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
-      .awaitIdentity()
+      .waitToPresent()
       .eraseToAnyPublisher()
       .sink(
         receiveCompletion: { _ in },

@@ -14,12 +14,13 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
   func checkUserSubscription(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<AssignmentPipelineOutput, Failure> {
-    tryMap { input in
+    asyncMap { input in
       switch input.triggerResult {
       case .paywall:
         return input
       default:
-        if input.request.flags.isUserSubscribed {
+        let subscriptionStatus = await input.request.flags.subscriptionStatus.async()
+        if subscriptionStatus == .active {
           Task.detached(priority: .utility) {
             let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .userIsSubscribed)
             await Superwall.shared.track(trackedEvent)

@@ -14,6 +14,11 @@ final class StoreKitService: NSObject, ObservableObject {
   static let shared = StoreKitService()
   @Published var isSubscribed = false {
     didSet {
+      if isSubscribed {
+        Superwall.shared.subscriptionStatus = .active
+      } else {
+        Superwall.shared.subscriptionStatus = .inactive
+      }
       UserDefaults.standard.set(isSubscribed, forKey: kIsSubscribed)
     }
   }

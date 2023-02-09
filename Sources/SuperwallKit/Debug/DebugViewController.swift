@@ -413,15 +413,17 @@ final class DebugViewController: UIViewController {
     bottomButton.setImage(nil, for: .normal)
     bottomButton.showLoading = true
 
+    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
     let presentationRequest = factory.makePresentationRequest(
       .fromIdentifier(
         paywallIdentifier,
         freeTrialOverride: freeTrialAvailable
       ),
       paywallOverrides: nil,
-      presentingViewController: self,
+      presenter: self,
       isDebuggerLaunched: true,
-      isUserSubscribed: false,
+      subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: Superwall.shared.isPaywallPresented
     )
 

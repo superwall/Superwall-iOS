@@ -25,7 +25,7 @@ struct PaywallRequest {
   let responseIdentifiers: ResponseIdentifiers
 
   /// Overrides within the paywall.
-  var overrides = Overrides()
+  let overrides: Overrides
 
   unowned let dependencyContainer: DependencyContainer
 

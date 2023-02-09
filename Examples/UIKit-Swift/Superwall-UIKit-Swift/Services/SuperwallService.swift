@@ -155,9 +155,5 @@ extension SuperwallService: SubscriptionController {
   func restorePurchases() async -> Bool {
     return await StoreKitService.shared.restorePurchases()
   }
-
-  func isUserSubscribed() -> Bool {
-    return StoreKitService.shared.isSubscribed
-  }
   */
 }

@@ -20,6 +20,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``objcDelegate``
 - ``SubscriptionController``
 - ``SubscriptionControllerObjc``
+- ``subscriptionStatus``
 - ``SuperwallOptions``
 - ``PaywallOptions``
 - ``options``
@@ -29,12 +30,12 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 ### Presenting and Dismissing a Paywall
 
 - <doc:TrackingEvents>
-- ``track(event:params:paywallOverrides:paywallHandler:)``
+- ``track(event:params:presenter:paywallOverrides:paywallHandler:)``
+- ``track(event:params:presenter:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``getTrackResult(forEvent:params:)``
 - ``getTrackResult(forEvent:params:completion:)``
 - ``getTrackInfo(forEvent:params:)``
 - ``publisher(forEvent:params:paywallOverrides:)``
-- ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``dismiss()``
 - ``dismiss(completion:)``
 - ``PaywallInfo``
@@ -52,6 +53,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 - <doc:SettingUserAttributes>
 - ``identify(userId:options:)``
+- ``identify(userId:options:completion:)``
+- ``IdentityOptions``
 - ``reset()``
 - ``reset(completion:)``
 - ``setUserAttributes(_:)``
@@ -83,4 +86,4 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``userId``
 - ``isLoggedIn``
 - ``isConfigured``
-- ``hasActiveSubscription``
+- ``subscriptionStatus``

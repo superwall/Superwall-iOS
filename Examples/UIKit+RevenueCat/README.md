@@ -49,13 +49,13 @@ Build and run the app and you'll see the welcome screen:
 
 SuperwallKit and RevenueCat are both [configured](Superwall-UIKit+RevenueCat/PaywallManager.swift#L37) on app launch, setting an `apiKey` and `delegate`.
 
-The SDK sends back events received from the paywall via the delegate methods in [PaywallManager.swift](Superwall-UIKit+RevenueCat/PaywallManager.swift#L170). The delegate is responsible for sending back analytical events and providing a `SubscriptionController`. This is a protocol implemented by the PaywallManager that handles all subscription-related logic.
+The SDK sends back events received from the paywall via the delegate methods in [PaywallManager.swift](Superwall-UIKit+RevenueCat/PaywallManager.swift#L170). The delegate is responsible for sending back analytical events and providing a `SubscriptionController`. This is a protocol implemented by the PaywallManager that handles purchasing and restoring logic.
 
 ## Logging In
 
 On the welcome screen, enter your name in the **text field**. This saves to the Superwall user attributes using [Superwall.shared.setUserAttributes(_:)](Superwall-UIKit+RevenueCat/PaywallManager.swift#L102). You don't need to set user attributes, but it can be useful if you want to create a rule to present a paywall based on a specific attribute you've set. You can also recall user attributes on your paywall to personalise the messaging.
 
-Tap **Log In**. This identifies the user with Superwall using a hardcoded userId, retrieving any paywalls that have already been assigned to them. It also logs into revenuecat, retrieving the user's subscription status.
+Tap **Log In**. This identifies the user with Superwall using a hardcoded userId, retrieving any paywalls that have already been assigned to them. It also logs into revenuecat, retrieving the user's subscription status. Every time the subscription status is updated, `Superwall.shared.subscriptionStatus` is set.
 
 You'll see an overview screen:
 
@@ -69,9 +69,9 @@ To present a paywall, you **track** an event.
 
 On the [Superwall Dashboard](https://superwall.com/dashboard) you add this event to a Campaign and attach some presentation rules. For this app, we've already done this for you.
 
-When an event is tracked, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall. Note that if the `SubscriptionController` method [isUserSubscribed()](Superwall-UIKit+RevenueCat/PaywallManager.swift#L122) returns `true`, a paywall will not show by default.
+When an event is tracked, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall. Note that if `Superwall.shared.subscriptionStatus` is set to `active`, a paywall will not show by default.
 
-By calling [Superwall.shared.track(event:params:paywallOverrides:paywallHandler:)](Superwall-UIKit+RevenueCat/TrackEventViewController.swift#L60), you present a paywall in response to the event. For this app, the event is called `campaign_trigger`.
+By calling [Superwall.shared.track(event:params:presenter:paywallOverrides:paywallHandler:)](Superwall-UIKit+RevenueCat/TrackEventViewController.swift#L60), you present a paywall in response to the event. For this app, the event is called `campaign_trigger`.
 
 On screen you'll see some explanatory text and a button that tracks an event:
 

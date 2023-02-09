@@ -16,10 +16,12 @@ final class EvaluateRulesOperatorTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let identifier = "abc"
 
+    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
     let request = dependencyContainer.makePresentationRequest(
       .fromIdentifier(identifier, freeTrialOverride: false),
       isDebuggerLaunched: true,
-      isUserSubscribed: false,
+      subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false
     )
 
@@ -54,11 +56,13 @@ final class EvaluateRulesOperatorTests: XCTestCase {
   }
 
   func test_evaluateRules_isNotDebugger() async {
+    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
     let dependencyContainer = DependencyContainer()
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
-      isUserSubscribed: false,
+      subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false
     )
 
