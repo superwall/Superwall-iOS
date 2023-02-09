@@ -68,7 +68,7 @@ On the [Superwall Dashboard](https://superwall.com/dashboard) you add this event
 
 When an event is tracked, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall.
 
-By calling [Superwall.shared.track(event:params:paywallOverrides:paywallHandler:)](Superwall-UIKit-Swift/TrackEventViewController.swift#L57), you present a paywall in response to the event. For this app, the event is called `campaign_trigger`.
+By calling [Superwall.shared.track(event:params:presenter:paywallOverrides:paywallHandler:)](Superwall-UIKit-Swift/TrackEventViewController.swift#L57), you present a paywall in response to the event. For this app, the event is called `campaign_trigger`.
 
 On screen you'll see some explanatory text and a button that tracks an event:
 

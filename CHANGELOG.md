@@ -12,6 +12,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds a new event `SubscriptionStatusDidChange` which is logged on the dashboard.
+- Adds an optional `presenter` parameter to `track`. In v2 this was known as `on`. This takes a `UIViewController` which is used to present the paywall.
 
 ## 3.0.0-beta.4
 

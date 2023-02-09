@@ -234,14 +234,14 @@ extension DependencyContainer: RequestFactory {
   func makePresentationRequest(
     _ presentationInfo: PresentationInfo,
     paywallOverrides: PaywallOverrides? = nil,
-    presentingViewController: UIViewController? = nil,
+    presenter: UIViewController? = nil,
     isDebuggerLaunched: Bool? = nil,
     subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>? = nil,
     isPaywallPresented: Bool
   ) -> PresentationRequest {
     return PresentationRequest(
       presentationInfo: presentationInfo,
-      presentingViewController: presentingViewController,
+      presenter: presenter,
       paywallOverrides: paywallOverrides,
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,

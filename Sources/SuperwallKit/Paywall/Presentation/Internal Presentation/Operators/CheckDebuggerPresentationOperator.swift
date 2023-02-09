@@ -16,7 +16,7 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
   ) -> AnyPublisher<Output, Failure> {
     tryMap { request, debugInfo in
       if request.flags.isDebuggerLaunched {
-        guard request.presentingViewController is DebugViewController else {
+        guard request.presenter is DebugViewController else {
           let error = InternalPresentationLogic.presentationError(
             domain: "SWPresentationError",
             code: 101,

@@ -14,7 +14,7 @@ struct PresentationRequest {
   let presentationInfo: PresentationInfo
 
   /// The view controller to present the paywall on, if any.
-  var presentingViewController: UIViewController?
+  var presenter: UIViewController?
 
   /// Overrides the default behavior and products of a paywall.
   var paywallOverrides: PaywallOverrides?
@@ -42,7 +42,7 @@ extension PresentationRequest: Stubbable {
     return dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       paywallOverrides: nil,
-      presentingViewController: nil,
+      presenter: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false
     )
