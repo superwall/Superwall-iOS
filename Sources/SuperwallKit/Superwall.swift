@@ -90,29 +90,28 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.identityManager.isLoggedIn
   }
 
-  /// A published property that indicates whether the device has any active subscriptions.
+  /// A published property that indicates the subscription status of the user.
   ///
-  /// Its value is stored on disk and synced with the active purchases on device.
+  /// If you're handling subscription-related logic yourself via a
+  /// ``SubscriptionController``, you must set this property whenever
+  /// the subscription status of a user changes.
+  /// However, if you're letting Superwall handle subscription-related logic, its value will
+  /// be synced with the user's purchases on device.
   ///
-  /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
+  /// Paywalls will not show until the subscription status has been established.
+  /// On first install, it's value will default to `.unknown`. Afterwards, it'll default
+  /// to its cached value.
+  ///
+  /// If you're using Combine or SwiftUI, you can subscribe or bind to it to get
   /// notified whenever the user's subscription status changes.
   ///
   /// Otherwise, you can check the delegate function
-  /// ``SuperwallDelegate/hasActiveSubscriptionDidChange(to:)-1rmfo``
+  /// ``SuperwallDelegate/subscriptionStatusDidChange(to:)-24teh``
   /// to receive a callback with the new value every time it changes.
   ///
-  /// If you are returning a ``SubscriptionController`` in the
-  /// ``SuperwallDelegate``, you should rely on your own subscription status instead.
+  /// To learn more, see <doc:AdvancedConfiguration>.
   @Published
-  public var hasActiveSubscription = false {
-    didSet {
-      dependencyContainer.storage.save(hasActiveSubscription, forType: SubscriptionStatus.self)
-      if oldValue == hasActiveSubscription {
-        return
-      }
-      dependencyContainer.delegateAdapter.hasActiveSubscriptionDidChange(to: hasActiveSubscription)
-    }
-  }
+  public var subscriptionStatus: SubscriptionStatus = .unknown
 
   /// A published property that is `true` when Superwall has finished configuring via
   /// ``configure(apiKey:delegate:options:completion:)-7fafw``.
@@ -193,9 +192,9 @@ public final class Superwall: NSObject, ObservableObject {
     )
     self.init(dependencyContainer: dependencyContainer)
 
-    hasActiveSubscription = dependencyContainer.storage.get(SubscriptionStatus.self) ?? false
+    subscriptionStatus = dependencyContainer.storage.get(ActiveSubscriptionStatus.self) ?? .unknown
 
-    listenForConfig()
+    addListeners()
 
     // This task runs on a background thread, even if called from a main thread.
     // This is because the function isn't marked to run on the main thread,
@@ -214,17 +213,37 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Listens to config and updates ``isConfigured`` when it receives a non-nil value
-  /// for config.
-  private func listenForConfig() {
+  /// Listens to config and the subscription status
+  private func addListeners() {
     dependencyContainer.configManager.$config
       .compactMap { $0 }
       .first()
       .receive(on: DispatchQueue.main)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
-        receiveValue: { config in
-          self.isConfigured = config != nil
+        receiveValue: { [weak self] config in
+          self?.isConfigured = config != nil
+        }
+      ))
+
+    $subscriptionStatus
+      .removeDuplicates()
+      .dropFirst()
+      .eraseToAnyPublisher()
+      .receive(on: DispatchQueue.main)
+      .subscribe(Subscribers.Sink(
+        receiveCompletion: { _ in },
+        receiveValue: { [weak self] newValue in
+          guard let self = self else {
+            return
+          }
+          self.dependencyContainer.storage.save(newValue, forType: ActiveSubscriptionStatus.self)
+          self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
+
+          Task {
+            let event = InternalSuperwallEvent.SubscriptionStatusDidChange(subscriptionStatus: newValue)
+            await self.track(event)
+          }
         }
       ))
   }

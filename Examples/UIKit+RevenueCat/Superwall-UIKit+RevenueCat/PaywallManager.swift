@@ -15,21 +15,10 @@ final class PaywallManager: NSObject {
   static var name: String {
     return Superwall.shared.userAttributes["firstName"] as? String ?? ""
   }
-  @Published var isSubscribed = false {
-    didSet {
-      UserDefaults.standard.set(isSubscribed, forKey: kIsSubscribed)
-    }
-  }
-  private let kIsSubscribed = "isSubscribed"
 
   #warning("Replace these with your API keys:")
   private static let revenueCatApiKey = "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql"
   private static let superwallApiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
-
-  override init() {
-    isSubscribed = UserDefaults.standard.bool(forKey: kIsSubscribed)
-    super.init()
-  }
 
   /// Configures both the RevenueCat and Superwall SDKs.
   ///
@@ -65,7 +54,7 @@ final class PaywallManager: NSObject {
     do {
       let (customerInfo, _) = try await Purchases.shared.logIn(userId)
       updateSubscriptionStatus(using: customerInfo)
-      try Superwall.shared.identify(userId: userId)
+      try await Superwall.shared.identify(userId: userId)
     } catch let error as IdentityError {
       switch error {
       case .missingUserId:
@@ -119,10 +108,6 @@ extension PaywallManager: SubscriptionController {
     return await restore()
   }
 
-  func isUserSubscribed() -> Bool {
-    return isSubscribed
-  }
-
   func purchase(product: SKProduct) async -> PurchaseResult {
     do {
       let userCancelled = try await purchase(product)
@@ -149,7 +134,11 @@ extension PaywallManager: PurchasesDelegate {
 
   /// Updates the subscription status in response to customer info received from RevenueCat.
   private func updateSubscriptionStatus(using customerInfo: CustomerInfo) {
-    isSubscribed = !customerInfo.entitlements.active.isEmpty
+    if customerInfo.entitlements.active.isEmpty {
+      Superwall.shared.subscriptionStatus = .inactive
+    } else {
+      Superwall.shared.subscriptionStatus = .active
+    }
   }
 
   /// Restores purchases and updates subscription status.

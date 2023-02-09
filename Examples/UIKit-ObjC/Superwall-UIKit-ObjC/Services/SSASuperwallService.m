@@ -63,6 +63,22 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
   return sharedService;
 }
 
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    // Listen for changes to the subscription state.
+    [[NSNotificationCenter defaultCenter] addObserverForName:SSAStoreKitServiceDidUpdateSubscribedState object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+      if ([SSAStoreKitService sharedService].isSubscribed) {
+        [Superwall sharedInstance].subscriptionStatus = SWKSubscriptionStatusActive;
+      } else {
+        [Superwall sharedInstance].subscriptionStatus = SWKSubscriptionStatusInactive;
+      }
+    }];
+  }
+
+  return self;
+}
+
 #pragma mark - Public Properties
 
 - (BOOL)isLoggedIn {
@@ -114,10 +130,6 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 }
 
 #pragma mark - SuperwallDelegate
-
-- (BOOL)isUserSubscribed { 
-  return [SSAStoreKitService sharedService].isSubscribed;
-}
 
 - (void)purchaseWithProduct:(SKProduct * _Nonnull)product completion:(void (^ _Nonnull)(enum SWKPurchaseResult, NSError * _Nullable))completion {
   [[SSAStoreKitService sharedService] purchaseProduct:product withCompletion:^(SKPaymentTransactionState state, NSError * _Nullable error) {

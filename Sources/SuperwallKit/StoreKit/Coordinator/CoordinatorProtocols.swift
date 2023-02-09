@@ -33,8 +33,3 @@ protocol TransactionRestorer: AnyObject {
   /// obtaining the restored transactions
   func restorePurchases() async -> Bool
 }
-
-protocol SubscriptionStatusChecker: AnyObject {
-  /// Determines the subscription status of the user.
-  func isSubscribed() -> Bool
-}

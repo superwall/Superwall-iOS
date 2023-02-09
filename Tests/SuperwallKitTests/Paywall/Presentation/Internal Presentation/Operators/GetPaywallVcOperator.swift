@@ -47,9 +47,11 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     )
     paywallManager.getPaywallError = PresentationPipelineError.cancelled
 
+    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+      .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
       .setting(\.dependencyContainer.paywallManager, to: paywallManager)
-      .setting(\.flags.isUserSubscribed, to: true)
+      .setting(\.flags.subscriptionStatus, to: publisher)
 
     let input = TriggerResultResponsePipelineOutput(
       request: request,
@@ -120,9 +122,11 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     )
     paywallManager.getPaywallError = PresentationPipelineError.cancelled
 
+    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
       .setting(\.dependencyContainer.paywallManager, to: paywallManager)
-      .setting(\.flags.isUserSubscribed, to: false)
+      .setting(\.flags.subscriptionStatus, to: publisher)
 
     let input = TriggerResultResponsePipelineOutput(
       request: request,

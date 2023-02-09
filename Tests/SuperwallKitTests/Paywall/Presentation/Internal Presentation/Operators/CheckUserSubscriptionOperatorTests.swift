@@ -13,11 +13,14 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
   func test_checkUserSubscription_notPaywall_userSubscribed() async {
+    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+      .eraseToAnyPublisher()
+
     let dependencyContainer = DependencyContainer()
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
-      isUserSubscribed: true,
+      subscriptionStatus: publisher,
       isPaywallPresented: false
     )
 
@@ -65,15 +68,20 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
     wait(for: [pipelineExpectation, stateExpectation], timeout: 0.1)
   }
 
   func test_checkUserSubscription_paywall() async {
+    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
+
     let dependencyContainer = DependencyContainer()
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
-      isUserSubscribed: false,
+      subscriptionStatus: publisher,
       isPaywallPresented: false
     )
 
@@ -106,15 +114,20 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
     wait(for: [pipelineExpectation, stateExpectation], timeout: 0.1)
   }
 
   func test_checkUserSubscription_notPaywall_userNotSubscribed() async {
+    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
+
     let dependencyContainer = DependencyContainer()
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
-      isUserSubscribed: false,
+      subscriptionStatus: publisher,
       isPaywallPresented: false
     )
 
@@ -147,6 +160,8 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
+    try? await Task.sleep(nanoseconds: 10_000_000)
+    
     wait(for: [pipelineExpectation, stateExpectation], timeout: 0.1)
   }
 }

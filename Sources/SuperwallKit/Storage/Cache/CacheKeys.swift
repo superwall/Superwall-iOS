@@ -121,10 +121,10 @@ enum SdkVersion: Storable {
   typealias Value = String
 }
 
-enum SubscriptionStatus: Storable {
+enum ActiveSubscriptionStatus: Storable {
   static var key: String {
     "store.subscriptionStatus"
   }
   static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = Bool
+  typealias Value = SubscriptionStatus
 }

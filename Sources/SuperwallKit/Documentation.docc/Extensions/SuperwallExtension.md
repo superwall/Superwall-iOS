@@ -20,6 +20,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``objcDelegate``
 - ``SubscriptionController``
 - ``SubscriptionControllerObjc``
+- ``subscriptionStatus``
 - ``SuperwallOptions``
 - ``PaywallOptions``
 - ``options``
@@ -52,6 +53,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 - <doc:SettingUserAttributes>
 - ``identify(userId:options:)``
+- ``identify(userId:options:completion:)``
+- ``IdentityOptions``
 - ``reset()``
 - ``reset(completion:)``
 - ``setUserAttributes(_:)``
@@ -83,4 +86,4 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``userId``
 - ``isLoggedIn``
 - ``isConfigured``
-- ``hasActiveSubscription``
+- ``subscriptionStatus``

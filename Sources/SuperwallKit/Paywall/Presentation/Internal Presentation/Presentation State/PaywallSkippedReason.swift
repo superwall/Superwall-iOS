@@ -28,11 +28,9 @@ public enum PaywallSkippedReason: Sendable {
 
   /// The user is subscribed.
   ///
-  /// If you're letting SuperwallKit handle subscription-related logic, this means that the user has
-  /// an active purchase.
-  ///
-  /// If you're returning a ``SubscriptionController`` in the delegate, this means your
-  /// ``SubscriptionController/isUserSubscribed()`` method is returning `true`.
+  /// This means ``Superwall/subscriptionStatus`` is set to `.active`. If you're
+  /// letting Superwall handle subscription-related logic, it will be based on the on-device
+  /// receipts. Otherwise it'll be based on the value you've set.
   ///
   /// By default, paywalls do not show to users who are already subscribed. You can override this
   /// behavior in the paywall editor.
@@ -60,11 +58,9 @@ public enum PaywallSkippedReasonObjc: Int, Sendable {
 
   /// The user is subscribed.
   ///
-  /// If you're letting SuperwallKit handle subscription-related logic, this means that the user has
-  /// an active purchase.
-  ///
-  /// If you're returning a ``SubscriptionController`` in the delegate, this means your
-  /// ``SubscriptionController/isUserSubscribed()`` method is returning `true`.
+  /// This means ``Superwall/subscriptionStatus`` is set to `.active`. If you're
+  /// letting Superwall handle subscription-related logic, it will be based on the on-device
+  /// receipts. Otherwise it'll be based on the value you've set.
   ///
   /// By default, paywalls do not show to users who are already subscribed. You can override this
   /// behavior in the paywall editor.

@@ -34,9 +34,12 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       }
     }
     .store(in: &cancellables)
+
+    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+      .eraseToAnyPublisher()
     let dependencyContainer = DependencyContainer()
     let request = PresentationRequest.stub()
-      .setting(\.flags.isUserSubscribed, to: true)
+      .setting(\.flags.subscriptionStatus, to: publisher)
 
     let input = PaywallVcPipelineOutput(
       request: request,
@@ -102,11 +105,13 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
 
     Superwall.shared.presentationItems.window = UIWindow()
 
+    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
     let dependencyContainer = DependencyContainer()
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
-      isUserSubscribed: false,
+      subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false
     )
     .setting(\.presentingViewController, to: nil)
@@ -160,9 +165,11 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
+    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
       .setting(\.presentingViewController, to: UIViewController())
-      .setting(\.flags.isUserSubscribed, to: false)
+      .setting(\.flags.subscriptionStatus, to: publisher)
 
     let dependencyContainer = DependencyContainer()
     let input = PaywallVcPipelineOutput(

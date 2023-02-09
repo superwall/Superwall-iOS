@@ -8,7 +8,7 @@
 import Foundation
 import StoreKit
 
-/// The Objective-C only protocol that handles Superwall's subscription-related logic.
+/// The Objective-C-only protocol that handles Superwall's subscription-related logic.
 ///
 /// By default, the Superwall SDK handles all subscription-related logic.
 ///
@@ -16,8 +16,11 @@ import StoreKit
 /// the delegate when configuring the SDK via
 /// ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw``.
 ///
+/// When implementing this, you also need to set the subscription status using
+/// ``Superwall/subscriptionStatus``.
+///
 /// To learn how to implement the ``SubscriptionControllerObjc`` in your app
-/// and best practices, see <doc:GettingStarted>.
+/// and best practices, see <doc:AdvancedConfiguration>.
 @MainActor
 @objc(SWKSubscriptionController)
 public protocol SubscriptionControllerObjc: AnyObject {
@@ -44,11 +47,4 @@ public protocol SubscriptionControllerObjc: AnyObject {
   /// - Parameters:
   ///   - completion: Call the completion with `true` if the user's purchases were restored or `false` if they weren't.
   @objc func restorePurchases(completion: @escaping (Bool) -> Void)
-
-  /// Decides whether a paywall should be presented based on whether the user has an active
-  /// subscription.
-  ///
-  /// - Warning: A paywall will never show if this function returns `true`.
-  /// - Returns: A boolean that indicates whether or not the user has an active subscription.
-  @objc func isUserSubscribed() -> Bool
 }

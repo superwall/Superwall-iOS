@@ -32,6 +32,9 @@ public enum SuperwallEvent {
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case sessionStart
 
+  /// When the user's subscription status changes.
+  case subscriptionStatusDidChange
+
   /// Anytime the app leaves the foreground.
   case appClose
 
@@ -165,6 +168,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .appInstall, description: "app_install")
     case .sessionStart:
       return .init(objcEvent: .sessionStart, description: "session_start")
+    case .subscriptionStatusDidChange:
+      return .init(objcEvent: .subscriptionStart, description: "subscription_status_did_change")
     case .appClose:
       return .init(objcEvent: .appClose, description: "app_close")
     case .deepLink:

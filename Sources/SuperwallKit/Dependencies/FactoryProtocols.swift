@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
@@ -36,7 +37,7 @@ protocol RequestFactory: AnyObject {
     paywallOverrides: PaywallOverrides?,
     presentingViewController: UIViewController?,
     isDebuggerLaunched: Bool?,
-    isUserSubscribed: Bool?,
+    subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>?,
     isPaywallPresented: Bool
   ) -> PresentationRequest
 }

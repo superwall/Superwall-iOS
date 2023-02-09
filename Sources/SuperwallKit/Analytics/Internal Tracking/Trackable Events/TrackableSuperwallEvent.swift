@@ -176,6 +176,17 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct SubscriptionStatusDidChange: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .subscriptionStatusDidChange
+    let subscriptionStatus: SubscriptionStatus
+    var customParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "subscription_status": subscriptionStatus
+      ]
+    }
+  }
+
   struct TriggerFire: TrackableSuperwallEvent {
     let triggerResult: TriggerResult
     var superwallEvent: SuperwallEvent {

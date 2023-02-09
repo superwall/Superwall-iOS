@@ -9,14 +9,21 @@ import Foundation
 import Combine
 
 extension AnyPublisher where Output == PresentationRequest, Failure == Error {
-  /// Waits for the `IdentiyManager` to confirm that the config has been received
-  /// and the identity of the user has been established.
-  func awaitIdentity() -> AnyPublisher<PresentationRequest, Failure> {
+  /// Waits for config to be received and the identity and subscription status of the user to
+  /// be established.
+  func waitToPresent() -> AnyPublisher<PresentationRequest, Failure> {
     subscribe(on: DispatchQueue.global(qos: .userInitiated))
       .flatMap { request in
-        zip(request.dependencyContainer.identityManager.hasIdentity)
+        zip(
+          request.dependencyContainer.identityManager.hasIdentity,
+          request.flags.subscriptionStatus
+            .filter { $0 != .unknown }
+            .setFailureType(to: Error.self)
+            .eraseToAnyPublisher()
+        )
       }
-      .map { request, _ in
+      .first()
+      .map { request, _, _ in
         return request
       }
       .eraseToAnyPublisher()
