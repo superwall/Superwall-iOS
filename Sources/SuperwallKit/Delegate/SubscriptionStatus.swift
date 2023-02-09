@@ -19,3 +19,17 @@ public enum SubscriptionStatus: Int, Codable {
   /// The subscription status is unknown.
   case unknown
 }
+
+// MARK: - CustomStringConvertible
+extension SubscriptionStatus: CustomStringConvertible {
+  public var description: String {
+    switch self {
+    case .active:
+      return "ACTIVE"
+    case .inactive:
+      return "INACTIVE"
+    case .unknown:
+      return "UNKNOWN"
+    }
+  }
+}

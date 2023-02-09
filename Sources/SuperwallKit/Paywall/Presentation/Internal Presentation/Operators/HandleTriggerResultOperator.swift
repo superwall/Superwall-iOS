@@ -42,7 +42,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
         let sessionEventsManager = input.request.dependencyContainer.sessionEventsManager
         await sessionEventsManager?.triggerSession.activateSession(
           for: input.request.presentationInfo,
-          on: input.request.presentingViewController,
+          on: input.request.presenter,
           triggerResult: input.triggerResult
         )
         Task.detached(priority: .utility) {
@@ -56,7 +56,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
         let sessionEventsManager = input.request.dependencyContainer.sessionEventsManager
         await sessionEventsManager?.triggerSession.activateSession(
           for: input.request.presentationInfo,
-          on: input.request.presentingViewController,
+          on: input.request.presenter,
           triggerResult: input.triggerResult
         )
         Task.detached(priority: .utility) {

@@ -114,7 +114,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false
     )
-    .setting(\.presentingViewController, to: nil)
+    .setting(\.presenter, to: nil)
     
     let input = PaywallVcPipelineOutput(
       request: request,
@@ -168,7 +168,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
-      .setting(\.presentingViewController, to: UIViewController())
+      .setting(\.presenter, to: UIViewController())
       .setting(\.flags.subscriptionStatus, to: publisher)
 
     let dependencyContainer = DependencyContainer()

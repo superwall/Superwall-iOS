@@ -421,7 +421,7 @@ final class DebugViewController: UIViewController {
         freeTrialOverride: freeTrialAvailable
       ),
       paywallOverrides: nil,
-      presentingViewController: self,
+      presenter: self,
       isDebuggerLaunched: true,
       subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: Superwall.shared.isPaywallPresented

@@ -50,12 +50,12 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         throw PresentationPipelineError.cancelled
       }
 
-      if input.request.presentingViewController == nil {
+      if input.request.presenter == nil {
         await Superwall.shared.createPresentingWindowIfNeeded()
       }
 
       // Make sure there's a presenter. If there isn't throw an error if no paywall is being presented
-      let providedViewController = input.request.presentingViewController
+      let providedViewController = input.request.presenter
       let rootViewController = await Superwall.shared.presentationItems.window?.rootViewController
 
       guard let presenter = (providedViewController ?? rootViewController) else {
@@ -86,7 +86,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
       let sessionEventsManager = input.request.dependencyContainer.sessionEventsManager
       await sessionEventsManager?.triggerSession.activateSession(
         for: input.request.presentationInfo,
-        on: input.request.presentingViewController,
+        on: input.request.presenter,
         paywall: input.paywallViewController.paywall,
         triggerResult: input.triggerResult
       )

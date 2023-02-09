@@ -57,8 +57,21 @@ final class NetworkTests: XCTestCase {
     let urlSession = CustomURLSessionMock()
     let dependencyContainer = DependencyContainer()
     let network = Network(urlSession: urlSession, factory: dependencyContainer)
-    let requestId = "abc"
     let publisher = Just(UIApplication.State.active)
+      .eraseToAnyPublisher()
+
+    _ = try? await network.getConfig(
+      injectedApplicationStatePublisher: publisher
+    )
+    XCTAssertTrue(urlSession.didRequest)
+  }
+
+  func test_config_inBackgroundThenForeground() async {
+    let urlSession = CustomURLSessionMock()
+    let dependencyContainer = DependencyContainer()
+    let network = Network(urlSession: urlSession, factory: dependencyContainer)
+    let publisher = [UIApplication.State.background, UIApplication.State.active]
+      .publisher
       .eraseToAnyPublisher()
 
     _ = try? await network.getConfig(

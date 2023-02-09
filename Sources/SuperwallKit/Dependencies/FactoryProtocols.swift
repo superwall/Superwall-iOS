@@ -35,7 +35,7 @@ protocol RequestFactory: AnyObject {
   func makePresentationRequest(
     _ presentationInfo: PresentationInfo,
     paywallOverrides: PaywallOverrides?,
-    presentingViewController: UIViewController?,
+    presenter: UIViewController?,
     isDebuggerLaunched: Bool?,
     subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>?,
     isPaywallPresented: Bool
