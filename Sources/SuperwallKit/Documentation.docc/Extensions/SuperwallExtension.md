@@ -21,6 +21,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``SubscriptionController``
 - ``SubscriptionControllerObjc``
 - ``subscriptionStatus``
+- ``SubscriptionStatus``
 - ``SuperwallOptions``
 - ``PaywallOptions``
 - ``options``
@@ -86,4 +87,3 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``userId``
 - ``isLoggedIn``
 - ``isConfigured``
-- ``subscriptionStatus``

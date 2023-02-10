@@ -75,7 +75,7 @@ or
   Superwall.shared.subscriptionStatus = .inactive
 ```
 
-This is a ``SubscriptionStatus`` enum that has three possible cases:
+This is a ``SubscriptionStatus`` class that has three static variables:
 
 1. **`.unknown`**: This is the default value. In this state, paywalls will not show until the state changes to `.active` or `.inactive`.
 
