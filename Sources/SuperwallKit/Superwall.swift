@@ -61,7 +61,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// A convenience variable to access and change the paywall options that you passed
   /// to ``configure(apiKey:delegate:options:completion:)-7fafw``.
-  public var options: SuperwallOptions {
+  var options: SuperwallOptions {
     return dependencyContainer.configManager.options
   }
 
@@ -108,6 +108,21 @@ public final class Superwall: NSObject, ObservableObject {
   /// Otherwise, you can check the delegate function
   /// ``SuperwallDelegate/subscriptionStatusDidChange(to:)-24teh``
   /// to receive a callback with the new value every time it changes.
+  ///
+  /// You can still `switch` on it to determine its value:
+  ///
+  /// ```
+  ///  switch Superwall.shared.subscriptionStatus {
+  ///  case .active:
+  ///    break
+  ///  case .inactive:
+  ///    break
+  ///  case .unknown:
+  ///    break
+  ///  default:
+  ///    break
+  ///  }
+  /// ```
   ///
   /// To learn more, see <doc:AdvancedConfiguration>.
   @Published

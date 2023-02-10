@@ -74,6 +74,21 @@ public protocol SuperwallDelegate: AnyObject {
   /// use the published properties of ``Superwall/subscriptionStatus`` to react to
   /// changes as they happen.
   ///
+  /// You can still `switch` on it to determine its value:
+  ///
+  /// ```
+  ///  switch newValue {
+  ///  case .active:
+  ///    break
+  ///  case .inactive:
+  ///    break
+  ///  case .unknown:
+  ///    break
+  ///  default:
+  ///    break
+  ///  }
+  /// ```
+  ///
   /// - Parameters:
   ///   - newValue: The new value of ``Superwall/subscriptionStatus``.
   func subscriptionStatusDidChange(to newValue: SubscriptionStatus)

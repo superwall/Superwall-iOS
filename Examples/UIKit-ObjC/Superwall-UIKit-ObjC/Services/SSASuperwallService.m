@@ -69,9 +69,9 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
     // Listen for changes to the subscription state.
     [[NSNotificationCenter defaultCenter] addObserverForName:SSAStoreKitServiceDidUpdateSubscribedState object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
       if ([SSAStoreKitService sharedService].isSubscribed) {
-        [Superwall sharedInstance].subscriptionStatus = SWKSubscriptionStatusActive;
+        [Superwall sharedInstance].subscriptionStatus = [SWKSubscriptionStatus active];
       } else {
-        [Superwall sharedInstance].subscriptionStatus = SWKSubscriptionStatusInactive;
+        [Superwall sharedInstance].subscriptionStatus = [SWKSubscriptionStatus inactive];
       }
     }];
   }

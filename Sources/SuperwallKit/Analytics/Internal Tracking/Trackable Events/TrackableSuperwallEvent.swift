@@ -182,7 +182,7 @@ enum InternalSuperwallEvent {
     var customParameters: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       return [
-        "subscription_status": subscriptionStatus.description
+        "subscription_status": subscriptionStatus.value.description
       ]
     }
   }
