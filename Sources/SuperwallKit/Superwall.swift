@@ -109,21 +109,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// ``SuperwallDelegate/subscriptionStatusDidChange(to:)-24teh``
   /// to receive a callback with the new value every time it changes.
   ///
-  /// You can still `switch` on it to determine its value:
-  ///
-  /// ```
-  ///  switch Superwall.shared.subscriptionStatus {
-  ///  case .active:
-  ///    break
-  ///  case .inactive:
-  ///    break
-  ///  case .unknown:
-  ///    break
-  ///  default:
-  ///    break
-  ///  }
-  /// ```
-  ///
   /// To learn more, see <doc:AdvancedConfiguration>.
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown
