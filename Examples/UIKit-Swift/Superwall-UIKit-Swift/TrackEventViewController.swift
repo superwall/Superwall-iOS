@@ -45,8 +45,6 @@ final class TrackEventViewController: UIViewController {
           self?.subscriptionLabel.text = "You currently have an active subscription. Therefore, the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions."
         case .inactive:
           self?.subscriptionLabel.text = "You do not have an active subscription so the paywall will show when clicking the button."
-        default:
-          break
         }
       }
     navigationItem.hidesBackButton = true

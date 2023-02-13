@@ -17,13 +17,6 @@ public final class PaywallOptions: NSObject {
   /// from the paywall, or closes the paywall.
   public var isHapticFeedbackEnabled = true
 
-  /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
-  /// Defaults to `true`.
-  ///
-  /// Set this to `false` to stop external data collection. This will not affect
-  /// your ability to create triggers based on properties.
-  public var isExternalDataCollectionEnabled = true
-
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
 
   @objc(SWKRestoreFailed)
