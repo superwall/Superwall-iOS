@@ -38,6 +38,20 @@ public extension Superwall {
   ///
   ///  - Parameters:
   ///     - userId: Your user's unique identifier, as defined by your backend system.
+  ///  - Throws: An error of type ``IdentityError``.
+  @available(swift, obsoleted: 1.0)
+  @objc func identify(
+    userId: String
+  ) async throws {
+    try await identify(userId: userId)
+  }
+
+  /// Creates an account with Superwall. This links a `userId` to Superwall's automatically generated alias.
+  ///
+  /// Call this as soon as you have a `userId`.
+  ///
+  ///  - Parameters:
+  ///     - userId: Your user's unique identifier, as defined by your backend system.
   ///     - options: An ``IdentityOptions`` object, whose property
   ///     ``IdentityOptions/restorePaywallAssignments`` you can set to `true`
   ///     to tell the SDK to wait to restore paywall assignments from the server before presenting any paywalls.

@@ -14,6 +14,7 @@ import UIKit
 public typealias PaywallDismissedCompletionBlock = (PaywallDismissedResult) -> Void
 
 public extension Superwall {
+  // MARK: - Dismiss
   /// Dismisses the presented paywall.
   /// 
 	/// - Parameters:
@@ -46,13 +47,21 @@ public extension Superwall {
     }
   }
 
-  /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); and the user matches a rule in the campaign. **Note**: Please use ``SuperwallKit/Superwall/setUserAttributes(_:)`` if you’re using Swift.
+  // MARK: - Objective-C-only Track
+  /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
+  /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
+  ///  and the user matches a rule in the campaign. **Note**: Please use ``SuperwallKit/Superwall/setUserAttributes(_:)``
+  ///   if you’re using Swift.
   ///
-  /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.
+  /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method
+  ///  when you want to remotely control paywall presentation in response to your own analytics event and utilize
+  ///   completion handlers associated with the paywall presentation state.
   ///
-  /// Before using this method, you'll first need to create a campaign and add a trigger associated with the event name on the [Superwall Dashboard](https://superwall.com/dashboard).
+  /// Before using this method, you'll first need to create a campaign and add a trigger associated with the event name
+  ///  on the [Superwall Dashboard](https://superwall.com/dashboard).
   ///
-  /// The paywall shown to the user is determined by the rules defined in the campaign. Paywalls are sticky, in that when a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
+  /// The paywall shown to the user is determined by the rules defined in the campaign. Paywalls are sticky, in that when
+  ///  a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
   ///
   /// For more information, see <doc:TrackingEvents>.
   ///
@@ -68,6 +77,30 @@ public extension Superwall {
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.
   @available(swift, obsoleted: 1.0)
   @objc func track(
+    event: String,
+    params: [String: Any]? = nil,
+    presenter: UIViewController? = nil,
+    products: PaywallProducts? = nil,
+    ignoreSubscriptionStatus: Bool = false,
+    presentationStyleOverride: PaywallPresentationStyle = .none,
+    onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
+    onPresent: ((PaywallInfo) -> Void)? = nil,
+    onDismiss: ((PaywallDismissedResultStateObjc, String?, PaywallInfo) -> Void)? = nil
+  ) {
+    internalObjcTrack(
+      event: event,
+      params: params,
+      presenter: presenter,
+      products: products,
+      ignoreSubscriptionStatus: ignoreSubscriptionStatus,
+      presentationStyleOverride: presentationStyleOverride,
+      onSkip: onSkip,
+      onPresent: onPresent,
+      onDismiss: onDismiss
+    )
+  }
+
+  private func internalObjcTrack(
     event: String,
     params: [String: Any]? = nil,
     presenter: UIViewController? = nil,
@@ -102,6 +135,182 @@ public extension Superwall {
       }
     }
   }
+
+  private func onSkipConverter(
+    reason: PaywallSkippedReason,
+    completion: ((PaywallSkippedReasonObjc, NSError) -> Void)?
+  ) {
+    switch reason {
+    case .holdout(let experiment):
+      let userInfo: [String: Any] = [
+        "experimentId": experiment.id,
+        "variantId": experiment.variant.id,
+        "groupId": experiment.groupId,
+        NSLocalizedDescriptionKey: NSLocalizedString(
+          "Holdout",
+          value: "This user was assigned to a holdout. This means the paywall will not show.",
+          comment: "ExperimentId: \(experiment.id), VariantId: \(experiment.variant.id), GroupId: \(experiment.groupId)"
+        )
+      ]
+      let error = NSError(
+        domain: "com.superwall",
+        code: 4001,
+        userInfo: userInfo
+      )
+      completion?(.holdout, error)
+    case .noRuleMatch:
+      let userInfo: [String: Any] = [
+        NSLocalizedDescriptionKey: NSLocalizedString(
+          "No rule match",
+          value: "The user did not match any rules configured for this trigger",
+          comment: ""
+        )
+      ]
+      let error = NSError(
+        domain: "com.superwall",
+        code: 4000,
+        userInfo: userInfo
+      )
+      completion?(.noRuleMatch, error)
+    case .eventNotFound:
+      let userInfo: [String: Any] = [
+        NSLocalizedDescriptionKey: NSLocalizedString(
+          "Event Not Found",
+          value: "The specified event could not be found in a campaign",
+          comment: ""
+        )
+      ]
+      let error = NSError(
+        domain: "com.superwall",
+        code: 404,
+        userInfo: userInfo
+      )
+      completion?(.eventNotFound, error)
+    case .userIsSubscribed:
+      let userInfo: [String: Any] = [
+        NSLocalizedDescriptionKey: NSLocalizedString(
+          "User Is Subscribed",
+          value: "The user subscription status is \"active\". By default, paywalls do not show to users who are already subscribed. You can override this behavior in the paywall editor.",
+          comment: ""
+        )
+      ]
+      let error = NSError(
+        domain: "com.superwall",
+        code: 4002,
+        userInfo: userInfo
+      )
+      completion?(.userIsSubscribed, error)
+    case .error(let error):
+      completion?(.error, error as NSError)
+    }
+  }
+
+  /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); and the user matches a rule in the campaign. **Note**: Please use ``SuperwallKit/Superwall/setUserAttributes(_:)`` if you’re using Swift.
+  ///
+  /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.
+  ///
+  /// Before using this method, you'll first need to create a campaign and add a trigger associated with the event name on the [Superwall Dashboard](https://superwall.com/dashboard).
+  ///
+  /// The paywall shown to the user is determined by the rules defined in the campaign. Paywalls are sticky, in that when a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
+  ///
+  /// For more information, see <doc:TrackingEvents>.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the event you wish to track.
+  @available(swift, obsoleted: 1.0)
+  @objc func track(event: String) {
+    track(event: event)
+  }
+
+  /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); and the user matches a rule in the campaign. **Note**: Please use ``SuperwallKit/Superwall/setUserAttributes(_:)`` if you’re using Swift.
+  ///
+  /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.
+  ///
+  /// Before using this method, you'll first need to create a campaign and add a trigger associated with the event name on the [Superwall Dashboard](https://superwall.com/dashboard).
+  ///
+  /// The paywall shown to the user is determined by the rules defined in the campaign. Paywalls are sticky, in that when a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
+  ///
+  /// For more information, see <doc:TrackingEvents>.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the event you wish to track.
+  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+  @available(swift, obsoleted: 1.0)
+  @objc func track(
+    event: String,
+    params: [String: Any]? = nil
+  ) {
+    track(event: event, params: params)
+  }
+
+  /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); and the user matches a rule in the campaign. **Note**: Please use ``SuperwallKit/Superwall/setUserAttributes(_:)`` if you’re using Swift.
+  ///
+  /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.
+  ///
+  /// Before using this method, you'll first need to create a campaign and add a trigger associated with the event name on the [Superwall Dashboard](https://superwall.com/dashboard).
+  ///
+  /// The paywall shown to the user is determined by the rules defined in the campaign. Paywalls are sticky, in that when a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
+  ///
+  /// For more information, see <doc:TrackingEvents>.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the event you wish to track.
+  ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo`` object containing information about the paywall.
+  ///   - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo`` object containing information about the paywall.
+  ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.
+  @available(swift, obsoleted: 1.0)
+  @objc func track(
+    event: String,
+    onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
+    onPresent: ((PaywallInfo) -> Void)? = nil,
+    onDismiss: ((PaywallDismissedResultStateObjc, String?, PaywallInfo) -> Void)? = nil
+  ) {
+    internalObjcTrack(
+      event: event,
+      onSkip: onSkip,
+      onPresent: onPresent,
+      onDismiss: onDismiss
+    )
+  }
+
+  /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); and the user matches a rule in the campaign. **Note**: Please use ``SuperwallKit/Superwall/setUserAttributes(_:)`` if you’re using Swift.
+  ///
+  /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method when you want to remotely control paywall presentation in response to your own analytics event and utilize completion handlers associated with the paywall presentation state.
+  ///
+  /// Before using this method, you'll first need to create a campaign and add a trigger associated with the event name on the [Superwall Dashboard](https://superwall.com/dashboard).
+  ///
+  /// The paywall shown to the user is determined by the rules defined in the campaign. Paywalls are sticky, in that when a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule.
+  ///
+  /// For more information, see <doc:TrackingEvents>.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the event you wish to track.
+  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+  ///   - presenter: An optional `UIViewController` from which to present the paywall from. If you don't provide one, the paywall will present from a new `UIViewController` in a new `UIWindow`. Defaults to `nil`.
+  ///   - products: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defauls to `nil`.
+  ///   - ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
+  ///   - presentationStyleOverride: A `PaywallPresentationStyle` object that overrides the presentation style of the paywall set on the dashboard. Defaults to `.none`.
+  ///   - onPresent: A completion block that gets called immediately after the paywall is presented. Defaults to `nil`.  Accepts a ``PaywallInfo`` object containing information about the paywall.
+  ///   - onDismiss: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo`` object containing information about the paywall.
+  ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.
+  @available(swift, obsoleted: 1.0)
+  @objc func track(
+    event: String,
+    params: [String: Any]? = nil,
+    onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
+    onPresent: ((PaywallInfo) -> Void)? = nil,
+    onDismiss: ((PaywallDismissedResultStateObjc, String?, PaywallInfo) -> Void)? = nil
+  ) {
+    internalObjcTrack(
+      event: event,
+      params: params,
+      onSkip: onSkip,
+      onPresent: onPresent,
+      onDismiss: onDismiss
+    )
+  }
+
+  // MARK: - Swift Track
 
   /// Tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
   ///
@@ -184,6 +393,8 @@ public extension Superwall {
     }
     .eraseToAnyPublisher()
   }
+
+  // MARK: - Get Track Result
 
   /// Preemptively get the result of tracking an event.
   ///
@@ -302,75 +513,6 @@ public extension Superwall {
       completion(.purchased, productId, result.paywallInfo)
     case .restored:
       completion(.restored, nil, result.paywallInfo)
-    }
-  }
-
-  private func onSkipConverter(
-    reason: PaywallSkippedReason,
-    completion: ((PaywallSkippedReasonObjc, NSError) -> Void)?
-  ) {
-    switch reason {
-    case .holdout(let experiment):
-      let userInfo: [String: Any] = [
-        "experimentId": experiment.id,
-        "variantId": experiment.variant.id,
-        "groupId": experiment.groupId,
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Holdout",
-          value: "This user was assigned to a holdout. This means the paywall will not show.",
-          comment: "ExperimentId: \(experiment.id), VariantId: \(experiment.variant.id), GroupId: \(experiment.groupId)"
-        )
-      ]
-      let error = NSError(
-        domain: "com.superwall",
-        code: 4001,
-        userInfo: userInfo
-      )
-      completion?(.holdout, error)
-    case .noRuleMatch:
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "No rule match",
-          value: "The user did not match any rules configured for this trigger",
-          comment: ""
-        )
-      ]
-      let error = NSError(
-        domain: "com.superwall",
-        code: 4000,
-        userInfo: userInfo
-      )
-      completion?(.noRuleMatch, error)
-    case .eventNotFound:
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Event Not Found",
-          value: "The specified event could not be found in a campaign",
-          comment: ""
-        )
-      ]
-      let error = NSError(
-        domain: "com.superwall",
-        code: 404,
-        userInfo: userInfo
-      )
-      completion?(.eventNotFound, error)
-    case .userIsSubscribed:
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "User Is Subscribed",
-          value: "The user subscription status is \"active\". By default, paywalls do not show to users who are already subscribed. You can override this behavior in the paywall editor.",
-          comment: ""
-        )
-      ]
-      let error = NSError(
-        domain: "com.superwall",
-        code: 4002,
-        userInfo: userInfo
-      )
-      completion?(.userIsSubscribed, error)
-    case .error(let error):
-      completion?(.error, error as NSError)
     }
   }
 }

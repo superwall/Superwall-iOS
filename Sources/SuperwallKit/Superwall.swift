@@ -312,6 +312,56 @@ public final class Superwall: NSObject, ObservableObject {
     options: SuperwallOptions? = nil,
     completion: (() -> Void)? = nil
   ) -> Superwall {
+    return objcConfigure(
+      apiKey: apiKey,
+      delegate: delegate,
+      purchaseController: purchaseController,
+      options: options,
+      completion: completion
+    )
+  }
+
+  /// Objective-C only function that configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.
+  ///
+  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
+  /// - Parameters:
+  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
+  ///   - delegate: An optional class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
+  ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
+  ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
+  /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
+  @discardableResult
+  @available(swift, obsoleted: 1.0)
+  public static func configure(
+    apiKey: String,
+    delegate: SuperwallDelegateObjc? = nil
+  ) -> Superwall {
+    return objcConfigure(
+      apiKey: apiKey,
+      delegate: delegate
+    )
+  }
+
+  /// Objective-C only function that configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.
+  ///
+  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
+  /// - Parameters:
+  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
+  /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
+  @discardableResult
+  @available(swift, obsoleted: 1.0)
+  public static func configure(apiKey: String) -> Superwall {
+    // Convenience method for objc
+    return objcConfigure(apiKey: apiKey)
+  }
+
+  private static func objcConfigure(
+    apiKey: String,
+    delegate: SuperwallDelegateObjc? = nil,
+    purchaseController: PurchaseControllerObjc? = nil,
+    options: SuperwallOptions? = nil,
+    completion: (() -> Void)? = nil
+  ) -> Superwall {
     guard superwall == nil else {
       Logger.debug(
         logLevel: .warn,

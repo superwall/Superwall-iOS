@@ -101,11 +101,12 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
   [[SSAStoreKitService sharedService] updateSubscribedState];
 
   // Configure Superwall.
-  [Superwall configureWithApiKey:kDemoAPIKey delegate:self purchaseController:nil options:nil completion:nil];
+
+  [Superwall configureWithApiKey:kDemoAPIKey delegate:self];
 }
 
 - (void)logInWithCompletion:(nullable void (^)(void))completion {
-  [[Superwall sharedInstance] identifyWithUserId:kDemoAPIKey options:nil completionHandler:^(NSError * _Nullable error) {
+  [[Superwall sharedInstance] identifyWithUserId:kDemoAPIKey completionHandler:^(NSError * _Nullable error) {
     switch (error.code) {
       case SWKIdentityErrorMissingUserId:
         NSLog(@"The provided userId was empty");
