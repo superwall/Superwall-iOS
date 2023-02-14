@@ -4,7 +4,7 @@ Configuring the SDK.
 
 ## Overview
 
-To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw`` and then present your paywall.
+To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b`` and then present your paywall.
 
 ## Getting your API Key
 
@@ -17,7 +17,7 @@ On that page, you will see your **Public API Key**. Copy this for the next step.
 
 ### Configuring the SDK
 
-To configure the SDK, you must call ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw`` as soon as your app launches from `application(_:didFinishLaunchingWithOptions:)`:
+To configure the SDK, you must call ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b`` as soon as your app launches from `application(_:didFinishLaunchingWithOptions:)`:
 
 ```swift
 import SuperwallKit
@@ -27,7 +27,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication, 
     didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?
   ) -> Bool {
-Superwall.configure(apiKey: "MYAPIKEY")  // Replace this with your API Key
+    Superwall.configure(apiKey: "MYAPIKEY")  // Replace this with your API Key
   )
 }
 ```
@@ -42,7 +42,7 @@ We generate a random user ID that persists internally until the user deletes/rei
 
 If you use your own user management system, call ``Superwall/identify(userId:options:)`` when a user creates or logs in to an account. This will alias your `userId` with the anonymous Superwall ID enabling us to load the user's assigned paywalls.
 
-Calling ``Superwall/reset()`` will reset the on-device `userId` to a random ID and clear the on-device paywall assignments. Yuu should do this when logging out or wanting to reset the identity of anonymous users.
+Calling ``Superwall/reset()`` will reset the on-device `userId` to a random ID and clear the on-device paywall assignments. You should do this when logging out or wanting to reset the identity of anonymous users.
 
 - Note: You can pass an ``IdentityOptions`` object to ``Superwall/identify(userId:options:)``. This should only be used in advanced use cases. By setting the ``IdentityOptions/restorePaywallAssignments`` property of ``IdentityOptions`` to `true`, paywalls are prevented from showing until after paywall assignments have been restored. If you expect users of your app to switch accounts or delete/reinstall a lot, you'd set this when users log in to an existing account.
 

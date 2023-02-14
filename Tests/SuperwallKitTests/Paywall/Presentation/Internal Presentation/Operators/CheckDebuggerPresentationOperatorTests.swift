@@ -48,7 +48,7 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
     let debugViewController = await dependencyContainer.makeDebugViewController(withDatabaseId: "abc")
     let request = PresentationRequest.stub()
       .setting(\.flags.isDebuggerLaunched, to: true)
-      .setting(\.presentingViewController, to: debugViewController)
+      .setting(\.presenter, to: debugViewController)
 
     let debugInfo: [String: Any] = [:]
 
@@ -80,7 +80,7 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
   func test_checkDebuggerPresentation_debuggerLaunched_notPresentingOnDebugger() async {
     let request = PresentationRequest.stub()
       .setting(\.flags.isDebuggerLaunched, to: true)
-      .setting(\.presentingViewController, to: nil)
+      .setting(\.presenter, to: nil)
 
     let debugInfo: [String: Any] = [:]
 

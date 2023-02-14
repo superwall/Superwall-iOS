@@ -13,7 +13,11 @@ final class ReceiptManager: NSObject {
   var purchases: Set<InAppPurchase> = []
   var activePurchases: Set<InAppPurchase> = [] {
     didSet {
-      Superwall.shared.hasActiveSubscription = !activePurchases.isEmpty
+      if activePurchases.isEmpty {
+        Superwall.shared.subscriptionStatus = .inactive
+      } else {
+        Superwall.shared.subscriptionStatus = .active
+      }
     }
   }
 
@@ -34,9 +38,11 @@ final class ReceiptManager: NSObject {
   @discardableResult
   func loadPurchasedProducts() async -> Set<StoreProduct>? {
     guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
+      Superwall.shared.subscriptionStatus = .inactive
       return nil
     }
     guard let delegate = delegate else {
+      Superwall.shared.subscriptionStatus = .inactive
       return nil
     }
 

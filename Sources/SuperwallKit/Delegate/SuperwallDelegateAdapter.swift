@@ -10,23 +10,28 @@ import Combine
 
 /// An adapter between the internal SDK and the public swift/objective c delegate.
 final class SuperwallDelegateAdapter {
-  var hasSubscriptionController: Bool {
-    return swiftDelegate?.subscriptionController() != nil
-      || objcDelegate?.subscriptionController?() != nil
+  var hasPurchaseController: Bool {
+    return swiftPurchaseController != nil || objcPurchaseController != nil
   }
   weak var swiftDelegate: SuperwallDelegate?
   weak var objcDelegate: SuperwallDelegateObjc?
+  weak var swiftPurchaseController: PurchaseController?
+  weak var objcPurchaseController: PurchaseControllerObjc?
 
-/// Called on init of the Superwall instance via ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw``.
+/// Called on init of the Superwall instance via ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
   ///
   /// We check to see if the delegates being set are non-nil because they may have been set
-  /// separately to the initial ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw`` function.
+  /// separately to the initial ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b`` function.
   init(
     swiftDelegate: SuperwallDelegate?,
-    objcDelegate: SuperwallDelegateObjc?
+    objcDelegate: SuperwallDelegateObjc?,
+    swiftPurchaseController: PurchaseController?,
+    objcPurchaseController: PurchaseControllerObjc?
   ) {
     self.swiftDelegate = swiftDelegate
     self.objcDelegate = objcDelegate
+    self.swiftPurchaseController = swiftPurchaseController
+    self.objcPurchaseController = objcPurchaseController
   }
 
   @MainActor
@@ -101,11 +106,11 @@ final class SuperwallDelegateAdapter {
     }
   }
 
-  func hasActiveSubscriptionDidChange(to newValue: Bool) {
+  func subscriptionStatusDidChange(to newValue: SubscriptionStatus) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.hasActiveSubscriptionDidChange(to: newValue)
+      swiftDelegate.subscriptionStatusDidChange(to: newValue)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.hasActiveSubscriptionDidChange?(to: newValue)
+      objcDelegate.subscriptionStatusDidChange?(to: newValue)
     }
   }
 
@@ -137,48 +142,23 @@ final class SuperwallDelegateAdapter {
   }
 }
 
-// MARK: - User Subscription Handling
-extension SuperwallDelegateAdapter: SubscriptionStatusChecker {
-  @MainActor
-  func isSubscribed() -> Bool {
-    if let swiftDelegate = swiftDelegate {
-      guard let subscriptionController = swiftDelegate.subscriptionController() else {
-        return false
-      }
-      return subscriptionController.isUserSubscribed()
-    } else if let objcDelegate = objcDelegate {
-      guard let subscriptionController = objcDelegate.subscriptionController?() else {
-        return false
-      }
-      return subscriptionController.isUserSubscribed()
-    }
-    return false
-  }
-}
-
 // MARK: - Product Purchaser
 extension SuperwallDelegateAdapter: ProductPurchaser {
   @MainActor
   func purchase(
     product: StoreProduct
   ) async -> PurchaseResult {
-    if let swiftDelegate = swiftDelegate {
-      guard let subscriptionController = swiftDelegate.subscriptionController() else {
-        return .failed(PurchaseError.noSubscriptionController)
-      }
+    if let purchaseController = swiftPurchaseController {
       guard let sk1Product = product.sk1Product else {
         return .failed(PurchaseError.productUnavailable)
       }
-      return await subscriptionController.purchase(product: sk1Product)
-    } else if let objcDelegate = objcDelegate {
-      guard let subscriptionController = objcDelegate.subscriptionController?() else {
-        return .failed(PurchaseError.noSubscriptionController)
-      }
+      return await purchaseController.purchase(product: sk1Product)
+    } else if let purchaseController = objcPurchaseController {
       guard let sk1Product = product.sk1Product else {
         return .failed(PurchaseError.productUnavailable)
       }
       return await withCheckedContinuation { continuation in
-        subscriptionController.purchase(product: sk1Product) { result, error in
+        purchaseController.purchase(product: sk1Product) { result, error in
           if let error = error {
             continuation.resume(returning: .failed(error))
           } else {
@@ -205,17 +185,11 @@ extension SuperwallDelegateAdapter: TransactionRestorer {
   @MainActor
   func restorePurchases() async -> Bool {
     var didRestore = false
-    if let swiftDelegate = swiftDelegate {
-      guard let subscriptionController = swiftDelegate.subscriptionController() else {
-        return false
-      }
-      didRestore = await subscriptionController.restorePurchases()
-    } else if let objcDelegate = objcDelegate {
-      guard let subscriptionController = objcDelegate.subscriptionController?() else {
-        return false
-      }
+    if let purchaseController = swiftPurchaseController {
+      didRestore = await purchaseController.restorePurchases()
+    } else if let purchaseController = objcPurchaseController {
       didRestore = await withCheckedContinuation { continuation in
-        subscriptionController.restorePurchases { didRestore in
+        purchaseController.restorePurchases { didRestore in
           continuation.resume(returning: didRestore)
         }
       }

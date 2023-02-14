@@ -19,10 +19,9 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
     map { request in
       let eventData = request.presentationInfo.eventData
       let debugInfo: [String: Any] = [
-        "on": request.presentingViewController.debugDescription,
+        "on": request.presenter.debugDescription,
         "fromEvent": eventData.debugDescription as Any
       ]
-
       Logger.debug(
         logLevel: .debug,
         scope: .paywallPresentation,

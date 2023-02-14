@@ -47,7 +47,7 @@ Build and run the app and you'll see the welcome screen:
 
 SuperwallKit is [configured](Superwall-SwiftUI/Services/SuperwallService.swift#L31) on app launch, setting an `apiKey` and `delegate`.
 
-The SDK sends back events received from the paywall via the delegate methods in [SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift#L67). You use these methods to make and restore purchases, react to analytical events, as well as tell the SDK whether the user has an active subscription. 
+The SDK sends back events received from the paywall via the delegate methods in [SuperwallService.swift](Superwall-SwiftUI/Services/SuperwallService.swift#L67).
 
 ## Logging In
 
@@ -69,7 +69,7 @@ On the [Superwall Dashboard](https://superwall.com/dashboard) you add this event
 
 When an event is tracked, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall.
 
-By calling [Superwall.shared.track(event:params:paywallOverrides:paywallHandler:)](Superwall-SwiftUI/TrackEventModel.swift#L15), you present a paywall in response to the event. For this app, the event is called `campaign_trigger`.
+By calling [Superwall.shared.track(event:params:presenter:paywallOverrides:paywallHandler:)](Superwall-SwiftUI/TrackEventModel.swift#L15), you present a paywall in response to the event. For this app, the event is called `campaign_trigger`.
 
 On screen you'll see some explanatory text and a button that tracks an event:
 

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
@@ -34,9 +35,9 @@ protocol RequestFactory: AnyObject {
   func makePresentationRequest(
     _ presentationInfo: PresentationInfo,
     paywallOverrides: PaywallOverrides?,
-    presentingViewController: UIViewController?,
+    presenter: UIViewController?,
     isDebuggerLaunched: Bool?,
-    isUserSubscribed: Bool?,
+    subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>?,
     isPaywallPresented: Bool
   ) -> PresentationRequest
 }

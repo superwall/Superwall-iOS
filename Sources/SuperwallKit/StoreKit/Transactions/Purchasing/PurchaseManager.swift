@@ -13,7 +13,6 @@ enum PurchaseError: LocalizedError {
   case unknown
   case noTransactionDetected
   case unverifiedTransaction
-  case noSubscriptionController
 
   var errorDescription: String? {
     switch self {
@@ -23,8 +22,6 @@ enum PurchaseError: LocalizedError {
       return "No receipt was found on device for the product transaction."
     case .unverifiedTransaction:
       return "The product transaction could not be verified."
-    case .noSubscriptionController:
-      return "No Subscription Controller found."
     case .unknown:
       return "An unknown error occurred."
     }

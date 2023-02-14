@@ -107,7 +107,7 @@ actor TriggerSessionManager {
   /// Creates a session for each potential trigger on config and manual paywall presentation and sends them off to the server.
   func createSessions(from config: Config) async {
     // Loop through triggers and create a session for each.
-    let isUserSubscribed = Superwall.shared.hasActiveSubscription
+    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
         configRequestId: configManager.config?.requestId,
@@ -199,10 +199,11 @@ actor TriggerSessionManager {
 
     // Recreate a pending trigger session
     let eventName = currentTriggerSession.trigger.eventName
+    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
       configRequestId: configManager.config?.requestId,
       userAttributes: identityManager.userAttributes,
-      isSubscribed: Superwall.shared.hasActiveSubscription,
+      isSubscribed: isUserSubscribed,
       eventName: eventName,
       products: currentTriggerSession.products.allProducts,
       appSession: appSessionManager.appSession
@@ -219,13 +220,14 @@ actor TriggerSessionManager {
     guard var triggerSession = activeTriggerSession else {
       return
     }
-    triggerSession.isSubscribed = Superwall.shared.hasActiveSubscription
+    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
+    triggerSession.isSubscribed = isUserSubscribed
     await delegate.enqueue(triggerSession)
   }
 
   /// Queues all the pending trigger sessions to be sent back to the server.
   private func enqueuePendingTriggerSessions() async {
-    let isUserSubscribed = Superwall.shared.hasActiveSubscription
+    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
     for eventName in pendingTriggerSessions.keys {
       guard var pendingTriggerSession = pendingTriggerSessions[eventName] else {
         continue

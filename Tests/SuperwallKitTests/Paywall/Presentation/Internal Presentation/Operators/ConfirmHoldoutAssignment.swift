@@ -28,10 +28,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
+    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
-      isUserSubscribed: false,
+      subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false
     )
     let input = AssignmentPipelineOutput(
@@ -73,10 +75,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
+    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
-      isUserSubscribed: false,
+      subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false
     )
 
@@ -119,10 +123,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
+    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
-      isUserSubscribed: false,
+      subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false
     )
     let input = AssignmentPipelineOutput(

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
 ///
@@ -40,12 +41,16 @@ final class DependencyContainer {
   init(
     swiftDelegate: SuperwallDelegate? = nil,
     objcDelegate: SuperwallDelegateObjc? = nil,
+    swiftPurchaseController: PurchaseController? = nil,
+    objcPurchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
     storeKitManager = StoreKitManager(factory: self)
     delegateAdapter = SuperwallDelegateAdapter(
       swiftDelegate: swiftDelegate,
-      objcDelegate: objcDelegate
+      objcDelegate: objcDelegate,
+      swiftPurchaseController: swiftPurchaseController,
+      objcPurchaseController: objcPurchaseController
     )
     localizationManager = LocalizationManager()
     storage = Storage(factory: self)
@@ -225,6 +230,7 @@ extension DependencyContainer: RequestFactory {
     return PaywallRequest(
       eventData: eventData,
       responseIdentifiers: responseIdentifiers,
+      overrides: overrides ?? PaywallRequest.Overrides(),
       dependencyContainer: self
     )
   }
@@ -232,18 +238,18 @@ extension DependencyContainer: RequestFactory {
   func makePresentationRequest(
     _ presentationInfo: PresentationInfo,
     paywallOverrides: PaywallOverrides? = nil,
-    presentingViewController: UIViewController? = nil,
+    presenter: UIViewController? = nil,
     isDebuggerLaunched: Bool? = nil,
-    isUserSubscribed: Bool? = nil,
+    subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>? = nil,
     isPaywallPresented: Bool
   ) -> PresentationRequest {
     return PresentationRequest(
       presentationInfo: presentationInfo,
-      presentingViewController: presentingViewController,
+      presenter: presenter,
       paywallOverrides: paywallOverrides,
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
-        isUserSubscribed: isUserSubscribed ?? storeKitManager.coordinator.subscriptionStatusHandler.isSubscribed(),
+        subscriptionStatus: subscriptionStatus ?? Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
         isPaywallPresented: isPaywallPresented
       ),
       dependencyContainer: self

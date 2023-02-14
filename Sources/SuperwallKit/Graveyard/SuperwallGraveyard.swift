@@ -24,7 +24,7 @@ public extension Superwall {
   @available(*, unavailable, renamed: "preloadPaywalls(forEvents:)")
   @objc static func preloadPaywalls(forTriggers triggers: Set<String>) {}
 
-  @available(*, unavailable, renamed: "track(event:params:paywallOverrides:paywallHandler:)")
+  @available(*, unavailable, renamed: "track(event:params:presenter:paywallOverrides:paywallHandler:)")
   @objc static func trigger(
     event: String? = nil,
     params: [String: Any]? = nil,

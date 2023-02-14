@@ -12,14 +12,17 @@ import StoreKit
 ///
 /// By default, the Superwall SDK handles all subscription-related logic.
 ///
-/// However, if you'd like more control, you can return a ``SubscriptionController`` in
+/// However, if you'd like more control, you can return a ``PurchaseController`` in
 /// the delegate when configuring the SDK via
-/// ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw``.
+/// ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
 ///
-/// To learn how to implement the ``SubscriptionController`` in your app
+/// When implementing this, you also need to set the subscription status using
+/// ``Superwall/subscriptionStatus``.
+///
+/// To learn how to implement the ``PurchaseController`` in your app
 /// and best practices, see <doc:AdvancedConfiguration>.
 @MainActor
-public protocol SubscriptionController: AnyObject {
+public protocol PurchaseController: AnyObject {
   /// Called when the user initiates purchasing of a product.
   ///
   /// Add your purchase logic here and return its result. You can use Apple's StoreKit APIs,
@@ -38,11 +41,4 @@ public protocol SubscriptionController: AnyObject {
   ///
   /// - Returns: A boolean that's `true` if the user's purchases were restored or `false` if they weren't.
   func restorePurchases() async -> Bool
-
-  /// Decides whether a paywall should be presented based on whether the user has an active
-  /// subscription.
-  ///
-  /// - Warning: A paywall will never show if this function returns `true`.
-  /// - Returns: A boolean that indicates whether or not the user has an active subscription.
-  func isUserSubscribed() -> Bool
 }

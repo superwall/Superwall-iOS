@@ -12,7 +12,7 @@ struct SuperwallSubscriptionStatusView: View {
   @StateObject private var superwall = Superwall.shared
   var text: String {
     return SuperwallSubscriptionStatusLogic.text(
-      isSubscribed: superwall.hasActiveSubscription
+      subscriptionStatus: superwall.subscriptionStatus
     )
   }
 

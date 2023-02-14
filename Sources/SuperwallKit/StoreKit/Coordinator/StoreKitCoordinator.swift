@@ -23,7 +23,6 @@ struct StoreKitCoordinator {
   var txnRestorer: TransactionRestorer
 
   /// Checks if the user is subscribed.
-  unowned var subscriptionStatusHandler: SubscriptionStatusChecker
   unowned let delegateAdapter: SuperwallDelegateAdapter
   unowned let storeKitManager: StoreKitManager
   private let factory: StoreTransactionFactory & ProductPurchaserFactory
@@ -47,15 +46,13 @@ struct StoreKitCoordinator {
       self.txnChecker = sk1ProductPurchaser
     }
 
-    let hasSubscriptionController = delegateAdapter.hasSubscriptionController
-    if hasSubscriptionController {
+    let hasPurchaseController = delegateAdapter.hasPurchaseController
+    if hasPurchaseController {
       self.productPurchaser = delegateAdapter
       self.txnRestorer = delegateAdapter
-      self.subscriptionStatusHandler = delegateAdapter
     } else {
       self.productPurchaser = sk1ProductPurchaser
       self.txnRestorer = sk1ProductPurchaser
-      self.subscriptionStatusHandler = storeKitManager
     }
   }
 
@@ -63,16 +60,14 @@ struct StoreKitCoordinator {
   ///
   /// Called when a user updates the delegate.
   mutating func didToggleDelegate() {
-    let hasSubscriptionController = delegateAdapter.hasSubscriptionController
-    if hasSubscriptionController {
+    let hasPurchaseController = delegateAdapter.hasPurchaseController
+    if hasPurchaseController {
       self.productPurchaser = delegateAdapter
       self.txnRestorer = delegateAdapter
-      self.subscriptionStatusHandler = delegateAdapter
     } else {
       let sk1ProductPurchaser = factory.makeSK1ProductPurchaser()
       self.productPurchaser = sk1ProductPurchaser
       self.txnRestorer = sk1ProductPurchaser
-      self.subscriptionStatusHandler = storeKitManager
     }
   }
 }

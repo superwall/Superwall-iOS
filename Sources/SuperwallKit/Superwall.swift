@@ -1,17 +1,17 @@
-// swiftlint:disable file_length
+// swiftlint:disable file_length type_body_length
 
 import Foundation
 import StoreKit
 import Combine
 
 /// The primary class for integrating Superwall into your application. After configuring via
-/// ``configure(apiKey:delegate:options:completion:)-7fafw``, It provides access to
+/// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``, It provides access to
 /// all its featured via instance functions and variables.
 @objcMembers
 public final class Superwall: NSObject, ObservableObject {
   // MARK: - Public Properties
   /// The optional purchasing delegate of the Superwall instance. Set this in
-  /// ``configure(apiKey:delegate:options:completion:)-7fafw``
+  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
   /// when you want to manually handle the purchasing logic within your app.
   public var delegate: SuperwallDelegate? {
     get {
@@ -24,7 +24,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// The optional purchasing delegate of the Superwall instance. Set this in
-  /// ``configure(apiKey:delegate:options:completion:)-7fafw``
+  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
   /// when you want to manually handle the purchasing logic within your app.
   @available(swift, obsoleted: 1.0)
   @objc(delegate)
@@ -60,8 +60,8 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// A convenience variable to access and change the paywall options that you passed
-  /// to ``configure(apiKey:delegate:options:completion:)-7fafw``.
-  public var options: SuperwallOptions {
+  /// to ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
+  var options: SuperwallOptions {
     return dependencyContainer.configManager.options
   }
 
@@ -90,44 +90,42 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.identityManager.isLoggedIn
   }
 
-  /// A published property that indicates whether the device has any active subscriptions.
+  /// A published property that indicates the subscription status of the user.
   ///
-  /// Its value is stored on disk and synced with the active purchases on device.
+  /// If you're handling subscription-related logic yourself, you must set this
+  /// property whenever the subscription status of a user changes.
+  /// However, if you're letting Superwall handle subscription-related logic, its value will
+  /// be synced with the user's purchases on device.
   ///
-  /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
+  /// Paywalls will not show until the subscription status has been established.
+  /// On first install, it's value will default to `.unknown`. Afterwards, it'll default
+  /// to its cached value.
+  ///
+  /// If you're using Combine or SwiftUI, you can subscribe or bind to it to get
   /// notified whenever the user's subscription status changes.
   ///
   /// Otherwise, you can check the delegate function
-  /// ``SuperwallDelegate/hasActiveSubscriptionDidChange(to:)-1rmfo``
+  /// ``SuperwallDelegate/subscriptionStatusDidChange(to:)-24teh``
   /// to receive a callback with the new value every time it changes.
   ///
-  /// If you are returning a ``SubscriptionController`` in the
-  /// ``SuperwallDelegate``, you should rely on your own subscription status instead.
+  /// To learn more, see <doc:AdvancedConfiguration>.
   @Published
-  public var hasActiveSubscription = false {
-    didSet {
-      dependencyContainer.storage.save(hasActiveSubscription, forType: SubscriptionStatus.self)
-      if oldValue == hasActiveSubscription {
-        return
-      }
-      dependencyContainer.delegateAdapter.hasActiveSubscriptionDidChange(to: hasActiveSubscription)
-    }
-  }
+  public var subscriptionStatus: SubscriptionStatus = .unknown
 
   /// A published property that is `true` when Superwall has finished configuring via
-  /// ``configure(apiKey:delegate:options:completion:)-7fafw``.
+  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
   /// notified when configuration has completed.
   ///
   /// Alternatively, you can use the completion handler from
-  /// ``configure(apiKey:delegate:options:completion:)-7fafw``.
+  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
   @Published
   public var isConfigured = false
 
   /// The configured shared instance of ``Superwall``.
   ///
-  /// - Warning: You must call ``configure(apiKey:delegate:options:completion:)-7fafw``
+  /// - Warning: You must call ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
   /// to initialize ``Superwall`` before using this.
   @objc(sharedInstance)
   public static var shared: Superwall {
@@ -183,19 +181,23 @@ public final class Superwall: NSObject, ObservableObject {
     apiKey: String,
     swiftDelegate: SuperwallDelegate? = nil,
     objcDelegate: SuperwallDelegateObjc? = nil,
+    swiftPurchaseController: PurchaseController? = nil,
+    objcPurchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil,
     completion: (() -> Void)?
   ) {
     let dependencyContainer = DependencyContainer(
       swiftDelegate: swiftDelegate,
       objcDelegate: objcDelegate,
+      swiftPurchaseController: swiftPurchaseController,
+      objcPurchaseController: objcPurchaseController,
       options: options
     )
     self.init(dependencyContainer: dependencyContainer)
 
-    hasActiveSubscription = dependencyContainer.storage.get(SubscriptionStatus.self) ?? false
+    subscriptionStatus = dependencyContainer.storage.get(ActiveSubscriptionStatus.self) ?? .unknown
 
-    listenForConfig()
+    addListeners()
 
     // This task runs on a background thread, even if called from a main thread.
     // This is because the function isn't marked to run on the main thread,
@@ -214,17 +216,37 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Listens to config and updates ``isConfigured`` when it receives a non-nil value
-  /// for config.
-  private func listenForConfig() {
+  /// Listens to config and the subscription status
+  private func addListeners() {
     dependencyContainer.configManager.$config
       .compactMap { $0 }
       .first()
       .receive(on: DispatchQueue.main)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
-        receiveValue: { config in
-          self.isConfigured = config != nil
+        receiveValue: { [weak self] config in
+          self?.isConfigured = config != nil
+        }
+      ))
+
+    $subscriptionStatus
+      .removeDuplicates()
+      .dropFirst()
+      .eraseToAnyPublisher()
+      .receive(on: DispatchQueue.main)
+      .subscribe(Subscribers.Sink(
+        receiveCompletion: { _ in },
+        receiveValue: { [weak self] newValue in
+          guard let self = self else {
+            return
+          }
+          self.dependencyContainer.storage.save(newValue, forType: ActiveSubscriptionStatus.self)
+          self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
+
+          Task {
+            let event = InternalSuperwallEvent.SubscriptionStatusDidChange(subscriptionStatus: newValue)
+            await self.track(event)
+          }
         }
       ))
   }
@@ -248,6 +270,7 @@ public final class Superwall: NSObject, ObservableObject {
   public static func configure(
     apiKey: String,
     delegate: SuperwallDelegate? = nil,
+    purchaseController: PurchaseController? = nil,
     options: SuperwallOptions? = nil,
     completion: (() -> Void)? = nil
   ) -> Superwall {
@@ -263,6 +286,8 @@ public final class Superwall: NSObject, ObservableObject {
       apiKey: apiKey,
       swiftDelegate: delegate,
       objcDelegate: nil,
+      swiftPurchaseController: purchaseController,
+      objcPurchaseController: nil,
       options: options,
       completion: completion
     )
@@ -283,6 +308,57 @@ public final class Superwall: NSObject, ObservableObject {
   public static func configure(
     apiKey: String,
     delegate: SuperwallDelegateObjc? = nil,
+    purchaseController: PurchaseControllerObjc? = nil,
+    options: SuperwallOptions? = nil,
+    completion: (() -> Void)? = nil
+  ) -> Superwall {
+    return objcConfigure(
+      apiKey: apiKey,
+      delegate: delegate,
+      purchaseController: purchaseController,
+      options: options,
+      completion: completion
+    )
+  }
+
+  /// Objective-C only function that configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.
+  ///
+  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
+  /// - Parameters:
+  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
+  ///   - delegate: An optional class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
+  ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
+  ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
+  /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
+  @discardableResult
+  @available(swift, obsoleted: 1.0)
+  public static func configure(
+    apiKey: String,
+    delegate: SuperwallDelegateObjc? = nil
+  ) -> Superwall {
+    return objcConfigure(
+      apiKey: apiKey,
+      delegate: delegate
+    )
+  }
+
+  /// Objective-C only function that configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.
+  ///
+  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
+  /// - Parameters:
+  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
+  /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
+  @discardableResult
+  @available(swift, obsoleted: 1.0)
+  public static func configure(apiKey: String) -> Superwall {
+    // Convenience method for objc
+    return objcConfigure(apiKey: apiKey)
+  }
+
+  private static func objcConfigure(
+    apiKey: String,
+    delegate: SuperwallDelegateObjc? = nil,
+    purchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil,
     completion: (() -> Void)? = nil
   ) -> Superwall {
@@ -298,6 +374,8 @@ public final class Superwall: NSObject, ObservableObject {
       apiKey: apiKey,
       swiftDelegate: nil,
       objcDelegate: delegate,
+      swiftPurchaseController: nil,
+      objcPurchaseController: purchaseController,
       options: options,
       completion: completion
     )
