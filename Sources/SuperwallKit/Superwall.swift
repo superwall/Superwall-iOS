@@ -5,13 +5,13 @@ import StoreKit
 import Combine
 
 /// The primary class for integrating Superwall into your application. After configuring via
-/// ``configure(apiKey:delegate:options:completion:)-7fafw``, It provides access to
+/// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``, It provides access to
 /// all its featured via instance functions and variables.
 @objcMembers
 public final class Superwall: NSObject, ObservableObject {
   // MARK: - Public Properties
   /// The optional purchasing delegate of the Superwall instance. Set this in
-  /// ``configure(apiKey:delegate:options:completion:)-7fafw``
+  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
   /// when you want to manually handle the purchasing logic within your app.
   public var delegate: SuperwallDelegate? {
     get {
@@ -24,7 +24,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// The optional purchasing delegate of the Superwall instance. Set this in
-  /// ``configure(apiKey:delegate:options:completion:)-7fafw``
+  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
   /// when you want to manually handle the purchasing logic within your app.
   @available(swift, obsoleted: 1.0)
   @objc(delegate)
@@ -60,7 +60,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// A convenience variable to access and change the paywall options that you passed
-  /// to ``configure(apiKey:delegate:options:completion:)-7fafw``.
+  /// to ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
   var options: SuperwallOptions {
     return dependencyContainer.configManager.options
   }
@@ -113,19 +113,19 @@ public final class Superwall: NSObject, ObservableObject {
   public var subscriptionStatus: SubscriptionStatus = .unknown
 
   /// A published property that is `true` when Superwall has finished configuring via
-  /// ``configure(apiKey:delegate:options:completion:)-7fafw``.
+  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
   /// notified when configuration has completed.
   ///
   /// Alternatively, you can use the completion handler from
-  /// ``configure(apiKey:delegate:options:completion:)-7fafw``.
+  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
   @Published
   public var isConfigured = false
 
   /// The configured shared instance of ``Superwall``.
   ///
-  /// - Warning: You must call ``configure(apiKey:delegate:options:completion:)-7fafw``
+  /// - Warning: You must call ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
   /// to initialize ``Superwall`` before using this.
   @objc(sharedInstance)
   public static var shared: Superwall {

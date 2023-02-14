@@ -14,7 +14,7 @@ import StoreKit
 ///
 /// However, if you'd like more control, you can return a ``PurchaseControllerObjc`` in
 /// the delegate when configuring the SDK via
-/// ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw``.
+/// ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
 ///
 /// When implementing this, you also need to set the subscription status using
 /// ``Superwall/subscriptionStatus``.

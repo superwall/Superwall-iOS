@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ``Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw`` to configure the SDK.
+The ``Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b`` to configure the SDK.
 
 ## Topics
 
@@ -11,8 +11,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - <doc:GettingStarted>
 - <doc:Ecosystem>
 - <doc:AdvancedConfiguration>
-- ``configure(apiKey:delegate:options:completion:)-7fafw``
-- ``configure(apiKey:delegate:options:completion:)-ogg1``
+- ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
+- ``configure(apiKey:delegate:purchaseController:options:completion:)-2x9j3``
 - ``shared``
 - ``SuperwallDelegate``
 - ``SuperwallDelegateObjc``
@@ -24,7 +24,6 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``SubscriptionStatus``
 - ``SuperwallOptions``
 - ``PaywallOptions``
-- ``options``
 - ``preloadAllPaywalls()``
 - ``preloadPaywalls(forEvents:)``
 
@@ -36,7 +35,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``getTrackResult(forEvent:params:)``
 - ``getTrackResult(forEvent:params:completion:)``
 - ``getTrackInfo(forEvent:params:)``
-- ``publisher(forEvent:params:paywallOverrides:)``
+- ``publisher(forEvent:params:presenter:paywallOverrides:)``
 - ``dismiss()``
 - ``dismiss(completion:)``
 - ``PaywallInfo``
