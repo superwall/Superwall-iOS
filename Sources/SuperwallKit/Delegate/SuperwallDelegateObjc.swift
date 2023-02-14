@@ -11,13 +11,11 @@ import Foundation
 ///
 /// The delegate methods receive callbacks from the SDK in response to certain events that happen on the paywall.
 ///
-/// You pass this in when configuring the SDK via ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw``.
+/// You pass this in when configuring the SDK via ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
 ///
 /// To learn how to conform to the delegate in your app and best practices, see <doc:AdvancedConfiguration>.
 @objc(SWKSuperwallDelegate)
 public protocol SuperwallDelegateObjc: AnyObject {
-  @objc optional func subscriptionController() -> SubscriptionControllerObjc?
-
   /// Called when the user taps a button on your paywall that has a `data-pw-custom` tag attached.
   ///
   /// To learn more about using this function, see <doc:CustomPaywallButtons>. To learn about the types of tags that
@@ -73,7 +71,7 @@ public protocol SuperwallDelegateObjc: AnyObject {
   /// Alternatively, you can use the published properties of ``Superwall/subscriptionStatus``
   /// to react to changes as they happen.
   ///
-  /// - Note: If you are implementing a ``SubscriptionController`` to handle your apps subscription-related
+  /// - Note: If you are implementing a ``PurchaseController`` to handle your apps subscription-related
   /// logic, you should rely on your own logic and not this method.
   ///
   /// - Parameters:

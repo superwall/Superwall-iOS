@@ -6,6 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Breaking Changes
 
+- Changes `SubscriptionController` to `PurchaseController`. You now set this in `Superwall.shared.configure`, rather than via the delegate.
 - Removes `isUserSubscribed()` from the `SuperwallDelegate` and replaces this with a published instance variable `subscriptionStatus`. This is enum that defaults to `.unknown` on first install and the cached value on subsequent app opens. If you're using a `SubscriptionController` to handle subscription-related logic, you must set `subscriptionStatus` every time the user's subscription status changes. If you're letting Superwall handle subscription-related logic, this value will be updated with the device receipt.
 - `hasActiveSubscriptionDidChange(to:)` is replaced in favour of `subscriptionStatusDidChange(to:)`.
 - Makes `Superwall.shared.options` internal so that options must be set in `configure`.

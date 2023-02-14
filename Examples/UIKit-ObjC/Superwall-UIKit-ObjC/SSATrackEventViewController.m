@@ -48,10 +48,6 @@
 - (IBAction)trackEvent:(id)sender {
   __weak typeof(self) weakSelf = self;
   [[Superwall sharedInstance] trackWithEvent:@"campaign_trigger"
-                     params:nil
-                   products:nil
-   ignoreSubscriptionStatus:NO
-  presentationStyleOverride:SWKPaywallPresentationStyleNone
                      onSkip:^(enum SWKPaywallSkippedReason reason, NSError * _Nullable error) {
     [weakSelf paywallSkippedWithReason:reason error:error];
   }

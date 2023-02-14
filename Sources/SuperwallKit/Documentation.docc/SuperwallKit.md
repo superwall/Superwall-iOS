@@ -18,6 +18,6 @@ Superwall makes it easy to show paywalls in your app using UIKit or SwiftUI. If 
 
 ### The Delegate
 - ``SuperwallDelegate``
-- ``SubscriptionController``
+- ``PurchaseController``
 - <doc:CustomPaywallButtons>
 - <doc:ThirdPartyAnalytics>
