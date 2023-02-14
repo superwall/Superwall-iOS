@@ -49,6 +49,7 @@
   __weak typeof(self) weakSelf = self;
   [[Superwall sharedInstance] trackWithEvent:@"campaign_trigger"
                      params:nil
+                  presenter:nil
                    products:nil
    ignoreSubscriptionStatus:NO
   presentationStyleOverride:SWKPaywallPresentationStyleNone

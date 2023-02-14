@@ -43,7 +43,8 @@ final class PaywallManager: NSObject {
 
     Superwall.configure(
       apiKey: superwallApiKey,
-      delegate: shared
+      delegate: shared,
+      purchaseController: shared
     )
   }
 
@@ -101,8 +102,8 @@ final class PaywallManager: NSObject {
   }
 }
 
-// MARK: - SubscriptionController
-extension PaywallManager: SubscriptionController {
+// MARK: - PurchaseController
+extension PaywallManager: PurchaseController {
   /// Restore purchases
   func restorePurchases() async -> Bool {
     return await restore()
@@ -157,10 +158,6 @@ extension PaywallManager: PurchasesDelegate {
 
 // MARK: - Superwall Delegate
 extension PaywallManager: SuperwallDelegate {
-  func subscriptionController() -> SubscriptionController? {
-    return self
-  }
-
   func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {
     print("analytics event called", info.event.description)
 

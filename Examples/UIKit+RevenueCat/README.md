@@ -49,7 +49,7 @@ Build and run the app and you'll see the welcome screen:
 
 SuperwallKit and RevenueCat are both [configured](Superwall-UIKit+RevenueCat/PaywallManager.swift#L37) on app launch, setting an `apiKey` and `delegate`.
 
-The SDK sends back events received from the paywall via the delegate methods in [PaywallManager.swift](Superwall-UIKit+RevenueCat/PaywallManager.swift#L170). The delegate is responsible for sending back analytical events and providing a `SubscriptionController`. This is a protocol implemented by the PaywallManager that handles purchasing and restoring logic.
+The SDK sends back events received from the paywall via the delegate methods in [PaywallManager.swift](Superwall-UIKit+RevenueCat/PaywallManager.swift#L170). A `PurchaseController` is provided by `PaywallManager` on configuring the SDK that handles purchasing and restoring logic.
 
 ## Logging In
 

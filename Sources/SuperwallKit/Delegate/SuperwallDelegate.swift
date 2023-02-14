@@ -15,8 +15,6 @@ import Foundation
 /// 
 /// To learn how to conform to the delegate in your app and best practices, see <doc:AdvancedConfiguration>.
 public protocol SuperwallDelegate: AnyObject {
-  func subscriptionController() -> SubscriptionController?
-
   /// Called when the user taps an element on your paywall that has the click action `Custom action`,
   /// or a `data-pw-custom` tag attached.
   ///
@@ -98,10 +96,6 @@ public protocol SuperwallDelegate: AnyObject {
 }
 
 public extension SuperwallDelegate {
-  func subscriptionController() -> SubscriptionController? {
-    return nil
-  }
-
   func handleCustomPaywallAction(withName name: String) {}
 
   func willDismissPaywall() {}

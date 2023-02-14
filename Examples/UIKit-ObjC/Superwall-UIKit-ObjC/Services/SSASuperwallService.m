@@ -101,7 +101,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
   [[SSAStoreKitService sharedService] updateSubscribedState];
 
   // Configure Superwall.
-  [Superwall configureWithApiKey:kDemoAPIKey delegate:self options:nil completion:nil];
+  [Superwall configureWithApiKey:kDemoAPIKey delegate:self purchaseController:nil options:nil completion:nil];
 }
 
 - (void)logInWithCompletion:(nullable void (^)(void))completion {

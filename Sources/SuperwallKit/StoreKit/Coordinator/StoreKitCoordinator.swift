@@ -46,8 +46,8 @@ struct StoreKitCoordinator {
       self.txnChecker = sk1ProductPurchaser
     }
 
-    let hasSubscriptionController = delegateAdapter.hasSubscriptionController
-    if hasSubscriptionController {
+    let hasPurchaseController = delegateAdapter.hasPurchaseController
+    if hasPurchaseController {
       self.productPurchaser = delegateAdapter
       self.txnRestorer = delegateAdapter
     } else {
@@ -60,8 +60,8 @@ struct StoreKitCoordinator {
   ///
   /// Called when a user updates the delegate.
   mutating func didToggleDelegate() {
-    let hasSubscriptionController = delegateAdapter.hasSubscriptionController
-    if hasSubscriptionController {
+    let hasPurchaseController = delegateAdapter.hasPurchaseController
+    if hasPurchaseController {
       self.productPurchaser = delegateAdapter
       self.txnRestorer = delegateAdapter
     } else {

@@ -12,18 +12,18 @@ import StoreKit
 ///
 /// By default, the Superwall SDK handles all subscription-related logic.
 ///
-/// However, if you'd like more control, you can return a ``SubscriptionControllerObjc`` in
+/// However, if you'd like more control, you can return a ``PurchaseControllerObjc`` in
 /// the delegate when configuring the SDK via
 /// ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw``.
 ///
 /// When implementing this, you also need to set the subscription status using
 /// ``Superwall/subscriptionStatus``.
 ///
-/// To learn how to implement the ``SubscriptionControllerObjc`` in your app
+/// To learn how to implement the ``PurchaseControllerObjc`` in your app
 /// and best practices, see <doc:AdvancedConfiguration>.
 @MainActor
-@objc(SWKSubscriptionController)
-public protocol SubscriptionControllerObjc: AnyObject {
+@objc(SWKPurchaseController)
+public protocol PurchaseControllerObjc: AnyObject {
   /// Called when the user initiates purchasing of a product.
   ///
   /// Add your purchase logic here and call the completion block with the result. You can use Apple's StoreKit APIs,

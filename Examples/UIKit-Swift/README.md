@@ -46,7 +46,7 @@ Build and run the app and you'll see the welcome screen:
 
 SuperwallKit is [configured](Superwall-UIKit-Swift/Services/SuperwallService.swift#L30) on app launch, setting an `apiKey` and `delegate`.
 
-The SDK sends back events received from the paywall via the delegate methods in [SuperwallService.swift](Superwall-UIKit-Swift/Services/SuperwallService.swift#L64). You use these methods to make and restore purchases and react to analytical events. 
+The SDK sends back events received from the paywall via the delegate methods in [SuperwallService.swift](Superwall-UIKit-Swift/Services/SuperwallService.swift#L64).
 
 ## Logging In
 

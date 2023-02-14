@@ -92,9 +92,8 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// A published property that indicates the subscription status of the user.
   ///
-  /// If you're handling subscription-related logic yourself via a
-  /// ``SubscriptionController``, you must set this property whenever
-  /// the subscription status of a user changes.
+  /// If you're handling subscription-related logic yourself, you must set this
+  /// property whenever the subscription status of a user changes.
   /// However, if you're letting Superwall handle subscription-related logic, its value will
   /// be synced with the user's purchases on device.
   ///
@@ -182,12 +181,16 @@ public final class Superwall: NSObject, ObservableObject {
     apiKey: String,
     swiftDelegate: SuperwallDelegate? = nil,
     objcDelegate: SuperwallDelegateObjc? = nil,
+    swiftPurchaseController: PurchaseController? = nil,
+    objcPurchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil,
     completion: (() -> Void)?
   ) {
     let dependencyContainer = DependencyContainer(
       swiftDelegate: swiftDelegate,
       objcDelegate: objcDelegate,
+      swiftPurchaseController: swiftPurchaseController,
+      objcPurchaseController: objcPurchaseController,
       options: options
     )
     self.init(dependencyContainer: dependencyContainer)
@@ -267,6 +270,7 @@ public final class Superwall: NSObject, ObservableObject {
   public static func configure(
     apiKey: String,
     delegate: SuperwallDelegate? = nil,
+    purchaseController: PurchaseController? = nil,
     options: SuperwallOptions? = nil,
     completion: (() -> Void)? = nil
   ) -> Superwall {
@@ -282,6 +286,8 @@ public final class Superwall: NSObject, ObservableObject {
       apiKey: apiKey,
       swiftDelegate: delegate,
       objcDelegate: nil,
+      swiftPurchaseController: purchaseController,
+      objcPurchaseController: nil,
       options: options,
       completion: completion
     )
@@ -302,6 +308,7 @@ public final class Superwall: NSObject, ObservableObject {
   public static func configure(
     apiKey: String,
     delegate: SuperwallDelegateObjc? = nil,
+    purchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil,
     completion: (() -> Void)? = nil
   ) -> Superwall {
@@ -317,6 +324,8 @@ public final class Superwall: NSObject, ObservableObject {
       apiKey: apiKey,
       swiftDelegate: nil,
       objcDelegate: delegate,
+      swiftPurchaseController: nil,
+      objcPurchaseController: purchaseController,
       options: options,
       completion: completion
     )

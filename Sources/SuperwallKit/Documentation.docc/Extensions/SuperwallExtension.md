@@ -18,8 +18,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``SuperwallDelegateObjc``
 - ``delegate``
 - ``objcDelegate``
-- ``SubscriptionController``
-- ``SubscriptionControllerObjc``
+- ``PurchaseController``
+- ``PurchaseControllerObjc``
 - ``subscriptionStatus``
 - ``SubscriptionStatus``
 - ``SuperwallOptions``

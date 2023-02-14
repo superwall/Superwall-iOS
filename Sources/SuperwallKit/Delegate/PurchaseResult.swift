@@ -17,7 +17,7 @@ enum InternalPurchaseResult {
 
 /// An enum that defines the possible outcomes of attempting to purchase a product.
 ///
-/// When implementing the ``SubscriptionController/purchase(product:)`` delegate
+/// When implementing the ``PurchaseController/purchase(product:)`` delegate
 /// method, all cases should be considered.
 public enum PurchaseResult: Sendable, Equatable {
   /// The purchase was cancelled.
@@ -95,7 +95,7 @@ public enum PurchaseResultObjc: Int, Sendable, Equatable {
 
   /// The purchase failed for a reason other than the user cancelling or the payment pending.
   ///
-  /// Send the `Error` back in the ``SubscriptionControllerObjc/purchase(product:completion:)``
+  /// Send the `Error` back in the ``PurchaseControllerObjc/purchase(product:completion:)``
   /// completion block to Superwall to alert the user.
   case failed
 }
