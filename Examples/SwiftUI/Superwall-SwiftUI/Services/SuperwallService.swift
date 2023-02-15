@@ -38,16 +38,11 @@ final class SuperwallService {
     shared.isLoggedIn.send(Superwall.shared.isLoggedIn)
   }
 
-  static func identify() {
+  static func identify() async {
     do {
-      try Superwall.shared.identify(userId: "abc")
-    } catch let error as IdentityError {
-      switch error {
-      case .missingUserId:
-        print("The provided userId was empty")
-      }
+      try await Superwall.shared.identify(userId: "abc")
     } catch {
-      print("Unexpected error", error)
+      print(error.localizedDescription)
     }
   }
 
@@ -139,6 +134,8 @@ extension SuperwallService: SuperwallDelegate {
     case .paywallProductsLoadComplete(let triggeredEventName):
       <#code#>
     case .paywallPresentationFail(reason: let reason):
+      <#code#>
+    case .subscriptionStatusDidChange:
       <#code#>
     }
     */

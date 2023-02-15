@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-beta.6
+
+### Breaking Changes
+
+- The non-async version of `identify` was never throwing an error due to the async error of the underlying code. This now passes the error via its completion block.
+
 ## 3.0.0-beta.5
 
 ### Breaking Changes

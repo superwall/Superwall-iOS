@@ -107,13 +107,8 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 
 - (void)logInWithCompletion:(nullable void (^)(void))completion {
   [[Superwall sharedInstance] identifyWithUserId:kDemoAPIKey completionHandler:^(NSError * _Nullable error) {
-    switch (error.code) {
-      case SWKIdentityErrorMissingUserId:
-        NSLog(@"The provided userId was empty");
-        break;
-      default:
-        NSLog(@"An unknown error occurred: %@", error.localizedDescription);
-        break;
+    if (error != nil) {
+      NSLog(@"%@", error.localizedDescription);
     }
 
     if (completion) {

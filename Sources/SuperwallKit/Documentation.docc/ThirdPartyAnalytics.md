@@ -81,6 +81,8 @@ extension SuperwallService: SuperwallDelegate {
       break
     case .paywallPresentationFail(reason: let reason):
       break
+    case .subscriptionStatusDidChange:
+      break
     }
   }
 }

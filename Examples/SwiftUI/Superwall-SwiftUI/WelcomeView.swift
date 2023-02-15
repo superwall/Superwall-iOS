@@ -67,7 +67,7 @@ struct WelcomeView: View {
     BrandedButton(title: "Log In") {
       Task {
         SuperwallService.setName(to: name)
-        SuperwallService.identify()
+        await SuperwallService.identify()
         isLoggedIn = true
       }
     }

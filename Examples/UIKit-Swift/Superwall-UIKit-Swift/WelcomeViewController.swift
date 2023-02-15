@@ -41,7 +41,7 @@ final class WelcomeViewController: UIViewController {
       if let name = textField.text {
         SuperwallService.setName(to: name)
       }
-      SuperwallService.identify()
+      await SuperwallService.identify()
       next()
     }
   }

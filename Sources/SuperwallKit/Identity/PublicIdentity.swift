@@ -58,18 +58,24 @@ public extension Superwall {
   ///     This should only be used in advanced use cases. If you expect
   ///     users of your app to switch accounts or delete/reinstall a lot, you'd set this when users log in to an
   ///     existing account.
-  ///     - completion: An optional completion block that returns when Superwall has finished configuring.
-  ///  - Throws: An error of type ``IdentityError``.
+  ///     - completion: An optional completion block that accepts a `success` state when Superwall has
+  ///     finished configuring. Otherwise it accepts a `failure` state with an error of type ``IdentityError``.
   @nonobjc
   func identify(
     userId: String,
     options: IdentityOptions? = nil,
-    completion: (() -> Void)? = nil
-  ) throws {
+    completion: ((IdentityError?) -> Void)? = nil
+  ) {
     Task {
-      try await identify(userId: userId, options: options)
-      await MainActor.run {
-        completion?()
+      do {
+        try await identify(userId: userId, options: options)
+        await MainActor.run {
+          completion?(nil)
+        }
+      } catch let error as IdentityError {
+        await MainActor.run {
+          completion?(error)
+        }
       }
     }
   }

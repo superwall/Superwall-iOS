@@ -56,13 +56,8 @@ final class PaywallManager: NSObject {
       let (customerInfo, _) = try await Purchases.shared.logIn(userId)
       updateSubscriptionStatus(using: customerInfo)
       try await Superwall.shared.identify(userId: userId)
-    } catch let error as IdentityError {
-      switch error {
-      case .missingUserId:
-        print("The provided userId was empty")
-      }
     } catch {
-      print("A RevenueCat error occurred", error)
+      print(error.localizedDescription)
     }
   }
 
@@ -231,6 +226,8 @@ extension PaywallManager: SuperwallDelegate {
     case .paywallProductsLoadComplete(let triggeredEventName):
       <#code#>
     case .paywallPresentationFail(reason: let reason):
+      <#code#>
+    case .subscriptionStatusDidChange:
       <#code#>
     }
     */
