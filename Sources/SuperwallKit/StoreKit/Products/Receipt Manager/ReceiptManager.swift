@@ -8,19 +8,9 @@
 import Foundation
 import StoreKit
 
-final class ReceiptManager: NSObject {
+actor ReceiptManager: NSObject {
   var purchasedSubscriptionGroupIds: Set<String>?
-  var purchases: Set<InAppPurchase> = []
-  var activePurchases: Set<InAppPurchase> = [] {
-    didSet {
-      if activePurchases.isEmpty {
-        Superwall.shared.subscriptionStatus = .inactive
-      } else {
-        Superwall.shared.subscriptionStatus = .active
-      }
-    }
-  }
-
+  private var purchases: Set<InAppPurchase> = []
   private var receiptRefreshCompletion: ((Bool) -> Void)?
   private weak var delegate: ProductsFetcher?
   private let receiptData: () -> Data?
@@ -48,8 +38,15 @@ final class ReceiptManager: NSObject {
 
     let purchases = payload.purchases
     self.purchases = purchases
+
+    // Update
     await MainActor.run {
-      activePurchases = purchases.filter { $0.isActive }
+      let activePurchases = purchases.filter { $0.isActive }
+      if activePurchases.isEmpty {
+        Superwall.shared.subscriptionStatus = .inactive
+      } else {
+        Superwall.shared.subscriptionStatus = .active
+      }
     }
 
     let purchasedProductIds = Set(purchases.map { $0.productIdentifier })
@@ -114,7 +111,7 @@ final class ReceiptManager: NSObject {
 }
 
 extension ReceiptManager: SKRequestDelegate {
-  func requestDidFinish(_ request: SKRequest) {
+  nonisolated func requestDidFinish(_ request: SKRequest) {
     guard request is SKReceiptRefreshRequest else {
       return
     }
@@ -124,11 +121,13 @@ extension ReceiptManager: SKRequestDelegate {
       message: "Receipt refresh request finished.",
       info: ["request": request]
     )
-    receiptRefreshCompletion?(true)
+    Task {
+      await receiptRefreshCompletion?(true)
+    }
     request.cancel()
   }
 
-  func request(_ request: SKRequest, didFailWithError error: Error) {
+  nonisolated func request(_ request: SKRequest, didFailWithError error: Error) {
     guard request is SKReceiptRefreshRequest else {
       return
     }
@@ -139,7 +138,9 @@ extension ReceiptManager: SKRequestDelegate {
       info: ["request": request],
       error: error
     )
-    receiptRefreshCompletion?(false)
+    Task {
+      await receiptRefreshCompletion?(false)
+    }
     request.cancel()
   }
 }

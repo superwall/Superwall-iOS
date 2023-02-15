@@ -48,7 +48,7 @@ actor PaywallRequestManager {
       // Calculate whether there's a free trial available
       if let primaryProduct = paywall.products.first(where: { $0.type == .primary }),
         let storeProduct = await storeKitManager.productsById[primaryProduct.id] {
-        let isFreeTrialAvailable = storeKitManager.isFreeTrialAvailable(for: storeProduct)
+        let isFreeTrialAvailable = await storeKitManager.isFreeTrialAvailable(for: storeProduct)
         paywall.isFreeTrialAvailable = isFreeTrialAvailable
       }
       paywall.experiment = request.responseIdentifiers.experiment
