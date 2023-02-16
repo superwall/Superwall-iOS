@@ -10,7 +10,7 @@ import GameController
 extension Superwall {
   /// Forwards Game controller events to the paywall.
   ///
-  /// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`
+  /// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`.
   ///
   /// See <doc:GameControllerSupport> for more information.
   ///

@@ -7,6 +7,11 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Breaking Changes
 
 - The non-async version of `identify` was never throwing an error due to the async error of the underlying code. This now passes the error via its completion block.
+- Removes `localizationOverride(localeIdentifier:)` and replaces it with the `SuperwallOption` `localeIdentifier`. You set this on configure.
+
+### Fixes
+
+- Fixes bug where calling identify and immediately tracking a paywall would result in an error if it happened before configure returned.
 
 ## 3.0.0-beta.5
 

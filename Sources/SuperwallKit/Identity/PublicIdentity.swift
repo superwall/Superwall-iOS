@@ -98,7 +98,7 @@ public extension Superwall {
   /// by Superwall.
   ///
   /// - Parameters:
-  ///   - completion: A completion block that is called when reset has completed.
+  ///   - completion: An optional completion block that is called when reset has completed.
   @nonobjc
   func reset(completion: (() -> Void)? = nil) {
     Task {

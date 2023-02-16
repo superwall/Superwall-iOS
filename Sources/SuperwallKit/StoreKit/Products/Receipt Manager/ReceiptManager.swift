@@ -39,9 +39,8 @@ actor ReceiptManager: NSObject {
     let purchases = payload.purchases
     self.purchases = purchases
 
-    // Update
+    let activePurchases = purchases.filter { $0.isActive }
     await MainActor.run {
-      let activePurchases = purchases.filter { $0.isActive }
       if activePurchases.isEmpty {
         Superwall.shared.subscriptionStatus = .inactive
       } else {

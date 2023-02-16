@@ -22,10 +22,10 @@ public extension Superwall {
   }*/
 
   @available(*, unavailable, renamed: "preloadPaywalls(forEvents:)")
-  @objc static func preloadPaywalls(forTriggers triggers: Set<String>) {}
+  @objc func preloadPaywalls(forTriggers triggers: Set<String>) {}
 
   @available(*, unavailable, renamed: "track(event:params:presenter:paywallOverrides:paywallHandler:)")
-  @objc static func trigger(
+  @objc func trigger(
     event: String? = nil,
     params: [String: Any]? = nil,
     on viewController: UIViewController? = nil,
@@ -37,10 +37,13 @@ public extension Superwall {
   ) {}
 
   @available(*, unavailable, renamed: "track(event:params:)")
-  @objc static func track(
+  @objc func track(
     _ name: String,
     _ params: [String: Any] = [:]
   ) {}
+
+  @available(*, unavailable, message: "Set the SuperwallOption \"localeIdentifier\" instead.")
+  @objc func localizationOverride(localeIdentifier: String? = nil) {}
 
   @available(*, unavailable, renamed: "SuperwallEvent")
   enum EventName: String {

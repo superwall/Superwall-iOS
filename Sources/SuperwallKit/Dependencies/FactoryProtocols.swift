@@ -58,6 +58,10 @@ protocol IdentityInfoFactory: AnyObject {
   func makeIdentityInfo() -> IdentityInfo
 }
 
+protocol LocaleIdentifierFactory: AnyObject {
+  func makeLocaleIdentifier() -> String?
+}
+
 protocol DeviceInfoFactory: AnyObject {
   func makeDeviceInfo() -> DeviceInfo
 }

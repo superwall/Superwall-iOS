@@ -79,7 +79,6 @@ final class DependencyContainer {
     deviceHelper = DeviceHelper(
       api: api,
       storage: storage,
-      localizationManager: localizationManager,
       factory: self
     )
 
@@ -160,6 +159,13 @@ extension DependencyContainer: DeviceInfoFactory {
       appInstalledAtString: deviceHelper.appInstalledAtString,
       locale: deviceHelper.locale
     )
+  }
+}
+
+// MARK: - DeviceInfofactory
+extension DependencyContainer: LocaleIdentifierFactory {
+  func makeLocaleIdentifier() -> String? {
+    return configManager.options.localeIdentifier
   }
 }
 

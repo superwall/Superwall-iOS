@@ -59,16 +59,14 @@ class IdentityManager {
     self.userAttributes = storage.get(UserAttributes.self) ?? [:]
   }
 
-  /// Waits for config to return before getting assignments (if needed).
+  /// Checks for static config upgrade before setting identity.
   func configure() async {
-    await configManager.$config.hasValue()
-
-    let accountExistedPreStaticConfig = storage.neverCalledStaticConfig
+    let neverCalledStaticConfig = storage.neverCalledStaticConfig
     let isFirstAppOpen = !(storage.get(DidTrackFirstSeen.self) ?? false)
 
     if IdentityLogic.shouldGetAssignments(
       isLoggedIn: isLoggedIn,
-      accountExistedPreStaticConfig: accountExistedPreStaticConfig,
+      neverCalledStaticConfig: neverCalledStaticConfig,
       isFirstAppOpen: isFirstAppOpen
     ) {
       await configManager.getAssignments()
@@ -77,7 +75,7 @@ class IdentityManager {
     didSetIdentity()
   }
 
-  /// Create an account and may or may not wait for assignments before
+  /// Creates an account and may or may not wait for assignments before
   /// returning.
   ///
   /// - Throws: An error of type ``IdentityError``.

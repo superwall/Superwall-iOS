@@ -6,10 +6,20 @@
 //
 
 import UIKit
+import Combine
 
 class ConfigManager {
   /// The configuration of the Superwall dashboard
   @Published var config: Config?
+
+  /// A publisher that emits just once only when `config` is non-`nil`.
+  var hasConfig: AnyPublisher<Config, Error> {
+    $config
+      .compactMap { $0 }
+      .first()
+      .setFailureType(to: Error.self)
+      .eraseToAnyPublisher()
+  }
 
   /// Options for configuring the SDK.
   var options = SuperwallOptions()

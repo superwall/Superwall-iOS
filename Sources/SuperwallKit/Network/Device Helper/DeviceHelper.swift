@@ -12,7 +12,8 @@ import CoreTelephony
 
 class DeviceHelper {
   var locale: String {
-    localizationManager.selectedLocale ?? Locale.autoupdatingCurrent.identifier
+    let localeIdentifier = factory.makeLocaleIdentifier()
+    return localeIdentifier ?? Locale.autoupdatingCurrent.identifier
   }
   let appInstalledAtString: String
 
@@ -304,17 +305,14 @@ class DeviceHelper {
   }
 
   private unowned let storage: Storage
-  private unowned let localizationManager: LocalizationManager
-  private unowned let factory: IdentityInfoFactory
+  private unowned let factory: IdentityInfoFactory & LocaleIdentifierFactory
 
   init(
     api: Api,
     storage: Storage,
-    localizationManager: LocalizationManager,
-    factory: IdentityInfoFactory
+    factory: IdentityInfoFactory & LocaleIdentifierFactory
   ) {
     self.storage = storage
-    self.localizationManager = localizationManager
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
     self.factory = factory
     reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.hostDomain)

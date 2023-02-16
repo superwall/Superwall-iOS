@@ -10,15 +10,16 @@ import Foundation
 import Combine
 import UIKit
 
-/// A completion block that contains a ``PaywallDismissedResult`` object. This contains info about why the paywall was dismissed.
+/// A completion block that contains a ``PaywallDismissedResult`` object. This contains info about why
+/// the paywall was dismissed.
 public typealias PaywallDismissedCompletionBlock = (PaywallDismissedResult) -> Void
 
 public extension Superwall {
   // MARK: - Dismiss
   /// Dismisses the presented paywall.
   /// 
-	/// - Parameters:
-  ///   - completion: An optional completion block that gets called after the paywall is dismissed. Defaults to nil.
+	/// - Parameter completion: An optional completion block that gets called after the paywall is dismissed.
+  /// Defaults to `nil`.
   @MainActor
   func dismiss(completion: (() -> Void)? = nil) {
 		guard let paywallViewController = paywallViewController else {
@@ -335,7 +336,8 @@ public extension Superwall {
   ///    dismissing. Defaults to `nil`. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal
   ///     to the product id of the purchased product (if any) and a ``PaywallInfo`` object containing information about the paywall.
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a
-  ///   ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.@available(swift, obsoleted: 1.0)
+  ///   ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.
+  @available(swift, obsoleted: 1.0)
   @objc func track(
     event: String,
     params: [String: Any]? = nil,

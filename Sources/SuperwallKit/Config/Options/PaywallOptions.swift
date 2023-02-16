@@ -40,8 +40,8 @@ public final class PaywallOptions: NSObject {
   ///
   /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
   ///
-  /// If you want to preload them at a later date, you can call ``SuperwallKit/Superwall/preloadAllPaywalls()``
-  /// or ``SuperwallKit/Superwall/preloadPaywalls(forEvents:)``
+  /// If you want to preload them at a later date, you can call ``Superwall/preloadAllPaywalls()``
+  /// or ``Superwall/preloadPaywalls(forEvents:)``
   public var shouldPreload = true
 
   /// Loads paywall template websites from disk, if available. Defaults to `true`.
@@ -69,6 +69,6 @@ public final class PaywallOptions: NSObject {
   ///
   /// Set this to `nil` to remove any background view during the transaction.
   ///
-  /// **Note:** This feature is still in development and is likely to change.
+  /// **Note:** This feature is still in development and could change.
   public var transactionBackgroundView: TransactionBackgroundView? = .spinner
 }
