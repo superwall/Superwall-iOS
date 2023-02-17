@@ -71,8 +71,6 @@ public extension Superwall {
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign.
   ///   Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates.
   ///   Arrays and dictionaries as values are not supported at this time, and will be dropped.
-  ///   - presenter: An optional `UIViewController` from which to present the paywall from. If you don't provide one, the paywall
-  ///    will present from a new `UIViewController` in a new `UIWindow`. Defaults to `nil`.
   ///   - products: An optional ``PaywallProducts`` object whose products replace the remotely defined paywall products. Defaults
   ///   to `nil`.
   ///   - ignoreSubscriptionStatus: Presents the paywall regardless of subscription status if `true`. Defaults to `false`.
@@ -89,7 +87,6 @@ public extension Superwall {
   @objc func track(
     event: String,
     params: [String: Any]? = nil,
-    presenter: UIViewController? = nil,
     products: PaywallProducts? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
@@ -100,7 +97,6 @@ public extension Superwall {
     objcTrack(
       event: event,
       params: params,
-      presenter: presenter,
       products: products,
       ignoreSubscriptionStatus: ignoreSubscriptionStatus,
       presentationStyleOverride: presentationStyleOverride,
@@ -113,7 +109,6 @@ public extension Superwall {
   private func objcTrack(
     event: String,
     params: [String: Any]? = nil,
-    presenter: UIViewController? = nil,
     products: PaywallProducts? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none,
@@ -130,7 +125,6 @@ public extension Superwall {
     track(
       event: event,
       params: params,
-      presenter: presenter,
       paywallOverrides: overrides
     ) { [weak self] state in
       switch state {
@@ -369,20 +363,17 @@ public extension Superwall {
   /// - Parameters:
   ///   -  event: The name of the event you wish to track.
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
-  ///   - presenter: An optional `UIViewController` from which to present the paywall from. If you don't provide one, the paywall will present from a new `UIViewController` in a new `UIWindow`. Defaults to `nil`.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///   - paywallHandler: An optional callback that provides updates on the state of the paywall via a ``PaywallState`` object.
   func track(
     event: String,
     params: [String: Any]? = nil,
-    presenter: UIViewController? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     paywallHandler: ((PaywallState) -> Void)? = nil
   ) {
     publisher(
       forEvent: event,
       params: params,
-      presenter: presenter,
       paywallOverrides: paywallOverrides
     )
     .subscribe(Subscribers.Sink(
@@ -406,14 +397,12 @@ public extension Superwall {
   /// - Parameters:
   ///   -  event: The name of the event you wish to track.
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
-  ///   - presenter: An optional `UIViewController` from which to present the paywall from. If you don't provide one, the paywall will present from a new `UIViewController` in a new `UIWindow`. Defaults to `nil`.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///
   /// - Returns: A publisher that provides updates on the state of the paywall via a ``PaywallState`` object.
   func publisher(
     forEvent event: String,
     params: [String: Any]? = nil,
-    presenter: UIViewController? = nil,
     paywallOverrides: PaywallOverrides? = nil
   ) -> PaywallStatePublisher {
     return Future {
@@ -430,7 +419,6 @@ public extension Superwall {
       let presentationRequest = self.dependencyContainer.makePresentationRequest(
         .explicitTrigger(trackResult.data),
         paywallOverrides: paywallOverrides,
-        presenter: presenter,
         isPaywallPresented: isPaywallPresented
       )
       return self.internallyPresent(presentationRequest)
@@ -449,7 +437,7 @@ public extension Superwall {
   /// present a paywall in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``track(event:params:presenter:paywallOverrides:paywallHandler:)``.
+  /// ``track(event:params:paywallOverrides:paywallHandler:)``.
   ///
   /// - Parameters:
   ///     - event: The name of the event you want to track.
@@ -498,7 +486,7 @@ public extension Superwall {
   /// present a paywall in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``track(event:params:presenter:paywallOverrides:paywallHandler:)``.
+  /// ``track(event:params:paywallOverrides:paywallHandler:)``.
   ///
   /// - Parameters:
   ///     - event: The name of the event you want to track.
@@ -525,7 +513,7 @@ public extension Superwall {
   /// present a paywall in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``track(event:params:presenter:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``.
+  /// ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``.
   ///
   /// - Parameters:
   ///     - event: The name of the event you want to track.

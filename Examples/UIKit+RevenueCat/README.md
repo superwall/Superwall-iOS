@@ -71,7 +71,7 @@ On the [Superwall Dashboard](https://superwall.com/dashboard) you add this event
 
 When an event is tracked, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall. Note that if `Superwall.shared.subscriptionStatus` is set to `active`, a paywall will not show by default.
 
-By calling [Superwall.shared.track(event:params:presenter:paywallOverrides:paywallHandler:)](Superwall-UIKit+RevenueCat/TrackEventViewController.swift#L60), you present a paywall in response to the event. For this app, the event is called `campaign_trigger`.
+By calling [Superwall.shared.track(event:params:paywallOverrides:paywallHandler:)](Superwall-UIKit+RevenueCat/TrackEventViewController.swift#L60), you present a paywall in response to the event. For this app, the event is called `campaign_trigger`.
 
 On screen you'll see some explanatory text and a button that tracks an event:
 

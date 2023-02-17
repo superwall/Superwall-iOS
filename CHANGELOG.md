@@ -10,6 +10,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Removes `localizationOverride(localeIdentifier:)` and replaces it with the `SuperwallOption` `localeIdentifier`. You set this on configure.
 - `setUserAttributes(_:)` is now an async function. It always was async under the hood but this makes it more explicit and helps you avoid race conditions.
 - Removes delegate from `configure`. You now set the delegate via `Superwall.shared.delegate`.
+- Removes `presenter` introduced in beta 5.
 
 ### Fixes
 

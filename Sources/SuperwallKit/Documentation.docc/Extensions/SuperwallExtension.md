@@ -30,8 +30,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 ### Presenting and Dismissing a Paywall
 
 - <doc:TrackingEvents>
-- ``track(event:params:presenter:paywallOverrides:paywallHandler:)``
-- ``track(event:params:presenter:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
+- ``track(event:params:paywallOverrides:paywallHandler:)``
+- ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``getTrackResult(forEvent:params:)``
 - ``getTrackResult(forEvent:params:completion:)``
 - ``getTrackInfo(forEvent:params:)``

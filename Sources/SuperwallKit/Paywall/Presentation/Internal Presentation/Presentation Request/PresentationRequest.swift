@@ -37,12 +37,14 @@ struct PresentationRequest {
 }
 
 extension PresentationRequest: Stubbable {
+  // Note: If making a stub in a test and needing to change things like
+  // configManager, this may not work because the original one will be
+  // deallocated and cause a crash. You'll need to create the request yourself.
   static func stub() -> PresentationRequest {
     let dependencyContainer = DependencyContainer()
     return dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       paywallOverrides: nil,
-      presenter: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false
     )

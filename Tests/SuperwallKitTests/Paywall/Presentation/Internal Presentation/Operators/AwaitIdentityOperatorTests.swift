@@ -104,12 +104,17 @@ final class AwaitIdentityOperatorTests: XCTestCase {
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
       .eraseToAnyPublisher()
 
-    let stub = PresentationRequest.stub()
-      .setting(\.dependencyContainer.identityManager, to: identityManager)
-      .setting(\.dependencyContainer.configManager, to: configManager)
-      .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
+    dependencyContainer.configManager.config = .stub()
+    let request = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      paywallOverrides: nil,
+      isDebuggerLaunched: false,
+      isPaywallPresented: false
+    )
+    .setting(\.dependencyContainer.identityManager, to: identityManager)
+    .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
-    CurrentValueSubject(stub)
+    CurrentValueSubject(request)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
       .waitToPresent()
