@@ -35,7 +35,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``getTrackResult(forEvent:params:)``
 - ``getTrackResult(forEvent:params:completion:)``
 - ``getTrackInfo(forEvent:params:)``
-- ``publisher(forEvent:params:presenter:paywallOverrides:)``
+- ``publisher(forEvent:params:paywallOverrides:)``
 - ``dismiss()``
 - ``dismiss(completion:)``
 - ``PaywallInfo``
@@ -75,12 +75,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``LogScope``
 - ``SuperwallOptions/Logging-swift.class``
 
-### Customization
-
-- ``localizationOverride(localeIdentifier:)``
+### Helpers
 - ``togglePaywallSpinner(isHidden:)``
-
-### Helper Variables
 - ``presentedViewController``
 - ``latestPaywallInfo``
 - ``userId``
