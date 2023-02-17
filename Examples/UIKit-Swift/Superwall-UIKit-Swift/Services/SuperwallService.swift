@@ -28,10 +28,10 @@ final class SuperwallService {
     // }
 
     Superwall.configure(
-      apiKey: apiKey,
-      delegate: shared/*,
+      apiKey: apiKey/*,
       purchaseController: shared*/
     )
+    Superwall.shared.delegate = shared
   }
 
   static func identify() async {
@@ -50,8 +50,8 @@ final class SuperwallService {
     Superwall.shared.handleDeepLink(url)
   }
 
-  static func setName(to name: String) {
-    Superwall.shared.setUserAttributes(["firstName": name])
+  static func setName(to name: String) async {
+    await Superwall.shared.setUserAttributes(["firstName": name])
   }
 }
 

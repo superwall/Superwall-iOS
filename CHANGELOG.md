@@ -8,6 +8,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - The non-async version of `identify` was never throwing an error due to the async error of the underlying code. This now passes the error via its completion block.
 - Removes `localizationOverride(localeIdentifier:)` and replaces it with the `SuperwallOption` `localeIdentifier`. You set this on configure.
+- `setUserAttributes(_:)` is now an async function. It always was async under the hood but this makes it more explicit and helps you avoid race conditions.
+- Removes delegate from `configure`. You now set the delegate via `Superwall.shared.delegate`.
 
 ### Fixes
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ``Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b`` to configure the SDK.
+The ``Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke`` to configure the SDK.
 
 ## Topics
 
@@ -11,8 +11,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - <doc:GettingStarted>
 - <doc:Ecosystem>
 - <doc:AdvancedConfiguration>
-- ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
-- ``configure(apiKey:delegate:purchaseController:options:completion:)-2x9j3``
+- ``configure(apiKey:purchaseController:options:completion:)-52tke``
+- ``configure(apiKey:purchaseController:options:completion:)-ds2x``
 - ``shared``
 - ``SuperwallDelegate``
 - ``SuperwallDelegateObjc``

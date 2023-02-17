@@ -78,6 +78,7 @@ protocol ApiFactory: AnyObject {
 
   func makeHeaders(
     fromRequest request: URLRequest,
+    isForDebugging: Bool,
     requestId: String
   ) -> [String: String]
 }

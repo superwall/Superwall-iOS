@@ -55,19 +55,4 @@ struct StoreKitCoordinator {
       self.txnRestorer = sk1ProductPurchaser
     }
   }
-
-  /// Updates which classes handle subscription-related logic.
-  ///
-  /// Called when a user updates the delegate.
-  mutating func didToggleDelegate() {
-    let hasPurchaseController = delegateAdapter.hasPurchaseController
-    if hasPurchaseController {
-      self.productPurchaser = delegateAdapter
-      self.txnRestorer = delegateAdapter
-    } else {
-      let sk1ProductPurchaser = factory.makeSK1ProductPurchaser()
-      self.productPurchaser = sk1ProductPurchaser
-      self.txnRestorer = sk1ProductPurchaser
-    }
-  }
 }

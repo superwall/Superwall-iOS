@@ -102,7 +102,8 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 
   // Configure Superwall.
 
-  [Superwall configureWithApiKey:kDemoAPIKey delegate:self];
+  [Superwall configureWithApiKey:kDemoAPIKey];
+  [[Superwall sharedInstance] setDelegate:self];
 }
 
 - (void)logInWithCompletion:(nullable void (^)(void))completion {

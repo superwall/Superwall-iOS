@@ -43,9 +43,9 @@ final class PaywallManager: NSObject {
 
     Superwall.configure(
       apiKey: superwallApiKey,
-      delegate: shared,
       purchaseController: shared
     )
+    Superwall.shared.delegate = shared
   }
 
   /// Logs the user in to both RevenueCat and Superwall with the specified `userId`.
@@ -83,8 +83,8 @@ final class PaywallManager: NSObject {
   }
 
   /// Settting Superwall attributes.
-  static func setName(to name: String) {
-    Superwall.shared.setUserAttributes(["firstName": name])
+  static func setName(to name: String) async {
+    await Superwall.shared.setUserAttributes(["firstName": name])
   }
 
   /// Purchases a product with RevenueCat.

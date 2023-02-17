@@ -4,7 +4,7 @@ Configuring the SDK.
 
 ## Overview
 
-To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b`` and then present your paywall.
+To get up and running, you need to get your **API Key** from the Superwall Dashboard. You then configure the SDK using ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke`` and then present your paywall.
 
 ## Getting your API Key
 
@@ -17,7 +17,7 @@ On that page, you will see your **Public API Key**. Copy this for the next step.
 
 ### Configuring the SDK
 
-To configure the SDK, you must call ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b`` as soon as your app launches from `application(_:didFinishLaunchingWithOptions:)`:
+To configure the SDK, you must call ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke`` as soon as your app launches from `application(_:didFinishLaunchingWithOptions:)`:
 
 ```swift
 import SuperwallKit

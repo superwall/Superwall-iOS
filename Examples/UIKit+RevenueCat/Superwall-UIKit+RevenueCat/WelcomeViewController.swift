@@ -39,7 +39,7 @@ final class WelcomeViewController: UIViewController {
     UserDefaults.standard.setValue(true, forKey: "IsLoggedIn")
     Task {
       if let name = textField.text {
-        PaywallManager.setName(to: name)
+        await PaywallManager.setName(to: name)
       }
       let userId = "abc"
       await PaywallManager.shared.logIn(userId: userId)

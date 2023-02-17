@@ -5,7 +5,7 @@ Use options and custom subscription-related logic for more control over the SDK.
 ## Overview
 
 By default, Superwall handles all subscription-related logic. However, if you're using RevenueCat, or you just want more control, you can return a ``PurchaseController`` when configuring the SDK via
- ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``. In addition, you can customise aspects of the SDK by passing in a ``SuperwallOptions`` object on configure.
+ ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``. In addition, you can customise aspects of the SDK by passing in a ``SuperwallOptions`` object on configure.
 
 ## Creating a Subscription Controller
 

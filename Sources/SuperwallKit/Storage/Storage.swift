@@ -11,8 +11,11 @@ class Storage {
   /// The interface that manages core data.
   let coreDataManager: CoreDataManager
 
-  /// The API key set on configure.
+  /// The API key, set on configure.
   var apiKey = ""
+
+  /// The API key for debugging, set when handling a deep link.
+  var debugKey = ""
 
   /// Indicates whether first seen has been tracked.
 	var didTrackFirstSeen = false

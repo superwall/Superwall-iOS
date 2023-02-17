@@ -10,7 +10,7 @@ import Foundation
 /// Options for configuring Superwall, including paywall presentation and appearance.
 ///
 /// Pass an instance of this class to
-/// ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
+/// ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``.
 @objc(SWKSuperwallOptions)
 @objcMembers
 public final class SuperwallOptions: NSObject {

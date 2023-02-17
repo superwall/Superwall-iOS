@@ -346,7 +346,9 @@ final class DebugViewController: UIViewController {
   }
 
 	func showLocalizationPicker() async {
-    let viewController = SWLocalizationViewController(localizationManager: localizationManager) { [weak self] identifier in
+    let viewController = SWLocalizationViewController(
+      localizationManager: localizationManager
+    ) { [weak self] identifier in
       Superwall.shared.options.localeIdentifier = identifier
       Task { await self?.loadPreview() }
     }
