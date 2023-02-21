@@ -47,25 +47,6 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.identityManager.userAttributes
   }
 
-  /// The presented paywall view controller.
-  @MainActor
-  public var presentedViewController: UIViewController? {
-    return dependencyContainer.paywallManager.presentedViewController
-  }
-
-  /// A convenience variable to access and change the paywall options that you passed
-  /// to ``configure(apiKey:purchaseController:options:completion:)-52tke``.
-  var options: SuperwallOptions {
-    return dependencyContainer.configManager.options
-  }
-
-  /// The ``PaywallInfo`` object of the most recently presented view controller.
-  @MainActor
-  public var latestPaywallInfo: PaywallInfo? {
-    let presentedPaywallInfo = dependencyContainer.paywallManager.presentedViewController?.paywallInfo
-    return presentedPaywallInfo ?? presentationItems.paywallInfo
-  }
-
   /// The current user's id.
   ///
   /// If you haven't called ``identify(userId:options:)``,
@@ -144,8 +125,14 @@ public final class Superwall: NSObject, ObservableObject {
     return superwall
   }
 
-  // MARK: - Internal Properties
+  // MARK: - Non-public Properties
   private static var superwall: Superwall?
+
+  /// A convenience variable to access and change the paywall options that you passed
+  /// to ``configure(apiKey:purchaseController:options:completion:)-52tke``.
+  var options: SuperwallOptions {
+    return dependencyContainer.configManager.options
+  }
 
   /// Items involved in the presentation of paywalls.
   var presentationItems = PresentationItems()
@@ -409,6 +396,54 @@ public final class Superwall: NSObject, ObservableObject {
         return
       }
       paywallViewController.togglePaywallSpinner(isHidden: isHidden)
+    }
+  }
+
+  // MARK: - Helpers
+  /// Gets the presented paywall view controller.
+  @MainActor
+  public func getPresentedViewController() async -> UIViewController? {
+    return await MainActor.run {
+      return dependencyContainer.paywallManager.presentedViewController
+    }
+  }
+
+  /// Gets the presented paywall view controller.
+  ///
+  /// - Parameter completion: A completion block accepting an optional `UIViewController` of the presenting
+  /// view controller.
+  @nonobjc
+  public func getPresentedViewController(completion: @escaping (UIViewController?) -> Void) {
+    Task {
+      let viewController = await getPresentedViewController()
+
+      await MainActor.run {
+        completion(viewController)
+      }
+    }
+  }
+
+  /// Gets  the ``PaywallInfo`` object of the most recently presented view controller.
+  @MainActor
+  public func getLatestPaywallInfo() async -> PaywallInfo? {
+    return await MainActor.run {
+      let presentedPaywallInfo = dependencyContainer.paywallManager.presentedViewController?.paywallInfo
+      return presentedPaywallInfo ?? presentationItems.paywallInfo
+    }
+  }
+
+  /// Gets  the ``PaywallInfo`` object of the most recently presented view controller.
+  ///
+  /// - Parameter completion: A completion block accepting an optional ``PaywallInfo`` of the most recently
+  /// presented view controller.
+  @nonobjc
+  public func getLatestPaywallInfo(completion: @escaping (PaywallInfo?) -> Void) {
+    Task {
+      let paywallInfo = await getLatestPaywallInfo()
+
+      await MainActor.run {
+        completion(paywallInfo)
+      }
     }
   }
 }

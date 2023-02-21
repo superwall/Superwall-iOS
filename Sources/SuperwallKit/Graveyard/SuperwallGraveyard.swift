@@ -7,7 +7,7 @@
 
 import UIKit
 
-public extension Superwall {
+extension Superwall {
   // MARK: - Unavailable methods
   // TODO: Fix deprecation here
   /*@available(*, unavailable, renamed: "configure(apiKey:purchaseController:options:completion:)")
@@ -22,10 +22,10 @@ public extension Superwall {
   }*/
 
   @available(*, unavailable, renamed: "preloadPaywalls(forEvents:)")
-  @objc func preloadPaywalls(forTriggers triggers: Set<String>) {}
+  @objc public func preloadPaywalls(forTriggers triggers: Set<String>) {}
 
   @available(*, unavailable, renamed: "track(event:params:paywallOverrides:paywallHandler:)")
-  @objc func trigger(
+  @objc public func trigger(
     event: String? = nil,
     params: [String: Any]? = nil,
     on viewController: UIViewController? = nil,
@@ -37,16 +37,16 @@ public extension Superwall {
   ) {}
 
   @available(*, unavailable, renamed: "track(event:params:)")
-  @objc func track(
+  @objc public func track(
     _ name: String,
     _ params: [String: Any] = [:]
   ) {}
 
   @available(*, unavailable, message: "Set the SuperwallOption \"localeIdentifier\" instead.")
-  @objc func localizationOverride(localeIdentifier: String? = nil) {}
+  @objc public func localizationOverride(localeIdentifier: String? = nil) {}
 
   @available(*, unavailable, renamed: "SuperwallEvent")
-  enum EventName: String {
+  public enum EventName: String {
     case fakeCase = "fake"
   }
 }

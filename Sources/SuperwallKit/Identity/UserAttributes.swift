@@ -7,7 +7,7 @@
 
 import Foundation
 
-public extension Superwall {
+extension Superwall {
   /// Sets user attributes for use in paywalls and the Superwall dashboard.
   ///
   /// If the existing user attributes dictionary already has a value for a given property, the old
@@ -32,8 +32,44 @@ public extension Superwall {
   /// attributes you'd like to store for the user. Values can be any JSON encodable value, `URL`s or `Date`s.
   /// Note: Keys beginning with `$` are reserved for Superwall and will be dropped. Arrays and dictionaries
   /// as values are not supported at this time, and will be dropped.
-  func setUserAttributes(_ attributes: [String: Any?]) async {
+  public func setUserAttributes(_ attributes: [String: Any?]) async {
     await mergeAttributes(attributes)
+  }
+
+  /// Sets user attributes for use in paywalls and the Superwall dashboard.
+  ///
+  /// If the existing user attributes dictionary already has a value for a given property, the old
+  /// value is overwritten. Existing properties will not be affected.
+  /// Useful for analytics and conditional paywall rules you may define in the Superwall Dashboard.
+  /// They should **not** be used as a source of truth for sensitive information.
+  ///
+  /// Here's how you might set user attributes after retrieving your user's data:
+  ///  ```swift
+  ///  var attributes: [String: Any] = [
+  ///   "name": user.name,
+  ///   "apnsToken": user.apnsTokenString,
+  ///   "email": user.email,
+  ///   "username": user.username,
+  ///   "profilePic": user.profilePicUrl
+  ///  ]
+  ///  await Superwall.shared.setUserAttributes(attributes)
+  ///  ```
+  /// See <doc:SettingUserAttributes> for more.
+  ///
+  /// - Parameters:
+  ///   - attributes: A `[String: Any?]` dictionary used to describe any custom
+  /// attributes you'd like to store for the user. Values can be any JSON encodable value, `URL`s or `Date`s.
+  /// Note: Keys beginning with `$` are reserved for Superwall and will be dropped. Arrays and dictionaries
+  /// as values are not supported at this time, and will be dropped.
+  ///   - completion: An optional completion block that is called when the attributes have been set.
+  public func setUserAttributes(
+    _ attributes: [String: Any?],
+    completion: (() -> Void)? = nil
+  ) {
+    Task {
+      await mergeAttributes(attributes)
+      completion?()
+    }
   }
 
   /// The Objective-C method for setting user attributes for use in your paywalls and the dashboard.
@@ -50,12 +86,14 @@ public extension Superwall {
   ///  [[Superwall sharedInstance] setUserAttributesDictionary: userAttributes];
   ///  ```
   ///
-  /// - Parameter attributes: An `NSDictionary` used to describe any custom
+  /// - Parameters:
+  ///   - attributes: An `NSDictionary` used to describe any custom
   /// attributes you'd like to store for the user. Values can be any JSON encodable value, `URL`s or `Date`s.
   /// Note: Keys beginning with `$` are reserved for Superwall and will be dropped. Arrays and dictionaries
   /// as values are not supported at this time, and will be dropped.
+  ///   - completion: An optional completion block that is called when the attributes have been set.
   @available(swift, obsoleted: 1.0)
-  @objc func setUserAttributesDictionary(
+  @objc public func setUserAttributesDictionary(
     _ attributes: NSDictionary,
     completion: (() -> Void)?
   ) {
@@ -81,7 +119,7 @@ public extension Superwall {
   /// Note: Keys beginning with `$` are reserved for Superwall and will be dropped. Arrays and dictionaries
   /// as values are not supported at this time, and will be dropped.
   @available(swift, obsoleted: 1.0)
-  @objc func setUserAttributesDictionary(
+  @objc public func setUserAttributesDictionary(
     _ attributes: NSDictionary
   ) {
     objcSetUserAttributes(attributes)
@@ -113,7 +151,7 @@ public extension Superwall {
   ///
   /// - Parameter keys: An array containing the keys you wish to remove from the user attributes dictionary.
   @available(swift, obsoleted: 1.0)
-  @objc func removeUserAttributes(
+  @objc public func removeUserAttributes(
     _ keys: [String],
     completion: (() -> Void)?
   ) {
@@ -124,12 +162,12 @@ public extension Superwall {
   ///
   ///  Example:
   ///  ```
-  ///  [[Superwall sharedInstance] removeUserAttributes:@[@"key1", @"key2"] completion:completion];
+  ///  [[Superwall sharedInstance] removeUserAttributes:@[@"key1", @"key2"]];
   ///  ```
   ///
   /// - Parameter keys: An array containing the keys you wish to remove from the user attributes dictionary.
   @available(swift, obsoleted: 1.0)
-  @objc func removeUserAttributes(_ keys: [String]) {
+  @objc public func removeUserAttributes(_ keys: [String]) {
     objcRemoveUserAttributes(keys)
   }
 

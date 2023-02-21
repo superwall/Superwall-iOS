@@ -17,11 +17,12 @@ extension Superwall {
   /// - Parameters:
   ///   - gamepad: The extended Gamepad controller profile.
   ///   - element: The game controller element.
-  @MainActor
   public func gamepadValueChanged(
     gamepad: GCExtendedGamepad,
     element: GCControllerElement
   ) {
-    GameControllerManager.shared.gamepadValueChanged(gamepad: gamepad, element: element)
+    Task { @MainActor in
+      GameControllerManager.shared.gamepadValueChanged(gamepad: gamepad, element: element)
+    }
   }
 }

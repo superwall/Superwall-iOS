@@ -124,7 +124,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 			Logger.debug(
         logLevel: .debug,
         scope: .productsManager,
-        message: "Fetched Product",
+        message: "Products request received response",
         info: ["request": request.debugDescription],
         error: nil
       )

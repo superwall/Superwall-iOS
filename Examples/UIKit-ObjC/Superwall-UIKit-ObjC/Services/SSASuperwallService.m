@@ -107,7 +107,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 }
 
 - (void)logInWithCompletion:(nullable void (^)(void))completion {
-  [[Superwall sharedInstance] identifyWithUserId:kDemoAPIKey completionHandler:^(NSError * _Nullable error) {
+  [[Superwall sharedInstance] identifyWithUserId:kDemoAPIKey completion:^(NSError * _Nullable error) {
     if (error != nil) {
       NSLog(@"%@", error.localizedDescription);
     }
@@ -119,7 +119,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 }
 
 - (void)logOutWithCompletion:(nullable void (^)(void))completion {
-  [[Superwall sharedInstance] resetWithCompletionHandler:completion];
+  [[Superwall sharedInstance] resetWithCompletion:completion];
 }
 
 - (void)handleDeepLinkWithURL:(NSURL *)URL {

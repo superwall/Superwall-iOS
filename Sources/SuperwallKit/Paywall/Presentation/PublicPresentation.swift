@@ -14,31 +14,31 @@ import UIKit
 /// the paywall was dismissed.
 public typealias PaywallDismissedCompletionBlock = (PaywallDismissedResult) -> Void
 
-public extension Superwall {
+extension Superwall {
   // MARK: - Dismiss
   /// Dismisses the presented paywall.
   /// 
 	/// - Parameter completion: An optional completion block that gets called after the paywall is dismissed.
   /// Defaults to `nil`.
-  @MainActor
-  func dismiss(completion: (() -> Void)? = nil) {
-		guard let paywallViewController = paywallViewController else {
-      return
+  @objc public func dismiss(completion: (() -> Void)? = nil) {
+    Task { @MainActor in
+      await dismiss()
+      completion?()
     }
-    dismiss(
-      paywallViewController,
-      state: .closed,
-      completion: completion
-    )
-	}
+  }
 
   /// Dismisses the presented paywall.
+  @available(swift, obsoleted: 1.0)
+  @objc public func dismiss() {
+    dismiss(completion: nil)
+  }
+
   @MainActor
-  @objc func dismiss() async {
+  func dismiss() async {
     guard let paywallViewController = paywallViewController else {
       return
     }
-    return await withCheckedContinuation { continuation in
+    await withCheckedContinuation { continuation in
       dismiss(
         paywallViewController,
         state: .closed
@@ -84,7 +84,7 @@ public extension Superwall {
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a
   ///   ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.
   @available(swift, obsoleted: 1.0)
-  @objc func track(
+  @objc public func track(
     event: String,
     params: [String: Any]? = nil,
     products: PaywallProducts? = nil,
@@ -229,7 +229,7 @@ public extension Superwall {
   /// - Parameters:
   ///   -  event: The name of the event you wish to track.
   @available(swift, obsoleted: 1.0)
-  @objc func track(event: String) {
+  @objc public func track(event: String) {
     objcTrack(event: event)
   }
 
@@ -256,7 +256,7 @@ public extension Superwall {
   ///   Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates.
   ///   Arrays and dictionaries as values are not supported at this time, and will be dropped.
   @available(swift, obsoleted: 1.0)
-  @objc func track(
+  @objc public func track(
     event: String,
     params: [String: Any]? = nil
   ) {
@@ -290,7 +290,7 @@ public extension Superwall {
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a
   ///   ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.
   @available(swift, obsoleted: 1.0)
-  @objc func track(
+  @objc public func track(
     event: String,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
@@ -332,7 +332,7 @@ public extension Superwall {
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a
   ///   ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.
   @available(swift, obsoleted: 1.0)
-  @objc func track(
+  @objc public func track(
     event: String,
     params: [String: Any]? = nil,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
@@ -365,7 +365,7 @@ public extension Superwall {
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///   - paywallHandler: An optional callback that provides updates on the state of the paywall via a ``PaywallState`` object.
-  func track(
+  public func track(
     event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
@@ -400,7 +400,7 @@ public extension Superwall {
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///
   /// - Returns: A publisher that provides updates on the state of the paywall via a ``PaywallState`` object.
-  func publisher(
+  public func publisher(
     forEvent event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil
@@ -444,7 +444,7 @@ public extension Superwall {
   ///     - params: Optional parameters you'd like to pass with your event.
   ///
   /// - Returns: A ``TrackResult`` that indicates the result of tracking an event.
-  func getTrackResult(
+  public func getTrackResult(
     forEvent event: String,
     params: [String: Any]? = nil
   ) async -> TrackResult {
@@ -493,7 +493,7 @@ public extension Superwall {
   ///     - params: Optional parameters you'd like to pass with your event.
   ///     - completion: A completion block that accepts a ``TrackResult`` indicating
   ///     the result of tracking an event.
-  func getTrackResult(
+  public func getTrackResult(
     forEvent event: String,
     params: [String: Any]? = nil,
     completion: @escaping (TrackResult) -> Void
@@ -521,7 +521,7 @@ public extension Superwall {
   ///
   /// - Returns: A ``TrackInfoObjc`` object that contains information about the result of tracking an event. 
   @available(swift, obsoleted: 1.0)
-  @objc func getTrackInfo(
+  @objc public func getTrackInfo(
     forEvent event: String,
     params: [String: Any]? = nil
   ) async -> TrackInfoObjc {

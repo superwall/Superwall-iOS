@@ -95,26 +95,26 @@ public protocol SuperwallDelegate: AnyObject {
   )
 }
 
-public extension SuperwallDelegate {
-  func handleCustomPaywallAction(withName name: String) {}
+extension SuperwallDelegate {
+  public func handleCustomPaywallAction(withName name: String) {}
 
-  func willDismissPaywall() {}
+  public func willDismissPaywall() {}
 
-  func willPresentPaywall() {}
+  public func willPresentPaywall() {}
 
-  func didDismissPaywall() {}
+  public func didDismissPaywall() {}
 
-  func didPresentPaywall() {}
+  public func didPresentPaywall() {}
 
-  func willOpenURL(url: URL) {}
+  public func willOpenURL(url: URL) {}
 
-  func willOpenDeepLink(url: URL) {}
+  public func willOpenDeepLink(url: URL) {}
 
-  func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {}
+  public func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {}
 
-  func subscriptionStatusDidChange(to newValue: SubscriptionStatus) {}
+  public func subscriptionStatusDidChange(to newValue: SubscriptionStatus) {}
 
-  func handleLog(
+  public func handleLog(
     level: String,
     scope: String,
     message: String?,

@@ -54,7 +54,7 @@ final class TrackEventViewController: UIViewController {
     UserDefaults.standard.setValue(false, forKey: "IsLoggedIn")
     Task {
       await SuperwallService.reset()
-      _ = navigationController?.popToRootViewController(animated: true)
+      self.navigationController?.popToRootViewController(animated: true)
     }
   }
 

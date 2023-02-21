@@ -13,6 +13,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - <doc:AdvancedConfiguration>
 - ``configure(apiKey:purchaseController:options:completion:)-52tke``
 - ``configure(apiKey:purchaseController:options:completion:)-ds2x``
+- ``configure(apiKey:)``
 - ``shared``
 - ``SuperwallDelegate``
 - ``SuperwallDelegateObjc``
@@ -32,12 +33,16 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - <doc:TrackingEvents>
 - ``track(event:params:paywallOverrides:paywallHandler:)``
 - ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
+- ``track(event:)``
+- ``track(event:params:)``
+- ``track(event:onSkip:onPresent:onDismiss:)``
+- ``track(event:params:onSkip:onPresent:onDismiss:)``
 - ``getTrackResult(forEvent:params:)``
 - ``getTrackResult(forEvent:params:completion:)``
 - ``getTrackInfo(forEvent:params:)``
 - ``publisher(forEvent:params:paywallOverrides:)``
-- ``dismiss()``
 - ``dismiss(completion:)``
+- ``dismiss()``
 - ``PaywallInfo``
 - ``SuperwallEvent``
 - ``SuperwallEventObjc``
@@ -54,12 +59,18 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - <doc:SettingUserAttributes>
 - ``identify(userId:options:)``
 - ``identify(userId:options:completion:)``
+- ``identify(userId:completion:)``
+- ``identify(userId:)``
 - ``IdentityOptions``
-- ``reset()``
+- ``reset()-8v37c``
 - ``reset(completion:)``
+- ``reset()-440dh``
 - ``setUserAttributes(_:)``
+- ``setUserAttributes(_:completion:)``
 - ``setUserAttributesDictionary(_:)``
+- ``setUserAttributesDictionary(_:completion:)``
 - ``removeUserAttributes(_:)``
+- ``removeUserAttributes(_:completion:)``
 - ``userAttributes``
 
 ### Game Controller
@@ -77,8 +88,10 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 ### Helpers
 - ``togglePaywallSpinner(isHidden:)``
-- ``presentedViewController``
-- ``latestPaywallInfo``
+- ``getPresentedViewController()``
+- ``getPresentedViewController(completion:)``
+- ``getLatestPaywallInfo()``
+- ``getLatestPaywallInfo(completion:)``
 - ``userId``
 - ``isLoggedIn``
 - ``isConfigured``
