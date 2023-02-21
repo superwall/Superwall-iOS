@@ -11,12 +11,10 @@ import Foundation
 ///
 /// The delegate methods receive callbacks from the SDK in response to certain events that happen on the paywall.
 ///
-/// You pass this in when configuring the SDK via ``Superwall/configure(apiKey:delegate:options:completion:)-7fafw``.
+/// You pass this in when configuring the SDK via ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
 /// 
 /// To learn how to conform to the delegate in your app and best practices, see <doc:AdvancedConfiguration>.
 public protocol SuperwallDelegate: AnyObject {
-  func subscriptionController() -> SubscriptionController?
-
   /// Called when the user taps an element on your paywall that has the click action `Custom action`,
   /// or a `data-pw-custom` tag attached.
   ///
@@ -98,10 +96,6 @@ public protocol SuperwallDelegate: AnyObject {
 }
 
 public extension SuperwallDelegate {
-  func subscriptionController() -> SubscriptionController? {
-    return nil
-  }
-
   func handleCustomPaywallAction(withName name: String) {}
 
   func willDismissPaywall() {}

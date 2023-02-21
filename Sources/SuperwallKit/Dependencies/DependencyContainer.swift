@@ -41,12 +41,16 @@ final class DependencyContainer {
   init(
     swiftDelegate: SuperwallDelegate? = nil,
     objcDelegate: SuperwallDelegateObjc? = nil,
+    swiftPurchaseController: PurchaseController? = nil,
+    objcPurchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
     storeKitManager = StoreKitManager(factory: self)
     delegateAdapter = SuperwallDelegateAdapter(
       swiftDelegate: swiftDelegate,
-      objcDelegate: objcDelegate
+      objcDelegate: objcDelegate,
+      swiftPurchaseController: swiftPurchaseController,
+      objcPurchaseController: objcPurchaseController
     )
     localizationManager = LocalizationManager()
     storage = Storage(factory: self)

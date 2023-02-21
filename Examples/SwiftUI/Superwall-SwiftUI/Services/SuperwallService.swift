@@ -20,8 +20,8 @@ final class SuperwallService {
 
   static func configure() {
     // Superwall handles subscription logic by default. However, if you'd
-    // like more control you can handle it yourself via the SubscriptionController
-    // in the delegate. If you're doing that, uncomment the following and other comments
+    // like more control you can handle it yourself by providing a PurchaseController.
+    // If you're doing that, uncomment the following and other comments
     // further down:
 
     // Task {
@@ -30,7 +30,8 @@ final class SuperwallService {
 
     Superwall.configure(
       apiKey: apiKey,
-      delegate: shared
+      delegate: shared/*,
+      purchaseController: shared*/
     )
 
     // Getting our logged in status from Superwall.
@@ -142,15 +143,12 @@ extension SuperwallService: SuperwallDelegate {
     }
     */
   }
-
-  // Uncomment if you would like to handle subscription-related logic yourself:
-  /*
-  func subscriptionController() -> SubscriptionController? {
-    return self
-  }
 }
 
-extension SuperwallService: SubscriptionController {
+// Uncomment to implement the PurchaseController:
+/*
+// MARK: - PurchaseController
+extension SuperwallService: PurchaseController {
   func purchase(product: SKProduct) async -> PurchaseResult {
     return await StoreKitService.shared.purchase(product)
   }
@@ -158,5 +156,5 @@ extension SuperwallService: SubscriptionController {
   func restorePurchases() async -> Bool {
     return await StoreKitService.shared.restorePurchases()
   }
-  */
 }
+*/

@@ -36,7 +36,7 @@ final class TrackEventViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    subscribedCancellable = Superwall.shared.subscriptionStatus
+    subscribedCancellable = Superwall.shared.$subscriptionStatus
       .receive(on: DispatchQueue.main)
       .sink { [weak self] status in
         switch status {

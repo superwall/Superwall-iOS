@@ -276,9 +276,9 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     }
   }
 
-  /// Finishes transactions only if the delegate doesn't return a ``SubscriptionController``.
+  /// Finishes transactions only if the delegate doesn't return a ``PurchaseController``.
   private func finishIfPossible(_ transaction: SKPaymentTransaction) {
-    if delegateAdapter.hasSubscriptionController {
+    if delegateAdapter.hasPurchaseController {
       return
     }
 
