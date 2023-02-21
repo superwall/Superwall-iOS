@@ -122,7 +122,7 @@ extension Superwall {
   public func reset() {
     reset(completion: nil)
   }
-  
+
   /// Resets the `userId`, on-device paywall assignments, and data stored
   /// by Superwall.
   @nonobjc

@@ -103,14 +103,14 @@ enum PaywallLogic {
       )
       swTemplateProductVariables.append(swTemplateProductVariable)
 
-      if product.type == .primary {
+      if !hasFreeTrial {
         hasFreeTrial = await isFreeTrialAvailable(storeProduct)
-
-        // use the override if it is set
-        if let freeTrialOverride = isFreeTrialAvailableOverride {
-          hasFreeTrial = freeTrialOverride
-        }
       }
+    }
+
+    // use the override if it is set
+    if let freeTrialOverride = isFreeTrialAvailableOverride {
+      hasFreeTrial = freeTrialOverride
     }
 
     return ProductProcessingOutcome(
