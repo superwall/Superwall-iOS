@@ -24,6 +24,7 @@ struct Endpoint<Response: Decodable> {
   var url: URL?
   var method: HttpMethod = .get
   var requestId: String = UUID().uuidString
+  var isForDebugging = false
   let factory: ApiFactory
 
   func makeRequest() -> URLRequest? {
@@ -58,6 +59,7 @@ struct Endpoint<Response: Decodable> {
 
     let headers = factory.makeHeaders(
       fromRequest: request,
+      isForDebugging: isForDebugging,
       requestId: requestId
     )
 
@@ -67,8 +69,6 @@ struct Endpoint<Response: Decodable> {
         forHTTPHeaderField: header.key
       )
     }
-
-  //  request.setValue(The last-modified date from the prev request here, forHTTPHeaderField: "If-Modified-Since")
 
     return request
   }
@@ -194,6 +194,7 @@ extension Endpoint where Response == Paywalls {
         path: Api.version1 + "paywalls"
       ),
       method: .get,
+      isForDebugging: true,
       factory: factory
     )
   }

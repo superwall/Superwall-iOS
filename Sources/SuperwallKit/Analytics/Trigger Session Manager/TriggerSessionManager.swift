@@ -387,7 +387,7 @@ actor TriggerSessionManager {
       .firstIndex {
         $0.productIdentifier == product.productIdentifier
       } ?? 0
-    activeTriggerSession?.transaction = .init(
+    activeTriggerSession?.transaction = await .init(
       startAt: Date(),
       count: transactionCount,
       product: .init(from: product, index: productIndex)
@@ -461,7 +461,7 @@ actor TriggerSessionManager {
         .firstIndex {
           $0.productIdentifier == product.productIdentifier
         } ?? 0
-      transactingProduct = .init(from: product, index: productIndex)
+      transactingProduct = await .init(from: product, index: productIndex)
     }
 
     let date = Date()

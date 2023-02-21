@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ``Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b`` to configure the SDK.
+The ``Superwall`` class is used to access all the features of the SDK. Before using any of the features, you must call ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke`` to configure the SDK.
 
 ## Topics
 
@@ -11,8 +11,9 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - <doc:GettingStarted>
 - <doc:Ecosystem>
 - <doc:AdvancedConfiguration>
-- ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
-- ``configure(apiKey:delegate:purchaseController:options:completion:)-2x9j3``
+- ``configure(apiKey:purchaseController:options:completion:)-52tke``
+- ``configure(apiKey:purchaseController:options:completion:)-ds2x``
+- ``configure(apiKey:)``
 - ``shared``
 - ``SuperwallDelegate``
 - ``SuperwallDelegateObjc``
@@ -30,14 +31,18 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 ### Presenting and Dismissing a Paywall
 
 - <doc:TrackingEvents>
-- ``track(event:params:presenter:paywallOverrides:paywallHandler:)``
-- ``track(event:params:presenter:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
+- ``track(event:params:paywallOverrides:paywallHandler:)``
+- ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
+- ``track(event:)``
+- ``track(event:params:)``
+- ``track(event:onSkip:onPresent:onDismiss:)``
+- ``track(event:params:onSkip:onPresent:onDismiss:)``
 - ``getTrackResult(forEvent:params:)``
 - ``getTrackResult(forEvent:params:completion:)``
 - ``getTrackInfo(forEvent:params:)``
-- ``publisher(forEvent:params:presenter:paywallOverrides:)``
-- ``dismiss()``
+- ``publisher(forEvent:params:paywallOverrides:)``
 - ``dismiss(completion:)``
+- ``dismiss()``
 - ``PaywallInfo``
 - ``SuperwallEvent``
 - ``SuperwallEventObjc``
@@ -54,12 +59,18 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - <doc:SettingUserAttributes>
 - ``identify(userId:options:)``
 - ``identify(userId:options:completion:)``
+- ``identify(userId:completion:)``
+- ``identify(userId:)``
 - ``IdentityOptions``
-- ``reset()``
+- ``reset()-8v37c``
 - ``reset(completion:)``
+- ``reset()-440dh``
 - ``setUserAttributes(_:)``
+- ``setUserAttributes(_:completion:)``
 - ``setUserAttributesDictionary(_:)``
+- ``setUserAttributesDictionary(_:completion:)``
 - ``removeUserAttributes(_:)``
+- ``removeUserAttributes(_:completion:)``
 - ``userAttributes``
 
 ### Game Controller
@@ -75,14 +86,12 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``LogScope``
 - ``SuperwallOptions/Logging-swift.class``
 
-### Customization
-
-- ``localizationOverride(localeIdentifier:)``
+### Helpers
 - ``togglePaywallSpinner(isHidden:)``
-
-### Helper Variables
-- ``presentedViewController``
-- ``latestPaywallInfo``
+- ``getPresentedViewController()``
+- ``getPresentedViewController(completion:)``
+- ``getLatestPaywallInfo()``
+- ``getLatestPaywallInfo(completion:)``
 - ``userId``
 - ``isLoggedIn``
 - ``isConfigured``

@@ -102,18 +102,14 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 
   // Configure Superwall.
 
-  [Superwall configureWithApiKey:kDemoAPIKey delegate:self];
+  [Superwall configureWithApiKey:kDemoAPIKey];
+  [[Superwall sharedInstance] setDelegate:self];
 }
 
 - (void)logInWithCompletion:(nullable void (^)(void))completion {
-  [[Superwall sharedInstance] identifyWithUserId:kDemoAPIKey completionHandler:^(NSError * _Nullable error) {
-    switch (error.code) {
-      case SWKIdentityErrorMissingUserId:
-        NSLog(@"The provided userId was empty");
-        break;
-      default:
-        NSLog(@"An unknown error occurred: %@", error.localizedDescription);
-        break;
+  [[Superwall sharedInstance] identifyWithUserId:kDemoAPIKey completion:^(NSError * _Nullable error) {
+    if (error != nil) {
+      NSLog(@"%@", error.localizedDescription);
     }
 
     if (completion) {
@@ -123,7 +119,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 }
 
 - (void)logOutWithCompletion:(nullable void (^)(void))completion {
-  [[Superwall sharedInstance] resetWithCompletionHandler:completion];
+  [[Superwall sharedInstance] resetWithCompletion:completion];
 }
 
 - (void)handleDeepLinkWithURL:(NSURL *)URL {

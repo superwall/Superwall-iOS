@@ -1,31 +1,26 @@
-// swiftlint:disable file_length type_body_length
+// swiftlint:disable file_length
 
 import Foundation
 import StoreKit
 import Combine
 
 /// The primary class for integrating Superwall into your application. After configuring via
-/// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``, It provides access to
+/// ``configure(apiKey:purchaseController:options:completion:)-52tke``, It provides access to
 /// all its featured via instance functions and variables.
 @objcMembers
 public final class Superwall: NSObject, ObservableObject {
   // MARK: - Public Properties
-  /// The optional purchasing delegate of the Superwall instance. Set this in
-  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
-  /// when you want to manually handle the purchasing logic within your app.
+  /// The delegate that handles Superwall lifecycle events.
   public var delegate: SuperwallDelegate? {
     get {
       return dependencyContainer.delegateAdapter.swiftDelegate
     }
     set {
       dependencyContainer.delegateAdapter.swiftDelegate = newValue
-      dependencyContainer.storeKitManager.coordinator.didToggleDelegate()
     }
   }
 
-  /// The optional purchasing delegate of the Superwall instance. Set this in
-  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
-  /// when you want to manually handle the purchasing logic within your app.
+  /// The Objective-C delegate that handles Superwall lifecycle events.
   @available(swift, obsoleted: 1.0)
   @objc(delegate)
   public var objcDelegate: SuperwallDelegateObjc? {
@@ -34,7 +29,6 @@ public final class Superwall: NSObject, ObservableObject {
     }
     set {
       dependencyContainer.delegateAdapter.objcDelegate = newValue
-      dependencyContainer.storeKitManager.coordinator.didToggleDelegate()
     }
   }
 
@@ -51,25 +45,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// Properties stored about the user, set using ``setUserAttributes(_:)``.
   public var userAttributes: [String: Any] {
     return dependencyContainer.identityManager.userAttributes
-  }
-
-  /// The presented paywall view controller.
-  @MainActor
-  public var presentedViewController: UIViewController? {
-    return dependencyContainer.paywallManager.presentedViewController
-  }
-
-  /// A convenience variable to access and change the paywall options that you passed
-  /// to ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
-  var options: SuperwallOptions {
-    return dependencyContainer.configManager.options
-  }
-
-  /// The ``PaywallInfo`` object of the most recently presented view controller.
-  @MainActor
-  public var latestPaywallInfo: PaywallInfo? {
-    let presentedPaywallInfo = dependencyContainer.paywallManager.presentedViewController?.paywallInfo
-    return presentedPaywallInfo ?? presentationItems.paywallInfo
   }
 
   /// The current user's id.
@@ -113,19 +88,19 @@ public final class Superwall: NSObject, ObservableObject {
   public var subscriptionStatus: SubscriptionStatus = .unknown
 
   /// A published property that is `true` when Superwall has finished configuring via
-  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
+  /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
   /// notified when configuration has completed.
   ///
   /// Alternatively, you can use the completion handler from
-  /// ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
+  /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
   @Published
   public var isConfigured = false
 
   /// The configured shared instance of ``Superwall``.
   ///
-  /// - Warning: You must call ``configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``
+  /// - Warning: You must call ``configure(apiKey:purchaseController:options:completion:)-52tke``
   /// to initialize ``Superwall`` before using this.
   @objc(sharedInstance)
   public static var shared: Superwall {
@@ -150,8 +125,14 @@ public final class Superwall: NSObject, ObservableObject {
     return superwall
   }
 
-  // MARK: - Internal Properties
+  // MARK: - Non-public Properties
   private static var superwall: Superwall?
+
+  /// A convenience variable to access and change the paywall options that you passed
+  /// to ``configure(apiKey:purchaseController:options:completion:)-52tke``.
+  var options: SuperwallOptions {
+    return dependencyContainer.configManager.options
+  }
 
   /// Items involved in the presentation of paywalls.
   var presentationItems = PresentationItems()
@@ -179,16 +160,12 @@ public final class Superwall: NSObject, ObservableObject {
 
   private convenience init(
     apiKey: String,
-    swiftDelegate: SuperwallDelegate? = nil,
-    objcDelegate: SuperwallDelegateObjc? = nil,
     swiftPurchaseController: PurchaseController? = nil,
     objcPurchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil,
     completion: (() -> Void)?
   ) {
     let dependencyContainer = DependencyContainer(
-      swiftDelegate: swiftDelegate,
-      objcDelegate: objcDelegate,
       swiftPurchaseController: swiftPurchaseController,
       objcPurchaseController: objcPurchaseController,
       options: options
@@ -218,14 +195,12 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Listens to config and the subscription status
   private func addListeners() {
-    dependencyContainer.configManager.$config
-      .compactMap { $0 }
-      .first()
+    dependencyContainer.configManager.hasConfig
       .receive(on: DispatchQueue.main)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
-        receiveValue: { [weak self] config in
-          self?.isConfigured = config != nil
+        receiveValue: { [weak self] _ in
+          self?.isConfigured = true
         }
       ))
 
@@ -259,17 +234,18 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have
   ///   an account, you can [sign up for free](https://superwall.com/sign-up).
-  ///   - delegate: An optional class that conforms to ``SuperwallDelegate``. The delegate methods receive
-  ///   callbacks from the SDK in response to certain events on the paywall.
+  ///   - purchaseController: An optional object that conforms to ``PurchaseController``. Implement this if you'd
+  ///   like to handle all subscription-related logic yourself. You'll need to also set the ``subscriptionStatus`` every time the user's
+  ///   subscription status changes. You can read more about that in <doc:AdvancedConfiguration>.   If `nil`, Superwall will handle all
+  ///   subscription-related logic itself.  Defaults to `nil`.
   ///   - options: An optional ``SuperwallOptions`` object which allows you to customise the appearance and behavior
   ///   of the paywall.
   ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
   ///   Alternatively, you can subscribe to the published variable ``isConfigured``.
-  /// - Returns: The newly configured ``Superwall`` instance.
+  /// - Returns: The configured ``Superwall`` instance.
   @discardableResult
   public static func configure(
     apiKey: String,
-    delegate: SuperwallDelegate? = nil,
     purchaseController: PurchaseController? = nil,
     options: SuperwallOptions? = nil,
     completion: (() -> Void)? = nil
@@ -284,8 +260,6 @@ public final class Superwall: NSObject, ObservableObject {
     }
     superwall = Superwall(
       apiKey: apiKey,
-      swiftDelegate: delegate,
-      objcDelegate: nil,
       swiftPurchaseController: purchaseController,
       objcPurchaseController: nil,
       options: options,
@@ -294,60 +268,44 @@ public final class Superwall: NSObject, ObservableObject {
     return shared
   }
 
-  /// Objective-C only function that configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.
+  /// Objective-C only function that configures a shared instance of ``Superwall`` for use throughout your app.
   ///
-  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
+  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out
+  /// our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
   /// - Parameters:
-  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
-  ///   - delegate: An optional class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
+  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you
+  ///   can [sign up for free](https://superwall.com/sign-up).
+  ///   - purchaseController: An optional object that conforms to ``PurchaseControllerObjc``. Implement this if you'd
+  ///   like to handle all subscription-related logic yourself. You'll need to also set the ``subscriptionStatus`` every time the user's
+  ///   subscription status changes. You can read more about that in <doc:AdvancedConfiguration>.   If `nil`, Superwall will handle all
+  ///   subscription-related logic itself.  Defaults to `nil`.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
-  /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
+  /// - Returns: The configured ``Superwall`` instance.
   @discardableResult
   @available(swift, obsoleted: 1.0)
   public static func configure(
     apiKey: String,
-    delegate: SuperwallDelegateObjc? = nil,
     purchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil,
     completion: (() -> Void)? = nil
   ) -> Superwall {
     return objcConfigure(
       apiKey: apiKey,
-      delegate: delegate,
       purchaseController: purchaseController,
       options: options,
       completion: completion
     )
   }
 
-  /// Objective-C only function that configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.
+  /// Objective-C only function that configures a shared instance of ``Superwall`` for use throughout your app.
   ///
-  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
+  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out
+  /// our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
   /// - Parameters:
-  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
-  ///   - delegate: An optional class that conforms to ``SuperwallDelegate``. The delegate methods receive callbacks from the SDK in response to certain events on the paywall.
-  ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
-  ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
-  /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
-  @discardableResult
-  @available(swift, obsoleted: 1.0)
-  public static func configure(
-    apiKey: String,
-    delegate: SuperwallDelegateObjc? = nil
-  ) -> Superwall {
-    return objcConfigure(
-      apiKey: apiKey,
-      delegate: delegate
-    )
-  }
-
-  /// Objective-C only function that configures a shared instance of ``SuperwallKit/Superwall`` for use throughout your app.
-  ///
-  /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
-  /// - Parameters:
-  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you can [sign up for free](https://superwall.com/sign-up).
-  /// - Returns: The newly configured ``SuperwallKit/Superwall`` instance.
+  ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you
+  ///   can [sign up for free](https://superwall.com/sign-up).
+  /// - Returns: The configured ``Superwall`` instance.
   @discardableResult
   @available(swift, obsoleted: 1.0)
   public static func configure(apiKey: String) -> Superwall {
@@ -357,7 +315,6 @@ public final class Superwall: NSObject, ObservableObject {
 
   private static func objcConfigure(
     apiKey: String,
-    delegate: SuperwallDelegateObjc? = nil,
     purchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil,
     completion: (() -> Void)? = nil
@@ -372,8 +329,6 @@ public final class Superwall: NSObject, ObservableObject {
     }
     superwall = Superwall(
       apiKey: apiKey,
-      swiftDelegate: nil,
-      objcDelegate: delegate,
       swiftPurchaseController: nil,
       objcPurchaseController: purchaseController,
       options: options,
@@ -386,7 +341,8 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard.
   ///
-  /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
+  /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this
+  /// function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded via ``preloadPaywalls(forEvents:)``.
   public func preloadAllPaywalls() {
@@ -397,9 +353,12 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Preloads paywalls for specific event names.
   ///
-  /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this function when you would like preloading to begin.
+  /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this
+  /// function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
+  /// - Parameters:
+  ///   - eventNames: A set of names of events whose paywalls you want to preload.
   public func preloadPaywalls(forEvents eventNames: Set<String>) {
     Task { [weak self] in
       await self?.dependencyContainer.configManager.preloadPaywalls(for: eventNames)
@@ -409,8 +368,12 @@ public final class Superwall: NSObject, ObservableObject {
   // MARK: - Deep Links
   /// Handles a deep link sent to your app to open a preview of your paywall.
   ///
-  /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for more.
+  /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a
+  /// preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for
+  /// more.
   ///
+  /// - Parameters:
+  ///   - url: The URL of the deep link.
   /// - Returns: A `Bool` that is `true` if the deep link was handled.
   @discardableResult
   public func handleDeepLink(_ url: URL) -> Bool {
@@ -421,25 +384,66 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   // MARK: - Overrides
-
-	/// Overrides the default device locale for testing purposes.
-  ///
-  /// You can also preview your paywall in different locales using the in-app debugger. See <doc:InAppPreviews> for more.
-	///  - Parameter localeIdentifier: The locale identifier for the language you would like to test.
-	public func localizationOverride(localeIdentifier: String? = nil) {
-    dependencyContainer.localizationManager.selectedLocale = localeIdentifier
-	}
-
   /// Toggles the paywall loading spinner on and off.
   ///
-  /// Use this when you want to do asynchronous work inside
+  /// Useful for when you want to do display a spinner when doing asynchronous work inside
   /// ``SuperwallDelegate/handleCustomPaywallAction(withName:)-b8fk``.
+  /// - Parameters:
+  ///   - isHidden: Toggles the paywall loading spinner on and off.
   public func togglePaywallSpinner(isHidden: Bool) {
     Task { @MainActor in
       guard let paywallViewController = dependencyContainer.paywallManager.presentedViewController else {
         return
       }
       paywallViewController.togglePaywallSpinner(isHidden: isHidden)
+    }
+  }
+
+  // MARK: - Helpers
+  /// Gets the presented paywall view controller.
+  @MainActor
+  public func getPresentedViewController() async -> UIViewController? {
+    return await MainActor.run {
+      return dependencyContainer.paywallManager.presentedViewController
+    }
+  }
+
+  /// Gets the presented paywall view controller.
+  ///
+  /// - Parameter completion: A completion block accepting an optional `UIViewController` of the presenting
+  /// view controller.
+  @nonobjc
+  public func getPresentedViewController(completion: @escaping (UIViewController?) -> Void) {
+    Task {
+      let viewController = await getPresentedViewController()
+
+      await MainActor.run {
+        completion(viewController)
+      }
+    }
+  }
+
+  /// Gets  the ``PaywallInfo`` object of the most recently presented view controller.
+  @MainActor
+  public func getLatestPaywallInfo() async -> PaywallInfo? {
+    return await MainActor.run {
+      let presentedPaywallInfo = dependencyContainer.paywallManager.presentedViewController?.paywallInfo
+      return presentedPaywallInfo ?? presentationItems.paywallInfo
+    }
+  }
+
+  /// Gets  the ``PaywallInfo`` object of the most recently presented view controller.
+  ///
+  /// - Parameter completion: A completion block accepting an optional ``PaywallInfo`` of the most recently
+  /// presented view controller.
+  @nonobjc
+  public func getLatestPaywallInfo(completion: @escaping (PaywallInfo?) -> Void) {
+    Task {
+      let paywallInfo = await getLatestPaywallInfo()
+
+      await MainActor.run {
+        completion(paywallInfo)
+      }
     }
   }
 }

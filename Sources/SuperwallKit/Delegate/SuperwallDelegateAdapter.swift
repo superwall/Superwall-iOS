@@ -18,18 +18,11 @@ final class SuperwallDelegateAdapter {
   weak var swiftPurchaseController: PurchaseController?
   weak var objcPurchaseController: PurchaseControllerObjc?
 
-/// Called on init of the Superwall instance via ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``.
-  ///
-  /// We check to see if the delegates being set are non-nil because they may have been set
-  /// separately to the initial ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b`` function.
+  /// Called on init of the Superwall instance via ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``.
   init(
-    swiftDelegate: SuperwallDelegate?,
-    objcDelegate: SuperwallDelegateObjc?,
     swiftPurchaseController: PurchaseController?,
     objcPurchaseController: PurchaseControllerObjc?
   ) {
-    self.swiftDelegate = swiftDelegate
-    self.objcDelegate = objcDelegate
     self.swiftPurchaseController = swiftPurchaseController
     self.objcPurchaseController = objcPurchaseController
   }

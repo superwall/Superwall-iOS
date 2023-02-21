@@ -11,10 +11,10 @@ import Combine
 
 final class AwaitIdentityOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
-  let identityManager: IdentityManager = {
-    let dependencyContainer = DependencyContainer()
+  let dependencyContainer = DependencyContainer()
+  var identityManager: IdentityManager {
     return dependencyContainer.identityManager
-  }()
+  }
   
   override func setUp() async throws {
     identityManager.reset()
@@ -70,8 +70,9 @@ final class AwaitIdentityOperatorTests: XCTestCase {
     wait(for: [expectation], timeout: 0.1)
   }
 
-  func test_waitToPresent_hasIdentity_activeStatus() async {
+  func test_waitToPresent_hasIdentity_activeStatus_noConfig() async {
     let expectation = expectation(description: "Got identity")
+    expectation.isInverted = true
 
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
       .eraseToAnyPublisher()
@@ -80,6 +81,40 @@ final class AwaitIdentityOperatorTests: XCTestCase {
       .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
     CurrentValueSubject(stub)
+      .setFailureType(to: Error.self)
+      .eraseToAnyPublisher()
+      .waitToPresent()
+      .eraseToAnyPublisher()
+      .sink(
+        receiveCompletion: { _ in },
+        receiveValue: { _ in
+          expectation.fulfill()
+        }
+      )
+      .store(in: &cancellables)
+
+    identityManager.didSetIdentity()
+
+    wait(for: [expectation], timeout: 0.1)
+  }
+
+  func test_waitToPresent_hasIdentity_activeStatus_hasConfig() async {
+    let expectation = expectation(description: "Got identity")
+
+    let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+      .eraseToAnyPublisher()
+
+    dependencyContainer.configManager.config = .stub()
+    let request = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      paywallOverrides: nil,
+      isDebuggerLaunched: false,
+      isPaywallPresented: false
+    )
+    .setting(\.dependencyContainer.identityManager, to: identityManager)
+    .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
+
+    CurrentValueSubject(request)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
       .waitToPresent()

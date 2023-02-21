@@ -119,6 +119,7 @@ final class DebugViewController: UIViewController {
   var paywalls: [Paywall] = []
   var previewViewContent: UIView?
   private var cancellable: AnyCancellable?
+  private var initialLocaleIdentifier: String?
 
   private unowned let storeKitManager: StoreKitManager
   private unowned let network: Network
@@ -153,7 +154,7 @@ final class DebugViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-
+    initialLocaleIdentifier = Superwall.shared.options.localeIdentifier
     addSubviews()
     Task { await loadPreview() }
   }
@@ -345,8 +346,10 @@ final class DebugViewController: UIViewController {
   }
 
 	func showLocalizationPicker() async {
-    let viewController = SWLocalizationViewController(localizationManager: localizationManager) { [weak self] locale in
-      self?.localizationManager.selectedLocale = locale
+    let viewController = SWLocalizationViewController(
+      localizationManager: localizationManager
+    ) { [weak self] identifier in
+      Superwall.shared.options.localeIdentifier = identifier
       Task { await self?.loadPreview() }
     }
 
@@ -476,7 +479,7 @@ final class DebugViewController: UIViewController {
     super.viewDidDisappear(animated)
     paywallManager.resetCache()
     debugManager.isDebuggerLaunched = false
-    localizationManager.selectedLocale = nil
+    Superwall.shared.options.localeIdentifier = initialLocaleIdentifier
   }
 }
 

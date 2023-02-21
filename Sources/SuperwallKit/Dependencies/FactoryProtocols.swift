@@ -58,6 +58,10 @@ protocol IdentityInfoFactory: AnyObject {
   func makeIdentityInfo() -> IdentityInfo
 }
 
+protocol LocaleIdentifierFactory: AnyObject {
+  func makeLocaleIdentifier() -> String?
+}
+
 protocol DeviceInfoFactory: AnyObject {
   func makeDeviceInfo() -> DeviceInfo
 }
@@ -74,6 +78,7 @@ protocol ApiFactory: AnyObject {
 
   func makeHeaders(
     fromRequest request: URLRequest,
+    isForDebugging: Bool,
     requestId: String
   ) -> [String: String]
 }

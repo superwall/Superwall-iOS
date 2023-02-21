@@ -54,30 +54,21 @@ enum IdentityLogic {
   /// Logic to figure out whether to get assignments before firing triggers.
   ///
   /// The logic is:
-  /// - If the appUserId exists, and existed PRE static config, get assignments.
-  /// - If the appUserId exists, and existed POST static config, don't get assignments.
-  /// - If they are anonymous, is NOT first app open since install, and existed PRE static config, get assignments.
-  /// - If they are anonymous, is NOT first app open since install, and existed POST static config, don't get assignments.
-  /// - If they are anonymous, IS first app open since install, existed PRE static, don't get assignments.
-  /// - If they are anonymous, IS first app open since install, existed POST static, don't get assignments.
+  /// - If is logged in to account that existed PRE static config, get assignments.
+  /// - If anonymous, is NOT first app open since install, and existed PRE static config, get assignments.
+  /// - If logged in POST static config, don't get assignments.
+  /// - If anonymous, is NOT first app open since install, and existed POST static config, don't get assignments.
+  /// - If anonymous, IS first app open since install, existed PRE static, don't get assignments.
+  /// - If anonymous, IS first app open since install, existed POST static, don't get assignments.
   static func shouldGetAssignments(
     isLoggedIn: Bool,
-    accountExistedPreStaticConfig: Bool,
+    neverCalledStaticConfig: Bool,
     isFirstAppOpen: Bool
   ) -> Bool {
-    if isLoggedIn {
-      if accountExistedPreStaticConfig {
+    if neverCalledStaticConfig {
+      if isLoggedIn || !isFirstAppOpen {
         return true
       }
-      return false
-    }
-
-    if isFirstAppOpen {
-      return false
-    }
-
-    if accountExistedPreStaticConfig {
-      return true
     }
 
     return false

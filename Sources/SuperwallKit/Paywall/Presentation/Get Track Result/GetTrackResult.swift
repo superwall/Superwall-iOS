@@ -61,7 +61,7 @@ extension Publisher where Output == TrackResult {
                 continuation.resume(with: .success(result))
               case .userIsSubscribed:
                 let userInfo: [String: Any] = [
-                  "Already Subscribed": "The user has a subscription so the paywall won't show."
+                  "Already Subscribed": "The user has an active subscription so the paywall won't show."
                 ]
                 let error = NSError(
                   domain: "com.superwall",

@@ -45,7 +45,8 @@ class ReceiptManagerTests: XCTestCase {
     )
 
     _ = await receiptManager.loadPurchasedProducts()
-    XCTAssertEqual(receiptManager.purchasedSubscriptionGroupIds, ["abc"])
+    let purchasedSubscriptionGroupIds = await receiptManager.purchasedSubscriptionGroupIds
+    XCTAssertEqual(purchasedSubscriptionGroupIds, ["abc"])
   }
 
   func test_loadPurchasedProducts_productError() async {
@@ -63,7 +64,8 @@ class ReceiptManagerTests: XCTestCase {
     )
 
     _ = await receiptManager.loadPurchasedProducts()
-    XCTAssertNil(receiptManager.purchasedSubscriptionGroupIds)
+    let purchasedSubscriptionGroupIds = await receiptManager.purchasedSubscriptionGroupIds
+    XCTAssertNil(purchasedSubscriptionGroupIds)
   }
 
   func test_isFreeTrialAvailable() {

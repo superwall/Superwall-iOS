@@ -66,8 +66,8 @@ struct WelcomeView: View {
   private func logInButton() -> some View {
     BrandedButton(title: "Log In") {
       Task {
-        SuperwallService.setName(to: name)
-        SuperwallService.identify()
+        await SuperwallService.setName(to: name)
+        await SuperwallService.identify()
         isLoggedIn = true
       }
     }

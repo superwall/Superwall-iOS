@@ -39,9 +39,9 @@ final class WelcomeViewController: UIViewController {
     UserDefaults.standard.setValue(true, forKey: "IsLoggedIn")
     Task {
       if let name = textField.text {
-        SuperwallService.setName(to: name)
+        await SuperwallService.setName(to: name)
       }
-      SuperwallService.identify()
+      await SuperwallService.identify()
       next()
     }
   }

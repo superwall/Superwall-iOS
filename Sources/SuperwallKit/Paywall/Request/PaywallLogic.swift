@@ -77,8 +77,8 @@ enum PaywallLogic {
     fromProducts products: [Product],
     productsById: [String: StoreProduct],
     isFreeTrialAvailableOverride: Bool?,
-    isFreeTrialAvailable: @escaping (StoreProduct) -> Bool
-  ) -> ProductProcessingOutcome {
+    isFreeTrialAvailable: @escaping (StoreProduct) async -> Bool
+  ) async -> ProductProcessingOutcome {
     var productVariables: [ProductVariable] = []
     var swTemplateProductVariables: [ProductVariable] = []
     var hasFreeTrial = false
@@ -103,14 +103,14 @@ enum PaywallLogic {
       )
       swTemplateProductVariables.append(swTemplateProductVariable)
 
-      if product.type == .primary {
-        hasFreeTrial = isFreeTrialAvailable(storeProduct)
-
-        // use the override if it is set
-        if let freeTrialOverride = isFreeTrialAvailableOverride {
-          hasFreeTrial = freeTrialOverride
-        }
+      if !hasFreeTrial {
+        hasFreeTrial = await isFreeTrialAvailable(storeProduct)
       }
+    }
+
+    // use the override if it is set
+    if let freeTrialOverride = isFreeTrialAvailableOverride {
+      hasFreeTrial = freeTrialOverride
     }
 
     return ProductProcessingOutcome(

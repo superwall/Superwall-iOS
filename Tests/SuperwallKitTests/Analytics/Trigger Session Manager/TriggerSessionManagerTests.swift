@@ -573,7 +573,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertNil(triggerSessions.last!.transaction?.status)
     XCTAssertEqual(triggerSessions.last!.transaction?.count, expectedTransactionCount)
     XCTAssertNil(triggerSessions.last!.transaction?.outcome)
-    XCTAssertEqual(triggerSessions.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+    let product = await TriggerSession.Transaction.Product(from: primaryProduct, index: 0)
+    XCTAssertEqual(triggerSessions.last!.transaction?.product, product)
   }
 
   private func beginTransactionOf(primaryProduct product: StoreProduct) async {
@@ -597,7 +598,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     await sessionManager.trackBeginTransaction(of: product)
   }
 
-  func testBeginTransaction_secondTime() async  {
+  func testBeginTransaction_secondTime() async {
     // Given
     let primaryProduct = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "primary"))
     await beginTransactionOf(primaryProduct: primaryProduct)
@@ -619,7 +620,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertNil(triggerSessions2.last!.transaction?.status)
     XCTAssertEqual(triggerSessions2.last!.transaction?.count, expectedTransactionCount)
     XCTAssertNil(triggerSessions2.last!.transaction?.outcome)
-    XCTAssertEqual(triggerSessions2.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+    let product = await TriggerSession.Transaction.Product(from: primaryProduct, index: 0)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.product, product)
   }
 
   func testTransactionError() async {
@@ -643,7 +645,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertEqual(triggerSessions2.last!.transaction?.status, .fail)
     XCTAssertEqual(triggerSessions2.last!.transaction?.count, expectedTransactionCount)
     XCTAssertNil(triggerSessions2.last!.transaction?.outcome)
-    XCTAssertEqual(triggerSessions2.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+    let product = await TriggerSession.Transaction.Product(from: primaryProduct, index: 0)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.product, product)
   }
 
   func testTransactionAbandon() async {
@@ -666,7 +669,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertEqual(triggerSessions2.last!.transaction?.status, .abandon)
     XCTAssertEqual(triggerSessions2.last!.transaction?.count, expectedTransactionCount)
     XCTAssertNil(triggerSessions2.last!.transaction?.outcome)
-    XCTAssertEqual(triggerSessions2.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+    let product = await TriggerSession.Transaction.Product(from: primaryProduct, index: 0)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.product, product)
   }
 
   func testTransactionRestoration_noPreviousTransactionActions() async {
@@ -705,7 +709,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertEqual(triggerSessions2.last!.transaction?.status, .complete)
     XCTAssertEqual(triggerSessions2.last!.transaction?.count, expectedTransactionCount)
     XCTAssertNil(triggerSessions2.last!.transaction?.outcome)
-    XCTAssertEqual(triggerSessions2.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+    let product = await TriggerSession.Transaction.Product(from: primaryProduct, index: 0)
+    XCTAssertEqual(triggerSessions2.last!.transaction?.product, product)
   }
 
   func testTransactionRestoration_withPreviousTransactionActions() async {
@@ -744,7 +749,8 @@ final class TriggerSessionManagerTests: XCTestCase {
     XCTAssertEqual(triggerSessions3.last!.transaction?.status, .complete)
     XCTAssertEqual(triggerSessions3.last!.transaction?.count, expectedTransactionCount)
     XCTAssertNil(triggerSessions3.last!.transaction?.outcome)
-    XCTAssertEqual(triggerSessions3.last!.transaction?.product, .init(from: primaryProduct, index: 0))
+    let product = await TriggerSession.Transaction.Product(from: primaryProduct, index: 0)
+    XCTAssertEqual(triggerSessions3.last!.transaction?.product, product)
   }
 
   func testTransactionDeferred() async {

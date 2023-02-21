@@ -12,4 +12,11 @@ import Foundation
 public enum IdentityError: Int, Error {
   /// The `userId` that was provided was empty.
   case missingUserId
+
+  public var localizedDescription: String {
+    switch self {
+    case .missingUserId:
+      return "The provided userId was empty."
+    }
+  }
 }

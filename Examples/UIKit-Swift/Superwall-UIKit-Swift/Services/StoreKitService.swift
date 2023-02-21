@@ -6,7 +6,7 @@
 //
 
 // Uncomment if you're implementing the PurchaseController in SuperwallService.swift:
-
+/*
 import StoreKit
 import SuperwallKit
 
@@ -129,3 +129,4 @@ extension StoreKitService: SKPaymentTransactionObserver {
     }
   }
 }
+*/
