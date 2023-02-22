@@ -8,21 +8,21 @@
 import Foundation
 import Combine
 
-class IdentityManager {
-  var aliasId: String {
+actor IdentityManager {
+  private(set) var aliasId: String {
     didSet {
       saveIds()
     }
   }
-  var appUserId: String? {
+  private(set) var appUserId: String? {
     didSet {
       saveIds()
     }
   }
+  private(set) var userAttributes: [String: Any] = [:]
   var userId: String {
     return appUserId ?? aliasId
   }
-  var userAttributes: [String: Any] = [:]
   var isLoggedIn: Bool {
     return appUserId != nil
   }
@@ -31,11 +31,11 @@ class IdentityManager {
   /// assignments) has been retrieved.
   ///
   /// When `false`, the SDK is unable to present paywalls.
-  private var identitySubject = CurrentValueSubject<Bool, Never>(false)
+  private let identitySubject = CurrentValueSubject<Bool, Never>(false)
 
   /// A Publisher that only emits when `identitySubject` is `true`. When `true`,
   /// it means the SDK is ready to fire triggers.
-  var hasIdentity: AnyPublisher<Bool, Error> {
+  nonisolated var hasIdentity: AnyPublisher<Bool, Error> {
     identitySubject
       .filter { $0 == true }
       .setFailureType(to: Error.self)
@@ -82,11 +82,7 @@ class IdentityManager {
   func identify(
     userId: String,
     options: IdentityOptions?
-  ) async throws {
-    guard let userId = sanitize(userId: userId) else {
-      throw IdentityError.missingUserId
-    }
-
+  ) async {
     // If they're sending the same userId as before, then they're
     // already logged in.
     if appUserId == userId {
@@ -138,32 +134,29 @@ class IdentityManager {
   }
 
   /// Merges the provided user attributes with existing attributes then saves them.
-  func mergeUserAttributes(_ newUserAttributes: [String: Any]) {
+  func mergeUserAttributes(_ newUserAttributes: [String: Any?]) {
     let mergedAttributes = IdentityLogic.mergeAttributes(
       newUserAttributes,
       with: userAttributes,
       appInstalledAtString: deviceHelper.appInstalledAtString
     )
+
+    Task {
+      let trackableEvent = InternalSuperwallEvent.Attributes(
+        customParameters: mergedAttributes
+      )
+      await Superwall.shared.track(trackableEvent)
+    }
+
     storage.save(mergedAttributes, forType: UserAttributes.self)
     userAttributes = mergedAttributes
   }
 
+  #warning("Review nonisolated here:")
   /// Sends a `true` value to the `identitySubject` in order to fire
   /// triggers after reset.
   func didSetIdentity() {
     identitySubject.send(true)
-  }
-
-  /// Removes white spaces and new lines
-  ///
-  /// - Returns: An optional `String` of the trimmed `userId`. This is `nil`
-  /// if the `userId` is empty.
-  private func sanitize(userId: String) -> String? {
-    let userId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
-    if userId.isEmpty {
-      return nil
-    }
-    return userId
   }
 
   /// Saves the aliasId and appUserId to storage and user attributes.

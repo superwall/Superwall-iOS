@@ -27,7 +27,7 @@ struct Endpoint<Response: Decodable> {
   var isForDebugging = false
   let factory: ApiFactory
 
-  func makeRequest() -> URLRequest? {
+  func makeRequest() async -> URLRequest? {
     let url: URL
 
     if let components = components {
@@ -57,7 +57,7 @@ struct Endpoint<Response: Decodable> {
       request.httpBody = bodyData
     }
 
-    let headers = factory.makeHeaders(
+    let headers = await factory.makeHeaders(
       fromRequest: request,
       isForDebugging: isForDebugging,
       requestId: requestId
@@ -113,7 +113,7 @@ extension Endpoint where Response == Paywall {
     withIdentifier identifier: String? = nil,
     fromEvent event: EventData? = nil,
     factory: ApiFactory
-  ) -> Self {
+  ) async -> Self {
     let bodyData: Data?
 
     if let identifier = identifier {
@@ -122,7 +122,7 @@ extension Endpoint where Response == Paywall {
       let bodyDict = ["event": event.jsonData]
       bodyData = try? JSONEncoder.toSnakeCase.encode(bodyDict)
     } else {
-      let body = PaywallRequestBody(appUserId: factory.identityManager.userId)
+      let body = await PaywallRequestBody(appUserId: factory.identityManager.userId)
       bodyData = try? JSONEncoder.toSnakeCase.encode(body)
     }
     let baseHost = factory.api.base.host

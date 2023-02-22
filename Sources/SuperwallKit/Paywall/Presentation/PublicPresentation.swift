@@ -30,22 +30,28 @@ extension Superwall {
   /// Dismisses the presented paywall.
   @available(swift, obsoleted: 1.0)
   @objc public func dismiss() {
-    dismiss(completion: nil)
+    Task {
+      await dismiss()
+    }
   }
 
+  /// Dismisses the presented paywall.
   @MainActor
-  func dismiss() async {
-    guard let paywallViewController = paywallViewController else {
-      return
-    }
-    await withCheckedContinuation { continuation in
-      dismiss(
-        paywallViewController,
-        state: .closed
-      ) {
-        continuation.resume()
+  public func dismiss() async {
+    let task = Task { @MainActor in
+      guard let paywallViewController = paywallViewController else {
+        return
+      }
+      await withCheckedContinuation { continuation in
+        dismiss(
+          paywallViewController,
+          state: .closed
+        ) {
+          continuation.resume()
+        }
       }
     }
+    await task.value
   }
 
   // MARK: - Objective-C-only Track

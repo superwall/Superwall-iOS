@@ -46,6 +46,7 @@ actor PaywallRequestManager {
     if var paywall = paywallsByHash[requestHash],
       shouldUseCache {
       // Calculate whether there's a free trial available
+#warning("change this!")
       if let primaryProduct = paywall.products.first(where: { $0.type == .primary }),
         let storeProduct = await storeKitManager.productsById[primaryProduct.id] {
         let isFreeTrialAvailable = await storeKitManager.isFreeTrialAvailable(for: storeProduct)
@@ -66,8 +67,12 @@ actor PaywallRequestManager {
           .addProducts()
           .throwableAsync()
 
-        paywallsByHash[requestHash] = paywall
-        activeTasks[requestHash] = nil
+        saveRequestHash(
+          requestHash,
+          paywall: paywall,
+          shouldUseCache: shouldUseCache
+        )
+
         return paywall
       } catch {
         activeTasks[requestHash] = nil
@@ -79,4 +84,18 @@ actor PaywallRequestManager {
 
     return try await task.value
   }
+
+  private func saveRequestHash(
+    _ requestHash: String,
+    paywall: Paywall,
+    shouldUseCache: Bool
+  ) {
+    guard shouldUseCache else {
+      return
+    }
+    paywallsByHash[requestHash] = paywall
+    activeTasks[requestHash] = nil
+  }
+
+
 }

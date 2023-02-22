@@ -52,12 +52,14 @@ class PaywallManager {
   ///   - completion: A completion block called with the resulting paywall view controller.
   @MainActor
   func getPaywallViewController(
-    from request: PaywallRequest,
-    cached: Bool = true
+    from request: PaywallRequest
   ) async throws -> PaywallViewController {
     let paywall = try await paywallRequestManager.getPaywall(from: request)
+    let notSubstitutingProducts = request.overrides.products == nil
+    let debuggerNotLaunched = !request.dependencyContainer.debugManager.isDebuggerLaunched
+    let shouldUseCache = notSubstitutingProducts && debuggerNotLaunched
 
-    if cached,
+    if shouldUseCache,
       let viewController = self.cache.getPaywallViewController(identifier: paywall.identifier) {
       // Set product-related vars again incase products have been substituted into paywall.
       viewController.paywall.products = paywall.products

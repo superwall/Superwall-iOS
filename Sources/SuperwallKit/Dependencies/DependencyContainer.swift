@@ -124,8 +124,8 @@ final class DependencyContainer {
 
 // MARK: - IdentityInfoFactory
 extension DependencyContainer: IdentityInfoFactory {
-  func makeIdentityInfo() -> IdentityInfo {
-    return IdentityInfo(
+  func makeIdentityInfo() async -> IdentityInfo {
+    return await IdentityInfo(
       aliasId: identityManager.aliasId,
       appUserId: identityManager.appUserId
     )
@@ -210,12 +210,15 @@ extension DependencyContainer: ViewControllerFactory {
 }
 
 extension DependencyContainer: VariablesFactory {
-  func makeJsonVariables(productVariables: [ProductVariable]?, params: JSON?) -> JSON {
+  func makeJsonVariables(productVariables: [ProductVariable]?, params: JSON?) async -> JSON {
+    let templateDeviceDict = await deviceHelper.getTemplateDevice().dictionary()
+    let userAttributes = await identityManager.userAttributes
+    
     return Variables(
       productVariables: productVariables,
       params: params,
-      userAttributes: identityManager.userAttributes,
-      templateDeviceDictionary: deviceHelper.templateDevice.dictionary()
+      userAttributes: userAttributes,
+      templateDeviceDictionary: templateDeviceDict
     ).templated()
   }
 }
@@ -263,10 +266,10 @@ extension DependencyContainer: ApiFactory {
     fromRequest request: URLRequest,
     isForDebugging: Bool,
     requestId: String
-  ) -> [String: String] {
+  ) async -> [String: String] {
     let key = isForDebugging ? storage.debugKey : storage.apiKey
     let auth = "Bearer \(key)"
-    let headers = [
+    let headers = await [
       "Authorization": auth,
       "X-Platform": "iOS",
       "X-Platform-Environment": "SDK",
@@ -299,13 +302,14 @@ extension DependencyContainer: ApiFactory {
 
 // MARK: - Rule Params
 extension DependencyContainer: RuleAttributesFactory {
-  func makeRuleAttributes() -> RuleAttributes {
-    var userAttributes = identityManager.userAttributes
-    userAttributes["isLoggedIn"] = identityManager.isLoggedIn
+  func makeRuleAttributes() async -> RuleAttributes {
+    var userAttributes = await identityManager.userAttributes
+    userAttributes["isLoggedIn"] = await identityManager.isLoggedIn
+    let device = await deviceHelper.getTemplateDevice().toDictionary()
 
     return RuleAttributes(
       user: userAttributes,
-      device: deviceHelper.templateDevice.toDictionary()
+      device: device
     )
   }
 }

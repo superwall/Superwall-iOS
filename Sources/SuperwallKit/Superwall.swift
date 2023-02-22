@@ -44,7 +44,9 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Properties stored about the user, set using ``setUserAttributes(_:)``.
   public var userAttributes: [String: Any] {
-    return dependencyContainer.identityManager.userAttributes
+    get async {
+      return await dependencyContainer.identityManager.userAttributes
+    }
   }
 
   /// The current user's id.
@@ -52,7 +54,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// If you haven't called ``identify(userId:options:)``,
   /// this value will return an anonymous user id which is cached to disk
   public var userId: String {
-    return dependencyContainer.identityManager.userId
+    get async {
+      return await dependencyContainer.identityManager.userId
+    }
   }
 
   /// Indicates whether the user is logged in to Superwall.
@@ -62,7 +66,9 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// - Returns: A boolean indicating whether the user is logged in or not.
   public var isLoggedIn: Bool {
-    return dependencyContainer.identityManager.isLoggedIn
+    get async {
+      return await dependencyContainer.identityManager.isLoggedIn
+    }
   }
 
   /// A published property that indicates the subscription status of the user.

@@ -41,8 +41,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``getTrackResult(forEvent:params:completion:)``
 - ``getTrackInfo(forEvent:params:)``
 - ``publisher(forEvent:params:paywallOverrides:)``
-- ``dismiss(completion:)``
 - ``dismiss()``
+- ``dismiss(completion:)``
 - ``PaywallInfo``
 - ``SuperwallEvent``
 - ``SuperwallEventObjc``

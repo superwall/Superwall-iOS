@@ -35,6 +35,7 @@ final class TrackEventViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
+    StoreKitService.shared
     subscribedCancellable = Superwall.shared.$subscriptionStatus
       .receive(on: DispatchQueue.main)
       .sink { [weak self] status in
@@ -48,19 +49,25 @@ final class TrackEventViewController: UIViewController {
         }
       }
     navigationItem.hidesBackButton = true
+    DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100)) {
+      self.trackEvent()
+    }
   }
 
   @IBAction private func logOut() {
     UserDefaults.standard.setValue(false, forKey: "IsLoggedIn")
-    Task {
-      await SuperwallService.reset()
-      self.navigationController?.popToRootViewController(animated: true)
-    }
+    SuperwallService.reset()
+    self.navigationController?.popToRootViewController(animated: true)
   }
 
   @IBAction private func trackEvent() {
+    let product = StoreProduct(sk1Product: StoreKitService.shared.products.first!)
+    let products = PaywallProducts(
+      primary: product
+    )
     Superwall.shared.track(
-      event: "campaign_trigger"
+      event: "campaign_trigger",
+      paywallOverrides: PaywallOverrides(products: products)
     ) { paywallState in
       switch paywallState {
       case .presented(let paywallInfo):

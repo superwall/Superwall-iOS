@@ -266,8 +266,8 @@ class DeviceHelper {
     return storage.get(TotalPaywallViews.self) ?? 0
   }
 
-  var templateDevice: DeviceTemplate {
-    let identityInfo = factory.makeIdentityInfo()
+  func getTemplateDevice() async -> DeviceTemplate {
+    let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
 
     return DeviceTemplate(

@@ -13,7 +13,7 @@ public struct PaywallDismissedResult {
   public let paywallInfo: PaywallInfo
 
   /// Contains the possible reasons for the dismissal of a paywall.
-  public enum DismissState {
+  public enum DismissState: Equatable {
     /// The paywall was dismissed because the user purchased a product
     ///
     /// - Parameters:

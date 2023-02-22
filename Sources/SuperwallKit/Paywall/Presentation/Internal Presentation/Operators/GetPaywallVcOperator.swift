@@ -47,8 +47,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
 
       do {
         let paywallViewController = try await dependencyContainer.paywallManager.getPaywallViewController(
-          from: paywallRequest,
-          cached: !input.request.flags.isDebuggerLaunched
+          from: paywallRequest
         )
 
         // if there's a paywall being presented, don't do anything

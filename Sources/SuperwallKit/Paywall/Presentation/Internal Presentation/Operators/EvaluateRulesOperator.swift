@@ -24,14 +24,14 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
   ///   - isPreemptive: A boolean that determines whether the rules are being evaluated before actually tracking an event.
   ///   If `true`, then it doesn't save the occurrence count of the rule.
   func evaluateRules(isPreemptive: Bool = false) -> AnyPublisher<AssignmentPipelineOutput, Failure> {
-    tryMap { request, debugInfo in
+    asyncMap { request, debugInfo in
       if let eventData = request.presentationInfo.eventData {
         let assignmentLogic = RuleLogic(
           configManager: request.dependencyContainer.configManager,
           storage: request.dependencyContainer.storage,
           factory: request.dependencyContainer
         )
-        let eventOutcome = assignmentLogic.evaluateRules(
+        let eventOutcome = await assignmentLogic.evaluateRules(
           forEvent: eventData,
           triggers: request.dependencyContainer.configManager.triggersByEventName,
           isPreemptive: isPreemptive
