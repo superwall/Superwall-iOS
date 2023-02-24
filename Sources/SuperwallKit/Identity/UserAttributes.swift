@@ -99,7 +99,7 @@ extension Superwall {
         }
       }
 
-      await dependencyContainer.identityManager.mergeUserAttributes(customAttributes)
+      dependencyContainer.identityManager.mergeUserAttributes(customAttributes)
     }
   }
 }

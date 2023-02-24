@@ -77,9 +77,9 @@ class Storage {
   }
 
   /// Clears data that is user specific.
-  func reset() async {
-    await coreDataManager.deleteAllEntities()
-    await cache.cleanUserFiles()
+  func reset() {
+    coreDataManager.deleteAllEntities()
+    cache.cleanUserFiles()
     confirmedAssignments = nil
     didTrackFirstSeen = false
     recordFirstSeenTracked()

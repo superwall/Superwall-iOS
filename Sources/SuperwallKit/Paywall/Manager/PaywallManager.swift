@@ -8,37 +8,36 @@
 import Foundation
 import UIKit
 
+/*
+ Get paywall by key and by which one is active.
+ */
 class PaywallManager {
-  @MainActor
   var presentedViewController: PaywallViewController? {
-    return PaywallViewController.cache.first { $0.isActive }
+    return cache.getActivePaywallViewController()
 	}
   private unowned let paywallRequestManager: PaywallRequestManager
-  private unowned let factory: ViewControllerFactory & CacheFactory
+  private unowned let factory: ViewControllerFactory & CacheFactory & DeviceInfoFactory
 
-  private lazy var cache: PaywallCache = factory.makeCache()
+  private lazy var cache: PaywallViewControllerCache = factory.makeCache()
 
   init(
-    factory: ViewControllerFactory & CacheFactory,
+    factory: ViewControllerFactory & CacheFactory & DeviceInfoFactory,
     paywallRequestManager: PaywallRequestManager
   ) {
     self.factory = factory
     self.paywallRequestManager = paywallRequestManager
   }
 
-  @MainActor
-	func removePaywallViewController(identifier: String?) {
-    cache.removePaywallViewController(identifier: identifier)
+  func setActivePaywallVcKey(to key: String) {
+    cache.activePaywallVcKey = key
+  }
+
+	func removePaywallViewController(forKey: String) {
+    cache.removePaywallViewController(forKey: forKey)
 	}
 
-  @MainActor
-	func removePaywallViewController(_ viewController: PaywallViewController) {
-    cache.removePaywallViewController(viewController)
-	}
-
-  @MainActor
 	func resetCache() {
-		cache.clearCache()
+		cache.removeAll()
 	}
 
   /// First, this gets the paywall response for a specified paywall identifier or trigger event.
@@ -52,27 +51,31 @@ class PaywallManager {
   ///   - completion: A completion block called with the resulting paywall view controller.
   @MainActor
   func getPaywallViewController(
-    from request: PaywallRequest
+    from request: PaywallRequest,
+    isPreloading: Bool,
+    isDebuggerLaunched: Bool
   ) async throws -> PaywallViewController {
     let paywall = try await paywallRequestManager.getPaywall(from: request)
-    let notSubstitutingProducts = request.overrides.products == nil
-    let debuggerNotLaunched = !request.dependencyContainer.debugManager.isDebuggerLaunched
-    let shouldUseCache = notSubstitutingProducts && debuggerNotLaunched
+    let deviceInfo = factory.makeDeviceInfo()
+    let cacheKey = PaywallCacheLogic.key(
+      identifier: paywall.identifier,
+      locale: deviceInfo.locale
+    )
 
-    if shouldUseCache,
-      let viewController = self.cache.getPaywallViewController(identifier: paywall.identifier) {
-      // Set product-related vars again incase products have been substituted into paywall.
-      viewController.paywall.products = paywall.products
-      viewController.paywall.productIds = paywall.productIds
-      viewController.paywall.swProducts = paywall.swProducts
-      viewController.paywall.productVariables = paywall.productVariables
-      viewController.paywall.swProductVariablesTemplate = paywall.swProductVariablesTemplate
-      viewController.paywall.isFreeTrialAvailable = paywall.isFreeTrialAvailable
-      viewController.paywall.productsLoadingInfo = paywall.productsLoadingInfo
+    if !isDebuggerLaunched,
+      let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
+
+      if !isPreloading {
+        viewController.paywall.overrideProductsIfNeeded(from: paywall)
+      }
       return viewController
     }
 
-    let paywallViewController = factory.makePaywallViewController(for: paywall)
+    let paywallViewController = factory.makePaywallViewController(
+      for: paywall,
+      withCache: cache
+    )
+    cache.save(paywallViewController, forKey: cacheKey)
 
     if let window = UIApplication.shared.activeWindow {
       paywallViewController.view.alpha = 0.01
@@ -85,5 +88,5 @@ class PaywallManager {
     }
 
     return paywallViewController
-	}
+  }
 }

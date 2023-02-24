@@ -53,11 +53,6 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
         paywall.productVariables = outcome.productVariables
         paywall.swProductVariablesTemplate = outcome.swProductVariablesTemplate
         paywall.isFreeTrialAvailable = outcome.isFreeTrialAvailable
-
-        /*
-         Get paywall request ->
-
-         */
         paywall.productsLoadingInfo.endAt = Date()
 
         return (paywall, input.request)

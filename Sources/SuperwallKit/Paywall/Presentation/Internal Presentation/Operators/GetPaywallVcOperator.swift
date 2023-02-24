@@ -30,26 +30,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<PaywallVcPipelineOutput, Error> {
     asyncMap { input in
-      let responseIdentifiers = ResponseIdentifiers(
-        paywallId: input.experiment.variant.paywallId,
-        experiment: input.experiment
-      )
-      let dependencyContainer = input.request.dependencyContainer
-
-      let paywallRequest = dependencyContainer.makePaywallRequest(
-        eventData: input.request.presentationInfo.eventData,
-        responseIdentifiers: responseIdentifiers,
-        overrides: .init(
-          products: input.request.paywallOverrides?.products,
-          isFreeTrial: input.request.presentationInfo.freeTrialOverride
-        )
-      )
-
       do {
-        let paywallViewController = try await dependencyContainer.paywallManager.getPaywallViewController(
-          from: paywallRequest
-        )
-
         // if there's a paywall being presented, don't do anything
         if input.request.flags.isPaywallPresented {
           Logger.debug(
@@ -73,6 +54,27 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
           paywallStatePublisher.send(completion: .finished)
           throw PresentationPipelineError.cancelled
         }
+
+        let responseIdentifiers = ResponseIdentifiers(
+          paywallId: input.experiment.variant.paywallId,
+          experiment: input.experiment
+        )
+        let dependencyContainer = input.request.dependencyContainer
+
+        let paywallRequest = dependencyContainer.makePaywallRequest(
+          eventData: input.request.presentationInfo.eventData,
+          responseIdentifiers: responseIdentifiers,
+          overrides: .init(
+            products: input.request.paywallOverrides?.products,
+            isFreeTrial: input.request.presentationInfo.freeTrialOverride
+          )
+        )
+
+        let paywallViewController = try await dependencyContainer.paywallManager.getPaywallViewController(
+          from: paywallRequest,
+          isPreloading: false,
+          isDebuggerLaunched: input.request.flags.isDebuggerLaunched
+        )
 
         let output = PaywallVcPipelineOutput(
           request: input.request,

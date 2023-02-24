@@ -6,7 +6,7 @@
 //
 
 // Uncomment if you're implementing the PurchaseController in SuperwallService.swift:
-
+/*
 import StoreKit
 import SuperwallKit
 
@@ -22,7 +22,6 @@ final class StoreKitService: NSObject, ObservableObject {
       UserDefaults.standard.set(isSubscribed, forKey: kIsSubscribed)
     }
   }
-  var products: [SKProduct] = []
   private let kIsSubscribed = "isSubscribed"
   enum StoreError: Error {
     case failedVerification
@@ -34,9 +33,6 @@ final class StoreKitService: NSObject, ObservableObject {
     super.init()
     isSubscribed = UserDefaults.standard.bool(forKey: kIsSubscribed)
     SKPaymentQueue.default().add(self)
-    let request = SKProductsRequest(productIdentifiers: ["sub"])
-    request.delegate = self
-    request.start()
   }
 
   func purchase(_ product: SKProduct) async -> PurchaseResult {
@@ -133,9 +129,4 @@ extension StoreKitService: SKPaymentTransactionObserver {
     }
   }
 }
-// MARK: - SKProductsRequestDelegate
-extension StoreKitService: SKProductsRequestDelegate {
-  func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-    products = response.products
-  }
-}
+*/

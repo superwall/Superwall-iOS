@@ -47,31 +47,6 @@
           "referenceName" : "sw_8999_yr",
           "subscriptionGroupID" : "CC896C93",
           "type" : "RecurringSubscription"
-        },
-        {
-          "adHocOffers" : [
-
-          ],
-          "codeOffers" : [
-
-          ],
-          "displayPrice" : "0.99",
-          "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "BF49699F",
-          "introductoryOffer" : null,
-          "localizations" : [
-            {
-              "description" : "with a free 7 day trial",
-              "displayName" : "Yearly Subscription",
-              "locale" : "en_US"
-            }
-          ],
-          "productID" : "sub",
-          "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "sw_8999_yr copy",
-          "subscriptionGroupID" : "CC896C93",
-          "type" : "RecurringSubscription"
         }
       ]
     }

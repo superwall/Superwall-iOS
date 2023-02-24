@@ -108,11 +108,10 @@ actor TriggerSessionManager {
   func createSessions(from config: Config) async {
     // Loop through triggers and create a session for each.
     let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
-    let userAttributes = await identityManager.userAttributes
     for trigger in config.triggers {
       let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
         configRequestId: configManager.config?.requestId,
-        userAttributes: userAttributes,
+        userAttributes: identityManager.userAttributes,
         isSubscribed: isUserSubscribed,
         eventName: trigger.eventName,
         appSession: appSessionManager.appSession
@@ -156,7 +155,7 @@ actor TriggerSessionManager {
     }
 
     // Update trigger session
-    session.userAttributes = await JSON(identityManager.userAttributes)
+    session.userAttributes = JSON(identityManager.userAttributes)
     session.presentationOutcome = outcome.presentationOutcome
     session.trigger = outcome.trigger
     session.paywall = outcome.paywall
@@ -203,7 +202,7 @@ actor TriggerSessionManager {
     let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
     let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
       configRequestId: configManager.config?.requestId,
-      userAttributes: await identityManager.userAttributes,
+      userAttributes: identityManager.userAttributes,
       isSubscribed: isUserSubscribed,
       eventName: eventName,
       products: currentTriggerSession.products.allProducts,

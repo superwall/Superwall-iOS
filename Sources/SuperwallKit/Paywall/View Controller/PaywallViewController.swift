@@ -78,9 +78,6 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     }
   }
 
-  /// The cache associated with the `PaywallViewController` class.
-  static var cache = Set<PaywallViewController>()
-
   // MARK: - Private Properties
   private weak var delegate: PaywallViewControllerDelegate?
 
@@ -147,6 +144,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private unowned let paywallManager: PaywallManager
+  private weak var cache: PaywallViewControllerCache?
 
 	// MARK: - View Lifecycle
 
@@ -157,10 +155,12 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     sessionEventsManager: SessionEventsManager,
     storage: Storage,
     paywallManager: PaywallManager,
-    webView: SWWebView
+    webView: SWWebView,
+    cache: PaywallViewControllerCache?
   ) {
+    self.cache = cache
     self.cacheKey = PaywallCacheLogic.key(
-      forIdentifier: paywall.identifier,
+      identifier: paywall.identifier,
       locale: deviceHelper.locale
     )
     self.deviceHelper = deviceHelper
@@ -173,7 +173,6 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 
     presentationStyle = paywall.presentation.style
     super.init(nibName: nil, bundle: nil)
-    PaywallViewController.cache.insert(self)
 	}
 
 	required init?(coder: NSCoder) {
@@ -181,7 +180,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 	}
 
   deinit {
-    PaywallViewController.cache.remove(self)
+    cache?.removePaywallViewController(forKey: cacheKey)
   }
 
   override func viewDidLoad() {
@@ -248,7 +247,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
         return
       }
       Task {
-        await Superwall.shared.presentAgain(identifier: self.paywall.identifier)
+        await Superwall.shared.presentAgain(cacheKey: self.cacheKey)
       }
     }
   }
@@ -264,7 +263,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       guard let self = self else {
         return
       }
-      self.paywallManager.removePaywallViewController(self)
+      self.cache?.removePaywallViewController(forKey: self.cacheKey)
     }
   }
 
@@ -534,6 +533,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 
   private func presentationDidFinish() {
     isPresented = true
+    cache?.activePaywallVcKey = cacheKey
     Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall()
     Task(priority: .utility) {
       await trackOpen()
@@ -703,6 +703,7 @@ extension PaywallViewController {
     }
 
     isPresented = false
+    cache?.activePaywallVcKey = nil
 
     GameControllerManager.shared.clearDelegate(self)
     Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall()

@@ -25,16 +25,10 @@ extension Superwall {
     userId: String,
     options: IdentityOptions? = nil
   ) throws {
-    guard let userId = IdentityLogic.sanitize(userId: userId) else {
-      throw IdentityError.missingUserId
-    }
-
-    Task {
-      await dependencyContainer.identityManager.identify(
-        userId: userId,
-        options: options
-      )
-    }
+    try dependencyContainer.identityManager.identify(
+      userId: userId,
+      options: options
+    )
   }
 
   /// Objective-C only method. Creates an account with Superwall. This links a `userId` to Superwall's automatically generated alias.
@@ -54,17 +48,17 @@ extension Superwall {
   /// by Superwall.
   public func reset() {
     Task {
-      await reset()
+      internalReset()
     }
   }
 
   /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
-  func reset() async {
-    await dependencyContainer.identityManager.reset()
-    await dependencyContainer.storage.reset()
-    await dependencyContainer.paywallManager.resetCache()
+  func internalReset() {
+    dependencyContainer.identityManager.reset()
+    dependencyContainer.storage.reset()
+    dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
     dependencyContainer.configManager.reset()
-    await dependencyContainer.identityManager.didSetIdentity()
+    dependencyContainer.identityManager.didSetIdentity()
   }
 }

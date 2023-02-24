@@ -418,8 +418,7 @@ extension Superwall {
         customParameters: params ?? [:]
       )
       let trackResult = await self.track(trackableEvent)
-      let isPaywallPresented = await self.isPaywallPresented
-      return (trackResult, isPaywallPresented)
+      return (trackResult, self.isPaywallPresented)
     }
     .flatMap { trackResult, isPaywallPresented in
       let presentationRequest = self.dependencyContainer.makePresentationRequest(

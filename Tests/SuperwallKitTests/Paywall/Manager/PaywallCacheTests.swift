@@ -16,7 +16,7 @@ class PaywallCacheTests: XCTestCase {
     // Given
     let dependencyContainer = DependencyContainer()
     let locale = dependencyContainer.deviceHelper.locale
-    let paywallCache = PaywallCache(deviceLocaleString: locale)
+    let paywallCache = PaywallViewControllerCache(deviceLocaleString: locale)
     let id = "myid"
     let key = PaywallCacheLogic.key(forIdentifier: id, locale: locale)
     let paywall = dependencyContainer.makePaywallViewController(for: .stub())
@@ -35,7 +35,7 @@ class PaywallCacheTests: XCTestCase {
     // Given
     let dependencyContainer = DependencyContainer()
     let locale = dependencyContainer.deviceHelper.locale
-    let paywallCache = PaywallCache(deviceLocaleString: locale)
+    let paywallCache = PaywallViewControllerCache(deviceLocaleString: locale)
     let id = "myid"
     let key = PaywallCacheLogic.key(forIdentifier: id, locale: locale)
     let paywall = dependencyContainer.makePaywallViewController(for: .stub())
@@ -60,7 +60,7 @@ class PaywallCacheTests: XCTestCase {
     // Given
     let dependencyContainer = DependencyContainer()
     let locale = dependencyContainer.deviceHelper.locale
-    let paywallCache = PaywallCache(deviceLocaleString: locale)
+    let paywallCache = PaywallViewControllerCache(deviceLocaleString: locale)
     let paywallVc = dependencyContainer.makePaywallViewController(for: .stub())
 
     // When
@@ -87,7 +87,7 @@ class PaywallCacheTests: XCTestCase {
     // Given
     let dependencyContainer = DependencyContainer()
     let locale = dependencyContainer.deviceHelper.locale
-    let paywallCache = PaywallCache(deviceLocaleString: locale)
+    let paywallCache = PaywallViewControllerCache(deviceLocaleString: locale)
     let paywallId1 = "id1"
     let key1 = PaywallCacheLogic.key(forIdentifier: paywallId1, locale: locale)
 

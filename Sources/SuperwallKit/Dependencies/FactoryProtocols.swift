@@ -10,12 +10,15 @@ import Combine
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
-  func makePaywallViewController(for paywall: Paywall) -> PaywallViewController
+  func makePaywallViewController(
+    for paywall: Paywall,
+    withCache cache: PaywallViewControllerCache?
+  ) -> PaywallViewController
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
 }
 
 protocol CacheFactory: AnyObject {
-  func makeCache() -> PaywallCache
+  func makeCache() -> PaywallViewControllerCache
 }
 
 protocol VariablesFactory: AnyObject {

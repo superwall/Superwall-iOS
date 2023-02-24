@@ -36,22 +36,14 @@ actor PaywallRequestManager {
     let requestHash = PaywallLogic.requestHash(
       identifier: request.responseIdentifiers.paywallId,
       event: request.eventData,
-      locale: deviceInfo.locale
+      locale: deviceInfo.locale,
+      paywallProducts: request.overrides.products
     )
 
-    let notSubstitutingProducts = request.overrides.products == nil
     let debuggerNotLaunched = !request.dependencyContainer.debugManager.isDebuggerLaunched
-    let shouldUseCache = notSubstitutingProducts && debuggerNotLaunched
 
     if var paywall = paywallsByHash[requestHash],
-      shouldUseCache {
-      // Calculate whether there's a free trial available
-#warning("change this!")
-      if let primaryProduct = paywall.products.first(where: { $0.type == .primary }),
-        let storeProduct = await storeKitManager.productsById[primaryProduct.id] {
-        let isFreeTrialAvailable = await storeKitManager.isFreeTrialAvailable(for: storeProduct)
-        paywall.isFreeTrialAvailable = isFreeTrialAvailable
-      }
+      debuggerNotLaunched {
       paywall.experiment = request.responseIdentifiers.experiment
       return paywall
     }
@@ -70,7 +62,7 @@ actor PaywallRequestManager {
         saveRequestHash(
           requestHash,
           paywall: paywall,
-          shouldUseCache: shouldUseCache
+          debuggerNotLaunched: debuggerNotLaunched
         )
 
         return paywall
@@ -88,14 +80,12 @@ actor PaywallRequestManager {
   private func saveRequestHash(
     _ requestHash: String,
     paywall: Paywall,
-    shouldUseCache: Bool
+    debuggerNotLaunched: Bool
   ) {
-    guard shouldUseCache else {
+    guard debuggerNotLaunched else {
       return
     }
     paywallsByHash[requestHash] = paywall
     activeTasks[requestHash] = nil
   }
-
-
 }

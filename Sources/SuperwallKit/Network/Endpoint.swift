@@ -113,7 +113,7 @@ extension Endpoint where Response == Paywall {
     withIdentifier identifier: String? = nil,
     fromEvent event: EventData? = nil,
     factory: ApiFactory
-  ) async -> Self {
+  ) -> Self {
     let bodyData: Data?
 
     if let identifier = identifier {
@@ -122,7 +122,7 @@ extension Endpoint where Response == Paywall {
       let bodyDict = ["event": event.jsonData]
       bodyData = try? JSONEncoder.toSnakeCase.encode(bodyDict)
     } else {
-      let body = await PaywallRequestBody(appUserId: factory.identityManager.userId)
+      let body = PaywallRequestBody(appUserId: factory.identityManager.userId)
       bodyData = try? JSONEncoder.toSnakeCase.encode(body)
     }
     let baseHost = factory.api.base.host

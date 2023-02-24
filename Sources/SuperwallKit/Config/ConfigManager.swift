@@ -239,7 +239,11 @@ class ConfigManager {
           responseIdentifiers: .init(paywallId: identifier),
           overrides: nil
         )
-        _ = try? await paywallManager.getPaywallViewController(from: request)
+        _ = try? await paywallManager.getPaywallViewController(
+          from: request,
+          isPreloading: true,
+          isDebuggerLaunched: false
+        )
       }
     }
   }

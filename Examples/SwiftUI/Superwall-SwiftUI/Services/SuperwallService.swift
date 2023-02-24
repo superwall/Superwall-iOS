@@ -38,24 +38,24 @@ final class SuperwallService {
     shared.isLoggedIn.send(Superwall.shared.isLoggedIn)
   }
 
-  static func identify() async {
+  static func identify() {
     do {
-      try await Superwall.shared.identify(userId: "abc")
+      try Superwall.shared.identify(userId: "abc")
     } catch {
       print(error.localizedDescription)
     }
   }
 
-  static func reset() async {
-    await Superwall.shared.reset()
+  static func reset() {
+    Superwall.shared.reset()
   }
 
   static func handleDeepLink(_ url: URL) {
     Superwall.shared.handleDeepLink(url)
   }
 
-  static func setName(to name: String) async {
-    await Superwall.shared.setUserAttributes(["firstName": name])
+  static func setName(to name: String) {
+    Superwall.shared.setUserAttributes(["firstName": name])
   }
 }
 

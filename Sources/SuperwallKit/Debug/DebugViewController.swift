@@ -269,7 +269,7 @@ final class DebugViewController: UIViewController {
       return
     }
 
-    let child = factory.makePaywallViewController(for: paywall)
+    let child = factory.makePaywallViewController(for: paywall, withCache: nil)
     addChild(child)
     previewContainerView.insertSubview(child.view, at: 0)
     previewViewContent = child.view
