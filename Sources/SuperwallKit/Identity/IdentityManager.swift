@@ -7,11 +7,11 @@
 
 // ********************** How to use this class **********************
 //
-// For variables that could have race conditions, a private variable
-// is created with an underscore. Access to this is synchronised via a
-// dispatch queue. When writing, use queue.async, when reading use a
-// computed var with a queue.sync block. You do not need to use the
-// queue during init.
+// For variables and functions that could have race conditions, a private
+// variable/function is created with an underscore. Access to this is
+// synchronised via a dispatch queue. When writing, use queue.async, when
+// reading use a computed var with a queue.sync block. You do not need to
+// use the queue during init.
 //
 // *******************************************************************
 
@@ -22,54 +22,15 @@ class IdentityManager {
   /// The appUserId or the aliasId, depending on whether the user is logged in
   /// or not.
   var userId: String {
-    return queue.sync { [weak self] in
-      guard let self = self else {
-        return ""
-      }
+    return queue.sync { [unowned self] in
       return self.appUserId ?? self.aliasId
-    }
-  }
-
-  /// Indicates whether the user has logged in or not.
-  var isLoggedIn: Bool {
-    return queue.sync { [weak self] in
-      return self?._appUserId != nil
-    }
-  }
-
-  /// The randomly generated aliasId used to identify an anonymous user.
-  var aliasId: String {
-    queue.sync { [weak self] in
-      guard let self = self else {
-        return ""
-      }
-      return self._aliasId
     }
   }
 
   /// The userId passed to the SDK.
   var appUserId: String? {
-    queue.sync { [weak self] in
-      guard let self = self else {
-        return nil
-      }
+    queue.sync { [unowned self] in
       return self._appUserId
-    }
-  }
-
-  /// User attributes that belong to the user.
-  var userAttributes: [String: Any] {
-    queue.sync { [weak self] in
-      guard let self = self else {
-        return [:]
-      }
-      return self._userAttributes
-    }
-  }
-
-  private var _aliasId: String {
-    didSet {
-      saveIds()
     }
   }
   private var _appUserId: String? {
@@ -77,14 +38,31 @@ class IdentityManager {
       saveIds()
     }
   }
+
+  /// User attributes that belong to the user.
+  var userAttributes: [String: Any] {
+    queue.sync { [unowned self] in
+      return self._userAttributes
+    }
+  }
   private var _userAttributes: [String: Any] = [:]
 
-  /// Indicates whether the identity (i.e. anonymous or logged in with
-  /// assignments) has been retrieved.
-  ///
-  /// When `false`, the SDK is unable to present paywalls.
-  private let identitySubject = CurrentValueSubject<Bool, Never>(false)
-  private let queue = DispatchQueue(label: "com.superwall.identitymanager")
+  /// The randomly generated aliasId used to identify an anonymous user.
+  var aliasId: String {
+    queue.sync { [unowned self] in
+      return self._aliasId
+    }
+  }
+  private var _aliasId: String {
+    didSet {
+      saveIds()
+    }
+  }
+
+  /// Indicates whether the user has logged in or not.
+  var isLoggedIn: Bool {
+    return appUserId != nil
+  }
 
   /// A Publisher that only emits when `identitySubject` is `true`. When `true`,
   /// it means the SDK is ready to fire triggers.
@@ -94,6 +72,14 @@ class IdentityManager {
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
   }
+
+
+  /// Indicates whether the identity (i.e. anonymous or logged in with
+  /// assignments) has been retrieved.
+  ///
+  /// When `false`, the SDK is unable to present paywalls.
+  private let identitySubject = CurrentValueSubject<Bool, Never>(false)
+  private let queue = DispatchQueue(label: "com.superwall.identitymanager")
 
   private unowned let deviceHelper: DeviceHelper
   private unowned let storage: Storage
@@ -130,14 +116,17 @@ class IdentityManager {
 
   /// Creates an account and may or may not wait for assignments before
   /// returning.
-  ///
-  /// - Throws: An error of type ``IdentityError``.
   func identify(
     userId: String,
     options: IdentityOptions?
-  ) throws {
+  ) {
     guard let userId = IdentityLogic.sanitize(userId: userId) else {
-      throw IdentityError.missingUserId
+      Logger.debug(
+        logLevel: .error,
+        scope: .identityManager,
+        message: "The provided userId was empty."
+      )
+      return
     }
 
     queue.async { [weak self] in
@@ -157,8 +146,8 @@ class IdentityManager {
       // If user already logged in but identifying with a
       // different userId, reset everything first.
       if oldUserId != nil,
-         userId != oldUserId {
-        Superwall.shared.internalReset()
+        userId != oldUserId {
+        Superwall.shared.reset(duringIdentify: true)
       }
 
       self._appUserId = userId
@@ -189,44 +178,6 @@ class IdentityManager {
     }
   }
 
-  /// Clears all stored user-specific variables.
-  func reset() {
-    identitySubject.send(false)
-    queue.async { [weak self] in
-      guard let self = self else {
-        return
-      }
-      self._appUserId = nil
-      self._aliasId = IdentityLogic.generateAlias()
-      self._userAttributes = [:]
-    }
-  }
-
-  func mergeUserAttributes(_ newUserAttributes: [String: Any?]) {
-    queue.async { [weak self] in
-      self?._mergeUserAttributes(newUserAttributes)
-    }
-  }
-
-  /// Merges the provided user attributes with existing attributes then saves them.
-  private func _mergeUserAttributes(_ newUserAttributes: [String: Any?]) {
-    let mergedAttributes = IdentityLogic.mergeAttributes(
-      newUserAttributes,
-      with: _userAttributes,
-      appInstalledAtString: deviceHelper.appInstalledAtString
-    )
-
-    Task {
-      let trackableEvent = InternalSuperwallEvent.Attributes(
-        customParameters: mergedAttributes
-      )
-      await Superwall.shared.track(trackableEvent)
-    }
-
-    storage.save(mergedAttributes, forType: UserAttributes.self)
-    _userAttributes = mergedAttributes
-  }
-
   /// Sends a `true` value to the `identitySubject` in order to fire
   /// triggers after reset.
   func didSetIdentity() {
@@ -255,19 +206,60 @@ class IdentityManager {
   }
 }
 
-// MARK: - Synchronised vars
+// MARK: - Reset
 extension IdentityManager {
+  /// Clears all stored user-specific variables.
+  ///
+  /// - Parameters:
+  ///   - duringIdentify: A boolean that indicates whether the reset
+  ///   call is happening during a call to `identify(userId:)`. If `fasle`,
+  ///   this happens
+  func reset(duringIdentify: Bool) {
+    identitySubject.send(false)
 
-
-  private func setUserAttributes(to newValue: [String: Any]) {
-    queue.async { [weak self] in
-      self?._userAttributes = newValue
+    if duringIdentify {
+      self._reset()
+    } else {
+      queue.async { [weak self] in
+        self?._reset()
+        self?.didSetIdentity()
+      }
     }
   }
 
-  private func setAppUserId(to newValue: String) {
+  /// Resets user values
+  private func _reset() {
+    _appUserId = nil
+    _aliasId = IdentityLogic.generateAlias()
+    _userAttributes = [:]
+  }
+}
+
+// MARK: - User Attributes
+extension IdentityManager {
+  /// Merges the attributes on an async queue
+  func mergeUserAttributes(_ newUserAttributes: [String: Any?]) {
     queue.async { [weak self] in
-      self?._appUserId = newValue
+      self?._mergeUserAttributes(newUserAttributes)
     }
+  }
+
+  /// Merges the provided user attributes with existing attributes then saves them.
+  private func _mergeUserAttributes(_ newUserAttributes: [String: Any?]) {
+    let mergedAttributes = IdentityLogic.mergeAttributes(
+      newUserAttributes,
+      with: _userAttributes,
+      appInstalledAtString: deviceHelper.appInstalledAtString
+    )
+
+    Task {
+      let trackableEvent = InternalSuperwallEvent.Attributes(
+        customParameters: mergedAttributes
+      )
+      await Superwall.shared.track(trackableEvent)
+    }
+
+    storage.save(mergedAttributes, forType: UserAttributes.self)
+    _userAttributes = mergedAttributes
   }
 }

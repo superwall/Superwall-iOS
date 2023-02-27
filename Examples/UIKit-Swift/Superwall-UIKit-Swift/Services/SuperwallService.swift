@@ -32,11 +32,7 @@ final class SuperwallService {
   }
 
   static func identify() {
-    do {
-      try Superwall.shared.identify(userId: "abc")
-    } catch {
-      print(error.localizedDescription)
-    }
+    Superwall.shared.identify(userId: "abc")
   }
 
   static func reset() {

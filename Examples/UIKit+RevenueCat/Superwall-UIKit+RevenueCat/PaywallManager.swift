@@ -55,7 +55,7 @@ final class PaywallManager: NSObject {
     do {
       let (customerInfo, _) = try await Purchases.shared.logIn(userId)
       updateSubscriptionStatus(using: customerInfo)
-      try Superwall.shared.identify(userId: userId)
+      Superwall.shared.identify(userId: userId)
     } catch {
       print(error.localizedDescription)
     }

@@ -8,9 +8,6 @@
 import Foundation
 import UIKit
 
-/*
- Get paywall by key and by which one is active.
- */
 class PaywallManager {
   var presentedViewController: PaywallViewController? {
     return cache.getActivePaywallViewController()
@@ -64,7 +61,6 @@ class PaywallManager {
 
     if !isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
-
       if !isPreloading {
         viewController.paywall.overrideProductsIfNeeded(from: paywall)
       }

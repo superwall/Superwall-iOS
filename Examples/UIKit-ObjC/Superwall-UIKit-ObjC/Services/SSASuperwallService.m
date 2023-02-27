@@ -107,11 +107,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 }
 
 - (void)logIn {
-  NSError *error;
-  [[Superwall sharedInstance] identifyWithUserId:kDemoUserId error:&error];
-  if (error != nil) {
-    NSLog(@"%@", error.localizedDescription);
-  }
+  [[Superwall sharedInstance] identifyWithUserId:kDemoUserId];
 }
 
 - (void)logOut {

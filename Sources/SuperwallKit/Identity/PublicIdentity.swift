@@ -24,8 +24,8 @@ extension Superwall {
   public func identify(
     userId: String,
     options: IdentityOptions? = nil
-  ) throws {
-    try dependencyContainer.identityManager.identify(
+  ) {
+    dependencyContainer.identityManager.identify(
       userId: userId,
       options: options
     )
@@ -37,28 +37,7 @@ extension Superwall {
   ///
   ///  - Parameter userId: Your user's unique identifier, as defined by your backend system.
   @available(swift, obsoleted: 1.0)
-  public func identify(userId: String) throws {
-    try identify(userId: userId, options: nil)
-  }
-}
-
-// MARK: - Reset
-extension Superwall {
-  /// Resets the `userId`, on-device paywall assignments, and data stored
-  /// by Superwall.
-  public func reset() {
-    Task {
-      internalReset()
-    }
-  }
-
-  /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
-  func internalReset() {
-    dependencyContainer.identityManager.reset()
-    dependencyContainer.storage.reset()
-    dependencyContainer.paywallManager.resetCache()
-    presentationItems.reset()
-    dependencyContainer.configManager.reset()
-    dependencyContainer.identityManager.didSetIdentity()
+  public func identify(userId: String) {
+    identify(userId: userId, options: nil)
   }
 }

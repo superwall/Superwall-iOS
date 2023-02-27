@@ -86,20 +86,18 @@ extension Superwall {
   }
 
   private func mergeAttributes(_ attributes: [String: Any?]) {
-    Task {
-      var customAttributes: [String: Any?] = [:]
+    var customAttributes: [String: Any?] = [:]
 
-      for key in attributes.keys {
-        if let value = attributes[key] {
-          if key.starts(with: "$") {
-            // preserve $ for Superwall-only values
-            continue
-          }
-          customAttributes[key] = value
+    for key in attributes.keys {
+      if let value = attributes[key] {
+        if key.starts(with: "$") {
+          // preserve $ for Superwall-only values
+          continue
         }
+        customAttributes[key] = value
       }
-
-      dependencyContainer.identityManager.mergeUserAttributes(customAttributes)
     }
+
+    dependencyContainer.identityManager.mergeUserAttributes(customAttributes)
   }
 }

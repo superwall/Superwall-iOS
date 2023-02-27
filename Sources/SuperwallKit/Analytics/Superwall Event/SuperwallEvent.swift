@@ -22,7 +22,7 @@ public enum SuperwallEvent {
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case appLaunch
 
-  /// When the SDK is configured for the first time, or directly after calling ``Superwall/reset()-8v37c``.
+  /// When the SDK is configured for the first time, or directly after calling ``Superwall/reset()``.
   ///
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case appInstall

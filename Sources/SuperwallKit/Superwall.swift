@@ -407,6 +407,22 @@ public final class Superwall: NSObject, ObservableObject {
       paywallViewController.togglePaywallSpinner(isHidden: isHidden)
     }
   }
+
+  // MARK: - Reset
+  /// Resets the `userId`, on-device paywall assignments, and data stored
+  /// by Superwall.
+  public func reset() {
+    reset(duringIdentify: false)
+  }
+
+  /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
+  func reset(duringIdentify: Bool) {
+    dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
+    dependencyContainer.storage.reset()
+    dependencyContainer.paywallManager.resetCache()
+    presentationItems.reset()
+    dependencyContainer.configManager.reset()
+  }
 }
 
 // MARK: - PaywallViewControllerDelegate

@@ -8,7 +8,7 @@ The SDK automatically tracks the events specified in ``SuperwallEvent``. Some of
 
 Event Name | Action | Can Present Paywalls
 --- | --- | ---
-`app_install` | When the SDK is configured for the first time, or directly after calling ``Superwall/reset()-8v37c``. | *Yes*
+`app_install` | When the SDK is configured for the first time, or directly after calling ``Superwall/reset()``. | *Yes*
 `app_launch` | When the app is launched from a cold start. | *Yes*
 `session_start` | When the app is opened either from a cold start, or after at least 30 seconds since last `app_close`. | *Yes* (recommended)
 `deepLink_open` | When a user opens the app via a deep link. | *Yes*

@@ -21,13 +21,13 @@ extension Superwall {
 	/// - Parameter completion: An optional completion block that gets called after the paywall is dismissed.
   /// Defaults to `nil`.
   @objc public func dismiss(completion: (() -> Void)? = nil) {
-    Task { @MainActor in
+    Task {
       await dismiss()
       completion?()
     }
   }
 
-  /// Dismisses the presented paywall.
+  /// Objective-C only method. Dismisses the presented paywall.
   @available(swift, obsoleted: 1.0)
   @objc public func dismiss() {
     Task {
@@ -37,21 +37,19 @@ extension Superwall {
 
   /// Dismisses the presented paywall.
   @MainActor
+  @nonobjc
   public func dismiss() async {
-    let task = Task { @MainActor in
-      guard let paywallViewController = paywallViewController else {
-        return
-      }
-      await withCheckedContinuation { continuation in
-        dismiss(
-          paywallViewController,
-          state: .closed
-        ) {
-          continuation.resume()
-        }
+    guard let paywallViewController = paywallViewController else {
+      return
+    }
+    await withCheckedContinuation { continuation in
+      dismiss(
+        paywallViewController,
+        state: .closed
+      ) {
+        continuation.resume()
       }
     }
-    await task.value
   }
 
   // MARK: - Objective-C-only Track

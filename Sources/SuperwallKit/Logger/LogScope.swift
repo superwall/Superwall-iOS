@@ -14,6 +14,7 @@ public enum LogScope: Int, Sendable, CustomStringConvertible {
   case bounceButton
   case coreData
   case configManager
+  case identityManager
   case debugManager
   case debugViewController
   case localizationViewController
@@ -42,6 +43,8 @@ public enum LogScope: Int, Sendable, CustomStringConvertible {
       return "coreData"
     case .configManager:
       return "configManager"
+    case .identityManager:
+      return "identityManager"
     case .debugManager:
       return "debugManager"
     case .debugViewController:

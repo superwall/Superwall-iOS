@@ -675,6 +675,7 @@ extension PaywallViewController {
   ) {
     calledDismiss = true
     willDismiss()
+
     dismiss(animated: presentationIsAnimated) { [weak self] in
       guard let self = self else {
         return
