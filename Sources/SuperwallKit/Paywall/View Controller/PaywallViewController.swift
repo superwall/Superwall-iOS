@@ -716,7 +716,7 @@ extension PaywallViewController {
       paywallStatePublisher = nil
     }
     completion?()
-    Superwall.shared.hidePresentingWindow()
+    Superwall.shared.destroyPresentingWindow()
   }
 }
 
