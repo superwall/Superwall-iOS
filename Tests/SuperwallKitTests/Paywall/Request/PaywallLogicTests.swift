@@ -21,11 +21,12 @@ class PaywallLogicTests: XCTestCase {
     // When
     let hash = PaywallLogic.requestHash(
       identifier: id,
-      locale: locale
+      locale: locale,
+      paywallProducts: nil
     )
 
     // Then
-    XCTAssertEqual(hash, "\(id)_\(locale)")
+    XCTAssertEqual(hash, "\(id)_\(locale)_")
   }
 
   func testRequestHash_withIdentifierWithEvent() {
@@ -38,11 +39,33 @@ class PaywallLogicTests: XCTestCase {
     let hash = PaywallLogic.requestHash(
       identifier: id,
       event: event,
-      locale: locale
+      locale: locale,
+      paywallProducts: nil
     )
 
     // Then
-    XCTAssertEqual(hash, "\(id)_\(locale)")
+    XCTAssertEqual(hash, "\(id)_\(locale)_")
+  }
+
+  func testRequestHash_withIdentifierWithEventAndProducts() {
+    // Given
+    let id = "myid"
+    let locale = "en_US"
+    let event: EventData = .stub()
+    let product1 = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "abc"))
+    let product2 = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "def"))
+    let products = PaywallProducts(primary: product1, secondary: product2)
+
+    // When
+    let hash = PaywallLogic.requestHash(
+      identifier: id,
+      event: event,
+      locale: locale,
+      paywallProducts: products
+    )
+
+    // Then
+    XCTAssertEqual(hash, "\(id)_\(locale)_abcdef")
   }
 
   func testRequestHash_noIdentifierWithEvent() {
@@ -55,11 +78,12 @@ class PaywallLogicTests: XCTestCase {
     // When
     let hash = PaywallLogic.requestHash(
       event: event,
-      locale: locale
+      locale: locale,
+      paywallProducts: nil
     )
 
     // Then
-    XCTAssertEqual(hash, "\(eventName)_\(locale)")
+    XCTAssertEqual(hash, "\(eventName)_\(locale)_")
   }
 
   func testRequestHash_noIdentifierNoEvent() {
@@ -68,11 +92,32 @@ class PaywallLogicTests: XCTestCase {
 
     // When
     let hash = PaywallLogic.requestHash(
-      locale: locale
+      locale: locale,
+      paywallProducts: nil
     )
 
     // Then
-    XCTAssertEqual(hash, "$called_manually_\(locale)")
+    XCTAssertEqual(hash, "$called_manually_\(locale)_")
+  }
+
+  func testRequestHash_noIdentifierWithEventAndProducts() {
+    // Given
+    let locale = "en_US"
+    let eventName = "MyEvent"
+    let event: EventData = .stub()
+      .setting(\.name, to: eventName)
+    let product1 = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "abc"))
+    let products = PaywallProducts(primary: product1)
+
+    // When
+    let hash = PaywallLogic.requestHash(
+      event: event,
+      locale: locale,
+      paywallProducts: products
+    )
+
+    // Then
+    XCTAssertEqual(hash, "\(eventName)_\(locale)_abc")
   }
 
   // MARK: - getVariablesAndFreeTrial

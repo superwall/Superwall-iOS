@@ -13,7 +13,7 @@ public struct PaywallDismissedResult {
   public let paywallInfo: PaywallInfo
 
   /// Contains the possible reasons for the dismissal of a paywall.
-  public enum DismissState: Equatable {
+  public enum DismissState: Equatable, Sendable {
     /// The paywall was dismissed because the user purchased a product
     ///
     /// - Parameters:
@@ -43,7 +43,7 @@ public struct PaywallDismissedResult {
 
 /// Objective-C compatible enum for `PaywallDismissedResult.DismissState`
 @objc(SWKPaywallDismissedResultState)
-public enum PaywallDismissedResultStateObjc: Int {
+public enum PaywallDismissedResultStateObjc: Int, Sendable {
   case purchased
   case closed
   case restored

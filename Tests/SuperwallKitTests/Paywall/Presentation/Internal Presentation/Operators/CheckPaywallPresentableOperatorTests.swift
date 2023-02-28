@@ -45,7 +45,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       request: request,
       triggerResult: .paywall(experiment),
       debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil),
       confirmableAssignment: nil
     )
 
@@ -120,7 +120,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       request: request,
       triggerResult: .paywall(experiment),
       debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil),
       confirmableAssignment: nil
     )
 
@@ -176,7 +176,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       request: request,
       triggerResult: .paywall(experiment),
       debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil),
       confirmableAssignment: nil
     )
 
