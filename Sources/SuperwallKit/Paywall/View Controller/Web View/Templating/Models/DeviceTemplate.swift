@@ -38,6 +38,7 @@ struct DeviceTemplate: Codable {
   var localTime: String
   var utcDateTime: String
   var localDateTime: String
+  var isSandbox: String
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

@@ -12,6 +12,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Removes delegate from `configure`. You now set the delegate via `Superwall.shared.delegate`.
 - Removes `presenter` introduced in beta 5.
 
+### Enhancements
+
+- You can now target `device.isSandbox` in rules.
+
 ### Fixes
 
 - Fixes bug where calling identify and immediately tracking a paywall would result in an error if it happened before configure returned.

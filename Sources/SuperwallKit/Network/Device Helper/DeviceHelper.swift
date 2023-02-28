@@ -300,7 +300,8 @@ class DeviceHelper {
       utcTime: utcTimeString,
       localTime: localTimeString,
       utcDateTime: utcDateTimeString,
-      localDateTime: localDateTimeString
+      localDateTime: localDateTimeString,
+      isSandbox: isSandbox
     )
   }
 
