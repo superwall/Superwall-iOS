@@ -658,6 +658,7 @@ extension PaywallViewController {
     }
 
     if !calledDismiss {
+      print("*** FIRING DID DISMISS FROM VIEW DID LOAD")
       didDismiss(
         .withResult(
           paywallInfo: paywallInfo,
@@ -716,6 +717,7 @@ extension PaywallViewController {
       paywallStatePublisher = nil
     }
     completion?()
+    print("*** DESTROY FROM HERE", calledDismiss)
     Superwall.shared.destroyPresentingWindow()
   }
 }
