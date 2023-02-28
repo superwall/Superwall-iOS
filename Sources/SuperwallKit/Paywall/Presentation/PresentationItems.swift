@@ -8,7 +8,7 @@
 import UIKit
 import Combine
 
-final class PresentationItems {
+final class PresentationItems: @unchecked Sendable {
   /// The publisher and request involved in the last successful paywall presentation request.
   var last: LastPresentationItems? {
     get {
@@ -40,27 +40,18 @@ final class PresentationItems {
   private var _paywallInfo: PaywallInfo?
 
   /// The window that presents the paywall.
-  var window: UIWindow? {
-    get {
-      queue.sync { [unowned self] in
-        return self._window
-      }
-    }
-    set {
-      queue.async { [unowned self] in
-        self._window = newValue
-      }
-    }
-  }
-  private var _window: UIWindow?
+  @MainActor
+  var window: UIWindow?
 
   private let queue = DispatchQueue(label: "com.superwall.presentationitems")
 
   func reset() {
     queue.async { [unowned self] in
       self._last = nil
-      self._window = nil
       self._paywallInfo = nil
+    }
+    Task { @MainActor in
+      self.window = nil
     }
   }
 }

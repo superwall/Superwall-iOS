@@ -559,7 +559,8 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       actionTitle: actionTitle,
       closeActionTitle: closeActionTitle,
       action: action,
-      onClose: onClose
+      onClose: onClose,
+      sourceView: self.view
     )
 
     present(alertController, animated: true) { [weak self] in

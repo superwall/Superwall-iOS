@@ -329,7 +329,12 @@ final class DebugViewController: UIViewController {
       return alert
     }
 
-    presentAlert(title: nil, message: "Your Paywalls", options: options)
+    presentAlert(
+      title: nil,
+      message: "Your Paywalls",
+      options: options,
+      on: previewPickerButton
+    )
   }
 
   @objc func pressedExitButton() {
@@ -339,10 +344,15 @@ final class DebugViewController: UIViewController {
   }
 
   @objc func pressedConsoleButton() {
-    presentAlert(title: nil, message: "Menu", options: [
-      AlertOption(title: "Localization", action: showLocalizationPicker, style: .default),
-      AlertOption(title: "Templates", action: showConsole, style: .default)
-    ])
+    presentAlert(
+      title: nil,
+      message: "Menu",
+      options: [
+        AlertOption(title: "Localization", action: showLocalizationPicker, style: .default),
+        AlertOption(title: "Templates", action: showConsole, style: .default)
+      ],
+      on: consoleButton
+    )
   }
 
 	func showLocalizationPicker() async {
@@ -362,9 +372,7 @@ final class DebugViewController: UIViewController {
       Logger.debug(
         logLevel: .error,
         scope: .debugViewController,
-        message: "Paywall is nil",
-        info: nil,
-        error: nil
+        message: "Paywall is nil"
       )
       return
     }
@@ -404,7 +412,8 @@ final class DebugViewController: UIViewController {
           },
           style: .default
         )
-      ]
+      ],
+      on: bottomButton
     )
   }
 
@@ -463,7 +472,11 @@ final class DebugViewController: UIViewController {
               info: nil
             )
           }
-          self.presentAlert(title: "Paywall Skipped", message: errorMessage, options: [])
+          self.presentAlert(
+            title: "Paywall Skipped",
+            message: errorMessage,
+            on: self.view
+          )
           self.bottomButton.showLoading = false
 
           let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
@@ -484,7 +497,12 @@ final class DebugViewController: UIViewController {
 }
 
 extension DebugViewController {
-  func presentAlert(title: String?, message: String?, options: [AlertOption]) {
+  func presentAlert(
+    title: String?,
+    message: String?,
+    options: [AlertOption] = [],
+    on sourceView: UIView
+  ) {
     let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
 
     for option in options {
@@ -499,6 +517,7 @@ extension DebugViewController {
       alertController.addAction(action)
     }
 
+    alertController.popoverPresentationController?.sourceView = sourceView
     alertController.addAction(UIAlertAction(title: "Close", style: .cancel, handler: nil))
     alertController.view.tintColor = .black
 
