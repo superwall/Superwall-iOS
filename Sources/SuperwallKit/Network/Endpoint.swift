@@ -27,7 +27,7 @@ struct Endpoint<Response: Decodable> {
   var isForDebugging = false
   let factory: ApiFactory
 
-  func makeRequest() -> URLRequest? {
+  func makeRequest() async -> URLRequest? {
     let url: URL
 
     if let components = components {
@@ -57,7 +57,7 @@ struct Endpoint<Response: Decodable> {
       request.httpBody = bodyData
     }
 
-    let headers = factory.makeHeaders(
+    let headers = await factory.makeHeaders(
       fromRequest: request,
       isForDebugging: isForDebugging,
       requestId: requestId

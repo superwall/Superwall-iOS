@@ -44,12 +44,12 @@ struct RuleLogic {
     forEvent event: EventData,
     triggers: [String: Trigger],
     isPreemptive: Bool
-  ) -> Outcome {
+  ) async -> Outcome {
     guard let trigger = triggers[event.name] else {
       return Outcome(triggerResult: .eventNotFound)
     }
 
-    guard let rule = findMatchingRule(
+    guard let rule = await findMatchingRule(
       for: event,
       withTrigger: trigger,
       isPreemptive: isPreemptive
@@ -118,13 +118,13 @@ struct RuleLogic {
     for event: EventData,
     withTrigger trigger: Trigger,
     isPreemptive: Bool
-  ) -> TriggerRule? {
+  ) async -> TriggerRule? {
     let expressionEvaluator = ExpressionEvaluator(
       storage: storage,
       factory: factory
     )
     for rule in trigger.rules {
-      if expressionEvaluator.evaluateExpression(
+      if await expressionEvaluator.evaluateExpression(
         fromRule: rule,
         eventData: event,
         isPreemptive: isPreemptive

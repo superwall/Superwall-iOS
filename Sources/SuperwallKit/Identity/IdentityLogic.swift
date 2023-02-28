@@ -18,7 +18,7 @@ enum IdentityLogic {
   }
 
   static func mergeAttributes(
-    _ newAttributes: [String: Any],
+    _ newAttributes: [String: Any?],
     with oldAttributes: [String: Any],
     appInstalledAtString: String
   ) -> [String: Any] {
@@ -72,5 +72,17 @@ enum IdentityLogic {
     }
 
     return false
+  }
+
+  /// Removes white spaces and new lines
+  ///
+  /// - Returns: An optional `String` of the trimmed `userId`. This is `nil`
+  /// if the `userId` is empty.
+  static func sanitize(userId: String) -> String? {
+    let userId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
+    if userId.isEmpty {
+      return nil
+    }
+    return userId
   }
 }

@@ -55,7 +55,7 @@ final class PaywallManager: NSObject {
     do {
       let (customerInfo, _) = try await Purchases.shared.logIn(userId)
       updateSubscriptionStatus(using: customerInfo)
-      try await Superwall.shared.identify(userId: userId)
+      Superwall.shared.identify(userId: userId)
     } catch {
       print(error.localizedDescription)
     }
@@ -68,7 +68,7 @@ final class PaywallManager: NSObject {
     do {
       let customerInfo = try await Purchases.shared.logOut()
       updateSubscriptionStatus(using: customerInfo)
-      await Superwall.shared.reset()
+      Superwall.shared.reset()
     } catch {
       print("A RevenueCat error occurred", error)
     }
@@ -83,8 +83,8 @@ final class PaywallManager: NSObject {
   }
 
   /// Settting Superwall attributes.
-  static func setName(to name: String) async {
-    await Superwall.shared.setUserAttributes(["firstName": name])
+  static func setName(to name: String) {
+    Superwall.shared.setUserAttributes(["firstName": name])
   }
 
   /// Purchases a product with RevenueCat.

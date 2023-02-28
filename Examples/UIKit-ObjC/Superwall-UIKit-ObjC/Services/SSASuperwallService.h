@@ -24,10 +24,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)initialize;
 
 /// Simplified abstraction over `Superwall` login functionality.
-- (void)logInWithCompletion:(nullable void (^)(void))completion;
+- (void)logIn;
 
 /// Simplified abstraction over `Superwall` logout functionality.
-- (void)logOutWithCompletion:(nullable void (^)(void))completion;
+- (void)logOut;
 
 /// Simplified abstraction over `Superwall` deeplink functionality.
 - (void)handleDeepLinkWithURL:(NSURL *)URL;

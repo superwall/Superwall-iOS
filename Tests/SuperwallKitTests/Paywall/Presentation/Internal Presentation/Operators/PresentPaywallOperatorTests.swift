@@ -45,7 +45,8 @@ final class PresentPaywallOperatorTests: XCTestCase {
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       storage: dependencyContainer.storage,
       paywallManager: dependencyContainer.paywallManager,
-      webView: webView
+      webView: webView,
+      cache: nil
     )
 
     webView.delegate = paywallVc
@@ -123,7 +124,8 @@ final class PresentPaywallOperatorTests: XCTestCase {
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       storage: dependencyContainer.storage,
       paywallManager: dependencyContainer.paywallManager,
-      webView: webView
+      webView: webView,
+      cache: nil
     )
     paywallVc.shouldPresent = false
     webView.delegate = paywallVc

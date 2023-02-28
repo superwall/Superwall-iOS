@@ -21,20 +21,24 @@ extension Superwall {
 	/// - Parameter completion: An optional completion block that gets called after the paywall is dismissed.
   /// Defaults to `nil`.
   @objc public func dismiss(completion: (() -> Void)? = nil) {
-    Task { @MainActor in
+    Task {
       await dismiss()
       completion?()
     }
   }
 
-  /// Dismisses the presented paywall.
+  /// Objective-C only method. Dismisses the presented paywall.
   @available(swift, obsoleted: 1.0)
   @objc public func dismiss() {
-    dismiss(completion: nil)
+    Task {
+      await dismiss()
+    }
   }
 
+  /// Dismisses the presented paywall.
   @MainActor
-  func dismiss() async {
+  @nonobjc
+  public func dismiss() async {
     guard let paywallViewController = paywallViewController else {
       return
     }
@@ -412,8 +416,7 @@ extension Superwall {
         customParameters: params ?? [:]
       )
       let trackResult = await self.track(trackableEvent)
-      let isPaywallPresented = await self.isPaywallPresented
-      return (trackResult, isPaywallPresented)
+      return (trackResult, self.isPaywallPresented)
     }
     .flatMap { trackResult, isPaywallPresented in
       let presentationRequest = self.dependencyContainer.makePresentationRequest(

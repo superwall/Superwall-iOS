@@ -10,19 +10,22 @@ import Combine
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
-  func makePaywallViewController(for paywall: Paywall) -> PaywallViewController
+  func makePaywallViewController(
+    for paywall: Paywall,
+    withCache cache: PaywallViewControllerCache?
+  ) -> PaywallViewController
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
 }
 
 protocol CacheFactory: AnyObject {
-  func makeCache() -> PaywallCache
+  func makeCache() -> PaywallViewControllerCache
 }
 
 protocol VariablesFactory: AnyObject {
   func makeJsonVariables(
     productVariables: [ProductVariable]?,
     params: JSON?
-  ) -> JSON
+  ) async -> JSON
 }
 
 protocol RequestFactory: AnyObject {
@@ -43,7 +46,7 @@ protocol RequestFactory: AnyObject {
 }
 
 protocol RuleAttributesFactory: AnyObject {
-  func makeRuleAttributes() -> RuleAttributes
+  func makeRuleAttributes() async -> RuleAttributes
 }
 
 protocol TriggerSessionManagerFactory: AnyObject {
@@ -55,7 +58,7 @@ protocol StoreKitCoordinatorFactory: AnyObject {
 }
 
 protocol IdentityInfoFactory: AnyObject {
-  func makeIdentityInfo() -> IdentityInfo
+  func makeIdentityInfo() async -> IdentityInfo
 }
 
 protocol LocaleIdentifierFactory: AnyObject {
@@ -80,7 +83,7 @@ protocol ApiFactory: AnyObject {
     fromRequest request: URLRequest,
     isForDebugging: Bool,
     requestId: String
-  ) -> [String: String]
+  ) async -> [String: String]
 }
 
 protocol ProductPurchaserFactory: AnyObject {

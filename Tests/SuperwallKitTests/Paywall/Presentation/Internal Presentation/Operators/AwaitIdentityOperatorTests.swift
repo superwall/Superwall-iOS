@@ -17,7 +17,7 @@ final class AwaitIdentityOperatorTests: XCTestCase {
   }
   
   override func setUp() async throws {
-    identityManager.reset()
+    identityManager.reset(duringIdentify: false)
   }
 
   func test_waitToPresent_noIdentity_unknownStatus() async {

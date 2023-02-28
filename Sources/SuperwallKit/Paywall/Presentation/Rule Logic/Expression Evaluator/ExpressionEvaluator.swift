@@ -24,7 +24,7 @@ struct ExpressionEvaluator {
     fromRule rule: TriggerRule,
     eventData: EventData,
     isPreemptive: Bool
-  ) -> Bool {
+  ) async -> Bool {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
       let shouldFire = shouldFire(
@@ -58,7 +58,7 @@ struct ExpressionEvaluator {
       )
     }
 
-    guard let postfix = getPostfix(
+    guard let postfix = await getPostfix(
       forRule: rule,
       withEventData: eventData
     ) else {
@@ -84,8 +84,8 @@ struct ExpressionEvaluator {
   private func getPostfix(
     forRule rule: TriggerRule,
     withEventData eventData: EventData
-  ) -> String? {
-    let ruleAttributes = factory.makeRuleAttributes()
+  ) async -> String? {
+    let ruleAttributes = await factory.makeRuleAttributes()
     let values = JSON([
       "user": ruleAttributes.user,
       "device": ruleAttributes.device,

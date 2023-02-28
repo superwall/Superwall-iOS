@@ -28,10 +28,15 @@ enum PaywallLogic {
   static func requestHash(
     identifier: String? = nil,
     event: EventData? = nil,
-    locale: String
+    locale: String,
+    paywallProducts: PaywallProducts?
   ) -> String {
     let id = identifier ?? event?.name ?? "$called_manually"
-    return "\(id)_\(locale)"
+    var substitutions = ""
+    if let paywallProducts = paywallProducts {
+      substitutions = paywallProducts.ids.joined()
+    }
+    return "\(id)_\(locale)_\(substitutions)"
   }
 
   static func handlePaywallError(

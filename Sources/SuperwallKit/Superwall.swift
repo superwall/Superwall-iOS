@@ -65,6 +65,17 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.identityManager.isLoggedIn
   }
 
+  /// The presented paywall view controller.
+  public var presentedViewController: UIViewController? {
+    return dependencyContainer.paywallManager.presentedViewController
+  }
+
+  /// The ``PaywallInfo`` object of the most recently presented view controller.
+  public var latestPaywallInfo: PaywallInfo? {
+    let presentedPaywallInfo = dependencyContainer.paywallManager.presentedViewController?.paywallInfo
+    return presentedPaywallInfo ?? presentationItems.paywallInfo
+  }
+
   /// A published property that indicates the subscription status of the user.
   ///
   /// If you're handling subscription-related logic yourself, you must set this
@@ -128,6 +139,11 @@ public final class Superwall: NSObject, ObservableObject {
   // MARK: - Non-public Properties
   private static var superwall: Superwall?
 
+  /// The presented paywall view controller.
+  var paywallViewController: PaywallViewController? {
+    return dependencyContainer.paywallManager.presentedViewController
+  }
+
   /// A convenience variable to access and change the paywall options that you passed
   /// to ``configure(apiKey:purchaseController:options:completion:)-52tke``.
   var options: SuperwallOptions {
@@ -137,16 +153,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// Items involved in the presentation of paywalls.
   var presentationItems = PresentationItems()
 
-  /// The presented paywall view controller.
-  @MainActor
-  var paywallViewController: PaywallViewController? {
-    return dependencyContainer.paywallManager.presentedViewController
-  }
-
   /// Determines whether a paywall is being presented.
-  @MainActor
   var isPaywallPresented: Bool {
-    return paywallViewController != nil
+    paywallViewController != nil
   }
 
   /// Handles all dependencies.
@@ -383,7 +392,7 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.debugManager.handle(deepLinkUrl: url)
   }
 
-  // MARK: - Overrides
+  // MARK: - Paywall Spinner
   /// Toggles the paywall loading spinner on and off.
   ///
   /// Useful for when you want to do display a spinner when doing asynchronous work inside
@@ -399,52 +408,20 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  // MARK: - Helpers
-  /// Gets the presented paywall view controller.
-  @MainActor
-  public func getPresentedViewController() async -> UIViewController? {
-    return await MainActor.run {
-      return dependencyContainer.paywallManager.presentedViewController
-    }
+  // MARK: - Reset
+  /// Resets the `userId`, on-device paywall assignments, and data stored
+  /// by Superwall.
+  public func reset() {
+    reset(duringIdentify: false)
   }
 
-  /// Gets the presented paywall view controller.
-  ///
-  /// - Parameter completion: A completion block accepting an optional `UIViewController` of the presenting
-  /// view controller.
-  @nonobjc
-  public func getPresentedViewController(completion: @escaping (UIViewController?) -> Void) {
-    Task {
-      let viewController = await getPresentedViewController()
-
-      await MainActor.run {
-        completion(viewController)
-      }
-    }
-  }
-
-  /// Gets  the ``PaywallInfo`` object of the most recently presented view controller.
-  @MainActor
-  public func getLatestPaywallInfo() async -> PaywallInfo? {
-    return await MainActor.run {
-      let presentedPaywallInfo = dependencyContainer.paywallManager.presentedViewController?.paywallInfo
-      return presentedPaywallInfo ?? presentationItems.paywallInfo
-    }
-  }
-
-  /// Gets  the ``PaywallInfo`` object of the most recently presented view controller.
-  ///
-  /// - Parameter completion: A completion block accepting an optional ``PaywallInfo`` of the most recently
-  /// presented view controller.
-  @nonobjc
-  public func getLatestPaywallInfo(completion: @escaping (PaywallInfo?) -> Void) {
-    Task {
-      let paywallInfo = await getLatestPaywallInfo()
-
-      await MainActor.run {
-        completion(paywallInfo)
-      }
-    }
+  /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
+  func reset(duringIdentify: Bool) {
+    dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
+    dependencyContainer.storage.reset()
+    dependencyContainer.paywallManager.resetCache()
+    presentationItems.reset()
+    dependencyContainer.configManager.reset()
   }
 }
 

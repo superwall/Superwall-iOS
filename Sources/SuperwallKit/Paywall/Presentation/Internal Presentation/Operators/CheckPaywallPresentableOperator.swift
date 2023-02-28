@@ -106,7 +106,10 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
 extension Superwall {
   @MainActor
   fileprivate func createPresentingWindowIfNeeded() {
-    guard presentationItems.window == nil else {
+    if let window = presentationItems.window {
+      let activeWindowScene = UIApplication.shared.activeWindow?.windowScene
+      window.windowScene = activeWindowScene
+      window.isHidden = false
       return
     }
     let activeWindow = UIApplication.shared.activeWindow
@@ -122,7 +125,8 @@ extension Superwall {
     presentationItems.window = presentingWindow
   }
 
-  func destroyPresentingWindow() {
-    presentationItems.window = nil
+  @MainActor
+  func hidePresentingWindow() {
+    presentationItems.window?.isHidden = true
   }
 }

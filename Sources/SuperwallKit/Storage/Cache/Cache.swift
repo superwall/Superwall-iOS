@@ -243,36 +243,29 @@ class Cache {
 // MARK: - Clean
 extension Cache {
   /// Clean all mem cache and disk cache. This is an async operation.
-  func cleanUserFiles() async {
-    cleanMemCache()
-    await cleanDiskCache()
-  }
-
-  private func cleanMemCache() {
+  func cleanUserFiles() {
     memCache.removeAllObjects()
+    cleanDiskCache()
   }
 
-  private func cleanDiskCache() async {
-    await withCheckedContinuation { continuation in
-      ioQueue.async { [weak self] in
-        guard let self = self else {
-          return
+  private func cleanDiskCache() {
+    ioQueue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      do {
+        if self.fileManager.fileExists(atPath: self.cacheUrl.path) {
+          try self.fileManager.removeItem(atPath: self.cacheUrl.path)
         }
-        do {
-          if self.fileManager.fileExists(atPath: self.cacheUrl.path) {
-            try self.fileManager.removeItem(atPath: self.cacheUrl.path)
-          }
-          if self.fileManager.fileExists(atPath: self.userSpecificDocumentUrl.path) {
-            try self.fileManager.removeItem(atPath: self.userSpecificDocumentUrl.path)
-          }
-        } catch {
-          Logger.debug(
-            logLevel: .error,
-            scope: .cache,
-            message: "Error when clean disk: \(error.localizedDescription)"
-          )
+        if self.fileManager.fileExists(atPath: self.userSpecificDocumentUrl.path) {
+          try self.fileManager.removeItem(atPath: self.userSpecificDocumentUrl.path)
         }
-        continuation.resume()
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .cache,
+          message: "Error when clean disk: \(error.localizedDescription)"
+        )
       }
     }
   }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// Options passed in when calling ``Superwall/identify(userId:options:completion:)``.
+/// Options passed in when calling ``Superwall/identify(userId:options:)``.
 @objc(SWKIdentityOptions)
 @objcMembers
 public final class IdentityOptions: NSObject, Sendable {

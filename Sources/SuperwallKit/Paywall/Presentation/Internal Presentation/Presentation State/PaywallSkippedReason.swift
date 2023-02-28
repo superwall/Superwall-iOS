@@ -8,7 +8,7 @@
 import Foundation
 
 /// The reason the paywall presentation was skipped.
-public enum PaywallSkippedReason: Sendable {
+public enum PaywallSkippedReason: Sendable, Equatable {
   /// The user was assigned to a holdout.
   ///
   /// A holdout is a control group which you can analyse against
@@ -38,12 +38,27 @@ public enum PaywallSkippedReason: Sendable {
 
   /// An error occurred.
   case error(Error)
+
+  public static func == (lhs: PaywallSkippedReason, rhs: PaywallSkippedReason) -> Bool {
+    switch (lhs, rhs) {
+    case (.noRuleMatch, .noRuleMatch),
+      (.eventNotFound, .eventNotFound),
+      (.userIsSubscribed, .userIsSubscribed):
+      return true
+    case let (.holdout(experiment1), .holdout(experiment2)):
+      return experiment1 == experiment2
+    case let (.error(error1), .error(error2)):
+      return error1.localizedDescription == error2.localizedDescription
+    default:
+      return false
+    }
+  }
 }
 
 /// Objective-C compatible enum for ``PaywallDismissedResult/DismissState``
 /// The reason the paywall presentation was skipped.
 @objc(SWKPaywallSkippedReason)
-public enum PaywallSkippedReasonObjc: Int, Sendable {
+public enum PaywallSkippedReasonObjc: Int, Sendable, Equatable {
   /// The user was assigned to a holdout group.
   case holdout
 

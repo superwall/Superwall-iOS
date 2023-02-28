@@ -141,8 +141,8 @@ extension DependencyContainer: AppManagerDelegate {
 
 // MARK: - CacheFactory
 extension DependencyContainer: CacheFactory {
-  func makeCache() -> PaywallCache {
-    return PaywallCache(deviceLocaleString: deviceHelper.locale)
+  func makeCache() -> PaywallViewControllerCache {
+    return PaywallViewControllerCache(deviceLocaleString: deviceHelper.locale)
   }
 }
 
@@ -166,7 +166,10 @@ extension DependencyContainer: LocaleIdentifierFactory {
 // MARK: - ViewControllerFactory
 extension DependencyContainer: ViewControllerFactory {
   @MainActor
-  func makePaywallViewController(for paywall: Paywall) -> PaywallViewController {
+  func makePaywallViewController(
+    for paywall: Paywall,
+    withCache cache: PaywallViewControllerCache?
+  ) -> PaywallViewController {
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: sessionEventsManager,
       factory: self
@@ -183,7 +186,8 @@ extension DependencyContainer: ViewControllerFactory {
       sessionEventsManager: sessionEventsManager,
       storage: storage,
       paywallManager: paywallManager,
-      webView: webView
+      webView: webView,
+      cache: cache
     )
 
     webView.delegate = paywallViewController
@@ -210,12 +214,14 @@ extension DependencyContainer: ViewControllerFactory {
 }
 
 extension DependencyContainer: VariablesFactory {
-  func makeJsonVariables(productVariables: [ProductVariable]?, params: JSON?) -> JSON {
+  func makeJsonVariables(productVariables: [ProductVariable]?, params: JSON?) async -> JSON {
+    let templateDeviceDict = await deviceHelper.getTemplateDevice().dictionary()
+
     return Variables(
       productVariables: productVariables,
       params: params,
       userAttributes: identityManager.userAttributes,
-      templateDeviceDictionary: deviceHelper.templateDevice.dictionary()
+      templateDeviceDictionary: templateDeviceDict
     ).templated()
   }
 }
@@ -263,7 +269,7 @@ extension DependencyContainer: ApiFactory {
     fromRequest request: URLRequest,
     isForDebugging: Bool,
     requestId: String
-  ) -> [String: String] {
+  ) async -> [String: String] {
     let key = isForDebugging ? storage.debugKey : storage.apiKey
     let auth = "Bearer \(key)"
     let headers = [
@@ -299,13 +305,14 @@ extension DependencyContainer: ApiFactory {
 
 // MARK: - Rule Params
 extension DependencyContainer: RuleAttributesFactory {
-  func makeRuleAttributes() -> RuleAttributes {
+  func makeRuleAttributes() async -> RuleAttributes {
     var userAttributes = identityManager.userAttributes
     userAttributes["isLoggedIn"] = identityManager.isLoggedIn
+    let device = await deviceHelper.getTemplateDevice().toDictionary()
 
     return RuleAttributes(
       user: userAttributes,
-      device: deviceHelper.templateDevice.toDictionary()
+      device: device
     )
   }
 }
