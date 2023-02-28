@@ -89,7 +89,7 @@ class IdentityManager {
 
     // If they're sending the same userId as before, then they're
     // already logged in.
-    if appUserId == sanitizedUserId {
+    if appUserId == userId {
       return
     }
 
@@ -100,7 +100,7 @@ class IdentityManager {
     // If user already logged in but identifying with a
     // different userId, reset everything first.
     if oldUserId != nil,
-      sanitizedUserId != oldUserId {
+       userId != oldUserId {
       await Superwall.shared.reset()
     }
 
