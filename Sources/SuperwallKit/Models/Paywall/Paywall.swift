@@ -12,11 +12,13 @@ struct Paywalls: Decodable {
 }
 
 struct Paywall: Decodable {
+  /// The id of the paywall in the database.
   var databaseId: String
 
   /// The identifier of the paywall
   var identifier: String
 
+  /// The name of the paywall
   let name: String
 
   /// The URL of the paywall webpage
@@ -225,6 +227,16 @@ struct Paywall: Decodable {
       isFreeTrialAvailable: isFreeTrialAvailable,
       sessionEventsManager: sessionEventsManager
     )
+  }
+
+  mutating func overrideProductsIfNeeded(from paywall: Paywall) {
+    products = paywall.products
+    productIds = paywall.productIds
+    swProducts = paywall.swProducts
+    productVariables = paywall.productVariables
+    swProductVariablesTemplate = paywall.swProductVariablesTemplate
+    isFreeTrialAvailable = paywall.isFreeTrialAvailable
+    productsLoadingInfo = paywall.productsLoadingInfo
   }
 }
 

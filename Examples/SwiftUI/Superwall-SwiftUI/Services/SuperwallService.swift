@@ -29,30 +29,21 @@ final class SuperwallService {
     // }
 
     Superwall.configure(
-      apiKey: apiKey,
-      delegate: shared/*,
+      apiKey: apiKey/*,
       purchaseController: shared*/
     )
+    Superwall.shared.delegate = shared
 
     // Getting our logged in status from Superwall.
     shared.isLoggedIn.send(Superwall.shared.isLoggedIn)
   }
 
   static func identify() {
-    do {
-      try Superwall.shared.identify(userId: "abc")
-    } catch let error as IdentityError {
-      switch error {
-      case .missingUserId:
-        print("The provided userId was empty")
-      }
-    } catch {
-      print("Unexpected error", error)
-    }
+    Superwall.shared.identify(userId: "abc")
   }
 
-  static func reset() async {
-    await Superwall.shared.reset()
+  static func reset() {
+    Superwall.shared.reset()
   }
 
   static func handleDeepLink(_ url: URL) {
@@ -139,6 +130,8 @@ extension SuperwallService: SuperwallDelegate {
     case .paywallProductsLoadComplete(let triggeredEventName):
       <#code#>
     case .paywallPresentationFail(reason: let reason):
+      <#code#>
+    case .subscriptionStatusDidChange:
       <#code#>
     }
     */

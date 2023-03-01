@@ -43,9 +43,9 @@ final class PaywallManager: NSObject {
 
     Superwall.configure(
       apiKey: superwallApiKey,
-      delegate: shared,
       purchaseController: shared
     )
+    Superwall.shared.delegate = shared
   }
 
   /// Logs the user in to both RevenueCat and Superwall with the specified `userId`.
@@ -55,14 +55,9 @@ final class PaywallManager: NSObject {
     do {
       let (customerInfo, _) = try await Purchases.shared.logIn(userId)
       updateSubscriptionStatus(using: customerInfo)
-      try await Superwall.shared.identify(userId: userId)
-    } catch let error as IdentityError {
-      switch error {
-      case .missingUserId:
-        print("The provided userId was empty")
-      }
+      Superwall.shared.identify(userId: userId)
     } catch {
-      print("A RevenueCat error occurred", error)
+      print(error.localizedDescription)
     }
   }
 
@@ -73,7 +68,7 @@ final class PaywallManager: NSObject {
     do {
       let customerInfo = try await Purchases.shared.logOut()
       updateSubscriptionStatus(using: customerInfo)
-      await Superwall.shared.reset()
+      Superwall.shared.reset()
     } catch {
       print("A RevenueCat error occurred", error)
     }
@@ -231,6 +226,8 @@ extension PaywallManager: SuperwallDelegate {
     case .paywallProductsLoadComplete(let triggeredEventName):
       <#code#>
     case .paywallPresentationFail(reason: let reason):
+      <#code#>
+    case .subscriptionStatusDidChange:
       <#code#>
     }
     */

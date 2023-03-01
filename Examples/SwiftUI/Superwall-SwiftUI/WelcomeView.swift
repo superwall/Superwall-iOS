@@ -65,11 +65,9 @@ struct WelcomeView: View {
   @ViewBuilder
   private func logInButton() -> some View {
     BrandedButton(title: "Log In") {
-      Task {
-        SuperwallService.setName(to: name)
-        SuperwallService.identify()
-        isLoggedIn = true
-      }
+      SuperwallService.setName(to: name)
+      SuperwallService.identify()
+      isLoggedIn = true
     }
   }
 }

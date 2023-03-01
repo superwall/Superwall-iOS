@@ -22,27 +22,25 @@ struct TrackEventView: View {
 
   var body: some View {
     VStack(spacing: 48) {
-      InfoView(
-        text: "The button below tracks an event \"campaign_trigger\".\n\nThis event has been added to a campaign on the Superwall dashboard.\n\nWhen this event is tracked, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
-      )
+      ScrollView {
+        InfoView(
+          text: "The button below tracks an event \"campaign_trigger\".\n\nThis event has been added to a campaign on the Superwall dashboard.\n\nWhen this event is tracked, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
+        )
 
-      Divider()
-        .background(Color.primaryTeal)
-        .padding()
+        Divider()
+          .background(Color.primaryTeal)
+          .padding()
 
-      SuperwallSubscriptionStatusView()
-
-      Spacer()
+        SuperwallSubscriptionStatusView()
+      }
 
       VStack(spacing: 25) {
         BrandedButton(title: "Track event") {
           model.trackEvent()
         }
         BrandedButton(title: "Log Out") {
-          Task {
-            await model.logOut()
-            isLoggedIn = false
-          }
+          model.logOut()
+          isLoggedIn = false
         }
       }
       .padding()

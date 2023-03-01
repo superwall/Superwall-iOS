@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import ASN1Swift
 
 struct InAppReceiptPayload: ASN1Decodable {
   /// In-app purchase's receipts

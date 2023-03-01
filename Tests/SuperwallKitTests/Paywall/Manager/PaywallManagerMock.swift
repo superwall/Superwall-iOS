@@ -13,7 +13,11 @@ final class PaywallManagerMock: PaywallManager {
   var getPaywallError: Error?
   var getPaywallVc: PaywallViewController?
 
-  override func getPaywallViewController(from request: PaywallRequest, cached: Bool) async throws -> PaywallViewController {
+  override func getPaywallViewController(
+    from request: PaywallRequest,
+    isPreloading: Bool,
+    isDebuggerLaunched: Bool
+  ) async throws -> PaywallViewController {
     if let getPaywallError = getPaywallError {
       throw getPaywallError
     } else {

@@ -41,7 +41,7 @@ final class DebugManager {
       return false
     }
 
-    storage.apiKey = debugKey
+    storage.debugKey = debugKey
 
     let paywallId = SWDebugManagerLogic.getQueryItemValue(
       fromUrl: deepLinkUrl,

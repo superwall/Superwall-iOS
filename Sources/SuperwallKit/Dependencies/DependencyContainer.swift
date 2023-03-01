@@ -15,8 +15,6 @@ import Combine
 ///
 /// Objects only need `unowned` references to the dependencies injected into them because
 /// `DependencyContainer` is owned by the `Superwall` class.
-///
-/// Idea taken from: [swiftbysundell.com](https://www.swiftbysundell.com/articles/dependency-injection-using-factories-in-swift/)
 final class DependencyContainer {
   // swiftlint:disable implicitly_unwrapped_optional
   var configManager: ConfigManager!
@@ -39,16 +37,12 @@ final class DependencyContainer {
   // swiftlint:enable implicitly_unwrapped_optional
 
   init(
-    swiftDelegate: SuperwallDelegate? = nil,
-    objcDelegate: SuperwallDelegateObjc? = nil,
     swiftPurchaseController: PurchaseController? = nil,
     objcPurchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
     storeKitManager = StoreKitManager(factory: self)
     delegateAdapter = SuperwallDelegateAdapter(
-      swiftDelegate: swiftDelegate,
-      objcDelegate: objcDelegate,
       swiftPurchaseController: swiftPurchaseController,
       objcPurchaseController: objcPurchaseController
     )
@@ -79,7 +73,6 @@ final class DependencyContainer {
     deviceHelper = DeviceHelper(
       api: api,
       storage: storage,
-      localizationManager: localizationManager,
       factory: self
     )
 
@@ -148,8 +141,8 @@ extension DependencyContainer: AppManagerDelegate {
 
 // MARK: - CacheFactory
 extension DependencyContainer: CacheFactory {
-  func makeCache() -> PaywallCache {
-    return PaywallCache(deviceLocaleString: deviceHelper.locale)
+  func makeCache() -> PaywallViewControllerCache {
+    return PaywallViewControllerCache(deviceLocaleString: deviceHelper.locale)
   }
 }
 
@@ -163,10 +156,20 @@ extension DependencyContainer: DeviceInfoFactory {
   }
 }
 
+// MARK: - DeviceInfofactory
+extension DependencyContainer: LocaleIdentifierFactory {
+  func makeLocaleIdentifier() -> String? {
+    return configManager.options.localeIdentifier
+  }
+}
+
 // MARK: - ViewControllerFactory
 extension DependencyContainer: ViewControllerFactory {
   @MainActor
-  func makePaywallViewController(for paywall: Paywall) -> PaywallViewController {
+  func makePaywallViewController(
+    for paywall: Paywall,
+    withCache cache: PaywallViewControllerCache?
+  ) -> PaywallViewController {
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: sessionEventsManager,
       factory: self
@@ -183,7 +186,8 @@ extension DependencyContainer: ViewControllerFactory {
       sessionEventsManager: sessionEventsManager,
       storage: storage,
       paywallManager: paywallManager,
-      webView: webView
+      webView: webView,
+      cache: cache
     )
 
     webView.delegate = paywallViewController
@@ -210,12 +214,14 @@ extension DependencyContainer: ViewControllerFactory {
 }
 
 extension DependencyContainer: VariablesFactory {
-  func makeJsonVariables(productVariables: [ProductVariable]?, params: JSON?) -> JSON {
+  func makeJsonVariables(productVariables: [ProductVariable]?, params: JSON?) async -> JSON {
+    let templateDeviceDict = await deviceHelper.getTemplateDevice().dictionary()
+
     return Variables(
       productVariables: productVariables,
       params: params,
       userAttributes: identityManager.userAttributes,
-      templateDeviceDictionary: deviceHelper.templateDevice.dictionary()
+      templateDeviceDictionary: templateDeviceDict
     ).templated()
   }
 }
@@ -261,9 +267,11 @@ extension DependencyContainer: RequestFactory {
 extension DependencyContainer: ApiFactory {
   func makeHeaders(
     fromRequest request: URLRequest,
+    isForDebugging: Bool,
     requestId: String
-  ) -> [String: String] {
-    let auth = "Bearer \(storage.apiKey)"
+  ) async -> [String: String] {
+    let key = isForDebugging ? storage.debugKey : storage.apiKey
+    let auth = "Bearer \(key)"
     let headers = [
       "Authorization": auth,
       "X-Platform": "iOS",
@@ -297,13 +305,14 @@ extension DependencyContainer: ApiFactory {
 
 // MARK: - Rule Params
 extension DependencyContainer: RuleAttributesFactory {
-  func makeRuleAttributes() -> RuleAttributes {
+  func makeRuleAttributes() async -> RuleAttributes {
     var userAttributes = identityManager.userAttributes
     userAttributes["isLoggedIn"] = identityManager.isLoggedIn
+    let device = await deviceHelper.getTemplateDevice().toDictionary()
 
     return RuleAttributes(
       user: userAttributes,
-      device: deviceHelper.templateDevice.toDictionary()
+      device: device
     )
   }
 }

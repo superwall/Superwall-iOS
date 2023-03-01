@@ -119,6 +119,7 @@ final class DebugViewController: UIViewController {
   var paywalls: [Paywall] = []
   var previewViewContent: UIView?
   private var cancellable: AnyCancellable?
+  private var initialLocaleIdentifier: String?
 
   private unowned let storeKitManager: StoreKitManager
   private unowned let network: Network
@@ -153,7 +154,7 @@ final class DebugViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-
+    initialLocaleIdentifier = Superwall.shared.options.localeIdentifier
     addSubviews()
     Task { await loadPreview() }
   }
@@ -268,7 +269,7 @@ final class DebugViewController: UIViewController {
       return
     }
 
-    let child = factory.makePaywallViewController(for: paywall)
+    let child = factory.makePaywallViewController(for: paywall, withCache: nil)
     addChild(child)
     previewContainerView.insertSubview(child.view, at: 0)
     previewViewContent = child.view
@@ -328,7 +329,12 @@ final class DebugViewController: UIViewController {
       return alert
     }
 
-    presentAlert(title: nil, message: "Your Paywalls", options: options)
+    presentAlert(
+      title: nil,
+      message: "Your Paywalls",
+      options: options,
+      on: previewPickerButton
+    )
   }
 
   @objc func pressedExitButton() {
@@ -338,15 +344,22 @@ final class DebugViewController: UIViewController {
   }
 
   @objc func pressedConsoleButton() {
-    presentAlert(title: nil, message: "Menu", options: [
-      AlertOption(title: "Localization", action: showLocalizationPicker, style: .default),
-      AlertOption(title: "Templates", action: showConsole, style: .default)
-    ])
+    presentAlert(
+      title: nil,
+      message: "Menu",
+      options: [
+        AlertOption(title: "Localization", action: showLocalizationPicker, style: .default),
+        AlertOption(title: "Templates", action: showConsole, style: .default)
+      ],
+      on: consoleButton
+    )
   }
 
 	func showLocalizationPicker() async {
-    let viewController = SWLocalizationViewController(localizationManager: localizationManager) { [weak self] locale in
-      self?.localizationManager.selectedLocale = locale
+    let viewController = SWLocalizationViewController(
+      localizationManager: localizationManager
+    ) { [weak self] identifier in
+      Superwall.shared.options.localeIdentifier = identifier
       Task { await self?.loadPreview() }
     }
 
@@ -359,9 +372,7 @@ final class DebugViewController: UIViewController {
       Logger.debug(
         logLevel: .error,
         scope: .debugViewController,
-        message: "Paywall is nil",
-        info: nil,
-        error: nil
+        message: "Paywall is nil"
       )
       return
     }
@@ -401,7 +412,8 @@ final class DebugViewController: UIViewController {
           },
           style: .default
         )
-      ]
+      ],
+      on: bottomButton
     )
   }
 
@@ -460,7 +472,11 @@ final class DebugViewController: UIViewController {
               info: nil
             )
           }
-          self.presentAlert(title: "Paywall Skipped", message: errorMessage, options: [])
+          self.presentAlert(
+            title: "Paywall Skipped",
+            message: errorMessage,
+            on: self.view
+          )
           self.bottomButton.showLoading = false
 
           let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
@@ -476,12 +492,17 @@ final class DebugViewController: UIViewController {
     super.viewDidDisappear(animated)
     paywallManager.resetCache()
     debugManager.isDebuggerLaunched = false
-    localizationManager.selectedLocale = nil
+    Superwall.shared.options.localeIdentifier = initialLocaleIdentifier
   }
 }
 
 extension DebugViewController {
-  func presentAlert(title: String?, message: String?, options: [AlertOption]) {
+  func presentAlert(
+    title: String?,
+    message: String?,
+    options: [AlertOption] = [],
+    on sourceView: UIView
+  ) {
     let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
 
     for option in options {
@@ -496,6 +517,7 @@ extension DebugViewController {
       alertController.addAction(action)
     }
 
+    alertController.popoverPresentationController?.sourceView = sourceView
     alertController.addAction(UIAlertAction(title: "Close", style: .cancel, handler: nil))
     alertController.view.tintColor = .black
 

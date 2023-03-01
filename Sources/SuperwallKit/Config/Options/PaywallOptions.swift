@@ -36,12 +36,12 @@ public final class PaywallOptions: NSObject {
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
   public var restoreFailed = RestoreFailed()
 
-  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Superwall/configure(apiKey:delegate:purchaseController:options:completion:)-5y99b``. Defaults to `true`.
+  /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
   ///
-  /// If you want to preload them at a later date, you can call ``SuperwallKit/Superwall/preloadAllPaywalls()``
-  /// or ``SuperwallKit/Superwall/preloadPaywalls(forEvents:)``
+  /// If you want to preload them at a later date, you can call ``Superwall/preloadAllPaywalls()``
+  /// or ``Superwall/preloadPaywalls(forEvents:)``
   public var shouldPreload = true
 
   /// Loads paywall template websites from disk, if available. Defaults to `true`.
@@ -69,6 +69,6 @@ public final class PaywallOptions: NSObject {
   ///
   /// Set this to `nil` to remove any background view during the transaction.
   ///
-  /// **Note:** This feature is still in development and is likely to change.
+  /// **Note:** This feature is still in development and could change.
   public var transactionBackgroundView: TransactionBackgroundView? = .spinner
 }

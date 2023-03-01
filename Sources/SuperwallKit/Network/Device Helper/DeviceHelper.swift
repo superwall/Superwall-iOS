@@ -12,7 +12,8 @@ import CoreTelephony
 
 class DeviceHelper {
   var locale: String {
-    localizationManager.selectedLocale ?? Locale.autoupdatingCurrent.identifier
+    let localeIdentifier = factory.makeLocaleIdentifier()
+    return localeIdentifier ?? Locale.autoupdatingCurrent.identifier
   }
   let appInstalledAtString: String
 
@@ -265,8 +266,8 @@ class DeviceHelper {
     return storage.get(TotalPaywallViews.self) ?? 0
   }
 
-  var templateDevice: DeviceTemplate {
-    let identityInfo = factory.makeIdentityInfo()
+  func getTemplateDevice() async -> DeviceTemplate {
+    let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
 
     return DeviceTemplate(
@@ -299,22 +300,20 @@ class DeviceHelper {
       utcTime: utcTimeString,
       localTime: localTimeString,
       utcDateTime: utcDateTimeString,
-      localDateTime: localDateTimeString
+      localDateTime: localDateTimeString,
+      isSandbox: isSandbox
     )
   }
 
   private unowned let storage: Storage
-  private unowned let localizationManager: LocalizationManager
-  private unowned let factory: IdentityInfoFactory
+  private unowned let factory: IdentityInfoFactory & LocaleIdentifierFactory
 
   init(
     api: Api,
     storage: Storage,
-    localizationManager: LocalizationManager,
-    factory: IdentityInfoFactory
+    factory: IdentityInfoFactory & LocaleIdentifierFactory
   ) {
     self.storage = storage
-    self.localizationManager = localizationManager
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
     self.factory = factory
     reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.hostDomain)

@@ -11,11 +11,26 @@ class Storage {
   /// The interface that manages core data.
   let coreDataManager: CoreDataManager
 
-  /// The API key set on configure.
+  /// The API key, set on configure.
   var apiKey = ""
 
+  /// The API key for debugging, set when handling a deep link.
+  var debugKey = ""
+
   /// Indicates whether first seen has been tracked.
-	var didTrackFirstSeen = false
+  var didTrackFirstSeen: Bool {
+    get {
+      queue.sync { [unowned self] in
+        self._didTrackFirstSeen
+      }
+    }
+    set {
+      queue.async { [unowned self] in
+        self.didTrackFirstSeen = newValue
+      }
+    }
+  }
+  private var _didTrackFirstSeen = false
 
   /// Indicates whether static config hasn't been called before.
   ///
@@ -24,7 +39,21 @@ class Storage {
   var neverCalledStaticConfig = false
 
   /// The confirmed assignments for the user loaded from the cache.
-  private var confirmedAssignments: [Experiment.ID: Experiment.Variant]?
+  private var confirmedAssignments: [Experiment.ID: Experiment.Variant]? {
+    get {
+      queue.sync { [unowned self] in
+        self._confirmedAssignments
+      }
+    }
+    set {
+      queue.async { [unowned self] in
+        self._confirmedAssignments = newValue
+      }
+    }
+  }
+  private var _confirmedAssignments: [Experiment.ID: Experiment.Variant]?
+
+  private let queue = DispatchQueue(label: "com.superwall.storage")
 
   /// The disk cache.
   private let cache: Cache
@@ -40,7 +69,7 @@ class Storage {
   ) {
     self.cache = cache
     self.coreDataManager = coreDataManager
-    self.didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true
+    self._didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true
     self.factory = factory
   }
 
@@ -74,26 +103,31 @@ class Storage {
   }
 
   /// Clears data that is user specific.
-  func reset() async {
-    await coreDataManager.deleteAllEntities()
-    await cache.cleanUserFiles()
-    confirmedAssignments = nil
-    didTrackFirstSeen = false
+  func reset() {
+    coreDataManager.deleteAllEntities()
+    cache.cleanUserFiles()
+
+    queue.async { [weak self] in
+      self?._confirmedAssignments = nil
+      self?._didTrackFirstSeen = false
+    }
     recordFirstSeenTracked()
   }
 
   // MARK: - Custom
   /// Tracks and stores first seen for the user.
 	func recordFirstSeenTracked() {
-    if didTrackFirstSeen {
-      return
-    }
+    queue.async { [unowned self] in
+      if self._didTrackFirstSeen {
+        return
+      }
 
-    Task {
-      await Superwall.shared.track(InternalSuperwallEvent.FirstSeen())
+      Task {
+        await Superwall.shared.track(InternalSuperwallEvent.FirstSeen())
+      }
+      self.save(true, forType: DidTrackFirstSeen.self)
+      self._didTrackFirstSeen = true
     }
-    save(true, forType: DidTrackFirstSeen.self)
-		didTrackFirstSeen = true
 	}
 
   /// Records the app install

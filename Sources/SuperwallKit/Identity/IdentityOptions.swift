@@ -10,7 +10,7 @@ import Foundation
 /// Options passed in when calling ``Superwall/identify(userId:options:)``.
 @objc(SWKIdentityOptions)
 @objcMembers
-public final class IdentityOptions: NSObject {
+public final class IdentityOptions: NSObject, Sendable {
   /// Determines whether the SDK should wait to restore paywall assignments from the server
   /// before presenting any paywalls.
   ///
@@ -18,5 +18,9 @@ public final class IdentityOptions: NSObject {
   /// paywalls from showing until after paywall assignments have been restored. If you expect
   /// users of your app to switch accounts or delete/reinstall a lot, you'd set this when users log
   /// in to an existing account.
-  public var restorePaywallAssignments = false
+  public let restorePaywallAssignments: Bool
+
+  init(restorePaywallAssignments: Bool = false) {
+    self.restorePaywallAssignments = restorePaywallAssignments
+  }
 }

@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 	s.name         = "SuperwallKit"
-  s.version      = "3.0.0-beta.5"
+  s.version      = "3.0.0-beta.6"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. superwall.com"
 
@@ -46,6 +46,5 @@ Pod::Spec.new do |s|
       "Sources/SuperwallKit/**/*.xcdatamodeld"
     ]
   }
-  s.dependency 'ASN1Swift', '~> 1.2.3'
 
 end

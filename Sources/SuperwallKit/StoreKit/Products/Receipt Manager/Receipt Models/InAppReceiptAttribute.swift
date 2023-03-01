@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import ASN1Swift
 
 struct InAppReceiptAttribute: ASN1Decodable {
   static var template: ASN1Template {

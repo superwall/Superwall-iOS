@@ -11,21 +11,10 @@ import XCTest
 @testable import SuperwallKit
 
 class PaywallCacheLogicTests: XCTestCase {
-  func testKey_noId() {
-    // Given + When
-    let key = PaywallCacheLogic.key(
-      forIdentifier: nil,
-      locale: "en_US"
-    )
-
-    // Then
-    XCTAssertEqual(key, "$no_id_en_US")
-  }
-
   func testKey_withId() {
     // Given + When
     let key = PaywallCacheLogic.key(
-      forIdentifier: "myid",
+      identifier: "myid",
       locale: "en_US"
     )
 

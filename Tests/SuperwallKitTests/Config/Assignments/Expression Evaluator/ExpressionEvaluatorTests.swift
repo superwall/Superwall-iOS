@@ -13,12 +13,12 @@ import XCTest
 final class ExpressionEvaluatorTests: XCTestCase {
   func testExpressionMatchesAll() async {
     let dependencyContainer = DependencyContainer()
-    await dependencyContainer.storage.reset()
+    dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
-    let result = evaluator.evaluateExpression(
+    let result = await evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: nil)
         .setting(\.expressionJs, to: nil),
@@ -32,13 +32,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
 
   func testExpressionEvaluator_expressionTrue() async  {
     let dependencyContainer = DependencyContainer()
-    await dependencyContainer.storage.reset()
+    dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
-    dependencyContainer.identityManager.userAttributes = ["a": "b"]
-    let result = evaluator.evaluateExpression(
+    dependencyContainer.identityManager.mergeUserAttributes(["a": "b"])
+    let result = await evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "user.a == \"b\""),
       eventData: EventData(name: "ss", parameters: [:], createdAt: Date()),
@@ -49,13 +49,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
 
   func testExpressionEvaluator_expressionParams() async {
     let dependencyContainer = DependencyContainer()
-    await dependencyContainer.storage.reset()
+    dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
-    dependencyContainer.identityManager.userAttributes = [:]
-    let result = evaluator.evaluateExpression(
+    dependencyContainer.identityManager.mergeUserAttributes([:])
+    let result = await evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "params.a == \"b\""),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
@@ -66,13 +66,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
 
   func testExpressionEvaluator_expressionDeviceTrue() async {
     let dependencyContainer = DependencyContainer()
-    await dependencyContainer.storage.reset()
+    dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
-    dependencyContainer.identityManager.userAttributes = [:]
-    let result = evaluator.evaluateExpression(
+    dependencyContainer.identityManager.mergeUserAttributes([:])
+    let result = await evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "device.platform == \"iOS\""),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
@@ -83,13 +83,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
 
   func testExpressionEvaluator_expressionDeviceFalse() async {
     let dependencyContainer = DependencyContainer()
-    await dependencyContainer.storage.reset()
+    dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
-    dependencyContainer.identityManager.userAttributes = [:]
-    let result = evaluator.evaluateExpression(
+    dependencyContainer.identityManager.mergeUserAttributes([:])
+    let result = await evaluator.evaluateExpression(
         fromRule: .stub()
           .setting(\.expression, to: "device.platform == \"Android\""),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
@@ -100,13 +100,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
 
   func testExpressionEvaluator_expressionFalse() async {
     let dependencyContainer = DependencyContainer()
-    await dependencyContainer.storage.reset()
+    dependencyContainer.storage.reset()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
-    dependencyContainer.identityManager.userAttributes = [:]
-    let result = evaluator.evaluateExpression(
+    dependencyContainer.identityManager.mergeUserAttributes([:])
+    let result = await evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expression, to: "a == \"b\""),
       eventData: .stub(),
@@ -131,13 +131,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
 
   // MARK: - ExpressionJS
 
-  func testExpressionEvaluator_expressionJSTrue() {
+  func testExpressionEvaluator_expressionJSTrue() async {
     let dependencyContainer = DependencyContainer()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
-    let result = evaluator.evaluateExpression(
+    let result = await evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(){ return true }; superwallEvaluator"),
       eventData: .stub(),
@@ -146,13 +146,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
     XCTAssertTrue(result)
   }
 
-  func testExpressionEvaluator_expressionJSValues_true() {
+  func testExpressionEvaluator_expressionJSValues_true() async {
       let dependencyContainer = DependencyContainer()
       let evaluator = ExpressionEvaluator(
         storage: dependencyContainer.storage,
         factory: dependencyContainer
       )
-    let result = evaluator.evaluateExpression(
+    let result = await evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator"),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
@@ -161,13 +161,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
     XCTAssertTrue(result)
   }
 
-  func testExpressionEvaluator_expressionJSValues_false() {
+  func testExpressionEvaluator_expressionJSValues_false() async {
     let dependencyContainer = DependencyContainer()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
-    let result = evaluator.evaluateExpression(
+    let result = await evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator"),
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
@@ -176,13 +176,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
     XCTAssertTrue(result)
   }
 
-  func testExpressionEvaluator_expressionJSNumbers() {
+  func testExpressionEvaluator_expressionJSNumbers() async {
     let dependencyContainer = DependencyContainer()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
-    let result = evaluator.evaluateExpression(
+    let result = await evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: "function superwallEvaluator(values) { return 1 == 1 }; superwallEvaluator"),
       eventData: .stub(),
@@ -205,13 +205,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
     XCTAssertTrue(result)
   }*/
 
-  func testExpressionEvaluator_expressionJSEmpty() {
+  func testExpressionEvaluator_expressionJSEmpty() async {
     let dependencyContainer = DependencyContainer()
     let evaluator = ExpressionEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
-    let result = evaluator.evaluateExpression(
+    let result = await evaluator.evaluateExpression(
       fromRule: .stub()
         .setting(\.expressionJs, to: ""),
       eventData: .stub(),

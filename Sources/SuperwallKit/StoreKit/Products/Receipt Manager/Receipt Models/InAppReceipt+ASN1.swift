@@ -8,7 +8,6 @@
 // swiftlint:disable type_name
 
 import Foundation
-import ASN1Swift
 
 final class _InAppReceipt {
   private var pkcs7container: PKCS7Container

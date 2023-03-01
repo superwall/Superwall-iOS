@@ -30,7 +30,7 @@ class CustomURLSession {
 
   @discardableResult
   func request<Response>(_ endpoint: Endpoint<Response>) async throws -> Response {
-    guard let request = endpoint.makeRequest() else {
+    guard let request = await endpoint.makeRequest() else {
       throw NetworkError.unknown
     }
     guard let auth = request.allHTTPHeaderFields?["Authorization"] else {

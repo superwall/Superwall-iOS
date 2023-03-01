@@ -49,7 +49,7 @@ extension TriggerSession.Transaction {
     init(
       from product: StoreProduct,
       index: Int
-    ) {
+    ) async {
       self.index = index
       self.identifier = product.productIdentifier
       self.language = product.languageCode
@@ -91,7 +91,7 @@ extension TriggerSession.Transaction {
           type: introductoryPrice.type
         )
 
-        self.introductoryRedeemable = Superwall.shared.dependencyContainer.storeKitManager.isFreeTrialAvailable(for: product)
+        self.introductoryRedeemable = await Superwall.shared.dependencyContainer.storeKitManager.isFreeTrialAvailable(for: product)
         self.hasIntroductoryOffer = true
       } else {
         self.hasIntroductoryOffer = false

@@ -52,16 +52,12 @@ final class TrackEventViewController: UIViewController {
 
   @IBAction private func logOut() {
     UserDefaults.standard.setValue(false, forKey: "IsLoggedIn")
-    Task {
-      await SuperwallService.reset()
-      _ = navigationController?.popToRootViewController(animated: true)
-    }
+    SuperwallService.reset()
+    self.navigationController?.popToRootViewController(animated: true)
   }
 
   @IBAction private func trackEvent() {
-    Superwall.shared.track(
-      event: "campaign_trigger"
-    ) { paywallState in
+    Superwall.shared.track(event: "campaign_trigger") { paywallState in
       switch paywallState {
       case .presented(let paywallInfo):
         print("paywall info is", paywallInfo)

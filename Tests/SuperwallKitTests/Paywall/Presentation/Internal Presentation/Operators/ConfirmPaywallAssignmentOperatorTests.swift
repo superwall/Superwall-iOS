@@ -31,7 +31,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     let input = PresentablePipelineOutput(
       request: request,
       debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil),
       presenter: UIViewController(),
       confirmableAssignment: ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
     )
@@ -74,7 +74,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     let input = PresentablePipelineOutput(
       request: request,
       debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil),
       presenter: UIViewController(),
       confirmableAssignment: nil
     )
@@ -120,7 +120,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     let input = PresentablePipelineOutput(
       request: request,
       debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub()),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil),
       presenter: UIViewController(),
       confirmableAssignment: ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
     )

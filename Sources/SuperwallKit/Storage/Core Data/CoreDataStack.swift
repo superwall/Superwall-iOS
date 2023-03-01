@@ -92,7 +92,6 @@ class CoreDataStack {
     }
   }
 
-
   func count<T: NSFetchRequestResult>(for fetchRequest: NSFetchRequest<T>) -> Int {
     do {
       let count = try mainContext.count(for: fetchRequest)

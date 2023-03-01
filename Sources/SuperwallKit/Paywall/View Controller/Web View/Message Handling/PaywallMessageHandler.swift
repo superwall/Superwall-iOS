@@ -55,8 +55,9 @@ final class PaywallMessageHandler: WebEventDelegate {
       }
     case .onReady(let paywalljsVersion):
       delegate?.paywall.paywalljsVersion = paywalljsVersion
+      let loadedAt = Date()
       Task {
-        await self.didLoadWebView(for: paywall)
+        await self.didLoadWebView(for: paywall, at: loadedAt)
       }
     case .close:
       hapticFeedback()
@@ -115,13 +116,16 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   /// Passes in the HTML substitutions, templates and other scripts to make the webview
   /// feel native.
-  nonisolated private func didLoadWebView(for paywall: Paywall) async {
+  nonisolated private func didLoadWebView(
+    for paywall: Paywall,
+    at loadedAt: Date
+  ) async {
     Task(priority: .utility) {
       guard let delegate = await self.delegate else {
         return
       }
 
-      delegate.paywall.webviewLoadingInfo.endAt = Date()
+      delegate.paywall.webviewLoadingInfo.endAt = loadedAt
 
       let paywallInfo = delegate.paywallInfo
       let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(

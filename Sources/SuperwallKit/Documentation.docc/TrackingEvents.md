@@ -16,7 +16,7 @@ In addition to your own events, you can add the Superwall events `app_install`, 
 
 When you sign up for a Superwall account, we give you an example paywall and campaign to test your integration. The example campaign contains an event called `campaign_trigger`, which you'll track in your app when you want to show the paywall.
 
-You use ``Superwall/track(event:params:presenter:paywallOverrides:paywallHandler:)`` to track events:
+You use ``Superwall/track(event:params:paywallOverrides:paywallHandler:)`` to track events:
 
 ```swift
 Superwall.shared.track(event: "campaign_trigger") { paywallState in

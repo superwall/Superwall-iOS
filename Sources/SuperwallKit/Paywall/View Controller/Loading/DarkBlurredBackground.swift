@@ -24,7 +24,7 @@ struct DarkBlurredBackground: ViewModifier {
       .background(
         DarkBlurView()
           .clipShape(
-            RoundedRectangle(cornerRadius: 15, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
           )
       )
   }

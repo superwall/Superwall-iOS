@@ -32,8 +32,8 @@ final class LoadingViewController: UIHostingController<LoadingView> {
 
   func hide() {
     model.isHidden = true
-    DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(300)) {
-      self.view.isHidden = true
+    DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(300)) { [weak self] in
+      self?.view.isHidden = true
     }
   }
 }

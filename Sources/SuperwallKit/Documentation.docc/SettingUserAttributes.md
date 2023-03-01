@@ -10,7 +10,7 @@ You do this by passing a `[String: Any?]` dictionary of attributes to ``Superwal
 
 ```swift
 extension SuperwallService {
-  static func setUser() {
+  static func setUser() async {
     guard let user = Auth.shared.user else {
       return
     }
@@ -22,7 +22,7 @@ extension SuperwallService {
       "username": user.username,
       "profilePic": user.profilePicUrl
     ]
-    Superwall.shared.setUserAttributes(attributes)
+    await Superwall.shared.setUserAttributes(attributes)
   }
 }
 ```

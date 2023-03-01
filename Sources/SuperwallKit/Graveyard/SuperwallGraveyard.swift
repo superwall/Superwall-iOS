@@ -7,10 +7,10 @@
 
 import UIKit
 
-public extension Superwall {
+extension Superwall {
   // MARK: - Unavailable methods
   // TODO: Fix deprecation here
-  /*@available(*, unavailable, renamed: "configure(apiKey:delegate:options:completion:)")
+  /*@available(*, unavailable, renamed: "configure(apiKey:purchaseController:options:completion:)")
   @discardableResult
   @objc static func configure(
     apiKey: String,
@@ -22,10 +22,10 @@ public extension Superwall {
   }*/
 
   @available(*, unavailable, renamed: "preloadPaywalls(forEvents:)")
-  @objc static func preloadPaywalls(forTriggers triggers: Set<String>) {}
+  @objc public func preloadPaywalls(forTriggers triggers: Set<String>) {}
 
-  @available(*, unavailable, renamed: "track(event:params:presenter:paywallOverrides:paywallHandler:)")
-  @objc static func trigger(
+  @available(*, unavailable, renamed: "track(event:params:paywallOverrides:paywallHandler:)")
+  @objc public func trigger(
     event: String? = nil,
     params: [String: Any]? = nil,
     on viewController: UIViewController? = nil,
@@ -37,13 +37,16 @@ public extension Superwall {
   ) {}
 
   @available(*, unavailable, renamed: "track(event:params:)")
-  @objc static func track(
+  @objc public func track(
     _ name: String,
     _ params: [String: Any] = [:]
   ) {}
 
+  @available(*, unavailable, message: "Set the SuperwallOption \"localeIdentifier\" instead.")
+  @objc public func localizationOverride(localeIdentifier: String? = nil) {}
+
   @available(*, unavailable, renamed: "SuperwallEvent")
-  enum EventName: String {
+  public enum EventName: String {
     case fakeCase = "fake"
   }
 }

@@ -60,10 +60,8 @@
 }
 
 - (IBAction)logOut:(id)sender {
-  __weak typeof(self) weakSelf = self;
-  [[SSASuperwallService sharedService] logOutWithCompletion:^{
-    [weakSelf.navigationController popToRootViewControllerAnimated:YES];
-  }];
+  [[SSASuperwallService sharedService] logOut];
+  [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
 #pragma mark - Private

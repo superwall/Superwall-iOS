@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import ASN1Swift
 
 enum InAppReceiptField {
   static let environment: Int32 = 0 // Sandbox, Production, ProductionSandbox
