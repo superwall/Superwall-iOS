@@ -13,6 +13,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - `setUserAttributes(_:)` is now an async function. It always was async under the hood but this makes it more explicit and helps you avoid race conditions.
 - Removes delegate from `configure`. You now set the delegate via `Superwall.shared.delegate`.
 - Removes `presenter` introduced in beta 5.
+- Removes ASN1Swift as a package dependency.
 
 ### Enhancements
 
