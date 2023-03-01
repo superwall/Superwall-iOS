@@ -14,7 +14,6 @@ struct LoadingView: View {
     GeometryReader { proxy in
       ActivityIndicatorView(isAnimating: model.isAnimating)
         .rotationAnimation(for: model.rotationAmount)
-//        .frame(width: 45, height: 45)
         .padding(20)
         .darkBlurredBackground()
         .scaleAnimation(for: model.scaleAmount)
@@ -37,8 +36,6 @@ struct LoadingView: View {
           Color.black.opacity(0.25)
             .edgesIgnoringSafeArea(.all)
         )
-        .opacityAnimation(for: model.opacityAmount)
-      
     }
   }
 }

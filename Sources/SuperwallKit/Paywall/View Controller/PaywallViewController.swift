@@ -331,8 +331,6 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       showRefreshButtonAfterTimeout(false)
       hideLoadingView()
 
-//      view.bringSubviewToFront(webView)
-
       if !spinnerDidShow {
         UIView.animate(
           withDuration: 0.6,

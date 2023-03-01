@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-
-
 struct ActivityIndicatorView: UIViewRepresentable {
   var isAnimating: Bool
 

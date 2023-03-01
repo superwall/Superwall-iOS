@@ -22,7 +22,7 @@ struct HiddenListenerViewModifier: ViewModifier {
   private func show() {
     model.isAnimating = true
     model.scaleAmount = 1
-    model.opacityAmount = 1.0
+    model.opacityAmount = 1
     model.rotationAmount = 0
   }
 
@@ -30,7 +30,7 @@ struct HiddenListenerViewModifier: ViewModifier {
     model.scaleAmount = 0.05
     model.opacityAmount = 0
     model.rotationAmount = .pi
-    self.model.isAnimating = false
+    model.isAnimating = false
   }
 }
 

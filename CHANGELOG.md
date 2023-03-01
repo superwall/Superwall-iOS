@@ -23,6 +23,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes bug where calling identify and immediately tracking a paywall would result in an error if it happened before configure returned.
 - Fixes compiler bug when calling track.
+- Tweaks the loading indicator.
+
 
 ## 3.0.0-beta.5
 
