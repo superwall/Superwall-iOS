@@ -36,6 +36,7 @@ struct LoadingView: View {
           Color.black.opacity(0.25)
             .edgesIgnoringSafeArea(.all)
         )
+        .opacityAnimation(for: model.opacityAmount)
     }
   }
 }
