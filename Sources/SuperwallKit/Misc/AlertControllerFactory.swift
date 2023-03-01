@@ -15,7 +15,8 @@ enum AlertControllerFactory {
     closeActionTitle: String = "Done",
     closeActionStyle: UIAlertAction.Style = .cancel,
     action: (() -> Void)? = nil,
-    onClose: (() -> Void)? = nil
+    onClose: (() -> Void)? = nil,
+    sourceView: UIView
   ) -> UIAlertController {
     let alertController = UIAlertController(
       title: title,
@@ -40,6 +41,7 @@ enum AlertControllerFactory {
       onClose?()
     }
     alertController.addAction(action)
+    alertController.popoverPresentationController?.sourceView = sourceView
 
     return alertController
   }

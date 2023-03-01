@@ -10,7 +10,7 @@ import Foundation
 /// Override the default behavior and products of a paywall.
 ///
 /// Provide an instance of this to ``Superwall/track(event:params:paywallOverrides:paywallHandler:)``.
-public struct PaywallOverrides {
+public final class PaywallOverrides: NSObject {
   /// Defines the products to override on the paywall.
   ///
   /// You can override one or more products of your choosing.
@@ -20,7 +20,7 @@ public struct PaywallOverrides {
   public let ignoreSubscriptionStatus: Bool
 
   /// Sets a custom presentation style for the paywall.
-  public let presentationStyle: PaywallPresentationStyle?
+  public let presentationStyle: PaywallPresentationStyle
 
   /// Override the default behavior and products of a paywall.
   ///
@@ -33,7 +33,7 @@ public struct PaywallOverrides {
   public init(
     products: PaywallProducts? = nil,
     ignoreSubscriptionStatus: Bool = false,
-    presentationStyleOverride: PaywallPresentationStyle? = nil
+    presentationStyleOverride: PaywallPresentationStyle = .none
   ) {
     self.products = products
     self.ignoreSubscriptionStatus = ignoreSubscriptionStatus

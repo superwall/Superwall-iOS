@@ -13,9 +13,6 @@ final class SuperwallService {
   static let shared = SuperwallService()
   #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
   private static let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
-  static var name: String {
-    return Superwall.shared.userAttributes["firstName"] as? String ?? ""
-  }
 
   static func configure() {
     // Superwall handles subscription logic by default. However, if you'd
@@ -34,24 +31,20 @@ final class SuperwallService {
     Superwall.shared.delegate = shared
   }
 
-  static func identify() async {
-    do {
-      try await Superwall.shared.identify(userId: "abc")
-    } catch {
-      print(error.localizedDescription)
-    }
+  static func identify() {
+    Superwall.shared.identify(userId: "abc")
   }
 
-  static func reset() async {
-    await Superwall.shared.reset()
+  static func reset() {
+    Superwall.shared.reset()
   }
 
   static func handleDeepLink(_ url: URL) {
     Superwall.shared.handleDeepLink(url)
   }
 
-  static func setName(to name: String) async {
-    await Superwall.shared.setUserAttributes(["firstName": name])
+  static func setName(to name: String) {
+    Superwall.shared.setUserAttributes(["firstName": name])
   }
 }
 

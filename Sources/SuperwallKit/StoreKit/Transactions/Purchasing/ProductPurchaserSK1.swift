@@ -161,8 +161,8 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   ) {
     restoration.dispatchGroup.enter()
     Task {
-      let isPaywallPresented = await Superwall.shared.isPaywallPresented
-      let paywallViewController = await Superwall.shared.paywallViewController
+      let isPaywallPresented = Superwall.shared.isPaywallPresented
+      let paywallViewController = Superwall.shared.paywallViewController
       for transaction in transactions {
         latestTransaction = transaction
         await checkForTimeout(of: transaction, in: paywallViewController)

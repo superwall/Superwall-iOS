@@ -56,10 +56,8 @@
   [SSASuperwallService sharedService].name = name;
 
   // Perform a demo login to the account.
-  __weak typeof(self) weakSelf = self;
-  [[SSASuperwallService sharedService] logInWithCompletion:^{
-    [weakSelf presentTrackEventViewController];
-  }];
+  [[SSASuperwallService sharedService] logIn];
+  [self presentTrackEventViewController];
 }
 
 #pragma mark - Private

@@ -39,10 +39,8 @@ struct TrackEventView: View {
           model.trackEvent()
         }
         BrandedButton(title: "Log Out") {
-          Task {
-            await model.logOut()
-            isLoggedIn = false
-          }
+          model.logOut()
+          isLoggedIn = false
         }
       }
       .padding()

@@ -68,7 +68,7 @@ final class GetPaywallVcNoChecksOperatorTests: XCTestCase {
       factory: dependencyContainer,
       paywallRequestManager: dependencyContainer.paywallRequestManager
     )
-    paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(for: .stub())
+    paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil)
 
     let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
       .eraseToAnyPublisher()

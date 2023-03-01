@@ -14,13 +14,13 @@ enum TemplateLogic {
     from paywall: Paywall,
     withParams params: JSON?,
     factory: VariablesFactory
-  ) -> String {
+  ) async -> String {
     let productsTemplate = ProductTemplate(
       eventName: "products",
       products: paywall.products
     )
 
-    let variablesTemplate = factory.makeJsonVariables(
+    let variablesTemplate = await factory.makeJsonVariables(
       productVariables: paywall.productVariables,
       params: params
     )

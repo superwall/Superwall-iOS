@@ -52,6 +52,8 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
     wait(for: [expectation], timeout: 0.1)
   }
 
@@ -88,6 +90,8 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    
     wait(for: [expectation], timeout: 0.1)
   }
 }

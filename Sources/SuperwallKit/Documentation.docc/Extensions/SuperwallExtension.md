@@ -41,8 +41,9 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``getTrackResult(forEvent:params:completion:)``
 - ``getTrackInfo(forEvent:params:)``
 - ``publisher(forEvent:params:paywallOverrides:)``
+- ``dismiss()-844a9``
+- ``dismiss()-4objm``
 - ``dismiss(completion:)``
-- ``dismiss()``
 - ``PaywallInfo``
 - ``SuperwallEvent``
 - ``SuperwallEventObjc``
@@ -58,19 +59,12 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 - <doc:SettingUserAttributes>
 - ``identify(userId:options:)``
-- ``identify(userId:options:completion:)``
-- ``identify(userId:completion:)``
 - ``identify(userId:)``
 - ``IdentityOptions``
-- ``reset()-8v37c``
-- ``reset(completion:)``
-- ``reset()-440dh``
+- ``reset()``
 - ``setUserAttributes(_:)``
-- ``setUserAttributes(_:completion:)``
 - ``setUserAttributesDictionary(_:)``
-- ``setUserAttributesDictionary(_:completion:)``
 - ``removeUserAttributes(_:)``
-- ``removeUserAttributes(_:completion:)``
 - ``userAttributes``
 
 ### Game Controller
@@ -88,10 +82,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 ### Helpers
 - ``togglePaywallSpinner(isHidden:)``
-- ``getPresentedViewController()``
-- ``getPresentedViewController(completion:)``
-- ``getLatestPaywallInfo()``
-- ``getLatestPaywallInfo(completion:)``
+- ``latestPaywallInfo``
+- ``presentedViewController``
 - ``userId``
 - ``isLoggedIn``
 - ``isConfigured``

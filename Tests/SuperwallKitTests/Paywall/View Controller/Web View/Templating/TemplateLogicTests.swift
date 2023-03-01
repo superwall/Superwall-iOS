@@ -32,7 +32,7 @@ final class TemplateLogicTests: XCTestCase {
     }
   }
 
-  func test_getBase64EncodedTemplates_oneProduct_noFreeTrial_userAttributes() {
+  func test_getBase64EncodedTemplates_oneProduct_noFreeTrial_userAttributes() async {
     // MARK: Given
     let products = [Product(type: .primary, id: "123")]
     let productVariables = [ProductVariable(type: .primary, attributes: ["period": "month"])]
@@ -52,7 +52,7 @@ final class TemplateLogicTests: XCTestCase {
     // MARK: When
 
     // Encode
-    let encodedTemplates = TemplateLogic.getBase64EncodedTemplates(
+    let encodedTemplates = await TemplateLogic.getBase64EncodedTemplates(
       from: .stub()
         .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables),
@@ -88,7 +88,7 @@ final class TemplateLogicTests: XCTestCase {
     XCTAssertTrue(jsonArray[3]["variables"].isEmpty)
   }
 
-  func test_getBase64EncodedTemplates_oneProduct_freeTrial_userAttributes() {
+  func test_getBase64EncodedTemplates_oneProduct_freeTrial_userAttributes() async {
     // MARK: Given
     let products = [Product(type: .primary, id: "123")]
     let productVariables = [ProductVariable(type: .primary, attributes: ["period": "month"])]
@@ -108,7 +108,7 @@ final class TemplateLogicTests: XCTestCase {
     // MARK: When
 
     // Encode
-    let encodedTemplates = TemplateLogic.getBase64EncodedTemplates(
+    let encodedTemplates = await TemplateLogic.getBase64EncodedTemplates(
       from: .stub()
         .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables)
@@ -145,7 +145,7 @@ final class TemplateLogicTests: XCTestCase {
     XCTAssertTrue(jsonArray[3]["variables"].isEmpty)
   }
 
-  func test_getBase64EncodedTemplates_threeProducts_freeTrial_userAttributes() {
+  func test_getBase64EncodedTemplates_threeProducts_freeTrial_userAttributes() async {
     // MARK: Given
     let products = [
       Product(type: .primary, id: "123"),
@@ -173,7 +173,7 @@ final class TemplateLogicTests: XCTestCase {
     // MARK: When
 
     // Encode
-    let encodedTemplates = TemplateLogic.getBase64EncodedTemplates(
+    let encodedTemplates = await TemplateLogic.getBase64EncodedTemplates(
       from: .stub()
         .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables)
@@ -216,7 +216,7 @@ final class TemplateLogicTests: XCTestCase {
     XCTAssertTrue(jsonArray[3]["variables"].isEmpty)
   }
 
-  func test_getBase64EncodedTemplates_threeProducts_freeTrial_userAttributes_variablesTemplate() {
+  func test_getBase64EncodedTemplates_threeProducts_freeTrial_userAttributes_variablesTemplate() async {
     // MARK: Given
     let products = [
       Product(type: .primary, id: "123"),
@@ -247,7 +247,7 @@ final class TemplateLogicTests: XCTestCase {
     // MARK: When
 
     // Encode
-    let encodedTemplates = TemplateLogic.getBase64EncodedTemplates(
+    let encodedTemplates = await TemplateLogic.getBase64EncodedTemplates(
       from: .stub()
         .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables)
