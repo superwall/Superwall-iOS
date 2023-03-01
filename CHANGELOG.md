@@ -14,6 +14,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Removes delegate from `configure`. You now set the delegate via `Superwall.shared.delegate`.
 - Removes `presenter` introduced in beta 5.
 - Removes ASN1Swift as a package dependency.
+- Changes free trial logic. Previously we'd look at just the primary product. However, we determing free trial eligibility based on the first product in the paywall that has a free trial available.
 
 ### Enhancements
 
@@ -24,7 +25,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes bug where calling identify and immediately tracking a paywall would result in an error if it happened before configure returned.
 - Fixes compiler bug when calling track.
 - Tweaks the loading indicator.
-
+- Fixes removing an attribute using Objective-C.
+- Fixes issues where some functions tagged for the main actor weren't actually running on the main actor.
+- Fixes issues with paywall product overrides.
 
 ## 3.0.0-beta.5
 
