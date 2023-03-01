@@ -533,7 +533,6 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 
   private func presentationDidFinish() {
     isPresented = true
-    cache?.activePaywallVcKey = cacheKey
     Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall()
     Task(priority: .utility) {
       await trackOpen()
@@ -615,6 +614,9 @@ extension PaywallViewController {
     guard isActive else {
       return
     }
+
+    cache?.activePaywallVcKey = cacheKey
+
     if isSafariVCPresented {
       return
     }
@@ -641,7 +643,9 @@ extension PaywallViewController {
 
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
-
+    if view.window == nil {
+      return
+    }
     guard isPresented else {
       return
     }
@@ -715,8 +719,8 @@ extension PaywallViewController {
       paywallStatePublisher?.send(completion: .finished)
       paywallStatePublisher = nil
     }
+    Superwall.shared.destroyPresentingWindow()
     completion?()
-    Superwall.shared.hidePresentingWindow()
   }
 }
 

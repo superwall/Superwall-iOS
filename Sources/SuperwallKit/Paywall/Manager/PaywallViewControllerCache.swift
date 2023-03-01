@@ -7,8 +7,29 @@
 
 import Foundation
 
-final class PaywallViewControllerCache {
-  var activePaywallVcKey: String?
+final class PaywallViewControllerCache: @unchecked Sendable {
+  var activePaywallVcKey: String? {
+    get {
+      queue.sync { [weak self] in
+        return self?._activePaywallVcKey
+      }
+    }
+    set {
+      queue.async { [weak self] in
+        self?._activePaywallVcKey = newValue
+      }
+    }
+  }
+  private var _activePaywallVcKey: String?
+
+  var activePaywallViewController: PaywallViewController? {
+    guard let activePaywallVcKey = activePaywallVcKey else {
+      return nil
+    }
+
+    return getPaywallViewController(forKey: activePaywallVcKey)
+  }
+
   private let queue = DispatchQueue(label: "com.superwall.paywallcache")
   private var cache: [String: PaywallViewController] = [:]
   private let deviceLocaleString: String
@@ -31,14 +52,6 @@ final class PaywallViewControllerCache {
     return result
   }
 
-  func getActivePaywallViewController() -> PaywallViewController? {
-    guard let activePaywallVcKey = activePaywallVcKey else {
-      return nil
-    }
-
-    return getPaywallViewController(forKey: activePaywallVcKey)
-  }
-
   func removePaywallViewController(forKey key: String) {
     queue.async { [weak self] in
       self?.cache.removeValue(forKey: key)
@@ -51,42 +64,11 @@ final class PaywallViewControllerCache {
         return
       }
       for key in self.cache.keys {
-        if key == self.activePaywallVcKey {
+        if key == self._activePaywallVcKey {
           continue
         }
         self.cache.removeValue(forKey: key)
       }
     }
   }
-
-  /*
-
-  @MainActor
-  func getPaywallViewController(identifier: String) -> PaywallViewController? {
-    let key = PaywallCacheLogic.key(
-      identifier: identifier,
-      locale: deviceLocaleString
-    )
-    return PaywallViewController.cache.first { $0.cacheKey == key }
-  }
-
-  @MainActor
-  func removePaywallViewController(identifier: String) {
-    if let viewController = getPaywallViewController(identifier: identifier) {
-      PaywallViewController.cache.remove(viewController)
-    }
-  }
-
-  @MainActor
-  func removePaywallViewController(_ viewController: PaywallViewController) {
-    PaywallViewController.cache.remove(viewController)
-  }
-
-  @MainActor
-  func clearCache() {
-    // don't remove the reference to a presented paywall
-    for viewController in PaywallViewController.cache where !viewController.isActive {
-      PaywallViewController.cache.remove(viewController)
-    }
-  }*/
 }

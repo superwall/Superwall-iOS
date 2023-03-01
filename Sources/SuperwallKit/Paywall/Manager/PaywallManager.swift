@@ -10,7 +10,7 @@ import UIKit
 
 class PaywallManager {
   var presentedViewController: PaywallViewController? {
-    return cache.getActivePaywallViewController()
+    return cache.activePaywallViewController
 	}
   private unowned let paywallRequestManager: PaywallRequestManager
   private unowned let factory: ViewControllerFactory & CacheFactory & DeviceInfoFactory
@@ -23,10 +23,6 @@ class PaywallManager {
   ) {
     self.factory = factory
     self.paywallRequestManager = paywallRequestManager
-  }
-
-  func setActivePaywallVcKey(to key: String) {
-    cache.activePaywallVcKey = key
   }
 
 	func removePaywallViewController(forKey: String) {
