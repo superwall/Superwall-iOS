@@ -79,7 +79,7 @@ extension Superwall {
   @objc public func removeUserAttributes(_ keys: [String]) {
     let userAttributes: [String: Any?] = keys.reduce([:]) { dictionary, key in
       var dictionary = dictionary
-      dictionary[key] = nil
+      dictionary[key] = Any?.none
       return dictionary
     }
     setUserAttributes(userAttributes)
