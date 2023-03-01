@@ -74,7 +74,7 @@ final class ShimmerView: UIImageView {
       shimmerImageView.leadingAnchor.constraint(equalTo: leadingAnchor),
       shimmerImageView.trailingAnchor.constraint(equalTo: trailingAnchor),
       shimmerImageView.topAnchor.constraint(equalTo: topAnchor),
-      shimmerImageView.bottomAnchor.constraint(equalTo: bottomAnchor),
+      shimmerImageView.bottomAnchor.constraint(equalTo: bottomAnchor)
     ])
 
     // style
