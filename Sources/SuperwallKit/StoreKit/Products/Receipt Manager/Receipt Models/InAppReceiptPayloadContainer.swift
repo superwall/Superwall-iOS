@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import ASN1Swift
 
 struct InAppReceiptPayloadContainer: ASN1Decodable {
   var payload: InAppReceiptPayload

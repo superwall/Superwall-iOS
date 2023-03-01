@@ -16,9 +16,9 @@ final class ShimmerView: UIImageView {
     gradientLayer.endPoint = CGPoint(x: 1.0, y: 1.0)
 
     let edgesColor = UIColor.white.withAlphaComponent(0.0).cgColor
-    let centerColor = UIColor.white.withAlphaComponent(isLightBackground ? 0.3 : 0.125).cgColor
+    let centerColor = UIColor.white.withAlphaComponent(isLightBackground ? 0.5 : 0.2).cgColor
     gradientLayer.colors = [edgesColor, centerColor, edgesColor]
-    gradientLayer.locations = [0.3, 0.5, 0.7]
+    gradientLayer.locations = [0, 0.5, 1.0]
     gradientLayer.add(animation, forKey: animation.keyPath)
     return gradientLayer
   }()
@@ -46,6 +46,7 @@ final class ShimmerView: UIImageView {
       return placeholder
     }
   }
+
   private lazy var animation: CABasicAnimation = {
     let animation = CABasicAnimation(keyPath: "locations")
     animation.fromValue = [-1.0, -0.5, 0.0]
@@ -57,6 +58,8 @@ final class ShimmerView: UIImageView {
     return animation
   }()
 
+  private let shimmerImageView = UIImageView()
+
   init(
     backgroundColor: UIColor,
     tintColor: UIColor,
@@ -64,14 +67,36 @@ final class ShimmerView: UIImageView {
   ) {
     self.isLightBackground = isLightBackground
     super.init(frame: .zero)
-    self.tintColor = tintColor.withAlphaComponent(0.5)
+
+    // add the shimmer
+    addSubview(shimmerImageView)
+    NSLayoutConstraint.activate([
+      shimmerImageView.leadingAnchor.constraint(equalTo: leadingAnchor),
+      shimmerImageView.trailingAnchor.constraint(equalTo: trailingAnchor),
+      shimmerImageView.topAnchor.constraint(equalTo: topAnchor),
+      shimmerImageView.bottomAnchor.constraint(equalTo: bottomAnchor)
+    ])
+
+    // style
+    self.tintColor = tintColor.withAlphaComponent(0.25)
+    shimmerImageView.tintColor = tintColor.withAlphaComponent(1.0)
+
     self.backgroundColor = backgroundColor
+    shimmerImageView.backgroundColor = backgroundColor
 
     translatesAutoresizingMaskIntoConstraints = false
+    shimmerImageView.translatesAutoresizingMaskIntoConstraints = false
+
     image = placeholderImage
-    layer.addSublayer(gradientLayer)
+    shimmerImageView.image = placeholderImage
+
     contentMode = .scaleAspectFit
+    shimmerImageView.contentMode = .scaleAspectFit
+
     clipsToBounds = true
+    shimmerImageView.clipsToBounds = true
+
+    shimmerImageView.layer.mask = gradientLayer
   }
 
   override func layoutSubviews() {
@@ -86,5 +111,6 @@ final class ShimmerView: UIImageView {
   override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
     super.traitCollectionDidChange(previousTraitCollection)
     image = placeholderImage
+    shimmerImageView.image = placeholderImage
   }
 }

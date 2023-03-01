@@ -4,6 +4,7 @@ excluded:
   - ${PWD}/DerivedData
   - ${PWD}/Examples
   - ${PWD}/Tests
+  - ${PWD}/Sources/SuperwallKit/StoreKit/Products/Receipt Manager/ASN1Swift
 
 disabled_rules:
   - discarded_notification_center_observer

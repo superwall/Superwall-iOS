@@ -15,7 +15,7 @@ struct ActivityIndicatorView: UIViewRepresentable {
     spinner.color = .white
     spinner.translatesAutoresizingMaskIntoConstraints = false
     spinner.style = .large
-    spinner.hidesWhenStopped = true
+    spinner.hidesWhenStopped = false
     return spinner
   }
 

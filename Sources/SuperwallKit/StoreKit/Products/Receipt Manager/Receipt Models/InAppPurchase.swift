@@ -7,7 +7,6 @@
 // swiftlint:disable force_cast implicitly_unwrapped_optional
 
 import Foundation
-import ASN1Swift
 
 struct InAppPurchase: ASN1Decodable, Hashable {
   static var template: ASN1Template {

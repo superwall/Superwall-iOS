@@ -60,7 +60,6 @@
 		2698874EEAE37BAECE7B8FD8 /* Network.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79E2143AD65D151AE7A4BF0F /* Network.swift */; };
 		271D224C45C545EAAA47D4AD /* UserAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 166374D62DB0AE4E759F2CA4 /* UserAttributes.swift */; };
 		27E2E3782CCEE667F4FAFEBF /* PaywallGraveyard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F551F1C92516FEB24A107A94 /* PaywallGraveyard.swift */; };
-		28FED9AE68193B568FF887E1 /* ASN1Swift in Frameworks */ = {isa = PBXBuildFile; productRef = 5BE89F371D9B5971F3271921 /* ASN1Swift */; };
 		2A9A91EFD65458797F6B3D59 /* Tracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81601941E6DCEEEC38A2868 /* Tracking.swift */; };
 		2BC7059002BF290E7E347B55 /* SWWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFACE6CE4DAE20FB9863302E /* SWWebView.swift */; };
 		2DA159644BAD6737FD1996CE /* PaywallWebEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7E6196C1445FABD2BA1833 /* PaywallWebEvent.swift */; };
@@ -73,7 +72,6 @@
 		35960B8492C96ED3FB40914B /* PurchaseResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7334CD5C8989BE285765BC3E /* PurchaseResult.swift */; };
 		35FA646E2C0A1778E586CDAE /* ScaleAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8DA08B90AA82CB3337B624 /* ScaleAnimation.swift */; };
 		36C39E98FE6528FF6B72BF6D /* Publisher+Async.swift in Sources */ = {isa = PBXBuildFile; fileRef = A42411E84D1A21D73D0BDA0E /* Publisher+Async.swift */; };
-		37344F5E62F926D676C51D89 /* ASN1Swift in Frameworks */ = {isa = PBXBuildFile; productRef = 36F71E474FE3523EF5DBADB3 /* ASN1Swift */; };
 		37607F7A7EC11CA52C64BB94 /* SWProductNumberGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BB801E8B818F3B96AF65D6 /* SWProductNumberGroup.swift */; };
 		38291090AEFC86AAF64E74DB /* TransactionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33BB1232A536B665B0C33E09 /* TransactionModel.swift */; };
 		389FED87EF4F78CBE68BC575 /* SuperwallDelegateObjc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120AB0D996202873DA53A667 /* SuperwallDelegateObjc.swift */; };
@@ -539,7 +537,7 @@
 		BF091A5565631C9F426F304B /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
 		C054891709C534F59C93C815 /* URLSessionRetryLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionRetryLogicTests.swift; sourceTree = "<group>"; };
 		C0F807DE042D48EB3DCB59F0 /* PaywallViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewController.swift; sourceTree = "<group>"; };
-		C22CA9431D5F791BE7A9BE27 /* Documentation.docc */ = {isa = PBXFileReference; path = Documentation.docc; sourceTree = "<group>"; };
+		C22CA9431D5F791BE7A9BE27 /* Documentation.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = Documentation.docc; sourceTree = "<group>"; };
 		C28014EF3A8BF357F2E71FC1 /* PaywallInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallInfo.swift; sourceTree = "<group>"; };
 		C649C8B193A114A5BDAF49C0 /* AppSessionLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionLogic.swift; sourceTree = "<group>"; };
 		C6E8278A89BA67AE4FF032DB /* PaywallLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallLogic.swift; sourceTree = "<group>"; };
@@ -608,7 +606,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				28FED9AE68193B568FF887E1 /* ASN1Swift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -617,7 +614,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				3002A50E92B640B4E3A98662 /* SuperwallKit.framework in Frameworks */,
-				37344F5E62F926D676C51D89 /* ASN1Swift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1738,7 +1734,6 @@
 			);
 			name = SuperwallKit;
 			packageProductDependencies = (
-				5BE89F371D9B5971F3271921 /* ASN1Swift */,
 			);
 			productName = SuperwallKit;
 			productReference = 04FB15C76DE3D22CB370AFDB /* SuperwallKit.framework */;
@@ -1759,7 +1754,6 @@
 			);
 			name = SuperwallKitTests;
 			packageProductDependencies = (
-				36F71E474FE3523EF5DBADB3 /* ASN1Swift */,
 			);
 			productName = SuperwallKitTests;
 			productReference = 92001AC11F099F7B03AF338A /* SuperwallKitTests.xctest */;
@@ -1772,8 +1766,6 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 1200;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = B7BB212B66F694F1FDA2FA4F /* Build configuration list for PBXProject "SuperwallKit" */;
 			compatibilityVersion = "Xcode 10.0";
@@ -1785,7 +1777,6 @@
 			);
 			mainGroup = 5CE8CEF97A892FFF3D0D8F06;
 			packageReferences = (
-				6A0AB63DCE10E48A17E4F411 /* XCRemoteSwiftPackageReference "ASN1Swift" */,
 			);
 			projectDirPath = "";
 			projectRoot = "";
@@ -2340,30 +2331,6 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		6A0AB63DCE10E48A17E4F411 /* XCRemoteSwiftPackageReference "ASN1Swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/tikhop/ASN1Swift";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.4;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		36F71E474FE3523EF5DBADB3 /* ASN1Swift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 6A0AB63DCE10E48A17E4F411 /* XCRemoteSwiftPackageReference "ASN1Swift" */;
-			productName = ASN1Swift;
-		};
-		5BE89F371D9B5971F3271921 /* ASN1Swift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 6A0AB63DCE10E48A17E4F411 /* XCRemoteSwiftPackageReference "ASN1Swift" */;
-			productName = ASN1Swift;
-		};
-/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCVersionGroup section */
 		E36770FA7C30179E09D62489 /* Model.xcdatamodeld */ = {

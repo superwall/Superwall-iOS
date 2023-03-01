@@ -1,6 +1,6 @@
 //
 //  SwiftUIView.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 11/10/2022.
 //
@@ -14,10 +14,10 @@ struct LoadingView: View {
     GeometryReader { proxy in
       ActivityIndicatorView(isAnimating: model.isAnimating)
         .rotationAnimation(for: model.rotationAmount)
-        .frame(width: 75, height: 75)
-        .padding(12.5)
+        .padding(20)
         .darkBlurredBackground()
         .scaleAnimation(for: model.scaleAmount)
+        .opacityAnimation(for: model.opacityAmount)
         .bottomPaddingAnimation(for: model.padding)
         .listen(
           to: model.$movedUp,

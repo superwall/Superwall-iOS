@@ -333,7 +333,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 
       if !spinnerDidShow {
         UIView.animate(
-          withDuration: 1,
+          withDuration: 0.6,
           delay: 0.25,
           animations: {
             self.shimmerView?.alpha = 0.0
@@ -364,7 +364,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       tintColor: paywall.backgroundColor.readableOverlayColor,
       isLightBackground: !paywall.backgroundColor.isDarkColor
     )
-    view.addSubview(shimmerView)
+    view.insertSubview(shimmerView, belowSubview: webView)
     NSLayoutConstraint.activate([
       shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
