@@ -2,6 +2,17 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-beta.7
+
+### Breaking Changes
+
+- Changes Objective-C method `getTrackInfo` to `getTrackResult` to be in line with the Swift API. 
+- Removes the error case from the `TrackResult` and adds in `userIsSubscribed` and `paywallNotAvailable` cases.
+
+### Fixes
+
+- Makes `NetworkEnvironment` Objective-C compatible.
+
 ## 3.0.0-beta.6
 
 ### Breaking Changes

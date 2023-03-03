@@ -37,6 +37,7 @@ extension Superwall {
       .checkForPaywallResult()
       .getPaywallViewControllerNoChecks()
       .checkPaywallIsPresentable()
+      .convertToTrackResult()
       .async()
   }
 }
@@ -58,27 +59,12 @@ extension Publisher where Output == TrackResult {
             case let error as GetTrackResultError:
               switch error {
               case .willNotPresent(let result):
-                continuation.resume(with: .success(result))
+                let trackResult = GetTrackResultLogic.convertTriggerResult(result)
+                continuation.resume(with: .success(trackResult))
               case .userIsSubscribed:
-                let userInfo: [String: Any] = [
-                  "Already Subscribed": "The user has an active subscription so the paywall won't show."
-                ]
-                let error = NSError(
-                  domain: "com.superwall",
-                  code: 404,
-                  userInfo: userInfo
-                )
-                continuation.resume(with: .success(.error(error)))
+                continuation.resume(with: .success(.userIsSubscribed))
               case .paywallNotAvailable:
-                let userInfo: [String: Any] = [
-                  "Paywall View Controller Error": "There was an issue retrieving the Paywall View Controller."
-                ]
-                let error = NSError(
-                  domain: "com.superwall",
-                  code: 404,
-                  userInfo: userInfo
-                )
-                continuation.resume(with: .success(.error(error)))
+                continuation.resume(with: .success(.paywallNotAvailable))
               }
             default:
               break

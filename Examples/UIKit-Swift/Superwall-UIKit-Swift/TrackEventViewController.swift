@@ -90,7 +90,7 @@ final class TrackEventViewController: UIViewController {
   // The below function gives an example of how to track an event using Combine publishers:
   /*
   func trackEventUsingCombine() {
-    cancellable = Superwall
+    cancellable = Superwall.shared
       .publisher(forEvent: "MyEvent")
       .sink { paywallState in
         switch paywallState {
@@ -113,10 +113,13 @@ final class TrackEventViewController: UIViewController {
             print("The user is in a holdout group, with experiment id: \(experiment.id), group id: \(experiment.groupId), paywall id: \(experiment.variant.paywallId ?? "")")
           case .eventNotFound:
             print("The event wasn't found in a campaign on the dashboard.")
+          case .userIsSubscribed:
+            print("The user is subscribed.")
           case .error(let error):
             print("Failed to present paywall. Consider a native paywall fallback", error)
           }
         }
       }
-  }*/
+  }
+  */
 }

@@ -20,7 +20,7 @@ public final class SuperwallOptions: NSObject {
   /// **WARNING**:  The different network environments that the SDK should use.
   /// Only use this enum to set ``SuperwallOptions/networkEnvironment-swift.property``
   ///  if told so explicitly by the Superwall team.
-  public enum NetworkEnvironment {
+  public enum NetworkEnvironment: Int {
     /// Default: Uses the standard latest environment.
     case release
     /// **WARNING**: Uses a release candidate environment. This is not meant for a production environment.

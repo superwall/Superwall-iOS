@@ -277,7 +277,7 @@ public final class Superwall: NSObject, ObservableObject {
     return shared
   }
 
-  /// Objective-C only function that configures a shared instance of ``Superwall`` for use throughout your app.
+  /// Objective-C-only function that configures a shared instance of ``Superwall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out
   /// our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
@@ -307,7 +307,7 @@ public final class Superwall: NSObject, ObservableObject {
     )
   }
 
-  /// Objective-C only function that configures a shared instance of ``Superwall`` for use throughout your app.
+  /// Objective-C-only function that configures a shared instance of ``Superwall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out
   /// our <doc:GettingStarted> article for a tutorial on how to configure the SDK.

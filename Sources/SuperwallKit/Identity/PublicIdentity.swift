@@ -31,7 +31,7 @@ extension Superwall {
     )
   }
 
-  /// Objective-C only method. Creates an account with Superwall. This links a `userId` to Superwall's automatically generated alias.
+  /// Objective-C-only method. Creates an account with Superwall. This links a `userId` to Superwall's automatically generated alias.
   ///
   /// Call this as soon as you have a `userId`.
   ///
