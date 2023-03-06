@@ -105,4 +105,24 @@ extension Superwall {
     let result = await getTrackResult(forEvent: event, params: params)
     return TrackResultObjc(trackResult: result)
   }
+
+  /// Objective-C-only function to preemptively get the result of tracking an event.
+  ///
+  /// This is useful for when you want to know whether a particular event will
+  /// present a paywall in the future.
+  ///
+  /// Note that this method does not present a paywall. To do that, use
+  /// ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``.
+  ///
+  /// - Parameters:
+  ///     - event: The name of the event you want to track.
+  ///
+  /// - Returns: A ``TrackResultObjc`` object that contains information about the result of tracking an event.
+  @available(swift, obsoleted: 1.0)
+  @objc public func getTrackResult(
+    forEvent event: String
+  ) async -> TrackResultObjc {
+    let result = await getTrackResult(forEvent: event, params: nil)
+    return TrackResultObjc(trackResult: result)
+  }
 }
