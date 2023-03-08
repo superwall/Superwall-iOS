@@ -18,6 +18,8 @@ public enum PaywallPresentationStyle: Int, Decodable, Sendable {
   case fullscreenNoAnimation
   /// A view presentation style in which the presented paywall pushes on screen, as if pushed on to a navigation stack.
   case push
+  /// A view presentation style in which the presented paywall slides up to cover half of the screen.
+  case halfScreen
   /// Indicates that the presentation style to be used is the one set on the dashboard.
   case none
 
@@ -26,6 +28,7 @@ public enum PaywallPresentationStyle: Int, Decodable, Sendable {
     case fullscreen = "FULLSCREEN"
     case fullscreenNoAnimation = "NO_ANIMATION"
     case push = "PUSH"
+    case halfScreen = "HALF_SCREEN"
   }
 
   public init(from decoder: Decoder) throws {
@@ -43,6 +46,8 @@ public enum PaywallPresentationStyle: Int, Decodable, Sendable {
       presentationStyle = .fullscreenNoAnimation
     case .push:
       presentationStyle = .push
+    case .halfScreen:
+      presentationStyle = .halfScreen
     }
     self = presentationStyle
   }
