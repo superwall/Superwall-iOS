@@ -21,8 +21,8 @@ extension Superwall {
 	/// - Parameter completion: An optional completion block that gets called after the paywall is dismissed.
   /// Defaults to `nil`.
   @objc public func dismiss(completion: (() -> Void)? = nil) {
-    Task {
-      await dismiss()
+    Task { [weak self] in
+      await self?.dismiss()
       completion?()
     }
   }
@@ -30,8 +30,8 @@ extension Superwall {
   /// Objective-C-only method. Dismisses the presented paywall.
   @available(swift, obsoleted: 1.0)
   @objc public func dismiss() {
-    Task {
-      await dismiss()
+    Task { [weak self] in
+      await self?.dismiss()
     }
   }
 

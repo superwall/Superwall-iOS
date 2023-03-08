@@ -23,11 +23,12 @@ final class PaywallViewControllerCache: @unchecked Sendable {
   private var _activePaywallVcKey: String?
 
   var activePaywallViewController: PaywallViewController? {
-    guard let activePaywallVcKey = activePaywallVcKey else {
-      return nil
+    queue.sync { [unowned self] in
+      guard let activePaywallVcKey = _activePaywallVcKey else {
+        return nil
+      }
+      return cache[activePaywallVcKey]
     }
-
-    return getPaywallViewController(forKey: activePaywallVcKey)
   }
 
   private let queue = DispatchQueue(label: "com.superwall.paywallcache")

@@ -12,6 +12,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Makes `NetworkEnvironment` Objective-C compatible.
+- Fixes an issue where a manually dismissed modally presented paywall wouldn't properly dismiss.
 
 ## 3.0.0-beta.6
 

@@ -179,10 +179,6 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 		fatalError("init(coder:) has not been implemented")
 	}
 
-  deinit {
-    cache?.removePaywallViewController(forKey: cacheKey)
-  }
-
   override func viewDidLoad() {
     super.viewDidLoad()
 		configureUI()
@@ -475,7 +471,6 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       || isBeingPresented {
       return completion(false)
     }
-
     addShimmerView(onPresent: true)
     prepareForPresentation()
 
@@ -643,9 +638,6 @@ extension PaywallViewController {
 
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
-    if view.window == nil {
-      return
-    }
     guard isPresented else {
       return
     }
