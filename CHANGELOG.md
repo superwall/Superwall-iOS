@@ -8,11 +8,14 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Changes Objective-C method `getTrackInfo` to `getTrackResult` to be in line with the Swift API. 
 - Removes the error case from the `TrackResult` and adds in `userIsSubscribed` and `paywallNotAvailable` cases.
+- Moves main actor conformance to functions of PurchaseController protocol rather than the whole protocol.
+- Changes Objective-C method `setUserAttributesDictionary(_:)` to `setUserAttributes(_:)`.
 
 ### Fixes
 
 - Makes `NetworkEnvironment` Objective-C compatible.
 - Fixes an issue where a manually dismissed modally presented paywall wouldn't properly dismiss.
+- Fixes race condition when calling identify and tracking a paywall.
 
 ## 3.0.0-beta.6
 

@@ -55,7 +55,7 @@ extension Superwall {
   // MARK: - Objective-C-only Track
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
   /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
-  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)``
+  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)-1wql2``
   /// if you’re using Swift.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method
@@ -215,7 +215,7 @@ extension Superwall {
 
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
   /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
-  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)``
+  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)-1wql2``
   /// if you’re using Swift.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method
@@ -239,7 +239,7 @@ extension Superwall {
 
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
   /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
-  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)``
+  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)-1wql2``
   /// if you’re using Swift.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method
@@ -269,7 +269,7 @@ extension Superwall {
 
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
   /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
-  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)``
+  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)-1wql2``
   /// if you’re using Swift.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method
@@ -310,7 +310,7 @@ extension Superwall {
 
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
   /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
-  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)``
+  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)-1wql2``
   /// if you’re using Swift.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method

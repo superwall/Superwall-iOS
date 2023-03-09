@@ -42,7 +42,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Properties stored about the user, set using ``setUserAttributes(_:)``.
+  /// Properties stored about the user, set using ``setUserAttributes(_:)-1wql2``.
   public var userAttributes: [String: Any] {
     return dependencyContainer.identityManager.userAttributes
   }

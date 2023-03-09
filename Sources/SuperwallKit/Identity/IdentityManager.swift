@@ -12,6 +12,9 @@
 // synchronised via a dispatch queue. When writing, use queue.async, when
 // reading use a computed var with a queue.sync block. You do not need to
 // use the queue during init.
+// A Dispatch Group is used when calling functions that will call didSetIdentity.
+// This is to prevent the case where identitySubject sends a true value before
+// all functions affecting the identity have finished.
 //
 // *******************************************************************
 
@@ -80,6 +83,7 @@ class IdentityManager {
   /// When `false`, the SDK is unable to present paywalls.
   private let identitySubject = CurrentValueSubject<Bool, Never>(false)
   private let queue = DispatchQueue(label: "com.superwall.identitymanager")
+  private let group = DispatchGroup()
 
   private unowned let deviceHelper: DeviceHelper
   private unowned let storage: Storage
@@ -100,6 +104,7 @@ class IdentityManager {
 
   /// Checks for static config upgrade before setting identity.
   func configure() async {
+    group.enter()
     let neverCalledStaticConfig = storage.neverCalledStaticConfig
     let isFirstAppOpen = !(storage.get(DidTrackFirstSeen.self) ?? false)
 
@@ -110,6 +115,7 @@ class IdentityManager {
     ) {
       await configManager.getAssignments()
     }
+    group.leave()
 
     didSetIdentity()
   }
@@ -128,6 +134,8 @@ class IdentityManager {
       )
       return
     }
+
+    group.enter()
 
     queue.async { [weak self] in
       guard let self = self else {
@@ -156,6 +164,7 @@ class IdentityManager {
         Task.detached {
           await self.configManager.getAssignments()
         }
+        self.group.leave()
         self.didSetIdentity()
       }
 
@@ -167,6 +176,7 @@ class IdentityManager {
         if options.restorePaywallAssignments {
           Task {
             await self.configManager.getAssignments()
+            self.group.leave()
             self.didSetIdentity()
           }
         } else {
@@ -181,7 +191,9 @@ class IdentityManager {
   /// Sends a `true` value to the `identitySubject` in order to fire
   /// triggers after reset.
   func didSetIdentity() {
-    identitySubject.send(true)
+    group.notify(queue: .main) { [weak self] in
+      self?.identitySubject.send(true)
+    }
   }
 
   /// Saves the aliasId and appUserId to storage and user attributes.
@@ -220,8 +232,10 @@ extension IdentityManager {
     if duringIdentify {
       self._reset()
     } else {
+      group.enter()
       queue.async { [weak self] in
         self?._reset()
+        self?.group.leave()
         self?.didSetIdentity()
       }
     }
