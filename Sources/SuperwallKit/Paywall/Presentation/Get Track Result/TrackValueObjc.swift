@@ -10,8 +10,8 @@ import Foundation
 /// The result of tracking an event.
 ///
 /// Contains the possible cases resulting from tracking an event.
-@objc(SWKTrackResult)
-public enum TrackResultObjc: Int, Sendable, Equatable {
+@objc(SWKTrackValue)
+public enum TrackValueObjc: Int, Sendable, Equatable {
   /// This event was not found on the dashboard.
   ///
   /// Please make sure you have added the event to a campaign on the dashboard and
@@ -27,16 +27,26 @@ public enum TrackResultObjc: Int, Sendable, Equatable {
   /// A matching rule was found and this user was assigned to a holdout group so will not be shown a paywall.
   case holdout
 
-  /// An error occurred and the user will not be shown a paywall.
-  case error
+  /// No view controller could be found to present on.
+  case paywallNotAvailable
+
+  /// The user is subscribed.
+  ///
+  /// This means ``Superwall/subscriptionStatus`` is set to `.active`. If you're
+  /// letting Superwall handle subscription-related logic, it will be based on the on-device
+  /// receipts. Otherwise it'll be based on the value you've set.
+  ///
+  /// By default, paywalls do not show to users who are already subscribed. You can override this
+  /// behavior in the paywall editor.
+  case userIsSubscribed
 }
 
 /// Information about the result of tracking an event.
-@objc(SWKTrackInfo)
+@objc(SWKTrackResult)
 @objcMembers
-public final class TrackInfoObjc: NSObject, Sendable {
+public final class TrackResultObjc: NSObject, Sendable {
   /// The result of tracking an event.
-  public let result: TrackResultObjc
+  public let value: TrackValueObjc
 
   /// A campaign experiment that was assigned to a user.
   ///
@@ -44,31 +54,26 @@ public final class TrackInfoObjc: NSObject, Sendable {
   /// a `paywall`.
   public let experiment: Experiment?
 
-  /// The error returned when the `result` is an `error`.
-  public let error: NSError?
-
   init(trackResult: TrackResult) {
     switch trackResult {
     case .paywall(let experiment):
-      self.result = .paywall
+      self.value = .paywall
       self.experiment = experiment
-      self.error = nil
-    case .error(let error):
-      self.result = .error
-      self.experiment = nil
-      self.error = error
     case .eventNotFound:
-      self.result = .eventNotFound
+      self.value = .eventNotFound
       self.experiment = nil
-      self.error = nil
     case .holdout(let experiment):
-      self.result = .holdout
+      self.value = .holdout
       self.experiment = experiment
-      self.error = nil
     case .noRuleMatch:
-      self.result = .noRuleMatch
+      self.value = .noRuleMatch
       self.experiment = nil
-      self.error = nil
+    case .userIsSubscribed:
+      self.value = .userIsSubscribed
+      self.experiment = nil
+    case .paywallNotAvailable:
+      self.value = .paywallNotAvailable
+      self.experiment = nil
     }
   }
 }

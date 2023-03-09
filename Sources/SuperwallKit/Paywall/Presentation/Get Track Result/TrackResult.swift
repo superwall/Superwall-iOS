@@ -2,15 +2,15 @@
 //  File.swift
 //  
 //
-//  Created by Yusuf Tör on 22/11/2022.
+//  Created by Yusuf Tör on 03/03/2023.
 //
 
 import Foundation
 
-/// The result of a paywall trigger.
+/// The result of a tracking an event.
 ///
-/// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
-public enum TriggerResult: Sendable, Equatable {
+/// Contains the possible cases resulting from tracking an event.
+public enum TrackResult: Sendable, Equatable {
   /// This event was not found on the dashboard.
   ///
   /// Please make sure you have added the event to a campaign on the dashboard and
@@ -32,10 +32,16 @@ public enum TriggerResult: Sendable, Equatable {
   ///   - experiment: The experiment  associated with the trigger.
   case holdout(Experiment)
 
-  /// An error occurred and the user will not be shown a paywall.
+  /// The user is subscribed.
   ///
-  /// If the error code is `101`, it means that no view controller could be found to present on. Otherwise a network failure may have occurred.
+  /// This means ``Superwall/subscriptionStatus`` is set to `.active`. If you're
+  /// letting Superwall handle subscription-related logic, it will be based on the on-device
+  /// receipts. Otherwise it'll be based on the value you've set.
   ///
-  /// In these instances, consider fallng back to a native paywall.
-  case error(NSError)
+  /// By default, paywalls do not show to users who are already subscribed. You can override this
+  /// behavior in the paywall editor.
+  case userIsSubscribed
+
+  /// No view controller could be found to present on.
+  case paywallNotAvailable
 }

@@ -9,7 +9,7 @@ import XCTest
 @testable import SuperwallKit
 import Combine
 
-final class AwaitIdentityOperatorTests: XCTestCase {
+final class WaitToPresentTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
   let dependencyContainer = DependencyContainer()
   var identityManager: IdentityManager {

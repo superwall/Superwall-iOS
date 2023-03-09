@@ -37,13 +37,16 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``track(event:params:)``
 - ``track(event:onSkip:onPresent:onDismiss:)``
 - ``track(event:params:onSkip:onPresent:onDismiss:)``
-- ``getTrackResult(forEvent:params:)``
-- ``getTrackResult(forEvent:params:completion:)``
-- ``getTrackInfo(forEvent:params:)``
 - ``publisher(forEvent:params:paywallOverrides:)``
+- ``getTrackResult(forEvent:params:)-1qexk``
+- ``getTrackResult(forEvent:params:completion:)``
+- ``getTrackResult(forEvent:params:)-2j7qn``
+- ``getTrackResult(forEvent:)``
 - ``dismiss()-844a9``
 - ``dismiss()-4objm``
 - ``dismiss(completion:)``
+- ``TrackResult``
+- ``TrackResultObjc``
 - ``PaywallInfo``
 - ``SuperwallEvent``
 - ``SuperwallEventObjc``
@@ -62,8 +65,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``identify(userId:)``
 - ``IdentityOptions``
 - ``reset()``
-- ``setUserAttributes(_:)``
-- ``setUserAttributesDictionary(_:)``
+- ``setUserAttributes(_:)-1wql2``
+- ``setUserAttributes(_:)-8jken``
 - ``removeUserAttributes(_:)``
 - ``userAttributes``
 

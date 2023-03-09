@@ -20,7 +20,6 @@ import StoreKit
 ///
 /// To learn how to implement the ``PurchaseControllerObjc`` in your app
 /// and best practices, see <doc:AdvancedConfiguration>.
-@MainActor
 @objc(SWKPurchaseController)
 public protocol PurchaseControllerObjc: AnyObject {
   /// Called when the user initiates purchasing of a product.
@@ -33,6 +32,7 @@ public protocol PurchaseControllerObjc: AnyObject {
   ///   Call this with the result of your purchase logic. When you pass a `.failed` result, make sure you also pass
   ///   the error.
   ///    **Note:** Make sure you handle all cases of ``PurchaseResult``.
+  @MainActor
   @objc func purchase(
     product: SKProduct,
     completion: @escaping (PurchaseResultObjc, Error?) -> Void
@@ -45,5 +45,6 @@ public protocol PurchaseControllerObjc: AnyObject {
   /// 
   /// - Parameters:
   ///   - completion: Call the completion with `true` if the user's purchases were restored or `false` if they weren't.
+  @MainActor
   @objc func restorePurchases(completion: @escaping (Bool) -> Void)
 }

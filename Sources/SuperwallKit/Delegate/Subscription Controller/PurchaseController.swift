@@ -20,7 +20,6 @@ import StoreKit
 ///
 /// To learn how to implement the ``PurchaseController`` in your app
 /// and best practices, see <doc:AdvancedConfiguration>.
-@MainActor
 public protocol PurchaseController: AnyObject {
   /// Called when the user initiates purchasing of a product.
   ///
@@ -31,6 +30,7 @@ public protocol PurchaseController: AnyObject {
   ///
   /// - Returns: A``PurchaseResult`` object, which is the result of your purchase logic.
   /// **Note**: Make sure you handle all cases of ``PurchaseResult``.
+  @MainActor
   func purchase(product: SKProduct) async -> PurchaseResult
 
   /// Called when the user initiates a restore.
@@ -39,5 +39,6 @@ public protocol PurchaseController: AnyObject {
   /// and return its result.
   ///
   /// - Returns: A boolean that's `true` if the user's purchases were restored or `false` if they weren't.
+  @MainActor
   func restorePurchases() async -> Bool
 }

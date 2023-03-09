@@ -25,8 +25,8 @@ class PaywallManager {
     self.paywallRequestManager = paywallRequestManager
   }
 
-	func removePaywallViewController(forKey: String) {
-    cache.removePaywallViewController(forKey: forKey)
+	func removePaywallViewController(forKey key: String) {
+    cache.removePaywallViewController(forKey: key)
 	}
 
 	func resetCache() {
@@ -69,15 +69,8 @@ class PaywallManager {
     )
     cache.save(paywallViewController, forKey: cacheKey)
 
-    if let window = UIApplication.shared.activeWindow {
-      paywallViewController.view.alpha = 0.01
-      window.addSubview(paywallViewController.view)
-      paywallViewController.view.transform = CGAffineTransform(
-        translationX: UIScreen.main.bounds.width,
-        y: 0
-      )
-      .scaledBy(x: 0.1, y: 0.1)
-    }
+    // Preloads the view.
+    _ = paywallViewController.view
 
     return paywallViewController
   }

@@ -259,7 +259,7 @@ class ConfigManager {
   /// Preloads paywalls referenced by triggers.
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) {
     for identifier in paywallIdentifiers {
-      Task {
+      Task { [unowned self] in
         let request = factory.makePaywallRequest(
           eventData: nil,
           responseIdentifiers: .init(paywallId: identifier),

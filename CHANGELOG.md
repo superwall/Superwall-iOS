@@ -2,6 +2,21 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-beta.7
+
+### Breaking Changes
+
+- Changes Objective-C method `getTrackInfo` to `getTrackResult` to be in line with the Swift API. 
+- Removes the error case from the `TrackResult` and adds in `userIsSubscribed` and `paywallNotAvailable` cases.
+- Moves main actor conformance to functions of PurchaseController protocol rather than the whole protocol.
+- Changes Objective-C method `setUserAttributesDictionary(_:)` to `setUserAttributes(_:)`.
+
+### Fixes
+
+- Makes `NetworkEnvironment` Objective-C compatible.
+- Fixes an issue where a manually dismissed modally presented paywall wouldn't properly dismiss.
+- Fixes race condition when calling identify and tracking a paywall.
+
 ## 3.0.0-beta.6
 
 ### Breaking Changes
@@ -10,7 +25,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - `reset` is no longer an async function.
 - `presentedViewController` and `latestPaywallInfo` no longer restricted to the main actor.
 - Removes `localizationOverride(localeIdentifier:)` and replaces it with the `SuperwallOption` `localeIdentifier`. You set this on configure.
-- `setUserAttributes(_:)` is now an async function. It always was async under the hood but this makes it more explicit and helps you avoid race conditions.
 - Removes delegate from `configure`. You now set the delegate via `Superwall.shared.delegate`.
 - Removes `presenter` introduced in beta 5.
 - Removes ASN1Swift as a package dependency.

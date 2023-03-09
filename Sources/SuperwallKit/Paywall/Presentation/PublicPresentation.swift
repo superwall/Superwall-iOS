@@ -21,17 +21,17 @@ extension Superwall {
 	/// - Parameter completion: An optional completion block that gets called after the paywall is dismissed.
   /// Defaults to `nil`.
   @objc public func dismiss(completion: (() -> Void)? = nil) {
-    Task {
-      await dismiss()
+    Task { [weak self] in
+      await self?.dismiss()
       completion?()
     }
   }
 
-  /// Objective-C only method. Dismisses the presented paywall.
+  /// Objective-C-only method. Dismisses the presented paywall.
   @available(swift, obsoleted: 1.0)
   @objc public func dismiss() {
-    Task {
-      await dismiss()
+    Task { [weak self] in
+      await self?.dismiss()
     }
   }
 
@@ -55,7 +55,7 @@ extension Superwall {
   // MARK: - Objective-C-only Track
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
   /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
-  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)``
+  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)-1wql2``
   /// if you’re using Swift.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method
@@ -215,7 +215,7 @@ extension Superwall {
 
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
   /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
-  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)``
+  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)-1wql2``
   /// if you’re using Swift.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method
@@ -239,7 +239,7 @@ extension Superwall {
 
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
   /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
-  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)``
+  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)-1wql2``
   /// if you’re using Swift.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method
@@ -269,7 +269,7 @@ extension Superwall {
 
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
   /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
-  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)``
+  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)-1wql2``
   /// if you’re using Swift.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method
@@ -310,7 +310,7 @@ extension Superwall {
 
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
   /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
-  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)``
+  /// and the user matches a rule in the campaign. **Note**: Please use ``Superwall/setUserAttributes(_:)-1wql2``
   /// if you’re using Swift.
   ///
   /// Triggers enable you to retroactively decide where or when to show a specific paywall in your app. Use this method
@@ -427,109 +427,6 @@ extension Superwall {
       return self.internallyPresent(presentationRequest)
     }
     .eraseToAnyPublisher()
-  }
-
-  // MARK: - Get Track Result
-
-  /// Preemptively get the result of tracking an event.
-  ///
-  /// Use this function if you want to preemptively get the result of tracking
-  /// an event.
-  ///
-  /// This is useful for when you want to know whether a particular event will
-  /// present a paywall in the future.
-  ///
-  /// Note that this method does not present a paywall. To do that, use
-  /// ``track(event:params:paywallOverrides:paywallHandler:)``.
-  ///
-  /// - Parameters:
-  ///     - event: The name of the event you want to track.
-  ///     - params: Optional parameters you'd like to pass with your event.
-  ///
-  /// - Returns: A ``TrackResult`` that indicates the result of tracking an event.
-  public func getTrackResult(
-    forEvent event: String,
-    params: [String: Any]? = nil
-  ) async -> TrackResult {
-    let eventCreatedAt = Date()
-
-    let trackableEvent = UserInitiatedEvent.Track(
-      rawName: event,
-      canImplicitlyTriggerPaywall: false,
-      customParameters: params ?? [:]
-    )
-
-    let parameters = await TrackingLogic.processParameters(
-      fromTrackableEvent: trackableEvent,
-      eventCreatedAt: eventCreatedAt,
-      appSessionId: dependencyContainer.appSessionManager.appSession.id
-    )
-
-    let eventData = EventData(
-      name: event,
-      parameters: JSON(parameters.eventParams),
-      createdAt: eventCreatedAt
-    )
-
-    let presentationRequest = dependencyContainer.makePresentationRequest(
-      .explicitTrigger(eventData),
-      isDebuggerLaunched: false,
-      isPaywallPresented: false
-    )
-
-    return await getTrackResult(for: presentationRequest)
-  }
-
-  /// Preemptively get the result of tracking an event.
-  ///
-  /// Use this function if you want to preemptively get the result of tracking
-  /// an event.
-  ///
-  /// This is useful for when you want to know whether a particular event will
-  /// present a paywall in the future.
-  ///
-  /// Note that this method does not present a paywall. To do that, use
-  /// ``track(event:params:paywallOverrides:paywallHandler:)``.
-  ///
-  /// - Parameters:
-  ///     - event: The name of the event you want to track.
-  ///     - params: Optional parameters you'd like to pass with your event.
-  ///     - completion: A completion block that accepts a ``TrackResult`` indicating
-  ///     the result of tracking an event.
-  public func getTrackResult(
-    forEvent event: String,
-    params: [String: Any]? = nil,
-    completion: @escaping (TrackResult) -> Void
-  ) {
-    Task {
-      let result = await getTrackResult(forEvent: event, params: params)
-      completion(result)
-    }
-  }
-
-  /// Objective-C only function to get information about the result of tracking an event.
-  ///
-  /// Use this function if you want to preemptively get the result of tracking
-  /// an event.
-  ///
-  /// This is useful for when you want to know whether a particular event will
-  /// present a paywall in the future.
-  ///
-  /// Note that this method does not present a paywall. To do that, use
-  /// ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``.
-  ///
-  /// - Parameters:
-  ///     - event: The name of the event you want to track.
-  ///     - params: Optional parameters you'd like to pass with your event.
-  ///
-  /// - Returns: A ``TrackInfoObjc`` object that contains information about the result of tracking an event. 
-  @available(swift, obsoleted: 1.0)
-  @objc public func getTrackInfo(
-    forEvent event: String,
-    params: [String: Any]? = nil
-  ) async -> TrackInfoObjc {
-    let result = await getTrackResult(forEvent: event, params: params)
-    return TrackInfoObjc(trackResult: result)
   }
 
   /// Converts dismissal result from enums with associated values, to old objective-c compatible way

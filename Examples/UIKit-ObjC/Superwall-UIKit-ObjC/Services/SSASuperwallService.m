@@ -91,7 +91,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 
 - (void)setName:(nullable NSString *)name {
   id userAttributeFirstName = name ? : [NSNull null];
-  [[Superwall sharedInstance] setUserAttributesDictionary:@{ kUserAttributesFirstNameKey : userAttributeFirstName }];
+  [[Superwall sharedInstance] setUserAttributes:@{ kUserAttributesFirstNameKey : userAttributeFirstName }];
 }
 
 #pragma mark - Public Methods
@@ -139,7 +139,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 
 - (void)didTrackSuperwallEventInfo:(SWKSuperwallEventInfo *)info {
   NSLog(@"Analytics event called %@", @(info.event));
-
+  
   // Uncomment the following if you want to track the different analytics events received from the paywall:
 
 //  switch (info.event) {
