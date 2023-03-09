@@ -91,7 +91,7 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 
 - (void)setName:(nullable NSString *)name {
   id userAttributeFirstName = name ? : [NSNull null];
-  [[Superwall sharedInstance] setUserAttributesDictionary:@{ kUserAttributesFirstNameKey : userAttributeFirstName }];
+  [[Superwall sharedInstance] setUserAttributes:@{ kUserAttributesFirstNameKey : userAttributeFirstName }];
 }
 
 #pragma mark - Public Methods

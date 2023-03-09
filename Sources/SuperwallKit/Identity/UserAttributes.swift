@@ -47,7 +47,7 @@ extension Superwall {
   ///
   ///  ```
   ///  NSDictionary *userAttributes = @{ key : value, key2 : value2};
-  ///  [[Superwall sharedInstance] setUserAttributesDictionary: userAttributes];
+  ///  [[Superwall sharedInstance] setUserAttributes:userAttributes];
   ///  ```
   ///
   /// - Parameters:
@@ -56,7 +56,7 @@ extension Superwall {
   /// Note: Keys beginning with `$` are reserved for Superwall and will be dropped. Arrays and dictionaries
   /// as values are not supported at this time, and will be dropped.
   @available(swift, obsoleted: 1.0)
-  @objc public func setUserAttributesDictionary(_ attributes: NSDictionary) {
+  @objc public func setUserAttributes(_ attributes: NSDictionary) {
     var swiftDictionary: [String: Any?] = [:]
     let keys = attributes.allKeys.compactMap { $0 as? String }
     for key in keys {

@@ -41,6 +41,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``getTrackResult(forEvent:params:)-1qexk``
 - ``getTrackResult(forEvent:params:completion:)``
 - ``getTrackResult(forEvent:params:)-2j7qn``
+- ``getTrackResult(forEvent:)``
 - ``dismiss()-844a9``
 - ``dismiss()-4objm``
 - ``dismiss(completion:)``
@@ -64,8 +65,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``identify(userId:)``
 - ``IdentityOptions``
 - ``reset()``
-- ``setUserAttributes(_:)``
-- ``setUserAttributesDictionary(_:)``
+- ``setUserAttributes(_:)-1wql2``
+- ``setUserAttributes(_:)-8jken``
 - ``removeUserAttributes(_:)``
 - ``userAttributes``
 
