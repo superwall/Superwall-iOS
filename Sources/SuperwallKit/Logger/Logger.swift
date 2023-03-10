@@ -96,7 +96,7 @@ enum Logger: Loggable {
 
       dump(
         dumping,
-        name: "[Superwall]  [\(dateString)]  \(logLevel.description)  \(scope.rawValue)  \(message ?? "")",
+        name: "[Superwall]  [\(dateString)]  \(logLevel.description)  \(scope.description)  \(message ?? "")",
         indent: 0,
         maxDepth: 100,
         maxItems: 100

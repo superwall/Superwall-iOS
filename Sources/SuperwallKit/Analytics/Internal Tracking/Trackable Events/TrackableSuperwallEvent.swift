@@ -50,10 +50,15 @@ enum InternalSuperwallEvent {
   }
 
   struct Attributes: TrackableSuperwallEvent {
+    let appInstalledAtString: String
     var superwallEvent: SuperwallEvent {
       return .userAttributes(customParameters)
     }
-    func getSuperwallParameters() async -> [String: Any] { [:] }
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "application_installed_at": appInstalledAtString
+      ]
+    }
     var customParameters: [String: Any] = [:]
   }
 

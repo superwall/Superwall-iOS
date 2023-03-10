@@ -242,9 +242,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       guard let self = self else {
         return
       }
-      Task {
-        await Superwall.shared.presentAgain(cacheKey: self.cacheKey)
-      }
+      Superwall.shared.presentAgain(cacheKey: self.cacheKey)
     }
   }
 

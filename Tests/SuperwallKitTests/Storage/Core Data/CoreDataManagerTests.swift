@@ -120,7 +120,7 @@ class CoreDataManagerTests: XCTestCase {
     }
 
     // Delete All Entities
-    await coreDataManager.deleteAllEntities()
+    coreDataManager.deleteAllEntities()
 
     // Count triggers
     let occurrenceCount = coreDataManager.countTriggerRuleOccurrences(for: occurrence)

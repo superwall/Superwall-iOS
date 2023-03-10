@@ -120,7 +120,7 @@ public enum SuperwallEvent {
   /// When the paywall fails to present.
   case paywallPresentationFail(reason: PaywallPresentationFailureReason)
 
-  internal var canImplicitlyTriggerPaywall: Bool {
+  var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
       .sessionStart,
@@ -147,123 +147,96 @@ extension SuperwallEvent {
     let objcEvent: SuperwallEventObjc
     let description: String
 
-    init(
-      objcEvent: SuperwallEventObjc,
-      description: String
-    ) {
+    init(objcEvent: SuperwallEventObjc) {
       self.objcEvent = objcEvent
-      self.description = description
+      self.description = objcEvent.description
     }
   }
 
   var backingData: BackingData {
     switch self {
     case .firstSeen:
-      return .init(objcEvent: .firstSeen, description: "first_seen")
+      return .init(objcEvent: .firstSeen)
     case .appOpen:
-      return .init(objcEvent: .appOpen, description: "app_open")
+      return .init(objcEvent: .appOpen)
     case .appLaunch:
-      return .init(objcEvent: .appLaunch, description: "app_launch")
+      return .init(objcEvent: .appLaunch)
     case .appInstall:
-      return .init(objcEvent: .appInstall, description: "app_install")
+      return .init(objcEvent: .appInstall)
     case .sessionStart:
-      return .init(objcEvent: .sessionStart, description: "session_start")
+      return .init(objcEvent: .sessionStart)
     case .subscriptionStatusDidChange:
-      return .init(objcEvent: .subscriptionStart, description: "subscription_status_did_change")
+      return .init(objcEvent: .subscriptionStatusDidChange)
     case .appClose:
-      return .init(objcEvent: .appClose, description: "app_close")
+      return .init(objcEvent: .appClose)
     case .deepLink:
-      return .init(objcEvent: .deepLink, description: "deepLink_open")
+      return .init(objcEvent: .deepLink)
     case .triggerFire:
-      return .init(objcEvent: .triggerFire, description: "trigger_fire")
+      return .init(objcEvent: .triggerFire)
     case .paywallOpen:
-      return .init(objcEvent: .paywallOpen, description: "paywall_open")
+      return .init(objcEvent: .paywallOpen)
     case .paywallClose:
-      return .init(objcEvent: .paywallClose, description: "paywall_close")
+      return .init(objcEvent: .paywallClose)
     case .transactionStart:
-      return .init(objcEvent: .transactionStart, description: "transaction_start")
+      return .init(objcEvent: .transactionStart)
     case .transactionFail:
-      return .init(objcEvent: .transactionFail, description: "transaction_fail")
+      return .init(objcEvent: .transactionFail)
     case .transactionAbandon:
-      return .init(objcEvent: .transactionAbandon, description: "transaction_abandon")
+      return .init(objcEvent: .transactionAbandon)
     case .transactionTimeout:
-      return .init(objcEvent: .transactionTimeout, description: "transaction_timeout")
+      return .init(objcEvent: .transactionTimeout)
     case .transactionComplete:
-      return .init(objcEvent: .transactionComplete, description: "transaction_complete")
+      return .init(objcEvent: .transactionComplete)
     case .subscriptionStart:
-      return .init(objcEvent: .subscriptionStart, description: "subscription_start")
+      return .init(objcEvent: .subscriptionStart)
     case .freeTrialStart:
-      return .init(objcEvent: .freeTrialStart, description: "freeTrial_start")
+      return .init(objcEvent: .freeTrialStart)
     case .transactionRestore:
-      return .init(objcEvent: .transactionRestore, description: "transaction_restore")
+      return .init(objcEvent: .transactionRestore)
     case .userAttributes:
-      return .init(objcEvent: .userAttributes, description: "user_attributes")
+      return .init(objcEvent: .userAttributes)
     case .nonRecurringProductPurchase:
-      return .init(objcEvent: .nonRecurringProductPurchase, description: "nonRecurringProduct_purchase")
+      return .init(objcEvent: .nonRecurringProductPurchase)
     case .paywallResponseLoadStart:
-      return .init(objcEvent: .paywallResponseLoadStart, description: "paywallResponseLoad_start")
+      return .init(objcEvent: .paywallResponseLoadStart)
     case .paywallResponseLoadNotFound:
-      return .init(objcEvent: .paywallResponseLoadNotFound, description: "paywallResponseLoad_notFound")
+      return .init(objcEvent: .paywallResponseLoadNotFound)
     case .paywallResponseLoadFail:
-      return .init(objcEvent: .paywallResponseLoadFail, description: "paywallResponseLoad_fail")
+      return .init(objcEvent: .paywallResponseLoadFail)
     case .paywallResponseLoadComplete:
-      return .init(objcEvent: .paywallResponseLoadComplete, description: "paywallResponseLoad_complete")
+      return .init(objcEvent: .paywallResponseLoadComplete)
     case .paywallWebviewLoadStart:
-      return .init(objcEvent: .paywallWebviewLoadStart, description: "paywallWebviewLoad_start")
+      return .init(objcEvent: .paywallWebviewLoadStart)
     case .paywallWebviewLoadFail:
-      return .init(objcEvent: .paywallWebviewLoadFail, description: "paywallWebviewLoad_fail")
+      return .init(objcEvent: .paywallWebviewLoadFail)
     case .paywallWebviewLoadComplete:
-      return .init(objcEvent: .paywallWebviewLoadComplete, description: "paywallWebviewLoad_complete")
+      return .init(objcEvent: .paywallWebviewLoadComplete)
     case .paywallWebviewLoadTimeout:
-      return .init(objcEvent: .paywallWebviewLoadTimeout, description: "paywallWebviewLoad_timeout")
+      return .init(objcEvent: .paywallWebviewLoadTimeout)
     case .paywallProductsLoadStart:
-      return .init(objcEvent: .paywallProductsLoadStart, description: "paywallProductsLoad_start")
+      return .init(objcEvent: .paywallProductsLoadStart)
     case .paywallProductsLoadFail:
-      return .init(objcEvent: .paywallProductsLoadFail, description: "paywallProductsLoad_fail")
+      return .init(objcEvent: .paywallProductsLoadFail)
     case .paywallProductsLoadComplete:
-      return .init(objcEvent: .paywallProductsLoadComplete, description: "paywallProductsLoad_complete")
+      return .init(objcEvent: .paywallProductsLoadComplete)
     case .paywallPresentationFail(reason: let reason):
       switch reason {
       case .userIsSubscribed:
-        return .init(
-          objcEvent: .paywallPresentationFailUserIsSubscribed,
-          description: "paywallPresentationFail_userIsSubscribed"
-        )
+        return .init(objcEvent: .paywallPresentationFailUserIsSubscribed)
       case .holdout:
-        return .init(
-          objcEvent: .paywallPresentationFailInHoldout,
-          description: "paywallPresentationFail_holdout"
-        )
+        return .init(objcEvent: .paywallPresentationFailInHoldout)
       case .noRuleMatch:
-        return .init(
-          objcEvent: .paywallPresentationFailNoRuleMatch,
-          description: "paywallPresentationFail_noRuleMatch"
-        )
+        return .init(objcEvent: .paywallPresentationFailNoRuleMatch)
       case .eventNotFound:
-        return .init(
-          objcEvent: .paywallPresentationFailEventNotFound,
-          description: "paywallPresentationFail_eventNotFound"
-        )
+        return .init(objcEvent: .paywallPresentationFailEventNotFound)
       case .debuggerLaunched:
-        return .init(
-          objcEvent: .paywallPresentationFailDebuggerLaunched,
-          description: "paywallPresentationFail_debuggerLaunched"
-        )
+        return .init(objcEvent: .paywallPresentationFailDebuggerLaunched)
       case .alreadyPresented:
-        return .init(
-          objcEvent: .paywallPresentationFailAlreadyPresented,
-          description: "paywallPresentationFail_alreadyPresented"
-        )
+        return .init(objcEvent: .paywallPresentationFailAlreadyPresented)
       case .noPresenter:
-        return .init(
-          objcEvent: .paywallPresentationFailNoPresenter,
-          description: "paywallPresentationFail_noPresenter"
-        )
+        return .init(objcEvent: .paywallPresentationFailNoPresenter)
       case .noPaywallViewController:
-        return .init(
-          objcEvent: .paywallPresentationFailNoPaywallViewController,
-          description: "paywallPresentationFail_noPaywallViewController"
-        )
+        return .init(objcEvent: .paywallPresentationFailNoPaywallViewController)
       }
     }
   }

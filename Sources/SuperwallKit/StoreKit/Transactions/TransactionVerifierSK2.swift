@@ -15,7 +15,7 @@ final class TransactionVerifierSK2: TransactionChecker {
   init(factory: StoreTransactionFactory) {
     self.factory = factory
   }
-  /// An iOS 15-only function that checks for a transaction of the product.
+  /// An iOS 15+-only function that checks for a transaction of the product.
   ///
   /// We need this function because on iOS 15+, the `Transaction.updates` listener doesn't notify us
   /// of transactions for recent purchases.

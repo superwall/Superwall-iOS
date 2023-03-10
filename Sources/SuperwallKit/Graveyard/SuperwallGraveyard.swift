@@ -9,18 +9,6 @@ import UIKit
 
 extension Superwall {
   // MARK: - Unavailable methods
-  // TODO: Fix deprecation here
-  /*@available(*, unavailable, renamed: "configure(apiKey:purchaseController:options:completion:)")
-  @discardableResult
-  @objc static func configure(
-    apiKey: String,
-    userId: String?,
-    delegate: SuperwallDelegate? = nil,
-    options: SuperwallOptions? = nil
-  ) -> Superwall {
-    return shared
-  }*/
-
   @available(*, unavailable, renamed: "preloadPaywalls(forEvents:)")
   @objc public func preloadPaywalls(forTriggers triggers: Set<String>) {}
 

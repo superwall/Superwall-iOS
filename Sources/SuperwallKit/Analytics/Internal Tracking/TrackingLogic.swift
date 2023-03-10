@@ -32,10 +32,8 @@ enum TrackingLogic {
     ]
 
     // Add a special property if it's a superwall event
-    var isStandardEvent = false
-    if trackableEvent is TrackableSuperwallEvent {
-      isStandardEvent = true
-    }
+    let isStandardEvent = trackableEvent is TrackableSuperwallEvent
+
     var eventParams: [String: Any] = [
       "$is_standard_event": isStandardEvent,
       "$event_name": eventName
@@ -107,6 +105,31 @@ enum TrackingLogic {
           return nil
         }
       }
+    }
+  }
+
+  /// Checks whether the user is tracking an event with the same name as a superwall event.
+  static func checkNotSuperwallEvent(_ event: String) throws {
+    for superwallEvent in SuperwallEventObjc.allCases where superwallEvent.description == event {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallPresentation,
+        message: "Do not track an event with the same name as a SuperwallEvent",
+        info: ["event": event]
+      )
+      let userInfo: [String: Any] = [
+        NSLocalizedDescriptionKey: NSLocalizedString(
+          "",
+          value: "Do not track an event with the same name as a SuperwallEvent",
+          comment: ""
+        )
+      ]
+      let error = NSError(
+        domain: "com.superwall",
+        code: 400,
+        userInfo: userInfo
+      )
+      throw error
     }
   }
 
