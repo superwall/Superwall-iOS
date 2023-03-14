@@ -22,7 +22,10 @@ protocol ProductPurchaser: AnyObject {
 
 protocol ProductsFetcher: AnyObject {
   /// Fetches a set of products from their identifiers.
-  func products(identifiers: Set<String>) async throws -> Set<StoreProduct>
+  func products(
+    identifiers: Set<String>,
+    forPaywall paywallName: String?
+  ) async throws -> Set<StoreProduct>
 }
 
 protocol TransactionRestorer: AnyObject {

@@ -51,7 +51,10 @@ actor ReceiptManager: NSObject {
     let purchasedProductIds = Set(purchases.map { $0.productIdentifier })
 
     do {
-      let products = try await delegate.products(identifiers: purchasedProductIds)
+      let products = try await delegate.products(
+        identifiers: purchasedProductIds,
+        forPaywall: nil
+      )
 
       var purchasedSubscriptionGroupIds: Set<String> = []
       for product in products {
