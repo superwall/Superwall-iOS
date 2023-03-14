@@ -160,14 +160,14 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 
       if response.products.isEmpty,
         !requestProducts.isEmpty {
-        var errorMessage = "Missing products"
+        var errorMessage = "Did not load products"
         if let paywallName = paywallNameByRequest[request] {
-          errorMessage += " defined in paywall \"\(paywallName)\""
+          errorMessage += " from paywall \"\(paywallName)\""
         }
         Logger.debug(
           logLevel: .error,
           scope: .productsManager,
-          message: "\(errorMessage). Visit https://superwall.com/l/no-products to diagnose.",
+          message: "\(errorMessage). Visit https://superwall.com/l/missing-products to diagnose.",
           info: ["product_ids": requestProducts.description]
         )
         for completion in completionBlocks {

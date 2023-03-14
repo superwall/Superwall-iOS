@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Prevents the logging of events that have the same name as `SuperwallEvents`.
+- Prevents the tracking of events that have the same name as internally tracked `SuperwallEvents` like `paywall_open`.
 
 ### Fixes
 
