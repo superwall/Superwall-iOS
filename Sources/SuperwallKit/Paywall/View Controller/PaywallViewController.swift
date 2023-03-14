@@ -508,10 +508,13 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       transitioningDelegate = transitionDelegate
     case .fullscreenNoAnimation:
       modalPresentationStyle = .overFullScreen
-    case .halfScreen:
+    case .drawer:
       modalPresentationStyle = .pageSheet
-      if #available(iOS 15.0, *) {
-        sheetPresentationController?.detents = [.medium()]
+      if #available(iOS 16.0, *),
+        UIDevice.current.userInterfaceIdiom == .phone {
+        sheetPresentationController?.detents = [.custom(resolver: { context in
+          return 0.62 * context.maximumDetentValue
+        })]
       }
     case .none:
       break
