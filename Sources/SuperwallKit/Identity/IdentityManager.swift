@@ -268,6 +268,7 @@ extension IdentityManager {
 
     Task {
       let trackableEvent = InternalSuperwallEvent.Attributes(
+        appInstalledAtString: deviceHelper.appInstalledAtString,
         customParameters: mergedAttributes
       )
       await Superwall.shared.track(trackableEvent)

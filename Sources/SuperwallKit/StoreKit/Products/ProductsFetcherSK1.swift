@@ -17,7 +17,8 @@ import StoreKit
 class ProductsFetcherSK1: NSObject, ProductsFetcher {
 	private var cachedProductsByIdentifier: [String: SKProduct] = [:]
 	private let queue = DispatchQueue(label: "com.superwall.ProductsManager")
-	private var productsByRequests: [SKRequest: Set<String>] = [:]
+	private var productsByRequest: [SKRequest: Set<String>] = [:]
+  private var paywallNameByRequest: [SKRequest: String] = [:]
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
   enum ProductError: Error {
@@ -31,9 +32,12 @@ class ProductsFetcherSK1: NSObject, ProductsFetcher {
   ///   - identifiers: A `Set` of product identifiers.
   /// - Returns: A `Set` of `StoreProducts`.
   /// - Throws: An error if it couldn't retrieve the products.
-  func products(identifiers: Set<String>) async throws -> Set<StoreProduct> {
+  func products(
+    identifiers: Set<String>,
+    forPaywall paywallName: String?
+  ) async throws -> Set<StoreProduct> {
     let sk1Products = try await withCheckedThrowingContinuation { continuation in
-      products(withIdentifiers: identifiers) { result in
+      products(withIdentifiers: identifiers, forPaywall: paywallName) { result in
         continuation.resume(with: result)
       }
     }
@@ -45,6 +49,7 @@ class ProductsFetcherSK1: NSObject, ProductsFetcher {
 
 	private func products(
     withIdentifiers identifiers: Set<String>,
+    forPaywall paywallName: String?,
     completion: @escaping ProductRequestCompletionBlock
   ) {
     // Return if there aren't any product IDs.
@@ -97,7 +102,8 @@ class ProductsFetcherSK1: NSObject, ProductsFetcher {
 			let request = SKProductsRequest(productIdentifiers: identifiers)
 			request.delegate = self
 			self.completionHandlers[identifiers] = [completion]
-			self.productsByRequests[request] = identifiers
+			self.productsByRequest[request] = identifiers
+      self.paywallNameByRequest[request] = paywallName
 			request.start()
 		}
 	}
@@ -128,7 +134,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
         info: ["request": request.debugDescription],
         error: nil
       )
-			guard let requestProducts = self.productsByRequests[request] else {
+			guard let requestProducts = self.productsByRequest[request] else {
 				Logger.debug(
           logLevel: .warn,
           scope: .productsManager,
@@ -150,14 +156,18 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 			}
 
 			self.completionHandlers.removeValue(forKey: requestProducts)
-			self.productsByRequests.removeValue(forKey: request)
+			self.productsByRequest.removeValue(forKey: request)
 
       if response.products.isEmpty,
         !requestProducts.isEmpty {
+        var errorMessage = "Could not load products"
+        if let paywallName = paywallNameByRequest[request] {
+          errorMessage += " from paywall \"\(paywallName)\""
+        }
         Logger.debug(
           logLevel: .error,
           scope: .productsManager,
-          message: "No products retrieved. Visit https://superwall.com/l/no-products to diagnose.",
+          message: "\(errorMessage). Visit https://superwall.com/l/missing-products to diagnose.",
           info: ["product_ids": requestProducts.description]
         )
         for completion in completionBlocks {
@@ -174,6 +184,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
           }
         }
       }
+      self.paywallNameByRequest.removeValue(forKey: request)
 		}
 	}
 
@@ -197,7 +208,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
         info: ["request": request.debugDescription],
         error: error
       )
-			guard let products = productsByRequests[request] else {
+			guard let products = productsByRequest[request] else {
 				Logger.debug(
           logLevel: .error,
           scope: .productsManager,
@@ -219,7 +230,8 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 			}
 
 			completionHandlers.removeValue(forKey: products)
-      productsByRequests.removeValue(forKey: request)
+      productsByRequest.removeValue(forKey: request)
+      paywallNameByRequest.removeValue(forKey: request)
 			for completion in completionBlocks {
         DispatchQueue.main.async {
           completion(.failure(error))

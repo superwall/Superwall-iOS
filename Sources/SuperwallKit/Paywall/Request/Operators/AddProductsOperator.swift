@@ -36,6 +36,7 @@ extension AnyPublisher where Output == PipelineData, Failure == Error {
       do {
         let result = try await input.request.dependencyContainer.storeKitManager.getProducts(
           withIds: input.paywall.productIds,
+          forPaywall: input.paywall.name,
           responseProducts: input.paywall.products,
           substituting: input.request.overrides.products
         )

@@ -71,8 +71,8 @@ struct PurchaseManager {
       // purchase without restoring. In this case, it returns a purchased
       // product immediately whose date is in the past.
       //
-      // If the product wasn't reported purchase, we need to see if any
-      // transactions came in since we made the purchase request.
+      // If the product wasn't reported purchased by the dev, we still need
+      // to check for transactions since a purchase request has been made.
 
       // TODO: What happens if it's pending and they do the flow above?
       let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateLatestTransaction(

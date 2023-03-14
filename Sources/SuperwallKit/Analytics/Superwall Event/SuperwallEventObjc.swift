@@ -12,7 +12,7 @@ import Foundation
 ///
 /// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallKit/SuperwallDelegateObjc/didTrackSuperwallEventInfo(_:)``.
 @objc(SWKSuperwallEvent)
-public enum SuperwallEventObjc: Int {
+public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the user is first seen in the app, regardless of whether the user is logged in or not.
   case firstSeen
 
@@ -71,6 +71,9 @@ public enum SuperwallEventObjc: Int {
 
   /// When the user successfully completes a transaction for a subscription product with no introductory offers.
   case subscriptionStart
+
+  /// When the user's subscription status changes.
+  case subscriptionStatusDidChange
 
   /// When the user successfully completes a transaction for a subscription product with an introductory offer.
   case freeTrialStart
@@ -140,5 +143,90 @@ public enum SuperwallEventObjc: Int {
 
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
+  }
+
+  var description: String {
+    switch self {
+    case .firstSeen:
+      return "first_seen"
+    case .appOpen:
+      return "app_open"
+    case .appLaunch:
+      return "app_launch"
+    case .appInstall:
+      return "app_install"
+    case .sessionStart:
+      return "session_start"
+    case .subscriptionStatusDidChange:
+      return "subscription_status_did_change"
+    case .appClose:
+      return "app_close"
+    case .deepLink:
+      return "deepLink_open"
+    case .triggerFire:
+      return "trigger_fire"
+    case .paywallOpen:
+      return "paywall_open"
+    case .paywallClose:
+      return "paywall_close"
+    case .transactionStart:
+      return "transaction_start"
+    case .transactionFail:
+      return "transaction_fail"
+    case .transactionAbandon:
+      return "transaction_abandon"
+    case .transactionTimeout:
+      return "transaction_timeout"
+    case .transactionComplete:
+      return "transaction_complete"
+    case .subscriptionStart:
+      return "subscription_start"
+    case .freeTrialStart:
+      return "freeTrial_start"
+    case .transactionRestore:
+      return "transaction_restore"
+    case .userAttributes:
+      return "user_attributes"
+    case .nonRecurringProductPurchase:
+      return "nonRecurringProduct_purchase"
+    case .paywallResponseLoadStart:
+      return "paywallResponseLoad_start"
+    case .paywallResponseLoadNotFound:
+      return "paywallResponseLoad_notFound"
+    case .paywallResponseLoadFail:
+      return "paywallResponseLoad_fail"
+    case .paywallResponseLoadComplete:
+      return "paywallResponseLoad_complete"
+    case .paywallWebviewLoadStart:
+      return "paywallWebviewLoad_start"
+    case .paywallWebviewLoadFail:
+      return "paywallWebviewLoad_fail"
+    case .paywallWebviewLoadComplete:
+      return "paywallWebviewLoad_complete"
+    case .paywallWebviewLoadTimeout:
+      return "paywallWebviewLoad_timeout"
+    case .paywallProductsLoadStart:
+      return "paywallProductsLoad_start"
+    case .paywallProductsLoadFail:
+      return "paywallProductsLoad_fail"
+    case .paywallProductsLoadComplete:
+      return "paywallProductsLoad_complete"
+    case .paywallPresentationFailUserIsSubscribed:
+      return "paywallPresentationFail_userIsSubscribed"
+    case .paywallPresentationFailInHoldout:
+      return "paywallPresentationFail_holdout"
+    case .paywallPresentationFailNoRuleMatch:
+      return "paywallPresentationFail_noRuleMatch"
+    case .paywallPresentationFailEventNotFound:
+      return "paywallPresentationFail_eventNotFound"
+    case .paywallPresentationFailDebuggerLaunched:
+      return "paywallPresentationFail_debuggerLaunched"
+    case .paywallPresentationFailAlreadyPresented:
+      return "paywallPresentationFail_alreadyPresented"
+    case .paywallPresentationFailNoPresenter:
+      return "paywallPresentationFail_noPresenter"
+    case .paywallPresentationFailNoPaywallViewController:
+      return "paywallPresentationFail_noPaywallViewController"
+    }
   }
 }

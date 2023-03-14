@@ -2,6 +2,16 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-beta.8
+
+### Enhancements
+
+- Prevents the tracking of events that have the same name as internally tracked `SuperwallEvents` like `paywall_open`.
+
+### Fixes
+
+- Fixes an issue with reporting in the dashboard due to a mismatch of keys between client and server.
+
 ## 3.0.0-beta.7
 
 ### Breaking Changes

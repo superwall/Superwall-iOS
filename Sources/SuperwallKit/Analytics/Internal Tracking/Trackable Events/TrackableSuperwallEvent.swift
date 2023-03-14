@@ -50,10 +50,15 @@ enum InternalSuperwallEvent {
   }
 
   struct Attributes: TrackableSuperwallEvent {
+    let appInstalledAtString: String
     var superwallEvent: SuperwallEvent {
       return .userAttributes(customParameters)
     }
-    func getSuperwallParameters() async -> [String: Any] { [:] }
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "application_installed_at": appInstalledAtString
+      ]
+    }
     var customParameters: [String: Any] = [:]
   }
 
@@ -161,8 +166,7 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] {
       let fromEvent = eventData != nil
       let params: [String: Any] = [
-        "is_triggered_from_event": fromEvent,
-        "event_name": eventData?.name ?? ""
+        "is_triggered_from_event": fromEvent
       ]
 
       switch state {
@@ -211,27 +215,29 @@ enum InternalSuperwallEvent {
       switch triggerResult {
       case .noRuleMatch:
         return params + [
-          "result": "no_rule_match",
-          "trigger_name": triggerName
+          "result": "no_rule_match"
         ]
       case .holdout(let experiment):
         return params + [
           "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
-          "result": "holdout",
-          "trigger_name": triggerName
+          "result": "holdout"
         ]
       case let .paywall(experiment):
         return params + [
           "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
           "paywall_identifier": experiment.variant.paywallId as Any,
-          "result": "present",
-          "trigger_name": triggerName
+          "result": "present"
         ]
-      case .eventNotFound,
-        .error:
-        return [:]
+      case .eventNotFound:
+        return params + [
+          "result": "eventNotFound"
+        ]
+      case .error:
+        return params + [
+          "result": "error"
+        ]
       }
     }
   }
@@ -325,11 +331,15 @@ enum InternalSuperwallEvent {
           eventParams += transactionDict
         }
         return eventParams
-      case .fail(let message):
-        return await paywallInfo.eventParams(
-          forProduct: product,
-          otherParams: ["message": message]
-        )
+      case .fail(let error):
+        switch error {
+        case .failure(let message, _),
+          .pending(let message):
+          return await paywallInfo.eventParams(
+            forProduct: product,
+            otherParams: ["message": message]
+          )
+        }
       }
     }
   }
@@ -433,8 +443,7 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] {
       let fromEvent = eventData != nil
       var params: [String: Any] = [
-        "is_triggered_from_event": fromEvent,
-        "event_name": eventData?.name ?? ""
+        "is_triggered_from_event": fromEvent
       ]
       params += await paywallInfo.eventParams()
       return params
