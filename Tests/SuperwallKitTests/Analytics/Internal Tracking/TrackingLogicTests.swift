@@ -372,4 +372,21 @@ final class TrackingLogicTests: XCTestCase {
     )
     XCTAssertEqual(outcome, .triggerPaywall)
   }
+
+  // MARK: - CheckNotSuperwallEvent
+
+  func test_checkNotSuperwallEvent_isSuperwallEvent() {
+    do {
+      try TrackingLogic.checkNotSuperwallEvent("paywall_open")
+      XCTFail("Should have failed")
+    } catch {}
+  }
+
+  func test_checkNotSuperwallEvent_isNotSuperwallEvent() {
+    do {
+      try TrackingLogic.checkNotSuperwallEvent("my_random_event")
+    } catch {
+      XCTFail("Should have failed")
+    }
+  }
 }

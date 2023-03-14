@@ -53,15 +53,13 @@ extension Superwall {
   }
 
   /// Presents the paywall again by sending the previous presentation request to the presentation publisher.
-  func presentAgain(cacheKey: String) async {
+  func presentAgain(cacheKey: String) {
     guard let lastPresentationItems = presentationItems.last else {
       return
     }
 
     // Remove the currently presenting paywall from cache.
-    await MainActor.run {
-      dependencyContainer.paywallManager.removePaywallViewController(forKey: cacheKey)
-    }
+    dependencyContainer.paywallManager.removePaywallViewController(forKey: cacheKey)
 
     // Resend the request and pass in the state publisher so it can continue
     // to send updates.

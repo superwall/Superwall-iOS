@@ -409,6 +409,12 @@ extension Superwall {
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil
   ) -> PaywallStatePublisher {
+    do {
+      try TrackingLogic.checkNotSuperwallEvent(event)
+    } catch {
+      return Just(.skipped(.error(error))).eraseToAnyPublisher()
+    }
+
     return Future {
       let trackableEvent = UserInitiatedEvent.Track(
         rawName: event,

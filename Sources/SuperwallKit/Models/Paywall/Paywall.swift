@@ -88,7 +88,6 @@ struct Paywall: Decodable {
     case id
     case identifier
     case name
-    case slug
     case url
     case htmlSubstitutions = "paywalljsEvent"
     case presentationStyle = "presentationStyleV2"

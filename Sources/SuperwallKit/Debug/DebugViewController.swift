@@ -231,10 +231,7 @@ final class DebugViewController: UIViewController {
 		} else if let paywallDatabaseId = paywallDatabaseId {
 			paywallId = paywalls.first(where: { $0.databaseId == paywallDatabaseId })?.identifier
 			paywallIdentifier = paywallId
-		}
-
-    // TODO: Can PaywallId actually be nil here or just a state error?
-    guard let paywallId = paywallId else {
+    } else {
       return
     }
 
@@ -376,7 +373,10 @@ final class DebugViewController: UIViewController {
       )
       return
     }
-    guard let (productsById, _) = try? await storeKitManager.getProducts(withIds: paywall.productIds) else {
+    guard let (productsById, _) = try? await storeKitManager.getProducts(
+      withIds: paywall.productIds,
+      forPaywall: paywall.name
+    ) else {
       return
     }
 

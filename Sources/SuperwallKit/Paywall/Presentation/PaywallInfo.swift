@@ -32,6 +32,9 @@ public final class PaywallInfo: NSObject {
   /// The products associated with the paywall.
   public let products: [Product]
 
+  /// An array of product IDs that this paywall is displaying in `[Primary, Secondary, Tertiary]` order.
+  public let productIds: [String]
+
   /// The name set for this paywall in Superwall's web dashboard.
   public let name: String
 
@@ -124,6 +127,7 @@ public final class PaywallInfo: NSObject {
     self.experiment = experiment
     self.paywalljsVersion = paywalljsVersion
     self.products = products
+    self.productIds = products.map { $0.id }
     self.isFreeTrialAvailable = isFreeTrialAvailable
 
     if eventData != nil {
@@ -171,10 +175,8 @@ public final class PaywallInfo: NSObject {
     forProduct product: StoreProduct? = nil,
     otherParams: [String: Any]? = nil
   ) async -> [String: Any] {
-    let productIds = products.map { $0.id }
-
     var output: [String: Any] = [
-      "paywall_database_id": databaseId,
+      "paywall_id": databaseId,
       "paywalljs_version": paywalljsVersion as Any,
       "paywall_identifier": identifier,
       "paywall_name": name,
