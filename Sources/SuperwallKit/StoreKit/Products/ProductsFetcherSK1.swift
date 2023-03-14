@@ -160,7 +160,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 
       if response.products.isEmpty,
         !requestProducts.isEmpty {
-        var errorMessage = "Did not load products"
+        var errorMessage = "Could not load products"
         if let paywallName = paywallNameByRequest[request] {
           errorMessage += " from paywall \"\(paywallName)\""
         }
