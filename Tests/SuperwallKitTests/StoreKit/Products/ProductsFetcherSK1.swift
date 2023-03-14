@@ -17,7 +17,7 @@ final class ProductsFetcherSK1Mock: ProductsFetcherSK1 {
     super.init()
   }
 
-  override func products(identifiers: Set<String>) async throws -> Set<StoreProduct> {
+  override func products(identifiers: Set<String>, forPaywall paywallName: String?) async throws -> Set<StoreProduct> {
     return try productCompletionResult.get()
   }
 }
