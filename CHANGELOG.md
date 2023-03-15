@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-beta.9
+
+### Fixes
+
+- Fixes a long term bug where tracking an event to show a paywall and tracking an event that results in noRuleMatch would interfere with each other and cause the trigger session to be set to `nil`. This resulted in some paywall data being incorrect on the dashboard.
+
 ## 3.0.0-beta.8
 
 ### Enhancements

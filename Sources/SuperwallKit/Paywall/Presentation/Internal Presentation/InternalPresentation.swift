@@ -30,6 +30,7 @@ extension Superwall {
 
     presentationSubject
       .eraseToAnyPublisher()
+      .checkNoPaywallAlreadyPresented(paywallStatePublisher)
       .waitToPresent()
       .logPresentation("Called Superwall.shared.track")
       .checkDebuggerPresentation(paywallStatePublisher)
@@ -37,7 +38,7 @@ extension Superwall {
       .checkUserSubscription(paywallStatePublisher)
       .confirmHoldoutAssignment()
       .handleTriggerResult(paywallStatePublisher)
-      .getPaywallViewController(paywallStatePublisher)
+      .getPaywallViewController(pipelineType: .presentation(paywallStatePublisher))
       .checkPaywallIsPresentable(paywallStatePublisher)
       .confirmPaywallAssignment()
       .presentPaywall(paywallStatePublisher)
