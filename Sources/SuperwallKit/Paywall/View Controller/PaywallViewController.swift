@@ -513,7 +513,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       if #available(iOS 16.0, *),
         UIDevice.current.userInterfaceIdiom == .phone {
         sheetPresentationController?.detents = [.custom(resolver: { context in
-          return 0.62 * context.maximumDetentValue
+          return 0.7 * context.maximumDetentValue
         })]
       }
     case .none:
