@@ -35,7 +35,7 @@ extension Superwall {
       .logPresentation("Called Superwall.shared.getTrackResult")
       .evaluateRules(isPreemptive: true)
       .checkForPaywallResult()
-      .getPaywallViewControllerNoChecks()
+      .getPaywallViewController(pipelineType: .getTrackResult)
       .checkPaywallIsPresentable()
       .convertToTrackResult()
       .async()

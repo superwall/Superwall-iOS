@@ -158,7 +158,7 @@ public enum SuperwallEventObjc: Int, CaseIterable {
     case .sessionStart:
       return "session_start"
     case .subscriptionStatusDidChange:
-      return "subscription_status_did_change"
+      return "subscriptionStatus_didChange"
     case .appClose:
       return "app_close"
     case .deepLink:
