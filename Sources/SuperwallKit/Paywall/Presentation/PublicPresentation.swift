@@ -388,6 +388,35 @@ extension Superwall {
     ))
   }
 
+
+  public func register(event: String, params: [String: Any]? = nil, handler: PaywallPresentationHandler? = nil, completion: (() -> Void)? = nil) {
+
+    Superwall.shared.track(event: event, params: params) { state in
+      switch state {
+        case .presented(let paywallInfo):
+          handler?.onPresent?(paywallInfo)
+        case .dismissed(let result):
+          handler?.onDismiss?(result.paywallInfo)
+          switch result.state {
+            case .purchased, .restored:
+              completion?()
+            case .closed:
+              let featureGating = result.paywallInfo.featureGatingBehavior
+              if featureGating == .nonGated {
+                completion?()
+              }
+          }
+        case .skipped(let reason):
+          switch reason {
+            case .error:
+              return // otherwise turning internet off would give unlimited access
+            default:
+              completion?()
+          }
+      }
+    }
+  }
+
   /// Returns a publisher that tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
   ///
   /// This shows a paywall to the user when: An event you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.

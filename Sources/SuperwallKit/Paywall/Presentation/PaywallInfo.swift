@@ -94,6 +94,8 @@ public final class PaywallInfo: NSObject {
 
   public let isFreeTrialAvailable: Bool
 
+  public let featureGatingBehavior: FeatureGatingBehavior
+
   private unowned let sessionEventsManager: SessionEventsManager
 
   init(
@@ -115,7 +117,8 @@ public final class PaywallInfo: NSObject {
     experiment: Experiment? = nil,
     paywalljsVersion: String? = nil,
     isFreeTrialAvailable: Bool,
-    sessionEventsManager: SessionEventsManager
+    sessionEventsManager: SessionEventsManager,
+    featureGatingBehavior: FeatureGatingBehavior = .nonGated
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -129,6 +132,7 @@ public final class PaywallInfo: NSObject {
     self.products = products
     self.productIds = products.map { $0.id }
     self.isFreeTrialAvailable = isFreeTrialAvailable
+    self.featureGatingBehavior = featureGatingBehavior
 
     if eventData != nil {
       self.presentedBy = "event"
@@ -196,7 +200,8 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
       "paywall_products_load_fail_time": productsLoadFailTime as Any,
       "paywall_products_load_duration": productsLoadDuration as Any,
-      "is_free_trial_available": isFreeTrialAvailable as Any
+      "is_free_trial_available": isFreeTrialAvailable as Any,
+      "feature_gating": featureGatingBehavior.rawValue as Any
     ]
 
     if let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession,

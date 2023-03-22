@@ -7,6 +7,8 @@
 
 import Foundation
 
+
+
 struct Config: Decodable {
   var triggers: Set<Trigger>
   var paywalls: [Paywall]

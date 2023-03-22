@@ -12,6 +12,7 @@ struct RawFeatureFlag: Decodable {
   let enabled: Bool
 }
 
+
 struct FeatureFlags: Decodable {
   var enableSessionEvents: Bool
   var enablePostback: Bool

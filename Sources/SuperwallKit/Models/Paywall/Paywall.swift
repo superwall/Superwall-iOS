@@ -84,6 +84,9 @@ struct Paywall: Decodable {
   /// Determines whether a free trial is available or not.
   var isFreeTrialAvailable = false
 
+  /// Determines whether a paywall moment is continues execution if the user does not purchase
+  var featureGating: FeatureGatingBehavior
+
   enum CodingKeys: String, CodingKey {
     case id
     case identifier
@@ -94,6 +97,7 @@ struct Paywall: Decodable {
     case presentationCondition
     case backgroundColorHex
     case products
+    case featureGating
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -157,6 +161,9 @@ struct Paywall: Decodable {
       endAt: productsLoadCompleteTime,
       failAt: productsLoadFailTime
     )
+
+    featureGating = try values.decodeIfPresent(FeatureGatingBehavior.self, forKey: .featureGating) ?? .nonGated
+
   }
 
   init(
@@ -178,7 +185,8 @@ struct Paywall: Decodable {
     swProducts: [SWProduct]? = [],
     productVariables: [ProductVariable]? = [],
     swTemplateProductVariables: [ProductVariable]? = [],
-    isFreeTrialAvailable: Bool = false
+    isFreeTrialAvailable: Bool = false,
+    featureGating: FeatureGatingBehavior = .nonGated
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -199,6 +207,7 @@ struct Paywall: Decodable {
     self.productVariables = productVariables
     self.swProductVariablesTemplate = swTemplateProductVariables
     self.isFreeTrialAvailable = isFreeTrialAvailable
+    self.featureGating = .nonGated
   }
 
   func getInfo(
@@ -224,7 +233,8 @@ struct Paywall: Decodable {
       experiment: experiment,
       paywalljsVersion: paywalljsVersion,
       isFreeTrialAvailable: isFreeTrialAvailable,
-      sessionEventsManager: sessionEventsManager
+      sessionEventsManager: sessionEventsManager,
+      featureGatingBehavior: featureGating
     )
   }
 
