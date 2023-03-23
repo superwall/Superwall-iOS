@@ -8,8 +8,6 @@
 import Foundation
 
 public class PaywallPresentationHandler: NSObject {
-
   public var onPresent: ((_ paywallInfo: PaywallInfo) -> Void)? = nil
   public var onDismiss: ((_ paywallInfo: PaywallInfo) -> Void)? = nil
-
 }

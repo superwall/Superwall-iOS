@@ -73,15 +73,13 @@ extension Superwall {
   @MainActor
   func dismiss(
     _ paywallViewController: PaywallViewController,
-    state: PaywallDismissedResult.DismissState,
+    state: DismissState,
     completion: (() -> Void)? = nil
   ) {
     let paywallInfo = paywallViewController.paywallInfo
     paywallViewController.dismiss(
-      .withResult(
-        paywallInfo: paywallInfo,
-        state: state
-      )
+      paywallInfo: paywallInfo,
+      state: state
     ) {
       completion?()
     }

@@ -233,10 +233,8 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 
   @objc private func pressedRefreshPaywall() {
     dismiss(
-      .withResult(
-        paywallInfo: paywallInfo,
-        state: .closed
-      ),
+      paywallInfo: paywallInfo,
+      state: .closed,
       shouldSendDismissedState: false
     ) { [weak self] in
       guard let self = self else {
@@ -248,10 +246,8 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
 
   @objc private func pressedExitPaywall() {
     dismiss(
-      .withResult(
-        paywallInfo: paywallInfo,
-        state: .closed
-      ),
+      paywallInfo: paywallInfo,
+      state: .closed,
       shouldSendDismissedState: true
     ) { [weak self] in
       guard let self = self else {
@@ -596,10 +592,8 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
   func openDeepLink(_ url: URL) {
     dismiss(
-      .withResult(
-        paywallInfo: paywallInfo,
-        state: .closed
-      ),
+      paywallInfo: paywallInfo,
+      state: .closed,
       shouldSendDismissedState: true
     ) { [weak self] in
       self?.eventDidOccur(.openedDeepLink(url: url))
@@ -661,10 +655,8 @@ extension PaywallViewController {
 
     if !calledDismiss {
       didDismiss(
-        .withResult(
-          paywallInfo: paywallInfo,
-          state: .closed
-        )
+        paywallInfo: paywallInfo,
+        state: .closed
       )
     }
 
@@ -672,7 +664,8 @@ extension PaywallViewController {
   }
 
   func dismiss(
-    _ dismissalResult: PaywallDismissedResult,
+    paywallInfo: PaywallInfo,
+    state: DismissState,
     shouldSendDismissedState: Bool = true,
     completion: (() -> Void)? = nil
   ) {
@@ -684,7 +677,8 @@ extension PaywallViewController {
         return
       }
       self.didDismiss(
-        dismissalResult,
+        paywallInfo: paywallInfo,
+        state: state,
         shouldSendDismissedState: shouldSendDismissedState,
         completion: completion
       )
@@ -697,7 +691,8 @@ extension PaywallViewController {
   }
 
   private func didDismiss(
-    _ dismissalResult: PaywallDismissedResult,
+    paywallInfo: PaywallInfo,
+    state: DismissState,
     shouldSendDismissedState: Bool = true,
     completion: (() -> Void)? = nil
   ) {
@@ -713,7 +708,7 @@ extension PaywallViewController {
     Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall()
 
     if shouldSendDismissedState {
-      paywallStatePublisher?.send(.dismissed(dismissalResult))
+      paywallStatePublisher?.send(.dismissed(paywallInfo, state))
       paywallStatePublisher?.send(completion: .finished)
       paywallStatePublisher = nil
     }
