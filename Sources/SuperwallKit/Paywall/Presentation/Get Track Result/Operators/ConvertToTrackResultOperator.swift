@@ -10,7 +10,7 @@ import Combine
 
 extension AnyPublisher where Output == TriggerResult, Failure == Error {
   /// Checks whether the trigger result indicates that a paywall should show.
-  func convertToTrackResult() -> AnyPublisher<TrackResult, Error> {
+  func convertToTrackResult() -> AnyPublisher<PresentationResult, Error> {
     map { input in
       return GetTrackResultLogic.convertTriggerResult(input)
     }

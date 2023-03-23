@@ -26,7 +26,7 @@ enum GetTrackResultError: Error, Equatable {
 }
 
 extension Superwall {
-  func getTrackResult(for request: PresentationRequest) async -> TrackResult {
+  func getTrackResult(for request: PresentationRequest) async -> PresentationResult {
     let presentationSubject = PresentationSubject(request)
 
     return await presentationSubject
@@ -43,7 +43,7 @@ extension Superwall {
 }
 
 // MARK: - Async Publisher for GetTrackResult
-extension Publisher where Output == TrackResult {
+extension Publisher where Output == PresentationResult {
   /// Waits and returns the first value of the publisher.
   ///
   /// This handles the error cases thrown by `getTrackResult(for:)`.

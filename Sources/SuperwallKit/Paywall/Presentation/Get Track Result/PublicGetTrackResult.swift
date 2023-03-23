@@ -23,17 +23,18 @@ extension Superwall {
   ///     - event: The name of the event you want to track.
   ///     - params: Optional parameters you'd like to pass with your event.
   ///
-  /// - Returns: A ``TrackResult`` that indicates the result of tracking an event.
-  public func getTrackResult(
+  /// - Returns: A ``PresentationResult`` that indicates the result of tracking an event.
+  public func getPresentationResult(
     forEvent event: String,
     params: [String: Any]? = nil
-  ) async -> TrackResult {
+  ) async -> PresentationResult {
     let eventCreatedAt = Date()
 
     let trackableEvent = UserInitiatedEvent.Track(
       rawName: event,
       canImplicitlyTriggerPaywall: false,
-      customParameters: params ?? [:]
+      customParameters: params ?? [:],
+      isFeatureGatable: false
     )
 
     let parameters = await TrackingLogic.processParameters(
@@ -71,15 +72,15 @@ extension Superwall {
   /// - Parameters:
   ///     - event: The name of the event you want to track.
   ///     - params: Optional parameters you'd like to pass with your event.
-  ///     - completion: A completion block that accepts a ``TrackResult`` indicating
+  ///     - completion: A completion block that accepts a ``PresentationResult`` indicating
   ///     the result of tracking an event.
-  public func getTrackResult(
+  public func getPresentationResult(
     forEvent event: String,
     params: [String: Any]? = nil,
-    completion: @escaping (TrackResult) -> Void
+    completion: @escaping (PresentationResult) -> Void
   ) {
     Task {
-      let result = await getTrackResult(forEvent: event, params: params)
+      let result = await getPresentationResult(forEvent: event, params: params)
       completion(result)
     }
   }
@@ -98,11 +99,11 @@ extension Superwall {
   ///
   /// - Returns: A ``TrackResultObjc`` object that contains information about the result of tracking an event.
   @available(swift, obsoleted: 1.0)
-  @objc public func getTrackResult(
+  @objc public func getPresentationResult(
     forEvent event: String,
     params: [String: Any]? = nil
   ) async -> TrackResultObjc {
-    let result = await getTrackResult(forEvent: event, params: params)
+    let result = await getPresentationResult(forEvent: event, params: params)
     return TrackResultObjc(trackResult: result)
   }
 
@@ -119,10 +120,10 @@ extension Superwall {
   ///
   /// - Returns: A ``TrackResultObjc`` object that contains information about the result of tracking an event.
   @available(swift, obsoleted: 1.0)
-  @objc public func getTrackResult(
+  @objc public func getPresentationResult(
     forEvent event: String
   ) async -> TrackResultObjc {
-    let result = await getTrackResult(forEvent: event, params: nil)
+    let result = await getPresentationResult(forEvent: event, params: nil)
     return TrackResultObjc(trackResult: result)
   }
 }

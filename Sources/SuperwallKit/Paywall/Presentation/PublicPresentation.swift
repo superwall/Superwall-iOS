@@ -378,7 +378,8 @@ extension Superwall {
     publisher(
       forEvent: event,
       params: params,
-      paywallOverrides: paywallOverrides
+      paywallOverrides: paywallOverrides,
+      isFeatureGatable: false
     )
     .subscribe(Subscribers.Sink(
       receiveCompletion: { _ in },
@@ -414,7 +415,8 @@ extension Superwall {
     publisher(
       forEvent: event,
       params: params,
-      paywallOverrides: nil
+      paywallOverrides: nil,
+      isFeatureGatable: completion != nil
     )
     .subscribe(Subscribers.Sink(
       receiveCompletion: { _ in },
@@ -464,7 +466,8 @@ extension Superwall {
   public func publisher(
     forEvent event: String,
     params: [String: Any]? = nil,
-    paywallOverrides: PaywallOverrides? = nil
+    paywallOverrides: PaywallOverrides? = nil,
+    isFeatureGatable: Bool
   ) -> PaywallStatePublisher {
     do {
       try TrackingLogic.checkNotSuperwallEvent(event)
@@ -476,7 +479,8 @@ extension Superwall {
       let trackableEvent = UserInitiatedEvent.Track(
         rawName: event,
         canImplicitlyTriggerPaywall: false,
-        customParameters: params ?? [:]
+        customParameters: params ?? [:],
+        isFeatureGatable: isFeatureGatable
       )
       let trackResult = await self.track(trackableEvent)
       return (trackResult, self.isPaywallPresented)

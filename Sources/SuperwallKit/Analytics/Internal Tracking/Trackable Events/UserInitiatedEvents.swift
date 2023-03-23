@@ -16,8 +16,11 @@ enum UserInitiatedEvent {
     let rawName: String
     let canImplicitlyTriggerPaywall: Bool
     var customParameters: [String: Any] = [:]
+    var isFeatureGatable: Bool
 
-    func getSuperwallParameters() async -> [String: Any] { [:] }
+    func getSuperwallParameters() async -> [String: Any] {
+      return ["is_feature_gatable": isFeatureGatable]
+    }
   }
   /*
   // MARK: - To be deprecated/deleted

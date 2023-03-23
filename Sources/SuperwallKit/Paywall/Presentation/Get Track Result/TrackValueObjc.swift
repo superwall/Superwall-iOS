@@ -54,7 +54,7 @@ public final class TrackResultObjc: NSObject, Sendable {
   /// a `paywall`.
   public let experiment: Experiment?
 
-  init(trackResult: TrackResult) {
+  init(trackResult: PresentationResult) {
     switch trackResult {
     case .paywall(let experiment):
       self.value = .paywall

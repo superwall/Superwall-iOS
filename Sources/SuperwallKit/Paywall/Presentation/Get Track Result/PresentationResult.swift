@@ -10,7 +10,7 @@ import Foundation
 /// The result of a tracking an event.
 ///
 /// Contains the possible cases resulting from tracking an event.
-public enum TrackResult: Sendable, Equatable {
+public enum PresentationResult: Sendable, Equatable {
   /// This event was not found on the dashboard.
   ///
   /// Please make sure you have added the event to a campaign on the dashboard and
