@@ -11,5 +11,6 @@ public class PaywallPresentationHandler: NSObject {
 
   public var onPresent: ((_ paywallInfo: PaywallInfo) -> Void)? = nil
   public var onDismiss: ((_ paywallInfo: PaywallInfo) -> Void)? = nil
+  public var onError: ((_ error: Error) -> Void)? = nil
 
 }

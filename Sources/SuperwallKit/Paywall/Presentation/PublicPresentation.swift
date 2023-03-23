@@ -408,8 +408,8 @@ extension Superwall {
           }
         case .skipped(let reason):
           switch reason {
-            case .error:
-              return // otherwise turning internet off would give unlimited access
+            case .error(let error):
+              handler?.onError?(error) // otherwise turning internet off would give unlimited access
             default:
               completion?()
           }
