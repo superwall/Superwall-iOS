@@ -22,8 +22,6 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
     flatMap { input in
       Future { promise in
         Task {
-          let state: PaywallState = await .presented(input.paywallViewController.paywallInfo)
-          paywallStatePublisher.send(state)
           await MainActor.run {
             input.paywallViewController.present(
               on: input.presenter,
@@ -32,6 +30,8 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
               paywallStatePublisher: paywallStatePublisher
             ) { isPresented in
               if isPresented {
+                let state: PaywallState = .presented(input.paywallViewController.paywallInfo)
+                paywallStatePublisher.send(state)
                 promise(.success(input))
               } else {
                 Logger.debug(

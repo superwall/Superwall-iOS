@@ -10,10 +10,6 @@ import Foundation
 import Combine
 import UIKit
 
-/// A completion block that contains a ``PaywallDismissedResult`` object. This contains info about why
-/// the paywall was dismissed.
-public typealias PaywallDismissedCompletionBlock = (PaywallDismissedResult) -> Void
-
 extension Superwall {
   // MARK: - Dismiss
   /// Dismisses the presented paywall.
@@ -96,7 +92,7 @@ extension Superwall {
     presentationStyleOverride: PaywallPresentationStyle = .none,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((PaywallDismissedResultStateObjc, String?, PaywallInfo) -> Void)? = nil
+    onDismiss: ((DismissStateObjc, String?, PaywallInfo) -> Void)? = nil
   ) {
     objcTrack(
       event: event,
@@ -118,7 +114,7 @@ extension Superwall {
     presentationStyleOverride: PaywallPresentationStyle = .none,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((PaywallDismissedResultStateObjc, String?, PaywallInfo) -> Void)? = nil
+    onDismiss: ((DismissStateObjc, String?, PaywallInfo) -> Void)? = nil
   ) {
     let overrides = PaywallOverrides(
       products: products,
@@ -134,9 +130,13 @@ extension Superwall {
       switch state {
       case .presented(let paywallInfo):
         onPresent?(paywallInfo)
-      case .dismissed(let result):
+      case let .dismissed(paywallInfo, state):
         if let onDismiss = onDismiss {
-          self?.onDismissConverter(result, completion: onDismiss)
+          self?.onDismissConverter(
+            paywallInfo: paywallInfo,
+            state: state,
+            completion: onDismiss
+          )
         }
       case .skipped(let reason):
         self?.onSkipConverter(reason: reason, completion: onSkip)
@@ -298,7 +298,7 @@ extension Superwall {
     event: String,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((PaywallDismissedResultStateObjc, String?, PaywallInfo) -> Void)? = nil
+    onDismiss: ((DismissStateObjc, String?, PaywallInfo) -> Void)? = nil
   ) {
     objcTrack(
       event: event,
@@ -341,7 +341,7 @@ extension Superwall {
     params: [String: Any]? = nil,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((PaywallDismissedResultStateObjc, String?, PaywallInfo) -> Void)? = nil
+    onDismiss: ((DismissStateObjc, String?, PaywallInfo) -> Void)? = nil
   ) {
     objcTrack(
       event: event,
@@ -388,23 +388,50 @@ extension Superwall {
     ))
   }
 
+  public func register(
+    event: String,
+    params: [String: Any]? = nil,
+    handler: PaywallPresentationHandler? = nil,
+    feature: @escaping () -> Void
+  ) {
+    internallyRegister(event: event, params: params, handler: handler, feature: feature)
+  }
 
-  public func register(event: String, params: [String: Any]? = nil, handler: PaywallPresentationHandler? = nil, completion: (() -> Void)? = nil) {
+  public func register(
+    event: String,
+    params: [String: Any]? = nil,
+    handler: PaywallPresentationHandler? = nil
+  ) {
+    internallyRegister(event: event, params: params, handler: handler)
+  }
 
-    Superwall.shared.track(event: event, params: params) { state in
-      switch state {
+  private func internallyRegister(
+    event: String,
+    params: [String: Any]? = nil,
+    handler: PaywallPresentationHandler? = nil,
+    feature completion: (() -> Void)? = nil
+  ) {
+    publisher(
+      forEvent: event,
+      params: params,
+      paywallOverrides: nil
+    )
+    .subscribe(Subscribers.Sink(
+      receiveCompletion: { _ in },
+      receiveValue: { state in
+        switch state {
         case .presented(let paywallInfo):
           handler?.onPresent?(paywallInfo)
-        case .dismissed(let result):
-          handler?.onDismiss?(result.paywallInfo)
-          switch result.state {
-            case .purchased, .restored:
+        case let .dismissed(paywallInfo, state):
+          handler?.onDismiss?(paywallInfo)
+          switch state {
+          case .purchased, .restored:
+            completion?()
+          case .closed:
+            let featureGating = paywallInfo.featureGatingBehavior
+            if featureGating == .nonGated {
               completion?()
-            case .closed:
-              let featureGating = result.paywallInfo.featureGatingBehavior
-              if featureGating == .nonGated {
-                completion?()
-              }
+            }
           }
         case .skipped(let reason):
           switch reason {
@@ -413,8 +440,9 @@ extension Superwall {
             default:
               completion?()
           }
+        }
       }
-    }
+    ))
   }
 
   /// Returns a publisher that tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -470,16 +498,17 @@ extension Superwall {
   ///   - result: The dismissal result
   ///   - completion: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo`` object containing information about the paywall.
   private func onDismissConverter(
-    _ result: PaywallDismissedResult,
-    completion: (PaywallDismissedResultStateObjc, String?, PaywallInfo) -> Void
+    paywallInfo: PaywallInfo,
+    state: DismissState,
+    completion: (DismissStateObjc, String?, PaywallInfo) -> Void
   ) {
-    switch result.state {
+    switch state {
     case .closed:
-      completion(.closed, nil, result.paywallInfo)
+      completion(.closed, nil, paywallInfo)
     case .purchased(productId: let productId):
-      completion(.purchased, productId, result.paywallInfo)
+      completion(.purchased, productId, paywallInfo)
     case .restored:
-      completion(.restored, nil, result.paywallInfo)
+      completion(.restored, nil, paywallInfo)
     }
   }
 }

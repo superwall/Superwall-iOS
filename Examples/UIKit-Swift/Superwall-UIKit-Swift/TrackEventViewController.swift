@@ -61,8 +61,9 @@ final class TrackEventViewController: UIViewController {
       switch paywallState {
       case .presented(let paywallInfo):
         print("paywall info is", paywallInfo)
-      case .dismissed(let result):
-        switch result.state {
+      case .dismissed(let paywallInfo, let state):
+        print("paywall info is", paywallInfo)
+        switch state {
         case .purchased(let productId):
           print("The purchased product ID is", productId)
         case .closed:
