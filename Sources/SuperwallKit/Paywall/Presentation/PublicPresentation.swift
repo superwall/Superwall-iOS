@@ -423,25 +423,37 @@ extension Superwall {
       receiveValue: { state in
         switch state {
         case .presented(let paywallInfo):
-          handler?.onPresent?(paywallInfo)
+          DispatchQueue.main.async {
+            handler?.onPresent?(paywallInfo)
+          }
         case let .dismissed(paywallInfo, state):
-          handler?.onDismiss?(paywallInfo)
+          DispatchQueue.main.async {
+            handler?.onDismiss?(paywallInfo)
+          }
           switch state {
           case .purchased,
             .restored:
-            completion?()
+            DispatchQueue.main.async {
+              completion?()
+            }
           case .closed:
             let featureGating = paywallInfo.featureGatingBehavior
             if featureGating == .nonGated {
-              completion?()
+              DispatchQueue.main.async {
+                completion?()
+              }
             }
           }
         case .skipped(let reason):
           switch reason {
           case .error(let error):
-            handler?.onError?(error) // otherwise turning internet off would give unlimited access
+            DispatchQueue.main.async {
+              handler?.onError?(error) // otherwise turning internet off would give unlimited access
+            }
           default:
-            completion?()
+            DispatchQueue.main.async {
+              completion?()
+            }
           }
         }
       }
