@@ -84,7 +84,9 @@ struct Paywall: Decodable {
   /// Determines whether a free trial is available or not.
   var isFreeTrialAvailable = false
 
-  /// Determines whether a paywall moment is continues execution if the user does not purchase
+  /// Determines whether a paywall executes the
+  /// ``Superwall/register(event:params:handler:feature:)`` feature block if the
+  /// user does not purchase.
   var featureGating: FeatureGatingBehavior
 
   enum CodingKeys: String, CodingKey {
@@ -163,7 +165,6 @@ struct Paywall: Decodable {
     )
 
     featureGating = try values.decodeIfPresent(FeatureGatingBehavior.self, forKey: .featureGating) ?? .nonGated
-
   }
 
   init(

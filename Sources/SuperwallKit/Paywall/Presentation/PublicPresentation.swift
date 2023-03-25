@@ -427,7 +427,8 @@ extension Superwall {
         case let .dismissed(paywallInfo, state):
           handler?.onDismiss?(paywallInfo)
           switch state {
-          case .purchased, .restored:
+          case .purchased,
+            .restored:
             completion?()
           case .closed:
             let featureGating = paywallInfo.featureGatingBehavior
@@ -437,10 +438,10 @@ extension Superwall {
           }
         case .skipped(let reason):
           switch reason {
-            case .error(let error):
-              handler?.onError?(error) // otherwise turning internet off would give unlimited access
-            default:
-              completion?()
+          case .error(let error):
+            handler?.onError?(error) // otherwise turning internet off would give unlimited access
+          default:
+            completion?()
           }
         }
       }

@@ -56,36 +56,54 @@ final class TrackEventViewController: UIViewController {
     self.navigationController?.popToRootViewController(animated: true)
   }
 
-  @IBAction private func trackEvent() {
-    Superwall.shared.track(event: "campaign_trigger") { paywallState in
-      switch paywallState {
-      case .presented(let paywallInfo):
-        print("paywall info is", paywallInfo)
-      case .dismissed(let paywallInfo, let state):
-        print("paywall info is", paywallInfo)
-        switch state {
-        case .purchased(let productId):
-          print("The purchased product ID is", productId)
-        case .closed:
-          print("The paywall was closed.")
-        case .restored:
-          print("The product was restored.")
-        }
-      case .skipped(let reason):
-        switch reason {
-        case .holdout(let experiment):
-          print("The user is in a holdout group, with id \(experiment.id) and group id \(experiment.groupId)")
-        case .noRuleMatch:
-          print("The user did not match any rules")
-        case .eventNotFound:
-          print("The event wasn't found in a campaign on the dashboard.")
-        case .userIsSubscribed:
-          print("The user is subscribed.")
-        case .error(let error):
-          print("Failed to present paywall. Consider a native paywall fallback", error)
-        }
-      }
+  @IBAction private func accessGatedFeature() {
+    let handler = PaywallPresentationHandler()
+    handler.onDismiss = { paywallInfo in
+      print("The paywall dismissed")
     }
+    handler.onPresent = { paywallInfo in
+      print("The paywall presented")
+    }
+    handler.onError = { error in
+      print("The paywall presentation failed with error \(error)")
+    }
+    Superwall.shared.register(event: "my_gated_feature", handler: handler) {
+      self.presentAlert(
+        title: "Non Gated Feature Block Called",
+        message: "Here is where you would add a feature. It's only called  after the user has purchased/restored or has an active subscription."
+      )
+    }
+  }
+
+  @IBAction private func accessNonGatedFeature() {
+    let handler = PaywallPresentationHandler()
+    handler.onDismiss = { paywallInfo in
+      print("The paywall dismissed", paywallInfo)
+    }
+    handler.onPresent = { paywallInfo in
+      print("The paywall presented", paywallInfo)
+    }
+    handler.onError = { error in
+      print("The paywall presentation failed with error \(error)")
+    }
+    Superwall.shared.register(event: "my_non_gated_feature", handler: handler) {
+      self.presentAlert(
+        title: "Non Gated Feature Block Called",
+        message: "Here is where you would add a feature. It's called regardless of the subscription status of the user."
+      )
+    }
+  }
+
+  private func presentAlert(title: String, message: String) {
+    let alertController = UIAlertController(
+      title: title,
+      message: message,
+      preferredStyle: .alert
+    )
+    let okAction = UIAlertAction(title: "OK", style: .default) { _ in }
+    alertController.addAction(okAction)
+    alertController.popoverPresentationController?.sourceView = self.view
+    self.present(alertController, animated: true)
   }
 
   // The below function gives an example of how to track an event using Combine publishers:

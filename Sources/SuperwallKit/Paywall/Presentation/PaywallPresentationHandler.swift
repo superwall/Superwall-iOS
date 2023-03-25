@@ -7,8 +7,15 @@
 
 import Foundation
 
+/// The handler for ``Superwall/register(event:params:handler:feature:)`` whose functions
+/// provide status updates for a paywall.
 public class PaywallPresentationHandler: NSObject {
-  public var onPresent: ((_ paywallInfo: PaywallInfo) -> Void)? = nil
-  public var onDismiss: ((_ paywallInfo: PaywallInfo) -> Void)? = nil
-  public var onError: ((_ error: Error) -> Void)? = nil
+  /// A block called when the paywall did present.
+  public var onPresent: ((_ paywallInfo: PaywallInfo) -> Void)?
+
+  /// A block called when the paywall did dismiss.
+  public var onDismiss: ((_ paywallInfo: PaywallInfo) -> Void)?
+
+  /// A block called when an error occurred while trying to present a paywall.
+  public var onError: ((_ error: Error) -> Void)?
 }

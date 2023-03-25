@@ -508,9 +508,11 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
       modalPresentationStyle = .pageSheet
       if #available(iOS 16.0, *),
         UIDevice.current.userInterfaceIdiom == .phone {
-        sheetPresentationController?.detents = [.custom(resolver: { context in
-          return 0.7 * context.maximumDetentValue
-        })]
+        sheetPresentationController?.detents = [
+          .custom(resolver: { context in
+            return 0.7 * context.maximumDetentValue
+          })
+        ]
       }
     case .none:
       break

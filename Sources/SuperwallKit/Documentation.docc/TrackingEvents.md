@@ -1,12 +1,12 @@
-# Tracking Events
+# Registering Events
 
-Show a paywall in your app in response to a tracked event.
+Show a paywall in your app in response to a registered event.
 
 ## Overview
 
-You can retroactively decide where and when to show a paywall in your app by tracking events.
+You can retroactively decide where and when to show a paywall in your app by registering events.
 
-Events are added to campaigns on the [Superwall Dashboard](https://superwall.com/dashboard) and are tracked via the SDK. The SDK listens for these events and evaluates their rules to determine whether or not to show a paywall.
+Events are added to campaigns on the [Superwall Dashboard](https://superwall.com/dashboard) and are registered via the SDK. The SDK listens for these events and evaluates their rules to determine whether or not to show a paywall.
 
 When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
 
@@ -14,25 +14,24 @@ In addition to your own events, you can add the Superwall events `app_install`, 
 
 ## Presenting a Paywall
 
-When you sign up for a Superwall account, we give you an example paywall and campaign to test your integration. The example campaign contains an event called `campaign_trigger`, which you'll track in your app when you want to show the paywall.
+When you sign up for a Superwall account, we give you an example paywall and campaign to test your integration. The example campaign contains an event called `campaign_trigger`, which you'll register in your app when you want to show the paywall.
 
-You use ``Superwall/track(event:params:paywallOverrides:paywallHandler:)`` to track events:
+You use ``Superwall/register(event:params:handler:feature:)`` to register events:
 
 ```swift
-Superwall.shared.track(event: "campaign_trigger") { paywallState in
-  switch paywallState {
-  case .presented(let paywallInfo):
-    break
-  case .dismissed(let result):
-    break
-  case .skipped(let reason):
-    break
+Superwall.shared.register(event: "campaign_trigger") {
+  print("Here is where you would add a feature.")
 }
 ```
 
-In this example, you're tracking the event `campaign_trigger`. You then utilize the optional `paywallHandler` callback to handle the paywall presentation state. You can also pass parameters to be used in rules and overrides to replace default paywall functionality.
+In this example, you're registering the event `campaign_trigger`. You then utilize the optional `feature` block. This is where you put code that you want behind a paywall. In the Paywall Editor on the Superwall dashboard, you can remotely configure whether this block should be `Gated` or `Non-Gated`:
 
-We recommend tracking all of your analytical events to Superwall. That way you can retroactively add a paywall to any of your events, should you decide to.
+1. **Gated**: This only calls the `feature` block after the user has purchased/restored or has an active subscription.
+2. **Non-Gated**: This calls the `feature` block regardless of the subscription status of the user.
+
+All paywalls default to `Non-Gated`. You can also pass parameters to be used in rules and a ``PaywallPresentationHandler`` to handle paywall presented, dismissed and failed states.
+
+We recommend  tracking all of your analytical events to Superwall. That way you can retroactively add a paywall to any of your events, should you decide to.
 
 ## Integrating with Existing Analytics
 
@@ -51,7 +50,7 @@ final class Analytics {
     params: [String: Any]
   ) {
     // Superwall
-    Superwall.shared.track(
+    Superwall.shared.register(
       event: event,
       params: params
     )
