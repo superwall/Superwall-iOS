@@ -90,17 +90,22 @@ enum Logger: Loggable {
       guard shouldPrint(logLevel: logLevel, scope: scope) else {
         return
       }
-      let dateString = Date().isoString
-        .replacingOccurrences(of: "T", with: " ")
-        .replacingOccurrences(of: "Z", with: "")
 
-      dump(
-        dumping,
-        name: "[Superwall]  [\(dateString)]  \(logLevel.description)  \(scope.description)  \(message ?? "")",
-        indent: 0,
-        maxDepth: 100,
-        maxItems: 100
-      )
+      let name = "\n\(logLevel.descriptionEmoji) [Superwall] [\(scope.description)] \(logLevel.description)\(message != nil ? ": \(message!)" : "")\n"
+
+      if dumping.isEmpty {
+        print(name)
+      } else {
+        dump(
+          dumping,
+          name: name,
+          indent: 0,
+          maxDepth: 100,
+          maxItems: 100
+        )
+      }
+
+
     }
 	}
 }

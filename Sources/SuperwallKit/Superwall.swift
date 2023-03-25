@@ -96,7 +96,17 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// To learn more, see <doc:AdvancedConfiguration>.
   @Published
-  public var subscriptionStatus: SubscriptionStatus = .unknown
+  public var subscriptionStatus: SubscriptionStatus = .unknown {
+    didSet {
+      if !Self.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .storeKitManager,
+          message: "Superwall.shared.subscriptionStatus set without active PurchaseController. Value may be later overwritten by Superwall. To manage subscriptionStatus on your own, or with subscription management platforms like RevenueCat and Qonversion, create a PurchaseController and pass it through to Superwall.configure(purchaseController:). Keep in mind, you will have to handle purchasing, restoring, and setting subscriptionStatus entirely on your own. If you are using RevenueCat, strongly consider using it in Observer Mode."
+        )
+      }
+    }
+  }
 
   /// A published property that is `true` when Superwall has finished configuring via
   /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.

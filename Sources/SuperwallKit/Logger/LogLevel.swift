@@ -28,4 +28,14 @@ public enum LogLevel: Int, CustomStringConvertible, Sendable {
     case .error: return "ERROR"
     }
   }
+
+  /// The string value of the log level
+  public var descriptionEmoji: String {
+    switch self {
+    case .debug: return "💬"
+    case .info: return "ℹ️"
+    case .warn: return "⚠️"
+    case .error: return "‼️"
+    }
+  }
 }
