@@ -27,19 +27,19 @@ public protocol SuperwallDelegate: AnyObject {
 
   /// Called right before the paywall is dismissed.
   @MainActor
-  func willDismissPaywall()
+  func willDismissPaywall(withInfo paywallInfo: PaywallInfo)
 
   /// Called right before the paywall is presented.
   @MainActor
-  func willPresentPaywall()
+  func willPresentPaywall(withInfo paywallInfo: PaywallInfo)
 
   /// Called right after the paywall is dismissed.
   @MainActor
-  func didDismissPaywall()
+  func didDismissPaywall(withInfo paywallInfo: PaywallInfo)
 
   /// Called right after the paywall is presented.
   @MainActor
-  func didPresentPaywall()
+  func didPresentPaywall(withInfo paywallInfo: PaywallInfo)
 
   /// Called when the user opens a URL by selecting an element on your paywall that has a `data-pw-open-url` tag.
   ///
@@ -98,13 +98,13 @@ public protocol SuperwallDelegate: AnyObject {
 extension SuperwallDelegate {
   public func handleCustomPaywallAction(withName name: String) {}
 
-  public func willDismissPaywall() {}
+  public func willDismissPaywall(withInfo paywallInfo: PaywallInfo) {}
 
-  public func willPresentPaywall() {}
+  public func willPresentPaywall(withInfo paywallInfo: PaywallInfo) {}
 
-  public func didDismissPaywall() {}
+  public func didDismissPaywall(withInfo paywallInfo: PaywallInfo) {}
 
-  public func didPresentPaywall() {}
+  public func didPresentPaywall(withInfo paywallInfo: PaywallInfo) {}
 
   public func willOpenURL(url: URL) {}
 

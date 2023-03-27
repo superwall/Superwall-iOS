@@ -37,36 +37,36 @@ final class SuperwallDelegateAdapter {
   }
 
   @MainActor
-  func willDismissPaywall() {
+  func willDismissPaywall(withInfo paywallInfo: PaywallInfo) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.willDismissPaywall()
+      swiftDelegate.willDismissPaywall(withInfo: paywallInfo)
     } else if let objcDelegate = objcDelegate {
       objcDelegate.willDismissPaywall?()
     }
   }
 
   @MainActor
-  func willPresentPaywall() {
+  func willPresentPaywall(withInfo paywallInfo: PaywallInfo) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.willPresentPaywall()
+      swiftDelegate.willPresentPaywall(withInfo: paywallInfo)
     } else if let objcDelegate = objcDelegate {
       objcDelegate.willPresentPaywall?()
     }
   }
 
   @MainActor
-  func didDismissPaywall() {
+  func didDismissPaywall(withInfo paywallInfo: PaywallInfo) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.didDismissPaywall()
+      swiftDelegate.didDismissPaywall(withInfo: paywallInfo)
     } else if let objcDelegate = objcDelegate {
       objcDelegate.didDismissPaywall?()
     }
   }
 
   @MainActor
-  func didPresentPaywall() {
+  func didPresentPaywall(withInfo paywallInfo: PaywallInfo) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.didPresentPaywall()
+      swiftDelegate.didPresentPaywall(withInfo: paywallInfo)
     } else if let objcDelegate = objcDelegate {
       objcDelegate.didPresentPaywall?()
     }

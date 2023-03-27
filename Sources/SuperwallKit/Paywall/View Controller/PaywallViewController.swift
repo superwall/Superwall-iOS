@@ -527,12 +527,12 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     view.transform = .identity
     webView.scrollView.contentOffset = CGPoint.zero
 
-    Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall()
+    Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall(withInfo: paywallInfo)
   }
 
   private func presentationDidFinish() {
     isPresented = true
-    Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall()
+    Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall(withInfo: paywallInfo)
     Task(priority: .utility) {
       await trackOpen()
     }
@@ -689,7 +689,7 @@ extension PaywallViewController {
 
   private func willDismiss() {
     Superwall.shared.presentationItems.paywallInfo = paywallInfo
-    Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall()
+    Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall(withInfo: paywallInfo)
   }
 
   private func didDismiss(
@@ -707,7 +707,7 @@ extension PaywallViewController {
     cache?.activePaywallVcKey = nil
 
     GameControllerManager.shared.clearDelegate(self)
-    Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall()
+    Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall(withInfo: paywallInfo)
 
     if shouldSendDismissedState {
       paywallStatePublisher?.send(.dismissed(paywallInfo, state))
