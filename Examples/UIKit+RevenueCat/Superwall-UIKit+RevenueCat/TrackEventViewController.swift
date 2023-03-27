@@ -59,35 +59,36 @@ final class TrackEventViewController: UIViewController {
     }
   }
 
-  @IBAction private func trackEvent() {
-    Superwall.shared.track(event: "campaign_trigger") { paywallState in
-      switch paywallState {
-      case .presented(let paywallInfo):
-        print("paywall info is", paywallInfo)
-      case .dismissed(let result):
-        switch result.state {
-        case .purchased(let productId):
-          print("The purchased product ID is", productId)
-        case .closed:
-          print("The paywall was closed.")
-        case .restored:
-          print("The product was restored.")
-        }
-      case .skipped(let reason):
-        switch reason {
-        case .holdout(let experiment):
-          print("The user is in a holdout group, with id \(experiment.id) and group id \(experiment.groupId)")
-        case .noRuleMatch:
-          print("The user did not match any rules")
-        case .eventNotFound:
-          print("The event wasn't found in a campaign on the dashboard.")
-        case .userIsSubscribed:
-          print("The user is subscribed.")
-        case .error(let error):
-          print("Failed to present paywall. Consider a native paywall fallback", error)
-        }
-      }
+  @IBAction private func launchFeature() {
+    let handler = PaywallPresentationHandler()
+    handler.onDismiss = { paywallInfo in
+      print("The paywall dismissed. PaywallInfo:", paywallInfo)
     }
+    handler.onPresent = { paywallInfo in
+      print("The paywall presented. PaywallInfo:", paywallInfo)
+    }
+    handler.onError = { error in
+      print("The paywall presentation failed with error \(error)")
+    }
+    Superwall.shared.register(event: "campaign_trigger", handler: handler) {
+      // code in here can be remotely configured to execute. Either
+      // (1) always after presentation or
+      // (2) only if the user pays
+      // code is always executed if no paywall is configured to show
+      self.presentAlert(title: "Feature Launched", message: "wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely.")
+    }
+  }
+
+  private func presentAlert(title: String, message: String) {
+    let alertController = UIAlertController(
+      title: title,
+      message: message,
+      preferredStyle: .alert
+    )
+    let okAction = UIAlertAction(title: "OK", style: .default) { _ in }
+    alertController.addAction(okAction)
+    alertController.popoverPresentationController?.sourceView = self.view
+    self.present(alertController, animated: true)
   }
 
   // The below function gives an example of how to track an event using Combine publishers:

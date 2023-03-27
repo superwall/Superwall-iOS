@@ -10,7 +10,7 @@ import SuperwallKit
 
 struct TrackEventView: View {
   @Binding var isLoggedIn: Bool
-  private let model = TrackEventModel()
+  @State private var launchFeature = false
 
   init(isLoggedIn: Binding<Bool>) {
     _isLoggedIn = isLoggedIn
@@ -24,7 +24,7 @@ struct TrackEventView: View {
     VStack(spacing: 48) {
       ScrollView {
         InfoView(
-          text: "The button below tracks an event \"campaign_trigger\".\n\nThis event has been added to a campaign on the Superwall dashboard.\n\nWhen this event is tracked, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
+          text: "The Launch Feature button below registers an event \"campaign_trigger\".\n\nThis event has been added to a campaign on the Superwall dashboard.\n\nWhen this event is tracked, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
         )
 
         Divider()
@@ -35,11 +35,27 @@ struct TrackEventView: View {
       }
 
       VStack(spacing: 25) {
-        BrandedButton(title: "Track event") {
-          model.trackEvent()
+        BrandedButton(title: "Launch Feature") {
+          let handler = PaywallPresentationHandler()
+          handler.onDismiss = { paywallInfo in
+            print("The paywall dismissed. PaywallInfo:", paywallInfo)
+          }
+          handler.onPresent = { paywallInfo in
+            print("The paywall presented. PaywallInfo:", paywallInfo)
+          }
+          handler.onError = { error in
+            print("The paywall presentation failed with error \(error)")
+          }
+          Superwall.shared.register(event: "campaign_trigger", handler: handler) {
+            // code in here can be remotely configured to execute. Either
+            // (1) always after presentation or
+            // (2) only if the user pays
+            // code is always executed if no paywall is configured to show
+            launchFeature = true
+          }
         }
         BrandedButton(title: "Log Out") {
-          model.logOut()
+          Superwall.shared.reset()
           isLoggedIn = false
         }
       }
@@ -51,6 +67,9 @@ struct TrackEventView: View {
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden()
     .navigationTitle("Hello \(SuperwallService.name)")
+    .alert("Wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely.", isPresented: $launchFeature) {
+      Button("OK", role: .cancel) { }
+    }
   }
 }
 

@@ -53,44 +53,27 @@ final class TrackEventViewController: UIViewController {
   @IBAction private func logOut() {
     UserDefaults.standard.setValue(false, forKey: "IsLoggedIn")
     SuperwallService.reset()
-    self.navigationController?.popToRootViewController(animated: true)
+    _ = self.navigationController?.popToRootViewController(animated: true)
   }
 
-  @IBAction private func accessGatedFeature() {
+
+  @IBAction private func launchFeature() {
     let handler = PaywallPresentationHandler()
     handler.onDismiss = { paywallInfo in
-      print("The paywall dismissed")
+      print("The paywall dismissed. PaywallInfo:", paywallInfo)
     }
     handler.onPresent = { paywallInfo in
-      print("The paywall presented")
+      print("The paywall presented. PaywallInfo:", paywallInfo)
     }
     handler.onError = { error in
       print("The paywall presentation failed with error \(error)")
     }
-    Superwall.shared.register(event: "my_gated_feature", handler: handler) {
-      self.presentAlert(
-        title: "Non Gated Feature Block Called",
-        message: "Here is where you would add a feature. It's only called  after the user has purchased/restored or has an active subscription."
-      )
-    }
-  }
-
-  @IBAction private func accessNonGatedFeature() {
-    let handler = PaywallPresentationHandler()
-    handler.onDismiss = { paywallInfo in
-      print("The paywall dismissed", paywallInfo)
-    }
-    handler.onPresent = { paywallInfo in
-      print("The paywall presented", paywallInfo)
-    }
-    handler.onError = { error in
-      print("The paywall presentation failed with error \(error)")
-    }
-    Superwall.shared.register(event: "my_non_gated_feature", handler: handler) {
-      self.presentAlert(
-        title: "Non Gated Feature Block Called",
-        message: "Here is where you would add a feature. It's called regardless of the subscription status of the user."
-      )
+    Superwall.shared.register(event: "campaign_trigger", handler: handler) {
+      // code in here can be remotely configured to execute. Either
+      // (1) always after presentation or
+      // (2) only if the user pays
+      // code is always executed if no paywall is configured to show
+      self.presentAlert(title: "Feature Launched", message: "wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely.")
     }
   }
 
