@@ -10,7 +10,7 @@ import Foundation
 
 /// Objective-C-only analytical events that are automatically tracked by Superwall.
 ///
-/// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallKit/SuperwallDelegateObjc/didTrackSuperwallEventInfo(_:)``.
+/// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallKit/SuperwallDelegateObjc/handleSuperwallEvent(withInfo:)``.
 @objc(SWKSuperwallEvent)
 public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the user is first seen in the app, regardless of whether the user is logged in or not.

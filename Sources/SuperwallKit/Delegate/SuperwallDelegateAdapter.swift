@@ -41,7 +41,7 @@ final class SuperwallDelegateAdapter {
     if let swiftDelegate = swiftDelegate {
       swiftDelegate.willDismissPaywall(withInfo: paywallInfo)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.willDismissPaywall?()
+      objcDelegate.willDismissPaywall?(withInfo: paywallInfo)
     }
   }
 
@@ -50,7 +50,7 @@ final class SuperwallDelegateAdapter {
     if let swiftDelegate = swiftDelegate {
       swiftDelegate.willPresentPaywall(withInfo: paywallInfo)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.willPresentPaywall?()
+      objcDelegate.willPresentPaywall?(withInfo: paywallInfo)
     }
   }
 
@@ -59,7 +59,7 @@ final class SuperwallDelegateAdapter {
     if let swiftDelegate = swiftDelegate {
       swiftDelegate.didDismissPaywall(withInfo: paywallInfo)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.didDismissPaywall?()
+      objcDelegate.didDismissPaywall?(withInfo: paywallInfo)
     }
   }
 
@@ -68,34 +68,34 @@ final class SuperwallDelegateAdapter {
     if let swiftDelegate = swiftDelegate {
       swiftDelegate.didPresentPaywall(withInfo: paywallInfo)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.didPresentPaywall?()
+      objcDelegate.didPresentPaywall?(withInfo: paywallInfo)
     }
   }
 
   @MainActor
-  func willOpenURL(url: URL) {
+  func paywallWillOpenURL(url: URL) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.willOpenURL(url: url)
+      swiftDelegate.paywallWillOpenURL(url: url)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.willOpenURL?(url: url)
+      objcDelegate.paywallWillOpenURL?(url: url)
     }
   }
 
   @MainActor
-  func willOpenDeepLink(url: URL) {
+  func paywallWillOpenDeepLink(url: URL) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.willOpenDeepLink(url: url)
+      swiftDelegate.paywallWillOpenDeepLink(url: url)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.willOpenDeepLink?(url: url)
+      objcDelegate.paywallWillOpenDeepLink?(url: url)
     }
   }
 
   @MainActor
-  func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {
+  func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.didTrackSuperwallEventInfo(info)
+      swiftDelegate.handleSuperwallEvent(withInfo: eventInfo)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.didTrackSuperwallEventInfo?(info)
+      objcDelegate.handleSuperwallEvent?(withInfo: eventInfo)
     }
   }
 

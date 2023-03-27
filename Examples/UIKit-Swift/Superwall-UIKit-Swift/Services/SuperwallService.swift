@@ -50,8 +50,10 @@ final class SuperwallService {
 
 // MARK: - Superwall Delegate
 extension SuperwallService: SuperwallDelegate {
-  func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo) {
-    print("analytics event called", info.event.description)
+
+  func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {
+
+    print("track this analytics event in your own system", eventInfo.event.description)
 
     // Uncomment if you want to get a dictionary of params associated with the event:
     // print(info.params)
@@ -59,7 +61,7 @@ extension SuperwallService: SuperwallDelegate {
     // Uncomment the following if you want to track
     // Superwall events:
     /*
-    switch info.event {
+    switch eventInfo.event {
     case .firstSeen:
       <#code#>
     case .appOpen:

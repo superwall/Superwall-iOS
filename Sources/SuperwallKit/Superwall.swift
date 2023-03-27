@@ -463,11 +463,11 @@ extension Superwall: PaywallViewControllerDelegate {
     case .initiateRestore:
       await dependencyContainer.restorationManager.tryToRestore(paywallViewController)
     case .openedURL(let url):
-      dependencyContainer.delegateAdapter.willOpenURL(url: url)
+      dependencyContainer.delegateAdapter.paywallWillOpenURL(url: url)
     case .openedUrlInSafari(let url):
-      dependencyContainer.delegateAdapter.willOpenURL(url: url)
+      dependencyContainer.delegateAdapter.paywallWillOpenURL(url: url)
     case .openedDeepLink(let url):
-      dependencyContainer.delegateAdapter.willOpenDeepLink(url: url)
+      dependencyContainer.delegateAdapter.paywallWillOpenDeepLink(url: url)
     case .custom(let string):
       dependencyContainer.delegateAdapter.handleCustomPaywallAction(withName: string)
     }

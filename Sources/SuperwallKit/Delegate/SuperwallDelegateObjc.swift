@@ -27,31 +27,31 @@ public protocol SuperwallDelegateObjc: AnyObject {
 
   /// Called right before the paywall is dismissed.
   @MainActor
-  @objc optional func willDismissPaywall()
+  @objc optional func willDismissPaywall(withInfo paywallInfo: PaywallInfo)
 
   /// Called right before the paywall is presented.
   @MainActor
-  @objc optional func willPresentPaywall()
+  @objc optional func willPresentPaywall(withInfo paywallInfo: PaywallInfo)
 
   /// Called right after the paywall is dismissed.
   @MainActor
-  @objc optional func didDismissPaywall()
+  @objc optional func didDismissPaywall(withInfo paywallInfo: PaywallInfo)
 
   /// Called right after the paywall is presented.
   @MainActor
-  @objc optional func didPresentPaywall()
+  @objc optional func didPresentPaywall(withInfo paywallInfo: PaywallInfo)
 
   /// Called when the user opens a URL by selecting an element on your paywall that has a `data-pw-open-url` tag.
   ///
   /// - Parameter url: The URL to open
   @MainActor
-  @objc optional func willOpenURL(url: URL)
+  @objc optional func paywallWillOpenURL(url: URL)
 
   /// Called when the user taps a deep link in your paywall.
   ///
   /// - Parameter url: The deep link URL to open
   @MainActor
-  @objc optional func willOpenDeepLink(url: URL)
+  @objc optional func paywallWillOpenDeepLink(url: URL)
 
   /// Called whenever an internal analytics event is tracked.
   ///
@@ -61,7 +61,7 @@ public protocol SuperwallDelegateObjc: AnyObject {
   ///
   /// - Parameter info: A `SuperwallEventInfo` object containing an `event` and a `params` parameter.
   @MainActor
-  @objc optional func didTrackSuperwallEventInfo(_ info: SuperwallEventInfo)
+  @objc optional func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo)
 
   /// Called when the property ``Superwall/subscriptionStatus`` changes.
   ///
