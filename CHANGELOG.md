@@ -2,15 +2,24 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
-## 3.0.0-beta.9
+## 3.0.0-rc.1
 
 ### Breaking Changes
 
-- Changed `subscription_status_did_change` to `subscriptionStatus_didChange`.
+- Adds `PaywallInfo` to `SuperwallDelegate` methods `paywallWillPresent(withInfo:)`, `paywallDidPresent(withInfo:)`, `paywallWillDismiss(withInfo:)` and `paywallDidDismiss(withInfo:)`.
+- Renames `SuperwallDelegate` method `didTrackSuperwallEventInfo(_:SuperwallEventInfo)` to `handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo)` for clarity
+- Renames `SuperwallDelegate` methods `willOpenURL(url:)` and `willOpenDeepLink(url:)` to `paywallWillOpenURL(url:)` and `paywallWillOpenDeepLink(url:)` respectively
+- Decouples associated value of `.dismissed` in `Superwall.shared.track()` closure to `PaywallInfo` and `DismissState`.
+- Changes `subscription_status_did_change` to `subscriptionStatus_didChange`.
+- Renames `TrackResult` to `PresentationResult`
 
 ### Enhancements
 
+- Introducing `Superwall.shared.register(event:params:handler:feature)`, Superwall's most powerful feature yet. Wrap your features with this method to conditionally show paywalls, lock features and more. 
 - Adds a drawer display option which displays the paywall at 70% screen height on iOS 16 iPhones.
+- Adds warning if setting subscription status without passing through a PurchaseController during config.
+- Adds `$is_feature_gatable` standard property to register and track calls
+- Cleans up and reformats SDK logs
 
 ### Fixes
 

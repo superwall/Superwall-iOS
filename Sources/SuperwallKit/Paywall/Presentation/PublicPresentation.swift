@@ -369,7 +369,6 @@ extension Superwall {
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///   - paywallHandler: An optional callback that provides updates on the state of the paywall via a ``PaywallState`` object.
-  @available(*, deprecated, message: "Use Superwall.shared.register(event:params:handler:feature:) instead.")
   public func track(
     event: String,
     params: [String: Any]? = nil,
