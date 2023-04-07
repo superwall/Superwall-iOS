@@ -6,17 +6,23 @@
 //
 
 import UIKit
+import SuperwallKit
+
+// MARK: - In App Previews & Deep Links
+/// Get in app previews working
+/// Turn deep links into campaigns that open specific paywalls on launch
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   var window: UIWindow?
 
+  // for cold starts
   func scene(
     _ scene: UIScene,
     willConnectTo session: UISceneSession,
     options connectionOptions: UIScene.ConnectionOptions
   ) {
     for context in connectionOptions.urlContexts {
-      SuperwallService.handleDeepLink(context.url)
+      Superwall.shared.handleDeepLink(context.url)
     }
   }
 
@@ -26,7 +32,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     openURLContexts URLContexts: Set<UIOpenURLContext>
   ) {
     for context in URLContexts {
-      SuperwallService.handleDeepLink(context.url)
+      Superwall.shared.handleDeepLink(context.url)
     }
   }
 }

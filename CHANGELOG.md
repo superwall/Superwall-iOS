@@ -2,6 +2,16 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-rc.2
+
+### Enhancements
+
+- Simplifies Superwall-UIKit-Swift exmaple project
+
+### Fixes
+
+- Fixes bug where calling Superwall.shared prior to Superwall.configure would result in a recursive loop 
+
 ## 3.0.0-rc.1
 
 ### Breaking Changes

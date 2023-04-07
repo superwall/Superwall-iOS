@@ -20,13 +20,11 @@
 		889FAA8127FC53EB00CB6EF5 /* Styles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA8027FC53EB00CB6EF5 /* Styles.swift */; };
 		889FAA8327FC53FF00CB6EF5 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA8227FC53FF00CB6EF5 /* Colors.swift */; };
 		889FAA8527FC557100CB6EF5 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 889FAA8427FC557100CB6EF5 /* Colors.xcassets */; };
-		889FAA8F27FC596700CB6EF5 /* StoreKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA8E27FC596700CB6EF5 /* StoreKitService.swift */; };
-		889FAA9927FC939400CB6EF5 /* TrackEventViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */; };
-		88A801D228EB15E2004244CA /* SuperwallService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A801D128EB15E2004244CA /* SuperwallService.swift */; };
+		889FAA9927FC939400CB6EF5 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA9827FC939400CB6EF5 /* HomeViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		543280CF291E002B00213238 /* paywall-ios */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "paywall-ios"; path = ../..; sourceTree = "<group>"; };
+		2300952929E0A692002737EB /* Superwall-iOS */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "Superwall-iOS"; path = ../..; sourceTree = "<group>"; };
 		889FAA6027FC530200CB6EF5 /* Superwall-UIKit-Swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Superwall-UIKit-Swift.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		889FAA6327FC530200CB6EF5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		889FAA6527FC530200CB6EF5 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -41,10 +39,8 @@
 		889FAA8027FC53EB00CB6EF5 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
 		889FAA8227FC53FF00CB6EF5 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		889FAA8427FC557100CB6EF5 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
-		889FAA8E27FC596700CB6EF5 /* StoreKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitService.swift; sourceTree = "<group>"; };
-		889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventViewController.swift; sourceTree = "<group>"; };
+		889FAA9827FC939400CB6EF5 /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		889FAA9C27FDADD000CB6EF5 /* Superwall_UIKit-Swift-Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Superwall_UIKit-Swift-Products.storekit"; sourceTree = "<group>"; };
-		88A801D128EB15E2004244CA /* SuperwallService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperwallService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,7 +58,7 @@
 		889FAA5727FC530200CB6EF5 = {
 			isa = PBXGroup;
 			children = (
-				543280CF291E002B00213238 /* paywall-ios */,
+				2300952929E0A692002737EB /* Superwall-iOS */,
 				889FAA6227FC530200CB6EF5 /* Superwall-UIKit-Swift */,
 				889FAA6127FC530200CB6EF5 /* Products */,
 				889FAA8B27FC58D700CB6EF5 /* Frameworks */,
@@ -81,12 +77,11 @@
 			isa = PBXGroup;
 			children = (
 				889FAA7727FC531B00CB6EF5 /* Design */,
-				889FAA8A27FC585800CB6EF5 /* Services */,
 				889FAA9C27FDADD000CB6EF5 /* Superwall_UIKit-Swift-Products.storekit */,
 				889FAA6327FC530200CB6EF5 /* AppDelegate.swift */,
 				889FAA6527FC530200CB6EF5 /* SceneDelegate.swift */,
 				889FAA6727FC530200CB6EF5 /* WelcomeViewController.swift */,
-				889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */,
+				889FAA9827FC939400CB6EF5 /* HomeViewController.swift */,
 				889FAA6927FC530200CB6EF5 /* Main.storyboard */,
 				889FAA6E27FC530200CB6EF5 /* LaunchScreen.storyboard */,
 				889FAA7127FC530200CB6EF5 /* Info.plist */,
@@ -122,15 +117,6 @@
 				889FAA8427FC557100CB6EF5 /* Colors.xcassets */,
 			);
 			path = Assets;
-			sourceTree = "<group>";
-		};
-		889FAA8A27FC585800CB6EF5 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				889FAA8E27FC596700CB6EF5 /* StoreKitService.swift */,
-				88A801D128EB15E2004244CA /* SuperwallService.swift */,
-			);
-			path = Services;
 			sourceTree = "<group>";
 		};
 		889FAA8B27FC58D700CB6EF5 /* Frameworks */ = {
@@ -245,11 +231,9 @@
 				889FAA8327FC53FF00CB6EF5 /* Colors.swift in Sources */,
 				889FAA8127FC53EB00CB6EF5 /* Styles.swift in Sources */,
 				889FAA6827FC530200CB6EF5 /* WelcomeViewController.swift in Sources */,
-				889FAA9927FC939400CB6EF5 /* TrackEventViewController.swift in Sources */,
+				889FAA9927FC939400CB6EF5 /* HomeViewController.swift in Sources */,
 				889FAA6427FC530200CB6EF5 /* AppDelegate.swift in Sources */,
 				889FAA6627FC530200CB6EF5 /* SceneDelegate.swift in Sources */,
-				889FAA8F27FC596700CB6EF5 /* StoreKitService.swift in Sources */,
-				88A801D228EB15E2004244CA /* SuperwallService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
