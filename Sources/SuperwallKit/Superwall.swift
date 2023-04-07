@@ -98,7 +98,9 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown {
     didSet {
-      if !Self.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
+      // `Self.shared` can't be accessed before `shared` has been configured.
+      if isConfigured == true,
+         !Self.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
         Logger.debug(
           logLevel: .warn,
           scope: .storeKitManager,
@@ -141,6 +143,7 @@ public final class Superwall: NSObject, ObservableObject {
         scope: .superwallCore,
         message: "Superwall has not been configured. Please call Superwall.configure()"
       )
+      assertionFailure("Superwall has not been configured. Please call Superwall.configure()")
       return Superwall()
     }
     return superwall
