@@ -11,7 +11,7 @@ import SuperwallKit
 final class WelcomeViewController: UIViewController {
   @IBOutlet private var textFieldBackgroundView: UIView!
   @IBOutlet private var textField: UITextField!
-  private var isLoggedIn = false
+
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationController?.isNavigationBarHidden = true
@@ -20,9 +20,9 @@ final class WelcomeViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    isLoggedIn = UserDefaults.standard.bool(forKey: "IsLoggedIn")
 
-    if isLoggedIn {
+
+    if Superwall.shared.isLoggedIn {
       next()
     }
 
@@ -36,19 +36,17 @@ final class WelcomeViewController: UIViewController {
   }
 
   @IBAction private func logIn() {
-    UserDefaults.standard.setValue(true, forKey: "IsLoggedIn")
     if let name = textField.text {
-      PaywallManager.setName(to: name)
+      Superwall.shared.setUserAttributes(["firstName": name])
     }
-    Task {
-      let userId = "abc"
-      await PaywallManager.shared.logIn(userId: userId)
-      next()
-    }
+
+    Superwall.shared.identify(userId: "abc")
+
+    next()
   }
 
   private func next() {
-    let trackEventViewController = TrackEventViewController.fromStoryboard()
+    let trackEventViewController = HomeViewController.fromStoryboard()
     navigationController?.pushViewController(trackEventViewController, animated: true)
   }
 }
@@ -56,7 +54,7 @@ final class WelcomeViewController: UIViewController {
 // MARK: - UITextFieldDelegate
 extension WelcomeViewController: UITextFieldDelegate {
   func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-    textField.resignFirstResponder()
+    _ = textField.resignFirstResponder()
     return true
   }
 }

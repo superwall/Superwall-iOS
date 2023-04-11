@@ -24,6 +24,12 @@ final class PaywallManager: NSObject {
   ///
   /// Call this on `application(_:didFinishLaunchingWithOptions:)`
   static func configure() {
+    Superwall.configure(
+      apiKey: superwallApiKey,
+      purchaseController: shared
+    )
+    Superwall.shared.delegate = shared
+
     Purchases.configure(
       with: .init(withAPIKey: revenueCatApiKey)
         .with(usesStoreKit2IfAvailable: false)
@@ -40,12 +46,6 @@ final class PaywallManager: NSObject {
         }
       }
     }
-
-    Superwall.configure(
-      apiKey: superwallApiKey,
-      purchaseController: shared
-    )
-    Superwall.shared.delegate = shared
   }
 
   /// Logs the user in to both RevenueCat and Superwall with the specified `userId`.
@@ -98,6 +98,7 @@ final class PaywallManager: NSObject {
 }
 
 // MARK: - PurchaseController
+
 extension PaywallManager: PurchaseController {
   /// Restore purchases
   func restorePurchases() async -> Bool {
