@@ -24,7 +24,7 @@
 		889FAA8127FC53EB00CB6EF5 /* Styles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA8027FC53EB00CB6EF5 /* Styles.swift */; };
 		889FAA8327FC53FF00CB6EF5 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA8227FC53FF00CB6EF5 /* Colors.swift */; };
 		889FAA8527FC557100CB6EF5 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 889FAA8427FC557100CB6EF5 /* Colors.xcassets */; };
-		889FAA9927FC939400CB6EF5 /* TrackEventViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */; };
+		889FAA9927FC939400CB6EF5 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889FAA9827FC939400CB6EF5 /* HomeViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,7 +44,7 @@
 		889FAA8027FC53EB00CB6EF5 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
 		889FAA8227FC53FF00CB6EF5 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		889FAA8427FC557100CB6EF5 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
-		889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventViewController.swift; sourceTree = "<group>"; };
+		889FAA9827FC939400CB6EF5 /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		889FAA9C27FDADD000CB6EF5 /* Superwall_UIKit+RevenueCat-Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Superwall_UIKit+RevenueCat-Products.storekit"; sourceTree = "<group>"; };
 		88B5FED12847ABCA009F36E2 /* paywall-ios */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "paywall-ios"; path = ../..; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -90,7 +90,7 @@
 				8824B8DA29229EA6001AFC9A /* PaywallManager.swift */,
 				889FAA6527FC530200CB6EF5 /* SceneDelegate.swift */,
 				889FAA6727FC530200CB6EF5 /* WelcomeViewController.swift */,
-				889FAA9827FC939400CB6EF5 /* TrackEventViewController.swift */,
+				889FAA9827FC939400CB6EF5 /* HomeViewController.swift */,
 				889FAA6927FC530200CB6EF5 /* Main.storyboard */,
 				889FAA6E27FC530200CB6EF5 /* LaunchScreen.storyboard */,
 				889FAA7127FC530200CB6EF5 /* Info.plist */,
@@ -244,7 +244,7 @@
 				889FAA8327FC53FF00CB6EF5 /* Colors.swift in Sources */,
 				889FAA8127FC53EB00CB6EF5 /* Styles.swift in Sources */,
 				889FAA6827FC530200CB6EF5 /* WelcomeViewController.swift in Sources */,
-				889FAA9927FC939400CB6EF5 /* TrackEventViewController.swift in Sources */,
+				889FAA9927FC939400CB6EF5 /* HomeViewController.swift in Sources */,
 				889FAA6427FC530200CB6EF5 /* AppDelegate.swift in Sources */,
 				8824B8DB29229EA6001AFC9A /* PaywallManager.swift in Sources */,
 				889FAA6627FC530200CB6EF5 /* SceneDelegate.swift in Sources */,

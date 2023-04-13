@@ -47,15 +47,12 @@
 
 - (IBAction)trackEvent:(id)sender {
   __weak typeof(self) weakSelf = self;
-  [[Superwall sharedInstance] trackWithEvent:@"campaign_trigger"
-                     onSkip:^(enum SWKPaywallSkippedReason reason, NSError * _Nullable error) {
+  [[Superwall sharedInstance] trackWithEvent:@"campaign_trigger" onSkip:^(enum SWKPaywallSkippedReason reason, NSError * _Nonnull error) {
     [weakSelf paywallSkippedWithReason:reason error:error];
-  }
-                  onPresent:^(SWKPaywallInfo * _Nonnull paywallInfo) {
+  } onPresent:^(SWKPaywallInfo * _Nonnull paywallInfo) {
     [weakSelf paywallPresentedWithPaywallInfo:paywallInfo];
-  }
-                  onDismiss:^(enum SWKPaywallDismissedResultState dismissedResultState, NSString * _Nullable productIdentifier, SWKPaywallInfo * _Nonnull paywallInfo) {
-    [weakSelf paywallDismissedWithResultState:dismissedResultState productIdentifier:productIdentifier paywallInfo:paywallInfo];
+  } onDismiss:^(enum SWKDismissState dismissState, NSString * _Nullable productIdentifier, SWKPaywallInfo * _Nonnull paywallInfo) {
+    [weakSelf paywallDismissedWithState:dismissState productIdentifier:productIdentifier paywallInfo:paywallInfo];
   }];
 }
 
@@ -100,15 +97,15 @@
   NSLog(@"Paywall info is %@", paywallInfo);
 }
 
-- (void)paywallDismissedWithResultState:(enum SWKPaywallDismissedResultState)dismissedResultState productIdentifier:(nullable NSString *)productIdentifier paywallInfo:(SWKPaywallInfo *)paywallInfo {
-  switch (dismissedResultState) {
-    case SWKPaywallDismissedResultStatePurchased:
+- (void)paywallDismissedWithState:(enum SWKDismissState)dismissState productIdentifier:(nullable NSString *)productIdentifier paywallInfo:(SWKPaywallInfo *)paywallInfo {
+  switch (dismissState) {
+    case SWKDismissStatePurchased:
       NSLog(@"The purchased product ID is %@.", productIdentifier);
       break;
-    case SWKPaywallDismissedResultStateClosed:
+    case SWKDismissStateClosed:
       NSLog(@"The paywall was closed.");
       break;
-    case SWKPaywallDismissedResultStateRestored:
+    case SWKDismissStateRestored:
       NSLog(@"The product was restored.");
       break;
   }

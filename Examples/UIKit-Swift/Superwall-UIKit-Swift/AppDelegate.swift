@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import StoreKit
 import SuperwallKit
 
 @main
