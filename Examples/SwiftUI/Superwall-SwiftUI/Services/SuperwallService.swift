@@ -20,7 +20,8 @@ final class SuperwallService {
 
   static func configure() {
     // Superwall handles subscription logic by default. However, if you'd
-    // like more control you can handle it yourself by providing a PurchaseController.
+    // like more control you can handle it yourself by providing a
+    // PurchaseController.
     // If you're doing that, uncomment the following and other comments
     // further down:
 

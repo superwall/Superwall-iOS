@@ -14,9 +14,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-
     // MARK: Configure Superwall
-    /// You'll need to replace the API key below with your real one :)
+    #warning("Replace the API key with your own.")
     Superwall.configure(apiKey: "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9")
 
     return true

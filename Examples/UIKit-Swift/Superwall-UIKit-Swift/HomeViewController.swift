@@ -35,7 +35,7 @@ final class HomeViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    // subscribe to subscriptionStatus changes
+    // Subscribe to subscriptionStatus changes
     subscribedCancellable = Superwall.shared.$subscriptionStatus
       .receive(on: DispatchQueue.main)
       .sink { [weak self] status in
@@ -58,7 +58,6 @@ final class HomeViewController: UIViewController {
     _ = self.navigationController?.popToRootViewController(animated: true)
   }
 
-
   @IBAction private func launchFeature() {
     let handler = PaywallPresentationHandler()
     handler.onDismiss = { paywallInfo in
@@ -75,7 +74,10 @@ final class HomeViewController: UIViewController {
       // (1) always after presentation or
       // (2) only if the user pays
       // code is always executed if no paywall is configured to show
-      self.presentAlert(title: "Feature Launched", message: "wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely.")
+      self.presentAlert(
+        title: "Feature Launched",
+        message: "Wrap your awesome features in register calls like this to remotely paywall your app. You can remotely decide whether these are paid features."
+      )
     }
   }
 
@@ -87,8 +89,7 @@ final class HomeViewController: UIViewController {
     )
     let okAction = UIAlertAction(title: "OK", style: .default) { _ in }
     alertController.addAction(okAction)
-    alertController.popoverPresentationController?.sourceView = self.view
+    alertController.popoverPresentationController?.sourceView = view
     self.present(alertController, animated: true)
   }
-
 }

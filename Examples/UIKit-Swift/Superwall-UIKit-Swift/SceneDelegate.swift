@@ -15,7 +15,7 @@ import SuperwallKit
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   var window: UIWindow?
 
-  // for cold starts
+  // For cold starts
   func scene(
     _ scene: UIScene,
     willConnectTo session: UISceneSession,
@@ -26,7 +26,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
   }
 
-  // for when your app is already running
+  // For when your app is already running
   func scene(
     _ scene: UIScene,
     openURLContexts URLContexts: Set<UIOpenURLContext>

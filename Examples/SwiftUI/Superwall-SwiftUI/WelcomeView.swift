@@ -30,7 +30,7 @@ struct WelcomeView: View {
         .background(Color.neutral)
       }
       .navigationDestination(isPresented: $isLoggedIn) {
-        TrackEventView(isLoggedIn: $isLoggedIn)
+        HomeView(isLoggedIn: $isLoggedIn)
       }
       .navigationBarHidden(true)
       .navigationTitle("")

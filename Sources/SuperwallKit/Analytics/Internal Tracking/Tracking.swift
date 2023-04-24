@@ -31,7 +31,7 @@ extension Superwall {
         params: parameters.delegateParams
       )
 
-      await dependencyContainer.delegateAdapter.handleSuperwallEvent(withInfo:info)
+      await dependencyContainer.delegateAdapter.handleSuperwallEvent(withInfo: info)
 
       Logger.debug(
         logLevel: .debug,

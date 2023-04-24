@@ -15,7 +15,6 @@ import Foundation
 /// 
 /// To learn how to conform to the delegate in your app and best practices, see <doc:AdvancedConfiguration>.
 public protocol SuperwallDelegate: AnyObject {
-
   /// Called when the property ``Superwall/subscriptionStatus`` changes.
   ///
   /// If you're letting Superwall handle subscription-related logic, then this is based on

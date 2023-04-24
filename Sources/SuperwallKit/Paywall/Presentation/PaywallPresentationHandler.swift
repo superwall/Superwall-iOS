@@ -19,27 +19,27 @@ public class PaywallPresentationHandler: NSObject {
   /// A block called when an error occurred while trying to present a paywall.
   public var onError: ((_ error: Error) -> Void)?
 
-//  init(onPresent: (@escaping (_: PaywallInfo) -> Void)? = nil, onDismiss: (@escaping (_: PaywallInfo) -> Void)? = nil, onError: (@escaping (_: Error) -> Void)? = nil) {
-//    self.onPresent = onPresent
-//    self.onDismiss = onDismiss
-//    self.onError = onError
-//  }
-
+  /// A convenience function to create a ``PaywallPresentationHandler`` that handles the
+  /// ``PaywallPresentationHandler/onPresent`` case.
   public static func onPresent(_ onPresent: ((_ paywallInfo: PaywallInfo) -> Void)?) -> PaywallPresentationHandler {
-    let h = PaywallPresentationHandler()
-    h.onPresent = onPresent
-    return h
+    let handler = PaywallPresentationHandler()
+    handler.onPresent = onPresent
+    return handler
   }
 
+  /// A convenience function to create a ``PaywallPresentationHandler`` that handles the
+  /// ``PaywallPresentationHandler/onDismiss`` case.
   public static func onDismiss(_ onDismiss: ((_ paywallInfo: PaywallInfo) -> Void)?) -> PaywallPresentationHandler {
-    let h = PaywallPresentationHandler()
-    h.onDismiss = onDismiss
-    return h
+    let handler = PaywallPresentationHandler()
+    handler.onDismiss = onDismiss
+    return handler
   }
 
+  /// A convenience function to create a ``PaywallPresentationHandler`` that handles the
+  /// ``PaywallPresentationHandler/onError`` case.
   public static func onError(_ onError: ((_ error: Error) -> Void)?) -> PaywallPresentationHandler {
-    let h = PaywallPresentationHandler()
-    h.onError = onError
-    return h
+    let handler = PaywallPresentationHandler()
+    handler.onError = onError
+    return handler
   }
 }

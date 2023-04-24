@@ -8,7 +8,7 @@
 import SwiftUI
 import SuperwallKit
 
-struct TrackEventView: View {
+struct HomeView: View {
   @Binding var isLoggedIn: Bool
   @State private var launchFeature = false
 
@@ -24,7 +24,7 @@ struct TrackEventView: View {
     VStack(spacing: 48) {
       ScrollView {
         InfoView(
-          text: "The Launch Feature button below registers an event \"campaign_trigger\".\n\nThis event has been added to a campaign on the Superwall dashboard.\n\nWhen this event is tracked, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
+          text: "The Launch Feature button below registers an event \"campaign_trigger\".\n\nThis event has been added to a campaign on the Superwall dashboard.\n\nWhen this event is registered, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
         )
 
         Divider()
@@ -67,14 +67,21 @@ struct TrackEventView: View {
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden()
     .navigationTitle("Hello \(SuperwallService.name)")
-    .alert("Wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely.", isPresented: $launchFeature) {
-      Button("OK", role: .cancel) { }
-    }
+    .alert(
+      "Launched Feature",
+      isPresented: $launchFeature,
+      actions: {
+        Button("OK", role: .cancel) {}
+      },
+      message: {
+        Text("Wrap your awesome features in register calls like this to remotely paywall your app. You can remotely decide whether these are paid features.")
+      }
+    )
   }
 }
 
 struct TrackEventView_Previews: PreviewProvider {
   static var previews: some View {
-    TrackEventView(isLoggedIn: .constant(false))
+    HomeView(isLoggedIn: .constant(false))
   }
 }

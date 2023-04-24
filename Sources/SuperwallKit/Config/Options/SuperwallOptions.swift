@@ -78,7 +78,7 @@ public final class SuperwallOptions: NSObject {
   /// Configuration for printing to the console.
   public final class Logging: NSObject {
     /// Defines the minimum log level to print to the console. Defaults to `warn`.
-    public var level: LogLevel? = .warn
+    public var level: LogLevel = .warn
 
     /// Defines the scope of logs to print to the console. Defaults to .all.
     public var scopes: Set<LogScope> = [.all]

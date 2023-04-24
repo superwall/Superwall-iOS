@@ -28,11 +28,15 @@ actor ReceiptManager: NSObject {
   @discardableResult
   func loadPurchasedProducts() async -> Set<StoreProduct>? {
     guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
-      Superwall.shared.subscriptionStatus = .inactive
+      await MainActor.run {
+        Superwall.shared.subscriptionStatus = .inactive
+      }
       return nil
     }
     guard let delegate = delegate else {
-      Superwall.shared.subscriptionStatus = .inactive
+      await MainActor.run {
+        Superwall.shared.subscriptionStatus = .inactive
+      }
       return nil
     }
 

@@ -35,7 +35,7 @@ We're in the process of releasing a new v3 version of the framework called **Sup
 
 ## Migrating to v3
 
-- See our [Migration Guide](https://docs.superwall.com/v3.0/docs/migrating-to-v3)
+- See our [Migration Guide](https://docs.superwall.com/docs/migrating-to-v3)
 
 ## SuperwallKit.framework Beta
 
@@ -53,8 +53,8 @@ We're in the process of releasing a new v3 version of the framework called **Sup
 🆓 | Trial start rate tracking - know and measure your trial start rate out of the box
 📊 | Analytics - automatic calculation of metrics like conversion and views
 ✏️ | A/B Testing - automatically calculate metrics for different paywalls
-📝 | [Online documentation](https://docs.superwall.com/v3.0/docs) up to date
-🔀 | [Integrations](https://docs.superwall.com/v3.0/docs) - over a dozen integrations to easily send conversion data where you need it
+📝 | [Online documentation](https://docs.superwall.com/docs) up to date
+🔀 | [Integrations](https://docs.superwall.com/docs) - over a dozen integrations to easily send conversion data where you need it
 💯 | Well maintained - [frequent releases](https://github.com/superwall-me/Superwall-iOS/releases)
 📮 | Great support - email a founder: jake@superwall.com
 
@@ -76,7 +76,7 @@ The preferred installation method is with [Swift Package Manager](https://swift.
 To include the *Superwall* SDK in your app, add the following to your Podfile:
 
 ```
-pod 'SuperwallKit', '3.0.0-rc.1'
+pod 'SuperwallKit', '3.0.0-rc.3'
 ```
 
 If you don't want to use the v3 beta, you'll need to add this instead:
@@ -91,7 +91,7 @@ Then, run `pod install`.
 
 ### With v3
 
-[Sign up for a free account on Superwall](https://superwall.com/sign-up) and [read our docs](https://docs.superwall.com/v3.0/docs).
+[Sign up for a free account on Superwall](https://superwall.com/sign-up) and [read our docs](https://docs.superwall.com/docs).
 
 You can also [view our iOS SDK docs](https://sdk.superwall.me/documentation/superwallkit/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
 
@@ -104,7 +104,7 @@ Check out our sample apps for a hands-on demonstration of the SDK:
 
 ### With v2
 
-[Sign up for a free account on Superwall](https://superwall.com/sign-up) and [read our docs](https://docs.superwall.com/docs).
+[Sign up for a free account on Superwall](https://superwall.com/sign-up) and [read our docs](https://docs.superwall.com/v2.5.8/docs).
 
 You can also [view our iOS SDK docs](https://sdk.superwall.me/documentation/paywall/).
 

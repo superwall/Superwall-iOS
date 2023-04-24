@@ -9,8 +9,11 @@ import SwiftUI
 
 @main
 struct SuperwallSwiftUIExampleApp: App {
-  @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
   @State private var isLoggedIn = false
+
+  init() {
+    SuperwallService.configure()
+  }
 
   var body: some Scene {
     WindowGroup {

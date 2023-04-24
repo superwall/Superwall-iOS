@@ -20,8 +20,6 @@ final class WelcomeViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-
-
     if Superwall.shared.isLoggedIn {
       next()
     }

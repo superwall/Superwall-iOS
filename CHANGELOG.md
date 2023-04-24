@@ -2,15 +2,21 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-rc.3
+
+### Breaking Changes
+
+- Changes the `logLevel` to be non-optional and introduces an `off` case to turn off logging.
+
 ## 3.0.0-rc.2
 
 ### Enhancements
 
-- Simplifies Superwall-UIKit-Swift exmaple project
+- Simplifies Superwall-UIKit-Swift example project.
 
 ### Fixes
 
-- Fixes bug where calling Superwall.shared prior to Superwall.configure would result in a recursive loop 
+- Fixes bug where calling Superwall.shared prior to Superwall.configure would result in a recursive loop .
 
 ## 3.0.0-rc.1
 

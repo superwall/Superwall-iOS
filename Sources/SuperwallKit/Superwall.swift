@@ -1,4 +1,4 @@
-// swiftlint:disable file_length
+// swiftlint:disable file_length line_length
 
 import Foundation
 import StoreKit
@@ -33,7 +33,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Specifies the detail of the logs returned from the SDK to the console.
-  public var logLevel: LogLevel? {
+  public var logLevel: LogLevel {
     get {
       return options.logging.level
     }
@@ -100,7 +100,7 @@ public final class Superwall: NSObject, ObservableObject {
     didSet {
       // `Self.shared` can't be accessed before `shared` has been configured.
       if isConfigured == true,
-         !Self.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
+        !Self.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
         Logger.debug(
           logLevel: .warn,
           scope: .storeKitManager,
