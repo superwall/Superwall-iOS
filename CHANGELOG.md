@@ -6,7 +6,11 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Breaking Changes
 
-- Changes the `logLevel` to be non-optional and introduces an `off` case to turn off logging.
+- Changes the `logLevel` to be non-optional and introduces an `none` case to turn off logging.
+
+### Fixes
+
+- Fixes issue where an invalid URL provided for an "Open URL" click behavior would result in a crash.
 
 ## 3.0.0-rc.2
 

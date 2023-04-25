@@ -582,6 +582,14 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func presentSafariInApp(_ url: URL) {
+    guard UIApplication.shared.canOpenURL(url) else {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .paywallViewController,
+        message: "Invalid URL provided for \"Open URL\" click behavior."
+      )
+      return
+    }
     let safariVC = SFSafariViewController(url: url)
     safariVC.delegate = self
     self.isSafariVCPresented = true

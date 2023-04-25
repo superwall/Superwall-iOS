@@ -47,7 +47,7 @@ enum Logger: Loggable {
     scope: LogScope
   ) -> Bool {
     let logging = Superwall.shared.options.logging
-    if logging.level == .off {
+    if logging.level == .none {
       return false
     }
     let exceedsCurrentLogLevel = logLevel.rawValue >= logging.level.rawValue

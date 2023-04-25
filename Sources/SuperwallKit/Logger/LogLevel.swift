@@ -23,7 +23,7 @@ public enum LogLevel: Int, CustomStringConvertible, Sendable {
   case error = 40
 
   /// Turns off all logs.
-  case off = 99
+  case none = 99
 
   /// The string value of the log level
   public var description: String {
@@ -32,7 +32,7 @@ public enum LogLevel: Int, CustomStringConvertible, Sendable {
     case .info: return "INFO"
     case .warn: return "WARN"
     case .error: return "ERROR"
-    case .off: return "OFF"
+    case .none: return "NONE"
     }
   }
 
@@ -43,7 +43,7 @@ public enum LogLevel: Int, CustomStringConvertible, Sendable {
     case .info: return "ℹ️"
     case .warn: return "⚠️"
     case .error: return "‼️"
-    case .off: return ""
+    case .none: return ""
     }
   }
 }

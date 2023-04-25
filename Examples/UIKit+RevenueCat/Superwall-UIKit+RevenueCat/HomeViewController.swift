@@ -75,7 +75,10 @@ final class HomeViewController: UIViewController {
       // (1) always after presentation or
       // (2) only if the user pays
       // code is always executed if no paywall is configured to show
-      self.presentAlert(title: "Feature Launched", message: "wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely.")
+      self.presentAlert(
+        title: "Feature Launched",
+        message: "wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely."
+      )
     }
   }
 
@@ -90,5 +93,4 @@ final class HomeViewController: UIViewController {
     alertController.popoverPresentationController?.sourceView = self.view
     self.present(alertController, animated: true)
   }
-
 }
