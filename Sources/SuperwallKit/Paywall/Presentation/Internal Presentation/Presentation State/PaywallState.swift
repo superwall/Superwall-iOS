@@ -35,8 +35,7 @@ public enum PaywallState {
   /// The paywall was presented. Contains a ``PaywallInfo`` object with more information about the presented paywall.
   case presented(PaywallInfo)
 
-  /// The paywall was dismissed. Contains a ``PaywallDismissedResult`` object that contains information about the
-  /// paywall and why it was dismissed.
+  /// The paywall was dismissed. Contains a ``PaywallInfo`` object with more information about the presented paywall and a ``DismissState`` object containing the paywall dismissal reason.
   case dismissed(PaywallInfo, DismissState)
 
   /// The paywall was skipped. Contains a ``PaywallSkippedReason`` enum whose cases state why the paywall was skipped.

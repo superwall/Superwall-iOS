@@ -26,7 +26,7 @@ extension Superwall {
   ///  ]
   ///  await Superwall.shared.setUserAttributes(attributes)
   ///  ```
-  /// See <doc:SettingUserAttributes> for more.
+  /// See [Setting User Attributes](https://docs.superwall.com/docs/setting-user-properties) for more.
   ///
   /// - Parameter attributes: A `[String: Any?]` dictionary used to describe any custom
   /// attributes you'd like to store for the user. Values can be any JSON encodable value, `URL`s or `Date`s.

@@ -7,6 +7,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Breaking Changes
 
 - Changes the `logLevel` to be non-optional and introduces an `none` case to turn off logging.
+- Removes all guides from the SDK documentation. From now on, our [online docs](https://docs.superwall.com/docs/) provide guides and the SDK documentation is only there as a technical reference.
+- Changes `TrackResultObjc` to `PresentationResultObjc`
 
 ### Fixes
 

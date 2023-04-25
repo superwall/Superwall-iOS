@@ -1,4 +1,4 @@
-// swiftlint:disable file_length line_length
+// swiftlint:disable file_length
 
 import Foundation
 import StoreKit
@@ -94,7 +94,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// ``SuperwallDelegate/subscriptionStatusDidChange(to:)-24teh``
   /// to receive a callback with the new value every time it changes.
   ///
-  /// To learn more, see <doc:AdvancedConfiguration>.
+  /// To learn more, see [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown
 
@@ -240,14 +240,16 @@ public final class Superwall: NSObject, ObservableObject {
   /// Configures a shared instance of ``Superwall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`.
-  /// Check out our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
+  /// Check out [Configuring the SDK](https://docs.superwall.com/docs/configuring-the-sdk) for information about
+  /// how to configure the SDK.
+  ///
   /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have
   ///   an account, you can [sign up for free](https://superwall.com/sign-up).
   ///   - purchaseController: An optional object that conforms to ``PurchaseController``. Implement this if you'd
   ///   like to handle all subscription-related logic yourself. You'll need to also set the ``subscriptionStatus`` every time the user's
-  ///   subscription status changes. You can read more about that in <doc:AdvancedConfiguration>.   If `nil`, Superwall will handle all
-  ///   subscription-related logic itself.  Defaults to `nil`.
+  ///   subscription status changes. You can read more about that in [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
+  ///   If `nil`, Superwall will handle all subscription-related logic itself.  Defaults to `nil`.
   ///   - options: An optional ``SuperwallOptions`` object which allows you to customise the appearance and behavior
   ///   of the paywall.
   ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
@@ -281,14 +283,14 @@ public final class Superwall: NSObject, ObservableObject {
   /// Objective-C-only function that configures a shared instance of ``Superwall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out
-  /// our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
+  /// [Configuring the SDK](https://docs.superwall.com/docs/configuring-the-sdk) for information about how to configure the SDK.
   /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you
   ///   can [sign up for free](https://superwall.com/sign-up).
   ///   - purchaseController: An optional object that conforms to ``PurchaseControllerObjc``. Implement this if you'd
   ///   like to handle all subscription-related logic yourself. You'll need to also set the ``subscriptionStatus`` every time the user's
-  ///   subscription status changes. You can read more about that in <doc:AdvancedConfiguration>.   If `nil`, Superwall will handle all
-  ///   subscription-related logic itself.  Defaults to `nil`.
+  ///   subscription status changes. You can read more about that in [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
+  ///   If `nil`, Superwall will handle all subscription-related logic itself.  Defaults to `nil`.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
   /// - Returns: The configured ``Superwall`` instance.
@@ -311,7 +313,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// Objective-C-only function that configures a shared instance of ``Superwall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out
-  /// our <doc:GettingStarted> article for a tutorial on how to configure the SDK.
+  /// [Configuring the SDK](https://docs.superwall.com/docs/configuring-the-sdk) for information about how to
+  /// configure the SDK.
+  ///
   /// - Parameters:
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you
   ///   can [sign up for free](https://superwall.com/sign-up).
@@ -379,7 +383,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// Handles a deep link sent to your app to open a preview of your paywall.
   ///
   /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a
-  /// preview of a paywall you've configured on the Superwall dashboard on your device. See <doc:InAppPreviews> for
+  /// preview of a paywall you've configured on the Superwall dashboard on your device. See
+  /// [In-App Previews](https://docs.superwall.com/docs/in-app-paywall-previews) for
   /// more.
   ///
   /// - Parameters:

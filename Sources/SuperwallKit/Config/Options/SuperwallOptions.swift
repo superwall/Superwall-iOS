@@ -67,7 +67,7 @@ public final class SuperwallOptions: NSObject {
   /// purposes.
   ///
   /// You can also preview your paywall in different locales using
-  /// <doc:InAppPreviews>.
+  /// [In-App Previews](https://docs.superwall.com/docs/in-app-paywall-previews).
   public var localeIdentifier: String?
 
   /// Forwards events from the game controller to the paywall. Defaults to `false`.

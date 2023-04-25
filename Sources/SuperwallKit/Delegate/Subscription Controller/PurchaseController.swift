@@ -19,7 +19,7 @@ import StoreKit
 /// ``Superwall/subscriptionStatus``.
 ///
 /// To learn how to implement the ``PurchaseController`` in your app
-/// and best practices, see <doc:AdvancedConfiguration>.
+/// and best practices, see [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
 public protocol PurchaseController: AnyObject {
   /// Called when the user initiates purchasing of a product.
   ///
