@@ -7,8 +7,10 @@
 
 import Foundation
 
-/// The handler for ``Superwall/register(event:params:handler:feature:)`` whose functions
-/// provide status updates for a paywall.
+/// The handler for ``Superwall/register(event:params:handler:feature:)`` whose
+/// functions provide status updates for a paywall.
+@objc(SWKPaywallPresentationHandler)
+@objcMembers
 public class PaywallPresentationHandler: NSObject {
   /// A block called when the paywall did present.
   public var onPresent: ((_ paywallInfo: PaywallInfo) -> Void)?

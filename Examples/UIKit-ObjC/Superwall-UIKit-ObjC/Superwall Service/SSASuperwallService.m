@@ -7,12 +7,8 @@
 
 #import "SSASuperwallService.h"
 
-// services
-#import "SSAStoreKitService.h"
-
 // frameworks
 @import SuperwallKit;
-@import StoreKit;
 
 #pragma mark - Constants
 
@@ -21,27 +17,8 @@ NSString *const kDemoAPIKey = @"pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed
 NSString *const kDemoUserId = @"abc";
 NSString *const kUserAttributesFirstNameKey = @"firstName";
 
-#pragma mark - Inline transform
-
-static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentTransactionState state, NSError *error) {
-  switch (state) {
-    case SKPaymentTransactionStatePurchased:
-      return SWKPurchaseResultPurchased;
-    case SKPaymentTransactionStateFailed:
-      switch (error.code) {
-        case SKErrorOverlayTimeout:
-        case SKErrorPaymentCancelled:
-        case SKErrorOverlayCancelled:
-          return SWKPurchaseResultCancelled;
-        default:
-          return SWKPurchaseResultFailed;
-      }
-    case SKPaymentTransactionStateDeferred:
-      return SWKPurchaseResultPending;
-    default:
-      return NSNotFound;
-  }
-}
+/// Notification name for posting a change to the subscribe state.
+NSNotificationName const SSASuperwallServiceDidUpdateSubscribedState = @"SSASuperwallServiceDidUpdateSubscribedState";
 
 #pragma mark - SSASuperwallService
 
@@ -63,22 +40,6 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
   return sharedService;
 }
 
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    // Listen for changes to the subscription state.
-    [[NSNotificationCenter defaultCenter] addObserverForName:SSAStoreKitServiceDidUpdateSubscribedState object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
-      if ([SSAStoreKitService sharedService].isSubscribed) {
-        [Superwall sharedInstance].subscriptionStatus = SWKSubscriptionStatusActive;
-      } else {
-        [Superwall sharedInstance].subscriptionStatus = SWKSubscriptionStatusInactive;
-      }
-    }];
-  }
-
-  return self;
-}
-
 #pragma mark - Public Properties
 
 - (BOOL)isLoggedIn {
@@ -97,11 +58,6 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 #pragma mark - Public Methods
 
 - (void)initialize {
-  // Load the current subscription state.
-  [[SSAStoreKitService sharedService] updateSubscribedState];
-
-  // Configure Superwall.
-
   [Superwall configureWithApiKey:kDemoAPIKey];
   [[Superwall sharedInstance] setDelegate:self];
 }
@@ -120,21 +76,10 @@ static inline SWKPurchaseResult SWKPurchaseResultFromTransactionState(SKPaymentT
 
 #pragma mark - SuperwallDelegate
 
-- (void)purchaseWithProduct:(SKProduct * _Nonnull)product completion:(void (^ _Nonnull)(enum SWKPurchaseResult, NSError * _Nullable))completion {
-  [[SSAStoreKitService sharedService] purchaseProduct:product withCompletion:^(SKPaymentTransactionState state, NSError * _Nullable error) {
-
-    // Determine the associated purchase result;
-    SWKPurchaseResult purchaseResult = SWKPurchaseResultFromTransactionState(state, error);
-    if (purchaseResult != NSNotFound) {
-      if (completion) {
-        completion(purchaseResult, error);
-      }
-    }
-  }];
-}
-
-- (void)restorePurchasesWithCompletion:(void (^ _Nonnull)(BOOL))completion { 
-  [[SSAStoreKitService sharedService] restorePurchases];
+- (void)subscriptionStatusDidChangeTo:(enum SWKSubscriptionStatus)newValue {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [[NSNotificationCenter defaultCenter] postNotificationName:SSASuperwallServiceDidUpdateSubscribedState object:self];
+  });
 }
 
 - (void)handleSuperwallEventWithInfo:(SWKSuperwallEventInfo *)eventInfo {

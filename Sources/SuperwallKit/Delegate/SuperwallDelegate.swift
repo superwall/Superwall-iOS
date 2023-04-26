@@ -33,9 +33,9 @@ public protocol SuperwallDelegate: AnyObject {
   ///
   /// Use this method when you want to track internal analytics events in your own analytics.
   ///
-  /// You can switch over `info.event` for a list of possible cases. See [Superwall Events](https://docs.superwall.com/docs/tracking-analytics) for more info.
+  /// You can switch over `eventInfo.event` for a list of possible cases. See [Superwall Events](https://docs.superwall.com/docs/tracking-analytics) for more info.
   ///
-  /// - Parameter info: A `SuperwallEventInfo` object containing an `event` and a `params` parameter.
+  /// - Parameter eventInfo: A `SuperwallEventInfo` object containing an `event` and a `params` parameter.
   @MainActor
   func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo)
 

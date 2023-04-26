@@ -62,7 +62,7 @@ public protocol SuperwallDelegateObjc: AnyObject {
   /// You can switch over `info.event` for a list of possible cases. See
   /// [Superwall Events](https://docs.superwall.com/docs/tracking-analytics) for more info.
   ///
-  /// - Parameter info: A `SuperwallEventInfo` object containing an `event` and a `params` parameter.
+  /// - Parameter eventInfo: A `SuperwallEventInfo` object containing an `event` and a `params` parameter.
   @MainActor
   @objc optional func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo)
 

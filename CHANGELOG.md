@@ -11,9 +11,16 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Changes `TrackResultObjc` to `PresentationResultObjc`
 - Removes convenience methods for creating PaywallPresentationHandlers because they were a bit confusing
 
+### Enhancements
+
+- If you're using SwiftUI, you can now call `Superwall.configure` in the `init()` of your `App` file. This means you don't need to have a `UIApplicationDelegate`.
+- Prevents validation of transaction if you're using a `PurchaseController`.
+- Updates Objective-C sample app to use `Superwall.register` and removes legacy StoreKit code.
+
 ### Fixes
 
 - Fixes issue where an invalid URL provided for an "Open URL" click behavior would result in a crash.
+- Exposes `PaywallPresentationHandler` as `SWKPaywallPresentationHandler` for Objective-C.
 
 ## 3.0.0-rc.2
 

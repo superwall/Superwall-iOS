@@ -19,20 +19,7 @@ final class SuperwallService {
   var isLoggedIn = CurrentValueSubject<Bool, Never>(false)
 
   static func configure() {
-    // Superwall handles subscription logic by default. However, if you'd
-    // like more control you can handle it yourself by providing a
-    // PurchaseController.
-    // If you're doing that, uncomment the following and other comments
-    // further down:
-
-    // Task {
-    //   await StoreKitService.shared.loadSubscriptionState()
-    // }
-
-    Superwall.configure(
-      apiKey: apiKey/*,
-      purchaseController: shared*/
-    )
+    Superwall.configure(apiKey: apiKey)
     Superwall.shared.delegate = shared
 
     // Getting our logged in status from Superwall.
@@ -58,12 +45,8 @@ final class SuperwallService {
 
 // MARK: - Superwall Delegate
 extension SuperwallService: SuperwallDelegate {
-
   func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {
     print("Track this analytics event in your own system", eventInfo.event.description, eventInfo.params)
-
-    // Uncomment if you want to get a dictionary of params associated with the event:
-    // print(info.params)
 
     // Uncomment the following if you want to track
     // Superwall events:
@@ -139,17 +122,3 @@ extension SuperwallService: SuperwallDelegate {
     */
   }
 }
-
-// Uncomment to implement the PurchaseController:
-/*
-// MARK: - PurchaseController
-extension SuperwallService: PurchaseController {
-  func purchase(product: SKProduct) async -> PurchaseResult {
-    return await StoreKitService.shared.purchase(product)
-  }
-
-  func restorePurchases() async -> Bool {
-    return await StoreKitService.shared.restorePurchases()
-  }
-}
-*/

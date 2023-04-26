@@ -9,6 +9,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSNotificationName const SSASuperwallServiceDidUpdateSubscribedState;
+
 /// Responsible for providing a convenient means of interacting with some Superwall functionality, and for communicating with the transaction service. In this demo, the underlying transaction service is StoreKit, but you might consider replacing with a third-party SDK like RevenueCat.
 @interface SSASuperwallService : NSObject
 

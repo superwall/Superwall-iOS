@@ -1,5 +1,5 @@
 //
-//  SSATrackEventViewController.h
+//  SSAHomeViewController.h
 //  Superwall-UIKit-ObjC
 //
 //  Created by Nest 22, Inc. on 11/4/22.
@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SSATrackEventViewController : UIViewController
+@interface SSAHomeViewController : UIViewController
 
 @end
 

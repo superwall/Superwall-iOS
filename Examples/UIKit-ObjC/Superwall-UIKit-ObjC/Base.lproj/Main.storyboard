@@ -2,6 +2,7 @@
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Q5H-aZ-jXR">
     <device id="retina6_5" orientation="portrait" appearance="light"/>
     <dependencies>
+        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21678"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
@@ -30,27 +31,27 @@
                                 </constraints>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Example App" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Z5M-EP-22h">
-                                <rect key="frame" x="165" y="74" width="84" height="17"/>
+                                <rect key="frame" x="164.66666666666666" y="74" width="85" height="17"/>
                                 <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="14"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="xQO-aa-IDD">
-                                <rect key="frame" x="0.0" y="370.33333333333331" width="414" height="155.66666666666669"/>
+                                <rect key="frame" x="0.0" y="369.66666666666669" width="414" height="157.00000000000006"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JiM-l3-bQZ">
-                                        <rect key="frame" x="20" y="0.0" width="374" height="74.666666666666671"/>
+                                        <rect key="frame" x="20" y="0.0" width="374" height="76"/>
                                         <string key="text">Welcome! Enter your name to get started. Your name will be added to the Paywall user attributes, which can then be accessed and displayed within your paywall.</string>
                                         <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
                                         <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <nil key="highlightedColor"/>
                                     </label>
                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="2bQ-Dk-qZ1">
-                                        <rect key="frame" x="20" y="104.66666666666669" width="374" height="70"/>
+                                        <rect key="frame" x="20" y="106" width="374" height="70"/>
                                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                     </view>
                                     <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Enter your name" textAlignment="natural" minimumFontSize="16" translatesAutoresizingMaskIntoConstraints="NO" id="L0h-Wi-MX8">
-                                        <rect key="frame" x="30" y="114.66666666666669" width="354" height="50"/>
+                                        <rect key="frame" x="30" y="116" width="354" height="50"/>
                                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <color key="tintColor" name="PrimaryTeal"/>
                                         <constraints>
@@ -146,14 +147,14 @@
         <!--Presenting a Paywall-->
         <scene sceneID="Pji-Lw-NYB">
             <objects>
-                <viewController storyboardIdentifier="SSATrackEventViewController" title="Presenting a Paywall" id="gix-OZ-Ey9" customClass="SSATrackEventViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="SSAHomeViewController" title="Presenting a Paywall" id="gix-OZ-Ey9" customClass="SSAHomeViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Tfc-EG-83N">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JHi-ua-mAu">
                                 <rect key="frame" x="20" y="63.999999999999986" width="374" height="170.66666666666663"/>
-                                <string key="text">The button below tracks an event "MyEvent".
+                                <string key="text">The button below registers an event "MyEvent".
 
 This event has been added to a campaign on the Superwall dashboard.
 
@@ -202,7 +203,7 @@ The rules match and cause a paywall to show.</string>
                                     <constraint firstAttribute="width" priority="998" constant="500" id="jGn-xw-W7Z"/>
                                 </constraints>
                                 <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="plain" title="Track Event" cornerStyle="capsule">
+                                <buttonConfiguration key="configuration" style="plain" title="Register Event" cornerStyle="capsule">
                                     <backgroundConfiguration key="background">
                                         <color key="backgroundColor" name="PrimaryTeal"/>
                                     </backgroundConfiguration>
@@ -210,7 +211,7 @@ The rules match and cause a paywall to show.</string>
                                     <color key="baseForegroundColor" name="Neutral"/>
                                 </buttonConfiguration>
                                 <connections>
-                                    <action selector="trackEvent:" destination="gix-OZ-Ey9" eventType="touchUpInside" id="aV2-Ap-IO2"/>
+                                    <action selector="registerEvent:" destination="gix-OZ-Ey9" eventType="touchUpInside" id="aV2-Ap-IO2"/>
                                 </connections>
                             </button>
                         </subviews>

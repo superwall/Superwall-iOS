@@ -17,7 +17,7 @@
 #import "SSASuperwallService.h"
 
 // view controllers
-#import "SSATrackEventViewController.h"
+#import "SSAHomeViewController.h"
 
 @interface SSAWelcomeViewController () <UITextFieldDelegate>
 
@@ -32,7 +32,7 @@
   [super viewDidLoad];
 
   if ([SSASuperwallService sharedService].isLoggedIn) {
-    [self presentTrackEventViewController];
+    [self presentHomeViewController];
   }
 
   // Configure view.
@@ -57,13 +57,13 @@
 
   // Perform a demo login to the account.
   [[SSASuperwallService sharedService] logIn];
-  [self presentTrackEventViewController];
+  [self presentHomeViewController];
 }
 
 #pragma mark - Private
 
-- (void)presentTrackEventViewController {
-  UIViewController *viewController = [SSATrackEventViewController ssa_storyboardViewController];
+- (void)presentHomeViewController {
+  UIViewController *viewController = [SSAHomeViewController ssa_storyboardViewController];
   [self.navigationController pushViewController:viewController animated:YES];
 }
 

@@ -151,10 +151,7 @@ extension PaywallManager: PurchasesDelegate {
 // MARK: - Superwall Delegate
 extension PaywallManager: SuperwallDelegate {
   func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {
-    print("Track this analytics event in your own system", eventInfo.event.description)
-
-    // Uncomment if you want to get a dictionary of params associated with the event:
-    // print(info.params)
+    print("Track this analytics event in your own system", eventInfo.event.description, eventInfo.params)
 
     // Uncomment the following if you want to track
     // Superwall events:
