@@ -9,11 +9,16 @@ import SwiftUI
 import SuperwallKit
 
 struct SuperwallSubscriptionStatusView: View {
-  @StateObject private var superwall = Superwall.shared
+  @StateObject private var superwall = Superwall.shared // ensures subscriptionStatus is auto updating
   var text: String {
-    return SuperwallSubscriptionStatusLogic.text(
-      subscriptionStatus: superwall.subscriptionStatus
-    )
+    switch superwall.subscriptionStatus {
+    case .active:
+      return "You currently have an active subscription. Therefore, the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions."
+    case .inactive:
+      return "You do not have an active subscription so the paywall will show when clicking the button."
+    case .unknown:
+      return "Your subscription status is unknown"
+    }
   }
 
   var body: some View {

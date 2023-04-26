@@ -16,6 +16,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - If you're using SwiftUI, you can now call `Superwall.configure` in the `init()` of your `App` file. This means you don't need to have a `UIApplicationDelegate`.
 - Prevents validation of transaction if you're using a `PurchaseController`.
 - Updates Objective-C sample app to use `Superwall.register` and removes legacy StoreKit code.
+- Simplifies SwiftUI example app
 
 ### Fixes
 

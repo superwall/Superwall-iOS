@@ -20,6 +20,10 @@ struct HomeView: View {
     ]
   }
 
+  var firstName: String {
+    Superwall.shared.userAttributes["firstName"] as? String ?? ""
+  }
+
   var body: some View {
     VStack(spacing: 48) {
       ScrollView {
@@ -66,7 +70,7 @@ struct HomeView: View {
     .background(Color.neutral)
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden()
-    .navigationTitle("Hello \(SuperwallService.name)")
+    .navigationTitle("Hello \(firstName)")
     .alert(
       "Launched Feature",
       isPresented: $launchFeature,

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SuperwallKit
 
 struct WelcomeView: View {
   @Binding var isLoggedIn: Bool
@@ -65,8 +66,8 @@ struct WelcomeView: View {
   @ViewBuilder
   private func logInButton() -> some View {
     BrandedButton(title: "Log In") {
-      SuperwallService.setName(to: name)
-      SuperwallService.identify()
+      Superwall.shared.identify(userId: "abc")
+      Superwall.shared.setUserAttributes(["firstName": name])
       isLoggedIn = true
     }
   }
