@@ -38,8 +38,7 @@ final class WelcomeViewController: UIViewController {
     if let username = textField.text {
       if username.isEmpty {
         let alert = UIAlertController(title: "Username Left Blank", message: "How would you like to continue?", preferredStyle: .alert)
-        let useAnonymous = UIAlertAction(title: "Anonymous Account",  style: .default) {
-          [weak self] _ in
+        let useAnonymous = UIAlertAction(title: "Anonymous Account", style: .default) { [weak self] _ in
           self?.next()
         }
         let useUsername = UIAlertAction(title: "Pick Username", style: .default)
@@ -58,8 +57,6 @@ final class WelcomeViewController: UIViewController {
 
       next()
     }
-
-
   }
 
   private func next() {
