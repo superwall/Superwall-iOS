@@ -114,7 +114,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Warning: You must call ``configure(apiKey:purchaseController:options:completion:)-52tke``
   /// to initialize ``Superwall`` before using this.
   @objc(sharedInstance)
-  public static var shared: Superwall {
+  public static let shared = Superwall()/* {
     guard let superwall = superwall else {
       #if DEBUG
       // Code only executes when tests are running in a debug environment.
@@ -135,7 +135,7 @@ public final class Superwall: NSObject, ObservableObject {
       return Superwall()
     }
     return superwall
-  }
+  }*/
 
   // MARK: - Non-public Properties
   private static var superwall: Superwall?
@@ -160,47 +160,12 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Handles all dependencies.
-  let dependencyContainer: DependencyContainer
+  var dependencyContainer: DependencyContainer
 
   // MARK: - Private Functions
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
     self.dependencyContainer = dependencyContainer
     super.init()
-  }
-
-  private convenience init(
-    apiKey: String,
-    swiftPurchaseController: PurchaseController? = nil,
-    objcPurchaseController: PurchaseControllerObjc? = nil,
-    options: SuperwallOptions? = nil,
-    completion: (() -> Void)?
-  ) {
-    let dependencyContainer = DependencyContainer(
-      swiftPurchaseController: swiftPurchaseController,
-      objcPurchaseController: objcPurchaseController,
-      options: options
-    )
-    self.init(dependencyContainer: dependencyContainer)
-
-    subscriptionStatus = dependencyContainer.storage.get(ActiveSubscriptionStatus.self) ?? .unknown
-
-    addListeners()
-
-    // This task runs on a background thread, even if called from a main thread.
-    // This is because the function isn't marked to run on the main thread,
-    // therefore, we don't need to make this detached.
-    Task {
-      dependencyContainer.storage.configure(apiKey: apiKey)
-
-      dependencyContainer.storage.recordAppInstall()
-
-      await dependencyContainer.configManager.fetchConfiguration()
-      await dependencyContainer.identityManager.configure()
-
-      await MainActor.run {
-        completion?()
-      }
-    }
   }
 
   /// Listens to config and the subscription status
@@ -262,7 +227,7 @@ public final class Superwall: NSObject, ObservableObject {
     options: SuperwallOptions? = nil,
     completion: (() -> Void)? = nil
   ) -> Superwall {
-    guard superwall == nil else {
+    if hasCalledConfigure {
       Logger.debug(
         logLevel: .warn,
         scope: .superwallCore,
@@ -270,15 +235,57 @@ public final class Superwall: NSObject, ObservableObject {
       )
       return shared
     }
-    superwall = Superwall(
+
+    shared.configure(
       apiKey: apiKey,
       swiftPurchaseController: purchaseController,
       objcPurchaseController: nil,
       options: options,
       completion: completion
     )
+
+    hasCalledConfigure = true
+
     return shared
   }
+
+  private static var hasCalledConfigure = false
+
+  private func configure(
+    apiKey: String,
+    swiftPurchaseController: PurchaseController? = nil,
+    objcPurchaseController: PurchaseControllerObjc? = nil,
+    options: SuperwallOptions? = nil,
+    completion: (() -> Void)?
+  ) {
+    let dependencyContainer = DependencyContainer(
+      swiftPurchaseController: swiftPurchaseController,
+      objcPurchaseController: objcPurchaseController,
+      options: options
+    )
+    self.dependencyContainer = dependencyContainer
+
+    subscriptionStatus = dependencyContainer.storage.get(ActiveSubscriptionStatus.self) ?? .unknown
+
+    addListeners()
+
+    // This task runs on a background thread, even if called from a main thread.
+    // This is because the function isn't marked to run on the main thread,
+    // therefore, we don't need to make this detached.
+    Task {
+      dependencyContainer.storage.configure(apiKey: apiKey)
+
+      dependencyContainer.storage.recordAppInstall()
+
+      await dependencyContainer.configManager.fetchConfiguration()
+      await dependencyContainer.identityManager.configure()
+
+      await MainActor.run {
+        completion?()
+      }
+    }
+  }
+
 
   /// Objective-C-only function that configures a shared instance of ``Superwall`` for use throughout your app.
   ///
@@ -333,7 +340,7 @@ public final class Superwall: NSObject, ObservableObject {
     options: SuperwallOptions? = nil,
     completion: (() -> Void)? = nil
   ) -> Superwall {
-    guard superwall == nil else {
+    if hasCalledConfigure {
       Logger.debug(
         logLevel: .warn,
         scope: .superwallCore,
@@ -341,13 +348,17 @@ public final class Superwall: NSObject, ObservableObject {
       )
       return shared
     }
-    superwall = Superwall(
+
+    shared.configure(
       apiKey: apiKey,
       swiftPurchaseController: nil,
       objcPurchaseController: purchaseController,
       options: options,
       completion: completion
     )
+
+    hasCalledConfigure = true
+
     return shared
   }
 

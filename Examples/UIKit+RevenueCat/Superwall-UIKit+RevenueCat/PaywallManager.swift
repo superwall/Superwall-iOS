@@ -24,12 +24,6 @@ final class PaywallManager: NSObject {
   ///
   /// Call this on `application(_:didFinishLaunchingWithOptions:)`
   static func configure() {
-    Superwall.configure(
-      apiKey: superwallApiKey,
-      purchaseController: shared
-    )
-    Superwall.shared.delegate = shared
-
     Purchases.configure(
       with: .init(withAPIKey: revenueCatApiKey)
         .with(usesStoreKit2IfAvailable: false)
@@ -42,6 +36,14 @@ final class PaywallManager: NSObject {
           shared.updateSubscriptionStatus(using: customerInfo)
         }
       }
+    }
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(5)) {
+      Superwall.configure(
+        apiKey: superwallApiKey,
+        purchaseController: shared
+      )
+      Superwall.shared.delegate = shared
     }
   }
 
