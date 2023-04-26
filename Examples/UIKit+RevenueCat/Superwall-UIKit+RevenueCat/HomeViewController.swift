@@ -8,6 +8,7 @@
 
 import UIKit
 import SuperwallKit
+import RevenueCat
 import Combine
 
 final class HomeViewController: UIViewController {
@@ -55,6 +56,11 @@ final class HomeViewController: UIViewController {
 
   @IBAction private func logOut() {
     Superwall.shared.reset()
+    if !Purchases.shared.isAnonymous {
+      Task {
+        try? await Purchases.shared.logOut()
+      }
+    }
     _ = self.navigationController?.popToRootViewController(animated: true)
   }
 

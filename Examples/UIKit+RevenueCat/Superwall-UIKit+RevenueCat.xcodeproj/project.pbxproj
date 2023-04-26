@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		8803503129112D520061D870 /* SuperwallKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8803503029112D520061D870 /* SuperwallKit */; };
-		8824B8DB29229EA6001AFC9A /* PaywallManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8824B8DA29229EA6001AFC9A /* PaywallManager.swift */; };
+		8824B8DB29229EA6001AFC9A /* RCPurchaseController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8824B8DA29229EA6001AFC9A /* RCPurchaseController.swift */; };
 		884D981729112F9E0013225F /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 884D981629112F9E0013225F /* RevenueCat */; };
 		884D981929113EEE0013225F /* StoreKitTestCertificate.cer in Resources */ = {isa = PBXBuildFile; fileRef = 884D981829113EEE0013225F /* StoreKitTestCertificate.cer */; };
 		884D981A29113F580013225F /* Superwall_UIKit+RevenueCat-Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 889FAA9C27FDADD000CB6EF5 /* Superwall_UIKit+RevenueCat-Products.storekit */; };
@@ -28,7 +28,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		8824B8DA29229EA6001AFC9A /* PaywallManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallManager.swift; sourceTree = "<group>"; };
+		8824B8DA29229EA6001AFC9A /* RCPurchaseController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RCPurchaseController.swift; sourceTree = "<group>"; };
 		884D981829113EEE0013225F /* StoreKitTestCertificate.cer */ = {isa = PBXFileReference; lastKnownFileType = file; path = StoreKitTestCertificate.cer; sourceTree = SOURCE_ROOT; };
 		889FAA6027FC530200CB6EF5 /* Superwall-UIKit+RevenueCat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Superwall-UIKit+RevenueCat.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		889FAA6327FC530200CB6EF5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -87,7 +87,7 @@
 				889FAA9C27FDADD000CB6EF5 /* Superwall_UIKit+RevenueCat-Products.storekit */,
 				884D981829113EEE0013225F /* StoreKitTestCertificate.cer */,
 				889FAA6327FC530200CB6EF5 /* AppDelegate.swift */,
-				8824B8DA29229EA6001AFC9A /* PaywallManager.swift */,
+				8824B8DA29229EA6001AFC9A /* RCPurchaseController.swift */,
 				889FAA6527FC530200CB6EF5 /* SceneDelegate.swift */,
 				889FAA6727FC530200CB6EF5 /* WelcomeViewController.swift */,
 				889FAA9827FC939400CB6EF5 /* HomeViewController.swift */,
@@ -246,7 +246,7 @@
 				889FAA6827FC530200CB6EF5 /* WelcomeViewController.swift in Sources */,
 				889FAA9927FC939400CB6EF5 /* HomeViewController.swift in Sources */,
 				889FAA6427FC530200CB6EF5 /* AppDelegate.swift in Sources */,
-				8824B8DB29229EA6001AFC9A /* PaywallManager.swift in Sources */,
+				8824B8DB29229EA6001AFC9A /* RCPurchaseController.swift in Sources */,
 				889FAA6627FC530200CB6EF5 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

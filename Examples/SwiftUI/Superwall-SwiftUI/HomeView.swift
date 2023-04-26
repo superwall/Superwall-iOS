@@ -60,6 +60,7 @@ struct HomeView: View {
         }
         BrandedButton(title: "Log Out") {
           Superwall.shared.reset()
+          Purchases.shared.reset()
           isLoggedIn = false
         }
       }

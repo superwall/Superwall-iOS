@@ -38,13 +38,11 @@ struct PurchaseManager {
 
     let result = await storeKitManager.coordinator.productPurchaser.purchase(product: product)
 
-    if let transactionResult = await checkForTransaction(
+    let transactionResult = await checkForTransaction(
       result,
       product: product,
       startAt: purchaseStartAt
-    ) {
-      return transactionResult
-    }
+    )
 
     switch result {
     case .failed(let error):
@@ -54,9 +52,7 @@ struct PurchaseManager {
     case .cancelled:
       return .cancelled
     case .purchased:
-      // Won't get called because it'll be handled when we
-      // check the transaction above.
-      return .failed(PurchaseError.noTransactionDetected)
+      return transactionResult ?? .failed(PurchaseError.noTransactionDetected)
     }
   }
 

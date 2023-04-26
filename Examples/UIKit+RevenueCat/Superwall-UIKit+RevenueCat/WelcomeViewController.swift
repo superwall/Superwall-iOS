@@ -7,6 +7,7 @@
 
 import UIKit
 import SuperwallKit
+import RevenueCat
 
 final class WelcomeViewController: UIViewController {
   @IBOutlet private var textFieldBackgroundView: UIView!
@@ -34,13 +35,31 @@ final class WelcomeViewController: UIViewController {
   }
 
   @IBAction private func logIn() {
-    if let name = textField.text {
-      Superwall.shared.setUserAttributes(["firstName": name])
+    if let username = textField.text {
+      if username.isEmpty {
+        let alert = UIAlertController(title: "Username Left Blank", message: "How would you like to continue?", preferredStyle: .alert)
+        let useAnonymous = UIAlertAction(title: "Anonymous Account",  style: .default) {
+          [weak self] _ in
+          self?.next()
+        }
+        let useUsername = UIAlertAction(title: "Pick Username", style: .default)
+        alert.addAction(useAnonymous)
+        alert.addAction(useUsername)
+        present(alert, animated: true)
+        return
+      }
+
+      Superwall.shared.setUserAttributes(["firstName": username])
+
+      Superwall.shared.identify(userId: "abc_\(username)")
+      Task {
+        try? await Purchases.shared.logIn("abc_\(username)")
+      }
+
+      next()
     }
 
-    Superwall.shared.identify(userId: "abc")
 
-    next()
   }
 
   private func next() {

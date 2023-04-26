@@ -32,19 +32,20 @@ final class RestorationManager {
 
     let hasRestored = await storeKitManager.coordinator.txnRestorer.restorePurchases()
 
-    // They may have refreshed the receipt themselves, but this is just
-    // incase...
-    await storeKitManager.refreshReceipt()
 
-    var isUserSubscribed = false
+    var successfullRestore = hasRestored
 
-    if hasRestored {
-      await storeKitManager.loadPurchasedProducts()
-      isUserSubscribed = Superwall.shared.subscriptionStatus == .active
+    if !Superwall.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
+      await storeKitManager.refreshReceipt()
+      var isUserSubscribed = false
+      if hasRestored {
+        await storeKitManager.loadPurchasedProducts()
+        isUserSubscribed = Superwall.shared.subscriptionStatus == .active
+      }
+      successfullRestore = hasRestored && isUserSubscribed
     }
 
-    if hasRestored,
-      isUserSubscribed {
+    if successfullRestore {
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
