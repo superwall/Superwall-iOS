@@ -17,6 +17,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Prevents validation of transaction if you're using a `PurchaseController`.
 - Updates Objective-C sample app to use `Superwall.register` and removes legacy StoreKit code.
 - Simplifies SwiftUI example app
+- Setting a custom PurchaseController does not validate restorations or purchases anymore, it is now all on you!
+- Simplifies RevenueCat example project to bare minimum
 
 ### Fixes
 
