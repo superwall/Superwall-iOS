@@ -85,20 +85,31 @@ extension ProductPurchaserSK1: ProductPurchaser {
 // MARK: - TransactionChecker
 extension ProductPurchaserSK1: TransactionChecker {
   /// Checks that a product has been purchased based on the last transaction
-  /// received on the queue and that the receipts are valid.
+  /// received on the queue. If user is not using a ``PurchaseController``, it
+  /// checks that the receipts are valid.
   ///
   /// The receipts are updated on successful purchase.
   ///
   /// Read more in [Apple's docs](https://developer.apple.com/documentation/storekit/in-app_purchase/original_api_for_in-app_purchase/choosing_a_receipt_validation_technique#//apple_ref/doc/uid/TP40010573).
   func getAndValidateLatestTransaction(
     of productId: String,
-    since purchasedAt: Date?
-  ) async throws -> StoreTransaction {
+    since purchasedAt: Date?,
+    hasPurchaseController: Bool
+  ) async throws -> StoreTransaction? {
+    if hasPurchaseController {
+      if let latestTransaction = latestTransaction {
+        let storeTransaction = await factory.makeStoreTransaction(from: latestTransaction)
+        return storeTransaction
+      }
+      return nil
+    }
+
     guard let latestTransaction = latestTransaction else {
       throw PurchaseError.noTransactionDetected
     }
+
     try ProductPurchaserLogic.validate(
-      latestTransaction: latestTransaction,
+      transaction: latestTransaction,
       withProductId: productId,
       since: purchasedAt
     )

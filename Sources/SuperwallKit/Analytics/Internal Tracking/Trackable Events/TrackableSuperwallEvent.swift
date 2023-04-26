@@ -279,7 +279,7 @@ enum InternalSuperwallEvent {
       case start(StoreProduct)
       case fail(TransactionError)
       case abandon(StoreProduct)
-      case complete(StoreProduct, StoreTransaction)
+      case complete(StoreProduct, StoreTransaction?)
       case restore
       case timeout
     }

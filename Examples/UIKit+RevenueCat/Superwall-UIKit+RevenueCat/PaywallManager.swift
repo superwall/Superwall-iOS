@@ -36,9 +36,6 @@ final class PaywallManager: NSObject {
     )
     Purchases.shared.delegate = shared
 
-    // We retrieve the subscription status from RevenueCat before
-    // configuring Superwall to prevent session_start events from
-    // incorrectly firing due to an incorrect subscription status.
     Purchases.shared.getCustomerInfo { customerInfo, _ in
       DispatchQueue.main.async {
         if let customerInfo {
@@ -98,7 +95,6 @@ final class PaywallManager: NSObject {
 }
 
 // MARK: - PurchaseController
-
 extension PaywallManager: PurchaseController {
   /// Restore purchases
   func restorePurchases() async -> Bool {

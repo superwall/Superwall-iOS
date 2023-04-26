@@ -8,11 +8,13 @@
 import Foundation
 
 protocol TransactionChecker: AnyObject {
-  /// Gets and validates a transaction of a product.
+  /// Gets and validates a transaction of a product, if the user isn't using
+  /// a ``PurchaseController``.
   func getAndValidateLatestTransaction(
     of productId: String,
-    since purchasedAt: Date?
-  ) async throws -> StoreTransaction
+    since purchasedAt: Date?,
+    hasPurchaseController: Bool
+  ) async throws -> StoreTransaction?
 }
 
 protocol ProductPurchaser: AnyObject {

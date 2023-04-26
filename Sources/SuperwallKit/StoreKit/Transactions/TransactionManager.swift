@@ -19,11 +19,12 @@ final class TransactionManager {
 
   init(
     storeKitManager: StoreKitManager,
-    sessionEventsManager: SessionEventsManager
+    sessionEventsManager: SessionEventsManager,
+    factory: PurchaseManagerFactory
   ) {
     self.storeKitManager = storeKitManager
     self.sessionEventsManager = sessionEventsManager
-    purchaseManager = PurchaseManager(storeKitManager: storeKitManager)
+    purchaseManager = factory.makePurchaseManager()
   }
 
   /// Purchases the given product and handles the result appropriately.
@@ -114,7 +115,7 @@ final class TransactionManager {
   private func didPurchase(
     _ product: StoreProduct,
     from paywallViewController: PaywallViewController,
-    transaction: StoreTransaction
+    transaction: StoreTransaction?
   ) async {
     Logger.debug(
       logLevel: .debug,
@@ -127,7 +128,9 @@ final class TransactionManager {
       error: nil
     )
     Task.detached(priority: .background) {
-      await self.sessionEventsManager.enqueue(transaction)
+      if let transaction = transaction {
+        await self.sessionEventsManager.enqueue(transaction)
+      }
     }
     await storeKitManager.loadPurchasedProducts()
 
@@ -236,7 +239,7 @@ final class TransactionManager {
   }
 
   func trackTransactionDidSucceed(
-    _ transaction: StoreTransaction,
+    _ transaction: StoreTransaction?,
     product: StoreProduct
   ) async {
     guard let paywallViewController = lastPaywallViewController else {
@@ -248,11 +251,13 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.paywallInfo
     Task.detached(priority: .background) {
-      await self.sessionEventsManager.triggerSession.trackTransactionSucceeded(
-        withId: transaction.storeTransactionId,
-        for: product,
-        isFreeTrialAvailable: didStartFreeTrial
-      )
+      if let transaction = transaction {
+        await self.sessionEventsManager.triggerSession.trackTransactionSucceeded(
+          withId: transaction.storeTransactionId,
+          for: product,
+          isFreeTrialAvailable: didStartFreeTrial
+        )
+      }
 
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .complete(product, transaction),

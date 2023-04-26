@@ -9,7 +9,7 @@ import Foundation
 import StoreKit
 
 enum InternalPurchaseResult {
-  case purchased(StoreTransaction)
+  case purchased(StoreTransaction?)
   case cancelled
   case pending
   case failed(Error)

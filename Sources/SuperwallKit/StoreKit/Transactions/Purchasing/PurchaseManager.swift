@@ -30,6 +30,7 @@ enum PurchaseError: LocalizedError {
 
 struct PurchaseManager {
   unowned let storeKitManager: StoreKitManager
+  let hasPurchaseController: Bool
 
   /// Purchases the product and then checks for a transaction,
   func purchase(product: StoreProduct) async -> InternalPurchaseResult {
@@ -77,7 +78,8 @@ struct PurchaseManager {
       // TODO: What happens if it's pending and they do the flow above?
       let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateLatestTransaction(
         of: product.productIdentifier,
-        since: result == .purchased ? nil : startAt
+        since: result == .purchased ? nil : startAt,
+        hasPurchaseController: hasPurchaseController
       )
       return .purchased(transaction)
     } catch {

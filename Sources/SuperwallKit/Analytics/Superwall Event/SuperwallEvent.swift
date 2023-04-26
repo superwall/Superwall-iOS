@@ -64,7 +64,11 @@ public enum SuperwallEvent {
   case transactionAbandon(product: StoreProduct, paywallInfo: PaywallInfo)
 
   /// When the user completes checkout in the payment sheet and any product was purchased.
-  case transactionComplete(transaction: StoreTransaction, product: StoreProduct, paywallInfo: PaywallInfo)
+  ///
+  /// - Note: The `transaction` is an optional ``StoreTransaction`` object. Most of the time
+  /// this won't be `nil`. However, it could be `nil` if you are using a ``PurchaseController``
+  /// and the transaction object couldn't be detected after you return `.purchased` in ``PurchaseController/purchase(product:)``.
+  case transactionComplete(transaction: StoreTransaction?, product: StoreProduct, paywallInfo: PaywallInfo)
 
   /// When the user successfully completes a transaction for a subscription product with no introductory offers.
   case subscriptionStart(product: StoreProduct, paywallInfo: PaywallInfo)

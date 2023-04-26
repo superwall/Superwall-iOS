@@ -112,7 +112,8 @@ final class DependencyContainer {
 
     transactionManager = TransactionManager(
       storeKitManager: storeKitManager,
-      sessionEventsManager: sessionEventsManager
+      sessionEventsManager: sessionEventsManager,
+      factory: self
     )
 
     restorationManager = RestorationManager(
@@ -375,6 +376,16 @@ extension DependencyContainer: ProductPurchaserFactory {
       sessionEventsManager: sessionEventsManager,
       delegateAdapter: delegateAdapter,
       factory: self
+    )
+  }
+}
+
+// MARK: - Purchase Manager Factory
+extension DependencyContainer: PurchaseManagerFactory {
+  func makePurchaseManager() -> PurchaseManager {
+    return PurchaseManager(
+      storeKitManager: storeKitManager,
+      hasPurchaseController: delegateAdapter.hasPurchaseController
     )
   }
 }

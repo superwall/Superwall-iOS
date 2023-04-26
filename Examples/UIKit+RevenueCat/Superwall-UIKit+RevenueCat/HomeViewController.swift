@@ -77,7 +77,7 @@ final class HomeViewController: UIViewController {
       // code is always executed if no paywall is configured to show
       self.presentAlert(
         title: "Feature Launched",
-        message: "wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely."
+        message: "Wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely."
       )
     }
   }
