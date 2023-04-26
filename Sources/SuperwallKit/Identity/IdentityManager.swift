@@ -144,6 +144,7 @@ class IdentityManager {
       // If they're sending the same userId as before, then they're
       // already logged in.
       if self._appUserId == userId {
+        self.group.leave()
         return
       }
 
