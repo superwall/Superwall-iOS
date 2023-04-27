@@ -22,7 +22,7 @@ final class RCPurchaseController: PurchaseController {
     }
   }
 
-  // Keeps Superwall's susbcription status up to date with RevenueCat's
+  // MARK: Keep Subscription Status in Sync
   func syncSubscriptionStatus() {
     Task {
       for await customerInfo in Purchases.shared.customerInfoStream {
