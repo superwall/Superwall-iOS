@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 23/12/2022.
 //
+// swiftlint:disable function_body_length
 
 import UIKit
 import Combine
@@ -32,7 +33,6 @@ final class DependencyContainer {
   var debugManager: DebugManager!
   var api: Api!
   var transactionManager: TransactionManager!
-  var restorationManager: RestorationManager!
   var delegateAdapter: SuperwallDelegateAdapter!
   // swiftlint:enable implicitly_unwrapped_optional
 
@@ -114,11 +114,6 @@ final class DependencyContainer {
       storeKitManager: storeKitManager,
       sessionEventsManager: sessionEventsManager,
       factory: self
-    )
-
-    restorationManager = RestorationManager(
-      storeKitManager: storeKitManager,
-      sessionEventsManager: sessionEventsManager
     )
   }
 }

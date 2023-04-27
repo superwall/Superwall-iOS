@@ -21,7 +21,6 @@
 		54B0D58A2911E14D00733072 /* UIColor+SSAAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 54B0D5892911E14D00733072 /* UIColor+SSAAdditions.m */; };
 		54B0D58E2911E3B100733072 /* SSAConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 54B0D58D2911E3B100733072 /* SSAConstants.m */; };
 		54B0D5942911E68000733072 /* UIFont+SSAAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 54B0D5932911E68000733072 /* UIFont+SSAAdditions.m */; };
-		54B0D59F29144D9100733072 /* SSASuperwallService.m in Sources */ = {isa = PBXBuildFile; fileRef = 54B0D59E29144D9100733072 /* SSASuperwallService.m */; };
 		54B0D5A629162B2300733072 /* SSAHomeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 54B0D5A529162B2300733072 /* SSAHomeViewController.m */; };
 		54B0D5A929162B5200733072 /* UIViewController+SSAAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 54B0D5A829162B5200733072 /* UIViewController+SSAAdditions.m */; };
 		54B0D5AC2916FA4400733072 /* Superwall_UIKit-Objc-Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 54B0D5AB2916FA4400733072 /* Superwall_UIKit-Objc-Products.storekit */; };
@@ -50,8 +49,6 @@
 		54B0D58D2911E3B100733072 /* SSAConstants.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SSAConstants.m; sourceTree = "<group>"; };
 		54B0D5922911E68000733072 /* UIFont+SSAAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIFont+SSAAdditions.h"; sourceTree = "<group>"; };
 		54B0D5932911E68000733072 /* UIFont+SSAAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIFont+SSAAdditions.m"; sourceTree = "<group>"; };
-		54B0D59D29144D9100733072 /* SSASuperwallService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SSASuperwallService.h; sourceTree = "<group>"; };
-		54B0D59E29144D9100733072 /* SSASuperwallService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SSASuperwallService.m; sourceTree = "<group>"; };
 		54B0D5A429162B2300733072 /* SSAHomeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SSAHomeViewController.h; sourceTree = "<group>"; };
 		54B0D5A529162B2300733072 /* SSAHomeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SSAHomeViewController.m; sourceTree = "<group>"; };
 		54B0D5A729162B5200733072 /* UIViewController+SSAAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIViewController+SSAAdditions.h"; sourceTree = "<group>"; };
@@ -96,7 +93,6 @@
 			children = (
 				54B0D5AA29162B5900733072 /* Categories */,
 				54B0D5772911E10C00733072 /* Design */,
-				54B0D5952911E8CE00733072 /* Superwall Service */,
 				54B0D5592911DEB500733072 /* SSAAppDelegate.h */,
 				54B0D55A2911DEB500733072 /* SSAAppDelegate.m */,
 				54B0D55C2911DEB500733072 /* SSASceneDelegate.h */,
@@ -160,15 +156,6 @@
 				54B0D5802911E10C00733072 /* Images.xcassets */,
 			);
 			path = Assets;
-			sourceTree = "<group>";
-		};
-		54B0D5952911E8CE00733072 /* Superwall Service */ = {
-			isa = PBXGroup;
-			children = (
-				54B0D59D29144D9100733072 /* SSASuperwallService.h */,
-				54B0D59E29144D9100733072 /* SSASuperwallService.m */,
-			);
-			path = "Superwall Service";
 			sourceTree = "<group>";
 		};
 		54B0D5AA29162B5900733072 /* Categories */ = {
@@ -264,7 +251,6 @@
 				54B0D5612911DEB500733072 /* SSAWelcomeViewController.m in Sources */,
 				54B0D5942911E68000733072 /* UIFont+SSAAdditions.m in Sources */,
 				54B0D58E2911E3B100733072 /* SSAConstants.m in Sources */,
-				54B0D59F29144D9100733072 /* SSASuperwallService.m in Sources */,
 				54B0D55B2911DEB500733072 /* SSAAppDelegate.m in Sources */,
 				54B0D5A929162B5200733072 /* UIViewController+SSAAdditions.m in Sources */,
 				54B0D5A629162B2300733072 /* SSAHomeViewController.m in Sources */,

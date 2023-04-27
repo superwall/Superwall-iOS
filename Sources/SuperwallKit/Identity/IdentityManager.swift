@@ -76,7 +76,6 @@ class IdentityManager {
       .eraseToAnyPublisher()
   }
 
-
   /// Indicates whether the identity (i.e. anonymous or logged in with
   /// assignments) has been retrieved.
   ///

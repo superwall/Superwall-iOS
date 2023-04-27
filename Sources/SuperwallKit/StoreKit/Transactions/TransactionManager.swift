@@ -67,6 +67,11 @@ final class TransactionManager {
           paywallViewController: paywallViewController
         )
       }
+    case .restored:
+      await storeKitManager.processRestoration(
+        hasRestored: true,
+        paywallViewController: paywallViewController
+      )
     case .pending:
       await handlePendingTransaction(from: paywallViewController)
     case .cancelled:

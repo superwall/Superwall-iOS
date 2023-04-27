@@ -93,7 +93,6 @@ extension ProductPurchaserSK1: TransactionChecker {
   /// Read more in [Apple's docs](https://developer.apple.com/documentation/storekit/in-app_purchase/original_api_for_in-app_purchase/choosing_a_receipt_validation_technique#//apple_ref/doc/uid/TP40010573).
   func getAndValidateLatestTransaction(
     of productId: String,
-    since purchasedAt: Date?,
     hasPurchaseController: Bool
   ) async throws -> StoreTransaction? {
     if hasPurchaseController {
@@ -110,8 +109,7 @@ extension ProductPurchaserSK1: TransactionChecker {
 
     try ProductPurchaserLogic.validate(
       transaction: latestTransaction,
-      withProductId: productId,
-      since: purchasedAt
+      withProductId: productId
     )
 
     let storeTransaction = await factory.makeStoreTransaction(from: latestTransaction)

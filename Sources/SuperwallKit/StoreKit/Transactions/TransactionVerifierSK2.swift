@@ -22,7 +22,6 @@ final class TransactionVerifierSK2: TransactionChecker {
   /// of transactions for recent purchases.
   func getAndValidateLatestTransaction(
     of productId: String,
-    since purchaseStartDate: Date? = nil,
     hasPurchaseController: Bool
   ) async throws -> StoreTransaction? {
     let verificationResult = await Transaction.latest(for: productId)
@@ -40,11 +39,6 @@ final class TransactionVerifierSK2: TransactionChecker {
       throw PurchaseError.unverifiedTransaction
     }
 
-    if let purchaseStartDate = purchaseStartDate {
-      guard transaction.purchaseDate >= purchaseStartDate else {
-        throw PurchaseError.noTransactionDetected
-      }
-    }
     return await factory.makeStoreTransaction(from: transaction)
   }
 }

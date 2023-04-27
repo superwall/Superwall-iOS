@@ -11,11 +11,4 @@ fi
 
 if which swiftlint >/dev/null; then
     swiftlint lint --config ../.swiftlint.yml
-else
-    echo "
-    Error: SwiftLint not installed!
-    Download from https://github.com/realm/SwiftLint,
-    or brew install swiftlint.
-    "
-    exit 1
 fi

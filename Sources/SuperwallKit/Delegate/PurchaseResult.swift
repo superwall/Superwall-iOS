@@ -10,6 +10,7 @@ import StoreKit
 
 enum InternalPurchaseResult {
   case purchased(StoreTransaction?)
+  case restored
   case cancelled
   case pending
   case failed(Error)

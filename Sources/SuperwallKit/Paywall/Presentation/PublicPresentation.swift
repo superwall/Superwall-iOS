@@ -4,7 +4,7 @@
 //
 //  Created by Jake Mor on 10/9/21.
 //
-// swiftlint:disable line_length file_length
+// swiftlint:disable line_length file_length function_body_length
 
 import Foundation
 import Combine

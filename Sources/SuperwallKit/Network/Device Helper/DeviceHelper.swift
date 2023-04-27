@@ -301,7 +301,8 @@ class DeviceHelper {
       localTime: localTimeString,
       utcDateTime: utcDateTimeString,
       localDateTime: localDateTimeString,
-      isSandbox: isSandbox
+      isSandbox: isSandbox,
+      subscriptionStatus: Superwall.shared.subscriptionStatus.description
     )
   }
 
