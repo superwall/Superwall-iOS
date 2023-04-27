@@ -109,6 +109,9 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var isConfigured = false
 
+  /// A block of code that gets executed when share is initialized
+  public static var onInitialized: () -> Void = {}
+
   /// The configured shared instance of ``Superwall``.
   ///
   /// - Warning: You must call ``configure(apiKey:purchaseController:options:completion:)-52tke``
@@ -277,6 +280,7 @@ public final class Superwall: NSObject, ObservableObject {
       options: options,
       completion: completion
     )
+    Self.onInitialized()
     return shared
   }
 

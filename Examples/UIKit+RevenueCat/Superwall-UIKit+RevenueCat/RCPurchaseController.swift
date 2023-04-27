@@ -11,13 +11,25 @@ import RevenueCat
 import Combine
 
 final class RCPurchaseController: PurchaseController {
+
+  init(revenueCatAPIKey apiKey: String) {
+    Superwall.onInitialized = { [weak self] in
+      Purchases.configure(
+        with: .init(withAPIKey: apiKey)
+          .with(usesStoreKit2IfAvailable: false) // don't use StoreKit2
+      )
+      self?.syncSubscriptionStatus()
+    }
+  }
+
   // Keeps Superwall's susbcription status up to date with RevenueCat's
   func syncSubscriptionStatus() {
-    Purchases.shared.invalidateCustomerInfoCache()
     Task {
       for await customerInfo in Purchases.shared.customerInfoStream {
-        // this gets called whenever new CustomerInfo is available
-        let hasActiveSubscription = RCPurchaseController.hasActiveSubscription(customerInfo: customerInfo)
+        // gets called whenever new CustomerInfo is available
+        // A subscription is ACTIVE if it has active entitlements
+        // More info -> https://www.revenuecat.com/docs/entitlements#entitlements
+        let hasActiveSubscription = !customerInfo.entitlements.active.isEmpty
         if hasActiveSubscription {
           Superwall.shared.subscriptionStatus = .active
         } else {
@@ -25,13 +37,6 @@ final class RCPurchaseController: PurchaseController {
         }
       }
     }
-  }
-
-  // Logic for if a subscription is active
-  private static func hasActiveSubscription(customerInfo: CustomerInfo) -> Bool {
-    // A subscription is ACTIVE if it has active entitlements
-    // More info -> https://www.revenuecat.com/docs/entitlements#entitlements
-    return !customerInfo.entitlements.active.isEmpty
   }
 
   // MARK: Purchase
