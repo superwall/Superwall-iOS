@@ -11,18 +11,27 @@ import RevenueCat
 
 @main // You can ignore the main thread error here ->
 final class AppDelegate: UIResponder, UIApplicationDelegate {
-  let purchaseController = RCPurchaseController(revenueCatAPIKey: "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql")
-
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     #warning("Replace these API keys with your own.")
 
-    // MARK: Step 1 – Configure Superwall
-    /// Always configure Superwall first
+    // MARK: Step 1 - Create your Purchase Controller
+    /// Create an RCPurchaseController() wherever Superwall and RecenueCat are being initialized.
+    let purchaseController = RCPurchaseController()
+
+    // MARK: Step 2 - Configure Superwall
+    /// Always configure Superwall first. Pass in the `purchaseController` you just created.
     Superwall.configure(apiKey: "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9", purchaseController: purchaseController)
 
+    // MARK: Step 3 – Configure RevenueCat
+    /// Always configure RevenueCat after Superwall
+    Purchases.configure(withAPIKey: "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql")
+
+    // MARK: Step 4 – Sync Subscription Status
+    /// Keep Superwall's subscription status up-to-date with RevenueCat's.
+    purchaseController.syncSubscriptionStatus()
 
     return true
   }

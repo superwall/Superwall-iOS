@@ -1,3 +1,4 @@
+// swiftlint:disable all
 //
 //  RCPurchaseController.swift
 //  Superwall-UIKit+RevenueCat
@@ -10,26 +11,24 @@ import StoreKit
 import RevenueCat
 import Combine
 
+// MARK: Quickstart (v3.0.0+)
+/// 1. Copy this file into your app
+/// 2. Create an RCPurchaseController() wherever Superwall and RecenueCat are being initialized. `let purchaseController = RCPurchaseController()`
+/// 3. First, Configure Superwall. Pass in the purchaseController you just created. `Superwall.configure(apiKey: "superwall_api_key", purchaseController: purchaseController)`
+/// 4. Second, configure RevenueCat. `Purchases.configure(withAPIKey: "revenuecat_api_key")`
+/// 5. Third, Keep Superwall's subscription status up-to-date with RevenueCat's. `purchaseController.syncSubscriptionStatus()`
+
 final class RCPurchaseController: PurchaseController {
 
-  init(revenueCatAPIKey apiKey: String) {
-    Superwall.onInitialized = { [weak self] in
-      Purchases.configure(
-        with: .init(withAPIKey: apiKey)
-          .with(usesStoreKit2IfAvailable: false) // don't use StoreKit2
-      )
-      self?.syncSubscriptionStatus()
-    }
-  }
-
-  // MARK: Keep Subscription Status in Sync
+  // MARK: Sync Subscription Status
+  /// Makes sure that Superwall knows the customers subscription status by
+  /// changing `Superwall.shared.subscriptionStatus`
   func syncSubscriptionStatus() {
+    assert(Purchases.isConfigured, "You must configure RevenueCat before calling this method.")
     Task {
       for await customerInfo in Purchases.shared.customerInfoStream {
-        // gets called whenever new CustomerInfo is available
-        // A subscription is ACTIVE if it has active entitlements
-        // More info -> https://www.revenuecat.com/docs/entitlements#entitlements
-        let hasActiveSubscription = !customerInfo.entitlements.active.isEmpty
+        // Gets called whenever new CustomerInfo is available
+        let hasActiveSubscription = !customerInfo.entitlements.active.isEmpty // Why? -> https://www.revenuecat.com/docs/entitlements#entitlements
         if hasActiveSubscription {
           Superwall.shared.subscriptionStatus = .active
         } else {
@@ -39,7 +38,7 @@ final class RCPurchaseController: PurchaseController {
     }
   }
 
-  // MARK: Purchase
+  // MARK: Handle Purchases
   /// Makes a purchase with RevenueCat and returns its result. This gets called when
   /// someone tries to purchase a product on one of your paywalls.
   func purchase(product: SKProduct) async -> PurchaseResult {
@@ -62,7 +61,7 @@ final class RCPurchaseController: PurchaseController {
     }
   }
 
-  // MARK: Restore
+  // MARK: Handle Restores
   /// Makes a restore with RevenueCat and returns true, unless an error is thrown.
   /// This gets called when someone tries to restore purchases on one of your paywalls.
   func restorePurchases() async -> RestorationResult {
