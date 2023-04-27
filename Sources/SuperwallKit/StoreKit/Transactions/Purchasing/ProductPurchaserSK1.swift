@@ -18,7 +18,7 @@ final class ProductPurchaserSK1: NSObject {
 
   // MARK: Restoration
   final class Restoration {
-    var completion: ((Bool) -> Void)?
+    var completion: ((Error?) -> Void)?
     var dispatchGroup = DispatchGroup()
     /// Used to serialise the async `SKPaymentQueue` calls when restoring.
     var queue = DispatchQueue(
@@ -132,7 +132,7 @@ extension ProductPurchaserSK1: TransactionRestorer {
       SKPaymentQueue.default().restoreCompletedTransactions()
     }
     restoration.completion = nil
-    return result ? .restored : .failed
+    return result == nil ? .restored : .failed(result)
   }
 }
 
@@ -145,7 +145,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       message: "Restore Completed Transactions Finished"
     )
     restoration.dispatchGroup.notify(queue: restoration.queue) { [weak self] in
-      self?.restoration.completion?(true)
+      self?.restoration.completion?(nil)
     }
   }
 
@@ -160,7 +160,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       error: error
     )
     restoration.dispatchGroup.notify(queue: restoration.queue) { [weak self] in
-      self?.restoration.completion?(false)
+      self?.restoration.completion?(error)
     }
   }
 

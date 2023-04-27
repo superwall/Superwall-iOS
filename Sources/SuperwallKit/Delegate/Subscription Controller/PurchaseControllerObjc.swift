@@ -46,5 +46,5 @@ public protocol PurchaseControllerObjc: AnyObject {
   /// - Parameters:
   ///   - completion: Call the completion with `true` if the user's purchases were restored or `false` if they weren't.
   @MainActor
-  @objc func restorePurchases(completion: @escaping (Bool) -> Void)
+  @objc func restorePurchases(completion: @escaping (RestorationResultObjc, Error?) -> Void)
 }

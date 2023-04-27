@@ -67,7 +67,6 @@ struct PurchaseManager {
     }
   }
 
-
   /// Checks whether the purchased product was actually a restoration. This happens (in sandbox),
   /// when a user purchases, then deletes the app, then launches the paywall and purchases again.
   private func hasRestored(

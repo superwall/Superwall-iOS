@@ -133,10 +133,10 @@ extension StoreKitManager {
 
     paywallViewController.loadingState = .loadingPurchase
 
-    let hasRestored = await coordinator.txnRestorer.restorePurchases()
+    let restorationResult = await coordinator.txnRestorer.restorePurchases()
 
     await processRestoration(
-      hasRestored: hasRestored,
+      restorationResult: restorationResult,
       paywallViewController: paywallViewController
     )
   }
@@ -146,9 +146,10 @@ extension StoreKitManager {
   /// This is accessed by both the transaction manager and the restoration manager.
   @MainActor
   func processRestoration(
-    hasRestored: Bool,
+    restorationResult: RestorationResult,
     paywallViewController: PaywallViewController
   ) async {
+    let hasRestored = restorationResult == .restored
     var successfulRestore = hasRestored
 
     if !Superwall.shared.dependencyContainer.delegateAdapter.hasPurchaseController {

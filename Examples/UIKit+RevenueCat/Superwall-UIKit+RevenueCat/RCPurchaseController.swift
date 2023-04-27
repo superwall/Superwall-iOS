@@ -64,8 +64,8 @@ final class RCPurchaseController: PurchaseController {
     do {
       _ = try await Purchases.shared.restorePurchases()
       return .restored
-    } catch {
-      return .failed
+    } catch let error {
+      return .failed(error)
     }
   }
 }
