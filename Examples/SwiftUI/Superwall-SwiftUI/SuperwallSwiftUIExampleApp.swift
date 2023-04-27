@@ -12,8 +12,7 @@ import SuperwallKit
 @main
 struct SuperwallSwiftUIExampleApp: App {
   @State private var isLoggedIn = false
-
-  var isPreviouslyLoggedIn = CurrentValueSubject<Bool, Never>(false)
+  private var isPreviouslyLoggedIn = CurrentValueSubject<Bool, Never>(false)
 
   init() {
     #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")

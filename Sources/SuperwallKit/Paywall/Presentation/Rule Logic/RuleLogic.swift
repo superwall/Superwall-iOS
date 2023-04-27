@@ -123,14 +123,12 @@ struct RuleLogic {
       storage: storage,
       factory: factory
     )
-    for rule in trigger.rules {
-      if await expressionEvaluator.evaluateExpression(
-        fromRule: rule,
-        eventData: event,
-        isPreemptive: isPreemptive
-      ) {
-        return rule
-      }
+    for rule in trigger.rules where await expressionEvaluator.evaluateExpression(
+      fromRule: rule,
+      eventData: event,
+      isPreemptive: isPreemptive
+    ) {
+      return rule
     }
     return nil
   }

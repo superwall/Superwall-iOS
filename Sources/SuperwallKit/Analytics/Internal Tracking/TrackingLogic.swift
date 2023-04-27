@@ -139,7 +139,7 @@ enum TrackingLogic {
     isPaywallPresented: Bool
   ) -> ImplicitTriggerOutcome {
     if let event = event as? TrackableSuperwallEvent,
-      case .deepLink(url: _) = event.superwallEvent {
+      case .deepLink = event.superwallEvent {
       return .deepLinkTrigger
     }
 

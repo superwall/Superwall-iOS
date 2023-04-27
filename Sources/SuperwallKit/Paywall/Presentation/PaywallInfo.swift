@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
-// swiftlint:disable cyclomatic_complexity
+// swiftlint:disable cyclomatic_complexity function_body_length
 
 import Foundation
 import StoreKit

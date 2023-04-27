@@ -4,7 +4,7 @@
 //
 //  Created by Jake Mor on 8/26/21.
 //
-// swiftlint:disable:all force_unwrapping file_length
+// swiftlint:disable force_unwrapping file_length type_body_length function_body_length
 
 import UIKit
 import Foundation
@@ -23,7 +23,6 @@ struct AlertOption {
   var style: UIAlertAction.Style = .default
 }
 
-// swiftlint:disable:all type_body_length
 @MainActor
 final class DebugViewController: UIViewController {
   var logoImageView: UIImageView = {

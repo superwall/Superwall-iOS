@@ -15,11 +15,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - If you're using SwiftUI, you can now call `Superwall.configure` in the `init()` of your `App` file. This means you don't need to have a `UIApplicationDelegate`.
-- Prevents validation of transaction if you're using a `PurchaseController`.
+- Prevents validation of restorations and purchases if you're using a `PurchaseController` - it's now all on you!
 - Updates Objective-C sample app to use `Superwall.register` and removes legacy StoreKit code.
-- Simplifies SwiftUI example app
-- Setting a custom PurchaseController does not validate restorations or purchases anymore, it is now all on you!
-- Simplifies RevenueCat example project to bare minimum
+- Simplifies SwiftUI and RevenueCat example app.
+- You can now access `device.subscriptionStatus` in a rule, which is a string that's either `ACTIVE`, `INACTIVE`, or `UNKNOWN`.
+- You no longer need to have swiftlint installed to run our example apps.
+- If you're not using a `PurchaseController` and a user comes across the "You're already subscribed to this product" popup, we will now correctly identify this as a restoration and not a purchase. This can happen when testing in sandbox if you purchase a product -> delete and reinstall the app -> open a paywall and purchase.
 
 ### Fixes
 
@@ -49,7 +50,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Introducing `Superwall.shared.register(event:params:handler:feature)`, Superwall's most powerful feature yet. Wrap your features with this method to conditionally show paywalls, lock features and more. 
+- Introducing `Superwall.shared.register(event:params:handler:feature)`, Superwall's most powerful feature yet. Wrap your features with this method to conditionally show paywalls, lock features and more.
 - Adds a drawer display option which displays the paywall at 70% screen height on iOS 16 iPhones.
 - Adds warning if setting subscription status without passing through a PurchaseController during config.
 - Adds `$is_feature_gatable` standard property to register and track calls
@@ -73,7 +74,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Breaking Changes
 
-- Changes Objective-C method `getTrackInfo` to `getTrackResult` to be in line with the Swift API. 
+- Changes Objective-C method `getTrackInfo` to `getTrackResult` to be in line with the Swift API.
 - Removes the error case from the `TrackResult` and adds in `userIsSubscribed` and `paywallNotAvailable` cases.
 - Moves main actor conformance to functions of PurchaseController protocol rather than the whole protocol.
 - Changes Objective-C method `setUserAttributesDictionary(_:)` to `setUserAttributes(_:)`.

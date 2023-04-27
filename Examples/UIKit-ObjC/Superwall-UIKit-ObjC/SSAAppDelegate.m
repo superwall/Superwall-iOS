@@ -7,10 +7,15 @@
 
 #import "SSAAppDelegate.h"
 
-// services
-#import "SSASuperwallService.h"
+// frameworks
+@import SuperwallKit;
 
-@interface SSAAppDelegate ()
+#pragma mark - Constants
+
+/// Notification name for posting a change to the subscribe state.
+NSNotificationName const SSAAppDelegateDidUpdateSubscribedState = @"SSAAppDelegateDidUpdateSubscribedState";
+
+@interface SSAAppDelegate () <SWKSuperwallDelegate>
 
 @end
 
@@ -18,8 +23,9 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // Initialize the Superwall service.
-  [[SSASuperwallService sharedService] initialize];
-
+  [Superwall configureWithApiKey:@"pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"];
+  [[Superwall sharedInstance] setDelegate:self];
+  
   return YES;
 }
 
@@ -27,6 +33,14 @@
 
 - (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options {
   return [[UISceneConfiguration alloc] initWithName:@"Default Configuration" sessionRole:connectingSceneSession.role];
+}
+
+#pragma mark - SuperwallDelegate
+
+- (void)subscriptionStatusDidChangeTo:(enum SWKSubscriptionStatus)newValue {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [[NSNotificationCenter defaultCenter] postNotificationName:SSAAppDelegateDidUpdateSubscribedState object:self];
+  });
 }
 
 @end

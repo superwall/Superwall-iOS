@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
-// swiftlint:disable line_length
+// swiftlint:disable line_length function_body_length
 
 import UIKit
 import WebKit

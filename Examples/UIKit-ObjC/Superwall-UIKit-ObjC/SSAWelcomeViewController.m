@@ -13,11 +13,11 @@
 // constants
 #import "SSAConstants.h"
 
-// services
-#import "SSASuperwallService.h"
-
 // view controllers
 #import "SSAHomeViewController.h"
+
+// frameworks
+@import SuperwallKit;
 
 @interface SSAWelcomeViewController () <UITextFieldDelegate>
 
@@ -31,7 +31,7 @@
 - (void)viewDidLoad {
   [super viewDidLoad];
 
-  if ([SSASuperwallService sharedService].isLoggedIn) {
+  if ([Superwall sharedInstance].isLoggedIn) {
     [self presentHomeViewController];
   }
 
@@ -53,10 +53,12 @@
 - (IBAction)login:(id)sender {
   // Store the user's name.
   NSString *name = self.textField.text;
-  [SSASuperwallService sharedService].name = name;
+
+  id userAttributeFirstName = name ? : [NSNull null];
+  [[Superwall sharedInstance] setUserAttributes:@{ @"firstName" : userAttributeFirstName }];
 
   // Perform a demo login to the account.
-  [[SSASuperwallService sharedService] logIn];
+  [[Superwall sharedInstance] identifyWithUserId:@"abc"];
   [self presentHomeViewController];
 }
 

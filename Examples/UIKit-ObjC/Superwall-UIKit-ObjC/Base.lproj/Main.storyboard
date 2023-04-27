@@ -203,7 +203,7 @@ The rules match and cause a paywall to show.</string>
                                     <constraint firstAttribute="width" priority="998" constant="500" id="jGn-xw-W7Z"/>
                                 </constraints>
                                 <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="plain" title="Register Event" cornerStyle="capsule">
+                                <buttonConfiguration key="configuration" style="plain" title="Launch Feature" cornerStyle="capsule">
                                     <backgroundConfiguration key="background">
                                         <color key="backgroundColor" name="PrimaryTeal"/>
                                     </backgroundConfiguration>
@@ -250,7 +250,7 @@ The rules match and cause a paywall to show.</string>
     <resources>
         <image name="logo" width="115" height="17"/>
         <namedColor name="Neutral">
-            <color red="0.054999999701976776" green="0.059000000357627869" blue="0.071000002324581146" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.054901960784313725" green="0.058823529411764705" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
         <namedColor name="PrimaryTeal">
             <color red="0.60399997234344482" green="0.98799997568130493" blue="0.94499999284744263" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

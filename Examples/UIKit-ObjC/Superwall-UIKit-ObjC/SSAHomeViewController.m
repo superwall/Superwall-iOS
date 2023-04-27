@@ -7,11 +7,11 @@
 
 #import "SSAHomeViewController.h"
 
+// App Delegate
+#import "SSAAppDelegate.h"
+
 // frameworks
 @import SuperwallKit;
-
-// services
-#import "SSASuperwallService.h"
 
 @interface SSAHomeViewController ()
 
@@ -32,7 +32,7 @@
 
   // Listen for changes to the subscription state.
   __weak typeof(self) weakSelf = self;
-  [[NSNotificationCenter defaultCenter] addObserverForName:SSASuperwallServiceDidUpdateSubscribedState object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+  [[NSNotificationCenter defaultCenter] addObserverForName:SSAAppDelegateDidUpdateSubscribedState object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
     [weakSelf updateForSubscriptionState:Superwall.sharedInstance.subscriptionStatus];
   }];
 }
@@ -74,7 +74,7 @@
 }
 
 - (IBAction)logOut:(id)sender {
-  [[SSASuperwallService sharedService] logOut];
+  [[Superwall sharedInstance] reset];
   [self.navigationController popToRootViewControllerAnimated:YES];
 }
 

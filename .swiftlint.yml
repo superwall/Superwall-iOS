@@ -14,10 +14,11 @@ disabled_rules:
   - unused_capture_list
   - nesting
   - function_parameter_count
+  - blanket_disable_command
+  - attributes
 
 opt_in_rules:
   - array_init
-  - attributes
   - closure_end_indentation
   - closure_spacing
   - collection_alignment

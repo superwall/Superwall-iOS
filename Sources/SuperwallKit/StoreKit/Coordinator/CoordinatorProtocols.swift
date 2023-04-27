@@ -12,7 +12,6 @@ protocol TransactionChecker: AnyObject {
   /// a ``PurchaseController``.
   func getAndValidateLatestTransaction(
     of productId: String,
-    since purchasedAt: Date?,
     hasPurchaseController: Bool
   ) async throws -> StoreTransaction?
 }

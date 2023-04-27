@@ -32,17 +32,11 @@ struct PurchaseManager {
   unowned let storeKitManager: StoreKitManager
   let hasPurchaseController: Bool
 
-  /// Purchases the product and then checks for a transaction,
+  /// Purchases the product and then checks for a transaction
   func purchase(product: StoreProduct) async -> InternalPurchaseResult {
     let purchaseStartAt = Date()
 
     let result = await storeKitManager.coordinator.productPurchaser.purchase(product: product)
-
-    let transactionResult = await checkForTransaction(
-      result,
-      product: product,
-      startAt: purchaseStartAt
-    )
 
     switch result {
     case .failed(let error):
@@ -52,43 +46,59 @@ struct PurchaseManager {
     case .cancelled:
       return .cancelled
     case .purchased:
-      return transactionResult ?? .failed(PurchaseError.noTransactionDetected)
+      do {
+        let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateLatestTransaction(
+          of: product.productIdentifier,
+          hasPurchaseController: hasPurchaseController
+        )
+
+        if hasRestored(
+          transaction,
+          hasPurchaseController: hasPurchaseController,
+          purchaseStartAt: purchaseStartAt
+        ) {
+          return .restored
+        }
+
+        return .purchased(transaction)
+      } catch {
+        return .failed(error)
+      }
     }
   }
 
-  /// Called to double check people aren't cheating the system.
-  private func checkForTransaction(
-    _ result: PurchaseResult,
-    product: StoreProduct,
-    startAt: Date
-  ) async -> InternalPurchaseResult? {
-    do {
-      // If the product was reported purchased, we just check it's valid.
-      // This is because someone may have reinstalled app and now gone to
-      // purchase without restoring. In this case, it returns a purchased
-      // product immediately whose date is in the past.
-      //
-      // If the product wasn't reported purchased by the dev, we still need
-      // to check for transactions since a purchase request has been made.
 
-      // TODO: What happens if it's pending and they do the flow above?
-      let transaction = try await storeKitManager.coordinator.txnChecker.getAndValidateLatestTransaction(
-        of: product.productIdentifier,
-        since: result == .purchased ? nil : startAt,
-        hasPurchaseController: hasPurchaseController
-      )
-      return .purchased(transaction)
-    } catch {
-      // If an error occured, it could be because they actually didn't
-      // purchase. In which case we return nil.
-      guard case .purchased = result else {
-        return nil
-      }
-      if let error = error as? PurchaseError {
-        return .failed(error)
+  /// Checks whether the purchased product was actually a restoration. This happens (in sandbox),
+  /// when a user purchases, then deletes the app, then launches the paywall and purchases again.
+  private func hasRestored(
+    _ transaction: StoreTransaction?,
+    hasPurchaseController: Bool,
+    purchaseStartAt: Date
+  ) -> Bool {
+    if hasPurchaseController {
+      return false
+    }
+    guard let transaction = transaction else {
+      return false
+    }
+
+    // If has a transaction date and that happened before purchase
+    // button was pressed...
+    if let transactionDate = transaction.transactionDate,
+      transactionDate < purchaseStartAt {
+      // ...and if it has an expiration date that expires in the future,
+      // then we must have restored.
+      if let expirationDate = transaction.expirationDate {
+        if expirationDate >= Date() {
+          return true
+        }
       } else {
-        return .failed(PurchaseError.unknown)
+        // If no expiration date, it must be a non-consumable product
+        // which has been restored.
+        return true
       }
     }
+
+    return false
   }
 }
