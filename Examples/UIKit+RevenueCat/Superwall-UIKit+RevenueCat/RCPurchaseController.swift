@@ -58,15 +58,14 @@ final class RCPurchaseController: PurchaseController {
   }
 
   // MARK: Restore
-  /// Makes a restore with RevenueCat and returns true if the restore was successful.
+  /// Makes a restore with RevenueCat and returns true, unless an error is thrown.
   /// This gets called when someone tries to restore purchases on one of your paywalls.
-  func restorePurchases() async -> Bool {
+  func restorePurchases() async -> RestorationResult {
     do {
-      let customerInfo = try await Purchases.shared.restorePurchases()
-      return RCPurchaseController.hasActiveSubscription(customerInfo: customerInfo)
+      _ = try await Purchases.shared.restorePurchases()
+      return .restored
     } catch {
-      print("restore failed")
-      return false
+      return .failed
     }
   }
 }

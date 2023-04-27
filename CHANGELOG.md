@@ -10,6 +10,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Removes all guides from the SDK documentation. From now on, our [online docs](https://docs.superwall.com/docs/) provide guides and the SDK documentation is only there as a technical reference.
 - Changes `TrackResultObjc` to `PresentationResultObjc`
 - Removes convenience methods for creating PaywallPresentationHandlers because they were a bit confusing
+- Changes the return type of `PurchaseController.restorePurchases()` from `bool` to `RestorationResult`
 
 ### Enhancements
 

@@ -39,6 +39,7 @@ public protocol PurchaseController: AnyObject {
   /// and return its result.
   ///
   /// - Returns: A boolean that's `true` if the user's purchases were restored or `false` if they weren't.
+  /// Note: `true` does not imply the user has an active subscription, it just mean the restore had no errors
   @MainActor
-  func restorePurchases() async -> Bool
+  func restorePurchases() async -> RestorationResult
 }

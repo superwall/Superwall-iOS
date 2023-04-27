@@ -95,7 +95,8 @@ enum Logger: Loggable {
         return
       }
 
-      var name = "\n\(logLevel.descriptionEmoji) [Superwall] [\(scope.description)] \(logLevel.description)"
+      var name = "\n\(Date().isoString) \(logLevel.descriptionEmoji) [Superwall] [\(scope.description)] - \(logLevel.description)"
+
       if let message = message {
         name += ": \(message)"
       }

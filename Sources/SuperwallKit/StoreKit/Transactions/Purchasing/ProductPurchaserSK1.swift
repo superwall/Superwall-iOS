@@ -123,7 +123,7 @@ extension ProductPurchaserSK1: TransactionChecker {
 
 // MARK: - TransactionRestorer
 extension ProductPurchaserSK1: TransactionRestorer {
-  func restorePurchases() async -> Bool {
+  func restorePurchases() async -> RestorationResult {
     let result = await withCheckedContinuation { continuation in
       // Using restoreCompletedTransactions instead of just refreshing
       // the receipt so that RC can pick up on the restored products,
@@ -134,7 +134,7 @@ extension ProductPurchaserSK1: TransactionRestorer {
       SKPaymentQueue.default().restoreCompletedTransactions()
     }
     restoration.completion = nil
-    return result
+    return result ? .restored : .failed
   }
 }
 

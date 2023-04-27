@@ -176,10 +176,11 @@ extension SuperwallDelegateAdapter: ProductPurchaser {
 // MARK: - TransactionRestorer
 extension SuperwallDelegateAdapter: TransactionRestorer {
   @MainActor
-  func restorePurchases() async -> Bool {
+  func restorePurchases() async -> RestorationResult {
     var didRestore = false
     if let purchaseController = swiftPurchaseController {
-      didRestore = await purchaseController.restorePurchases()
+      let result = await purchaseController.restorePurchases()
+      return result
     } else if let purchaseController = objcPurchaseController {
       didRestore = await withCheckedContinuation { continuation in
         purchaseController.restorePurchases { didRestore in
@@ -187,6 +188,6 @@ extension SuperwallDelegateAdapter: TransactionRestorer {
         }
       }
     }
-    return didRestore
+    return didRestore ? .restored : .failed
   }
 }

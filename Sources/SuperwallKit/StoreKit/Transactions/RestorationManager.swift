@@ -30,22 +30,19 @@ final class RestorationManager {
 
     paywallViewController.loadingState = .loadingPurchase
 
-    let hasRestored = await storeKitManager.coordinator.txnRestorer.restorePurchases()
-
-
-    var successfullRestore = hasRestored
+    let restorationResult: RestorationResult = await storeKitManager.coordinator.txnRestorer.restorePurchases()
+    let hasRestored = restorationResult == .restored
 
     if !Superwall.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
       await storeKitManager.refreshReceipt()
-      var isUserSubscribed = false
       if hasRestored {
         await storeKitManager.loadPurchasedProducts()
-        isUserSubscribed = Superwall.shared.subscriptionStatus == .active
       }
-      successfullRestore = hasRestored && isUserSubscribed
     }
 
-    if successfullRestore {
+    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
+
+    if hasRestored && isUserSubscribed {
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,

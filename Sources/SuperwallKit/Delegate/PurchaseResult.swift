@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  PurchaseResult.swift
 //  
 //
 //  Created by Yusuf Tör on 18/10/2022.
