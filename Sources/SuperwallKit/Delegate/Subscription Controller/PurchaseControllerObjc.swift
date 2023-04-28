@@ -19,7 +19,7 @@ import StoreKit
 /// ``Superwall/subscriptionStatus``.
 ///
 /// To learn how to implement the ``PurchaseControllerObjc`` in your app
-/// and best practices, see <doc:AdvancedConfiguration>.
+/// and best practices, see [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
 @objc(SWKPurchaseController)
 public protocol PurchaseControllerObjc: AnyObject {
   /// Called when the user initiates purchasing of a product.
@@ -46,5 +46,5 @@ public protocol PurchaseControllerObjc: AnyObject {
   /// - Parameters:
   ///   - completion: Call the completion with `true` if the user's purchases were restored or `false` if they weren't.
   @MainActor
-  @objc func restorePurchases(completion: @escaping (Bool) -> Void)
+  @objc func restorePurchases(completion: @escaping (RestorationResultObjc, Error?) -> Void)
 }

@@ -7,6 +7,8 @@
 
 #import <UIKit/UIKit.h>
 
+extern NSNotificationName const SSAAppDelegateDidUpdateSubscribedState;
+
 @interface SSAAppDelegate : UIResponder <UIApplicationDelegate>
 
 @end

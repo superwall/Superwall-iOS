@@ -10,8 +10,8 @@ import Foundation
 /// The result of tracking an event.
 ///
 /// Contains the possible cases resulting from tracking an event.
-@objc(SWKTrackValue)
-public enum TrackValueObjc: Int, Sendable, Equatable {
+@objc(SWKPresentationValue)
+public enum PresentationValueObjc: Int, Sendable, Equatable {
   /// This event was not found on the dashboard.
   ///
   /// Please make sure you have added the event to a campaign on the dashboard and
@@ -42,11 +42,11 @@ public enum TrackValueObjc: Int, Sendable, Equatable {
 }
 
 /// Information about the result of tracking an event.
-@objc(SWKTrackResult)
+@objc(SWKPresentationResult)
 @objcMembers
-public final class TrackResultObjc: NSObject, Sendable {
+public final class PresentationResultObjc: NSObject, Sendable {
   /// The result of tracking an event.
-  public let value: TrackValueObjc
+  public let value: PresentationValueObjc
 
   /// A campaign experiment that was assigned to a user.
   ///

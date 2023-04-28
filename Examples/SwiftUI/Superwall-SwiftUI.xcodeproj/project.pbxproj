@@ -11,8 +11,7 @@
 		888F488827DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */; };
 		888F488C27DA6B10009C74A3 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F488B27DA6B10009C74A3 /* Images.xcassets */; };
 		888F488F27DA6B10009C74A3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */; };
-		888F48BD27DA71EA009C74A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48BC27DA71EA009C74A3 /* AppDelegate.swift */; };
-		888F48C327DB8584009C74A3 /* TrackEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48C227DB8584009C74A3 /* TrackEventView.swift */; };
+		888F48C327DB8584009C74A3 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48C227DB8584009C74A3 /* HomeView.swift */; };
 		888F48C827DBA47E009C74A3 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F48C727DBA47E009C74A3 /* Colors.xcassets */; };
 		888F48CB27DBA55E009C74A3 /* BrandedButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48CA27DBA55E009C74A3 /* BrandedButton.swift */; };
 		888F48D127DBA62D009C74A3 /* Font.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48D027DBA62D009C74A3 /* Font.swift */; };
@@ -20,10 +19,7 @@
 		888F48D727DBA6B6009C74A3 /* Rubik-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 888F48D627DBA6B6009C74A3 /* Rubik-Regular.ttf */; };
 		888F48D927DBA751009C74A3 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48D827DBA751009C74A3 /* Colors.swift */; };
 		888F48DB27DBA8A9009C74A3 /* Rubik-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 888F48DA27DBA8A9009C74A3 /* Rubik-Bold.ttf */; };
-		88A801CC28EAE53E004244CA /* SuperwallService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A801CB28EAE53E004244CA /* SuperwallService.swift */; };
-		88A801CE28EAE5A0004244CA /* SuperwallSubscriptionStatusLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A801CD28EAE5A0004244CA /* SuperwallSubscriptionStatusLogic.swift */; };
 		88A801D028EAE717004244CA /* SuperwallSubscriptionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A801CF28EAE717004244CA /* SuperwallSubscriptionStatusView.swift */; };
-		88EE539327DF677900F1FFFB /* StoreKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EE539227DF677900F1FFFB /* StoreKitService.swift */; };
 		88EE539627DF6D0A00F1FFFB /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */; };
 		88F9F1E327E21718004FCE83 /* InfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F9F1E227E21718004FCE83 /* InfoView.swift */; };
 /* End PBXBuildFile section */
@@ -33,9 +29,8 @@
 		888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallSwiftUIExampleApp.swift; sourceTree = "<group>"; };
 		888F488B27DA6B10009C74A3 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		888F48BC27DA71EA009C74A3 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		888F48BE27DA7352009C74A3 /* paywall-ios */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "paywall-ios"; path = ../..; sourceTree = "<group>"; };
-		888F48C227DB8584009C74A3 /* TrackEventView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventView.swift; sourceTree = "<group>"; };
+		888F48C227DB8584009C74A3 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		888F48C727DBA47E009C74A3 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
 		888F48CA27DBA55E009C74A3 /* BrandedButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandedButton.swift; sourceTree = "<group>"; };
 		888F48CD27DBA5BA009C74A3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -44,11 +39,8 @@
 		888F48D627DBA6B6009C74A3 /* Rubik-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rubik-Regular.ttf"; sourceTree = "<group>"; };
 		888F48D827DBA751009C74A3 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		888F48DA27DBA8A9009C74A3 /* Rubik-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rubik-Bold.ttf"; sourceTree = "<group>"; };
-		88A801CB28EAE53E004244CA /* SuperwallService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperwallService.swift; sourceTree = "<group>"; };
-		88A801CD28EAE5A0004244CA /* SuperwallSubscriptionStatusLogic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperwallSubscriptionStatusLogic.swift; sourceTree = "<group>"; };
 		88A801CF28EAE717004244CA /* SuperwallSubscriptionStatusView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperwallSubscriptionStatusView.swift; sourceTree = "<group>"; };
 		88EE539127DF64BB00F1FFFB /* Superwall_SwiftUI-Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Superwall_SwiftUI-Products.storekit"; sourceTree = "<group>"; };
-		88EE539227DF677900F1FFFB /* StoreKitService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitService.swift; sourceTree = "<group>"; };
 		88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		88F9F1E227E21718004FCE83 /* InfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -88,24 +80,13 @@
 			children = (
 				888F48C627DBA46B009C74A3 /* Design */,
 				888F48C927DBA54A009C74A3 /* Components */,
-				888F488D27DA6B10009C74A3 /* Preview Content */,
-				88EE539427DF677C00F1FFFB /* Services */,
 				888F48CD27DBA5BA009C74A3 /* Info.plist */,
 				88EE539127DF64BB00F1FFFB /* Superwall_SwiftUI-Products.storekit */,
 				888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */,
-				888F48BC27DA71EA009C74A3 /* AppDelegate.swift */,
 				88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */,
-				888F48C227DB8584009C74A3 /* TrackEventView.swift */,
+				888F48C227DB8584009C74A3 /* HomeView.swift */,
 			);
 			path = "Superwall-SwiftUI";
-			sourceTree = "<group>";
-		};
-		888F488D27DA6B10009C74A3 /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-				888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */,
-			);
-			path = "Preview Content";
 			sourceTree = "<group>";
 		};
 		888F48B727DA6F7F009C74A3 /* Frameworks */ = {
@@ -132,7 +113,6 @@
 				888F48CA27DBA55E009C74A3 /* BrandedButton.swift */,
 				88F9F1E227E21718004FCE83 /* InfoView.swift */,
 				88A801CF28EAE717004244CA /* SuperwallSubscriptionStatusView.swift */,
-				88A801CD28EAE5A0004244CA /* SuperwallSubscriptionStatusLogic.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -140,6 +120,7 @@
 		888F48D427DBA67E009C74A3 /* Assets */ = {
 			isa = PBXGroup;
 			children = (
+				888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */,
 				888F48C727DBA47E009C74A3 /* Colors.xcassets */,
 				888F488B27DA6B10009C74A3 /* Images.xcassets */,
 			);
@@ -154,15 +135,6 @@
 				888F48DA27DBA8A9009C74A3 /* Rubik-Bold.ttf */,
 			);
 			path = Fonts;
-			sourceTree = "<group>";
-		};
-		88EE539427DF677C00F1FFFB /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				88A801CB28EAE53E004244CA /* SuperwallService.swift */,
-				88EE539227DF677900F1FFFB /* StoreKitService.swift */,
-			);
-			path = Services;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -268,15 +240,11 @@
 				888F48CB27DBA55E009C74A3 /* BrandedButton.swift in Sources */,
 				888F48D927DBA751009C74A3 /* Colors.swift in Sources */,
 				88A801D028EAE717004244CA /* SuperwallSubscriptionStatusView.swift in Sources */,
-				888F48C327DB8584009C74A3 /* TrackEventView.swift in Sources */,
-				88EE539327DF677900F1FFFB /* StoreKitService.swift in Sources */,
-				888F48BD27DA71EA009C74A3 /* AppDelegate.swift in Sources */,
+				888F48C327DB8584009C74A3 /* HomeView.swift in Sources */,
 				88EE539627DF6D0A00F1FFFB /* WelcomeView.swift in Sources */,
-				88A801CC28EAE53E004244CA /* SuperwallService.swift in Sources */,
 				888F48D127DBA62D009C74A3 /* Font.swift in Sources */,
 				88F9F1E327E21718004FCE83 /* InfoView.swift in Sources */,
 				888F488827DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift in Sources */,
-				88A801CE28EAE5A0004244CA /* SuperwallSubscriptionStatusLogic.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -406,7 +374,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Superwall-SwiftUI/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Superwall-SwiftUI/Design/Assets\"";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -440,7 +408,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Superwall-SwiftUI/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Superwall-SwiftUI/Design/Assets\"";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

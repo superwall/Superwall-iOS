@@ -8,6 +8,7 @@
 
 import UIKit
 import SuperwallKit
+import RevenueCat
 import Combine
 
 final class HomeViewController: UIViewController {
@@ -49,15 +50,18 @@ final class HomeViewController: UIViewController {
         }
       }
 
-
     navigationItem.hidesBackButton = true
   }
 
   @IBAction private func logOut() {
     Superwall.shared.reset()
+    if !Purchases.shared.isAnonymous {
+      Task {
+        try? await Purchases.shared.logOut()
+      }
+    }
     _ = self.navigationController?.popToRootViewController(animated: true)
   }
-
 
   @IBAction private func launchFeature() {
     let handler = PaywallPresentationHandler()
@@ -75,7 +79,10 @@ final class HomeViewController: UIViewController {
       // (1) always after presentation or
       // (2) only if the user pays
       // code is always executed if no paywall is configured to show
-      self.presentAlert(title: "Feature Launched", message: "wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely.")
+      self.presentAlert(
+        title: "Feature Launched",
+        message: "Wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely."
+      )
     }
   }
 
@@ -90,5 +97,4 @@ final class HomeViewController: UIViewController {
     alertController.popoverPresentationController?.sourceView = self.view
     self.present(alertController, animated: true)
   }
-
 }

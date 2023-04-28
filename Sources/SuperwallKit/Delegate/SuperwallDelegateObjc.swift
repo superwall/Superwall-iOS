@@ -13,13 +13,15 @@ import Foundation
 ///
 /// You set this directly using ``Superwall/objcDelegate``.
 ///
-/// To learn how to conform to the delegate in your app and best practices, see <doc:AdvancedConfiguration>.
+/// To learn how to conform to the delegate in your app and best practices, see
+/// [our docs](https://docs.superwall.com/docs/3rd-party-analytics).
 @objc(SWKSuperwallDelegate)
 public protocol SuperwallDelegateObjc: AnyObject {
   /// Called when the user taps a button on your paywall that has a `data-pw-custom` tag attached.
   ///
-  /// To learn more about using this function, see <doc:CustomPaywallButtons>. To learn about the types of tags that
-  /// can be attached to elements on your paywall, see [Data Tags](https://docs.superwall.com/docs/data-tags).
+  /// To learn more about using this function, see [Custom Paywall Actions](https://docs.superwall.com/docs/custom-paywall-events).
+  /// To learn about the types of tags that can be attached to elements on your paywall, see
+  /// [Data Tags](https://docs.superwall.com/docs/data-tags).
   ///
   ///  - Parameter name: The value of the `data-pw-custom` tag in your HTML element that the user selected.
   @MainActor
@@ -57,9 +59,10 @@ public protocol SuperwallDelegateObjc: AnyObject {
   ///
   /// Use this method when you want to track internal analytics events in your own analytics.
   ///
-  /// You can switch over `info.event` for a list of possible cases. See <doc:SuperwallEvents> for more info.
+  /// You can switch over `info.event` for a list of possible cases. See
+  /// [Superwall Events](https://docs.superwall.com/docs/tracking-analytics) for more info.
   ///
-  /// - Parameter info: A `SuperwallEventInfo` object containing an `event` and a `params` parameter.
+  /// - Parameter eventInfo: A `SuperwallEventInfo` object containing an `event` and a `params` parameter.
   @MainActor
   @objc optional func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo)
 

@@ -28,11 +28,15 @@ actor ReceiptManager: NSObject {
   @discardableResult
   func loadPurchasedProducts() async -> Set<StoreProduct>? {
     guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
-      Superwall.shared.subscriptionStatus = .inactive
+      await MainActor.run {
+        Superwall.shared.subscriptionStatus = .inactive
+      }
       return nil
     }
     guard let delegate = delegate else {
-      Superwall.shared.subscriptionStatus = .inactive
+      await MainActor.run {
+        Superwall.shared.subscriptionStatus = .inactive
+      }
       return nil
     }
 
@@ -89,13 +93,15 @@ actor ReceiptManager: NSObject {
   }
 
   /// Refreshes the receipt.
-  func refreshReceipt() async -> Bool {
+  func refreshReceipt() async {
     Logger.debug(
       logLevel: .debug,
       scope: .receipts,
       message: "Refreshing receipts"
     )
-    let isRefreshed = await withCheckedContinuation { continuation in
+
+    // Don't need the result at the moment.
+    _ = await withCheckedContinuation { continuation in
       let refresh = SKReceiptRefreshRequest()
       refresh.delegate = self
       refresh.start()
@@ -103,7 +109,6 @@ actor ReceiptManager: NSObject {
         continuation.resume(returning: completed)
       }
     }
-    return isRefreshed
   }
 
   /// Determines whether the purchases already contain the given product ID.

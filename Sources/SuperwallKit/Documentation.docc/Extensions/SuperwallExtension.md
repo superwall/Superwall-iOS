@@ -8,13 +8,11 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 ### Configuring the SDK
 
-- <doc:GettingStarted>
-- <doc:Ecosystem>
-- <doc:AdvancedConfiguration>
 - ``configure(apiKey:purchaseController:options:completion:)-52tke``
 - ``configure(apiKey:purchaseController:options:completion:)-ds2x``
 - ``configure(apiKey:)``
 - ``shared``
+- ``isInitialized``
 - ``SuperwallDelegate``
 - ``SuperwallDelegateObjc``
 - ``delegate``
@@ -30,23 +28,24 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 ### Presenting and Dismissing a Paywall
 
-- <doc:TrackingEvents>
+- ``register(event:params:handler:)``
+- ``register(event:params:handler:feature:)``
 - ``track(event:params:paywallOverrides:paywallHandler:)``
 - ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``track(event:)``
 - ``track(event:params:)``
 - ``track(event:onSkip:onPresent:onDismiss:)``
 - ``track(event:params:onSkip:onPresent:onDismiss:)``
-- ``publisher(forEvent:params:paywallOverrides:)``
-- ``getTrackResult(forEvent:params:)-1qexk``
-- ``getTrackResult(forEvent:params:completion:)``
-- ``getTrackResult(forEvent:params:)-2j7qn``
-- ``getTrackResult(forEvent:)``
+- ``publisher(forEvent:params:paywallOverrides:isFeatureGatable:)``
+- ``getPresentationResult(forEvent:)``
+- ``getPresentationResult(forEvent:params:)-9ivi6``
+- ``getPresentationResult(forEvent:params:)-60qtr``
+- ``getPresentationResult(forEvent:params:completion:)``
 - ``dismiss()-844a9``
 - ``dismiss()-4objm``
 - ``dismiss(completion:)``
-- ``TrackResult``
-- ``TrackResultObjc``
+- ``PresentationResult``
+- ``PresentationResultObjc``
 - ``PaywallInfo``
 - ``SuperwallEvent``
 - ``SuperwallEventObjc``
@@ -55,12 +54,10 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 ### In-App Previews
 
-- <doc:InAppPreviews>
 - ``handleDeepLink(_:)``
 
 ### Identifying a User
 
-- <doc:SettingUserAttributes>
 - ``identify(userId:options:)``
 - ``identify(userId:)``
 - ``IdentityOptions``
@@ -72,7 +69,6 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 ### Game Controller
 
-- <doc:GameControllerSupport>
 - ``gamepadValueChanged(gamepad:element:)``
 
 ### Logging

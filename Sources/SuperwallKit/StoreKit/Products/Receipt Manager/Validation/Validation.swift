@@ -5,7 +5,7 @@
 //  Created by Pavel Tikhonenko on 19/01/17.
 //  Copyright © 2017-2021 Pavel Tikhonenko. All rights reserved.
 //
-// swiftlint:disable force_unwrapping force_cast cyclomatic_complexity
+// swiftlint:disable force_unwrapping force_cast cyclomatic_complexity function_body_length
 
 #if os(iOS) || os(tvOS)
 import UIKit

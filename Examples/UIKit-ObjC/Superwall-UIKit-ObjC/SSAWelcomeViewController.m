@@ -13,11 +13,11 @@
 // constants
 #import "SSAConstants.h"
 
-// services
-#import "SSASuperwallService.h"
-
 // view controllers
-#import "SSATrackEventViewController.h"
+#import "SSAHomeViewController.h"
+
+// frameworks
+@import SuperwallKit;
 
 @interface SSAWelcomeViewController () <UITextFieldDelegate>
 
@@ -31,8 +31,8 @@
 - (void)viewDidLoad {
   [super viewDidLoad];
 
-  if ([SSASuperwallService sharedService].isLoggedIn) {
-    [self presentTrackEventViewController];
+  if ([Superwall sharedInstance].isLoggedIn) {
+    [self presentHomeViewController];
   }
 
   // Configure view.
@@ -53,17 +53,19 @@
 - (IBAction)login:(id)sender {
   // Store the user's name.
   NSString *name = self.textField.text;
-  [SSASuperwallService sharedService].name = name;
+
+  id userAttributeFirstName = name ? : [NSNull null];
+  [[Superwall sharedInstance] setUserAttributes:@{ @"firstName" : userAttributeFirstName }];
 
   // Perform a demo login to the account.
-  [[SSASuperwallService sharedService] logIn];
-  [self presentTrackEventViewController];
+  [[Superwall sharedInstance] identifyWithUserId:@"abc"];
+  [self presentHomeViewController];
 }
 
 #pragma mark - Private
 
-- (void)presentTrackEventViewController {
-  UIViewController *viewController = [SSATrackEventViewController ssa_storyboardViewController];
+- (void)presentHomeViewController {
+  UIViewController *viewController = [SSAHomeViewController ssa_storyboardViewController];
   [self.navigationController pushViewController:viewController animated:YES];
 }
 

@@ -97,6 +97,7 @@ class Network {
     }
   }
 
+  @MainActor
   func getConfig(
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
   ) async throws -> Config {

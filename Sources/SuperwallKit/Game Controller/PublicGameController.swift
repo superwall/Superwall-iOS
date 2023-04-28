@@ -12,7 +12,7 @@ extension Superwall {
   ///
   /// Call this in Gamepad's `valueChanged` function to forward game controller events to the paywall via `paywall.js`.
   ///
-  /// See <doc:GameControllerSupport> for more information.
+  /// See [Game Controller Support](https://docs.superwall.com/docs/game-controller-support) for more information.
   ///
   /// - Parameters:
   ///   - gamepad: The extended Gamepad controller profile.

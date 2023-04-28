@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  PurchaseResult.swift
 //  
 //
 //  Created by Yusuf Tör on 18/10/2022.
@@ -9,7 +9,8 @@ import Foundation
 import StoreKit
 
 enum InternalPurchaseResult {
-  case purchased(StoreTransaction)
+  case purchased(StoreTransaction?)
+  case restored
   case cancelled
   case pending
   case failed(Error)

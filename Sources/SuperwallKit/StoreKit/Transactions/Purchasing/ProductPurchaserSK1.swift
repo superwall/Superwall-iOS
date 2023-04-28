@@ -18,7 +18,7 @@ final class ProductPurchaserSK1: NSObject {
 
   // MARK: Restoration
   final class Restoration {
-    var completion: ((Bool) -> Void)?
+    var completion: ((Error?) -> Void)?
     var dispatchGroup = DispatchGroup()
     /// Used to serialise the async `SKPaymentQueue` calls when restoring.
     var queue = DispatchQueue(
@@ -85,22 +85,31 @@ extension ProductPurchaserSK1: ProductPurchaser {
 // MARK: - TransactionChecker
 extension ProductPurchaserSK1: TransactionChecker {
   /// Checks that a product has been purchased based on the last transaction
-  /// received on the queue and that the receipts are valid.
+  /// received on the queue. If user is not using a ``PurchaseController``, it
+  /// checks that the receipts are valid.
   ///
   /// The receipts are updated on successful purchase.
   ///
   /// Read more in [Apple's docs](https://developer.apple.com/documentation/storekit/in-app_purchase/original_api_for_in-app_purchase/choosing_a_receipt_validation_technique#//apple_ref/doc/uid/TP40010573).
   func getAndValidateLatestTransaction(
     of productId: String,
-    since purchasedAt: Date?
-  ) async throws -> StoreTransaction {
+    hasPurchaseController: Bool
+  ) async throws -> StoreTransaction? {
+    if hasPurchaseController {
+      if let latestTransaction = latestTransaction {
+        let storeTransaction = await factory.makeStoreTransaction(from: latestTransaction)
+        return storeTransaction
+      }
+      return nil
+    }
+
     guard let latestTransaction = latestTransaction else {
       throw PurchaseError.noTransactionDetected
     }
+
     try ProductPurchaserLogic.validate(
-      latestTransaction: latestTransaction,
-      withProductId: productId,
-      since: purchasedAt
+      transaction: latestTransaction,
+      withProductId: productId
     )
 
     let storeTransaction = await factory.makeStoreTransaction(from: latestTransaction)
@@ -112,7 +121,7 @@ extension ProductPurchaserSK1: TransactionChecker {
 
 // MARK: - TransactionRestorer
 extension ProductPurchaserSK1: TransactionRestorer {
-  func restorePurchases() async -> Bool {
+  func restorePurchases() async -> RestorationResult {
     let result = await withCheckedContinuation { continuation in
       // Using restoreCompletedTransactions instead of just refreshing
       // the receipt so that RC can pick up on the restored products,
@@ -123,7 +132,7 @@ extension ProductPurchaserSK1: TransactionRestorer {
       SKPaymentQueue.default().restoreCompletedTransactions()
     }
     restoration.completion = nil
-    return result
+    return result == nil ? .restored : .failed(result)
   }
 }
 
@@ -136,7 +145,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       message: "Restore Completed Transactions Finished"
     )
     restoration.dispatchGroup.notify(queue: restoration.queue) { [weak self] in
-      self?.restoration.completion?(true)
+      self?.restoration.completion?(nil)
     }
   }
 
@@ -151,7 +160,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       error: error
     )
     restoration.dispatchGroup.notify(queue: restoration.queue) { [weak self] in
-      self?.restoration.completion?(false)
+      self?.restoration.completion?(error)
     }
   }
 

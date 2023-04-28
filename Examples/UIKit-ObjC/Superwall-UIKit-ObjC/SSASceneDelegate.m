@@ -7,8 +7,8 @@
 
 #import "SSASceneDelegate.h"
 
-// services
-#import "SSASuperwallService.h"
+// frameworks
+@import SuperwallKit;
 
 @interface SSASceneDelegate ()
 
@@ -28,7 +28,7 @@
 
 - (void)handleURLContexts:(NSSet<UIOpenURLContext *> *)URLContexts {
   [URLContexts enumerateObjectsUsingBlock:^(UIOpenURLContext * _Nonnull context, BOOL * _Nonnull stop) {
-    [[SSASuperwallService sharedService] handleDeepLinkWithURL:context.URL];
+    [[Superwall sharedInstance] handleDeepLink:context.URL];
   }];
 }
 

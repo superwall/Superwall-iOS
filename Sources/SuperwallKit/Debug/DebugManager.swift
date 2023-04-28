@@ -9,8 +9,7 @@ import Foundation
 import UIKit
 
 final class DebugManager {
-  @MainActor
-	var viewController: DebugViewController?
+  @MainActor var viewController: DebugViewController?
 	var isDebuggerLaunched = false
 
   private unowned let storage: Storage

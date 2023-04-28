@@ -90,7 +90,7 @@ struct ExpressionEvaluator {
       "user": ruleAttributes.user,
       "device": ruleAttributes.device,
       "params": eventData.parameters
-    ])
+    ] as [String: Any])
 
     if let expressionJs = rule.expressionJs {
       if let base64Params = JavascriptExpressionEvaluatorParams(

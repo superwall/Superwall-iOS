@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 11/10/2022.
 //
+// swiftlint:disable void_function_in_ternary
 
 import SwiftUI
 

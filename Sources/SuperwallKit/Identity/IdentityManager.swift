@@ -76,7 +76,6 @@ class IdentityManager {
       .eraseToAnyPublisher()
   }
 
-
   /// Indicates whether the identity (i.e. anonymous or logged in with
   /// assignments) has been retrieved.
   ///
@@ -144,6 +143,7 @@ class IdentityManager {
       // If they're sending the same userId as before, then they're
       // already logged in.
       if self._appUserId == userId {
+        self.group.leave()
         return
       }
 

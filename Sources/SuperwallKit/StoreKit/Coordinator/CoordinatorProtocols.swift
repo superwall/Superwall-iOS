@@ -8,11 +8,12 @@
 import Foundation
 
 protocol TransactionChecker: AnyObject {
-  /// Gets and validates a transaction of a product.
+  /// Gets and validates a transaction of a product, if the user isn't using
+  /// a ``PurchaseController``.
   func getAndValidateLatestTransaction(
     of productId: String,
-    since purchasedAt: Date?
-  ) async throws -> StoreTransaction
+    hasPurchaseController: Bool
+  ) async throws -> StoreTransaction?
 }
 
 protocol ProductPurchaser: AnyObject {
@@ -34,5 +35,5 @@ protocol TransactionRestorer: AnyObject {
   /// - Returns: A boolean indicating whether the restore request succeeded or failed.
   /// This doesn't mean that the user is now subscribed, just that there were no errors
   /// obtaining the restored transactions
-  func restorePurchases() async -> Bool
+  func restorePurchases() async -> RestorationResult
 }

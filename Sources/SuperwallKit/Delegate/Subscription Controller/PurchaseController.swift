@@ -19,7 +19,7 @@ import StoreKit
 /// ``Superwall/subscriptionStatus``.
 ///
 /// To learn how to implement the ``PurchaseController`` in your app
-/// and best practices, see <doc:AdvancedConfiguration>.
+/// and best practices, see [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
 public protocol PurchaseController: AnyObject {
   /// Called when the user initiates purchasing of a product.
   ///
@@ -39,6 +39,7 @@ public protocol PurchaseController: AnyObject {
   /// and return its result.
   ///
   /// - Returns: A boolean that's `true` if the user's purchases were restored or `false` if they weren't.
+  /// Note: `true` does not imply the user has an active subscription, it just mean the restore had no errors
   @MainActor
-  func restorePurchases() async -> Bool
+  func restorePurchases() async -> RestorationResult
 }

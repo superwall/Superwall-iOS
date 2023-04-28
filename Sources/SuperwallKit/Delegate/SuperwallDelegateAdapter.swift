@@ -18,7 +18,8 @@ final class SuperwallDelegateAdapter {
   weak var swiftPurchaseController: PurchaseController?
   weak var objcPurchaseController: PurchaseControllerObjc?
 
-  /// Called on init of the Superwall instance via ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``.
+  /// Called on init of the Superwall instance via
+  /// ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``.
   init(
     swiftPurchaseController: PurchaseController?,
     objcPurchaseController: PurchaseControllerObjc?
@@ -176,17 +177,22 @@ extension SuperwallDelegateAdapter: ProductPurchaser {
 // MARK: - TransactionRestorer
 extension SuperwallDelegateAdapter: TransactionRestorer {
   @MainActor
-  func restorePurchases() async -> Bool {
-    var didRestore = false
+  func restorePurchases() async -> RestorationResult {
+    var result: RestorationResult = .failed(nil)
     if let purchaseController = swiftPurchaseController {
-      didRestore = await purchaseController.restorePurchases()
+      result = await purchaseController.restorePurchases()
     } else if let purchaseController = objcPurchaseController {
-      didRestore = await withCheckedContinuation { continuation in
-        purchaseController.restorePurchases { didRestore in
-          continuation.resume(returning: didRestore)
+      result = await withCheckedContinuation { continuation in
+        purchaseController.restorePurchases { result, error in
+          switch result {
+          case .restored:
+            continuation.resume(returning: .restored)
+          case .failed:
+            continuation.resume(returning: .failed(error))
+          }
         }
       }
     }
-    return didRestore
+    return result
   }
 }

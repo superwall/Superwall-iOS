@@ -19,7 +19,7 @@ actor StoreKitManager {
     self.factory = factory
   }
 
-	func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
+  func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
     guard let output = try? await getProducts(
       withIds: paywall.productIds,
       forPaywall: paywall.name
@@ -38,7 +38,7 @@ actor StoreKitManager {
     }
 
     return variables
-	}
+  }
 
   func getProducts(
     withIds responseProductIds: [String],
@@ -65,7 +65,7 @@ actor StoreKitManager {
     }
 
     return (productsById, processingResult.products)
-	}
+  }
 
   /// For each product to substitute, this removes the response product at the given index and stores
   /// the substitute product in memory.
@@ -121,20 +121,101 @@ actor StoreKitManager {
   }
 }
 
+// MARK: - Restoration
+extension StoreKitManager {
+  @MainActor
+  func tryToRestore(_ paywallViewController: PaywallViewController) async {
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallTransactions,
+      message: "Attempting Restore"
+    )
+
+    paywallViewController.loadingState = .loadingPurchase
+
+    let restorationResult = await coordinator.txnRestorer.restorePurchases()
+
+    await processRestoration(
+      restorationResult: restorationResult,
+      paywallViewController: paywallViewController
+    )
+  }
+
+  /// After restoring, it checks to see whether the user is actually subscribed or not.
+  ///
+  /// This is accessed by both the transaction manager and the restoration manager.
+  @MainActor
+  func processRestoration(
+    restorationResult: RestorationResult,
+    paywallViewController: PaywallViewController
+  ) async {
+    let hasRestored = restorationResult == .restored
+    var successfulRestore = hasRestored
+
+    if !Superwall.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
+      await refreshReceipt()
+      var isUserSubscribed = false
+      if hasRestored {
+        await loadPurchasedProducts()
+        isUserSubscribed = Superwall.shared.subscriptionStatus == .active
+      }
+      successfulRestore = hasRestored && isUserSubscribed
+    }
+
+    if successfulRestore {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallTransactions,
+        message: "Transactions Restored"
+      )
+      transactionWasRestored(paywallViewController: paywallViewController)
+    } else {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallTransactions,
+        message: "Transactions Failed to Restore"
+      )
+
+      paywallViewController.presentAlert(
+        title: Superwall.shared.options.paywalls.restoreFailed.title,
+        message: Superwall.shared.options.paywalls.restoreFailed.message,
+        closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle
+      )
+    }
+  }
+
+  @MainActor
+  private func transactionWasRestored(paywallViewController: PaywallViewController) {
+    let paywallInfo = paywallViewController.paywallInfo
+    Task.detached(priority: .utility) {
+      let trackedEvent = InternalSuperwallEvent.Transaction(
+        state: .restore,
+        paywallInfo: paywallInfo,
+        product: nil,
+        model: nil
+      )
+      await Superwall.shared.track(trackedEvent)
+    }
+
+    if Superwall.shared.options.paywalls.automaticallyDismiss {
+      Superwall.shared.dismiss(paywallViewController, state: .restored)
+    }
+  }
+}
+
 // MARK: - Receipt API
 extension StoreKitManager {
   /// This refreshes the device receipt.
   ///
   /// - Warning: This will prompt the user to log in, so only do this on
   /// when restoring or after purchasing.
-  @discardableResult
-  func refreshReceipt() async -> Bool {
+  func refreshReceipt() async {
     Logger.debug(
       logLevel: .debug,
       scope: .storeKitManager,
       message: "Refreshing App Store receipt."
     )
-    return await receiptManager.refreshReceipt()
+    await receiptManager.refreshReceipt()
   }
 
   /// Loads the purchased products from the receipt,

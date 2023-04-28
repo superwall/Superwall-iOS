@@ -97,14 +97,14 @@ extension Superwall {
   ///     - event: The name of the event you want to track.
   ///     - params: Optional parameters you'd like to pass with your event.
   ///
-  /// - Returns: A ``TrackResultObjc`` object that contains information about the result of tracking an event.
+  /// - Returns: A ``PresentationResultObjc`` object that contains information about the result of tracking an event.
   @available(swift, obsoleted: 1.0)
   @objc public func getPresentationResult(
     forEvent event: String,
     params: [String: Any]? = nil
-  ) async -> TrackResultObjc {
+  ) async -> PresentationResultObjc {
     let result = await getPresentationResult(forEvent: event, params: params)
-    return TrackResultObjc(trackResult: result)
+    return PresentationResultObjc(trackResult: result)
   }
 
   /// Objective-C-only function to preemptively get the result of tracking an event.
@@ -118,12 +118,12 @@ extension Superwall {
   /// - Parameters:
   ///     - event: The name of the event you want to track.
   ///
-  /// - Returns: A ``TrackResultObjc`` object that contains information about the result of tracking an event.
+  /// - Returns: A ``PresentationResultObjc`` object that contains information about the result of tracking an event.
   @available(swift, obsoleted: 1.0)
   @objc public func getPresentationResult(
     forEvent event: String
-  ) async -> TrackResultObjc {
+  ) async -> PresentationResultObjc {
     let result = await getPresentationResult(forEvent: event, params: nil)
-    return TrackResultObjc(trackResult: result)
+    return PresentationResultObjc(trackResult: result)
   }
 }

@@ -55,8 +55,7 @@ public enum PaywallSkippedReason: Sendable, Equatable {
   }
 }
 
-/// Objective-C compatible enum for ``PaywallDismissedResult/DismissState``
-/// The reason the paywall presentation was skipped.
+/// Objective-C-only enum. Specifies the reason the paywall presentation was skipped.
 @objc(SWKPaywallSkippedReason)
 public enum PaywallSkippedReasonObjc: Int, Sendable, Equatable {
   /// The user was assigned to a holdout group.

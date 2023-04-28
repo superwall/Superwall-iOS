@@ -16,7 +16,7 @@ import Foundation
 /// by probabilities. An experiment will result in a user seeing a paywall unless
 /// they are in a holdout group.
 ///
-/// To learn more, read <doc:Ecosystem>.
+/// To learn more, read [our docs](https://docs.superwall.com/docs/home#how-it-works).
 @objc(SWKExperiment)
 @objcMembers
 public final class Experiment: NSObject, Codable, Sendable {
