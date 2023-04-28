@@ -98,12 +98,16 @@ extension Superwall {
   func dismiss(
     _ paywallViewController: PaywallViewController,
     state: DismissState,
+    shouldSendDismissedState: Bool = true,
+    shouldCompleteStatePublisher: Bool = true,
     completion: (() -> Void)? = nil
   ) {
     let paywallInfo = paywallViewController.paywallInfo
     paywallViewController.dismiss(
       paywallInfo: paywallInfo,
-      state: state
+      state: state,
+      shouldSendDismissedState: shouldSendDismissedState,
+      shouldCompleteStatePublisher: shouldCompleteStatePublisher
     ) {
       completion?()
     }

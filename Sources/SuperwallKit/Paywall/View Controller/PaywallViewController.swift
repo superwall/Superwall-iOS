@@ -235,7 +235,8 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     dismiss(
       paywallInfo: paywallInfo,
       state: .closed,
-      shouldSendDismissedState: false
+      shouldSendDismissedState: false,
+      shouldCompleteStatePublisher: false
     ) { [weak self] in
       guard let self = self else {
         return
@@ -247,8 +248,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   @objc private func pressedExitPaywall() {
     dismiss(
       paywallInfo: paywallInfo,
-      state: .closed,
-      shouldSendDismissedState: true
+      state: .closed
     ) { [weak self] in
       guard let self = self else {
         return
@@ -639,8 +639,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   func openDeepLink(_ url: URL) {
     dismiss(
       paywallInfo: paywallInfo,
-      state: .closed,
-      shouldSendDismissedState: true
+      state: .closed
     ) { [weak self] in
       self?.eventDidOccur(.openedDeepLink(url: url))
       UIApplication.shared.open(url)
@@ -713,6 +712,7 @@ extension PaywallViewController {
     paywallInfo: PaywallInfo,
     state: DismissState,
     shouldSendDismissedState: Bool = true,
+    shouldCompleteStatePublisher: Bool = true,
     completion: (() -> Void)? = nil
   ) {
     calledDismiss = true
@@ -726,6 +726,7 @@ extension PaywallViewController {
         paywallInfo: paywallInfo,
         state: state,
         shouldSendDismissedState: shouldSendDismissedState,
+        shouldSendCompletion: shouldCompleteStatePublisher,
         completion: completion
       )
     }
@@ -740,6 +741,7 @@ extension PaywallViewController {
     paywallInfo: PaywallInfo,
     state: DismissState,
     shouldSendDismissedState: Bool = true,
+    shouldSendCompletion: Bool = true,
     completion: (() -> Void)? = nil
   ) {
     let isShowingSpinner = loadingState == .loadingPurchase || loadingState == .manualLoading
@@ -755,6 +757,8 @@ extension PaywallViewController {
 
     if shouldSendDismissedState {
       paywallStatePublisher?.send(.dismissed(paywallInfo, state))
+    }
+    if shouldSendCompletion {
       paywallStatePublisher?.send(completion: .finished)
       paywallStatePublisher = nil
     }

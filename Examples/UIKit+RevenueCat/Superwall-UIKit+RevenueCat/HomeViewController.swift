@@ -51,7 +51,6 @@ final class HomeViewController: UIViewController {
         }
       }
 
-
     navigationItem.hidesBackButton = true
   }
 
@@ -64,7 +63,6 @@ final class HomeViewController: UIViewController {
     }
     _ = self.navigationController?.popToRootViewController(animated: true)
   }
-
 
   @IBAction private func launchFeature() {
     let handler = PaywallPresentationHandler()

@@ -129,7 +129,9 @@ public enum SuperwallEvent {
     case .appInstall,
       .sessionStart,
       .appLaunch,
-      .deepLink:
+      .deepLink,
+      .transactionFail,
+      .transactionAbandon:
       return true
     default:
       return false

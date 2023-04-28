@@ -14,6 +14,7 @@ enum TrackingLogic {
     case deepLinkTrigger
     case disallowedEventAsTrigger
     case dontTriggerPaywall
+    case closePaywallThenTriggerPaywall
   }
 
   static func processParameters(
@@ -136,17 +137,30 @@ enum TrackingLogic {
   static func canTriggerPaywall(
     _ event: Trackable,
     triggers: Set<String>,
-    isPaywallPresented: Bool
+    paywallViewController: PaywallViewController?
   ) -> ImplicitTriggerOutcome {
     if let event = event as? TrackableSuperwallEvent,
       case .deepLink = event.superwallEvent {
       return .deepLinkTrigger
     }
 
-    if isPaywallPresented {
+    guard triggers.contains(event.rawName) else {
       return .dontTriggerPaywall
     }
-    guard triggers.contains(event.rawName) else {
+
+    let presentedEventName = paywallViewController?.paywallInfo.presentedByEventWithName
+    if let event = event as? TrackableSuperwallEvent,
+      case .transactionAbandon = event.superwallEvent,
+      presentedEventName != SuperwallEventObjc.transactionAbandon.description {
+      return .closePaywallThenTriggerPaywall
+    }
+
+    if let event = event as? TrackableSuperwallEvent,
+      case .transactionFail = event.superwallEvent {
+      return .closePaywallThenTriggerPaywall
+    }
+
+    if paywallViewController != nil {
       return .dontTriggerPaywall
     }
 

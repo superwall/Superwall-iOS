@@ -7,8 +7,10 @@
 
   ],
   "settings" : {
-    "_compatibilityTimeRate" : 6,
-    "_timeRate" : 15
+    "_compatibilityTimeRate" : {
+      "3" : 6
+    },
+    "_timeRate" : 1003
   },
   "subscriptionGroups" : [
     {

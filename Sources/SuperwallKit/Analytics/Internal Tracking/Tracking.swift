@@ -82,7 +82,7 @@ extension Superwall {
     let outcome = TrackingLogic.canTriggerPaywall(
       event,
       triggers: Set(dependencyContainer.configManager.triggersByEventName.keys),
-      isPaywallPresented: isPaywallPresented
+      paywallViewController: paywallViewController
     )
 
     switch outcome {
@@ -95,6 +95,21 @@ extension Superwall {
         isPaywallPresented: isPaywallPresented
       )
       await internallyPresent(presentationRequest).asyncNoValue()
+    case .closePaywallThenTriggerPaywall:
+      guard let lastPresentationItems = presentationItems.last else {
+        return
+      }
+      if isPaywallPresented {
+        await dismissForNextPaywall()
+      }
+      let presentationRequest = dependencyContainer.makePresentationRequest(
+        presentationInfo,
+        isPaywallPresented: isPaywallPresented
+      )
+      await internallyPresent(
+        presentationRequest,
+        lastPresentationItems.statePublisher
+      ).asyncNoValue()
     case .triggerPaywall:
       let presentationRequest = dependencyContainer.makePresentationRequest(
         presentationInfo,
