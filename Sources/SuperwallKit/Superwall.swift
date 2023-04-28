@@ -5,7 +5,7 @@ import StoreKit
 import Combine
 
 /// The primary class for integrating Superwall into your application. After configuring via
-/// ``configure(apiKey:purchaseController:options:completion:)-52tke``, It provides access to
+/// ``configure(apiKey:purchaseController:options:completion:)-52tke``, it provides access to
 /// all its featured via instance functions and variables.
 @objcMembers
 public final class Superwall: NSObject, ObservableObject {
@@ -109,7 +109,7 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var isConfigured = false
 
-  /// A variable that is only `true` if `Superwall.shared` is available for use.
+  /// A variable that is only `true` if ``shared`` is available for use.
   /// Gets set to `true` immediately after
   /// ``configure(apiKey:purchaseController:options:completion:)-52tke`` is
   /// called.
