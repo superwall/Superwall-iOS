@@ -33,6 +33,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     /// Keep Superwall's subscription status up-to-date with RevenueCat's.
     purchaseController.syncSubscriptionStatus()
 
+
+
     return true
   }
 

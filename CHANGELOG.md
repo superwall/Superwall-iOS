@@ -21,6 +21,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - You can now access `device.subscriptionStatus` in a rule, which is a string that's either `ACTIVE`, `INACTIVE`, or `UNKNOWN`.
 - You no longer need to have swiftlint installed to run our example apps.
 - If you're not using a `PurchaseController` and a user comes across the "You're already subscribed to this product" popup, we will now correctly identify this as a restoration and not a purchase. This can happen when testing in sandbox if you purchase a product -> delete and reinstall the app -> open a paywall and purchase.
+- Adds static variable `Superwall.isInitialized` which is `true` when initialization is complete and `Superwall.shared` can be accessed.
 
 ### Fixes
 

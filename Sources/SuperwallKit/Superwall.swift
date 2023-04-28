@@ -109,8 +109,11 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var isConfigured = false
 
-  /// A block of code that gets executed when share is initialized
-  public static var onInitialized: () -> Void = {}
+  /// A variable that is only true if `Superwall.shared` is available for use.
+  /// Gets set to true immediately after ``Superwall.configure(apiKey:)`` is called.
+  public static var isInitialized: Bool {
+    return isInitializedInternal
+  }
 
   /// The configured shared instance of ``Superwall``.
   ///
@@ -142,6 +145,8 @@ public final class Superwall: NSObject, ObservableObject {
 
   // MARK: - Non-public Properties
   private static var superwall: Superwall?
+
+  private static var isInitializedInternal: Bool = false
 
   /// The presented paywall view controller.
   var paywallViewController: PaywallViewController? {
@@ -280,7 +285,9 @@ public final class Superwall: NSObject, ObservableObject {
       options: options,
       completion: completion
     )
-    Self.onInitialized()
+    Self.isInitializedInternal = true
+//    let notification = Notification(name: .superwallIsInitialized)
+//    NotificationCenter.default.post(notification)
     return shared
   }
 
