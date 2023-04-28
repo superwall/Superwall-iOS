@@ -13,10 +13,14 @@ import Combine
 
 // MARK: Quickstart (v3.0.0+)
 /// 1. Copy this file into your app
-/// 2. Create an RCPurchaseController() wherever Superwall and RecenueCat are being initialized. `let purchaseController = RCPurchaseController()`
-/// 3. First, Configure Superwall. Pass in the purchaseController you just created. `Superwall.configure(apiKey: "superwall_api_key", purchaseController: purchaseController)`
-/// 4. Second, configure RevenueCat. `Purchases.configure(withAPIKey: "revenuecat_api_key")`
-/// 5. Third, Keep Superwall's subscription status up-to-date with RevenueCat's. `purchaseController.syncSubscriptionStatus()`
+/// 2. Create an RCPurchaseController() wherever Superwall and RecenueCat are being initialized.
+///   `let purchaseController = RCPurchaseController()`
+/// 3. First, Configure Superwall. Pass in the purchaseController you just created.
+///   `Superwall.configure(apiKey: "superwall_api_key", purchaseController: purchaseController)`
+/// 4. Second, configure RevenueCat.
+///   `Purchases.configure(withAPIKey: "revenuecat_api_key")`
+/// 5. Third, Keep Superwall's subscription status up-to-date with RevenueCat's.
+///   `purchaseController.syncSubscriptionStatus()`
 
 final class RCPurchaseController: PurchaseController {
 
