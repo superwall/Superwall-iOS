@@ -18,6 +18,10 @@ public enum DismissState: Equatable, Sendable {
   /// The paywall was dismissed by the user manually pressing the close button.
   case closed
 
+  /// The paywall was dismissed so that another paywall can be shown. This happens when
+  /// `transaction_abandon` or `transaction_fail` is added as a trigger.
+  case closedForNextPaywall
+
   /// The paywall was dismissed due to the user restoring their purchases.
   case restored
 }
@@ -27,6 +31,7 @@ public enum DismissState: Equatable, Sendable {
 public enum DismissStateObjc: Int, Sendable {
   case purchased
   case closed
+  case closedForNextPaywall
   case restored
 }
 

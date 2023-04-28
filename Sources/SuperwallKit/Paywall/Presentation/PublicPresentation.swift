@@ -48,6 +48,23 @@ extension Superwall {
     }
   }
 
+  @MainActor
+  func dismissForNextPaywall() async {
+    guard let paywallViewController = paywallViewController else {
+      return
+    }
+    await withCheckedContinuation { continuation in
+      dismiss(
+        paywallViewController,
+        state: .closedForNextPaywall,
+        shouldSendDismissedState: true,
+        shouldCompleteStatePublisher: false
+      ) {
+        continuation.resume()
+      }
+    }
+  }
+
   // MARK: - Objective-C-only Track
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
   /// active trigger inside a campaign on the [Superwall Dashboard](https://superwall.com/dashboard);
@@ -431,6 +448,8 @@ extension Superwall {
                 completion?()
               }
             }
+          case .closedForNextPaywall:
+            break
           }
         case .skipped(let reason):
           switch reason {
@@ -508,6 +527,8 @@ extension Superwall {
     switch state {
     case .closed:
       completion(.closed, nil, paywallInfo)
+    case .closedForNextPaywall:
+      completion(.closedForNextPaywall, nil, paywallInfo)
     case .purchased(productId: let productId):
       completion(.purchased, productId, paywallInfo)
     case .restored:

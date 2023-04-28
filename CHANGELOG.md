@@ -22,6 +22,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - You no longer need to have swiftlint installed to run our example apps.
 - If you're not using a `PurchaseController` and a user comes across the "You're already subscribed to this product" popup, we will now correctly identify this as a restoration and not a purchase. This can happen when testing in sandbox if you purchase a product -> delete and reinstall the app -> open a paywall and purchase.
 - Adds static variable `Superwall.isInitialized` which is `true` when initialization is complete and `Superwall.shared` can be accessed.
+- Adds `transaction_abandon` and `transaction_fail` as potential triggers. This comes with a new `DismissState` case `closedForNextPaywall`, which is returned when dismissing one paywall for another.
 
 ### Fixes
 
