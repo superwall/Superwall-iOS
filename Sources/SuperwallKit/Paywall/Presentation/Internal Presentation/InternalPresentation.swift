@@ -54,12 +54,11 @@ extension Superwall {
       .eraseToAnyPublisher()
   }
 
-
   @discardableResult
   func internallyGetPaywallViewController(
     _ request: PresentationRequest,
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never> = .init()
-  ) -> PresentablePipelineOutputPublisher {
+  ) -> AnyPublisher<PaywallViewController, Error> {
 
     let presentationSubject = PresentationSubject(request)
 
@@ -73,7 +72,17 @@ extension Superwall {
       .getPaywallViewController(pipelineType: .presentation(paywallStatePublisher))
       .checkSubscriptionStatus(paywallStatePublisher)
       .confirmPaywallAssignment()
+      .storePresentationObjects(presentationSubject, paywallStatePublisher)
       .receive(on: DispatchQueue.main)
+      .map { input in
+        let paywallViewController = input.paywallViewController
+        paywallViewController.set(
+          eventData: input.request.presentationInfo.eventData,
+          presentationStyleOverride: input.request.paywallOverrides?.presentationStyle,
+          paywallStatePublisher: paywallStatePublisher
+        )
+        return input.paywallViewController
+      }
       .eraseToAnyPublisher()
   }
 

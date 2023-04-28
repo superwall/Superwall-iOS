@@ -29,7 +29,6 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<TriggerResultResponsePipelineOutput, Error> {
     asyncMap { input in
-
       var errorType: PresentationPipelineError = .cancelled
 
       switch input.triggerResult {
@@ -67,14 +66,14 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
           let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noRuleMatch)
           await Superwall.shared.track(trackedEvent)
         }
-          errorType = .noRuleMatch
+        errorType = .noRuleMatch
         paywallStatePublisher.send(.skipped(.noRuleMatch))
       case .eventNotFound:
         Task.detached(priority: .utility) {
           let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .eventNotFound)
           await Superwall.shared.track(trackedEvent)
         }
-          errorType = .eventNotFound
+        errorType = .eventNotFound
         paywallStatePublisher.send(.skipped(.eventNotFound))
       case let .error(error):
         Logger.debug(
@@ -88,7 +87,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
           let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPaywallViewController)
           await Superwall.shared.track(trackedEvent)
         }
-          errorType = .noPaywallViewController
+        errorType = .noPaywallViewController
         paywallStatePublisher.send(.skipped(.error(error)))
       }
 

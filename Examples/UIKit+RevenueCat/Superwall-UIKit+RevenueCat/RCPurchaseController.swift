@@ -32,7 +32,7 @@ final class RCPurchaseController: PurchaseController {
         // Gets called whenever new CustomerInfo is available
         let hasActiveSubscription = !customerInfo.entitlements.active.isEmpty // Why? -> https://www.revenuecat.com/docs/entitlements#entitlements
         if hasActiveSubscription {
-          Superwall.shared.subscriptionStatus = .inactive //.active
+          Superwall.shared.subscriptionStatus = .active
         } else {
           Superwall.shared.subscriptionStatus = .inactive
         }
