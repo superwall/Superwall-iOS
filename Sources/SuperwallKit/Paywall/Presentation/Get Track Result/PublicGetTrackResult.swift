@@ -83,7 +83,7 @@ extension Superwall {
       let result = await getPresentationResult(forEvent: event, params: params)
       completion(result)
     }
-  }
+  }  
 
   /// Objective-C-only function to preemptively get the result of tracking an event.
   ///

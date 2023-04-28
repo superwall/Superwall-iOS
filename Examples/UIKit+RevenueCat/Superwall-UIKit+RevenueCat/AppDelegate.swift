@@ -1,3 +1,4 @@
+// swiftlint:disable all
 //
 //  AppDelegate.swift
 //  SuperwallUIKitExample
@@ -32,8 +33,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: Step 4 – Sync Subscription Status
     /// Keep Superwall's subscription status up-to-date with RevenueCat's.
     purchaseController.syncSubscriptionStatus()
-
-
 
     return true
   }

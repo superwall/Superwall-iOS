@@ -30,7 +30,7 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
           let state: PaywallState = .skipped(.error(error))
           paywallStatePublisher.send(state)
           paywallStatePublisher.send(completion: .finished)
-          throw PresentationPipelineError.cancelled
+          throw PresentationPipelineError.debuggerPresented
         }
       }
       return (request, debugInfo)

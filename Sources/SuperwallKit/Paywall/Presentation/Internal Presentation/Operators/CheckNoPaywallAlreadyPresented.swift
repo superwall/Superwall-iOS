@@ -40,7 +40,7 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
         let state: PaywallState = .skipped(.error(error))
         paywallStatePublisher.send(state)
         paywallStatePublisher.send(completion: .finished)
-        throw PresentationPipelineError.cancelled
+        throw PresentationPipelineError.paywallAlreadyPresented
       }
       .eraseToAnyPublisher()
   }

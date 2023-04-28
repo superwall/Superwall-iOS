@@ -29,4 +29,20 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
       }
       .eraseToAnyPublisher()
   }
+
+  /// Waits for config to be received and the identity to be established
+  func waitUntilReady() -> AnyPublisher<PresentationRequest, Failure> {
+    subscribe(on: DispatchQueue.global(qos: .userInitiated))
+      .flatMap { request in
+        zip(
+          request.dependencyContainer.identityManager.hasIdentity,
+          request.dependencyContainer.configManager.hasConfig
+        )
+      }
+      .first()
+      .map { request, _, _ in
+        return request
+      }
+      .eraseToAnyPublisher()
+  }
 }

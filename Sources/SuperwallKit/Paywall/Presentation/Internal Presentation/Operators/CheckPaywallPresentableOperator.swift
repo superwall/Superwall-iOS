@@ -29,6 +29,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<PresentablePipelineOutput, Error> {
     asyncMap { input in
+
       let subscriptionStatus = await input.request.flags.subscriptionStatus.async()
       if await InternalPresentationLogic.userSubscribedAndNotOverridden(
         isUserSubscribed: subscriptionStatus == .active,
@@ -47,7 +48,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         let state: PaywallState = .skipped(.userIsSubscribed)
         paywallStatePublisher.send(state)
         paywallStatePublisher.send(completion: .finished)
-        throw PresentationPipelineError.cancelled
+        throw PresentationPipelineError.userIsSubscribed
       }
 
       if input.request.presenter == nil {
@@ -80,7 +81,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
         let state: PaywallState = .skipped(.error(error))
         paywallStatePublisher.send(state)
         paywallStatePublisher.send(completion: .finished)
-        throw PresentationPipelineError.cancelled
+        throw PresentationPipelineError.noPresenter
       }
 
       let sessionEventsManager = input.request.dependencyContainer.sessionEventsManager

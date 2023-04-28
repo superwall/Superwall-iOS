@@ -495,6 +495,7 @@ extension Superwall {
     .eraseToAnyPublisher()
   }
 
+
   /// Converts dismissal result from enums with associated values, to old objective-c compatible way
   ///
   /// - Parameters:

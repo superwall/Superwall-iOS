@@ -13,6 +13,7 @@ typealias PresentationSubject = CurrentValueSubject<PresentationRequest, Error>
 
 /// A publisher that emits ``PaywallState`` objects.
 public typealias PaywallStatePublisher = AnyPublisher<PaywallState, Never>
+typealias PresentablePipelineOutputPublisher = AnyPublisher<PresentablePipelineOutput, Error>
 
 extension Superwall {
   /// Runs a combine pipeline to present a paywall, publishing ``PaywallState`` objects that provide updates on the lifecycle of the paywall.
@@ -49,6 +50,29 @@ extension Superwall {
       ))
 
     return paywallStatePublisher
+      .receive(on: DispatchQueue.main)
+      .eraseToAnyPublisher()
+  }
+
+
+  @discardableResult
+  func internallyGetPaywallViewController(
+    _ request: PresentationRequest,
+    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never> = .init()
+  ) -> PresentablePipelineOutputPublisher {
+
+    let presentationSubject = PresentationSubject(request)
+
+    return presentationSubject
+      .eraseToAnyPublisher()
+      .waitToPresent()
+      .logPresentation("Called Superwall.shared.getPaywallViewController")
+      .evaluateRules()
+      .confirmHoldoutAssignment()
+      .handleTriggerResult(paywallStatePublisher)
+      .getPaywallViewController(pipelineType: .presentation(paywallStatePublisher))
+      .checkSubscriptionStatus(paywallStatePublisher)
+      .confirmPaywallAssignment()
       .receive(on: DispatchQueue.main)
       .eraseToAnyPublisher()
   }

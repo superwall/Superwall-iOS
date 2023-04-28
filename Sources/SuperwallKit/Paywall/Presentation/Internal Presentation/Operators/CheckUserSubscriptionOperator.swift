@@ -27,7 +27,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
           }
           paywallStatePublisher.send(.skipped(.userIsSubscribed))
           paywallStatePublisher.send(completion: .finished)
-          throw PresentationPipelineError.cancelled
+          throw PresentationPipelineError.userIsSubscribed
         }
         return input
       }
