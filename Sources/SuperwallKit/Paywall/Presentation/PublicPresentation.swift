@@ -38,6 +38,7 @@ extension Superwall {
     guard let paywallViewController = paywallViewController else {
       return
     }
+    paywallViewController.paywall.closeReason = .userInteraction
     await withCheckedContinuation { continuation in
       dismiss(
         paywallViewController,
@@ -53,8 +54,9 @@ extension Superwall {
     guard let paywallViewController = paywallViewController else {
       return
     }
-    paywallViewController.paywallInfo.closeReason = .forNextPaywall
+
     await withCheckedContinuation { continuation in
+      paywallViewController.paywall.closeReason = .forNextPaywall
       dismiss(
         paywallViewController,
         state: .closed, // .closedForNextPaywall

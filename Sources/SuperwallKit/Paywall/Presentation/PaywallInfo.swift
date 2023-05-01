@@ -29,9 +29,6 @@ public final class PaywallInfo: NSObject {
   /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
   public let experiment: Experiment?
 
-  /// An enum describing why this paywall was last closed. `nil` if not yet closed. 
-  public var closeReason: PaywallCloseReason?
-
   /// The products associated with the paywall.
   public let products: [Product]
 
@@ -99,6 +96,9 @@ public final class PaywallInfo: NSObject {
 
   public let featureGatingBehavior: FeatureGatingBehavior
 
+  /// An enum describing why this paywall was last closed. `nil` if not yet closed.
+  public let closeReason: PaywallCloseReason?
+
   private unowned let sessionEventsManager: SessionEventsManager
 
   init(
@@ -121,7 +121,8 @@ public final class PaywallInfo: NSObject {
     paywalljsVersion: String? = nil,
     isFreeTrialAvailable: Bool,
     sessionEventsManager: SessionEventsManager,
-    featureGatingBehavior: FeatureGatingBehavior = .nonGated
+    featureGatingBehavior: FeatureGatingBehavior = .nonGated,
+    closeReason: PaywallCloseReason? = nil
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -176,6 +177,7 @@ public final class PaywallInfo: NSObject {
       self.productsLoadDuration = nil
     }
     self.sessionEventsManager = sessionEventsManager
+    self.closeReason = closeReason
   }
 
   func eventParams(

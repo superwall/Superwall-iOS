@@ -563,7 +563,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     view.alpha = 1.0
     view.transform = .identity
     webView.scrollView.contentOffset = CGPoint.zero
-    paywallInfo.closeReason = nil
+    paywall.closeReason = nil
     Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall(withInfo: paywallInfo)
   }
 
