@@ -29,6 +29,9 @@ public final class PaywallInfo: NSObject {
   /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
   public let experiment: Experiment?
 
+  /// An enum describing why this paywall was last closed. `nil` if not yet closed. 
+  public var closeReason: PaywallCloseReason?
+
   /// The products associated with the paywall.
   public let products: [Product]
 

@@ -12,6 +12,7 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``configure(apiKey:purchaseController:options:completion:)-ds2x``
 - ``configure(apiKey:)``
 - ``shared``
+- ``isInitialized``
 - ``SuperwallDelegate``
 - ``SuperwallDelegateObjc``
 - ``delegate``
@@ -27,6 +28,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 ### Presenting and Dismissing a Paywall
 
+- ``register(event:params:handler:)``
+- ``register(event:params:handler:feature:)``
 - ``track(event:params:paywallOverrides:paywallHandler:)``
 - ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
 - ``track(event:)``

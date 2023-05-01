@@ -14,10 +14,12 @@ final class TrackingTests: XCTestCase {
     let eventName = "MyEvent"
     let result = await Superwall.shared.track(UserInitiatedEvent.Track(
       rawName: eventName,
-      canImplicitlyTriggerPaywall: false)
-    )
+      canImplicitlyTriggerPaywall: false,
+      isFeatureGatable: false
+    ))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertFalse(result.parameters.eventParams["$is_standard_event"] as! Bool)
+    XCTAssertFalse(result.parameters.eventParams["$is_feature_gatable"] as! Bool)
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, eventName)
   }
 
@@ -177,7 +179,7 @@ final class TrackingTests: XCTestCase {
     let result = await Superwall.shared.track(InternalSuperwallEvent.SubscriptionStatusDidChange(subscriptionStatus: .active))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "subscription_status_did_change")
+    XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "subscriptionStatus_didChange")
     XCTAssertEqual(result.parameters.eventParams["$subscription_status"] as! String, "ACTIVE")
   }
 
@@ -185,7 +187,7 @@ final class TrackingTests: XCTestCase {
     let result = await Superwall.shared.track(InternalSuperwallEvent.SubscriptionStatusDidChange(subscriptionStatus: .inactive))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "subscription_status_did_change")
+    XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "subscriptionStatus_didChange")
     XCTAssertEqual(result.parameters.eventParams["$subscription_status"] as! String, "INACTIVE")
   }
 

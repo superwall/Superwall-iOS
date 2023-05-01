@@ -49,9 +49,9 @@ final class TrackingLogicTests: XCTestCase {
     // Given
     let event = UserInitiatedEvent.Track(
       rawName: "test",
-      canImplicitlyTriggerPaywall: false
+      canImplicitlyTriggerPaywall: false,
+      isFeatureGatable: false
     )
-    let storage = StorageMock()
 
     // When
     let parameters = await TrackingLogic.processParameters(
@@ -61,6 +61,7 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     XCTAssertFalse(parameters.eventParams["$is_standard_event"] as! Bool)
+    XCTAssertFalse(parameters.eventParams["$is_feature_gatable"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
   }
 /*
@@ -329,11 +330,33 @@ final class TrackingLogicTests: XCTestCase {
 
   // MARK: - didStartNewSession
 
+  @MainActor
   func testDidStartNewSession_canTriggerPaywall_paywallAlreadyPresented() {
+    let dependencyContainer = DependencyContainer()
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      webView: webView,
+      cache: nil
+    )
+
     let outcome = TrackingLogic.canTriggerPaywall(
       InternalSuperwallEvent.AppInstall(appInstalledAtString: ""),
       triggers: Set(["app_install"]),
-      isPaywallPresented: true
+      paywallViewController: paywallVc
     )
     XCTAssertEqual(outcome, .dontTriggerPaywall)
   }
@@ -342,7 +365,7 @@ final class TrackingLogicTests: XCTestCase {
     let outcome = TrackingLogic.canTriggerPaywall(
       InternalSuperwallEvent.AppInstall(appInstalledAtString: ""),
       triggers: [],
-      isPaywallPresented: false
+      paywallViewController: nil
     )
     XCTAssertEqual(outcome, .dontTriggerPaywall)
   }
@@ -351,16 +374,16 @@ final class TrackingLogicTests: XCTestCase {
     let outcome = TrackingLogic.canTriggerPaywall(
       InternalSuperwallEvent.AppInstall(appInstalledAtString: ""),
       triggers: ["app_install"],
-      isPaywallPresented: false
+      paywallViewController: nil
     )
     XCTAssertEqual(outcome, .triggerPaywall)
   }
 
   func testDidStartNewSession_canTriggerPaywall_isNotInternalEvent() {
     let outcome = TrackingLogic.canTriggerPaywall(
-      UserInitiatedEvent.Track(rawName: "random_event", canImplicitlyTriggerPaywall: true),
+      UserInitiatedEvent.Track(rawName: "random_event", canImplicitlyTriggerPaywall: true, isFeatureGatable: false),
       triggers: ["random_event"],
-      isPaywallPresented: false
+      paywallViewController: nil
     )
     XCTAssertEqual(outcome, .triggerPaywall)
   }
