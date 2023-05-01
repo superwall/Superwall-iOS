@@ -53,10 +53,11 @@ extension Superwall {
     guard let paywallViewController = paywallViewController else {
       return
     }
+    paywallViewController.paywallInfo.closeReason = .forNextPaywall
     await withCheckedContinuation { continuation in
       dismiss(
         paywallViewController,
-        state: .closedForNextPaywall,
+        state: .closed, // .closedForNextPaywall
         shouldSendDismissedState: true,
         shouldCompleteStatePublisher: false
       ) {
@@ -467,14 +468,13 @@ extension Superwall {
               completion?()
             }
           case .closed:
+            let closeReason = paywallInfo.closeReason
             let featureGating = paywallInfo.featureGatingBehavior
-            if featureGating == .nonGated {
+            if closeReason != .forNextPaywall && featureGating == .nonGated {
               DispatchQueue.main.async {
                 completion?()
               }
             }
-          case .closedForNextPaywall:
-            break
           }
         case .skipped(let reason):
           switch reason {
@@ -552,8 +552,6 @@ extension Superwall {
     switch state {
     case .closed:
       completion(.closed, nil, paywallInfo)
-    case .closedForNextPaywall:
-      completion(.closedForNextPaywall, nil, paywallInfo)
     case .purchased(productId: let productId):
       completion(.purchased, productId, paywallInfo)
     case .restored:

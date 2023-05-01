@@ -468,6 +468,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     addShimmerView(onPresent: true)
     prepareForPresentation()
 
+
     self.eventData = eventData
     self.paywallStatePublisher = paywallStatePublisher
 
@@ -526,7 +527,7 @@ class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegat
     view.alpha = 1.0
     view.transform = .identity
     webView.scrollView.contentOffset = CGPoint.zero
-
+    paywallInfo.closeReason = nil
     Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall(withInfo: paywallInfo)
   }
 
