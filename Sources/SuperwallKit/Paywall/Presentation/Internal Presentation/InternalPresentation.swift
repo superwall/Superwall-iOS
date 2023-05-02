@@ -78,14 +78,14 @@ extension Superwall {
     result: PaywallResult,
     shouldSendPaywallResult: Bool = true,
     shouldCompleteStatePublisher: Bool = true,
+    closeReason: PaywallCloseReason = .systemLogic,
     completion: (() -> Void)? = nil
   ) {
-    let paywallInfo = paywallViewController.paywallInfo
     paywallViewController.dismiss(
-      paywallInfo: paywallInfo,
       result: result,
       shouldSendPaywallResult: shouldSendPaywallResult,
-      shouldCompleteStatePublisher: shouldCompleteStatePublisher
+      shouldCompleteStatePublisher: shouldCompleteStatePublisher,
+      closeReason: closeReason
     ) {
       completion?()
     }

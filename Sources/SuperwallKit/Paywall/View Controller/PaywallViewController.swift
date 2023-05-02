@@ -239,7 +239,6 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
 
   @objc private func pressedRefreshPaywall() {
     dismiss(
-      paywallInfo: paywallInfo,
       result: .closed,
       shouldSendPaywallResult: false,
       shouldCompleteStatePublisher: false
@@ -253,7 +252,6 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
 
   @objc private func pressedExitPaywall() {
     dismiss(
-      paywallInfo: paywallInfo,
       result: .closed
     ) { [weak self] in
       guard let self = self else {
@@ -649,7 +647,6 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
   func openDeepLink(_ url: URL) {
     dismiss(
-      paywallInfo: paywallInfo,
       result: .closed
     ) { [weak self] in
       self?.eventDidOccur(.openedDeepLink(url: url))
@@ -711,7 +708,6 @@ extension PaywallViewController {
 
     if !calledDismiss {
       didDismiss(
-        paywallInfo: paywallInfo,
         paywallResult: .closed
       )
     }
@@ -720,13 +716,15 @@ extension PaywallViewController {
   }
 
   func dismiss(
-    paywallInfo: PaywallInfo,
     result: PaywallResult,
     shouldSendPaywallResult: Bool = true,
     shouldCompleteStatePublisher: Bool = true,
+    closeReason: PaywallCloseReason = .systemLogic,
     completion: (() -> Void)? = nil
   ) {
+
     calledDismiss = true
+    paywall.closeReason = closeReason
     willDismiss()
 
     dismiss(animated: presentationIsAnimated) { [weak self] in
@@ -734,7 +732,6 @@ extension PaywallViewController {
         return
       }
       self.didDismiss(
-        paywallInfo: paywallInfo,
         paywallResult: result,
         shouldSendPaywallResult: shouldSendPaywallResult,
         shouldSendCompletion: shouldCompleteStatePublisher,
@@ -749,7 +746,6 @@ extension PaywallViewController {
   }
 
   private func didDismiss(
-    paywallInfo: PaywallInfo,
     paywallResult: PaywallResult,
     shouldSendPaywallResult: Bool = true,
     shouldSendCompletion: Bool = true,

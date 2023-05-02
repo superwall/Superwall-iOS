@@ -54,6 +54,9 @@ public enum SuperwallEvent {
   /// When a paywall is closed.
   case paywallClose(paywallInfo: PaywallInfo)
 
+  /// When a user dismisses a paywall instead of purchasing
+  case paywallDecline(paywallInfo: PaywallInfo)
+
   /// When the payment sheet is displayed to the user.
   case transactionStart(product: StoreProduct, paywallInfo: PaywallInfo)
 
@@ -131,6 +134,7 @@ public enum SuperwallEvent {
       .appLaunch,
       .deepLink,
       .transactionFail,
+      .paywallDecline,
       .transactionAbandon:
       return true
     default:
@@ -183,6 +187,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallOpen)
     case .paywallClose:
       return .init(objcEvent: .paywallClose)
+    case .paywallDecline:
+        return .init(objcEvent: .paywallDecline)
     case .transactionStart:
       return .init(objcEvent: .transactionStart)
     case .transactionFail:

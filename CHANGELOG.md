@@ -7,7 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Breaking Changes
 
 - Changes `DismissState` to `PaywallResult`
-- Removes the `closedForNextPaywall` `PaywallResult` and moves it to a new `PaywallInfo` property `closeReason`, which can either be `nil`, `.userInteraction`, or `.forNextPaywall`.
+- Removes the `closedForNextPaywall` `PaywallResult` and moves it to a new `PaywallInfo` property `closeReason`, which can either be `nil`, `.systemLogic`, or `.forNextPaywall`.
 - Changes the `PaywallPresentationHandler` variables to functions.
 - Removes `Superwall.shared.track`. We're going all in on `Superwall.shared.register` baby!
 

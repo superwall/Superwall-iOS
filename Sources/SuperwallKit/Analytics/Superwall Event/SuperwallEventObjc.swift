@@ -51,6 +51,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When a paywall is closed.
   case paywallClose
 
+  /// When a user dismisses a paywall instead of purchasing
+  case paywallDecline
+
   /// When the payment sheet is displayed to the user.
   case transactionStart
 
@@ -167,6 +170,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "trigger_fire"
     case .paywallOpen:
       return "paywall_open"
+    case .paywallDecline:
+      return "paywall_decline"
     case .paywallClose:
       return "paywall_close"
     case .transactionStart:

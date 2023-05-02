@@ -11,8 +11,9 @@ import Foundation
 /// interaction or because another paywall will show.
 @objc(SWKPaywallCloseReason)
 public enum PaywallCloseReason: Int, Codable, Equatable, Sendable {
-  /// The paywall was closed by user interaction.
-  case userInteraction
+  /// The paywall was closed by system logic, either after a purchase, because
+  /// a deeplink was presented, close button pressed, etc.
+  case systemLogic
 
   /// The paywall was automatically closed becacuse another paywall will show.
   ///

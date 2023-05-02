@@ -148,10 +148,21 @@ enum TrackingLogic {
       return .dontTriggerPaywall
     }
 
-    let presentedEventName = paywallViewController?.paywallInfo.presentedByEventWithName
+    // referring events in this set are not able to trigger another
+    // another paywall. prevents loops from occurring
+    let notAllowedReferringEventNames: Set<String> = [
+      SuperwallEventObjc.transactionAbandon.description,
+      SuperwallEventObjc.transactionFail.description,
+      SuperwallEventObjc.paywallDecline.description,
+    ]
+
+    if let referringEventName = paywallViewController?.paywallInfo.presentedByEventWithName,
+       notAllowedReferringEventNames.contains(referringEventName) {
+      return .dontTriggerPaywall
+    }
+
     if let event = event as? TrackableSuperwallEvent,
-      case .transactionAbandon = event.superwallEvent,
-      presentedEventName != SuperwallEventObjc.transactionAbandon.description {
+      case .transactionAbandon = event.superwallEvent {
       return .closePaywallThenTriggerPaywall
     }
 
@@ -159,6 +170,12 @@ enum TrackingLogic {
       case .transactionFail = event.superwallEvent {
       return .closePaywallThenTriggerPaywall
     }
+
+    if let event = event as? TrackableSuperwallEvent,
+      case .paywallDecline = event.superwallEvent {
+      return .closePaywallThenTriggerPaywall
+    }
+
 
     if paywallViewController != nil {
       return .dontTriggerPaywall
