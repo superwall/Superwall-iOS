@@ -41,10 +41,11 @@ public protocol PurchaseControllerObjc: AnyObject {
   /// Called when the user initiates a restore.
   ///
   /// Add your restore logic here, making sure that the user's subscription status is updated after restore,
-  /// and return its result.
+  /// and call the completion block.
   /// 
   /// - Parameters:
-  ///   - completion: Call the completion with `true` if the user's purchases were restored or `false` if they weren't.
+  ///   - completion: A completion block that accepts two objects. 1. A ``RestorationResultObjc`` that's `.restored` if the user's purchases were restored or `.failed` if they weren't. 2. An optional error that you can return when the restore failed.
+  /// **Note**: `restored` does not imply the user has an active subscription, it just mean the restore had no errors.
   @MainActor
   @objc func restorePurchases(completion: @escaping (RestorationResultObjc, Error?) -> Void)
 }
