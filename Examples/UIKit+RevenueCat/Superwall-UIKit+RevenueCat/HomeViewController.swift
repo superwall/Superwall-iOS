@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 05/04/2022.
 //
-// swiftlint:disable force_cast
+// swiftlint:disable all
 
 import UIKit
 import SuperwallKit
@@ -122,7 +122,7 @@ final class HomeViewController: UIViewController {
     Task {
 
       do {
-        let paywall = try await Superwall.shared.getPaywall(forEvent: "campaign_trigger")
+        let paywall = try await Superwall.shared.getPaywall(forEvent: "citizen")
         print("[!] got paywall")
 
         // prepare the vc
