@@ -38,8 +38,8 @@ public protocol PurchaseController: AnyObject {
   /// Add your restore logic here, making sure that the user's subscription status is updated after restore,
   /// and return its result.
   ///
-  /// - Returns: A boolean that's `true` if the user's purchases were restored or `false` if they weren't.
-  /// Note: `true` does not imply the user has an active subscription, it just mean the restore had no errors
+  /// - Returns: A ``RestorationResult`` that's `.restored` if the user's purchases were restored or `.failed(Error?)` if they weren't.
+  /// **Note**: `restored` does not imply the user has an active subscription, it just mean the restore had no errors.
   @MainActor
   func restorePurchases() async -> RestorationResult
 }
