@@ -10,7 +10,7 @@ import Foundation
 /// Override the default behavior and products of a paywall.
 ///
 /// Provide an instance of this to ``Superwall/track(event:params:paywallOverrides:paywallHandler:)``.
-public final class PaywallOverrides: NSObject {
+public final class PaywallOverrides: NSObject, Sendable {
   /// Defines the products to override on the paywall.
   ///
   /// You can override one or more products of your choosing.

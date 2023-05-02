@@ -92,8 +92,12 @@ public final class PaywallInfo: NSObject {
   /// The paywall.js version installed on the paywall website.
   public let paywalljsVersion: String?
 
+  /// Indicates whether the paywall is showing free trial content.
   public let isFreeTrialAvailable: Bool
 
+  /// A ``FeatureGatingBehavior`` case that indicates whether the
+  /// ``Superwall/register(event:params:handler:feature:)``
+  /// `feature` block executes or not.
   public let featureGatingBehavior: FeatureGatingBehavior
 
   /// An enum describing why this paywall was last closed. `nil` if not yet closed.

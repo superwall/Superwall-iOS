@@ -13,6 +13,7 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
   /// be established.
   func waitToPresent() -> AnyPublisher<PresentationRequest, Failure> {
     subscribe(on: DispatchQueue.global(qos: .userInitiated))
+  // TODO: PRINT OUT HERE
       .flatMap { request in
         zip(
           request.dependencyContainer.identityManager.hasIdentity,
@@ -25,22 +26,11 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
       }
       .first()
       .map { request, _, _, _ in
-        return request
-      }
-      .eraseToAnyPublisher()
-  }
-
-  /// Waits for config to be received and the identity to be established
-  func waitUntilReady() -> AnyPublisher<PresentationRequest, Failure> {
-    subscribe(on: DispatchQueue.global(qos: .userInitiated))
-      .flatMap { request in
-        zip(
-          request.dependencyContainer.identityManager.hasIdentity,
-          request.dependencyContainer.configManager.hasConfig
+        Logger.debug(
+          logLevel: .info,
+          scope: .paywallPresentation,
+          message: "Retrieved identity, configuration and subscription status."
         )
-      }
-      .first()
-      .map { request, _, _ in
         return request
       }
       .eraseToAnyPublisher()

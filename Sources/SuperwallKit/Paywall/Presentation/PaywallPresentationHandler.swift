@@ -13,11 +13,35 @@ import Foundation
 @objcMembers
 public class PaywallPresentationHandler: NSObject {
   /// A block called when the paywall did present.
-  public var onPresent: ((_ paywallInfo: PaywallInfo) -> Void)?
+  var onPresentHandler: ((_ paywallInfo: PaywallInfo) -> Void)?
 
   /// A block called when the paywall did dismiss.
-  public var onDismiss: ((_ paywallInfo: PaywallInfo) -> Void)?
+  var onDismissHandler: ((_ paywallInfo: PaywallInfo) -> Void)?
 
   /// A block called when an error occurred while trying to present a paywall.
-  public var onError: ((_ error: Error) -> Void)?
+  var onErrorHandler: ((_ error: Error) -> Void)?
+
+  /// Sets the handler that will be called when the paywall did presented.
+  ///
+  /// - Parameter handler: A block that accepts a ``PaywallInfo`` object associated with
+  /// the presented paywall.
+  public func onPresent(_ handler: @escaping (_ paywallInfo: PaywallInfo) -> Void) {
+    self.onPresentHandler = handler
+  }
+
+  /// Sets the handler that will be called when the paywall did dismissed.
+  ///
+  /// - Parameter handler: A block that accepts a ``PaywallInfo`` object associated with
+  /// the dismissed paywall.
+  public func onDismiss(_ handler: @escaping (_ paywallInfo: PaywallInfo) -> Void) {
+    self.onDismissHandler = handler
+  }
+
+  /// Sets the handler that will be called when an error occurred while trying to present a paywall.
+  ///
+  /// - Parameter handler: A block that accepts an `Error` indicating why the paywall
+  /// could not present.
+  public func onError(_ handler: @escaping (_ error: Error) -> Void) {
+    self.onErrorHandler = handler
+  }
 }

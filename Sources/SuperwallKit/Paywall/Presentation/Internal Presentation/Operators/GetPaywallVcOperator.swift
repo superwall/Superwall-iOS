@@ -15,7 +15,6 @@ struct PaywallVcPipelineOutput {
   let confirmableAssignment: ConfirmableAssignment?
 }
 
-
 extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Failure == Error {
   enum PipelineType {
     case getTrackResult

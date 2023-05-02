@@ -65,26 +65,26 @@ final class HomeViewController: UIViewController {
 
   @IBAction private func launchFeature() {
     let handler = PaywallPresentationHandler()
-    handler.onDismiss = { paywallInfo in
+    handler.onDismiss { paywallInfo in
       print("The paywall dismissed. PaywallInfo:", paywallInfo)
     }
-    handler.onPresent = { paywallInfo in
+    handler.onPresent { paywallInfo in
       print("The paywall presented. PaywallInfo:", paywallInfo)
     }
-    handler.onError = { error in
+    handler.onError { error in
       print("The paywall presentation failed with error \(error)")
     }
-//    Superwall.shared.register(event: "campaign_trigger", handler: handler) {
-//      // code in here can be remotely configured to execute. Either
-//      // (1) always after presentation or
-//      // (2) only if the user pays
-//      // code is always executed if no paywall is configured to show
-//      self.presentAlert(
-//        title: "Feature Launched",
-//        message: "Wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely."
-//      )
-//    }
-//
+    Superwall.shared.register(event: "campaign_trigger", handler: handler) {
+      // code in here can be remotely configured to execute. Either
+      // (1) always after presentation or
+      // (2) only if the user pays
+      // code is always executed if no paywall is configured to show
+      self.presentAlert(
+        title: "Feature Launched",
+        message: "Wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely."
+      )
+    }
+
 
 
 
@@ -118,33 +118,33 @@ final class HomeViewController: UIViewController {
 //      }
 //    }
 
-
-    Task {
-
-      do {
-        let paywall = try await Superwall.shared.getPaywall(forEvent: "campaign_trigger")
-        print("[!] got paywall")
-
-        // prepare the vc
-        paywall.presentationWillBegin()
-
-        // present however you like
-        self.present(paywall, animated: paywall.presentationIsAnimated) {
-          // let the paywall know its presented
-          print("[!] paywall presented")
-          paywall.presentationDidFinish()
-        }
-
-        // get its result
-        paywall.onDismiss { state in
-          print("[!] paywall state:", state)
-        }
-
-      } catch let error {
-        print("[!] skipped because: ", error)
-      }
-
-    }
+//
+//    Task {
+//
+//      do {
+//        let paywall = try await Superwall.shared.getPaywallViewController(forEvent: "campaign_trigger")
+//        print("[!] got paywall")
+//
+//        // prepare the vc
+//        paywall.presentationWillBegin()
+//
+//        // present however you like
+//        self.present(paywall, animated: paywall.presentationIsAnimated) {
+//          // let the paywall know its presented
+//          print("[!] paywall presented")
+//          paywall.presentationDidFinish()
+//        }
+//
+//        // get its result
+//        paywall.onDismiss { state in
+//          print("[!] paywall state:", state)
+//        }
+//
+//      } catch let error {
+//        print("[!] skipped because: ", error)
+//      }
+//
+//    }
 
 
 

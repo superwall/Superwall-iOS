@@ -27,7 +27,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
   /// - Returns: A publisher that contains info for the next pipeline operator.
   func checkPaywallIsPresentable(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
-  ) -> AnyPublisher<PresentablePipelineOutput, Error> {
+  ) -> PresentablePipelineOutputPublisher {
     asyncMap { input in
       let subscriptionStatus = await input.request.flags.subscriptionStatus.async()
       if await InternalPresentationLogic.userSubscribedAndNotOverridden(

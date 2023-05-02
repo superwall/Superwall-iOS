@@ -84,6 +84,7 @@ struct Paywall: Decodable {
   /// Determines whether a free trial is available or not.
   var isFreeTrialAvailable = false
 
+  /// The reason for closing the paywall.
   var closeReason: PaywallCloseReason? = nil
 
   /// Determines whether a paywall executes the

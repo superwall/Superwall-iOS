@@ -13,19 +13,24 @@ import StoreKit
 /// Pass an instance of this to ``Superwall/track(event:params:paywallOverrides:paywallHandler:)`` to replace your remotely defined products.
 @objc(SWKPaywallProducts)
 @objcMembers
-public class PaywallProducts: NSObject {
+public final class PaywallProducts: NSObject, Sendable {
   /// The primary product for the paywall.
-  var primary: StoreProduct?
+  let primary: StoreProduct?
 
   /// The secondary product for the paywall.
-  var secondary: StoreProduct?
+  let secondary: StoreProduct?
 
   /// The tertiary product for the paywall.
-  var tertiary: StoreProduct?
+  let tertiary: StoreProduct?
 
-  var ids: [String] = []
+  let ids: [String]
 
-  private override init() {}
+  private override init() {
+    primary = nil
+    secondary = nil
+    tertiary = nil
+    ids = []
+  }
 
   /// Define one or more products to be substituted into the paywall.
   ///

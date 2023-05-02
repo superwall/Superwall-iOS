@@ -44,6 +44,7 @@ extension Superwall {
       .confirmPaywallAssignment()
       .presentPaywall(paywallStatePublisher)
       .storePresentationObjects(presentationSubject, paywallStatePublisher)
+      .printErrors()
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
         receiveValue: { _ in }
@@ -51,38 +52,6 @@ extension Superwall {
 
     return paywallStatePublisher
       .receive(on: DispatchQueue.main)
-      .eraseToAnyPublisher()
-  }
-
-  @discardableResult
-  func internallyGetPaywallViewController(
-    _ request: PresentationRequest,
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never> = .init()
-  ) -> AnyPublisher<PaywallViewController, Error> {
-
-    let presentationSubject = PresentationSubject(request)
-
-    return presentationSubject
-      .eraseToAnyPublisher()
-      .waitToPresent()
-      .logPresentation("Called Superwall.shared.getPaywallViewController")
-      .evaluateRules()
-      .confirmHoldoutAssignment()
-      .handleTriggerResult(paywallStatePublisher)
-      .getPaywallViewController(pipelineType: .presentation(paywallStatePublisher))
-      .checkSubscriptionStatus(paywallStatePublisher)
-      .confirmPaywallAssignment()
-      .storePresentationObjects(presentationSubject, paywallStatePublisher)
-      .receive(on: DispatchQueue.main)
-      .map { input in
-        let paywallViewController = input.paywallViewController
-        paywallViewController.set(
-          eventData: input.request.presentationInfo.eventData,
-          presentationStyleOverride: input.request.paywallOverrides?.presentationStyle,
-          paywallStatePublisher: paywallStatePublisher
-        )
-        return input.paywallViewController
-      }
       .eraseToAnyPublisher()
   }
 
@@ -106,16 +75,16 @@ extension Superwall {
   @MainActor
   func dismiss(
     _ paywallViewController: PaywallViewController,
-    state: DismissState,
-    shouldSendDismissedState: Bool = true,
+    result: PaywallResult,
+    shouldSendPaywallResult: Bool = true,
     shouldCompleteStatePublisher: Bool = true,
     completion: (() -> Void)? = nil
   ) {
     let paywallInfo = paywallViewController.paywallInfo
     paywallViewController.dismiss(
       paywallInfo: paywallInfo,
-      state: state,
-      shouldSendDismissedState: shouldSendDismissedState,
+      result: result,
+      shouldSendPaywallResult: shouldSendPaywallResult,
       shouldCompleteStatePublisher: shouldCompleteStatePublisher
     ) {
       completion?()

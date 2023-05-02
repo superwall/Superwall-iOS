@@ -23,7 +23,7 @@ public typealias SK2Product = StoreKit.Product
 
 @objc(SWKStoreProduct)
 @objcMembers
-public final class StoreProduct: NSObject, StoreProductType {
+public final class StoreProduct: NSObject, StoreProductType, Sendable {
   let product: StoreProductType
 
   /// Returns the `SKProduct` if this `StoreProduct` represents a `StoreKit.SKProduct`.

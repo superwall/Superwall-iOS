@@ -461,7 +461,7 @@ extension Superwall: PaywallViewControllerDelegate {
     case .closed:
       dismiss(
         paywallViewController,
-        state: .closed
+        result: .closed
       )
     case .initiatePurchase(let productId):
       await dependencyContainer.transactionManager.purchase(

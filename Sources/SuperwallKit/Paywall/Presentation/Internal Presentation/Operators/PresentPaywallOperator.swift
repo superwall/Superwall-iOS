@@ -18,11 +18,16 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
   /// - Returns: A publisher that contains info for the next pipeline operator.
   func presentPaywall(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
-  ) -> AnyPublisher<PresentablePipelineOutput, Error> {
+  ) -> PresentablePipelineOutputPublisher {
     flatMap { input in
       Future { promise in
         Task {
           await MainActor.run {
+            Logger.debug(
+              logLevel: .info,
+              scope: .paywallPresentation,
+              message: "Presenting paywall"
+            )
             input.paywallViewController.present(
               on: input.presenter,
               eventData: input.request.presentationInfo.eventData,
@@ -52,7 +57,7 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
                 }
                 paywallStatePublisher.send(.skipped(.error(error)))
                 paywallStatePublisher.send(completion: .finished)
-                promise(.failure(PresentationPipelineError.cancelled))
+                promise(.failure(PresentationPipelineError.paywallAlreadyPresented))
               }
             }
           }

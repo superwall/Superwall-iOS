@@ -4,6 +4,17 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.0.0-rc.4
 
+### Breaking Changes
+
+- Changes `DismissState` to `PaywallResult`
+- Removes the `closedForNextPaywall` `PaywallResult` and moves it to a new `PaywallInfo` property `closeReason`, which can either be `nil`, `.userInteraction`, or `.forNextPaywall`.
+- Changes the `PaywallPresentationHandler` variables to functions.
+- Removes `Superwall.shared.track`. We're going all in on `Superwall.shared.register` baby!
+
+### Enhancements
+
+- Sets default logging level to `INFO`.
+
 ### Fixes
 
 - Paywalls will now show even if you are missing products.
@@ -28,7 +39,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - You no longer need to have swiftlint installed to run our example apps.
 - If you're not using a `PurchaseController` and a user comes across the "You're already subscribed to this product" popup, we will now correctly identify this as a restoration and not a purchase. This can happen when testing in sandbox if you purchase a product -> delete and reinstall the app -> open a paywall and purchase.
 - Adds static variable `Superwall.isInitialized` which is `true` when initialization is complete and `Superwall.shared` can be accessed.
-- Adds `transaction_abandon` and `transaction_fail` as potential triggers. This comes with a new `PaywallInfo` property `closeReason`, which can either be `nil`, `.userInteraction`, or `.forNextPaywall`.
+- Adds `transaction_abandon` and `transaction_fail` as potential triggers. This comes with a new `DismissState` case `closedForNextPaywall`, which is returned when dismissing one paywall for another.
 
 ### Fixes
 

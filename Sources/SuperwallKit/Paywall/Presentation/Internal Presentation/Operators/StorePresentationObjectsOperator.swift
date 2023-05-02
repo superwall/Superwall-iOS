@@ -19,7 +19,7 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
   func storePresentationObjects(
     _ presentationSubject: PresentationSubject,
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
-  ) -> AnyPublisher<PresentablePipelineOutput, Error> {
+  ) -> PresentablePipelineOutputPublisher {
     map { input in
       let lastPaywallPresentation = LastPresentationItems(
         request: input.request,

@@ -43,7 +43,7 @@ final class CheckForPaywallResultTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   func test_checkForPaywallResult_noRuleMatch() async {

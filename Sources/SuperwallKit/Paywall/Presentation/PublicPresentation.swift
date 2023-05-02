@@ -42,7 +42,7 @@ extension Superwall {
     await withCheckedContinuation { continuation in
       dismiss(
         paywallViewController,
-        state: .closed
+        result: .closed
       ) {
         continuation.resume()
       }
@@ -59,8 +59,8 @@ extension Superwall {
       paywallViewController.paywall.closeReason = .forNextPaywall
       dismiss(
         paywallViewController,
-        state: .closed, // .closedForNextPaywall
-        shouldSendDismissedState: true,
+        result: .closed,
+        shouldSendPaywallResult: true,
         shouldCompleteStatePublisher: false
       ) {
         continuation.resume()
@@ -110,7 +110,7 @@ extension Superwall {
     presentationStyleOverride: PaywallPresentationStyle = .none,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((DismissStateObjc, String?, PaywallInfo) -> Void)? = nil
+    onDismiss: ((PaywallResultObjc, String?, PaywallInfo) -> Void)? = nil
   ) {
     objcTrack(
       event: event,
@@ -132,7 +132,7 @@ extension Superwall {
     presentationStyleOverride: PaywallPresentationStyle = .none,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((DismissStateObjc, String?, PaywallInfo) -> Void)? = nil
+    onDismiss: ((PaywallResultObjc, String?, PaywallInfo) -> Void)? = nil
   ) {
     let overrides = PaywallOverrides(
       products: products,
@@ -310,7 +310,7 @@ extension Superwall {
     event: String,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((DismissStateObjc, String?, PaywallInfo) -> Void)? = nil
+    onDismiss: ((PaywallResultObjc, String?, PaywallInfo) -> Void)? = nil
   ) {
     objcTrack(
       event: event,
@@ -351,7 +351,7 @@ extension Superwall {
     params: [String: Any]? = nil,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
-    onDismiss: ((DismissStateObjc, String?, PaywallInfo) -> Void)? = nil
+    onDismiss: ((PaywallResultObjc, String?, PaywallInfo) -> Void)? = nil
   ) {
     objcTrack(
       event: event,
@@ -457,11 +457,11 @@ extension Superwall {
         switch state {
         case .presented(let paywallInfo):
           DispatchQueue.main.async {
-            handler?.onPresent?(paywallInfo)
+            handler?.onPresentHandler?(paywallInfo)
           }
         case let .dismissed(paywallInfo, state):
           DispatchQueue.main.async {
-            handler?.onDismiss?(paywallInfo)
+            handler?.onDismissHandler?(paywallInfo)
           }
           switch state {
           case .purchased,
@@ -482,7 +482,7 @@ extension Superwall {
           switch reason {
           case .error(let error):
             DispatchQueue.main.async {
-              handler?.onError?(error) // otherwise turning internet off would give unlimited access
+              handler?.onErrorHandler?(error) // otherwise turning internet off would give unlimited access
             }
           default:
             DispatchQueue.main.async {
@@ -549,8 +549,8 @@ extension Superwall {
   ///   - completion: A completion block that gets called when the paywall is dismissed by the user, by way of purchasing, restoring or manually dismissing. Accepts a `Bool` that is `true` if the user purchased a product and `false` if not, a `String?` equal to the product id of the purchased product (if any) and a ``PaywallInfo`` object containing information about the paywall.
   private func onDismissConverter(
     paywallInfo: PaywallInfo,
-    state: DismissState,
-    completion: (DismissStateObjc, String?, PaywallInfo) -> Void
+    state: PaywallResult,
+    completion: (PaywallResultObjc, String?, PaywallInfo) -> Void
   ) {
     switch state {
     case .closed:
