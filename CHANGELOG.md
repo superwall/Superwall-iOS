@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-rc.4
+
+### Fixes
+
+- Paywalls will now show even if you are missing products.
+
 ## 3.0.0-rc.3
 
 ### Breaking Changes
