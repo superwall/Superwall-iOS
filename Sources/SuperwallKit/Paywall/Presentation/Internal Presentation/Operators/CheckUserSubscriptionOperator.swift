@@ -21,10 +21,6 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
       default:
         let subscriptionStatus = await input.request.flags.subscriptionStatus.async()
         if subscriptionStatus == .active {
-          Task.detached(priority: .utility) {
-            let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .userIsSubscribed)
-            await Superwall.shared.track(trackedEvent)
-          }
           paywallStatePublisher.send(.skipped(.userIsSubscribed))
           paywallStatePublisher.send(completion: .finished)
           throw PresentationPipelineError.userIsSubscribed

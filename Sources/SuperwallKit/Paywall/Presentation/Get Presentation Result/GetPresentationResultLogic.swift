@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum GetTrackResultLogic {
+enum GetPresentationResultLogic {
   static func convertTriggerResult(_ triggerResult: TriggerResult) -> PresentationResult {
     switch triggerResult {
     case .eventNotFound:

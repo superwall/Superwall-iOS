@@ -37,7 +37,7 @@ final class CheckPaywallIsPresentableTests: XCTestCase {
         receiveCompletion: { completion in
           switch completion {
           case .failure(let error):
-            guard let error = error as? GetTrackResultError else {
+            guard let error = error as? GetPresentationResultError else {
               return XCTFail("Wrong type of error")
             }
             XCTAssertEqual(error, .userIsSubscribed)

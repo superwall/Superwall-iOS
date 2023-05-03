@@ -4,14 +4,13 @@
 //
 //  Created by Jake Mor on 10/9/21.
 //
-// swiftlint:disable line_length file_length function_body_length
 
 import Foundation
 import Combine
 import UIKit
 
 extension Superwall {
-  /// Gets the  ``PaywallViewController`` object, which you can present
+  /// Gets the  ``PaywallViewController`` object for an event, which you can present
   /// however you want.
   ///
   /// To use this you **must** follow the following steps:
@@ -24,7 +23,17 @@ extension Superwall {
   /// completes.
   ///
   /// - Note: The remotely configured presentation style will be ignored, it is up to you
-  /// to set it programmatically. 
+  /// to set it programmatically.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the event, as you have defined on the Superwall dashboard.
+  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules
+  ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
+  ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
+  ///   be dropped.
+  ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
+  ///   - completion: A completion block that contains a `Result` type, containing either a success case with a
+  ///   ``PaywallViewController`` object, or a failure case with an `Error`.
   public func getPaywallViewController(
     forEvent event: String,
     params: [String: Any]? = nil,
@@ -59,6 +68,18 @@ extension Superwall {
   ///
   /// - Note: The remotely configured presentation style will be ignored, it is up to you
   /// to set it programmatically.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the event, as you have defined on the Superwall dashboard.
+  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules
+  ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
+  ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
+  ///   be dropped.
+  ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
+  ///
+  /// - Returns A ``PaywallViewController`` object.
+  /// - Throws: An `Error` explaining why it couldn't get the view controller.
+  @MainActor
   public func getPaywallViewController(
     forEvent: String,
     params: [String: Any]? = nil,
@@ -78,7 +99,8 @@ extension Superwall {
       let presentationRequest = self.dependencyContainer.makePresentationRequest(
         .explicitTrigger(trackResult.data),
         paywallOverrides: paywallOverrides,
-        isPaywallPresented: false
+        isPaywallPresented: false,
+        type: .getPaywallViewController
       )
       return self.internallyGetPaywallViewController(presentationRequest)
     }

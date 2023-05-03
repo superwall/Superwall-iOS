@@ -44,7 +44,7 @@ extension Superwall {
       .confirmPaywallAssignment()
       .presentPaywall(paywallStatePublisher)
       .storePresentationObjects(presentationSubject, paywallStatePublisher)
-      .printErrors()
+      .logErrors(from: request)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
         receiveValue: { _ in }
