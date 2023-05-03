@@ -21,6 +21,9 @@ public class PaywallPresentationHandler: NSObject {
   /// A block called when an error occurred while trying to present a paywall.
   var onErrorHandler: ((_ error: Error) -> Void)?
 
+  /// A block called when an error occurred while trying to present a paywall.
+  var onSkipHandler: ((_ reason: PaywallSkippedReason) -> Void)?
+
   /// Sets the handler that will be called when the paywall did presented.
   ///
   /// - Parameter handler: A block that accepts a ``PaywallInfo`` object associated with
@@ -43,5 +46,13 @@ public class PaywallPresentationHandler: NSObject {
   /// could not present.
   public func onError(_ handler: @escaping (_ error: Error) -> Void) {
     self.onErrorHandler = handler
+  }
+
+  /// Sets the handler that will be called when a paywall is skipped, but no error has occurred.
+  ///
+  /// - Parameter handler: A block that accepts a `Error` indicating why the paywall
+  /// could not present.
+  public func onSkip(_ handler: @escaping (_ reason: PaywallSkippedReason) -> Void) {
+    self.onSkipHandler = handler
   }
 }

@@ -36,8 +36,8 @@ public enum PaywallSkippedReason: Sendable, Equatable {
   /// behavior in the paywall editor.
   case userIsSubscribed
 
-  /// An error occurred.
-  case error(Error)
+//  /// An error occurred.
+//  case error(Error)
 
   public static func == (lhs: PaywallSkippedReason, rhs: PaywallSkippedReason) -> Bool {
     switch (lhs, rhs) {
@@ -47,8 +47,8 @@ public enum PaywallSkippedReason: Sendable, Equatable {
       return true
     case let (.holdout(experiment1), .holdout(experiment2)):
       return experiment1 == experiment2
-    case let (.error(error1), .error(error2)):
-      return error1.localizedDescription == error2.localizedDescription
+//    case let (.error(error1), .error(error2)):
+//      return error1.localizedDescription == error2.localizedDescription
     default:
       return false
     }

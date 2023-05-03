@@ -31,7 +31,7 @@ extension Superwall {
     paywallOverrides: PaywallOverrides? = nil,
     completion: @escaping (Result<PaywallViewController, Error>) -> Void
   ) {
-    Task {
+    Task { @MainActor in 
       do {
         let paywallViewController = try await getPaywallViewController(
           forEvent: event,

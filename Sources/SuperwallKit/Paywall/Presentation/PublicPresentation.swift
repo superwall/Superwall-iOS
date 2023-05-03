@@ -100,7 +100,7 @@ extension Superwall {
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a
   ///   ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.
   @available(swift, obsoleted: 1.0)
-  @objc public func track(
+  @objc private func track(
     event: String,
     params: [String: Any]? = nil,
     products: PaywallProducts? = nil,
@@ -156,77 +156,86 @@ extension Superwall {
         }
       case .skipped(let reason):
         self?.onSkipConverter(reason: reason, completion: onSkip)
+      case .presentationError(let error):
+        self?.onSkipConverter(error: error, completion: onSkip)
       }
     }
   }
 
   private func onSkipConverter(
-    reason: PaywallSkippedReason,
+    reason: PaywallSkippedReason? = nil,
+    error: Error? = nil,
     completion: ((PaywallSkippedReasonObjc, NSError) -> Void)?
   ) {
-    switch reason {
-    case .holdout(let experiment):
-      let userInfo: [String: Any] = [
-        "experimentId": experiment.id,
-        "variantId": experiment.variant.id,
-        "groupId": experiment.groupId,
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Holdout",
-          value: "This user was assigned to a holdout. This means the paywall will not show.",
-          comment: "ExperimentId: \(experiment.id), VariantId: \(experiment.variant.id), GroupId: \(experiment.groupId)"
+
+    if let reason = reason {
+      switch reason {
+      case .holdout(let experiment):
+        let userInfo: [String: Any] = [
+          "experimentId": experiment.id,
+          "variantId": experiment.variant.id,
+          "groupId": experiment.groupId,
+          NSLocalizedDescriptionKey: NSLocalizedString(
+            "Holdout",
+            value: "This user was assigned to a holdout. This means the paywall will not show.",
+            comment: "ExperimentId: \(experiment.id), VariantId: \(experiment.variant.id), GroupId: \(experiment.groupId)"
+          )
+        ]
+        let error = NSError(
+          domain: "com.superwall",
+          code: 4001,
+          userInfo: userInfo
         )
-      ]
-      let error = NSError(
-        domain: "com.superwall",
-        code: 4001,
-        userInfo: userInfo
-      )
-      completion?(.holdout, error)
-    case .noRuleMatch:
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "No rule match",
-          value: "The user did not match any rules configured for this trigger",
-          comment: ""
+        completion?(.holdout, error)
+      case .noRuleMatch:
+        let userInfo: [String: Any] = [
+          NSLocalizedDescriptionKey: NSLocalizedString(
+            "No rule match",
+            value: "The user did not match any rules configured for this trigger",
+            comment: ""
+          )
+        ]
+        let error = NSError(
+          domain: "com.superwall",
+          code: 4000,
+          userInfo: userInfo
         )
-      ]
-      let error = NSError(
-        domain: "com.superwall",
-        code: 4000,
-        userInfo: userInfo
-      )
-      completion?(.noRuleMatch, error)
-    case .eventNotFound:
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Event Not Found",
-          value: "The specified event could not be found in a campaign",
-          comment: ""
+        completion?(.noRuleMatch, error)
+      case .eventNotFound:
+        let userInfo: [String: Any] = [
+          NSLocalizedDescriptionKey: NSLocalizedString(
+            "Event Not Found",
+            value: "The specified event could not be found in a campaign",
+            comment: ""
+          )
+        ]
+        let error = NSError(
+          domain: "com.superwall",
+          code: 404,
+          userInfo: userInfo
         )
-      ]
-      let error = NSError(
-        domain: "com.superwall",
-        code: 404,
-        userInfo: userInfo
-      )
-      completion?(.eventNotFound, error)
-    case .userIsSubscribed:
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "User Is Subscribed",
-          value: "The user subscription status is \"active\". By default, paywalls do not show to users who are already subscribed. You can override this behavior in the paywall editor.",
-          comment: ""
+        completion?(.eventNotFound, error)
+      case .userIsSubscribed:
+        let userInfo: [String: Any] = [
+          NSLocalizedDescriptionKey: NSLocalizedString(
+            "User Is Subscribed",
+            value: "The user subscription status is \"active\". By default, paywalls do not show to users who are already subscribed. You can override this behavior in the paywall editor.",
+            comment: ""
+          )
+        ]
+        let error = NSError(
+          domain: "com.superwall",
+          code: 4002,
+          userInfo: userInfo
         )
-      ]
-      let error = NSError(
-        domain: "com.superwall",
-        code: 4002,
-        userInfo: userInfo
-      )
-      completion?(.userIsSubscribed, error)
-    case .error(let error):
+        completion?(.userIsSubscribed, error)
+      }
+    }
+
+    if let error = error {
       completion?(.error, error as NSError)
     }
+
   }
 
   /// An Objective-C-only method that shows a paywall to the user when: An event you provide is tied to an
@@ -247,7 +256,7 @@ extension Superwall {
   /// - Parameters:
   ///   -  event: The name of the event you wish to track.
   @available(swift, obsoleted: 1.0)
-  @objc public func track(event: String) {
+  @objc private func track(event: String) {
     objcTrack(event: event)
   }
 
@@ -272,7 +281,7 @@ extension Superwall {
   ///   Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates.
   ///   Arrays and dictionaries as values are not supported at this time, and will be dropped.
   @available(swift, obsoleted: 1.0)
-  @objc public func track(
+  @objc private func track(
     event: String,
     params: [String: Any]? = nil
   ) {
@@ -304,7 +313,7 @@ extension Superwall {
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a
   ///   ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.
   @available(swift, obsoleted: 1.0)
-  @objc public func track(
+  @objc private func track(
     event: String,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
@@ -344,7 +353,7 @@ extension Superwall {
   ///   - onSkip: A completion block that gets called when the paywall's presentation is skipped. Defaults to `nil`.  Accepts a
   ///   ``PaywallSkippedReasonObjc`` object and an `NSError` with more details.
   @available(swift, obsoleted: 1.0)
-  @objc public func track(
+  @objc private func track(
     event: String,
     params: [String: Any]? = nil,
     onSkip: ((PaywallSkippedReasonObjc, NSError) -> Void)? = nil,
@@ -375,7 +384,7 @@ extension Superwall {
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///   - paywallHandler: An optional callback that provides updates on the state of the paywall via a ``PaywallState`` object.
-  public func track(
+  private func track(
     event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
@@ -477,17 +486,16 @@ extension Superwall {
             }
           }
         case .skipped(let reason):
-          switch reason {
-          case .error(let error):
-            DispatchQueue.main.async {
-              handler?.onErrorHandler?(error) // otherwise turning internet off would give unlimited access
-            }
-          default:
-            DispatchQueue.main.async {
-              completion?()
-            }
+          DispatchQueue.main.async {
+            handler?.onSkipHandler?(reason)
+            completion?()
+          }
+        case .presentationError(let error):
+          DispatchQueue.main.async {
+            handler?.onErrorHandler?(error) // otherwise turning internet off would give unlimited access
           }
         }
+
       }
     ))
   }
@@ -515,7 +523,7 @@ extension Superwall {
     do {
       try TrackingLogic.checkNotSuperwallEvent(event)
     } catch {
-      return Just(.skipped(.error(error))).eraseToAnyPublisher()
+      return Just(.presentationError(error)).eraseToAnyPublisher()
     }
 
     return Future {

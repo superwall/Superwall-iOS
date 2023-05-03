@@ -462,14 +462,6 @@ final class DebugViewController: UIViewController {
             errorMessage = "Couldn't find event"
           case .userIsSubscribed:
             errorMessage = "The user is subscribed."
-          case .error(let error):
-            errorMessage = error.localizedDescription
-            Logger.debug(
-              logLevel: .error,
-              scope: .debugViewController,
-              message: "Failed to Show Paywall",
-              info: nil
-            )
           }
           self.presentAlert(
             title: "Paywall Skipped",
@@ -483,7 +475,25 @@ final class DebugViewController: UIViewController {
           self.activityIndicator.stopAnimating()
         case .dismissed:
           break
+        case .presentationError(let error):
+          Logger.debug(
+            logLevel: .error,
+            scope: .debugViewController,
+            message: "Failed to Show Paywall",
+            info: nil
+          )
+          self.presentAlert(
+            title: "Presentation Error",
+            message: error.localizedDescription,
+            on: self.view
+          )
+          self.bottomButton.showLoading = false
+
+          let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
+          self.bottomButton.setImage(playButton, for: .normal)
+          self.activityIndicator.stopAnimating()
         }
+
       }
   }
 

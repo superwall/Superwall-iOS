@@ -88,7 +88,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
           await Superwall.shared.track(trackedEvent)
         }
         errorType = .noPaywallViewController
-        paywallStatePublisher.send(.skipped(.error(error)))
+        paywallStatePublisher.send(.presentationError(error))
       }
 
       paywallStatePublisher.send(completion: .finished)

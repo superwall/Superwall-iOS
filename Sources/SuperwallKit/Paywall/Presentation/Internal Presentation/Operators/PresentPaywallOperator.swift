@@ -55,7 +55,7 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
                   let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .alreadyPresented)
                   await Superwall.shared.track(trackedEvent)
                 }
-                paywallStatePublisher.send(.skipped(.error(error)))
+                paywallStatePublisher.send(.presentationError(error))
                 paywallStatePublisher.send(completion: .finished)
                 promise(.failure(PresentationPipelineError.paywallAlreadyPresented))
               }

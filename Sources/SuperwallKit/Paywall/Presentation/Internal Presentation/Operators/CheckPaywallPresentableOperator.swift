@@ -77,7 +77,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
           let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPresenter)
           await Superwall.shared.track(trackedEvent)
         }
-        let state: PaywallState = .skipped(.error(error))
+        let state: PaywallState = .presentationError(error)
         paywallStatePublisher.send(state)
         paywallStatePublisher.send(completion: .finished)
         throw PresentationPipelineError.noPresenter

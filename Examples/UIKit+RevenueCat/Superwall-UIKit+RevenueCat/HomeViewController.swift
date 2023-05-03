@@ -71,9 +71,26 @@ final class HomeViewController: UIViewController {
     handler.onPresent { paywallInfo in
       print("The paywall presented. PaywallInfo:", paywallInfo)
     }
+
     handler.onError { error in
-      print("The paywall presentation failed with error \(error)")
+      // internet doesn't work
+      // paywall view controller issue
+      // needs your attention
     }
+
+    handler.onSkip { reason in
+      switch reason {
+      case .holdout:
+        break
+      case .noRuleMatch:
+        break
+      case .eventNotFound:
+        break
+      case .userIsSubscribed:
+        break
+      }
+    }
+
     Superwall.shared.register(event: "campaign_trigger", handler: handler) {
       // code in here can be remotely configured to execute. Either
       // (1) always after presentation or
@@ -85,40 +102,27 @@ final class HomeViewController: UIViewController {
       )
     }
 
-
-
-
-
-
-
-//
-//    Superwall.shared.getPaywall(forEvent: "campaign_trigger") { paywall, error in
-//      guard let paywall = paywall else {
-//        // TODO: make an async version and add error handling
-//        // skipped or subscribed
+//    Superwall.shared.getPaywallViewController(forEvent: "campaign_trigger") { result in
+//      switch result {
+//      case .success(let paywall):
+//        // prepare the vc
+//        paywall.presentationWillBegin()
+//        // present however you like
+//        self.present(paywall, animated: paywall.presentationIsAnimated) {
+//          // let the paywall know its presented
+//          print("[!] paywall presented")
+//          paywall.presentationDidFinish()
+//        }
+//        // get its result
+//        paywall.onDismiss { state in
+//          print("[!] paywall state:", state)
+//        }
+//      case .failure(let error):
 //        print("[!] skip", error)
-//        return
-//      }
-//
-//      print("[!] got paywall")
-//
-//      // prepare the vc
-//      paywall.presentationWillBegin()
-//
-//      // present however you like
-//      self.present(paywall, animated: paywall.presentationIsAnimated) {
-//
-//        // let the paywall know its presented
-//        paywall.presentationDidFinish()
-//      }
-//
-//      // get its result
-//      paywall.onDismiss { state in
-//        print("[!] paywall state:", state)
 //      }
 //    }
 
-//
+
 //    Task {
 //
 //      do {

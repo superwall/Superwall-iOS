@@ -27,7 +27,7 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
             let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .debuggerLaunched)
             await Superwall.shared.track(trackedEvent)
           }
-          let state: PaywallState = .skipped(.error(error))
+          let state: PaywallState = .presentationError(error)
           paywallStatePublisher.send(state)
           paywallStatePublisher.send(completion: .finished)
           throw PresentationPipelineError.debuggerPresented
