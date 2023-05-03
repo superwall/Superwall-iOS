@@ -24,7 +24,7 @@
   <a href="https://superwall.com/">
     <img src="https://img.shields.io/github/v/tag/superwall-me/Superwall-iOS" alt="Version Number">
   </a>
-</p>                            
+</p>                              
 
 ----------------
 
