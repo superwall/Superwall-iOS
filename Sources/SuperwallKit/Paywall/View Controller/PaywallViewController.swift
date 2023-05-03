@@ -607,10 +607,10 @@ extension PaywallViewController {
       receiveCompletion: { _ in },
       receiveValue: { paywallState in
         switch paywallState {
-          case .dismissed(_, let dismissState):
-            handler(dismissState)
-          default:
-            break
+        case .dismissed(_, let dismissState):
+          handler(dismissState)
+        default:
+          break
         }
       }
     ))
@@ -660,7 +660,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
 // MARK: - View Lifecycle
 extension PaywallViewController {
-   override public func viewWillAppear(_ animated: Bool) {
+  override public func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     guard isActive else {
       return

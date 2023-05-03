@@ -42,7 +42,7 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         )
         return output
       } catch {
-        throw GetTrackResultError.paywallNotAvailable
+        throw GetPresentationResultError.paywallNotAvailable
       }
     }
     .eraseToAnyPublisher()

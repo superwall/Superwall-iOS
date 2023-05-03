@@ -7,6 +7,8 @@
 
 import Foundation
 
+typealias PresentationPipelineError = PaywallPresentationRequestStatusReason
+
 extension Superwall {
   /// Preemptively get the result of tracking an event.
   ///
@@ -52,10 +54,11 @@ extension Superwall {
     let presentationRequest = dependencyContainer.makePresentationRequest(
       .explicitTrigger(eventData),
       isDebuggerLaunched: false,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPresentationResult
     )
 
-    return await getTrackResult(for: presentationRequest)
+    return await getPresentationResult(for: presentationRequest)
   }
 
   /// Preemptively get the result of tracking an event.

@@ -534,7 +534,8 @@ extension Superwall {
       let presentationRequest = self.dependencyContainer.makePresentationRequest(
         .explicitTrigger(trackResult.data),
         paywallOverrides: paywallOverrides,
-        isPaywallPresented: isPaywallPresented
+        isPaywallPresented: isPaywallPresented,
+        type: .presentation
       )
       return self.internallyPresent(presentationRequest)
     }

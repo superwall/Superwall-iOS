@@ -17,7 +17,7 @@ struct PaywallVcPipelineOutput {
 
 extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Failure == Error {
   enum PipelineType {
-    case getTrackResult
+    case getPresentationResult
     case presentation(PassthroughSubject<PaywallState, Never>)
   }
   /// Requests the paywall view controller to present. If an error occurred during this,
@@ -62,8 +62,8 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         return output
       } catch {
         switch pipelineType {
-        case .getTrackResult:
-          throw GetTrackResultError.paywallNotAvailable
+        case .getPresentationResult:
+          throw GetPresentationResultError.paywallNotAvailable
         case .presentation(let paywallStatePublisher):
           throw await presentationFailure(error, input, paywallStatePublisher)
         }
@@ -85,14 +85,10 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         shouldIgnoreSubscriptionStatus: input.request.paywallOverrides?.ignoreSubscriptionStatus
       )
     ) {
-      Task.detached(priority: .utility) {
-        let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .userIsSubscribed)
-        await Superwall.shared.track(trackedEvent)
-      }
       let state: PaywallState = .skipped(.userIsSubscribed)
       paywallStatePublisher.send(state)
       paywallStatePublisher.send(completion: .finished)
-      return PresentationPipelineError.cancelled
+      return PresentationPipelineError.userIsSubscribed
     }
 
     Logger.debug(
@@ -102,12 +98,8 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
       info: input.debugInfo,
       error: error
     )
-    Task.detached(priority: .utility) {
-      let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPaywallViewController)
-      await Superwall.shared.track(trackedEvent)
-    }
     paywallStatePublisher.send(.skipped(.error(error)))
     paywallStatePublisher.send(completion: .finished)
-    return PresentationPipelineError.cancelled
+    return PresentationPipelineError.noPaywallViewController
   }
 }

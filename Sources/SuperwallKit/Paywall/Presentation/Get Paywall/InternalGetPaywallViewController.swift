@@ -33,6 +33,7 @@ extension Superwall {
       .checkSubscriptionStatus(paywallStatePublisher)
       .confirmPaywallAssignment()
       .storePresentationObjects(presentationSubject, paywallStatePublisher)
+      .logErrors(from: request)
       .extractPaywallViewController(paywallStatePublisher)
   }
 }
