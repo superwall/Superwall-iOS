@@ -73,21 +73,19 @@ final class HomeViewController: UIViewController {
     }
 
     handler.onError { error in
-      // internet doesn't work
-      // paywall view controller issue
-      // needs your attention
+      print("The paywall presentation failed with error \(error)")
     }
 
     handler.onSkip { reason in
       switch reason {
-      case .holdout:
-        break
-      case .noRuleMatch:
-        break
-      case .eventNotFound:
-        break
       case .userIsSubscribed:
-        break
+        print("Paywall not shown because user is subscribed.")
+      case .holdout(let experiment):
+        print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
+      case .noRuleMatch:
+        print("Paywall not shown because user doesn't match any rules.")
+      case .eventNotFound:
+        print("Paywall not shown because this event isn't part of a campaign.")
       }
     }
 
@@ -101,55 +99,6 @@ final class HomeViewController: UIViewController {
         message: "Wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely."
       )
     }
-
-//    Superwall.shared.getPaywallViewController(forEvent: "campaign_trigger") { result in
-//      switch result {
-//      case .success(let paywall):
-//        // prepare the vc
-//        paywall.presentationWillBegin()
-//        // present however you like
-//        self.present(paywall, animated: paywall.presentationIsAnimated) {
-//          // let the paywall know its presented
-//          print("[!] paywall presented")
-//          paywall.presentationDidFinish()
-//        }
-//        // get its result
-//        paywall.onDismiss { state in
-//          print("[!] paywall state:", state)
-//        }
-//      case .failure(let error):
-//        print("[!] skip", error)
-//      }
-//    }
-
-
-//    Task {
-//
-//      do {
-//        let paywall = try await Superwall.shared.getPaywallViewController(forEvent: "campaign_trigger")
-//        print("[!] got paywall")
-//
-//        // prepare the vc
-//        paywall.presentationWillBegin()
-//
-//        // present however you like
-//        self.present(paywall, animated: paywall.presentationIsAnimated) {
-//          // let the paywall know its presented
-//          print("[!] paywall presented")
-//          paywall.presentationDidFinish()
-//        }
-//
-//        // get its result
-//        paywall.onDismiss { state in
-//          print("[!] paywall state:", state)
-//        }
-//
-//      } catch let error {
-//        print("[!] skipped because: ", error)
-//      }
-//
-//    }
-
   }
 
   private func presentAlert(title: String, message: String) {

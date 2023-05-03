@@ -60,14 +60,26 @@ final class HomeViewController: UIViewController {
 
   @IBAction private func launchFeature() {
     let handler = PaywallPresentationHandler()
-    handler.onDismiss = { paywallInfo in
+    handler.onDismiss { paywallInfo in
       print("The paywall dismissed. PaywallInfo:", paywallInfo)
     }
-    handler.onPresent = { paywallInfo in
+    handler.onPresent { paywallInfo in
       print("The paywall presented. PaywallInfo:", paywallInfo)
     }
-    handler.onError = { error in
+    handler.onError { error in
       print("The paywall presentation failed with error \(error)")
+    }
+    handler.onSkip { reason in
+      switch reason {
+      case .userIsSubscribed:
+        print("Paywall not shown because user is subscribed.")
+      case .holdout(let experiment):
+        print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
+      case .noRuleMatch:
+        print("Paywall not shown because user doesn't match any rules.")
+      case .eventNotFound:
+        print("Paywall not shown because this event isn't part of a campaign.")
+      }
     }
     Superwall.shared.register(event: "campaign_trigger", handler: handler) {
       // code in here can be remotely configured to execute. Either
