@@ -153,11 +153,11 @@ enum TrackingLogic {
     let notAllowedReferringEventNames: Set<String> = [
       SuperwallEventObjc.transactionAbandon.description,
       SuperwallEventObjc.transactionFail.description,
-      SuperwallEventObjc.paywallDecline.description,
+      SuperwallEventObjc.paywallDecline.description
     ]
 
     if let referringEventName = paywallViewController?.paywallInfo.presentedByEventWithName,
-       notAllowedReferringEventNames.contains(referringEventName) {
+      notAllowedReferringEventNames.contains(referringEventName) {
       return .dontTriggerPaywall
     }
 
@@ -175,7 +175,6 @@ enum TrackingLogic {
       case .paywallDecline = event.superwallEvent {
       return .closePaywallThenTriggerPaywall
     }
-
 
     if paywallViewController != nil {
       return .dontTriggerPaywall

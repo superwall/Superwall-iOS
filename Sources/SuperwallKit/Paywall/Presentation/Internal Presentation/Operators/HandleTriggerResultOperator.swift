@@ -29,7 +29,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) -> AnyPublisher<TriggerResultResponsePipelineOutput, Error> {
     asyncMap { input in
-      var errorType: PresentationPipelineError = .cancelled
+      let errorType: PresentationPipelineError
 
       switch input.triggerResult {
       case .paywall(let experiment):
@@ -47,13 +47,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
           on: input.request.presenter,
           triggerResult: input.triggerResult
         )
-        Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(
-            state: .holdout(experiment)
-          )
-          await Superwall.shared.track(trackedEvent)
-        }
-        errorType = .holdout
+        errorType = .holdout(experiment)
         paywallStatePublisher.send(.skipped(.holdout(experiment)))
       case .noRuleMatch:
         let sessionEventsManager = input.request.dependencyContainer.sessionEventsManager
@@ -62,17 +56,9 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
           on: input.request.presenter,
           triggerResult: input.triggerResult
         )
-        Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noRuleMatch)
-          await Superwall.shared.track(trackedEvent)
-        }
         errorType = .noRuleMatch
         paywallStatePublisher.send(.skipped(.noRuleMatch))
       case .eventNotFound:
-        Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .eventNotFound)
-          await Superwall.shared.track(trackedEvent)
-        }
         errorType = .eventNotFound
         paywallStatePublisher.send(.skipped(.eventNotFound))
       case let .error(error):
@@ -83,10 +69,6 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
           info: input.debugInfo,
           error: error
         )
-        Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPaywallViewController)
-          await Superwall.shared.track(trackedEvent)
-        }
         errorType = .noPaywallViewController
         paywallStatePublisher.send(.presentationError(error))
       }

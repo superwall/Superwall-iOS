@@ -30,10 +30,10 @@ final class CheckForPaywallResultTests: XCTestCase {
         receiveCompletion: { completion in
           switch completion {
           case .failure(let error):
-            guard let error = error as? GetTrackResultError else {
+            guard let error = error as? GetPresentationResultError else {
               return XCTFail("Wrong type of error")
             }
-            XCTAssertEqual(error, GetTrackResultError.willNotPresent(.eventNotFound))
+            XCTAssertEqual(error, GetPresentationResultError.willNotPresent(.eventNotFound))
             expectation.fulfill()
           case .finished:
             XCTFail("Shouldn't have finished")
@@ -63,7 +63,7 @@ final class CheckForPaywallResultTests: XCTestCase {
         receiveCompletion: { completion in
           switch completion {
           case .failure(let error):
-            guard let error = error as? GetTrackResultError else {
+            guard let error = error as? GetPresentationResultError else {
               return XCTFail("Wrong type of error")
             }
             guard case .willNotPresent(let result) = error else {
@@ -99,7 +99,7 @@ final class CheckForPaywallResultTests: XCTestCase {
         receiveCompletion: { completion in
           switch completion {
           case .failure(let error):
-            guard let error = error as? GetTrackResultError else {
+            guard let error = error as? GetPresentationResultError else {
               return XCTFail("Wrong type of error")
             }
             guard case .willNotPresent(let result) = error else {
@@ -139,7 +139,7 @@ final class CheckForPaywallResultTests: XCTestCase {
         receiveCompletion: { completion in
           switch completion {
           case .failure(let error):
-            guard let error = error as? GetTrackResultError else {
+            guard let error = error as? GetPresentationResultError else {
               return XCTFail("Wrong type of error")
             }
             guard case .willNotPresent(let result) = error else {

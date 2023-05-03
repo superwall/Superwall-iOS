@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 26/09/2022.
 //
-// swiftlint:disable strict_fileprivate function_body_length
+// swiftlint:disable strict_fileprivate
 
 import UIKit
 import Combine
@@ -38,12 +38,6 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
           presentationCondition: input.paywallViewController.paywall.presentation.condition
         )
       ) {
-        Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(
-            state: .userIsSubscribed
-          )
-          await Superwall.shared.track(trackedEvent)
-        }
         let state: PaywallState = .skipped(.userIsSubscribed)
         paywallStatePublisher.send(state)
         paywallStatePublisher.send(completion: .finished)

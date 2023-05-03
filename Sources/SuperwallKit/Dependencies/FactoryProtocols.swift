@@ -41,7 +41,8 @@ protocol RequestFactory: AnyObject {
     presenter: UIViewController?,
     isDebuggerLaunched: Bool?,
     subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>?,
-    isPaywallPresented: Bool
+    isPaywallPresented: Bool,
+    type: PresentationRequestType
   ) -> PresentationRequest
 }
 

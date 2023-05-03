@@ -22,12 +22,16 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
     flatMap { input in
       Future { promise in
         Task {
-          await MainActor.run {
-            Logger.debug(
-              logLevel: .info,
-              scope: .paywallPresentation,
-              message: "Presenting paywall"
+          Task.detached {
+            let trackedEvent = InternalSuperwallEvent.PresentationRequest(
+              eventData: input.request.presentationInfo.eventData,
+              type: input.request.flags.type,
+              status: .presentation,
+              statusReason: nil
             )
+            await Superwall.shared.track(trackedEvent)
+          }
+          await MainActor.run {
             input.paywallViewController.present(
               on: input.presenter,
               eventData: input.request.presentationInfo.eventData,

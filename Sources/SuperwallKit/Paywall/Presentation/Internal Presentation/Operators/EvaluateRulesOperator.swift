@@ -21,9 +21,8 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
   /// - Parameters:
   ///   - configManager: A `ConfigManager` object used for dependency injection.
   ///   - storgate: A `Storage` object used for dependency injection.
-  ///   - isPreemptive: A boolean that determines whether the rules are being evaluated before actually tracking an event.
   ///   If `true`, then it doesn't save the occurrence count of the rule.
-  func evaluateRules(isPreemptive: Bool = false) -> AnyPublisher<AssignmentPipelineOutput, Failure> {
+  func evaluateRules() -> AnyPublisher<AssignmentPipelineOutput, Failure> {
     asyncMap { request, debugInfo in
       if let eventData = request.presentationInfo.eventData {
         let assignmentLogic = RuleLogic(
@@ -34,7 +33,7 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
         let eventOutcome = await assignmentLogic.evaluateRules(
           forEvent: eventData,
           triggers: request.dependencyContainer.configManager.triggersByEventName,
-          isPreemptive: isPreemptive
+          isPreemptive: request.flags.type == .getPresentationResult
         )
         let confirmableAssignment = eventOutcome.confirmableAssignment
 
@@ -49,7 +48,7 @@ extension AnyPublisher where Output == (PresentationRequest, DebugInfo), Failure
         guard let paywallId = request.presentationInfo.identifier else {
           // This error will never be thrown. Just preferring this
           // to force unwrapping.
-          throw PresentationPipelineError.cancelled
+          throw PresentationPipelineError.noPaywallViewController
         }
         return AssignmentPipelineOutput(
           request: request,

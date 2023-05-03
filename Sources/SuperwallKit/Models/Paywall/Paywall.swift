@@ -85,7 +85,7 @@ struct Paywall: Decodable {
   var isFreeTrialAvailable = false
 
   /// The reason for closing the paywall.
-  var closeReason: PaywallCloseReason? = nil
+  var closeReason: PaywallCloseReason?
 
   /// Determines whether a paywall executes the
   /// ``Superwall/register(event:params:handler:feature:)`` feature block if the

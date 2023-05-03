@@ -150,8 +150,6 @@ final class HomeViewController: UIViewController {
 //
 //    }
 
-
-
   }
 
   private func presentAlert(title: String, message: String) {
