@@ -464,7 +464,9 @@ extension Superwall: PaywallViewControllerDelegate {
       let result = await getPresentationResult(forEvent: "paywall_decline")
 
       if case .paywall = result,
-        paywallViewController.paywallInfo.presentedByEventWithName == SuperwallEventObjc.paywallDecline.description {
+        paywallViewController.paywallInfo.presentedByEventWithName != SuperwallEventObjc.paywallDecline.description {
+
+      } else {
         dismiss(
           paywallViewController,
           result: .closed
