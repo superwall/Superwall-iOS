@@ -55,10 +55,6 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
                   title: "Paywall Already Presented",
                   value: "Trying to present paywall while another paywall is presented."
                 )
-                Task.detached(priority: .utility) {
-                  let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .alreadyPresented)
-                  await Superwall.shared.track(trackedEvent)
-                }
                 paywallStatePublisher.send(.presentationError(error))
                 paywallStatePublisher.send(completion: .finished)
                 promise(.failure(PresentationPipelineError.paywallAlreadyPresented))

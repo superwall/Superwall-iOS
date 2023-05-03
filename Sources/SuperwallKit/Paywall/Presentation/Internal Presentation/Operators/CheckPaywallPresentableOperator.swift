@@ -67,10 +67,6 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
           title: "No UIViewController to present paywall on",
           value: "This usually happens when you call this method before a window was made key and visible."
         )
-        Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPresenter)
-          await Superwall.shared.track(trackedEvent)
-        }
         let state: PaywallState = .presentationError(error)
         paywallStatePublisher.send(state)
         paywallStatePublisher.send(completion: .finished)

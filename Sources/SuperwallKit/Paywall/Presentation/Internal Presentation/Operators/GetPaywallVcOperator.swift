@@ -98,10 +98,6 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
       info: input.debugInfo,
       error: error
     )
-    Task.detached(priority: .utility) {
-      let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPaywallViewController)
-      await Superwall.shared.track(trackedEvent)
-    }
     paywallStatePublisher.send(.presentationError(error))
     paywallStatePublisher.send(completion: .finished)
     return PresentationPipelineError.noPaywallViewController
