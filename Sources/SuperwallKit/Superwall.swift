@@ -459,20 +459,19 @@ extension Superwall: PaywallViewControllerDelegate {
 
     switch paywallEvent {
     case .closed:
-
       let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: paywallViewController.paywallInfo)
 
-      // TODO: if this results in another presentation,
-      // we need to stop the following dismiss call from
-      // completing the state publisher and we need this paywall
-      // to instead execute the feature block upon completion
-      // harder to handle this vs txn_abandon bc this is explicit ...
-      await Superwall.shared.track(trackedEvent)
+      let result = await getPresentationResult(forEvent: "paywall_decline")
 
-      dismiss(
-        paywallViewController,
-        result: .closed
-      )
+      if case .paywall = result,
+        paywallViewController.paywallInfo.presentedByEventWithName == SuperwallEventObjc.paywallDecline.description {
+        dismiss(
+          paywallViewController,
+          result: .closed
+        )
+      }
+
+      await Superwall.shared.track(trackedEvent)
     case .initiatePurchase(let productId):
       await dependencyContainer.transactionManager.purchase(
         productId,

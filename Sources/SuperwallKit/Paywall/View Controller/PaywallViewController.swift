@@ -722,7 +722,6 @@ extension PaywallViewController {
     closeReason: PaywallCloseReason = .systemLogic,
     completion: (() -> Void)? = nil
   ) {
-
     calledDismiss = true
     paywall.closeReason = closeReason
     willDismiss()

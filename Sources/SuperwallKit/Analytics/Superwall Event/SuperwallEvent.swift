@@ -191,7 +191,7 @@ extension SuperwallEvent {
     case .paywallClose:
       return .init(objcEvent: .paywallClose)
     case .paywallDecline:
-        return .init(objcEvent: .paywallDecline)
+      return .init(objcEvent: .paywallDecline)
     case .transactionStart:
       return .init(objcEvent: .transactionStart)
     case .transactionFail:
