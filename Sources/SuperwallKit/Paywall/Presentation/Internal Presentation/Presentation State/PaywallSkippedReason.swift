@@ -8,7 +8,7 @@
 import Foundation
 
 /// The reason the paywall presentation was skipped.
-public enum PaywallSkippedReason: Sendable, Equatable {
+public enum PaywallSkippedReason: Error, Sendable, Equatable {
   /// The user was assigned to a holdout.
   ///
   /// A holdout is a control group which you can analyse against

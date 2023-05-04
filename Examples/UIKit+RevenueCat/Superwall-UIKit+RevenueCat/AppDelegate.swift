@@ -28,6 +28,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
       purchaseController: purchaseController
     )
 
+
     // MARK: Step 3 – Configure RevenueCat
     /// Always configure RevenueCat after Superwall
     Purchases.configure(withAPIKey: "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql")

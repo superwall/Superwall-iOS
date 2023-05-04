@@ -76,14 +76,14 @@ final class HomeViewController: UIViewController {
     }
     handler.onSkip { reason in
       switch reason {
-      case .userIsSubscribed:
-        print("Paywall not shown because user is subscribed.")
-      case .holdout(let experiment):
-        print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
-      case .noRuleMatch:
-        print("Paywall not shown because user doesn't match any rules.")
-      case .eventNotFound:
-        print("Paywall not shown because this event isn't part of a campaign.")
+        case .userIsSubscribed:
+          print("Paywall not shown because user is subscribed.")
+        case .holdout(let experiment):
+          print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
+        case .noRuleMatch:
+          print("Paywall not shown because user doesn't match any rules.")
+        case .eventNotFound:
+          print("Paywall not shown because this event isn't part of a campaign.")
       }
     }
 
@@ -96,6 +96,29 @@ final class HomeViewController: UIViewController {
         title: "Feature Launched",
         message: "Wrap your awesome features in register calls like this to remotely paywall your app. You can choose if these are paid features remotely."
       )
+    }
+
+
+
+    Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
+      Task { @MainActor in
+        do {
+          let paywallVC = try await Superwall.shared.getPaywallViewController(forEvent: "campaign_trigger")
+
+
+          paywallVC.onDismiss { result in
+            print("[get paywall vc] paywall dismissed", result)
+          }
+
+          self.present(paywallVC, animated: true) {
+            paywallVC.presentationDidFinish()
+            print("[get paywall vc] paywall presented")
+          }
+        } catch let error  {
+
+          print("[get paywall vc] unable to get paywall vc", error)
+        }
+      }
     }
   }
 
@@ -111,3 +134,17 @@ final class HomeViewController: UIViewController {
     self.present(alertController, animated: true)
   }
 }
+
+
+//extension UIViewController {
+//  func present(_ viewControllerToPresent: PaywallViewController, animated flag: Bool, completion: (() -> Void)? = nil) {
+//    viewControllerToPresent.presentationWillBegin()
+//
+//    self.present(viewControllerToPresent as UIViewController, animated: flag) {
+//      viewControllerToPresent.presentationDidFinish()
+//      completion?()
+//    }
+//  }
+//}
+
+
