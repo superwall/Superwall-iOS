@@ -150,6 +150,7 @@ extension Superwall {
             let objcReason = self.onSkipConverter(reason: reason)
             handler?.onSkipHandlerObjc?(objcReason)
           }
+          completion?()
         case .presentationError(let error):
           handler?.onErrorHandler?(error) // otherwise turning internet off would give unlimited access
         }

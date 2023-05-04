@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-rc.5
+
+### Fixes
+
+- Fixes bug where `Superwall.shared.register`'s feature handler would not be called if the user is subscribed
+
 ## 3.0.0-rc.4
 
 ### Breaking Changes
