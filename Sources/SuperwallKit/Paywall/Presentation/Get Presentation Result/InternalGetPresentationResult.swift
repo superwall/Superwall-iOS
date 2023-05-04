@@ -8,12 +8,12 @@
 import Foundation
 import Combine
 
-enum GetTrackResultError: Error, Equatable {
+enum GetPresentationResultError: Error, Equatable {
   case willNotPresent(TriggerResult)
   case userIsSubscribed
   case paywallNotAvailable
 
-  static func == (lhs: GetTrackResultError, rhs: GetTrackResultError) -> Bool {
+  static func == (lhs: GetPresentationResultError, rhs: GetPresentationResultError) -> Bool {
     switch (lhs, rhs) {
     case (.willNotPresent, .willNotPresent),
       (.userIsSubscribed, .userIsSubscribed),
@@ -26,19 +26,19 @@ enum GetTrackResultError: Error, Equatable {
 }
 
 extension Superwall {
-  func getTrackResult(for request: PresentationRequest) async -> PresentationResult {
+  func getPresentationResult(for request: PresentationRequest) async -> PresentationResult {
     let presentationSubject = PresentationSubject(request)
 
     return await presentationSubject
       .eraseToAnyPublisher()
       .waitToPresent()
-      .logPresentation("Called Superwall.shared.getTrackResult")
-      .evaluateRules(isPreemptive: true)
+      .logPresentation("Called Superwall.shared.getPresentationResult")
+      .evaluateRules()
       .checkForPaywallResult()
-      .getPaywallViewController(pipelineType: .getTrackResult)
+      .getPaywallViewController(pipelineType: .getPresentationResult)
       .checkPaywallIsPresentable()
-      .convertToTrackResult()
-      .async()
+      .convertToPresentationResult()
+      .async(request: request)
   }
 }
 
@@ -46,9 +46,9 @@ extension Superwall {
 extension Publisher where Output == PresentationResult {
   /// Waits and returns the first value of the publisher.
   ///
-  /// This handles the error cases thrown by `getTrackResult(for:)`.
+  /// This handles the error cases thrown by `getPresentationResult(for:)`.
   @discardableResult
-  func async() async -> Output {
+  func async(request: PresentationRequest) async -> Output {
     await withCheckedContinuation { continuation in
       var cancellable: AnyCancellable?
       cancellable = first()
@@ -56,10 +56,17 @@ extension Publisher where Output == PresentationResult {
           switch completion {
           case .failure(let error):
             switch error {
-            case let error as GetTrackResultError:
+            case let error as GetPresentationResultError:
+              if request.flags.type != .getImplicitPresentationResult {
+                Logger.debug(
+                  logLevel: .info,
+                  scope: .paywallPresentation,
+                  message: "Skipped paywall presentation: \(error)"
+                )
+              }
               switch error {
               case .willNotPresent(let result):
-                let trackResult = GetTrackResultLogic.convertTriggerResult(result)
+                let trackResult = GetPresentationResultLogic.convertTriggerResult(result)
                 continuation.resume(with: .success(trackResult))
               case .userIsSubscribed:
                 continuation.resume(with: .success(.userIsSubscribed))

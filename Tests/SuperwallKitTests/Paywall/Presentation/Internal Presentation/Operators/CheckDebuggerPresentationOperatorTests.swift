@@ -40,7 +40,7 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [continuePipelineExpectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [continuePipelineExpectation, stateExpectation], timeout: 0.1)
   }
 
   func test_checkDebuggerPresentation_debuggerLaunched_presentingOnDebugger() async {
@@ -74,7 +74,7 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [continuePipelineExpectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [continuePipelineExpectation, stateExpectation], timeout: 0.1)
   }
 
   func test_checkDebuggerPresentation_debuggerLaunched_notPresentingOnDebugger() async {
@@ -88,14 +88,9 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
     let stateExpectation = expectation(description: "Output a state")
     statePublisher.sink { state in
       switch state {
-      case .skipped(let reason):
-        switch reason {
-        case .error(let error):
-          if (error as NSError).code == 101 {
-            stateExpectation.fulfill()
-          }
-        default:
-          break
+      case .presentationError(let error):
+        if (error as NSError).code == 101 {
+          stateExpectation.fulfill()
         }
       default:
         break
@@ -125,7 +120,7 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [continuePipelineExpectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [continuePipelineExpectation, stateExpectation], timeout: 0.1)
   }
 
   /*

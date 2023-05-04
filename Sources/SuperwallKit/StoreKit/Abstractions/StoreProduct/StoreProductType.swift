@@ -15,7 +15,7 @@
 import Foundation
 
 /// Type that provides access to all of `StoreKit`'s product type's properties.
-protocol StoreProductType {
+protocol StoreProductType: Sendable {
   /// The string that identifies the product to the Apple App Store.
   var productIdentifier: String { get }
 

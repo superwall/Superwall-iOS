@@ -72,7 +72,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 500_000_000)
 
-    wait(for: [expectation, stateExpectation], timeout: 2)
+    await fulfillment(of: [expectation, stateExpectation], timeout: 2)
   }
 
   @MainActor
@@ -90,13 +90,8 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       }
     } receiveValue: { state in
       switch state {
-      case .skipped(let reason):
-        switch reason {
-        case .error:
-          stateExpectation.fulfill()
-        default:
-          break
-        }
+      case .presentationError:
+        stateExpectation.fulfill()
       default:
         break
       }
@@ -112,7 +107,8 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
       subscriptionStatus: inactiveSubscriptionPublisher,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPaywallViewController
     )
     .setting(\.presenter, to: nil)
     
@@ -145,9 +141,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    try? await Task.sleep(nanoseconds: 500_000_000)
-
-    wait(for: [expectation, stateExpectation], timeout: 2)
+    await fulfillment(of: [expectation, stateExpectation], timeout: 2)
   }
 
   @MainActor
@@ -198,6 +192,6 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 500_000_000)
 
-    wait(for: [expectation, stateExpectation], timeout: 2)
+    await fulfillment(of: [expectation, stateExpectation], timeout: 2)
   }
 }

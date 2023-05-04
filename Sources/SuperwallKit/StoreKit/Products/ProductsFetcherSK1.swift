@@ -21,9 +21,6 @@ class ProductsFetcherSK1: NSObject, ProductsFetcher {
   private var paywallNameByRequest: [SKRequest: String] = [:]
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
-  enum ProductError: Error {
-    case didNotRetrieve
-  }
 
   // MARK: - ProductsFetcher
   /// Gets StoreKit 1 products from identifiers.
@@ -170,18 +167,12 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
           message: "\(errorMessage). Visit https://superwall.com/l/missing-products to diagnose.",
           info: ["product_ids": requestProducts.description]
         )
-        for completion in completionBlocks {
-          DispatchQueue.main.async {
-            completion(.failure(ProductError.didNotRetrieve))
-          }
-        }
-      } else {
-        self.cacheProducts(response.products)
+      }
+      self.cacheProducts(response.products)
 
-        for completion in completionBlocks {
-          DispatchQueue.main.async {
-            completion(.success(Set(response.products)))
-          }
+      for completion in completionBlocks {
+        DispatchQueue.main.async {
+          completion(.success(Set(response.products)))
         }
       }
       self.paywallNameByRequest.removeValue(forKey: request)

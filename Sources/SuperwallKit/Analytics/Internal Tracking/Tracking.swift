@@ -92,7 +92,8 @@ extension Superwall {
       }
       let presentationRequest = dependencyContainer.makePresentationRequest(
         presentationInfo,
-        isPaywallPresented: isPaywallPresented
+        isPaywallPresented: isPaywallPresented,
+        type: .presentation
       )
       await internallyPresent(presentationRequest).asyncNoValue()
     case .closePaywallThenTriggerPaywall:
@@ -104,7 +105,8 @@ extension Superwall {
       }
       let presentationRequest = dependencyContainer.makePresentationRequest(
         presentationInfo,
-        isPaywallPresented: isPaywallPresented
+        isPaywallPresented: isPaywallPresented,
+        type: .presentation
       )
       await internallyPresent(
         presentationRequest,
@@ -113,7 +115,8 @@ extension Superwall {
     case .triggerPaywall:
       let presentationRequest = dependencyContainer.makePresentationRequest(
         presentationInfo,
-        isPaywallPresented: isPaywallPresented
+        isPaywallPresented: isPaywallPresented,
+        type: .presentation
       )
       await internallyPresent(presentationRequest).asyncNoValue()
     case .disallowedEventAsTrigger:

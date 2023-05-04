@@ -20,7 +20,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
           presentationCondition: input.paywallViewController.paywall.presentation.condition
         )
       ) {
-        throw GetTrackResultError.userIsSubscribed
+        throw GetPresentationResultError.userIsSubscribed
       }
       return input.triggerResult
     }

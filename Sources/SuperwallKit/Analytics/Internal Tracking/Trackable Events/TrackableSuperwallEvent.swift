@@ -242,14 +242,24 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct UnableToPresent: TrackableSuperwallEvent {
-    let state: PaywallPresentationFailureReason
+  struct PresentationRequest: TrackableSuperwallEvent {
+    let eventData: EventData?
+    let type: PresentationRequestType
+    let status: PaywallPresentationRequestStatus
+    let statusReason: PaywallPresentationRequestStatusReason?
 
     var superwallEvent: SuperwallEvent {
-      return .paywallPresentationFail(reason: state)
+      return .paywallPresentationRequest(status: status, reason: statusReason)
     }
     var customParameters: [String: Any] = [:]
-    func getSuperwallParameters() async -> [String: Any] { [:] }
+    func getSuperwallParameters() async -> [String: Any] {
+      [
+        "source_event_name": eventData?.name ?? "",
+        "pipeline_type": type.rawValue,
+        "status": status.rawValue,
+        "status_reason": statusReason?.description ?? ""
+      ]
+    }
   }
 
   struct PaywallOpen: TrackableSuperwallEvent {
@@ -266,6 +276,17 @@ enum InternalSuperwallEvent {
   struct PaywallClose: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .paywallClose(paywallInfo: paywallInfo)
+    }
+    let paywallInfo: PaywallInfo
+    func getSuperwallParameters() async -> [String: Any] {
+      return await paywallInfo.eventParams()
+    }
+    var customParameters: [String: Any] = [:]
+  }
+
+  struct PaywallDecline: TrackableSuperwallEvent {
+    var superwallEvent: SuperwallEvent {
+      return .paywallDecline(paywallInfo: paywallInfo)
     }
     let paywallInfo: PaywallInfo
     func getSuperwallParameters() async -> [String: Any] {

@@ -198,7 +198,7 @@ extension StoreKitManager {
     }
 
     if Superwall.shared.options.paywalls.automaticallyDismiss {
-      Superwall.shared.dismiss(paywallViewController, state: .restored)
+      Superwall.shared.dismiss(paywallViewController, result: .restored)
     }
   }
 }

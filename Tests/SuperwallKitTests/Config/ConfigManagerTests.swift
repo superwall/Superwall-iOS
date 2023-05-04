@@ -64,8 +64,7 @@ final class ConfigManagerTests: XCTestCase {
       expectation.fulfill()
     }
 
-    await waitForExpectations(timeout: 1)
-
+    await fulfillment(of: [expectation], timeout: 1)
 
     XCTAssertTrue(storage.getConfirmedAssignments().isEmpty)
     XCTAssertTrue(configManager.unconfirmedAssignments.isEmpty)

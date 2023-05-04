@@ -51,7 +51,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   @MainActor
@@ -94,7 +94,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   @MainActor
@@ -114,7 +114,8 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPaywallViewController
     )
 
     let input = PresentablePipelineOutput(
@@ -140,6 +141,6 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 }

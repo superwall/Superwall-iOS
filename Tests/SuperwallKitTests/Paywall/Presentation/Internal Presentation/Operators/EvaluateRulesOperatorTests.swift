@@ -22,7 +22,8 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       .fromIdentifier(identifier, freeTrialOverride: false),
       isDebuggerLaunched: true,
       subscriptionStatus: inactiveSubscriptionPublisher,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPaywallViewController
     )
 
     let debugInfo: [String: Any] = [:]
@@ -30,7 +31,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
     CurrentValueSubject((request, debugInfo))
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
-      .evaluateRules(isPreemptive: false)
+      .evaluateRules()
       .eraseToAnyPublisher()
       .sink(
         receiveCompletion: { _ in },
@@ -54,7 +55,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 100_000_000)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   func test_evaluateRules_isNotDebugger() async {
@@ -65,7 +66,8 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
       subscriptionStatus: inactiveSubscriptionPublisher,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPaywallViewController
     )
 
     let debugInfo: [String: Any] = [:]
@@ -73,7 +75,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
     CurrentValueSubject((request, debugInfo))
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
-      .evaluateRules(isPreemptive: false)
+      .evaluateRules()
       .eraseToAnyPublisher()
       .sink(
         receiveCompletion: { _ in },
@@ -91,7 +93,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       .store(in: &cancellables)
 
     try? await Task.sleep(nanoseconds: 100_000_000)
-    
-    wait(for: [expectation], timeout: 0.1)
+
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 }

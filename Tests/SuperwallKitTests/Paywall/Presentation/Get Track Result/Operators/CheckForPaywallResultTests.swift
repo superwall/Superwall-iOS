@@ -30,10 +30,10 @@ final class CheckForPaywallResultTests: XCTestCase {
         receiveCompletion: { completion in
           switch completion {
           case .failure(let error):
-            guard let error = error as? GetTrackResultError else {
+            guard let error = error as? GetPresentationResultError else {
               return XCTFail("Wrong type of error")
             }
-            XCTAssertEqual(error, GetTrackResultError.willNotPresent(.eventNotFound))
+            XCTAssertEqual(error, GetPresentationResultError.willNotPresent(.eventNotFound))
             expectation.fulfill()
           case .finished:
             XCTFail("Shouldn't have finished")
@@ -43,7 +43,7 @@ final class CheckForPaywallResultTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   func test_checkForPaywallResult_noRuleMatch() async {
@@ -63,7 +63,7 @@ final class CheckForPaywallResultTests: XCTestCase {
         receiveCompletion: { completion in
           switch completion {
           case .failure(let error):
-            guard let error = error as? GetTrackResultError else {
+            guard let error = error as? GetPresentationResultError else {
               return XCTFail("Wrong type of error")
             }
             guard case .willNotPresent(let result) = error else {
@@ -79,7 +79,7 @@ final class CheckForPaywallResultTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   func test_checkForPaywallResult_holdout() async {
@@ -99,7 +99,7 @@ final class CheckForPaywallResultTests: XCTestCase {
         receiveCompletion: { completion in
           switch completion {
           case .failure(let error):
-            guard let error = error as? GetTrackResultError else {
+            guard let error = error as? GetPresentationResultError else {
               return XCTFail("Wrong type of error")
             }
             guard case .willNotPresent(let result) = error else {
@@ -118,7 +118,7 @@ final class CheckForPaywallResultTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   func test_checkForPaywallResult_error() async {
@@ -139,7 +139,7 @@ final class CheckForPaywallResultTests: XCTestCase {
         receiveCompletion: { completion in
           switch completion {
           case .failure(let error):
-            guard let error = error as? GetTrackResultError else {
+            guard let error = error as? GetPresentationResultError else {
               return XCTFail("Wrong type of error")
             }
             guard case .willNotPresent(let result) = error else {
@@ -158,7 +158,7 @@ final class CheckForPaywallResultTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   func test_checkForPaywallResult_paywall() async {
@@ -192,6 +192,6 @@ final class CheckForPaywallResultTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 }

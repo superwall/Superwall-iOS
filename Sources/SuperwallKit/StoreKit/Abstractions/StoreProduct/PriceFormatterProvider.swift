@@ -19,46 +19,54 @@ import Foundation
 final class PriceFormatterProvider {
   private var cachedPriceFormatterForSK1: NumberFormatter?
   private var cachedPriceFormatterForSK2: NumberFormatter?
+  private let queue = DispatchQueue(label: "com.superwall.priceformatterprovider", attributes: .concurrent)
 
   func priceFormatterForSK1(with locale: Locale) -> NumberFormatter {
-    func makePriceFormatterForSK1(with locale: Locale) -> NumberFormatter {
-      let formatter = NumberFormatter()
-      formatter.numberStyle = .currency
-      formatter.locale = locale
+    queue.sync {
+      func makePriceFormatterForSK1(with locale: Locale) -> NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = locale
+        return formatter
+      }
+
+      guard
+        let formatter = cachedPriceFormatterForSK1,
+        formatter.locale == locale
+      else {
+        let newFormatter = makePriceFormatterForSK1(with: locale)
+        cachedPriceFormatterForSK1 = newFormatter
+        return newFormatter
+      }
       return formatter
     }
-
-    guard
-      let formatter = cachedPriceFormatterForSK1,
-      formatter.locale == locale
-    else {
-      let newFormatter = makePriceFormatterForSK1(with: locale)
-      cachedPriceFormatterForSK1 = newFormatter
-      return newFormatter
-    }
-    return formatter
   }
 
   @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func priceFormatterForSK2(withCurrencyCode currencyCode: String) -> NumberFormatter {
-    func makePriceFormatterForSK2(with currencyCode: String) -> NumberFormatter {
-      let formatter = NumberFormatter()
-      formatter.numberStyle = .currency
-      formatter.locale = .autoupdatingCurrent
-      formatter.currencyCode = currencyCode
+    queue.sync {
+      func makePriceFormatterForSK2(with currencyCode: String) -> NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = .autoupdatingCurrent
+        formatter.currencyCode = currencyCode
+        return formatter
+      }
+
+      guard
+        let formatter = cachedPriceFormatterForSK2,
+        formatter.currencyCode == currencyCode
+      else {
+        let newFormatter = makePriceFormatterForSK2(with: currencyCode)
+        cachedPriceFormatterForSK2 = newFormatter
+
+        return newFormatter
+      }
+
       return formatter
     }
-
-    guard
-      let formatter = cachedPriceFormatterForSK2,
-      formatter.currencyCode == currencyCode
-    else {
-      let newFormatter = makePriceFormatterForSK2(with: currencyCode)
-      cachedPriceFormatterForSK2 = newFormatter
-
-      return newFormatter
-    }
-
-    return formatter
   }
 }
+
+// It's unchecked here because we're using a queue to serialise access to the caches.
+extension PriceFormatterProvider: @unchecked Sendable {}

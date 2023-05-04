@@ -84,6 +84,9 @@ struct Paywall: Decodable {
   /// Determines whether a free trial is available or not.
   var isFreeTrialAvailable = false
 
+  /// The reason for closing the paywall.
+  var closeReason: PaywallCloseReason?
+
   /// Determines whether a paywall executes the
   /// ``Superwall/register(event:params:handler:feature:)`` feature block if the
   /// user does not purchase.
@@ -235,7 +238,8 @@ struct Paywall: Decodable {
       paywalljsVersion: paywalljsVersion,
       isFreeTrialAvailable: isFreeTrialAvailable,
       sessionEventsManager: sessionEventsManager,
-      featureGatingBehavior: featureGating
+      featureGatingBehavior: featureGating,
+      closeReason: closeReason
     )
   }
 

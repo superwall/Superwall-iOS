@@ -37,7 +37,7 @@ final class CheckPaywallIsPresentableTests: XCTestCase {
         receiveCompletion: { completion in
           switch completion {
           case .failure(let error):
-            guard let error = error as? GetTrackResultError else {
+            guard let error = error as? GetPresentationResultError else {
               return XCTFail("Wrong type of error")
             }
             XCTAssertEqual(error, .userIsSubscribed)
@@ -52,7 +52,7 @@ final class CheckPaywallIsPresentableTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 100_000_000)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   func test_checkPaywallIsPresentable_userNotSubscribed() async {
@@ -91,6 +91,6 @@ final class CheckPaywallIsPresentableTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 100_000_000)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 }

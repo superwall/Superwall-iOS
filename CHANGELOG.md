@@ -2,6 +2,33 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-rc.4
+
+### Breaking Changes
+
+- Changes `DismissState` to `PaywallResult`.
+- Removes the `closedForNextPaywall` case from `PaywallResult` in favor of a new `PaywallInfo` property called `closeReason`, which can either be `nil`, `.systemLogic`, or `.forNextPaywall`.
+- Changes the `PaywallPresentationHandler` variables to functions.
+- Removes `Superwall.shared.track`. We're going all in on `Superwall.shared.register` baby!
+- Removes .error(Error) from `PaywallSkippedReason` in favor of a new `PaywallState` case `.presentationError(Error)`. 
+- Removes `PaywallPresentationHandler` completion block variables removed in favor of function calls with the same names. 
+- Changes `.onError` of `PaywallPresentationHandler` to no longer be called when a paywall is intentionally not shown (i.e. user is subscribed, user is in holdout, no rule match, event not configured)
+- Adds `.onSkip(reason:)` to `PaywallPresentationHandler` to handle cases where paywall isn't shown because user is subscribed, user is in holdout, no rules match, event not configured
+
+### Enhancements
+
+- Adds `getPaywallViewController`! You can no request an actual view controller to present however you like. Check function documentation in Xcode for instructions – follow directions closely.  
+- Changes default logging level to `INFO`.
+- Adds new automatically tracked `paywall_decline` event that can be used to present a new paywall when a user dismisses a paywall.
+- Allows `transaction_abandon` to trigger new paywalls when added to a campaign – called when a user abandons checkout (did you know 75% of the time, users abandon checkout when Apple's payment sheet comes up?!).
+- Adds `.onSkip` to `PaywallPresentationHandler` which is passed a `PaywallSkippedReason` when a paywall is not supposed to show.
+- Adds logging at `INFO` level, mansplaining exactly why a paywall is not shown when calling `register` or `getPaywallViewController`.
+- Adds new automatically tracked event `presentation_request` that gets sent with properties explaining why a paywall was or was not shown. 
+
+### Fixes
+
+- Paywalls will now show even if you are missing products.
+
 ## 3.0.0-rc.3
 
 ### Breaking Changes

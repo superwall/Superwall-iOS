@@ -9,9 +9,7 @@
 import Foundation
 import StoreKit
 
-/// Contains information about a given paywall.
-///
-/// This is returned in the `paywallState` after presenting a paywall with ``Superwall/track(event:params:paywallOverrides:paywallHandler:)``.
+/// Contains information about a paywall.
 @objc(SWKPaywallInfo)
 @objcMembers
 public final class PaywallInfo: NSObject {
@@ -92,9 +90,16 @@ public final class PaywallInfo: NSObject {
   /// The paywall.js version installed on the paywall website.
   public let paywalljsVersion: String?
 
+  /// Indicates whether the paywall is showing free trial content.
   public let isFreeTrialAvailable: Bool
 
+  /// A ``FeatureGatingBehavior`` case that indicates whether the
+  /// ``Superwall/register(event:params:handler:feature:)``
+  /// `feature` block executes or not.
   public let featureGatingBehavior: FeatureGatingBehavior
+
+  /// An enum describing why this paywall was last closed. `nil` if not yet closed.
+  public let closeReason: PaywallCloseReason?
 
   private unowned let sessionEventsManager: SessionEventsManager
 
@@ -118,7 +123,8 @@ public final class PaywallInfo: NSObject {
     paywalljsVersion: String? = nil,
     isFreeTrialAvailable: Bool,
     sessionEventsManager: SessionEventsManager,
-    featureGatingBehavior: FeatureGatingBehavior = .nonGated
+    featureGatingBehavior: FeatureGatingBehavior = .nonGated,
+    closeReason: PaywallCloseReason? = nil
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -173,6 +179,7 @@ public final class PaywallInfo: NSObject {
       self.productsLoadDuration = nil
     }
     self.sessionEventsManager = sessionEventsManager
+    self.closeReason = closeReason
   }
 
   func eventParams(

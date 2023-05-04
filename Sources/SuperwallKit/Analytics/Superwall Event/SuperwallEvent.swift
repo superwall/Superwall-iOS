@@ -54,6 +54,9 @@ public enum SuperwallEvent {
   /// When a paywall is closed.
   case paywallClose(paywallInfo: PaywallInfo)
 
+  /// When a user dismisses a paywall instead of purchasing
+  case paywallDecline(paywallInfo: PaywallInfo)
+
   /// When the payment sheet is displayed to the user.
   case transactionStart(product: StoreProduct, paywallInfo: PaywallInfo)
 
@@ -121,8 +124,11 @@ public enum SuperwallEvent {
   /// When the request to load the paywall's products completed.
   case paywallProductsLoadComplete(triggeredEventName: String?)
 
-  /// When the paywall fails to present.
-  case paywallPresentationFail(reason: PaywallPresentationFailureReason)
+  /// Information about the paywall presentation request
+  case paywallPresentationRequest(
+    status: PaywallPresentationRequestStatus,
+    reason: PaywallPresentationRequestStatusReason?
+  )
 
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
@@ -131,6 +137,7 @@ public enum SuperwallEvent {
       .appLaunch,
       .deepLink,
       .transactionFail,
+      .paywallDecline,
       .transactionAbandon:
       return true
     default:
@@ -183,6 +190,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallOpen)
     case .paywallClose:
       return .init(objcEvent: .paywallClose)
+    case .paywallDecline:
+      return .init(objcEvent: .paywallDecline)
     case .transactionStart:
       return .init(objcEvent: .transactionStart)
     case .transactionFail:
@@ -225,29 +234,13 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallProductsLoadFail)
     case .paywallProductsLoadComplete:
       return .init(objcEvent: .paywallProductsLoadComplete)
-    case .paywallPresentationFail(reason: let reason):
-      switch reason {
-      case .userIsSubscribed:
-        return .init(objcEvent: .paywallPresentationFailUserIsSubscribed)
-      case .holdout:
-        return .init(objcEvent: .paywallPresentationFailInHoldout)
-      case .noRuleMatch:
-        return .init(objcEvent: .paywallPresentationFailNoRuleMatch)
-      case .eventNotFound:
-        return .init(objcEvent: .paywallPresentationFailEventNotFound)
-      case .debuggerLaunched:
-        return .init(objcEvent: .paywallPresentationFailDebuggerLaunched)
-      case .alreadyPresented:
-        return .init(objcEvent: .paywallPresentationFailAlreadyPresented)
-      case .noPresenter:
-        return .init(objcEvent: .paywallPresentationFailNoPresenter)
-      case .noPaywallViewController:
-        return .init(objcEvent: .paywallPresentationFailNoPaywallViewController)
-      }
+    case .paywallPresentationRequest:
+      return .init(objcEvent: .paywallPresentationRequest)
     }
   }
 }
 
+// Using this to silence warnings.
 // This is unchecked because of the use of `Any` in `[String: Any]` user attributes.
-// Everything else is Sendable except that.
+// Also, PaywallInfo is not Sendable.
 extension SuperwallEvent: @unchecked Sendable {}

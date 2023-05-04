@@ -243,7 +243,8 @@ extension DependencyContainer: RequestFactory {
     presenter: UIViewController? = nil,
     isDebuggerLaunched: Bool? = nil,
     subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>? = nil,
-    isPaywallPresented: Bool
+    isPaywallPresented: Bool,
+    type: PresentationRequestType
   ) -> PresentationRequest {
     return PresentationRequest(
       presentationInfo: presentationInfo,
@@ -252,7 +253,8 @@ extension DependencyContainer: RequestFactory {
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
         subscriptionStatus: subscriptionStatus ?? Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
-        isPaywallPresented: isPaywallPresented
+        isPaywallPresented: isPaywallPresented,
+        type: type
       ),
       dependencyContainer: self
     )

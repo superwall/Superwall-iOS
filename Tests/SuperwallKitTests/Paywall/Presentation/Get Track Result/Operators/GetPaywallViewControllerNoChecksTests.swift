@@ -19,7 +19,7 @@ final class GetPaywallVcNoChecksOperatorTests: XCTestCase {
       factory: dependencyContainer,
       paywallRequestManager: dependencyContainer.paywallRequestManager
     )
-    paywallManager.getPaywallError = PresentationPipelineError.cancelled
+    paywallManager.getPaywallError = PresentationPipelineError.noPaywallViewController
 
     let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
       .eraseToAnyPublisher()
@@ -56,9 +56,7 @@ final class GetPaywallVcNoChecksOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    try? await Task.sleep(nanoseconds: 1_000_000)
-
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   @MainActor
@@ -107,6 +105,6 @@ final class GetPaywallVcNoChecksOperatorTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 1_000_000)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 }

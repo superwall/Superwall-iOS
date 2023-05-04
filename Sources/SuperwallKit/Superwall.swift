@@ -161,7 +161,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Items involved in the presentation of paywalls.
-  var presentationItems = PresentationItems()
+  let presentationItems = PresentationItems()
 
   /// Determines whether a paywall is being presented.
   var isPaywallPresented: Bool {
@@ -459,10 +459,21 @@ extension Superwall: PaywallViewControllerDelegate {
 
     switch paywallEvent {
     case .closed:
-      dismiss(
-        paywallViewController,
-        state: .closed
-      )
+      let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: paywallViewController.paywallInfo)
+
+      let result = await getImplicitPresentationResult(forEvent: "paywall_decline")
+
+      if case .paywall = result,
+        paywallViewController.paywallInfo.presentedByEventWithName != SuperwallEventObjc.paywallDecline.description {
+        // Do nothing, track will handle it.
+      } else {
+        dismiss(
+          paywallViewController,
+          result: .closed
+        )
+      }
+
+      await Superwall.shared.track(trackedEvent)
     case .initiatePurchase(let productId):
       await dependencyContainer.transactionManager.purchase(
         productId,

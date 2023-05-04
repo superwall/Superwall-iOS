@@ -8,6 +8,13 @@
 import UIKit
 import Combine
 
+enum PresentationRequestType: String {
+  case presentation
+  case getPaywallViewController
+  case getPresentationResult
+  case getImplicitPresentationResult
+}
+
 /// Defines the information needed to request the presentation of a paywall.
 struct PresentationRequest {
   /// The type of trigger (implicit/explicit/fromIdentifier), and associated data.
@@ -23,6 +30,7 @@ struct PresentationRequest {
     var isDebuggerLaunched: Bool
     var subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>
     var isPaywallPresented: Bool
+    var type: PresentationRequestType
   }
   var flags: Flags
 
@@ -46,7 +54,8 @@ extension PresentationRequest: Stubbable {
       .explicitTrigger(.stub()),
       paywallOverrides: nil,
       isDebuggerLaunched: false,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .presentation
     )
   }
 }

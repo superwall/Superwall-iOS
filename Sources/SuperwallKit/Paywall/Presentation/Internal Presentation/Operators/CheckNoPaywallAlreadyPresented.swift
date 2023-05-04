@@ -33,14 +33,10 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
           title: "Paywall Already Presented",
           value: "You can only present one paywall at a time."
         )
-        Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .alreadyPresented)
-          await Superwall.shared.track(trackedEvent)
-        }
-        let state: PaywallState = .skipped(.error(error))
+        let state: PaywallState = .presentationError(error)
         paywallStatePublisher.send(state)
         paywallStatePublisher.send(completion: .finished)
-        throw PresentationPipelineError.cancelled
+        throw PresentationPipelineError.paywallAlreadyPresented
       }
       .eraseToAnyPublisher()
   }

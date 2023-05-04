@@ -28,7 +28,7 @@ extension AnyPublisher where Output == AssignmentPipelineOutput, Failure == Erro
           experiment: experiment
         )
       default:
-        throw GetTrackResultError.willNotPresent(input.triggerResult)
+        throw GetPresentationResultError.willNotPresent(input.triggerResult)
       }
     }
     .eraseToAnyPublisher()

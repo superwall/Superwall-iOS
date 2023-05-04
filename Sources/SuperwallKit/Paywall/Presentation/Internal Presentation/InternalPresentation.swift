@@ -13,6 +13,7 @@ typealias PresentationSubject = CurrentValueSubject<PresentationRequest, Error>
 
 /// A publisher that emits ``PaywallState`` objects.
 public typealias PaywallStatePublisher = AnyPublisher<PaywallState, Never>
+typealias PresentablePipelineOutputPublisher = AnyPublisher<PresentablePipelineOutput, Error>
 
 extension Superwall {
   /// Runs a combine pipeline to present a paywall, publishing ``PaywallState`` objects that provide updates on the lifecycle of the paywall.
@@ -43,6 +44,7 @@ extension Superwall {
       .confirmPaywallAssignment()
       .presentPaywall(paywallStatePublisher)
       .storePresentationObjects(presentationSubject, paywallStatePublisher)
+      .logErrors(from: request)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
         receiveValue: { _ in }
@@ -73,17 +75,17 @@ extension Superwall {
   @MainActor
   func dismiss(
     _ paywallViewController: PaywallViewController,
-    state: DismissState,
-    shouldSendDismissedState: Bool = true,
+    result: PaywallResult,
+    shouldSendPaywallResult: Bool = true,
     shouldCompleteStatePublisher: Bool = true,
+    closeReason: PaywallCloseReason = .systemLogic,
     completion: (() -> Void)? = nil
   ) {
-    let paywallInfo = paywallViewController.paywallInfo
     paywallViewController.dismiss(
-      paywallInfo: paywallInfo,
-      state: state,
-      shouldSendDismissedState: shouldSendDismissedState,
-      shouldCompleteStatePublisher: shouldCompleteStatePublisher
+      result: result,
+      shouldSendPaywallResult: shouldSendPaywallResult,
+      shouldCompleteStatePublisher: shouldCompleteStatePublisher,
+      closeReason: closeReason
     ) {
       completion?()
     }

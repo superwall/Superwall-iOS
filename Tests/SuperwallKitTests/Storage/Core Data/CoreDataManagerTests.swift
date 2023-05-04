@@ -92,9 +92,7 @@ class CoreDataManagerTests: XCTestCase {
       expectation1.fulfill()
     }
 
-    await waitForExpectations(timeout: 2.0) { error in
-      XCTAssertNil(error, "Save did not occur")
-    }
+    await fulfillment(of: [expectation1], timeout: 2)
 
 
     // Save Trigger Rule Occurrence
@@ -115,9 +113,7 @@ class CoreDataManagerTests: XCTestCase {
       expectation2.fulfill()
     }
 
-    await waitForExpectations(timeout: 20.0) { error in
-      XCTAssertNil(error, "Save did not occur")
-    }
+    await fulfillment(of: [expectation2], timeout: 20)
 
     // Delete All Entities
     coreDataManager.deleteAllEntities()

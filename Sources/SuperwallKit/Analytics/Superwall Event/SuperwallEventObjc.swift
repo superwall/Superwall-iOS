@@ -4,7 +4,6 @@
 //
 //  Created by Yusuf Tör on 07/11/2022.
 //
-// swiftlint:disable identifier_name
 
 import Foundation
 
@@ -50,6 +49,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
 
   /// When a paywall is closed.
   case paywallClose
+
+  /// When a user dismisses a paywall instead of purchasing
+  case paywallDecline
 
   /// When the payment sheet is displayed to the user.
   case transactionStart
@@ -117,29 +119,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the request to load the paywall's products completed.
   case paywallProductsLoadComplete
 
-  /// Trying to present paywall when debugger is launched.
-  case paywallPresentationFailDebuggerLaunched
-
-  /// The user is subscribed.
-  case paywallPresentationFailUserIsSubscribed
-
-  /// The user is in a holdout group.
-  case paywallPresentationFailInHoldout
-
-  /// No rules defined in the campaign for the event matched.
-  case paywallPresentationFailNoRuleMatch
-
-  /// The event provided was not found in any campaign on the dashboard.
-  case paywallPresentationFailEventNotFound
-
-  /// There was an error getting the paywall view controller.
-  case paywallPresentationFailNoPaywallViewController
-
-  /// There isn't a view to present the paywall on.
-  case paywallPresentationFailNoPresenter
-
-  /// There's already a paywall presented.
-  case paywallPresentationFailAlreadyPresented
+  /// Information about a paywall presentation request
+  case paywallPresentationRequest
 
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
@@ -167,6 +148,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "trigger_fire"
     case .paywallOpen:
       return "paywall_open"
+    case .paywallDecline:
+      return "paywall_decline"
     case .paywallClose:
       return "paywall_close"
     case .transactionStart:
@@ -211,22 +194,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "paywallProductsLoad_fail"
     case .paywallProductsLoadComplete:
       return "paywallProductsLoad_complete"
-    case .paywallPresentationFailUserIsSubscribed:
-      return "paywallPresentationFail_userIsSubscribed"
-    case .paywallPresentationFailInHoldout:
-      return "paywallPresentationFail_holdout"
-    case .paywallPresentationFailNoRuleMatch:
-      return "paywallPresentationFail_noRuleMatch"
-    case .paywallPresentationFailEventNotFound:
-      return "paywallPresentationFail_eventNotFound"
-    case .paywallPresentationFailDebuggerLaunched:
-      return "paywallPresentationFail_debuggerLaunched"
-    case .paywallPresentationFailAlreadyPresented:
-      return "paywallPresentationFail_alreadyPresented"
-    case .paywallPresentationFailNoPresenter:
-      return "paywallPresentationFail_noPresenter"
-    case .paywallPresentationFailNoPaywallViewController:
-      return "paywallPresentationFail_noPaywallViewController"
+    case .paywallPresentationRequest:
+      return "paywallPresentationRequest"
     }
   }
 }

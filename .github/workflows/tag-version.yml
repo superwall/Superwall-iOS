@@ -28,7 +28,7 @@ jobs:
 
   cocoapods:
     needs: tag
-    runs-on: macos-12
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v1
     - name: Publish to CocoaPod register
@@ -39,7 +39,7 @@ jobs:
 
   xcode12:
     needs: tag
-    runs-on: macos-12
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2

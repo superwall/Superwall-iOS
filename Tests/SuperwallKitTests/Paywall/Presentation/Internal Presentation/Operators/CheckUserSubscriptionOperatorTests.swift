@@ -21,7 +21,8 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
       subscriptionStatus: publisher,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPaywallViewController
     )
 
     let input = AssignmentPipelineOutput(
@@ -70,7 +71,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 10_000_000)
 
-    wait(for: [pipelineExpectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [pipelineExpectation, stateExpectation], timeout: 0.1)
   }
 
   func test_checkUserSubscription_paywall() async {
@@ -82,7 +83,8 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
       subscriptionStatus: publisher,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPaywallViewController
     )
 
     let input = AssignmentPipelineOutput(
@@ -116,7 +118,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 10_000_000)
 
-    wait(for: [pipelineExpectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [pipelineExpectation, stateExpectation], timeout: 0.1)
   }
 
   func test_checkUserSubscription_notPaywall_userNotSubscribed() async {
@@ -128,7 +130,8 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
       subscriptionStatus: publisher,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPaywallViewController
     )
 
     let input = AssignmentPipelineOutput(
@@ -161,7 +164,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       .store(in: &cancellables)
 
     try? await Task.sleep(nanoseconds: 10_000_000)
-    
-    wait(for: [pipelineExpectation, stateExpectation], timeout: 0.1)
+
+    await fulfillment(of: [pipelineExpectation, stateExpectation], timeout: 0.1)
   }
 }

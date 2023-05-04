@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 26/09/2022.
 //
-// swiftlint:disable strict_fileprivate function_body_length
+// swiftlint:disable strict_fileprivate
 
 import UIKit
 import Combine
@@ -27,7 +27,7 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
   /// - Returns: A publisher that contains info for the next pipeline operator.
   func checkPaywallIsPresentable(
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
-  ) -> AnyPublisher<PresentablePipelineOutput, Error> {
+  ) -> PresentablePipelineOutputPublisher {
     asyncMap { input in
       let subscriptionStatus = await input.request.flags.subscriptionStatus.async()
       if await InternalPresentationLogic.userSubscribedAndNotOverridden(
@@ -38,16 +38,10 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
           presentationCondition: input.paywallViewController.paywall.presentation.condition
         )
       ) {
-        Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(
-            state: .userIsSubscribed
-          )
-          await Superwall.shared.track(trackedEvent)
-        }
         let state: PaywallState = .skipped(.userIsSubscribed)
         paywallStatePublisher.send(state)
         paywallStatePublisher.send(completion: .finished)
-        throw PresentationPipelineError.cancelled
+        throw PresentationPipelineError.userIsSubscribed
       }
 
       if input.request.presenter == nil {
@@ -73,14 +67,10 @@ extension AnyPublisher where Output == PaywallVcPipelineOutput, Failure == Error
           title: "No UIViewController to present paywall on",
           value: "This usually happens when you call this method before a window was made key and visible."
         )
-        Task.detached(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.UnableToPresent(state: .noPresenter)
-          await Superwall.shared.track(trackedEvent)
-        }
-        let state: PaywallState = .skipped(.error(error))
+        let state: PaywallState = .presentationError(error)
         paywallStatePublisher.send(state)
         paywallStatePublisher.send(completion: .finished)
-        throw PresentationPipelineError.cancelled
+        throw PresentationPipelineError.noPresenter
       }
 
       let sessionEventsManager = input.request.dependencyContainer.sessionEventsManager
@@ -117,8 +107,6 @@ extension Superwall {
     }
 
     presentingWindow?.rootViewController = UIViewController()
-    presentingWindow?.makeKeyAndVisible()
-
     presentationItems.window = presentingWindow
   }
 

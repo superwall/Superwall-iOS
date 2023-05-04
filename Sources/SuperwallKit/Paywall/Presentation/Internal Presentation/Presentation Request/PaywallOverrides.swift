@@ -9,8 +9,8 @@ import Foundation
 
 /// Override the default behavior and products of a paywall.
 ///
-/// Provide an instance of this to ``Superwall/track(event:params:paywallOverrides:paywallHandler:)``.
-public final class PaywallOverrides: NSObject {
+/// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:)``.
+public final class PaywallOverrides: NSObject, Sendable {
   /// Defines the products to override on the paywall.
   ///
   /// You can override one or more products of your choosing.
@@ -24,7 +24,7 @@ public final class PaywallOverrides: NSObject {
 
   /// Override the default behavior and products of a paywall.
   ///
-  /// Provide an instance of this to ``Superwall/track(event:params:paywallOverrides:paywallHandler:)``.
+  /// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:)``.
   ///
   /// - parameters:
   ///   - products: A ``PaywallProducts`` object defining the products to override on the paywall.

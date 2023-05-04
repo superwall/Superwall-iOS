@@ -45,7 +45,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
       factory: dependencyContainer,
       paywallRequestManager: dependencyContainer.paywallRequestManager
     )
-    paywallManager.getPaywallError = PresentationPipelineError.cancelled
+    paywallManager.getPaywallError = PresentationPipelineError.noPaywallViewController
 
     let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
       .eraseToAnyPublisher()
@@ -84,7 +84,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 1_000_000)
 
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [expectation, stateExpectation], timeout: 0.1)
   }
 
   @MainActor
@@ -102,13 +102,8 @@ final class GetPaywallVcOperatorTests: XCTestCase {
       }
     } receiveValue: { state in
       switch state {
-      case .skipped(let reason):
-        switch reason {
-        case .error:
-          stateExpectation.fulfill()
-        default:
-          break
-        }
+      case .presentationError:
+        stateExpectation.fulfill()
       default:
         break
       }
@@ -120,7 +115,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
       factory: dependencyContainer,
       paywallRequestManager: dependencyContainer.paywallRequestManager
     )
-    paywallManager.getPaywallError = PresentationPipelineError.cancelled
+    paywallManager.getPaywallError = PresentationPipelineError.userIsSubscribed
 
     let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
       .eraseToAnyPublisher()
@@ -157,9 +152,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    try? await Task.sleep(nanoseconds: 1_000_000)
-
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [expectation, stateExpectation], timeout: 0.1)
   }
 
   @MainActor
@@ -210,8 +203,6 @@ final class GetPaywallVcOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    try? await Task.sleep(nanoseconds: 1_000_000)
-
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [expectation, stateExpectation], timeout: 0.1)
   }
 }

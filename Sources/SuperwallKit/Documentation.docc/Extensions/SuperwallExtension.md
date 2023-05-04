@@ -28,14 +28,12 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 ### Presenting and Dismissing a Paywall
 
-- ``register(event:params:handler:)``
 - ``register(event:params:handler:feature:)``
-- ``track(event:params:paywallOverrides:paywallHandler:)``
-- ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``
-- ``track(event:)``
-- ``track(event:params:)``
-- ``track(event:onSkip:onPresent:onDismiss:)``
-- ``track(event:params:onSkip:onPresent:onDismiss:)``
+- ``register(event:params:handler:)``
+- ``register(event:)``
+- ``register(event:params:)``
+- ``getPaywallViewController(forEvent:params:paywallOverrides:)``
+- ``getPaywallViewController(forEvent:params:paywallOverrides:completion:)``
 - ``publisher(forEvent:params:paywallOverrides:isFeatureGatable:)``
 - ``getPresentationResult(forEvent:)``
 - ``getPresentationResult(forEvent:params:)-9ivi6``
