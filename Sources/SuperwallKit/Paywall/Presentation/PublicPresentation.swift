@@ -77,7 +77,7 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   -  event: The name of the event you wish to register.
-  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped. Defaults to `nil`.
   ///   - handler: An optional handler whose variables provide status updates for a paywall. Defaults to `nil`.
   ///   - feature: A completion block containing a feature that you wish to paywall. Access to this block is remotely configurable via the [Superwall Dashboard](https://superwall.com/dashboard). If the paywall is set to _Non Gated_, this will be called when the paywall is dismissed or if the user is already paying. If the paywall is _Gated_, this will be called only if the user is already paying or if they begin paying. If no paywall is configured, this gets called immediately. This will not be called in the event of an error, which you can detect via the `handler`.
   public func register(
@@ -99,7 +99,7 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   -  event: The name of the event you wish to register.
-  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
+  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped. Defaults to `nil`.
   ///   - handler: An optional handler whose variables provide status updates for a paywall. Defaults to `nil`.
   public func register(
     event: String,
@@ -160,6 +160,40 @@ extension Superwall {
         }
       }
     ))
+  }
+  
+  /// Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
+  ///
+  /// This shows a paywall to the user when: An event you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.
+  ///
+  /// Before using this method, you'll first need to create a campaign and add the event to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
+  ///
+  /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the event you wish to register.
+  @available(swift, obsoleted: 1.0)
+  @objc private func register(event: String) {
+    internallyRegister(event: event)
+  }
+
+  /// Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
+  ///
+  /// This shows a paywall to the user when: An event you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.
+  ///
+  /// Before using this method, you'll first need to create a campaign and add the event to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
+  ///
+  /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the event you wish to register.
+  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped. Defaults to `nil`.
+  @available(swift, obsoleted: 1.0)
+  @objc private func register(
+    event: String,
+    params: [String: Any]?
+  ) {
+    internallyRegister(event: event, params: params)
   }
 
   /// Returns a publisher that registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
