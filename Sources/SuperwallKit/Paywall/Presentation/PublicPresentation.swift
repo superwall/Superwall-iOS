@@ -173,7 +173,7 @@ extension Superwall {
   /// - Parameters:
   ///   -  event: The name of the event you wish to register.
   @available(swift, obsoleted: 1.0)
-  @objc private func register(event: String) {
+  @objc public func register(event: String) {
     internallyRegister(event: event)
   }
 
@@ -189,7 +189,7 @@ extension Superwall {
   ///   -  event: The name of the event you wish to register.
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped. Defaults to `nil`.
   @available(swift, obsoleted: 1.0)
-  @objc private func register(
+  @objc public func register(
     event: String,
     params: [String: Any]?
   ) {
