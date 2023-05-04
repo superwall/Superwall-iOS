@@ -161,7 +161,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Items involved in the presentation of paywalls.
-  var presentationItems = PresentationItems()
+  let presentationItems = PresentationItems()
 
   /// Determines whether a paywall is being presented.
   var isPaywallPresented: Bool {

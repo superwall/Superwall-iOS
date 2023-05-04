@@ -16,8 +16,9 @@ extension Superwall {
   ///
   /// - Returns: A ``PaywallViewController`` to present.
   @discardableResult
-  func internallyGetPaywallViewController(
-    _ request: PresentationRequest
+  func getPaywallViewController(
+    _ request: PresentationRequest,
+    isObjc: Bool
   ) -> AnyPublisher<PaywallViewController, Error> {
     let paywallStatePublisher: PassthroughSubject<PaywallState, Never> = .init()
     let presentationSubject = PresentationSubject(request)
@@ -35,5 +36,6 @@ extension Superwall {
       .storePresentationObjects(presentationSubject, paywallStatePublisher)
       .logErrors(from: request)
       .extractPaywallViewController(paywallStatePublisher)
+      .mapErrors(isObjc: isObjc)
   }
 }

@@ -12,13 +12,16 @@ final class PresentationItems: @unchecked Sendable {
   /// The publisher and request involved in the last successful paywall presentation request.
   var last: LastPresentationItems? {
     get {
-      queue.sync { [unowned self] in
+      queue.sync { [weak self] in
+        guard let self = self else {
+          return nil
+        }
         return self._last
       }
     }
     set {
-      queue.async { [unowned self] in
-        self._last = newValue
+      queue.async { [weak self] in
+        self?._last = newValue
       }
     }
   }
@@ -27,13 +30,13 @@ final class PresentationItems: @unchecked Sendable {
   /// The ``PaywallInfo`` object stored from the last paywall view controller that was dismissed.
   var paywallInfo: PaywallInfo? {
     get {
-      queue.sync { [unowned self] in
-        return self._paywallInfo
+      queue.sync { [weak self] in
+        return self?._paywallInfo
       }
     }
     set {
-      queue.async { [unowned self] in
-        self._paywallInfo = newValue
+      queue.async { [weak self] in
+        self?._paywallInfo = newValue
       }
     }
   }
@@ -46,9 +49,9 @@ final class PresentationItems: @unchecked Sendable {
   private let queue = DispatchQueue(label: "com.superwall.presentationitems")
 
   func reset() {
-    queue.async { [unowned self] in
-      self._last = nil
-      self._paywallInfo = nil
+    queue.async { [weak self] in
+      self?._last = nil
+      self?._paywallInfo = nil
     }
 
     Task { @MainActor [weak self]  in
