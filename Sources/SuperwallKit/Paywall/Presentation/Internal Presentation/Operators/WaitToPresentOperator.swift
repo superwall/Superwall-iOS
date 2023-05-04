@@ -30,14 +30,19 @@ extension AnyPublisher where Output == PresentationRequest, Failure == Error {
       }
       .first()
       .map { request, timer, _, _, _ in
-        timer.invalidate()
+        timer?.invalidate()
         return request
       }
       .eraseToAnyPublisher()
   }
 
-  private func startTimer() -> (AnyPublisher<(PresentationRequest, Timer), Failure>) {
+  /// Starts a 5 sec timer. If pipeline above progresses, it'll get cancelled. Otherwise will log a
+  /// timeout for the user.
+  private func startTimer() -> (AnyPublisher<(PresentationRequest, Timer?), Failure>) {
     map { request in
+      guard request.flags.type != .getImplicitPresentationResult else {
+        return (request, nil)
+      }
       let timer = Timer(
         timeInterval: 5,
         repeats: false

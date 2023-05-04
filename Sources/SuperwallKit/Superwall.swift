@@ -461,7 +461,7 @@ extension Superwall: PaywallViewControllerDelegate {
     case .closed:
       let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: paywallViewController.paywallInfo)
 
-      let result = await getPresentationResult(forEvent: "paywall_decline")
+      let result = await getImplicitPresentationResult(forEvent: "paywall_decline")
 
       if case .paywall = result,
         paywallViewController.paywallInfo.presentedByEventWithName != SuperwallEventObjc.paywallDecline.description {

@@ -12,6 +12,7 @@ enum PresentationRequestType: String {
   case presentation
   case getPaywallViewController
   case getPresentationResult
+  case getImplicitPresentationResult
 }
 
 /// Defines the information needed to request the presentation of a paywall.

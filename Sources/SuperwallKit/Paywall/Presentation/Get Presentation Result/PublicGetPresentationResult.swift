@@ -30,35 +30,11 @@ extension Superwall {
     forEvent event: String,
     params: [String: Any]? = nil
   ) async -> PresentationResult {
-    let eventCreatedAt = Date()
-
-    let trackableEvent = UserInitiatedEvent.Track(
-      rawName: event,
-      canImplicitlyTriggerPaywall: false,
-      customParameters: params ?? [:],
-      isFeatureGatable: false
-    )
-
-    let parameters = await TrackingLogic.processParameters(
-      fromTrackableEvent: trackableEvent,
-      eventCreatedAt: eventCreatedAt,
-      appSessionId: dependencyContainer.appSessionManager.appSession.id
-    )
-
-    let eventData = EventData(
-      name: event,
-      parameters: JSON(parameters.eventParams),
-      createdAt: eventCreatedAt
-    )
-
-    let presentationRequest = dependencyContainer.makePresentationRequest(
-      .explicitTrigger(eventData),
-      isDebuggerLaunched: false,
-      isPaywallPresented: false,
+    return await internallyGetPresentationResult(
+      forEvent: event,
+      params: params,
       type: .getPresentationResult
     )
-
-    return await getPresentationResult(for: presentationRequest)
   }
 
   /// Preemptively get the result of tracking an event.
@@ -86,6 +62,51 @@ extension Superwall {
       let result = await getPresentationResult(forEvent: event, params: params)
       completion(result)
     }
+  }
+
+  /// Call when you need to get the presentation result from an implicit event. This prevents logs being
+  /// fired.
+  func getImplicitPresentationResult(forEvent event: String) async -> PresentationResult {
+    return await internallyGetPresentationResult(
+      forEvent: event,
+      type: .getImplicitPresentationResult
+    )
+  }
+
+  private func internallyGetPresentationResult(
+    forEvent event: String,
+    params: [String: Any]? = nil,
+    type: PresentationRequestType
+  ) async -> PresentationResult {
+    let eventCreatedAt = Date()
+
+    let trackableEvent = UserInitiatedEvent.Track(
+      rawName: event,
+      canImplicitlyTriggerPaywall: false,
+      customParameters: params ?? [:],
+      isFeatureGatable: false
+    )
+
+    let parameters = await TrackingLogic.processParameters(
+      fromTrackableEvent: trackableEvent,
+      eventCreatedAt: eventCreatedAt,
+      appSessionId: dependencyContainer.appSessionManager.appSession.id
+    )
+
+    let eventData = EventData(
+      name: event,
+      parameters: JSON(parameters.eventParams),
+      createdAt: eventCreatedAt
+    )
+
+    let presentationRequest = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(eventData),
+      isDebuggerLaunched: false,
+      isPaywallPresented: false,
+      type: type
+    )
+
+    return await getPresentationResult(for: presentationRequest)
   }
 
   /// Objective-C-only function to preemptively get the result of tracking an event.

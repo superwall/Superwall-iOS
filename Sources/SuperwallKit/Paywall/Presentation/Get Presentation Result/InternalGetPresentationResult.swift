@@ -38,7 +38,7 @@ extension Superwall {
       .getPaywallViewController(pipelineType: .getPresentationResult)
       .checkPaywallIsPresentable()
       .convertToPresentationResult()
-      .async()
+      .async(request: request)
   }
 }
 
@@ -48,7 +48,7 @@ extension Publisher where Output == PresentationResult {
   ///
   /// This handles the error cases thrown by `getPresentationResult(for:)`.
   @discardableResult
-  func async() async -> Output {
+  func async(request: PresentationRequest) async -> Output {
     await withCheckedContinuation { continuation in
       var cancellable: AnyCancellable?
       cancellable = first()
@@ -57,11 +57,13 @@ extension Publisher where Output == PresentationResult {
           case .failure(let error):
             switch error {
             case let error as GetPresentationResultError:
-              Logger.debug(
-                logLevel: .info,
-                scope: .paywallPresentation,
-                message: "Skipped paywall presentation: \(error)"
-              )
+              if request.flags.type != .getImplicitPresentationResult {
+                Logger.debug(
+                  logLevel: .info,
+                  scope: .paywallPresentation,
+                  message: "Skipped paywall presentation: \(error)"
+                )
+              }
               switch error {
               case .willNotPresent(let result):
                 let trackResult = GetPresentationResultLogic.convertTriggerResult(result)
