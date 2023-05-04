@@ -129,20 +129,20 @@ extension Superwall {
         }
         switch state {
         case .presented(let paywallInfo):
-            handler?.onPresentHandler?(paywallInfo)
+          handler?.onPresentHandler?(paywallInfo)
         case let .dismissed(paywallInfo, state):
-            handler?.onDismissHandler?(paywallInfo)
-          switch state {
-          case .purchased,
-            .restored:
+          handler?.onDismissHandler?(paywallInfo)
+        switch state {
+        case .purchased,
+          .restored:
+          completion?()
+        case .closed:
+          let closeReason = paywallInfo.closeReason
+          let featureGating = paywallInfo.featureGatingBehavior
+          if closeReason != .forNextPaywall && featureGating == .nonGated {
             completion?()
-          case .closed:
-            let closeReason = paywallInfo.closeReason
-            let featureGating = paywallInfo.featureGatingBehavior
-            if closeReason != .forNextPaywall && featureGating == .nonGated {
-              completion?()
-            }
           }
+        }
         case .skipped(let reason):
           if let handler = handler?.onSkipHandler {
             handler(reason)
@@ -156,7 +156,7 @@ extension Superwall {
       }
     ))
   }
-  
+
   /// Objective-C-only convenience method. Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
   ///
   /// This shows a paywall to the user when: An event you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.
