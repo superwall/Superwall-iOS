@@ -478,6 +478,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
       || isBeingPresented {
       return completion(false)
     }
+    Superwall.shared.presentationItems.window?.makeKeyAndVisible()
     addShimmerView(onPresent: true)
     prepareForPresentation()
 
