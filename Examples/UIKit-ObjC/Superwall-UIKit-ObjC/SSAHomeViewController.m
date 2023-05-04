@@ -55,6 +55,23 @@
     NSLog(@"The paywall presented. PaywallInfo: %@", paywallInfo);
   }];
 
+  [handler onSkip:^(enum SWKPaywallSkippedReason reason) {
+    switch (reason) {
+      case SWKPaywallSkippedReasonUserIsSubscribed:
+        NSLog(@"Paywall not shown because user is subscribed.");
+        break;
+      case SWKPaywallSkippedReasonHoldout:
+        NSLog(@"Paywall not shown because user is in a holdout group.");
+        break;
+      case SWKPaywallSkippedReasonNoRuleMatch:
+        NSLog(@"Paywall not shown because user doesn't match any rules.");
+        break;
+      case SWKPaywallSkippedReasonEventNotFound:
+        NSLog(@"Paywall not shown because this event isn't part of a campaign.");
+        break;
+    }
+  }];
+
   [handler onError:^(NSError * _Nonnull error) {
     NSLog(@"The paywall presentation failed with error %@", error);
   }];

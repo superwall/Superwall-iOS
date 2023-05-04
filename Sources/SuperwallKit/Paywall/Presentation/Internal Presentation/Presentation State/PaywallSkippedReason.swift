@@ -74,7 +74,4 @@ public enum PaywallSkippedReasonObjc: Int, Sendable, Equatable {
   /// By default, paywalls do not show to users who are already subscribed. You can override this
   /// behavior in the paywall editor.
   case userIsSubscribed
-
-  /// An error occurred.
-  case error
 }

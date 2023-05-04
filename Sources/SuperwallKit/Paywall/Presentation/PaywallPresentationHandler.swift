@@ -13,22 +13,25 @@ import Foundation
 @objcMembers
 public class PaywallPresentationHandler: NSObject {
   /// A block called when the paywall did present.
-  var onPresentHandler: ((_ paywallInfo: PaywallInfo) -> Void)?
+  var onPresentHandler: ((PaywallInfo) -> Void)?
 
   /// A block called when the paywall did dismiss.
-  var onDismissHandler: ((_ paywallInfo: PaywallInfo) -> Void)?
+  var onDismissHandler: ((PaywallInfo) -> Void)?
 
   /// A block called when an error occurred while trying to present a paywall.
-  var onErrorHandler: ((_ error: Error) -> Void)?
+  var onErrorHandler: ((Error) -> Void)?
 
   /// A block called when an error occurred while trying to present a paywall.
-  var onSkipHandler: ((_ reason: PaywallSkippedReason) -> Void)?
+  var onSkipHandler: ((PaywallSkippedReason) -> Void)?
+
+  /// An objective-c only block called when an error occurred while trying to present a paywall.
+  var onSkipHandlerObjc: ((PaywallSkippedReasonObjc) -> Void)?
 
   /// Sets the handler that will be called when the paywall did presented.
   ///
   /// - Parameter handler: A block that accepts a ``PaywallInfo`` object associated with
   /// the presented paywall.
-  public func onPresent(_ handler: @escaping (_ paywallInfo: PaywallInfo) -> Void) {
+  public func onPresent(_ handler: @escaping (PaywallInfo) -> Void) {
     self.onPresentHandler = handler
   }
 
@@ -36,7 +39,7 @@ public class PaywallPresentationHandler: NSObject {
   ///
   /// - Parameter handler: A block that accepts a ``PaywallInfo`` object associated with
   /// the dismissed paywall.
-  public func onDismiss(_ handler: @escaping (_ paywallInfo: PaywallInfo) -> Void) {
+  public func onDismiss(_ handler: @escaping (PaywallInfo) -> Void) {
     self.onDismissHandler = handler
   }
 
@@ -44,7 +47,7 @@ public class PaywallPresentationHandler: NSObject {
   ///
   /// - Parameter handler: A block that accepts an `Error` indicating why the paywall
   /// could not present.
-  public func onError(_ handler: @escaping (_ error: Error) -> Void) {
+  public func onError(_ handler: @escaping (Error) -> Void) {
     self.onErrorHandler = handler
   }
 
@@ -52,7 +55,16 @@ public class PaywallPresentationHandler: NSObject {
   ///
   /// - Parameter handler: A block that accepts a `Error` indicating why the paywall
   /// could not present.
-  public func onSkip(_ handler: @escaping (_ reason: PaywallSkippedReason) -> Void) {
+  public func onSkip(_ handler: @escaping (PaywallSkippedReason) -> Void) {
     self.onSkipHandler = handler
+  }
+
+  /// Sets the handler that will be called when a paywall is skipped, but no error has occurred.
+  ///
+  /// - Parameter handler: A block that accepts a `Error` indicating why the paywall
+  /// could not present.
+  @available(swift, obsoleted: 1.0)
+  public func onSkip(_ handler: @escaping (PaywallSkippedReasonObjc) -> Void) {
+    self.onSkipHandlerObjc = handler
   }
 }

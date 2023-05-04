@@ -30,6 +30,8 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 - ``register(event:params:handler:feature:)``
 - ``register(event:params:handler:)``
+- ``register(event:)``
+- ``register(event:params:)``
 - ``getPaywallViewController(forEvent:params:paywallOverrides:)``
 - ``getPaywallViewController(forEvent:params:paywallOverrides:completion:)``
 - ``publisher(forEvent:params:paywallOverrides:isFeatureGatable:)``

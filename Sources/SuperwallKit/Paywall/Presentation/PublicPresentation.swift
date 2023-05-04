@@ -123,46 +123,41 @@ extension Superwall {
     )
     .subscribe(Subscribers.Sink(
       receiveCompletion: { _ in },
-      receiveValue: { state in
+      receiveValue: { [weak self] state in
+        guard let self = self else {
+          return
+        }
         switch state {
         case .presented(let paywallInfo):
-          DispatchQueue.main.async {
             handler?.onPresentHandler?(paywallInfo)
-          }
         case let .dismissed(paywallInfo, state):
-          DispatchQueue.main.async {
             handler?.onDismissHandler?(paywallInfo)
-          }
           switch state {
           case .purchased,
             .restored:
-            DispatchQueue.main.async {
-              completion?()
-            }
+            completion?()
           case .closed:
             let closeReason = paywallInfo.closeReason
             let featureGating = paywallInfo.featureGatingBehavior
             if closeReason != .forNextPaywall && featureGating == .nonGated {
-              DispatchQueue.main.async {
-                completion?()
-              }
+              completion?()
             }
           }
         case .skipped(let reason):
-          DispatchQueue.main.async {
-            handler?.onSkipHandler?(reason)
-            completion?()
+          if let handler = handler?.onSkipHandler {
+            handler(reason)
+          } else {
+            let objcReason = self.onSkipConverter(reason: reason)
+            handler?.onSkipHandlerObjc?(objcReason)
           }
         case .presentationError(let error):
-          DispatchQueue.main.async {
-            handler?.onErrorHandler?(error) // otherwise turning internet off would give unlimited access
-          }
+          handler?.onErrorHandler?(error) // otherwise turning internet off would give unlimited access
         }
       }
     ))
   }
   
-  /// Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
+  /// Objective-C-only convenience method. Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
   ///
   /// This shows a paywall to the user when: An event you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.
   ///
@@ -177,7 +172,7 @@ extension Superwall {
     internallyRegister(event: event)
   }
 
-  /// Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
+  /// Objective-C-only convenience method. Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
   ///
   /// This shows a paywall to the user when: An event you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.
   ///
@@ -242,5 +237,18 @@ extension Superwall {
       return self.internallyPresent(presentationRequest)
     }
     .eraseToAnyPublisher()
+  }
+
+  private func onSkipConverter(reason: PaywallSkippedReason) -> PaywallSkippedReasonObjc {
+    switch reason {
+    case .holdout:
+      return .holdout
+    case .noRuleMatch:
+      return .noRuleMatch
+    case .eventNotFound:
+      return .eventNotFound
+    case .userIsSubscribed:
+      return .userIsSubscribed
+    }
   }
 }
