@@ -49,7 +49,8 @@ final class NetworkTests: XCTestCase {
       expectation.fulfill()
     }
 
-    wait(for: [expectation], timeout: 0.4)
+    await fulfillment(of: [expectation], timeout: 0.4)
+
     XCTAssertFalse(urlSession.didRequest)
   }
 

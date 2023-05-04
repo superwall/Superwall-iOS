@@ -94,13 +94,8 @@ final class PresentPaywallOperatorTests: XCTestCase {
       }
     } receiveValue: { state in
       switch state {
-      case .skipped(let reason):
-        switch reason {
-        case .error:
-          stateExpectation.fulfill()
-        default:
-          break
-        }
+      case .presentationError:
+        stateExpectation.fulfill()
       default:
         break
       }

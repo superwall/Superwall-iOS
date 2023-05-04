@@ -243,14 +243,9 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       }
     } receiveValue: { state in
       switch state {
-      case .skipped(let reason):
-        switch reason {
-        case .error(let error):
-          XCTAssertEqual(error as NSError, outputError)
-          stateExpectation.fulfill()
-        default:
-          break
-        }
+      case .presentationError(let error):
+        XCTAssertEqual(error as NSError, outputError)
+        stateExpectation.fulfill()
       default:
         break
       }

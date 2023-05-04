@@ -34,7 +34,8 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
       subscriptionStatus: inactiveSubscriptionPublisher,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPaywallViewController
     )
     let input = AssignmentPipelineOutput(
       request: request,
@@ -56,7 +57,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [pipelineExpectation], timeout: 0.1)
+    await fulfillment(of: [pipelineExpectation], timeout: 0.1)
     XCTAssertFalse(configManager.confirmedAssignment)
   }
 
@@ -81,7 +82,8 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
       subscriptionStatus: inactiveSubscriptionPublisher,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPaywallViewController
     )
 
     let input = AssignmentPipelineOutput(
@@ -105,7 +107,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [pipelineExpectation], timeout: 0.1)
+    await fulfillment(of: [pipelineExpectation], timeout: 0.1)
     XCTAssertFalse(configManager.confirmedAssignment)
   }
 
@@ -129,7 +131,8 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
       subscriptionStatus: inactiveSubscriptionPublisher,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPaywallViewController
     )
     let input = AssignmentPipelineOutput(
       request: request,
@@ -152,7 +155,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [pipelineExpectation], timeout: 0.1)
+    await fulfillment(of: [pipelineExpectation], timeout: 0.1)
     XCTAssertTrue(configManager.confirmedAssignment)
   }
 }

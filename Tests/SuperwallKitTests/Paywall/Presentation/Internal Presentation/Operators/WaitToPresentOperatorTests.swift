@@ -42,7 +42,7 @@ final class WaitToPresentTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   func test_waitToPresent_noIdentity_activeStatus() async {
@@ -67,7 +67,7 @@ final class WaitToPresentTests: XCTestCase {
       )
       .store(in: &cancellables)
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   func test_waitToPresent_hasIdentity_activeStatus_noConfig() async {
@@ -95,7 +95,7 @@ final class WaitToPresentTests: XCTestCase {
 
     identityManager.didSetIdentity()
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 
   func test_waitToPresent_hasIdentity_activeStatus_hasConfig() async {
@@ -109,7 +109,8 @@ final class WaitToPresentTests: XCTestCase {
       .explicitTrigger(.stub()),
       paywallOverrides: nil,
       isDebuggerLaunched: false,
-      isPaywallPresented: false
+      isPaywallPresented: false,
+      type: .getPaywallViewController
     )
     .setting(\.dependencyContainer.identityManager, to: identityManager)
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
@@ -129,6 +130,6 @@ final class WaitToPresentTests: XCTestCase {
 
     identityManager.didSetIdentity()
 
-    wait(for: [expectation], timeout: 0.1)
+    await fulfillment(of: [expectation], timeout: 0.1)
   }
 }
