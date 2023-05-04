@@ -107,8 +107,6 @@ extension Superwall {
     }
 
     presentingWindow?.rootViewController = UIViewController()
-//    presentingWindow?.makeKeyAndVisible()
-
     presentationItems.window = presentingWindow
   }
 
