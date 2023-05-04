@@ -41,19 +41,15 @@ struct HomeView: View {
       VStack(spacing: 25) {
         BrandedButton(title: "Launch Feature") {
           let handler = PaywallPresentationHandler()
-
           handler.onDismiss { paywallInfo in
             print("The paywall dismissed. PaywallInfo:", paywallInfo)
           }
-
           handler.onPresent { paywallInfo in
             print("The paywall presented. PaywallInfo:", paywallInfo)
           }
-
           handler.onError { error in
             print("The paywall presentation failed with error \(error)")
           }
-
           handler.onSkip { reason in
             switch reason {
             case .userIsSubscribed:

@@ -28,10 +28,11 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 ### Presenting and Dismissing a Paywall
 
-- ``register(event:params:handler:)``
 - ``register(event:params:handler:feature:)``
+- ``register(event:params:handler:)``
 - ``getPaywallViewController(forEvent:params:paywallOverrides:)``
 - ``getPaywallViewController(forEvent:params:paywallOverrides:completion:)``
+- ``publisher(forEvent:params:paywallOverrides:isFeatureGatable:)``
 - ``getPresentationResult(forEvent:)``
 - ``getPresentationResult(forEvent:params:)-9ivi6``
 - ``getPresentationResult(forEvent:params:)-60qtr``

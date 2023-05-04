@@ -71,11 +71,9 @@ final class HomeViewController: UIViewController {
     handler.onPresent { paywallInfo in
       print("The paywall presented. PaywallInfo:", paywallInfo)
     }
-
     handler.onError { error in
       print("The paywall presentation failed with error \(error)")
     }
-
     handler.onSkip { reason in
       switch reason {
       case .userIsSubscribed:

@@ -494,7 +494,6 @@ final class DebugViewController: UIViewController {
           self.bottomButton.setImage(playButton, for: .normal)
           self.activityIndicator.stopAnimating()
         }
-
       }
   }
 

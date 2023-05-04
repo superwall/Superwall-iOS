@@ -10,7 +10,7 @@ import StoreKit
 
 /// Defines primary, secondary and tertiary products to be used on the paywall.
 ///
-/// Pass an instance of this to ``Superwall/track(event:params:paywallOverrides:paywallHandler:)`` to replace your remotely defined products.
+/// Pass an instance of this to ``PaywallOverrides/products`` to replace your remotely defined products.
 @objc(SWKPaywallProducts)
 @objcMembers
 public final class PaywallProducts: NSObject, Sendable {

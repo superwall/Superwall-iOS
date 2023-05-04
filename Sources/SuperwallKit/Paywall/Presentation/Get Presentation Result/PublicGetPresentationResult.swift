@@ -10,22 +10,19 @@ import Foundation
 typealias PresentationPipelineError = PaywallPresentationRequestStatusReason
 
 extension Superwall {
-  /// Preemptively get the result of tracking an event.
+  /// Preemptively gets the result of registering an event.
   ///
-  /// Use this function if you want to preemptively get the result of tracking
-  /// an event.
-  ///
-  /// This is useful for when you want to know whether a particular event will
-  /// present a paywall in the future.
+  /// This helps you determine whether a particular event will present a paywall
+  /// in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``track(event:params:paywallOverrides:paywallHandler:)``.
+  /// ``register(event:params:handler:feature:)``.
   ///
   /// - Parameters:
-  ///     - event: The name of the event you want to track.
+  ///     - event: The name of the event you want to register.
   ///     - params: Optional parameters you'd like to pass with your event.
   ///
-  /// - Returns: A ``PresentationResult`` that indicates the result of tracking an event.
+  /// - Returns: A ``PresentationResult`` that indicates the result of registering an event.
   public func getPresentationResult(
     forEvent event: String,
     params: [String: Any]? = nil
@@ -37,19 +34,16 @@ extension Superwall {
     )
   }
 
-  /// Preemptively get the result of tracking an event.
+  /// Preemptively gets the result of registering an event.
   ///
-  /// Use this function if you want to preemptively get the result of tracking
-  /// an event.
-  ///
-  /// This is useful for when you want to know whether a particular event will
-  /// present a paywall in the future.
+  /// This helps you determine whether a particular event will present a paywall
+  /// in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``track(event:params:paywallOverrides:paywallHandler:)``.
+  /// ``register(event:params:handler:feature:)``.
   ///
   /// - Parameters:
-  ///     - event: The name of the event you want to track.
+  ///     - event: The name of the event you want to register.
   ///     - params: Optional parameters you'd like to pass with your event.
   ///     - completion: A completion block that accepts a ``PresentationResult`` indicating
   ///     the result of tracking an event.
@@ -64,8 +58,8 @@ extension Superwall {
     }
   }
 
-  /// Call when you need to get the presentation result from an implicit event. This prevents logs being
-  /// fired.
+  /// Called internally when you need to get the presentation result from an implicit event.
+  /// This prevents logs being fired.
   func getImplicitPresentationResult(forEvent event: String) async -> PresentationResult {
     return await internallyGetPresentationResult(
       forEvent: event,
@@ -109,16 +103,16 @@ extension Superwall {
     return await getPresentationResult(for: presentationRequest)
   }
 
-  /// Objective-C-only function to preemptively get the result of tracking an event.
+  /// Objective-C-only function to preemptively gets the result of registering an event.
   ///
-  /// This is useful for when you want to know whether a particular event will
-  /// present a paywall in the future.
+  /// This helps you determine whether a particular event will present a paywall
+  /// in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``.
+  /// ``register(event:params:handler:feature:)``.
   ///
   /// - Parameters:
-  ///     - event: The name of the event you want to track.
+  ///     - event: The name of the event you want to register.
   ///     - params: Optional parameters you'd like to pass with your event.
   ///
   /// - Returns: A ``PresentationResultObjc`` object that contains information about the result of tracking an event.
@@ -131,17 +125,15 @@ extension Superwall {
     return PresentationResultObjc(trackResult: result)
   }
 
-  /// Objective-C-only function to preemptively get the result of tracking an event.
+  /// Objective-C-only function to preemptively gets the result of registering an event.
   ///
-  /// This is useful for when you want to know whether a particular event will
-  /// present a paywall in the future.
+  /// This helps you determine whether a particular event will present a paywall
+  /// in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``track(event:params:products:ignoreSubscriptionStatus:presentationStyleOverride:onSkip:onPresent:onDismiss:)``.
+  /// ``register(event:params:handler:feature:)``.
   ///
-  /// - Parameters:
-  ///     - event: The name of the event you want to track.
-  ///
+  /// - Parameters event: The name of the event you want to register.
   /// - Returns: A ``PresentationResultObjc`` object that contains information about the result of tracking an event.
   @available(swift, obsoleted: 1.0)
   @objc public func getPresentationResult(

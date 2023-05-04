@@ -43,5 +43,4 @@ public enum PaywallState {
 
   /// The paywall was intentionally skipped. Contains a ``PaywallSkippedReason`` enum whose cases state why the paywall was skipped.
   case skipped(PaywallSkippedReason)
-
 }

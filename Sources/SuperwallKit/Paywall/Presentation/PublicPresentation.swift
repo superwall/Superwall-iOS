@@ -4,7 +4,6 @@
 //
 //  Created by Jake Mor on 10/9/21.
 //
-// swiftlint:disable line_length file_length function_body_length
 
 import Foundation
 import Combine
@@ -159,12 +158,11 @@ extension Superwall {
             handler?.onErrorHandler?(error) // otherwise turning internet off would give unlimited access
           }
         }
-
       }
     ))
   }
 
-  /// Returns a publisher that tracks an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
+  /// Returns a publisher that registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
   ///
   /// This shows a paywall to the user when: An event you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.
   ///
@@ -173,7 +171,7 @@ extension Superwall {
   /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event you wish to track.
+  ///   -  event: The name of the event you wish to register.
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///

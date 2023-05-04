@@ -91,7 +91,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
 
   // MARK: - Private Properties
   /// Internal passthrough subject that emits ``PaywallState`` objects. These state objects feed back to
-  /// the caller of ``Superwall/track(event:params:paywallOverrides:paywallHandler:)``
+  /// the caller of ``Superwall/register(event:params:handler:feature:)``
   ///
   /// This publisher is set on presentation of the paywall.
   private var paywallStateSubject: PassthroughSubject<PaywallState, Never>!

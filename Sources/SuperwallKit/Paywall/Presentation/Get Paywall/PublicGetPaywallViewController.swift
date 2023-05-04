@@ -40,7 +40,7 @@ extension Superwall {
     paywallOverrides: PaywallOverrides? = nil,
     completion: @escaping (Result<PaywallViewController, Error>) -> Void
   ) {
-    Task { @MainActor in 
+    Task { @MainActor in
       do {
         let paywallViewController = try await getPaywallViewController(
           forEvent: event,
@@ -81,13 +81,13 @@ extension Superwall {
   /// - Throws: An `Error` explaining why it couldn't get the view controller.
   @MainActor
   public func getPaywallViewController(
-    forEvent: String,
+    forEvent event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil
   ) async throws -> PaywallViewController {
     return try await Future {
       let trackableEvent = UserInitiatedEvent.Track(
-        rawName: forEvent,
+        rawName: event,
         canImplicitlyTriggerPaywall: false,
         customParameters: params ?? [:],
         isFeatureGatable: false

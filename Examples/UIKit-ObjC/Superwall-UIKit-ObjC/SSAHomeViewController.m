@@ -46,15 +46,18 @@
 
 - (IBAction)registerEvent:(id)sender {
   SWKPaywallPresentationHandler *handler = [[SWKPaywallPresentationHandler alloc] init];
-  handler.onDismiss = ^(SWKPaywallInfo *paywallInfo) {
+
+  [handler onDismiss:^(SWKPaywallInfo * _Nonnull paywallInfo) {
     NSLog(@"The paywall dismissed. PaywallInfo: %@", paywallInfo);
-  };
-  handler.onPresent = ^(SWKPaywallInfo *paywallInfo) {
+  }];
+
+  [handler onPresent:^(SWKPaywallInfo * _Nonnull paywallInfo) {
     NSLog(@"The paywall presented. PaywallInfo: %@", paywallInfo);
-  };
-  handler.onError = ^(NSError * _Nonnull error) {
+  }];
+
+  [handler onError:^(NSError * _Nonnull error) {
     NSLog(@"The paywall presentation failed with error %@", error);
-  };
+  }];
 
   [[Superwall sharedInstance] registerWithEvent:@"campaign_trigger" params:nil handler:handler feature:^{
     UIAlertController* alert = [UIAlertController
