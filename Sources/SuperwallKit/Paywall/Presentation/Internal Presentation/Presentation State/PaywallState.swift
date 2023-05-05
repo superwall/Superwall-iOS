@@ -20,13 +20,29 @@ public enum PaywallResult: Equatable, Sendable {
 
   /// The paywall was dismissed due to the user restoring their purchases.
   case restored
+
+  func convertForObjc() -> PaywallResultObjc {
+    switch self {
+    case .purchased(let productId):
+      return .purchased
+    case .closed:
+      return .closed
+    case .restored:
+      return .restored
+    }
+  }
 }
 
-/// Objective-C compatible enum for ``PaywallResult``
+/// Objective-C-only enum. Contains the possible reasons for the dismissal of a paywall.
 @objc(SWKPaywallResult)
 public enum PaywallResultObjc: Int, Sendable {
+  /// The paywall was dismissed because the user purchased a product
   case purchased
+
+  /// The paywall was dismissed by the user manually pressing the close button.
   case closed
+
+  /// The paywall was dismissed due to the user restoring their purchases.
   case restored
 }
 
