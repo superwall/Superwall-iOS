@@ -23,6 +23,7 @@ public final class Experiment: NSObject, Codable, Sendable {
   public typealias ID = String
 
   @objc(SWKVariant)
+  @objcMembers
   public final class Variant: NSObject, Codable, Sendable {
     @objc(SWKVariantType)
     public enum VariantType: Int, Codable, Hashable, Sendable {

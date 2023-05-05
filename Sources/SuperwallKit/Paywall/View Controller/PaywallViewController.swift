@@ -36,6 +36,8 @@ enum PaywallLoadingState {
   case ready
 }
 
+@objc(SWKPaywallViewController)
+@objcMembers
 public class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegate {
   // MARK: - Public Properties
   /// A publisher that emits ``PaywallState`` objects, which tell you the state of the presented paywall.

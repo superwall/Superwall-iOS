@@ -76,8 +76,8 @@ extension ProductType: CustomStringConvertible {
 }
 
 /// The product in the paywall.
-@objcMembers
 @objc(SWKProduct)
+@objcMembers
 public final class Product: NSObject, Codable, Sendable {
   /// The type of product.
   public let type: ProductType

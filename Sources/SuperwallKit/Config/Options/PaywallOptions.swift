@@ -20,6 +20,7 @@ public final class PaywallOptions: NSObject {
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
 
   @objc(SWKRestoreFailed)
+  @objcMembers
   public final class RestoreFailed: NSObject {
     /// The title of the alert presented to the user when restoring a transaction fails. Defaults to
     /// `No Subscription Found`.

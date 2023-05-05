@@ -23,6 +23,7 @@ public final class PaywallProducts: NSObject, Sendable {
   /// The tertiary product for the paywall.
   let tertiary: StoreProduct?
 
+  ///  The product IDs.
   let ids: [String]
 
   private override init() {

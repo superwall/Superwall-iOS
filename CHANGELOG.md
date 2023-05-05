@@ -2,11 +2,21 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-rc.6
+
+### Breaking Changes
+
+- `getPaywallViewController(forEvent:params:paywallOverrides:completion:)` now accepts an optional `PaywallViewController`, an optional `PaywallSkippedReason` and an optional `Error`. This makes it easier to understand when the paywall was skipped vs when a real error occurred.
+
+### Enhancements
+
+- Exposes `PaywallOverrides` and `PaywallViewController` to Objective-C.
+
 ## 3.0.0-rc.5
 
 ### Fixes
 
-- Fixes bug where `Superwall.shared.register`'s feature handler would not be called if the user is subscribed
+- Fixes bug where `Superwall.shared.register`'s feature handler would not be called if the user is subscribed.
 
 ## 3.0.0-rc.4
 
