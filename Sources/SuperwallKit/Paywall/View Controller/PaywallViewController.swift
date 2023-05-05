@@ -242,16 +242,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   }
 
   @objc private func pressedRefreshPaywall() {
-    dismiss(
-      result: .closed,
-      shouldSendPaywallResult: false,
-      shouldCompleteStatePublisher: false
-    ) { [weak self] in
-      guard let self = self else {
-        return
-      }
-      Superwall.shared.presentAgain(cacheKey: self.cacheKey)
-    }
+    webView.reload()
   }
 
   @objc private func pressedExitPaywall() {
@@ -639,10 +630,6 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 extension PaywallViewController {
   override public func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    guard isActive else {
-      return
-    }
-
     cache?.activePaywallVcKey = cacheKey
 
     if isSafariVCPresented {
