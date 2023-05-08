@@ -1,4 +1,4 @@
-<p align="center">      
+<p align="center">       
   <br />
   <img src=https://user-images.githubusercontent.com/3296904/158817914-144c66d0-572d-43a4-9d47-d7d0b711c6d7.png alt="logo" height="100px" />
   <h3 style="font-size:26" align="center">In-App Paywalls Made Easy 💸</h3>
