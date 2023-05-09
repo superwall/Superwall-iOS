@@ -6,7 +6,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Breaking Changes
 
-- `getPaywallViewController(forEvent:params:paywallOverrides:completion:)` now accepts an optional `PaywallViewController`, an optional `PaywallSkippedReason` and an optional `Error`. This makes it easier to understand when the paywall was skipped vs when a real error occurred.
+- Adds a `PaywallViewControllerDelegate` to the getPaywalliewController functions. This is mandatory and is how you control what happens after a paywall is dismissed.
+- The completion block of `getPaywallViewController(forEvent:params:paywallOverrides:delegate:completion:)` now accepts an optional `PaywallViewController`, an optional `PaywallSkippedReason` and an optional `Error`. This makes it easier to understand when the paywall was skipped vs when a real error occurred.
+- Renamed the `PaywallResult` case `closed` to `declined`.
 
 ### Enhancements
 

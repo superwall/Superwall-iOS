@@ -24,7 +24,7 @@ final class CheckPaywallIsPresentableTests: XCTestCase {
         .setting(\.flags.subscriptionStatus, to: publisher),
       triggerResult: .paywall(.stub()),
       debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
       confirmableAssignment: nil
     )
 
@@ -69,7 +69,7 @@ final class CheckPaywallIsPresentableTests: XCTestCase {
         .setting(\.flags.subscriptionStatus, to: publisher),
       triggerResult: triggerResult,
       debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil),
+      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
       confirmableAssignment: nil
     )
 

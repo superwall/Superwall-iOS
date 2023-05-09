@@ -8,33 +8,8 @@
 
 import WebKit
 import UIKit
-import Foundation
 import SafariServices
 import Combine
-
-protocol PaywallViewControllerDelegate: AnyObject {
-	@MainActor func eventDidOccur(
-    _ paywallEvent: PaywallWebEvent,
-    on paywallViewController: PaywallViewController
-  ) async
-}
-
-enum PaywallLoadingState {
-  /// The initial state of the paywall
-  case unknown
-
-  /// When a purchase is loading
-  case loadingPurchase
-
-  /// When the paywall URL is loading
-  case loadingURL
-
-  /// When the user has manually shown the spinner
-  case manualLoading
-
-  /// When everything has loaded.
-  case ready
-}
 
 @objc(SWKPaywallViewController)
 public class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegate {
@@ -90,6 +65,8 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     }
   }
 
+  var delegate: PaywallViewControllerDelegateAdapter?
+
   // MARK: - Private Properties
   /// Internal passthrough subject that emits ``PaywallState`` objects. These state objects feed back to
   /// the caller of ``Superwall/register(event:params:handler:feature:)``
@@ -97,7 +74,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   /// This publisher is set on presentation of the paywall.
   private var paywallStateSubject: PassthroughSubject<PaywallState, Never>!
 
-  private weak var delegate: PaywallViewControllerDelegate?
+  private weak var eventDelegate: PaywallViewControllerEventDelegate?
 
   /// Defines whether the view controller is being presented or not.
   private var isPresented = false
@@ -125,7 +102,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     ButtonFactory.make(
       imageNamed: "reload_paywall",
       target: self,
-      action: #selector(pressedRefreshPaywall)
+      action: #selector(reloadWebView)
     )
 	}()
 
@@ -134,7 +111,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     ButtonFactory.make(
       imageNamed: "exit_paywall",
       target: self,
-      action: #selector(pressedExitPaywall)
+      action: #selector(forceClose)
     )
   }()
 
@@ -160,7 +137,8 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
 
 	init(
     paywall: Paywall,
-    delegate: PaywallViewControllerDelegate? = nil,
+    eventDelegate: PaywallViewControllerEventDelegate? = nil,
+    delegate: PaywallViewControllerDelegateAdapter? = nil,
     deviceHelper: DeviceHelper,
     sessionEventsManager: SessionEventsManager,
     storage: Storage,
@@ -174,7 +152,9 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
       locale: deviceHelper.locale
     )
     self.deviceHelper = deviceHelper
-		self.delegate = delegate
+		self.eventDelegate = eventDelegate
+    self.delegate = delegate
+
     self.sessionEventsManager = sessionEventsManager
     self.storage = storage
     self.paywall = paywall
@@ -192,7 +172,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   public override func viewDidLoad() {
     super.viewDidLoad()
 		configureUI()
-    loadPaywallWebpage()
+    loadWebView()
 	}
 
   private func configureUI() {
@@ -241,13 +221,10 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     await sessionEventsManager.triggerSession.trackPaywallClose()
   }
 
-  @objc private func pressedRefreshPaywall() {
-    webView.reload()
-  }
-
-  @objc private func pressedExitPaywall() {
+  /// Triggered by user closing the paywall when the webview hasn't loaded.
+  @objc private func forceClose() {
     dismiss(
-      result: .closed
+      result: .declined
     ) { [weak self] in
       guard let self = self else {
         return
@@ -256,7 +233,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     }
   }
 
-  private func loadPaywallWebpage() {
+  private func loadWebView() {
     let url = paywall.url
 
     if paywall.webviewLoadingInfo.startAt == nil {
@@ -284,6 +261,10 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     }
 
     loadingState = .loadingURL
+  }
+
+  @objc private func reloadWebView() {
+    webView.reload()
   }
 
   // MARK: - State Handling
@@ -452,10 +433,11 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
 
   // MARK: - Presentation Logic
 
+  /// Sets the event data for use in ``PaywallInfo`` and the state publisher
+  /// for callbacks.
   func set(
     eventData: EventData?,
-    presentationStyleOverride: PaywallPresentationStyle?,
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never> = .init()
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) {
     self.eventData = eventData
     self.paywallStateSubject = paywallStatePublisher
@@ -475,8 +457,10 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     }
     Superwall.shared.presentationItems.window?.makeKeyAndVisible()
 
-    self.eventData = eventData
-    self.paywallStateSubject = paywallStatePublisher
+    set(
+      eventData: eventData,
+      paywallStatePublisher: paywallStatePublisher
+    )
 
     setPresentationStyle(withOverride: presentationStyleOverride)
 
@@ -488,10 +472,10 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     }
   }
 
-  private func setPresentationStyle(withOverride presentationStyleOverride: PaywallPresentationStyle?) {
-    if let presentationStyleOverride = presentationStyleOverride,
-      presentationStyleOverride != .none {
-      presentationStyle = presentationStyleOverride
+  private func setPresentationStyle(withOverride override: PaywallPresentationStyle?) {
+    if let override = override,
+      override != .none {
+      presentationStyle = override
     } else {
       presentationStyle = paywall.presentation.style
     }
@@ -552,45 +536,11 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   }
 }
 
-// MARK: - Public API
-extension PaywallViewController {
-  /// Attach a block that is called after the paywall has dismissed.
-  ///
-  /// - Parameter handler: A block that returns a ``PaywallResult``
-  public func onDismiss(
-    _ handler: @escaping (_ result: PaywallResult) -> Void
-  ) {
-    paywallStateSubject.subscribe(Subscribers.Sink(
-      receiveCompletion: { _ in },
-      receiveValue: { paywallState in
-        switch paywallState {
-        case .dismissed(_, let dismissState):
-          handler(dismissState)
-        default:
-          break
-        }
-      }
-    ))
-  }
-
-  /// Attach a block that is called after the paywall has dismissed.
-  ///
-  /// - Parameter handler: A block that returns a ``PaywallResultObjc``
-  @available(swift, obsoleted: 1.0)
-  @objc public func onDismiss(
-    _ handler: @escaping (_ result: PaywallResultObjc) -> Void
-  ) {
-    onDismiss { result in
-      handler(result.convertForObjc())
-    }
-  }
-}
-
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
     Task {
-      await delegate?.eventDidOccur(
+      await eventDelegate?.eventDidOccur(
         paywallEvent,
         on: self
       )
@@ -618,7 +568,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
   func openDeepLink(_ url: URL) {
     dismiss(
-      result: .closed
+      result: .declined
     ) { [weak self] in
       self?.eventDidOccur(.openedDeepLink(url: url))
       UIApplication.shared.open(url)
@@ -721,7 +671,7 @@ extension PaywallViewController {
 
     if !calledDismiss {
       didDismiss(
-        paywallResult: .closed
+        paywallResult: .declined
       )
     }
 
@@ -735,25 +685,29 @@ extension PaywallViewController {
 
   func dismiss(
     result: PaywallResult,
-    shouldSendPaywallResult: Bool = true,
-    shouldCompleteStatePublisher: Bool = true,
     closeReason: PaywallCloseReason = .systemLogic,
     completion: (() -> Void)? = nil
   ) {
-    calledDismiss = true
     paywall.closeReason = closeReason
     willDismiss()
 
-    dismiss(animated: presentationIsAnimated) { [weak self] in
-      guard let self = self else {
-        return
-      }
-      self.didDismiss(
-        paywallResult: result,
-        shouldSendPaywallResult: shouldSendPaywallResult,
-        shouldSendCompletion: shouldCompleteStatePublisher,
-        completion: completion
+    if let delegate = delegate {
+      delegate.didFinish(
+        controller: self,
+        swiftResult: result,
+        objcResult: result.convertForObjc()
       )
+    } else {
+      calledDismiss = true
+      dismiss(animated: presentationIsAnimated) { [weak self] in
+        guard let self = self else {
+          return
+        }
+        self.didDismiss(
+          paywallResult: result,
+          completion: completion
+        )
+      }
     }
   }
 
@@ -764,8 +718,6 @@ extension PaywallViewController {
 
   private func didDismiss(
     paywallResult: PaywallResult,
-    shouldSendPaywallResult: Bool = true,
-    shouldSendCompletion: Bool = true,
     completion: (() -> Void)? = nil
   ) {
     let isShowingSpinner = loadingState == .loadingPurchase || loadingState == .manualLoading
@@ -779,10 +731,9 @@ extension PaywallViewController {
     GameControllerManager.shared.clearDelegate(self)
     Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall(withInfo: paywallInfo)
 
-    if shouldSendPaywallResult {
-      paywallStateSubject?.send(.dismissed(paywallInfo, paywallResult))
-    }
-    if shouldSendCompletion {
+    paywallStateSubject?.send(.dismissed(paywallInfo, paywallResult))
+
+    if paywall.closeReason == .systemLogic {
       paywallStateSubject?.send(completion: .finished)
       paywallStateSubject = nil
     }
@@ -800,16 +751,6 @@ extension PaywallViewController: SFSafariViewControllerDelegate {
 
 // MARK: - GameControllerDelegate
 extension PaywallViewController: GameControllerDelegate {
-  func connectionStatusDidChange(isConnected: Bool) {
-    Logger.debug(
-      logLevel: .debug,
-      scope: .gameControllerManager,
-      message: "Status Changed",
-      info: ["connected": isConnected],
-      error: nil
-    )
-  }
-
   func gameControllerEventDidOccur(event: GameControllerEvent) {
     guard let payload = event.jsonString else {
       return

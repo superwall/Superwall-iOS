@@ -9,7 +9,7 @@ import Foundation
 
 /// Override the default behavior and products of a paywall.
 ///
-/// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:)``.
+/// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:)``.
 @objc(SWKPaywallOverrides)
 @objcMembers
 public final class PaywallOverrides: NSObject, Sendable {
@@ -26,7 +26,7 @@ public final class PaywallOverrides: NSObject, Sendable {
 
   /// Override the default behavior and products of a paywall.
   ///
-  /// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:)``.
+  /// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:)``.
   ///
   /// - parameters:
   ///   - products: A ``PaywallProducts`` object defining the products to override on the paywall.
@@ -44,7 +44,7 @@ public final class PaywallOverrides: NSObject, Sendable {
 
   /// Override the default behavior and products of a paywall.
   ///
-  /// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:)``.
+  /// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:)``.
   ///
   /// - parameters:
   ///   - products: A ``PaywallProducts`` object defining the products to override on the paywall.
@@ -57,7 +57,7 @@ public final class PaywallOverrides: NSObject, Sendable {
 
   /// Override the default behavior and products of a paywall.
   ///
-  /// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:)``.
+  /// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:)``.
   ///
   /// - parameters:
   ///   - products: A ``PaywallProducts`` object defining the products to override on the paywall.

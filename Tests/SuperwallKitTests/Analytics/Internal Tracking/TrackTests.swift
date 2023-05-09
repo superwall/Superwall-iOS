@@ -261,7 +261,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController,
+      type: .getPaywallViewController(.stub()),
       status: .noPresentation,
       statusReason: .userIsSubscribed
     )
@@ -279,7 +279,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController,
+      type: .getPaywallViewController(.stub()),
       status: .noPresentation,
       statusReason: .eventNotFound
     )
@@ -297,7 +297,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController,
+      type: .getPaywallViewController(.stub()),
       status: .noPresentation,
       statusReason: .noRuleMatch
     )
@@ -315,7 +315,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController,
+      type: .getPaywallViewController(.stub()),
       status: .noPresentation,
       statusReason: .paywallAlreadyPresented
     )
@@ -333,7 +333,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController,
+      type: .getPaywallViewController(.stub()),
       status: .noPresentation,
       statusReason: .debuggerPresented
     )
@@ -351,7 +351,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController,
+      type: .getPaywallViewController(.stub()),
       status: .noPresentation,
       statusReason: .noPresenter
     )
@@ -369,7 +369,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController,
+      type: .getPaywallViewController(.stub()),
       status: .noPresentation,
       statusReason: .noPaywallViewController
     )
@@ -387,7 +387,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController,
+      type: .getPaywallViewController(.stub()),
       status: .noPresentation,
       statusReason: .holdout(.stub())
     )

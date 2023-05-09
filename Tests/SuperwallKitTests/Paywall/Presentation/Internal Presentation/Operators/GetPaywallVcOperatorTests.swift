@@ -65,7 +65,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     CurrentValueSubject(input)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
-      .getPaywallViewController(pipelineType: .presentation(statePublisher))
+      .getPaywallViewController(statePublisher)
       .eraseToAnyPublisher()
       .sink(
         receiveCompletion: { completion in
@@ -81,8 +81,6 @@ final class GetPaywallVcOperatorTests: XCTestCase {
         }
       )
       .store(in: &cancellables)
-
-    try? await Task.sleep(nanoseconds: 1_000_000)
 
     await fulfillment(of: [expectation, stateExpectation], timeout: 0.1)
   }
@@ -135,7 +133,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     CurrentValueSubject(input)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
-      .getPaywallViewController(pipelineType: .presentation(statePublisher))
+      .getPaywallViewController(statePublisher)
       .eraseToAnyPublisher()
       .sink(
         receiveCompletion: { completion in
@@ -173,7 +171,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
       factory: dependencyContainer,
       paywallRequestManager: dependencyContainer.paywallRequestManager
     )
-    paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil)
+    paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil)
 
     let request = PresentationRequest.stub()
       .setting(\.dependencyContainer.paywallManager, to: paywallManager)
@@ -191,7 +189,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     CurrentValueSubject(input)
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
-      .getPaywallViewController(pipelineType: .presentation(statePublisher))
+      .getPaywallViewController(statePublisher)
       .eraseToAnyPublisher()
       .sink(
         receiveCompletion: { completion in

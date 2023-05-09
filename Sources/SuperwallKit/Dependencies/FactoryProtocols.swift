@@ -12,8 +12,10 @@ protocol ViewControllerFactory: AnyObject {
   @MainActor
   func makePaywallViewController(
     for paywall: Paywall,
-    withCache cache: PaywallViewControllerCache?
+    withCache cache: PaywallViewControllerCache?,
+    delegate: PaywallViewControllerDelegateAdapter?
   ) -> PaywallViewController
+
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
 }
 

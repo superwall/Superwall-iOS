@@ -16,10 +16,6 @@ struct PaywallVcPipelineOutput {
 }
 
 extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Failure == Error {
-  enum PipelineType {
-    case getPresentationResult
-    case presentation(PassthroughSubject<PaywallState, Never>)
-  }
   /// Requests the paywall view controller to present. If an error occurred during this,
   /// or a paywall is already presented, it cancels the pipeline and sends an `error`
   /// state to the paywall state publisher.
@@ -28,7 +24,9 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   ///
   /// - Returns: A publisher that contains info for the next pipeline operator.
-  func getPaywallViewController(pipelineType: PipelineType) -> AnyPublisher<PaywallVcPipelineOutput, Error> {
+  func getPaywallViewController(
+    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
+  ) -> AnyPublisher<PaywallVcPipelineOutput, Error> {
     asyncMap { input in
       let responseIdentifiers = ResponseIdentifiers(
         paywallId: input.experiment.variant.paywallId,
@@ -49,7 +47,8 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         let paywallViewController = try await dependencyContainer.paywallManager.getPaywallViewController(
           from: paywallRequest,
           isPreloading: false,
-          isDebuggerLaunched: input.request.flags.isDebuggerLaunched
+          isDebuggerLaunched: input.request.flags.isDebuggerLaunched,
+          delegate: input.request.flags.type.getPaywallVcDelegateAdapter()
         )
 
         let output = PaywallVcPipelineOutput(
@@ -61,10 +60,16 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         )
         return output
       } catch {
-        switch pipelineType {
-        case .getPresentationResult:
+        switch input.request.flags.type {
+        case .getImplicitPresentationResult,
+          .getPresentationResult:
           throw GetPresentationResultError.paywallNotAvailable
-        case .presentation(let paywallStatePublisher):
+        case .presentation,
+          .getPaywallViewController:
+          guard let paywallStatePublisher = paywallStatePublisher else {
+            // Will never get here
+            throw error
+          }
           throw await presentationFailure(error, input, paywallStatePublisher)
         }
       }

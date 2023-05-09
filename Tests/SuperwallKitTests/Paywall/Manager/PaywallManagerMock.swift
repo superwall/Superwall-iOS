@@ -16,7 +16,8 @@ final class PaywallManagerMock: PaywallManager {
   override func getPaywallViewController(
     from request: PaywallRequest,
     isPreloading: Bool,
-    isDebuggerLaunched: Bool
+    isDebuggerLaunched: Bool,
+    delegate: PaywallViewControllerDelegateAdapter?
   ) async throws -> PaywallViewController {
     if let getPaywallError = getPaywallError {
       throw getPaywallError

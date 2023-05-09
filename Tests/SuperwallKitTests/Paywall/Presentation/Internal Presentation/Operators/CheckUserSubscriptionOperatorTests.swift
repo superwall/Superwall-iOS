@@ -22,7 +22,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       subscriptionStatus: publisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController
+      type: .getPaywallViewController(.stub())
     )
 
     let input = AssignmentPipelineOutput(
@@ -84,7 +84,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       subscriptionStatus: publisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController
+      type: .getPaywallViewController(.stub())
     )
 
     let input = AssignmentPipelineOutput(
@@ -131,7 +131,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       subscriptionStatus: publisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController
+      type: .getPaywallViewController(.stub())
     )
 
     let input = AssignmentPipelineOutput(

@@ -23,7 +23,6 @@ extension AnyPublisher where Output == PresentablePipelineOutput, Failure == Err
         let paywallViewController = input.paywallViewController
         paywallViewController.set(
           eventData: input.request.presentationInfo.eventData,
-          presentationStyleOverride: input.request.paywallOverrides?.presentationStyle,
           paywallStatePublisher: paywallStatePublisher
         )
         return input.paywallViewController

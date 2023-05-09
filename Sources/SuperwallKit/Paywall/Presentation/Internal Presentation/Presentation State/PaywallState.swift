@@ -15,18 +15,18 @@ public enum PaywallResult: Equatable, Sendable {
   ///   - productId: The identifier of the product.
   case purchased(productId: String)
 
-  /// The paywall was dismissed by the user manually pressing the close button.
-  case closed
+  /// The paywall was declined by the user pressing the close button.
+  case declined
 
   /// The paywall was dismissed due to the user restoring their purchases.
   case restored
 
   func convertForObjc() -> PaywallResultObjc {
     switch self {
-    case .purchased(let productId):
+    case .purchased:
       return .purchased
-    case .closed:
-      return .closed
+    case .declined:
+      return .declined
     case .restored:
       return .restored
     }
@@ -39,8 +39,8 @@ public enum PaywallResultObjc: Int, Sendable {
   /// The paywall was dismissed because the user purchased a product
   case purchased
 
-  /// The paywall was dismissed by the user manually pressing the close button.
-  case closed
+  /// The paywall was declined by the user pressing the close button.
+  case declined
 
   /// The paywall was dismissed due to the user restoring their purchases.
   case restored

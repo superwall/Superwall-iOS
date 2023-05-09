@@ -40,7 +40,7 @@ extension Superwall {
     await withCheckedContinuation { continuation in
       dismiss(
         paywallViewController,
-        result: .closed
+        result: .declined
       ) {
         continuation.resume()
       }
@@ -56,8 +56,7 @@ extension Superwall {
     await withCheckedContinuation { continuation in
       dismiss(
         paywallViewController,
-        result: .closed,
-        shouldCompleteStatePublisher: false,
+        result: .declined,
         closeReason: .forNextPaywall
       ) {
         continuation.resume()
@@ -136,7 +135,7 @@ extension Superwall {
         case .purchased,
           .restored:
           completion?()
-        case .closed:
+        case .declined:
           let closeReason = paywallInfo.closeReason
           let featureGating = paywallInfo.featureGatingBehavior
           if closeReason != .forNextPaywall && featureGating == .nonGated {

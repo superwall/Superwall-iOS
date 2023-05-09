@@ -255,7 +255,7 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] {
       [
         "source_event_name": eventData?.name ?? "",
-        "pipeline_type": type.rawValue,
+        "pipeline_type": type.description,
         "status": status.rawValue,
         "status_reason": statusReason?.description ?? ""
       ]

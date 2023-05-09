@@ -23,7 +23,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       isDebuggerLaunched: true,
       subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController
+      type: .getPaywallViewController(.stub())
     )
 
     let debugInfo: [String: Any] = [:]
@@ -67,7 +67,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController
+      type: .getPaywallViewController(.stub())
     )
 
     let debugInfo: [String: Any] = [:]

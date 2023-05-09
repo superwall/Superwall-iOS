@@ -164,7 +164,8 @@ extension DependencyContainer: ViewControllerFactory {
   @MainActor
   func makePaywallViewController(
     for paywall: Paywall,
-    withCache cache: PaywallViewControllerCache?
+    withCache cache: PaywallViewControllerCache?,
+    delegate: PaywallViewControllerDelegateAdapter?
   ) -> PaywallViewController {
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: sessionEventsManager,
@@ -177,7 +178,8 @@ extension DependencyContainer: ViewControllerFactory {
     )
     let paywallViewController = PaywallViewController(
       paywall: paywall,
-      delegate: Superwall.shared,
+      eventDelegate: Superwall.shared,
+      delegate: delegate,
       deviceHelper: deviceHelper,
       sessionEventsManager: sessionEventsManager,
       storage: storage,

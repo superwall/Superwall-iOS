@@ -39,7 +39,7 @@ extension Superwall {
       .checkUserSubscription(paywallStatePublisher)
       .confirmHoldoutAssignment()
       .handleTriggerResult(paywallStatePublisher)
-      .getPaywallViewController(pipelineType: .presentation(paywallStatePublisher))
+      .getPaywallViewController(paywallStatePublisher)
       .checkPaywallIsPresentable(paywallStatePublisher)
       .confirmPaywallAssignment()
       .presentPaywall(paywallStatePublisher)
@@ -59,15 +59,11 @@ extension Superwall {
   func dismiss(
     _ paywallViewController: PaywallViewController,
     result: PaywallResult,
-    shouldSendPaywallResult: Bool = true,
-    shouldCompleteStatePublisher: Bool = true,
     closeReason: PaywallCloseReason = .systemLogic,
     completion: (() -> Void)? = nil
   ) {
     paywallViewController.dismiss(
       result: result,
-      shouldSendPaywallResult: shouldSendPaywallResult,
-      shouldCompleteStatePublisher: shouldCompleteStatePublisher,
       closeReason: closeReason
     ) {
       completion?()

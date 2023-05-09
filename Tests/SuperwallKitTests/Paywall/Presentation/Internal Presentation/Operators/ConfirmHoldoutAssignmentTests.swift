@@ -35,7 +35,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController
+      type: .getPaywallViewController(.stub())
     )
     let input = AssignmentPipelineOutput(
       request: request,
@@ -83,7 +83,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController
+      type: .getPaywallViewController(.stub())
     )
 
     let input = AssignmentPipelineOutput(
@@ -132,7 +132,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController
+      type: .getPaywallViewController(.stub())
     )
     let input = AssignmentPipelineOutput(
       request: request,
