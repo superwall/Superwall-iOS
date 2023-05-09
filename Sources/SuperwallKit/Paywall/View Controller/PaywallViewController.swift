@@ -79,8 +79,11 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   /// Defines whether the view controller is being presented or not.
   private var isPresented = false
 
-  /// Defines whether dismiss has been called.
-  private var calledDismiss = false
+  /// Stores the completion block when calling dismiss.
+  private var dismissCompletionBlock: (() -> Void)?
+
+  /// Stores the ``PaywallResult`` on dismiss of paywall.
+  private var paywallResult: PaywallResult?
 
   /// A timer that shows the refresh buttons/modal when it fires.
 	private var showRefreshTimer: Timer?
@@ -644,9 +647,6 @@ extension PaywallViewController {
     if isSafariVCPresented {
       return
     }
-    if calledDismiss {
-      return
-    }
     willDismiss()
   }
 
@@ -669,13 +669,7 @@ extension PaywallViewController {
 
     resetPresentationPreparations()
 
-    if !calledDismiss {
-      didDismiss(
-        paywallResult: .declined
-      )
-    }
-
-    calledDismiss = false
+    didDismiss()
   }
 
   private func resetPresentationPreparations() {
@@ -688,8 +682,9 @@ extension PaywallViewController {
     closeReason: PaywallCloseReason = .systemLogic,
     completion: (() -> Void)? = nil
   ) {
+    dismissCompletionBlock = completion
+    paywallResult = result
     paywall.closeReason = closeReason
-    willDismiss()
 
     if let delegate = delegate {
       delegate.didFinish(
@@ -698,16 +693,7 @@ extension PaywallViewController {
         objcResult: result.convertForObjc()
       )
     } else {
-      calledDismiss = true
-      dismiss(animated: presentationIsAnimated) { [weak self] in
-        guard let self = self else {
-          return
-        }
-        self.didDismiss(
-          paywallResult: result,
-          completion: completion
-        )
-      }
+      dismiss(animated: presentationIsAnimated)
     }
   }
 
@@ -716,29 +702,33 @@ extension PaywallViewController {
     Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall(withInfo: paywallInfo)
   }
 
-  private func didDismiss(
-    paywallResult: PaywallResult,
-    completion: (() -> Void)? = nil
-  ) {
+  private func didDismiss() {
+    // Reset spinner
     let isShowingSpinner = loadingState == .loadingPurchase || loadingState == .manualLoading
     if isShowingSpinner {
       self.loadingState = .ready
     }
 
-    isPresented = false
-    cache?.activePaywallVcKey = nil
-
-    GameControllerManager.shared.clearDelegate(self)
     Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall(withInfo: paywallInfo)
 
-    paywallStateSubject?.send(.dismissed(paywallInfo, paywallResult))
+    let result = paywallResult ?? .declined
+    paywallStateSubject?.send(.dismissed(paywallInfo, result))
 
     if paywall.closeReason == .systemLogic {
       paywallStateSubject?.send(completion: .finished)
       paywallStateSubject = nil
     }
+
+    // Reset state
     Superwall.shared.destroyPresentingWindow()
-    completion?()
+    GameControllerManager.shared.clearDelegate(self)
+
+    paywallResult = nil
+    cache?.activePaywallVcKey = nil
+    isPresented = false
+
+    dismissCompletionBlock?()
+    dismissCompletionBlock = nil
   }
 }
 
