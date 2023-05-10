@@ -13,6 +13,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Exposes `PaywallOverrides` and `PaywallViewController` to Objective-C.
+- Adds a `device.isFirstSession` property that you can use in paywall rules. This is `true` for the very first time a user opens the app. When the user closes and reopens the app, this will be `false`.
 
 ## 3.0.0-rc.5
 
