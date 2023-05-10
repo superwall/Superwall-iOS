@@ -57,6 +57,14 @@ enum DidTrackFirstSeen: Storable {
   typealias Value = Bool
 }
 
+enum DidTrackFirstSession: Storable {
+  static var key: String {
+    "store.didTrackFirstSession"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}
+
 enum UserAttributes: Storable {
   static var key: String {
     "store.userAttributes"

@@ -85,6 +85,7 @@ class AppSessionManager {
   }
 
   @objc private func applicationWillResignActive() {
+    storage.recordFirstSessionTracked()
     Task.detached(priority: .utility) {
       await Superwall.shared.track(InternalSuperwallEvent.AppClose())
     }

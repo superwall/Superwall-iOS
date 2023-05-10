@@ -40,6 +40,7 @@ struct DeviceTemplate: Codable {
   var localDateTime: String
   var isSandbox: String
   var subscriptionStatus: String
+  var isFirstSession: Bool
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {
