@@ -69,6 +69,9 @@
       case SWKPaywallSkippedReasonEventNotFound:
         NSLog(@"Paywall not shown because this event isn't part of a campaign.");
         break;
+      case SWKPaywallSkippedReasonNone:
+        // The paywall wasn't skipped.
+        break;
     }
   }];
 

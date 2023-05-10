@@ -74,4 +74,7 @@ public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable {
   /// By default, paywalls do not show to users who are already subscribed. You can override this
   /// behavior in the paywall editor.
   case userIsSubscribed
+
+  /// The presentation wasn't skipped.
+  case none
 }

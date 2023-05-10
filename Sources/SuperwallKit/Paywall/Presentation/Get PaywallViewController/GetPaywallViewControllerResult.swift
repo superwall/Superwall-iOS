@@ -11,19 +11,19 @@ import Foundation
 /// ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:completion:)-4qzau``.
 @objc(SWKGetPaywallViewControllerResult)
 @objcMembers
-public final class GetPaywallViewControllerResult: NSObject {
+public final class GetPaywallViewControllerResultObjc: NSObject {
   /// The ``PaywallViewController``.
   public let paywallViewController: PaywallViewController?
 
   /// The reason that the paywall retrieval was intentionally skipped.
-  public let skippedReason: PaywallSkippedReasonObjc?
+  public let skippedReason: PaywallSkippedReasonObjc
 
   /// Any errors that occurred when trying to retrieve the ``PaywallViewController``.
   public let error: Error?
 
   init(
     paywallViewController: PaywallViewController?,
-    skippedReason: PaywallSkippedReasonObjc?,
+    skippedReason: PaywallSkippedReasonObjc,
     error: Error?
   ) {
     self.paywallViewController = paywallViewController
