@@ -224,7 +224,7 @@ extension IdentityManager {
   ///
   /// - Parameters:
   ///   - duringIdentify: A boolean that indicates whether the reset
-  ///   call is happening during a call to `identify(userId:)`. If `fasle`,
+  ///   call is happening during a call to `identify(userId:)`. If `false`,
   ///   this happens
   func reset(duringIdentify: Bool) {
     identitySubject.send(false)
