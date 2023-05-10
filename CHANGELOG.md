@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Breaking Changes
 
-- Adds a `PaywallViewControllerDelegate` to the getPaywalliewController functions. This is mandatory and is how you control what happens after a paywall is dismissed.
+- Adds a `PaywallViewControllerDelegate` to the `getPaywallViewController` functions. This is mandatory and is how you control what happens after a paywall is dismissed.
 - The completion block of `getPaywallViewController(forEvent:params:paywallOverrides:delegate:completion:)` now accepts an optional `PaywallViewController`, an optional `PaywallSkippedReason` and an optional `Error`. This makes it easier to understand when the paywall was skipped vs when a real error occurred.
 - Renamed the `PaywallResult` case `closed` to `declined`.
 
@@ -14,6 +14,11 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Exposes `PaywallOverrides` and `PaywallViewController` to Objective-C.
 - Adds a `device.isFirstSession` property that you can use in paywall rules. This is `true` for the very first time a user opens the app. When the user closes and reopens the app, this will be `false`.
+- Removes the need to tell us when you're going to present/have presented a `PaywallViewController`.
+
+### Fixes
+
+- Fixes a crash when calling `reset()` when a paywall is displayed.
 
 ## 3.0.0-rc.5
 
