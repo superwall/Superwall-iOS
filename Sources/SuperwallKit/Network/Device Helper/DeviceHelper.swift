@@ -62,6 +62,10 @@ class DeviceHelper {
     "\(Int(TimeZone.current.secondsFromGMT()))"
   }
 
+  var isFirstSession: Bool {
+    return !storage.didTrackFirstSession
+  }
+
   var radioType: String {
     guard let reachability = reachability else {
       return "No Internet"
@@ -302,7 +306,8 @@ class DeviceHelper {
       utcDateTime: utcDateTimeString,
       localDateTime: localDateTimeString,
       isSandbox: isSandbox,
-      subscriptionStatus: Superwall.shared.subscriptionStatus.description
+      subscriptionStatus: Superwall.shared.subscriptionStatus.description,
+      isFirstSession: isFirstSession
     )
   }
 

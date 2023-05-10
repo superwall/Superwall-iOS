@@ -32,6 +32,21 @@ class Storage {
   }
   private var _didTrackFirstSeen = false
 
+  /// Indicates whether first seen has been tracked.
+  var didTrackFirstSession: Bool {
+    get {
+      queue.sync { [unowned self] in
+        self._didTrackFirstSession
+      }
+    }
+    set {
+      queue.async { [unowned self] in
+        self.didTrackFirstSession = newValue
+      }
+    }
+  }
+  private var _didTrackFirstSession = false
+
   /// Indicates whether static config hasn't been called before.
   ///
   /// Users upgrading from older SDK versions will not have called static config.
@@ -70,6 +85,13 @@ class Storage {
     self.cache = cache
     self.coreDataManager = coreDataManager
     self._didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true
+
+    // If we've already tracked firstSeen, then it can't be the first session. Useful for those upgrading.
+    if _didTrackFirstSeen {
+      self._didTrackFirstSession = true
+    } else {
+      self._didTrackFirstSession = cache.read(DidTrackFirstSession.self) == true
+    }
     self.factory = factory
   }
 
@@ -129,6 +151,17 @@ class Storage {
       self._didTrackFirstSeen = true
     }
 	}
+
+  func recordFirstSessionTracked() {
+    queue.async { [unowned self] in
+      if self._didTrackFirstSession {
+        return
+      }
+
+      self.save(true, forType: DidTrackFirstSession.self)
+      self._didTrackFirstSession = true
+    }
+  }
 
   /// Records the app install
   func recordAppInstall(
