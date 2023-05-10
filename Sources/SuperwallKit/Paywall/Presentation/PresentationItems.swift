@@ -53,10 +53,6 @@ final class PresentationItems: @unchecked Sendable {
       self?._last = nil
       self?._paywallInfo = nil
     }
-
-    Task { @MainActor [weak self]  in
-      self?.window = nil
-    }
   }
 }
 

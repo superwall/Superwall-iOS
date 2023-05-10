@@ -46,7 +46,8 @@ class PaywallManager {
   func getPaywallViewController(
     from request: PaywallRequest,
     isPreloading: Bool,
-    isDebuggerLaunched: Bool
+    isDebuggerLaunched: Bool,
+    delegate: PaywallViewControllerDelegateAdapter?
   ) async throws -> PaywallViewController {
     let paywall = try await paywallRequestManager.getPaywall(from: request)
     let deviceInfo = factory.makeDeviceInfo()
@@ -57,6 +58,7 @@ class PaywallManager {
 
     if !isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
+      viewController.delegate = delegate
       if !isPreloading {
         viewController.paywall.overrideProductsIfNeeded(from: paywall)
       }
@@ -65,7 +67,8 @@ class PaywallManager {
 
     let paywallViewController = factory.makePaywallViewController(
       for: paywall,
-      withCache: cache
+      withCache: cache,
+      delegate: delegate
     )
     cache.save(paywallViewController, forKey: cacheKey)
 

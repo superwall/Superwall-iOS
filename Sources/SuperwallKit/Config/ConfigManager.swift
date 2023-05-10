@@ -268,7 +268,8 @@ class ConfigManager {
         _ = try? await paywallManager.getPaywallViewController(
           from: request,
           isPreloading: true,
-          isDebuggerLaunched: false
+          isDebuggerLaunched: false,
+          delegate: nil
         )
       }
     }

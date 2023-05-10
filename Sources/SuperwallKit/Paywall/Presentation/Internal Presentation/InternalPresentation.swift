@@ -39,7 +39,7 @@ extension Superwall {
       .checkUserSubscription(paywallStatePublisher)
       .confirmHoldoutAssignment()
       .handleTriggerResult(paywallStatePublisher)
-      .getPaywallViewController(pipelineType: .presentation(paywallStatePublisher))
+      .getPaywallViewController(paywallStatePublisher)
       .checkPaywallIsPresentable(paywallStatePublisher)
       .confirmPaywallAssignment()
       .presentPaywall(paywallStatePublisher)
@@ -55,36 +55,15 @@ extension Superwall {
       .eraseToAnyPublisher()
   }
 
-  /// Presents the paywall again by sending the previous presentation request to the presentation publisher.
-  func presentAgain(cacheKey: String) {
-    guard let lastPresentationItems = presentationItems.last else {
-      return
-    }
-
-    // Remove the currently presenting paywall from cache.
-    dependencyContainer.paywallManager.removePaywallViewController(forKey: cacheKey)
-
-    // Resend the request and pass in the state publisher so it can continue
-    // to send updates.
-    internallyPresent(
-      lastPresentationItems.request,
-      lastPresentationItems.statePublisher
-    )
-  }
-
   @MainActor
   func dismiss(
     _ paywallViewController: PaywallViewController,
     result: PaywallResult,
-    shouldSendPaywallResult: Bool = true,
-    shouldCompleteStatePublisher: Bool = true,
     closeReason: PaywallCloseReason = .systemLogic,
     completion: (() -> Void)? = nil
   ) {
     paywallViewController.dismiss(
       result: result,
-      shouldSendPaywallResult: shouldSendPaywallResult,
-      shouldCompleteStatePublisher: shouldCompleteStatePublisher,
       closeReason: closeReason
     ) {
       completion?()

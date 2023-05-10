@@ -9,7 +9,7 @@ import Foundation
 
 /// Override the default behavior and products of a paywall.
 ///
-/// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:)``.
+/// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:)``.
 @objc(SWKPaywallOverrides)
 @objcMembers
 public final class PaywallOverrides: NSObject, Sendable {
@@ -26,13 +26,13 @@ public final class PaywallOverrides: NSObject, Sendable {
 
   /// Override the default behavior and products of a paywall.
   ///
-  /// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:)``.
+  /// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:)``.
   ///
   /// - parameters:
   ///   - products: A ``PaywallProducts`` object defining the products to override on the paywall.
   ///   - ignoreSubscriptionStatus: Set this to `true` to always show the paywall, regardless of whether the user has an active subscription or not.
   ///   - presentationStyleOverride: A ``PaywallPresentationStyle`` enum that specifies the presentation style for the paywall.
-  @objc public init(
+  public init(
     products: PaywallProducts? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyle = .none
@@ -40,5 +40,35 @@ public final class PaywallOverrides: NSObject, Sendable {
     self.products = products
     self.ignoreSubscriptionStatus = ignoreSubscriptionStatus
     self.presentationStyle = presentationStyleOverride
+  }
+
+  /// Override the default behavior and products of a paywall.
+  ///
+  /// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:)``.
+  ///
+  /// - parameters:
+  ///   - products: A ``PaywallProducts`` object defining the products to override on the paywall.
+  @available(swift, obsoleted: 1.0)
+  public init(products: PaywallProducts?) {
+    self.products = products
+    self.ignoreSubscriptionStatus = false
+    self.presentationStyle = .none
+  }
+
+  /// Override the default behavior and products of a paywall.
+  ///
+  /// Provide an instance of this to ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:)``.
+  ///
+  /// - parameters:
+  ///   - products: A ``PaywallProducts`` object defining the products to override on the paywall.
+  ///   - ignoreSubscriptionStatus: Set this to `true` to always show the paywall, regardless of whether the user has an active subscription or not.
+  @available(swift, obsoleted: 1.0)
+  public init(
+    products: PaywallProducts?,
+    ignoreSubscriptionStatus: Bool = false
+  ) {
+    self.products = products
+    self.ignoreSubscriptionStatus = ignoreSubscriptionStatus
+    self.presentationStyle = .none
   }
 }

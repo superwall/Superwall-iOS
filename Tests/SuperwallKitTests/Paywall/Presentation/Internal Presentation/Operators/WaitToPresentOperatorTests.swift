@@ -110,7 +110,7 @@ final class WaitToPresentTests: XCTestCase {
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController
+      type: .getPaywallViewController(.stub())
     )
     .setting(\.dependencyContainer.identityManager, to: identityManager)
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)

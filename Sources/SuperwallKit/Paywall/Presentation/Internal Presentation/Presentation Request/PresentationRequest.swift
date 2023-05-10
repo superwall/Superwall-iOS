@@ -8,11 +8,55 @@
 import UIKit
 import Combine
 
-enum PresentationRequestType: String {
+enum PresentationRequestType: Equatable, CustomStringConvertible {
   case presentation
-  case getPaywallViewController
+  case getPaywallViewController(PaywallViewControllerDelegateAdapter)
   case getPresentationResult
   case getImplicitPresentationResult
+
+  var description: String {
+    switch self {
+    case .presentation:
+      return "presentation"
+    case .getPaywallViewController:
+      return "getPaywallViewController"
+    case .getPresentationResult:
+      return "getPresentationResult"
+    case .getImplicitPresentationResult:
+      return "getImplicitPresentationResult"
+    }
+  }
+
+  func getPaywallVcDelegateAdapter() -> PaywallViewControllerDelegateAdapter? {
+    switch self {
+    case .getPaywallViewController(let adapter):
+      return adapter
+    default:
+      return nil
+    }
+  }
+
+  func hasObjcDelegate() -> Bool {
+    switch self {
+    case .getPaywallViewController(let adapter):
+      return adapter.hasObjcDelegate
+    default:
+      return false
+    }
+  }
+
+  static func == (lhs: PresentationRequestType, rhs: PresentationRequestType) -> Bool {
+    switch (lhs, rhs) {
+    case (.getImplicitPresentationResult, .getImplicitPresentationResult),
+      (.getPresentationResult, .getPresentationResult),
+      (.presentation, .presentation):
+      return true
+    case let (.getPaywallViewController(type1), .getPaywallViewController(type2)):
+      return type1 === type2
+    default:
+      return false
+    }
+  }
 }
 
 /// Defines the information needed to request the presentation of a paywall.

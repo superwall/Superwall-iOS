@@ -16,12 +16,10 @@ extension Superwall {
   ///
   /// - Returns: A ``PaywallViewController`` to present.
   @discardableResult
-  func getPaywallViewController(
-    _ request: PresentationRequest,
-    isObjc: Bool
-  ) -> AnyPublisher<PaywallViewController, Error> {
+  func getPaywallViewController(_ request: PresentationRequest) -> AnyPublisher<PaywallViewController, Error> {
     let paywallStatePublisher: PassthroughSubject<PaywallState, Never> = .init()
     let presentationSubject = PresentationSubject(request)
+    let hasObjcDelegate = request.flags.type.hasObjcDelegate()
 
     return presentationSubject
       .eraseToAnyPublisher()
@@ -30,12 +28,12 @@ extension Superwall {
       .evaluateRules()
       .confirmHoldoutAssignment()
       .handleTriggerResult(paywallStatePublisher)
-      .getPaywallViewController(pipelineType: .presentation(paywallStatePublisher))
+      .getPaywallViewController(paywallStatePublisher)
       .checkSubscriptionStatus(paywallStatePublisher)
       .confirmPaywallAssignment()
       .storePresentationObjects(presentationSubject, paywallStatePublisher)
       .logErrors(from: request)
       .extractPaywallViewController(paywallStatePublisher)
-      .mapErrors(isObjc: isObjc)
+      .mapErrors(toObjc: hasObjcDelegate)
   }
 }

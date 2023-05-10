@@ -11,8 +11,7 @@ import StoreKit
 /// The Objective-C-only protocol that handles Superwall's subscription-related logic.
 ///
 /// By default, the Superwall SDK handles all subscription-related logic. However, if you'd like
-/// more control, you can return a ``PurchaseControllerObjc`` in the delegate when
-/// configuring the SDK via
+/// more control, you can return a ``PurchaseControllerObjc`` when configuring the SDK via
 /// ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``.
 ///
 /// When implementing this, you also need to set the subscription status using

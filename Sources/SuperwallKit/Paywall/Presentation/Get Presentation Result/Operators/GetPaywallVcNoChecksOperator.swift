@@ -30,7 +30,8 @@ extension AnyPublisher where Output == TriggerResultResponsePipelineOutput, Fail
         let paywallViewController = try await dependencyContainer.paywallManager.getPaywallViewController(
           from: paywallRequest,
           isPreloading: false,
-          isDebuggerLaunched: false
+          isDebuggerLaunched: false,
+          delegate: input.request.flags.type.getPaywallVcDelegateAdapter()
         )
 
         let output = PaywallVcPipelineOutput(

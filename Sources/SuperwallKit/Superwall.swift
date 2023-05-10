@@ -444,7 +444,7 @@ public final class Superwall: NSObject, ObservableObject {
 }
 
 // MARK: - PaywallViewControllerDelegate
-extension Superwall: PaywallViewControllerDelegate {
+extension Superwall: PaywallViewControllerEventDelegate {
   @MainActor
   func eventDidOccur(
     _ paywallEvent: PaywallWebEvent,
@@ -469,7 +469,7 @@ extension Superwall: PaywallViewControllerDelegate {
       } else {
         dismiss(
           paywallViewController,
-          result: .closed
+          result: .declined
         )
       }
 
