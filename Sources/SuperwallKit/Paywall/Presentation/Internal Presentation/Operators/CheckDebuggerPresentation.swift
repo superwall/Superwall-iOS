@@ -9,28 +9,25 @@ import Foundation
 import Combine
 
 extension Superwall {
-  func checkNoPaywallAlreadyPresented(
+  func checkDebuggerPresentation(
     _ request: PresentationRequest,
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
-  ) async throws {
-    guard request.flags.isPaywallPresented else {
+  ) throws {
+    guard request.flags.isDebuggerLaunched else {
       return
     }
-    Logger.debug(
-      logLevel: .error,
-      scope: .paywallPresentation,
-      message: "Paywall Already Presented",
-      info: ["message": "Superwall.shared.isPaywallPresented is true"]
-    )
+    if request.presenter is DebugViewController {
+      return
+    }
     let error = InternalPresentationLogic.presentationError(
       domain: "SWPresentationError",
-      code: 102,
-      title: "Paywall Already Presented",
-      value: "You can only present one paywall at a time."
+      code: 101,
+      title: "Debugger Is Presented",
+      value: "Trying to present paywall when debugger is launched."
     )
     let state: PaywallState = .presentationError(error)
     paywallStatePublisher.send(state)
     paywallStatePublisher.send(completion: .finished)
-    throw PresentationPipelineError.paywallAlreadyPresented
+    throw PresentationPipelineError.debuggerPresented
   }
 }

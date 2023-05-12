@@ -20,7 +20,7 @@ final class WaitToPresentTests: XCTestCase {
     identityManager.reset(duringIdentify: false)
   }
 
-  func test_waitToPresent_noIdentity_unknownStatus() async {
+  func test_waitToPresent_noIdentity_unknownStatus() {
     let expectation = expectation(description: "Got identity")
     expectation.isInverted = true
 
@@ -29,23 +29,16 @@ final class WaitToPresentTests: XCTestCase {
     let request = PresentationRequest.stub()
       .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
-    CurrentValueSubject(request)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .waitToPresent()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { _ in
-          expectation.fulfill()
-        }
-      )
-      .store(in: &cancellables)
 
-    await fulfillment(of: [expectation], timeout: 0.1)
+    Task {
+      await Superwall.shared.waitToPresent(request, dependencyContainer: dependencyContainer)
+      expectation.fulfill()
+    }
+
+    wait(for: [expectation], timeout: 0.1)
   }
 
-  func test_waitToPresent_noIdentity_activeStatus() async {
+  func test_waitToPresent_noIdentity_activeStatus() {
     let expectation = expectation(description: "Got identity")
     expectation.isInverted = true
 
@@ -54,54 +47,37 @@ final class WaitToPresentTests: XCTestCase {
     let request = PresentationRequest.stub()
       .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
-    CurrentValueSubject(request)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .waitToPresent()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { _ in
-          expectation.fulfill()
-        }
-      )
-      .store(in: &cancellables)
+    Task {
+      await Superwall.shared.waitToPresent(request)
+      expectation.fulfill()
+    }
 
-    await fulfillment(of: [expectation], timeout: 0.1)
+    wait(for: [expectation], timeout: 0.1)
   }
 
-  func test_waitToPresent_hasIdentity_activeStatus_noConfig() async {
+  func test_waitToPresent_hasIdentity_activeStatus_noConfig() {
     let expectation = expectation(description: "Got identity")
     expectation.isInverted = true
 
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
       .eraseToAnyPublisher()
     let stub = PresentationRequest.stub()
-      .setting(\.dependencyContainer.identityManager, to: identityManager)
       .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
-    CurrentValueSubject(stub)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .waitToPresent()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { _ in
-          expectation.fulfill()
-        }
-      )
-      .store(in: &cancellables)
+    Task {
+      await Superwall.shared.waitToPresent(stub, dependencyContainer: dependencyContainer)
+      expectation.fulfill()
+    }
 
     identityManager.didSetIdentity()
 
-    await fulfillment(of: [expectation], timeout: 0.1)
+    wait(for: [expectation], timeout: 0.1)
   }
 
-  func test_waitToPresent_hasIdentity_activeStatus_hasConfig() async {
+  func test_waitToPresent_hasIdentity_inactiveStatus_hasConfig() {
     let expectation = expectation(description: "Got identity")
 
-    let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+    let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
       .eraseToAnyPublisher()
 
     dependencyContainer.configManager.config = .stub()
@@ -112,24 +88,15 @@ final class WaitToPresentTests: XCTestCase {
       isPaywallPresented: false,
       type: .getPaywallViewController(.stub())
     )
-    .setting(\.dependencyContainer.identityManager, to: identityManager)
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
-    CurrentValueSubject(request)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .waitToPresent()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { _ in
-          expectation.fulfill()
-        }
-      )
-      .store(in: &cancellables)
+    Task {
+      await Superwall.shared.waitToPresent(request, dependencyContainer: dependencyContainer)
+      expectation.fulfill()
+    }
 
     identityManager.didSetIdentity()
 
-    await fulfillment(of: [expectation], timeout: 0.1)
+    wait(for: [expectation], timeout: 0.1)
   }
 }

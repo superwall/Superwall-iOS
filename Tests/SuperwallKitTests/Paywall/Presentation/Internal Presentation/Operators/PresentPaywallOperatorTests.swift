@@ -13,7 +13,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
   @MainActor
-  func test_presentPaywall_isPresented() {
+  func test_presentPaywall_isPresented() async {
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
 
@@ -42,7 +42,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
     let paywallVc = PaywallViewControllerMock(
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer,
       storage: dependencyContainer.storage,
       paywallManager: dependencyContainer.paywallManager,
       webView: webView,
@@ -55,32 +55,27 @@ final class PresentPaywallOperatorTests: XCTestCase {
     paywallVc.shouldPresent = true
 
     let input = PresentablePipelineOutput(
-      request: .stub(),
       debugInfo: [:],
       paywallViewController: paywallVc,
       presenter: UIViewController(),
       confirmableAssignment: nil
     )
 
-    let expectation = expectation(description: "Got identity")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .presentPaywall(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { value in
-          expectation.fulfill()
-        }
+    do {
+      _ = try await Superwall.shared.presentPaywall(
+        .stub(),
+        input,
+        statePublisher
       )
-      .store(in: &cancellables)
+    } catch {
+      XCTFail("Shouldn't fail")
+    }
 
-    wait(for: [expectation, stateExpectation], timeout: 5)
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
   @MainActor
-  func test_presentPaywall_isNotPresented() {
+  func test_presentPaywall_isNotPresented() async {
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
     stateExpectation.expectedFulfillmentCount = 2
@@ -116,7 +111,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
     let paywallVc = PaywallViewControllerMock(
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer,
       storage: dependencyContainer.storage,
       paywallManager: dependencyContainer.paywallManager,
       webView: webView,
@@ -127,34 +122,28 @@ final class PresentPaywallOperatorTests: XCTestCase {
     messageHandler.delegate = paywallVc
 
     let input = PresentablePipelineOutput(
-      request: .stub(),
       debugInfo: [:],
       paywallViewController: paywallVc,
       presenter: UIViewController(),
       confirmableAssignment: nil
     )
 
-    let expectation = expectation(description: "Got identity")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .presentPaywall(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          switch completion {
-          case .failure:
-            expectation.fulfill()
-          default:
-            break
-          }
-        },
-        receiveValue: { value in
-          XCTFail()
-        }
+    do {
+      _ = try await Superwall.shared.presentPaywall(
+        .stub(),
+        input,
+        statePublisher
       )
-      .store(in: &cancellables)
+      XCTFail("Should fail")
+    } catch {
+      if let error = error as? PresentationPipelineError,
+        case .paywallAlreadyPresented = error {
 
-    wait(for: [expectation, stateExpectation], timeout: 5)
+      } else {
+        XCTFail("Wrong error type")
+      }
+    }
+
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 }

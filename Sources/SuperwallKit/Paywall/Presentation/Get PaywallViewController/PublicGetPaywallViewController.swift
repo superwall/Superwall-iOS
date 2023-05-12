@@ -158,26 +158,20 @@ extension Superwall {
     paywallOverrides: PaywallOverrides?,
     delegate: PaywallViewControllerDelegateAdapter
   ) async throws -> PaywallViewController {
-    return try await Future {
-      let trackableEvent = UserInitiatedEvent.Track(
-        rawName: event,
-        canImplicitlyTriggerPaywall: false,
-        customParameters: params ?? [:],
-        isFeatureGatable: false
-      )
-      let trackResult = await self.track(trackableEvent)
-      return trackResult
-    }
-    .flatMap { trackResult in
-      let presentationRequest = self.dependencyContainer.makePresentationRequest(
-        .explicitTrigger(trackResult.data),
-        paywallOverrides: paywallOverrides,
-        isPaywallPresented: false,
-        type: .getPaywallViewController(delegate)
-      )
-      return self.getPaywallViewController(presentationRequest)
-    }
-    .eraseToAnyPublisher()
-    .throwableAsync()
+    let trackableEvent = UserInitiatedEvent.Track(
+      rawName: event,
+      canImplicitlyTriggerPaywall: false,
+      customParameters: params ?? [:],
+      isFeatureGatable: false
+    )
+    let trackResult = await track(trackableEvent)
+
+    let presentationRequest = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(trackResult.data),
+      paywallOverrides: paywallOverrides,
+      isPaywallPresented: false,
+      type: .getPaywallViewController(delegate)
+    )
+    return try await getPaywallViewController(presentationRequest)
   }
 }

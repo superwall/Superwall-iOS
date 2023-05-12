@@ -346,7 +346,7 @@ final class TrackingLogicTests: XCTestCase {
     let paywallVc = PaywallViewControllerMock(
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer,
       storage: dependencyContainer.storage,
       paywallManager: dependencyContainer.paywallManager,
       webView: webView,

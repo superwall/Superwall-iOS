@@ -216,7 +216,7 @@ struct Paywall: Decodable {
 
   func getInfo(
     fromEvent: EventData?,
-    sessionEventsManager: SessionEventsManager
+    factory: TriggerSessionManagerFactory
   ) -> PaywallInfo {
     return PaywallInfo(
       databaseId: databaseId,
@@ -237,7 +237,7 @@ struct Paywall: Decodable {
       experiment: experiment,
       paywalljsVersion: paywalljsVersion,
       isFreeTrialAvailable: isFreeTrialAvailable,
-      sessionEventsManager: sessionEventsManager,
+      factory: factory,
       featureGatingBehavior: featureGating,
       closeReason: closeReason
     )

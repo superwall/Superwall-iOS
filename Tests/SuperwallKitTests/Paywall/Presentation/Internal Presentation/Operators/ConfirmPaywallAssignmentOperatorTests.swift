@@ -29,29 +29,18 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       .setting(\.flags.isDebuggerLaunched, to: true)
 
     let input = PresentablePipelineOutput(
-      request: request,
       debugInfo: [:],
       paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
       presenter: UIViewController(),
       confirmableAssignment: ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
     )
 
-    let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .confirmPaywallAssignment()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { output in
-          expectation.fulfill()
-          XCTAssertFalse(configManager.confirmedAssignment)
-        }
-      )
-      .store(in: &cancellables)
-
-    await fulfillment(of: [expectation], timeout: 0.1)
+     Superwall.shared.confirmPaywallAssignment(
+      request: request,
+      input: input,
+      dependencyContainer: dependencyContainer
+     )
+    XCTAssertFalse(configManager.confirmedAssignment)
   }
 
   @MainActor
@@ -72,29 +61,18 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       .setting(\.flags.isDebuggerLaunched, to: false)
 
     let input = PresentablePipelineOutput(
-      request: request,
       debugInfo: [:],
       paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
       presenter: UIViewController(),
       confirmableAssignment: nil
     )
 
-    let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .confirmPaywallAssignment()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { output in
-          expectation.fulfill()
-          XCTAssertFalse(configManager.confirmedAssignment)
-        }
-      )
-      .store(in: &cancellables)
-
-    await fulfillment(of: [expectation], timeout: 0.1)
+     Superwall.shared.confirmPaywallAssignment(
+      request: request,
+      input: input,
+      dependencyContainer: dependencyContainer
+     )
+    XCTAssertFalse(configManager.confirmedAssignment)
   }
 
   @MainActor
@@ -119,28 +97,17 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     )
 
     let input = PresentablePipelineOutput(
-      request: request,
       debugInfo: [:],
       paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
       presenter: UIViewController(),
       confirmableAssignment: ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
     )
 
-    let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .confirmPaywallAssignment()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { output in
-          expectation.fulfill()
-          XCTAssertTrue(configManager.confirmedAssignment)
-        }
-      )
-      .store(in: &cancellables)
-
-    await fulfillment(of: [expectation], timeout: 0.1)
+    Superwall.shared.confirmPaywallAssignment(
+     request: request,
+     input: input,
+     dependencyContainer: dependencyContainer
+    )
+   XCTAssertTrue(configManager.confirmedAssignment)
   }
 }

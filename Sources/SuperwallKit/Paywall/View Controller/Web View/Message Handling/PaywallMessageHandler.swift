@@ -10,7 +10,7 @@ import UIKit
 import WebKit
 
 protocol PaywallMessageHandlerDelegate: AnyObject {
-  var eventData: EventData? { get }
+  var request: PresentationRequest? { get }
   var paywall: Paywall { get set }
   var paywallInfo: PaywallInfo { get }
   var webView: SWWebView { get }
@@ -81,9 +81,10 @@ final class PaywallMessageHandler: WebEventDelegate {
   ///
   /// This is called every paywall open incase variables like user attributes have changed.
   nonisolated private func passTemplatesToWebView(from paywall: Paywall) async {
+    let params = await delegate?.request?.presentationInfo.eventData?.parameters
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
-      withParams: delegate?.eventData?.parameters,
+      withParams: params,
       factory: factory
     )
 
@@ -141,9 +142,10 @@ final class PaywallMessageHandler: WebEventDelegate {
     }
 
     let htmlSubstitutions = paywall.htmlSubstitutions
+    let params = await delegate?.request?.presentationInfo.eventData?.parameters
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
-      withParams: delegate?.eventData?.parameters,
+      withParams: params,
       factory: factory
     )
     let scriptSrc = """

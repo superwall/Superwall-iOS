@@ -34,8 +34,8 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   /// The paywall to feed into the view controller.
   var paywall: Paywall
 
-  /// The event data associated with the presentation of the paywall.
-  var eventData: EventData?
+  /// The request associated with the presentation of the paywall.
+  var request: PresentationRequest?
 
   /// The cache key for the view controller.
   var cacheKey: String
@@ -51,8 +51,8 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   /// The paywall info
   var paywallInfo: PaywallInfo {
     return paywall.getInfo(
-      fromEvent: eventData,
-      sessionEventsManager: sessionEventsManager
+      fromEvent: request?.presentationInfo.eventData,
+      factory: factory
     )
   }
 
@@ -130,7 +130,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   private var presentationWillPrepare = true
   private var presentationDidFinishPrepare = false
 
-  private unowned let sessionEventsManager: SessionEventsManager
+  private unowned let factory: TriggerSessionManagerFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private unowned let paywallManager: PaywallManager
@@ -143,7 +143,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     eventDelegate: PaywallViewControllerEventDelegate? = nil,
     delegate: PaywallViewControllerDelegateAdapter? = nil,
     deviceHelper: DeviceHelper,
-    sessionEventsManager: SessionEventsManager,
+    factory: TriggerSessionManagerFactory,
     storage: Storage,
     paywallManager: PaywallManager,
     webView: SWWebView,
@@ -158,7 +158,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
 		self.eventDelegate = eventDelegate
     self.delegate = delegate
 
-    self.sessionEventsManager = sessionEventsManager
+    self.factory = factory
     self.storage = storage
     self.paywall = paywall
     self.paywallManager = paywallManager
@@ -212,16 +212,18 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   }
 
   nonisolated private func trackOpen() async {
-    await sessionEventsManager.triggerSession.trackPaywallOpen()
+    let triggerSessionManager = factory.getTriggerSessionManager()
+    await triggerSessionManager.trackPaywallOpen()
     storage.trackPaywallOpen()
     let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: paywallInfo)
     await Superwall.shared.track(trackedEvent)
   }
 
   nonisolated private func trackClose() async {
+    let triggerSessionManager = factory.getTriggerSessionManager()
     let trackedEvent = await InternalSuperwallEvent.PaywallClose(paywallInfo: paywallInfo)
     await Superwall.shared.track(trackedEvent)
-    await sessionEventsManager.triggerSession.trackPaywallClose()
+    await triggerSessionManager.trackPaywallClose()
   }
 
   /// Triggered by user closing the paywall when the webview hasn't loaded.
@@ -249,7 +251,9 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
         paywallInfo: self.paywallInfo
       )
       await Superwall.shared.track(trackedEvent)
-      await sessionEventsManager.triggerSession.trackWebviewLoad(
+
+      let triggerSessionManager = factory.getTriggerSessionManager()
+      await triggerSessionManager.trackWebviewLoad(
         forPaywallId: paywallInfo.databaseId,
         state: .start
       )
@@ -439,16 +443,16 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   /// Sets the event data for use in ``PaywallInfo`` and the state publisher
   /// for callbacks.
   func set(
-    eventData: EventData?,
+    request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) {
-    self.eventData = eventData
+    self.request = request
     self.paywallStateSubject = paywallStatePublisher
   }
 
   func present(
     on presenter: UIViewController,
-    eventData: EventData?,
+    request: PresentationRequest,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     completion: @escaping (Bool) -> Void
@@ -461,7 +465,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     Superwall.shared.presentationItems.window?.makeKeyAndVisible()
 
     set(
-      eventData: eventData,
+      request: request,
       paywallStatePublisher: paywallStatePublisher
     )
 
@@ -629,7 +633,7 @@ extension PaywallViewController {
     if presentationDidFinishPrepare {
       return
     }
-
+    Superwall.shared.storePresentationObjects(request, paywallStateSubject)
     isPresented = true
     Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall(withInfo: paywallInfo)
     Task {

@@ -12,10 +12,14 @@ class PaywallManager {
   var presentedViewController: PaywallViewController? {
     return cache.activePaywallViewController
 	}
+  private let queue = DispatchQueue(label: "com.superwall.paywallmanager")
   private unowned let paywallRequestManager: PaywallRequestManager
   private unowned let factory: ViewControllerFactory & CacheFactory & DeviceInfoFactory
 
-  private lazy var cache: PaywallViewControllerCache = factory.makeCache()
+  private var cache: PaywallViewControllerCache {
+    return queue.sync { _cache ?? createCache() }
+  }
+  private var _cache: PaywallViewControllerCache?
 
   init(
     factory: ViewControllerFactory & CacheFactory & DeviceInfoFactory,
@@ -23,6 +27,12 @@ class PaywallManager {
   ) {
     self.factory = factory
     self.paywallRequestManager = paywallRequestManager
+  }
+
+  private func createCache() -> PaywallViewControllerCache {
+    let cache = factory.makeCache()
+    _cache = cache
+    return cache
   }
 
 	func removePaywallViewController(forKey key: String) {
@@ -46,7 +56,6 @@ class PaywallManager {
   func getPaywallViewController(
     from request: PaywallRequest,
     isPreloading: Bool,
-    isDebuggerLaunched: Bool,
     delegate: PaywallViewControllerDelegateAdapter?
   ) async throws -> PaywallViewController {
     let paywall = try await paywallRequestManager.getPaywall(from: request)
@@ -56,10 +65,10 @@ class PaywallManager {
       locale: deviceInfo.locale
     )
 
-    if !isDebuggerLaunched,
+    if !request.isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
-      viewController.delegate = delegate
       if !isPreloading {
+        viewController.delegate = delegate
         viewController.paywall.overrideProductsIfNeeded(from: paywall)
       }
       return viewController

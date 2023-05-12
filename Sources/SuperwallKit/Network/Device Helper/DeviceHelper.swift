@@ -62,7 +62,7 @@ class DeviceHelper {
     "\(Int(TimeZone.current.secondsFromGMT()))"
   }
 
-  var isFirstSession: Bool {
+  var isFirstAppOpen: Bool {
     return !storage.didTrackFirstSession
   }
 
@@ -307,7 +307,7 @@ class DeviceHelper {
       localDateTime: localDateTimeString,
       isSandbox: isSandbox,
       subscriptionStatus: Superwall.shared.subscriptionStatus.description,
-      isFirstSession: isFirstSession
+      isFirstAppOpen: isFirstAppOpen
     )
   }
 

@@ -26,7 +26,6 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
     )
 
     let input = AssignmentPipelineOutput(
-      request: request,
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
       debugInfo: [:]
     )
@@ -49,29 +48,22 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let pipelineExpectation = expectation(description: "Continued pipeline")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .checkUserSubscription(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          switch completion {
-          case .failure:
-            pipelineExpectation.fulfill()
-          default:
-            break
-          }
-
-        },
-        receiveValue: { _ in }
+    let expectation = expectation(description: "Called publisher")
+    do {
+      try await Superwall.shared.checkUserSubscription(
+        request,
+        input.triggerResult,
+        statePublisher
       )
-      .store(in: &cancellables)
+      XCTFail("Should throw")
+    } catch {
+      if let error = error as? PresentationPipelineError,
+         case .userIsSubscribed = error {
+        expectation.fulfill()
+      }
+    }
 
-    try? await Task.sleep(nanoseconds: 10_000_000)
-
-    await fulfillment(of: [pipelineExpectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [expectation, stateExpectation], timeout: 0.1)
   }
 
   func test_checkUserSubscription_paywall() async {
@@ -88,7 +80,6 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
     )
 
     let input = AssignmentPipelineOutput(
-      request: request,
       triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
       debugInfo: [:]
     )
@@ -102,23 +93,17 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let pipelineExpectation = expectation(description: "Continued pipeline")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .checkUserSubscription(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { output in
-          pipelineExpectation.fulfill()
-        }
+    do {
+      try await Superwall.shared.checkUserSubscription(
+        request,
+        input.triggerResult,
+        statePublisher
       )
-      .store(in: &cancellables)
+    } catch {
+      XCTFail("Shouldn't throw")
+    }
 
-    try? await Task.sleep(nanoseconds: 10_000_000)
-
-    await fulfillment(of: [pipelineExpectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
   func test_checkUserSubscription_notPaywall_userNotSubscribed() async {
@@ -135,7 +120,6 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
     )
 
     let input = AssignmentPipelineOutput(
-      request: request,
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
       debugInfo: [:]
     )
@@ -149,22 +133,16 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let pipelineExpectation = expectation(description: "Continued pipeline")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .checkUserSubscription(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { output in
-          pipelineExpectation.fulfill()
-        }
+    do {
+      try await Superwall.shared.checkUserSubscription(
+        request,
+        input.triggerResult,
+        statePublisher
       )
-      .store(in: &cancellables)
+    } catch {
+      XCTFail("Shouldn't throw")
+    }
 
-    try? await Task.sleep(nanoseconds: 10_000_000)
-
-    await fulfillment(of: [pipelineExpectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 }

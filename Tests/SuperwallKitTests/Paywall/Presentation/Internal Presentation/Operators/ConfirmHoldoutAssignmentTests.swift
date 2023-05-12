@@ -28,36 +28,15 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
-      .eraseToAnyPublisher()
-    let request = dependencyContainer.makePresentationRequest(
-      .explicitTrigger(.stub()),
-      isDebuggerLaunched: false,
-      subscriptionStatus: inactiveSubscriptionPublisher,
-      isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
-    )
     let input = AssignmentPipelineOutput(
-      request: request,
       triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
       debugInfo: [:]
     )
 
-    let pipelineExpectation = expectation(description: "Continued pipeline")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .confirmHoldoutAssignment()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { value in
-          pipelineExpectation.fulfill()
-        }
-      )
-      .store(in: &cancellables)
-
-    await fulfillment(of: [pipelineExpectation], timeout: 0.1)
+    Superwall.shared.confirmHoldoutAssignment(
+      input: input,
+      dependencyContainer: dependencyContainer
+    )
     XCTAssertFalse(configManager.confirmedAssignment)
   }
 
@@ -76,38 +55,16 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
-      .eraseToAnyPublisher()
-    let request = dependencyContainer.makePresentationRequest(
-      .explicitTrigger(.stub()),
-      isDebuggerLaunched: false,
-      subscriptionStatus: inactiveSubscriptionPublisher,
-      isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
-    )
-
     let input = AssignmentPipelineOutput(
-      request: request,
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
       confirmableAssignment: nil,
       debugInfo: [:]
     )
 
-    let pipelineExpectation = expectation(description: "Continued pipeline")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .confirmHoldoutAssignment()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { value in
-          pipelineExpectation.fulfill()
-        }
-      )
-      .store(in: &cancellables)
-
-    await fulfillment(of: [pipelineExpectation], timeout: 0.1)
+    Superwall.shared.confirmHoldoutAssignment(
+      input: input,
+      dependencyContainer: dependencyContainer
+    )
     XCTAssertFalse(configManager.confirmedAssignment)
   }
 
@@ -125,37 +82,16 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
-      .eraseToAnyPublisher()
-    let request = dependencyContainer.makePresentationRequest(
-      .explicitTrigger(.stub()),
-      isDebuggerLaunched: false,
-      subscriptionStatus: inactiveSubscriptionPublisher,
-      isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
-    )
     let input = AssignmentPipelineOutput(
-      request: request,
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
       confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
       debugInfo: [:]
     )
 
-    let pipelineExpectation = expectation(description: "Continued pipeline")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .confirmHoldoutAssignment()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { value in
-          pipelineExpectation.fulfill()
-        }
-      )
-      .store(in: &cancellables)
-
-    await fulfillment(of: [pipelineExpectation], timeout: 0.1)
+    Superwall.shared.confirmHoldoutAssignment(
+      input: input,
+      dependencyContainer: dependencyContainer
+    )
     XCTAssertTrue(configManager.confirmedAssignment)
   }
 }
