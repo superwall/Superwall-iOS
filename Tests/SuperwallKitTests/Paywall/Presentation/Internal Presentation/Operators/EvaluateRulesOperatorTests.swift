@@ -26,36 +26,26 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       type: .getPaywallViewController(.stub())
     )
 
-    let debugInfo: [String: Any] = [:]
-    let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject((request, debugInfo))
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .evaluateRules()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { output in
-          XCTAssertNil(output.confirmableAssignment)
-
-          switch output.triggerResult {
-          case .paywall(let experiment):
-            XCTAssertEqual(experiment.id, identifier)
-            XCTAssertEqual(experiment.groupId, "")
-            XCTAssertEqual(experiment.variant.id, "")
-            XCTAssertEqual(experiment.variant.type, .treatment)
-            XCTAssertEqual(experiment.variant.paywallId, identifier)
-          default:
-            XCTFail("Wrong trigger result")
-          }
-          expectation.fulfill()
-        }
+    do {
+      let output = try await Superwall.shared.evaluateRules(
+        request,
+        debugInfo: [:]
       )
-      .store(in: &cancellables)
+      XCTAssertNil(output.confirmableAssignment)
 
-    try? await Task.sleep(nanoseconds: 100_000_000)
-
-    await fulfillment(of: [expectation], timeout: 0.1)
+      switch output.triggerResult {
+      case .paywall(let experiment):
+        XCTAssertEqual(experiment.id, identifier)
+        XCTAssertEqual(experiment.groupId, "")
+        XCTAssertEqual(experiment.variant.id, "")
+        XCTAssertEqual(experiment.variant.type, .treatment)
+        XCTAssertEqual(experiment.variant.paywallId, identifier)
+      default:
+        XCTFail("Wrong trigger result")
+      }
+    } catch {
+      XCTFail("Shouldn't throw")
+    }
   }
 
   func test_evaluateRules_isNotDebugger() async {
@@ -70,30 +60,21 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       type: .getPaywallViewController(.stub())
     )
 
-    let debugInfo: [String: Any] = [:]
-    let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject((request, debugInfo))
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .evaluateRules()
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { output in
-          XCTAssertNil(output.confirmableAssignment)
-
-          switch output.triggerResult {
-          case .eventNotFound:
-            expectation.fulfill()
-          default:
-            break
-          }
-        }
+    do {
+      let output = try await Superwall.shared.evaluateRules(
+        request,
+        debugInfo: [:]
       )
-      .store(in: &cancellables)
+      XCTAssertNil(output.confirmableAssignment)
 
-    try? await Task.sleep(nanoseconds: 100_000_000)
-
-    await fulfillment(of: [expectation], timeout: 0.1)
+      switch output.triggerResult {
+      case .eventNotFound:
+        break
+      default:
+        XCTFail("Wrong trigger result")
+      }
+    } catch {
+      XCTFail("Shouldn't throw")
+    }
   }
 }

@@ -27,8 +27,10 @@ extension Superwall {
   func getPaywallViewController(
     _ request: PresentationRequest,
     _ input: TriggerResultResponsePipelineOutput,
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
+    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
+    dependencyContainer: DependencyContainer? = nil
   ) async throws -> PaywallVcPipelineOutput {
+    let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     let responseIdentifiers = ResponseIdentifiers(
       paywallId: input.experiment.variant.paywallId,
       experiment: input.experiment

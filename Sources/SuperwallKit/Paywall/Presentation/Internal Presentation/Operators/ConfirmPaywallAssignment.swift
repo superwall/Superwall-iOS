@@ -15,8 +15,10 @@ extension Superwall {
   /// at this point.
   func confirmPaywallAssignment(
     request: PresentationRequest,
-    input: PresentablePipelineOutput
+    input: PresentablePipelineOutput,
+    dependencyContainer: DependencyContainer? = nil
   ) {
+    let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     // Debuggers shouldn't confirm assignments.
     if request.flags.isDebuggerLaunched {
       return

@@ -12,9 +12,8 @@ import Combine
 final class HandleTriggerResultOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
-  func test_handleTriggerResult_paywall() {
+  func test_handleTriggerResult_paywall() async {
     let input = AssignmentPipelineOutput(
-      request: .stub(),
       triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
       debugInfo: [:]
     )
@@ -28,28 +27,23 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .handleTriggerResult(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { output in
-          expectation.fulfill()
-        }
+    do {
+      _ = try await Superwall.shared.handleTriggerResult(
+        .stub(),
+        input,
+        statePublisher
       )
-      .store(in: &cancellables)
+    } catch {
+      XCTFail()
+    }
 
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
-  func test_handleTriggerResult_holdout() {
+  func test_handleTriggerResult_holdout() async {
     //TODO: THis doesn't take into account activateSession
     let experimentId = "abc"
     let input = AssignmentPipelineOutput(
-      request: .stub(),
       triggerResult: .holdout(.init(id: experimentId, groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
       debugInfo: [:]
     )
@@ -81,33 +75,27 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let expectation = expectation(description: "Failed")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .handleTriggerResult(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          switch completion {
-          case .failure:
-            expectation.fulfill()
-          default:
-            break
-          }
-        },
-        receiveValue: { output in
-          XCTFail()
-        }
+    do {
+      _ = try await Superwall.shared.handleTriggerResult(
+        .stub(),
+        input,
+        statePublisher
       )
-      .store(in: &cancellables)
+      XCTFail("Should fail")
+    } catch {
+      if let error = error as? PresentationPipelineError,
+        case .holdout = error {
 
-    wait(for: [expectation, stateExpectation], timeout: 1)
+      } else {
+        XCTFail("Wrong error type")
+      }
+    }
+
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
-  func test_handleTriggerResult_noRuleMatch() {
+  func test_handleTriggerResult_noRuleMatch() async {
     let input = AssignmentPipelineOutput(
-      request: .stub(),
       triggerResult: .noRuleMatch,
       debugInfo: [:]
     )
@@ -138,33 +126,27 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let expectation = expectation(description: "Failed")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .handleTriggerResult(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          switch completion {
-          case .failure:
-            expectation.fulfill()
-          default:
-            break
-          }
-        },
-        receiveValue: { output in
-          XCTFail()
-        }
+    do {
+      _ = try await Superwall.shared.handleTriggerResult(
+        .stub(),
+        input,
+        statePublisher
       )
-      .store(in: &cancellables)
+      XCTFail("Should fail")
+    } catch {
+      if let error = error as? PresentationPipelineError,
+        case .noRuleMatch = error {
 
-    wait(for: [expectation, stateExpectation], timeout: 1)
+      } else {
+        XCTFail("Wrong error type")
+      }
+    }
+
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
-  func test_handleTriggerResult_eventNotFound() {
+  func test_handleTriggerResult_eventNotFound() async {
     let input = AssignmentPipelineOutput(
-      request: .stub(),
       triggerResult: .eventNotFound,
       debugInfo: [:]
     )
@@ -195,37 +177,31 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let expectation = expectation(description: "Failed")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .handleTriggerResult(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          switch completion {
-          case .failure:
-            expectation.fulfill()
-          default:
-            break
-          }
-        },
-        receiveValue: { output in
-          XCTFail()
-        }
+    do {
+      _ = try await Superwall.shared.handleTriggerResult(
+        .stub(),
+        input,
+        statePublisher
       )
-      .store(in: &cancellables)
+      XCTFail("Should fail")
+    } catch {
+      if let error = error as? PresentationPipelineError,
+        case .eventNotFound = error {
 
-    wait(for: [expectation, stateExpectation], timeout: 0.1)
+      } else {
+        XCTFail("Wrong error type")
+      }
+    }
+
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
-  func test_handleTriggerResult_error() {
+  func test_handleTriggerResult_error() async {
     let outputError = NSError(
       domain: "Test",
       code: 1
     )
     let input = AssignmentPipelineOutput(
-      request: .stub(),
       triggerResult: .error(outputError),
       debugInfo: [:]
     )
@@ -252,27 +228,22 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let expectation = expectation(description: "Failed")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .handleTriggerResult(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          switch completion {
-          case .failure:
-            expectation.fulfill()
-          default:
-            break
-          }
-        },
-        receiveValue: { output in
-          XCTFail()
-        }
+    do {
+      _ = try await Superwall.shared.handleTriggerResult(
+        .stub(),
+        input,
+        statePublisher
       )
-      .store(in: &cancellables)
+      XCTFail("Should fail")
+    } catch {
+      if let error = error as? PresentationPipelineError,
+         case .noPaywallViewController = error {
 
-    wait(for: [expectation, stateExpectation], timeout: 1)
+      } else {
+        XCTFail("Wrong error type")
+      }
+    }
+
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 }

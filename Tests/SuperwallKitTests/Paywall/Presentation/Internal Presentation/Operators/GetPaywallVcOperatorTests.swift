@@ -50,39 +50,27 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
-      .setting(\.dependencyContainer.paywallManager, to: paywallManager)
       .setting(\.flags.subscriptionStatus, to: publisher)
 
     let input = TriggerResultResponsePipelineOutput(
-      request: request,
       triggerResult: .paywall(experiment),
       debugInfo: [:],
       confirmableAssignment: nil,
       experiment: experiment
     )
 
-    let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .getPaywallViewController(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          switch completion {
-          case .failure:
-            expectation.fulfill()
-          default:
-            break
-          }
-        },
-        receiveValue: { output in
-          XCTFail()
-        }
-      )
-      .store(in: &cancellables)
+    do {
+      _ = try await Superwall.shared.getPaywallViewController(request, input, statePublisher, dependencyContainer: dependencyContainer)
+    } catch {
+      if let error = error as? PresentationPipelineError,
+         case .userIsSubscribed = error {
 
-    await fulfillment(of: [expectation, stateExpectation], timeout: 0.1)
+      } else {
+        XCTFail("Wrong error case")
+      }
+    }
+
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
   @MainActor
@@ -118,39 +106,27 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
-      .setting(\.dependencyContainer.paywallManager, to: paywallManager)
       .setting(\.flags.subscriptionStatus, to: publisher)
 
     let input = TriggerResultResponsePipelineOutput(
-      request: request,
       triggerResult: .paywall(experiment),
       debugInfo: [:],
       confirmableAssignment: nil,
       experiment: experiment
     )
 
-    let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .getPaywallViewController(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          switch completion {
-          case .failure:
-            expectation.fulfill()
-          default:
-            break
-          }
-        },
-        receiveValue: { output in
-          XCTFail()
-        }
-      )
-      .store(in: &cancellables)
+    do {
+      _ = try await Superwall.shared.getPaywallViewController(request, input, statePublisher, dependencyContainer: dependencyContainer)
+    } catch {
+      if let error = error as? PresentationPipelineError,
+         case .noPaywallViewController = error {
 
-    await fulfillment(of: [expectation, stateExpectation], timeout: 0.1)
+      } else {
+        XCTFail("Wrong error case \(error)")
+      }
+    }
+
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
   @MainActor
@@ -172,35 +148,29 @@ final class GetPaywallVcOperatorTests: XCTestCase {
       paywallRequestManager: dependencyContainer.paywallRequestManager
     )
     paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil)
+    dependencyContainer.paywallManager = paywallManager
 
     let request = PresentationRequest.stub()
-      .setting(\.dependencyContainer.paywallManager, to: paywallManager)
       .setting(\.flags.isPaywallPresented, to: false)
 
     let input = TriggerResultResponsePipelineOutput(
-      request: request,
       triggerResult: .paywall(experiment),
       debugInfo: [:],
       confirmableAssignment: nil,
       experiment: experiment
     )
 
-    let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .getPaywallViewController(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          XCTFail()
-        },
-        receiveValue: { output in
-          expectation.fulfill()
-        }
+    do {
+      _ = try await Superwall.shared.getPaywallViewController(
+        request,
+        input,
+        statePublisher,
+        dependencyContainer: dependencyContainer
       )
-      .store(in: &cancellables)
+    } catch {
+      XCTFail("Shouldn't have failed \(error)")
+    }
 
-    await fulfillment(of: [expectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 }

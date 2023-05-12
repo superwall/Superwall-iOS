@@ -42,7 +42,6 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       .setting(\.flags.subscriptionStatus, to: publisher)
 
     let input = PaywallVcPipelineOutput(
-      request: request,
       triggerResult: .paywall(experiment),
       debugInfo: [:],
       paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
@@ -50,27 +49,19 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     )
 
     let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .checkPaywallIsPresentable(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          switch completion {
-          case .failure:
-            expectation.fulfill()
-          default:
-            break
-          }
-        },
-        receiveValue: { output in
-          XCTFail()
-        }
+    do {
+      try await Superwall.shared.checkPaywallIsPresentable(
+        input: input,
+        request: request,
+        statePublisher
       )
-      .store(in: &cancellables)
-
-    try? await Task.sleep(nanoseconds: 500_000_000)
+      XCTFail("Should throw")
+    } catch {
+      if let error = error as? PresentationPipelineError,
+        case .userIsSubscribed = error {
+        expectation.fulfill()
+      }
+    }
 
     await fulfillment(of: [expectation, stateExpectation], timeout: 2)
   }
@@ -113,7 +104,6 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     .setting(\.presenter, to: nil)
     
     let input = PaywallVcPipelineOutput(
-      request: request,
       triggerResult: .paywall(experiment),
       debugInfo: [:],
       paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
@@ -121,25 +111,19 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     )
 
     let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .checkPaywallIsPresentable(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          switch completion {
-          case .failure:
-            expectation.fulfill()
-          default:
-            break
-          }
-        },
-        receiveValue: { output in
-          XCTFail()
-        }
+    do {
+      try await Superwall.shared.checkPaywallIsPresentable(
+        input: input,
+        request: request,
+        statePublisher
       )
-      .store(in: &cancellables)
+      XCTFail("Should throw")
+    } catch {
+      if let error = error as? PresentationPipelineError,
+         case .noPresenter = error {
+        expectation.fulfill()
+      }
+    }
 
     await fulfillment(of: [expectation, stateExpectation], timeout: 2)
   }
@@ -167,31 +151,22 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
 
     let dependencyContainer = DependencyContainer()
     let input = PaywallVcPipelineOutput(
-      request: request,
       triggerResult: .paywall(experiment),
       debugInfo: [:],
       paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
       confirmableAssignment: nil
     )
 
-    let expectation = expectation(description: "Called publisher")
-    CurrentValueSubject(input)
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .checkPaywallIsPresentable(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          XCTFail()
-        },
-        receiveValue: { output in
-          expectation.fulfill()
-        }
+    do {
+      try await Superwall.shared.checkPaywallIsPresentable(
+        input: input,
+        request: request,
+        statePublisher
       )
-      .store(in: &cancellables)
+    } catch {
+      XCTFail()
+    }
 
-    try? await Task.sleep(nanoseconds: 500_000_000)
-
-    await fulfillment(of: [expectation, stateExpectation], timeout: 2)
+    await fulfillment(of: [stateExpectation], timeout: 2)
   }
 }

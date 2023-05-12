@@ -11,10 +11,14 @@ extension Superwall {
   /// Waits for config to be received and the identity and subscription status of the user to
   /// be established.
   func waitToPresent(
-    _ request: PresentationRequest
+    _ request: PresentationRequest,
+    dependencyContainer: DependencyContainer? = nil
   ) async {
-    let timer = startTimer(for: request)
-
+    let dependencyContainer = dependencyContainer ?? self.dependencyContainer
+    let timer = startTimer(
+      for: request,
+      dependencyContainer: dependencyContainer
+    )
     async let hasIdentity = dependencyContainer.identityManager.hasIdentity.async()
     async let hasConfig = dependencyContainer.configManager.hasConfig.async()
     async let subscriptionStatus = request.flags.subscriptionStatus
@@ -30,7 +34,10 @@ extension Superwall {
 
   /// Starts a 5 sec timer. If pipeline above progresses, it'll get cancelled. Otherwise will log a
   /// timeout for the user.
-  private func startTimer(for request: PresentationRequest) -> Timer? {
+  private func startTimer(
+    for request: PresentationRequest,
+    dependencyContainer: DependencyContainer
+  ) -> Timer? {
     guard request.flags.type != .getImplicitPresentationResult else {
       return nil
     }
@@ -60,7 +67,7 @@ extension Superwall {
           timeoutReason += "\nThe config for the user has not returned from the server."
         }
 
-        let hasIdentity = await self.dependencyContainer.identityManager.hasIdentity.async()
+        let hasIdentity = await dependencyContainer.identityManager.hasIdentity.async()
         if !hasIdentity {
           timeoutReason += "\nThe user's identity has not been set."
         }

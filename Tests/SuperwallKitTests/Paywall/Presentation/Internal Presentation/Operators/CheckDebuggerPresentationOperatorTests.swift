@@ -9,14 +9,12 @@ import XCTest
 @testable import SuperwallKit
 import Combine
 
-final class CheckDebuggerPresentationOperatorTests: XCTestCase {
+final class CheckDebuggerPresentationTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
-  func test_checkDebuggerPresentation_debuggerNotLaunched() async {
+  func test_checkDebuggerPresentation_debuggerNotLaunched() {
     let request = PresentationRequest.stub()
       .setting(\.flags.isDebuggerLaunched, to: false)
-    
-    let debugInfo: [String: Any] = [:]
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -26,21 +24,13 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let continuePipelineExpectation = expectation(description: "Continued Pipeline")
-    CurrentValueSubject((request, debugInfo))
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .checkDebuggerPresentation(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { output in
-          continuePipelineExpectation.fulfill()
-        }
-      )
-      .store(in: &cancellables)
+    do {
+      try Superwall.shared.checkDebuggerPresentation(request, statePublisher)
+    } catch {
+      XCTFail("Shouldn't have thrown")
+    }
 
-    await fulfillment(of: [continuePipelineExpectation, stateExpectation], timeout: 0.1)
+    wait(for: [stateExpectation], timeout: 0.1)
   }
 
   func test_checkDebuggerPresentation_debuggerLaunched_presentingOnDebugger() async {
@@ -50,8 +40,6 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
       .setting(\.flags.isDebuggerLaunched, to: true)
       .setting(\.presenter, to: debugViewController)
 
-    let debugInfo: [String: Any] = [:]
-
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
     stateExpectation.isInverted = true
@@ -60,29 +48,19 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let continuePipelineExpectation = expectation(description: "Continued Pipeline")
-    CurrentValueSubject((request, debugInfo))
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .checkDebuggerPresentation(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { output in
-          continuePipelineExpectation.fulfill()
-        }
-      )
-      .store(in: &cancellables)
+    do {
+      try Superwall.shared.checkDebuggerPresentation(request, statePublisher)
+    } catch {
+      XCTFail("Shouldn't have thrown")
+    }
 
-    await fulfillment(of: [continuePipelineExpectation, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
-  func test_checkDebuggerPresentation_debuggerLaunched_notPresentingOnDebugger() async {
+  func test_checkDebuggerPresentation_debuggerLaunched_notPresentingOnDebugger() {
     let request = PresentationRequest.stub()
       .setting(\.flags.isDebuggerLaunched, to: true)
       .setting(\.presenter, to: nil)
-
-    let debugInfo: [String: Any] = [:]
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -98,29 +76,15 @@ final class CheckDebuggerPresentationOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let continuePipelineExpectation = expectation(description: "Continued Pipeline")
+    let debuggerPresentation = expectation(description: "Output a state")
+    do {
+      try Superwall.shared.checkDebuggerPresentation(request, statePublisher)
+      XCTFail("Should have thrown")
+    } catch {
+      debuggerPresentation.fulfill()
+    }
 
-    CurrentValueSubject((request, debugInfo))
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .checkDebuggerPresentation(statePublisher)
-      .eraseToAnyPublisher()
-      .sink(
-        receiveCompletion: { completion in
-          switch completion {
-          case .failure:
-            continuePipelineExpectation.fulfill()
-          default:
-            break
-          }
-        },
-        receiveValue: { output in
-          XCTFail()
-        }
-      )
-      .store(in: &cancellables)
-
-    await fulfillment(of: [continuePipelineExpectation, stateExpectation], timeout: 0.1)
+    wait(for: [debuggerPresentation, stateExpectation], timeout: 0.1)
   }
 
   /*
