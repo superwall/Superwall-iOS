@@ -21,7 +21,7 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var didOpenDeepLink = false
   var didPresentSafariExternal = false
 
-  var eventData: SuperwallKit.EventData?
+  var request: PresentationRequest?
 
   var paywall: SuperwallKit.Paywall = .stub()
 

@@ -30,7 +30,7 @@ extension Superwall {
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) async throws -> TriggerResultResponsePipelineOutput {
     let errorType: PresentationPipelineError
-    
+
     switch input.triggerResult {
     case .paywall(let experiment):
       return TriggerResultResponsePipelineOutput(
@@ -71,7 +71,7 @@ extension Superwall {
       errorType = .noPaywallViewController
       paywallStatePublisher.send(.presentationError(error))
     }
-    
+
     paywallStatePublisher.send(completion: .finished)
     throw errorType
   }

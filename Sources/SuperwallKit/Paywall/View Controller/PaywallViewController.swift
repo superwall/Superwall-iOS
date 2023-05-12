@@ -34,8 +34,8 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   /// The paywall to feed into the view controller.
   var paywall: Paywall
 
-  /// The event data associated with the presentation of the paywall.
-  var eventData: EventData?
+  /// The request associated with the presentation of the paywall.
+  var request: PresentationRequest?
 
   /// The cache key for the view controller.
   var cacheKey: String
@@ -51,7 +51,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   /// The paywall info
   var paywallInfo: PaywallInfo {
     return paywall.getInfo(
-      fromEvent: eventData,
+      fromEvent: request?.presentationInfo.eventData,
       factory: factory
     )
   }
@@ -443,16 +443,16 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   /// Sets the event data for use in ``PaywallInfo`` and the state publisher
   /// for callbacks.
   func set(
-    eventData: EventData?,
+    request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) {
-    self.eventData = eventData
+    self.request = request
     self.paywallStateSubject = paywallStatePublisher
   }
 
   func present(
     on presenter: UIViewController,
-    eventData: EventData?,
+    request: PresentationRequest,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     completion: @escaping (Bool) -> Void
@@ -465,7 +465,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     Superwall.shared.presentationItems.window?.makeKeyAndVisible()
 
     set(
-      eventData: eventData,
+      request: request,
       paywallStatePublisher: paywallStatePublisher
     )
 
@@ -633,7 +633,7 @@ extension PaywallViewController {
     if presentationDidFinishPrepare {
       return
     }
-
+    Superwall.shared.storePresentationObjects(request, paywallStateSubject)
     isPresented = true
     Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall(withInfo: paywallInfo)
     Task {

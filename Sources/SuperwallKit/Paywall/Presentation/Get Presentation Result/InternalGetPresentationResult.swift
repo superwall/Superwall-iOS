@@ -14,7 +14,10 @@ extension Superwall {
     do {
       await waitToPresent(request)
       let debugInfo = logPresentation(request, "Called Superwall.shared.track")
-      let assignmentOutput = try await evaluateRules(request, debugInfo: debugInfo)
+      let assignmentOutput = try await evaluateRules(
+        from: request,
+        debugInfo: debugInfo
+      )
 
       let triggerResultOutput = try checkForPaywallResult(
         triggerResult: assignmentOutput.triggerResult,
@@ -28,7 +31,6 @@ extension Superwall {
       )
       let presentationResult = GetPresentationResultLogic.convertTriggerResult(assignmentOutput.triggerResult)
       return presentationResult
-
     } catch let error as PresentationPipelineError {
       return handle(error, requestType: request.flags.type)
     } catch {
@@ -60,8 +62,8 @@ extension Superwall {
     case .eventNotFound:
       return .eventNotFound
     case .debuggerPresented,
-        .noPresenter,
-        .paywallAlreadyPresented:
+      .noPresenter,
+      .paywallAlreadyPresented:
       // Won't get here
       return .paywallNotAvailable
     }

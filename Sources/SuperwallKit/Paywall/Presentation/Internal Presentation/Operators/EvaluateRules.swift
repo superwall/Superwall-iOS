@@ -21,7 +21,7 @@ extension Superwall {
   ///   - storgate: A `Storage` object used for dependency injection.
   ///   If `true`, then it doesn't save the occurrence count of the rule.
   func evaluateRules(
-    _ request: PresentationRequest,
+    from request: PresentationRequest,
     debugInfo: [String: Any]
   ) async throws -> AssignmentPipelineOutput {
     if let eventData = request.presentationInfo.eventData {

@@ -33,7 +33,10 @@ extension Superwall {
         await waitToPresent(request)
         let debugInfo = logPresentation(request, "Called Superwall.shared.track")
         try checkDebuggerPresentation(request, publisher)
-        let assignmentOutput = try await evaluateRules(request, debugInfo: debugInfo)
+        let assignmentOutput = try await evaluateRules(
+          from: request,
+          debugInfo: debugInfo
+        )
         try await checkUserSubscription(request, assignmentOutput.triggerResult, publisher)
         confirmHoldoutAssignment(input: assignmentOutput)
         let triggerResultOutput = try await handleTriggerResult(request, assignmentOutput, publisher)
@@ -44,10 +47,8 @@ extension Superwall {
           request: request,
           publisher
         )
-        
         confirmPaywallAssignment(request: request, input: presentableOutput)
         try await presentPaywall(request, presentableOutput, publisher)
-        storePresentationObjects(request, publisher)
       } catch {
         logErrors(from: request, error)
       }

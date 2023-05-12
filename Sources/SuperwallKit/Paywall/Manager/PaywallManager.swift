@@ -67,8 +67,8 @@ class PaywallManager {
 
     if !request.isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
-      viewController.delegate = delegate
       if !isPreloading {
+        viewController.delegate = delegate
         viewController.paywall.overrideProductsIfNeeded(from: paywall)
       }
       return viewController

@@ -31,11 +31,11 @@ extension Superwall {
       )
       await self?.track(trackedEvent)
     }
-    
+
     try await withCheckedThrowingContinuation { continuation in
       input.paywallViewController.present(
         on: input.presenter,
-        eventData: request.presentationInfo.eventData,
+        request: request,
         presentationStyleOverride: request.paywallOverrides?.presentationStyle,
         paywallStatePublisher: paywallStatePublisher
       ) { isPresented in

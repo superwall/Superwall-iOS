@@ -14,7 +14,7 @@ final class PaywallViewControllerMock: PaywallViewController {
 
   override func present(
     on presenter: UIViewController,
-    eventData: EventData?,
+    request: PresentationRequest?,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     completion: @escaping (Bool) -> Void

@@ -19,6 +19,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
+- Fixes various memory related crashes.
 - Fixes a crash when calling `reset()` when a paywall is displayed.
 
 ## 3.0.0-rc.5

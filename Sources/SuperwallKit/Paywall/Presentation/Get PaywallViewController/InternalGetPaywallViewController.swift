@@ -25,23 +25,24 @@ extension Superwall {
       await waitToPresent(request)
       let debugInfo = logPresentation(request, "Called Superwall.shared.track")
 
-      let assignmentOutput = try await evaluateRules(request, debugInfo: debugInfo)
+      let assignmentOutput = try await evaluateRules(
+        from: request,
+        debugInfo: debugInfo
+      )
 
       confirmHoldoutAssignment(input: assignmentOutput)
       let triggerResultOutput = try await handleTriggerResult(request, assignmentOutput, publisher)
       let paywallVcOutput = try await getPaywallViewController(request, triggerResultOutput, publisher)
       let presentableOutput = try await checkSubscriptionStatus(request, paywallVcOutput, publisher)
-      
+
       confirmPaywallAssignment(
         request: request,
         input: presentableOutput
       )
 
-      //TODO: Move Store presentation objects to the paywallVC. Only on will appear should it change.
-
       let paywallViewController = presentableOutput.paywallViewController
       await paywallViewController.set(
-        eventData: request.presentationInfo.eventData,
+        request: request,
         paywallStatePublisher: publisher
       )
       return paywallViewController

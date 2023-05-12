@@ -28,7 +28,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
 
     do {
       let output = try await Superwall.shared.evaluateRules(
-        request,
+        from: request,
         debugInfo: [:]
       )
       XCTAssertNil(output.confirmableAssignment)
@@ -62,7 +62,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
 
     do {
       let output = try await Superwall.shared.evaluateRules(
-        request,
+        from: request,
         debugInfo: [:]
       )
       XCTAssertNil(output.confirmableAssignment)

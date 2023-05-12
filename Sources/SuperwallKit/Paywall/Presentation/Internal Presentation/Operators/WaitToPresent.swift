@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 11/05/2023.
 //
+// swiftlint:disable line_length 
 
 import Foundation
 
@@ -27,7 +28,7 @@ extension Superwall {
       .eraseToAnyPublisher()
       .async()
 
-    let results = await (hasIdentity, hasConfig, subscriptionStatus)
+    _ = await (hasIdentity, hasConfig, subscriptionStatus)
 
     timer?.invalidate()
   }

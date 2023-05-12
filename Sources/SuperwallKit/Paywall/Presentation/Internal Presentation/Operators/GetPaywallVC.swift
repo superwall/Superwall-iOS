@@ -45,10 +45,11 @@ extension Superwall {
       isDebuggerLaunched: request.flags.isDebuggerLaunched
     )
     do {
+      let delegate = request.flags.type.getPaywallVcDelegateAdapter()
       let paywallViewController = try await dependencyContainer.paywallManager.getPaywallViewController(
         from: paywallRequest,
         isPreloading: false,
-        delegate: request.flags.type.getPaywallVcDelegateAdapter()
+        delegate: delegate
       )
 
       let output = PaywallVcPipelineOutput(
@@ -61,10 +62,10 @@ extension Superwall {
     } catch {
       switch request.flags.type {
       case .getImplicitPresentationResult,
-          .getPresentationResult:
+        .getPresentationResult:
         throw PresentationPipelineError.noPaywallViewController
       case .presentation,
-          .getPaywallViewController:
+        .getPaywallViewController:
         guard let paywallStatePublisher = paywallStatePublisher else {
           // Will never get here
           throw error
