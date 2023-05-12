@@ -2,6 +2,8 @@ name: Dispatch UI Tests
 
 on:
   push:
+    branches:
+      - develop
 
 jobs:
   trigger_dispatch:
