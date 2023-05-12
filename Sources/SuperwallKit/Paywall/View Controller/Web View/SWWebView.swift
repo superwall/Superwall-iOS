@@ -61,9 +61,11 @@ class SWWebView: WKWebView {
     scrollView.maximumZoomScale = 1.0
     scrollView.minimumZoomScale = 1.0
     isOpaque = false
+    #if compiler(>=5.8) && os(iOS)
     if #available(iOS 16.4, *) {
       isInspectable = true
     }
+    #endif
 
     scrollView.contentInsetAdjustmentBehavior = .never
     scrollView.bounces = true
