@@ -16,6 +16,7 @@ disabled_rules:
   - function_parameter_count
   - blanket_disable_command
   - attributes
+  - unhandled_throwing_task
 
 opt_in_rules:
   - array_init
