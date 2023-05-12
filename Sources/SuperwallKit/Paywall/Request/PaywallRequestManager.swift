@@ -10,17 +10,23 @@ import Combine
 
 /// Actor responsible for handling all paywall requests.
 actor PaywallRequestManager {
-  private unowned let storeKitManager: StoreKitManager
-  private unowned let factory: DeviceInfoFactory
+  unowned let storeKitManager: StoreKitManager
+  unowned let network: Network
+  unowned let factory: Factory
 
   private var activeTasks: [String: Task<Paywall, Error>] = [:]
   private var paywallsByHash: [String: Paywall] = [:]
+  typealias Factory = DeviceInfoFactory
+    & TriggerSessionManagerFactory
+    & ConfigManagerFactory
 
   init(
     storeKitManager: StoreKitManager,
-    factory: DeviceInfoFactory
+    network: Network,
+    factory: Factory
   ) {
     self.storeKitManager = storeKitManager
+    self.network = network
     self.factory = factory
   }
 
@@ -40,10 +46,8 @@ actor PaywallRequestManager {
       paywallProducts: request.overrides.products
     )
 
-    let debuggerNotLaunched = !request.dependencyContainer.debugManager.isDebuggerLaunched
-
     if var paywall = paywallsByHash[requestHash],
-      debuggerNotLaunched {
+      request.isDebuggerLaunched {
       paywall.experiment = request.responseIdentifiers.experiment
       return paywall
     }
@@ -54,15 +58,13 @@ actor PaywallRequestManager {
 
     let task = Task<Paywall, Error> {
       do {
-        let paywall = try await request.publisher
-          .getRawPaywall()
-          .addProducts()
-          .throwableAsync()
+        let rawPaywall = try await getRawPaywall(from: request)
+        let paywall = try await addProducts(to: rawPaywall, request: request)
 
         saveRequestHash(
           requestHash,
           paywall: paywall,
-          debuggerNotLaunched: debuggerNotLaunched
+          debuggerNotLaunched: request.isDebuggerLaunched
         )
 
         return paywall

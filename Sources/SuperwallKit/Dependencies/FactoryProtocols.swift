@@ -34,7 +34,8 @@ protocol RequestFactory: AnyObject {
   func makePaywallRequest(
     eventData: EventData?,
     responseIdentifiers: ResponseIdentifiers,
-    overrides: PaywallRequest.Overrides?
+    overrides: PaywallRequest.Overrides?,
+    isDebuggerLaunched: Bool
   ) -> PaywallRequest
 
   func makePresentationRequest(
@@ -54,6 +55,11 @@ protocol RuleAttributesFactory: AnyObject {
 
 protocol TriggerSessionManagerFactory: AnyObject {
   func makeTriggerSessionManager() -> TriggerSessionManager
+  func getTriggerSessionManager() -> TriggerSessionManager
+}
+
+protocol ConfigManagerFactory: AnyObject {
+  func makeStaticPaywall(withId paywallId: String?) -> Paywall?
 }
 
 protocol StoreKitCoordinatorFactory: AnyObject {

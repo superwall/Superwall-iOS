@@ -8,81 +8,62 @@
 import Foundation
 import Combine
 
-enum GetPresentationResultError: Error, Equatable {
-  case willNotPresent(TriggerResult)
-  case userIsSubscribed
-  case paywallNotAvailable
+extension Superwall {
+  @discardableResult
+  func getPresentationResult(for request: PresentationRequest) async -> PresentationResult {
+    do {
+      await waitToPresent(request)
+      let debugInfo = logPresentation(request, "Called Superwall.shared.track")
+      let assignmentOutput = try await evaluateRules(request, debugInfo: debugInfo)
 
-  static func == (lhs: GetPresentationResultError, rhs: GetPresentationResultError) -> Bool {
-    switch (lhs, rhs) {
-    case (.willNotPresent, .willNotPresent),
-      (.userIsSubscribed, .userIsSubscribed),
-      (.paywallNotAvailable, .paywallNotAvailable):
-      return true
-    default:
-      return false
+      let triggerResultOutput = try checkForPaywallResult(
+        triggerResult: assignmentOutput.triggerResult,
+        debugInfo: debugInfo
+      )
+      let paywallVcOutput = try await getPaywallViewController(request, triggerResultOutput)
+
+      try await checkPaywallIsPresentable(
+        input: paywallVcOutput,
+        request: request
+      )
+      let presentationResult = GetPresentationResultLogic.convertTriggerResult(assignmentOutput.triggerResult)
+      return presentationResult
+
+    } catch let error as PresentationPipelineError {
+      return handle(error, requestType: request.flags.type)
+    } catch {
+      // Will never get here
+      return .paywallNotAvailable
     }
   }
-}
 
-extension Superwall {
-  func getPresentationResult(for request: PresentationRequest) async -> PresentationResult {
-    let presentationSubject = PresentationSubject(request)
-
-    return await presentationSubject
-      .eraseToAnyPublisher()
-      .waitToPresent()
-      .logPresentation("Called Superwall.shared.getPresentationResult")
-      .evaluateRules()
-      .checkForPaywallResult()
-      .getPaywallViewController()
-      .checkPaywallIsPresentable()
-      .convertToPresentationResult()
-      .async(request: request)
-  }
-}
-
-// MARK: - Async Publisher for GetTrackResult
-extension Publisher where Output == PresentationResult {
-  /// Waits and returns the first value of the publisher.
-  ///
-  /// This handles the error cases thrown by `getPresentationResult(for:)`.
-  @discardableResult
-  func async(request: PresentationRequest) async -> Output {
-    await withCheckedContinuation { continuation in
-      var cancellable: AnyCancellable?
-      cancellable = first()
-        .sink { completion in
-          switch completion {
-          case .failure(let error):
-            switch error {
-            case let error as GetPresentationResultError:
-              if request.flags.type != .getImplicitPresentationResult {
-                Logger.debug(
-                  logLevel: .info,
-                  scope: .paywallPresentation,
-                  message: "Skipped paywall presentation: \(error)"
-                )
-              }
-              switch error {
-              case .willNotPresent(let result):
-                let trackResult = GetPresentationResultLogic.convertTriggerResult(result)
-                continuation.resume(with: .success(trackResult))
-              case .userIsSubscribed:
-                continuation.resume(with: .success(.userIsSubscribed))
-              case .paywallNotAvailable:
-                continuation.resume(with: .success(.paywallNotAvailable))
-              }
-            default:
-              break
-            }
-            cancellable?.cancel()
-          case .finished:
-            cancellable?.cancel()
-          }
-        } receiveValue: { value in
-          continuation.resume(with: .success(value))
-        }
+  private func handle(
+    _ error: PresentationPipelineError,
+    requestType: PresentationRequestType
+  ) -> PresentationResult {
+    if requestType != .getImplicitPresentationResult {
+      Logger.debug(
+        logLevel: .info,
+        scope: .paywallPresentation,
+        message: "Skipped paywall presentation: \(error)"
+      )
+    }
+    switch error {
+    case .userIsSubscribed:
+      return .userIsSubscribed
+    case .noPaywallViewController:
+      return .paywallNotAvailable
+    case .noRuleMatch:
+      return .noRuleMatch
+    case .holdout(let experiment):
+      return .holdout(experiment)
+    case .eventNotFound:
+      return .eventNotFound
+    case .debuggerPresented,
+        .noPresenter,
+        .paywallAlreadyPresented:
+      // Won't get here
+      return .paywallNotAvailable
     }
   }
 }

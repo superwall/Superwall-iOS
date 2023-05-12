@@ -78,8 +78,6 @@ struct PresentationRequest {
   }
   var flags: Flags
 
-  unowned let dependencyContainer: DependencyContainer
-
   /// A `Just` publisher that that emits the request object once and finishes.
   var publisher: AnyPublisher<Self, Error> {
     Just(self)

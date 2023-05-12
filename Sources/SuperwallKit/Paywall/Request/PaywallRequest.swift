@@ -27,7 +27,8 @@ struct PaywallRequest {
   /// Overrides within the paywall.
   let overrides: Overrides
 
-  unowned let dependencyContainer: DependencyContainer
+  /// If the debugger is launched when the request was created.
+  let isDebuggerLaunched: Bool
 
   /// The request publisher that fires just once.
   var publisher: AnyPublisher<Self, Error> {

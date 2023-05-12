@@ -101,7 +101,7 @@ public final class PaywallInfo: NSObject {
   /// An enum describing why this paywall was last closed. `nil` if not yet closed.
   public let closeReason: PaywallCloseReason?
 
-  private unowned let sessionEventsManager: SessionEventsManager
+  private unowned let factory: TriggerSessionManagerFactory
 
   init(
     databaseId: String,
@@ -122,7 +122,7 @@ public final class PaywallInfo: NSObject {
     experiment: Experiment? = nil,
     paywalljsVersion: String? = nil,
     isFreeTrialAvailable: Bool,
-    sessionEventsManager: SessionEventsManager,
+    factory: TriggerSessionManagerFactory,
     featureGatingBehavior: FeatureGatingBehavior = .nonGated,
     closeReason: PaywallCloseReason? = nil
   ) {
@@ -178,7 +178,7 @@ public final class PaywallInfo: NSObject {
     } else {
       self.productsLoadDuration = nil
     }
-    self.sessionEventsManager = sessionEventsManager
+    self.factory = factory
     self.closeReason = closeReason
   }
 
@@ -211,7 +211,8 @@ public final class PaywallInfo: NSObject {
       "feature_gating": featureGatingBehavior.rawValue as Any
     ]
 
-    if let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession,
+    let triggerSessionManager = factory.getTriggerSessionManager()
+    if let triggerSession = await triggerSessionManager.activeTriggerSession,
       let databaseId = triggerSession.paywall?.databaseId,
       databaseId == self.databaseId {
       output["trigger_session_id"] = triggerSession.id
@@ -287,7 +288,7 @@ extension PaywallInfo: Stubbable {
       productsLoadFailTime: nil,
       productsLoadCompleteTime: nil,
       isFreeTrialAvailable: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager
+      factory: dependencyContainer
     )
   }
 }

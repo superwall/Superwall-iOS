@@ -52,6 +52,7 @@ final class DependencyContainer {
 
     paywallRequestManager = PaywallRequestManager(
       storeKitManager: storeKitManager,
+      network: network,
       factory: self
     )
     paywallManager = PaywallManager(
@@ -181,7 +182,7 @@ extension DependencyContainer: ViewControllerFactory {
       eventDelegate: Superwall.shared,
       delegate: delegate,
       deviceHelper: deviceHelper,
-      sessionEventsManager: sessionEventsManager,
+      factory: self,
       storage: storage,
       paywallManager: paywallManager,
       webView: webView,
@@ -229,13 +230,14 @@ extension DependencyContainer: RequestFactory {
   func makePaywallRequest(
     eventData: EventData? = nil,
     responseIdentifiers: ResponseIdentifiers,
-    overrides: PaywallRequest.Overrides? = nil
+    overrides: PaywallRequest.Overrides? = nil,
+    isDebuggerLaunched: Bool
   ) -> PaywallRequest {
     return PaywallRequest(
       eventData: eventData,
       responseIdentifiers: responseIdentifiers,
       overrides: overrides ?? PaywallRequest.Overrides(),
-      dependencyContainer: self
+      isDebuggerLaunched: isDebuggerLaunched
     )
   }
 
@@ -257,8 +259,7 @@ extension DependencyContainer: RequestFactory {
         subscriptionStatus: subscriptionStatus ?? Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
         isPaywallPresented: isPaywallPresented,
         type: type
-      ),
-      dependencyContainer: self
+      )
     )
   }
 }
@@ -328,6 +329,23 @@ extension DependencyContainer: TriggerSessionManagerFactory {
       configManager: configManager,
       appSessionManager: appSessionManager,
       identityManager: identityManager
+    )
+  }
+
+  func getTriggerSessionManager() -> TriggerSessionManager {
+    return sessionEventsManager.triggerSession
+  }
+}
+
+// MARK: - ConfigManagerFactory
+extension DependencyContainer: ConfigManagerFactory {
+  /// Gets the paywall response from the static config, if the device locale starts with "en" and no more specific version can be found.
+  func makeStaticPaywall(withId paywallId: String?) -> Paywall? {
+    let deviceInfo = makeDeviceInfo()
+    return ConfigLogic.getStaticPaywall(
+      withId: paywallId,
+      config: configManager.config,
+      deviceLocale: deviceInfo.locale
     )
   }
 }

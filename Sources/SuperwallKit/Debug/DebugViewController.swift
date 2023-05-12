@@ -238,7 +238,8 @@ final class DebugViewController: UIViewController {
       let request = factory.makePaywallRequest(
         eventData: nil,
         responseIdentifiers: .init(paywallId: paywallId),
-        overrides: nil
+        overrides: nil,
+        isDebuggerLaunched: true
       )
       var paywall = try await paywallRequestManager.getPaywall(from: request)
 

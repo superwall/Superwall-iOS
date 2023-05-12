@@ -175,16 +175,6 @@ class ConfigManager {
     }
   }
 
-  /// Gets the paywall response from the static config, if the device locale starts with "en" and no more specific version can be found.
-  func getStaticPaywall(withId paywallId: String?) -> Paywall? {
-    let deviceInfo = factory.makeDeviceInfo()
-    return ConfigLogic.getStaticPaywall(
-      withId: paywallId,
-      config: config,
-      deviceLocale: deviceInfo.locale
-    )
-  }
-
   /// Performs a given operation on the confirmed assignments, before updating both confirmed
   /// and unconfirmed assignments.
   ///
@@ -259,16 +249,19 @@ class ConfigManager {
   /// Preloads paywalls referenced by triggers.
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) {
     for identifier in paywallIdentifiers {
-      Task { [unowned self] in
-        let request = factory.makePaywallRequest(
+      Task { [weak self] in
+        guard let self = self else {
+          return
+        }
+        let request = self.factory.makePaywallRequest(
           eventData: nil,
           responseIdentifiers: .init(paywallId: identifier),
-          overrides: nil
+          overrides: nil,
+          isDebuggerLaunched: false
         )
-        _ = try? await paywallManager.getPaywallViewController(
+        _ = try? await self.paywallManager.getPaywallViewController(
           from: request,
           isPreloading: true,
-          isDebuggerLaunched: false,
           delegate: nil
         )
       }

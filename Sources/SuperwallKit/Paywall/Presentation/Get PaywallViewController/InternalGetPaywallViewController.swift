@@ -16,24 +16,39 @@ extension Superwall {
   ///
   /// - Returns: A ``PaywallViewController`` to present.
   @discardableResult
-  func getPaywallViewController(_ request: PresentationRequest) -> AnyPublisher<PaywallViewController, Error> {
-    let paywallStatePublisher: PassthroughSubject<PaywallState, Never> = .init()
-    let presentationSubject = PresentationSubject(request)
-    let hasObjcDelegate = request.flags.type.hasObjcDelegate()
+  func getPaywallViewController(
+    _ request: PresentationRequest
+  ) async throws -> PaywallViewController {
+    do {
+      let publisher: PassthroughSubject<PaywallState, Never> = .init()
 
-    return presentationSubject
-      .eraseToAnyPublisher()
-      .waitToPresent()
-      .logPresentation("Called Superwall.shared.getPaywallViewController")
-      .evaluateRules()
-      .confirmHoldoutAssignment()
-      .handleTriggerResult(paywallStatePublisher)
-      .getPaywallViewController(paywallStatePublisher)
-      .checkSubscriptionStatus(paywallStatePublisher)
-      .confirmPaywallAssignment()
-      .storePresentationObjects(presentationSubject, paywallStatePublisher)
-      .logErrors(from: request)
-      .extractPaywallViewController(paywallStatePublisher)
-      .mapErrors(toObjc: hasObjcDelegate)
+      await waitToPresent(request)
+      let debugInfo = logPresentation(request, "Called Superwall.shared.track")
+
+      let assignmentOutput = try await evaluateRules(request, debugInfo: debugInfo)
+
+      confirmHoldoutAssignment(input: assignmentOutput)
+      let triggerResultOutput = try await handleTriggerResult(request, assignmentOutput, publisher)
+      let paywallVcOutput = try await getPaywallViewController(request, triggerResultOutput, publisher)
+      let presentableOutput = try await checkSubscriptionStatus(request, paywallVcOutput, publisher)
+      
+      confirmPaywallAssignment(
+        request: request,
+        input: presentableOutput
+      )
+
+      //TODO: Move Store presentation objects to the paywallVC. Only on will appear should it change.
+
+      let paywallViewController = presentableOutput.paywallViewController
+      await paywallViewController.set(
+        eventData: request.presentationInfo.eventData,
+        paywallStatePublisher: publisher
+      )
+      return paywallViewController
+    } catch {
+      let toObjc = request.flags.type.hasObjcDelegate()
+      logErrors(from: request, error)
+      throw mapError(error, toObjc: toObjc)
+    }
   }
 }
