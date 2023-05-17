@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-rc.7
+
+### Fixes
+
+- Exposes `Logging` to Objective C.
+
 ## 3.0.0-rc.6
 
 ### Breaking Changes
