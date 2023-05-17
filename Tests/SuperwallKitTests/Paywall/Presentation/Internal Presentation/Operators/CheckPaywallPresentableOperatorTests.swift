@@ -41,19 +41,15 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     let request = PresentationRequest.stub()
       .setting(\.flags.subscriptionStatus, to: publisher)
 
-    let input = PaywallVcPipelineOutput(
-      triggerResult: .paywall(experiment),
-      debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
-      confirmableAssignment: nil
-    )
-
+    let paywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil)
     let expectation = expectation(description: "Called publisher")
     do {
-      try await Superwall.shared.checkPaywallIsPresentable(
-        input: input,
+      try await Superwall.shared.getPresenter(
+        for: paywallVc,
+        rulesOutput: EvaluateRulesOutput(triggerResult: .paywall(experiment)),
         request: request,
-        statePublisher
+        debugInfo: [:],
+        paywallStatePublisher: statePublisher
       )
       XCTFail("Should throw")
     } catch {
@@ -102,20 +98,16 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       type: .getPaywallViewController(.stub())
     )
     .setting(\.presenter, to: nil)
-    
-    let input = PaywallVcPipelineOutput(
-      triggerResult: .paywall(experiment),
-      debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
-      confirmableAssignment: nil
-    )
 
+    let paywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil)
     let expectation = expectation(description: "Called publisher")
     do {
-      try await Superwall.shared.checkPaywallIsPresentable(
-        input: input,
+      try await Superwall.shared.getPresenter(
+        for: paywallVc,
+        rulesOutput: EvaluateRulesOutput(triggerResult: .paywall(experiment)),
         request: request,
-        statePublisher
+        debugInfo: [:],
+        paywallStatePublisher: statePublisher
       )
       XCTFail("Should throw")
     } catch {
@@ -150,18 +142,14 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       .setting(\.flags.subscriptionStatus, to: publisher)
 
     let dependencyContainer = DependencyContainer()
-    let input = PaywallVcPipelineOutput(
-      triggerResult: .paywall(experiment),
-      debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
-      confirmableAssignment: nil
-    )
-
+    let paywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil)
     do {
-      try await Superwall.shared.checkPaywallIsPresentable(
-        input: input,
+      try await Superwall.shared.getPresenter(
+        for: paywallVc,
+        rulesOutput: EvaluateRulesOutput(triggerResult: .paywall(experiment)),
         request: request,
-        statePublisher
+        debugInfo: [:],
+        paywallStatePublisher: statePublisher
       )
     } catch {
       XCTFail()

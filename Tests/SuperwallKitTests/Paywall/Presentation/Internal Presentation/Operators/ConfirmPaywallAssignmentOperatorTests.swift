@@ -25,19 +25,10 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
     dependencyContainer.configManager = configManager
-    let request = PresentationRequest.stub()
-      .setting(\.flags.isDebuggerLaunched, to: true)
-
-    let input = PresentablePipelineOutput(
-      debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
-      presenter: UIViewController(),
-      confirmableAssignment: ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
-    )
 
      Superwall.shared.confirmPaywallAssignment(
-      request: request,
-      input: input,
+      ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      isDebuggerLaunched: true,
       dependencyContainer: dependencyContainer
      )
     XCTAssertFalse(configManager.confirmedAssignment)
@@ -56,20 +47,11 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
     dependencyContainer.configManager = configManager
-    
-    let request = PresentationRequest.stub()
-      .setting(\.flags.isDebuggerLaunched, to: false)
 
-    let input = PresentablePipelineOutput(
-      debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
-      presenter: UIViewController(),
-      confirmableAssignment: nil
-    )
 
      Superwall.shared.confirmPaywallAssignment(
-      request: request,
-      input: input,
+      nil,
+      isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
      )
     XCTAssertFalse(configManager.confirmedAssignment)
@@ -104,10 +86,10 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     )
 
     Superwall.shared.confirmPaywallAssignment(
-     request: request,
-     input: input,
-     dependencyContainer: dependencyContainer
-    )
+      ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      isDebuggerLaunched: false,
+      dependencyContainer: dependencyContainer
+     )
    XCTAssertTrue(configManager.confirmedAssignment)
   }
 }

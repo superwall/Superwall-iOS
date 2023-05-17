@@ -7,23 +7,19 @@
 
 import Foundation
 
-struct AssignmentPipelineOutput {
+struct EvaluateRulesOutput {
   let triggerResult: TriggerResult
   var confirmableAssignment: ConfirmableAssignment?
-  let debugInfo: [String: Any]
 }
 
 extension Superwall {
-  /// Evaluates the rules from the campaign that the event belongs to. This retrieves the trigger result and the confirmable assignment.
+  /// Evaluates the rules from the campaign that the event belongs to
   ///
-  /// - Parameters:
-  ///   - configManager: A `ConfigManager` object used for dependency injection.
-  ///   - storgate: A `Storage` object used for dependency injection.
-  ///   If `true`, then it doesn't save the occurrence count of the rule.
+  /// - Parameter request: The presentation request
+  /// - Returns: An `EvaluateRulesOutput` object containing the trigger result and confirmable assignment.
   func evaluateRules(
-    from request: PresentationRequest,
-    debugInfo: [String: Any]
-  ) async throws -> AssignmentPipelineOutput {
+    from request: PresentationRequest
+  ) async throws -> EvaluateRulesOutput {
     if let eventData = request.presentationInfo.eventData {
       let assignmentLogic = RuleLogic(
         configManager: dependencyContainer.configManager,
@@ -37,10 +33,9 @@ extension Superwall {
       )
       let confirmableAssignment = eventOutcome.confirmableAssignment
 
-      return AssignmentPipelineOutput(
+      return EvaluateRulesOutput(
         triggerResult: eventOutcome.triggerResult,
-        confirmableAssignment: confirmableAssignment,
-        debugInfo: debugInfo
+        confirmableAssignment: confirmableAssignment
       )
     } else {
       // Called if the debugger is shown.
@@ -49,9 +44,8 @@ extension Superwall {
         // to force unwrapping.
         throw PresentationPipelineError.noPaywallViewController
       }
-      return AssignmentPipelineOutput(
-        triggerResult: .paywall(.presentById(paywallId)),
-        debugInfo: debugInfo
+      return EvaluateRulesOutput(
+        triggerResult: .paywall(.presentById(paywallId))
       )
     }
   }

@@ -8,32 +8,32 @@
 import Foundation
 import Combine
 
-struct PaywallVcPipelineOutput {
-  let triggerResult: TriggerResult
-  let debugInfo: [String: Any]
-  let paywallViewController: PaywallViewController
-  let confirmableAssignment: ConfirmableAssignment?
-}
-
 extension Superwall {
   /// Requests the paywall view controller to present. If an error occurred during this,
   /// or a paywall is already presented, it cancels the pipeline and sends an `error`
   /// state to the paywall state publisher.
   ///
   /// - Parameters:
+  ///   - request: The presentation request.
+  ///   - experiment: The experiment that this paywall is part of.
+  ///   - rulesOutput: The output from evaluating rules.
+  ///   - debugInfo: Information to help with debugging.
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
+  ///   - dependencyContainer: Used with testing only.
   ///
-  /// - Returns: A publisher that contains info for the next pipeline operator.
+  /// - Returns: A ``PaywallViewController``.
   func getPaywallViewController(
-    _ request: PresentationRequest,
-    _ input: TriggerResultResponsePipelineOutput,
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
+    request: PresentationRequest,
+    experiment: Experiment?,
+    rulesOutput: EvaluateRulesOutput,
+    debugInfo: [String: Any],
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
     dependencyContainer: DependencyContainer? = nil
-  ) async throws -> PaywallVcPipelineOutput {
+  ) async throws -> PaywallViewController {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     let responseIdentifiers = ResponseIdentifiers(
-      paywallId: input.experiment.variant.paywallId,
-      experiment: input.experiment
+      paywallId: experiment?.variant.paywallId,
+      experiment: experiment
     )
     let paywallRequest = dependencyContainer.makePaywallRequest(
       eventData: request.presentationInfo.eventData,
@@ -52,13 +52,7 @@ extension Superwall {
         delegate: delegate
       )
 
-      let output = PaywallVcPipelineOutput(
-        triggerResult: input.triggerResult,
-        debugInfo: input.debugInfo,
-        paywallViewController: paywallViewController,
-        confirmableAssignment: input.confirmableAssignment
-      )
-      return output
+      return paywallViewController
     } catch {
       switch request.flags.type {
       case .getImplicitPresentationResult,
@@ -70,7 +64,7 @@ extension Superwall {
           // Will never get here
           throw error
         }
-        throw await presentationFailure(error, request, input.debugInfo, paywallStatePublisher)
+        throw await presentationFailure(error, request, debugInfo, paywallStatePublisher)
       }
     }
   }

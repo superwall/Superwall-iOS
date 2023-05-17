@@ -21,22 +21,28 @@ extension Superwall {
   /// which the paywall can present.
   ///
   /// - Parameters:
+  ///   - paywallViewController: The ``PaywallViewController`` to present.
+  ///   - rulesOutput: The output from evaluating rules.
+  ///   - request: The presentation request.
+  ///   - debugInfo: Info used to print debug logs.
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   ///
-  /// - Returns: A publisher that contains info for the next pipeline operator.
+  /// - Returns: A `UIViewController`to present on.
   @discardableResult
-  func checkPaywallIsPresentable(
-    input: PaywallVcPipelineOutput,
+  func getPresenter(
+    for paywallViewController: PaywallViewController,
+    rulesOutput: EvaluateRulesOutput,
     request: PresentationRequest,
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
-  ) async throws -> PresentablePipelineOutput {
+    debugInfo: [String: Any],
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
+  ) async throws -> UIViewController? {
     let subscriptionStatus = await request.flags.subscriptionStatus.async()
     if await InternalPresentationLogic.userSubscribedAndNotOverridden(
       isUserSubscribed: subscriptionStatus == .active,
       overrides: .init(
         isDebuggerLaunched: request.flags.isDebuggerLaunched,
         shouldIgnoreSubscriptionStatus: request.paywallOverrides?.ignoreSubscriptionStatus,
-        presentationCondition: input.paywallViewController.paywall.presentation.condition
+        presentationCondition: paywallViewController.paywall.presentation.condition
       )
     ) {
       let state: PaywallState = .skipped(.userIsSubscribed)
@@ -48,12 +54,7 @@ extension Superwall {
     // Return early with stub if we're just getting the paywall result.
     if request.flags.type == .getPresentationResult ||
       request.flags.type == .getImplicitPresentationResult {
-      return await PresentablePipelineOutput(
-        debugInfo: input.debugInfo,
-        paywallViewController: input.paywallViewController,
-        presenter: UIViewController(),
-        confirmableAssignment: input.confirmableAssignment
-      )
+      return nil
     }
 
     if request.presenter == nil {
@@ -69,7 +70,7 @@ extension Superwall {
         logLevel: .error,
         scope: .paywallPresentation,
         message: "No Presenter To Present Paywall",
-        info: input.debugInfo,
+        info: debugInfo,
         error: nil
       )
 
@@ -89,16 +90,11 @@ extension Superwall {
     await sessionEventsManager?.triggerSession.activateSession(
       for: request.presentationInfo,
       on: request.presenter,
-      paywall: input.paywallViewController.paywall,
-      triggerResult: input.triggerResult
+      paywall: paywallViewController.paywall,
+      triggerResult: rulesOutput.triggerResult
     )
 
-    return PresentablePipelineOutput(
-      debugInfo: input.debugInfo,
-      paywallViewController: input.paywallViewController,
-      presenter: presenter,
-      confirmableAssignment: input.confirmableAssignment
-    )
+    return presenter
   }
 
   @MainActor

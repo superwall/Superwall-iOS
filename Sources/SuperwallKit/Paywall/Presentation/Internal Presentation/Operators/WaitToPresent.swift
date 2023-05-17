@@ -10,7 +10,11 @@ import Foundation
 
 extension Superwall {
   /// Waits for config to be received and the identity and subscription status of the user to
-  /// be established.
+  /// be established before continuing.
+  ///
+  /// - Parameters:
+  ///   - request: The presentation request.
+  ///   - dependencyContainer: Used for testing only.
   func waitToPresent(
     _ request: PresentationRequest,
     dependencyContainer: DependencyContainer? = nil

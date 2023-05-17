@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 extension Superwall {
-  /// Runs a combine pipeline to get a paywall to present, publishing ``PaywallState`` objects that provide updates on the lifecycle of the paywall.
+  /// Gets a paywall to present, publishing ``PaywallState`` objects that provide updates on the lifecycle of the paywall.
   ///
   /// - Parameters:
   ///   - request: A presentation request of type `PresentationRequest` to feed into a presentation pipeline.
@@ -20,27 +20,46 @@ extension Superwall {
     _ request: PresentationRequest
   ) async throws -> PaywallViewController {
     do {
+      await waitToPresent(request)
+
+      let debugInfo = logPresentation(
+        request: request,
+        message: "Called Superwall.shared.track"
+      )
+
+      let rulesOutput = try await evaluateRules(from: request)
+
+      confirmHoldoutAssignment(rulesOutput: rulesOutput)
+
       let publisher: PassthroughSubject<PaywallState, Never> = .init()
 
-      await waitToPresent(request)
-      let debugInfo = logPresentation(request, "Called Superwall.shared.track")
-
-      let assignmentOutput = try await evaluateRules(
-        from: request,
-        debugInfo: debugInfo
+      let experiment = try await getExperiment(
+        request: request,
+        rulesOutput: rulesOutput,
+        debugInfo: debugInfo,
+        paywallStatePublisher: publisher
       )
 
-      confirmHoldoutAssignment(input: assignmentOutput)
-      let triggerResultOutput = try await handleTriggerResult(request, assignmentOutput, publisher)
-      let paywallVcOutput = try await getPaywallViewController(request, triggerResultOutput, publisher)
-      let presentableOutput = try await checkSubscriptionStatus(request, paywallVcOutput, publisher)
+      let paywallViewController = try await getPaywallViewController(
+        request: request,
+        experiment: experiment,
+        rulesOutput: rulesOutput,
+        debugInfo: debugInfo,
+        paywallStatePublisher: publisher
+      )
+
+      try await checkSubscriptionStatus(
+        request: request,
+        paywall: paywallViewController.paywall,
+        triggerResult: rulesOutput.triggerResult,
+        paywallStatePublisher: publisher
+      )
 
       confirmPaywallAssignment(
-        request: request,
-        input: presentableOutput
+        rulesOutput.confirmableAssignment,
+        isDebuggerLaunched: request.flags.isDebuggerLaunched
       )
 
-      let paywallViewController = presentableOutput.paywallViewController
       await paywallViewController.set(
         request: request,
         paywallStatePublisher: publisher

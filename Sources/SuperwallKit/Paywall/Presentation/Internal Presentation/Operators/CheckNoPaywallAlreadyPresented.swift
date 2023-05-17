@@ -9,6 +9,11 @@ import Foundation
 import Combine
 
 extension Superwall {
+  /// Throws an error if the paywall is already presented.
+  ///
+  /// - Parameters:
+  ///   - request: The presentation request.
+  ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   func checkNoPaywallAlreadyPresented(
     _ request: PresentationRequest,
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>

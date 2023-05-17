@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 21/11/2022.
 //
@@ -13,23 +13,31 @@ extension Superwall {
   func getPresentationResult(for request: PresentationRequest) async -> PresentationResult {
     do {
       await waitToPresent(request)
-      let debugInfo = logPresentation(request, "Called Superwall.shared.track")
-      let assignmentOutput = try await evaluateRules(
-        from: request,
+      let debugInfo = logPresentation(
+        request: request,
+        message: "Called Superwall.shared.getPresentationResult"
+      )
+      let rulesOutput = try await evaluateRules(from: request)
+
+      let experiment = try await getExperiment(
+        request: request,
+        rulesOutput: rulesOutput
+      )
+
+      let paywallViewController = try await getPaywallViewController(
+        request: request,
+        experiment: experiment,
+        rulesOutput: rulesOutput,
         debugInfo: debugInfo
       )
 
-      let triggerResultOutput = try checkForPaywallResult(
-        triggerResult: assignmentOutput.triggerResult,
+      try await getPresenter(
+        for: paywallViewController,
+        rulesOutput: rulesOutput,
+        request: request,
         debugInfo: debugInfo
       )
-      let paywallVcOutput = try await getPaywallViewController(request, triggerResultOutput)
-
-      try await checkPaywallIsPresentable(
-        input: paywallVcOutput,
-        request: request
-      )
-      let presentationResult = GetPresentationResultLogic.convertTriggerResult(assignmentOutput.triggerResult)
+      let presentationResult = GetPresentationResultLogic.convertTriggerResult(rulesOutput.triggerResult)
       return presentationResult
     } catch let error as PresentationPipelineError {
       return handle(error, requestType: request.flags.type)
@@ -39,6 +47,12 @@ extension Superwall {
     }
   }
 
+  /// Converts a thrown error into a ``PresentationResult`` object.
+  ///
+  /// - Parameters:
+  ///   - error: The error that was thrown.
+  ///   - requestType: The type of presentation request, as defined in `PresentationRequestType`.
+  /// - Returns: A ``PresentationResult``.
   private func handle(
     _ error: PresentationPipelineError,
     requestType: PresentationRequestType

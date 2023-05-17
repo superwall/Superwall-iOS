@@ -52,21 +52,21 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     let request = PresentationRequest.stub()
       .setting(\.flags.subscriptionStatus, to: publisher)
 
-    let input = TriggerResultResponsePipelineOutput(
-      triggerResult: .paywall(experiment),
-      debugInfo: [:],
-      confirmableAssignment: nil,
-      experiment: experiment
-    )
-
     do {
-      _ = try await Superwall.shared.getPaywallViewController(request, input, statePublisher, dependencyContainer: dependencyContainer)
+      _ = try await Superwall.shared.getPaywallViewController(
+        request: request,
+        experiment: experiment,
+        rulesOutput: .init(triggerResult: .paywall(experiment)),
+        debugInfo: [:],
+        paywallStatePublisher: statePublisher,
+        dependencyContainer: dependencyContainer
+      )
     } catch {
       if let error = error as? PresentationPipelineError,
          case .userIsSubscribed = error {
 
       } else {
-        XCTFail("Wrong error case")
+        XCTFail("Wrong error case \(error)")
       }
     }
 
@@ -108,15 +108,15 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     let request = PresentationRequest.stub()
       .setting(\.flags.subscriptionStatus, to: publisher)
 
-    let input = TriggerResultResponsePipelineOutput(
-      triggerResult: .paywall(experiment),
-      debugInfo: [:],
-      confirmableAssignment: nil,
-      experiment: experiment
-    )
-
     do {
-      _ = try await Superwall.shared.getPaywallViewController(request, input, statePublisher, dependencyContainer: dependencyContainer)
+      _ = try await Superwall.shared.getPaywallViewController(
+        request: request,
+        experiment: experiment,
+        rulesOutput: .init(triggerResult: .paywall(experiment)),
+        debugInfo: [:],
+        paywallStatePublisher: statePublisher,
+        dependencyContainer: dependencyContainer
+      )
     } catch {
       if let error = error as? PresentationPipelineError,
          case .noPaywallViewController = error {
@@ -153,18 +153,13 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     let request = PresentationRequest.stub()
       .setting(\.flags.isPaywallPresented, to: false)
 
-    let input = TriggerResultResponsePipelineOutput(
-      triggerResult: .paywall(experiment),
-      debugInfo: [:],
-      confirmableAssignment: nil,
-      experiment: experiment
-    )
-
     do {
       _ = try await Superwall.shared.getPaywallViewController(
-        request,
-        input,
-        statePublisher,
+        request: request,
+        experiment: experiment,
+        rulesOutput: .init(triggerResult: .paywall(experiment)),
+        debugInfo: [:],
+        paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
       )
     } catch {

@@ -59,15 +59,15 @@ actor PaywallRequestManager {
     let task = Task<Paywall, Error> {
       do {
         let rawPaywall = try await getRawPaywall(from: request)
-        let paywall = try await addProducts(to: rawPaywall, request: request)
+        let paywallWithProducts = try await addProducts(to: rawPaywall, request: request)
 
         saveRequestHash(
           requestHash,
-          paywall: paywall,
+          paywall: paywallWithProducts,
           debuggerNotLaunched: request.isDebuggerLaunched
         )
 
-        return paywall
+        return paywallWithProducts
       } catch {
         activeTasks[requestHash] = nil
         throw error

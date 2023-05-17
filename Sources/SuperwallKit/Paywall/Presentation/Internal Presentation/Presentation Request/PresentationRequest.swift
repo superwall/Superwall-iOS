@@ -49,10 +49,9 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
     switch (lhs, rhs) {
     case (.getImplicitPresentationResult, .getImplicitPresentationResult),
       (.getPresentationResult, .getPresentationResult),
-      (.presentation, .presentation):
+      (.presentation, .presentation),
+      (.getPaywallViewController, .getPaywallViewController):
       return true
-    case let (.getPaywallViewController(type1), .getPaywallViewController(type2)):
-      return type1 === type2
     default:
       return false
     }
