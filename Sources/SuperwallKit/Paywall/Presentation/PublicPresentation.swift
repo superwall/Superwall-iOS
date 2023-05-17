@@ -131,17 +131,17 @@ extension Superwall {
           handler?.onPresentHandler?(paywallInfo)
         case let .dismissed(paywallInfo, state):
           handler?.onDismissHandler?(paywallInfo)
-        switch state {
-        case .purchased,
-          .restored:
-          completion?()
-        case .declined:
-          let closeReason = paywallInfo.closeReason
-          let featureGating = paywallInfo.featureGatingBehavior
-          if closeReason != .forNextPaywall && featureGating == .nonGated {
+          switch state {
+          case .purchased,
+            .restored:
             completion?()
+          case .declined:
+            let closeReason = paywallInfo.closeReason
+            let featureGating = paywallInfo.featureGatingBehavior
+            if closeReason != .forNextPaywall && featureGating == .nonGated {
+              completion?()
+            }
           }
-        }
         case .skipped(let reason):
           if let handler = handler?.onSkipHandler {
             handler(reason)

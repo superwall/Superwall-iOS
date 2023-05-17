@@ -52,7 +52,7 @@ public final class PaywallOptions: NSObject {
   /// This is used to cache your paywall webpage to disk after it's first loaded. Superwall will
   /// continue to load the cached version of your paywall webpage unless the next time you
   /// make a change on the Superwall dashboard.
-  var useCachedTemplates = false
+  public var useCachedTemplates = true
 
   /// Automatically dismisses the paywall when a product is purchased or restored. Defaults to `true`.
   ///
@@ -60,16 +60,18 @@ public final class PaywallOptions: NSObject {
   public var automaticallyDismiss = true
 
   /// Defines the different types of views that can appear behind Apple's payment sheet during a transaction.
-
   @objc(SWKTransactionBackgroundView)
   public enum TransactionBackgroundView: Int, Sendable {
     /// This shows your paywall background color overlayed with an activity indicator.
     case spinner
+
+    /// Removes the background view during a transaction.
+    case none
   }
   /// The view that appears behind Apple's payment sheet during a transaction. Defaults to `.spinner`.
   ///
-  /// Set this to `nil` to remove any background view during the transaction.
+  /// Set this to `.none` to remove the background view during a transaction.
   ///
   /// **Note:** This feature is still in development and could change.
-  public var transactionBackgroundView: TransactionBackgroundView? = .spinner
+  public var transactionBackgroundView: TransactionBackgroundView = .spinner
 }

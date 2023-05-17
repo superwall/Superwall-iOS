@@ -263,7 +263,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
       let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
       webView.load(request)
     } else {
-      let request = URLRequest(url: url)
+    let request = URLRequest(url: url)
       webView.load(request)
     }
 
@@ -352,10 +352,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   }
 
   private func addLoadingView() {
-    guard
-      let background = Superwall.shared.options.paywalls.transactionBackgroundView,
-      background == .spinner
-    else {
+    guard Superwall.shared.options.paywalls.transactionBackgroundView == .spinner else {
       return
     }
 
