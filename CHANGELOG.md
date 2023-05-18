@@ -11,10 +11,11 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `useCachedTemplates` to `PaywallOptions`, which defaults to `true`. When you save a change to your paywall in the Superwall dashboard, a key is appended to the end of your paywall website URL, e.g. `sw_cache_key=<Date saved>`. This is used to cache your paywall webpage to disk after it has first loaded. Superwall will continue to load the cached version of your paywall webpage until the next time you make a change on the Superwall dashboard. With this enhancement, your paywalls will load lightning fast and will reduce network load of your app.
+- Exposes `Logging` `SuperwallOption` to Objective C.
 
 ### Fixes
 
-- Exposes `Logging` `SuperwallOption` to Objective C.
+- Fixes issue where a crash would occur if storage was full and a persistent container couldn't be created.
 
 ## 3.0.0-rc.6
 
