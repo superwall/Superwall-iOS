@@ -7,11 +7,15 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Breaking Changes
 
 - Exposes the `transactionBackgroundView` `PaywallOption` to Objective-C by making it non-optional and adding a `none` case in place of setting it to `nil`.
+- Renames `paywallViewController(_:didFinishWith:)` to `handle(paywall:result:)`.
+- Renames `paywallStatePublisher` property on `PaywallViewController` to `statePublisher`.
 
 ### Enhancements
 
 - Adds `useCachedTemplates` to `PaywallOptions`, which defaults to `true`. When you save a change to your paywall in the Superwall dashboard, a key is appended to the end of your paywall website URL, e.g. `sw_cache_key=<Date saved>`. This is used to cache your paywall webpage to disk after it has first loaded. Superwall will continue to load the cached version of your paywall webpage until the next time you make a change on the Superwall dashboard. With this enhancement, your paywalls will load lightning fast and will reduce network load of your app.
 - Exposes `Logging` `SuperwallOption` to Objective C.
+- Exposes `info` on the `PaywallViewController`.
+- Adds a `paywall(_:didDisappearWith:)` function to the `PaywallViewControllerDelegate`, which is called when the paywall disappears.
 
 ### Fixes
 

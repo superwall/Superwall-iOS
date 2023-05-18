@@ -25,16 +25,27 @@ final class PaywallViewControllerDelegateAdapter {
   }
 
   @MainActor
-  func didFinish(
-    controller: PaywallViewController,
+  func handle(
+    paywall: PaywallViewController,
     swiftResult: PaywallResult,
     objcResult: PaywallResultObjc
   ) {
-    swiftDelegate?.paywallViewController(controller, didFinishWith: swiftResult)
-    objcDelegate?.paywallViewController(controller, didFinishWith: objcResult)
+    swiftDelegate?.handle(paywall: paywall, result: swiftResult)
+    objcDelegate?.handle(paywall: paywall, result: objcResult)
+  }
+
+  @MainActor
+  func didDisappear(
+    paywall: PaywallViewController,
+    swiftResult: PaywallResult,
+    objcResult: PaywallResultObjc
+  ) {
+    swiftDelegate?.paywall(paywall, didDisappearWith: swiftResult)
+    objcDelegate?.paywall(paywall, didDisappearWith: objcResult)
   }
 }
 
+// MARK: - Stubbable
 extension PaywallViewControllerDelegateAdapter: Stubbable {
   static func stub() -> PaywallViewControllerDelegateAdapter {
     return PaywallViewControllerDelegateAdapter(

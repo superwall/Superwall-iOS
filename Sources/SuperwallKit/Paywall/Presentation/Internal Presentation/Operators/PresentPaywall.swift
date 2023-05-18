@@ -42,7 +42,7 @@ extension Superwall {
         paywallStatePublisher: paywallStatePublisher
       ) { isPresented in
         if isPresented {
-          let state: PaywallState = .presented(paywallViewController.paywallInfo)
+          let state: PaywallState = .presented(paywallViewController.info)
           paywallStatePublisher.send(state)
           continuation.resume()
         } else {

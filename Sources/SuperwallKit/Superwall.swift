@@ -72,7 +72,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// The ``PaywallInfo`` object of the most recently presented view controller.
   public var latestPaywallInfo: PaywallInfo? {
-    let presentedPaywallInfo = dependencyContainer.paywallManager.presentedViewController?.paywallInfo
+    let presentedPaywallInfo = dependencyContainer.paywallManager.presentedViewController?.info
     return presentedPaywallInfo ?? presentationItems.paywallInfo
   }
 
@@ -459,12 +459,12 @@ extension Superwall: PaywallViewControllerEventDelegate {
 
     switch paywallEvent {
     case .closed:
-      let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: paywallViewController.paywallInfo)
+      let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: paywallViewController.info)
 
       let result = await getImplicitPresentationResult(forEvent: "paywall_decline")
 
       if case .paywall = result,
-        paywallViewController.paywallInfo.presentedByEventWithName != SuperwallEventObjc.paywallDecline.description {
+        paywallViewController.info.presentedByEventWithName != SuperwallEventObjc.paywallDecline.description {
         // Do nothing, track will handle it.
       } else {
         dismiss(

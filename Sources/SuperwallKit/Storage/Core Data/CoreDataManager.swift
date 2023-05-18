@@ -86,10 +86,7 @@ class CoreDataManager {
     )
     let deleteOccurrenceRequest = NSBatchDeleteRequest(fetchRequest: occurrenceRequest)
 
-    backgroundContext.performAndWait { [weak self] in
-      guard let self = self else {
-        return
-      }
+    backgroundContext.performAndWait {
       do {
         try backgroundContext.executeAndMergeChanges(using: deleteEventDataRequest)
         try backgroundContext.executeAndMergeChanges(using: deleteOccurrenceRequest)

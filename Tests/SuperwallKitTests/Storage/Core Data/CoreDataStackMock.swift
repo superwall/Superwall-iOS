@@ -16,7 +16,7 @@ final class CoreDataStackMock: CoreDataStack {
     let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
 
     do {
-      try mainContext.executeAndMergeChanges(using: deleteRequest)
+      try mainContext!.executeAndMergeChanges(using: deleteRequest)
       completion()
       print("Deleted entities")
     } catch let error as NSError {
@@ -51,7 +51,7 @@ final class CoreDataStackMock: CoreDataStack {
       return false
     }
 
-    persistentContainer.performBackgroundTask { context in
+    persistentContainer!.performBackgroundTask { context in
       do {
         try context.execute(batchInsert)
         completion()
@@ -83,7 +83,7 @@ final class CoreDataStackMock: CoreDataStack {
       return false
     }
 
-    persistentContainer.performBackgroundTask { context in
+    persistentContainer!.performBackgroundTask { context in
       do {
         try context.execute(batchInsert)
         completion()

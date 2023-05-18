@@ -11,16 +11,28 @@ import Foundation
 /// has been retrieved using
 /// ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:)``.
 public protocol PaywallViewControllerDelegate: AnyObject {
-  /// Tells the delegate that the user finished interacting with the paywall.
+  /// Tells the delegate to handle the dismissal of the paywall.
   ///
   /// - Parameters:
-  ///   - controller: The ``PaywallViewController`` that the user is interacting with.
+  ///   - paywall: The ``PaywallViewController`` that the user is interacting with.
   ///   - result: A ``PaywallResult`` enum that contains the reason for the dismissal of
   ///   the ``PaywallViewController``.
   @MainActor
-  func paywallViewController(
-    _ controller: PaywallViewController,
-    didFinishWith result: PaywallResult
+  func handle(
+    paywall: PaywallViewController,
+    result: PaywallResult
+  )
+
+  /// Tells the delegate that the paywall disappeared.
+  ///
+  /// - Parameters:
+  ///   - paywall: The ``PaywallViewController`` that the user is interacting with.
+  ///   - result: A ``PaywallResult`` enum that contains the reason for the disappearing of
+  ///   the ``PaywallViewController``.
+  @MainActor
+  func paywall(
+    _ paywall: PaywallViewController,
+    didDisappearWith result: PaywallResult
   )
 }
 
@@ -29,16 +41,28 @@ public protocol PaywallViewControllerDelegate: AnyObject {
 /// ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:)``.
 @objc(SWKPaywallViewControllerDelegate)
 public protocol PaywallViewControllerDelegateObjc: AnyObject {
-  /// Tells the delegate that the user finished interacting with the paywall.
+  /// Tells the delegate to handle the dismissal of the paywall.
   ///
   /// - Parameters:
-  ///   - controller: The ``PaywallViewController`` that the user is interacting with.
+  ///   - paywall: The ``PaywallViewController`` that the user is interacting with.
   ///   - result: A ``PaywallResultObjc`` enum that contains the reason for the dismissal of
   ///   the ``PaywallViewController``.
   @MainActor
-  @objc func paywallViewController(
-    _ controller: PaywallViewController,
-    didFinishWith result: PaywallResultObjc
+  @objc func handle(
+    paywall: PaywallViewController,
+    result: PaywallResultObjc
+  )
+
+  /// Tells the delegate that the paywall disappeared.
+  ///
+  /// - Parameters:
+  ///   - paywall: The ``PaywallViewController`` that the user is interacting with.
+  ///   - result: A ``PaywallResult`` enum that contains the reason for the disappearing of
+  ///   the ``PaywallViewController``.
+  @MainActor
+  func paywall(
+    _ paywall: PaywallViewController,
+    didDisappearWith result: PaywallResultObjc
   )
 }
 

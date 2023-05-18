@@ -156,7 +156,7 @@ enum TrackingLogic {
       SuperwallEventObjc.paywallDecline.description
     ]
 
-    if let referringEventName = paywallViewController?.paywallInfo.presentedByEventWithName,
+    if let referringEventName = paywallViewController?.info.presentedByEventWithName,
       notAllowedReferringEventNames.contains(referringEventName) {
       return .dontTriggerPaywall
     }
