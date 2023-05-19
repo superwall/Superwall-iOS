@@ -248,9 +248,10 @@ extension DependencyContainer: RequestFactory {
     isDebuggerLaunched: Bool? = nil,
     subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>? = nil,
     isPaywallPresented: Bool,
-    type: PresentationRequestType
+    type: PresentationRequestType,
+    hasInternetOverride: Bool? = nil
   ) -> PresentationRequest {
-    let hasInternet = deviceHelper.reachabilityFlags?.contains(.reachable) ?? false
+    let hasInternet = hasInternetOverride ?? deviceHelper.reachabilityFlags?.contains(.reachable) ?? false
 
     return PresentationRequest(
       presentationInfo: presentationInfo,
