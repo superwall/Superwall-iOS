@@ -9,6 +9,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Exposes the `transactionBackgroundView` `PaywallOption` to Objective-C by making it non-optional and adding a `none` case in place of setting it to `nil`.
 - Renames `paywallViewController(_:didFinishWith:)` to `handle(paywall:result:)`.
 - Renames `paywallStatePublisher` property on `PaywallViewController` to `statePublisher`.
+- Changes the presentation error domain code from `SWPresentationError` to `SWKPresentationError`.
 
 ### Enhancements
 
@@ -21,6 +22,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes issue where a crash would occur if storage was full and a persistent container couldn't be created.
 - Fixes thread safety issue when using a lazy variable to retrieve products.
+- If the internet is offline when trying to present a paywall, it now throws a presentationError. If the internet reconnects future paywalls will show.
+- Fixes retry logic for requests.
 
 ## 3.0.0-rc.6
 

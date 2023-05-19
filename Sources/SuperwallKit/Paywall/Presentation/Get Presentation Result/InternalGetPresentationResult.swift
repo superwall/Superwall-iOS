@@ -12,7 +12,7 @@ extension Superwall {
   @discardableResult
   func getPresentationResult(for request: PresentationRequest) async -> PresentationResult {
     do {
-      await waitToPresent(request)
+      try await waitToPresent(request)
       let debugInfo = logPresentation(
         request: request,
         message: "Called Superwall.shared.getPresentationResult"
@@ -77,7 +77,8 @@ extension Superwall {
       return .eventNotFound
     case .debuggerPresented,
       .noPresenter,
-      .paywallAlreadyPresented:
+      .paywallAlreadyPresented,
+      .noInternet:
       // Won't get here
       return .paywallNotAvailable
     }

@@ -25,7 +25,7 @@ extension Superwall {
       return
     }
     let error = InternalPresentationLogic.presentationError(
-      domain: "SWPresentationError",
+      domain: "SWKPresentationError",
       code: 101,
       title: "Debugger Is Presented",
       value: "Trying to present paywall when debugger is launched."

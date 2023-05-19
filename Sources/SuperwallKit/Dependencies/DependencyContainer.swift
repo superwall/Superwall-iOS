@@ -250,6 +250,8 @@ extension DependencyContainer: RequestFactory {
     isPaywallPresented: Bool,
     type: PresentationRequestType
   ) -> PresentationRequest {
+    let hasInternet = deviceHelper.reachabilityFlags?.contains(.reachable) ?? false
+
     return PresentationRequest(
       presentationInfo: presentationInfo,
       presenter: presenter,
@@ -258,7 +260,8 @@ extension DependencyContainer: RequestFactory {
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
         subscriptionStatus: subscriptionStatus ?? Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
         isPaywallPresented: isPaywallPresented,
-        type: type
+        type: type,
+        hasInternet: hasInternet
       )
     )
   }

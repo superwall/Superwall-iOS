@@ -74,6 +74,7 @@ struct PresentationRequest {
     var subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>
     var isPaywallPresented: Bool
     var type: PresentationRequestType
+    var hasInternet: Bool
   }
   var flags: Flags
 

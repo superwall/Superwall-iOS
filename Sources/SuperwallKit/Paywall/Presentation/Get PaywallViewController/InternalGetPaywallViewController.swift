@@ -20,7 +20,8 @@ extension Superwall {
     _ request: PresentationRequest
   ) async throws -> PaywallViewController {
     do {
-      await waitToPresent(request)
+      let publisher: PassthroughSubject<PaywallState, Never> = .init()
+      try await waitToPresent(request, paywallStatePublisher: publisher)
 
       let debugInfo = logPresentation(
         request: request,
@@ -31,7 +32,6 @@ extension Superwall {
 
       confirmHoldoutAssignment(rulesOutput: rulesOutput)
 
-      let publisher: PassthroughSubject<PaywallState, Never> = .init()
 
       let experiment = try await getExperiment(
         request: request,

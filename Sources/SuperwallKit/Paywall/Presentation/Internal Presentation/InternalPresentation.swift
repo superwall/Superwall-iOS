@@ -30,7 +30,7 @@ extension Superwall {
     Task {
       do {
         try await checkNoPaywallAlreadyPresented(request, publisher)
-        await waitToPresent(request)
+        try await waitToPresent(request, paywallStatePublisher: publisher)
         let debugInfo = logPresentation(
           request: request,
           message: "Called Superwall.shared.register"

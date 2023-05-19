@@ -28,7 +28,7 @@ extension Superwall {
       info: ["message": "Superwall.shared.isPaywallPresented is true"]
     )
     let error = InternalPresentationLogic.presentationError(
-      domain: "SWPresentationError",
+      domain: "SWKPresentationError",
       code: 102,
       title: "Paywall Already Presented",
       value: "You can only present one paywall at a time."

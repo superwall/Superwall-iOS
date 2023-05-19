@@ -46,7 +46,10 @@ extension Publisher {
   /// Returns the first value of the publisher, throwing on failure or if no value was returned.
   @discardableResult
   func throwableAsync() async throws -> Output {
-    try await withCheckedThrowingContinuation { continuation in
+    if Task.isCancelled {
+      throw AsyncError.finishedWithoutValue
+    }
+    return try await withCheckedThrowingContinuation { continuation in
       var cancellable: AnyCancellable?
       var finishedWithoutValue = true
       cancellable = first()

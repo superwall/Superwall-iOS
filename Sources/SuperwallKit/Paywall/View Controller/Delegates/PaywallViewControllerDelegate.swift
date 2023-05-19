@@ -36,6 +36,13 @@ public protocol PaywallViewControllerDelegate: AnyObject {
   )
 }
 
+public extension PaywallViewControllerDelegate {
+  func paywall(
+    _ paywall: PaywallViewController,
+    didDisappearWith result: PaywallResult
+  ) {}
+}
+
 /// Objective-C-only interface for responding to user interactions with a ``PaywallViewController`` that
 /// has been retrieved using
 /// ``Superwall/getPaywallViewController(forEvent:params:paywallOverrides:delegate:)``.
@@ -60,10 +67,17 @@ public protocol PaywallViewControllerDelegateObjc: AnyObject {
   ///   - result: A ``PaywallResult`` enum that contains the reason for the disappearing of
   ///   the ``PaywallViewController``.
   @MainActor
-  func paywall(
+  @objc optional func paywall(
     _ paywall: PaywallViewController,
     didDisappearWithResult result: PaywallResultObjc
   )
+}
+
+public extension PaywallViewControllerDelegateObjc {
+  func paywall(
+    _ paywall: PaywallViewController,
+    didDisappearWithResult result: PaywallResultObjc
+  ) {}
 }
 
 protocol PaywallViewControllerEventDelegate: AnyObject {

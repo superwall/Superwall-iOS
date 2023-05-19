@@ -53,7 +53,7 @@ extension Superwall {
             info: debugInfo
           )
           let error = InternalPresentationLogic.presentationError(
-            domain: "SWPresentationError",
+            domain: "SWKPresentationError",
             code: 102,
             title: "Paywall Already Presented",
             value: "Trying to present paywall while another paywall is presented."

@@ -7,6 +7,8 @@
 // swiftlint:disable line_length 
 
 import Foundation
+import SystemConfiguration
+import Combine
 
 extension Superwall {
   /// Waits for config to be received and the identity and subscription status of the user to
@@ -17,22 +19,45 @@ extension Superwall {
   ///   - dependencyContainer: Used for testing only.
   func waitToPresent(
     _ request: PresentationRequest,
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
     dependencyContainer: DependencyContainer? = nil
-  ) async {
+  ) async throws {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     let timer = startTimer(
       for: request,
       dependencyContainer: dependencyContainer
     )
-    async let hasIdentity = dependencyContainer.identityManager.hasIdentity.async()
-    async let hasConfig = dependencyContainer.configManager.hasConfig.async()
-    async let subscriptionStatus = request.flags.subscriptionStatus
-      .filter { $0 != .unknown }
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .async()
 
-    _ = await (hasIdentity, hasConfig, subscriptionStatus)
+    let task = Task {
+      async let hasIdentity = dependencyContainer.identityManager.hasIdentity.throwableAsync()
+      async let hasConfig = dependencyContainer.configManager.hasConfig.throwableAsync()
+      async let subscriptionStatus = request.flags.subscriptionStatus
+        .filter { $0 != .unknown }
+        .setFailureType(to: Error.self)
+        .eraseToAnyPublisher()
+        .throwableAsync()
+
+      _ = await (try hasIdentity, try hasConfig, try subscriptionStatus)
+    }
+
+    if !request.flags.hasInternet {
+      task.cancel()
+    }
+
+    do {
+      try await task.value
+    } catch {
+      let error = InternalPresentationLogic.presentationError(
+        domain: "SWKPresentationError",
+        code: 104,
+        title: "No Internet",
+        value: "Trying to present paywall with no internet."
+      )
+      let state: PaywallState = .presentationError(error)
+      paywallStatePublisher?.send(state)
+      paywallStatePublisher?.send(completion: .finished)
+      throw PresentationPipelineError.noInternet
+    }
 
     timer?.invalidate()
   }
