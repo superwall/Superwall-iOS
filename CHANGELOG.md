@@ -20,6 +20,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes issue where a crash would occur if storage was full and a persistent container couldn't be created.
+- Fixes thread safety issue when using a lazy variable to retrieve products.
 
 ## 3.0.0-rc.6
 

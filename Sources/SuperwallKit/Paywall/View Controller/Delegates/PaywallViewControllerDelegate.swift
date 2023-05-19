@@ -62,7 +62,7 @@ public protocol PaywallViewControllerDelegateObjc: AnyObject {
   @MainActor
   func paywall(
     _ paywall: PaywallViewController,
-    didDisappearWith result: PaywallResultObjc
+    didDisappearWithResult result: PaywallResultObjc
   )
 }
 

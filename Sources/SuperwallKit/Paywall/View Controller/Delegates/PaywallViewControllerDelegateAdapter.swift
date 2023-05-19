@@ -41,7 +41,7 @@ final class PaywallViewControllerDelegateAdapter {
     objcResult: PaywallResultObjc
   ) {
     swiftDelegate?.paywall(paywall, didDisappearWith: swiftResult)
-    objcDelegate?.paywall(paywall, didDisappearWith: objcResult)
+    objcDelegate?.paywall(paywall, didDisappearWithResult: objcResult)
   }
 }
 

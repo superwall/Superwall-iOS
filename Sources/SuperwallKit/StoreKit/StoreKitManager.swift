@@ -4,7 +4,7 @@ import Combine
 actor StoreKitManager {
   /// Coordinates: The purchasing, restoring and retrieving of products; the checking
   /// of transactions; and the determining of the user's subscription status.
-  nonisolated lazy var coordinator = factory.makeStoreKitCoordinator()
+  lazy var coordinator = factory.makeStoreKitCoordinator()
   private unowned let factory: StoreKitCoordinatorFactory
   private lazy var receiptManager = ReceiptManager(delegate: self)
 
