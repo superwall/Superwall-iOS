@@ -27,7 +27,7 @@ class DeviceHelper {
 
     return flags
   }
-  
+
   var appVersion: String {
     Bundle.main.releaseVersionNumber ?? ""
   }
