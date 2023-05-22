@@ -9,7 +9,7 @@ import Foundation
 
 /// An object that represents the result of calling
 /// ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:completion:)-5vtpb``.
-@objc(SWKGetPaywallViewControllerResult)
+@objc(SWKGetPaywallResult)
 @objcMembers
 public final class GetPaywallResultObjc: NSObject {
   /// The ``PaywallViewController``.
