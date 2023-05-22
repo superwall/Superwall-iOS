@@ -129,6 +129,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
 
   private var presentationWillPrepare = true
   private var presentationDidFinishPrepare = false
+  private var didCallDelegate = false
 
   private unowned let factory: TriggerSessionManagerFactory
   private unowned let storage: Storage
@@ -608,6 +609,7 @@ extension PaywallViewController {
     view.alpha = 1.0
     view.transform = .identity
 
+    didCallDelegate = false
     paywall.closeReason = nil
     Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall(withInfo: info)
 
@@ -688,10 +690,11 @@ extension PaywallViewController {
     paywall.closeReason = closeReason
 
     if let delegate = delegate {
-      delegate.handle(
+      didCallDelegate = true
+      delegate.didFinish(
         paywall: self,
-        swiftResult: result,
-        objcResult: result.convertForObjc()
+        result: result,
+        shouldDismiss: true
       )
     } else {
       dismiss(animated: presentationIsAnimated)
@@ -714,11 +717,14 @@ extension PaywallViewController {
 
     let result = paywallResult ?? .declined
     paywallStateSubject?.send(.dismissed(info, result))
-    delegate?.didDisappear(
-      paywall: self,
-      swiftResult: result,
-      objcResult: result.convertForObjc()
-    )
+
+    if !didCallDelegate {
+      delegate?.didFinish(
+        paywall: self,
+        result: result,
+        shouldDismiss: false
+      )
+    }
 
     if paywall.closeReason == .systemLogic {
       paywallStateSubject?.send(completion: .finished)

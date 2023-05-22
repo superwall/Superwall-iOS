@@ -16,7 +16,7 @@ extension Superwall {
   ///
   /// - Returns: A ``PaywallViewController`` to present.
   @discardableResult
-  func getPaywallViewController(
+  func getPaywall(
     _ request: PresentationRequest
   ) async throws -> PaywallViewController {
     do {

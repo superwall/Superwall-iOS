@@ -25,23 +25,13 @@ final class PaywallViewControllerDelegateAdapter {
   }
 
   @MainActor
-  func handle(
+  func didFinish(
     paywall: PaywallViewController,
-    swiftResult: PaywallResult,
-    objcResult: PaywallResultObjc
+    result: PaywallResult,
+    shouldDismiss: Bool
   ) {
-    swiftDelegate?.handle(paywall: paywall, result: swiftResult)
-    objcDelegate?.handle(paywall: paywall, result: objcResult)
-  }
-
-  @MainActor
-  func didDisappear(
-    paywall: PaywallViewController,
-    swiftResult: PaywallResult,
-    objcResult: PaywallResultObjc
-  ) {
-    swiftDelegate?.paywall(paywall, didDisappearWith: swiftResult)
-    objcDelegate?.paywall(paywall, didDisappearWithResult: objcResult)
+    swiftDelegate?.paywall(paywall, didFinishWith: result, shouldDismiss: shouldDismiss)
+    objcDelegate?.paywall(paywall, didFinishWithResult: result.convertForObjc(), shouldDismiss: shouldDismiss)
   }
 }
 
