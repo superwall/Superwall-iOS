@@ -10,13 +10,15 @@ import Combine
 
 /// An adapter between the internal SDK and the public swift/objective c delegate.
 final class SuperwallDelegateAdapter {
+
   var hasPurchaseController: Bool {
     return swiftPurchaseController != nil || objcPurchaseController != nil
   }
-  weak var swiftDelegate: SuperwallDelegate?
-  weak var objcDelegate: SuperwallDelegateObjc?
-  weak var swiftPurchaseController: PurchaseController?
-  weak var objcPurchaseController: PurchaseControllerObjc?
+
+  var swiftDelegate: SuperwallDelegate?
+  var objcDelegate: SuperwallDelegateObjc?
+  var swiftPurchaseController: PurchaseController?
+  var objcPurchaseController: PurchaseControllerObjc?
 
   /// Called on init of the Superwall instance via
   /// ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``.
