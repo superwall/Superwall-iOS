@@ -45,15 +45,6 @@ public final class PaywallOptions: NSObject {
   /// or ``Superwall/preloadPaywalls(forEvents:)``
   public var shouldPreload = true
 
-  /// Loads paywall template websites from disk, if available. Defaults to `true`.
-  ///
-  /// When you save a change to your paywall in the Superwall dashboard, a key is
-  /// appended to the end of your paywall website URL, e.g. `sw_cache_key=<Date saved>`.
-  /// This is used to cache your paywall webpage to disk after it's first loaded. Superwall will
-  /// continue to load the cached version of your paywall webpage unless the next time you
-  /// make a change on the Superwall dashboard.
-  public var useCachedTemplates = true
-
   /// Automatically dismisses the paywall when a product is purchased or restored. Defaults to `true`.
   ///
   /// Set this to `false` to prevent the paywall from dismissing on purchase/restore.

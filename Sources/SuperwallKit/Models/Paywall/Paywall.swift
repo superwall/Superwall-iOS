@@ -45,6 +45,9 @@ struct Paywall: Decodable {
   let backgroundColorHex: String
   let backgroundColor: UIColor
 
+  /// Indicates whether the caching of the paywall is enabled or not.
+  let onDeviceCache: OnDeviceCaching
+
   /// The products associated with the paywall.
   var products: [Product] {
     didSet {
@@ -103,6 +106,7 @@ struct Paywall: Decodable {
     case backgroundColorHex
     case products
     case featureGating
+    case onDeviceCache
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -168,6 +172,7 @@ struct Paywall: Decodable {
     )
 
     featureGating = try values.decodeIfPresent(FeatureGatingBehavior.self, forKey: .featureGating) ?? .nonGated
+    onDeviceCache = try values.decodeIfPresent(OnDeviceCaching.self, forKey: .onDeviceCache) ?? .enabled
   }
 
   init(
@@ -190,7 +195,8 @@ struct Paywall: Decodable {
     productVariables: [ProductVariable]? = [],
     swTemplateProductVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false,
-    featureGating: FeatureGatingBehavior = .nonGated
+    featureGating: FeatureGatingBehavior = .nonGated,
+    onDeviceCache: OnDeviceCaching = .enabled
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -211,7 +217,8 @@ struct Paywall: Decodable {
     self.productVariables = productVariables
     self.swProductVariablesTemplate = swTemplateProductVariables
     self.isFreeTrialAvailable = isFreeTrialAvailable
-    self.featureGating = .nonGated
+    self.featureGating = featureGating
+    self.onDeviceCache = onDeviceCache
   }
 
   func getInfo(

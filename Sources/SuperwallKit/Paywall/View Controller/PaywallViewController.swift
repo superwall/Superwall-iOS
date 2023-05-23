@@ -260,7 +260,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
       )
     }
 
-    if Superwall.shared.options.paywalls.useCachedTemplates {
+    if paywall.onDeviceCache == .enabled {
       let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
       webView.load(request)
     } else {
