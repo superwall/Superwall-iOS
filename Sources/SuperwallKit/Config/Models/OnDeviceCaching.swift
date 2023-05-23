@@ -20,7 +20,7 @@ enum OnDeviceCaching: Decodable {
   init(from decoder: Decoder) throws {
     let container = try decoder.singleValueContainer()
     let rawValue = try container.decode(String.self)
-    let caching = CodingKeys(rawValue: rawValue) ?? .enabled
+    let caching = CodingKeys(rawValue: rawValue) ?? .disabled
     switch caching {
     case .enabled:
       self = .enabled

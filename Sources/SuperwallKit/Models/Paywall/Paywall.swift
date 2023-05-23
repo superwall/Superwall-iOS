@@ -172,7 +172,7 @@ struct Paywall: Decodable {
     )
 
     featureGating = try values.decodeIfPresent(FeatureGatingBehavior.self, forKey: .featureGating) ?? .nonGated
-    onDeviceCache = try values.decodeIfPresent(OnDeviceCaching.self, forKey: .onDeviceCache) ?? .enabled
+    onDeviceCache = try values.decodeIfPresent(OnDeviceCaching.self, forKey: .onDeviceCache) ?? .disabled
   }
 
   init(
@@ -196,7 +196,7 @@ struct Paywall: Decodable {
     swTemplateProductVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false,
     featureGating: FeatureGatingBehavior = .nonGated,
-    onDeviceCache: OnDeviceCaching = .enabled
+    onDeviceCache: OnDeviceCaching = .disabled
   ) {
     self.databaseId = databaseId
     self.identifier = identifier

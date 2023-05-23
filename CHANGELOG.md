@@ -13,7 +13,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds paywall caching. By default, all paywalls are now cached (unless they've been updated). However, you'll be able to turn this off on the dashboard. With this enhancement, your paywalls will load lightning fast and will reduce network load of your app.
+- Adds paywall caching. This is disabled by default but we'll roll this out to users accounts remotely. With this enhancement, your paywalls will load lightning fast and will reduce network load of your app.
 - Exposes `Logging` `SuperwallOption` to Objective C.
 - Exposes `info` on the `PaywallViewController`.
 
