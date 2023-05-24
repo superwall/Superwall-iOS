@@ -65,6 +65,12 @@ extension Superwall {
           paywallStatePublisher: publisher
         )
 
+        try await checkGatingAndInternet(
+          from: paywallViewController.info,
+          request: request,
+          paywallStatePublisher: publisher
+        )
+
         guard let presenter = try await getPresenter(
           for: paywallViewController,
           rulesOutput: rulesOutput,

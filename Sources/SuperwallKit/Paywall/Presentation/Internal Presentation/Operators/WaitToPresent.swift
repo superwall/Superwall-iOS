@@ -27,39 +27,54 @@ extension Superwall {
       for: request,
       dependencyContainer: dependencyContainer
     )
-
-    let task = Task {
-      async let hasIdentity = dependencyContainer.identityManager.hasIdentity.throwableAsync()
-      async let hasConfig = dependencyContainer.configManager.hasConfig.throwableAsync()
-      async let subscriptionStatus = request.flags.subscriptionStatus
-        .filter { $0 != .unknown }
-        .setFailureType(to: Error.self)
-        .eraseToAnyPublisher()
-        .throwableAsync()
-
-      _ = await (try hasIdentity, try hasConfig, try subscriptionStatus)
+    defer {
+      timer?.invalidate()
     }
+
+    let subscriptionStatus = await request.flags.subscriptionStatus
+      .filter { $0 != .unknown }
+      .setFailureType(to: Error.self)
+      .eraseToAnyPublisher()
+      .async()
 
     if !request.flags.hasInternet {
-      task.cancel()
+      if dependencyContainer.configManager.config == nil {
+        if subscriptionStatus == .active {
+          // If no internet, no config, but is subscribed, then skip presentation with userIsSubscribed.
+          let state: PaywallState = .skipped(.userIsSubscribed)
+          paywallStatePublisher?.send(state)
+          paywallStatePublisher?.send(completion: .finished)
+          throw PresentationPipelineError.userIsSubscribed
+        } else {
+          // If no internet, not subscribed, and no config
+          // then throw error.
+          try noInternet(paywallStatePublisher: paywallStatePublisher)
+        }
+      } else {
+        // If has config, continue but might catch error later on.
+        return
+      }
     }
 
-    do {
-      try await task.value
-    } catch {
-      let error = InternalPresentationLogic.presentationError(
-        domain: "SWKPresentationError",
-        code: 104,
-        title: "No Internet",
-        value: "Trying to present paywall with no internet."
-      )
-      let state: PaywallState = .presentationError(error)
-      paywallStatePublisher?.send(state)
-      paywallStatePublisher?.send(completion: .finished)
-      throw PresentationPipelineError.noInternet
-    }
+    async let hasIdentity = await dependencyContainer.identityManager.hasIdentity.async()
+    async let hasConfig = await dependencyContainer.configManager.hasConfig.async()
 
-    timer?.invalidate()
+    _ = await (hasIdentity, hasConfig)
+  }
+
+  func noInternet(
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
+  ) throws {
+    let error = InternalPresentationLogic.presentationError(
+      domain: "SWKPresentationError",
+      code: 104,
+      title: "No Internet",
+      value: "Trying to present paywall with no internet."
+    )
+    let state: PaywallState = .presentationError(error)
+    paywallStatePublisher?.send(state)
+    paywallStatePublisher?.send(completion: .finished)
+    throw PresentationPipelineError.noInternet
   }
 
   /// Starts a 5 sec timer. If pipeline above progresses, it'll get cancelled. Otherwise will log a
@@ -91,13 +106,13 @@ extension Superwall {
         var timeoutReason = ""
         let subscriptionStatus = await request.flags.subscriptionStatus.async()
         if subscriptionStatus == .unknown {
-          timeoutReason += "\nSuperwall.shared.subscriptionStatus is currently \"unknown\". A paywall cannot show in this state."
+          timeoutReason += "\nSuperwall.shared.subscriptionStatus is currently \"unknown\"."
         }
         if self.dependencyContainer.configManager.config == nil {
           timeoutReason += "\nThe config for the user has not returned from the server."
         }
 
-        let hasIdentity = await dependencyContainer.identityManager.hasIdentity.async()
+        let hasIdentity = dependencyContainer.identityManager.identitySubject.value
         if !hasIdentity {
           timeoutReason += "\nThe user's identity has not been set."
         }

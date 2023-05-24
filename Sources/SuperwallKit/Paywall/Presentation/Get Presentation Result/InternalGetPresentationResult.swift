@@ -61,7 +61,7 @@ extension Superwall {
       Logger.debug(
         logLevel: .info,
         scope: .paywallPresentation,
-        message: "Skipped paywall presentation: \(error)"
+        message: "Paywall presentation error: \(error)"
       )
     }
     switch error {
@@ -79,7 +79,6 @@ extension Superwall {
       .noPresenter,
       .paywallAlreadyPresented,
       .noInternet:
-      // Won't get here
       return .paywallNotAvailable
     }
   }

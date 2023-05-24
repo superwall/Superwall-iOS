@@ -32,7 +32,6 @@ extension Superwall {
 
       confirmHoldoutAssignment(rulesOutput: rulesOutput)
 
-
       let experiment = try await getExperiment(
         request: request,
         rulesOutput: rulesOutput,
@@ -45,6 +44,12 @@ extension Superwall {
         experiment: experiment,
         rulesOutput: rulesOutput,
         debugInfo: debugInfo,
+        paywallStatePublisher: publisher
+      )
+
+      try await checkGatingAndInternet(
+        from: paywallViewController.info,
+        request: request,
         paywallStatePublisher: publisher
       )
 

@@ -201,7 +201,7 @@ public final class Superwall: NSObject, ObservableObject {
     Task {
       dependencyContainer.storage.configure(apiKey: apiKey)
 
-      dependencyContainer.storage.recordAppInstall()
+      dependencyContainer.storage.recordAppInstall(trackEvent: track)
 
       await dependencyContainer.configManager.fetchConfiguration()
       await dependencyContainer.identityManager.configure()

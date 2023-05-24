@@ -80,7 +80,7 @@ class IdentityManager {
   /// assignments) has been retrieved.
   ///
   /// When `false`, the SDK is unable to present paywalls.
-  private let identitySubject = CurrentValueSubject<Bool, Never>(false)
+  let identitySubject = CurrentValueSubject<Bool, Never>(false)
   private let queue = DispatchQueue(label: "com.superwall.identitymanager")
   private let group = DispatchGroup()
 
