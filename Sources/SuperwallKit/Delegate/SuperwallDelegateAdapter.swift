@@ -10,7 +10,6 @@ import Combine
 
 /// An adapter between the internal SDK and the public swift/objective c delegate.
 final class SuperwallDelegateAdapter {
-
   var hasPurchaseController: Bool {
     return swiftPurchaseController != nil || objcPurchaseController != nil
   }

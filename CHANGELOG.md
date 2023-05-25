@@ -23,6 +23,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes thread safety issue when using a lazy variable to retrieve products.
 - If the internet is offline when trying to present a paywall, the paywall configuration hasn't been retrieved, and the user is not subscribed, it now throws a presentationError. If the internet reconnects future paywalls will show.
 - Fixes retry logic for requests.
+- Fixes crash when handling a deep link.
 
 ## 3.0.0-rc.6
 

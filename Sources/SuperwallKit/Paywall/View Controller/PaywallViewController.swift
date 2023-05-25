@@ -4,7 +4,7 @@
 //
 //  Created by brian on 7/21/21.
 //
-// swiftlint:disable file_length implicitly_unwrapped_optional type_body_length
+// swiftlint:disable file_length type_body_length
 
 import WebKit
 import UIKit
@@ -72,7 +72,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   /// the caller of ``Superwall/register(event:params:handler:feature:)``
   ///
   /// This publisher is set on presentation of the paywall.
-  private var paywallStateSubject: PassthroughSubject<PaywallState, Never>!
+  private var paywallStateSubject: PassthroughSubject<PaywallState, Never>?
 
   private weak var eventDelegate: PaywallViewControllerEventDelegate?
 
@@ -632,7 +632,9 @@ extension PaywallViewController {
     if presentationDidFinishPrepare {
       return
     }
-    Superwall.shared.storePresentationObjects(request, paywallStateSubject)
+    if let paywallStateSubject = paywallStateSubject {
+      Superwall.shared.storePresentationObjects(request, paywallStateSubject)
+    }
     isPresented = true
     Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall(withInfo: info)
     Task {

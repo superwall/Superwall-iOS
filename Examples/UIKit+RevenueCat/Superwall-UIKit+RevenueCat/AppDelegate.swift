@@ -9,13 +9,8 @@ import UIKit
 import SuperwallKit
 import RevenueCat
 
-
-
-
 @main // You can ignore the main thread error here ->
 final class AppDelegate: UIResponder, UIApplicationDelegate {
-
-
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -23,9 +18,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     #warning("Replace these API keys with your own.")
 
     // MARK: Step 1 - Create your Purchase Controller
-    /// Create an RCPurchaseController() wherever Superwall and RecenueCat are being initialized.
-    let purchaseController = RCPurchaseController() // <- move this here
-
+    /// Create an `RCPurchaseController()` wherever Superwall and RevenueCat are being initialized.
+    let purchaseController = RCPurchaseController()
 
     // MARK: Step 2 - Configure Superwall
     /// Always configure Superwall first. Pass in the `purchaseController` you just created.
