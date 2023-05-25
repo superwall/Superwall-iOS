@@ -65,6 +65,18 @@ protocol StoreProductType: Sendable {
 
   var trialPeriodEndDateString: String { get }
 
+  var localizedTrialPeriodPrice: String { get }
+
+  var trialPeriodPrice: Decimal { get }
+
+  var trialPeriodDailyPrice: String { get }
+
+  var trialPeriodWeeklyPrice: String { get }
+
+  var trialPeriodMonthlyPrice: String { get }
+
+  var trialPeriodYearlyPrice: String { get }
+
   var trialPeriodDays: Int { get }
 
   var trialPeriodDaysString: String { get }

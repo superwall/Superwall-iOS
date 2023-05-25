@@ -301,7 +301,7 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits) / Decimal(1)
     }
 
-    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "n/a"
   }
 
   var weeklyPrice: String {
@@ -337,7 +337,7 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits) / Decimal(7)
     }
 
-    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "n/a"
   }
 
   var monthlyPrice: String {
@@ -374,7 +374,7 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits) / Decimal(30)
     }
 
-    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "n/a"
   }
 
   var yearlyPrice: String {
@@ -411,7 +411,7 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits) / Decimal(365)
     }
 
-    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "N/A"
+    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "n/a"
   }
 
   var hasFreeTrial: Bool {
@@ -648,6 +648,173 @@ struct SK2StoreProduct: StoreProductType {
   var discounts: [StoreProductDiscount] {
     (underlyingSK2Product.subscription?.promotionalOffers ?? [])
       .compactMap { StoreProductDiscount(sk2Discount: $0, currencyCode: currencyCode) }
+  }
+
+  var trialPeriodPrice: Decimal {
+    underlyingSK2Product.subscription?.introductoryOffer?.price ?? 0.00
+  }
+
+  var trialPeriodDailyPrice: String {
+    guard let introductoryOffer = underlyingSK2Product.subscription?.introductoryOffer else {
+      return priceFormatter?.string(from: 0.00) ?? "$0.00"
+    }
+    if introductoryOffer.price == 0.00 {
+      return priceFormatter?.string(from: 0.00) ?? "$0.00"
+    }
+
+    let numberFormatter = NumberFormatter()
+    let locale = underlyingSK2Product.priceFormatStyle.locale
+    numberFormatter.numberStyle = .currency
+    numberFormatter.locale = locale
+
+    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+      return "n/a"
+    }
+    let numberOfUnits = subscriptionPeriod.value
+    var periods: Decimal = 1.0
+    let inputPrice = underlyingSK2Product.price
+
+    if subscriptionPeriod.unit == .year {
+      periods = Decimal(365 * numberOfUnits)
+    }
+
+    if subscriptionPeriod.unit == .month {
+      periods = Decimal(30 * numberOfUnits)
+    }
+
+    if subscriptionPeriod.unit == .week {
+      periods = Decimal(numberOfUnits) / Decimal(7)
+    }
+
+    if subscriptionPeriod.unit == .day {
+      periods = Decimal(numberOfUnits) / Decimal(1)
+    }
+
+    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "n/a"
+  }
+
+  var trialPeriodWeeklyPrice: String {
+    guard let introductoryOffer = underlyingSK2Product.subscription?.introductoryOffer else {
+      return priceFormatter?.string(from: 0.00) ?? "$0.00"
+    }
+    if introductoryOffer.price == 0.00 {
+      return priceFormatter?.string(from: 0.00) ?? "$0.00"
+    }
+
+    let numberFormatter = NumberFormatter()
+    let locale = underlyingSK2Product.priceFormatStyle.locale
+    numberFormatter.numberStyle = .currency
+    numberFormatter.locale = locale
+
+    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+      return "n/a"
+    }
+    let numberOfUnits = subscriptionPeriod.value
+    var periods: Decimal = 1.0
+    let inputPrice = underlyingSK2Product.price
+
+    if subscriptionPeriod.unit == .year {
+      periods = Decimal(52 * numberOfUnits)
+    }
+
+    if subscriptionPeriod.unit == .month {
+      periods = Decimal(4 * numberOfUnits)
+    }
+
+    if subscriptionPeriod.unit == .week {
+      periods = Decimal(numberOfUnits) / Decimal(1)
+    }
+
+    if subscriptionPeriod.unit == .day {
+      periods = Decimal(numberOfUnits) / Decimal(7)
+    }
+
+    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "n/a"
+  }
+
+  var trialPeriodMonthlyPrice: String {
+    guard let introductoryOffer = underlyingSK2Product.subscription?.introductoryOffer else {
+      return priceFormatter?.string(from: 0.00) ?? "$0.00"
+    }
+    if introductoryOffer.price == 0.00 {
+      return priceFormatter?.string(from: 0.00) ?? "$0.00"
+    }
+
+    let numberFormatter = NumberFormatter()
+    let locale = underlyingSK2Product.priceFormatStyle.locale
+    numberFormatter.numberStyle = .currency
+    numberFormatter.locale = locale
+
+    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+      return "n/a"
+    }
+    let numberOfUnits = subscriptionPeriod.value
+    var periods: Decimal = 1.0
+    let inputPrice = underlyingSK2Product.price
+
+    if subscriptionPeriod.unit == .year {
+      periods = Decimal(12 * numberOfUnits)
+    }
+
+    if subscriptionPeriod.unit == .month {
+      periods = Decimal(1 * numberOfUnits)
+    }
+
+    if subscriptionPeriod.unit == .week {
+      periods = Decimal(numberOfUnits) / Decimal(4)
+    }
+
+    if subscriptionPeriod.unit == .day {
+      periods = Decimal(numberOfUnits) / Decimal(30)
+    }
+
+    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "n/a"
+  }
+
+  var trialPeriodYearlyPrice: String {
+    guard let introductoryOffer = underlyingSK2Product.subscription?.introductoryOffer else {
+      return priceFormatter?.string(from: 0.00) ?? "$0.00"
+    }
+    if introductoryOffer.price == 0.00 {
+      return priceFormatter?.string(from: 0.00) ?? "$0.00"
+    }
+
+    let numberFormatter = NumberFormatter()
+    let locale = underlyingSK2Product.priceFormatStyle.locale
+    numberFormatter.numberStyle = .currency
+    numberFormatter.locale = locale
+
+    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+      return "n/a"
+    }
+    let numberOfUnits = subscriptionPeriod.value
+    var periods: Decimal = 1.0
+    let inputPrice = underlyingSK2Product.price
+
+    if subscriptionPeriod.unit == .year {
+      periods = Decimal(numberOfUnits)
+    }
+
+    if subscriptionPeriod.unit == .month {
+      periods = Decimal(numberOfUnits) / Decimal(12)
+    }
+
+    if subscriptionPeriod.unit == .week {
+      periods = Decimal(numberOfUnits) / Decimal(52)
+    }
+
+    if subscriptionPeriod.unit == .day {
+      periods = Decimal(numberOfUnits) / Decimal(365)
+    }
+
+    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "n/a"
+  }
+
+  var localizedTrialPeriodPrice: String {
+    guard let price = underlyingSK2Product.subscription?.introductoryOffer?.price else {
+      return priceFormatter?.string(from: 0.00) ?? "$0.00"
+    }
+    return priceFormatter?.string(from: price as NSDecimalNumber) ?? "$0.00"
   }
 }
 
