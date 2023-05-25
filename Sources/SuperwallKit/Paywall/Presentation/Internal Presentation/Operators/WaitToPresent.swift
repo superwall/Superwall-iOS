@@ -51,7 +51,7 @@ extension Superwall {
           try noInternet(paywallStatePublisher: paywallStatePublisher)
         }
       } else {
-        // If has config, continue but might catch error later on.
+        // If has config, continue.
         return
       }
     }

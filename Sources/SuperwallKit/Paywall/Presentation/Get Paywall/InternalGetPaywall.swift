@@ -47,12 +47,6 @@ extension Superwall {
         paywallStatePublisher: publisher
       )
 
-      try await checkGatingAndInternet(
-        from: paywallViewController.info,
-        request: request,
-        paywallStatePublisher: publisher
-      )
-
       try await checkSubscriptionStatus(
         request: request,
         paywall: paywallViewController.paywall,
