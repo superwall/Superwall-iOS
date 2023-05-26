@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-rc.8
+
+### Fixes
+
+- Fixes a crash if you called `Superwall.shared.handleDeepLink(_:)` twice.
+
 ## 3.0.0-rc.7
 
 ### Breaking Changes

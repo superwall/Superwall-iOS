@@ -80,6 +80,9 @@ final class DebugManager {
 	func presentDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
 		isDebuggerLaunched = true
 		if let viewController = viewController {
+      if viewController.isBeingPresented {
+        return
+      }
 			viewController.paywallDatabaseId = paywallDatabaseId
 			await viewController.loadPreview()
 			await UIViewController.topMostViewController?.present(

@@ -55,7 +55,10 @@ class ProductsFetcherSK1: NSObject, ProductsFetcher {
 			return
 		}
 
-		queue.async { [self] in
+		queue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
       // If products already cached, return them
       let productsAlreadyCached = self.cachedProductsByIdentifier.filter { key, _ in identifiers.contains(key) }
 
@@ -114,7 +117,10 @@ class ProductsFetcherSK1: NSObject, ProductsFetcher {
   }
 
 	private func cacheProduct(_ product: SKProduct) {
-		queue.async {
+		queue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
 			self.cachedProductsByIdentifier[product.productIdentifier] = product
 		}
 	}
@@ -123,7 +129,10 @@ class ProductsFetcherSK1: NSObject, ProductsFetcher {
 // MARK: - SKProductsRequestDelegate
 extension ProductsFetcherSK1: SKProductsRequestDelegate {
 	func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-		queue.async { [self] in
+		queue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
 			Logger.debug(
         logLevel: .debug,
         scope: .productsManager,
@@ -191,7 +200,10 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 	}
 
 	func request(_ request: SKRequest, didFailWithError error: Error) {
-		queue.async { [self] in
+		queue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
 			Logger.debug(
         logLevel: .error,
         scope: .productsManager,

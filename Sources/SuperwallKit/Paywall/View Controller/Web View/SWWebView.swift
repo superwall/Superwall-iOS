@@ -122,13 +122,14 @@ extension SWWebView: WKNavigationDelegate {
     didFail navigation: WKNavigation!,
     withError error: Error
   ) {
+    let date = Date()
     Task {
-      await trackPaywallError()
+      await trackPaywallError(at: date)
     }
   }
 
-  func trackPaywallError() async {
-    delegate?.paywall.webviewLoadingInfo.failAt = Date()
+  func trackPaywallError(at failAt: Date = Date()) async {
+    delegate?.paywall.webviewLoadingInfo.failAt = failAt
 
     guard let paywallInfo = delegate?.info else {
       return
