@@ -129,21 +129,21 @@ extension Superwall {
           )
         )
         let reason = GetPaywallResultObjc(
-          paywallViewController: paywallViewController,
+          paywall: paywallViewController,
           skippedReason: .none,
           error: nil
         )
         completion(reason)
       } catch let reason as PaywallSkippedReasonObjc {
         let reason = GetPaywallResultObjc(
-          paywallViewController: nil,
+          paywall: nil,
           skippedReason: reason,
           error: nil
         )
         completion(reason)
       } catch {
         let reason = GetPaywallResultObjc(
-          paywallViewController: nil,
+          paywall: nil,
           skippedReason: .none,
           error: error
         )

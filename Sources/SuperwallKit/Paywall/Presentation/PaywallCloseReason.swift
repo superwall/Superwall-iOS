@@ -20,4 +20,7 @@ public enum PaywallCloseReason: Int, Codable, Equatable, Sendable {
   /// This prevents ``Superwall/register(event:params:handler:feature:)`` `feature`
   /// block from executing on dismiss of the paywall, because another paywall is set to show
   case forNextPaywall
+
+  /// The paywall hasn't been closed yet.
+  case none
 }

@@ -98,8 +98,8 @@ public final class PaywallInfo: NSObject {
   /// `feature` block executes or not.
   public let featureGatingBehavior: FeatureGatingBehavior
 
-  /// An enum describing why this paywall was last closed. `nil` if not yet closed.
-  public let closeReason: PaywallCloseReason?
+  /// An enum describing why this paywall was last closed. `none` if not yet closed.
+  public let closeReason: PaywallCloseReason
 
   private unowned let factory: TriggerSessionManagerFactory
 
@@ -124,7 +124,7 @@ public final class PaywallInfo: NSObject {
     isFreeTrialAvailable: Bool,
     factory: TriggerSessionManagerFactory,
     featureGatingBehavior: FeatureGatingBehavior = .nonGated,
-    closeReason: PaywallCloseReason? = nil
+    closeReason: PaywallCloseReason = .none
   ) {
     self.databaseId = databaseId
     self.identifier = identifier

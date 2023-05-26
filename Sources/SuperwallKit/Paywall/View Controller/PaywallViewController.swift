@@ -49,7 +49,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   let webView: SWWebView
 
   /// The paywall info
-  public var info: PaywallInfo {
+  @objc public var info: PaywallInfo {
     return paywall.getInfo(
       fromEvent: request?.presentationInfo.eventData,
       factory: factory
@@ -610,7 +610,7 @@ extension PaywallViewController {
     view.transform = .identity
 
     didCallDelegate = false
-    paywall.closeReason = nil
+    paywall.closeReason = .none
     Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall(withInfo: info)
 
     webView.scrollView.contentOffset = CGPoint.zero

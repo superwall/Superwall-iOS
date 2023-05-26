@@ -4,6 +4,15 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.0.0-rc.8
 
+### Breaking Changes
+
+- Changes the `PaywallInfo` `closeReason` to be non-nil with a `.none` case. This is so it can be compatible with Objective-C.
+- Renames the `SWKGetPaywallResult` `paywallViewController` property to `paywall`.
+
+### Enhancements
+
+- Exposes `info` on the `PaywallViewController` in Objective-C
+
 ### Fixes
 
 - Fixes a crash if you called `Superwall.shared.handleDeepLink(_:)` twice.

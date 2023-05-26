@@ -13,7 +13,7 @@ import Foundation
 @objcMembers
 public final class GetPaywallResultObjc: NSObject {
   /// The ``PaywallViewController``.
-  public let paywallViewController: PaywallViewController?
+  public let paywall: PaywallViewController?
 
   /// The reason that the paywall retrieval was intentionally skipped.
   public let skippedReason: PaywallSkippedReasonObjc
@@ -22,11 +22,11 @@ public final class GetPaywallResultObjc: NSObject {
   public let error: Error?
 
   init(
-    paywallViewController: PaywallViewController?,
+    paywall: PaywallViewController?,
     skippedReason: PaywallSkippedReasonObjc,
     error: Error?
   ) {
-    self.paywallViewController = paywallViewController
+    self.paywall = paywall
     self.skippedReason = skippedReason
     self.error = error
   }
