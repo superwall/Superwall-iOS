@@ -31,7 +31,7 @@ final class WaitToPresentTests: XCTestCase {
 
 
     Task {
-      await Superwall.shared.waitToPresent(request, dependencyContainer: dependencyContainer)
+      try await Superwall.shared.waitToPresent(request, dependencyContainer: dependencyContainer)
       expectation.fulfill()
     }
 
@@ -48,7 +48,7 @@ final class WaitToPresentTests: XCTestCase {
       .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
     Task {
-      await Superwall.shared.waitToPresent(request)
+      try await Superwall.shared.waitToPresent(request)
       expectation.fulfill()
     }
 
@@ -65,7 +65,7 @@ final class WaitToPresentTests: XCTestCase {
       .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
     Task {
-      await Superwall.shared.waitToPresent(stub, dependencyContainer: dependencyContainer)
+      try await Superwall.shared.waitToPresent(stub, dependencyContainer: dependencyContainer)
       expectation.fulfill()
     }
 
@@ -86,13 +86,109 @@ final class WaitToPresentTests: XCTestCase {
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
+      type: .getPaywallViewController(.stub()),
+      hasInternetOverride: true
     )
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
     Task {
-      await Superwall.shared.waitToPresent(request, dependencyContainer: dependencyContainer)
+      try await Superwall.shared.waitToPresent(request, dependencyContainer: dependencyContainer)
       expectation.fulfill()
+    }
+
+    identityManager.didSetIdentity()
+
+    wait(for: [expectation], timeout: 0.1)
+  }
+
+  func test_waitToPresent_hasIdentity_inactiveStatus_hasConfig_noInternet() {
+    let expectation = expectation(description: "Got identity")
+    expectation.isInverted = true
+
+    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
+
+    dependencyContainer.configManager.config = .stub()
+    let request = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      paywallOverrides: nil,
+      isDebuggerLaunched: false,
+      isPaywallPresented: false,
+      type: .getPaywallViewController(.stub()),
+      hasInternetOverride: false
+    )
+    .setting(\.flags.subscriptionStatus, to: inactiveSubscriptionPublisher)
+
+    Task {
+      do {
+        try await Superwall.shared.waitToPresent(request, dependencyContainer: dependencyContainer)
+      } catch {
+        expectation.fulfill()
+      }
+    }
+
+    identityManager.didSetIdentity()
+
+    wait(for: [expectation], timeout: 0.1)
+  }
+
+  func test_waitToPresent_hasIdentity_inactiveStatus_noConfig_noInternet() {
+    let expectation = expectation(description: "Got identity")
+
+    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
+      .eraseToAnyPublisher()
+
+    dependencyContainer.configManager.config = nil
+    let request = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      paywallOverrides: nil,
+      isDebuggerLaunched: false,
+      isPaywallPresented: false,
+      type: .getPaywallViewController(.stub()),
+      hasInternetOverride: false
+    )
+    .setting(\.flags.subscriptionStatus, to: inactiveSubscriptionPublisher)
+
+    Task {
+      do {
+        try await Superwall.shared.waitToPresent(request, dependencyContainer: dependencyContainer)
+      } catch let error as PresentationPipelineError {
+        if case .noInternet = error {
+          expectation.fulfill()
+        }
+      }
+    }
+
+    identityManager.didSetIdentity()
+
+    wait(for: [expectation], timeout: 0.1)
+  }
+
+  func test_waitToPresent_hasIdentity_activeStatus_noConfig_noInternet() {
+    let expectation = expectation(description: "Got identity")
+
+    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+      .eraseToAnyPublisher()
+
+    dependencyContainer.configManager.config = nil
+    let request = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      paywallOverrides: nil,
+      isDebuggerLaunched: false,
+      isPaywallPresented: false,
+      type: .getPaywallViewController(.stub()),
+      hasInternetOverride: false
+    )
+    .setting(\.flags.subscriptionStatus, to: inactiveSubscriptionPublisher)
+
+    Task {
+      do {
+        try await Superwall.shared.waitToPresent(request, dependencyContainer: dependencyContainer)
+      } catch let error as PresentationPipelineError {
+        if case .userIsSubscribed = error {
+          expectation.fulfill()
+        }
+      }
     }
 
     identityManager.didSetIdentity()

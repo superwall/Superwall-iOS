@@ -66,7 +66,7 @@ final class RestorationManager {
 
   @MainActor
   private func transactionWasRestored(paywallViewController: PaywallViewController) {
-    let paywallInfo = paywallViewController.paywallInfo
+    let paywallInfo = paywallViewController.info
     Task.detached(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .restore,

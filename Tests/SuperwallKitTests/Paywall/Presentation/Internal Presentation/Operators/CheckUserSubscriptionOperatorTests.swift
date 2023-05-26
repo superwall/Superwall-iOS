@@ -25,9 +25,8 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       type: .getPaywallViewController(.stub())
     )
 
-    let input = AssignmentPipelineOutput(
-      triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
-      debugInfo: [:]
+    let input = EvaluateRulesOutput(
+      triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
@@ -51,9 +50,9 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
     let expectation = expectation(description: "Called publisher")
     do {
       try await Superwall.shared.checkUserSubscription(
-        request,
-        input.triggerResult,
-        statePublisher
+        request: request,
+        triggerResult: input.triggerResult,
+        paywallStatePublisher: statePublisher
       )
       XCTFail("Should throw")
     } catch {
@@ -79,9 +78,8 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       type: .getPaywallViewController(.stub())
     )
 
-    let input = AssignmentPipelineOutput(
-      triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
-      debugInfo: [:]
+    let input = EvaluateRulesOutput(
+      triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
@@ -95,9 +93,9 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
 
     do {
       try await Superwall.shared.checkUserSubscription(
-        request,
-        input.triggerResult,
-        statePublisher
+        request: request,
+        triggerResult: input.triggerResult,
+        paywallStatePublisher: statePublisher
       )
     } catch {
       XCTFail("Shouldn't throw")
@@ -119,9 +117,8 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       type: .getPaywallViewController(.stub())
     )
 
-    let input = AssignmentPipelineOutput(
-      triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
-      debugInfo: [:]
+    let input = EvaluateRulesOutput(
+      triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
@@ -135,9 +132,9 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
 
     do {
       try await Superwall.shared.checkUserSubscription(
-        request,
-        input.triggerResult,
-        statePublisher
+        request: request,
+        triggerResult: input.triggerResult,
+        paywallStatePublisher: statePublisher
       )
     } catch {
       XCTFail("Shouldn't throw")

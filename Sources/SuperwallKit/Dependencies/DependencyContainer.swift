@@ -248,8 +248,11 @@ extension DependencyContainer: RequestFactory {
     isDebuggerLaunched: Bool? = nil,
     subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>? = nil,
     isPaywallPresented: Bool,
-    type: PresentationRequestType
+    type: PresentationRequestType,
+    hasInternetOverride: Bool? = nil
   ) -> PresentationRequest {
+    let hasInternet = hasInternetOverride ?? deviceHelper.reachabilityFlags?.contains(.reachable) ?? false
+
     return PresentationRequest(
       presentationInfo: presentationInfo,
       presenter: presenter,
@@ -258,7 +261,8 @@ extension DependencyContainer: RequestFactory {
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
         subscriptionStatus: subscriptionStatus ?? Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
         isPaywallPresented: isPaywallPresented,
-        type: type
+        type: type,
+        hasInternet: hasInternet
       )
     )
   }

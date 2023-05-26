@@ -150,9 +150,9 @@ class PaywallLogicTests: XCTestCase {
     )]
 
     let skProductId = "id2"
-    let skProduct = SKProduct(
-      identifier: skProductId,
-      price: "1.99"
+    let skProduct = MockSkProduct(
+      productIdentifier: skProductId,
+      price: 1.99
     )
     let productsById = [skProductId: StoreProduct(sk1Product: skProduct)]
     
@@ -187,9 +187,9 @@ class PaywallLogicTests: XCTestCase {
 
     let product = StoreProduct(
       sk1Product:
-        SKProduct(
-          identifier: productId,
-          price: "1.99"
+        MockSkProduct(
+          productIdentifier: productId,
+          price: 1.99
         )
     )
     let productsById = [productId: product]
@@ -231,10 +231,10 @@ class PaywallLogicTests: XCTestCase {
 
     let product = StoreProduct(
       sk1Product:
-        SKProduct(
-          identifier: productId,
-          price: "1.99",
-          introductoryPrice: mockIntroPeriod
+        MockSkProduct(
+          productIdentifier: productId,
+          introPeriod: mockIntroPeriod,
+          price: 1.99
         )
     )
     let productsById = [productId: product]
@@ -278,10 +278,10 @@ class PaywallLogicTests: XCTestCase {
     )
     let product = StoreProduct(
       sk1Product:
-        SKProduct(
-          identifier: productId,
-          price: "1.99",
-          introductoryPrice: mockIntroPeriod
+        MockSkProduct(
+          productIdentifier: productId,
+          introPeriod: mockIntroPeriod,
+          price: 1.99
         )
     )
     let productsById = [productId: product]
@@ -324,10 +324,10 @@ class PaywallLogicTests: XCTestCase {
     )
     let product = StoreProduct(
       sk1Product:
-        SKProduct(
-          identifier: productId,
-          price: "1.99",
-          introductoryPrice: mockIntroPeriod
+        MockSkProduct(
+          productIdentifier: productId,
+          introPeriod: mockIntroPeriod,
+          price: 1.99
         )
     )
     let productsById = [productId: product]

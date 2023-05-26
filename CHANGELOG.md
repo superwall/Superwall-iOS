@@ -2,6 +2,31 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0-rc.7
+
+### Breaking Changes
+
+- Exposes the `transactionBackgroundView` `PaywallOption` to Objective-C by making it non-optional and adding a `none` case in place of setting it to `nil`.
+- Renames `getPaywallViewController` to `getPaywall`.
+- Renames `paywallStatePublisher` property on `PaywallViewController` to `statePublisher`.
+- Changes the presentation error domain code from `SWPresentationError` to `SWKPresentationError`.
+
+### Enhancements
+
+- Adds paywall caching. This is disabled by default but we'll roll this out to users accounts remotely. With this enhancement, your paywalls will load lightning fast and will reduce network load of your app.
+- Exposes `Logging` `SuperwallOption` to Objective C.
+- Exposes `info` on the `PaywallViewController`.
+- Adds `rawTrialPeriodPrice`, `trialPeriodPrice`, `trialPeriodDailyPrice`, `trialPeriodWeeklyPrice`, `trialPeriodMonthlyPrice`, `trialPeriodYearlyPrice`.
+
+### Fixes
+
+- Fixes issue where a crash would occur if storage was full and a persistent container couldn't be created.
+- Fixes thread safety issue when using a lazy variable to retrieve products.
+- If the internet is offline when trying to present a paywall, the paywall configuration hasn't been retrieved, and the user is not subscribed, it now throws a presentationError. If the internet reconnects future paywalls will show.
+- Fixes retry logic for requests.
+- Fixes crash when handling a deep link.
+- Creates a strong reference to the purchase controller as it was getting deallocated if you didn't keep a hold on it.
+
 ## 3.0.0-rc.6
 
 ### Breaking Changes

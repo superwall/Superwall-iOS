@@ -10,25 +10,26 @@ import Combine
 import UIKit
 
 extension Superwall {
-  /// Checks conditions for whether the paywall can present before accessing a window on
-  /// which the paywall can present.
+  /// Checks conditions for whether the paywall can present.
   ///
   /// - Parameters:
+  ///   - request: The presentation request.
+  ///   - paywall: The ``Paywall`` whose presentation condition is checked.
+  ///   - triggerResult: The ``TriggerResult``.
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
-  ///
-  /// - Returns: A publisher that contains info for the next pipeline operator.
   func checkSubscriptionStatus(
-    _ request: PresentationRequest,
-    _ input: PaywallVcPipelineOutput,
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
-  ) async throws -> PresentablePipelineOutput {
+    request: PresentationRequest,
+    paywall: Paywall,
+    triggerResult: TriggerResult,
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+  ) async throws {
     let subscriptionStatus = await request.flags.subscriptionStatus.async()
-    if await InternalPresentationLogic.userSubscribedAndNotOverridden(
+    if InternalPresentationLogic.userSubscribedAndNotOverridden(
       isUserSubscribed: subscriptionStatus == .active,
       overrides: .init(
         isDebuggerLaunched: request.flags.isDebuggerLaunched,
         shouldIgnoreSubscriptionStatus: request.paywallOverrides?.ignoreSubscriptionStatus,
-        presentationCondition: input.paywallViewController.paywall.presentation.condition
+        presentationCondition: paywall.presentation.condition
       )
     ) {
       let state: PaywallState = .skipped(.userIsSubscribed)
@@ -41,15 +42,8 @@ extension Superwall {
     await sessionEventsManager?.triggerSession.activateSession(
       for: request.presentationInfo,
       on: request.presenter,
-      paywall: input.paywallViewController.paywall,
-      triggerResult: input.triggerResult
-    )
-
-    return await PresentablePipelineOutput(
-      debugInfo: input.debugInfo,
-      paywallViewController: input.paywallViewController,
-      presenter: UIViewController(), // TODO: Fix this
-      confirmableAssignment: input.confirmableAssignment
+      paywall: paywall,
+      triggerResult: triggerResult
     )
   }
 }

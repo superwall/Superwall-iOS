@@ -34,9 +34,9 @@ class CoreDataStack {
     return model
   }()
 
-  var persistentContainer: NSPersistentContainer
-  let backgroundContext: NSManagedObjectContext
-  let mainContext: NSManagedObjectContext
+  var persistentContainer: NSPersistentContainer?
+  var backgroundContext: NSManagedObjectContext?
+  var mainContext: NSManagedObjectContext?
 
   init() {
     // First load persistent container
@@ -47,7 +47,9 @@ class CoreDataStack {
 
     let dispatchGroup = DispatchGroup()
     dispatchGroup.enter()
+    var containerError: Error?
     persistentContainer.loadPersistentStores { _, error in
+      containerError = error
       if let error = error as NSError? {
         Logger.debug(
           logLevel: .error,
@@ -60,6 +62,10 @@ class CoreDataStack {
       dispatchGroup.leave()
     }
     dispatchGroup.wait()
+    guard containerError == nil else {
+      return
+    }
+
     self.persistentContainer = persistentContainer
 
     // Then load background and main context
@@ -76,6 +82,10 @@ class CoreDataStack {
     _ context: NSManagedObjectContext,
     completion: (() -> Void)? = nil
   ) {
+    if persistentContainer == nil {
+      completion?()
+      return
+    }
     context.perform {
       do {
         try context.save()
@@ -93,6 +103,12 @@ class CoreDataStack {
   }
 
   func count<T: NSFetchRequestResult>(for fetchRequest: NSFetchRequest<T>) -> Int {
+    guard
+      let mainContext = mainContext,
+      persistentContainer != nil
+    else {
+      return 0
+    }
     do {
       let count = try mainContext.count(for: fetchRequest)
       return count

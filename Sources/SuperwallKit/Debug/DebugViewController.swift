@@ -441,7 +441,8 @@ final class DebugViewController: UIViewController {
       isDebuggerLaunched: true,
       subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: Superwall.shared.isPaywallPresented,
-      type: .presentation
+      type: .presentation,
+      hasInternetOverride: nil
     )
 
     cancellable = Superwall.shared

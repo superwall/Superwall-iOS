@@ -18,23 +18,11 @@ final class MockIntroductoryPeriod: SKProductDiscount {
     return .current
   }
 
+  override var price: NSDecimalNumber {
+    return 0
+  }
+
   init(testSubscriptionPeriod: MockSubscriptionPeriod) {
     self.testSubscriptionPeriod = testSubscriptionPeriod
-  }
-}
-
-extension SKProduct {
-  /// To be used for mocking only.
-  convenience init(
-    identifier: String,
-    price: String,
-    introductoryPrice: MockIntroductoryPeriod? = nil,
-    priceLocale: Locale = .current
-  ) {
-    self.init()
-    setValue(identifier, forKey: "productIdentifier")
-    setValue(NSDecimalNumber(string: price), forKey: "price")
-    setValue(priceLocale, forKey: "priceLocale")
-    setValue(introductoryPrice, forKey: "introductoryPrice")
   }
 }

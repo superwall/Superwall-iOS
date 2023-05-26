@@ -28,7 +28,7 @@ extension Superwall {
   ///   ``PaywallSkippedReason`` and an optional `Error`. If the ``PaywallViewController`` couldn't be retrieved
   ///   because its presentation should be skipped, the ``PaywallSkippedReason`` will be non-`nil`. Any errors
   ///   will be in the `Error` object.
-  @nonobjc public func getPaywallViewController(
+  @nonobjc public func getPaywall(
     forEvent event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
@@ -37,7 +37,7 @@ extension Superwall {
   ) {
     Task { @MainActor in
       do {
-        let paywallViewController = try await getPaywallViewController(
+        let paywallViewController = try await getPaywall(
           forEvent: event,
           params: params,
           paywallOverrides: paywallOverrides,
@@ -72,13 +72,13 @@ extension Superwall {
   /// because its presentation should be skipped, catch an error of type ``PaywallSkippedReason`` and switch over its cases to find out
   /// more info. All other errors will be returned in the general catch block.
   @MainActor
-  @nonobjc public func getPaywallViewController(
+  @nonobjc public func getPaywall(
     forEvent event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     delegate: PaywallViewControllerDelegate
   ) async throws -> PaywallViewController {
-    return try await internallyGetPaywallViewController(
+    return try await internallyGetPaywall(
       forEvent: event,
       params: params,
       paywallOverrides: paywallOverrides,
@@ -103,23 +103,23 @@ extension Superwall {
   ///   be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall
   ///   defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
-  ///   - completion: A completion block that accepts a ``GetPaywallViewControllerResultObjc`` object. First check
-  ///   ``GetPaywallViewControllerResultObjc/paywallViewController`` to see if was retrieved. Then check
-  ///   ``GetPaywallViewControllerResultObjc/skippedReason`` is not ``PaywallSkippedReasonObjc/none``
+  ///   - completion: A completion block that accepts a ``GetPaywallResultObjc`` object. First check
+  ///   ``GetPaywallResultObjc/paywallViewController`` to see if was retrieved. Then check
+  ///   ``GetPaywallResultObjc/skippedReason`` is not ``PaywallSkippedReasonObjc/none``
   ///   to see if it's presentation was intentionally skipped. Then check
-  ///   ``GetPaywallViewControllerResultObjc/error`` for any errors that may have occurred.
+  ///   ``GetPaywallResultObjc/error`` for any errors that may have occurred.
   ///   - delegate: A delegate responsible for handling user interactions with the retrieved ``PaywallViewController``.
   @available(swift, obsoleted: 1.0)
-  @objc public func getPaywallViewController(
+  @objc public func getPaywall(
     forEvent event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     delegate: PaywallViewControllerDelegateObjc,
-    completion: @escaping (GetPaywallViewControllerResultObjc) -> Void
+    completion: @escaping (GetPaywallResultObjc) -> Void
   ) {
     Task { @MainActor in
       do {
-        let paywallViewController = try await internallyGetPaywallViewController(
+        let paywallViewController = try await internallyGetPaywall(
           forEvent: event,
           params: params,
           paywallOverrides: paywallOverrides,
@@ -128,21 +128,21 @@ extension Superwall {
             objcDelegate: delegate
           )
         )
-        let reason = GetPaywallViewControllerResultObjc(
+        let reason = GetPaywallResultObjc(
           paywallViewController: paywallViewController,
           skippedReason: .none,
           error: nil
         )
         completion(reason)
       } catch let reason as PaywallSkippedReasonObjc {
-        let reason = GetPaywallViewControllerResultObjc(
+        let reason = GetPaywallResultObjc(
           paywallViewController: nil,
           skippedReason: reason,
           error: nil
         )
         completion(reason)
       } catch {
-        let reason = GetPaywallViewControllerResultObjc(
+        let reason = GetPaywallResultObjc(
           paywallViewController: nil,
           skippedReason: .none,
           error: error
@@ -152,7 +152,7 @@ extension Superwall {
     }
   }
 
-  private func internallyGetPaywallViewController(
+  private func internallyGetPaywall(
     forEvent event: String,
     params: [String: Any]?,
     paywallOverrides: PaywallOverrides?,
@@ -172,6 +172,6 @@ extension Superwall {
       isPaywallPresented: false,
       type: .getPaywallViewController(delegate)
     )
-    return try await getPaywallViewController(presentationRequest)
+    return try await getPaywall(presentationRequest)
   }
 }

@@ -9,6 +9,7 @@ import Foundation
 import StoreKit
 
 final class MockSkProduct: SKProduct {
+  private let internalPrice: NSDecimalNumber?
   private let internalIntroPeriod: MockIntroductoryPeriod?
   private let internalSubscriptionPeriod: SKProductSubscriptionPeriod?
   private let internalProductIdentifier: String?
@@ -29,7 +30,7 @@ final class MockSkProduct: SKProduct {
   }
 
   override var price: NSDecimalNumber {
-    return 0
+    return internalPrice ?? 0
   }
 
   @available(iOS 12.0, *)
@@ -41,11 +42,13 @@ final class MockSkProduct: SKProduct {
     subscriptionPeriod: SKProductSubscriptionPeriod? = nil,
     productIdentifier: String? = nil,
     introPeriod: MockIntroductoryPeriod? = nil,
-    subscriptionGroupIdentifier: String? = nil
+    subscriptionGroupIdentifier: String? = nil,
+    price: NSDecimalNumber? = nil
   ) {
     self.internalSubscriptionPeriod = subscriptionPeriod
     self.internalProductIdentifier = productIdentifier
     self.internalIntroPeriod = introPeriod
     self.internalSubscriptionGroupIdentifier = subscriptionGroupIdentifier
+    self.internalPrice = price
   }
 }

@@ -25,7 +25,7 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   var paywall: SuperwallKit.Paywall = .stub()
 
-  var paywallInfo: SuperwallKit.PaywallInfo
+  var info: SuperwallKit.PaywallInfo
 
   var webView: SuperwallKit.SWWebView
 
@@ -37,7 +37,7 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
     paywallInfo: SuperwallKit.PaywallInfo,
     webView: FakeWebView
   ) {
-    self.paywallInfo = paywallInfo
+    self.info = paywallInfo
     self.webView = webView
   }
 

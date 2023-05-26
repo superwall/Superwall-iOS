@@ -28,13 +28,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let input = AssignmentPipelineOutput(
-      triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
-      debugInfo: [:]
+    let input = EvaluateRulesOutput(
+      triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
     Superwall.shared.confirmHoldoutAssignment(
-      input: input,
+      rulesOutput: input,
       dependencyContainer: dependencyContainer
     )
     XCTAssertFalse(configManager.confirmedAssignment)
@@ -55,14 +54,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let input = AssignmentPipelineOutput(
-      triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
-      confirmableAssignment: nil,
-      debugInfo: [:]
+    let input = EvaluateRulesOutput(
+      triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
     Superwall.shared.confirmHoldoutAssignment(
-      input: input,
+      rulesOutput: input,
       dependencyContainer: dependencyContainer
     )
     XCTAssertFalse(configManager.confirmedAssignment)
@@ -82,14 +79,13 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let input = AssignmentPipelineOutput(
+    let input = EvaluateRulesOutput(
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
-      confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
-      debugInfo: [:]
+      confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
     )
 
     Superwall.shared.confirmHoldoutAssignment(
-      input: input,
+      rulesOutput: input,
       dependencyContainer: dependencyContainer
     )
     XCTAssertTrue(configManager.confirmedAssignment)

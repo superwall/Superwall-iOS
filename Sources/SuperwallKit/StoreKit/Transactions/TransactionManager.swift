@@ -98,7 +98,7 @@ final class TransactionManager {
       error: nil
     )
 
-    let paywallInfo = await paywallViewController.paywallInfo
+    let paywallInfo = await paywallViewController.info
     Task.detached(priority: .utility) {
       await self.sessionEventsManager.triggerSession.trackBeginTransaction(of: product)
       let trackedEvent = InternalSuperwallEvent.Transaction(
@@ -166,7 +166,7 @@ final class TransactionManager {
         error: nil
       )
 
-      let paywallInfo = await paywallViewController.paywallInfo
+      let paywallInfo = await paywallViewController.info
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .abandon(product),
         paywallInfo: paywallInfo,
@@ -191,7 +191,7 @@ final class TransactionManager {
       error: nil
     )
 
-    let paywallInfo = await paywallViewController.paywallInfo
+    let paywallInfo = await paywallViewController.info
     Task.detached(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .fail(.pending("Needs parental approval")),
@@ -225,7 +225,7 @@ final class TransactionManager {
       error: error
     )
 
-    let paywallInfo = await paywallViewController.paywallInfo
+    let paywallInfo = await paywallViewController.info
     Task.detached(priority: .utility) {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .fail(.failure(error.localizedDescription, product)),
@@ -254,7 +254,7 @@ final class TransactionManager {
     let paywallShowingFreeTrial = await paywallViewController.paywall.isFreeTrialAvailable == true
     let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
 
-    let paywallInfo = await paywallViewController.paywallInfo
+    let paywallInfo = await paywallViewController.info
     Task.detached(priority: .background) {
       if let transaction = transaction {
         await self.sessionEventsManager.triggerSession.trackTransactionSucceeded(

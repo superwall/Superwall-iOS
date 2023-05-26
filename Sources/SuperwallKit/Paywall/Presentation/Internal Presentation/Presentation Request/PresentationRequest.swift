@@ -49,10 +49,9 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
     switch (lhs, rhs) {
     case (.getImplicitPresentationResult, .getImplicitPresentationResult),
       (.getPresentationResult, .getPresentationResult),
-      (.presentation, .presentation):
+      (.presentation, .presentation),
+      (.getPaywallViewController, .getPaywallViewController):
       return true
-    case let (.getPaywallViewController(type1), .getPaywallViewController(type2)):
-      return type1 === type2
     default:
       return false
     }
@@ -75,6 +74,7 @@ struct PresentationRequest {
     var subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>
     var isPaywallPresented: Bool
     var type: PresentationRequestType
+    var hasInternet: Bool
   }
   var flags: Flags
 
@@ -97,7 +97,8 @@ extension PresentationRequest: Stubbable {
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .presentation
+      type: .presentation,
+      hasInternetOverride: true
     )
   }
 }

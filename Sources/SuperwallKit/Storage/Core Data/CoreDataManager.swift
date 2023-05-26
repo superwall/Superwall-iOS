@@ -10,24 +10,29 @@ import CoreData
 
 class CoreDataManager {
   private let coreDataStack: CoreDataStack
-  private let backgroundContext: NSManagedObjectContext
+  private var backgroundContext: NSManagedObjectContext?
 
   init(coreDataStack: CoreDataStack = CoreDataStack()) {
     self.coreDataStack = coreDataStack
-    backgroundContext = coreDataStack.persistentContainer.newBackgroundContext()
+    if let persistentContainer = coreDataStack.persistentContainer {
+      backgroundContext = persistentContainer.newBackgroundContext()
+    }
   }
 
   func saveEventData(
     _ eventData: EventData,
     completion: ((ManagedEventData) -> Void)? = nil
   ) {
+    guard let backgroundContext = backgroundContext else {
+      return
+    }
     backgroundContext.perform { [weak self] in
       guard let self = self else {
         return
       }
       let data = try? JSONEncoder().encode(eventData.parameters)
       guard let managedEventData = ManagedEventData(
-        context: self.backgroundContext,
+        context: backgroundContext,
         id: eventData.id,
         createdAt: eventData.createdAt,
         name: eventData.name,
@@ -36,7 +41,7 @@ class CoreDataManager {
         return
       }
 
-      self.coreDataStack.saveContext(self.backgroundContext) {
+      self.coreDataStack.saveContext(backgroundContext) {
         completion?(managedEventData)
       }
     }
@@ -46,25 +51,31 @@ class CoreDataManager {
     triggerRuleOccurrence ruleOccurence: TriggerRuleOccurrence,
     completion: ((ManagedTriggerRuleOccurrence) -> Void)? = nil
   ) {
+    guard let backgroundContext = backgroundContext else {
+      return
+    }
     backgroundContext.perform { [weak self] in
       guard let self = self else {
         return
       }
       guard let managedRuleOccurrence = ManagedTriggerRuleOccurrence(
-        context: self.backgroundContext,
+        context: backgroundContext,
         createdAt: Date(),
         occurrenceKey: ruleOccurence.key
       ) else {
         return
       }
 
-      self.coreDataStack.saveContext(self.backgroundContext) {
+      self.coreDataStack.saveContext(backgroundContext) {
         completion?(managedRuleOccurrence)
       }
     }
   }
 
   func deleteAllEntities() {
+    guard let backgroundContext = backgroundContext else {
+      return
+    }
     let eventDataRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(
       entityName: ManagedEventData.entityName
     )
@@ -75,13 +86,10 @@ class CoreDataManager {
     )
     let deleteOccurrenceRequest = NSBatchDeleteRequest(fetchRequest: occurrenceRequest)
 
-    backgroundContext.performAndWait { [weak self] in
-      guard let self = self else {
-        return
-      }
+    backgroundContext.performAndWait {
       do {
-        try self.backgroundContext.executeAndMergeChanges(using: deleteEventDataRequest)
-        try self.backgroundContext.executeAndMergeChanges(using: deleteOccurrenceRequest)
+        try backgroundContext.executeAndMergeChanges(using: deleteEventDataRequest)
+        try backgroundContext.executeAndMergeChanges(using: deleteOccurrenceRequest)
       } catch {
         Logger.debug(
           logLevel: .error,

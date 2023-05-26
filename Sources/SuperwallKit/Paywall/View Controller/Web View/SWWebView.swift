@@ -10,7 +10,7 @@ import Foundation
 import WebKit
 
 protocol SWWebViewDelegate: AnyObject {
-  var paywallInfo: PaywallInfo { get }
+  var info: PaywallInfo { get }
 }
 
 class SWWebView: WKWebView {
@@ -130,7 +130,7 @@ extension SWWebView: WKNavigationDelegate {
   func trackPaywallError() async {
     delegate?.paywall.webviewLoadingInfo.failAt = Date()
 
-    guard let paywallInfo = delegate?.paywallInfo else {
+    guard let paywallInfo = delegate?.info else {
       return
     }
 

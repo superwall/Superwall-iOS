@@ -60,6 +60,12 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
       "dailyPrice": dailyPrice,
       "monthlyPrice": monthlyPrice,
       "yearlyPrice": yearlyPrice,
+      "rawTrialPeriodPrice": "\(trialPeriodPrice)",
+      "trialPeriodPrice": "\(localizedTrialPeriodPrice)",
+      "trialPeriodDailyPrice": trialPeriodDailyPrice,
+      "trialPeriodWeeklyPrice": trialPeriodWeeklyPrice,
+      "trialPeriodMonthlyPrice": trialPeriodMonthlyPrice,
+      "trialPeriodYearlyPrice": trialPeriodYearlyPrice,
       "trialPeriodDays": trialPeriodDaysString,
       "trialPeriodWeeks": trialPeriodWeeksString,
       "trialPeriodMonths": trialPeriodMonthsString,
@@ -188,6 +194,36 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   /// The product's trial period end date formatted using `DateFormatter.Style.medium`
   public var trialPeriodEndDateString: String {
     product.trialPeriodEndDateString
+  }
+
+  /// The product's introductory price duration in days.
+  public var localizedTrialPeriodPrice: String {
+    product.localizedTrialPeriodPrice
+  }
+
+  /// The product's introductory price duration in days.
+  public var trialPeriodPrice: Decimal {
+    product.trialPeriodPrice
+  }
+
+  /// The product's localized daily introductory price.
+  public var trialPeriodDailyPrice: String {
+    product.trialPeriodDailyPrice
+  }
+
+  /// The product's localized weekly introductory price.
+  public var trialPeriodWeeklyPrice: String {
+    product.trialPeriodWeeklyPrice
+  }
+
+  /// The product's localized monthly introductory price.
+  public var trialPeriodMonthlyPrice: String {
+    product.trialPeriodMonthlyPrice
+  }
+
+  /// The product's localized yearly introductory price.
+  public var trialPeriodYearlyPrice: String {
+    product.trialPeriodYearlyPrice
   }
 
   /// The product's introductory price duration in days.

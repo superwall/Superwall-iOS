@@ -9,12 +9,17 @@ import Foundation
 import Combine
 
 extension Superwall {
-  /// Cancels the pipeline if the user is already subscribed unless the trigger result is `paywall`.
+  /// Cancels the state publisher if the user is already subscribed unless the trigger result is ``TriggerResult/paywall(_:)``.
   /// This is because a paywall can be presented to a user regardless of subscription status.
+  ///
+  /// - Parameters:
+  ///   - request: The presentation request.
+  ///   - triggerResult: The trigger result.
+  ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   func checkUserSubscription(
-    _ request: PresentationRequest,
-    _ triggerResult: TriggerResult,
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+    request: PresentationRequest,
+    triggerResult: TriggerResult,
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) async throws {
     switch triggerResult {
     case .paywall:

@@ -18,6 +18,16 @@ class DeviceHelper {
   let appInstalledAtString: String
 
   private let reachability: SCNetworkReachability?
+  var reachabilityFlags: SCNetworkReachabilityFlags? {
+    guard let reachability = reachability else {
+      return nil
+    }
+    var flags = SCNetworkReachabilityFlags()
+    SCNetworkReachabilityGetFlags(reachability, &flags)
+
+    return flags
+  }
+
   var appVersion: String {
     Bundle.main.releaseVersionNumber ?? ""
   }
@@ -67,12 +77,9 @@ class DeviceHelper {
   }
 
   var radioType: String {
-    guard let reachability = reachability else {
+    guard let flags = reachabilityFlags else {
       return "No Internet"
     }
-
-    var flags = SCNetworkReachabilityFlags()
-    SCNetworkReachabilityGetFlags(reachability, &flags)
 
     let isReachable = flags.contains(.reachable)
     let isWWAN = flags.contains(.isWWAN)

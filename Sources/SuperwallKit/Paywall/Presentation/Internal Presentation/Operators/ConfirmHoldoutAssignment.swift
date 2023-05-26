@@ -12,15 +12,19 @@ extension Superwall {
   ///
   /// We can't confirm a paywall assignment here because there may be factors that prevent
   /// it from showing later on.
+  ///
+  /// - Parameters:
+  ///   - rulesOutput: The output from evaluating rules.
+  ///   - dependencyContainer: Used for testing only.
   func confirmHoldoutAssignment(
-    input: AssignmentPipelineOutput,
+    rulesOutput: EvaluateRulesOutput,
     dependencyContainer: DependencyContainer? = nil
   ) {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
-    guard case .holdout = input.triggerResult else {
+    guard case .holdout = rulesOutput.triggerResult else {
       return
     }
-    if let confirmableAssignment = input.confirmableAssignment {
+    if let confirmableAssignment = rulesOutput.confirmableAssignment {
       dependencyContainer.configManager.confirmAssignment(confirmableAssignment)
     }
   }

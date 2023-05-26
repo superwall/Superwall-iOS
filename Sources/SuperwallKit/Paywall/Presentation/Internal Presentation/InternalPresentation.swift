@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
+// swiftlint:disable function_body_length
 
 import UIKit
 import Combine
@@ -30,25 +31,63 @@ extension Superwall {
     Task {
       do {
         try await checkNoPaywallAlreadyPresented(request, publisher)
-        await waitToPresent(request)
-        let debugInfo = logPresentation(request, "Called Superwall.shared.track")
-        try checkDebuggerPresentation(request, publisher)
-        let assignmentOutput = try await evaluateRules(
-          from: request,
-          debugInfo: debugInfo
-        )
-        try await checkUserSubscription(request, assignmentOutput.triggerResult, publisher)
-        confirmHoldoutAssignment(input: assignmentOutput)
-        let triggerResultOutput = try await handleTriggerResult(request, assignmentOutput, publisher)
-        let paywallVcOutput = try await getPaywallViewController(request, triggerResultOutput, publisher)
-
-        let presentableOutput = try await checkPaywallIsPresentable(
-          input: paywallVcOutput,
+        try await waitToPresent(request, paywallStatePublisher: publisher)
+        let debugInfo = logPresentation(
           request: request,
-          publisher
+          message: "Called Superwall.shared.register"
         )
-        confirmPaywallAssignment(request: request, input: presentableOutput)
-        try await presentPaywall(request, presentableOutput, publisher)
+
+        try checkDebuggerPresentation(
+          request: request,
+          paywallStatePublisher: publisher
+        )
+
+        let rulesOutput = try await evaluateRules(from: request)
+
+        try await checkUserSubscription(
+          request: request,
+          triggerResult: rulesOutput.triggerResult,
+          paywallStatePublisher: publisher
+        )
+
+        confirmHoldoutAssignment(rulesOutput: rulesOutput)
+
+        let experiment = try await getExperiment(
+          request: request,
+          rulesOutput: rulesOutput,
+          debugInfo: debugInfo,
+          paywallStatePublisher: publisher
+        )
+        let paywallViewController = try await getPaywallViewController(
+          request: request,
+          experiment: experiment,
+          rulesOutput: rulesOutput,
+          debugInfo: debugInfo,
+          paywallStatePublisher: publisher
+        )
+
+        guard let presenter = try await getPresenter(
+          for: paywallViewController,
+          rulesOutput: rulesOutput,
+          request: request,
+          debugInfo: debugInfo,
+          paywallStatePublisher: publisher
+        ) else {
+          return
+        }
+
+        confirmPaywallAssignment(
+          rulesOutput.confirmableAssignment,
+          isDebuggerLaunched: request.flags.isDebuggerLaunched
+        )
+
+        try await presentPaywallViewController(
+          paywallViewController,
+          on: presenter,
+          debugInfo: debugInfo,
+          request: request,
+          paywallStatePublisher: publisher
+        )
       } catch {
         logErrors(from: request, error)
       }

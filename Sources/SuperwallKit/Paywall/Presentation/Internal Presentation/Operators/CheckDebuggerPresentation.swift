@@ -9,9 +9,14 @@ import Foundation
 import Combine
 
 extension Superwall {
+  /// Cancels the state publisher if the debugger is already launched.
+  ///
+  /// - Parameters:
+  ///   - request: The presentation request.
+  ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   func checkDebuggerPresentation(
-    _ request: PresentationRequest,
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+    request: PresentationRequest,
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) throws {
     guard request.flags.isDebuggerLaunched else {
       return
@@ -20,7 +25,7 @@ extension Superwall {
       return
     }
     let error = InternalPresentationLogic.presentationError(
-      domain: "SWPresentationError",
+      domain: "SWKPresentationError",
       code: 101,
       title: "Debugger Is Presented",
       value: "Trying to present paywall when debugger is launched."

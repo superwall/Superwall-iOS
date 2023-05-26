@@ -165,7 +165,7 @@ class Storage {
 
   /// Records the app install
   func recordAppInstall(
-    trackEvent: @escaping (Trackable) async -> TrackingResult = Superwall.shared.track
+    trackEvent: @escaping (Trackable) async -> TrackingResult
   ) {
     let didTrackAppInstall = get(DidTrackAppInstall.self) ?? false
     if didTrackAppInstall {

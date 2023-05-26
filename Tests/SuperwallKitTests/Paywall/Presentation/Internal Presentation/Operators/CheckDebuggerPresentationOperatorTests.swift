@@ -25,7 +25,10 @@ final class CheckDebuggerPresentationTests: XCTestCase {
     .store(in: &cancellables)
 
     do {
-      try Superwall.shared.checkDebuggerPresentation(request, statePublisher)
+      try Superwall.shared.checkDebuggerPresentation(
+        request: request,
+        paywallStatePublisher: statePublisher
+      )
     } catch {
       XCTFail("Shouldn't have thrown")
     }
@@ -49,7 +52,10 @@ final class CheckDebuggerPresentationTests: XCTestCase {
     .store(in: &cancellables)
 
     do {
-      try Superwall.shared.checkDebuggerPresentation(request, statePublisher)
+      try Superwall.shared.checkDebuggerPresentation(
+        request: request,
+        paywallStatePublisher: statePublisher
+      )
     } catch {
       XCTFail("Shouldn't have thrown")
     }
@@ -78,7 +84,10 @@ final class CheckDebuggerPresentationTests: XCTestCase {
 
     let debuggerPresentation = expectation(description: "Output a state")
     do {
-      try Superwall.shared.checkDebuggerPresentation(request, statePublisher)
+      try Superwall.shared.checkDebuggerPresentation(
+        request: request,
+        paywallStatePublisher: statePublisher
+      )
       XCTFail("Should have thrown")
     } catch {
       debuggerPresentation.fulfill()

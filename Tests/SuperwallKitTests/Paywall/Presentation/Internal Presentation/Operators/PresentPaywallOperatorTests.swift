@@ -54,18 +54,13 @@ final class PresentPaywallOperatorTests: XCTestCase {
 
     paywallVc.shouldPresent = true
 
-    let input = PresentablePipelineOutput(
-      debugInfo: [:],
-      paywallViewController: paywallVc,
-      presenter: UIViewController(),
-      confirmableAssignment: nil
-    )
-
     do {
-      _ = try await Superwall.shared.presentPaywall(
-        .stub(),
-        input,
-        statePublisher
+      _ = try await Superwall.shared.presentPaywallViewController(
+        paywallVc,
+        on: UIViewController(),
+        debugInfo: [:],
+        request: .stub(),
+        paywallStatePublisher: statePublisher
       )
     } catch {
       XCTFail("Shouldn't fail")
@@ -121,18 +116,13 @@ final class PresentPaywallOperatorTests: XCTestCase {
     webView.delegate = paywallVc
     messageHandler.delegate = paywallVc
 
-    let input = PresentablePipelineOutput(
-      debugInfo: [:],
-      paywallViewController: paywallVc,
-      presenter: UIViewController(),
-      confirmableAssignment: nil
-    )
-
     do {
-      _ = try await Superwall.shared.presentPaywall(
-        .stub(),
-        input,
-        statePublisher
+      _ = try await Superwall.shared.presentPaywallViewController(
+        paywallVc,
+        on: UIViewController(),
+        debugInfo: [:],
+        request: .stub(),
+        paywallStatePublisher: statePublisher
       )
       XCTFail("Should fail")
     } catch {

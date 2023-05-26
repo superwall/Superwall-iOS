@@ -13,18 +13,23 @@ extension Superwall {
   /// This is split from the holdout assignment because overrides can make the
   /// paywall present even if the user is subscribed. We only know the overrides
   /// at this point.
+  ///
+  /// - Parameters:
+  ///   - confirmableAssignment: The assignment to confirm.
+  ///   - isDebuggerLaunched: A boolean that indicates whether the debugger is launched.
+  ///   - dependendencyContainer: Used for tests only.
   func confirmPaywallAssignment(
-    request: PresentationRequest,
-    input: PresentablePipelineOutput,
+    _ confirmableAssignment: ConfirmableAssignment?,
+    isDebuggerLaunched: Bool,
     dependencyContainer: DependencyContainer? = nil
   ) {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     // Debuggers shouldn't confirm assignments.
-    if request.flags.isDebuggerLaunched {
+    if isDebuggerLaunched {
       return
     }
 
-    if let confirmableAssignment = input.confirmableAssignment {
+    if let confirmableAssignment = confirmableAssignment {
       dependencyContainer.configManager.confirmAssignment(confirmableAssignment)
     }
   }

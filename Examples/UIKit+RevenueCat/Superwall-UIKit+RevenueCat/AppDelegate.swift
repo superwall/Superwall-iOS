@@ -18,7 +18,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     #warning("Replace these API keys with your own.")
 
     // MARK: Step 1 - Create your Purchase Controller
-    /// Create an RCPurchaseController() wherever Superwall and RecenueCat are being initialized.
+    /// Create an `RCPurchaseController()` wherever Superwall and RevenueCat are being initialized.
     let purchaseController = RCPurchaseController()
 
     // MARK: Step 2 - Configure Superwall

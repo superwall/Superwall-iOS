@@ -208,7 +208,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           case .overlayTimeout:
             let trackedEvent = await InternalSuperwallEvent.Transaction(
               state: .timeout,
-              paywallInfo: paywallViewController.paywallInfo,
+              paywallInfo: paywallViewController.info,
               product: nil,
               model: nil
             )

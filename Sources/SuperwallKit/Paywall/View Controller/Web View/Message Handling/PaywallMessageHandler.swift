@@ -12,7 +12,7 @@ import WebKit
 protocol PaywallMessageHandlerDelegate: AnyObject {
   var request: PresentationRequest? { get }
   var paywall: Paywall { get set }
-  var paywallInfo: PaywallInfo { get }
+  var info: PaywallInfo { get }
   var webView: SWWebView { get }
   var loadingState: PaywallLoadingState { get set }
   var isActive: Bool { get }
@@ -128,7 +128,7 @@ final class PaywallMessageHandler: WebEventDelegate {
 
       delegate.paywall.webviewLoadingInfo.endAt = loadedAt
 
-      let paywallInfo = delegate.paywallInfo
+      let paywallInfo = delegate.info
       let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
         state: .complete,
         paywallInfo: paywallInfo

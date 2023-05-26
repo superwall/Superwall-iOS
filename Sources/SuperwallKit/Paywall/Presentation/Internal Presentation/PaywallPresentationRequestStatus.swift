@@ -46,6 +46,9 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
   /// There isn't a view to present the paywall on.
   case noPresenter
 
+  /// There isn't any internet.
+  case noInternet
+
   public var description: String {
     switch self {
     case .debuggerPresented:
@@ -64,6 +67,8 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
       return "no_paywall_view_controller"
     case .noPresenter:
       return "no_presenter"
+    case .noInternet:
+      return "no_internet"
     }
   }
 }

@@ -45,7 +45,8 @@ protocol RequestFactory: AnyObject {
     isDebuggerLaunched: Bool?,
     subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>?,
     isPaywallPresented: Bool,
-    type: PresentationRequestType
+    type: PresentationRequestType,
+    hasInternetOverride: Bool?
   ) -> PresentationRequest
 }
 
