@@ -10,10 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Install jq
+      run: sudo apt-get install -y jq
+
     - name: Trigger repository_dispatch event
       run: |
+        COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | jq -Rs .)
         curl -X POST \
         -H "Authorization: token ${{ secrets.UI_TESTS_REPO_ACCESS_TOKEN }}" \
         -H "Accept: application/vnd.github.everest-preview+json" \
         "https://api.github.com/repos/superwall-me/Superwall-iOS-UI-tests/dispatches" \
-        -d '{"event_type": "branch-push", "client_payload": {"ref": "${{ github.ref }}", "commit": "${{ github.sha }}", "author": "${{ github.event.head_commit.author.name }}", "message": "${{ github.event.head_commit.message }}" }}'
+        -d '{"event_type": "branch-push", "client_payload": {"ref": "${{ github.ref }}", "commit": "${{ github.sha }}", "author": "${{ github.event.head_commit.author.name }}", "message": '$COMMIT_MSG' }}'
