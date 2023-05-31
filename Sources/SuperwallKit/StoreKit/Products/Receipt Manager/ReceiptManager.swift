@@ -27,15 +27,21 @@ actor ReceiptManager: NSObject {
   /// purchases and active purchases.
   @discardableResult
   func loadPurchasedProducts() async -> Set<StoreProduct>? {
+    let hasPurchaseController = Superwall.shared.dependencyContainer.delegateAdapter.hasPurchaseController
+
     guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
-      await MainActor.run {
-        Superwall.shared.subscriptionStatus = .inactive
+      if !hasPurchaseController {
+        await MainActor.run {
+          Superwall.shared.subscriptionStatus = .inactive
+        }
       }
       return nil
     }
     guard let delegate = delegate else {
-      await MainActor.run {
-        Superwall.shared.subscriptionStatus = .inactive
+      if !hasPurchaseController {
+        await MainActor.run {
+          Superwall.shared.subscriptionStatus = .inactive
+        }
       }
       return nil
     }
@@ -43,12 +49,15 @@ actor ReceiptManager: NSObject {
     let purchases = payload.purchases
     self.purchases = purchases
 
-    let activePurchases = purchases.filter { $0.isActive }
-    await MainActor.run {
-      if activePurchases.isEmpty {
-        Superwall.shared.subscriptionStatus = .inactive
-      } else {
-        Superwall.shared.subscriptionStatus = .active
+
+    if !hasPurchaseController {
+      let activePurchases = purchases.filter { $0.isActive }
+      await MainActor.run {
+        if activePurchases.isEmpty {
+          Superwall.shared.subscriptionStatus = .inactive
+        } else {
+          Superwall.shared.subscriptionStatus = .active
+        }
       }
     }
 

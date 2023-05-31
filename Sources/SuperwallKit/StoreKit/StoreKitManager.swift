@@ -220,9 +220,6 @@ extension StoreKitManager {
 
   /// Loads the purchased products from the receipt,
   func loadPurchasedProducts() async {
-    if Superwall.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
-      return
-    }
     Logger.debug(
       logLevel: .debug,
       scope: .storeKitManager,
