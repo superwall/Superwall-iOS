@@ -16,8 +16,10 @@ protocol SWWebViewDelegate: AnyObject {
 class SWWebView: WKWebView {
   let messageHandler: PaywallMessageHandler
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
+  private var webViewFailureCompletionBlocks: [((Bool) -> Void)] = []
   private let wkConfig: WKWebViewConfiguration
   private let isMac: Bool
+  private var didFailToLoad: Bool?
   private unowned let sessionEventsManager: SessionEventsManager
 
   init(
@@ -82,6 +84,17 @@ class SWWebView: WKWebView {
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
+
+  func checkWebViewFailure() async -> Bool {
+    if let didFailToLoad = didFailToLoad {
+      return didFailToLoad
+    }
+    return await withCheckedContinuation { continuation in
+      webViewFailureCompletionBlocks.append { failed in
+        continuation.resume(returning: failed)
+      }
+    }
+  }
 }
 
 // MARK: - WKNavigationDelegate
@@ -115,6 +128,24 @@ extension SWWebView: WKNavigationDelegate {
       return .allow
     }
     return .cancel
+  }
+
+  func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+    didFailToLoad = false
+    for completionBlock in webViewFailureCompletionBlocks {
+      completionBlock(false)
+    }
+  }
+
+  func webView(
+    _ webView: WKWebView,
+    didFailProvisionalNavigation navigation: WKNavigation!,
+    withError error: Error
+  ) {
+    didFailToLoad = true
+    for completionBlock in webViewFailureCompletionBlocks {
+      completionBlock(true)
+    }
   }
 
   func webView(

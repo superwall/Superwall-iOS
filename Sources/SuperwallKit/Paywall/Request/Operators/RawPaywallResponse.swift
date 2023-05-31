@@ -37,6 +37,9 @@ extension PaywallRequestManager {
       if let staticPaywall = factory.makeStaticPaywall(withId: paywallId) {
         paywall = staticPaywall
       } else {
+        if !request.hasInternet {
+          throw NetworkError.noInternet
+        }
         paywall = try await network.getPaywall(
           withId: paywallId,
           fromEvent: event

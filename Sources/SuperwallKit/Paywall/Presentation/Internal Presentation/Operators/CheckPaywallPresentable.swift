@@ -51,6 +51,17 @@ extension Superwall {
       throw PresentationPipelineError.userIsSubscribed
     }
 
+    // Check for webview loading failure
+    if await webViewDidFail(for: paywallViewController) {
+      if await paywallViewController.paywall.featureGating == .gated {
+        throw noInternet(paywallStatePublisher: paywallStatePublisher)
+      } else {
+        paywallStatePublisher?.send(.skipped(.webViewFailedToLoad))
+        paywallStatePublisher?.send(completion: .finished)
+        throw PresentationPipelineError.noInternet
+      }
+    }
+
     // Return early with stub if we're just getting the paywall result.
     if request.flags.type == .getPresentationResult ||
       request.flags.type == .getImplicitPresentationResult {
@@ -95,6 +106,14 @@ extension Superwall {
     )
 
     return presenter
+  }
+
+  @MainActor
+  private func webViewDidFail(for paywallViewController: PaywallViewController) async -> Bool {
+    if paywallViewController.loadingState == .ready {
+      return false
+    }
+    return await paywallViewController.webView.checkWebViewFailure()
   }
 
   @MainActor

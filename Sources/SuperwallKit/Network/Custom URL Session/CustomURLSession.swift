@@ -7,26 +7,28 @@
 
 import UIKit
 
-class CustomURLSession {
-  private let urlSession = URLSession(configuration: .default)
+enum NetworkError: LocalizedError {
+  case unknown
+  case notAuthenticated
+  case decoding
+  case notFound
+  case invalidUrl
+  case noInternet
 
-  enum NetworkError: LocalizedError {
-    case unknown
-    case notAuthenticated
-    case decoding
-    case notFound
-    case invalidUrl
-
-    var errorDescription: String? {
-      switch self {
-      case .unknown: return NSLocalizedString("An unknown error occurred.", comment: "")
-      case .notAuthenticated: return NSLocalizedString("Unauthorized.", comment: "")
-      case .decoding: return NSLocalizedString("Decoding error.", comment: "")
-      case .notFound: return NSLocalizedString("Not found", comment: "")
-      case .invalidUrl: return NSLocalizedString("URL invalid", comment: "")
-      }
+  var errorDescription: String? {
+    switch self {
+    case .unknown: return NSLocalizedString("An unknown error occurred.", comment: "")
+    case .notAuthenticated: return NSLocalizedString("Unauthorized.", comment: "")
+    case .decoding: return NSLocalizedString("Decoding error.", comment: "")
+    case .notFound: return NSLocalizedString("Not found", comment: "")
+    case .invalidUrl: return NSLocalizedString("URL invalid", comment: "")
+    case .noInternet: return NSLocalizedString("No Internet", comment: "")
     }
   }
+}
+
+class CustomURLSession {
+  private let urlSession = URLSession(configuration: .default)
 
   @discardableResult
   func request<Response>(_ endpoint: Endpoint<Response>) async throws -> Response {

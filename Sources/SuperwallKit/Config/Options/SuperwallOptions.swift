@@ -53,6 +53,9 @@ public final class SuperwallOptions: NSObject {
   /// received the go-ahead from the Superwall team.
   public var networkEnvironment: NetworkEnvironment = .release
 
+  /// **For testing purposes only**. This allows you to override the internet availability.
+  public var hasInternetOverride: Bool?
+
   /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
   /// Defaults to `true`.
   ///

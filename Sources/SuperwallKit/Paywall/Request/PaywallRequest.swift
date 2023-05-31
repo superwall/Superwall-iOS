@@ -29,4 +29,7 @@ struct PaywallRequest {
 
   /// If the debugger is launched when the request was created.
   let isDebuggerLaunched: Bool
+
+  /// Whether the internet is available when the request is made
+  let hasInternet: Bool
 }

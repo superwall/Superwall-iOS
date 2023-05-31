@@ -35,7 +35,8 @@ protocol RequestFactory: AnyObject {
     eventData: EventData?,
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides?,
-    isDebuggerLaunched: Bool
+    isDebuggerLaunched: Bool,
+    hasInternetOverride: Bool?
   ) -> PaywallRequest
 
   func makePresentationRequest(

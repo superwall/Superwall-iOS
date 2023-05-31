@@ -122,10 +122,7 @@ extension Superwall {
     )
     .subscribe(Subscribers.Sink(
       receiveCompletion: { _ in },
-      receiveValue: { [weak self] state in
-        guard let self = self else {
-          return
-        }
+      receiveValue: { state in
         switch state {
         case .presented(let paywallInfo):
           handler?.onPresentHandler?(paywallInfo)
@@ -146,8 +143,7 @@ extension Superwall {
           if let handler = handler?.onSkipHandler {
             handler(reason)
           } else {
-            let objcReason = self.onSkipConverter(reason: reason)
-            handler?.onSkipHandlerObjc?(objcReason)
+            handler?.onSkipHandlerObjc?(reason.toObjc())
           }
           completion?()
         case .presentationError(let error):
@@ -237,18 +233,5 @@ extension Superwall {
       return self.internallyPresent(presentationRequest)
     }
     .eraseToAnyPublisher()
-  }
-
-  private func onSkipConverter(reason: PaywallSkippedReason) -> PaywallSkippedReasonObjc {
-    switch reason {
-    case .holdout:
-      return .holdout
-    case .noRuleMatch:
-      return .noRuleMatch
-    case .eventNotFound:
-      return .eventNotFound
-    case .userIsSubscribed:
-      return .userIsSubscribed
-    }
   }
 }

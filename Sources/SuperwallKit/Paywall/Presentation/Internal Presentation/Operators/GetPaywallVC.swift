@@ -54,18 +54,7 @@ extension Superwall {
 
       return paywallViewController
     } catch {
-      switch request.flags.type {
-      case .getImplicitPresentationResult,
-        .getPresentationResult:
-        throw PresentationPipelineError.noPaywallViewController
-      case .presentation,
-        .getPaywallViewController:
-        guard let paywallStatePublisher = paywallStatePublisher else {
-          // Will never get here
-          throw error
-        }
-        throw await presentationFailure(error, request, debugInfo, paywallStatePublisher)
-      }
+      throw await presentationFailure(error, request, debugInfo, paywallStatePublisher)
     }
   }
 
@@ -73,7 +62,7 @@ extension Superwall {
     _ error: Error,
     _ request: PresentationRequest,
     _ debugInfo: [String: Any],
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
   ) async -> Error {
     let subscriptionStatus = await request.flags.subscriptionStatus.async()
     if InternalPresentationLogic.userSubscribedAndNotOverridden(
@@ -84,20 +73,23 @@ extension Superwall {
       )
     ) {
       let state: PaywallState = .skipped(.userIsSubscribed)
-      paywallStatePublisher.send(state)
-      paywallStatePublisher.send(completion: .finished)
+      paywallStatePublisher?.send(state)
+      paywallStatePublisher?.send(completion: .finished)
       return PresentationPipelineError.userIsSubscribed
     }
 
-    Logger.debug(
-      logLevel: .error,
-      scope: .paywallPresentation,
-      message: "Error Getting Paywall View Controller",
-      info: debugInfo,
-      error: error
-    )
-    paywallStatePublisher.send(.presentationError(error))
-    paywallStatePublisher.send(completion: .finished)
+    if request.flags.type != .getImplicitPresentationResult &&
+      request.flags.type != .getPresentationResult {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallPresentation,
+        message: "Error Getting Paywall View Controller",
+        info: debugInfo,
+        error: error
+      )
+    }
+    paywallStatePublisher?.send(.presentationError(error))
+    paywallStatePublisher?.send(completion: .finished)
     return PresentationPipelineError.noPaywallViewController
   }
 }

@@ -48,10 +48,10 @@ extension Superwall {
         } else {
           // If no internet, not subscribed, and no config
           // then throw error.
-          try noInternet(paywallStatePublisher: paywallStatePublisher)
+          throw noInternet(paywallStatePublisher: paywallStatePublisher)
         }
       } else {
-        // If has config, continue.
+        // If has config, continue (and skip waiting for the identity).
         return
       }
     }
@@ -64,7 +64,7 @@ extension Superwall {
 
   func noInternet(
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
-  ) throws {
+  ) -> Error {
     let error = InternalPresentationLogic.presentationError(
       domain: "SWKPresentationError",
       code: 104,
@@ -74,7 +74,7 @@ extension Superwall {
     let state: PaywallState = .presentationError(error)
     paywallStatePublisher?.send(state)
     paywallStatePublisher?.send(completion: .finished)
-    throw PresentationPipelineError.noInternet
+    return PresentationPipelineError.noInternet
   }
 
   /// Starts a 5 sec timer. If pipeline above progresses, it'll get cancelled. Otherwise will log a

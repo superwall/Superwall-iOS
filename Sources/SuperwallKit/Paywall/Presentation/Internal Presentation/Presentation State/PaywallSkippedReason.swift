@@ -36,6 +36,12 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable {
   /// behavior in the paywall editor.
   case userIsSubscribed
 
+  /// The paywall web view couldn't be loaded.
+  ///
+  /// The presentation of the paywall is skipped if there is no internet to load the paywall webview.
+  /// In the case of a non-gated paywall, this is not an error and calls the feature block.
+  case webViewFailedToLoad
+
   public static func == (lhs: PaywallSkippedReason, rhs: PaywallSkippedReason) -> Bool {
     switch (lhs, rhs) {
     case (.noRuleMatch, .noRuleMatch),
@@ -46,6 +52,21 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable {
       return experiment1 == experiment2
     default:
       return false
+    }
+  }
+
+  func toObjc() -> PaywallSkippedReasonObjc {
+    switch self {
+    case .holdout:
+      return .holdout
+    case .noRuleMatch:
+      return .noRuleMatch
+    case .eventNotFound:
+      return .eventNotFound
+    case .userIsSubscribed:
+      return .userIsSubscribed
+    case .webViewFailedToLoad:
+      return .noWebView
     }
   }
 }
@@ -74,6 +95,12 @@ public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable {
   /// By default, paywalls do not show to users who are already subscribed. You can override this
   /// behavior in the paywall editor.
   case userIsSubscribed
+
+  /// The paywall web view couldn't be loaded.
+  ///
+  /// The presentation of the paywall is skipped if there is no internet to load the paywall webview.
+  /// In the case of a non-gated paywall, this is not an error and calls the feature block.
+  case noWebView
 
   /// The presentation wasn't skipped.
   case none

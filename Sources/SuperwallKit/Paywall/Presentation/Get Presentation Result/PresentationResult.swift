@@ -42,6 +42,7 @@ public enum PresentationResult: Sendable, Equatable {
   /// behavior in the paywall editor.
   case userIsSubscribed
 
-  /// No view controller could be found to present on.
+  /// The paywall is unavailable. This could be because there's no internet, no view controller to
+  /// present from, or the paywall is already presented.
   case paywallNotAvailable
 }

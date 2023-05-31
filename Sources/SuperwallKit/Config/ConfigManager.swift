@@ -257,7 +257,8 @@ class ConfigManager {
           eventData: nil,
           responseIdentifiers: .init(paywallId: identifier),
           overrides: nil,
-          isDebuggerLaunched: false
+          isDebuggerLaunched: false,
+          hasInternetOverride: nil
         )
         _ = try? await self.paywallManager.getPaywallViewController(
           from: request,

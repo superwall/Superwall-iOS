@@ -231,13 +231,15 @@ extension DependencyContainer: RequestFactory {
     eventData: EventData? = nil,
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides? = nil,
-    isDebuggerLaunched: Bool
+    isDebuggerLaunched: Bool,
+    hasInternetOverride: Bool? = nil
   ) -> PaywallRequest {
     return PaywallRequest(
       eventData: eventData,
       responseIdentifiers: responseIdentifiers,
       overrides: overrides ?? PaywallRequest.Overrides(),
-      isDebuggerLaunched: isDebuggerLaunched
+      isDebuggerLaunched: isDebuggerLaunched,
+      hasInternet: hasInternetOverride ?? deviceHelper.reachabilityFlags?.contains(.reachable) ?? false
     )
   }
 
