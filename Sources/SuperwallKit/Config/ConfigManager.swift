@@ -98,7 +98,7 @@ class ConfigManager {
       await storeKitManager.loadPurchasedProducts()
       Task { await preloadPaywalls() }
     } catch {
-      configFailure = error
+      configError = error
       Logger.debug(
         logLevel: .error,
         scope: .superwallCore,
