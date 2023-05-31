@@ -79,7 +79,7 @@ final class HomeViewController: UIViewController {
       case .eventNotFound:
         print("Paywall not shown because this event isn't part of a campaign.")
       case .webViewFailedToLoad:
-        print("The paywall webview failed to load.")
+        print("Paywall not shown because it's web view failed to load.")
       }
     }
     Superwall.shared.register(event: "campaign_trigger", handler: handler) {

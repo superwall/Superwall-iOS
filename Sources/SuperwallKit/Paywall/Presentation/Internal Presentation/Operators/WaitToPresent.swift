@@ -123,7 +123,7 @@ extension Superwall {
         )
       }
     }
-
+    RunLoop.main.add(timer, forMode: .default)
     return timer
   }
 }
