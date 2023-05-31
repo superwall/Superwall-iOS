@@ -56,6 +56,9 @@ class ConfigManager {
   }
   private var _unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
+  /// The `Error` returned when config fails.
+  var configError: Error?
+
   private let queue = DispatchQueue(label: "com.superwall.configmanager")
 
   private unowned let storeKitManager: StoreKitManager
@@ -95,6 +98,7 @@ class ConfigManager {
       await storeKitManager.loadPurchasedProducts()
       Task { await preloadPaywalls() }
     } catch {
+      configFailure = error
       Logger.debug(
         logLevel: .error,
         scope: .superwallCore,

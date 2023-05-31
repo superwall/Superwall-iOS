@@ -37,7 +37,7 @@ extension Superwall {
       .eraseToAnyPublisher()
       .async()
 
-    if !request.flags.hasInternet {
+    if !request.flags.hasInternet || dependencyContainer.configManager.configError != nil {
       if dependencyContainer.configManager.config == nil {
         if subscriptionStatus == .active {
           // If no internet, no config, but is subscribed, then skip presentation with userIsSubscribed.
