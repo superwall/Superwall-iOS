@@ -167,7 +167,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
       if response.products.isEmpty,
         !requestProducts.isEmpty {
         var errorMessage = "Could not load products"
-        if let paywallName = paywallNameByRequest[request] {
+        if let paywallName = self.paywallNameByRequest[request] {
           errorMessage += " from paywall \"\(paywallName)\""
         }
         Logger.debug(
@@ -211,7 +211,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
         info: ["request": request.debugDescription],
         error: error
       )
-			guard let products = productsByRequest[request] else {
+      guard let products = self.productsByRequest[request] else {
 				Logger.debug(
           logLevel: .error,
           scope: .productsManager,
@@ -221,7 +221,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
         )
 				return
 			}
-			guard let completionBlocks = completionHandlers[products] else {
+      guard let completionBlocks = self.completionHandlers[products] else {
 				Logger.debug(
           logLevel: .error,
           scope: .productsManager,
@@ -232,9 +232,9 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 				return
 			}
 
-			completionHandlers.removeValue(forKey: products)
-      productsByRequest.removeValue(forKey: request)
-      paywallNameByRequest.removeValue(forKey: request)
+      self.completionHandlers.removeValue(forKey: products)
+      self.productsByRequest.removeValue(forKey: request)
+      self.paywallNameByRequest.removeValue(forKey: request)
 			for completion in completionBlocks {
         DispatchQueue.main.async {
           completion(.failure(error))

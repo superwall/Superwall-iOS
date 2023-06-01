@@ -85,6 +85,7 @@ class ConfigManager {
 
   func fetchConfiguration() async {
     do {
+      await storeKitManager.loadPurchasedProducts()
       let config = try await network.getConfig()
       Task { await sendProductsBack(from: config) }
 
@@ -92,7 +93,6 @@ class ConfigManager {
       choosePaywallVariants(from: config.triggers)
       self.config = config
 
-      await storeKitManager.loadPurchasedProducts()
       Task { await preloadPaywalls() }
     } catch {
       Logger.debug(
