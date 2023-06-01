@@ -239,8 +239,7 @@ final class DebugViewController: UIViewController {
         eventData: nil,
         responseIdentifiers: .init(paywallId: paywallId),
         overrides: nil,
-        isDebuggerLaunched: true,
-        hasInternetOverride: nil
+        isDebuggerLaunched: true
       )
       var paywall = try await paywallRequestManager.getPaywall(from: request)
 
@@ -442,8 +441,7 @@ final class DebugViewController: UIViewController {
       isDebuggerLaunched: true,
       subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: Superwall.shared.isPaywallPresented,
-      type: .presentation,
-      hasInternetOverride: nil
+      type: .presentation
     )
 
     cancellable = Superwall.shared

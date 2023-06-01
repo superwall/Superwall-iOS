@@ -99,7 +99,8 @@ class Network {
 
   @MainActor
   func getConfig(
-    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
+    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
+    isRetryingHandler: @escaping (Bool) -> Void
   ) async throws -> Config {
     // Suspend until app is in foreground.
     let applicationStatePublisher = injectedApplicationStatePublisher ?? self.applicationStatePublisher
@@ -107,12 +108,14 @@ class Network {
     await applicationStatePublisher
       .subscribe(on: DispatchQueue.main)
       .filter { $0 != .background }
-      .eraseToAnyPublisher()
       .async()
 
     do {
       let requestId = UUID().uuidString
-      var config = try await urlSession.request(.config(requestId: requestId, factory: factory))
+      var config = try await urlSession.request(
+        .config(requestId: requestId, factory: factory),
+        isRetryingHandler: isRetryingHandler
+      )
       config.requestId = requestId
       return config
     } catch {

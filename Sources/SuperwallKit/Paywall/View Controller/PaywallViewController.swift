@@ -262,9 +262,11 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
 
     if paywall.onDeviceCache == .enabled {
       let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
+      webView.request = request
       webView.load(request)
     } else {
-    let request = URLRequest(url: url)
+      let request = URLRequest(url: url)
+      webView.request = request
       webView.load(request)
     }
 

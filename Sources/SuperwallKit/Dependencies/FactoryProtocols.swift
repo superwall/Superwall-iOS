@@ -7,6 +7,7 @@
 
 import UIKit
 import Combine
+import SystemConfiguration
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
@@ -35,8 +36,7 @@ protocol RequestFactory: AnyObject {
     eventData: EventData?,
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides?,
-    isDebuggerLaunched: Bool,
-    hasInternetOverride: Bool?
+    isDebuggerLaunched: Bool
   ) -> PaywallRequest
 
   func makePresentationRequest(
@@ -46,8 +46,7 @@ protocol RequestFactory: AnyObject {
     isDebuggerLaunched: Bool?,
     subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>?,
     isPaywallPresented: Bool,
-    type: PresentationRequestType,
-    hasInternetOverride: Bool?
+    type: PresentationRequestType
   ) -> PresentationRequest
 }
 

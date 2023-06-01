@@ -20,6 +20,7 @@ struct Endpoint<Response: Decodable> {
     var bodyData: Data?
   }
 
+  var retryCount = 6
   var components: Components?
   var url: URL?
   var method: HttpMethod = .get
@@ -128,6 +129,7 @@ extension Endpoint where Response == Paywall {
     let baseHost = factory.api.base.host
 
     return Endpoint(
+      retryCount: 0,
       components: Components(
         host: baseHost,
         path: Api.version1 + "paywall",
@@ -173,6 +175,7 @@ extension Endpoint where Response == Paywall {
     let baseHost = factory.api.base.host
 
     return Endpoint(
+      retryCount: 0,
       components: Components(
         host: baseHost,
         path: Api.version1 + "paywall/\(identifier)",

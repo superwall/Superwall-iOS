@@ -112,7 +112,7 @@ class IdentityManager {
       neverCalledStaticConfig: neverCalledStaticConfig,
       isFirstAppOpen: isFirstAppOpen
     ) {
-      await configManager.getAssignments()
+      try? await configManager.getAssignments()
     }
     group.leave()
 
@@ -162,7 +162,7 @@ class IdentityManager {
 
       func getAssignmentsAsync() {
         Task.detached {
-          await self.configManager.getAssignments()
+          try? await self.configManager.getAssignments()
         }
         self.group.leave()
         self.didSetIdentity()
@@ -175,7 +175,7 @@ class IdentityManager {
       if let options = options {
         if options.restorePaywallAssignments {
           Task {
-            await self.configManager.getAssignments()
+            try? await self.configManager.getAssignments()
             self.group.leave()
             self.didSetIdentity()
           }

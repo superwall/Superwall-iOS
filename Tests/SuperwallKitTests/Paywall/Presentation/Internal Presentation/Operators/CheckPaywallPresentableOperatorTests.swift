@@ -42,6 +42,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       .setting(\.flags.subscriptionStatus, to: publisher)
 
     let paywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil)
+    paywallVc.loadViewIfNeeded()
     let expectation = expectation(description: "Called publisher")
     do {
       try await Superwall.shared.getPresenter(
@@ -100,6 +101,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     .setting(\.presenter, to: nil)
 
     let paywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil)
+    paywallVc.loadViewIfNeeded()
     let expectation = expectation(description: "Called publisher")
     do {
       try await Superwall.shared.getPresenter(
@@ -143,6 +145,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
 
     let dependencyContainer = DependencyContainer()
     let paywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil)
+    paywallVc.loadViewIfNeeded()
     do {
       try await Superwall.shared.getPresenter(
         for: paywallVc,

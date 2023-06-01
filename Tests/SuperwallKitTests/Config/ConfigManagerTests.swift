@@ -60,7 +60,7 @@ final class ConfigManagerTests: XCTestCase {
     let expectation = expectation(description: "No assignments")
     expectation.isInverted = true
     Task {
-      await configManager.getAssignments()
+      try? await configManager.getAssignments()
       expectation.fulfill()
     }
 
@@ -82,10 +82,10 @@ final class ConfigManagerTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
-    configManager.config = .stub()
-      .setting(\.triggers, to: [])
+    configManager.configSubject.send(.stub()
+      .setting(\.triggers, to: []))
 
-    await configManager.getAssignments()
+    try? await configManager.getAssignments()
 
     XCTAssertTrue(storage.getConfirmedAssignments().isEmpty)
     XCTAssertTrue(configManager.unconfirmedAssignments.isEmpty)
@@ -114,7 +114,7 @@ final class ConfigManagerTests: XCTestCase {
 
     let variantOption: VariantOption = .stub()
       .setting(\.id, to: variantId)
-    configManager.config = .stub()
+    configManager.configSubject.send(.stub()
       .setting(\.triggers, to: [
         .stub()
         .setting(\.rules, to: [
@@ -125,8 +125,9 @@ final class ConfigManagerTests: XCTestCase {
           ])
         ])
       ])
+    )
 
-    await configManager.getAssignments()
+    try? await configManager.getAssignments()
 
     try? await Task.sleep(nanoseconds: 1_000_000)
 

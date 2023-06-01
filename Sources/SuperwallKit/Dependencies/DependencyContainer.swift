@@ -8,6 +8,7 @@
 
 import UIKit
 import Combine
+import SystemConfiguration
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
 ///
@@ -231,15 +232,13 @@ extension DependencyContainer: RequestFactory {
     eventData: EventData? = nil,
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides? = nil,
-    isDebuggerLaunched: Bool,
-    hasInternetOverride: Bool? = nil
+    isDebuggerLaunched: Bool
   ) -> PaywallRequest {
     return PaywallRequest(
       eventData: eventData,
       responseIdentifiers: responseIdentifiers,
       overrides: overrides ?? PaywallRequest.Overrides(),
-      isDebuggerLaunched: isDebuggerLaunched,
-      hasInternet: hasInternetOverride ?? deviceHelper.reachabilityFlags?.contains(.reachable) ?? false
+      isDebuggerLaunched: isDebuggerLaunched
     )
   }
 
@@ -250,11 +249,8 @@ extension DependencyContainer: RequestFactory {
     isDebuggerLaunched: Bool? = nil,
     subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>? = nil,
     isPaywallPresented: Bool,
-    type: PresentationRequestType,
-    hasInternetOverride: Bool? = nil
+    type: PresentationRequestType
   ) -> PresentationRequest {
-    let hasInternet = hasInternetOverride ?? deviceHelper.reachabilityFlags?.contains(.reachable) ?? false
-
     return PresentationRequest(
       presentationInfo: presentationInfo,
       presenter: presenter,
@@ -263,8 +259,7 @@ extension DependencyContainer: RequestFactory {
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
         subscriptionStatus: subscriptionStatus ?? Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
         isPaywallPresented: isPaywallPresented,
-        type: type,
-        hasInternet: hasInternet
+        type: type
       )
     )
   }

@@ -58,16 +58,19 @@ actor TriggerSessionManager {
   }
 
   private func listenForConfig() {
-    configListener = configManager.$config
+    configListener = configManager.configSubject
       .compactMap { $0 }
-      .sink { [weak self] config in
-        guard let self = self else {
-          return
+      .sink(
+        receiveCompletion: { _ in },
+        receiveValue: { [weak self] config in
+          guard let self = self else {
+            return
+          }
+          Task {
+            await self.createSessions(from: config)
+          }
         }
-        Task {
-          await self.createSessions(from: config)
-        }
-      }
+      )
   }
 
   @MainActor

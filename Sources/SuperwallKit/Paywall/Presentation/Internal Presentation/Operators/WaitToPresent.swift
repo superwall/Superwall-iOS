@@ -7,7 +7,6 @@
 // swiftlint:disable line_length 
 
 import Foundation
-import SystemConfiguration
 import Combine
 
 extension Superwall {
@@ -31,35 +30,56 @@ extension Superwall {
       timer?.invalidate()
     }
 
-    let subscriptionStatus = await request.flags.subscriptionStatus
+    async let getSubscriptionStatus = await request.flags.subscriptionStatus
       .filter { $0 != .unknown }
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
       .async()
+    async let hasIdentity = await dependencyContainer.identityManager.hasIdentity.async()
 
-    if !request.flags.hasInternet || dependencyContainer.configManager.configError != nil {
-      if dependencyContainer.configManager.config == nil {
-        if subscriptionStatus == .active {
-          // If no internet, no config, but is subscribed, then skip presentation with userIsSubscribed.
-          let state: PaywallState = .skipped(.userIsSubscribed)
-          paywallStatePublisher?.send(state)
-          paywallStatePublisher?.send(completion: .finished)
-          throw PresentationPipelineError.userIsSubscribed
-        } else {
-          // If no internet, not subscribed, and no config
-          // then throw error.
-          throw noInternet(paywallStatePublisher: paywallStatePublisher)
-        }
-      } else {
-        // If has config, continue (and skip waiting for the identity).
-        return
-      }
+    let (subscriptionStatus, _) = await (getSubscriptionStatus, hasIdentity)
+
+    if dependencyContainer.configManager.configIsRetrying {
+      try checkForNoConfig(
+        subscriptionStatus: subscriptionStatus,
+        paywallStatePublisher: paywallStatePublisher,
+        dependencyContainer: dependencyContainer
+      )
     }
 
-    async let hasIdentity = await dependencyContainer.identityManager.hasIdentity.async()
-    async let hasConfig = await dependencyContainer.configManager.hasConfig.async()
+    async let hasConfig = try await dependencyContainer.configManager.configSubject
+      .throwableHasValue()
 
-    _ = await (hasIdentity, hasConfig)
+    do {
+      _ = try await hasConfig
+    } catch {
+      try checkForNoConfig(
+        subscriptionStatus: subscriptionStatus,
+        paywallStatePublisher: paywallStatePublisher,
+        dependencyContainer: dependencyContainer
+      )
+    }
+  }
+
+  private func checkForNoConfig(
+    subscriptionStatus: SubscriptionStatus,
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?,
+    dependencyContainer: DependencyContainer
+  ) throws {
+    if dependencyContainer.configManager.configSubject.value == nil {
+      if subscriptionStatus == .active {
+        // If no internet, no config, but is subscribed, then skip presentation with userIsSubscribed.
+        let state: PaywallState = .skipped(.userIsSubscribed)
+        paywallStatePublisher?.send(state)
+        paywallStatePublisher?.send(completion: .finished)
+        throw PresentationPipelineError.userIsSubscribed
+      } else {
+        // If no internet, not subscribed, and no config
+        // then throw error.
+        throw noInternet(paywallStatePublisher: paywallStatePublisher)
+      }
+    } else {
+      // If has config, continue (and skip waiting for the identity).
+      return
+    }
   }
 
   func noInternet(

@@ -9,16 +9,22 @@ import UIKit
 import Combine
 
 class ConfigManager {
-  /// The configuration of the Superwall dashboard
-  @Published var config: Config?
-
   /// A publisher that emits just once only when `config` is non-`nil`.
   var hasConfig: AnyPublisher<Config, Error> {
-    $config
+    configSubject
       .compactMap { $0 }
       .first()
-      .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
+  }
+
+  var configIsRetrying: Bool = false
+
+  /// The configuration of the Superwall dashboard
+  var configSubject = CurrentValueSubject<Config?, Error>(nil)
+
+  /// Convenience variable to access config.
+  var config: Config? {
+    return configSubject.value
   }
 
   /// Options for configuring the SDK.
@@ -56,9 +62,6 @@ class ConfigManager {
   }
   private var _unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
-  /// The `Error` returned when config fails.
-  var configError: Error?
-
   private let queue = DispatchQueue(label: "com.superwall.configmanager")
 
   private unowned let storeKitManager: StoreKitManager
@@ -89,16 +92,18 @@ class ConfigManager {
   func fetchConfiguration() async {
     do {
       await storeKitManager.loadPurchasedProducts()
-      let config = try await network.getConfig()
+      let config = try await network.getConfig { [weak self] isRetrying in
+        self?.configIsRetrying = isRetrying
+      }
       Task { await sendProductsBack(from: config) }
 
       triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
       choosePaywallVariants(from: config.triggers)
-      self.config = config
+      configSubject.send(config)
 
       Task { await preloadPaywalls() }
     } catch {
-      configError = error
+      configSubject.send(completion: .failure(error))
       Logger.debug(
         logLevel: .error,
         scope: .superwallCore,
@@ -111,7 +116,7 @@ class ConfigManager {
 
   /// Reassigns variants and preloads paywalls again.
   func reset() {
-    guard let config = config else {
+    guard let config = configSubject.value else {
       return
     }
     unconfirmedAssignments.removeAll()
@@ -131,10 +136,15 @@ class ConfigManager {
   }
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
-  func getAssignments() async {
-    await $config.hasValue()
+  func getAssignments() async throws {
+    if configIsRetrying {
+      throw NetworkError.noInternet
+    } else {
+      try await configSubject.throwableHasValue()
+    }
+
     guard
-      let triggers = config?.triggers,
+      let triggers = configSubject.value?.triggers,
       !triggers.isEmpty
     else {
       return
@@ -198,7 +208,7 @@ class ConfigManager {
 
   // MARK: - Preloading Paywalls
   private func getTreatmentPaywallIds(from triggers: Set<Trigger>) -> Set<String> {
-    guard let config = config else {
+    guard let config = configSubject.value else {
       return []
     }
     let preloadableTriggers = ConfigLogic.filterTriggers(
@@ -228,7 +238,7 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by triggers.
   func preloadAllPaywalls() async {
-    let config = await $config.hasValue()
+    let config = await configSubject.hasValue()
     let triggers = ConfigLogic.filterTriggers(
       config.triggers,
       removing: config.preloadingDisabled
@@ -244,7 +254,7 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by the provided triggers.
   func preloadPaywalls(for eventNames: Set<String>) async {
-    let config = await $config.hasValue()
+    let config = await configSubject.hasValue()
     let triggersToPreload = config.triggers.filter { eventNames.contains($0.eventName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
@@ -261,8 +271,7 @@ class ConfigManager {
           eventData: nil,
           responseIdentifiers: .init(paywallId: identifier),
           overrides: nil,
-          isDebuggerLaunched: false,
-          hasInternetOverride: nil
+          isDebuggerLaunched: false
         )
         _ = try? await self.paywallManager.getPaywallViewController(
           from: request,

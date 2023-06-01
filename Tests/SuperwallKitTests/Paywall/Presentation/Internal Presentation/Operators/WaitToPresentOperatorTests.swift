@@ -80,14 +80,13 @@ final class WaitToPresentTests: XCTestCase {
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
       .eraseToAnyPublisher()
 
-    dependencyContainer.configManager.config = .stub()
+    dependencyContainer.configManager.configSubject.send(.stub())
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub()),
-      hasInternetOverride: true
+      type: .getPaywallViewController(.stub())
     )
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
@@ -108,14 +107,13 @@ final class WaitToPresentTests: XCTestCase {
     let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
       .eraseToAnyPublisher()
 
-    dependencyContainer.configManager.config = .stub()
+    dependencyContainer.configManager.configSubject.send(.stub())
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub()),
-      hasInternetOverride: false
+      type: .getPaywallViewController(.stub())
     )
     .setting(\.flags.subscriptionStatus, to: inactiveSubscriptionPublisher)
 
@@ -132,20 +130,20 @@ final class WaitToPresentTests: XCTestCase {
     wait(for: [expectation], timeout: 0.1)
   }
 
-  func test_waitToPresent_hasIdentity_inactiveStatus_noConfig_noInternet() {
+  func test_waitToPresent_hasIdentity_inactiveStatus_noConfig_configIsRetrying() {
     let expectation = expectation(description: "Got identity")
 
     let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
       .eraseToAnyPublisher()
+    dependencyContainer.configManager.configIsRetrying = true
 
-    dependencyContainer.configManager.config = nil
+    dependencyContainer.configManager.configSubject.send(nil)
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub()),
-      hasInternetOverride: false
+      type: .getPaywallViewController(.stub())
     )
     .setting(\.flags.subscriptionStatus, to: inactiveSubscriptionPublisher)
 
@@ -164,20 +162,20 @@ final class WaitToPresentTests: XCTestCase {
     wait(for: [expectation], timeout: 0.1)
   }
 
-  func test_waitToPresent_hasIdentity_activeStatus_noConfig_noInternet() {
+  func test_waitToPresent_hasIdentity_activeStatus_noConfig_configIsRetrying() {
     let expectation = expectation(description: "Got identity")
 
+    dependencyContainer.configManager.configIsRetrying = true
     let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
       .eraseToAnyPublisher()
 
-    dependencyContainer.configManager.config = nil
+    dependencyContainer.configManager.configSubject.send(nil)
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub()),
-      hasInternetOverride: false
+      type: .getPaywallViewController(.stub())
     )
     .setting(\.flags.subscriptionStatus, to: inactiveSubscriptionPublisher)
 

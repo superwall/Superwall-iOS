@@ -16,6 +16,7 @@ protocol SWWebViewDelegate: AnyObject {
 class SWWebView: WKWebView {
   let messageHandler: PaywallMessageHandler
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
+  var request: URLRequest?
   private var webViewFailureCompletionBlocks: [((Bool) -> Void)] = []
   private let wkConfig: WKWebViewConfiguration
   private let isMac: Bool
@@ -86,12 +87,23 @@ class SWWebView: WKWebView {
   }
 
   func checkWebViewFailure() async -> Bool {
-    if let didFailToLoad = didFailToLoad {
-      return didFailToLoad
+    // If it didn't fail to load, return false immediately.
+    if let didFailToLoad = didFailToLoad,
+      !didFailToLoad {
+      return false
     }
+
+    // Otherwise add a completion block to wait for result of loading the webview.
     return await withCheckedContinuation { continuation in
       webViewFailureCompletionBlocks.append { failed in
         continuation.resume(returning: failed)
+      }
+
+      // If previously failed to load, try the request again.
+      if let didFailToLoad = didFailToLoad,
+        didFailToLoad,
+        let request = request {
+        load(request)
       }
     }
   }
@@ -135,6 +147,7 @@ extension SWWebView: WKNavigationDelegate {
     for completionBlock in webViewFailureCompletionBlocks {
       completionBlock(false)
     }
+    webViewFailureCompletionBlocks.removeAll()
   }
 
   func webView(
@@ -146,6 +159,7 @@ extension SWWebView: WKNavigationDelegate {
     for completionBlock in webViewFailureCompletionBlocks {
       completionBlock(true)
     }
+    webViewFailureCompletionBlocks.removeAll()
   }
 
   func webView(

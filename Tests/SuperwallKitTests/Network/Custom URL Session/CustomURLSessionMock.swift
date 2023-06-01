@@ -11,10 +11,8 @@ import Foundation
 final class CustomURLSessionMock: CustomURLSession {
   var didRequest = false
 
-  override func request<Response>(
-    _ endpoint: Endpoint<Response>
-  ) async throws -> Response where Response: Decodable {
+  override func request<Response>(_ endpoint: Endpoint<Response>, isRetryingHandler: ((Bool) -> Void)? = nil) async throws -> Response where Response : Decodable {
     didRequest = true
-    return try await super.request(endpoint)
+    return try await super.request(endpoint, isRetryingHandler: isRetryingHandler)
   }
 }

@@ -8,12 +8,15 @@
 import Foundation
 
 extension PaywallRequestManager {
-  func getRawPaywall(from request: PaywallRequest) async throws -> Paywall {
+  func getRawPaywall(
+    from request: PaywallRequest,
+    withHash hash: String
+  ) async throws -> Paywall {
     await trackResponseStarted(
       paywallId: request.responseIdentifiers.paywallId,
       event: request.eventData
     )
-    let paywall = try await getPaywallResponse(from: request)
+    let paywall = try await getPaywallResponse(from: request, withHash: hash)
 
     let paywallInfo = paywall.getInfo(
       fromEvent: request.eventData,
@@ -27,7 +30,10 @@ extension PaywallRequestManager {
     return paywall
   }
 
-  private func getPaywallResponse(from request: PaywallRequest) async throws -> Paywall {
+  private func getPaywallResponse(
+    from request: PaywallRequest,
+    withHash hash: String
+  ) async throws -> Paywall {
     let responseLoadStartTime = Date()
     let paywallId = request.responseIdentifiers.paywallId
     let event = request.eventData
@@ -37,9 +43,6 @@ extension PaywallRequestManager {
       if let staticPaywall = factory.makeStaticPaywall(withId: paywallId) {
         paywall = staticPaywall
       } else {
-        if !request.hasInternet {
-          throw NetworkError.noInternet
-        }
         paywall = try await network.getPaywall(
           withId: paywallId,
           fromEvent: event

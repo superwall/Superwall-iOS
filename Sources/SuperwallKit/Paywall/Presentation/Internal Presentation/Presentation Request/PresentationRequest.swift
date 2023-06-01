@@ -74,7 +74,6 @@ struct PresentationRequest {
     var subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>
     var isPaywallPresented: Bool
     var type: PresentationRequestType
-    var hasInternet: Bool
   }
   var flags: Flags
 
@@ -97,8 +96,7 @@ extension PresentationRequest: Stubbable {
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .presentation,
-      hasInternetOverride: true
+      type: .presentation
     )
   }
 }
