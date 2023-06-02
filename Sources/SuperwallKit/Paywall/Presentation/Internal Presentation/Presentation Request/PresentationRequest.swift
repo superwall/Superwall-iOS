@@ -97,8 +97,7 @@ extension PresentationRequest: Stubbable {
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .presentation,
-      hasInternetOverride: true
+      type: .presentation
     )
   }
 }
