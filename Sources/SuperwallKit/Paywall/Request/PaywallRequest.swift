@@ -29,4 +29,7 @@ struct PaywallRequest {
 
   /// If the debugger is launched when the request was created.
   let isDebuggerLaunched: Bool
+
+  /// The number of times to retry the request.
+  let retryCount: Int
 }

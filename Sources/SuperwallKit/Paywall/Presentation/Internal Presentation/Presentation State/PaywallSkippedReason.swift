@@ -36,9 +36,9 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable {
   /// behavior in the paywall editor.
   case userIsSubscribed
 
-  /// The paywall web view couldn't be loaded.
+  /// The paywall webview couldn't be loaded.
   ///
-  /// The presentation of the paywall is skipped if there is no internet to load the paywall webview.
+  /// The presentation of the paywall is skipped if the loading of the paywall webview failed.
   /// In the case of a non-gated paywall, this is not an error and calls the feature block.
   case webViewFailedToLoad
 
@@ -96,7 +96,7 @@ public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable {
   /// behavior in the paywall editor.
   case userIsSubscribed
 
-  /// The paywall web view couldn't be loaded.
+  /// The paywall webview couldn't be loaded.
   ///
   /// The presentation of the paywall is skipped if there is no internet to load the paywall webview.
   /// In the case of a non-gated paywall, this is not an error and calls the feature block.

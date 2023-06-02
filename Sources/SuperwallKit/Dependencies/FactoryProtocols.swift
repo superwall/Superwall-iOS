@@ -36,7 +36,8 @@ protocol RequestFactory: AnyObject {
     eventData: EventData?,
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides?,
-    isDebuggerLaunched: Bool
+    isDebuggerLaunched: Bool,
+    retryCount: Int
   ) -> PaywallRequest
 
   func makePresentationRequest(
@@ -60,7 +61,10 @@ protocol TriggerSessionManagerFactory: AnyObject {
 }
 
 protocol ConfigManagerFactory: AnyObject {
-  func makeStaticPaywall(withId paywallId: String?) -> Paywall?
+  func makeStaticPaywall(
+    withId paywallId: String?,
+    isDebuggerLaunched: Bool
+  ) -> Paywall?
 }
 
 protocol StoreKitCoordinatorFactory: AnyObject {

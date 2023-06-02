@@ -45,7 +45,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     return isPresented || isBeingPresented
   }
 
-  /// The web view that the paywall is displayed in.
+  /// The webview that the paywall is displayed in.
   let webView: SWWebView
 
   /// The paywall info

@@ -17,8 +17,6 @@ class ConfigManager {
       .eraseToAnyPublisher()
   }
 
-  var configIsRetrying: Bool = false
-
   /// The configuration of the Superwall dashboard
   var configSubject = CurrentValueSubject<Config?, Error>(nil)
 
@@ -92,9 +90,7 @@ class ConfigManager {
   func fetchConfiguration() async {
     do {
       await storeKitManager.loadPurchasedProducts()
-      let config = try await network.getConfig { [weak self] isRetrying in
-        self?.configIsRetrying = isRetrying
-      }
+      let config = try await network.getConfig()
       Task { await sendProductsBack(from: config) }
 
       triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
@@ -137,11 +133,7 @@ class ConfigManager {
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
   func getAssignments() async throws {
-    if configIsRetrying {
-      throw NetworkError.noInternet
-    } else {
-      try await configSubject.throwableHasValue()
-    }
+    try await configSubject.throwableHasValue()
 
     guard
       let triggers = configSubject.value?.triggers,
@@ -271,10 +263,12 @@ class ConfigManager {
           eventData: nil,
           responseIdentifiers: .init(paywallId: identifier),
           overrides: nil,
-          isDebuggerLaunched: false
+          isDebuggerLaunched: false,
+          retryCount: 6
         )
         _ = try? await self.paywallManager.getPaywallViewController(
           from: request,
+          isForPresentation: true,
           isPreloading: true,
           delegate: nil
         )

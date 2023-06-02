@@ -239,7 +239,8 @@ final class DebugViewController: UIViewController {
         eventData: nil,
         responseIdentifiers: .init(paywallId: paywallId),
         overrides: nil,
-        isDebuggerLaunched: true
+        isDebuggerLaunched: true,
+        retryCount: 6
       )
       var paywall = try await paywallRequestManager.getPaywall(from: request)
 

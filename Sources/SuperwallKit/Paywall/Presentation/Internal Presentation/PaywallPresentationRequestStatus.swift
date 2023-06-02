@@ -46,8 +46,17 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
   /// There isn't a view to present the paywall on.
   case noPresenter
 
-  /// There isn't any internet.
-  case noInternet
+  /// The config hasn't been retrieved from the server in time.
+  case noConfig
+
+  // The webview failed to load
+  case webViewFailedToLoad
+
+  /// The subscription status timed out.
+  ///
+  /// This happens when the ``Superwall/subscriptionStatus``
+  /// stays ``SubscriptionStatus/unknown`` for more than 5 seconds.
+  case subscriptionStatusTimeout
 
   public var description: String {
     switch self {
@@ -67,8 +76,12 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
       return "no_paywall_view_controller"
     case .noPresenter:
       return "no_presenter"
-    case .noInternet:
-      return "no_internet"
+    case .noConfig:
+      return "no_config"
+    case .webViewFailedToLoad:
+      return "webView_failed_to_load"
+    case .subscriptionStatusTimeout:
+      return "subscription_status_timeout"
     }
   }
 }

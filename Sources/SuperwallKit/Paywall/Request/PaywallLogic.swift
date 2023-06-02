@@ -53,6 +53,19 @@ enum PaywallLogic {
       Task {
         _ = await trackEvent(trackedEvent)
       }
+      let userInfo: [String: Any] = [
+        NSLocalizedDescriptionKey: NSLocalizedString(
+          "Not Found",
+          value: "There isn't a paywall configured to show in this context.",
+          comment: ""
+        )
+      ]
+      let error = NSError(
+        domain: "SWKPaywallNotFound",
+        code: 404,
+        userInfo: userInfo
+      )
+      return error
     } else {
       let trackedEvent = InternalSuperwallEvent.PaywallLoad(
         state: .fail,
@@ -61,21 +74,20 @@ enum PaywallLogic {
       Task {
         _ = await trackEvent(trackedEvent)
       }
-    }
-
-    let userInfo: [String: Any] = [
-      NSLocalizedDescriptionKey: NSLocalizedString(
-        "Not Found",
-        value: "There isn't a paywall configured to show in this context",
-        comment: ""
+      let userInfo: [String: Any] = [
+        NSLocalizedDescriptionKey: NSLocalizedString(
+          "No Paywall",
+          value: "The paywall failed to load.",
+          comment: ""
+        )
+      ]
+      let error = NSError(
+        domain: "SWKPresentationError",
+        code: 107,
+        userInfo: userInfo
       )
-    ]
-    let error = NSError(
-      domain: "SWPaywallNotFound",
-      code: 404,
-      userInfo: userInfo
-    )
-    return error
+      return error
+    }
   }
 
   static func getVariablesAndFreeTrial(

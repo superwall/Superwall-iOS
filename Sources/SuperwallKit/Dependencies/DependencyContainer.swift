@@ -232,13 +232,15 @@ extension DependencyContainer: RequestFactory {
     eventData: EventData? = nil,
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides? = nil,
-    isDebuggerLaunched: Bool
+    isDebuggerLaunched: Bool,
+    retryCount: Int
   ) -> PaywallRequest {
     return PaywallRequest(
       eventData: eventData,
       responseIdentifiers: responseIdentifiers,
       overrides: overrides ?? PaywallRequest.Overrides(),
-      isDebuggerLaunched: isDebuggerLaunched
+      isDebuggerLaunched: isDebuggerLaunched,
+      retryCount: retryCount
     )
   }
 
@@ -341,7 +343,13 @@ extension DependencyContainer: TriggerSessionManagerFactory {
 // MARK: - ConfigManagerFactory
 extension DependencyContainer: ConfigManagerFactory {
   /// Gets the paywall response from the static config, if the device locale starts with "en" and no more specific version can be found.
-  func makeStaticPaywall(withId paywallId: String?) -> Paywall? {
+  func makeStaticPaywall(
+    withId paywallId: String?,
+    isDebuggerLaunched: Bool
+  ) -> Paywall? {
+    if isDebuggerLaunched {
+      return nil
+    }
     let deviceInfo = makeDeviceInfo()
     return ConfigLogic.getStaticPaywall(
       withId: paywallId,

@@ -85,7 +85,7 @@ final class HomeViewController: UIViewController {
       case .eventNotFound:
         print("Paywall not shown because this event isn't part of a campaign.")
       case .webViewFailedToLoad:
-        print("Paywall not shown because it's web view failed to load.")
+        print("Paywall not shown because it's webview failed to load.")
       }
     }
 

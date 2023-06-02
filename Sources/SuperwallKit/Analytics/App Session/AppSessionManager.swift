@@ -69,22 +69,22 @@ class AppSessionManager {
 
   func listenForAppSessionTimeout() {
     cancellable = configManager.configSubject
-        .compactMap { $0 }
-        .sink(
-          receiveCompletion: { _ in },
-          receiveValue: { [weak self] config in
-            guard let self = self else {
-              return
-            }
-            self.appSessionTimeout = config.appSessionTimeout
-
-            // Account for the fact that dev may have delayed the init of Superwall
-            // such that applicationDidBecomeActive() doesn't activate.
-            if !self.didTrackAppLaunch {
-              self.sessionCouldRefresh()
-            }
+      .compactMap { $0 }
+      .sink(
+        receiveCompletion: { _ in },
+        receiveValue: { [weak self] config in
+          guard let self = self else {
+            return
           }
-        )
+          self.appSessionTimeout = config.appSessionTimeout
+
+          // Account for the fact that dev may have delayed the init of Superwall
+          // such that applicationDidBecomeActive() doesn't activate.
+          if !self.didTrackAppLaunch {
+            self.sessionCouldRefresh()
+          }
+        }
+      )
   }
 
   @objc private func applicationWillResignActive() {

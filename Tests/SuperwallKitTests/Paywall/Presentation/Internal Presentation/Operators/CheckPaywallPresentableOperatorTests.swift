@@ -96,7 +96,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
+      type: .presentation
     )
     .setting(\.presenter, to: nil)
 

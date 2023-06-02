@@ -59,15 +59,14 @@ actor PaywallRequestManager {
     let task = Task<Paywall, Error> {
       do {
         let rawPaywall = try await getRawPaywall(
-          from: request,
-          withHash: requestHash
+          from: request
         )
         let paywallWithProducts = try await addProducts(to: rawPaywall, request: request)
 
         saveRequestHash(
           requestHash,
           paywall: paywallWithProducts,
-          debuggerNotLaunched: request.isDebuggerLaunched
+          isDebuggerLaunched: request.isDebuggerLaunched
         )
 
         return paywallWithProducts
@@ -85,9 +84,9 @@ actor PaywallRequestManager {
   private func saveRequestHash(
     _ requestHash: String,
     paywall: Paywall,
-    debuggerNotLaunched: Bool
+    isDebuggerLaunched: Bool
   ) {
-    guard debuggerNotLaunched else {
+    if isDebuggerLaunched {
       return
     }
     paywallsByHash[requestHash] = paywall

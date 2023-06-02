@@ -57,6 +57,7 @@ extension Superwall {
     _ error: PresentationPipelineError,
     requestType: PresentationRequestType
   ) -> PresentationResult {
+    // TODO: (Minor) This will print out on subscriptionStatusTimeout when it probs shouldn't:
     if requestType != .getImplicitPresentationResult {
       Logger.debug(
         logLevel: .info,
@@ -64,6 +65,7 @@ extension Superwall {
         message: "Paywall presentation error: \(error)"
       )
     }
+
     switch error {
     case .userIsSubscribed:
       return .userIsSubscribed
@@ -78,7 +80,9 @@ extension Superwall {
     case .debuggerPresented,
       .noPresenter,
       .paywallAlreadyPresented,
-      .noInternet:
+      .noConfig,
+      .subscriptionStatusTimeout,
+      .webViewFailedToLoad:
       return .paywallNotAvailable
     }
   }

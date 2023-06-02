@@ -51,21 +51,20 @@ extension Superwall {
       throw PresentationPipelineError.userIsSubscribed
     }
 
+    // Return early with if we're just getting the paywall result.
+    guard request.flags.type == .presentation else {
+      return nil
+    }
+
     // Check for webview loading failure
     if await webViewDidFail(for: paywallViewController) {
       if await paywallViewController.paywall.featureGating == .gated {
-        throw noInternet(paywallStatePublisher: paywallStatePublisher)
+        throw gatedWebViewFailed(paywallStatePublisher: paywallStatePublisher)
       } else {
         paywallStatePublisher?.send(.skipped(.webViewFailedToLoad))
         paywallStatePublisher?.send(completion: .finished)
-        throw PresentationPipelineError.noInternet
+        throw PresentationPipelineError.webViewFailedToLoad
       }
-    }
-
-    // Return early with stub if we're just getting the paywall result.
-    if request.flags.type == .getPresentationResult ||
-      request.flags.type == .getImplicitPresentationResult {
-      return nil
     }
 
     if request.presenter == nil {

@@ -9,9 +9,18 @@ import UIKit
 import Combine
 
 enum PresentationRequestType: Equatable, CustomStringConvertible {
+  /// Presenting via ``Superwall/register(event:params:handler:feature:)``.
   case presentation
+
+  /// Getting the paywall view controller via
+  /// ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)``.
   case getPaywallViewController(PaywallViewControllerDelegateAdapter)
+
+  /// Getting the presentation result via ``Superwall/getPresentationResult(forEvent:)``
   case getPresentationResult
+
+  /// Getting the presentation result from an event that's used internally. Specifically, getting the result
+  /// of calling `paywall_decline`.
   case getImplicitPresentationResult
 
   var description: String {

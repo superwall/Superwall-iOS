@@ -35,6 +35,14 @@ extension Superwall {
       paywallId: experiment?.variant.paywallId,
       experiment: experiment
     )
+
+    var requestRetryCount = 6
+
+    let subscriptionStatus = await request.flags.subscriptionStatus.async()
+    if subscriptionStatus == .active {
+      requestRetryCount = 0
+    }
+
     let paywallRequest = dependencyContainer.makePaywallRequest(
       eventData: request.presentationInfo.eventData,
       responseIdentifiers: responseIdentifiers,
@@ -42,19 +50,28 @@ extension Superwall {
         products: request.paywallOverrides?.products,
         isFreeTrial: request.presentationInfo.freeTrialOverride
       ),
-      isDebuggerLaunched: request.flags.isDebuggerLaunched
+      isDebuggerLaunched: request.flags.isDebuggerLaunched,
+      retryCount: requestRetryCount
     )
     do {
+      let isForPresentation = !(request.flags.type == .getImplicitPresentationResult
+        || request.flags.type == .getPresentationResult)
       let delegate = request.flags.type.getPaywallVcDelegateAdapter()
+
       let paywallViewController = try await dependencyContainer.paywallManager.getPaywallViewController(
         from: paywallRequest,
+        isForPresentation: isForPresentation,
         isPreloading: false,
         delegate: delegate
       )
 
       return paywallViewController
     } catch {
-      throw await presentationFailure(error, request, debugInfo, paywallStatePublisher)
+      if subscriptionStatus == .active {
+        throw userIsSubscribed(paywallStatePublisher: paywallStatePublisher)
+      } else {
+        throw await presentationFailure(error, request, debugInfo, paywallStatePublisher)
+      }
     }
   }
 

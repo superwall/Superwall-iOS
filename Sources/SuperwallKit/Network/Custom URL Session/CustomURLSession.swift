@@ -31,10 +31,7 @@ class CustomURLSession {
   private let urlSession = URLSession(configuration: .default)
 
   @discardableResult
-  func request<Response>(
-    _ endpoint: Endpoint<Response>,
-    isRetryingHandler: ((Bool) -> Void)? = nil
-  ) async throws -> Response {
+  func request<Response>(_ endpoint: Endpoint<Response>) async throws -> Response {
     guard let request = await endpoint.makeRequest() else {
       throw NetworkError.unknown
     }
@@ -52,15 +49,10 @@ class CustomURLSession {
       ]
     )
 
-    print("*** retry ciun", endpoint.retryCount, request.url)
     let startTime = Date().timeIntervalSince1970
-    let (data, response) = try await Task.retrying(
-      maxRetryCount: endpoint.retryCount,
-      operation: {
-        return try await self.urlSession.data(for: request)
-      },
-      isRetryingHandler: isRetryingHandler
-    ).value
+    let (data, response) = try await Task.retrying(maxRetryCount: endpoint.retryCount) {
+      return try await self.urlSession.data(for: request)
+    }.value
 
     let requestDuration = Date().timeIntervalSince1970 - startTime
     let requestId = try getRequestId(
