@@ -278,7 +278,11 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   }
 
   // MARK: - State Handling
-  func togglePaywallSpinner(isHidden: Bool) {
+
+  /// Hides or displays the paywall spinner.
+  ///
+  /// - Parameter isHidden: A `Bool` indicating whether to show or hide the spinner.
+  public func togglePaywallSpinner(isHidden: Bool) {
     if isHidden {
       if loadingState == .manualLoading {
         loadingState = .ready
