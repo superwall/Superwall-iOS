@@ -82,8 +82,8 @@ final class ConfigManagerTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       factory: dependencyContainer
     )
-    configManager.configSubject.send(.stub()
-      .setting(\.triggers, to: []))
+    configManager.configState.send(.retrieved(.stub()
+      .setting(\.triggers, to: [])))
 
     try? await configManager.getAssignments()
 
@@ -114,7 +114,7 @@ final class ConfigManagerTests: XCTestCase {
 
     let variantOption: VariantOption = .stub()
       .setting(\.id, to: variantId)
-    configManager.configSubject.send(.stub()
+    configManager.configState.send(.retrieved(.stub()
       .setting(\.triggers, to: [
         .stub()
         .setting(\.rules, to: [
@@ -125,7 +125,7 @@ final class ConfigManagerTests: XCTestCase {
           ])
         ])
       ])
-    )
+    ))
 
     try? await configManager.getAssignments()
 

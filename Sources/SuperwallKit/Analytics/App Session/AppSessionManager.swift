@@ -68,8 +68,8 @@ class AppSessionManager {
   }
 
   func listenForAppSessionTimeout() {
-    cancellable = configManager.configSubject
-      .compactMap { $0 }
+    cancellable = configManager.configState
+      .compactMap { $0.getConfig() }
       .sink(
         receiveCompletion: { _ in },
         receiveValue: { [weak self] config in

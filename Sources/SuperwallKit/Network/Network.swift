@@ -105,7 +105,8 @@ class Network {
 
   @MainActor
   func getConfig(
-    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
+    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
+    isRetryingCallback: @escaping () -> Void
   ) async throws -> Config {
     // Suspend until app is in foreground.
     let applicationStatePublisher = injectedApplicationStatePublisher ?? self.applicationStatePublisher
@@ -118,7 +119,8 @@ class Network {
     do {
       let requestId = UUID().uuidString
       var config = try await urlSession.request(
-        .config(requestId: requestId, factory: factory)
+        .config(requestId: requestId, factory: factory),
+        isRetryingCallback: isRetryingCallback
       )
       config.requestId = requestId
       return config

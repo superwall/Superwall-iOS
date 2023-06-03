@@ -86,7 +86,7 @@ final class WaitToPresentTests: XCTestCase {
     wait(for: [expectation1, stateExpectation], timeout: 5.5)
   }
 
-  func test_waitToPresent_activeStatus_noConfig() {
+  func test_waitToPresent_activeStatus_noConfigEvenAfterDelay() {
     let expectation1 = expectation(description: "Got identity")
 
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
@@ -112,12 +112,127 @@ final class WaitToPresentTests: XCTestCase {
           paywallStatePublisher: statePublisher,
           dependencyContainer: dependencyContainer
         )
+        XCTFail()
+      } catch {
+        expectation1.fulfill()
+      }
+    }
+
+    wait(for: [expectation1, stateExpectation], timeout: 1.1)
+  }
+
+  func test_waitToPresent_activeStatus_noConfig_configFailedState() {
+    let expectation1 = expectation(description: "Got identity")
+
+    let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+      .eraseToAnyPublisher()
+    let stub = PresentationRequest.stub()
+      .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
+
+    let statePublisher = PassthroughSubject<PaywallState, Never>()
+    let stateExpectation = expectation(description: "Output a state")
+    stateExpectation.expectedFulfillmentCount = 2
+
+    statePublisher.sink { completion in
+      stateExpectation.fulfill()
+    } receiveValue: { state in
+      stateExpectation.fulfill()
+    }
+    .store(in: &cancellables)
+
+
+    dependencyContainer.configManager.configState.send(.failed)
+
+    Task {
+      do {
+        try await Superwall.shared.waitToPresent(
+          stub,
+          paywallStatePublisher: statePublisher,
+          dependencyContainer: dependencyContainer
+        )
+        XCTFail()
       } catch {
         expectation1.fulfill()
       }
     }
 
     wait(for: [expectation1, stateExpectation], timeout: 0.1)
+  }
+
+  func test_waitToPresent_activeStatus_noConfig_configRetryingState() {
+    let expectation1 = expectation(description: "Got identity")
+
+    let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+      .eraseToAnyPublisher()
+    let stub = PresentationRequest.stub()
+      .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
+
+    let statePublisher = PassthroughSubject<PaywallState, Never>()
+    let stateExpectation = expectation(description: "Output a state")
+    stateExpectation.expectedFulfillmentCount = 2
+
+    statePublisher.sink { completion in
+      stateExpectation.fulfill()
+    } receiveValue: { state in
+      stateExpectation.fulfill()
+    }
+    .store(in: &cancellables)
+
+
+    dependencyContainer.configManager.configState.send(.retrying)
+
+    Task {
+      do {
+        try await Superwall.shared.waitToPresent(
+          stub,
+          paywallStatePublisher: statePublisher,
+          dependencyContainer: dependencyContainer
+        )
+        XCTFail()
+      } catch {
+        expectation1.fulfill()
+      }
+    }
+
+    wait(for: [expectation1, stateExpectation], timeout: 0.1)
+  }
+
+  func test_waitToPresent_activeStatus_noConfig_hasConfigAfterDelay() {
+    let expectation1 = expectation(description: "Got identity")
+
+    let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
+      .eraseToAnyPublisher()
+    let stub = PresentationRequest.stub()
+      .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
+
+    let statePublisher = PassthroughSubject<PaywallState, Never>()
+
+    statePublisher.sink { completion in
+      XCTFail()
+    } receiveValue: { state in
+      XCTFail()
+    }
+    .store(in: &cancellables)
+
+    Task.detached {
+      try? await Task.sleep(nanoseconds: 500_000_000)
+      self.dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    }
+
+    Task {
+      do {
+        try await Superwall.shared.waitToPresent(
+          stub,
+          paywallStatePublisher: statePublisher,
+          dependencyContainer: dependencyContainer
+        )
+        expectation1.fulfill()
+      } catch {
+        XCTFail()
+      }
+    }
+
+    wait(for: [expectation1], timeout: 1.1)
   }
 
   func test_waitToPresent_noIdentity_activeStatus_hasConfig() async {
@@ -127,7 +242,7 @@ final class WaitToPresentTests: XCTestCase {
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
       .eraseToAnyPublisher()
 
-    dependencyContainer.configManager.configSubject.send(.stub())
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       paywallOverrides: nil,
@@ -194,7 +309,7 @@ final class WaitToPresentTests: XCTestCase {
     .store(in: &cancellables)
 
     let error = NetworkError.noInternet
-    dependencyContainer.configManager.configSubject.send(completion: .failure(error))
+    dependencyContainer.configManager.configState.send(completion: .failure(error))
 
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
@@ -235,7 +350,7 @@ final class WaitToPresentTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    dependencyContainer.configManager.configSubject.send(.stub())
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
 
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
@@ -279,7 +394,7 @@ final class WaitToPresentTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    dependencyContainer.configManager.configSubject.send(.stub())
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
 
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),

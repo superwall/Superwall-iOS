@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
+// swiftlint:disable function_body_length
 
 import UIKit
 
@@ -31,7 +32,10 @@ class CustomURLSession {
   private let urlSession = URLSession(configuration: .default)
 
   @discardableResult
-  func request<Response>(_ endpoint: Endpoint<Response>) async throws -> Response {
+  func request<Response>(
+    _ endpoint: Endpoint<Response>,
+    isRetryingCallback: (() -> Void)? = nil
+  ) async throws -> Response {
     guard let request = await endpoint.makeRequest() else {
       throw NetworkError.unknown
     }
@@ -50,7 +54,10 @@ class CustomURLSession {
     )
 
     let startTime = Date().timeIntervalSince1970
-    let (data, response) = try await Task.retrying(maxRetryCount: endpoint.retryCount) {
+    let (data, response) = try await Task.retrying(
+      maxRetryCount: endpoint.retryCount,
+      isRetryingCallback: isRetryingCallback
+    ) {
       return try await self.urlSession.data(for: request)
     }.value
 

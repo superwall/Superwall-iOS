@@ -58,8 +58,8 @@ actor TriggerSessionManager {
   }
 
   private func listenForConfig() {
-    configListener = configManager.configSubject
-      .compactMap { $0 }
+    configListener = configManager.configState
+      .compactMap { $0.getConfig() }
       .sink(
         receiveCompletion: { _ in },
         receiveValue: { [weak self] config in

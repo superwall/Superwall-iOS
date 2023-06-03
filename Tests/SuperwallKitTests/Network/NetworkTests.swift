@@ -23,7 +23,8 @@ final class NetworkTests: XCTestCase {
       let requestId = "abc"
 
       _ = try? await network.getConfig(
-        injectedApplicationStatePublisher: injectedApplicationStatePublisher
+        injectedApplicationStatePublisher: injectedApplicationStatePublisher,
+        isRetryingCallback: {}
       )
       completion()
     }
@@ -62,7 +63,8 @@ final class NetworkTests: XCTestCase {
       .eraseToAnyPublisher()
 
     _ = try? await network.getConfig(
-      injectedApplicationStatePublisher: publisher
+      injectedApplicationStatePublisher: publisher,
+      isRetryingCallback: {}
     )
     XCTAssertTrue(urlSession.didRequest)
   }
@@ -76,7 +78,8 @@ final class NetworkTests: XCTestCase {
       .eraseToAnyPublisher()
 
     _ = try? await network.getConfig(
-      injectedApplicationStatePublisher: publisher
+      injectedApplicationStatePublisher: publisher,
+      isRetryingCallback: {}
     )
     XCTAssertTrue(urlSession.didRequest)
   }

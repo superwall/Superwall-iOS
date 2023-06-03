@@ -43,19 +43,34 @@ extension Superwall {
       }
     }
 
+    let configState = dependencyContainer.configManager.configState
+
     if subscriptionStatus == .active {
-      if dependencyContainer.configManager.configSubject.value == nil {
-        // If the user is subscribed and there's no config (for whatever reason),
-        // just call the feature block.
-        throw userIsSubscribed(paywallStatePublisher: paywallStatePublisher)
+      if configState.value.getConfig() == nil {
+        if configState.value == .retrieving {
+          // If we're still retrieving config, wait for 1s and
+          // then try to get config again.
+          try? await Task.sleep(nanoseconds: 1_000_000_000)
+          if configState.value.getConfig() == nil {
+            // Still failed to get config, call feature block.
+            throw userIsSubscribed(paywallStatePublisher: paywallStatePublisher)
+          } else {
+            // Continue because we now have config.
+          }
+        } else {
+          // If the user is subscribed and there's no config (for whatever reason),
+          // just call the feature block.
+          throw userIsSubscribed(paywallStatePublisher: paywallStatePublisher)
+        }
       } else {
         // If the user is subscribed and there is config, continue.
       }
     } else {
       do {
         // If the user isn't subscribed, wait for config to return.
-        try await dependencyContainer.configManager.configSubject
-          .throwableHasValue()
+        try await dependencyContainer.configManager.configState
+          .compactMap { $0.getConfig() }
+          .throwableAsync()
       } catch {
         // If config completely dies, then throw an error
         let error = InternalPresentationLogic.presentationError(
