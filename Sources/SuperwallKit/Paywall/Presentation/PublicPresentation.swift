@@ -138,6 +138,15 @@ extension Superwall {
             if closeReason != .forNextPaywall && featureGating == .nonGated {
               completion?()
             }
+            if closeReason == .webViewFailedToLoad && featureGating == .gated {
+              let error = InternalPresentationLogic.presentationError(
+                domain: "SWKPresentationError",
+                code: 106,
+                title: "Webview Failed",
+                value: "Trying to present gated paywall but the webview could not load."
+              )
+              handler?.onErrorHandler?(error)
+            }
           }
         case .skipped(let reason):
           if let handler = handler?.onSkipHandler {

@@ -145,12 +145,16 @@ extension DependencyContainer: CacheFactory {
 }
 
 // MARK: - DeviceInfofactory
-extension DependencyContainer: DeviceInfoFactory {
+extension DependencyContainer: DeviceHelperFactory {
   func makeDeviceInfo() -> DeviceInfo {
     return DeviceInfo(
       appInstalledAtString: deviceHelper.appInstalledAtString,
       locale: deviceHelper.locale
     )
+  }
+
+  func makeIsSandbox() -> Bool {
+    return deviceHelper.isSandbox == "true"
   }
 }
 

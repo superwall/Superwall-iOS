@@ -56,17 +56,6 @@ extension Superwall {
       return nil
     }
 
-    // Check for webview loading failure
-    if await webViewDidFail(for: paywallViewController) {
-      if await paywallViewController.paywall.featureGating == .gated {
-        throw gatedWebViewFailed(paywallStatePublisher: paywallStatePublisher)
-      } else {
-        paywallStatePublisher?.send(.skipped(.webViewFailedToLoad))
-        paywallStatePublisher?.send(completion: .finished)
-        throw PresentationPipelineError.webViewFailedToLoad
-      }
-    }
-
     if request.presenter == nil {
       await createPresentingWindowIfNeeded()
     }
@@ -105,14 +94,6 @@ extension Superwall {
     )
 
     return presenter
-  }
-
-  @MainActor
-  private func webViewDidFail(for paywallViewController: PaywallViewController) async -> Bool {
-    if paywallViewController.loadingState == .ready {
-      return false
-    }
-    return await paywallViewController.webView.checkWebViewFailure()
   }
 
   @MainActor

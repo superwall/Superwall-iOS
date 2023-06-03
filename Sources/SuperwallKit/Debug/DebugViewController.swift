@@ -469,8 +469,6 @@ final class DebugViewController: UIViewController {
             errorMessage = "Couldn't find event."
           case .userIsSubscribed:
             errorMessage = "The user is subscribed."
-          case .webViewFailedToLoad:
-            errorMessage = "The webview couldn't load."
           }
           self.presentAlert(
             title: "Paywall Skipped",

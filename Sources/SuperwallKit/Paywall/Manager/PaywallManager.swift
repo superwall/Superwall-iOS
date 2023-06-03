@@ -14,7 +14,7 @@ class PaywallManager {
 	}
   private let queue = DispatchQueue(label: "com.superwall.paywallmanager")
   private unowned let paywallRequestManager: PaywallRequestManager
-  private unowned let factory: ViewControllerFactory & CacheFactory & DeviceInfoFactory
+  private unowned let factory: ViewControllerFactory & CacheFactory & DeviceHelperFactory
 
   private var cache: PaywallViewControllerCache {
     return queue.sync { _cache ?? createCache() }
@@ -22,7 +22,7 @@ class PaywallManager {
   private var _cache: PaywallViewControllerCache?
 
   init(
-    factory: ViewControllerFactory & CacheFactory & DeviceInfoFactory,
+    factory: ViewControllerFactory & CacheFactory & DeviceHelperFactory,
     paywallRequestManager: PaywallRequestManager
   ) {
     self.factory = factory

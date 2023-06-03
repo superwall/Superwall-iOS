@@ -79,8 +79,9 @@ protocol LocaleIdentifierFactory: AnyObject {
   func makeLocaleIdentifier() -> String?
 }
 
-protocol DeviceInfoFactory: AnyObject {
+protocol DeviceHelperFactory: AnyObject {
   func makeDeviceInfo() -> DeviceInfo
+  func makeIsSandbox() -> Bool
 }
 
 protocol ApiFactory: AnyObject {

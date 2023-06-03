@@ -67,7 +67,7 @@ class ConfigManager {
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
 
-  private let factory: RequestFactory & DeviceInfoFactory
+  private let factory: RequestFactory & DeviceHelperFactory
 
   init(
     options: SuperwallOptions?,
@@ -75,7 +75,7 @@ class ConfigManager {
     storage: Storage,
     network: Network,
     paywallManager: PaywallManager,
-    factory: RequestFactory & DeviceInfoFactory
+    factory: RequestFactory & DeviceHelperFactory
   ) {
     if let options = options {
       self.options = options
@@ -89,6 +89,11 @@ class ConfigManager {
 
   func fetchConfiguration() async {
     do {
+      // Refresh receipt in sandbox. Can't do this in production because
+      // it'll prompt the user to enter App Store login details.
+      if factory.makeIsSandbox() {
+        await storeKitManager.refreshReceipt()
+      }
       await storeKitManager.loadPurchasedProducts()
 
       let config = try await network.getConfig { [weak self] in

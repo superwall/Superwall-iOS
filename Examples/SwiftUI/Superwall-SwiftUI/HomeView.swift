@@ -60,8 +60,6 @@ struct HomeView: View {
               print("Paywall not shown because user doesn't match any rules.")
             case .eventNotFound:
               print("Paywall not shown because this event isn't part of a campaign.")
-            case .webViewFailedToLoad:
-              print("Paywall not shown because it's webview failed to load.")
             }
           }
 

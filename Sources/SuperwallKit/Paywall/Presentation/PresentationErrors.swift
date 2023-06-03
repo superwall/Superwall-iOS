@@ -19,19 +19,4 @@ extension Superwall {
     paywallStatePublisher?.send(completion: .finished)
     return PresentationPipelineError.userIsSubscribed
   }
-
-  func gatedWebViewFailed(
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
-  ) -> Error {
-    let error = InternalPresentationLogic.presentationError(
-      domain: "SWKPresentationError",
-      code: 106,
-      title: "Webview Failed",
-      value: "Trying to present gated paywall but the webview could not load."
-    )
-    let state: PaywallState = .presentationError(error)
-    paywallStatePublisher?.send(state)
-    paywallStatePublisher?.send(completion: .finished)
-    return PresentationPipelineError.webViewFailedToLoad
-  }
 }

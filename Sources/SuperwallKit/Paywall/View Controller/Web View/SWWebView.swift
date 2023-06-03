@@ -11,16 +11,16 @@ import WebKit
 
 protocol SWWebViewDelegate: AnyObject {
   var info: PaywallInfo { get }
+  func webViewDidFailProvisionalNavigation()
+  func webViewDidFail()
 }
 
 class SWWebView: WKWebView {
   let messageHandler: PaywallMessageHandler
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
-  var request: URLRequest?
-  private var webViewFailureCompletionBlocks: [((Bool) -> Void)] = []
+  var didFailToLoad = false
   private let wkConfig: WKWebViewConfiguration
   private let isMac: Bool
-  private var didFailToLoad: Bool?
   private unowned let sessionEventsManager: SessionEventsManager
 
   init(
@@ -85,28 +85,6 @@ class SWWebView: WKWebView {
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
-
-  func checkWebViewFailure() async -> Bool {
-    // If it didn't fail to load, return false immediately.
-    if let didFailToLoad = didFailToLoad,
-      !didFailToLoad {
-      return false
-    }
-
-    // Otherwise add a completion block to wait for result of loading the webview.
-    return await withCheckedContinuation { continuation in
-      webViewFailureCompletionBlocks.append { failed in
-        continuation.resume(returning: failed)
-      }
-
-      // If previously failed to load, try the request again.
-      if let didFailToLoad = didFailToLoad,
-        didFailToLoad,
-        let request = request {
-        load(request)
-      }
-    }
-  }
 }
 
 // MARK: - WKNavigationDelegate
@@ -144,10 +122,6 @@ extension SWWebView: WKNavigationDelegate {
 
   func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
     didFailToLoad = false
-    for completionBlock in webViewFailureCompletionBlocks {
-      completionBlock(false)
-    }
-    webViewFailureCompletionBlocks.removeAll()
   }
 
   func webView(
@@ -156,10 +130,7 @@ extension SWWebView: WKNavigationDelegate {
     withError error: Error
   ) {
     didFailToLoad = true
-    for completionBlock in webViewFailureCompletionBlocks {
-      completionBlock(true)
-    }
-    webViewFailureCompletionBlocks.removeAll()
+    delegate?.webViewDidFailProvisionalNavigation()
   }
 
   func webView(
@@ -167,6 +138,8 @@ extension SWWebView: WKNavigationDelegate {
     didFail navigation: WKNavigation!,
     withError error: Error
   ) {
+    didFailToLoad = true
+    delegate?.webViewDidFail()
     let date = Date()
     Task {
       await trackPaywallError(at: date)

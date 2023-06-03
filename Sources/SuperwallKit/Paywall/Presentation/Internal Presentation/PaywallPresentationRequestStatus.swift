@@ -49,9 +49,6 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
   /// The config hasn't been retrieved from the server in time.
   case noConfig
 
-  // The webview failed to load
-  case webViewFailedToLoad
-
   /// The subscription status timed out.
   ///
   /// This happens when the ``Superwall/subscriptionStatus``
@@ -78,8 +75,6 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
       return "no_presenter"
     case .noConfig:
       return "no_config"
-    case .webViewFailedToLoad:
-      return "webView_failed_to_load"
     case .subscriptionStatusTimeout:
       return "subscription_status_timeout"
     }

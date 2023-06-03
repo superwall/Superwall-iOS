@@ -81,8 +81,7 @@ extension Superwall {
       .noPresenter,
       .paywallAlreadyPresented,
       .noConfig,
-      .subscriptionStatusTimeout,
-      .webViewFailedToLoad:
+      .subscriptionStatusTimeout:
       return .paywallNotAvailable
     }
   }

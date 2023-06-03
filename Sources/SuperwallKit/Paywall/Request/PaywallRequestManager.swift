@@ -16,7 +16,7 @@ actor PaywallRequestManager {
 
   private var activeTasks: [String: Task<Paywall, Error>] = [:]
   private var paywallsByHash: [String: Paywall] = [:]
-  typealias Factory = DeviceInfoFactory
+  typealias Factory = DeviceHelperFactory
     & TriggerSessionManagerFactory
     & ConfigManagerFactory
 
