@@ -8,7 +8,7 @@
 import Foundation
 
 enum ConfigState: Equatable {
-  static func == (lhs: ConfigManager.ConfigState, rhs: ConfigManager.ConfigState) -> Bool {
+  static func == (lhs: ConfigState, rhs: ConfigState) -> Bool {
     switch (lhs, rhs) {
     case (.failed, .failed),
       (.retrieving, .retrieving),
