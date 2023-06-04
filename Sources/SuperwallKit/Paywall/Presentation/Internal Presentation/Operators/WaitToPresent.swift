@@ -23,40 +23,96 @@ extension Superwall {
   ) async throws {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
 
-    // Wait for subscription status, throwing an error on timeout.
-    let timer = activateTimerForSubscriptionStatus(
-      request: request,
-      paywallStatePublisher: paywallStatePublisher,
-      dependencyContainer: dependencyContainer
-    )
-
-    let subscriptionStatus = await request.flags.subscriptionStatus
-      .filter { $0 != .unknown }
-      .async()
-
-    if let timer = timer {
-      if timer.isValid {
-      timer.invalidate()
-      } else {
-        // Timer has fired, cancel pipeline.
-        throw PresentationPipelineError.subscriptionStatusTimeout
-      }
+    let getSubscriptionStatus = Task {
+      return try await request.flags.subscriptionStatus
+        .filter { $0 != .unknown }
+        .throwableAsync()
     }
+
+    let timer = Timer(
+      timeInterval: 5,
+      repeats: false
+    ) { _ in
+      getSubscriptionStatus.cancel()
+    }
+    RunLoop.main.add(timer, forMode: .default)
+
+    do {
+      _ = try await getSubscriptionStatus.value
+    } catch {
+      Task {
+        let trackedEvent = InternalSuperwallEvent.PresentationRequest(
+          eventData: request.presentationInfo.eventData,
+          type: request.flags.type,
+          status: .timeout,
+          statusReason: nil
+        )
+        await self.track(trackedEvent)
+      }
+      Logger.debug(
+        logLevel: .info,
+        scope: .paywallPresentation,
+        message: "Timeout: Superwall.shared.subscriptionStatus has been \"unknown\" for over 5 seconds resulting in a failure."
+      )
+      let error = InternalPresentationLogic.presentationError(
+        domain: "SWKPresentationError",
+        code: 105,
+        title: "Timeout",
+        value: "The subscription status failed to change from \"unknown\"."
+      )
+      paywallStatePublisher?.send(.presentationError(error))
+      paywallStatePublisher?.send(completion: .finished)
+      throw PresentationPipelineError.subscriptionStatusTimeout
+    }
+
+    timer.invalidate()
 
     let configState = dependencyContainer.configManager.configState
 
     if subscriptionStatus == .active {
       if configState.value.getConfig() == nil {
         if configState.value == .retrieving {
-          // If we're still retrieving config, wait for 1s and
-          // then try to get config again.
-          try? await Task.sleep(nanoseconds: 1_000_000_000)
-          if configState.value.getConfig() == nil {
-            // Still failed to get config, call feature block.
-            throw userIsSubscribed(paywallStatePublisher: paywallStatePublisher)
-          } else {
-            // Continue because we now have config.
+          // If config is nil and we're still retrieving, wait for <=1 second.
+          // At 1s we cancel the task and check config again.
+          let timedTask = Task {
+            return try await dependencyContainer.configManager.configState
+              .compactMap{ $0.getConfig() }
+              .throwableAsync()
           }
+
+          let timer = Timer(
+            timeInterval: 1,
+            repeats: false
+          ) { _ in
+            timedTask.cancel()
+          }
+          RunLoop.main.add(timer, forMode: .default)
+
+          do {
+            _ = try await timedTask.value
+          } catch {
+            if configState.value.getConfig() == nil {
+              // Still failed to get config, call feature block.
+              Task {
+                let trackedEvent = InternalSuperwallEvent.PresentationRequest(
+                  eventData: request.presentationInfo.eventData,
+                  type: request.flags.type,
+                  status: .timeout,
+                  statusReason: nil
+                )
+                await self.track(trackedEvent)
+              }
+              Logger.debug(
+                logLevel: .info,
+                scope: .paywallPresentation,
+                message: "Timeout: The config could not be retrieved in a reasonable time for a subscribed user."
+              )
+              throw userIsSubscribed(paywallStatePublisher: paywallStatePublisher)
+            }
+          }
+
+          // Got config, cancel the timer.
+          timer.invalidate()
         } else {
           // If the user is subscribed and there's no config (for whatever reason),
           // just call the feature block.
@@ -116,7 +172,7 @@ extension Superwall {
             eventData: request.presentationInfo.eventData,
             type: request.flags.type,
             status: .timeout,
-            statusReason: .subscriptionStatusTimeout
+            statusReason: nil
           )
           await self.track(trackedEvent)
         }

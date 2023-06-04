@@ -57,7 +57,6 @@ extension Superwall {
     _ error: PresentationPipelineError,
     requestType: PresentationRequestType
   ) -> PresentationResult {
-    // TODO: (Minor) This will print out on subscriptionStatusTimeout when it probs shouldn't:
     if requestType != .getImplicitPresentationResult {
       Logger.debug(
         logLevel: .info,
