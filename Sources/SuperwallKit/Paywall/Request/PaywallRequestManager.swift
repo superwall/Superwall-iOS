@@ -16,7 +16,7 @@ actor PaywallRequestManager {
 
   private var activeTasks: [String: Task<Paywall, Error>] = [:]
   private var paywallsByHash: [String: Paywall] = [:]
-  typealias Factory = DeviceInfoFactory
+  typealias Factory = DeviceHelperFactory
     & TriggerSessionManagerFactory
     & ConfigManagerFactory
 
@@ -58,13 +58,15 @@ actor PaywallRequestManager {
 
     let task = Task<Paywall, Error> {
       do {
-        let rawPaywall = try await getRawPaywall(from: request)
+        let rawPaywall = try await getRawPaywall(
+          from: request
+        )
         let paywallWithProducts = try await addProducts(to: rawPaywall, request: request)
 
         saveRequestHash(
           requestHash,
           paywall: paywallWithProducts,
-          debuggerNotLaunched: request.isDebuggerLaunched
+          isDebuggerLaunched: request.isDebuggerLaunched
         )
 
         return paywallWithProducts
@@ -82,9 +84,9 @@ actor PaywallRequestManager {
   private func saveRequestHash(
     _ requestHash: String,
     paywall: Paywall,
-    debuggerNotLaunched: Bool
+    isDebuggerLaunched: Bool
   ) {
-    guard debuggerNotLaunched else {
+    if isDebuggerLaunched {
       return
     }
     paywallsByHash[requestHash] = paywall

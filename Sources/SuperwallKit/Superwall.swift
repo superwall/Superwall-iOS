@@ -203,8 +203,10 @@ public final class Superwall: NSObject, ObservableObject {
 
       dependencyContainer.storage.recordAppInstall(trackEvent: track)
 
-      await dependencyContainer.configManager.fetchConfiguration()
-      await dependencyContainer.identityManager.configure()
+      async let fetchConfig: () = await dependencyContainer.configManager.fetchConfiguration()
+      async let configureIdentity: () = await dependencyContainer.identityManager.configure()
+
+      _ = await (fetchConfig, configureIdentity)
 
       await MainActor.run {
         completion?()

@@ -43,7 +43,7 @@ final class SessionEventsManagerTests: XCTestCase {
     let storage = StorageMock(internalCachedTriggerSessions: [.stub()])
     let dependencyContainer = DependencyContainer()
     let configManager = dependencyContainer.configManager!
-    configManager.config = .stub()
+    configManager.configState.send(.retrieved(.stub()))
 
     let network = NetworkMock(factory: dependencyContainer)
     _ = SessionEventsManager(
@@ -74,7 +74,7 @@ final class SessionEventsManagerTests: XCTestCase {
     )
     let dependencyContainer = DependencyContainer()
     let configManager = dependencyContainer.configManager!
-    configManager.config = .stub()
+    configManager.configState.send(.retrieved(.stub()))
 
     let network = NetworkMock(factory: dependencyContainer)
     _ = SessionEventsManager(
@@ -105,7 +105,7 @@ final class SessionEventsManagerTests: XCTestCase {
     )
     let dependencyContainer = DependencyContainer()
     let configManager = dependencyContainer.configManager!
-    configManager.config = .stub()
+    configManager.configState.send(.retrieved(.stub()))
 
     let network = NetworkMock(factory: dependencyContainer)
     _ = SessionEventsManager(

@@ -48,6 +48,19 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable {
       return false
     }
   }
+
+  func toObjc() -> PaywallSkippedReasonObjc {
+    switch self {
+    case .holdout:
+      return .holdout
+    case .noRuleMatch:
+      return .noRuleMatch
+    case .eventNotFound:
+      return .eventNotFound
+    case .userIsSubscribed:
+      return .userIsSubscribed
+    }
+  }
 }
 
 /// Objective-C-only enum. Specifies the reason the paywall presentation was skipped.

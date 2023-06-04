@@ -11,11 +11,14 @@ import WebKit
 
 protocol SWWebViewDelegate: AnyObject {
   var info: PaywallInfo { get }
+  func webViewDidFailProvisionalNavigation()
+  func webViewDidFail()
 }
 
 class SWWebView: WKWebView {
   let messageHandler: PaywallMessageHandler
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
+  var didFailToLoad = false
   private let wkConfig: WKWebViewConfiguration
   private let isMac: Bool
   private unowned let sessionEventsManager: SessionEventsManager
@@ -117,18 +120,34 @@ extension SWWebView: WKNavigationDelegate {
     return .cancel
   }
 
+  func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+    didFailToLoad = false
+  }
+
+  func webView(
+    _ webView: WKWebView,
+    didFailProvisionalNavigation navigation: WKNavigation!,
+    withError error: Error
+  ) {
+    didFailToLoad = true
+    delegate?.webViewDidFailProvisionalNavigation()
+  }
+
   func webView(
     _ webView: WKWebView,
     didFail navigation: WKNavigation!,
     withError error: Error
   ) {
+    didFailToLoad = true
+    delegate?.webViewDidFail()
+    let date = Date()
     Task {
-      await trackPaywallError()
+      await trackPaywallError(at: date)
     }
   }
 
-  func trackPaywallError() async {
-    delegate?.paywall.webviewLoadingInfo.failAt = Date()
+  func trackPaywallError(at failAt: Date = Date()) async {
+    delegate?.paywall.webviewLoadingInfo.failAt = failAt
 
     guard let paywallInfo = delegate?.info else {
       return

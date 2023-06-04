@@ -12,6 +12,11 @@ extension Superwall {
     from request: PresentationRequest,
     _ error: Error
   ) {
+    if let reason = error as? PresentationPipelineError,
+      case .subscriptionStatusTimeout = reason {
+      // Don't print anything if we've just cancelled a pipeline that timed out.
+      return
+    }
     Task {
       if let reason = error as? PresentationPipelineError {
         let trackedEvent = InternalSuperwallEvent.PresentationRequest(

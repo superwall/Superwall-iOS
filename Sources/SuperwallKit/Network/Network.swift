@@ -52,11 +52,17 @@ class Network {
 
   func getPaywall(
     withId identifier: String? = nil,
-    fromEvent event: EventData? = nil
+    fromEvent event: EventData? = nil,
+    retryCount: Int
   ) async throws -> Paywall {
     do {
       return try await urlSession.request(
-        .paywall(withIdentifier: identifier, fromEvent: event, factory: factory)
+        .paywall(
+          withIdentifier: identifier,
+          fromEvent: event,
+          retryCount: retryCount,
+          factory: factory
+        )
       )
     } catch {
       if identifier == nil {
@@ -99,7 +105,8 @@ class Network {
 
   @MainActor
   func getConfig(
-    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
+    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
+    isRetryingCallback: @escaping () -> Void
   ) async throws -> Config {
     // Suspend until app is in foreground.
     let applicationStatePublisher = injectedApplicationStatePublisher ?? self.applicationStatePublisher
@@ -107,12 +114,14 @@ class Network {
     await applicationStatePublisher
       .subscribe(on: DispatchQueue.main)
       .filter { $0 != .background }
-      .eraseToAnyPublisher()
       .async()
 
     do {
       let requestId = UUID().uuidString
-      var config = try await urlSession.request(.config(requestId: requestId, factory: factory))
+      var config = try await urlSession.request(
+        .config(requestId: requestId, factory: factory),
+        isRetryingCallback: isRetryingCallback
+      )
       config.requestId = requestId
       return config
     } catch {

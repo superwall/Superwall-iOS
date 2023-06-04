@@ -51,9 +51,8 @@ extension Superwall {
       throw PresentationPipelineError.userIsSubscribed
     }
 
-    // Return early with stub if we're just getting the paywall result.
-    if request.flags.type == .getPresentationResult ||
-      request.flags.type == .getImplicitPresentationResult {
+    // Return early with if we're just getting the paywall result.
+    guard request.flags.type == .presentation else {
       return nil
     }
 

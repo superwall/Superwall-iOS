@@ -2,6 +2,111 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.0
+
+Welcome to `SuperwallKit` v3.0, the framework formally known as `Paywall`!
+
+This update is a major release, containing lots of breaking changes, enhancements and bug fixes. We're excited for you to use it!
+
+We understand that transitions between major SDK releases can become frustrating, so we've made a [migration guide](https://docs.superwall.com/docs/migrating-to-v3) to make your life easier. We've also updated our [example apps](Examples) to v3, including RevenueCat+SuperwallKit and Objective-C apps. Finally, we recommend you check out our [updated docs](https://docs.superwall.com/docs).
+
+### Breaking Changes
+
+- Renames the package from `Paywall` to `SuperwallKit`.
+- Renames the primary static class for integrating Superwall from `Paywall` to `Superwall`.
+- Sets the minimum iOS version to iOS 13.
+- Moves all functions and variables to the `shared` instance for consistency.
+- Renames `preloadPaywalls(forTriggers:)` to `preloadPaywalls(forEvents:)`
+- Renames `configure(apiKey:userId:delegate:options:)` to `configure(apiKey:purchaseController:options:completion:)`. You can use the completion block to know when Superwall has finished configuring.
+- Removes delegate from `configure`. You now set the delegate via `Superwall.shared.delegate`.
+- Changes `PaywallOptions` to `SuperwallOptions`. This now clearly defines which of the options are explicit to paywalls vs other configuration options within the SDK.
+- Makes `Superwall.shared.options` internal so that options must be set in `configure`.
+- Removes `Superwall.trigger(event:)` and replaces with register(event:params:handler:feature). This is Superwall's most powerful feature yet. Wrap your features with this method to conditionally show paywalls, lock features and more.
+- Renames `Paywall.EventName` to `SuperwallEvent` and removes `.manualPresent` as a `SuperwallEvent`.
+- Renames `PaywallDelegate` to `SuperwallDelegate`.
+- Superwall now automatically handles all subscription-related logic. However, if you'd still like control (e.g. if you're using RevenueCat), you'll need to implement a `PurchaseController` and set `Superwall.shared.subscriptionStatus` yourself whenever the subscription status of the user changes. You pass your `PurchaseController` to `configure(apiKey:purchaseController:options:completion:)`.
+- Removes `isUserSubscribed()` from the delegate and replaces this with a published instance variable `subscriptionStatus`. This is enum that defaults to `.unknown` on first install and the cached value on subsequent app opens. If you're using a `PurchaseController` to handle subscription-related logic, you must set `subscriptionStatus` every time the user's subscription status changes. If you're letting Superwall handle subscription-related logic, this value will be updated with the device receipt.
+- For Objective-C users, this changes the `SWKPurchaseController` method `purchase(product:)` to `purchase(product:completion:)`. You call the completion block with the result of the user attempting to purchase a product, making sure you handle all cases of `SWKPurchaseResult`: `.purchased`, `.cancelled`, `.pending`, `failed`. When you have a purchasing error, you need to call the completion block with the `.failed` case along with the error.
+- Changes `restorePurchases()` to an async function that returns a boolean instead of having a completion block.
+- Removes `Paywall.load(identifier:)`. This was being used to preload a paywall by identifier.
+- Removes `.triggerPaywall()` for SwiftUI apps. Instead, SwiftUI users should now use the UIKit function `Superwall.register()`.
+- Changes the `period` and `periodly` attributes for 2, 3 and 6 month products. Previously, the `period` would be "month", and the `periodly` would be "monthly" for all three. Now the `period` returns "2 months", "quarter", "6 months" and the `periodly` returns "every 2 months", "quarterly", and "every 6 months".
+- Removes `localizationOverride(localeIdentifier:)` and replaces it with the `SuperwallOption` `localeIdentifier`. You set this on configure.
+- Removes ASN1Swift as a package dependency.
+- Changes free trial logic. Previously we'd look at just the primary product. However, we determing free trial eligibility based on the first product in the paywall that has a free trial available.
+- Changes Objective-C method `setUserAttributesDictionary(_:)` to `setUserAttributes(_:)`.
+- Adds `PaywallInfo` to `SuperwallDelegate` methods `WillPresentPaywall(withInfo:)`, `didPresentPaywall(withInfo:)`, `willDismissPaywall(withInfo:)` and `didDismissPaywall(withInfo:)`.
+- Renames `SuperwallDelegate` method `didTrackSuperwallEventInfo(_:SuperwallEventInfo)` to `handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo)` for clarity.
+- Renames `SuperwallDelegate` methods `willOpenURL(url:)` and `willOpenDeepLink(url:)` to `paywallWillOpenURL(url:)` and `paywallWillOpenDeepLink(url:)` respectively.
+- Changes the `logLevel` to be non-optional and introduces a `none` case to turn off logging.
+- Removes all guides from the SDK documentation. From now on, our [online docs](https://docs.superwall.com/docs/) provide guides and the SDK documentation is only there as a technical reference.
+- Changes the return type of `PurchaseController.restorePurchases()` from `Bool` to `RestorationResult`.
+- Changes `DismissState` to `PaywallResult`.
+- Renamed the `PaywallResult` case `closed` to `declined`.
+- Removes .error(Error) from `PaywallSkippedReason` in favor of a new `PaywallState` case `.presentationError(Error)`.
+- Exposes the `transactionBackgroundView` `PaywallOption` to Objective-C by making it non-optional and adding a `none` case in place of setting it to `nil`.
+
+### Enhancements
+
+- Adds `getPaywall(forEvent:params:paywallOverrides:delegate:)`! You can use this to request the `PaywallViewController` to present however you like. Please read our docs to learn more about how to use this.
+- Adds paywall caching. This is enabled on all paywalls by default, however it can be turned off on a case by case basis via the dashboard. With this enhancement, your paywalls will load lightning fast and will reduce network load of your app.
+- You can now pass an `IdentityOptions` object to `identify(userId:options)`. This should only be used in advanced use cases. By setting the `restorePaywallAssignments` property of `IdentityOptions` to `true`, it prevents paywalls from showing until after paywall assignments have been restored. If you expect users of your app to switch accounts or delete/reinstall a lot, you'd set this when identifying an existing account.
+- Adds `Superwall.shared.isLoggedIn` to check whether the user is logged in to the SDK or not. This will be true if you've previously called `identify(userId:options:)`. This is added to user properties, which means you can create a rule based on whether the user is logged in vs. whether they're anonymous.
+- Adds a new example app, UIKit+RevenueCat, which shows you how to use Superwall with RevenueCat.
+- Adds a new Objective-C example app UIKit-Objc.
+- Adds an Objective-C-only function `removeUserAttributes(_:)` to remove user attributes. In Swift, to remove attributes you can pass in `nil` for a specific attribute in `setUserAttributes(_:)`.
+- Adds `getPresentationResult(forEvent:params:)`. This returns a `PresentationResult`, which preemptively gets the result of registering an event. This helps you determine whether a particular event will present a paywall in the future.
+- Logs when products fail to load with a link to help diagnose the cause.
+- Adds a published property `isConfigured`. This is a boolean which you can use to check whether Superwall is configured and ready to present paywalls.
+- Adds `isFreeTrialAvailable` to `PaywallInfo`.
+- Adds `subscriptionStatusDidChange(to:)` delegate function. If you're letting Superwall handle subscription logic you can use this to receive a callback whenever the user's internal subscription status changes. You can also listen to the published `subscriptionStatus` variable.
+- Adds a completion handler to `Superwall.configure(...)` that lets you know when Superwall has finished configuring. You can also listen to the published `isConfigured` variable.
+- If you let Superwall handle your subscription-related logic, we now assume that a non-consumable product on your paywall is a lifetime subscription. If not, you'll need to return a `SubscriptionController` from the delegate.
+- `handleDeepLink(_:)` now returns a discardable `Bool` indicating whether the deep link was handled. If you're using `application(_:open:options:)` you can return its value there.
+- Adds `togglePaywallSpinner(isHidden:)` to arbitrarily toggle the loading spinner on and off. This is particularly useful when you're doing async work when performing a custom action in `handleCustomPaywallAction(withName:)`.
+- Adds a new event `SubscriptionStatusDidChange` which is logged on the dashboard whenever the user's subscription status changes.
+- You can now target `device.isSandbox` in rules.
+- Tweaks the loading indicator UI.
+- Prevents the registering of events that have the same name as internally tracked `SuperwallEvents` like `paywall_open`.
+- Adds a drawer display option which displays the paywall at 70% screen height on iOS 16 iPhones.
+- Adds `$is_feature_gatable` standard property to register calls.
+- Cleans up and reformats SDK logs.
+- If you're using SwiftUI, you can now call `Superwall.configure` in the `init()` of your `App` file. This means you don't need to have a `UIApplicationDelegate`.
+- You can access `device.subscriptionStatus` in a rule, which is a string that's either `ACTIVE`, `INACTIVE`, or `UNKNOWN`.
+- You no longer need to have swiftlint installed to run our example apps.
+- Adds static variable `Superwall.isInitialized` which is `true` when initialization is complete and `Superwall.shared` can be accessed.
+- Adds `transaction_abandon`, `transaction_fail` and `paywall_decline` as potential triggers. This comes with a new `PaywallInfo` property called `closeReason`, which can either be `none`, `.systemLogic`, or `.forNextPaywall`.
+- Changes default logging level to `INFO`.
+- Adds new automatically tracked event `presentation_request` that gets sent with properties explaining why a paywall was or was not shown.
+- Adds a `device.isFirstAppOpen` property that you can use in paywall rules. This is `true` for the very first time a user opens the app. When the user closes and reopens the app, this will be `false`.
+- Adds `isInspectable` to the paywall web view if running on iOS 16.4+.
+- Adds `rawTrialPeriodPrice`, `trialPeriodPrice`, `trialPeriodDailyPrice`, `trialPeriodWeeklyPrice`, `trialPeriodMonthlyPrice`, `trialPeriodYearlyPrice` to product variables.
+- Fully handles what happens when there are network failures.
+
+### Fixes
+
+- Fixes race condition issue where the free trial paywall information would still be shown even if you had previously used a free trial on an expired product.
+- Fixes a caching issue where the paywall was still showing in free trial mode when it shouldn't have. This was happening if you had purchased a free trial, let it expire, then reopened the paywall. Note that in Sandbox environments this issue may still occur due to introductory offers not being added to a receipt until after a purchase.
+- The API uses background threads wherever possible, dispatching to the main thread only when necessary and when calling completion blocks.
+- The API is now fully compatible with Objective-C.
+- Setting the `PaywallOption` `automaticallyDismiss` to `false` now keeps the loading indicator visible after restoring and successfully purchasing until you manually dismiss the paywall.
+- Improves the speed of requests by changing the cache policy of requests to our servers.
+- Fixes `session_start`, `app_launch` and `first_seen` not being tracked if the SDK was initialised a few seconds after app launch.
+- Stops the unnecessary retemplating of paywall variables when coming back to the paywall after visiting a link via the in-app browser.
+- Removes the transaction timeout popup. This was causing a raft of issues so we now rely on overlayTimeout to cancel the transaction flow.
+- Fixes bug in `<iOS 14` where the spinner wasn't appearing when transacting.
+- Fixes an rare crash associated with the loading and saving of Core Data.
+- Makes `NetworkEnvironment` Objective-C compatible.
+- Fixes race condition when calling identify and registering an event.
+- Fixes a long term bug where registering an event to show a paywall and registering an event that results in noRuleMatch would interfere with each other and cause the trigger session to be set to `nil`. This resulted in some paywall data being incorrect on the dashboard.
+- Fixes issue where an invalid URL provided for an "Open URL" click behavior would result in a crash.
+- Fixes various memory related crashes.
+- Fixes a crash when calling `reset()` when a paywall is displayed.
+- Fixes issue where a crash would occur if storage was full and a persistent container couldn't be created.
+- If the internet is offline when trying to present a paywall, the paywall configuration hasn't been retrieved, and the user is not subscribed, it now throws a presentationError. If the internet reconnects future paywalls will show.
+- Fixes retry logic for requests.
+- Fixes crash when handling a deep link.
+
 ## 3.0.0-rc.7
 
 ### Breaking Changes
@@ -117,7 +222,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes bug where calling Superwall.shared prior to Superwall.configure would result in a recursive loop .
+- Fixes bug where calling Superwall.shared prior to Superwall.configure would result in a recursive loop.
 
 ## 3.0.0-rc.1
 

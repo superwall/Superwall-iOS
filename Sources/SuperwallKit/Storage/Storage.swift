@@ -73,12 +73,12 @@ class Storage {
   /// The disk cache.
   private let cache: Cache
 
-  private unowned let factory: DeviceInfoFactory
+  private unowned let factory: DeviceHelperFactory
 
   // MARK: - Configuration
 
   init(
-    factory: DeviceInfoFactory,
+    factory: DeviceHelperFactory,
     cache: Cache = Cache(),
     coreDataManager: CoreDataManager = CoreDataManager()
   ) {

@@ -20,4 +20,13 @@ public enum PaywallCloseReason: Int, Codable, Equatable, Sendable {
   /// This prevents ``Superwall/register(event:params:handler:feature:)`` `feature`
   /// block from executing on dismiss of the paywall, because another paywall is set to show
   case forNextPaywall
+
+  /// The paywall was closed because the webview couldn't be loaded.
+  ///
+  /// If this happens for a gated paywall, the ``PaywallPresentationHandler/onError(_:)``
+  /// handler will be called. If it's for a non-gated paywall, the feature block will be called.
+  case webViewFailedToLoad
+
+  /// The paywall hasn't been closed yet.
+  case none
 }

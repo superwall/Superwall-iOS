@@ -20,6 +20,7 @@ struct Endpoint<Response: Decodable> {
     var bodyData: Data?
   }
 
+  var retryCount = 6
   var components: Components?
   var url: URL?
   var method: HttpMethod = .get
@@ -112,12 +113,17 @@ extension Endpoint where Response == Paywall {
   static func paywall(
     withIdentifier identifier: String? = nil,
     fromEvent event: EventData? = nil,
+    retryCount: Int,
     factory: ApiFactory
   ) -> Self {
     let bodyData: Data?
 
     if let identifier = identifier {
-      return paywall(byIdentifier: identifier, factory: factory)
+      return paywall(
+        byIdentifier: identifier,
+        retryCount: retryCount,
+        factory: factory
+      )
     } else if let event = event {
       let bodyDict = ["event": event.jsonData]
       bodyData = try? JSONEncoder.toSnakeCase.encode(bodyDict)
@@ -128,6 +134,7 @@ extension Endpoint where Response == Paywall {
     let baseHost = factory.api.base.host
 
     return Endpoint(
+      retryCount: retryCount,
       components: Components(
         host: baseHost,
         path: Api.version1 + "paywall",
@@ -140,6 +147,7 @@ extension Endpoint where Response == Paywall {
 
   static private func paywall(
     byIdentifier identifier: String,
+    retryCount: Int,
     factory: ApiFactory
   ) -> Self {
     // WARNING: Do not modify anything about this request without considering our cache eviction code
@@ -173,6 +181,7 @@ extension Endpoint where Response == Paywall {
     let baseHost = factory.api.base.host
 
     return Endpoint(
+      retryCount: retryCount,
       components: Components(
         host: baseHost,
         path: Api.version1 + "paywall/\(identifier)",

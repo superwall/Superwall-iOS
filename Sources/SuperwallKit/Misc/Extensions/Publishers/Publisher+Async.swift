@@ -46,27 +46,37 @@ extension Publisher {
   /// Returns the first value of the publisher, throwing on failure or if no value was returned.
   @discardableResult
   func throwableAsync() async throws -> Output {
-    if Task.isCancelled {
-      throw AsyncError.finishedWithoutValue
+    for try await value in values {
+      return value
     }
-    return try await withCheckedThrowingContinuation { continuation in
+    throw CancellationError()
+  }
+
+  /// Convert this publisher into an `AsyncThrowingStream` that
+  /// can be iterated over asynchronously using `for try await`.
+  /// The stream will yield each output value produced by the
+  /// publisher and will finish once the publisher completes.
+  var values: AsyncThrowingStream<Output, Error> {
+    AsyncThrowingStream { continuation in
       var cancellable: AnyCancellable?
-      var finishedWithoutValue = true
-      cancellable = first()
-        .sink { result in
-          switch result {
+      let onTermination = { cancellable?.cancel() }
+
+      continuation.onTermination = { @Sendable _ in
+        onTermination()
+      }
+
+      cancellable = sink(
+        receiveCompletion: { completion in
+          switch completion {
           case .finished:
-            if finishedWithoutValue {
-              continuation.resume(throwing: AsyncError.finishedWithoutValue)
-            }
-          case let .failure(error):
-            continuation.resume(throwing: error)
+            continuation.finish()
+          case .failure(let error):
+            continuation.finish(throwing: error)
           }
-          cancellable?.cancel()
-        } receiveValue: { value in
-          finishedWithoutValue = false
-          continuation.resume(with: .success(value))
+        }, receiveValue: { value in
+          continuation.yield(value)
         }
+      )
     }
   }
 }

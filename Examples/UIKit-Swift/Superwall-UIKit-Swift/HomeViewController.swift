@@ -80,6 +80,7 @@ final class HomeViewController: UIViewController {
         print("Paywall not shown because this event isn't part of a campaign.")
       }
     }
+
     Superwall.shared.register(event: "campaign_trigger", handler: handler) {
       // code in here can be remotely configured to execute. Either
       // (1) always after presentation or
