@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 11/05/2023.
 //
-// swiftlint:disable line_length 
+// swiftlint:disable line_length function_body_length
 
 import Foundation
 import Combine
@@ -23,22 +23,25 @@ extension Superwall {
   ) async throws {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
 
-    let getSubscriptionStatus = Task {
+    let subscriptionStatusTask = Task {
       return try await request.flags.subscriptionStatus
         .filter { $0 != .unknown }
         .throwableAsync()
     }
 
+    // Create a 5 sec timer. If the subscription status is retrieved, it'll
+    // get cancelled. Otherwise will log a timeout and fail the request.
     let timer = Timer(
       timeInterval: 5,
       repeats: false
     ) { _ in
-      getSubscriptionStatus.cancel()
+      subscriptionStatusTask.cancel()
     }
     RunLoop.main.add(timer, forMode: .default)
 
+    let subscriptionStatus: SubscriptionStatus
     do {
-      _ = try await getSubscriptionStatus.value
+      subscriptionStatus = try await subscriptionStatusTask.value
     } catch {
       Task {
         let trackedEvent = InternalSuperwallEvent.PresentationRequest(
@@ -76,7 +79,7 @@ extension Superwall {
           // At 1s we cancel the task and check config again.
           let timedTask = Task {
             return try await dependencyContainer.configManager.configState
-              .compactMap{ $0.getConfig() }
+              .compactMap { $0.getConfig() }
               .throwableAsync()
           }
 
@@ -145,53 +148,5 @@ extension Superwall {
     // Get the identity. This may or may not wait depending on whether the dev
     // specifically wants to wait for assignments.
     await dependencyContainer.identityManager.hasIdentity.async()
-  }
-
-  /// Creates a 5 sec timer. If the subscription status is retrieved, it'll get cancelled. Otherwise will log a
-  /// timeout and fail the request.
-  private func activateTimerForSubscriptionStatus(
-    request: PresentationRequest,
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?,
-    dependencyContainer: DependencyContainer
-  ) -> Timer? {
-    // Don't need to do this when implicit presentation result because the
-    // status will already have been retrieved by this point and we don't want to track anything.
-    guard request.flags.type != .getImplicitPresentationResult else {
-      return nil
-    }
-    let timer = Timer(
-      timeInterval: 5,
-      repeats: false
-    ) { _ in
-      Task { [weak self] in
-        guard let self = self else {
-          return
-        }
-        Task {
-          let trackedEvent = InternalSuperwallEvent.PresentationRequest(
-            eventData: request.presentationInfo.eventData,
-            type: request.flags.type,
-            status: .timeout,
-            statusReason: nil
-          )
-          await self.track(trackedEvent)
-        }
-        Logger.debug(
-          logLevel: .info,
-          scope: .paywallPresentation,
-          message: "Timeout: Superwall.shared.subscriptionStatus has been \"unknown\" for over 5 seconds resulting in a failure."
-        )
-        let error = InternalPresentationLogic.presentationError(
-          domain: "SWKPresentationError",
-          code: 105,
-          title: "Timeout",
-          value: "The subscription status failed to change from \"unknown\"."
-        )
-        paywallStatePublisher?.send(.presentationError(error))
-        paywallStatePublisher?.send(completion: .finished)
-      }
-    }
-    RunLoop.main.add(timer, forMode: .default)
-    return timer
   }
 }

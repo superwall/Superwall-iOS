@@ -20,6 +20,10 @@ final class StorageMock: Storage {
     func makeDeviceInfo() -> DeviceInfo {
       return DeviceInfo(appInstalledAtString: "a", locale: "b")
     }
+
+    func makeIsSandbox() -> Bool {
+      return true
+    }
   }
 
   init(
