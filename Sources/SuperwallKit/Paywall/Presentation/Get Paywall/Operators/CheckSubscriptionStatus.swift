@@ -12,6 +12,11 @@ import UIKit
 extension Superwall {
   /// Checks conditions for whether the paywall can present.
   ///
+  /// This is called by
+  ///  ``getPaywall(forEvent:params:paywallOverrides:delegate:)`` instead of
+  ///  the `getPresenter` function in the pipeline (because we don't want to get a presenter here).
+  ///  
+  ///
   /// - Parameters:
   ///   - request: The presentation request.
   ///   - paywall: The ``Paywall`` whose presentation condition is checked.

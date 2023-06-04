@@ -81,6 +81,7 @@ We understand that transitions between major SDK releases can become frustrating
 - Adds a `device.isFirstAppOpen` property that you can use in paywall rules. This is `true` for the very first time a user opens the app. When the user closes and reopens the app, this will be `false`.
 - Adds `isInspectable` to the paywall web view if running on iOS 16.4+.
 - Adds `rawTrialPeriodPrice`, `trialPeriodPrice`, `trialPeriodDailyPrice`, `trialPeriodWeeklyPrice`, `trialPeriodMonthlyPrice`, `trialPeriodYearlyPrice` to product variables.
+- Fully handles what happens when there are network failures.
 
 ### Fixes
 

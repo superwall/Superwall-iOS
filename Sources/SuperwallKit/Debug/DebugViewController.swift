@@ -239,7 +239,8 @@ final class DebugViewController: UIViewController {
         eventData: nil,
         responseIdentifiers: .init(paywallId: paywallId),
         overrides: nil,
-        isDebuggerLaunched: true
+        isDebuggerLaunched: true,
+        retryCount: 6
       )
       var paywall = try await paywallRequestManager.getPaywall(from: request)
 
@@ -441,8 +442,7 @@ final class DebugViewController: UIViewController {
       isDebuggerLaunched: true,
       subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: Superwall.shared.isPaywallPresented,
-      type: .presentation,
-      hasInternetOverride: nil
+      type: .presentation
     )
 
     cancellable = Superwall.shared
@@ -462,11 +462,11 @@ final class DebugViewController: UIViewController {
 
           switch reason {
           case .holdout:
-            errorMessage = "The user was assigned to a holdout"
+            errorMessage = "The user was assigned to a holdout."
           case .noRuleMatch:
-            errorMessage = "The user didn't match a rule"
+            errorMessage = "The user didn't match a rule."
           case .eventNotFound:
-            errorMessage = "Couldn't find event"
+            errorMessage = "Couldn't find event."
           case .userIsSubscribed:
             errorMessage = "The user is subscribed."
           }

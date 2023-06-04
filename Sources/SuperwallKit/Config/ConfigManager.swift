@@ -9,16 +9,20 @@ import UIKit
 import Combine
 
 class ConfigManager {
-  /// The configuration of the Superwall dashboard
-  @Published var config: Config?
-
   /// A publisher that emits just once only when `config` is non-`nil`.
   var hasConfig: AnyPublisher<Config, Error> {
-    $config
-      .compactMap { $0 }
+    configState
+      .compactMap { $0.getConfig() }
       .first()
-      .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
+  }
+
+  /// The configuration of the Superwall dashboard
+  var configState = CurrentValueSubject<ConfigState, Error>(.retrieving)
+
+  /// Convenience variable to access config.
+  var config: Config? {
+    return configState.value.getConfig()
   }
 
   /// Options for configuring the SDK.
@@ -63,7 +67,7 @@ class ConfigManager {
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
 
-  private let factory: RequestFactory & DeviceInfoFactory
+  private let factory: RequestFactory & DeviceHelperFactory
 
   init(
     options: SuperwallOptions?,
@@ -71,7 +75,7 @@ class ConfigManager {
     storage: Storage,
     network: Network,
     paywallManager: PaywallManager,
-    factory: RequestFactory & DeviceInfoFactory
+    factory: RequestFactory & DeviceHelperFactory
   ) {
     if let options = options {
       self.options = options
@@ -85,16 +89,26 @@ class ConfigManager {
 
   func fetchConfiguration() async {
     do {
+      // Refresh receipt in sandbox. Can't do this in production because
+      // it'll prompt the user to enter App Store login details.
+      if factory.makeIsSandbox() {
+        await storeKitManager.refreshReceipt()
+      }
       await storeKitManager.loadPurchasedProducts()
-      let config = try await network.getConfig()
+
+      let config = try await network.getConfig { [weak self] in
+        self?.configState.send(.retrying)
+      }
+
       Task { await sendProductsBack(from: config) }
 
       triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
       choosePaywallVariants(from: config.triggers)
-      self.config = config
+      configState.send(.retrieved(config))
 
       Task { await preloadPaywalls() }
     } catch {
+      configState.send(completion: .failure(error))
       Logger.debug(
         logLevel: .error,
         scope: .superwallCore,
@@ -107,7 +121,7 @@ class ConfigManager {
 
   /// Reassigns variants and preloads paywalls again.
   func reset() {
-    guard let config = config else {
+    guard let config = configState.value.getConfig() else {
       return
     }
     unconfirmedAssignments.removeAll()
@@ -127,12 +141,14 @@ class ConfigManager {
   }
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
-  func getAssignments() async {
-    await $config.hasValue()
-    guard
-      let triggers = config?.triggers,
-      !triggers.isEmpty
-    else {
+  func getAssignments() async throws {
+    let config = try await configState
+      .compactMap { $0.getConfig() }
+      .throwableAsync()
+
+    let triggers = config.triggers
+
+    guard !triggers.isEmpty else {
       return
     }
 
@@ -194,7 +210,7 @@ class ConfigManager {
 
   // MARK: - Preloading Paywalls
   private func getTreatmentPaywallIds(from triggers: Set<Trigger>) -> Set<String> {
-    guard let config = config else {
+    guard let config = configState.value.getConfig() else {
       return []
     }
     let preloadableTriggers = ConfigLogic.filterTriggers(
@@ -224,7 +240,12 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by triggers.
   func preloadAllPaywalls() async {
-    let config = await $config.hasValue()
+    guard let config = try? await configState
+      .compactMap({ $0.getConfig() })
+      .throwableAsync() else {
+        return
+      }
+
     let triggers = ConfigLogic.filterTriggers(
       config.triggers,
       removing: config.preloadingDisabled
@@ -240,7 +261,11 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by the provided triggers.
   func preloadPaywalls(for eventNames: Set<String>) async {
-    let config = await $config.hasValue()
+    guard let config = try? await configState
+      .compactMap({ $0.getConfig() })
+      .throwableAsync() else {
+        return
+      }
     let triggersToPreload = config.triggers.filter { eventNames.contains($0.eventName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
     preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
@@ -257,10 +282,12 @@ class ConfigManager {
           eventData: nil,
           responseIdentifiers: .init(paywallId: identifier),
           overrides: nil,
-          isDebuggerLaunched: false
+          isDebuggerLaunched: false,
+          retryCount: 6
         )
         _ = try? await self.paywallManager.getPaywallViewController(
           from: request,
+          isForPresentation: true,
           isPreloading: true,
           delegate: nil
         )

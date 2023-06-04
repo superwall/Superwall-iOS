@@ -4,10 +4,9 @@
 //
 //  Created by Yusuf Tör on 11/05/2023.
 //
-// swiftlint:disable line_length 
+// swiftlint:disable line_length function_body_length
 
 import Foundation
-import SystemConfiguration
 import Combine
 
 extension Superwall {
@@ -23,107 +22,131 @@ extension Superwall {
     dependencyContainer: DependencyContainer? = nil
   ) async throws {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
-    let timer = startTimer(
-      for: request,
-      dependencyContainer: dependencyContainer
-    )
-    defer {
-      timer?.invalidate()
+
+    let subscriptionStatusTask = Task {
+      return try await request.flags.subscriptionStatus
+        .filter { $0 != .unknown }
+        .throwableAsync()
     }
 
-    let subscriptionStatus = await request.flags.subscriptionStatus
-      .filter { $0 != .unknown }
-      .setFailureType(to: Error.self)
-      .eraseToAnyPublisher()
-      .async()
-
-    if !request.flags.hasInternet {
-      if dependencyContainer.configManager.config == nil {
-        if subscriptionStatus == .active {
-          // If no internet, no config, but is subscribed, then skip presentation with userIsSubscribed.
-          let state: PaywallState = .skipped(.userIsSubscribed)
-          paywallStatePublisher?.send(state)
-          paywallStatePublisher?.send(completion: .finished)
-          throw PresentationPipelineError.userIsSubscribed
-        } else {
-          // If no internet, not subscribed, and no config
-          // then throw error.
-          try noInternet(paywallStatePublisher: paywallStatePublisher)
-        }
-      } else {
-        // If has config, continue.
-        return
-      }
-    }
-
-    async let hasIdentity = await dependencyContainer.identityManager.hasIdentity.async()
-    async let hasConfig = await dependencyContainer.configManager.hasConfig.async()
-
-    _ = await (hasIdentity, hasConfig)
-  }
-
-  func noInternet(
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
-  ) throws {
-    let error = InternalPresentationLogic.presentationError(
-      domain: "SWKPresentationError",
-      code: 104,
-      title: "No Internet",
-      value: "Trying to present paywall with no internet."
-    )
-    let state: PaywallState = .presentationError(error)
-    paywallStatePublisher?.send(state)
-    paywallStatePublisher?.send(completion: .finished)
-    throw PresentationPipelineError.noInternet
-  }
-
-  /// Starts a 5 sec timer. If pipeline above progresses, it'll get cancelled. Otherwise will log a
-  /// timeout for the user.
-  private func startTimer(
-    for request: PresentationRequest,
-    dependencyContainer: DependencyContainer
-  ) -> Timer? {
-    guard request.flags.type != .getImplicitPresentationResult else {
-      return nil
-    }
+    // Create a 5 sec timer. If the subscription status is retrieved, it'll
+    // get cancelled. Otherwise will log a timeout and fail the request.
     let timer = Timer(
       timeInterval: 5,
       repeats: false
     ) { _ in
-      Task { [weak self] in
-        guard let self = self else {
-          return
-        }
-        Task {
-          let trackedEvent = InternalSuperwallEvent.PresentationRequest(
-            eventData: request.presentationInfo.eventData,
-            type: request.flags.type,
-            status: .timeout,
-            statusReason: nil
-          )
-          await self.track(trackedEvent)
-        }
-        var timeoutReason = ""
-        let subscriptionStatus = await request.flags.subscriptionStatus.async()
-        if subscriptionStatus == .unknown {
-          timeoutReason += "\nSuperwall.shared.subscriptionStatus is currently \"unknown\"."
-        }
-        if self.dependencyContainer.configManager.config == nil {
-          timeoutReason += "\nThe config for the user has not returned from the server."
-        }
+      subscriptionStatusTask.cancel()
+    }
+    RunLoop.main.add(timer, forMode: .default)
 
-        let hasIdentity = dependencyContainer.identityManager.identitySubject.value
-        if !hasIdentity {
-          timeoutReason += "\nThe user's identity has not been set."
-        }
-        Logger.debug(
-          logLevel: .info,
-          scope: .paywallPresentation,
-          message: "Timeout: Waiting for >5 seconds to continue paywall request. Your paywall may not show because:\(timeoutReason)"
+    let subscriptionStatus: SubscriptionStatus
+    do {
+      subscriptionStatus = try await subscriptionStatusTask.value
+    } catch {
+      Task {
+        let trackedEvent = InternalSuperwallEvent.PresentationRequest(
+          eventData: request.presentationInfo.eventData,
+          type: request.flags.type,
+          status: .timeout,
+          statusReason: nil
         )
+        await self.track(trackedEvent)
+      }
+      Logger.debug(
+        logLevel: .info,
+        scope: .paywallPresentation,
+        message: "Timeout: Superwall.shared.subscriptionStatus has been \"unknown\" for over 5 seconds resulting in a failure."
+      )
+      let error = InternalPresentationLogic.presentationError(
+        domain: "SWKPresentationError",
+        code: 105,
+        title: "Timeout",
+        value: "The subscription status failed to change from \"unknown\"."
+      )
+      paywallStatePublisher?.send(.presentationError(error))
+      paywallStatePublisher?.send(completion: .finished)
+      throw PresentationPipelineError.subscriptionStatusTimeout
+    }
+
+    timer.invalidate()
+
+    let configState = dependencyContainer.configManager.configState
+
+    if subscriptionStatus == .active {
+      if configState.value.getConfig() == nil {
+        if configState.value == .retrieving {
+          // If config is nil and we're still retrieving, wait for <=1 second.
+          // At 1s we cancel the task and check config again.
+          let timedTask = Task {
+            return try await dependencyContainer.configManager.configState
+              .compactMap { $0.getConfig() }
+              .throwableAsync()
+          }
+
+          let timer = Timer(
+            timeInterval: 1,
+            repeats: false
+          ) { _ in
+            timedTask.cancel()
+          }
+          RunLoop.main.add(timer, forMode: .default)
+
+          do {
+            _ = try await timedTask.value
+          } catch {
+            if configState.value.getConfig() == nil {
+              // Still failed to get config, call feature block.
+              Task {
+                let trackedEvent = InternalSuperwallEvent.PresentationRequest(
+                  eventData: request.presentationInfo.eventData,
+                  type: request.flags.type,
+                  status: .timeout,
+                  statusReason: nil
+                )
+                await self.track(trackedEvent)
+              }
+              Logger.debug(
+                logLevel: .info,
+                scope: .paywallPresentation,
+                message: "Timeout: The config could not be retrieved in a reasonable time for a subscribed user."
+              )
+              throw userIsSubscribed(paywallStatePublisher: paywallStatePublisher)
+            }
+          }
+
+          // Got config, cancel the timer.
+          timer.invalidate()
+        } else {
+          // If the user is subscribed and there's no config (for whatever reason),
+          // just call the feature block.
+          throw userIsSubscribed(paywallStatePublisher: paywallStatePublisher)
+        }
+      } else {
+        // If the user is subscribed and there is config, continue.
+      }
+    } else {
+      do {
+        // If the user isn't subscribed, wait for config to return.
+        try await dependencyContainer.configManager.configState
+          .compactMap { $0.getConfig() }
+          .throwableAsync()
+      } catch {
+        // If config completely dies, then throw an error
+        let error = InternalPresentationLogic.presentationError(
+          domain: "SWKPresentationError",
+          code: 104,
+          title: "No Config",
+          value: "Trying to present paywall without the Superwall config."
+        )
+        let state: PaywallState = .presentationError(error)
+        paywallStatePublisher?.send(state)
+        paywallStatePublisher?.send(completion: .finished)
+        throw PresentationPipelineError.noConfig
       }
     }
 
-    return timer
+    // Get the identity. This may or may not wait depending on whether the dev
+    // specifically wants to wait for assignments.
+    await dependencyContainer.identityManager.hasIdentity.async()
   }
 }

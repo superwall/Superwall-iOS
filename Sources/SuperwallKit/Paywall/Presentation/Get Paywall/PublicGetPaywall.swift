@@ -104,7 +104,7 @@ extension Superwall {
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall
   ///   defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
   ///   - completion: A completion block that accepts a ``GetPaywallResultObjc`` object. First check
-  ///   ``GetPaywallResultObjc/paywallViewController`` to see if was retrieved. Then check
+  ///   ``GetPaywallResultObjc/paywall`` to see if was retrieved. Then check
   ///   ``GetPaywallResultObjc/skippedReason`` is not ``PaywallSkippedReasonObjc/none``
   ///   to see if it's presentation was intentionally skipped. Then check
   ///   ``GetPaywallResultObjc/error`` for any errors that may have occurred.

@@ -7,6 +7,7 @@
 
 import UIKit
 import Combine
+import SystemConfiguration
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
@@ -35,7 +36,8 @@ protocol RequestFactory: AnyObject {
     eventData: EventData?,
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides?,
-    isDebuggerLaunched: Bool
+    isDebuggerLaunched: Bool,
+    retryCount: Int
   ) -> PaywallRequest
 
   func makePresentationRequest(
@@ -45,8 +47,7 @@ protocol RequestFactory: AnyObject {
     isDebuggerLaunched: Bool?,
     subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>?,
     isPaywallPresented: Bool,
-    type: PresentationRequestType,
-    hasInternetOverride: Bool?
+    type: PresentationRequestType
   ) -> PresentationRequest
 }
 
@@ -60,7 +61,10 @@ protocol TriggerSessionManagerFactory: AnyObject {
 }
 
 protocol ConfigManagerFactory: AnyObject {
-  func makeStaticPaywall(withId paywallId: String?) -> Paywall?
+  func makeStaticPaywall(
+    withId paywallId: String?,
+    isDebuggerLaunched: Bool
+  ) -> Paywall?
 }
 
 protocol StoreKitCoordinatorFactory: AnyObject {
@@ -75,8 +79,9 @@ protocol LocaleIdentifierFactory: AnyObject {
   func makeLocaleIdentifier() -> String?
 }
 
-protocol DeviceInfoFactory: AnyObject {
+protocol DeviceHelperFactory: AnyObject {
   func makeDeviceInfo() -> DeviceInfo
+  func makeIsSandbox() -> Bool
 }
 
 protocol ApiFactory: AnyObject {

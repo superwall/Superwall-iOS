@@ -14,7 +14,7 @@ class PaywallManager {
 	}
   private let queue = DispatchQueue(label: "com.superwall.paywallmanager")
   private unowned let paywallRequestManager: PaywallRequestManager
-  private unowned let factory: ViewControllerFactory & CacheFactory & DeviceInfoFactory
+  private unowned let factory: ViewControllerFactory & CacheFactory & DeviceHelperFactory
 
   private var cache: PaywallViewControllerCache {
     return queue.sync { _cache ?? createCache() }
@@ -22,7 +22,7 @@ class PaywallManager {
   private var _cache: PaywallViewControllerCache?
 
   init(
-    factory: ViewControllerFactory & CacheFactory & DeviceInfoFactory,
+    factory: ViewControllerFactory & CacheFactory & DeviceHelperFactory,
     paywallRequestManager: PaywallRequestManager
   ) {
     self.factory = factory
@@ -49,12 +49,15 @@ class PaywallManager {
   /// If no `identifier` or `event` is specified, this gets the default paywall for the user.
   ///
   /// - Parameters:
-  ///   - presentationInfo: Info concerning the cause of the paywall presentation and data associated with it.
-  ///   - cached: Whether or not the paywall is cached.
-  ///   - completion: A completion block called with the resulting paywall view controller.
+  ///   - request: The request to get the paywall.
+  ///   - isForPresentation: Indicates whether the paywall will be
+  ///   presented.
+  ///   - isPreloading: Whether or not the paywall is being preloaded.
+  ///   - delegate: The delegate for the `PaywallViewController`.
   @MainActor
   func getPaywallViewController(
     from request: PaywallRequest,
+    isForPresentation: Bool,
     isPreloading: Bool,
     delegate: PaywallViewControllerDelegateAdapter?
   ) async throws -> PaywallViewController {
@@ -81,8 +84,11 @@ class PaywallManager {
     )
     cache.save(paywallViewController, forKey: cacheKey)
 
-    // Preloads the view.
-    _ = paywallViewController.view
+    if isForPresentation {
+      // Only preload if it's actually gonna present the view.
+      // Not if we're just checking it's result
+      paywallViewController.loadViewIfNeeded()
+    }
 
     return paywallViewController
   }

@@ -64,6 +64,7 @@ extension Superwall {
         message: "Paywall presentation error: \(error)"
       )
     }
+
     switch error {
     case .userIsSubscribed:
       return .userIsSubscribed
@@ -78,7 +79,8 @@ extension Superwall {
     case .debuggerPresented,
       .noPresenter,
       .paywallAlreadyPresented,
-      .noInternet:
+      .noConfig,
+      .subscriptionStatusTimeout:
       return .paywallNotAvailable
     }
   }

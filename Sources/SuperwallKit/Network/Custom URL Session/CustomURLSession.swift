@@ -4,32 +4,38 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
+// swiftlint:disable function_body_length
 
 import UIKit
+
+enum NetworkError: LocalizedError {
+  case unknown
+  case notAuthenticated
+  case decoding
+  case notFound
+  case invalidUrl
+  case noInternet
+
+  var errorDescription: String? {
+    switch self {
+    case .unknown: return NSLocalizedString("An unknown error occurred.", comment: "")
+    case .notAuthenticated: return NSLocalizedString("Unauthorized.", comment: "")
+    case .decoding: return NSLocalizedString("Decoding error.", comment: "")
+    case .notFound: return NSLocalizedString("Not found", comment: "")
+    case .invalidUrl: return NSLocalizedString("URL invalid", comment: "")
+    case .noInternet: return NSLocalizedString("No Internet", comment: "")
+    }
+  }
+}
 
 class CustomURLSession {
   private let urlSession = URLSession(configuration: .default)
 
-  enum NetworkError: LocalizedError {
-    case unknown
-    case notAuthenticated
-    case decoding
-    case notFound
-    case invalidUrl
-
-    var errorDescription: String? {
-      switch self {
-      case .unknown: return NSLocalizedString("An unknown error occurred.", comment: "")
-      case .notAuthenticated: return NSLocalizedString("Unauthorized.", comment: "")
-      case .decoding: return NSLocalizedString("Decoding error.", comment: "")
-      case .notFound: return NSLocalizedString("Not found", comment: "")
-      case .invalidUrl: return NSLocalizedString("URL invalid", comment: "")
-      }
-    }
-  }
-
   @discardableResult
-  func request<Response>(_ endpoint: Endpoint<Response>) async throws -> Response {
+  func request<Response>(
+    _ endpoint: Endpoint<Response>,
+    isRetryingCallback: (() -> Void)? = nil
+  ) async throws -> Response {
     guard let request = await endpoint.makeRequest() else {
       throw NetworkError.unknown
     }
@@ -48,10 +54,12 @@ class CustomURLSession {
     )
 
     let startTime = Date().timeIntervalSince1970
-    let (data, response) = try await Task.retrying {
+    let (data, response) = try await Task.retrying(
+      maxRetryCount: endpoint.retryCount,
+      isRetryingCallback: isRetryingCallback
+    ) {
       return try await self.urlSession.data(for: request)
-    }
-    .value
+    }.value
 
     let requestDuration = Date().timeIntervalSince1970 - startTime
     let requestId = try getRequestId(

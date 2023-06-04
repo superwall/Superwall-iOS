@@ -35,6 +35,14 @@ extension Superwall {
       paywallId: experiment?.variant.paywallId,
       experiment: experiment
     )
+
+    var requestRetryCount = 6
+
+    let subscriptionStatus = await request.flags.subscriptionStatus.async()
+    if subscriptionStatus == .active {
+      requestRetryCount = 0
+    }
+
     let paywallRequest = dependencyContainer.makePaywallRequest(
       eventData: request.presentationInfo.eventData,
       responseIdentifiers: responseIdentifiers,
@@ -42,28 +50,26 @@ extension Superwall {
         products: request.paywallOverrides?.products,
         isFreeTrial: request.presentationInfo.freeTrialOverride
       ),
-      isDebuggerLaunched: request.flags.isDebuggerLaunched
+      isDebuggerLaunched: request.flags.isDebuggerLaunched,
+      retryCount: requestRetryCount
     )
     do {
+      let isForPresentation = !(request.flags.type == .getImplicitPresentationResult
+        || request.flags.type == .getPresentationResult)
       let delegate = request.flags.type.getPaywallVcDelegateAdapter()
+
       let paywallViewController = try await dependencyContainer.paywallManager.getPaywallViewController(
         from: paywallRequest,
+        isForPresentation: isForPresentation,
         isPreloading: false,
         delegate: delegate
       )
 
       return paywallViewController
     } catch {
-      switch request.flags.type {
-      case .getImplicitPresentationResult,
-        .getPresentationResult:
-        throw PresentationPipelineError.noPaywallViewController
-      case .presentation,
-        .getPaywallViewController:
-        guard let paywallStatePublisher = paywallStatePublisher else {
-          // Will never get here
-          throw error
-        }
+      if subscriptionStatus == .active {
+        throw userIsSubscribed(paywallStatePublisher: paywallStatePublisher)
+      } else {
         throw await presentationFailure(error, request, debugInfo, paywallStatePublisher)
       }
     }
@@ -73,7 +79,7 @@ extension Superwall {
     _ error: Error,
     _ request: PresentationRequest,
     _ debugInfo: [String: Any],
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
   ) async -> Error {
     let subscriptionStatus = await request.flags.subscriptionStatus.async()
     if InternalPresentationLogic.userSubscribedAndNotOverridden(
@@ -84,20 +90,23 @@ extension Superwall {
       )
     ) {
       let state: PaywallState = .skipped(.userIsSubscribed)
-      paywallStatePublisher.send(state)
-      paywallStatePublisher.send(completion: .finished)
+      paywallStatePublisher?.send(state)
+      paywallStatePublisher?.send(completion: .finished)
       return PresentationPipelineError.userIsSubscribed
     }
 
-    Logger.debug(
-      logLevel: .error,
-      scope: .paywallPresentation,
-      message: "Error Getting Paywall View Controller",
-      info: debugInfo,
-      error: error
-    )
-    paywallStatePublisher.send(.presentationError(error))
-    paywallStatePublisher.send(completion: .finished)
+    if request.flags.type != .getImplicitPresentationResult &&
+      request.flags.type != .getPresentationResult {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallPresentation,
+        message: "Error Getting Paywall View Controller",
+        info: debugInfo,
+        error: error
+      )
+    }
+    paywallStatePublisher?.send(.presentationError(error))
+    paywallStatePublisher?.send(completion: .finished)
     return PresentationPipelineError.noPaywallViewController
   }
 }

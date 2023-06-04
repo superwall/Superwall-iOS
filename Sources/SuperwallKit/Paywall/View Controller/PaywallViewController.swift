@@ -12,7 +12,7 @@ import SafariServices
 import Combine
 
 @objc(SWKPaywallViewController)
-public class PaywallViewController: UIViewController, SWWebViewDelegate, LoadingDelegate {
+public class PaywallViewController: UIViewController, LoadingDelegate {
   // MARK: - Public Properties
   /// A publisher that emits ``PaywallState`` objects, which tell you the state of the presented paywall.
   public var statePublisher: AnyPublisher<PaywallState, Never>? {
@@ -45,7 +45,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
     return isPresented || isBeingPresented
   }
 
-  /// The web view that the paywall is displayed in.
+  /// The webview that the paywall is displayed in.
   let webView: SWWebView
 
   /// The paywall info
@@ -264,7 +264,7 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
       let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
       webView.load(request)
     } else {
-    let request = URLRequest(url: url)
+      let request = URLRequest(url: url)
       webView.load(request)
     }
 
@@ -545,6 +545,27 @@ public class PaywallViewController: UIViewController, SWWebViewDelegate, Loading
   }
 }
 
+// MARK: - SWWebViewDelegate
+extension PaywallViewController: SWWebViewDelegate {
+  func webViewDidFail() {
+    handleWebViewFailure()
+  }
+
+  func webViewDidFailProvisionalNavigation() {
+    handleWebViewFailure()
+  }
+
+  private func handleWebViewFailure() {
+    guard isActive else {
+      return
+    }
+    dismiss(
+      result: .declined,
+      closeReason: .webViewFailedToLoad
+    )
+  }
+}
+
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
@@ -598,6 +619,10 @@ extension PaywallViewController {
     if #available(iOS 15.0, *),
       !deviceHelper.isMac {
       webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
+    }
+
+    if webView.didFailToLoad {
+      loadWebView()
     }
 
     presentationWillBegin()

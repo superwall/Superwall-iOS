@@ -8,6 +8,7 @@
 
 import UIKit
 import Combine
+import SystemConfiguration
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
 ///
@@ -144,12 +145,16 @@ extension DependencyContainer: CacheFactory {
 }
 
 // MARK: - DeviceInfofactory
-extension DependencyContainer: DeviceInfoFactory {
+extension DependencyContainer: DeviceHelperFactory {
   func makeDeviceInfo() -> DeviceInfo {
     return DeviceInfo(
       appInstalledAtString: deviceHelper.appInstalledAtString,
       locale: deviceHelper.locale
     )
+  }
+
+  func makeIsSandbox() -> Bool {
+    return deviceHelper.isSandbox == "true"
   }
 }
 
@@ -231,13 +236,15 @@ extension DependencyContainer: RequestFactory {
     eventData: EventData? = nil,
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides? = nil,
-    isDebuggerLaunched: Bool
+    isDebuggerLaunched: Bool,
+    retryCount: Int
   ) -> PaywallRequest {
     return PaywallRequest(
       eventData: eventData,
       responseIdentifiers: responseIdentifiers,
       overrides: overrides ?? PaywallRequest.Overrides(),
-      isDebuggerLaunched: isDebuggerLaunched
+      isDebuggerLaunched: isDebuggerLaunched,
+      retryCount: retryCount
     )
   }
 
@@ -248,11 +255,8 @@ extension DependencyContainer: RequestFactory {
     isDebuggerLaunched: Bool? = nil,
     subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>? = nil,
     isPaywallPresented: Bool,
-    type: PresentationRequestType,
-    hasInternetOverride: Bool? = nil
+    type: PresentationRequestType
   ) -> PresentationRequest {
-    let hasInternet = hasInternetOverride ?? deviceHelper.reachabilityFlags?.contains(.reachable) ?? false
-
     return PresentationRequest(
       presentationInfo: presentationInfo,
       presenter: presenter,
@@ -261,8 +265,7 @@ extension DependencyContainer: RequestFactory {
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
         subscriptionStatus: subscriptionStatus ?? Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
         isPaywallPresented: isPaywallPresented,
-        type: type,
-        hasInternet: hasInternet
+        type: type
       )
     )
   }
@@ -344,7 +347,13 @@ extension DependencyContainer: TriggerSessionManagerFactory {
 // MARK: - ConfigManagerFactory
 extension DependencyContainer: ConfigManagerFactory {
   /// Gets the paywall response from the static config, if the device locale starts with "en" and no more specific version can be found.
-  func makeStaticPaywall(withId paywallId: String?) -> Paywall? {
+  func makeStaticPaywall(
+    withId paywallId: String?,
+    isDebuggerLaunched: Bool
+  ) -> Paywall? {
+    if isDebuggerLaunched {
+      return nil
+    }
     let deviceInfo = makeDeviceInfo()
     return ConfigLogic.getStaticPaywall(
       withId: paywallId,
