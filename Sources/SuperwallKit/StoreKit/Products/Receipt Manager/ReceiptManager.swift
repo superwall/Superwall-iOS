@@ -103,10 +103,6 @@ actor ReceiptManager: NSObject {
 
   /// Refreshes the receipt.
   func refreshReceipt() async {
-    // Wait for connected scenes to exist. Prevents bug
-    // in SwiftUI where the receipt wouldn't finish refreshing.
-    _ = await UIApplication.shared.connectedScenes
-
     Logger.debug(
       logLevel: .debug,
       scope: .receipts,
