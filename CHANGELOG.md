@@ -2,6 +2,10 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.1
+
+- Fixes bug that prevented Superwall from configuring when SwiftUI users in sandbox mode used the App file's `init()` to configure Superwall.
+
 ## 3.0.0
 
 Welcome to `SuperwallKit` v3.0, the framework formally known as `Paywall`!
