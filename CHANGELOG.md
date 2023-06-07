@@ -2,7 +2,15 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.2
+
+### Fixes
+
+- Fixes issues with Xcode 15 beta 1.
+
 ## 3.0.1
+
+### Fixes
 
 - Fixes bug that prevented Superwall from configuring when SwiftUI users in sandbox mode used the App file's `init()` to configure Superwall.
 

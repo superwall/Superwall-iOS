@@ -16,9 +16,6 @@ public final class PaywallInfo: NSObject {
   /// Superwall's internal ID for this paywall.
   let databaseId: String
 
-  @available(*, unavailable, renamed: "databaseId")
-  let id: String = ""
-
   /// The identifier set for this paywall in the Superwall dashboard.
   public let identifier: String
 
