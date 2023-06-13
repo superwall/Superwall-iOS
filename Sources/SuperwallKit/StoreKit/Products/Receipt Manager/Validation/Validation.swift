@@ -5,7 +5,7 @@
 //  Created by Pavel Tikhonenko on 19/01/17.
 //  Copyright © 2017-2021 Pavel Tikhonenko. All rights reserved.
 //
-// swiftlint:disable force_unwrapping force_cast cyclomatic_complexity function_body_length
+// swiftlint:disable cyclomatic_complexity function_body_length
 
 #if os(iOS) || os(tvOS)
 import UIKit
@@ -196,22 +196,34 @@ extension InAppReceipt {
 
     if #available(OSX 10.14, tvOS 12.0, *) {
       var error: CFError?
-      guard SecTrustEvaluateWithError(wwdcTrust!, &error) else {
+      guard
+        let wwdcTrust = wwdcTrust,
+        SecTrustEvaluateWithError(wwdcTrust, &error)
+      else {
         throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
       }
     } else {
-      guard SecTrustEvaluate(wwdcTrust!, &secTrustResult) == errSecSuccess else {
+      guard
+        let wwdcTrust = wwdcTrust,
+        SecTrustEvaluate(wwdcTrust, &secTrustResult) == errSecSuccess
+      else {
         throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
       }
     }
 
     if #available(OSX 10.14, tvOS 12.0, *) {
       var error: CFError?
-      guard SecTrustEvaluateWithError(iTunesTrust!, &error) else {
+      guard
+        let iTunesTrust = iTunesTrust,
+        SecTrustEvaluateWithError(iTunesTrust, &error)
+      else {
         throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
       }
     } else {
-      guard SecTrustEvaluate(iTunesTrust!, &secTrustResult) == errSecSuccess else {
+      guard
+        let iTunesTrust = iTunesTrust,
+        SecTrustEvaluate(iTunesTrust, &secTrustResult) == errSecSuccess
+      else {
         throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
       }
     }
@@ -252,10 +264,10 @@ extension InAppReceipt {
 
 private func guid() -> Data {
 #if os(watchOS)
-  var uuidBytes = WKInterfaceDevice.current().identifierForVendor!.uuid
+  var uuidBytes = WKInterfaceDevice.current().identifierForVendor?.uuid
   return Data(bytes: &uuidBytes, count: MemoryLayout.size(ofValue: uuidBytes))
 #elseif !targetEnvironment(macCatalyst) && (os(iOS) || os(tvOS))
-  var uuidBytes = UIDevice.current.identifierForVendor!.uuid
+  var uuidBytes = UIDevice.current.identifierForVendor?.uuid
   return Data(bytes: &uuidBytes, count: MemoryLayout.size(ofValue: uuidBytes))
 #elseif targetEnvironment(macCatalyst) || os(macOS)
 
@@ -320,8 +332,8 @@ func ioService(named name: String, wantBuiltIn: Bool) -> io_service_t? {
   var candidate = IOIteratorNext(iterator)
   while candidate != IO_OBJECT_NULL {
     if let cftype = IORegistryEntryCreateCFProperty(candidate, "IOBuiltin" as CFString, kCFAllocatorDefault, 0) {
-      let isBuiltIn = cftype.takeRetainedValue() as! CFBoolean
-      if wantBuiltIn == CFBooleanGetValue(isBuiltIn) {
+      if let isBuiltIn = cftype.takeRetainedValue() as? CFBoolean,
+        wantBuiltIn == CFBooleanGetValue(isBuiltIn) {
         return candidate
       }
     }

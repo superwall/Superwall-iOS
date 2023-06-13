@@ -35,8 +35,9 @@ struct ExpressionEvaluator {
       return shouldFire
     }
 
-    // swiftlint:disable:next force_unwrapping
-    let jsCtx = JSContext()!
+    guard let jsCtx = JSContext() else {
+      return false
+    }
     jsCtx.exceptionHandler = { (_, value: JSValue?) in
       guard let value = value else {
         return

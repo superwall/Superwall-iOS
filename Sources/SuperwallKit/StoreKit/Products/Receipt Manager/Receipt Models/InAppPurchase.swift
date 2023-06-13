@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 24/03/2022.
 //
-// swiftlint:disable force_cast implicitly_unwrapped_optional
+// swiftlint:disable function_body_length
 
 import Foundation
 
@@ -51,19 +51,46 @@ struct InAppPurchase: ASN1Decodable, Hashable {
   var purchaseDate: Date
 
   init(from decoder: Decoder) throws {
-    var container = try decoder.unkeyedContainer() as! ASN1UnkeyedDecodingContainerProtocol
+    guard var container = try decoder.unkeyedContainer() as? ASN1UnkeyedDecodingContainerProtocol else {
+      throw DecodingError.valueNotFound(
+        ASN1UnkeyedDecodingContainerProtocol.self,
+        DecodingError.Context(
+          codingPath: decoder.codingPath,
+          debugDescription: "Unkeyed container doesn't exist."
+        )
+      )
+    }
 
     var productIdentifier = ""
-    var purchaseDate: Date!
+    var purchaseDate: Date?
 
     while !container.isAtEnd {
       do {
-        // swiftlint:disable:next force_cast line_length
-        var attributeContainer = try container.nestedUnkeyedContainer(for: InAppReceiptAttribute.template) as! ASN1UnkeyedDecodingContainerProtocol
+        guard var attributeContainer = try container.nestedUnkeyedContainer(
+          for: InAppReceiptAttribute.template
+        ) as? ASN1UnkeyedDecodingContainerProtocol else {
+          throw DecodingError.valueNotFound(
+            ASN1UnkeyedDecodingContainerProtocol.self,
+            DecodingError.Context(
+              codingPath: decoder.codingPath,
+              debugDescription: "InAppReceiptAttribute template nested unkeyed container doesn't exist."
+            )
+          )
+        }
         let type: Int32 = try attributeContainer.decode(Int32.self)
         _ = try attributeContainer.skip(template: .universal(ASN1Identifier.Tag.integer))
-        // swiftlint:disable:next force_cast line_length
-        var valueContainer = try attributeContainer.nestedUnkeyedContainer(for: .universal(ASN1Identifier.Tag.octetString)) as! ASN1UnkeyedDecodingContainerProtocol
+
+        guard var valueContainer = try attributeContainer.nestedUnkeyedContainer(
+          for: .universal(ASN1Identifier.Tag.octetString)
+        ) as? ASN1UnkeyedDecodingContainerProtocol else {
+          throw DecodingError.valueNotFound(
+            ASN1UnkeyedDecodingContainerProtocol.self,
+            DecodingError.Context(
+              codingPath: decoder.codingPath,
+              debugDescription: "Value container doesn't exist."
+            )
+          )
+        }
 
         switch type {
         case InAppReceiptField.productIdentifier:
@@ -89,6 +116,17 @@ struct InAppPurchase: ASN1Decodable, Hashable {
     }
 
     self.productIdentifier = productIdentifier
-    self.purchaseDate = purchaseDate
+
+    if let purchaseDate = purchaseDate {
+      self.purchaseDate = purchaseDate
+    } else {
+      throw DecodingError.valueNotFound(
+        Date.self,
+        DecodingError.Context(
+          codingPath: decoder.codingPath,
+          debugDescription: "Unkeyed container is at end."
+        )
+      )
+    }
   }
 }

@@ -4,7 +4,6 @@
 //
 //  Created by Jake Mor on 10/5/21.
 //
-// swiftlint:disable force_unwrapping
 
 import Foundation
 import GameController
@@ -86,11 +85,15 @@ final class GameControllerManager: NSObject {
     case gamepad.leftThumbstick:
       self.valueChanged(name, gamepad.leftThumbstick.xAxis.value, gamepad.leftThumbstick.yAxis.value)
     case gamepad.leftThumbstickButton:
-      self.valueChanged(name, gamepad.leftThumbstickButton!.value)
+      if let button = gamepad.leftThumbstickButton {
+        self.valueChanged(name, button.value)
+      }
     case gamepad.rightThumbstick:
       self.valueChanged(name, gamepad.rightThumbstick.xAxis.value, gamepad.rightThumbstick.yAxis.value)
     case gamepad.rightThumbstickButton:
-      self.valueChanged(name, gamepad.rightThumbstickButton!.value)
+      if let button = gamepad.rightThumbstickButton {
+        self.valueChanged(name, button.value)
+      }
     case gamepad.dpad:
       self.valueChanged(name, gamepad.dpad.xAxis.value, gamepad.dpad.yAxis.value)
     case gamepad.dpad.down:
@@ -112,8 +115,9 @@ final class GameControllerManager: NSObject {
     case gamepad.buttonMenu:
       self.valueChanged(name, gamepad.buttonMenu.value)
     case gamepad.buttonOptions:
-      // swiftlint:disable:next force_unwrapping
-      self.valueChanged(name, gamepad.buttonOptions!.value)
+      if let options = gamepad.buttonOptions {
+        self.valueChanged(name, options.value)
+      }
     default:
       Logger.debug(
         logLevel: .debug,

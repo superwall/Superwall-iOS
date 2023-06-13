@@ -17,10 +17,11 @@ enum LocalizationLogic {
 
     for localeId in localeIds {
       // Get language
-      let localizedLanguage = currentLocale.localizedString(
+      guard let localizedLanguage = currentLocale.localizedString(
         forLanguageCode: localeId
-      )!
-      // swiftlint:disable:previous force_unwrapping
+      ) else {
+        continue
+      }
 
       // Get country
       let locale = Locale(identifier: localeId)

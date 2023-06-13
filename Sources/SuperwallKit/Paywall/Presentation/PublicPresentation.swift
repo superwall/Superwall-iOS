@@ -77,7 +77,7 @@ extension Superwall {
   /// - Parameters:
   ///   -  event: The name of the event you wish to register.
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped. Defaults to `nil`.
-  ///   - handler: An optional handler whose variables provide status updates for a paywall. Defaults to `nil`.
+  ///   - handler: An optional handler whose functions provide status updates for a paywall. Defaults to `nil`.
   ///   - feature: A completion block containing a feature that you wish to paywall. Access to this block is remotely configurable via the [Superwall Dashboard](https://superwall.com/dashboard). If the paywall is set to _Non Gated_, this will be called when the paywall is dismissed or if the user is already paying. If the paywall is _Gated_, this will be called only if the user is already paying or if they begin paying. If no paywall is configured, this gets called immediately. This will not be called in the event of an error, which you can detect via the `handler`.
   public func register(
     event: String,
@@ -99,7 +99,7 @@ extension Superwall {
   /// - Parameters:
   ///   -  event: The name of the event you wish to register.
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped. Defaults to `nil`.
-  ///   - handler: An optional handler whose variables provide status updates for a paywall. Defaults to `nil`.
+  ///   - handler: An optional handler whose functions provide status updates for a paywall. Defaults to `nil`.
   public func register(
     event: String,
     params: [String: Any]? = nil,

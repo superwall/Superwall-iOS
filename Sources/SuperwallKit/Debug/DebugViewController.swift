@@ -125,7 +125,6 @@ final class DebugViewController: UIViewController {
   private unowned let paywallRequestManager: PaywallRequestManager
   private unowned let paywallManager: PaywallManager
   private unowned let debugManager: DebugManager
-  private let localizationManager: LocalizationManager
   private let factory: RequestFactory & ViewControllerFactory
 
   init(
@@ -133,7 +132,6 @@ final class DebugViewController: UIViewController {
     network: Network,
     paywallRequestManager: PaywallRequestManager,
     paywallManager: PaywallManager,
-    localizationManager: LocalizationManager,
     debugManager: DebugManager,
     factory: RequestFactory & ViewControllerFactory
   ) {
@@ -141,7 +139,6 @@ final class DebugViewController: UIViewController {
     self.network = network
     self.paywallRequestManager = paywallRequestManager
     self.paywallManager = paywallManager
-    self.localizationManager = localizationManager
     self.debugManager = debugManager
     self.factory = factory
     super.init(nibName: nil, bundle: nil)
@@ -358,9 +355,7 @@ final class DebugViewController: UIViewController {
   }
 
 	func showLocalizationPicker() async {
-    let viewController = SWLocalizationViewController(
-      localizationManager: localizationManager
-    ) { [weak self] identifier in
+    let viewController = SWLocalizationViewController { [weak self] identifier in
       Superwall.shared.options.localeIdentifier = identifier
       Task { await self?.loadPreview() }
     }
