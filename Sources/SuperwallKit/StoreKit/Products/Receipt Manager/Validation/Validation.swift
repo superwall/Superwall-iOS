@@ -332,8 +332,9 @@ func ioService(named name: String, wantBuiltIn: Bool) -> io_service_t? {
   var candidate = IOIteratorNext(iterator)
   while candidate != IO_OBJECT_NULL {
     if let cftype = IORegistryEntryCreateCFProperty(candidate, "IOBuiltin" as CFString, kCFAllocatorDefault, 0) {
-      if let isBuiltIn = cftype.takeRetainedValue() as? CFBoolean,
-        wantBuiltIn == CFBooleanGetValue(isBuiltIn) {
+      // swiftlint:disable:next force_cast
+      let isBuiltIn = cftype.takeRetainedValue() as! CFBoolean
+      if wantBuiltIn == CFBooleanGetValue(isBuiltIn) {
         return candidate
       }
     }
