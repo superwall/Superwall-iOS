@@ -255,45 +255,45 @@ final class TransactionManager {
     let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
 
     let paywallInfo = await paywallViewController.info
-    Task.detached(priority: .background) {
-      if let transaction = transaction {
-        await self.sessionEventsManager.triggerSession.trackTransactionSucceeded(
-          withId: transaction.storeTransactionId,
-          for: product,
-          isFreeTrialAvailable: didStartFreeTrial
-        )
-      }
 
-      let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .complete(product, transaction),
+    if let transaction = transaction {
+      await self.sessionEventsManager.triggerSession.trackTransactionSucceeded(
+        withId: transaction.storeTransactionId,
+        for: product,
+        isFreeTrialAvailable: didStartFreeTrial
+      )
+    }
+
+    let trackedEvent = InternalSuperwallEvent.Transaction(
+      state: .complete(product, transaction),
+      paywallInfo: paywallInfo,
+      product: product,
+      model: transaction
+    )
+    await Superwall.shared.track(trackedEvent)
+
+    if product.subscriptionPeriod == nil {
+      let trackedEvent = InternalSuperwallEvent.NonRecurringProductPurchase(
         paywallInfo: paywallInfo,
-        product: product,
-        model: transaction
+        product: product
       )
       await Superwall.shared.track(trackedEvent)
-
-      if product.subscriptionPeriod == nil {
-        let trackedEvent = InternalSuperwallEvent.NonRecurringProductPurchase(
-          paywallInfo: paywallInfo,
-          product: product
-        )
-        await Superwall.shared.track(trackedEvent)
-      }
-
-      if didStartFreeTrial {
-        let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
-          paywallInfo: paywallInfo,
-          product: product
-        )
-        await Superwall.shared.track(trackedEvent)
-      } else {
-        let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
-          paywallInfo: paywallInfo,
-          product: product
-        )
-        await Superwall.shared.track(trackedEvent)
-      }
     }
+
+    if didStartFreeTrial {
+      let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
+        paywallInfo: paywallInfo,
+        product: product
+      )
+      await Superwall.shared.track(trackedEvent)
+    } else {
+      let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
+        paywallInfo: paywallInfo,
+        product: product
+      )
+      await Superwall.shared.track(trackedEvent)
+    }
+
     lastPaywallViewController = nil
   }
 }

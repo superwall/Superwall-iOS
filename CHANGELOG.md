@@ -9,6 +9,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes issues with Xcode 15 and iOS 17.
 - Moves the loading of localizations to only when the debugger is launched, therefore reducing setup time of Superwall.
 - Removes reliance on force unwrapping/force casting as a safety precaution.
+- Moves tracking of free trial start and transaction complete events to a higher priority Task. Before, this was of background priority and would take a while to track.
 
 ## 3.0.1
 
