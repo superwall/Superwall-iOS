@@ -332,6 +332,8 @@ func ioService(named name: String, wantBuiltIn: Bool) -> io_service_t? {
   var candidate = IOIteratorNext(iterator)
   while candidate != IO_OBJECT_NULL {
     if let cftype = IORegistryEntryCreateCFProperty(candidate, "IOBuiltin" as CFString, kCFAllocatorDefault, 0) {
+      // Keeping the following as force case because optionally casting it is an error
+      // when building for mac catalyst.
       // swiftlint:disable:next force_cast
       let isBuiltIn = cftype.takeRetainedValue() as! CFBoolean
       if wantBuiltIn == CFBooleanGetValue(isBuiltIn) {
