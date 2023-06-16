@@ -85,6 +85,13 @@ enum ConfigLogic {
     throw TriggerRuleError.invalidState
   }
 
+  /// Gets the rules per unique experiment group. If any trigger belongs to an experimnt who's rule has
+  /// already been retrieved, it gets skipped.
+  ///
+  /// - Parameters:
+  ///   - triggers: A set of triggers
+  ///
+  /// - Returns: A `Set` of `TriggerRule` arrays.
   static func getRulesPerTriggerGroup(
     from triggers: Set<Trigger>
   ) -> Set<[TriggerRule]> {

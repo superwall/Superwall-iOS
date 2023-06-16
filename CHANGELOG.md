@@ -11,6 +11,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Removes reliance on force unwrapping/force casting as a safety precaution.
 - Moves tracking of free trial start and transaction complete events to a higher priority Task. Before, this was of background priority and would take a while to track.
 - Fix crash when trying to access `Superwall.shared.userId`.
+- Prices in variables are now rounded down, e.g. 3.999 becomes 3.99, rather than 4.00.
+- Fixes incorrect values for `trialPeriodPrice`, `trialPeriodDailyPrice`, `trialPeriodWeeklyPrice`, `trialPeriodMonthlyPrice`, `trialPeriodYearlyPrice` variables.
 
 ## 3.0.1
 

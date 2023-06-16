@@ -94,6 +94,72 @@ public final class StoreProductDiscount: NSObject, StoreProductDiscountType {
 }
 
 extension StoreProductDiscount {
+  func pricePerUnit(_ unit: SubscriptionPeriod.Unit) -> Decimal {
+    switch paymentMode {
+    case .freeTrial:
+      return 0.00
+    case .payAsYouGo,
+      .payUpFront:
+      /// The total cost that you'll pay
+      let introCost = price * Decimal(numberOfPeriods)
+
+      /// The number of total units normalised to the unit you want.
+      let introPeriods = periodsPerUnit(unit) * Decimal(numberOfPeriods) * Decimal(subscriptionPeriod.value)
+
+      let introPayment: Decimal
+      if introPeriods < 1 {
+        // If less than 1, it means the intro period doesn't exceed a full unit, therefore you'd pay the
+        // full intro cost within the unit. E.g. if the unit is month, but the intro discount is 3 weeks at 0.99,
+        // the introPeriods would be < 1 and the cost for the month would be 3 * 0.99 = 2.97.
+        introPayment = introCost
+      } else {
+        // Otherwise, divide the total cost by the normalised intro periods.
+        introPayment = (introCost as NSDecimalNumber)
+          .dividing(
+            by: introPeriods as NSDecimalNumber,
+            withBehavior: SubscriptionPeriod.roundingBehavior
+          ) as Decimal
+      }
+
+      return introPayment
+    }
+  }
+
+  func periodsPerUnit(_ unit: SubscriptionPeriod.Unit) -> Decimal {
+    switch unit {
+    case .day:
+      switch subscriptionPeriod.unit {
+      case .day: return 1
+      case .week: return 7
+      case .month: return 30
+      case .year: return 365
+      }
+    case .week:
+      switch subscriptionPeriod.unit {
+      case .day: return 1 / 7
+      case .week: return 1
+      case .month: return 4
+      case .year: return 52
+      }
+    case .month:
+      switch subscriptionPeriod.unit {
+      case .day: return 1 / 30
+      case .week: return 1 / 4
+      case .month: return 1
+      case .year: return 12
+      }
+    case .year:
+      switch subscriptionPeriod.unit {
+      case .day: return 1 / 365
+      case .week: return 1 / 52
+      case .month: return 1 / 12
+      case .year: return 1
+      }
+    }
+  }
+}
+
+extension StoreProductDiscount {
   /// Used to represent ``id``.
   public struct Data: Hashable {
     private var offerIdentifier: String?
