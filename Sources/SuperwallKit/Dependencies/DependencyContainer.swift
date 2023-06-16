@@ -29,7 +29,6 @@ final class DependencyContainer {
   var paywallManager: PaywallManager!
   var paywallRequestManager: PaywallRequestManager!
   var deviceHelper: DeviceHelper!
-  var localizationManager: LocalizationManager!
   var queue: EventsQueue!
   var debugManager: DebugManager!
   var api: Api!
@@ -47,7 +46,6 @@ final class DependencyContainer {
       swiftPurchaseController: swiftPurchaseController,
       objcPurchaseController: objcPurchaseController
     )
-    localizationManager = LocalizationManager()
     storage = Storage(factory: self)
     network = Network(factory: self)
 
@@ -207,7 +205,6 @@ extension DependencyContainer: ViewControllerFactory {
       network: network,
       paywallRequestManager: paywallRequestManager,
       paywallManager: paywallManager,
-      localizationManager: localizationManager,
       debugManager: debugManager,
       factory: self
     )

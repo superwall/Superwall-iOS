@@ -178,7 +178,7 @@ extension SubscriptionPeriod {
         withBehavior: Self.roundingBehavior) as Decimal
   }
 
-  private static let roundingBehavior = NSDecimalNumberHandler(
+  static let roundingBehavior = NSDecimalNumberHandler(
     roundingMode: .down,
     scale: 2,
     raiseOnExactness: false,

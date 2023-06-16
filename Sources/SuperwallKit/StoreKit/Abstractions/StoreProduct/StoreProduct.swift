@@ -62,10 +62,10 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
       "yearlyPrice": yearlyPrice,
       "rawTrialPeriodPrice": "\(trialPeriodPrice)",
       "trialPeriodPrice": "\(localizedTrialPeriodPrice)",
-      "trialPeriodDailyPrice": trialPeriodDailyPrice,
-      "trialPeriodWeeklyPrice": trialPeriodWeeklyPrice,
-      "trialPeriodMonthlyPrice": trialPeriodMonthlyPrice,
-      "trialPeriodYearlyPrice": trialPeriodYearlyPrice,
+      "trialPeriodDailyPrice": trialPeriodPricePerUnit(.day),
+      "trialPeriodWeeklyPrice": trialPeriodPricePerUnit(.week),
+      "trialPeriodMonthlyPrice": trialPeriodPricePerUnit(.month),
+      "trialPeriodYearlyPrice": trialPeriodPricePerUnit(.year),
       "trialPeriodDays": trialPeriodDaysString,
       "trialPeriodWeeks": trialPeriodWeeksString,
       "trialPeriodMonths": trialPeriodMonthsString,
@@ -206,24 +206,9 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
     product.trialPeriodPrice
   }
 
-  /// The product's localized daily introductory price.
-  public var trialPeriodDailyPrice: String {
-    product.trialPeriodDailyPrice
-  }
-
-  /// The product's localized weekly introductory price.
-  public var trialPeriodWeeklyPrice: String {
-    product.trialPeriodWeeklyPrice
-  }
-
-  /// The product's localized monthly introductory price.
-  public var trialPeriodMonthlyPrice: String {
-    product.trialPeriodMonthlyPrice
-  }
-
-  /// The product's localized yearly introductory price.
-  public var trialPeriodYearlyPrice: String {
-    product.trialPeriodYearlyPrice
+  /// The product's localized introductory price for a given unit.
+  func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String {
+    return product.trialPeriodPricePerUnit(unit)
   }
 
   /// The product's introductory price duration in days.

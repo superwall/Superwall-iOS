@@ -9,17 +9,14 @@ import Foundation
 import UIKit
 
 final class SWLocalizationViewController: UITableViewController {
-	var rowModels: [LocalizationGrouping] {
+	private var rowModels: [LocalizationGrouping] {
 		return localizationManager.localizationGroupings(forSearchTerm: searchBar.text)
 	}
-
-	var completion: (String) -> Void
-
-	lazy var allRowModels: [LocalizationGrouping] = {
+	private var completion: (String) -> Void
+  private lazy var allRowModels: [LocalizationGrouping] = {
 		return localizationManager.localizationGroupings
 	}()
-
-	lazy var searchBar: UISearchBar = {
+	private lazy var searchBar: UISearchBar = {
 		let searchBar = UISearchBar()
 		searchBar.searchBarStyle = UISearchBar.Style.default
 		searchBar.placeholder = " Search..."
@@ -29,15 +26,10 @@ final class SWLocalizationViewController: UITableViewController {
 		searchBar.delegate = self
 		return searchBar
 	}()
+  private lazy var localizationManager = LocalizationManager()
 
-  private unowned let localizationManager: LocalizationManager
-
-	init(
-    localizationManager: LocalizationManager,
-    completion: @escaping (String) -> Void
-  ) {
+	init(completion: @escaping (String) -> Void) {
 		self.completion = completion
-    self.localizationManager = localizationManager
 		super.init(nibName: nil, bundle: nil)
 	}
 

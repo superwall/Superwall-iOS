@@ -15,9 +15,8 @@ public final class SuperwallEventInfo: NSObject {
   public let event: SuperwallEvent
 
   /// Objective-C compatible ``SuperwallEvent``.
-  @available(swift, obsoleted: 1.0)
   @objc(event)
-  public lazy var eventObjc: SuperwallEventObjc = {
+  public lazy var objcEvent: SuperwallEventObjc = {
     return SuperwallEventObjc(event: event)
   }()
 

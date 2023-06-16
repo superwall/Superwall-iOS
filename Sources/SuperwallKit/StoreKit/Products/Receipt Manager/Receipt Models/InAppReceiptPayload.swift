@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 24/03/2022.
 //
+// swiftlint:disable function_body_length
 
 import Foundation
 
@@ -45,9 +46,15 @@ struct InAppReceiptPayload: ASN1Decodable {
   }
 
   init(from decoder: Decoder) throws {
-    // swiftlint:disable force_cast
-    let asn1d = decoder as! ASN1DecoderProtocol
-    // swiftlint:enable force_cast
+    guard let asn1d = decoder as? ASN1DecoderProtocol else {
+      throw DecodingError.valueNotFound(
+        ASN1DecoderProtocol.self,
+        DecodingError.Context(
+          codingPath: decoder.codingPath,
+          debugDescription: "Decoder isn't of type ASN1DecoderProtocol."
+        )
+      )
+    }
     let rawData: Data = try asn1d.extractValueData()
     var bundleIdentifier = ""
     var appVersion = ""
@@ -58,17 +65,46 @@ struct InAppReceiptPayload: ASN1Decodable {
     var bundleIdentifierData = Data()
 
     let firstContainer = try decoder.container(keyedBy: CodingKeys.self)
-    // swiftlint:disable:next force_cast line_length
-    var secondContainer = try firstContainer.nestedUnkeyedContainer(forKey: .set) as! ASN1UnkeyedDecodingContainerProtocol
+
+    guard var secondContainer = try firstContainer.nestedUnkeyedContainer(
+      forKey: .set
+    ) as? ASN1UnkeyedDecodingContainerProtocol else {
+      throw DecodingError.valueNotFound(
+        ASN1UnkeyedDecodingContainerProtocol.self,
+        DecodingError.Context(
+          codingPath: decoder.codingPath,
+          debugDescription: "Second container couldn't be decoded."
+        )
+      )
+    }
 
     while !secondContainer.isAtEnd {
       do {
-        // swiftlint:disable:next force_cast line_length
-        var attributeContainer = try secondContainer.nestedUnkeyedContainer(for: InAppReceiptAttribute.template) as! ASN1UnkeyedDecodingContainerProtocol
+        guard var attributeContainer = try secondContainer.nestedUnkeyedContainer(
+          for: InAppReceiptAttribute.template
+        ) as? ASN1UnkeyedDecodingContainerProtocol else {
+          throw DecodingError.valueNotFound(
+            ASN1UnkeyedDecodingContainerProtocol.self,
+            DecodingError.Context(
+              codingPath: decoder.codingPath,
+              debugDescription: "Attribute container couldn't be decoded."
+            )
+          )
+        }
         let type: Int32 = try attributeContainer.decode(Int32.self)
         _ = try attributeContainer.skip(template: .universal(ASN1Identifier.Tag.integer))
-        // swiftlint:disable:next force_cast line_length
-        var valueContainer = try attributeContainer.nestedUnkeyedContainer(for: .universal(ASN1Identifier.Tag.octetString)) as! ASN1UnkeyedDecodingContainerProtocol
+
+        guard var valueContainer = try attributeContainer.nestedUnkeyedContainer(
+          for: .universal(ASN1Identifier.Tag.octetString)
+        ) as? ASN1UnkeyedDecodingContainerProtocol else {
+          throw DecodingError.valueNotFound(
+            ASN1UnkeyedDecodingContainerProtocol.self,
+            DecodingError.Context(
+              codingPath: decoder.codingPath,
+              debugDescription: "Value container couldn't be decoded."
+            )
+          )
+        }
 
         switch type {
         case InAppReceiptField.inAppPurchaseReceipt:

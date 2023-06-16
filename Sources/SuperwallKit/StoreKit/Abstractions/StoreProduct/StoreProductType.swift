@@ -69,13 +69,7 @@ protocol StoreProductType: Sendable {
 
   var trialPeriodPrice: Decimal { get }
 
-  var trialPeriodDailyPrice: String { get }
-
-  var trialPeriodWeeklyPrice: String { get }
-
-  var trialPeriodMonthlyPrice: String { get }
-
-  var trialPeriodYearlyPrice: String { get }
+  func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String
 
   var trialPeriodDays: Int { get }
 

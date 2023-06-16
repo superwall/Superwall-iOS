@@ -26,7 +26,7 @@ class IdentityManager {
   /// or not.
   var userId: String {
     return queue.sync { [unowned self] in
-      return self.appUserId ?? self.aliasId
+      return self._appUserId ?? self._aliasId
     }
   }
 
