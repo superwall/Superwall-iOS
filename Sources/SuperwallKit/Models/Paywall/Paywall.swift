@@ -95,6 +95,9 @@ struct Paywall: Decodable {
   /// user does not purchase.
   var featureGating: FeatureGatingBehavior
 
+  /// The local notifications for the paywall, e.g. to notify the user of free trial expiry.
+  var localNotifications: [LocalNotification]
+
   enum CodingKeys: String, CodingKey {
     case id
     case identifier
@@ -107,6 +110,7 @@ struct Paywall: Decodable {
     case products
     case featureGating
     case onDeviceCache
+    case localNotifications
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -173,6 +177,7 @@ struct Paywall: Decodable {
 
     featureGating = try values.decodeIfPresent(FeatureGatingBehavior.self, forKey: .featureGating) ?? .nonGated
     onDeviceCache = try values.decodeIfPresent(OnDeviceCaching.self, forKey: .onDeviceCache) ?? .disabled
+    localNotifications = try values.decodeIfPresent([LocalNotification].self, forKey: .localNotifications) ?? []
   }
 
   init(
@@ -196,7 +201,8 @@ struct Paywall: Decodable {
     swTemplateProductVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false,
     featureGating: FeatureGatingBehavior = .nonGated,
-    onDeviceCache: OnDeviceCaching = .disabled
+    onDeviceCache: OnDeviceCaching = .disabled,
+    localNotifications: [LocalNotification] = []
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -219,6 +225,7 @@ struct Paywall: Decodable {
     self.isFreeTrialAvailable = isFreeTrialAvailable
     self.featureGating = featureGating
     self.onDeviceCache = onDeviceCache
+    self.localNotifications = localNotifications
   }
 
   func getInfo(
