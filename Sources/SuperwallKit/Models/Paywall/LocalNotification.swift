@@ -26,7 +26,7 @@ public final class LocalNotification: NSObject, Decodable {
   /// The delay to the notification in minutes.
   public let delay: Int
 
-  enum CodingKeys: String, CodingKey  {
+  enum CodingKeys: String, CodingKey {
     case type = "notificationType"
     case title = "title"
     case subtitle = "subtitle"

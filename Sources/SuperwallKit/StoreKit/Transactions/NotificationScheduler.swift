@@ -17,12 +17,12 @@ enum NotificationScheduler {
     let center = UNUserNotificationCenter.current()
 
     return await withCheckedContinuation { continuation in
-      center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-        if let error = error {
-          // Handle the error here.
+      center.requestAuthorization(options: [.alert, .sound, .badge]) { _, error in
+        if error == nil {
+          return continuation.resume(returning: true)
+        } else {
           return continuation.resume(returning: false)
         }
-        continuation.resume(returning: true)
         // Enable or disable features based on the authorization.
       }
     }
