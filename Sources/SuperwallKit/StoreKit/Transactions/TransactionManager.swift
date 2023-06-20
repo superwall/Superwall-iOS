@@ -286,7 +286,6 @@ final class TransactionManager {
         product: product
       )
       await Superwall.shared.track(trackedEvent)
-
     } else {
       let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
         paywallInfo: paywallInfo,
