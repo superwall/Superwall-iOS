@@ -98,6 +98,8 @@ public final class PaywallInfo: NSObject {
   /// An enum describing why this paywall was last closed. `none` if not yet closed.
   public let closeReason: PaywallCloseReason
 
+  public let localNotifications: [LocalNotification]
+
   private unowned let factory: TriggerSessionManagerFactory
 
   init(
@@ -121,7 +123,8 @@ public final class PaywallInfo: NSObject {
     isFreeTrialAvailable: Bool,
     factory: TriggerSessionManagerFactory,
     featureGatingBehavior: FeatureGatingBehavior = .nonGated,
-    closeReason: PaywallCloseReason = .none
+    closeReason: PaywallCloseReason = .none,
+    localNotifications: [LocalNotification] = []
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -136,6 +139,7 @@ public final class PaywallInfo: NSObject {
     self.productIds = products.map { $0.id }
     self.isFreeTrialAvailable = isFreeTrialAvailable
     self.featureGatingBehavior = featureGatingBehavior
+    self.localNotifications = localNotifications
 
     if eventData != nil {
       self.presentedBy = "event"

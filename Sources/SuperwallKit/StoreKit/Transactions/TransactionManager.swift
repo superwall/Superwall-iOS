@@ -287,18 +287,6 @@ final class TransactionManager {
       )
       await Superwall.shared.track(trackedEvent)
 
-      // TODO: Maybe move to paywallInfo
-      let paywall = await paywallViewController.paywall
-
-      let notifications = paywall.localNotifications.filter { $0.type == .freeTrial }
-
-      await withTaskGroup(of: Void.self) { taskGroup in
-        for notification in notifications {
-          taskGroup.addTask {
-            await NotificationScheduler.scheduleNotification(notification)
-          }
-        }
-      }
     } else {
       let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
         paywallInfo: paywallInfo,
@@ -306,6 +294,12 @@ final class TransactionManager {
       )
       await Superwall.shared.track(trackedEvent)
     }
+
+    let notifications = paywallInfo.localNotifications.filter {
+      $0.type == .postTransaction
+    }
+
+    await NotificationScheduler.scheduleNotifications(notifications)
 
     lastPaywallViewController = nil
   }
