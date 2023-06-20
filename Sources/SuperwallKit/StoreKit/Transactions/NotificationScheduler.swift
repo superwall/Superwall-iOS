@@ -29,6 +29,9 @@ enum NotificationScheduler {
   }
 
   static func scheduleNotifications(_ notifications: [LocalNotification]) async {
+    if notifications.isEmpty {
+      return
+    }
     guard await NotificationScheduler.askForPermissionsIfNecessary() else {
       return
     }
