@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.0.3
+
+### Fixes
+
+- Fixes an issue where Superwall events such as `app_launch` weren't working as paywall triggers.
+
 ## 3.0.2
 
 ### Fixes
