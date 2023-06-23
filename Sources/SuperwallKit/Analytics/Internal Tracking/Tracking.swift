@@ -75,7 +75,9 @@ extension Superwall {
     forEvent event: Trackable,
     withData eventData: EventData
   ) async {
-    await dependencyContainer.identityManager.hasIdentity.async()
+    await dependencyContainer.configManager.configState
+      .compactMap { $0.getConfig() }
+      .async()
 
     let presentationInfo: PresentationInfo = .implicitTrigger(eventData)
 
