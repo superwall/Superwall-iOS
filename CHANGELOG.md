@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes an issue where Superwall events such as `app_launch` weren't working as paywall triggers.
+- Fixes an issue where Superwall events `app_launch`, `app_install`, and `session_start` weren't working as paywall triggers from a cold start.
 
 ## 3.0.2
 
