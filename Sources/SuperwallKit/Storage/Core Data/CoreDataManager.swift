@@ -103,7 +103,7 @@ class CoreDataManager {
 
   func countTriggerRuleOccurrences(
     for ruleOccurrence: TriggerRuleOccurrence
-  ) -> Int {
+  ) async -> Int {
     let fetchRequest = ManagedTriggerRuleOccurrence.fetchRequest()
     fetchRequest.fetchLimit = ruleOccurrence.maxCount
 
@@ -126,10 +126,19 @@ class CoreDataManager {
         date as NSDate,
         ruleOccurrence.key
       )
-      return coreDataStack.count(for: fetchRequest)
+
+      return await withCheckedContinuation { continuation in
+        coreDataStack.count(for: fetchRequest) { count in
+          continuation.resume(returning: count)
+        }
+      }
     case .infinity:
       fetchRequest.predicate = NSPredicate(format: "occurrenceKey == %@", ruleOccurrence.key)
-      return coreDataStack.count(for: fetchRequest)
+      return await withCheckedContinuation { continuation in
+        coreDataStack.count(for: fetchRequest) { count in
+          continuation.resume(returning: count)
+        }
+      }
     }
   }
 }

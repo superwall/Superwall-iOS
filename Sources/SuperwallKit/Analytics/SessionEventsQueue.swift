@@ -35,7 +35,7 @@ actor SessionEventsQueue: SessionEnqueuable {
   private let maxEventCount = 50
   var triggerSessions: [TriggerSession] = []
   var transactions: [StoreTransaction] = []
-  private var timer: AnyCancellable?
+  private var timer: Timer?
   @MainActor
   private var willResignActiveObserver: AnyCancellable?
   private lazy var lastTwentySessions = LimitedQueue<TriggerSession>(limit: 20)
@@ -45,7 +45,7 @@ actor SessionEventsQueue: SessionEnqueuable {
   private unowned let configManager: ConfigManager
 
   deinit {
-    timer?.cancel()
+    timer?.invalidate()
     timer = nil
   }
 
@@ -65,21 +65,19 @@ actor SessionEventsQueue: SessionEnqueuable {
 
   private func setupTimer() {
     let timeInterval = configManager.options.networkEnvironment == .release ? 20.0 : 1.0
-    timer = Timer
-      .publish(
-        every: timeInterval,
-        on: RunLoop.main,
-        in: .default
-      )
-      .autoconnect()
-      .sink { [weak self] _ in
-        guard let self = self else {
-          return
-        }
-        Task {
-          await self.flushInternal(depth: 10)
-        }
+    let timer = Timer(
+      timeInterval: timeInterval,
+      repeats: true
+    ) { [weak self] _ in
+      guard let self = self else {
+        return
       }
+      Task {
+        await self.flushInternal(depth: 10)
+      }
+    }
+    self.timer = timer
+    RunLoop.main.add(timer, forMode: .default)
   }
 
   @MainActor
