@@ -72,15 +72,16 @@ class ConfigManager {
         sessionEventsManager.triggerSession.createSessions(from: config)
         self.config = config
         self.assignVariants()
-        self.cacheConfig()
 
         if afterReset {
+          self.cacheConfig()
           triggerDelayManager.handleDelayedContent(
             storage: self.storage,
             configManager: self
           )
         } else {
           StoreKitManager.shared.loadPurchasedProducts {
+            self.cacheConfig()
             triggerDelayManager.handleDelayedContent(
               storage: self.storage,
               configManager: self
