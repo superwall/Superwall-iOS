@@ -48,19 +48,5 @@ public final class LocalNotification: NSObject, Decodable {
 @objc(SWKLocalNotificationType)
 public enum LocalNotificationType: Int, Decodable {
   /// The notification will fire after a transaction.
-  case postTransaction
-
-  enum CodingKeys: String {
-    case postTransaction
-  }
-
-  public init(from decoder: Decoder) throws {
-    let container = try decoder.singleValueContainer()
-    let rawValue = try container.decode(String.self)
-    let notificationType = CodingKeys(rawValue: rawValue) ?? .postTransaction
-    switch notificationType {
-    case .postTransaction:
-      self = .postTransaction
-    }
-  }
+  case trialStarted
 }
