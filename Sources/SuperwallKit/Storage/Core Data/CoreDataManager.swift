@@ -103,22 +103,21 @@ class CoreDataManager {
 
   func getDaysSinceLastEvent(name: String) async -> Int? {
     return await withCheckedContinuation { continuation in
-      coreDataStack.getLastSavedEvent(
-        name: name) { event in
-          guard let event = event else {
-            return continuation.resume(returning: nil)
-          }
-          let createdAt = event.createdAt
-          let calendar = Calendar.current
-          let currentDate = Date()
-          let components = calendar.dateComponents(
-            [.day],
-            from: createdAt,
-            to: currentDate
-          )
-
-          continuation.resume(returning: components.day)
+      coreDataStack.getLastSavedEvent(name: name) { event in
+        guard let event = event else {
+          return continuation.resume(returning: nil)
         }
+        let createdAt = event.createdAt
+        let calendar = Calendar.current
+        let currentDate = Date()
+        let components = calendar.dateComponents(
+          [.day],
+          from: createdAt,
+          to: currentDate
+        )
+
+        continuation.resume(returning: components.day)
+      }
     }
   }
 
