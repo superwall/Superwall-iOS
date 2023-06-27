@@ -102,25 +102,30 @@ class CoreDataStack {
     }
   }
 
-  func count<T: NSFetchRequestResult>(for fetchRequest: NSFetchRequest<T>) -> Int {
+  func count<T: NSFetchRequestResult>(
+    for fetchRequest: NSFetchRequest<T>,
+    completion: @escaping ((Int) -> Void)
+  ) {
     guard
-      let mainContext = mainContext,
+      let backgroundContext = backgroundContext,
       persistentContainer != nil
     else {
-      return 0
+      return completion(0)
     }
-    do {
-      let count = try mainContext.count(for: fetchRequest)
-      return count
-    } catch let error as NSError {
-      Logger.debug(
-        logLevel: .error,
-        scope: .coreData,
-        message: "Error counting from Core Data.",
-        info: error.userInfo,
-        error: error
-      )
-      return 0
+    backgroundContext.perform {
+      do {
+        let count = try backgroundContext.count(for: fetchRequest)
+        completion(count)
+      } catch let error as NSError {
+        Logger.debug(
+          logLevel: .error,
+          scope: .coreData,
+          message: "Error counting from Core Data.",
+          info: error.userInfo,
+          error: error
+        )
+        completion(0)
+      }
     }
   }
 }

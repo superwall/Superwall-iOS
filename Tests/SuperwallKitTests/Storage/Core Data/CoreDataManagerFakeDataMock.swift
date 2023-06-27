@@ -17,7 +17,7 @@ final class CoreDataManagerFakeDataMock: CoreDataManager {
     super.init(coreDataStack: CoreDataStackMock())
   }
 
-  override func countTriggerRuleOccurrences(for ruleOccurrence: TriggerRuleOccurrence) -> Int {
+  override func countTriggerRuleOccurrences(for ruleOccurrence: TriggerRuleOccurrence) async -> Int {
     return internalOccurrenceCount
   }
 }
