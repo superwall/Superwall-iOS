@@ -86,7 +86,13 @@ struct ExpressionEvaluator {
     forRule rule: TriggerRule,
     withEventData eventData: EventData
   ) async -> String? {
-    let ruleAttributes = await factory.makeRuleAttributes()
+    var ruleAttributes = await factory.makeRuleAttributes()
+
+    await ruleAttributes.addDaysSinceLastAttributes(
+      given: rule,
+      coreDataManager: storage.coreDataManager
+    )
+
     let values = JSON([
       "user": ruleAttributes.user,
       "device": ruleAttributes.device,

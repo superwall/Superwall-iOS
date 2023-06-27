@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.0.4
 
+### Enhancements
+
+- Adds ability to use `daysSinceLast_X` in campaign rules, where `X` is an event name, which can include Superwall events or your own events.
+
 ### Fixes
 
 - Fixes a Core Data multi-threading issue when performing a count. If you had enabled Core Data multi-threading assertions in your app, this will have caused a crash.

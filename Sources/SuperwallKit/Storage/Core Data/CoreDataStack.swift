@@ -128,4 +128,37 @@ class CoreDataStack {
       }
     }
   }
+
+  func getLastSavedEvent(
+    name: String,
+    completion: @escaping ((ManagedEventData?) -> Void)
+  ) {
+    guard let backgroundContext = backgroundContext else {
+      return completion(nil)
+    }
+
+    backgroundContext.perform {
+      let fetchRequest = ManagedEventData.fetchRequest()
+      fetchRequest.predicate = NSPredicate(format: "name == %@", name)
+      fetchRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+      fetchRequest.fetchLimit = 1
+
+      do {
+        let results = try backgroundContext.fetch(fetchRequest)
+        guard let event = results.first else {
+          return completion(nil)
+        }
+        completion(event)
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .coreData,
+          message: "Error getting last saved event from Core Data.",
+          info: ["event": name],
+          error: error
+        )
+        completion(nil)
+      }
+    }
+  }
 }

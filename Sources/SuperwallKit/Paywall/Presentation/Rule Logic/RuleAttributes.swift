@@ -9,5 +9,31 @@ import Foundation
 
 struct RuleAttributes {
   let user: [String: Any]
-  let device: [String: Any]
+  var device: [String: Any]
+
+  mutating func addDaysSinceLastAttributes(
+    given rule: TriggerRule,
+    coreDataManager: CoreDataManager
+  ) async {
+    let expression = rule.expressionJs ?? rule.expression ?? ""
+    let eventPrefix = "daysSinceLast_"
+    let pattern = eventPrefix + "([a-zA-Z0-9_]+)"
+    let regex = try! NSRegularExpression(pattern: pattern, options: [])
+
+    var eventNames: [String] = []
+    let range = NSRange(expression.startIndex..<expression.endIndex, in: expression)
+    regex.enumerateMatches(in: expression, options: [], range: range) { (result, _, _) in
+      if let result = result, let matchRange = Range(result.range(at: 1), in: expression) {
+        let name = String(expression[matchRange])
+        eventNames.append(name)
+      }
+    }
+
+    for name in eventNames {
+      if let daysSinceLastEvent = await coreDataManager.getDaysSinceLastEvent(name: name) {
+        let attribute = eventPrefix + name
+        device[attribute] = daysSinceLastEvent
+      }
+    }
+  }
 }
