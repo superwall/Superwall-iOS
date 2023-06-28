@@ -66,6 +66,18 @@ let response = #"""
     "identifier": "example-paywall-4de1-2022-03-15"
   }],
   "paywall_responses": [{
+    "local_notifications": [{
+      "notification_type": "SOMETHING",
+      "title": "test",
+      "body": "body",
+      "delay": 5000
+    },
+    {
+      "notification_type": "TRIAL_STARTED",
+      "title": "test",
+      "body": "body",
+      "delay": 5000
+    }],
     "id": "571",
     "url": "https://www.fitnessai.com/superwall-video?sw_cache_key=1659989801716",
     "name": "Example Paywall",

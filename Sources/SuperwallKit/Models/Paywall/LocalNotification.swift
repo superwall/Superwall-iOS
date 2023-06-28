@@ -28,10 +28,10 @@ public final class LocalNotification: NSObject, Decodable {
 
   enum CodingKeys: String, CodingKey {
     case type = "notificationType"
-    case title = "title"
-    case subtitle = "subtitle"
-    case body = "body"
-    case delay = "delay"
+    case title
+    case subtitle
+    case body
+    case delay
   }
 
   public init(from decoder: Decoder) throws {
@@ -49,4 +49,26 @@ public final class LocalNotification: NSObject, Decodable {
 public enum LocalNotificationType: Int, Decodable {
   /// The notification will fire after a transaction.
   case trialStarted
+
+  enum CodingKeys: String, CodingKey {
+    case trialStarted = "TRIAL_STARTED"
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    let rawValue = try container.decode(String.self)
+    let type = CodingKeys(rawValue: rawValue)
+    switch type {
+    case .trialStarted:
+      self = .trialStarted
+    case .none:
+      throw DecodingError.valueNotFound(
+        String.self,
+        .init(
+          codingPath: [],
+          debugDescription: "Unsupported notification type."
+        )
+      )
+    }
+  }
 }

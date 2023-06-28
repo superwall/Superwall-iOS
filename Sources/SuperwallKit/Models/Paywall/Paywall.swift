@@ -177,7 +177,12 @@ struct Paywall: Decodable {
 
     featureGating = try values.decodeIfPresent(FeatureGatingBehavior.self, forKey: .featureGating) ?? .nonGated
     onDeviceCache = try values.decodeIfPresent(OnDeviceCaching.self, forKey: .onDeviceCache) ?? .disabled
-    localNotifications = try values.decodeIfPresent([LocalNotification].self, forKey: .localNotifications) ?? []
+
+    let throwableNotifications = try values.decodeIfPresent(
+      [Throwable<LocalNotification>].self,
+      forKey: .localNotifications
+    ) ?? []
+    localNotifications = throwableNotifications.compactMap { try? $0.result.get() }
   }
 
   init(
