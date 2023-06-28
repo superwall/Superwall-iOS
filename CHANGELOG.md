@@ -7,9 +7,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds support for paywalls that include a free trial notification. After starting a free trial, the app checks whether the paywall should notify the user when their trial is about to end. If so, the user will be asked to enable notifications (if they haven't already) before scheduling a local notification. You can add a free trial notification to your paywall from the paywall editor.
-
-### Enhancements
-
 - Adds ability to use `daysSinceLast_X` in campaign rules, where `X` is an event name, which can include Superwall events or your own events.
 
 ### Fixes
