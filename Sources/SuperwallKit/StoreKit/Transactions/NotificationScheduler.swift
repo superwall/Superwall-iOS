@@ -17,13 +17,12 @@ enum NotificationScheduler {
     let center = UNUserNotificationCenter.current()
 
     return await withCheckedContinuation { continuation in
-      center.requestAuthorization(options: [.alert, .sound, .badge]) { _, error in
-        if error == nil {
+      center.requestAuthorization(options: [.alert, .sound, .badge]) { isAuthorized, _ in
+        if isAuthorized {
           return continuation.resume(returning: true)
         } else {
           return continuation.resume(returning: false)
         }
-        // Enable or disable features based on the authorization.
       }
     }
   }
@@ -49,6 +48,7 @@ enum NotificationScheduler {
     let content = UNMutableNotificationContent()
     content.title = notification.title
     content.subtitle = notification.subtitle ?? ""
+    content.body = notification.body
 
     // Show this notification X seconds from now.
     let trigger = UNTimeIntervalNotificationTrigger(
