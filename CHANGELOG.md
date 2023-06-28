@@ -10,7 +10,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes a Core Data multi-threading issue when performing a count. If you had enabled Core Data multi-threading assertions in your app, this will have caused a crash.
+- Fixes a Core Data multi-threading issue when performing a count. If you had enabled Core Data multi-threading assertions in Xcode, this will have caused a crash.
 
 ## 3.0.3
 
