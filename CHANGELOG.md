@@ -2,7 +2,11 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
-## 3.0.4
+## 3.1.0
+
+### Enhancements
+
+- Adds support for paywalls that include a free trial notification. After starting a free trial, the app checks whether the paywall should notify the user when their trial is about to end. If so, the user will be asked to enable notifications (if they haven't already) before scheduling a local notification. You can add a free trial notification to your paywall from the paywall editor.
 
 ### Enhancements
 
@@ -10,7 +14,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes a Core Data multi-threading issue when performing a count. If you had enabled Core Data multi-threading assertions in your app, this will have caused a crash.
+- Fixes a Core Data multi-threading issue when performing a count. If you had enabled Core Data multi-threading assertions in Xcode, this will have caused a crash.
 
 ## 3.0.3
 
