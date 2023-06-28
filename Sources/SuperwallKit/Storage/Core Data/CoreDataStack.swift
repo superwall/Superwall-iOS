@@ -131,6 +131,7 @@ class CoreDataStack {
 
   func getLastSavedEvent(
     name: String,
+    before date: Date?,
     completion: @escaping ((ManagedEventData?) -> Void)
   ) {
     guard let backgroundContext = backgroundContext else {
@@ -139,7 +140,11 @@ class CoreDataStack {
 
     backgroundContext.perform {
       let fetchRequest = ManagedEventData.fetchRequest()
-      fetchRequest.predicate = NSPredicate(format: "name == %@", name)
+      if let date = date {
+        fetchRequest.predicate = NSPredicate(format: "name == %@ AND createdAt < %@", name, date as NSDate)
+      } else {
+        fetchRequest.predicate = NSPredicate(format: "name == %@", name)
+      }
       fetchRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
       fetchRequest.fetchLimit = 1
 

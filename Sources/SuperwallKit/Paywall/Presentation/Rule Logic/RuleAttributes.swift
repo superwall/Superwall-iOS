@@ -13,6 +13,7 @@ struct RuleAttributes {
 
   mutating func addDaysSinceLastAttributes(
     given rule: TriggerRule,
+    triggerEvent event: EventData,
     coreDataManager: CoreDataManager
   ) async {
     let expression = rule.expressionJs ?? rule.expression ?? ""
@@ -33,7 +34,10 @@ struct RuleAttributes {
     }
 
     for name in eventNames {
-      if let daysSinceLastEvent = await coreDataManager.getDaysSinceLastEvent(name: name) {
+      if let daysSinceLastEvent = await coreDataManager.getDaysSinceEvent(
+        name: name,
+        before: event.name == name ? event.createdAt : nil
+      ) {
         let attribute = eventPrefix + name
         device[attribute] = daysSinceLastEvent
       }

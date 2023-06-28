@@ -90,6 +90,7 @@ struct ExpressionEvaluator {
 
     await ruleAttributes.addDaysSinceLastAttributes(
       given: rule,
+      triggerEvent: eventData,
       coreDataManager: storage.coreDataManager
     )
 
