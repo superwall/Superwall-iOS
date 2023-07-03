@@ -8,7 +8,7 @@
 import Foundation
 
 /// The handler for ``Superwall/register(event:params:handler:feature:)`` whose
-/// variables provide status updates for a paywall.
+/// functions provide status updates for a paywall.
 @objc(SWKPaywallPresentationHandler)
 @objcMembers
 public class PaywallPresentationHandler: NSObject {
@@ -27,7 +27,7 @@ public class PaywallPresentationHandler: NSObject {
   /// An objective-c only block called when an error occurred while trying to present a paywall.
   var onSkipHandlerObjc: ((PaywallSkippedReasonObjc) -> Void)?
 
-  /// Sets the handler that will be called when the paywall did presented.
+  /// Sets the handler that will be called when the paywall did present.
   ///
   /// - Parameter handler: A block that accepts a ``PaywallInfo`` object associated with
   /// the presented paywall.
@@ -53,16 +53,16 @@ public class PaywallPresentationHandler: NSObject {
 
   /// Sets the handler that will be called when a paywall is skipped, but no error has occurred.
   ///
-  /// - Parameter handler: A block that accepts a `Error` indicating why the paywall
-  /// could not present.
+  /// - Parameter handler: A block that accepts a ``PaywallSkippedReason`` indicating why the paywall
+  /// was skipped.
   public func onSkip(_ handler: @escaping (PaywallSkippedReason) -> Void) {
     self.onSkipHandler = handler
   }
 
   /// Sets the handler that will be called when a paywall is skipped, but no error has occurred.
   ///
-  /// - Parameter handler: A block that accepts a `Error` indicating why the paywall
-  /// could not present.
+  /// - Parameter handler: A block that accepts a ``PaywallSkippedReasonObjc`` indicating why the paywall
+  /// was skipped.
   @available(swift, obsoleted: 1.0)
   public func onSkip(_ handler: @escaping (PaywallSkippedReasonObjc) -> Void) {
     self.onSkipHandlerObjc = handler
