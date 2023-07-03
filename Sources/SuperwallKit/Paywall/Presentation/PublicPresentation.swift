@@ -267,6 +267,6 @@ extension Superwall {
       type: .presentation
     )
     return internallyPresent(presentationRequest)
-        .eraseToAnyPublisher()
+      .eraseToAnyPublisher()
   }
 }
