@@ -9,13 +9,13 @@ import Foundation
 
 extension Dictionary {
   /// Merge strategy to use for any duplicate keys.
-  enum MergeStrategy<Value> {
+  enum MergeStrategy<Strategy> {
     /// Keep the original value.
     case keepOriginalValue
     /// Overwrite the original value.
     case overwriteValue
 
-    var combine: (Value, Value) -> Value {
+    var combine: (Strategy, Strategy) -> Strategy {
       switch self {
       case .keepOriginalValue:
         return { original, _ in original }

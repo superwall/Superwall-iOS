@@ -24,24 +24,7 @@ public final class LocalNotification: NSObject, Decodable {
   public let body: String
 
   /// The delay to the notification in minutes.
-  public let delay: Int
-
-  enum CodingKeys: String, CodingKey {
-    case type = "notificationType"
-    case title
-    case subtitle
-    case body
-    case delay
-  }
-
-  public init(from decoder: Decoder) throws {
-    let values = try decoder.container(keyedBy: CodingKeys.self)
-    type = try values.decode(LocalNotificationType.self, forKey: .type)
-    title = try values.decode(String.self, forKey: .title)
-    subtitle = try values.decodeIfPresent(String.self, forKey: .subtitle)
-    body = try values.decode(String.self, forKey: .body)
-    delay = try values.decode(Int.self, forKey: .delay)
-  }
+  public let delay: Milliseconds
 }
 
 /// The type of notification.

@@ -85,7 +85,9 @@ extension Superwall {
     handler: PaywallPresentationHandler? = nil,
     feature: @escaping () -> Void
   ) {
-    internallyRegister(event: event, params: params, handler: handler, feature: feature)
+    Task {
+      await internallyRegister(event: event, params: params, handler: handler, feature: feature)
+    }
   }
 
   /// Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -105,7 +107,9 @@ extension Superwall {
     params: [String: Any]? = nil,
     handler: PaywallPresentationHandler? = nil
   ) {
-    internallyRegister(event: event, params: params, handler: handler)
+    Task {
+      await internallyRegister(event: event, params: params, handler: handler)
+    }
   }
 
   private func internallyRegister(
@@ -113,53 +117,55 @@ extension Superwall {
     params: [String: Any]? = nil,
     handler: PaywallPresentationHandler? = nil,
     feature completion: (() -> Void)? = nil
-  ) {
-    publisher(
+  ) async {
+    let publisher = await asyncPublisher(
       forEvent: event,
       params: params,
       paywallOverrides: nil,
       isFeatureGatable: completion != nil
     )
-    .subscribe(Subscribers.Sink(
-      receiveCompletion: { _ in },
-      receiveValue: { state in
-        switch state {
-        case .presented(let paywallInfo):
-          handler?.onPresentHandler?(paywallInfo)
-        case let .dismissed(paywallInfo, state):
-          handler?.onDismissHandler?(paywallInfo)
+
+    publisher
+      .subscribe(Subscribers.Sink(
+        receiveCompletion: { _ in },
+        receiveValue: { state in
           switch state {
-          case .purchased,
-            .restored:
-            completion?()
-          case .declined:
-            let closeReason = paywallInfo.closeReason
-            let featureGating = paywallInfo.featureGatingBehavior
-            if closeReason != .forNextPaywall && featureGating == .nonGated {
+          case .presented(let paywallInfo):
+            handler?.onPresentHandler?(paywallInfo)
+          case let .dismissed(paywallInfo, state):
+            handler?.onDismissHandler?(paywallInfo)
+            switch state {
+            case .purchased,
+              .restored:
               completion?()
+            case .declined:
+              let closeReason = paywallInfo.closeReason
+              let featureGating = paywallInfo.featureGatingBehavior
+              if closeReason != .forNextPaywall && featureGating == .nonGated {
+                completion?()
+              }
+              if closeReason == .webViewFailedToLoad && featureGating == .gated {
+                let error = InternalPresentationLogic.presentationError(
+                  domain: "SWKPresentationError",
+                  code: 106,
+                  title: "Webview Failed",
+                  value: "Trying to present gated paywall but the webview could not load."
+                )
+                handler?.onErrorHandler?(error)
+              }
             }
-            if closeReason == .webViewFailedToLoad && featureGating == .gated {
-              let error = InternalPresentationLogic.presentationError(
-                domain: "SWKPresentationError",
-                code: 106,
-                title: "Webview Failed",
-                value: "Trying to present gated paywall but the webview could not load."
-              )
-              handler?.onErrorHandler?(error)
+          case .skipped(let reason):
+            if let handler = handler?.onSkipHandler {
+              handler(reason)
+            } else {
+              handler?.onSkipHandlerObjc?(reason.toObjc())
             }
+            completion?()
+          case .presentationError(let error):
+            handler?.onErrorHandler?(error) // otherwise turning internet off would give unlimited access
           }
-        case .skipped(let reason):
-          if let handler = handler?.onSkipHandler {
-            handler(reason)
-          } else {
-            handler?.onSkipHandlerObjc?(reason.toObjc())
-          }
-          completion?()
-        case .presentationError(let error):
-          handler?.onErrorHandler?(error) // otherwise turning internet off would give unlimited access
         }
-      }
-    ))
+      ))
   }
 
   /// Objective-C-only convenience method. Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -174,7 +180,9 @@ extension Superwall {
   ///   -  event: The name of the event you wish to register.
   @available(swift, obsoleted: 1.0)
   @objc public func register(event: String) {
-    internallyRegister(event: event)
+    Task {
+      await internallyRegister(event: event)
+    }
   }
 
   /// Objective-C-only convenience method. Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -193,7 +201,9 @@ extension Superwall {
     event: String,
     params: [String: Any]?
   ) {
-    internallyRegister(event: event, params: params)
+    Task {
+      await internallyRegister(event: event, params: params)
+    }
   }
 
   /// Returns a publisher that registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -216,31 +226,47 @@ extension Superwall {
     paywallOverrides: PaywallOverrides? = nil,
     isFeatureGatable: Bool
   ) -> PaywallStatePublisher {
+    return Future {
+      return await self.asyncPublisher(
+        forEvent: event,
+        params: params,
+        paywallOverrides: paywallOverrides,
+        isFeatureGatable: isFeatureGatable
+      )
+    }
+    .flatMap { publisher in
+      return publisher
+    }
+    .eraseToAnyPublisher()
+  }
+
+  private func asyncPublisher(
+    forEvent event: String,
+    params: [String: Any]? = nil,
+    paywallOverrides: PaywallOverrides? = nil,
+    isFeatureGatable: Bool
+  ) async -> PaywallStatePublisher {
     do {
       try TrackingLogic.checkNotSuperwallEvent(event)
     } catch {
       return Just(.presentationError(error)).eraseToAnyPublisher()
     }
 
-    return Future {
-      let trackableEvent = UserInitiatedEvent.Track(
-        rawName: event,
-        canImplicitlyTriggerPaywall: false,
-        customParameters: params ?? [:],
-        isFeatureGatable: isFeatureGatable
-      )
-      let trackResult = await self.track(trackableEvent)
-      return (trackResult, self.isPaywallPresented)
-    }
-    .flatMap { trackResult, isPaywallPresented in
-      let presentationRequest = self.dependencyContainer.makePresentationRequest(
-        .explicitTrigger(trackResult.data),
-        paywallOverrides: paywallOverrides,
-        isPaywallPresented: isPaywallPresented,
-        type: .presentation
-      )
-      return self.internallyPresent(presentationRequest)
-    }
-    .eraseToAnyPublisher()
+    let trackableEvent = UserInitiatedEvent.Track(
+      rawName: event,
+      canImplicitlyTriggerPaywall: false,
+      customParameters: params ?? [:],
+      isFeatureGatable: isFeatureGatable
+    )
+    let trackResult = await track(trackableEvent)
+
+    let presentationRequest = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(trackResult.data),
+      paywallOverrides: paywallOverrides,
+      isPaywallPresented: isPaywallPresented,
+      type: .presentation
+    )
+    return internallyPresent(presentationRequest)
+        .eraseToAnyPublisher()
   }
 }

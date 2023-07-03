@@ -258,7 +258,8 @@ struct Paywall: Decodable {
       isFreeTrialAvailable: isFreeTrialAvailable,
       factory: factory,
       featureGatingBehavior: featureGating,
-      closeReason: closeReason
+      closeReason: closeReason,
+      localNotifications: localNotifications
     )
   }
 

@@ -8,5 +8,5 @@
 import Foundation
 
 /// A number of milliseconds.
-typealias Milliseconds = Double
+public typealias Milliseconds = Double
 typealias Seconds = Double

@@ -10,9 +10,27 @@ import StoreKit
 
 final class ProductPurchaserSK1: NSObject {
   // MARK: Purchasing
-  final class Purchasing {
-    var completion: ((PurchaseResult) -> Void)?
-    var productId: String?
+  actor Purchasing {
+    private var completion: ((PurchaseResult) -> Void)?
+    private var productId: String?
+
+    func productId(is productId: String) -> Bool {
+      return productId == self.productId
+    }
+
+    func setCompletion(_ completion: @escaping (PurchaseResult) -> Void) {
+      self.completion = completion
+    }
+
+    func setProductId(_ productId: String) {
+      self.productId = productId
+    }
+
+    func completePurchase(result: PurchaseResult) {
+      completion?(result)
+      self.completion = nil
+      self.productId = nil
+    }
   }
   private let purchasing = Purchasing()
 
@@ -64,21 +82,22 @@ extension ProductPurchaserSK1: ProductPurchaser {
     guard let sk1Product = product.sk1Product else {
       return .failed(PurchaseError.productUnavailable)
     }
-    purchasing.productId = product.productIdentifier
 
-    return await withCheckedContinuation { continuation in
-      let payment = SKPayment(product: sk1Product)
+    await purchasing.setProductId(product.productIdentifier)
 
-      purchasing.completion = { [weak self] result in
-        guard let self = self else {
-          return
+    let task = Task {
+      return await withCheckedContinuation { continuation in
+        Task {
+          await purchasing.setCompletion { result in
+            continuation.resume(returning: result)
+          }
         }
-        continuation.resume(returning: result)
-        self.purchasing.productId = nil
-        self.purchasing.completion = nil
       }
-      SKPaymentQueue.default().add(payment)
     }
+    let payment = SKPayment(product: sk1Product)
+    SKPaymentQueue.default().add(payment)
+
+    return await task.value
   }
 }
 
@@ -175,7 +194,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       for transaction in transactions {
         latestTransaction = transaction
         await checkForTimeout(of: transaction, in: paywallViewController)
-        updatePurchaseCompletionBlock(for: transaction)
+        await updatePurchaseCompletionBlock(for: transaction)
         await checkForRestoration(transaction, isPaywallPresented: isPaywallPresented)
         finishIfPossible(transaction)
 
@@ -224,22 +243,21 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   }
 
   /// Sends a `PurchaseResult` to the completion block and stores the latest purchased transaction.
-  private func updatePurchaseCompletionBlock(for transaction: SKPaymentTransaction) {
-    guard purchasing.productId == transaction.payment.productIdentifier else {
+  private func updatePurchaseCompletionBlock(for transaction: SKPaymentTransaction) async {
+    guard await purchasing.productId(is: transaction.payment.productIdentifier) else {
       return
     }
 
     switch transaction.transactionState {
     case .purchased:
-      purchasing.completion?(.purchased)
+      await purchasing.completePurchase(result: .purchased)
     case .failed:
       if let error = transaction.error {
         if let error = error as? SKError {
           switch error.code {
           case .paymentCancelled,
             .overlayCancelled:
-            purchasing.completion?(.cancelled)
-            return
+            return await purchasing.completePurchase(result: .cancelled)
           default:
             break
           }
@@ -247,17 +265,16 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           if #available(iOS 14, *) {
             switch error.code {
             case .overlayTimeout:
-              purchasing.completion?(.cancelled)
-              return
+              return await purchasing.completePurchase(result: .cancelled)
             default:
               break
             }
           }
         }
-        purchasing.completion?(.failed(error))
+        await purchasing.completePurchase(result: .failed(error))
       }
     case .deferred:
-      purchasing.completion?(.pending)
+      await purchasing.completePurchase(result: .pending)
     default:
       break
     }
