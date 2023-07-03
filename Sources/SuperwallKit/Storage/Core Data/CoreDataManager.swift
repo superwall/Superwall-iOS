@@ -101,14 +101,15 @@ class CoreDataManager {
     }
   }
 
-  func getDaysSinceEvent(
-    name: String,
-    before date: Date?
+  func getComputedPropertySinceEvent(
+    _ event: EventData,
+    property: ComputedProperty
   ) async -> Int? {
+    let lastEventDate = event.name == property.eventName ? event.createdAt : nil
     return await withCheckedContinuation { continuation in
       coreDataStack.getLastSavedEvent(
-        name: name,
-        before: date
+        name: property.eventName,
+        before: lastEventDate
       ) { event in
         guard let event = event else {
           return continuation.resume(returning: nil)
@@ -117,12 +118,12 @@ class CoreDataManager {
         let calendar = Calendar.current
         let currentDate = Date()
         let components = calendar.dateComponents(
-          [.minute],
+          [property.type.calendarComponent],
           from: createdAt,
           to: currentDate
         )
 
-        continuation.resume(returning: components.minute)
+        continuation.resume(returning: property.type.dateComponent(from: components))
       }
     }
   }

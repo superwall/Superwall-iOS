@@ -310,15 +310,41 @@ extension DependencyContainer: ApiFactory {
 
 // MARK: - Rule Params
 extension DependencyContainer: RuleAttributesFactory {
-  func makeRuleAttributes() async -> RuleAttributes {
+  func makeRuleAttributes(forEvent event: EventData) async -> RuleAttributes {
     var userAttributes = identityManager.userAttributes
     userAttributes["isLoggedIn"] = identityManager.isLoggedIn
-    let device = await deviceHelper.getTemplateDevice().toDictionary()
+    var device = await deviceHelper.getTemplateDevice().toDictionary()
+
+    if let config = configManager.config {
+      let computedProperties = await getComputedPropertySinceEvent(
+        event: event,
+        from: config
+      )
+      device += computedProperties
+    }
 
     return RuleAttributes(
       user: userAttributes,
       device: device
     )
+  }
+
+  private func getComputedPropertySinceEvent(
+    event: EventData,
+    from config: Config
+  ) async -> [String: Any] {
+    var computedProperties: [String: Any] = [:]
+
+    for computedProperty in config.computedProperties {
+      if let value = await storage.coreDataManager.getComputedPropertySinceEvent(
+        event,
+        property: computedProperty
+      ) {
+        computedProperties[computedProperty.type.prefix + computedProperty.eventName] = value
+      }
+    }
+
+    return computedProperties
   }
 }
 

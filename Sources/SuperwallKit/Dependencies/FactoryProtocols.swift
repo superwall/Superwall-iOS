@@ -52,7 +52,7 @@ protocol RequestFactory: AnyObject {
 }
 
 protocol RuleAttributesFactory: AnyObject {
-  func makeRuleAttributes() async -> RuleAttributes
+  func makeRuleAttributes(forEvent event: EventData) async -> RuleAttributes
 }
 
 protocol TriggerSessionManagerFactory: AnyObject {
