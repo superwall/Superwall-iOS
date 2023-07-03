@@ -115,8 +115,14 @@ class CoreDataManagerTests: XCTestCase {
 
     await fulfillment(of: [expectation2], timeout: 20)
 
+    let expectation3 = expectation(description: "Cleared events")
+
     // Delete All Entities
-    coreDataManager.deleteAllEntities()
+    coreDataManager.deleteAllEntities() {
+      expectation3.fulfill()
+    }
+
+    await fulfillment(of: [expectation3], timeout: 20)
 
     // Count triggers
     let occurrenceCount = await coreDataManager.countTriggerRuleOccurrences(for: occurrence)

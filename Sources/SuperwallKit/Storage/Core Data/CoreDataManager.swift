@@ -72,7 +72,7 @@ class CoreDataManager {
     }
   }
 
-  func deleteAllEntities() {
+  func deleteAllEntities(completion: (() -> Void)? = nil) {
     guard let backgroundContext = backgroundContext else {
       return
     }
@@ -90,6 +90,7 @@ class CoreDataManager {
       do {
         try backgroundContext.executeAndMergeChanges(using: deleteEventDataRequest)
         try backgroundContext.executeAndMergeChanges(using: deleteOccurrenceRequest)
+        completion?()
       } catch {
         Logger.debug(
           logLevel: .error,
