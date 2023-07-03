@@ -52,7 +52,7 @@ enum NotificationScheduler {
 
     // Show this notification X seconds from now.
     let trigger = UNTimeIntervalNotificationTrigger(
-      timeInterval: TimeInterval(notification.delay * 60),
+      timeInterval: notification.delay / 1000,
       repeats: false
     )
 
