@@ -9,6 +9,8 @@ import Foundation
 import UserNotifications
 
 enum NotificationScheduler {
+  static let superwallIdentifier = "com.superwall.ios"
+
   private static func askForPermissionsIfNecessary() async -> Bool {
     if await checkIsAuthorized() {
       return true
@@ -58,7 +60,7 @@ enum NotificationScheduler {
 
     // Choose a random identifier
     let request = UNNotificationRequest(
-      identifier: UUID().uuidString,
+      identifier: superwallIdentifier + "-" + UUID().uuidString,
       content: content,
       trigger: trigger
     )
