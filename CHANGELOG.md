@@ -7,7 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds support for paywalls that include a free trial notification. After starting a free trial, the app checks whether the paywall should notify the user when their trial is about to end. If so, the user will be asked to enable notifications (if they haven't already) before scheduling a local notification. You can add a free trial notification to your paywall from the paywall editor.
-- Adds ability to use `daysSinceLast_X` in campaign rules, where `X` is an event name, which can include Superwall events or your own events.
+- Adds ability to use `device.minutesSince_X`, `device.hoursSince_X`, `device.daysSince_X`, `device.monthsSince_X`, and `device.yearsSince_X` in campaign rules and paywalls, where `X` is an event name. This can include Superwall events, such as `app_open`, or your own events.
 - Prints out the Superwall SDK version when the `debug` logLevel is enabled.
 - Updates RevenueCat to the latest version in our RevenueCat example app.
 
