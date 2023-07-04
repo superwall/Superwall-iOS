@@ -277,11 +277,43 @@ class DeviceHelper {
     return storage.get(TotalPaywallViews.self) ?? 0
   }
 
-  func getTemplateDevice() async -> DeviceTemplate {
+  func getDeviceAttributes(
+    since event: EventData?,
+    computedPropertyRequests: [ComputedPropertyRequest]
+  ) async -> [String: Any] {
+    var dictionary = await getTemplateDevice()
+
+    let computedProperties = await getComputedDevicePropertiesSinceEvent(
+      event,
+      requests: computedPropertyRequests
+    )
+    dictionary += computedProperties
+    return dictionary
+  }
+
+  private func getComputedDevicePropertiesSinceEvent(
+    _ event: EventData?,
+    requests computedPropertyRequests: [ComputedPropertyRequest]
+  ) async -> [String: Any] {
+    var output: [String: Any] = [:]
+
+    for computedPropertyRequest in computedPropertyRequests {
+      if let value = await storage.coreDataManager.getComputedPropertySinceEvent(
+        event,
+        request: computedPropertyRequest
+      ) {
+        output[computedPropertyRequest.type.prefix + computedPropertyRequest.eventName] = value
+      }
+    }
+
+    return output
+  }
+
+  private func getTemplateDevice() async -> [String: Any] {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
 
-    return DeviceTemplate(
+    let template = DeviceTemplate(
       publicApiKey: storage.apiKey,
       platform: isMac ? "macOS" : "iOS",
       appUserId: identityInfo.appUserId ?? "",
@@ -316,6 +348,8 @@ class DeviceHelper {
       subscriptionStatus: Superwall.shared.subscriptionStatus.description,
       isFirstAppOpen: isFirstAppOpen
     )
+
+    return template.toDictionary()
   }
 
   private unowned let storage: Storage

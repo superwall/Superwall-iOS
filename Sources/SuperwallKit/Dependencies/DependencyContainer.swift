@@ -215,12 +215,19 @@ extension DependencyContainer: ViewControllerFactory {
 }
 
 extension DependencyContainer: VariablesFactory {
-  func makeJsonVariables(productVariables: [ProductVariable]?, params: JSON?) async -> JSON {
-    let templateDeviceDict = await deviceHelper.getTemplateDevice().dictionary()
+  func makeJsonVariables(
+    productVariables: [ProductVariable]?,
+    computedPropertyRequests: [ComputedPropertyRequest],
+    event: EventData?
+  ) async -> JSON {
+    let templateDeviceDict = await deviceHelper.getDeviceAttributes(
+      since: event,
+      computedPropertyRequests: computedPropertyRequests
+    )
 
     return Variables(
       productVariables: productVariables,
-      params: params,
+      params: event?.parameters,
       userAttributes: identityManager.userAttributes,
       templateDeviceDictionary: templateDeviceDict
     ).templated()
@@ -310,14 +317,21 @@ extension DependencyContainer: ApiFactory {
 
 // MARK: - Rule Params
 extension DependencyContainer: RuleAttributesFactory {
-  func makeRuleAttributes() async -> RuleAttributes {
+  func makeRuleAttributes(
+    forEvent event: EventData,
+    from rule: TriggerRule
+  ) async -> RuleAttributes {
     var userAttributes = identityManager.userAttributes
     userAttributes["isLoggedIn"] = identityManager.isLoggedIn
-    let device = await deviceHelper.getTemplateDevice().toDictionary()
+
+    let deviceAttributes = await deviceHelper.getDeviceAttributes(
+      since: event,
+      computedPropertyRequests: rule.computedPropertyRequests
+    )
 
     return RuleAttributes(
       user: userAttributes,
-      device: device
+      device: deviceAttributes
     )
   }
 }

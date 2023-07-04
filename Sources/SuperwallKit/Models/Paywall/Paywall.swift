@@ -44,6 +44,7 @@ struct Paywall: Decodable {
 
   let backgroundColorHex: String
   let backgroundColor: UIColor
+  let computedPropertyRequests: [ComputedPropertyRequest]
 
   /// Indicates whether the caching of the paywall is enabled or not.
   let onDeviceCache: OnDeviceCaching
@@ -111,6 +112,7 @@ struct Paywall: Decodable {
     case featureGating
     case onDeviceCache
     case localNotifications
+    case computedPropertyRequests = "computedProperties"
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -183,6 +185,12 @@ struct Paywall: Decodable {
       forKey: .localNotifications
     ) ?? []
     localNotifications = throwableNotifications.compactMap { try? $0.result.get() }
+
+    let throwableComputedPropertyRequests = try values.decodeIfPresent(
+      [Throwable<ComputedPropertyRequest>].self,
+      forKey: .computedPropertyRequests
+    ) ?? []
+    computedPropertyRequests = throwableComputedPropertyRequests.compactMap { try? $0.result.get() }
   }
 
   init(
@@ -207,7 +215,8 @@ struct Paywall: Decodable {
     isFreeTrialAvailable: Bool = false,
     featureGating: FeatureGatingBehavior = .nonGated,
     onDeviceCache: OnDeviceCaching = .disabled,
-    localNotifications: [LocalNotification] = []
+    localNotifications: [LocalNotification] = [],
+    computedPropertyRequests: [ComputedPropertyRequest] = []
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -231,6 +240,7 @@ struct Paywall: Decodable {
     self.featureGating = featureGating
     self.onDeviceCache = onDeviceCache
     self.localNotifications = localNotifications
+    self.computedPropertyRequests = computedPropertyRequests
   }
 
   func getInfo(
@@ -259,7 +269,8 @@ struct Paywall: Decodable {
       factory: factory,
       featureGatingBehavior: featureGating,
       closeReason: closeReason,
-      localNotifications: localNotifications
+      localNotifications: localNotifications,
+      computedPropertyRequests: computedPropertyRequests
     )
   }
 

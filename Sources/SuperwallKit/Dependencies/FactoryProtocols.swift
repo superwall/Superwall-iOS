@@ -27,7 +27,8 @@ protocol CacheFactory: AnyObject {
 protocol VariablesFactory: AnyObject {
   func makeJsonVariables(
     productVariables: [ProductVariable]?,
-    params: JSON?
+    computedPropertyRequests: [ComputedPropertyRequest],
+    event: EventData?
   ) async -> JSON
 }
 
@@ -52,7 +53,10 @@ protocol RequestFactory: AnyObject {
 }
 
 protocol RuleAttributesFactory: AnyObject {
-  func makeRuleAttributes() async -> RuleAttributes
+  func makeRuleAttributes(
+    forEvent event: EventData,
+    from rule: TriggerRule
+  ) async -> RuleAttributes
 }
 
 protocol TriggerSessionManagerFactory: AnyObject {

@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds support for paywalls that include a free trial notification. After starting a free trial, the app checks whether the paywall should notify the user when their trial is about to end. If so, the user will be asked to enable notifications (if they haven't already) before scheduling a local notification. You can add a free trial notification to your paywall from the paywall editor.
+- Adds ability to use `device.minutesSince_X`, `device.hoursSince_X`, `device.daysSince_X`, `device.monthsSince_X`, and `device.yearsSince_X` in campaign rules and paywalls, where `X` is an event name. This can include Superwall events, such as `app_open`, or your own events.
 - Prints out the Superwall SDK version when the `debug` logLevel is enabled.
 - Updates RevenueCat to the latest version in our RevenueCat example app.
 
@@ -206,20 +207,20 @@ We understand that transitions between major SDK releases can become frustrating
 - Removes the `closedForNextPaywall` case from `PaywallResult` in favor of a new `PaywallInfo` property called `closeReason`, which can either be `nil`, `.systemLogic`, or `.forNextPaywall`.
 - Changes the `PaywallPresentationHandler` variables to functions.
 - Removes `Superwall.shared.track`. We're going all in on `Superwall.shared.register` baby!
-- Removes .error(Error) from `PaywallSkippedReason` in favor of a new `PaywallState` case `.presentationError(Error)`. 
-- Removes `PaywallPresentationHandler` completion block variables removed in favor of function calls with the same names. 
+- Removes .error(Error) from `PaywallSkippedReason` in favor of a new `PaywallState` case `.presentationError(Error)`.
+- Removes `PaywallPresentationHandler` completion block variables removed in favor of function calls with the same names.
 - Changes `.onError` of `PaywallPresentationHandler` to no longer be called when a paywall is intentionally not shown (i.e. user is subscribed, user is in holdout, no rule match, event not configured)
 - Adds `.onSkip(reason:)` to `PaywallPresentationHandler` to handle cases where paywall isn't shown because user is subscribed, user is in holdout, no rules match, event not configured
 
 ### Enhancements
 
-- Adds `getPaywallViewController`! You can no request an actual view controller to present however you like. Check function documentation in Xcode for instructions – follow directions closely.  
+- Adds `getPaywallViewController`! You can no request an actual view controller to present however you like. Check function documentation in Xcode for instructions – follow directions closely.
 - Changes default logging level to `INFO`.
 - Adds new automatically tracked `paywall_decline` event that can be used to present a new paywall when a user dismisses a paywall.
 - Allows `transaction_abandon` to trigger new paywalls when added to a campaign – called when a user abandons checkout (did you know 75% of the time, users abandon checkout when Apple's payment sheet comes up?!).
 - Adds `.onSkip` to `PaywallPresentationHandler` which is passed a `PaywallSkippedReason` when a paywall is not supposed to show.
 - Adds logging at `INFO` level, mansplaining exactly why a paywall is not shown when calling `register` or `getPaywallViewController`.
-- Adds new automatically tracked event `presentation_request` that gets sent with properties explaining why a paywall was or was not shown. 
+- Adds new automatically tracked event `presentation_request` that gets sent with properties explaining why a paywall was or was not shown.
 
 ### Fixes
 

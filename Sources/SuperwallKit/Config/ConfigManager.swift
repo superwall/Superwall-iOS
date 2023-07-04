@@ -67,7 +67,7 @@ class ConfigManager {
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
 
-  private let factory: RequestFactory & DeviceHelperFactory
+  private let factory: RequestFactory
 
   init(
     options: SuperwallOptions?,
@@ -75,7 +75,7 @@ class ConfigManager {
     storage: Storage,
     network: Network,
     paywallManager: PaywallManager,
-    factory: RequestFactory & DeviceHelperFactory
+    factory: RequestFactory
   ) {
     if let options = options {
       self.options = options
