@@ -215,12 +215,19 @@ extension DependencyContainer: ViewControllerFactory {
 }
 
 extension DependencyContainer: VariablesFactory {
-  func makeJsonVariables(productVariables: [ProductVariable]?, params: JSON?) async -> JSON {
-    let templateDeviceDict = await deviceHelper.getTemplateDevice().dictionary()
+  func makeJsonVariables(
+    productVariables: [ProductVariable]?,
+    computedPropertyRequests: [ComputedPropertyRequest],
+    event: EventData?
+  ) async -> JSON {
+    let templateDeviceDict = await deviceHelper.getDeviceAttributes(
+      since: event,
+      computedPropertyRequests: computedPropertyRequests
+    )
 
     return Variables(
       productVariables: productVariables,
-      params: params,
+      params: event?.parameters,
       userAttributes: identityManager.userAttributes,
       templateDeviceDictionary: templateDeviceDict
     ).templated()
@@ -310,41 +317,22 @@ extension DependencyContainer: ApiFactory {
 
 // MARK: - Rule Params
 extension DependencyContainer: RuleAttributesFactory {
-  func makeRuleAttributes(forEvent event: EventData) async -> RuleAttributes {
+  func makeRuleAttributes(
+    forEvent event: EventData,
+    from rule: TriggerRule
+  ) async -> RuleAttributes {
     var userAttributes = identityManager.userAttributes
     userAttributes["isLoggedIn"] = identityManager.isLoggedIn
-    var device = await deviceHelper.getTemplateDevice().toDictionary()
 
-    if let config = configManager.config {
-      let computedProperties = await getComputedPropertySinceEvent(
-        event: event,
-        from: config
-      )
-      device += computedProperties
-    }
+    let deviceAttributes = await deviceHelper.getDeviceAttributes(
+      since: event,
+      computedPropertyRequests: rule.computedPropertyRequests
+    )
 
     return RuleAttributes(
       user: userAttributes,
-      device: device
+      device: deviceAttributes
     )
-  }
-
-  private func getComputedPropertySinceEvent(
-    event: EventData,
-    from config: Config
-  ) async -> [String: Any] {
-    var computedProperties: [String: Any] = [:]
-
-    for computedProperty in config.computedProperties {
-      if let value = await storage.coreDataManager.getComputedPropertySinceEvent(
-        event,
-        property: computedProperty
-      ) {
-        computedProperties[computedProperty.type.prefix + computedProperty.eventName] = value
-      }
-    }
-
-    return computedProperties
   }
 }
 

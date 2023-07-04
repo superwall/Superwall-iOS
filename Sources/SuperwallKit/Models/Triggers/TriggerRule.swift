@@ -12,6 +12,7 @@ struct TriggerRule: Decodable, Hashable {
   var expression: String?
   var expressionJs: String?
   var occurrence: TriggerRuleOccurrence?
+  let computedPropertyRequests: [ComputedPropertyRequest]
 
   enum CodingKeys: String, CodingKey {
     case experimentGroupId
@@ -20,6 +21,7 @@ struct TriggerRule: Decodable, Hashable {
     case variants
     case expressionJs
     case occurrence
+    case computedPropertyRequests = "computedProperties"
   }
 
   init(from decoder: Decoder) throws {
@@ -38,18 +40,26 @@ struct TriggerRule: Decodable, Hashable {
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
     expressionJs = try values.decodeIfPresent(String.self, forKey: .expressionJs)
     occurrence = try values.decodeIfPresent(TriggerRuleOccurrence.self, forKey: .occurrence)
+
+    let throwableComputedProperties = try values.decodeIfPresent(
+      [Throwable<ComputedPropertyRequest>].self,
+      forKey: .computedPropertyRequests
+    ) ?? []
+    computedPropertyRequests = throwableComputedProperties.compactMap { try? $0.result.get() }
   }
 
   init(
     experiment: RawExperiment,
     expression: String?,
     expressionJs: String?,
-    occurrence: TriggerRuleOccurrence? = nil
+    occurrence: TriggerRuleOccurrence? = nil,
+    computedPropertyRequests: [ComputedPropertyRequest]
   ) {
     self.experiment = experiment
     self.expression = expression
     self.expressionJs = expressionJs
     self.occurrence = occurrence
+    self.computedPropertyRequests = computedPropertyRequests
   }
 }
 
@@ -70,7 +80,8 @@ extension TriggerRule: Stubbable {
       ),
       expression: nil,
       expressionJs: nil,
-      occurrence: nil
+      occurrence: nil,
+      computedPropertyRequests: []
     )
   }
 }

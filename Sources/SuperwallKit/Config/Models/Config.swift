@@ -17,7 +17,6 @@ struct Config: Decodable {
   var featureFlags: FeatureFlags
   var preloadingDisabled: PreloadingDisabled
   var requestId: String?
-  let computedProperties: [ComputedProperty]
 
   enum CodingKeys: String, CodingKey {
     case triggers = "triggerOptions"
@@ -28,7 +27,6 @@ struct Config: Decodable {
     case appSessionTimeout = "appSessionTimeoutMs"
     case featureFlags = "toggles"
     case preloadingDisabled = "disablePreload"
-    case computedProperties
   }
 
   init(from decoder: Decoder) throws {
@@ -41,11 +39,6 @@ struct Config: Decodable {
     appSessionTimeout = try values.decode(Milliseconds.self, forKey: .appSessionTimeout)
     featureFlags = try FeatureFlags(from: decoder)
     preloadingDisabled = try values.decode(PreloadingDisabled.self, forKey: .preloadingDisabled)
-    let throwableComputedProperties = try values.decodeIfPresent(
-      [Throwable<ComputedProperty>].self,
-      forKey: .computedProperties
-    ) ?? []
-    computedProperties = throwableComputedProperties.compactMap { try? $0.result.get() }
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
@@ -59,8 +52,7 @@ struct Config: Decodable {
     locales: Set<String>,
     appSessionTimeout: Milliseconds,
     featureFlags: FeatureFlags,
-    preloadingDisabled: PreloadingDisabled,
-    computedProperties: [ComputedProperty]
+    preloadingDisabled: PreloadingDisabled
   ) {
     self.triggers = triggers
     self.paywalls = paywalls
@@ -70,7 +62,6 @@ struct Config: Decodable {
     self.appSessionTimeout = appSessionTimeout
     self.featureFlags = featureFlags
     self.preloadingDisabled = preloadingDisabled
-    self.computedProperties = computedProperties
   }
 }
 
@@ -85,8 +76,7 @@ extension Config: Stubbable {
       locales: [],
       appSessionTimeout: 3600000,
       featureFlags: .stub(),
-      preloadingDisabled: .stub(),
-      computedProperties: []
+      preloadingDisabled: .stub()
     )
   }
 }

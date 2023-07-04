@@ -86,7 +86,10 @@ struct ExpressionEvaluator {
     forRule rule: TriggerRule,
     withEventData eventData: EventData
   ) async -> String? {
-    let ruleAttributes = await factory.makeRuleAttributes(forEvent: eventData)
+    let ruleAttributes = await factory.makeRuleAttributes(
+      forEvent: eventData,
+      from: rule
+    )
 
     let values = JSON([
       "user": ruleAttributes.user,
