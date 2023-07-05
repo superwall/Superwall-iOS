@@ -42,7 +42,6 @@ final class PriceFormatterProvider {
     }
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func priceFormatterForSK2(withCurrencyCode currencyCode: String) -> NumberFormatter {
     queue.sync {
       func makePriceFormatterForSK2(with currencyCode: String) -> NumberFormatter {
