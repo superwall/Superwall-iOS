@@ -27,7 +27,7 @@ struct ExpressionEvaluator {
   ) async -> Bool {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
-      let shouldFire = shouldFire(
+      let shouldFire = await shouldFire(
         forOccurrence: rule.occurrence,
         ruleMatched: true,
         isPreemptive: isPreemptive
@@ -73,7 +73,7 @@ struct ExpressionEvaluator {
 
     let isMatched = result?.toString() == "true"
 
-    let shouldFire = shouldFire(
+    let shouldFire = await shouldFire(
       forOccurrence: rule.occurrence,
       ruleMatched: isMatched,
       isPreemptive: isPreemptive
@@ -86,7 +86,11 @@ struct ExpressionEvaluator {
     forRule rule: TriggerRule,
     withEventData eventData: EventData
   ) async -> String? {
-    let ruleAttributes = await factory.makeRuleAttributes()
+    let ruleAttributes = await factory.makeRuleAttributes(
+      forEvent: eventData,
+      from: rule
+    )
+
     let values = JSON([
       "user": ruleAttributes.user,
       "device": ruleAttributes.device,
@@ -119,7 +123,7 @@ struct ExpressionEvaluator {
     forOccurrence occurrence: TriggerRuleOccurrence?,
     ruleMatched: Bool,
     isPreemptive: Bool
-  ) -> Bool {
+  ) async -> Bool {
     if ruleMatched {
       guard let occurrence = occurrence else {
         Logger.debug(
@@ -129,7 +133,7 @@ struct ExpressionEvaluator {
         )
         return true
       }
-      let count = storage
+      let count = await storage
         .coreDataManager
         .countTriggerRuleOccurrences(
           for: occurrence

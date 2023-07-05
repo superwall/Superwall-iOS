@@ -115,14 +115,20 @@ class CoreDataManagerTests: XCTestCase {
 
     await fulfillment(of: [expectation2], timeout: 20)
 
+    let expectation3 = expectation(description: "Cleared events")
+
     // Delete All Entities
-    coreDataManager.deleteAllEntities()
+    coreDataManager.deleteAllEntities() {
+      expectation3.fulfill()
+    }
+
+    await fulfillment(of: [expectation3], timeout: 20)
 
     // Count triggers
-    let occurrenceCount = coreDataManager.countTriggerRuleOccurrences(for: occurrence)
+    let occurrenceCount = await coreDataManager.countTriggerRuleOccurrences(for: occurrence)
     XCTAssertEqual(occurrenceCount, 0)
 
-    let eventCount = coreDataManager.countAllEvents()
+    let eventCount = await coreDataManager.countAllEvents()
     XCTAssertEqual(eventCount, 0)
   }
 
@@ -156,15 +162,15 @@ class CoreDataManagerTests: XCTestCase {
       keys.append("\(i)")
     }
 
-    let expectation = expectation(description: "Saved Trigger Occurrences")
-    expectation.expectedFulfillmentCount = keys.count
+    let expectation1 = expectation(description: "Saved Trigger Occurrences")
+    expectation1.expectedFulfillmentCount = keys.count
 
     for key in keys {
       coreDataStack.batchInsertTriggerOccurrences(
         key: key,
         count: 10,
         completion: {
-          expectation.fulfill()
+          expectation1.fulfill()
         }
       )
     }
@@ -183,12 +189,18 @@ class CoreDataManagerTests: XCTestCase {
       interval: interval
     )
 
-    var count = 0
+
     measure {
-      count = coreDataManager.countTriggerRuleOccurrences(for: occurrence)
+      let exp = expectation(description: "Finished")
+      Task {
+        var count = 0
+        count = await coreDataManager.countTriggerRuleOccurrences(for: occurrence)
+        exp.fulfill()
+        XCTAssertEqual(count, 10)
+      }
+      wait(for: [exp], timeout: 15.0)
     }
 
-    XCTAssertEqual(count, 10)
   }
 
   /*

@@ -22,10 +22,14 @@ final class TemplateLogicTests: XCTestCase {
       self.deviceDict = deviceDict
     }
 
-    func makeJsonVariables(productVariables: [ProductVariable]?, params: JSON?) -> JSON {
+    func makeJsonVariables(
+      productVariables: [ProductVariable]?,
+      computedPropertyRequests: [ComputedPropertyRequest],
+      event: EventData?
+    ) async -> JSON {
       return Variables(
         productVariables: productVariables,
-        params: params,
+        params: event?.parameters,
         userAttributes: userAttributes,
         templateDeviceDictionary: deviceDict
       ).templated()
@@ -42,7 +46,6 @@ final class TemplateLogicTests: XCTestCase {
     let deviceDict = [
       "isMac": false
     ]
-    let params: JSON = ["myparam": "test"]
 
     let factory = MockVariablesFactory(
       userAttributes: userAttributes,
@@ -56,7 +59,8 @@ final class TemplateLogicTests: XCTestCase {
       from: .stub()
         .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables),
-      withParams: params,
+      event: .stub()
+        .setting(\.parameters, to: ["myparam": "test"]),
       factory: factory
     )
 
@@ -113,7 +117,8 @@ final class TemplateLogicTests: XCTestCase {
         .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true),
-      withParams: params,
+      event: .stub()
+        .setting(\.parameters, to: params),
       factory: factory
     )
 
@@ -178,7 +183,8 @@ final class TemplateLogicTests: XCTestCase {
         .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true),
-      withParams: params,
+      event: .stub()
+        .setting(\.parameters, to: params),
       factory: factory
     )
 
@@ -253,7 +259,8 @@ final class TemplateLogicTests: XCTestCase {
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true)
         .setting(\.swProductVariablesTemplate, to: swProductVariablesTemplate),
-      withParams: params,
+      event: .stub()
+        .setting(\.parameters, to: params),
       factory: factory
     )
 

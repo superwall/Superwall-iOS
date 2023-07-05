@@ -72,7 +72,7 @@ class CoreDataManager {
     }
   }
 
-  func deleteAllEntities() {
+  func deleteAllEntities(completion: (() -> Void)? = nil) {
     guard let backgroundContext = backgroundContext else {
       return
     }
@@ -90,6 +90,7 @@ class CoreDataManager {
       do {
         try backgroundContext.executeAndMergeChanges(using: deleteEventDataRequest)
         try backgroundContext.executeAndMergeChanges(using: deleteOccurrenceRequest)
+        completion?()
       } catch {
         Logger.debug(
           logLevel: .error,
@@ -101,9 +102,40 @@ class CoreDataManager {
     }
   }
 
+  func getComputedPropertySinceEvent(
+    _ event: EventData?,
+    request: ComputedPropertyRequest
+  ) async -> Int? {
+    var lastEventDate: Date?
+    if let event = event {
+      lastEventDate = event.name == request.eventName ? event.createdAt : nil
+    }
+
+    return await withCheckedContinuation { continuation in
+      coreDataStack.getLastSavedEvent(
+        name: request.eventName,
+        before: lastEventDate
+      ) { event in
+        guard let event = event else {
+          return continuation.resume(returning: nil)
+        }
+        let createdAt = event.createdAt
+        let calendar = Calendar.current
+        let currentDate = Date()
+        let components = calendar.dateComponents(
+          [request.type.calendarComponent],
+          from: createdAt,
+          to: currentDate
+        )
+
+        continuation.resume(returning: request.type.dateComponent(from: components))
+      }
+    }
+  }
+
   func countTriggerRuleOccurrences(
     for ruleOccurrence: TriggerRuleOccurrence
-  ) -> Int {
+  ) async -> Int {
     let fetchRequest = ManagedTriggerRuleOccurrence.fetchRequest()
     fetchRequest.fetchLimit = ruleOccurrence.maxCount
 
@@ -126,10 +158,19 @@ class CoreDataManager {
         date as NSDate,
         ruleOccurrence.key
       )
-      return coreDataStack.count(for: fetchRequest)
+
+      return await withCheckedContinuation { continuation in
+        coreDataStack.count(for: fetchRequest) { count in
+          continuation.resume(returning: count)
+        }
+      }
     case .infinity:
       fetchRequest.predicate = NSPredicate(format: "occurrenceKey == %@", ruleOccurrence.key)
-      return coreDataStack.count(for: fetchRequest)
+      return await withCheckedContinuation { continuation in
+        coreDataStack.count(for: fetchRequest) { count in
+          continuation.resume(returning: count)
+        }
+      }
     }
   }
 }

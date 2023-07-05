@@ -24,7 +24,8 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
-      expressionJs: nil
+      expressionJs: nil,
+      computedPropertyRequests: []
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -87,7 +88,8 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
-      expressionJs: nil
+      expressionJs: nil,
+      computedPropertyRequests: []
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -151,7 +153,8 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
-      expressionJs: nil
+      expressionJs: nil,
+      computedPropertyRequests: []
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -208,7 +211,8 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
-      expressionJs: nil
+      expressionJs: nil,
+      computedPropertyRequests: []
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -271,7 +275,8 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: "params.a == \"c\"",
-      expressionJs: nil
+      expressionJs: nil,
+      computedPropertyRequests: []
     )
     let trigger = Trigger(
       eventName: eventName,
@@ -326,7 +331,8 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: "params.a == \"c\"",
-      expressionJs: nil
+      expressionJs: nil,
+      computedPropertyRequests: []
     )
     let trigger = Trigger(
       eventName: eventName,

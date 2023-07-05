@@ -289,6 +289,12 @@ public final class Superwall: NSObject, ObservableObject {
       completion: completion
     )
 
+    Logger.debug(
+      logLevel: .debug,
+      scope: .superwallCore,
+      message: "SDK Version - \(sdkVersion)"
+    )
+
     isInitializedInternal = true
 
     return shared

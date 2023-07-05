@@ -14,7 +14,7 @@ import Combine
 actor EventsQueue {
   private let maxEventCount = 50
   private var elements: [JSON] = []
-  private var timer: AnyCancellable?
+  private var timer: Timer?
   private unowned let network: Network
   private unowned let configManager: ConfigManager
 
@@ -22,7 +22,7 @@ actor EventsQueue {
   private var resignActiveObserver: AnyCancellable?
 
   deinit {
-    timer?.cancel()
+    timer?.invalidate()
     timer = nil
   }
 
@@ -40,21 +40,19 @@ actor EventsQueue {
 
   private func setupTimer() {
     let timeInterval = configManager.options.networkEnvironment == .release ? 20.0 : 1.0
-    timer = Timer
-      .publish(
-        every: timeInterval,
-        on: RunLoop.main,
-        in: .default
-      )
-      .autoconnect()
-      .sink { [weak self] _ in
-        guard let self = self else {
-          return
-        }
-        Task {
-          await self.flushInternal()
-        }
+    let timer = Timer(
+      timeInterval: timeInterval,
+      repeats: true
+    ) { [weak self] _ in
+      guard let self = self else {
+        return
       }
+      Task {
+        await self.flushInternal()
+      }
+    }
+    self.timer = timer
+    RunLoop.main.add(timer, forMode: .default)
   }
 
   @MainActor

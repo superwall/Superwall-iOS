@@ -81,10 +81,10 @@ final class PaywallMessageHandler: WebEventDelegate {
   ///
   /// This is called every paywall open incase variables like user attributes have changed.
   nonisolated private func passTemplatesToWebView(from paywall: Paywall) async {
-    let params = await delegate?.request?.presentationInfo.eventData?.parameters
+    let eventData = await delegate?.request?.presentationInfo.eventData
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
-      withParams: params,
+      event: eventData,
       factory: factory
     )
 
@@ -142,10 +142,10 @@ final class PaywallMessageHandler: WebEventDelegate {
     }
 
     let htmlSubstitutions = paywall.htmlSubstitutions
-    let params = await delegate?.request?.presentationInfo.eventData?.parameters
+    let eventData = await delegate?.request?.presentationInfo.eventData
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
-      withParams: params,
+      event: eventData,
       factory: factory
     )
     let scriptSrc = """

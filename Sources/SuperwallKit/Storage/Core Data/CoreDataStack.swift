@@ -102,25 +102,68 @@ class CoreDataStack {
     }
   }
 
-  func count<T: NSFetchRequestResult>(for fetchRequest: NSFetchRequest<T>) -> Int {
+  func count<T: NSFetchRequestResult>(
+    for fetchRequest: NSFetchRequest<T>,
+    completion: @escaping ((Int) -> Void)
+  ) {
     guard
-      let mainContext = mainContext,
+      let backgroundContext = backgroundContext,
       persistentContainer != nil
     else {
-      return 0
+      return completion(0)
     }
-    do {
-      let count = try mainContext.count(for: fetchRequest)
-      return count
-    } catch let error as NSError {
-      Logger.debug(
-        logLevel: .error,
-        scope: .coreData,
-        message: "Error counting from Core Data.",
-        info: error.userInfo,
-        error: error
-      )
-      return 0
+    backgroundContext.perform {
+      do {
+        let count = try backgroundContext.count(for: fetchRequest)
+        completion(count)
+      } catch let error as NSError {
+        Logger.debug(
+          logLevel: .error,
+          scope: .coreData,
+          message: "Error counting from Core Data.",
+          info: error.userInfo,
+          error: error
+        )
+        completion(0)
+      }
+    }
+  }
+
+  func getLastSavedEvent(
+    name: String,
+    before date: Date?,
+    completion: @escaping ((ManagedEventData?) -> Void)
+  ) {
+    guard let backgroundContext = backgroundContext else {
+      return completion(nil)
+    }
+
+    backgroundContext.perform {
+      let fetchRequest = ManagedEventData.fetchRequest()
+      if let date = date {
+        fetchRequest.predicate = NSPredicate(format: "name == %@ AND createdAt < %@", name, date as NSDate)
+      } else {
+        fetchRequest.predicate = NSPredicate(format: "name == %@", name)
+      }
+      fetchRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+      fetchRequest.fetchLimit = 1
+
+      do {
+        let results = try backgroundContext.fetch(fetchRequest)
+        guard let event = results.first else {
+          return completion(nil)
+        }
+        completion(event)
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .coreData,
+          message: "Error getting last saved event from Core Data.",
+          info: ["event": name],
+          error: error
+        )
+        completion(nil)
+      }
     }
   }
 }

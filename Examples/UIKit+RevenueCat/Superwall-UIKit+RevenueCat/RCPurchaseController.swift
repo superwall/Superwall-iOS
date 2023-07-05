@@ -64,7 +64,7 @@ final class RCPurchaseController: PurchaseController {
   }
 
   // MARK: Handle Restores
-  /// Makes a restore with RevenueCat and returns true, unless an error is thrown.
+  /// Makes a restore with RevenueCat and returns `.restored`, unless an error is thrown.
   /// This gets called when someone tries to restore purchases on one of your paywalls.
   func restorePurchases() async -> RestorationResult {
     do {

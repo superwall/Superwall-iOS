@@ -44,6 +44,7 @@ struct Paywall: Decodable {
 
   let backgroundColorHex: String
   let backgroundColor: UIColor
+  let computedPropertyRequests: [ComputedPropertyRequest]
 
   /// Indicates whether the caching of the paywall is enabled or not.
   let onDeviceCache: OnDeviceCaching
@@ -95,6 +96,9 @@ struct Paywall: Decodable {
   /// user does not purchase.
   var featureGating: FeatureGatingBehavior
 
+  /// The local notifications for the paywall, e.g. to notify the user of free trial expiry.
+  var localNotifications: [LocalNotification]
+
   enum CodingKeys: String, CodingKey {
     case id
     case identifier
@@ -107,6 +111,8 @@ struct Paywall: Decodable {
     case products
     case featureGating
     case onDeviceCache
+    case localNotifications
+    case computedPropertyRequests = "computedProperties"
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -173,6 +179,18 @@ struct Paywall: Decodable {
 
     featureGating = try values.decodeIfPresent(FeatureGatingBehavior.self, forKey: .featureGating) ?? .nonGated
     onDeviceCache = try values.decodeIfPresent(OnDeviceCaching.self, forKey: .onDeviceCache) ?? .disabled
+
+    let throwableNotifications = try values.decodeIfPresent(
+      [Throwable<LocalNotification>].self,
+      forKey: .localNotifications
+    ) ?? []
+    localNotifications = throwableNotifications.compactMap { try? $0.result.get() }
+
+    let throwableComputedPropertyRequests = try values.decodeIfPresent(
+      [Throwable<ComputedPropertyRequest>].self,
+      forKey: .computedPropertyRequests
+    ) ?? []
+    computedPropertyRequests = throwableComputedPropertyRequests.compactMap { try? $0.result.get() }
   }
 
   init(
@@ -196,7 +214,9 @@ struct Paywall: Decodable {
     swTemplateProductVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false,
     featureGating: FeatureGatingBehavior = .nonGated,
-    onDeviceCache: OnDeviceCaching = .disabled
+    onDeviceCache: OnDeviceCaching = .disabled,
+    localNotifications: [LocalNotification] = [],
+    computedPropertyRequests: [ComputedPropertyRequest] = []
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -219,6 +239,8 @@ struct Paywall: Decodable {
     self.isFreeTrialAvailable = isFreeTrialAvailable
     self.featureGating = featureGating
     self.onDeviceCache = onDeviceCache
+    self.localNotifications = localNotifications
+    self.computedPropertyRequests = computedPropertyRequests
   }
 
   func getInfo(
@@ -246,7 +268,9 @@ struct Paywall: Decodable {
       isFreeTrialAvailable: isFreeTrialAvailable,
       factory: factory,
       featureGatingBehavior: featureGating,
-      closeReason: closeReason
+      closeReason: closeReason,
+      localNotifications: localNotifications,
+      computedPropertyRequests: computedPropertyRequests
     )
   }
 
