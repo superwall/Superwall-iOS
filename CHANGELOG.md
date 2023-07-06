@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.1.1
+
+### Fixes
+
+- Internal updates for unit tests.
+
 ## 3.1.0
 
 ### Enhancements

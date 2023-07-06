@@ -128,7 +128,7 @@ public final class Superwall: NSObject, ObservableObject {
       // Code only executes when tests are running in a debug environment.
       // This avoids lots of irrelevent error messages printed to console about Superwall not
       // being configured, which slows down the tests.
-      if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+      if ProcessInfo.processInfo.arguments.contains("UNIT_TESTS") {
         let superwall = Superwall()
         self.superwall = superwall
         return superwall
