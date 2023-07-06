@@ -430,3 +430,10 @@ extension DependencyContainer: PurchaseManagerFactory {
     )
   }
 }
+
+// MARK: - Options Factory
+extension DependencyContainer: OptionsFactory {
+  func makeSuperwallOptions() -> SuperwallOptions {
+    return configManager.options
+  }
+}

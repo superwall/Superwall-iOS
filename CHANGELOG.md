@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.1.1
 
+### Enhancements
+
+- Adds `shouldShowPurchaseFailureAlert` as a `PaywallOption`. This defaults to `true`. If you're using a `PurchaseController`, set this to `false` to disable the alert that shows after the purchase fails.
+
 ### Fixes
 
 - Internal updates for unit tests.

@@ -119,3 +119,7 @@ protocol StoreTransactionFactory: AnyObject {
 protocol PurchaseManagerFactory: AnyObject {
   func makePurchaseManager() -> PurchaseManager
 }
+
+protocol OptionsFactory: AnyObject {
+  func makeSuperwallOptions() -> SuperwallOptions
+}

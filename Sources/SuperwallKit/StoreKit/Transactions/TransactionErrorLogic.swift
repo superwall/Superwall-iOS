@@ -19,7 +19,10 @@ enum TransactionErrorLogic {
     case presentAlert
   }
 
-  static func handle(_ error: Error) -> ErrorOutcome {
+  static func handle(
+    _ error: Error,
+    shouldShowPurchaseFailureAlert: Bool
+  ) -> ErrorOutcome? {
     if #available(iOS 15.0, *),
       let error = error as? StoreKitError {
       switch error {
@@ -49,6 +52,10 @@ enum TransactionErrorLogic {
       }
     }
 
-    return .presentAlert
+    if shouldShowPurchaseFailureAlert {
+      return .presentAlert
+    } else {
+      return nil
+    }
   }
 }

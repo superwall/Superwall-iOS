@@ -13,6 +13,7 @@ final class TransactionManager {
   private unowned let storeKitManager: StoreKitManager
   private unowned let sessionEventsManager: SessionEventsManager
   private let purchaseManager: PurchaseManager
+  private let factory: PurchaseManagerFactory & OptionsFactory
 
   /// The paywall view controller that the last product was purchased from.
   private var lastPaywallViewController: PaywallViewController?
@@ -20,10 +21,11 @@ final class TransactionManager {
   init(
     storeKitManager: StoreKitManager,
     sessionEventsManager: SessionEventsManager,
-    factory: PurchaseManagerFactory
+    factory: PurchaseManagerFactory & OptionsFactory
   ) {
     self.storeKitManager = storeKitManager
     self.sessionEventsManager = sessionEventsManager
+    self.factory = factory
     purchaseManager = factory.makePurchaseManager()
   }
 
@@ -53,7 +55,13 @@ final class TransactionManager {
         transaction: transaction
       )
     case .failed(let error):
-      let outcome = TransactionErrorLogic.handle(error)
+      let superwallOptions = factory.makeSuperwallOptions()
+      guard let outcome = TransactionErrorLogic.handle(
+        error,
+        shouldShowPurchaseFailureAlert: superwallOptions.paywalls.shouldShowPurchaseFailureAlert
+      ) else {
+        return await paywallViewController.togglePaywallSpinner(isHidden: true)
+      }
       switch outcome {
       case .cancelled:
         await trackCancelled(
@@ -144,7 +152,8 @@ final class TransactionManager {
       product: product
     )
 
-    if Superwall.shared.options.paywalls.automaticallyDismiss {
+    let superwallOptions = factory.makeSuperwallOptions()
+    if superwallOptions.paywalls.automaticallyDismiss {
       await Superwall.shared.dismiss(
         paywallViewController,
         result: .purchased(productId: product.productIdentifier)

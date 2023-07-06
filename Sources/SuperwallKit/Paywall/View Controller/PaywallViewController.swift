@@ -282,7 +282,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// - Parameter isHidden: A `Bool` indicating whether to show or hide the spinner.
   public func togglePaywallSpinner(isHidden: Bool) {
     if isHidden {
-      if loadingState == .manualLoading {
+      if loadingState == .manualLoading || loadingState == .loadingPurchase {
         loadingState = .ready
       }
     } else {
