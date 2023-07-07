@@ -10,7 +10,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Internal updates for unit tests.
+- Fixes issue where a secondary paywall wouldn't present with the `transaction_fail` trigger.
 
 ## 3.1.0
 

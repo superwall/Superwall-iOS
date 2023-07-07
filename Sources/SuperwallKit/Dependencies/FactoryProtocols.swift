@@ -123,3 +123,7 @@ protocol PurchaseManagerFactory: AnyObject {
 protocol OptionsFactory: AnyObject {
   func makeSuperwallOptions() -> SuperwallOptions
 }
+
+protocol TriggerFactory: AnyObject {
+  func makeTriggers() -> Set<String>
+}

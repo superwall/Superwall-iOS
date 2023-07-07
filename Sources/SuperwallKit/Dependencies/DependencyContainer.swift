@@ -437,3 +437,10 @@ extension DependencyContainer: OptionsFactory {
     return configManager.options
   }
 }
+
+// MARK: - Triggers Factory
+extension DependencyContainer: TriggerFactory {
+  func makeTriggers() -> Set<String> {
+    return Set(configManager.triggersByEventName.keys)
+  }
+}

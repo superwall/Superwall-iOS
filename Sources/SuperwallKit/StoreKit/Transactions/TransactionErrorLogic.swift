@@ -21,6 +21,7 @@ enum TransactionErrorLogic {
 
   static func handle(
     _ error: Error,
+    triggers: Set<String>,
     shouldShowPurchaseFailureAlert: Bool
   ) -> ErrorOutcome? {
     if #available(iOS 15.0, *),
@@ -52,7 +53,10 @@ enum TransactionErrorLogic {
       }
     }
 
-    if shouldShowPurchaseFailureAlert {
+    let transactionFailExists = triggers.contains(SuperwallEventObjc.transactionFail.description)
+
+    if shouldShowPurchaseFailureAlert,
+      !transactionFailExists {
       return .presentAlert
     } else {
       return nil
