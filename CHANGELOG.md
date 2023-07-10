@@ -11,7 +11,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes issue where a secondary paywall wouldn't present with the `transaction_fail` trigger.
-- Fixes issue where the paywall preview wasn't obeying free trial/non-free trial overrides.
+- Fixes issue where the paywall preview wasn't obeying free trial/default paywall overrides.
 - Fixes issue where preloaded paywalls may be associated with the incorrect experiment.
 
 ## 3.1.0
