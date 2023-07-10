@@ -58,9 +58,7 @@ actor PaywallRequestManager {
 
     let task = Task<Paywall, Error> {
       do {
-        let rawPaywall = try await getRawPaywall(
-          from: request
-        )
+        let rawPaywall = try await getRawPaywall(from: request)
         let paywallWithProducts = try await addProducts(to: rawPaywall, request: request)
 
         saveRequestHash(
