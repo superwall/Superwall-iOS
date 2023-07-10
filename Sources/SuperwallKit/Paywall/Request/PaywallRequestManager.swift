@@ -47,7 +47,7 @@ actor PaywallRequestManager {
     )
 
     if var paywall = paywallsByHash[requestHash],
-      request.isDebuggerLaunched {
+      !request.isDebuggerLaunched {
       paywall.experiment = request.responseIdentifiers.experiment
       return paywall
     }
@@ -58,9 +58,7 @@ actor PaywallRequestManager {
 
     let task = Task<Paywall, Error> {
       do {
-        let rawPaywall = try await getRawPaywall(
-          from: request
-        )
+        let rawPaywall = try await getRawPaywall(from: request)
         let paywallWithProducts = try await addProducts(to: rawPaywall, request: request)
 
         saveRequestHash(
@@ -86,10 +84,9 @@ actor PaywallRequestManager {
     paywall: Paywall,
     isDebuggerLaunched: Bool
   ) {
-    if isDebuggerLaunched {
-      return
-    }
-    paywallsByHash[requestHash] = paywall
     activeTasks[requestHash] = nil
+    if !isDebuggerLaunched {
+      paywallsByHash[requestHash] = paywall
+    }
   }
 }

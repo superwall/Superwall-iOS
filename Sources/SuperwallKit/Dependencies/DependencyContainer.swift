@@ -430,3 +430,17 @@ extension DependencyContainer: PurchaseManagerFactory {
     )
   }
 }
+
+// MARK: - Options Factory
+extension DependencyContainer: OptionsFactory {
+  func makeSuperwallOptions() -> SuperwallOptions {
+    return configManager.options
+  }
+}
+
+// MARK: - Triggers Factory
+extension DependencyContainer: TriggerFactory {
+  func makeTriggers() -> Set<String> {
+    return Set(configManager.triggersByEventName.keys)
+  }
+}

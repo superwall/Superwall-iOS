@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 20/10/2022.
 //
+// swiftlint:disable type_body_length
 
 import StoreKit
 import UIKit
@@ -13,6 +14,7 @@ final class TransactionManager {
   private unowned let storeKitManager: StoreKitManager
   private unowned let sessionEventsManager: SessionEventsManager
   private let purchaseManager: PurchaseManager
+  private let factory: PurchaseManagerFactory & OptionsFactory & TriggerFactory
 
   /// The paywall view controller that the last product was purchased from.
   private var lastPaywallViewController: PaywallViewController?
@@ -20,10 +22,11 @@ final class TransactionManager {
   init(
     storeKitManager: StoreKitManager,
     sessionEventsManager: SessionEventsManager,
-    factory: PurchaseManagerFactory
+    factory: PurchaseManagerFactory & OptionsFactory & TriggerFactory
   ) {
     self.storeKitManager = storeKitManager
     self.sessionEventsManager = sessionEventsManager
+    self.factory = factory
     purchaseManager = factory.makePurchaseManager()
   }
 
@@ -53,7 +56,19 @@ final class TransactionManager {
         transaction: transaction
       )
     case .failed(let error):
-      let outcome = TransactionErrorLogic.handle(error)
+      let superwallOptions = factory.makeSuperwallOptions()
+      guard let outcome = TransactionErrorLogic.handle(
+        error,
+        triggers: factory.makeTriggers(),
+        shouldShowPurchaseFailureAlert: superwallOptions.paywalls.shouldShowPurchaseFailureAlert
+      ) else {
+        await trackFailure(
+          error: error,
+          product: product,
+          paywallViewController: paywallViewController
+        )
+        return await paywallViewController.togglePaywallSpinner(isHidden: true)
+      }
       switch outcome {
       case .cancelled:
         await trackCancelled(
@@ -61,6 +76,11 @@ final class TransactionManager {
           from: paywallViewController
         )
       case .presentAlert:
+        await trackFailure(
+          error: error,
+          product: product,
+          paywallViewController: paywallViewController
+        )
         await presentAlert(
           forError: error,
           product: product,
@@ -84,6 +104,35 @@ final class TransactionManager {
   /// When the purchase sheet appears, the application resigns active.
 
   // MARK: - Transaction lifecycle
+
+  private func trackFailure(
+    error: Error,
+    product: StoreProduct,
+    paywallViewController: PaywallViewController
+  ) async {
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallTransactions,
+      message: "Transaction Error",
+      info: [
+        "product_id": product.productIdentifier,
+        "paywall_vc": paywallViewController
+      ],
+      error: error
+    )
+
+    let paywallInfo = await paywallViewController.info
+    Task {
+      let trackedEvent = InternalSuperwallEvent.Transaction(
+        state: .fail(.failure(error.localizedDescription, product)),
+        paywallInfo: paywallInfo,
+        product: product,
+        model: nil
+      )
+      await Superwall.shared.track(trackedEvent)
+      await self.sessionEventsManager.triggerSession.trackTransactionError()
+    }
+  }
 
   /// Tracks the analytics and logs the start of the transaction.
   private func prepareToStartTransaction(
@@ -144,7 +193,8 @@ final class TransactionManager {
       product: product
     )
 
-    if Superwall.shared.options.paywalls.automaticallyDismiss {
+    let superwallOptions = factory.makeSuperwallOptions()
+    if superwallOptions.paywalls.automaticallyDismiss {
       await Superwall.shared.dismiss(
         paywallViewController,
         result: .purchased(productId: product.productIdentifier)
@@ -214,29 +264,6 @@ final class TransactionManager {
     product: StoreProduct,
     paywallViewController: PaywallViewController
   ) async {
-    Logger.debug(
-      logLevel: .debug,
-      scope: .paywallTransactions,
-      message: "Transaction Error",
-      info: [
-        "product_id": product.productIdentifier,
-        "paywall_vc": paywallViewController
-      ],
-      error: error
-    )
-
-    let paywallInfo = await paywallViewController.info
-    Task.detached(priority: .utility) {
-      let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .fail(.failure(error.localizedDescription, product)),
-        paywallInfo: paywallInfo,
-        product: product,
-        model: nil
-      )
-      await Superwall.shared.track(trackedEvent)
-      await self.sessionEventsManager.triggerSession.trackTransactionError()
-    }
-
     await paywallViewController.presentAlert(
       title: "An error occurred",
       message: error.localizedDescription

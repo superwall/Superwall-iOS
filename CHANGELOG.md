@@ -2,6 +2,18 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.1.1
+
+### Enhancements
+
+- Adds `shouldShowPurchaseFailureAlert` as a `PaywallOption`. This defaults to `true`. If you're using a `PurchaseController`, set this to `false` to disable the alert that shows after the purchase fails.
+
+### Fixes
+
+- Fixes issue where a secondary paywall wouldn't present with the `transaction_fail` trigger.
+- Fixes issue where the paywall preview wasn't obeying free trial/default paywall overrides.
+- Fixes issue where preloaded paywalls may be associated with the incorrect experiment.
+
 ## 3.1.0
 
 ### Enhancements

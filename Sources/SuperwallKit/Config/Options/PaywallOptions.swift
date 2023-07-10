@@ -37,6 +37,12 @@ public final class PaywallOptions: NSObject {
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
   public var restoreFailed = RestoreFailed()
 
+  /// Shows an alert after a purchase fails. Defaults to `true`.
+  ///
+  /// Set this to `false` if you're using a `PurchaseController` and want to show
+  /// your own alert after the purchase fails.
+  public var shouldShowPurchaseFailureAlert = true
+
   /// Pre-loads and caches trigger paywalls and products when you initialize the SDK via ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``. Defaults to `true`.
   ///
   /// Set this to `false` to load and cache paywalls and products in a just-in-time fashion.
