@@ -11,6 +11,8 @@ targets:
     scheme:
       testTargets:
         - SuperwallKitTests
+      commandLineArguments:
+        SUPERWALL_UNIT_TESTS: true
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.SuperwallKit"
     info:
@@ -42,6 +44,7 @@ targets:
       - package: ASN1Swift
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.SuperwallTests"
+
     info:
       path: SuperwallKit.xcodeproj/SuperwallTests_Info.plist
       properties:

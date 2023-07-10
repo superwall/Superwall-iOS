@@ -29,7 +29,7 @@
       shouldUseLaunchSchemeArgsEnv = "NO">
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "UNIT_TESTS"
+            argument = "SUPERWALL_UNIT_TESTS"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
