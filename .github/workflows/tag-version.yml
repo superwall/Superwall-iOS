@@ -36,28 +36,3 @@ jobs:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
       run: |
         pod trunk push SuperwallKit.podspec --allow-warnings
-
-  xcode12:
-    needs: tag
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: '2.7.18'
-    - name: Xcode12
-      env:
-        COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
-      run: | 
-          sudo git config --global user.name 'Jake'
-          sudo git config --global user.email 'jakemor@users.noreply.github.com'
-          sudo git pull
-          sudo git checkout -b xcode12/$(sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift)
-          sudo python xcode12.py
-          sed -i '' "4s/.*/    s.version      = \"$(sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift)-xcode-12\"/" SuperwallKit.podspec
-          sudo git add -A
-          sudo git commit -m "xcode 12 support"
-          sudo git push -u origin xcode12/$(sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift)
-          sudo git tag -a $(sed -n 21p ./Sources/SuperwallKit/Misc/Constants.swift)-xcode-12 -m "tags with latest version for xcode-12"
-          sudo git push --tags || true
-          pod trunk push SuperwallKit.podspec --allow-warnings
