@@ -10,19 +10,6 @@ import StoreKit
 import UIKit
 import Combine
 
-extension Error {
-  /// Checks that it's not an empty NSError before returning the `localizedDescription`.`
-  var safeLocalizedDescription: String {
-    let nsError = self as NSError
-    if nsError.code == 0,
-       nsError.domain.isEmpty {
-      return "Empty error."
-    } else {
-      return localizedDescription
-    }
-  }
-}
-
 final class TransactionManager {
   private unowned let storeKitManager: StoreKitManager
   private unowned let sessionEventsManager: SessionEventsManager
@@ -136,7 +123,6 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
     Task {
-
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .fail(.failure(error.safeLocalizedDescription, product)),
         paywallInfo: paywallInfo,
