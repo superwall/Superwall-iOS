@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.1.2
+
+### Fixes
+
+- Adds safeguard for developers returning an empty `NSError` on purchase failure which could cause a crash.
+
 ## 3.1.1
 
 ### Enhancements

@@ -79,7 +79,7 @@ enum Logger: Loggable {
       }
 
       if let error = error {
-        output.append(error.localizedDescription)
+        output.append(error.safeLocalizedDescription)
         dumping["error"] = error
       }
 

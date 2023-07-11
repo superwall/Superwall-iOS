@@ -486,7 +486,7 @@ final class DebugViewController: UIViewController {
           )
           self.presentAlert(
             title: "Presentation Error",
-            message: error.localizedDescription,
+            message: error.safeLocalizedDescription,
             on: self.view
           )
           self.bottomButton.showLoading = false
