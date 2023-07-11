@@ -6,6 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
+- Fixes iOS 14 transaction validation issue associated with Apple's upcoming changes to the way App Store receipt signing works.
 - Adds safeguard for developers returning an empty `NSError` on purchase failure which could cause a crash.
 
 ## 3.1.1
