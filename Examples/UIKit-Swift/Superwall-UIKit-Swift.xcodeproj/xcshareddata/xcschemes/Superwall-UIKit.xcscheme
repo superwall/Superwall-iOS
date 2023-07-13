@@ -50,6 +50,12 @@
             ReferencedContainer = "container:Superwall-UIKit-Swift.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "-com.apple.CoreData.ConcurrencyDebug 1"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <StoreKitConfigurationFileReference
          identifier = "../../Superwall-UIKit-Swift/Superwall_UIKit-Swift-Products.storekit">
       </StoreKitConfigurationFileReference>

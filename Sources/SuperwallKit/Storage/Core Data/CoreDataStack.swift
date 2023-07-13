@@ -39,67 +39,43 @@ class CoreDataStack {
   var mainContext: NSManagedObjectContext?
 
   init() {
-    // First load persistent container
-    let persistentContainer = NSPersistentContainer(
-      name: Self.modelName,
-      managedObjectModel: Self.managedObject
-    )
+      // First load persistent container
+      let persistentContainer = NSPersistentContainer(
+        name: Self.modelName,
+        managedObjectModel: Self.managedObject
+      )
 
-    let dispatchGroup = DispatchGroup()
-    dispatchGroup.enter()
-    var containerError: Error?
-    persistentContainer.loadPersistentStores { _, error in
-      containerError = error
-      if let error = error as NSError? {
-        Logger.debug(
-          logLevel: .error,
-          scope: .coreData,
-          message: "Error loading Core Data persistent stores.",
-          info: error.userInfo,
-          error: error
-        )
+      let dispatchGroup = DispatchGroup()
+      dispatchGroup.enter()
+      var containerError: Error?
+      persistentContainer.loadPersistentStores { _, error in
+        containerError = error
+        if let error = error as NSError? {
+          Logger.debug(
+            logLevel: .error,
+            scope: .coreData,
+            message: "Error loading Core Data persistent stores.",
+            info: error.userInfo,
+            error: error
+          )
+        }
+        dispatchGroup.leave()
       }
-      dispatchGroup.leave()
-    }
-    dispatchGroup.wait()
-    guard containerError == nil else {
-      return
-    }
-
-    self.persistentContainer = persistentContainer
-
-    // Then load background and main context
-    let backgroundContext = persistentContainer.newBackgroundContext()
-    backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
-    self.backgroundContext = backgroundContext
-
-    let mainContext = persistentContainer.viewContext
-    mainContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
-    self.mainContext = mainContext
-  }
-
-  func saveContext(
-    _ context: NSManagedObjectContext,
-    completion: (() -> Void)? = nil
-  ) {
-    if persistentContainer == nil {
-      completion?()
-      return
-    }
-    context.perform {
-      do {
-        try context.save()
-        completion?()
-      } catch let error as NSError {
-        Logger.debug(
-          logLevel: .error,
-          scope: .coreData,
-          message: "Error saving to Core Data.",
-          info: error.userInfo,
-          error: error
-        )
+      dispatchGroup.wait()
+      guard containerError == nil else {
+        return
       }
-    }
+
+      self.persistentContainer = persistentContainer
+
+      // Then load background and main context
+      let backgroundContext = persistentContainer.newBackgroundContext()
+      backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
+      self.backgroundContext = backgroundContext
+
+      let mainContext = persistentContainer.viewContext
+      mainContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
+      self.mainContext = mainContext
   }
 
   func count<T: NSFetchRequestResult>(

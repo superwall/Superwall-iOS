@@ -53,7 +53,9 @@ actor PaywallRequestManager {
     }
 
     if let existingTask = activeTasks[requestHash] {
-      return try await existingTask.value
+      var paywall = try await existingTask.value
+      paywall.experiment = request.responseIdentifiers.experiment
+      return paywall
     }
 
     let task = Task<Paywall, Error> {
@@ -76,7 +78,9 @@ actor PaywallRequestManager {
 
     activeTasks[requestHash] = task
 
-    return try await task.value
+    var paywall = try await task.value
+    paywall.experiment = request.responseIdentifiers.experiment
+    return paywall
   }
 
   private func saveRequestHash(
