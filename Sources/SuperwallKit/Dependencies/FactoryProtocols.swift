@@ -88,6 +88,10 @@ protocol DeviceHelperFactory: AnyObject {
   func makeIsSandbox() -> Bool
 }
 
+protocol HasPurchaseControllerFactory: AnyObject {
+  func makeHasPurchaseController() -> Bool
+}
+
 protocol ApiFactory: AnyObject {
   // TODO: Think of an alternative way such that we don't need to do this:
   // swiftlint:disable implicitly_unwrapped_optional

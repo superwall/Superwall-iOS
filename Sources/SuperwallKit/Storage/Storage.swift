@@ -73,12 +73,12 @@ class Storage {
   /// The disk cache.
   private let cache: Cache
 
-  private unowned let factory: DeviceHelperFactory
+  private unowned let factory: DeviceHelperFactory & HasPurchaseControllerFactory
 
   // MARK: - Configuration
 
   init(
-    factory: DeviceHelperFactory,
+    factory: DeviceHelperFactory & HasPurchaseControllerFactory,
     cache: Cache = Cache(),
     coreDataManager: CoreDataManager = CoreDataManager()
   ) {
@@ -171,9 +171,15 @@ class Storage {
     if didTrackAppInstall {
       return
     }
+
+    let hasPurchaseController = factory.makeHasPurchaseController()
+    let deviceInfo = factory.makeDeviceInfo()
+
     Task {
-      let deviceInfo = factory.makeDeviceInfo()
-      let event = InternalSuperwallEvent.AppInstall(appInstalledAtString: deviceInfo.appInstalledAtString)
+      let event = InternalSuperwallEvent.AppInstall(
+        appInstalledAtString: deviceInfo.appInstalledAtString,
+        hasPurchaseController: hasPurchaseController
+      )
       _ = await trackEvent(event)
     }
     save(true, forType: DidTrackAppInstall.self)

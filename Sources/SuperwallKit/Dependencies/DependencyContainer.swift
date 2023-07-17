@@ -444,3 +444,10 @@ extension DependencyContainer: TriggerFactory {
     return Set(configManager.triggersByEventName.keys)
   }
 }
+
+// MARK: - Purchase Controller Factory
+extension DependencyContainer: HasPurchaseControllerFactory {
+  func makeHasPurchaseController() -> Bool {
+    return delegateAdapter.hasPurchaseController
+  }
+}

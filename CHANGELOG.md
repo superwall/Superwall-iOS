@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.1.2
 
+### Enhancements
+
+- Tracks whether a purchase controller is being used on the `AppInstall` event.
+
 ### Fixes
 
 - Fixes iOS 14 transaction validation issue associated with Apple's upcoming changes to the way App Store receipt signing works.
