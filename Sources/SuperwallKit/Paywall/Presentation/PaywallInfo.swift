@@ -48,6 +48,9 @@ public final class PaywallInfo: NSObject {
   /// How the paywall was presented, either 'programmatically', 'identifier', or 'event'
   public let presentedBy: String
 
+  /// The source function that retrieved the paywall. Either `implicit`, `getPaywall`, or `register`. `nil` only when preloading.
+  public let presentationSourceType: String?
+
   /// An iso date string indicating when the paywall response began loading.
   public let responseLoadStartTime: String?
 
@@ -124,6 +127,7 @@ public final class PaywallInfo: NSObject {
     experiment: Experiment? = nil,
     paywalljsVersion: String? = nil,
     isFreeTrialAvailable: Bool,
+    presentationSourceType: String? = nil,
     factory: TriggerSessionManagerFactory,
     featureGatingBehavior: FeatureGatingBehavior = .nonGated,
     closeReason: PaywallCloseReason = .none,
@@ -137,6 +141,7 @@ public final class PaywallInfo: NSObject {
     self.presentedByEventWithName = eventData?.name
     self.presentedByEventAt = eventData?.createdAt.isoString
     self.presentedByEventWithId = eventData?.id.lowercased()
+    self.presentationSourceType = presentationSourceType
     self.experiment = experiment
     self.paywalljsVersion = paywalljsVersion
     self.products = products
@@ -201,6 +206,7 @@ public final class PaywallInfo: NSObject {
       "presented_by_event_name": presentedByEventWithName as Any,
       "presented_by_event_id": presentedByEventWithId as Any,
       "presented_by_event_timestamp": presentedByEventAt as Any,
+      "presentation_source_type": presentationSourceType as Any,
       "presented_by": presentedBy as Any,
       "paywall_product_ids": productIds.joined(separator: ","),
       "paywall_response_load_start_time": responseLoadStartTime as Any,
@@ -294,6 +300,7 @@ extension PaywallInfo: Stubbable {
       productsLoadFailTime: nil,
       productsLoadCompleteTime: nil,
       isFreeTrialAvailable: false,
+      presentationSourceType: "register",
       factory: dependencyContainer
     )
   }

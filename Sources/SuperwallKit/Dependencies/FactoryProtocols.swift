@@ -38,6 +38,7 @@ protocol RequestFactory: AnyObject {
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides?,
     isDebuggerLaunched: Bool,
+    presentationSourceType: String?,
     retryCount: Int
   ) -> PaywallRequest
 

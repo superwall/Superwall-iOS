@@ -241,6 +241,7 @@ extension DependencyContainer: RequestFactory {
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides? = nil,
     isDebuggerLaunched: Bool,
+    presentationSourceType: String?,
     retryCount: Int
   ) -> PaywallRequest {
     return PaywallRequest(
@@ -248,6 +249,7 @@ extension DependencyContainer: RequestFactory {
       responseIdentifiers: responseIdentifiers,
       overrides: overrides ?? PaywallRequest.Overrides(),
       isDebuggerLaunched: isDebuggerLaunched,
+      presentationSourceType: presentationSourceType,
       retryCount: retryCount
     )
   }

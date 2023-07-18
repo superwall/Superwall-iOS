@@ -147,6 +147,25 @@ class DeviceHelper {
     return result
   }()
 
+  let deviceType: String = {
+    switch UIDevice.current.userInterfaceIdiom {
+    case .pad:
+      return "ipad"
+    case .phone:
+      return "iphone"
+    case .mac:
+      return "mac"
+    case .carPlay:
+      return "carplay"
+    case .tv:
+      return "tv"
+    case .unspecified:
+      fallthrough
+    @unknown default:
+      return "unspecified"
+    }
+  }()
+
   private let appInstallDate: Date? = {
     guard let urlToDocumentsFolder = FileManager.default.urls(
       for: .documentDirectory,
@@ -326,6 +345,7 @@ class DeviceHelper {
       deviceLanguageCode: languageCode,
       deviceCurrencyCode: currencyCode,
       deviceCurrencySymbol: currencySymbol,
+      deviceType: deviceType,
       timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
       radioType: radioType,
       interfaceStyle: interfaceStyle,

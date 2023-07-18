@@ -51,6 +51,7 @@ extension Superwall {
         isFreeTrial: request.presentationInfo.freeTrialOverride
       ),
       isDebuggerLaunched: request.flags.isDebuggerLaunched,
+      presentationSourceType: request.presentationSourceType,
       retryCount: requestRetryCount
     )
     do {

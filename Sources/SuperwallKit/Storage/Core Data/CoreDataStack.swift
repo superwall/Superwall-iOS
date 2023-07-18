@@ -39,43 +39,43 @@ class CoreDataStack {
   var mainContext: NSManagedObjectContext?
 
   init() {
-      // First load persistent container
-      let persistentContainer = NSPersistentContainer(
-        name: Self.modelName,
-        managedObjectModel: Self.managedObject
-      )
+    // First load persistent container
+    let persistentContainer = NSPersistentContainer(
+      name: Self.modelName,
+      managedObjectModel: Self.managedObject
+    )
 
-      let dispatchGroup = DispatchGroup()
-      dispatchGroup.enter()
-      var containerError: Error?
-      persistentContainer.loadPersistentStores { _, error in
-        containerError = error
-        if let error = error as NSError? {
-          Logger.debug(
-            logLevel: .error,
-            scope: .coreData,
-            message: "Error loading Core Data persistent stores.",
-            info: error.userInfo,
-            error: error
-          )
-        }
-        dispatchGroup.leave()
+    let dispatchGroup = DispatchGroup()
+    dispatchGroup.enter()
+    var containerError: Error?
+    persistentContainer.loadPersistentStores { _, error in
+      containerError = error
+      if let error = error as NSError? {
+        Logger.debug(
+          logLevel: .error,
+          scope: .coreData,
+          message: "Error loading Core Data persistent stores.",
+          info: error.userInfo,
+          error: error
+        )
       }
-      dispatchGroup.wait()
-      guard containerError == nil else {
-        return
-      }
+      dispatchGroup.leave()
+    }
+    dispatchGroup.wait()
+    guard containerError == nil else {
+      return
+    }
 
-      self.persistentContainer = persistentContainer
+    self.persistentContainer = persistentContainer
 
-      // Then load background and main context
-      let backgroundContext = persistentContainer.newBackgroundContext()
-      backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
-      self.backgroundContext = backgroundContext
+    // Then load background and main context
+    let backgroundContext = persistentContainer.newBackgroundContext()
+    backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
+    self.backgroundContext = backgroundContext
 
-      let mainContext = persistentContainer.viewContext
-      mainContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
-      self.mainContext = mainContext
+    let mainContext = persistentContainer.viewContext
+    mainContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
+    self.mainContext = mainContext
   }
 
   func count<T: NSFetchRequestResult>(

@@ -48,13 +48,13 @@ actor PaywallRequestManager {
 
     if var paywall = paywallsByHash[requestHash],
       !request.isDebuggerLaunched {
-      paywall.experiment = request.responseIdentifiers.experiment
+      paywall = updatePaywall(paywall, for: request)
       return paywall
     }
 
     if let existingTask = activeTasks[requestHash] {
       var paywall = try await existingTask.value
-      paywall.experiment = request.responseIdentifiers.experiment
+      paywall = updatePaywall(paywall, for: request)
       return paywall
     }
 
@@ -79,7 +79,18 @@ actor PaywallRequestManager {
     activeTasks[requestHash] = task
 
     var paywall = try await task.value
+    paywall = updatePaywall(paywall, for: request)
+
+    return paywall
+  }
+
+  private func updatePaywall(
+    _ paywall: Paywall,
+    for request: PaywallRequest
+  ) -> Paywall {
+    var paywall = paywall
     paywall.experiment = request.responseIdentifiers.experiment
+    paywall.presentationSourceType = request.presentationSourceType
     return paywall
   }
 

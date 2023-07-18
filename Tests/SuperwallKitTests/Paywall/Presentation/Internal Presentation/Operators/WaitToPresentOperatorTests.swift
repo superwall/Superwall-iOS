@@ -248,7 +248,7 @@ final class WaitToPresentTests: XCTestCase {
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
+      type: .getPaywall(.stub())
     )
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
@@ -276,7 +276,7 @@ final class WaitToPresentTests: XCTestCase {
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
+      type: .getPaywall(.stub())
     )
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
@@ -316,7 +316,7 @@ final class WaitToPresentTests: XCTestCase {
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
+      type: .getPaywall(.stub())
     )
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
@@ -357,7 +357,7 @@ final class WaitToPresentTests: XCTestCase {
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
+      type: .getPaywall(.stub())
     )
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
@@ -401,7 +401,7 @@ final class WaitToPresentTests: XCTestCase {
       paywallOverrides: nil,
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
+      type: .getPaywall(.stub())
     )
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
