@@ -12,7 +12,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes iOS 14 transaction validation issue associated with Apple's upcoming changes to the way App Store receipt signing works.
+- Fixes issue where the transition from background to foreground may not have been detected on app launch, resulting in paywalls not showing.
+- Fixes iOS 14 transaction validation issue.
 - Adds safeguard for developers returning an empty `NSError` on purchase failure which could cause a crash.
 
 ## 3.1.1
