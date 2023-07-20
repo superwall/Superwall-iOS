@@ -17,6 +17,10 @@ enum IdentityLogic {
     return "$SuperwallAlias:\(UUID().uuidString)"
   }
 
+  static func generateSeed() -> Int {
+    return Int.random(in: 0..<100)
+  }
+
   static func mergeAttributes(
     _ newAttributes: [String: Any?],
     with oldAttributes: [String: Any],

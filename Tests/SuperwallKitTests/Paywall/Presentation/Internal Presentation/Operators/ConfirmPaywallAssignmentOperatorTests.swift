@@ -75,7 +75,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
+      type: .getPaywall(.stub())
     )
 
     let input = PresentablePipelineOutput(

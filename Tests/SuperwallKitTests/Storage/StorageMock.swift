@@ -16,13 +16,17 @@ final class StorageMock: Storage {
   var internalConfirmedAssignments: [Experiment.ID: Experiment.Variant]
   var didClearCachedSessionEvents = false
 
-  class DeviceInfoFactoryMock: DeviceHelperFactory {
+  class DeviceInfoFactoryMock: DeviceHelperFactory, HasPurchaseControllerFactory {
     func makeDeviceInfo() -> DeviceInfo {
       return DeviceInfo(appInstalledAtString: "a", locale: "b")
     }
 
     func makeIsSandbox() -> Bool {
       return true
+    }
+
+    func makeHasPurchaseController() -> Bool {
+      return false
     }
   }
 

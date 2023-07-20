@@ -25,7 +25,7 @@ extension Superwall {
 
       let debugInfo = logPresentation(
         request: request,
-        message: "Called Superwall.shared.track"
+        message: "Called Superwall.shared.getPaywall"
       )
 
       let rulesOutput = try await evaluateRules(from: request)

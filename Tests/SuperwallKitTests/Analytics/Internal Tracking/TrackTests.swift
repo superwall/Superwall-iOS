@@ -32,9 +32,10 @@ final class TrackingTests: XCTestCase {
 
   func test_appInstall() async {
     let appInstalledAtString = "now"
-    let result = await Superwall.shared.track(InternalSuperwallEvent.AppInstall(appInstalledAtString: appInstalledAtString))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.AppInstall(appInstalledAtString: appInstalledAtString, hasPurchaseController: true))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
+    XCTAssertTrue(result.parameters.eventParams["$using_purchase_controller"] as! Bool)
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "app_install")
     XCTAssertEqual(result.parameters.eventParams["$application_installed_at"] as! String, appInstalledAtString)
   }
@@ -261,7 +262,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController(.stub()),
+      type: .getPaywall(.stub()),
       status: .noPresentation,
       statusReason: .userIsSubscribed
     )
@@ -279,7 +280,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController(.stub()),
+      type: .getPaywall(.stub()),
       status: .noPresentation,
       statusReason: .eventNotFound
     )
@@ -297,7 +298,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController(.stub()),
+      type: .getPaywall(.stub()),
       status: .noPresentation,
       statusReason: .noRuleMatch
     )
@@ -315,7 +316,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController(.stub()),
+      type: .getPaywall(.stub()),
       status: .noPresentation,
       statusReason: .paywallAlreadyPresented
     )
@@ -333,7 +334,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController(.stub()),
+      type: .getPaywall(.stub()),
       status: .noPresentation,
       statusReason: .debuggerPresented
     )
@@ -351,7 +352,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController(.stub()),
+      type: .getPaywall(.stub()),
       status: .noPresentation,
       statusReason: .noPresenter
     )
@@ -369,7 +370,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController(.stub()),
+      type: .getPaywall(.stub()),
       status: .noPresentation,
       statusReason: .noPaywallViewController
     )
@@ -387,7 +388,7 @@ final class TrackingTests: XCTestCase {
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
-      type: .getPaywallViewController(.stub()),
+      type: .getPaywall(.stub()),
       status: .noPresentation,
       statusReason: .holdout(.stub())
     )
@@ -416,6 +417,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.eventParams["$presented_by_event_id"] as? String, paywallInfo.presentedByEventWithId)
     XCTAssertEqual(result.parameters.eventParams["$presented_by_event_timestamp"] as? String, paywallInfo.presentedByEventAt)
     XCTAssertEqual(result.parameters.eventParams["$presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["$presentation_source_type"] as? String, paywallInfo.presentationSourceType)
     XCTAssertEqual(result.parameters.eventParams["$paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
     XCTAssertEqual(result.parameters.eventParams["$paywall_response_load_start_time"] as! String, paywallInfo.responseLoadStartTime!)
     XCTAssertEqual(result.parameters.eventParams["$paywall_response_load_complete_time"] as! String, paywallInfo.responseLoadCompleteTime!)

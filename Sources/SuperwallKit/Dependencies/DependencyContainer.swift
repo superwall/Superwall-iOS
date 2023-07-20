@@ -241,6 +241,7 @@ extension DependencyContainer: RequestFactory {
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides? = nil,
     isDebuggerLaunched: Bool,
+    presentationSourceType: String?,
     retryCount: Int
   ) -> PaywallRequest {
     return PaywallRequest(
@@ -248,6 +249,7 @@ extension DependencyContainer: RequestFactory {
       responseIdentifiers: responseIdentifiers,
       overrides: overrides ?? PaywallRequest.Overrides(),
       isDebuggerLaunched: isDebuggerLaunched,
+      presentationSourceType: presentationSourceType,
       retryCount: retryCount
     )
   }
@@ -442,5 +444,12 @@ extension DependencyContainer: OptionsFactory {
 extension DependencyContainer: TriggerFactory {
   func makeTriggers() -> Set<String> {
     return Set(configManager.triggersByEventName.keys)
+  }
+}
+
+// MARK: - Purchase Controller Factory
+extension DependencyContainer: HasPurchaseControllerFactory {
+  func makeHasPurchaseController() -> Bool {
+    return delegateAdapter.hasPurchaseController
   }
 }

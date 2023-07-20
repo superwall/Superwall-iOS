@@ -170,7 +170,7 @@ extension Superwall {
       .explicitTrigger(trackResult.data),
       paywallOverrides: paywallOverrides,
       isPaywallPresented: false,
-      type: .getPaywallViewController(delegate)
+      type: .getPaywall(delegate)
     )
     return try await getPaywall(presentationRequest)
   }

@@ -62,6 +62,18 @@ class IdentityManager {
     }
   }
 
+  /// The randomly generated seed used to put users into cohorts.
+  var seed: Int {
+    queue.sync { [unowned self] in
+      return self._seed
+    }
+  }
+  private var _seed: Int {
+    didSet {
+      saveIds()
+    }
+  }
+
   /// Indicates whether the user has logged in or not.
   var isLoggedIn: Bool {
     return appUserId != nil
@@ -98,6 +110,7 @@ class IdentityManager {
     self.configManager = configManager
     self._appUserId = storage.get(AppUserId.self)
     self._aliasId = storage.get(AliasId.self) ?? IdentityLogic.generateAlias()
+    self._seed = storage.get(Seed.self) ?? IdentityLogic.generateSeed()
     self._userAttributes = storage.get(UserAttributes.self) ?? [:]
   }
 
@@ -114,6 +127,7 @@ class IdentityManager {
     ) {
       try? await configManager.getAssignments()
     }
+    saveIds()
     group.leave()
 
     didSetIdentity()
@@ -206,9 +220,11 @@ class IdentityManager {
     }
 
     storage.save(_aliasId, forType: AliasId.self)
+    storage.save(_seed, forType: Seed.self)
 
-    var newUserAttributes = [
-      "aliasId": _aliasId
+    var newUserAttributes: [String: Any] = [
+      "aliasId": _aliasId,
+      "seed": _seed
     ]
     if let appUserId = _appUserId {
       newUserAttributes["appUserId"] = appUserId
@@ -245,6 +261,7 @@ extension IdentityManager {
   private func _reset() {
     _appUserId = nil
     _aliasId = IdentityLogic.generateAlias()
+    _seed = IdentityLogic.generateSeed()
     _userAttributes = [:]
   }
 }

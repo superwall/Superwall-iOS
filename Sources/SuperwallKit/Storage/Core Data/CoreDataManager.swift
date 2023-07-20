@@ -26,10 +26,7 @@ class CoreDataManager {
     guard let backgroundContext = backgroundContext else {
       return
     }
-    backgroundContext.perform { [weak self] in
-      guard let self = self else {
-        return
-      }
+    backgroundContext.perform {
       let data = try? JSONEncoder().encode(eventData.parameters)
       guard let managedEventData = ManagedEventData(
         context: backgroundContext,
@@ -41,8 +38,19 @@ class CoreDataManager {
         return
       }
 
-      self.coreDataStack.saveContext(backgroundContext) {
+      do {
+        if backgroundContext.hasChanges {
+          try backgroundContext.save()
+        }
         completion?(managedEventData)
+      } catch let error as NSError {
+        Logger.debug(
+          logLevel: .error,
+          scope: .coreData,
+          message: "Error saving to Core Data.",
+          info: error.userInfo,
+          error: error
+        )
       }
     }
   }
@@ -54,10 +62,7 @@ class CoreDataManager {
     guard let backgroundContext = backgroundContext else {
       return
     }
-    backgroundContext.perform { [weak self] in
-      guard let self = self else {
-        return
-      }
+    backgroundContext.perform {
       guard let managedRuleOccurrence = ManagedTriggerRuleOccurrence(
         context: backgroundContext,
         createdAt: Date(),
@@ -66,8 +71,19 @@ class CoreDataManager {
         return
       }
 
-      self.coreDataStack.saveContext(backgroundContext) {
+      do {
+        if backgroundContext.hasChanges {
+          try backgroundContext.save()
+        }
         completion?(managedRuleOccurrence)
+      } catch let error as NSError {
+        Logger.debug(
+          logLevel: .error,
+          scope: .coreData,
+          message: "Error saving to Core Data.",
+          info: error.userInfo,
+          error: error
+        )
       }
     }
   }

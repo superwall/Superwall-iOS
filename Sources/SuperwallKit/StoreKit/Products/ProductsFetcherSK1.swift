@@ -225,7 +225,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 				Logger.debug(
           logLevel: .error,
           scope: .productsManager,
-          message: "Callback Not Found for Failed Request",
+          message: "Callbacks Not Found for Failed Request",
           info: ["request": request.debugDescription],
           error: error
         )

@@ -78,30 +78,6 @@ class CoreDataStack {
     self.mainContext = mainContext
   }
 
-  func saveContext(
-    _ context: NSManagedObjectContext,
-    completion: (() -> Void)? = nil
-  ) {
-    if persistentContainer == nil {
-      completion?()
-      return
-    }
-    context.perform {
-      do {
-        try context.save()
-        completion?()
-      } catch let error as NSError {
-        Logger.debug(
-          logLevel: .error,
-          scope: .coreData,
-          message: "Error saving to Core Data.",
-          info: error.userInfo,
-          error: error
-        )
-      }
-    }
-  }
-
   func count<T: NSFetchRequestResult>(
     for fetchRequest: NSFetchRequest<T>,
     completion: @escaping ((Int) -> Void)

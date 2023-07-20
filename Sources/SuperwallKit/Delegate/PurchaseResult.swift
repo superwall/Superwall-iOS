@@ -59,7 +59,7 @@ public enum PurchaseResult: Sendable, Equatable {
       (.pending, .pending):
       return true
     case let (.failed(error), .failed(error2)):
-      return error.localizedDescription == error2.localizedDescription
+      return error.safeLocalizedDescription == error2.safeLocalizedDescription
     default:
       return false
     }

@@ -11,11 +11,8 @@ import Combine
 
 class Network {
   private let urlSession: CustomURLSession
-  private var applicationStatePublisher: AnyPublisher<UIApplication.State, Never> {
-    UIApplication.shared.publisher(for: \.applicationState)
-      .eraseToAnyPublisher()
-  }
   private let factory: ApiFactory
+  private var applicationStateSubject: CurrentValueSubject<UIApplication.State, Never> = .init(.background)
 
   init(
     urlSession: CustomURLSession = CustomURLSession(),
@@ -23,6 +20,29 @@ class Network {
   ) {
     self.urlSession = urlSession
     self.factory = factory
+
+    Task { @MainActor [weak self] in
+      self?.applicationStateDidChange()
+    }
+
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(applicationStateDidChange),
+      name: UIApplication.didBecomeActiveNotification,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(applicationStateDidChange),
+      name: UIApplication.didEnterBackgroundNotification,
+      object: nil
+    )
+  }
+
+  @objc
+  @MainActor
+  private func applicationStateDidChange() {
+    applicationStateSubject.send(UIApplication.shared.applicationState)
   }
 
   func sendEvents(events: EventsRequest) async {
@@ -108,9 +128,10 @@ class Network {
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
     isRetryingCallback: @escaping () -> Void
   ) async throws -> Config {
-    // Suspend until app is in foreground.
-    let applicationStatePublisher = injectedApplicationStatePublisher ?? self.applicationStatePublisher
+    let existingApplicationStatePublisher = self.applicationStateSubject.eraseToAnyPublisher()
+    let applicationStatePublisher = injectedApplicationStatePublisher ?? existingApplicationStatePublisher
 
+      // Suspend until app is in foreground.
     await applicationStatePublisher
       .subscribe(on: DispatchQueue.main)
       .filter { $0 != .background }

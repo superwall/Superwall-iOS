@@ -22,7 +22,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       subscriptionStatus: publisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
+      type: .getPaywall(.stub())
     )
 
     let input = EvaluateRulesOutput(
@@ -75,7 +75,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       subscriptionStatus: publisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
+      type: .getPaywall(.stub())
     )
 
     let input = EvaluateRulesOutput(
@@ -114,7 +114,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       subscriptionStatus: publisher,
       isPaywallPresented: false,
-      type: .getPaywallViewController(.stub())
+      type: .getPaywall(.stub())
     )
 
     let input = EvaluateRulesOutput(

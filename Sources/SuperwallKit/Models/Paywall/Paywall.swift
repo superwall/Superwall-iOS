@@ -88,6 +88,9 @@ struct Paywall: Decodable {
   /// Determines whether a free trial is available or not.
   var isFreeTrialAvailable = false
 
+  /// The source of the presentation request. Either 'implicit', 'getPaywall', 'register'.
+  var presentationSourceType: String?
+
   /// The reason for closing the paywall.
   var closeReason: PaywallCloseReason = .none
 
@@ -193,7 +196,8 @@ struct Paywall: Decodable {
     computedPropertyRequests = throwableComputedPropertyRequests.compactMap { try? $0.result.get() }
   }
 
-  init(
+  // Only used in stub
+  private init(
     databaseId: String,
     identifier: String,
     name: String,
@@ -213,6 +217,7 @@ struct Paywall: Decodable {
     productVariables: [ProductVariable]? = [],
     swTemplateProductVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false,
+    presentationSourceType: String? = nil,
     featureGating: FeatureGatingBehavior = .nonGated,
     onDeviceCache: OnDeviceCaching = .disabled,
     localNotifications: [LocalNotification] = [],
@@ -237,6 +242,7 @@ struct Paywall: Decodable {
     self.productVariables = productVariables
     self.swProductVariablesTemplate = swTemplateProductVariables
     self.isFreeTrialAvailable = isFreeTrialAvailable
+    self.presentationSourceType = presentationSourceType
     self.featureGating = featureGating
     self.onDeviceCache = onDeviceCache
     self.localNotifications = localNotifications
@@ -266,6 +272,7 @@ struct Paywall: Decodable {
       experiment: experiment,
       paywalljsVersion: paywalljsVersion,
       isFreeTrialAvailable: isFreeTrialAvailable,
+      presentationSourceType: presentationSourceType,
       factory: factory,
       featureGatingBehavior: featureGating,
       closeReason: closeReason,
@@ -282,6 +289,7 @@ struct Paywall: Decodable {
     swProductVariablesTemplate = paywall.swProductVariablesTemplate
     isFreeTrialAvailable = paywall.isFreeTrialAvailable
     productsLoadingInfo = paywall.productsLoadingInfo
+    presentationSourceType = paywall.presentationSourceType
   }
 }
 

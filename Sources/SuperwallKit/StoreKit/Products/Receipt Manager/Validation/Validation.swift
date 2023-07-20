@@ -264,20 +264,32 @@ extension InAppReceipt {
 
 private func guid() -> Data {
 #if os(watchOS)
-  var uuidBytes = WKInterfaceDevice.current().identifierForVendor?.uuid
-  return Data(bytes: &uuidBytes, count: MemoryLayout.size(ofValue: uuidBytes))
+  if let identifierForVendor = WKInterfaceDevice.current().identifierForVendor {
+    var rawUUID = identifierForVendor.uuid
+    let count = MemoryLayout.size(ofValue: rawUUID)
+    let data = withUnsafePointer(to: &rawUUID) {
+      Data(bytes: $0, count: count)
+    }
+    return data
+  }
+  return Data()
 #elseif !targetEnvironment(macCatalyst) && (os(iOS) || os(tvOS))
-  var uuidBytes = UIDevice.current.identifierForVendor?.uuid
-  return Data(bytes: &uuidBytes, count: MemoryLayout.size(ofValue: uuidBytes))
+  if let identifierForVendor = UIDevice.current.identifierForVendor {
+    var rawUUID = identifierForVendor.uuid
+    let count = MemoryLayout.size(ofValue: rawUUID)
+    let data = withUnsafePointer(to: &rawUUID) {
+      Data(bytes: $0, count: count)
+    }
+    return data
+  }
+  return Data()
 #elseif targetEnvironment(macCatalyst) || os(macOS)
-
   if let guid = getMacAddress() {
     return guid
   } else {
     assertionFailure("Failed to retrieve guid")
   }
-
-  return Data() // Never get called
+  return Data()
 #endif
 }
 

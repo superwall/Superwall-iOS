@@ -2,6 +2,21 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.2.0
+
+### Enhancements
+
+- Adds `user.seed` to user attributes for use in campaign rules. This assigns a user a random number from 0 to 99. This allows you to segment users into cohorts across campaigns. For example, in campaign A you may say `if user.seed < 50 { show variant A } else { show variant B }`, in campaign B you may say `if user.seed < 50 { show variant X } else { show variant Y }`. Therefore users who see variant A will then see variant X.
+- Adds ability to use `device.interfaceType` in campaign rules to show different paywalls for different interface types. Use this instead of `device.deviceModel`, as that can lead to inaccurate results on some devices. `interfaceType` can be one of `ipad/iphone/mac/carplay/tv/unspecified`. Note that iPhone screen size emulated in iPad will be `iphone`. Built for iPad on Mac will be `ipad`.
+- Adds `presentation_source_type` to `PaywallInfo`, which lets you know the source function that retrieved the paywall – register/getPaywall/implicit.
+- Tracks whether a purchase controller is being used on the `AppInstall` event.
+
+### Fixes
+
+- Fixes issue where the transition from background to foreground may not have been detected on app launch, resulting in paywalls not showing.
+- Fixes iOS 14 transaction validation issue that affects apps on v3.0.2+.
+- Adds safeguard for developers returning an empty `NSError` on purchase failure which could cause a crash.
+
 ## 3.1.1
 
 ### Enhancements

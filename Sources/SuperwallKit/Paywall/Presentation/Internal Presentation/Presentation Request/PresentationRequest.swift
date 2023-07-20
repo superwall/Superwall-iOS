@@ -14,7 +14,7 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
 
   /// Getting the paywall view controller via
   /// ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)``.
-  case getPaywallViewController(PaywallViewControllerDelegateAdapter)
+  case getPaywall(PaywallViewControllerDelegateAdapter)
 
   /// Getting the presentation result via ``Superwall/getPresentationResult(forEvent:)``
   case getPresentationResult
@@ -27,7 +27,7 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
     switch self {
     case .presentation:
       return "presentation"
-    case .getPaywallViewController:
+    case .getPaywall:
       return "getPaywallViewController"
     case .getPresentationResult:
       return "getPresentationResult"
@@ -38,7 +38,7 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
 
   func getPaywallVcDelegateAdapter() -> PaywallViewControllerDelegateAdapter? {
     switch self {
-    case .getPaywallViewController(let adapter):
+    case .getPaywall(let adapter):
       return adapter
     default:
       return nil
@@ -47,7 +47,7 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
 
   func hasObjcDelegate() -> Bool {
     switch self {
-    case .getPaywallViewController(let adapter):
+    case .getPaywall(let adapter):
       return adapter.hasObjcDelegate
     default:
       return false
@@ -59,7 +59,7 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
     case (.getImplicitPresentationResult, .getImplicitPresentationResult),
       (.getPresentationResult, .getPresentationResult),
       (.presentation, .presentation),
-      (.getPaywallViewController, .getPaywallViewController):
+      (.getPaywall, .getPaywall):
       return true
     default:
       return false
@@ -77,6 +77,24 @@ struct PresentationRequest {
 
   /// Overrides the default behavior and products of a paywall.
   var paywallOverrides: PaywallOverrides?
+
+  /// The source function type that initiated the presentation request.
+  var presentationSourceType: String? {
+    switch presentationInfo.triggerType {
+    case .implicit:
+      return "implicit"
+    case .explicit:
+      switch flags.type {
+      case .getPaywall:
+        return "getPaywall"
+      case .presentation:
+        return "register"
+      case .getImplicitPresentationResult,
+        .getPresentationResult:
+        return nil
+      }
+    }
+  }
 
   struct Flags {
     var isDebuggerLaunched: Bool

@@ -124,7 +124,7 @@ final class TransactionManager {
     let paywallInfo = await paywallViewController.info
     Task {
       let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .fail(.failure(error.localizedDescription, product)),
+        state: .fail(.failure(error.safeLocalizedDescription, product)),
         paywallInfo: paywallInfo,
         product: product,
         model: nil
@@ -266,7 +266,7 @@ final class TransactionManager {
   ) async {
     await paywallViewController.presentAlert(
       title: "An error occurred",
-      message: error.localizedDescription
+      message: error.safeLocalizedDescription
     )
   }
 

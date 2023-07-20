@@ -278,6 +278,7 @@ class ConfigManager {
           responseIdentifiers: .init(paywallId: identifier),
           overrides: nil,
           isDebuggerLaunched: false,
+          presentationSourceType: nil,
           retryCount: 6
         )
         _ = try? await self.paywallManager.getPaywallViewController(

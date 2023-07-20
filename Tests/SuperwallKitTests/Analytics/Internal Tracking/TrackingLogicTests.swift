@@ -354,7 +354,7 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(appInstalledAtString: ""),
+      InternalSuperwallEvent.AppInstall(appInstalledAtString: "", hasPurchaseController: false),
       triggers: Set(["app_install"]),
       paywallViewController: paywallVc
     )
@@ -363,7 +363,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testDidStartNewSession_canTriggerPaywall_isntTrigger() {
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(appInstalledAtString: ""),
+      InternalSuperwallEvent.AppInstall(appInstalledAtString: "", hasPurchaseController: false),
       triggers: [],
       paywallViewController: nil
     )
@@ -372,7 +372,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testDidStartNewSession_canTriggerPaywall_isAllowedInternalEvent() {
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(appInstalledAtString: ""),
+      InternalSuperwallEvent.AppInstall(appInstalledAtString: "", hasPurchaseController: false),
       triggers: ["app_install"],
       paywallViewController: nil
     )

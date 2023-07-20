@@ -237,6 +237,7 @@ final class DebugViewController: UIViewController {
         responseIdentifiers: .init(paywallId: paywallId),
         overrides: nil,
         isDebuggerLaunched: true,
+        presentationSourceType: nil,
         retryCount: 6
       )
       var paywall = try await paywallRequestManager.getPaywall(from: request)
@@ -486,7 +487,7 @@ final class DebugViewController: UIViewController {
           )
           self.presentAlert(
             title: "Presentation Error",
-            message: error.localizedDescription,
+            message: error.safeLocalizedDescription,
             on: self.view
           )
           self.bottomButton.showLoading = false
