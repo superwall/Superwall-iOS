@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds ability to use `device.deviceType` in campaign rules to show different paywalls for different device types. Use this instead of `device.deviceModel`, as that can lead to inaccurate results on some devices. `deviceType` can be one of ipad/iphone/mac/carplay/tv/unspecified.
+- Adds ability to use `device.interfaceType` in campaign rules to show different paywalls for different device types. Use this instead of `device.deviceModel`, as that can lead to inaccurate results on some devices. `interfaceType` can be one of ipad/iphone/mac/carplay/tv/unspecified.
 - Adds `presentation_source_type` to `PaywallInfo`, which lets you know the source function that retrieved the paywall – register/getPaywall/implicit.
 - Tracks whether a purchase controller is being used on the `AppInstall` event.
 

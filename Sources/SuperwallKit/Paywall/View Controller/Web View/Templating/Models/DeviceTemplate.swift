@@ -20,7 +20,7 @@ struct DeviceTemplate: Codable {
   var deviceLanguageCode: String
   var deviceCurrencyCode: String
   var deviceCurrencySymbol: String
-  var deviceType: String
+  var interfaceType: String
   var timezoneOffset: Int
   var radioType: String
   var interfaceStyle: String

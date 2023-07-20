@@ -147,7 +147,7 @@ class DeviceHelper {
     return result
   }()
 
-  let deviceType: String = {
+  let interfaceType: String = {
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
       return "ipad"
@@ -345,7 +345,7 @@ class DeviceHelper {
       deviceLanguageCode: languageCode,
       deviceCurrencyCode: currencyCode,
       deviceCurrencySymbol: currencySymbol,
-      deviceType: deviceType,
+      interfaceType: interfaceType,
       timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
       radioType: radioType,
       interfaceStyle: interfaceStyle,
