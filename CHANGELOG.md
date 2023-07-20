@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.2.1
+
+### Fixes
+
+- Fixes `user_attributes` being fired on every app launch when it wasn't necessary.
+
 ## 3.2.0
 
 ### Enhancements

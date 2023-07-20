@@ -66,6 +66,7 @@
 		2BEA0C3FED992CB3BBD2F5CC /* SK1StoreProductDiscount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C064AE76E6545B9595305D7 /* SK1StoreProductDiscount.swift */; };
 		2C1CC812D17087B1CE54161A /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = F98F66F7AA2F9F3E96849D8A /* Config.swift */; };
 		2C7867867DDAD83E5856ECC9 /* ASN1Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8087A8CD8F4FC7C745010428 /* ASN1Types.swift */; };
+		2CC98A7FC5577F9B8B0C9AD2 /* Error+SafeLocalizedDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A7FFEA64AF7F4E09F052FCD /* Error+SafeLocalizedDescription.swift */; };
 		2D751F5C2F463DEEF0A49B42 /* PaywallCloseReason.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36308E59620C724F701B803 /* PaywallCloseReason.swift */; };
 		2EBE499C9918DE5823659CD0 /* InAppReceiptPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 072886BB8C0E08DF414D9162 /* InAppReceiptPayload.swift */; };
 		2EC1D279019CD3FB64E4674A /* TriggerResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25515131DF0AE67E26BFF462 /* TriggerResult.swift */; };
@@ -643,6 +644,7 @@
 		98D3CEEDCBBDB85C54FDC128 /* PresentPaywall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentPaywall.swift; sourceTree = "<group>"; };
 		990461F7A9B2F3ED62B3A628 /* PaywallViewControllerDelegateAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewControllerDelegateAdapter.swift; sourceTree = "<group>"; };
 		991415992A1EA3C9E6DB7D25 /* TriggerSessionTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerSessionTrigger.swift; sourceTree = "<group>"; };
+		9A7FFEA64AF7F4E09F052FCD /* Error+SafeLocalizedDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Error+SafeLocalizedDescription.swift"; sourceTree = "<group>"; };
 		9B75209DF76859131941CA0F /* Variables.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Variables.swift; sourceTree = "<group>"; };
 		9C2580C3CD6A8BF0C5258665 /* SWWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWWebView.swift; sourceTree = "<group>"; };
 		9DC4D23D1EDDA249C928930D /* PaddingListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaddingListener.swift; sourceTree = "<group>"; };
@@ -1127,6 +1129,7 @@
 				51407421A3CBF7AF0FC76E60 /* Bundle+Helpers.swift */,
 				A9A3C997FDC1550AF477CA1D /* Decimal+Rounding.swift */,
 				B2E6016BF483A4C47FF7A7C0 /* Encodable+Dictionary.swift */,
+				9A7FFEA64AF7F4E09F052FCD /* Error+SafeLocalizedDescription.swift */,
 				8DE36D141F461F6E945823FA /* Future+Async.swift */,
 				E2243C6BF6BE477794F568ED /* GCControllerElement+buttonName.swift */,
 				FD778E66506BA51BEB5EE89C /* JSONEncoder+Superwall.swift */,
@@ -2215,7 +2218,7 @@
 			path = Assignment;
 			sourceTree = "<group>";
 		};
-		"TEMP_89BC623C-3735-4CC4-AA1A-3C36C0A6D055" /* Events */ = {
+		"TEMP_ECE821B9-9409-4D69-BD4B-9789D2EF963D" /* Events */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -2454,6 +2457,7 @@
 				9EAE577E60052F5E1C7B9657 /* EmptyResponse.swift in Sources */,
 				CB1E11FB74879A29DD1C9EB1 /* Encodable+Dictionary.swift in Sources */,
 				11477D1EB60D1FDA32F5099A /* Endpoint.swift in Sources */,
+				2CC98A7FC5577F9B8B0C9AD2 /* Error+SafeLocalizedDescription.swift in Sources */,
 				B2842C329F0F9AAFC2040C35 /* EvaluateRules.swift in Sources */,
 				35597883CB038DBEE63E162B /* EventData.swift in Sources */,
 				211B94C3D7CEE3DEF10E5C79 /* EventsQueue.swift in Sources */,
