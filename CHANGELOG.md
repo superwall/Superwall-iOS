@@ -14,7 +14,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes issue where the transition from background to foreground may not have been detected on app launch, resulting in paywalls not showing.
-- Fixes iOS 14 transaction validation issue.
+- Fixes iOS 14 transaction validation issue that affects apps on v3.0.2+.
 - Adds safeguard for developers returning an empty `NSError` on purchase failure which could cause a crash.
 
 ## 3.1.1
