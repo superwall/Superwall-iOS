@@ -109,9 +109,29 @@ class IdentityManager {
     self.storage = storage
     self.configManager = configManager
     self._appUserId = storage.get(AppUserId.self)
-    self._aliasId = storage.get(AliasId.self) ?? IdentityLogic.generateAlias()
-    self._seed = storage.get(Seed.self) ?? IdentityLogic.generateSeed()
+
+    var extraAttributes: [String: Any] = [:]
+
+    if let aliasId = storage.get(AliasId.self) {
+      self._aliasId = aliasId
+    } else {
+      self._aliasId = IdentityLogic.generateAlias()
+      storage.save(_aliasId, forType: AliasId.self)
+      extraAttributes["aliasId"] = self._aliasId
+    }
+
+    if let seed = storage.get(Seed.self) {
+      self._seed = seed
+    } else {
+      self._seed = IdentityLogic.generateSeed()
+      storage.save(_seed, forType: Seed.self)
+      extraAttributes["seed"] = self._seed
+    }
     self._userAttributes = storage.get(UserAttributes.self) ?? [:]
+
+    if !extraAttributes.isEmpty {
+      mergeUserAttributes(extraAttributes, shouldTrackMerge: false)
+    }
   }
 
   /// Checks for static config upgrade before setting identity.
@@ -127,7 +147,7 @@ class IdentityManager {
     ) {
       try? await configManager.getAssignments()
     }
-    saveIds()
+
     group.leave()
 
     didSetIdentity()
@@ -219,6 +239,7 @@ class IdentityManager {
       storage.save(appUserId, forType: AppUserId.self)
     }
 
+    // Save incase these have also changed.
     storage.save(_aliasId, forType: AliasId.self)
     storage.save(_seed, forType: Seed.self)
 
@@ -269,26 +290,39 @@ extension IdentityManager {
 // MARK: - User Attributes
 extension IdentityManager {
   /// Merges the attributes on an async queue
-  func mergeUserAttributes(_ newUserAttributes: [String: Any?]) {
+  func mergeUserAttributes(
+    _ newUserAttributes: [String: Any?],
+    shouldTrackMerge: Bool = true
+  ) {
     queue.async { [weak self] in
-      self?._mergeUserAttributes(newUserAttributes)
+      self?._mergeUserAttributes(
+        newUserAttributes,
+        shouldTrackMerge: shouldTrackMerge
+      )
     }
   }
 
   /// Merges the provided user attributes with existing attributes then saves them.
-  private func _mergeUserAttributes(_ newUserAttributes: [String: Any?]) {
+  ///
+  /// - Parameter shouldTrackMerge: A boolean indicated whether the merge should be tracked in analytics.
+  private func _mergeUserAttributes(
+    _ newUserAttributes: [String: Any?],
+    shouldTrackMerge: Bool = true
+  ) {
     let mergedAttributes = IdentityLogic.mergeAttributes(
       newUserAttributes,
       with: _userAttributes,
       appInstalledAtString: deviceHelper.appInstalledAtString
     )
 
-    Task {
-      let trackableEvent = InternalSuperwallEvent.Attributes(
-        appInstalledAtString: deviceHelper.appInstalledAtString,
-        customParameters: mergedAttributes
-      )
-      await Superwall.shared.track(trackableEvent)
+    if shouldTrackMerge {
+      Task {
+        let trackableEvent = InternalSuperwallEvent.Attributes(
+          appInstalledAtString: deviceHelper.appInstalledAtString,
+          customParameters: mergedAttributes
+        )
+        await Superwall.shared.track(trackableEvent)
+      }
     }
 
     storage.save(mergedAttributes, forType: UserAttributes.self)
