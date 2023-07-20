@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- `user_attributes` being fired on every app launch when it wasn't necessary.
+- Fixes `user_attributes` being fired on every app launch when it wasn't necessary.
 
 ## 3.2.0
 
