@@ -41,6 +41,14 @@ enum AliasId: Storable {
   typealias Value = String
 }
 
+enum Seed: Storable {
+  static var key: String {
+    "store.seed"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = Int
+}
+
 enum DidTrackAppInstall: Storable {
   static var key: String {
     "store.didTrackAppInstall"
