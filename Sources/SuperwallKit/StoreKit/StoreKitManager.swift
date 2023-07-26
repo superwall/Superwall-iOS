@@ -150,19 +150,17 @@ extension StoreKitManager {
     paywallViewController: PaywallViewController
   ) async {
     let hasRestored = restorationResult == .restored
-    var successfulRestore = hasRestored
 
     if !Superwall.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
       await refreshReceipt()
-      var isUserSubscribed = false
       if hasRestored {
         await loadPurchasedProducts()
-        isUserSubscribed = Superwall.shared.subscriptionStatus == .active
       }
-      successfulRestore = hasRestored && isUserSubscribed
     }
 
-    if successfulRestore {
+    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
+
+    if hasRestored && isUserSubscribed {
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
