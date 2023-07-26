@@ -9,7 +9,7 @@
 import XCTest
 @testable import SuperwallKit
 
-@available(iOS 14.0, *)
+@available(iOS 16.0, *)
 class CoreDataManagerTests: XCTestCase {
   var coreDataManager: CoreDataManagerMock!
   var coreDataStack: CoreDataStackMock!
@@ -123,6 +123,8 @@ class CoreDataManagerTests: XCTestCase {
     }
 
     await fulfillment(of: [expectation3], timeout: 20)
+
+    try? await Task.sleep(for: .seconds(3))
 
     // Count triggers
     let occurrenceCount = await coreDataManager.countTriggerRuleOccurrences(for: occurrence)

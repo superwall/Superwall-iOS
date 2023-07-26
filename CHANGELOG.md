@@ -2,11 +2,18 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.2.2
+
+### Fixes
+
+- If a developer is using a purchase controller, returning .restored from the restorePurchases() function would dismiss the paywall and assume an active subscription status. This was incorrect behavior. Now we specifically check both the subscription status and the restoration result to determine whether to dismiss the paywall, regardless of whether a purchase controller is being used.
+- Added extra logging when a timeout occurs during paywall presentation.
+
 ## 3.2.1
 
 ### Fixes
 
-- Fixes `user_attributes` being fired on every app launch when it wasn't necessary.
+- Fixes `user_attributes` being unnecessarily fired on every cold app launch.
 
 ## 3.2.0
 

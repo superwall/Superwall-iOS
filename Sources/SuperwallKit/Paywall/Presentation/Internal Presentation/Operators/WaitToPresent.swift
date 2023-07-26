@@ -48,7 +48,7 @@ extension Superwall {
           eventData: request.presentationInfo.eventData,
           type: request.flags.type,
           status: .timeout,
-          statusReason: nil
+          statusReason: .subscriptionStatusTimeout
         )
         await self.track(trackedEvent)
       }
@@ -101,7 +101,7 @@ extension Superwall {
                   eventData: request.presentationInfo.eventData,
                   type: request.flags.type,
                   status: .timeout,
-                  statusReason: nil
+                  statusReason: .noConfig
                 )
                 await self.track(trackedEvent)
               }
