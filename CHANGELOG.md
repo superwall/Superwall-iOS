@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- If a developer is using a purchase controller, returning .restored from the restorePurchases() function would dismiss the paywall and assume an active subscription status. This was incorrect behavior. Now we specifically check both the subscription status and the restoration result to determine whether to dismiss the paywall, regardless of whether a purchase controller is being used.
+- If using a purchase controller, returning `.restored` from `restorePurchases()` would dismiss the paywall and assume an active subscription status. This was incorrect behavior. Now we specifically check both the subscription status and the restoration result to determine whether to dismiss the paywall, regardless of whether a purchase controller is being used.
 - Added extra logging when a timeout occurs during paywall presentation.
 
 ## 3.2.1
