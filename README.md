@@ -80,6 +80,8 @@ Then, run `pod install`.
 
 You can also [view our iOS SDK docs](https://sdk.superwall.me/documentation/superwallkit/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
 
+Read our Kodeco (previously Ray Wenderlich) tutorial: [Superwall: Remote Paywall Configuration on iOS](https://www.kodeco.com/38677971-superwall-remote-paywall-configuration-on-ios).
+
 Check out our sample apps for a hands-on demonstration of the SDK:
 
 - [Swift-UIKit with RevenueCat Example App](Examples/UIKit+RevenueCat)
