@@ -106,6 +106,8 @@ public final class PaywallInfo: NSObject {
 
   public let computedPropertyRequests: [ComputedPropertyRequest]
 
+  public let survey: Survey?
+
   private unowned let factory: TriggerSessionManagerFactory
 
   init(
@@ -132,7 +134,8 @@ public final class PaywallInfo: NSObject {
     featureGatingBehavior: FeatureGatingBehavior = .nonGated,
     closeReason: PaywallCloseReason = .none,
     localNotifications: [LocalNotification] = [],
-    computedPropertyRequests: [ComputedPropertyRequest] = []
+    computedPropertyRequests: [ComputedPropertyRequest] = [],
+    survey: Survey?
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -150,6 +153,7 @@ public final class PaywallInfo: NSObject {
     self.featureGatingBehavior = featureGatingBehavior
     self.localNotifications = localNotifications
     self.computedPropertyRequests = computedPropertyRequests
+    self.survey = survey
 
     if eventData != nil {
       self.presentedBy = "event"
@@ -301,7 +305,8 @@ extension PaywallInfo: Stubbable {
       productsLoadCompleteTime: nil,
       isFreeTrialAvailable: false,
       presentationSourceType: "register",
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      survey: nil
     )
   }
 }

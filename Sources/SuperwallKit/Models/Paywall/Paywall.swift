@@ -49,6 +49,9 @@ struct Paywall: Decodable {
   /// Indicates whether the caching of the paywall is enabled or not.
   let onDeviceCache: OnDeviceCaching
 
+  /// A survey to potentially show on close of the paywall.
+  let survey: Survey?
+
   /// The products associated with the paywall.
   var products: [Product] {
     didSet {
@@ -116,6 +119,7 @@ struct Paywall: Decodable {
     case onDeviceCache
     case localNotifications
     case computedPropertyRequests = "computedProperties"
+    case survey
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -137,6 +141,7 @@ struct Paywall: Decodable {
     name = try values.decode(String.self, forKey: .name)
     url = try values.decode(URL.self, forKey: .url)
     htmlSubstitutions = try values.decode(String.self, forKey: .htmlSubstitutions)
+    survey = try values.decodeIfPresent(Survey.self, forKey: .survey)
 
     let presentationStyle = try values.decode(PaywallPresentationStyle.self, forKey: .presentationStyle)
     let presentationCondition = try values.decode(PresentationCondition.self, forKey: .presentationCondition)
@@ -221,7 +226,8 @@ struct Paywall: Decodable {
     featureGating: FeatureGatingBehavior = .nonGated,
     onDeviceCache: OnDeviceCaching = .disabled,
     localNotifications: [LocalNotification] = [],
-    computedPropertyRequests: [ComputedPropertyRequest] = []
+    computedPropertyRequests: [ComputedPropertyRequest] = [],
+    survey: Survey? = nil
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -247,6 +253,7 @@ struct Paywall: Decodable {
     self.onDeviceCache = onDeviceCache
     self.localNotifications = localNotifications
     self.computedPropertyRequests = computedPropertyRequests
+    self.survey = survey
   }
 
   func getInfo(
@@ -277,11 +284,12 @@ struct Paywall: Decodable {
       featureGatingBehavior: featureGating,
       closeReason: closeReason,
       localNotifications: localNotifications,
-      computedPropertyRequests: computedPropertyRequests
+      computedPropertyRequests: computedPropertyRequests,
+      survey: survey
     )
   }
 
-  mutating func overrideProductsIfNeeded(from paywall: Paywall) {
+  mutating func update(from paywall: Paywall) {
     products = paywall.products
     productIds = paywall.productIds
     swProducts = paywall.swProducts
@@ -290,6 +298,7 @@ struct Paywall: Decodable {
     isFreeTrialAvailable = paywall.isFreeTrialAvailable
     productsLoadingInfo = paywall.productsLoadingInfo
     presentationSourceType = paywall.presentationSourceType
+    experiment = paywall.experiment
   }
 }
 

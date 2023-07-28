@@ -144,3 +144,11 @@ enum ActiveSubscriptionStatus: Storable {
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = SubscriptionStatus
 }
+
+enum SurveyAssignmentKey: Storable {
+  static var key: String {
+    "store.surveyAssignmentKey"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = String
+}

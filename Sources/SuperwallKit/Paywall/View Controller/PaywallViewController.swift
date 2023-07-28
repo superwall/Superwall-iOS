@@ -131,6 +131,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var presentationDidFinishPrepare = false
   private var didCallDelegate = false
 
+
+  var presenting: UIViewController?
+
   private unowned let factory: TriggerSessionManagerFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
@@ -650,9 +653,10 @@ extension PaywallViewController {
     presentationWillPrepare = false
   }
 
+
   public override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
-
+    presenting = presentingViewController
     presentationDidFinish()
   }
 
@@ -701,9 +705,28 @@ extension PaywallViewController {
       webView.setAllMediaPlaybackSuspended(true) // ignore-xcode-12
     }
 
+    // TODO: Experiment not on paywallInfo object or paywall
+    // TODO: Make sure the survey is ONLY shown when the user closes the paywall - not if the paywall is closed due to other reasons, like purchasing.
     resetPresentationPreparations()
+    print(paywall.experiment)
+    let isDeclined = paywallResult ?? .declined == .declined
 
-    didDismiss()
+    if isDeclined {
+      let isPresentingSurvey = SurveyManager.presentSurvey(
+        paywall.survey,
+        using: presenting,
+        paywallInfo: info,
+        storage: storage,
+        completion: {
+          self.didDismiss()
+        }
+      )
+      if !isPresentingSurvey {
+        didDismiss()
+      }
+    } else {
+      didDismiss()
+    }
   }
 
   private func resetPresentationPreparations() {
