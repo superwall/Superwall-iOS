@@ -62,7 +62,7 @@ class PaywallManager {
     delegate: PaywallViewControllerDelegateAdapter?
   ) async throws -> PaywallViewController {
     let paywall = try await paywallRequestManager.getPaywall(from: request)
-    print("ERRRR", paywall.experiment)
+
     let deviceInfo = factory.makeDeviceInfo()
     let cacheKey = PaywallCacheLogic.key(
       identifier: paywall.identifier,

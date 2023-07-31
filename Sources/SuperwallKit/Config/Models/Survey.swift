@@ -10,7 +10,6 @@ import Foundation
 @objc(SWKSurvey)
 @objcMembers
 final public class Survey: NSObject, Decodable {
-  // TODO: Comment this
   /// The id of the survey.
   public let id: String
 
@@ -30,13 +29,20 @@ final public class Survey: NSObject, Decodable {
 
   /// The probability that the survey will present to the user.
   public let presentationProbability: Double
+
+  /// The locale of the survey.
   public let locale: String
+
+  /// Whether the "Other" option should appear to allow a user to provide a custom
+  /// response.
   public let includeOtherOption: Bool
 
   /// Rolls dice to see if survey should present.
   func shouldPresent(storage: Storage) -> Bool {
     // If survey with assignment key already seen, don't present.
-    guard storage.get(SurveyAssignmentKey.self) == nil else {
+    let existingAssignmentKey = storage.get(SurveyAssignmentKey.self)
+
+    guard existingAssignmentKey == nil || existingAssignmentKey != assignmentKey else {
       return false
     }
 
@@ -47,7 +53,6 @@ final public class Survey: NSObject, Decodable {
 
     return true
   }
-  private static let maxOptions = 4
 
   init(
     id: String,
@@ -68,25 +73,15 @@ final public class Survey: NSObject, Decodable {
     self.locale = locale
     self.includeOtherOption = includeOtherOption
   }
-
-  func getShuffledOptions() -> [SurveyOption] {
-    // Shuffle options
-    var options = options
-    options.shuffle()
-
-    // Make sure there aren't more than the max amount.
-    if options.count > Self.maxOptions {
-      let excess = options.count - Self.maxOptions
-      options = options.dropLast(excess)
-    }
-    return options
-  }
 }
 
 @objc(SWKSurveyOption)
 @objcMembers
 final public class SurveyOption: NSObject, Decodable {
+  /// The id of the survey option.
   public let id: String
+
+  /// The title of the survey option.
   public let title: String
 
   init(id: String, title: String) {

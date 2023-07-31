@@ -4,19 +4,22 @@
 //
 //  Created by Yusuf Tör on 25/07/2023.
 //
+// swiftlint:disable function_body_length
 
 import UIKit
 
 enum SurveyManager {
-  // TODO: Check this
-
   static func presentSurvey(
     _ survey: Survey?,
     using presenter: UIViewController?,
+    paywallIsDeclined: Bool,
     paywallInfo: PaywallInfo,
     storage: Storage,
     completion: @escaping () -> Void
   ) -> Bool {
+    guard paywallIsDeclined else {
+      return false
+    }
     guard let survey = survey else {
       return false
     }
@@ -27,11 +30,15 @@ enum SurveyManager {
     storage.save(survey.assignmentKey, forType: SurveyAssignmentKey.self)
 
     guard shouldPresent else {
-      // TODO: Log
+      Logger.debug(
+        logLevel: .info,
+        scope: .paywallViewController,
+        message: "The survey will not present."
+      )
       return false
     }
 
-    let options = survey.getShuffledOptions()
+    let options = survey.options.shuffled()
 
     // Create alert controller and add options.
     let alertController = UIAlertController(
@@ -39,6 +46,7 @@ enum SurveyManager {
       message: survey.message,
       preferredStyle: .actionSheet
     )
+    alertController.popoverPresentationController?.sourceView = presenter?.view
 
     for option in options {
       let action = UIAlertAction(
@@ -70,6 +78,7 @@ enum SurveyManager {
           message: nil,
           preferredStyle: .alert
         )
+        otherAlertController.popoverPresentationController?.sourceView = presenter?.view
         otherAlertController.addTextField()
 
         let submitAction = UIAlertAction(title: "Submit", style: .default) { _ in
