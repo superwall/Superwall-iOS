@@ -16,7 +16,7 @@ final public class Survey: NSObject, Decodable {
   /// The assigned key for the survey.
   ///
   /// A user will only see one survey per assignment key.
-  public let assignmentKey: String
+  public internal(set) var assignmentKey: String
 
   /// The title of the survey's alert controller.
   public let title: String
@@ -28,7 +28,7 @@ final public class Survey: NSObject, Decodable {
   public let options: [SurveyOption]
 
   /// The probability that the survey will present to the user.
-  public let presentationProbability: Double
+  public internal(set) var presentationProbability: Double
 
   /// The locale of the survey.
   public let locale: String
@@ -39,15 +39,21 @@ final public class Survey: NSObject, Decodable {
 
   /// Rolls dice to see if survey should present.
   func shouldPresent(storage: Storage) -> Bool {
+    // Return immediately if no chance to present.
+    if presentationProbability == 0 {
+      return false
+    }
+
+    // Choose random number to present the survey with
+    // the probability of presentationProbability.
+    let randomNumber = Double.random(in: 0..<1)
+    guard randomNumber < presentationProbability else {
+      return false
+    }
     // If survey with assignment key already seen, don't present.
     let existingAssignmentKey = storage.get(SurveyAssignmentKey.self)
 
     guard existingAssignmentKey == nil || existingAssignmentKey != assignmentKey else {
-      return false
-    }
-
-    let randomNumber = Double.random(in: 0...1)
-    guard randomNumber <= presentationProbability else {
       return false
     }
 
@@ -75,17 +81,18 @@ final public class Survey: NSObject, Decodable {
   }
 }
 
-@objc(SWKSurveyOption)
-@objcMembers
-final public class SurveyOption: NSObject, Decodable {
-  /// The id of the survey option.
-  public let id: String
-
-  /// The title of the survey option.
-  public let title: String
-
-  init(id: String, title: String) {
-    self.id = id
-    self.title = title
+// MARK: - Stubbable
+extension Survey: Stubbable {
+  static func stub() -> Survey {
+    return Survey(
+      id: UUID().uuidString,
+      assignmentKey: "abc",
+      title: "test",
+      message: "test",
+      options: [.stub()],
+      presentationProbability: 1,
+      locale: "en",
+      includeOtherOption: true
+    )
   }
 }
