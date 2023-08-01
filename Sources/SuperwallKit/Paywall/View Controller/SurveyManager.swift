@@ -9,19 +9,21 @@
 import UIKit
 
 enum SurveyManager {
-  static func presentSurvey(
+  static func presentSurveyIfAvailable(
     _ survey: Survey?,
     using presenter: UIViewController?,
     paywallIsDeclined: Bool,
     paywallInfo: PaywallInfo,
     storage: Storage,
     completion: @escaping () -> Void
-  ) -> Bool {
+  ) {
     guard paywallIsDeclined else {
-      return false
+      completion()
+      return
     }
     guard let survey = survey else {
-      return false
+      completion()
+      return
     }
 
     let shouldPresent = survey.shouldPresent(storage: storage)
@@ -35,7 +37,8 @@ enum SurveyManager {
         scope: .paywallViewController,
         message: "The survey will not present."
       )
-      return false
+      completion()
+      return
     }
 
     let options = survey.options.shuffled()
@@ -104,7 +107,6 @@ enum SurveyManager {
     }
 
     presenter?.present(alertController, animated: true)
-    return true
   }
 
   static private func selectedOption(

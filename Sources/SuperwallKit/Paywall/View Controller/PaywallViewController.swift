@@ -707,20 +707,8 @@ extension PaywallViewController {
     }
 
     resetPresentationPreparations()
-    let isDeclined = paywallResult ?? .declined == .declined
 
-    let isPresentingSurvey = SurveyManager.presentSurvey(
-      paywall.survey,
-      using: internalPresentingViewController,
-      paywallIsDeclined: isDeclined,
-      paywallInfo: info,
-      storage: storage
-    ) {
-      self.didDismiss()
-    }
-    if !isPresentingSurvey {
-      didDismiss()
-    }
+    didDismiss()
   }
 
   private func resetPresentationPreparations() {
@@ -737,15 +725,31 @@ extension PaywallViewController {
     paywallResult = result
     paywall.closeReason = closeReason
 
-    if let delegate = delegate {
-      didCallDelegate = true
-      delegate.didFinish(
-        paywall: self,
-        result: result,
-        shouldDismiss: true
-      )
-    } else {
-      dismiss(animated: presentationIsAnimated)
+    let isDeclined = paywallResult == .declined
+    let isSystemLogicClose = closeReason == .closeButton
+
+    func dismissView() {
+      if let delegate = delegate {
+        didCallDelegate = true
+        delegate.didFinish(
+          paywall: self,
+          result: result,
+          shouldDismiss: true
+        )
+      } else {
+        dismiss(animated: presentationIsAnimated)
+      }
+    }
+
+    let survey = Survey.stub()
+    SurveyManager.presentSurveyIfAvailable(
+      survey,
+      using: self,
+      paywallIsDeclined: isDeclined && isSystemLogicClose,
+      paywallInfo: info,
+      storage: storage
+    ) {
+      dismissView()
     }
   }
 
@@ -774,7 +778,7 @@ extension PaywallViewController {
       )
     }
 
-    if paywall.closeReason == .systemLogic {
+    if paywall.closeReason == .systemLogic || paywall.closeReason == .closeButton {
       paywallStateSubject?.send(completion: .finished)
       paywallStateSubject = nil
     }

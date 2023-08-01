@@ -30,9 +30,6 @@ final public class Survey: NSObject, Decodable {
   /// The probability that the survey will present to the user.
   public internal(set) var presentationProbability: Double
 
-  /// The locale of the survey.
-  public let locale: String
-
   /// Whether the "Other" option should appear to allow a user to provide a custom
   /// response.
   public let includeOtherOption: Bool
@@ -67,7 +64,6 @@ final public class Survey: NSObject, Decodable {
     message: String,
     options: [SurveyOption],
     presentationProbability: Double,
-    locale: String,
     includeOtherOption: Bool
   ) {
     self.id = id
@@ -76,7 +72,6 @@ final public class Survey: NSObject, Decodable {
     self.message = message
     self.options = options
     self.presentationProbability = presentationProbability
-    self.locale = locale
     self.includeOtherOption = includeOtherOption
   }
 }
@@ -91,7 +86,6 @@ extension Survey: Stubbable {
       message: "test",
       options: [.stub()],
       presentationProbability: 1,
-      locale: "en",
       includeOtherOption: true
     )
   }
