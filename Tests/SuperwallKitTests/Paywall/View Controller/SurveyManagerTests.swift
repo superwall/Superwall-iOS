@@ -10,83 +10,100 @@ import XCTest
 
 @available(iOS 14.0, *)
 final class SurveyManagerTests: XCTestCase {
-  func test_presentSurvey_paywallDeclined() {
+  func test_presentSurveyIfAvailable_paywallDeclined() {
     let survey = Survey.stub()
-    let result = SurveyManager.presentSurvey(
+    let expectation = expectation(description: "called completion block")
+    SurveyManager.presentSurveyIfAvailable(
       survey,
       using: UIViewController(),
       paywallIsDeclined: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
-      completion: {}
+      completion: {
+        expectation.fulfill()
+      }
     )
-    XCTAssertFalse(result)
+    wait(for: [expectation])
   }
 
-  func test_presentSurvey_surveyNil() {
-    let result = SurveyManager.presentSurvey(
+  func test_presentSurveyIfAvailable_surveyNil() {
+    let expectation = expectation(description: "called completion block")
+    SurveyManager.presentSurveyIfAvailable(
       nil,
       using: UIViewController(),
       paywallIsDeclined: true,
       paywallInfo: .stub(),
       storage: StorageMock(),
-      completion: {}
+      completion: {
+        expectation.fulfill()
+      }
     )
-    XCTAssertFalse(result)
+    wait(for: [expectation])
   }
 
-  func test_presentSurvey_sameAssignmentKey() {
+  func test_presentSurveyIfAvailable_sameAssignmentKey() {
     let storageMock = StorageMock()
 
     let survey = Survey.stub()
       .setting(\.assignmentKey, to: "1")
     storageMock.save("1", forType: SurveyAssignmentKey.self)
 
-    let result = SurveyManager.presentSurvey(
+    let expectation = expectation(description: "called completion block")
+    SurveyManager.presentSurveyIfAvailable(
       survey,
       using: UIViewController(),
       paywallIsDeclined: true,
       paywallInfo: .stub(),
       storage: storageMock,
-      completion: {}
+      completion: {
+        expectation.fulfill()
+      }
     )
-    XCTAssertFalse(result)
+    wait(for: [expectation])
     XCTAssertTrue(storageMock.didSave)
   }
 
-  func test_presentSurvey_zeroPresentationProbability() {
+  func test_presentSurveyIfAvailable_zeroPresentationProbability() {
     let storageMock = StorageMock()
 
     let survey = Survey.stub()
       .setting(\.presentationProbability, to: 0)
 
-    let result = SurveyManager.presentSurvey(
+    let expectation = expectation(description: "called completion block")
+
+    SurveyManager.presentSurveyIfAvailable(
       survey,
       using: UIViewController(),
       paywallIsDeclined: true,
       paywallInfo: .stub(),
       storage: storageMock,
-      completion: {}
+      completion: {
+        expectation.fulfill()
+      }
     )
-    XCTAssertFalse(result)
+    wait(for: [expectation])
     XCTAssertTrue(storageMock.didSave)
   }
 
-  func test_presentSurvey_success() {
+  func test_presentSurveyIfAvailable_success() {
     let storageMock = StorageMock()
     storageMock.reset()
 
     let survey = Survey.stub()
       .setting(\.presentationProbability, to: 1)
 
-    let result = SurveyManager.presentSurvey(
+    let expectation = expectation(description: "called completion block")
+    expectation.isInverted = true
+    SurveyManager.presentSurveyIfAvailable(
       survey,
       using: UIViewController(),
       paywallIsDeclined: true,
       paywallInfo: .stub(),
       storage: storageMock,
-      completion: {}
+      completion: {
+        expectation.fulfill()
+      }
     )
-    XCTAssertTrue(result)
+    wait(for: [expectation])
   }
 }

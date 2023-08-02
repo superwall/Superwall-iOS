@@ -478,7 +478,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
         dismiss(
           paywallViewController,
           result: .declined,
-          closeReason: .closeButton
+          closeReason: .manualClose
         )
       }
 

@@ -47,14 +47,28 @@ final public class Survey: NSObject, Decodable {
     guard randomNumber < presentationProbability else {
       return false
     }
-    // If survey with assignment key already seen, don't present.
-    let existingAssignmentKey = storage.get(SurveyAssignmentKey.self)
 
-    guard existingAssignmentKey == nil || existingAssignmentKey != assignmentKey else {
+    if hasSeenSurvey(storage: storage) {
       return false
     }
 
     return true
+  }
+
+  /// Determines whether a survey with the same `assignmentKey` has been
+  /// seen before.
+  func hasSeenSurvey(storage: Storage) -> Bool {
+    let existingAssignmentKey = storage.get(SurveyAssignmentKey.self)
+
+    if existingAssignmentKey == nil {
+      return false
+    }
+
+    if existingAssignmentKey == assignmentKey {
+      return true
+    }
+
+    return false
   }
 
   init(

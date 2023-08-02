@@ -27,8 +27,8 @@ public enum PaywallCloseReason: Int, Codable, Equatable, Sendable {
   /// handler will be called. If it's for a non-gated paywall, the feature block will be called.
   case webViewFailedToLoad
 
-  /// The paywall was closed because the user tapped the close button.
-  case closeButton
+  /// The paywall was closed because the user tapped the close button or dragged to dismiss.
+  case manualClose
 
   /// The paywall hasn't been closed yet.
   case none

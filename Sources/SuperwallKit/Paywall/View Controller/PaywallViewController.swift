@@ -131,6 +131,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var presentationDidFinishPrepare = false
   private var didCallDelegate = false
 
+  /// `true` if there's a survey to complete and the paywall is displayed in a modal style.
+  private var didDisableSwipeForSurvey = false
+
   /// The presenting view controller, saved for presenting surveys from when
   /// the view disappears.
   var internalPresentingViewController: UIViewController?
@@ -234,7 +237,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Triggered by user closing the paywall when the webview hasn't loaded.
   @objc private func forceClose() {
     dismiss(
-      result: .declined
+      result: .declined,
+      closeReason: .systemLogic
     ) { [weak self] in
       guard let self = self else {
         return
@@ -570,6 +574,16 @@ extension PaywallViewController: SWWebViewDelegate {
   }
 }
 
+// MARK: - UIAdaptivePresentationControllerDelegate
+extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
+  public func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) {
+    dismiss(
+      result: .declined,
+      closeReason: .manualClose
+    )
+  }
+}
+
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
@@ -602,7 +616,8 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
   func openDeepLink(_ url: URL) {
     dismiss(
-      result: .declined
+      result: .declined,
+      closeReason: .systemLogic
     ) { [weak self] in
       self?.eventDidOccur(.openedDeepLink(url: url))
       UIApplication.shared.open(url)
@@ -636,6 +651,16 @@ extension PaywallViewController {
   private func presentationWillBegin() {
     guard presentationWillPrepare else {
       return
+    }
+    if let survey = paywall.survey,
+      survey.hasSeenSurvey(storage: storage) == false,
+      modalPresentationStyle == .formSheet
+      || modalPresentationStyle == .pageSheet
+      || modalPresentationStyle == .popover,
+      presentationController?.delegate == nil {
+      didDisableSwipeForSurvey = true
+      presentationController?.delegate = self
+      isModalInPresentation = true
     }
     addShimmerView(onPresent: true)
 
@@ -718,7 +743,7 @@ extension PaywallViewController {
 
   func dismiss(
     result: PaywallResult,
-    closeReason: PaywallCloseReason = .systemLogic,
+    closeReason: PaywallCloseReason,
     completion: (() -> Void)? = nil
   ) {
     dismissCompletionBlock = completion
@@ -726,7 +751,7 @@ extension PaywallViewController {
     paywall.closeReason = closeReason
 
     let isDeclined = paywallResult == .declined
-    let isSystemLogicClose = closeReason == .closeButton
+    let isManualClose = closeReason == .manualClose
 
     func dismissView() {
       if let delegate = delegate {
@@ -741,11 +766,10 @@ extension PaywallViewController {
       }
     }
 
-    let survey = Survey.stub()
     SurveyManager.presentSurveyIfAvailable(
-      survey,
+      paywall.survey,
       using: self,
-      paywallIsDeclined: isDeclined && isSystemLogicClose,
+      paywallIsDeclined: isDeclined && isManualClose,
       paywallInfo: info,
       storage: storage
     ) {
@@ -778,7 +802,8 @@ extension PaywallViewController {
       )
     }
 
-    if paywall.closeReason == .systemLogic || paywall.closeReason == .closeButton {
+    // TODO: Might want to move this to track close:
+    if paywall.closeReason == .systemLogic || paywall.closeReason == .manualClose {
       paywallStateSubject?.send(completion: .finished)
       paywallStateSubject = nil
     }
@@ -786,6 +811,13 @@ extension PaywallViewController {
     // Reset state
     Superwall.shared.destroyPresentingWindow()
     GameControllerManager.shared.clearDelegate(self)
+
+
+    if didDisableSwipeForSurvey {
+      presentationController?.delegate = nil
+      isModalInPresentation = false
+      didDisableSwipeForSurvey = false
+    }
 
     paywallResult = nil
     cache?.activePaywallVcKey = nil
