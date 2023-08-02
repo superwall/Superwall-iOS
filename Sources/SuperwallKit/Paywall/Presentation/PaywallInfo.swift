@@ -201,18 +201,15 @@ public final class PaywallInfo: NSObject {
     forProduct product: StoreProduct? = nil,
     otherParams: [String: Any]? = nil
   ) async -> [String: Any] {
-    var output: [String: Any] = [
-      "paywall_id": databaseId,
+    var output = customParams()
+
+    output += [
       "paywalljs_version": paywalljsVersion as Any,
       "paywall_identifier": identifier,
-      "paywall_name": name,
       "paywall_url": url.absoluteString,
-      "presented_by_event_name": presentedByEventWithName as Any,
       "presented_by_event_id": presentedByEventWithId as Any,
       "presented_by_event_timestamp": presentedByEventAt as Any,
       "presentation_source_type": presentationSourceType as Any,
-      "presented_by": presentedBy as Any,
-      "paywall_product_ids": productIds.joined(separator: ","),
       "paywall_response_load_start_time": responseLoadStartTime as Any,
       "paywall_response_load_complete_time": responseLoadCompleteTime as Any,
       "paywall_response_load_duration": responseLoadDuration as Any,
@@ -222,15 +219,13 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_start_time": productsLoadStartTime as Any,
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
       "paywall_products_load_fail_time": productsLoadFailTime as Any,
-      "paywall_products_load_duration": productsLoadDuration as Any,
-      "is_free_trial_available": isFreeTrialAvailable as Any,
-      "feature_gating": featureGatingBehavior.rawValue as Any
+      "paywall_products_load_duration": productsLoadDuration as Any
     ]
 
     let triggerSessionManager = factory.getTriggerSessionManager()
     if let triggerSession = await triggerSessionManager.activeTriggerSession,
-      let databaseId = triggerSession.paywall?.databaseId,
-      databaseId == self.databaseId {
+       let databaseId = triggerSession.paywall?.databaseId,
+       databaseId == self.databaseId {
       output["trigger_session_id"] = triggerSession.id
       output["experiment_id"] = triggerSession.trigger.experiment?.id
       output["variant_id"] = triggerSession.trigger.experiment?.variant.id
@@ -239,7 +234,7 @@ public final class PaywallInfo: NSObject {
     var loadingVars: [String: Any] = [:]
     for key in output.keys {
       if key.contains("_load_"),
-        let output = output[key] {
+         let output = output[key] {
         loadingVars[key] = output
       }
     }
@@ -250,16 +245,6 @@ public final class PaywallInfo: NSObject {
       message: "Paywall loading timestamps",
       info: loadingVars
     )
-
-    let levels = ["primary", "secondary", "tertiary"]
-
-    for (id, level) in levels.enumerated() {
-      let key = "\(level)_product_id"
-      output[key] = ""
-      if id < products.count {
-        output[key] = productIds[id]
-      }
-    }
 
     if let product = product {
       output["product_id"] = product.productIdentifier
@@ -275,6 +260,31 @@ public final class PaywallInfo: NSObject {
         if let value = otherParams[key] {
           output[key] = value
         }
+      }
+    }
+
+    return output
+  }
+
+  /// Parameters that can be used in rules.
+  func customParams() -> [String: Any] {
+    var output: [String: Any] = [
+      "paywall_id": databaseId,
+      "paywall_name": name,
+      "presented_by_event_name": presentedByEventWithName as Any,
+      "paywall_product_ids": productIds.joined(separator: ","),
+      "is_free_trial_available": isFreeTrialAvailable as Any,
+      "feature_gating": featureGatingBehavior.rawValue as Any,
+      "presented_by": presentedBy as Any,
+    ]
+
+    let levels = ["primary", "secondary", "tertiary"]
+
+    for (id, level) in levels.enumerated() {
+      let key = "\(level)_product_id"
+      output[key] = ""
+      if id < products.count {
+        output[key] = productIds[id]
       }
     }
 

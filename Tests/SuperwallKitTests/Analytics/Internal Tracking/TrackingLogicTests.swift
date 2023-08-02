@@ -86,7 +86,8 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertEqual(parameters.eventParams["$count_24h"] as! Int, 2)
   }
 */
-  func testProcessParameters_superwallEvent_noCustomParams() async {
+
+  func testProcessParameters_paywallLoad() async {
     // Given
     let eventName = "TestName"
     let event = InternalSuperwallEvent.PaywallLoad(
@@ -109,14 +110,11 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_withCustomParams() async {
+  func testProcessParameters_attributes_withCustomParams() async {
     // Given
     let eventName = "TestName"
-    let event = InternalSuperwallEvent.PaywallLoad(
-      state: .start,
-      eventData: EventData
-        .stub()
-        .setting(\.name, to: eventName),
+    let event = InternalSuperwallEvent.Attributes(
+      appInstalledAtString: "abc",
       customParameters: [
         "myCustomParam": "hello",
         "otherParam": true
@@ -125,17 +123,17 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt,
+      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "paywallResponseLoad_start")
+    XCTAssertEqual(parameters.eventParams["$application_installed_at"] as! String, "abc")
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "user_attributes")
     XCTAssertEqual(parameters.eventParams["myCustomParam"] as! String, "hello")
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
     XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! String, "hello")
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -143,11 +141,8 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_containsDollar() async {
     // Given
     let eventName = "TestName"
-    let event = InternalSuperwallEvent.PaywallLoad(
-      state: .start,
-      eventData: EventData
-        .stub()
-        .setting(\.name, to: eventName),
+    let event = InternalSuperwallEvent.Attributes(
+      appInstalledAtString: "abc",
       customParameters: [
         "$myCustomParam": "hello",
         "otherParam": true
@@ -156,17 +151,17 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt,
+      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "paywallResponseLoad_start")
+    XCTAssertEqual(parameters.eventParams["$application_installed_at"] as! String, "abc")
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "user_attributes")
     XCTAssertNil(parameters.eventParams["$myCustomParam"])
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
     XCTAssertNil(parameters.delegateParams["$myCustomParam"])
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -174,11 +169,8 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_containArray() async {
     // Given
     let eventName = "TestName"
-    let event = InternalSuperwallEvent.PaywallLoad(
-      state: .start,
-      eventData: EventData
-        .stub()
-        .setting(\.name, to: eventName),
+    let event = InternalSuperwallEvent.Attributes(
+      appInstalledAtString: "abc",
       customParameters: [
         "myCustomParam": ["hello"],
         "otherParam": true
@@ -187,17 +179,17 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt,
+      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "paywallResponseLoad_start")
+    XCTAssertEqual(parameters.eventParams["$application_installed_at"] as! String, "abc")
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "user_attributes")
     XCTAssertNil(parameters.eventParams["myCustomParam"])
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
     XCTAssertNil(parameters.delegateParams["myCustomParam"])
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -205,30 +197,27 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_containDictionary() async {
     // Given
     let eventName = "TestName"
-    let event = InternalSuperwallEvent.PaywallLoad(
-      state: .start,
-      eventData: EventData
-        .stub()
-        .setting(\.name, to: eventName),
+    let event = InternalSuperwallEvent.Attributes(
+      appInstalledAtString: "abc",
       customParameters: [
-        "myCustomParam": ["one" : "hello"],
+        "myCustomParam": ["one": "two"],
         "otherParam": true
       ]
     )
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt,
+      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "paywallResponseLoad_start")
+    XCTAssertEqual(parameters.eventParams["$application_installed_at"] as! String, "abc")
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "user_attributes")
     XCTAssertNil(parameters.eventParams["myCustomParam"])
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
     XCTAssertNil(parameters.delegateParams["myCustomParam"])
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -237,11 +226,8 @@ final class TrackingLogicTests: XCTestCase {
     // Given
     let date = Date(timeIntervalSince1970: 1650534735)
     let eventName = "TestName"
-    let event = InternalSuperwallEvent.PaywallLoad(
-      state: .start,
-      eventData: EventData
-        .stub()
-        .setting(\.name, to: eventName),
+    let event = InternalSuperwallEvent.Attributes(
+      appInstalledAtString: "abc",
       customParameters: [
         "myCustomParam": date,
         "otherParam": true
@@ -250,17 +236,17 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt,
+      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "paywallResponseLoad_start")
+    XCTAssertEqual(parameters.eventParams["$application_installed_at"] as! String, "abc")
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "user_attributes")
     XCTAssertEqual(parameters.eventParams["myCustomParam"] as! String, date.isoString)
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
     XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! String, date.isoString)
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -269,11 +255,8 @@ final class TrackingLogicTests: XCTestCase {
     // Given
     let url = URL(string: "https://www.google.com")!
     let eventName = "TestName"
-    let event = InternalSuperwallEvent.PaywallLoad(
-      state: .start,
-      eventData: EventData
-        .stub()
-        .setting(\.name, to: eventName),
+    let event = InternalSuperwallEvent.Attributes(
+      appInstalledAtString: "abc",
       customParameters: [
         "myCustomParam": url,
         "otherParam": true
@@ -282,17 +265,17 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt,
+      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "paywallResponseLoad_start")
+    XCTAssertEqual(parameters.eventParams["$application_installed_at"] as! String, "abc")
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "user_attributes")
     XCTAssertEqual(parameters.eventParams["myCustomParam"] as! String, url.absoluteString)
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
     XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! String, url.absoluteString)
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
@@ -300,11 +283,8 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_nilValue() async {
     // Given
     let eventName = "TestName"
-    let event = InternalSuperwallEvent.PaywallLoad(
-      state: .start,
-      eventData: EventData
-        .stub()
-        .setting(\.name, to: eventName),
+    let event = InternalSuperwallEvent.Attributes(
+      appInstalledAtString: "abc",
       customParameters: [
         "myCustomParam": nil,
         "otherParam": true
@@ -313,17 +293,17 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt,
+      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
     XCTAssertTrue(parameters.eventParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.eventParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "paywallResponseLoad_start")
+    XCTAssertEqual(parameters.eventParams["$application_installed_at"] as! String, "abc")
+    XCTAssertEqual(parameters.eventParams["$event_name"] as! String, "user_attributes")
     XCTAssertNil(parameters.eventParams["myCustomParam"])
     XCTAssertTrue(parameters.eventParams["otherParam"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
     XCTAssertNil(parameters.delegateParams["myCustomParam"])
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }

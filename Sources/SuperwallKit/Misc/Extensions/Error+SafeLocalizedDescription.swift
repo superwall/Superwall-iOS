@@ -11,8 +11,8 @@ extension Error {
   /// Checks that it's not an empty NSError before returning the `localizedDescription`.`
   var safeLocalizedDescription: String {
     // Xcode lies, conditional cast is needed otherwise this crashes.
-    if let nsError = self as? NSError,
-      nsError.code == 0,
+    let nsError = self as NSError
+    if nsError.code == 0,
       nsError.domain.isEmpty {
       return "Unknown error."
     } else {
