@@ -147,6 +147,6 @@ extension Superwall {
 
     // Get the identity. This may or may not wait depending on whether the dev
     // specifically wants to wait for assignments.
-    await dependencyContainer.identityManager.hasIdentity.async()
+    try await dependencyContainer.identityManager.hasIdentity.throwableAsync()
   }
 }

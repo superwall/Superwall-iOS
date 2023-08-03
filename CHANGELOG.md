@@ -16,6 +16,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes issue where a preloaded `Paywall` object wouldn't have had an experiment available on its `info` property.
 - Fixes "error while deleting file" log on clean install of app.
 - Exposes the `IdentityOptions` initializer.
+- Fixes thread safety issues.
 
 ## 3.2.2
 

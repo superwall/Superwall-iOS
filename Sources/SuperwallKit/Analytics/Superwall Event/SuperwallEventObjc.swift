@@ -23,7 +23,7 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// This event can be used to trigger a paywall. Just add the `app_launch` event to a campaign.
   case appLaunch
 
-  /// When the SDK is configured for the first time, or directly after calling ``Superwall/reset()``.
+  /// When the SDK is configured for the first time.
   ///
   /// This event can be used to trigger a paywall. Just add the `app_install` event to a campaign.
   case appInstall

@@ -38,7 +38,7 @@ extension Superwall {
 
     var requestRetryCount = 6
 
-    let subscriptionStatus = await request.flags.subscriptionStatus.async()
+    let subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
     if subscriptionStatus == .active {
       requestRetryCount = 0
     }
@@ -82,7 +82,11 @@ extension Superwall {
     _ debugInfo: [String: Any],
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
   ) async -> Error {
-    let subscriptionStatus = await request.flags.subscriptionStatus.async()
+    do {
+      let subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
+    } catch {
+      return error
+    }
     if InternalPresentationLogic.userSubscribedAndNotOverridden(
       isUserSubscribed: subscriptionStatus == .active,
       overrides: .init(

@@ -28,7 +28,7 @@ extension Superwall {
     triggerResult: TriggerResult,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) async throws {
-    let subscriptionStatus = await request.flags.subscriptionStatus.async()
+    let subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
     if InternalPresentationLogic.userSubscribedAndNotOverridden(
       isUserSubscribed: subscriptionStatus == .active,
       overrides: .init(

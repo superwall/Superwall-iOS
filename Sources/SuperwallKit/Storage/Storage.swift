@@ -20,13 +20,13 @@ class Storage {
   /// Indicates whether first seen has been tracked.
   var didTrackFirstSeen: Bool {
     get {
-      queue.sync { [unowned self] in
-        self._didTrackFirstSeen
+      queue.sync {
+        _didTrackFirstSeen
       }
     }
     set {
-      queue.async { [unowned self] in
-        self.didTrackFirstSeen = newValue
+      queue.async { [weak self] in
+        self?.didTrackFirstSeen = newValue
       }
     }
   }
@@ -35,13 +35,13 @@ class Storage {
   /// Indicates whether first seen has been tracked.
   var didTrackFirstSession: Bool {
     get {
-      queue.sync { [unowned self] in
-        self._didTrackFirstSession
+      queue.sync {
+        _didTrackFirstSession
       }
     }
     set {
-      queue.async { [unowned self] in
-        self.didTrackFirstSession = newValue
+      queue.async { [weak self] in
+        self?.didTrackFirstSession = newValue
       }
     }
   }
@@ -56,13 +56,13 @@ class Storage {
   /// The confirmed assignments for the user loaded from the cache.
   private var confirmedAssignments: [Experiment.ID: Experiment.Variant]? {
     get {
-      queue.sync { [unowned self] in
+      queue.sync {
         self._confirmedAssignments
       }
     }
     set {
-      queue.async { [unowned self] in
-        self._confirmedAssignments = newValue
+      queue.async { [weak self] in
+        self?._confirmedAssignments = newValue
       }
     }
   }
@@ -139,7 +139,7 @@ class Storage {
   // MARK: - Custom
   /// Tracks and stores first seen for the user.
 	func recordFirstSeenTracked() {
-    queue.async { [unowned self] in
+    queue.async {
       if self._didTrackFirstSeen {
         return
       }
@@ -153,7 +153,7 @@ class Storage {
 	}
 
   func recordFirstSessionTracked() {
-    queue.async { [unowned self] in
+    queue.async {
       if self._didTrackFirstSession {
         return
       }

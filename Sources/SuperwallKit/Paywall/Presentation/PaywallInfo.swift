@@ -4,7 +4,6 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
-// swiftlint:disable cyclomatic_complexity function_body_length
 
 import Foundation
 import StoreKit
@@ -224,8 +223,8 @@ public final class PaywallInfo: NSObject {
 
     let triggerSessionManager = factory.getTriggerSessionManager()
     if let triggerSession = await triggerSessionManager.activeTriggerSession,
-       let databaseId = triggerSession.paywall?.databaseId,
-       databaseId == self.databaseId {
+      let databaseId = triggerSession.paywall?.databaseId,
+      databaseId == self.databaseId {
       output["trigger_session_id"] = triggerSession.id
       output["experiment_id"] = triggerSession.trigger.experiment?.id
       output["variant_id"] = triggerSession.trigger.experiment?.variant.id
@@ -234,7 +233,7 @@ public final class PaywallInfo: NSObject {
     var loadingVars: [String: Any] = [:]
     for key in output.keys {
       if key.contains("_load_"),
-         let output = output[key] {
+        let output = output[key] {
         loadingVars[key] = output
       }
     }
@@ -275,7 +274,7 @@ public final class PaywallInfo: NSObject {
       "paywall_product_ids": productIds.joined(separator: ","),
       "is_free_trial_available": isFreeTrialAvailable as Any,
       "feature_gating": featureGatingBehavior.rawValue as Any,
-      "presented_by": presentedBy as Any,
+      "presented_by": presentedBy as Any
     ]
 
     let levels = ["primary", "secondary", "tertiary"]

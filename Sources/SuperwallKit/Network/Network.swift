@@ -132,10 +132,10 @@ class Network {
     let applicationStatePublisher = injectedApplicationStatePublisher ?? existingApplicationStatePublisher
 
       // Suspend until app is in foreground.
-    await applicationStatePublisher
+    try await applicationStatePublisher
       .subscribe(on: DispatchQueue.main)
       .filter { $0 != .background }
-      .async()
+      .throwableAsync()
 
     do {
       let requestId = UUID().uuidString
