@@ -15,6 +15,7 @@ final class StorageMock: Storage {
   var internalCachedTransactions: [StoreTransaction]
   var internalConfirmedAssignments: [Experiment.ID: Experiment.Variant]
   var didClearCachedSessionEvents = false
+  var didSave = false
 
   class DeviceInfoFactoryMock: DeviceHelperFactory, HasPurchaseControllerFactory {
     func makeDeviceInfo() -> DeviceInfo {
@@ -50,7 +51,7 @@ final class StorageMock: Storage {
     } else if keyType == Transactions.self {
       return internalCachedTransactions as? Key.Value
     }
-    return nil
+    return super.get(keyType)
   }
 
   override func get<Key>(_ keyType: Key.Type) -> Key.Value? where Key : Storable, Key.Value : Decodable {
@@ -59,7 +60,7 @@ final class StorageMock: Storage {
     } else if keyType == Transactions.self {
       return internalCachedTransactions as? Key.Value
     }
-    return nil
+    return super.get(keyType)
   }
 
   override func clearCachedSessionEvents() {
@@ -72,5 +73,15 @@ final class StorageMock: Storage {
 
   override func saveConfirmedAssignments(_ assignments: [String : Experiment.Variant]) {
     internalConfirmedAssignments = assignments
+  }
+
+  override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable {
+    super.save(value, forType: keyType)
+    didSave = true
+  }
+
+  override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable, Key.Value : Encodable {
+    super.save(value, forType: keyType)
+    didSave = true
   }
 }

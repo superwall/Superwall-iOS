@@ -75,9 +75,13 @@ extension Superwall {
     forEvent event: Trackable,
     withData eventData: EventData
   ) async {
-    await dependencyContainer.configManager.configState
-      .compactMap { $0.getConfig() }
-      .async()
+    do {
+      try await dependencyContainer.configManager.configState
+        .compactMap { $0.getConfig() }
+        .throwableAsync()
+    } catch {
+      return
+    }
 
     let presentationInfo: PresentationInfo = .implicitTrigger(eventData)
 
@@ -97,7 +101,7 @@ extension Superwall {
         isPaywallPresented: isPaywallPresented,
         type: .presentation
       )
-      await internallyPresent(presentationRequest).asyncNoValue()
+      _ = try? await internallyPresent(presentationRequest).throwableAsync()
     case .closePaywallThenTriggerPaywall:
       guard let lastPresentationItems = presentationItems.last else {
         return
@@ -110,17 +114,17 @@ extension Superwall {
         isPaywallPresented: isPaywallPresented,
         type: .presentation
       )
-      await internallyPresent(
+      _ = try? await internallyPresent(
         presentationRequest,
         lastPresentationItems.statePublisher
-      ).asyncNoValue()
+      ).throwableAsync()
     case .triggerPaywall:
       let presentationRequest = dependencyContainer.makePresentationRequest(
         presentationInfo,
         isPaywallPresented: isPaywallPresented,
         type: .presentation
       )
-      await internallyPresent(presentationRequest).asyncNoValue()
+      _ = try? await internallyPresent(presentationRequest).throwableAsync()
     case .disallowedEventAsTrigger:
       Logger.debug(
         logLevel: .warn,

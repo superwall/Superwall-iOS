@@ -28,18 +28,12 @@ final class NetworkTests: XCTestCase {
       )
       completion()
     }
-
-    let milliseconds = 200
-    let nanoseconds = UInt64(milliseconds * 1_000_000)
-    try? await Task.sleep(nanoseconds: nanoseconds)
-
-    task.cancel()
   }
 
   // MARK: - Config
   func test_config_inBackground() async {
     let urlSession = CustomURLSessionMock()
-    let publisher = Just(UIApplication.State.background)
+    let publisher = CurrentValueSubject<UIApplication.State, Never>(.background)
       .eraseToAnyPublisher()
     let expectation = expectation(description: "config completed")
     expectation.isInverted = true
@@ -59,7 +53,7 @@ final class NetworkTests: XCTestCase {
     let urlSession = CustomURLSessionMock()
     let dependencyContainer = DependencyContainer()
     let network = Network(urlSession: urlSession, factory: dependencyContainer)
-    let publisher = Just(UIApplication.State.active)
+    let publisher = CurrentValueSubject<UIApplication.State, Never>(.active)
       .eraseToAnyPublisher()
 
     _ = try? await network.getConfig(

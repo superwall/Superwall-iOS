@@ -37,7 +37,8 @@ enum TrackingLogic {
 
     var eventParams: [String: Any] = [
       "$is_standard_event": isStandardEvent,
-      "$event_name": eventName
+      "$event_name": eventName,
+      "event_name": eventName
     ]
 
     // Filter then assign Superwall parameters

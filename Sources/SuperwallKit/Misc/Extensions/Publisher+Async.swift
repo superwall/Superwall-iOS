@@ -8,41 +8,7 @@
 
 import Combine
 
-enum AsyncError: Error {
-  case finishedWithoutValue
-}
-
 extension Publisher {
-  /// Returns on completion after getting the first value of the publisher, regardless
-  /// of whether a value was returned or a failure occurred.
-  func asyncNoValue() async {
-    _ = await withCheckedContinuation { continuation in
-      var cancellable: AnyCancellable?
-      cancellable = first()
-        .sink(
-          receiveCompletion: { _ in
-            continuation.resume()
-            cancellable?.cancel()
-          },
-          receiveValue: { _ in }
-        )
-    }
-  }
-
-  /// Returns the first value of the publisher.
-  @discardableResult
-  func async() async -> Output {
-    await withCheckedContinuation { continuation in
-      var cancellable: AnyCancellable?
-      cancellable = first()
-        .sink { _ in
-          cancellable?.cancel()
-        } receiveValue: { value in
-          continuation.resume(with: .success(value))
-        }
-    }
-  }
-
   /// Returns the first value of the publisher, throwing on failure or if no value was returned.
   @discardableResult
   func throwableAsync() async throws -> Output {

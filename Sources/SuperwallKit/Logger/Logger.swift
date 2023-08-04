@@ -46,7 +46,13 @@ enum Logger: Loggable {
     logLevel: LogLevel,
     scope: LogScope
   ) -> Bool {
-    let logging = Superwall.shared.options.logging
+    var logging: SuperwallOptions.Logging
+
+    if Superwall.isInitialized {
+      logging = Superwall.shared.options.logging
+    } else {
+      logging = .init()
+    }
     if logging.level == .none {
       return false
     }
@@ -83,13 +89,15 @@ enum Logger: Loggable {
         dumping["error"] = error
       }
 
-      await Superwall.shared.dependencyContainer.delegateAdapter.handleLog(
-        level: logLevel.description,
-        scope: scope.description,
-        message: message,
-        info: info,
-        error: error
-      )
+      if Superwall.isInitialized {
+        await Superwall.shared.dependencyContainer.delegateAdapter.handleLog(
+          level: logLevel.description,
+          scope: scope.description,
+          message: message,
+          info: info,
+          error: error
+        )
+      }
 
       guard shouldPrint(logLevel: logLevel, scope: scope) else {
         return

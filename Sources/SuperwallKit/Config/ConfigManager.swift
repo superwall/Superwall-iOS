@@ -29,38 +29,15 @@ class ConfigManager {
   var options = SuperwallOptions()
 
   /// A dictionary of triggers by their event name.
-  var triggersByEventName: [String: Trigger] {
-    get {
-      queue.sync { [unowned self] in
-        self._triggersByEventName
-      }
-    }
-    set {
-      queue.async { [unowned self] in
-        self._triggersByEventName = newValue
-      }
-    }
-  }
-  private var _triggersByEventName: [String: Trigger] = [:]
+  @DispatchQueueBacked
+  var triggersByEventName: [String: Trigger] = [:]
 
   /// A memory store of assignments that are yet to be confirmed.
   ///
   /// When the trigger is fired, the assignment is confirmed and stored to disk.
-  var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] {
-    get {
-      queue.sync { [unowned self] in
-        self._unconfirmedAssignments
-      }
-    }
-    set {
-      queue.async { [unowned self] in
-        self._unconfirmedAssignments = newValue
-      }
-    }
-  }
-  private var _unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
-  private let queue = DispatchQueue(label: "com.superwall.configmanager")
+  @DispatchQueueBacked
+  var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
   private unowned let storeKitManager: StoreKitManager
   private unowned let storage: Storage

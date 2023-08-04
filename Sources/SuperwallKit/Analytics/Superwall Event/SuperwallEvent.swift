@@ -22,7 +22,7 @@ public enum SuperwallEvent {
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case appLaunch
 
-  /// When the SDK is configured for the first time, or directly after calling ``Superwall/reset()``.
+  /// When the SDK is configured for the first time.
   ///
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case appInstall
@@ -124,6 +124,14 @@ public enum SuperwallEvent {
   /// When the request to load the paywall's products completed.
   case paywallProductsLoadComplete(triggeredEventName: String?)
 
+  /// When the response to a paywall survey is recorded.
+  case surveyResponse(
+    survey: Survey,
+    selectedOption: SurveyOption,
+    customResponse: String?,
+    paywallInfo: PaywallInfo
+  )
+
   /// Information about the paywall presentation request
   case paywallPresentationRequest(
     status: PaywallPresentationRequestStatus,
@@ -138,7 +146,8 @@ public enum SuperwallEvent {
       .deepLink,
       .transactionFail,
       .paywallDecline,
-      .transactionAbandon:
+      .transactionAbandon,
+      .surveyResponse:
       return true
     default:
       return false
@@ -236,6 +245,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallProductsLoadComplete)
     case .paywallPresentationRequest:
       return .init(objcEvent: .paywallPresentationRequest)
+    case .surveyResponse:
+      return .init(objcEvent: .surveyResponse)
     }
   }
 }

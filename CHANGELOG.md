@@ -2,6 +2,22 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.3.0
+
+### Enhancements
+
+- Adds the ability to add a paywall exit survey. Surveys are configured via the dashboard and added to paywalls. When added to a paywall, it will attempt to display when the user taps the close button. If the paywall has the `modalPresentationStyle` of `pageSheet`, `formSheet`, or `popover`, the survey will also attempt to display when the user tries to drag to dismiss the paywall. The probability of the survey showing is determined by the survey's configuration in the dashboard. A user will only ever see one survey unless you reset its assignment key on the dashboard. The survey will always show on exit of the paywall in the debugger.
+- Adds the ability to add `survey_close` as a trigger and use the selected option title in rules.
+- Adds new `PaywallCloseReason` `.manualClose`.
+
+### Fixes
+
+- Fixes a recursive issue that was happening if you forgot to configure the Superwall instance.
+- Fixes issue where a preloaded `Paywall` object wouldn't have had an experiment available on its `info` property.
+- Fixes "error while deleting file" log on clean install of app.
+- Exposes the `IdentityOptions` initializer.
+- Fixes thread safety issues.
+
 ## 3.2.2
 
 ### Fixes
