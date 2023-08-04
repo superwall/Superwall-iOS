@@ -8,7 +8,9 @@
 
 import UIKit
 
-enum SurveyManager {
+final class SurveyManager {
+  static private var otherAlertController: UIAlertController?
+
   static func presentSurveyIfAvailable(
     _ survey: Survey?,
     using presenter: UIViewController?,
@@ -73,16 +75,23 @@ enum SurveyManager {
         title: "Other",
         style: .default
       ) { _ in
-        // TODO: Sort out the ID here:
-        let option = SurveyOption(id: "123", title: "Other")
+        let option = SurveyOption(id: "000", title: "Other")
 
         let otherAlertController = UIAlertController(
-          title: option.title,
-          message: nil,
+          title: survey.title,
+          message: survey.message,
           preferredStyle: .alert
         )
+        self.otherAlertController = otherAlertController
         otherAlertController.popoverPresentationController?.sourceView = presenter?.view
-        otherAlertController.addTextField()
+        otherAlertController.addTextField { textField in
+          textField.addTarget(
+            self,
+            action: #selector(alertTextFieldDidChange(_:)),
+            for: .editingChanged
+          )
+          textField.placeholder = "Your response"
+        }
 
         let submitAction = UIAlertAction(title: "Submit", style: .default) { _ in
           let textField = otherAlertController.textFields?[0]
@@ -96,6 +105,7 @@ enum SurveyManager {
             completion: completion
           )
         }
+        submitAction.isEnabled = false
 
         otherAlertController.addAction(submitAction)
 
@@ -129,6 +139,15 @@ enum SurveyManager {
         )
       }
       completion()
+    }
+    otherAlertController = nil
+  }
+
+  @objc
+  static private func alertTextFieldDidChange(_ sender: UITextField) {
+    if let text = sender.text {
+      let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+      otherAlertController?.actions[0].isEnabled = !text.isEmpty
     }
   }
 }

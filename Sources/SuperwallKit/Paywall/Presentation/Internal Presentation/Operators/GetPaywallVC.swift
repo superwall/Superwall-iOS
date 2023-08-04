@@ -82,8 +82,9 @@ extension Superwall {
     _ debugInfo: [String: Any],
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
   ) async -> Error {
+    let subscriptionStatus: SubscriptionStatus
     do {
-      let subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
+      subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
     } catch {
       return error
     }

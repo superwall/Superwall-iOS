@@ -104,6 +104,6 @@ final class SurveyManagerTests: XCTestCase {
         expectation.fulfill()
       }
     )
-    wait(for: [expectation])
+    wait(for: [expectation], timeout: 0.1)
   }
 }
