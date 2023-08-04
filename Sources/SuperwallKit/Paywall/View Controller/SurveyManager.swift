@@ -13,13 +13,19 @@ final class SurveyManager {
 
   static func presentSurveyIfAvailable(
     _ survey: Survey?,
-    using presenter: UIViewController?,
-    paywallIsDeclined: Bool,
+    using presenter: UIViewController,
+    loadingState: PaywallLoadingState,
+    paywallIsManuallyDeclined: Bool,
+    isDebuggerLaunched: Bool,
     paywallInfo: PaywallInfo,
     storage: Storage,
     completion: @escaping () -> Void
   ) {
-    guard paywallIsDeclined else {
+    guard loadingState == .ready else {
+      completion()
+      return
+    }
+    guard paywallIsManuallyDeclined else {
       completion()
       return
     }
@@ -28,10 +34,15 @@ final class SurveyManager {
       return
     }
 
-    let shouldPresent = survey.shouldPresent(storage: storage)
+    let shouldPresent = survey.shouldPresent(
+      isDebuggerLaunched: isDebuggerLaunched,
+      storage: storage
+    )
 
-    // Make sure we don't assess this survey with this assignment key again.
-    storage.save(survey.assignmentKey, forType: SurveyAssignmentKey.self)
+    if !isDebuggerLaunched {
+      // Make sure we don't assess this survey with this assignment key again.
+      storage.save(survey.assignmentKey, forType: SurveyAssignmentKey.self)
+    }
 
     guard shouldPresent else {
       Logger.debug(
@@ -51,7 +62,14 @@ final class SurveyManager {
       message: survey.message,
       preferredStyle: .actionSheet
     )
-    alertController.popoverPresentationController?.sourceView = presenter?.view
+    alertController.popoverPresentationController?.sourceView = presenter.view
+    // Calculate the center of the view
+    let centerX = presenter.view.bounds.midX
+    let centerY = presenter.view.bounds.minY
+
+    // Set the sourceRect to center the popover
+    alertController.popoverPresentationController?.sourceRect = CGRect(x: centerX, y: centerY, width: 0, height: 0)
+    alertController.isModalInPresentation = true
 
     for option in options {
       let action = UIAlertAction(
@@ -83,7 +101,7 @@ final class SurveyManager {
           preferredStyle: .alert
         )
         self.otherAlertController = otherAlertController
-        otherAlertController.popoverPresentationController?.sourceView = presenter?.view
+        otherAlertController.popoverPresentationController?.sourceView = presenter.view
         otherAlertController.addTextField { textField in
           textField.addTarget(
             self,
@@ -110,13 +128,13 @@ final class SurveyManager {
         otherAlertController.addAction(submitAction)
 
         alertController.dismiss(animated: true) {
-          presenter?.present(otherAlertController, animated: true)
+          presenter.present(otherAlertController, animated: true)
         }
       }
       alertController.addAction(otherAction)
     }
 
-    presenter?.present(alertController, animated: true)
+    presenter.present(alertController, animated: true)
   }
 
   static private func selectedOption(

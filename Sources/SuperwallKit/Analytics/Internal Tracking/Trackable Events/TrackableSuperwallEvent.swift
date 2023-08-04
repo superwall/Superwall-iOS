@@ -57,7 +57,8 @@ enum InternalSuperwallEvent {
     var customParameters: [String: Any] {
       let output = paywallInfo.customParams()
       return output + [
-        "survey_selected_option_title": selectedOption.title
+        "survey_selected_option_title": selectedOption.title,
+        "survey_custom_response": customResponse as Any
       ]
     }
     let survey: Survey
@@ -69,8 +70,7 @@ enum InternalSuperwallEvent {
       let params: [String: Any] = [
         "survey_id": survey.id,
         "survey_assignment_key": survey.assignmentKey,
-        "survey_selected_option_id": selectedOption.id,
-        "survey_custom_response": customResponse as Any
+        "survey_selected_option_id": selectedOption.id
       ]
 
       return await paywallInfo.eventParams(otherParams: params)

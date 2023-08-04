@@ -32,4 +32,14 @@ public enum PaywallCloseReason: Int, Codable, Equatable, Sendable {
 
   /// The paywall hasn't been closed yet.
   case none
+
+  /// Indicates whether the paywall state publisher should receive a completion.
+  var stateShouldComplete: Bool {
+    switch self {
+    case .forNextPaywall:
+      return false
+    default:
+      return true
+    }
+  }
 }

@@ -769,7 +769,9 @@ extension PaywallViewController {
     SurveyManager.presentSurveyIfAvailable(
       paywall.survey,
       using: self,
-      paywallIsDeclined: isDeclined && isManualClose,
+      loadingState: loadingState,
+      paywallIsManuallyDeclined: isDeclined && isManualClose,
+      isDebuggerLaunched: request?.flags.isDebuggerLaunched == true,
       paywallInfo: info,
       storage: storage
     ) {
@@ -802,8 +804,7 @@ extension PaywallViewController {
       )
     }
 
-    // TODO: Might want to move this to track close:
-    if paywall.closeReason == .systemLogic || paywall.closeReason == .manualClose {
+    if paywall.closeReason.stateShouldComplete {
       paywallStateSubject?.send(completion: .finished)
       paywallStateSubject = nil
     }

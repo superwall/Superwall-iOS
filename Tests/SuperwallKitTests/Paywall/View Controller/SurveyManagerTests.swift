@@ -16,7 +16,9 @@ final class SurveyManagerTests: XCTestCase {
     SurveyManager.presentSurveyIfAvailable(
       survey,
       using: UIViewController(),
-      paywallIsDeclined: false,
+      loadingState: .ready,
+      paywallIsManuallyDeclined: false,
+      isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
       completion: {
@@ -31,7 +33,77 @@ final class SurveyManagerTests: XCTestCase {
     SurveyManager.presentSurveyIfAvailable(
       nil,
       using: UIViewController(),
-      paywallIsDeclined: true,
+      loadingState: .ready,
+      paywallIsManuallyDeclined: true,
+      isDebuggerLaunched: false,
+      paywallInfo: .stub(),
+      storage: StorageMock(),
+      completion: {
+        expectation.fulfill()
+      }
+    )
+    wait(for: [expectation])
+  }
+
+  func test_presentSurveyIfAvailable_loadingState_loadingPurchase() {
+    let expectation = expectation(description: "called completion block")
+    SurveyManager.presentSurveyIfAvailable(
+      .stub(),
+      using: UIViewController(),
+      loadingState: .loadingPurchase,
+      paywallIsManuallyDeclined: true,
+      isDebuggerLaunched: false,
+      paywallInfo: .stub(),
+      storage: StorageMock(),
+      completion: {
+        expectation.fulfill()
+      }
+    )
+    wait(for: [expectation])
+  }
+
+  func test_presentSurveyIfAvailable_loadingState_loadingURL() {
+    let expectation = expectation(description: "called completion block")
+    SurveyManager.presentSurveyIfAvailable(
+      .stub(),
+      using: UIViewController(),
+      loadingState: .loadingURL,
+      paywallIsManuallyDeclined: true,
+      isDebuggerLaunched: false,
+      paywallInfo: .stub(),
+      storage: StorageMock(),
+      completion: {
+        expectation.fulfill()
+      }
+    )
+    wait(for: [expectation])
+  }
+
+  func test_presentSurveyIfAvailable_loadingState_manualLoading() {
+    let expectation = expectation(description: "called completion block")
+    SurveyManager.presentSurveyIfAvailable(
+      .stub(),
+      using: UIViewController(),
+      loadingState: .manualLoading,
+      paywallIsManuallyDeclined: true,
+      isDebuggerLaunched: false,
+      paywallInfo: .stub(),
+      storage: StorageMock(),
+      completion: {
+        expectation.fulfill()
+      }
+    )
+    wait(for: [expectation])
+  }
+
+  func test_presentSurveyIfAvailable_loadingState_unknown() {
+    let expectation = expectation(description: "called completion block")
+    SurveyManager.presentSurveyIfAvailable(
+      .stub(),
+      using: UIViewController(),
+      loadingState: .unknown,
+      paywallIsManuallyDeclined: true,
+      isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
       completion: {
@@ -52,7 +124,9 @@ final class SurveyManagerTests: XCTestCase {
     SurveyManager.presentSurveyIfAvailable(
       survey,
       using: UIViewController(),
-      paywallIsDeclined: true,
+      loadingState: .ready,
+      paywallIsManuallyDeclined: true,
+      isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: storageMock,
       completion: {
@@ -74,7 +148,9 @@ final class SurveyManagerTests: XCTestCase {
     SurveyManager.presentSurveyIfAvailable(
       survey,
       using: UIViewController(),
-      paywallIsDeclined: true,
+      loadingState: .ready,
+      paywallIsManuallyDeclined: true,
+      isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: storageMock,
       completion: {
@@ -83,6 +159,30 @@ final class SurveyManagerTests: XCTestCase {
     )
     wait(for: [expectation])
     XCTAssertTrue(storageMock.didSave)
+  }
+
+  func test_presentSurveyIfAvailable_debuggerLaunched() {
+    let storageMock = StorageMock()
+
+    let survey = Survey.stub()
+
+    let expectation = expectation(description: "called completion block")
+    expectation.isInverted = true
+
+    SurveyManager.presentSurveyIfAvailable(
+      survey,
+      using: UIViewController(),
+      loadingState: .ready,
+      paywallIsManuallyDeclined: true,
+      isDebuggerLaunched: true,
+      paywallInfo: .stub(),
+      storage: storageMock,
+      completion: {
+        expectation.fulfill()
+      }
+    )
+    wait(for: [expectation], timeout: 0.1)
+    XCTAssertFalse(storageMock.didSave)
   }
 
   func test_presentSurveyIfAvailable_success() {
@@ -97,7 +197,9 @@ final class SurveyManagerTests: XCTestCase {
     SurveyManager.presentSurveyIfAvailable(
       survey,
       using: UIViewController(),
-      paywallIsDeclined: true,
+      loadingState: .ready,
+      paywallIsManuallyDeclined: true,
+      isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: storageMock,
       completion: {

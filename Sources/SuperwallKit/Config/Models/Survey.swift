@@ -35,7 +35,13 @@ final public class Survey: NSObject, Decodable {
   public let includeOtherOption: Bool
 
   /// Rolls dice to see if survey should present.
-  func shouldPresent(storage: Storage) -> Bool {
+  func shouldPresent(
+    isDebuggerLaunched: Bool,
+    storage: Storage
+  ) -> Bool {
+    if isDebuggerLaunched {
+      return true
+    }
     // Return immediately if no chance to present.
     if presentationProbability == 0 {
       return false
