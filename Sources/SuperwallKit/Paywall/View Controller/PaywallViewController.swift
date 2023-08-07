@@ -138,7 +138,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// the view disappears.
   var internalPresentingViewController: UIViewController?
 
-  private unowned let factory: TriggerSessionManagerFactory
+  private unowned let factory: TriggerSessionManagerFactory & TriggerFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private unowned let paywallManager: PaywallManager
@@ -151,7 +151,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     eventDelegate: PaywallViewControllerEventDelegate? = nil,
     delegate: PaywallViewControllerDelegateAdapter? = nil,
     deviceHelper: DeviceHelper,
-    factory: TriggerSessionManagerFactory,
+    factory: TriggerSessionManagerFactory & TriggerFactory,
     storage: Storage,
     paywallManager: PaywallManager,
     webView: SWWebView,
@@ -773,7 +773,8 @@ extension PaywallViewController {
       paywallIsManuallyDeclined: isDeclined && isManualClose,
       isDebuggerLaunched: request?.flags.isDebuggerLaunched == true,
       paywallInfo: info,
-      storage: storage
+      storage: storage,
+      factory: factory
     ) {
       dismissView()
     }
@@ -824,6 +825,8 @@ extension PaywallViewController {
     cache?.activePaywallVcKey = nil
     isPresented = false
 
+    print("Dismissed!")
+    
     dismissCompletionBlock?()
     dismissCompletionBlock = nil
   }

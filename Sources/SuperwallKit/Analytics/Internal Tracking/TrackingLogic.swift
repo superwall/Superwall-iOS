@@ -177,6 +177,11 @@ enum TrackingLogic {
       return .closePaywallThenTriggerPaywall
     }
 
+    if let event = event as? TrackableSuperwallEvent,
+      case .surveyResponse = event.superwallEvent {
+      return .closePaywallThenTriggerPaywall
+    }
+
     if paywallViewController != nil {
       return .dontTriggerPaywall
     }

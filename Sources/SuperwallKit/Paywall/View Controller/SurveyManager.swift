@@ -13,12 +13,13 @@ final class SurveyManager {
 
   static func presentSurveyIfAvailable(
     _ survey: Survey?,
-    using presenter: UIViewController,
+    using presenter: PaywallViewController,
     loadingState: PaywallLoadingState,
     paywallIsManuallyDeclined: Bool,
     isDebuggerLaunched: Bool,
     paywallInfo: PaywallInfo,
     storage: Storage,
+    factory: TriggerFactory,
     completion: @escaping () -> Void
   ) {
     guard loadingState == .ready else {
@@ -81,6 +82,8 @@ final class SurveyManager {
           fromSurvey: survey,
           withCustomResponse: nil,
           paywallInfo: paywallInfo,
+          factory: factory,
+          paywallViewController: presenter,
           alertController: alertController,
           completion: completion
         )
@@ -119,6 +122,8 @@ final class SurveyManager {
             fromSurvey: survey,
             withCustomResponse: response,
             paywallInfo: paywallInfo,
+            factory: factory,
+            paywallViewController: presenter,
             alertController: otherAlertController,
             completion: completion
           )
@@ -142,21 +147,36 @@ final class SurveyManager {
     fromSurvey survey: Survey,
     withCustomResponse customResponse: String?,
     paywallInfo: PaywallInfo,
+    factory: TriggerFactory,
+    paywallViewController: PaywallViewController,
     alertController: UIAlertController,
     completion: @escaping () -> Void
   ) {
     alertController.dismiss(animated: true) {
       Task {
-        await Superwall.shared.track(
-          InternalSuperwallEvent.SurveyResponse(
-            survey: survey,
-            selectedOption: option,
-            customResponse: customResponse,
-            paywallInfo: paywallInfo
-          )
+        let event = InternalSuperwallEvent.SurveyResponse(
+          survey: survey,
+          selectedOption: option,
+          customResponse: customResponse,
+          paywallInfo: paywallInfo
         )
+
+        let outcome = TrackingLogic.canTriggerPaywall(
+          event,
+          triggers: factory.makeTriggers(),
+          paywallViewController: paywallViewController
+        )
+        await Superwall.shared.track(event)
+
+        // If we are going to show another paywall, we don't call the completion
+        // block as this will call didDismiss, which is going to be called
+        // implicitly anyway.
+        if outcome == .dontTriggerPaywall {
+          await MainActor.run {
+            completion()
+          }
+        }
       }
-      completion()
     }
     otherAlertController = nil
   }
