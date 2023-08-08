@@ -9,18 +9,41 @@ import XCTest
 @testable import SuperwallKit
 
 @available(iOS 14.0, *)
+@MainActor
 final class SurveyManagerTests: XCTestCase {
   func test_presentSurveyIfAvailable_paywallDeclined() {
     let survey = Survey.stub()
     let expectation = expectation(description: "called completion block")
+    let dependencyContainer = DependencyContainer()
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      webView: webView,
+      cache: nil
+    )
+
     SurveyManager.presentSurveyIfAvailable(
       survey,
-      using: UIViewController(),
+      using: paywallVc,
       loadingState: .ready,
       paywallIsManuallyDeclined: false,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
+      factory: dependencyContainer,
       completion: {
         expectation.fulfill()
       }
@@ -30,14 +53,36 @@ final class SurveyManagerTests: XCTestCase {
 
   func test_presentSurveyIfAvailable_surveyNil() {
     let expectation = expectation(description: "called completion block")
+    let dependencyContainer = DependencyContainer()
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      webView: webView,
+      cache: nil
+    )
+
     SurveyManager.presentSurveyIfAvailable(
       nil,
-      using: UIViewController(),
+      using: paywallVc,
       loadingState: .ready,
       paywallIsManuallyDeclined: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
+      factory: dependencyContainer,
       completion: {
         expectation.fulfill()
       }
@@ -47,14 +92,36 @@ final class SurveyManagerTests: XCTestCase {
 
   func test_presentSurveyIfAvailable_loadingState_loadingPurchase() {
     let expectation = expectation(description: "called completion block")
+    let dependencyContainer = DependencyContainer()
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      webView: webView,
+      cache: nil
+    )
+
     SurveyManager.presentSurveyIfAvailable(
       .stub(),
-      using: UIViewController(),
+      using: paywallVc,
       loadingState: .loadingPurchase,
       paywallIsManuallyDeclined: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
+      factory: dependencyContainer,
       completion: {
         expectation.fulfill()
       }
@@ -64,14 +131,36 @@ final class SurveyManagerTests: XCTestCase {
 
   func test_presentSurveyIfAvailable_loadingState_loadingURL() {
     let expectation = expectation(description: "called completion block")
+    let dependencyContainer = DependencyContainer()
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      webView: webView,
+      cache: nil
+    )
+
     SurveyManager.presentSurveyIfAvailable(
       .stub(),
-      using: UIViewController(),
+      using: paywallVc,
       loadingState: .loadingURL,
       paywallIsManuallyDeclined: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
+      factory: dependencyContainer,
       completion: {
         expectation.fulfill()
       }
@@ -81,14 +170,36 @@ final class SurveyManagerTests: XCTestCase {
 
   func test_presentSurveyIfAvailable_loadingState_manualLoading() {
     let expectation = expectation(description: "called completion block")
+    let dependencyContainer = DependencyContainer()
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      webView: webView,
+      cache: nil
+    )
+
     SurveyManager.presentSurveyIfAvailable(
       .stub(),
-      using: UIViewController(),
+      using: paywallVc,
       loadingState: .manualLoading,
       paywallIsManuallyDeclined: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
+      factory: dependencyContainer,
       completion: {
         expectation.fulfill()
       }
@@ -98,14 +209,36 @@ final class SurveyManagerTests: XCTestCase {
 
   func test_presentSurveyIfAvailable_loadingState_unknown() {
     let expectation = expectation(description: "called completion block")
+    let dependencyContainer = DependencyContainer()
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      webView: webView,
+      cache: nil
+    )
+
     SurveyManager.presentSurveyIfAvailable(
       .stub(),
-      using: UIViewController(),
+      using: paywallVc,
       loadingState: .unknown,
       paywallIsManuallyDeclined: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
+      factory: dependencyContainer,
       completion: {
         expectation.fulfill()
       }
@@ -121,14 +254,36 @@ final class SurveyManagerTests: XCTestCase {
     storageMock.save("1", forType: SurveyAssignmentKey.self)
 
     let expectation = expectation(description: "called completion block")
+    let dependencyContainer = DependencyContainer()
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      webView: webView,
+      cache: nil
+    )
+
     SurveyManager.presentSurveyIfAvailable(
       survey,
-      using: UIViewController(),
+      using: paywallVc,
       loadingState: .ready,
       paywallIsManuallyDeclined: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: storageMock,
+      factory: dependencyContainer,
       completion: {
         expectation.fulfill()
       }
@@ -144,15 +299,37 @@ final class SurveyManagerTests: XCTestCase {
       .setting(\.presentationProbability, to: 0)
 
     let expectation = expectation(description: "called completion block")
+    let dependencyContainer = DependencyContainer()
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      webView: webView,
+      cache: nil
+    )
+
 
     SurveyManager.presentSurveyIfAvailable(
       survey,
-      using: UIViewController(),
+      using: paywallVc,
       loadingState: .ready,
       paywallIsManuallyDeclined: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: storageMock,
+      factory: dependencyContainer,
       completion: {
         expectation.fulfill()
       }
@@ -168,15 +345,36 @@ final class SurveyManagerTests: XCTestCase {
 
     let expectation = expectation(description: "called completion block")
     expectation.isInverted = true
+    let dependencyContainer = DependencyContainer()
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      webView: webView,
+      cache: nil
+    )
 
     SurveyManager.presentSurveyIfAvailable(
       survey,
-      using: UIViewController(),
+      using: paywallVc,
       loadingState: .ready,
       paywallIsManuallyDeclined: true,
       isDebuggerLaunched: true,
       paywallInfo: .stub(),
       storage: storageMock,
+      factory: dependencyContainer,
       completion: {
         expectation.fulfill()
       }
@@ -194,14 +392,36 @@ final class SurveyManagerTests: XCTestCase {
 
     let expectation = expectation(description: "called completion block")
     expectation.isInverted = true
+    let dependencyContainer = DependencyContainer()
+
+    let messageHandler = PaywallMessageHandler(
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      factory: dependencyContainer
+    )
+    let webView = SWWebView(
+      isMac: false,
+      sessionEventsManager: dependencyContainer.sessionEventsManager,
+      messageHandler: messageHandler
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      paywallManager: dependencyContainer.paywallManager,
+      webView: webView,
+      cache: nil
+    )
+
     SurveyManager.presentSurveyIfAvailable(
       survey,
-      using: UIViewController(),
+      using: paywallVc,
       loadingState: .ready,
       paywallIsManuallyDeclined: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: storageMock,
+      factory: dependencyContainer,
       completion: {
         expectation.fulfill()
       }
