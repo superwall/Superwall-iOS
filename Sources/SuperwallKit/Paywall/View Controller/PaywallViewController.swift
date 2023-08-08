@@ -825,8 +825,6 @@ extension PaywallViewController {
     cache?.activePaywallVcKey = nil
     isPresented = false
 
-    print("Dismissed!")
-    
     dismissCompletionBlock?()
     dismissCompletionBlock = nil
   }

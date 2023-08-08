@@ -84,6 +84,7 @@ final class SurveyManager {
           paywallInfo: paywallInfo,
           factory: factory,
           paywallViewController: presenter,
+          isDebuggerLaunched: isDebuggerLaunched,
           alertController: alertController,
           completion: completion
         )
@@ -124,6 +125,7 @@ final class SurveyManager {
             paywallInfo: paywallInfo,
             factory: factory,
             paywallViewController: presenter,
+            isDebuggerLaunched: isDebuggerLaunched,
             alertController: otherAlertController,
             completion: completion
           )
@@ -149,31 +151,37 @@ final class SurveyManager {
     paywallInfo: PaywallInfo,
     factory: TriggerFactory,
     paywallViewController: PaywallViewController,
+    isDebuggerLaunched: Bool,
     alertController: UIAlertController,
     completion: @escaping () -> Void
   ) {
     alertController.dismiss(animated: true) {
-      Task {
-        let event = InternalSuperwallEvent.SurveyResponse(
-          survey: survey,
-          selectedOption: option,
-          customResponse: customResponse,
-          paywallInfo: paywallInfo
-        )
+      // Always complete without tracking if debugger launched.
+      if isDebuggerLaunched {
+        completion()
+      } else {
+        Task {
+          let event = InternalSuperwallEvent.SurveyResponse(
+            survey: survey,
+            selectedOption: option,
+            customResponse: customResponse,
+            paywallInfo: paywallInfo
+          )
 
-        let outcome = TrackingLogic.canTriggerPaywall(
-          event,
-          triggers: factory.makeTriggers(),
-          paywallViewController: paywallViewController
-        )
-        await Superwall.shared.track(event)
+          let outcome = TrackingLogic.canTriggerPaywall(
+            event,
+            triggers: factory.makeTriggers(),
+            paywallViewController: paywallViewController
+          )
+          await Superwall.shared.track(event)
 
-        // If we are going to show another paywall, we don't call the completion
-        // block as this will call didDismiss, which is going to be called
-        // implicitly anyway.
-        if outcome == .dontTriggerPaywall {
-          await MainActor.run {
-            completion()
+          // If we are going to show another paywall, we don't call the completion
+          // block as this will call didDismiss, which is going to be called
+          // implicitly anyway.
+          if outcome == .dontTriggerPaywall {
+            await MainActor.run {
+              completion()
+            }
           }
         }
       }
