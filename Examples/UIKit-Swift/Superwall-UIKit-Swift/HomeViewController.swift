@@ -58,39 +58,44 @@ final class HomeViewController: UIViewController {
   }
 
   @IBAction private func launchFeature() {
-    let handler = PaywallPresentationHandler()
-    handler.onDismiss { paywallInfo in
-      print("The paywall dismissed. PaywallInfo:", paywallInfo)
-    }
-    handler.onPresent { paywallInfo in
-      print("The paywall presented. PaywallInfo:", paywallInfo)
-    }
-    handler.onError { error in
-      print("The paywall presentation failed with error \(error)")
-    }
-    handler.onSkip { reason in
-      switch reason {
-      case .userIsSubscribed:
-        print("Paywall not shown because user is subscribed.")
-      case .holdout(let experiment):
-        print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
-      case .noRuleMatch:
-        print("Paywall not shown because user doesn't match any rules.")
-      case .eventNotFound:
-        print("Paywall not shown because this event isn't part of a campaign.")
-      }
+    Task {
+      let paywall = try? await Superwall.shared.getPaywall(forEvent: "campaign_trigger", delegate: self)
+      self.present(paywall!, animated: true)
     }
 
-    Superwall.shared.register(event: "campaign_trigger", handler: handler) {
-      // code in here can be remotely configured to execute. Either
-      // (1) always after presentation or
-      // (2) only if the user pays
-      // code is always executed if no paywall is configured to show
-      self.presentAlert(
-        title: "Feature Launched",
-        message: "Wrap your awesome features in register calls like this to remotely paywall your app. You can remotely decide whether these are paid features."
-      )
-    }
+//    let handler = PaywallPresentationHandler()
+//    handler.onDismiss { paywallInfo in
+//      print("The paywall dismissed. PaywallInfo:", paywallInfo)
+//    }
+//    handler.onPresent { paywallInfo in
+//      print("The paywall presented. PaywallInfo:", paywallInfo)
+//    }
+//    handler.onError { error in
+//      print("The paywall presentation failed with error \(error)")
+//    }
+//    handler.onSkip { reason in
+//      switch reason {
+//      case .userIsSubscribed:
+//        print("Paywall not shown because user is subscribed.")
+//      case .holdout(let experiment):
+//        print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
+//      case .noRuleMatch:
+//        print("Paywall not shown because user doesn't match any rules.")
+//      case .eventNotFound:
+//        print("Paywall not shown because this event isn't part of a campaign.")
+//      }
+//    }
+//
+//    Superwall.shared.register(event: "campaign_trigger", handler: handler) {
+//      // code in here can be remotely configured to execute. Either
+//      // (1) always after presentation or
+//      // (2) only if the user pays
+//      // code is always executed if no paywall is configured to show
+//      self.presentAlert(
+//        title: "Feature Launched",
+//        message: "Wrap your awesome features in register calls like this to remotely paywall your app. You can remotely decide whether these are paid features."
+//      )
+//    }
   }
 
   private func presentAlert(title: String, message: String) {
@@ -103,5 +108,14 @@ final class HomeViewController: UIViewController {
     alertController.addAction(okAction)
     alertController.popoverPresentationController?.sourceView = view
     self.present(alertController, animated: true)
+  }
+}
+
+extension HomeViewController: PaywallViewControllerDelegate {
+  func paywall(_ paywall: PaywallViewController, didFinishWith result: PaywallResult, shouldDismiss: Bool) {
+    print(result)
+    if shouldDismiss {
+      paywall.dismiss(animated: true)
+    }
   }
 }

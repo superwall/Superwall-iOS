@@ -10,8 +10,8 @@ import Foundation
 final class PaywallViewControllerCache: @unchecked Sendable {
   var activePaywallVcKey: String? {
     get {
-      queue.sync { [weak self] in
-        return self?._activePaywallVcKey
+      queue.sync {
+        _activePaywallVcKey
       }
     }
     set {
@@ -23,7 +23,7 @@ final class PaywallViewControllerCache: @unchecked Sendable {
   private var _activePaywallVcKey: String?
 
   var activePaywallViewController: PaywallViewController? {
-    queue.sync { [unowned self] in
+    queue.sync {
       guard let activePaywallVcKey = _activePaywallVcKey else {
         return nil
       }

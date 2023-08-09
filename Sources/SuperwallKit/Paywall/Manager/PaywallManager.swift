@@ -62,6 +62,7 @@ class PaywallManager {
     delegate: PaywallViewControllerDelegateAdapter?
   ) async throws -> PaywallViewController {
     let paywall = try await paywallRequestManager.getPaywall(from: request)
+
     let deviceInfo = factory.makeDeviceInfo()
     let cacheKey = PaywallCacheLogic.key(
       identifier: paywall.identifier,
@@ -72,7 +73,7 @@ class PaywallManager {
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
       if !isPreloading {
         viewController.delegate = delegate
-        viewController.paywall.overrideProductsIfNeeded(from: paywall)
+        viewController.paywall.update(from: paywall)
       }
       return viewController
     }

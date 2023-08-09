@@ -94,6 +94,87 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "session_start")
   }
 
+  func test_surveyResponse() async {
+    // Given
+    let eventName = "TestName"
+    let survey = Survey.stub()
+    let paywallInfo = PaywallInfo.stub()
+    let event = InternalSuperwallEvent.SurveyResponse(
+      survey: survey,
+      selectedOption: survey.options.first!,
+      customResponse: nil,
+      paywallInfo: paywallInfo
+    )
+    // When
+    let result = await Superwall.shared.track(event)
+
+    print(result.parameters.eventParams)
+
+    XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
+    XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "survey_response")
+    XCTAssertEqual(result.parameters.eventParams["$survey_id"] as! String, survey.id)
+    XCTAssertEqual(result.parameters.eventParams["$survey_selected_option_id"] as! String, survey.options.first!.id)
+    XCTAssertEqual(result.parameters.eventParams["$survey_assignment_key"] as! String, survey.assignmentKey)
+    XCTAssertNil(result.parameters.eventParams["$survey_custom_response"])
+    XCTAssertEqual(result.parameters.eventParams["survey_selected_option_title"] as! String, survey.assignmentKey)
+    XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
+    XCTAssertEqual(result.parameters.eventParams["$paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["$paywalljs_version"] as? String, paywallInfo.paywalljsVersion)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_identifier"] as! String, paywallInfo.identifier)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_url"] as! String, paywallInfo.url.absoluteString)
+    XCTAssertEqual(result.parameters.eventParams["$presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
+    XCTAssertEqual(result.parameters.eventParams["$presented_by_event_id"] as? String, paywallInfo.presentedByEventWithId)
+    XCTAssertEqual(result.parameters.eventParams["$presented_by_event_timestamp"] as? String, paywallInfo.presentedByEventAt)
+    XCTAssertEqual(result.parameters.eventParams["$presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertEqual(result.parameters.eventParams["$paywall_response_load_start_time"] as! String, paywallInfo.responseLoadStartTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_response_load_complete_time"] as! String, paywallInfo.responseLoadCompleteTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_response_load_duration"] as? TimeInterval, paywallInfo.responseLoadDuration)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_webview_load_start_time"] as! String, paywallInfo.webViewLoadStartTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_webview_load_complete_time"] as! String, paywallInfo.webViewLoadCompleteTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_webview_load_duration"] as? TimeInterval, paywallInfo.webViewLoadDuration)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_start_time"] as! String, paywallInfo.productsLoadStartTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_complete_time"] as! String, paywallInfo.productsLoadCompleteTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_fail_time"] as! String, paywallInfo.productsLoadFailTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_duration"] as? TimeInterval, paywallInfo.productsLoadDuration)
+    XCTAssertEqual(result.parameters.eventParams["$is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "survey_response")
+    XCTAssertEqual(result.parameters.eventParams["survey_selected_option_title"] as! String, survey.assignmentKey)
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
+
+
+    XCTAssertTrue(result.parameters.delegateParams["is_superwall"] as! Bool)
+    XCTAssertEqual(result.parameters.delegateParams["survey_selected_option_title"] as! String, survey.assignmentKey)
+    XCTAssertEqual(result.parameters.delegateParams["survey_id"] as! String, survey.id)
+    XCTAssertEqual(result.parameters.delegateParams["survey_selected_option_id"] as! String, survey.options.first!.id)
+    XCTAssertEqual(result.parameters.delegateParams["survey_assignment_key"] as! String, survey.assignmentKey)
+    XCTAssertNil(result.parameters.delegateParams["survey_custom_response"])
+    XCTAssertEqual(result.parameters.delegateParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.delegateParams["paywall_identifier"] as! String, paywallInfo.identifier)
+    XCTAssertEqual(result.parameters.delegateParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.delegateParams["paywall_url"] as! String, paywallInfo.url.absoluteString)
+    XCTAssertEqual(result.parameters.delegateParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.delegateParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.delegateParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.delegateParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.delegateParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.delegateParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.delegateParams["tertiary_product_id"])
+  }
+
+
   func test_paywallLoad_start() async {
     let eventName = "name"
     let params = ["hello":true]
@@ -174,6 +255,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_fail_time"] as! String, paywallInfo.productsLoadFailTime!)
     XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_duration"] as? TimeInterval, paywallInfo.productsLoadDuration)
     XCTAssertEqual(result.parameters.eventParams["$is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "paywallResponseLoad_complete")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_subscriptionStatusDidChange_active() async {
@@ -431,6 +525,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_duration"] as? TimeInterval, paywallInfo.productsLoadDuration)
     XCTAssertEqual(result.parameters.eventParams["$is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "paywall_open")
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "paywall_open")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_paywallClose() async {
@@ -461,6 +568,62 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_duration"] as? TimeInterval, paywallInfo.productsLoadDuration)
     XCTAssertEqual(result.parameters.eventParams["$is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "paywall_close")
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "paywall_close")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
+  }
+
+  func test_paywallDecline() async {
+    let paywallInfo: PaywallInfo = .stub()
+    let result = await Superwall.shared.track(InternalSuperwallEvent.PaywallDecline(paywallInfo: paywallInfo))
+    XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
+    XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
+
+    XCTAssertEqual(result.parameters.eventParams["$paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["$paywalljs_version"] as? String, paywallInfo.paywalljsVersion)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_identifier"] as! String, paywallInfo.identifier)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_url"] as! String, paywallInfo.url.absoluteString)
+    XCTAssertEqual(result.parameters.eventParams["$presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
+    XCTAssertEqual(result.parameters.eventParams["$presented_by_event_id"] as? String, paywallInfo.presentedByEventWithId)
+    XCTAssertEqual(result.parameters.eventParams["$presented_by_event_timestamp"] as? String, paywallInfo.presentedByEventAt)
+    XCTAssertEqual(result.parameters.eventParams["$presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertEqual(result.parameters.eventParams["$paywall_response_load_start_time"] as! String, paywallInfo.responseLoadStartTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_response_load_complete_time"] as! String, paywallInfo.responseLoadCompleteTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_response_load_duration"] as? TimeInterval, paywallInfo.responseLoadDuration)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_webview_load_start_time"] as! String, paywallInfo.webViewLoadStartTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_webview_load_complete_time"] as! String, paywallInfo.webViewLoadCompleteTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_webview_load_duration"] as? TimeInterval, paywallInfo.webViewLoadDuration)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_start_time"] as! String, paywallInfo.productsLoadStartTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_complete_time"] as! String, paywallInfo.productsLoadCompleteTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_fail_time"] as! String, paywallInfo.productsLoadFailTime!)
+    XCTAssertEqual(result.parameters.eventParams["$paywall_products_load_duration"] as? TimeInterval, paywallInfo.productsLoadDuration)
+    XCTAssertEqual(result.parameters.eventParams["$is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "paywall_decline")
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "paywall_decline")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_transaction_start() async {
@@ -530,6 +693,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$id"])
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "transaction_start")
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "transaction_start")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_transaction_complete() async {
@@ -599,6 +775,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$id"])
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "transaction_complete")
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "transaction_complete")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_transaction_restore() async {
@@ -668,6 +857,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$id"])
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "transaction_restore")
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "transaction_restore")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_transaction_timeout() async {
@@ -737,6 +939,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$id"])
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "transaction_timeout")
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "transaction_timeout")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_transaction_fail() async {
@@ -804,6 +1019,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertEqual(result.parameters.eventParams["$message"] as! String, "failed mate")
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "transaction_fail")
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "transaction_fail")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_subscriptionStart() async {
@@ -867,6 +1095,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$secondary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$tertiary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "subscription_start")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_freeTrialStart() async {
@@ -930,6 +1171,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$secondary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$tertiary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "freeTrial_start")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_nonRecurringProductPurchase() async {
@@ -993,6 +1247,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$secondary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$tertiary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "nonRecurringProduct_purchase")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_paywallWebviewLoad_start() async {
@@ -1026,6 +1293,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$secondary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$tertiary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "paywallWebviewLoad_start")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_paywallWebviewLoad_fail() async {
@@ -1059,6 +1339,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$secondary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$tertiary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "paywallWebviewLoad_fail")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_paywallWebviewLoad_complete() async {
@@ -1092,6 +1385,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$secondary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$tertiary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "paywallWebviewLoad_complete")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_paywallWebviewLoad_timeout() async {
@@ -1124,6 +1430,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$primary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$secondary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$tertiary_product_id"])
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "paywallWebviewLoad_timeout")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_paywallProductsLoad_start() async {
@@ -1158,6 +1477,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$primary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$secondary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$tertiary_product_id"])
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "paywallProductsLoad_start")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_paywallProductsLoad_fail() async {
@@ -1192,6 +1524,19 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$primary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$secondary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$tertiary_product_id"])
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "paywallProductsLoad_fail")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
   func test_paywallProductsLoad_complete() async {
@@ -1226,5 +1571,18 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.eventParams["$primary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$secondary_product_id"])
     XCTAssertNotNil(result.parameters.eventParams["$tertiary_product_id"])
+
+    // Custom parameters
+    XCTAssertEqual(result.parameters.eventParams["event_name"] as! String, "paywallProductsLoad_complete")
+    XCTAssertEqual(result.parameters.eventParams["paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertEqual(result.parameters.eventParams["paywall_name"] as! String, paywallInfo.name)
+    XCTAssertEqual(result.parameters.eventParams["is_free_trial_available"] as! Bool, paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.eventParams["feature_gating"] as! Int, 1)
+    XCTAssertEqual(result.parameters.eventParams["presented_by"] as! String, paywallInfo.presentedBy)
+    XCTAssertEqual(result.parameters.eventParams["paywall_product_ids"] as? String, paywallInfo.productIds.joined(separator: ","))
+    XCTAssertNotNil(result.parameters.eventParams["primary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["secondary_product_id"])
+    XCTAssertNotNil(result.parameters.eventParams["tertiary_product_id"])
+    XCTAssertEqual(result.parameters.eventParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 }

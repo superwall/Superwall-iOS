@@ -224,7 +224,9 @@ class Cache {
           forKey: key,
           directory: directory
         ) {
-          try self.fileManager.removeItem(atPath: path)
+          if self.fileManager.fileExists(atPath: path) {
+            try self.fileManager.removeItem(atPath: path)
+          }
         }
       } catch {
         Logger.debug(

@@ -4,7 +4,6 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
-// swiftlint:disable cyclomatic_complexity function_body_length
 
 import Foundation
 import StoreKit
@@ -106,6 +105,8 @@ public final class PaywallInfo: NSObject {
 
   public let computedPropertyRequests: [ComputedPropertyRequest]
 
+  public let survey: Survey?
+
   private unowned let factory: TriggerSessionManagerFactory
 
   init(
@@ -132,7 +133,8 @@ public final class PaywallInfo: NSObject {
     featureGatingBehavior: FeatureGatingBehavior = .nonGated,
     closeReason: PaywallCloseReason = .none,
     localNotifications: [LocalNotification] = [],
-    computedPropertyRequests: [ComputedPropertyRequest] = []
+    computedPropertyRequests: [ComputedPropertyRequest] = [],
+    survey: Survey?
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -150,6 +152,7 @@ public final class PaywallInfo: NSObject {
     self.featureGatingBehavior = featureGatingBehavior
     self.localNotifications = localNotifications
     self.computedPropertyRequests = computedPropertyRequests
+    self.survey = survey
 
     if eventData != nil {
       self.presentedBy = "event"
@@ -197,18 +200,15 @@ public final class PaywallInfo: NSObject {
     forProduct product: StoreProduct? = nil,
     otherParams: [String: Any]? = nil
   ) async -> [String: Any] {
-    var output: [String: Any] = [
-      "paywall_id": databaseId,
+    var output = customParams()
+
+    output += [
       "paywalljs_version": paywalljsVersion as Any,
       "paywall_identifier": identifier,
-      "paywall_name": name,
       "paywall_url": url.absoluteString,
-      "presented_by_event_name": presentedByEventWithName as Any,
       "presented_by_event_id": presentedByEventWithId as Any,
       "presented_by_event_timestamp": presentedByEventAt as Any,
       "presentation_source_type": presentationSourceType as Any,
-      "presented_by": presentedBy as Any,
-      "paywall_product_ids": productIds.joined(separator: ","),
       "paywall_response_load_start_time": responseLoadStartTime as Any,
       "paywall_response_load_complete_time": responseLoadCompleteTime as Any,
       "paywall_response_load_duration": responseLoadDuration as Any,
@@ -218,9 +218,7 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_start_time": productsLoadStartTime as Any,
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
       "paywall_products_load_fail_time": productsLoadFailTime as Any,
-      "paywall_products_load_duration": productsLoadDuration as Any,
-      "is_free_trial_available": isFreeTrialAvailable as Any,
-      "feature_gating": featureGatingBehavior.rawValue as Any
+      "paywall_products_load_duration": productsLoadDuration as Any
     ]
 
     let triggerSessionManager = factory.getTriggerSessionManager()
@@ -247,16 +245,6 @@ public final class PaywallInfo: NSObject {
       info: loadingVars
     )
 
-    let levels = ["primary", "secondary", "tertiary"]
-
-    for (id, level) in levels.enumerated() {
-      let key = "\(level)_product_id"
-      output[key] = ""
-      if id < products.count {
-        output[key] = productIds[id]
-      }
-    }
-
     if let product = product {
       output["product_id"] = product.productIdentifier
       for key in product.attributes.keys {
@@ -271,6 +259,31 @@ public final class PaywallInfo: NSObject {
         if let value = otherParams[key] {
           output[key] = value
         }
+      }
+    }
+
+    return output
+  }
+
+  /// Parameters that can be used in rules.
+  func customParams() -> [String: Any] {
+    var output: [String: Any] = [
+      "paywall_id": databaseId,
+      "paywall_name": name,
+      "presented_by_event_name": presentedByEventWithName as Any,
+      "paywall_product_ids": productIds.joined(separator: ","),
+      "is_free_trial_available": isFreeTrialAvailable as Any,
+      "feature_gating": featureGatingBehavior.rawValue as Any,
+      "presented_by": presentedBy as Any
+    ]
+
+    let levels = ["primary", "secondary", "tertiary"]
+
+    for (id, level) in levels.enumerated() {
+      let key = "\(level)_product_id"
+      output[key] = ""
+      if id < products.count {
+        output[key] = productIds[id]
       }
     }
 
@@ -301,7 +314,8 @@ extension PaywallInfo: Stubbable {
       productsLoadCompleteTime: nil,
       isFreeTrialAvailable: false,
       presentationSourceType: "register",
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      survey: nil
     )
   }
 }

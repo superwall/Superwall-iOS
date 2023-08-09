@@ -25,7 +25,7 @@ extension Superwall {
     case .paywall:
       return
     default:
-      let subscriptionStatus = await request.flags.subscriptionStatus.async()
+      let subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
       if subscriptionStatus == .active {
         paywallStatePublisher.send(.skipped(.userIsSubscribed))
         paywallStatePublisher.send(completion: .finished)

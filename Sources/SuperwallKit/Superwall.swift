@@ -109,14 +109,6 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var isConfigured = false
 
-  /// A variable that is only `true` if ``shared`` is available for use.
-  /// Gets set to `true` immediately after
-  /// ``configure(apiKey:purchaseController:options:completion:)-52tke`` is
-  /// called.
-  public static var isInitialized: Bool {
-    return isInitializedInternal
-  }
-
   /// The configured shared instance of ``Superwall``.
   ///
   /// - Warning: You must call ``configure(apiKey:purchaseController:options:completion:)-52tke``
@@ -145,9 +137,16 @@ public final class Superwall: NSObject, ObservableObject {
     return superwall
   }
 
+  /// A variable that is only `true` if ``shared`` is available for use.
+  /// Gets set to `true` immediately after
+  /// ``configure(apiKey:purchaseController:options:completion:)-52tke`` is
+  /// called.
+  @DispatchQueueBacked
+  public private(set) static var isInitialized = false
+
   // MARK: - Non-public Properties
   private static var superwall: Superwall?
-  private static var isInitializedInternal = false
+
 
   /// The presented paywall view controller.
   var paywallViewController: PaywallViewController? {
@@ -295,11 +294,10 @@ public final class Superwall: NSObject, ObservableObject {
       message: "SDK Version - \(sdkVersion)"
     )
 
-    isInitializedInternal = true
+    isInitialized = true
 
     return shared
   }
-
   /// Objective-C-only function that configures a shared instance of ``Superwall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out
@@ -477,7 +475,8 @@ extension Superwall: PaywallViewControllerEventDelegate {
       } else {
         dismiss(
           paywallViewController,
-          result: .declined
+          result: .declined,
+          closeReason: .manualClose
         )
       }
 

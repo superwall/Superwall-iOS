@@ -20,7 +20,7 @@ public final class IdentityOptions: NSObject, Sendable {
   /// in to an existing account.
   public let restorePaywallAssignments: Bool
 
-  init(restorePaywallAssignments: Bool = false) {
+  public init(restorePaywallAssignments: Bool = false) {
     self.restorePaywallAssignments = restorePaywallAssignments
   }
 }

@@ -36,7 +36,7 @@ extension Superwall {
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
   ) async throws -> UIViewController? {
-    let subscriptionStatus = await request.flags.subscriptionStatus.async()
+    let subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
     if await InternalPresentationLogic.userSubscribedAndNotOverridden(
       isUserSubscribed: subscriptionStatus == .active,
       overrides: .init(

@@ -25,15 +25,15 @@ class IdentityManager {
   /// The appUserId or the aliasId, depending on whether the user is logged in
   /// or not.
   var userId: String {
-    return queue.sync { [unowned self] in
-      return self._appUserId ?? self._aliasId
+    return queue.sync {
+      _appUserId ?? _aliasId
     }
   }
 
   /// The userId passed to the SDK.
   var appUserId: String? {
-    queue.sync { [unowned self] in
-      return self._appUserId
+    queue.sync {
+      _appUserId
     }
   }
   private var _appUserId: String? {
@@ -44,16 +44,16 @@ class IdentityManager {
 
   /// User attributes that belong to the user.
   var userAttributes: [String: Any] {
-    queue.sync { [unowned self] in
-      return self._userAttributes
+    queue.sync {
+      _userAttributes
     }
   }
   private var _userAttributes: [String: Any] = [:]
 
   /// The randomly generated aliasId used to identify an anonymous user.
   var aliasId: String {
-    queue.sync { [unowned self] in
-      return self._aliasId
+    queue.sync {
+      _aliasId
     }
   }
   private var _aliasId: String {
@@ -64,8 +64,8 @@ class IdentityManager {
 
   /// The randomly generated seed used to put users into cohorts.
   var seed: Int {
-    queue.sync { [unowned self] in
-      return self._seed
+    queue.sync {
+      _seed
     }
   }
   private var _seed: Int {
