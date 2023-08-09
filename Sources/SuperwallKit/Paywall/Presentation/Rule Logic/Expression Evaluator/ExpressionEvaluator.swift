@@ -86,21 +86,15 @@ struct ExpressionEvaluator {
     forRule rule: TriggerRule,
     withEventData eventData: EventData
   ) async -> String? {
-    let ruleAttributes = await factory.makeRuleAttributes(
+    let attributes = await factory.makeRuleAttributes(
       forEvent: eventData,
-      from: rule
+      withComputedProperties: rule.computedPropertyRequests
     )
-
-    let values = JSON([
-      "user": ruleAttributes.user,
-      "device": ruleAttributes.device,
-      "params": eventData.parameters
-    ] as [String: Any])
 
     if let expressionJs = rule.expressionJs {
       if let base64Params = JavascriptExpressionEvaluatorParams(
         expressionJs: expressionJs,
-        values: values
+        values: attributes
       ).toBase64Input() {
         let postfix = "\n SuperwallSDKJS.evaluateJS64('\(base64Params)');"
         return postfix
@@ -109,7 +103,7 @@ struct ExpressionEvaluator {
     } else if let expression = rule.expression {
       if let base64Params = LiquidExpressionEvaluatorParams(
         expression: expression,
-        values: values
+        values: attributes
       ).toBase64Input() {
         let postfix = "\n SuperwallSDKJS.evaluate64('\(base64Params)');"
         return postfix

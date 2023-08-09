@@ -288,18 +288,37 @@ enum InternalSuperwallEvent {
     let type: PresentationRequestType
     let status: PaywallPresentationRequestStatus
     let statusReason: PaywallPresentationRequestStatusReason?
+    let factory: RuleAttributesFactory & FeatureFlagsFactory & ComputedPropertyRequestsFactory
 
     var superwallEvent: SuperwallEvent {
-      return .paywallPresentationRequest(status: status, reason: statusReason)
+      return .paywallPresentationRequest(
+        status: status,
+        reason: statusReason
+      )
     }
     var customParameters: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
-      [
+      var params = [
         "source_event_name": eventData?.name ?? "",
         "pipeline_type": type.description,
         "status": status.rawValue,
         "status_reason": statusReason?.description ?? ""
       ]
+
+      if let featureFlags = factory.makeFeatureFlags(),
+        featureFlags.enableExpressionParameters {
+        let computedPropertyRequests = factory.makeComputedPropertyRequests()
+        let rules = await factory.makeRuleAttributes(
+          forEvent: eventData,
+          withComputedProperties: computedPropertyRequests
+        )
+        let rulesString = rules.description
+        params += [
+          "expression_params": rulesString
+        ]
+      }
+
+      return params
     }
   }
 

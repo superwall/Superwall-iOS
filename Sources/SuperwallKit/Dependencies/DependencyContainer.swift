@@ -320,21 +320,22 @@ extension DependencyContainer: ApiFactory {
 // MARK: - Rule Params
 extension DependencyContainer: RuleAttributesFactory {
   func makeRuleAttributes(
-    forEvent event: EventData,
-    from rule: TriggerRule
-  ) async -> RuleAttributes {
+    forEvent event: EventData?,
+    withComputedProperties computedPropertyRequests: [ComputedPropertyRequest]
+  ) async -> JSON {
     var userAttributes = identityManager.userAttributes
     userAttributes["isLoggedIn"] = identityManager.isLoggedIn
 
     let deviceAttributes = await deviceHelper.getDeviceAttributes(
       since: event,
-      computedPropertyRequests: rule.computedPropertyRequests
+      computedPropertyRequests: computedPropertyRequests
     )
 
-    return RuleAttributes(
-      user: userAttributes,
-      device: deviceAttributes
-    )
+    return JSON([
+      "user": userAttributes,
+      "device": deviceAttributes,
+      "params": event?.parameters ?? ""
+    ] as [String: Any])
   }
 }
 
@@ -451,5 +452,19 @@ extension DependencyContainer: TriggerFactory {
 extension DependencyContainer: HasPurchaseControllerFactory {
   func makeHasPurchaseController() -> Bool {
     return delegateAdapter.hasPurchaseController
+  }
+}
+
+// MARK: - Feature Flags Factory
+extension DependencyContainer: FeatureFlagsFactory {
+  func makeFeatureFlags() -> FeatureFlags? {
+    return configManager.config?.featureFlags
+  }
+}
+
+// MARK: - Computed Property Requests Factory
+extension DependencyContainer: ComputedPropertyRequestsFactory {
+  func makeComputedPropertyRequests() -> [ComputedPropertyRequest] {
+    return configManager.config?.allComputedProperties ?? []
   }
 }

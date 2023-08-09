@@ -17,6 +17,13 @@ struct Config: Decodable {
   var featureFlags: FeatureFlags
   var preloadingDisabled: PreloadingDisabled
   var requestId: String?
+  var allComputedProperties: [ComputedPropertyRequest] {
+    return triggers.flatMap {
+      $0.rules.flatMap {
+        $0.computedPropertyRequests
+      }
+    }
+  }
 
   enum CodingKeys: String, CodingKey {
     case triggers = "triggerOptions"

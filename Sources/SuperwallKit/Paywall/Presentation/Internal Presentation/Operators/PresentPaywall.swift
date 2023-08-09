@@ -25,13 +25,17 @@ extension Superwall {
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) async throws {
     Task.detached { [weak self] in
+      guard let self = self else {
+        return
+      }
       let trackedEvent = InternalSuperwallEvent.PresentationRequest(
         eventData: request.presentationInfo.eventData,
         type: request.flags.type,
         status: .presentation,
-        statusReason: nil
+        statusReason: nil,
+        factory: self.dependencyContainer
       )
-      await self?.track(trackedEvent)
+      await self.track(trackedEvent)
     }
 
     try await withCheckedThrowingContinuation { continuation in
