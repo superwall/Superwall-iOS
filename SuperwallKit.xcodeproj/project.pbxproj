@@ -2230,7 +2230,7 @@
 			path = Assignment;
 			sourceTree = "<group>";
 		};
-		"TEMP_ECA8B518-590E-4F20-9C6C-E8E617C40640" /* Events */ = {
+		"TEMP_5FF3E573-7335-434E-94E2-8F7B70E94A14" /* Events */ = {
 			isa = PBXGroup;
 			children = (
 			);
