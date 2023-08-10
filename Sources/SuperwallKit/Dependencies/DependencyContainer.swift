@@ -330,11 +330,10 @@ extension DependencyContainer: RuleAttributesFactory {
       since: event,
       computedPropertyRequests: computedPropertyRequests
     )
-
     return JSON([
       "user": userAttributes,
       "device": deviceAttributes,
-      "params": event?.parameters ?? ""
+      "params": event?.parameters.dictionaryObject ?? ""
     ] as [String: Any])
   }
 }

@@ -353,12 +353,14 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_presentationRequest_userIsSubscribed() async {
+    let dependencyContainer = DependencyContainer()
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
-      statusReason: .userIsSubscribed
+      statusReason: .userIsSubscribed,
+      factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
@@ -371,12 +373,14 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_presentationRequest_eventNotFound() async {
+    let dependencyContainer = DependencyContainer()
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
-      statusReason: .eventNotFound
+      statusReason: .eventNotFound,
+      factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
@@ -389,12 +393,14 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_presentationRequest_noRuleMatch() async {
+    let dependencyContainer = DependencyContainer()
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
-      statusReason: .noRuleMatch
+      statusReason: .noRuleMatch,
+      factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
@@ -407,12 +413,14 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_presentationRequest_alreadyPresented() async {
+    let dependencyContainer = DependencyContainer()
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
-      statusReason: .paywallAlreadyPresented
+      statusReason: .paywallAlreadyPresented,
+      factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
@@ -423,14 +431,16 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.eventParams["$pipeline_type"] as! String, "getPaywallViewController")
     XCTAssertEqual(result.parameters.eventParams["$status_reason"] as! String, "paywall_already_presented")
   }
-
+  // TODO: Add test for expression params
   func test_presentationRequest_debuggerLaunched() async {
+    let dependencyContainer = DependencyContainer()
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
-      statusReason: .debuggerPresented
+      statusReason: .debuggerPresented,
+      factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
@@ -443,12 +453,14 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_presentationRequest_noPresenter() async {
+    let dependencyContainer = DependencyContainer()
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
-      statusReason: .noPresenter
+      statusReason: .noPresenter,
+      factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
@@ -461,12 +473,14 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_presentationRequest_noPaywallViewController() async {
+    let dependencyContainer = DependencyContainer()
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
-      statusReason: .noPaywallViewController
+      statusReason: .noPaywallViewController,
+      factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
@@ -479,12 +493,14 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_presentationRequest_holdout() async {
+    let dependencyContainer = DependencyContainer()
     let eventData: EventData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       eventData: eventData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
-      statusReason: .holdout(.stub())
+      statusReason: .holdout(.stub()),
+      factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])

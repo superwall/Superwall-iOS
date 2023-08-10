@@ -90,11 +90,12 @@ struct ExpressionEvaluator {
       forEvent: eventData,
       withComputedProperties: rule.computedPropertyRequests
     )
+    let jsonAttributes = JSON(attributes)
 
     if let expressionJs = rule.expressionJs {
       if let base64Params = JavascriptExpressionEvaluatorParams(
         expressionJs: expressionJs,
-        values: attributes
+        values: jsonAttributes
       ).toBase64Input() {
         let postfix = "\n SuperwallSDKJS.evaluateJS64('\(base64Params)');"
         return postfix
@@ -103,7 +104,7 @@ struct ExpressionEvaluator {
     } else if let expression = rule.expression {
       if let base64Params = LiquidExpressionEvaluatorParams(
         expression: expression,
-        values: attributes
+        values: jsonAttributes
       ).toBase64Input() {
         let postfix = "\n SuperwallSDKJS.evaluate64('\(base64Params)');"
         return postfix

@@ -11,6 +11,7 @@ targets:
     scheme:
       testTargets:
         - name: SuperwallKitTests
+          parallelizable: true
       commandLineArguments:
         SUPERWALL_UNIT_TESTS: true
     settings:

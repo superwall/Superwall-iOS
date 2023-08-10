@@ -312,10 +312,14 @@ enum InternalSuperwallEvent {
           forEvent: eventData,
           withComputedProperties: computedPropertyRequests
         )
-        let rulesString = rules.description
-        params += [
-          "expression_params": rulesString
-        ]
+
+        if let rulesDictionary = rules.dictionaryObject,
+          let jsonData = try? JSONSerialization.data(withJSONObject: rulesDictionary),
+          let decoded = String(data: jsonData, encoding: .utf8) {
+          params += [
+            "expression_params": decoded
+          ]
+        }
       }
 
       return params
