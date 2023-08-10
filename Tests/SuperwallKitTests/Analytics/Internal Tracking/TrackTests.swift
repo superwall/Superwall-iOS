@@ -410,6 +410,29 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.eventParams["$status"] as! String, "no_presentation")
     XCTAssertEqual(result.parameters.eventParams["$pipeline_type"] as! String, "getPaywallViewController")
     XCTAssertEqual(result.parameters.eventParams["$status_reason"] as! String, "no_rule_match")
+    XCTAssertNil(result.parameters.eventParams["$expression_params"] as? String)
+  }
+
+  func test_presentationRequest_expressionParams() async {
+    let dependencyContainer = DependencyContainer()
+    dependencyContainer.configManager.configState.send(.retrieved(.stub().setting(\.featureFlags.enableExpressionParameters, to: true)))
+    let eventData: EventData = .stub()
+    let event = InternalSuperwallEvent.PresentationRequest(
+      eventData: eventData,
+      type: .getPaywall(.stub()),
+      status: .noPresentation,
+      statusReason: .noRuleMatch,
+      factory: dependencyContainer
+    )
+    let result = await Superwall.shared.track(event)
+    XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
+    XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
+    XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "paywallPresentationRequest")
+    XCTAssertEqual(result.parameters.eventParams["$source_event_name"] as! String, eventData.name)
+    XCTAssertEqual(result.parameters.eventParams["$status"] as! String, "no_presentation")
+    XCTAssertEqual(result.parameters.eventParams["$pipeline_type"] as! String, "getPaywallViewController")
+    XCTAssertEqual(result.parameters.eventParams["$status_reason"] as! String, "no_rule_match")
+    XCTAssertNotNil(result.parameters.eventParams["$expression_params"] as! String)
   }
 
   func test_presentationRequest_alreadyPresented() async {
