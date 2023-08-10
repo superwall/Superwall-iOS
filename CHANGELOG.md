@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.3.1
+
+### Enhancements
+
+- Adds an `enable_expression_params` feature flag which can enhance debugging by sending a stringified version of all the device/user/event parameters with a `paywallPresentationRequest` event.
+
 ## 3.3.0
 
 ### Enhancements
