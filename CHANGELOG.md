@@ -6,7 +6,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds an `enable_expression_params` feature flag which can enhance debugging by sending a stringified version of all the device/user/event parameters with a `paywallPresentationRequest` event.
+- Adds logic to enhance debugging by sending a stringified version of all the device/user/event parameters used to evaluate rules within the `paywallPresentationRequest` event. This is behind a feature flag.
+- Adds logic to keep the user's generated `seed` value consistent when `Superwall.identify` is called. This is behind a feature flag.
 
 ## 3.3.0
 
