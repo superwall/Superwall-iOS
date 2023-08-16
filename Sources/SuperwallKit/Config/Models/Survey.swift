@@ -34,31 +34,30 @@ final public class Survey: NSObject, Decodable {
   /// response.
   public let includeOtherOption: Bool
 
-  /// Rolls dice to see if survey should present.
-  func shouldPresent(
+  /// Rolls dice to see if survey should present or is in holdout.
+  ///
+  /// - Returns: `true` if user is in holdout, false if survey should present.
+  func shouldAssignHoldout(
     isDebuggerLaunched: Bool,
-    storage: Storage
+    storage: Storage,
+    randomiser: (Range<Double>) -> Double = Double.random
   ) -> Bool {
     if isDebuggerLaunched {
-      return true
+      return false
     }
     // Return immediately if no chance to present.
     if presentationProbability == 0 {
-      return false
+      return true
     }
 
     // Choose random number to present the survey with
     // the probability of presentationProbability.
-    let randomNumber = Double.random(in: 0..<1)
+    let randomNumber = randomiser(0..<1)
     guard randomNumber < presentationProbability else {
-      return false
+      return true
     }
 
-    if hasSeenSurvey(storage: storage) {
-      return false
-    }
-
-    return true
+    return false
   }
 
   /// Determines whether a survey with the same `assignmentKey` has been

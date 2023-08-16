@@ -136,7 +136,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   /// The presenting view controller, saved for presenting surveys from when
   /// the view disappears.
-  var internalPresentingViewController: UIViewController?
+  private var internalPresentingViewController: UIViewController?
+
+  /// Whether the survey was shown, not shown, or in a holdout. Defaults to not shown.
+  private var surveyPresentationResult: SurveyPresentationResult = .noShow
 
   private unowned let factory: TriggerSessionManagerFactory & TriggerFactory
   private unowned let storage: Storage
@@ -229,7 +232,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   nonisolated private func trackClose() async {
     let triggerSessionManager = factory.getTriggerSessionManager()
-    let trackedEvent = await InternalSuperwallEvent.PaywallClose(paywallInfo: info)
+    let trackedEvent = await InternalSuperwallEvent.PaywallClose(
+      paywallInfo: info,
+      surveyPresentationResult: surveyPresentationResult
+    )
     await Superwall.shared.track(trackedEvent)
     await triggerSessionManager.trackPaywallClose()
   }
@@ -775,7 +781,8 @@ extension PaywallViewController {
       paywallInfo: info,
       storage: storage,
       factory: factory
-    ) {
+    ) { [weak self] result in
+      self?.surveyPresentationResult = result
       dismissView()
     }
   }

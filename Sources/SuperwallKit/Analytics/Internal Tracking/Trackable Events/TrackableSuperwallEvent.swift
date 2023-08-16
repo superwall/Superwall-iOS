@@ -344,8 +344,20 @@ enum InternalSuperwallEvent {
       return .paywallClose(paywallInfo: paywallInfo)
     }
     let paywallInfo: PaywallInfo
+    let surveyPresentationResult: SurveyPresentationResult
+
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams()
+      var params: [String: Any] = [
+        "survey_attached": paywallInfo.survey == nil ? false : true
+      ]
+
+      if surveyPresentationResult != .noShow {
+        params["survey_presentation"] = surveyPresentationResult.rawValue
+      }
+
+      let eventParams = await paywallInfo.eventParams()
+      params += eventParams
+      return params
     }
     var customParameters: [String: Any] {
       return paywallInfo.customParams()
