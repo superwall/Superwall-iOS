@@ -28,12 +28,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let input = EvaluateRulesOutput(
+    let input = RuleEvaluationOutcome(
       triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
     Superwall.shared.confirmHoldoutAssignment(
-      rulesOutput: input,
+      from: input,
       dependencyContainer: dependencyContainer
     )
     XCTAssertFalse(configManager.confirmedAssignment)
@@ -54,12 +54,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let input = EvaluateRulesOutput(
+    let input = RuleEvaluationOutcome(
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
     Superwall.shared.confirmHoldoutAssignment(
-      rulesOutput: input,
+      from: input,
       dependencyContainer: dependencyContainer
     )
     XCTAssertFalse(configManager.confirmedAssignment)
@@ -79,13 +79,13 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let input = EvaluateRulesOutput(
-      triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))),
-      confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
+    let input = RuleEvaluationOutcome(
+      confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
     Superwall.shared.confirmHoldoutAssignment(
-      rulesOutput: input,
+      from: input,
       dependencyContainer: dependencyContainer
     )
     XCTAssertTrue(configManager.confirmedAssignment)

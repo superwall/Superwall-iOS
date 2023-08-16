@@ -31,7 +31,7 @@ extension Superwall {
   @discardableResult
   func getPresenter(
     for paywallViewController: PaywallViewController,
-    rulesOutput: EvaluateRulesOutput,
+    rulesOutcome: RuleEvaluationOutcome,
     request: PresentationRequest,
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
@@ -90,7 +90,7 @@ extension Superwall {
       for: request.presentationInfo,
       on: request.presenter,
       paywall: paywallViewController.paywall,
-      triggerResult: rulesOutput.triggerResult
+      triggerResult: rulesOutcome.triggerResult
     )
 
     return presenter

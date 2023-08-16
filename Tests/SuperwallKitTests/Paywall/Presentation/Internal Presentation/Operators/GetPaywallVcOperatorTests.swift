@@ -56,7 +56,6 @@ final class GetPaywallVcOperatorTests: XCTestCase {
       _ = try await Superwall.shared.getPaywallViewController(
         request: request,
         experiment: experiment,
-        rulesOutput: .init(triggerResult: .paywall(experiment)),
         debugInfo: [:],
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -112,7 +111,6 @@ final class GetPaywallVcOperatorTests: XCTestCase {
       _ = try await Superwall.shared.getPaywallViewController(
         request: request,
         experiment: experiment,
-        rulesOutput: .init(triggerResult: .paywall(experiment)),
         debugInfo: [:],
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -157,7 +155,6 @@ final class GetPaywallVcOperatorTests: XCTestCase {
       _ = try await Superwall.shared.getPaywallViewController(
         request: request,
         experiment: experiment,
-        rulesOutput: .init(triggerResult: .paywall(experiment)),
         debugInfo: [:],
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer

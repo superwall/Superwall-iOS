@@ -141,6 +141,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Whether the survey was shown, not shown, or in a holdout. Defaults to not shown.
   private var surveyPresentationResult: SurveyPresentationResult = .noShow
 
+  /// If the user match a rule with an occurrence, this needs to be saved on
+  /// paywall presentation.
+  private var unsavedOccurrence: TriggerRuleOccurrence?
+
   private unowned let factory: TriggerSessionManagerFactory & TriggerFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
@@ -460,15 +464,18 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// for callbacks.
   func set(
     request: PresentationRequest,
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
+    unsavedOccurrence: TriggerRuleOccurrence?
   ) {
     self.request = request
     self.paywallStateSubject = paywallStatePublisher
+    self.unsavedOccurrence = unsavedOccurrence
   }
 
   func present(
     on presenter: UIViewController,
     request: PresentationRequest,
+    unsavedOccurrence: TriggerRuleOccurrence?,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     completion: @escaping (Bool) -> Void
@@ -482,7 +489,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
     set(
       request: request,
-      paywallStatePublisher: paywallStatePublisher
+      paywallStatePublisher: paywallStatePublisher,
+      unsavedOccurrence: unsavedOccurrence
     )
 
     setPresentationStyle(withOverride: presentationStyleOverride)
@@ -699,6 +707,10 @@ extension PaywallViewController {
     }
     if let paywallStateSubject = paywallStateSubject {
       Superwall.shared.storePresentationObjects(request, paywallStateSubject)
+    }
+    if let unsavedOccurrence = unsavedOccurrence {
+      storage.coreDataManager.save(triggerRuleOccurrence: unsavedOccurrence)
+      self.unsavedOccurrence = nil
     }
     isPresented = true
     Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall(withInfo: info)

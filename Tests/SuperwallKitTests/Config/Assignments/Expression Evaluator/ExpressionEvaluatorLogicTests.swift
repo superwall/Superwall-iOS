@@ -18,12 +18,12 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
       storage: storage,
       factory: dependencyContainer
     )
-    let shouldFire = await evaluator.shouldFire(
+    let outcome = await evaluator.shouldFire(
       forOccurrence: .stub(),
       ruleMatched: false,
       isPreemptive: false
     )
-    XCTAssertFalse(shouldFire)
+    XCTAssertFalse(outcome.shouldFire)
   }
 
   func testShouldFire_noOccurrenceRule() async {
@@ -33,12 +33,12 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
       storage: storage,
       factory: dependencyContainer
     )
-    let shouldFire = await evaluator.shouldFire(
+    let outcome = await evaluator.shouldFire(
       forOccurrence: nil,
       ruleMatched: true,
       isPreemptive: false
     )
-    XCTAssertTrue(shouldFire)
+    XCTAssertTrue(outcome.shouldFire)
   }
 
   func testShouldFire_shouldntFire_maxCountGTCount() async {
@@ -49,13 +49,13 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
       storage: storage,
       factory: dependencyContainer
     )
-    let shouldFire = await evaluator.shouldFire(
+    let outcome = await evaluator.shouldFire(
       forOccurrence: .stub()
         .setting(\.maxCount, to: 1),
       ruleMatched: true,
       isPreemptive: false
     )
-    XCTAssertFalse(shouldFire)
+    XCTAssertFalse(outcome.shouldFire)
   }
 
   func testShouldFire_shouldFire_maxCountEqualToCount() async {
@@ -66,13 +66,13 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
       storage: storage,
       factory: dependencyContainer
     )
-    let shouldFire = await evaluator.shouldFire(
+    let outcome = await evaluator.shouldFire(
       forOccurrence: .stub()
         .setting(\.maxCount, to: 1),
       ruleMatched: true,
       isPreemptive: false
     )
-    XCTAssertTrue(shouldFire)
+    XCTAssertTrue(outcome.shouldFire)
   }
 
   func testShouldFire_shouldFire_maxCountLtCount() async {
@@ -83,12 +83,12 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
       storage: storage,
       factory: dependencyContainer
     )
-    let shouldFire = await evaluator.shouldFire(
+    let outcome = await evaluator.shouldFire(
       forOccurrence: .stub()
         .setting(\.maxCount, to: 4),
       ruleMatched: true,
       isPreemptive: false
     )
-    XCTAssertTrue(shouldFire)
+    XCTAssertTrue(outcome.shouldFire)
   }
 }

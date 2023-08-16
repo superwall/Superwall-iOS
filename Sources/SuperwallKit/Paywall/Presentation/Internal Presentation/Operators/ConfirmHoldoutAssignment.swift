@@ -17,14 +17,14 @@ extension Superwall {
   ///   - rulesOutput: The output from evaluating rules.
   ///   - dependencyContainer: Used for testing only.
   func confirmHoldoutAssignment(
-    rulesOutput: EvaluateRulesOutput,
+    from rulesOutcome: RuleEvaluationOutcome,
     dependencyContainer: DependencyContainer? = nil
   ) {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
-    guard case .holdout = rulesOutput.triggerResult else {
+    guard case .holdout = rulesOutcome.triggerResult else {
       return
     }
-    if let confirmableAssignment = rulesOutput.confirmableAssignment {
+    if let confirmableAssignment = rulesOutcome.confirmableAssignment {
       dependencyContainer.configManager.confirmAssignment(confirmableAssignment)
     }
   }

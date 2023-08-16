@@ -7,11 +7,6 @@
 
 import Foundation
 
-struct EvaluateRulesOutput {
-  let triggerResult: TriggerResult
-  var confirmableAssignment: ConfirmableAssignment?
-}
-
 extension Superwall {
   /// Evaluates the rules from the campaign that the event belongs to
   ///
@@ -19,23 +14,17 @@ extension Superwall {
   /// - Returns: An `EvaluateRulesOutput` object containing the trigger result and confirmable assignment.
   func evaluateRules(
     from request: PresentationRequest
-  ) async throws -> EvaluateRulesOutput {
+  ) async throws -> RuleEvaluationOutcome {
     if let eventData = request.presentationInfo.eventData {
-      let assignmentLogic = RuleLogic(
+      let ruleLogic = RuleLogic(
         configManager: dependencyContainer.configManager,
         storage: dependencyContainer.storage,
         factory: dependencyContainer
       )
-      let eventOutcome = await assignmentLogic.evaluateRules(
+      return await ruleLogic.evaluateRules(
         forEvent: eventData,
         triggers: dependencyContainer.configManager.triggersByEventName,
         isPreemptive: request.flags.type == .getPresentationResult
-      )
-      let confirmableAssignment = eventOutcome.confirmableAssignment
-
-      return EvaluateRulesOutput(
-        triggerResult: eventOutcome.triggerResult,
-        confirmableAssignment: confirmableAssignment
       )
     } else {
       // Called if the debugger is shown.
@@ -44,7 +33,7 @@ extension Superwall {
         // to force unwrapping.
         throw PresentationPipelineError.noPaywallViewController
       }
-      return EvaluateRulesOutput(
+      return RuleEvaluationOutcome(
         triggerResult: .paywall(.presentById(paywallId))
       )
     }

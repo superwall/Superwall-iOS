@@ -12,6 +12,11 @@ struct ExpressionEvaluator {
   private let storage: Storage
   private unowned let factory: RuleAttributesFactory
 
+  struct TriggerFireOutcome {
+    let shouldFire: Bool
+    var unsavedOccurrence: TriggerRuleOccurrence?
+  }
+
   init(
     storage: Storage,
     factory: RuleAttributesFactory
@@ -24,7 +29,7 @@ struct ExpressionEvaluator {
     fromRule rule: TriggerRule,
     eventData: EventData,
     isPreemptive: Bool
-  ) async -> Bool {
+  ) async -> TriggerFireOutcome {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
       let shouldFire = await shouldFire(
@@ -36,7 +41,7 @@ struct ExpressionEvaluator {
     }
 
     guard let jsCtx = JSContext() else {
-      return false
+      return TriggerFireOutcome(shouldFire: false)
     }
     jsCtx.exceptionHandler = { (_, value: JSValue?) in
       guard let value = value else {
@@ -63,12 +68,12 @@ struct ExpressionEvaluator {
       forRule: rule,
       withEventData: eventData
     ) else {
-      return false
+      return TriggerFireOutcome(shouldFire: false)
     }
 
     let result = jsCtx.evaluateScript(script + "\n " + postfix)
     if result?.isString == nil {
-      return false
+      return TriggerFireOutcome(shouldFire: false)
     }
 
     let isMatched = result?.toString() == "true"
@@ -93,7 +98,7 @@ struct ExpressionEvaluator {
     let jsonAttributes = JSON(attributes)
 
     if let expressionJs = rule.expressionJs {
-      if let base64Params = JavascriptExpressionEvaluatorParams(
+      if let base64Params = JsExpressionEvaluatorParams(
         expressionJs: expressionJs,
         values: jsonAttributes
       ).toBase64Input() {
@@ -118,7 +123,7 @@ struct ExpressionEvaluator {
     forOccurrence occurrence: TriggerRuleOccurrence?,
     ruleMatched: Bool,
     isPreemptive: Bool
-  ) async -> Bool {
+  ) async -> TriggerFireOutcome {
     if ruleMatched {
       guard let occurrence = occurrence else {
         Logger.debug(
@@ -126,8 +131,10 @@ struct ExpressionEvaluator {
           scope: .paywallPresentation,
           message: "No occurrence parameter found for trigger rule."
         )
-        return true
+
+        return TriggerFireOutcome(shouldFire: true)
       }
+
       let count = await storage
         .coreDataManager
         .countTriggerRuleOccurrences(
@@ -135,14 +142,19 @@ struct ExpressionEvaluator {
         ) + 1
       let shouldFire = count <= occurrence.maxCount
 
+      var unsavedOccurrence: TriggerRuleOccurrence?
+
       if shouldFire,
         !isPreemptive {
-        storage.coreDataManager.save(triggerRuleOccurrence: occurrence)
+        unsavedOccurrence = occurrence
       }
 
-      return shouldFire
+      return TriggerFireOutcome(
+        shouldFire: shouldFire,
+        unsavedOccurrence: unsavedOccurrence
+      )
     }
 
-    return false
+    return TriggerFireOutcome(shouldFire: false)
   }
 }

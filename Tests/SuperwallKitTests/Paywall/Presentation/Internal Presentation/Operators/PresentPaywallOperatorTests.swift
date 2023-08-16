@@ -58,6 +58,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
       _ = try await Superwall.shared.presentPaywallViewController(
         paywallVc,
         on: UIViewController(),
+        unsavedOccurrence: nil,
         debugInfo: [:],
         request: .stub(),
         paywallStatePublisher: statePublisher
@@ -120,6 +121,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
       _ = try await Superwall.shared.presentPaywallViewController(
         paywallVc,
         on: UIViewController(),
+        unsavedOccurrence: nil,
         debugInfo: [:],
         request: .stub(),
         paywallStatePublisher: statePublisher

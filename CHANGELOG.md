@@ -9,6 +9,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds logic to enhance debugging by sending a stringified version of all the device/user/event parameters used to evaluate rules within the `paywallPresentationRequest` event. This is behind a feature flag.
 - Adds logic to keep the user's generated `seed` value consistent when `Superwall.identify` is called. This is behind a feature flag.
 
+### Fixes
+
+- Fixes rare issue when using limits on a campaign rule. If a paywall encountered an error preventing it from being presented, it may still have been counted as having been presented. This would then have affected future paywall presentation requests underneath the same rule.
+
 ## 3.3.0
 
 ### Enhancements
