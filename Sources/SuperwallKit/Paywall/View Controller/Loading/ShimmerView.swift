@@ -26,7 +26,7 @@ final class ShimmerView: UIImageView {
   private var placeholderImage: UIImage {
     if UIWindow.isLandscape {
       guard let placeholder = UIImage(
-        named: "paywall_placeholder_landscape",
+        named: "SuperwallKit_paywall_placeholder_landscape",
         in: Bundle.module,
         compatibleWith: nil
       ) else {
@@ -36,7 +36,7 @@ final class ShimmerView: UIImageView {
       return placeholder
     } else {
       guard let placeholder = UIImage(
-        named: "paywall_placeholder",
+        named: "SuperwallKit_paywall_placeholder",
         in: Bundle.module,
         compatibleWith: nil
       ) else {

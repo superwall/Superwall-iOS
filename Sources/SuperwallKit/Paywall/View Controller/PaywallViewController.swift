@@ -103,7 +103,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// A button that refreshes the paywall presentation.
   private lazy var refreshPaywallButton: UIButton = {
     ButtonFactory.make(
-      imageNamed: "reload_paywall",
+      imageNamed: "SuperwallKit_reload_paywall",
       target: self,
       action: #selector(reloadWebView)
     )
@@ -112,7 +112,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// A button that exits the paywall.
   private lazy var exitButton: UIButton = {
     ButtonFactory.make(
-      imageNamed: "exit_paywall",
+      imageNamed: "SuperwallKit_exit_paywall",
       target: self,
       action: #selector(forceClose)
     )

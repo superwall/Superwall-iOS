@@ -12,6 +12,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes rare issue when using limits on a campaign rule. If a paywall encountered an error preventing it from being presented, it may still have been counted as having been presented. This would then have affected future paywall presentation requests underneath the same rule.
+- Fixes issue where resources weren't being accessed correctly when installing the SDK via CocoaPods.
 
 ## 3.3.0
 
