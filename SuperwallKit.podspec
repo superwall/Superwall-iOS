@@ -39,12 +39,10 @@ Pod::Spec.new do |s|
 	s.requires_arc = true
 
   s.source_files  = "Sources/**/*.{swift}"
-  s.resources = "Sources/SuperwallKit/**/*.cer"
-  s.resource_bundles = {
-    "SuperwallKit" => [
-      "Sources/SuperwallKit/**/*.xcassets",
-      "Sources/SuperwallKit/**/*.xcdatamodeld"
-    ]
-  }
+  s.resources = [
+    "Sources/SuperwallKit/**/*.xcassets",
+    "Sources/SuperwallKit/**/*.xcdatamodeld",
+    "Sources/SuperwallKit/**/*.cer"
+  ]
 
 end

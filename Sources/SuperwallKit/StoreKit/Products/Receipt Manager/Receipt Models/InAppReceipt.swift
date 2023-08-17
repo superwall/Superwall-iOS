@@ -67,9 +67,9 @@ final class InAppReceipt {
     self.rawData = receiptData
 
     #if DEBUG
-    let certificateName = "StoreKitTestCertificate"
+    let certificateName = "Superwall_StoreKitTestCertificate"
     #else
-    let certificateName = "AppleIncRootCertificate"
+    let certificateName = "Superwall_AppleIncRootCertificate"
     #endif
 
     self.rootCertificatePath = rootCertPath ?? Bundle.module.path(forResource: certificateName, ofType: "cer")
