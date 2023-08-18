@@ -307,6 +307,7 @@ class DeviceHelper {
       requests: computedPropertyRequests
     )
     dictionary += computedProperties
+
     return dictionary
   }
 

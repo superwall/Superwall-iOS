@@ -44,7 +44,8 @@ final class SurveyManagerTests: XCTestCase {
       paywallInfo: .stub(),
       storage: StorageMock(),
       factory: dependencyContainer,
-      completion: {
+      completion: { result in
+        XCTAssertEqual(result, .noShow)
         expectation.fulfill()
       }
     )
@@ -83,7 +84,8 @@ final class SurveyManagerTests: XCTestCase {
       paywallInfo: .stub(),
       storage: StorageMock(),
       factory: dependencyContainer,
-      completion: {
+      completion: { result in
+        XCTAssertEqual(result, .noShow)
         expectation.fulfill()
       }
     )
@@ -122,7 +124,8 @@ final class SurveyManagerTests: XCTestCase {
       paywallInfo: .stub(),
       storage: StorageMock(),
       factory: dependencyContainer,
-      completion: {
+      completion: { result in
+        XCTAssertEqual(result, .noShow)
         expectation.fulfill()
       }
     )
@@ -161,7 +164,8 @@ final class SurveyManagerTests: XCTestCase {
       paywallInfo: .stub(),
       storage: StorageMock(),
       factory: dependencyContainer,
-      completion: {
+      completion: { result in
+        XCTAssertEqual(result, .noShow)
         expectation.fulfill()
       }
     )
@@ -200,7 +204,8 @@ final class SurveyManagerTests: XCTestCase {
       paywallInfo: .stub(),
       storage: StorageMock(),
       factory: dependencyContainer,
-      completion: {
+      completion: { result in
+        XCTAssertEqual(result, .noShow)
         expectation.fulfill()
       }
     )
@@ -239,7 +244,8 @@ final class SurveyManagerTests: XCTestCase {
       paywallInfo: .stub(),
       storage: StorageMock(),
       factory: dependencyContainer,
-      completion: {
+      completion: { result in
+        XCTAssertEqual(result, .noShow)
         expectation.fulfill()
       }
     )
@@ -247,11 +253,9 @@ final class SurveyManagerTests: XCTestCase {
   }
 
   func test_presentSurveyIfAvailable_sameAssignmentKey() {
-    let storageMock = StorageMock()
-
+    let storageMock = StorageMock(internalSurveyAssignmentKey: "1")
     let survey = Survey.stub()
       .setting(\.assignmentKey, to: "1")
-    storageMock.save("1", forType: SurveyAssignmentKey.self)
 
     let expectation = expectation(description: "called completion block")
     let dependencyContainer = DependencyContainer()
@@ -284,12 +288,13 @@ final class SurveyManagerTests: XCTestCase {
       paywallInfo: .stub(),
       storage: storageMock,
       factory: dependencyContainer,
-      completion: {
+      completion: { result in
+        XCTAssertEqual(result, .noShow)
         expectation.fulfill()
       }
     )
-    wait(for: [expectation])
-    XCTAssertTrue(storageMock.didSave)
+    wait(for: [expectation], timeout: 0.2)
+    XCTAssertFalse(storageMock.didSave)
   }
 
   func test_presentSurveyIfAvailable_zeroPresentationProbability() {
@@ -330,7 +335,8 @@ final class SurveyManagerTests: XCTestCase {
       paywallInfo: .stub(),
       storage: storageMock,
       factory: dependencyContainer,
-      completion: {
+      completion: { result in
+        XCTAssertEqual(result, .holdout)
         expectation.fulfill()
       }
     )
@@ -375,7 +381,8 @@ final class SurveyManagerTests: XCTestCase {
       paywallInfo: .stub(),
       storage: storageMock,
       factory: dependencyContainer,
-      completion: {
+      completion: { result in
+        XCTAssertEqual(result, .show)
         expectation.fulfill()
       }
     )
@@ -422,7 +429,8 @@ final class SurveyManagerTests: XCTestCase {
       paywallInfo: .stub(),
       storage: storageMock,
       factory: dependencyContainer,
-      completion: {
+      completion: { result in
+        XCTAssertEqual(result, .show)
         expectation.fulfill()
       }
     )

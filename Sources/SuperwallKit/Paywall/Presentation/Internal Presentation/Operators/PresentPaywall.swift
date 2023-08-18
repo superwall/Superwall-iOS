@@ -14,30 +14,41 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
+  ///   - presenter: The view controller to present that paywall on.
+  ///   - unsavedOccurrence: The trigger rule occurrence to save, if available.
+  ///   - debugInfo: Information to help with debugging.
+  ///   - request: The request to present the paywall.
+  ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   ///
   /// - Returns: A publisher that contains info for the next pipeline operator.
   @MainActor
   func presentPaywallViewController(
     _ paywallViewController: PaywallViewController,
     on presenter: UIViewController,
+    unsavedOccurrence: TriggerRuleOccurrence?,
     debugInfo: [String: Any],
     request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) async throws {
     Task.detached { [weak self] in
+      guard let self = self else {
+        return
+      }
       let trackedEvent = InternalSuperwallEvent.PresentationRequest(
         eventData: request.presentationInfo.eventData,
         type: request.flags.type,
         status: .presentation,
-        statusReason: nil
+        statusReason: nil,
+        factory: self.dependencyContainer
       )
-      await self?.track(trackedEvent)
+      await self.track(trackedEvent)
     }
 
     try await withCheckedThrowingContinuation { continuation in
       paywallViewController.present(
         on: presenter,
         request: request,
+        unsavedOccurrence: unsavedOccurrence,
         presentationStyleOverride: request.paywallOverrides?.presentationStyle,
         paywallStatePublisher: paywallStatePublisher
       ) { isPresented in

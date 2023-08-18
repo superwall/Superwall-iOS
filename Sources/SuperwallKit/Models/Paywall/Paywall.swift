@@ -50,7 +50,7 @@ struct Paywall: Decodable {
   let onDeviceCache: OnDeviceCaching
 
   /// A survey to potentially show on close of the paywall.
-  let survey: Survey?
+  var survey: Survey?
 
   /// The products associated with the paywall.
   var products: [Product] {

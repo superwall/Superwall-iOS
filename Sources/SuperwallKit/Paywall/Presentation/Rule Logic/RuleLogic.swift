@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 09/08/2022.
 //
+// swiftlint:disable function_body_length
 
 import Foundation
 
@@ -12,15 +13,16 @@ struct ConfirmableAssignment: Equatable {
   let variant: Experiment.Variant
 }
 
+struct RuleEvaluationOutcome {
+  var confirmableAssignment: ConfirmableAssignment?
+  var unsavedOccurrence: TriggerRuleOccurrence?
+  var triggerResult: TriggerResult
+}
+
 struct RuleLogic {
   unowned let configManager: ConfigManager
   unowned let storage: Storage
   unowned let factory: RuleAttributesFactory
-
-  struct Outcome {
-    var confirmableAssignment: ConfirmableAssignment?
-    var triggerResult: TriggerResult
-  }
 
   /// Determines the outcome of an event based on given triggers. It also determines
   /// whether there is an assignment to confirm based on the rule.
@@ -44,22 +46,22 @@ struct RuleLogic {
     forEvent event: EventData,
     triggers: [String: Trigger],
     isPreemptive: Bool
-  ) async -> Outcome {
+  ) async -> RuleEvaluationOutcome {
     guard let trigger = triggers[event.name] else {
-      return Outcome(triggerResult: .eventNotFound)
+      return RuleEvaluationOutcome(triggerResult: .eventNotFound)
     }
 
-    guard let rule = await findMatchingRule(
+    guard let ruleOutcome = await findMatchingRule(
       for: event,
       withTrigger: trigger,
       isPreemptive: isPreemptive
     ) else {
-      return Outcome(triggerResult: .noRuleMatch)
+      return RuleEvaluationOutcome(triggerResult: .noRuleMatch)
     }
 
     let variant: Experiment.Variant
     var confirmableAssignment: ConfirmableAssignment?
-
+    let rule = ruleOutcome.rule
     // For a matching rule there will be an unconfirmed (in-memory) or confirmed (on disk) variant assignment.
     // First check the disk, otherwise check memory.
     let confirmedAssignments = storage.getConfirmedAssignments()
@@ -85,13 +87,14 @@ struct RuleLogic {
         code: 404,
         userInfo: userInfo
       )
-      return Outcome(triggerResult: .error(error))
+      return RuleEvaluationOutcome(triggerResult: .error(error))
     }
 
     switch variant.type {
     case .holdout:
-      return Outcome(
+      return RuleEvaluationOutcome(
         confirmableAssignment: confirmableAssignment,
+        unsavedOccurrence: ruleOutcome.unsavedOccurrence,
         triggerResult: .holdout(
           Experiment(
             id: rule.experiment.id,
@@ -101,8 +104,9 @@ struct RuleLogic {
         )
       )
     case .treatment:
-      return Outcome(
+      return RuleEvaluationOutcome(
         confirmableAssignment: confirmableAssignment,
+        unsavedOccurrence: ruleOutcome.unsavedOccurrence,
         triggerResult: .paywall(
           Experiment(
             id: rule.experiment.id,
@@ -118,17 +122,24 @@ struct RuleLogic {
     for event: EventData,
     withTrigger trigger: Trigger,
     isPreemptive: Bool
-  ) async -> TriggerRule? {
+  ) async -> TriggerRuleOutcome? {
     let expressionEvaluator = ExpressionEvaluator(
       storage: storage,
       factory: factory
     )
-    for rule in trigger.rules where await expressionEvaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: event,
-      isPreemptive: isPreemptive
-    ) {
-      return rule
+
+    for rule in trigger.rules {
+      let outcome = await expressionEvaluator.evaluateExpression(
+        fromRule: rule,
+        eventData: event,
+        isPreemptive: isPreemptive
+      )
+      if outcome.shouldFire {
+        return TriggerRuleOutcome(
+          rule: rule,
+          unsavedOccurrence: outcome.unsavedOccurrence
+        )
+      }
     }
     return nil
   }

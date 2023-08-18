@@ -21,21 +21,21 @@ extension Superwall {
   /// - Returns: A struct that contains info for the next operation.
   func getExperiment(
     request: PresentationRequest,
-    rulesOutput: EvaluateRulesOutput,
+    rulesOutcome: RuleEvaluationOutcome,
     debugInfo: [String: Any]? = nil,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
   ) async throws -> Experiment {
     let errorType: PresentationPipelineError
 
-    switch rulesOutput.triggerResult {
+    switch rulesOutcome.triggerResult {
     case .paywall(let experiment):
       return experiment
     case .holdout(let experiment):
-      await activateSession(request: request, rulesOutput: rulesOutput)
+      await activateSession(request: request, rulesOutcome: rulesOutcome)
       errorType = .holdout(experiment)
       paywallStatePublisher?.send(.skipped(.holdout(experiment)))
     case .noRuleMatch:
-      await activateSession(request: request, rulesOutput: rulesOutput)
+      await activateSession(request: request, rulesOutcome: rulesOutcome)
       errorType = .noRuleMatch
       paywallStatePublisher?.send(.skipped(.noRuleMatch))
     case .eventNotFound:
@@ -62,7 +62,7 @@ extension Superwall {
 
   private func activateSession(
     request: PresentationRequest,
-    rulesOutput: EvaluateRulesOutput
+    rulesOutcome: RuleEvaluationOutcome
   ) async {
     if request.flags.type == .getImplicitPresentationResult ||
       request.flags.type == .getPresentationResult {
@@ -72,7 +72,7 @@ extension Superwall {
     await sessionEventsManager?.triggerSession.activateSession(
       for: request.presentationInfo,
       on: request.presenter,
-      triggerResult: rulesOutput.triggerResult
+      triggerResult: rulesOutcome.triggerResult
     )
   }
 }

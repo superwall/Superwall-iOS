@@ -20,7 +20,7 @@ struct LiquidExpressionEvaluatorParams: Codable {
   }
 }
 
-struct JavascriptExpressionEvaluatorParams: Codable {
+struct JsExpressionEvaluatorParams: Codable {
   var expressionJs: String
   var values: JSON
 

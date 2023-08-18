@@ -54,7 +54,7 @@ public enum SuperwallEvent {
   /// When a paywall is closed.
   case paywallClose(paywallInfo: PaywallInfo)
 
-  /// When a user dismisses a paywall instead of purchasing
+  /// When a user manually dismisses a paywall.
   case paywallDecline(paywallInfo: PaywallInfo)
 
   /// When the payment sheet is displayed to the user.

@@ -7,6 +7,11 @@
 
 import Foundation
 
+struct TriggerRuleOutcome {
+  let rule: TriggerRule
+  let unsavedOccurrence: TriggerRuleOccurrence?
+}
+
 struct TriggerRule: Decodable, Hashable {
   var experiment: RawExperiment
   var expression: String?

@@ -25,7 +25,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       eventData: .stub(),
       isPreemptive: false
     )
-    XCTAssertTrue(result)
+    XCTAssertTrue(result.shouldFire)
   }
 
   // MARK: - Expression
@@ -44,7 +44,28 @@ final class ExpressionEvaluatorTests: XCTestCase {
       eventData: EventData(name: "ss", parameters: [:], createdAt: Date()),
       isPreemptive: false
     )
-    XCTAssertTrue(result)
+    XCTAssertTrue(result.shouldFire)
+    XCTAssertNil(result.unsavedOccurrence)
+  }
+
+  func testExpressionEvaluator_expression_withOccurrence() async  {
+    let dependencyContainer = DependencyContainer()
+    dependencyContainer.storage.reset()
+    let evaluator = ExpressionEvaluator(
+      storage: dependencyContainer.storage,
+      factory: dependencyContainer
+    )
+    dependencyContainer.identityManager.mergeUserAttributes(["a": "b"])
+    let occurrence = TriggerRuleOccurrence(key: "a", maxCount: 1, interval: .infinity)
+    let result = await evaluator.evaluateExpression(
+      fromRule: .stub()
+        .setting(\.expression, to: "user.a == \"b\"")
+        .setting(\.occurrence, to: occurrence),
+      eventData: EventData(name: "ss", parameters: [:], createdAt: Date()),
+      isPreemptive: false
+    )
+    XCTAssertTrue(result.shouldFire)
+    XCTAssertEqual(result.unsavedOccurrence, occurrence)
   }
 
   func testExpressionEvaluator_expressionParams() async {
@@ -61,7 +82,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
       isPreemptive: false
     )
-    XCTAssertTrue(result)
+    XCTAssertTrue(result.shouldFire)
   }
 
   func testExpressionEvaluator_expressionDeviceTrue() async {
@@ -78,7 +99,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
       isPreemptive: false
     )
-    XCTAssertTrue(result)
+    XCTAssertTrue(result.shouldFire)
   }
 
   func testExpressionEvaluator_expressionDeviceFalse() async {
@@ -95,7 +116,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
         isPreemptive: false
     )
-    XCTAssertFalse(result)
+    XCTAssertFalse(result.shouldFire)
   }
 
   func testExpressionEvaluator_expressionFalse() async {
@@ -112,7 +133,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       eventData: .stub(),
       isPreemptive: false
     )
-    XCTAssertFalse(result)
+    XCTAssertFalse(result.shouldFire)
   }
 /*
   func testExpressionEvaluator_events() {
@@ -143,7 +164,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       eventData: .stub(),
       isPreemptive: false
     )
-    XCTAssertTrue(result)
+    XCTAssertTrue(result.shouldFire)
   }
 
   func testExpressionEvaluator_expressionJSValues_true() async {
@@ -158,7 +179,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
       isPreemptive: false
     )
-    XCTAssertTrue(result)
+    XCTAssertTrue(result.shouldFire)
   }
 
   func testExpressionEvaluator_expressionJSValues_false() async {
@@ -173,7 +194,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date()),
       isPreemptive: false
     )
-    XCTAssertTrue(result)
+    XCTAssertTrue(result.shouldFire)
   }
 
   func testExpressionEvaluator_expressionJSNumbers() async {
@@ -188,7 +209,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       eventData: .stub(),
       isPreemptive: false
     )
-    XCTAssertTrue(result)
+    XCTAssertTrue(result.shouldFire)
   }
 /*
   func testExpressionEvaluator_expressionJSValues_events() {
@@ -217,6 +238,6 @@ final class ExpressionEvaluatorTests: XCTestCase {
       eventData: .stub(),
       isPreemptive: false
     )
-    XCTAssertFalse(result)
+    XCTAssertFalse(result.shouldFire)
   }
 }

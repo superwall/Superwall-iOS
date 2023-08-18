@@ -17,15 +17,19 @@ extension Superwall {
       // Don't print anything if we've just cancelled a pipeline that timed out.
       return
     }
-    Task {
+    Task { [weak self] in
+      guard let self = self else {
+        return
+      }
       if let reason = error as? PresentationPipelineError {
         let trackedEvent = InternalSuperwallEvent.PresentationRequest(
           eventData: request.presentationInfo.eventData,
           type: request.flags.type,
           status: .noPresentation,
-          statusReason: reason
+          statusReason: reason,
+          factory: self.dependencyContainer
         )
-        await track(trackedEvent)
+        await self.track(trackedEvent)
       }
     }
     Logger.debug(

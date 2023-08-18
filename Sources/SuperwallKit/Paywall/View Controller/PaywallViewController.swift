@@ -103,7 +103,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// A button that refreshes the paywall presentation.
   private lazy var refreshPaywallButton: UIButton = {
     ButtonFactory.make(
-      imageNamed: "reload_paywall",
+      imageNamed: "SuperwallKit_reload_paywall",
       target: self,
       action: #selector(reloadWebView)
     )
@@ -112,7 +112,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// A button that exits the paywall.
   private lazy var exitButton: UIButton = {
     ButtonFactory.make(
-      imageNamed: "exit_paywall",
+      imageNamed: "SuperwallKit_exit_paywall",
       target: self,
       action: #selector(forceClose)
     )
@@ -136,7 +136,14 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   /// The presenting view controller, saved for presenting surveys from when
   /// the view disappears.
-  var internalPresentingViewController: UIViewController?
+  private var internalPresentingViewController: UIViewController?
+
+  /// Whether the survey was shown, not shown, or in a holdout. Defaults to not shown.
+  private var surveyPresentationResult: SurveyPresentationResult = .noShow
+
+  /// If the user match a rule with an occurrence, this needs to be saved on
+  /// paywall presentation.
+  private var unsavedOccurrence: TriggerRuleOccurrence?
 
   private unowned let factory: TriggerSessionManagerFactory & TriggerFactory
   private unowned let storage: Storage
@@ -229,7 +236,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   nonisolated private func trackClose() async {
     let triggerSessionManager = factory.getTriggerSessionManager()
-    let trackedEvent = await InternalSuperwallEvent.PaywallClose(paywallInfo: info)
+    let trackedEvent = await InternalSuperwallEvent.PaywallClose(
+      paywallInfo: info,
+      surveyPresentationResult: surveyPresentationResult
+    )
     await Superwall.shared.track(trackedEvent)
     await triggerSessionManager.trackPaywallClose()
   }
@@ -454,15 +464,18 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// for callbacks.
   func set(
     request: PresentationRequest,
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
+    unsavedOccurrence: TriggerRuleOccurrence?
   ) {
     self.request = request
     self.paywallStateSubject = paywallStatePublisher
+    self.unsavedOccurrence = unsavedOccurrence
   }
 
   func present(
     on presenter: UIViewController,
     request: PresentationRequest,
+    unsavedOccurrence: TriggerRuleOccurrence?,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     completion: @escaping (Bool) -> Void
@@ -476,7 +489,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
     set(
       request: request,
-      paywallStatePublisher: paywallStatePublisher
+      paywallStatePublisher: paywallStatePublisher,
+      unsavedOccurrence: unsavedOccurrence
     )
 
     setPresentationStyle(withOverride: presentationStyleOverride)
@@ -694,6 +708,10 @@ extension PaywallViewController {
     if let paywallStateSubject = paywallStateSubject {
       Superwall.shared.storePresentationObjects(request, paywallStateSubject)
     }
+    if let unsavedOccurrence = unsavedOccurrence {
+      storage.coreDataManager.save(triggerRuleOccurrence: unsavedOccurrence)
+      self.unsavedOccurrence = nil
+    }
     isPresented = true
     Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall(withInfo: info)
     Task {
@@ -722,7 +740,7 @@ extension PaywallViewController {
     if isSafariVCPresented {
       return
     }
-    Task(priority: .utility) {
+    Task {
       await trackClose()
     }
 
@@ -775,7 +793,8 @@ extension PaywallViewController {
       paywallInfo: info,
       storage: storage,
       factory: factory
-    ) {
+    ) { [weak self] result in
+      self?.surveyPresentationResult = result
       dismissView()
     }
   }

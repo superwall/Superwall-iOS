@@ -139,7 +139,17 @@ class Cache {
       return
     }
 
-    let data = NSKeyedArchiver.archivedData(withRootObject: value)
+    guard let data = try? NSKeyedArchiver.archivedData(
+      withRootObject: value,
+      requiringSecureCoding: true
+    ) else {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .cache,
+        message: "Could not write object that doesn't conform to NSSecureCoding to cache."
+      )
+      return
+    }
     memCache.setObject(data as AnyObject, forKey: keyType.key as AnyObject)
 
     writeDataToDisk(
@@ -163,7 +173,17 @@ class Cache {
       return
     }
 
-    let archivedData = NSKeyedArchiver.archivedData(withRootObject: data)
+    guard let archivedData = try? NSKeyedArchiver.archivedData(
+      withRootObject: data,
+      requiringSecureCoding: true
+    ) else {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .cache,
+        message: "Could not write object that doesn't conform to NSSecureCoding to cache."
+      )
+      return
+    }
     memCache.setObject(archivedData as AnyObject, forKey: keyType.key as AnyObject)
 
     writeDataToDisk(

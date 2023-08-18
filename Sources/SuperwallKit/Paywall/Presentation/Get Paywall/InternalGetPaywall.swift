@@ -28,13 +28,13 @@ extension Superwall {
         message: "Called Superwall.shared.getPaywall"
       )
 
-      let rulesOutput = try await evaluateRules(from: request)
+      let rulesOutcome = try await evaluateRules(from: request)
 
-      confirmHoldoutAssignment(rulesOutput: rulesOutput)
+      confirmHoldoutAssignment(from: rulesOutcome)
 
       let experiment = try await getExperiment(
         request: request,
-        rulesOutput: rulesOutput,
+        rulesOutcome: rulesOutcome,
         debugInfo: debugInfo,
         paywallStatePublisher: publisher
       )
@@ -42,7 +42,6 @@ extension Superwall {
       let paywallViewController = try await getPaywallViewController(
         request: request,
         experiment: experiment,
-        rulesOutput: rulesOutput,
         debugInfo: debugInfo,
         paywallStatePublisher: publisher
       )
@@ -50,18 +49,19 @@ extension Superwall {
       try await checkSubscriptionStatus(
         request: request,
         paywall: paywallViewController.paywall,
-        triggerResult: rulesOutput.triggerResult,
+        triggerResult: rulesOutcome.triggerResult,
         paywallStatePublisher: publisher
       )
 
       confirmPaywallAssignment(
-        rulesOutput.confirmableAssignment,
+        rulesOutcome.confirmableAssignment,
         isDebuggerLaunched: request.flags.isDebuggerLaunched
       )
 
       await paywallViewController.set(
         request: request,
-        paywallStatePublisher: publisher
+        paywallStatePublisher: publisher,
+        unsavedOccurrence: rulesOutcome.unsavedOccurrence
       )
       return paywallViewController
     } catch {

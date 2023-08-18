@@ -17,27 +17,26 @@ extension Superwall {
         request: request,
         message: "Called Superwall.shared.getPresentationResult"
       )
-      let rulesOutput = try await evaluateRules(from: request)
+      let rulesOutcome = try await evaluateRules(from: request)
 
       let experiment = try await getExperiment(
         request: request,
-        rulesOutput: rulesOutput
+        rulesOutcome: rulesOutcome
       )
 
       let paywallViewController = try await getPaywallViewController(
         request: request,
         experiment: experiment,
-        rulesOutput: rulesOutput,
         debugInfo: debugInfo
       )
 
       try await getPresenter(
         for: paywallViewController,
-        rulesOutput: rulesOutput,
+        rulesOutcome: rulesOutcome,
         request: request,
         debugInfo: debugInfo
       )
-      let presentationResult = GetPresentationResultLogic.convertTriggerResult(rulesOutput.triggerResult)
+      let presentationResult = GetPresentationResultLogic.convertTriggerResult(rulesOutcome.triggerResult)
       return presentationResult
     } catch let error as PresentationPipelineError {
       return handle(error, requestType: request.flags.type)

@@ -26,7 +26,7 @@ struct AlertOption {
 @MainActor
 final class DebugViewController: UIViewController {
   var logoImageView: UIImageView = {
-    let superwallLogo = UIImage(named: "superwall_logo", in: Bundle.module, compatibleWith: nil)!
+    let superwallLogo = UIImage(named: "SuperwallKit_superwall_logo", in: Bundle.module, compatibleWith: nil)!
     let imageView = UIImageView(image: superwallLogo)
     imageView.contentMode = .scaleAspectFit
     imageView.backgroundColor = .clear
@@ -38,7 +38,7 @@ final class DebugViewController: UIViewController {
 
   lazy var exitButton: SWBounceButton = {
     let button = SWBounceButton()
-    let image = UIImage(named: "exit", in: Bundle.module, compatibleWith: nil)!
+    let image = UIImage(named: "SuperwallKit_exit", in: Bundle.module, compatibleWith: nil)!
     button.setImage(image, for: .normal)
     button.translatesAutoresizingMaskIntoConstraints = false
     button.imageView?.tintColor = UIColor.white.withAlphaComponent(0.5)
@@ -48,7 +48,7 @@ final class DebugViewController: UIViewController {
 
   lazy var consoleButton: SWBounceButton = {
     let button = SWBounceButton()
-    let image = UIImage(named: "debugger", in: Bundle.module, compatibleWith: nil)!
+    let image = UIImage(named: "SuperwallKit_debugger", in: Bundle.module, compatibleWith: nil)!
     button.setImage(image, for: .normal)
     button.translatesAutoresizingMaskIntoConstraints = false
     button.imageView?.tintColor = UIColor.white.withAlphaComponent(0.5)
@@ -64,7 +64,7 @@ final class DebugViewController: UIViewController {
     button.setTitleColor(primaryColor, for: .normal)
     button.translatesAutoresizingMaskIntoConstraints = false
 
-    let image = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
+    let image = UIImage(named: "SuperwallKit_play_button", in: Bundle.module, compatibleWith: nil)!
     button.titleEdgeInsets = UIEdgeInsets(top: -1, left: 0, bottom: 0, right: 0)
     // button.imageEdgeInsets = UIEdgeInsets(top: 1, left: 5, bottom: -1, right: -3)
     button.setImage(image, for: .normal)
@@ -86,7 +86,7 @@ final class DebugViewController: UIViewController {
     button.imageView?.tintColor = primaryColor
     button.layer.cornerRadius = 10
 
-    let image = UIImage(named: "down_arrow", in: Bundle.module, compatibleWith: nil)!
+    let image = UIImage(named: "SuperwallKit_down_arrow", in: Bundle.module, compatibleWith: nil)!
     button.semanticContentAttribute = .forceRightToLeft
     button.setImage(image, for: .normal)
     button.imageView?.tintColor = primaryColor
@@ -448,7 +448,7 @@ final class DebugViewController: UIViewController {
         case .presented:
           self.bottomButton.showLoading = false
 
-          let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
+          let playButton = UIImage(named: "SuperwallKit_play_button", in: Bundle.module, compatibleWith: nil)!
           self.bottomButton.setImage(
             playButton,
             for: .normal
@@ -473,7 +473,7 @@ final class DebugViewController: UIViewController {
           )
           self.bottomButton.showLoading = false
 
-          let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
+          let playButton = UIImage(named: "SuperwallKit_play_button", in: Bundle.module, compatibleWith: nil)!
           self.bottomButton.setImage(playButton, for: .normal)
           self.activityIndicator.stopAnimating()
         case .dismissed:
@@ -492,7 +492,7 @@ final class DebugViewController: UIViewController {
           )
           self.bottomButton.showLoading = false
 
-          let playButton = UIImage(named: "play_button", in: Bundle.module, compatibleWith: nil)!
+          let playButton = UIImage(named: "SuperwallKit_play_button", in: Bundle.module, compatibleWith: nil)!
           self.bottomButton.setImage(playButton, for: .normal)
           self.activityIndicator.stopAnimating()
         }

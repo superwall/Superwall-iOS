@@ -288,18 +288,41 @@ enum InternalSuperwallEvent {
     let type: PresentationRequestType
     let status: PaywallPresentationRequestStatus
     let statusReason: PaywallPresentationRequestStatusReason?
+    let factory: RuleAttributesFactory & FeatureFlagsFactory & ComputedPropertyRequestsFactory
 
     var superwallEvent: SuperwallEvent {
-      return .paywallPresentationRequest(status: status, reason: statusReason)
+      return .paywallPresentationRequest(
+        status: status,
+        reason: statusReason
+      )
     }
     var customParameters: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
-      [
+      var params = [
         "source_event_name": eventData?.name ?? "",
         "pipeline_type": type.description,
         "status": status.rawValue,
         "status_reason": statusReason?.description ?? ""
       ]
+
+      if let featureFlags = factory.makeFeatureFlags(),
+        featureFlags.enableExpressionParameters {
+        let computedPropertyRequests = factory.makeComputedPropertyRequests()
+        let rules = await factory.makeRuleAttributes(
+          forEvent: eventData,
+          withComputedProperties: computedPropertyRequests
+        )
+
+        if let rulesDictionary = rules.dictionaryObject,
+          let jsonData = try? JSONSerialization.data(withJSONObject: rulesDictionary),
+          let decoded = String(data: jsonData, encoding: .utf8) {
+          params += [
+            "expression_params": decoded
+          ]
+        }
+      }
+
+      return params
     }
   }
 
@@ -321,8 +344,20 @@ enum InternalSuperwallEvent {
       return .paywallClose(paywallInfo: paywallInfo)
     }
     let paywallInfo: PaywallInfo
+    let surveyPresentationResult: SurveyPresentationResult
+
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams()
+      var params: [String: Any] = [
+        "survey_attached": paywallInfo.survey == nil ? false : true
+      ]
+
+      if surveyPresentationResult != .noShow {
+        params["survey_presentation"] = surveyPresentationResult.rawValue
+      }
+
+      let eventParams = await paywallInfo.eventParams()
+      params += eventParams
+      return params
     }
     var customParameters: [String: Any] {
       return paywallInfo.customParams()

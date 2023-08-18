@@ -25,7 +25,6 @@ extension Superwall {
   func getPaywallViewController(
     request: PresentationRequest,
     experiment: Experiment?,
-    rulesOutput: EvaluateRulesOutput,
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
     dependencyContainer: DependencyContainer? = nil

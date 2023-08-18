@@ -14,6 +14,7 @@ final class StorageMock: Storage {
   var internalCachedTriggerSessions: [TriggerSession]
   var internalCachedTransactions: [StoreTransaction]
   var internalConfirmedAssignments: [Experiment.ID: Experiment.Variant]
+  var internalSurveyAssignmentKey: String?
   var didClearCachedSessionEvents = false
   var didSave = false
 
@@ -34,6 +35,7 @@ final class StorageMock: Storage {
   init(
     internalCachedTriggerSessions: [TriggerSession] = [],
     internalCachedTransactions: [StoreTransaction] = [],
+    internalSurveyAssignmentKey: String? = nil,
     coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock(),
     confirmedAssignments: [Experiment.ID : Experiment.Variant] = [:],
     cache: Cache = Cache()
@@ -41,6 +43,7 @@ final class StorageMock: Storage {
     self.internalCachedTriggerSessions = internalCachedTriggerSessions
     self.internalCachedTransactions = internalCachedTransactions
     self.internalConfirmedAssignments = confirmedAssignments
+    self.internalSurveyAssignmentKey = internalSurveyAssignmentKey
 
     super.init(factory: DeviceInfoFactoryMock(), cache: cache, coreDataManager: coreDataManager)
   }
@@ -50,6 +53,8 @@ final class StorageMock: Storage {
       return internalCachedTriggerSessions as? Key.Value
     } else if keyType == Transactions.self {
       return internalCachedTransactions as? Key.Value
+    } else if keyType == SurveyAssignmentKey.self {
+      return internalSurveyAssignmentKey as? Key.Value
     }
     return super.get(keyType)
   }
@@ -59,6 +64,8 @@ final class StorageMock: Storage {
       return internalCachedTriggerSessions as? Key.Value
     } else if keyType == Transactions.self {
       return internalCachedTransactions as? Key.Value
+    } else if keyType == SurveyAssignmentKey.self {
+      return internalSurveyAssignmentKey as? Key.Value
     }
     return super.get(keyType)
   }

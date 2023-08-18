@@ -36,6 +36,6 @@ public enum TriggerResult: Sendable, Equatable {
   ///
   /// If the error code is `101`, it means that no view controller could be found to present on. Otherwise a network failure may have occurred.
   ///
-  /// In these instances, consider fallng back to a native paywall.
+  /// In these instances, consider falling back to a native paywall.
   case error(NSError)
 }

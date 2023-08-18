@@ -55,9 +55,17 @@ protocol RequestFactory: AnyObject {
 
 protocol RuleAttributesFactory: AnyObject {
   func makeRuleAttributes(
-    forEvent event: EventData,
-    from rule: TriggerRule
-  ) async -> RuleAttributes
+    forEvent event: EventData?,
+    withComputedProperties computedPropertyRequests: [ComputedPropertyRequest]
+  ) async -> JSON
+}
+
+protocol FeatureFlagsFactory: AnyObject {
+  func makeFeatureFlags() -> FeatureFlags?
+}
+
+protocol ComputedPropertyRequestsFactory: AnyObject {
+  func makeComputedPropertyRequests() -> [ComputedPropertyRequest]
 }
 
 protocol TriggerSessionManagerFactory: AnyObject {

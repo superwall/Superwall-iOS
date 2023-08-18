@@ -13,7 +13,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
   func test_handleTriggerResult_paywall() async {
-    let input = EvaluateRulesOutput(
+    let input = RuleEvaluationOutcome(
       triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
@@ -29,7 +29,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     do {
       _ = try await Superwall.shared.getExperiment(
         request: .stub(),
-        rulesOutput: input,
+        rulesOutcome: input,
         paywallStatePublisher: statePublisher
       )
     } catch {
@@ -42,7 +42,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
   func test_handleTriggerResult_holdout() async {
     //TODO: THis doesn't take into account activateSession
     let experimentId = "abc"
-    let input = EvaluateRulesOutput(
+    let input = RuleEvaluationOutcome(
       triggerResult: .holdout(.init(id: experimentId, groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
@@ -76,7 +76,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     do {
       _ = try await Superwall.shared.getExperiment(
         request: .stub(),
-        rulesOutput: input,
+        rulesOutcome: input,
         paywallStatePublisher: statePublisher
       )
       XCTFail("Should fail")
@@ -93,7 +93,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
   }
 
   func test_handleTriggerResult_noRuleMatch() async {
-    let input = EvaluateRulesOutput(
+    let input = RuleEvaluationOutcome(
       triggerResult: .noRuleMatch
     )
 
@@ -126,7 +126,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     do {
       _ = try await Superwall.shared.getExperiment(
         request: .stub(),
-        rulesOutput: input,
+        rulesOutcome: input,
         paywallStatePublisher: statePublisher
       )
       XCTFail("Should fail")
@@ -143,7 +143,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
   }
 
   func test_handleTriggerResult_eventNotFound() async {
-    let input = EvaluateRulesOutput(
+    let input = RuleEvaluationOutcome(
       triggerResult: .eventNotFound
     )
 
@@ -176,7 +176,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     do {
       _ = try await Superwall.shared.getExperiment(
         request: .stub(),
-        rulesOutput: input,
+        rulesOutcome: input,
         paywallStatePublisher: statePublisher
       )
       XCTFail("Should fail")
@@ -197,7 +197,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       domain: "Test",
       code: 1
     )
-    let input = EvaluateRulesOutput(
+    let input = RuleEvaluationOutcome(
       triggerResult: .error(outputError)
     )
 
@@ -226,7 +226,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     do {
       _ = try await Superwall.shared.getExperiment(
         request: .stub(),
-        rulesOutput: input,
+        rulesOutcome: input,
         paywallStatePublisher: statePublisher
       )
       XCTFail("Should fail")

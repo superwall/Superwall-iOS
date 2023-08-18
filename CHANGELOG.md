@@ -2,6 +2,19 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.3.1
+
+### Enhancements
+
+- Adds logic to enhance debugging by sending a stringified version of all the device/user/event parameters used to evaluate rules within the `paywallPresentationRequest` event. This is behind a feature flag.
+- Adds logic to keep the user's generated `seed` value consistent when `Superwall.identify` is called. This is behind a feature flag.
+
+### Fixes
+
+- Fixes rare issue when using limits on a campaign rule. If a paywall encountered an error preventing it from being presented, it may still have been counted as having been presented. This would then have affected future paywall presentation requests underneath the same rule.
+- Fixes issue where assets weren't being accessed correctly when installing the SDK via CocoaPods.
+- Fixes crash if you tried to save an object that didn't conform to NSSecureCoding in user attributes.
+
 ## 3.3.0
 
 ### Enhancements
