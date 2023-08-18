@@ -740,7 +740,7 @@ extension PaywallViewController {
     if isSafariVCPresented {
       return
     }
-    Task(priority: .utility) {
+    Task {
       await trackClose()
     }
 
