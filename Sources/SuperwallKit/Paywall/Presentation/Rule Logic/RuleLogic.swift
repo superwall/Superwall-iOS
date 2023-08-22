@@ -135,12 +135,14 @@ struct RuleLogic {
         isPreemptive: isPreemptive
       )
       if outcome.shouldFire {
-        return TriggerRuleOutcome(
-          rule: rule,
-          unsavedOccurrence: outcome.unsavedOccurrence
+        return TriggerRuleOutcome.match(
+          .init(
+            rule: rule,
+            unsavedOccurrence: outcome.unsavedOccurrence
+          )
         )
       }
     }
-    return nil
+    return TriggerRuleOutcome.noRuleMatch(<#T##TriggerRuleOutcome.NoMatchSource#>)
   }
 }

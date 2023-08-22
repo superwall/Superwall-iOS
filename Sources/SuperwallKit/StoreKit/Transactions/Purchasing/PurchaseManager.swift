@@ -51,7 +51,7 @@ struct PurchaseManager {
           of: product.productIdentifier,
           hasPurchaseController: hasPurchaseController
         )
-
+        
         if hasRestored(
           transaction,
           hasPurchaseController: hasPurchaseController,

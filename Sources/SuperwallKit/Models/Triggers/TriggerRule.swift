@@ -7,9 +7,17 @@
 
 import Foundation
 
-struct TriggerRuleOutcome {
-  let rule: TriggerRule
-  let unsavedOccurrence: TriggerRuleOccurrence?
+enum TriggerRuleOutcome {
+  enum NoMatchSource {
+    case expression
+    case occurrence
+  }
+  struct MatchedItem {
+    let rule: TriggerRule
+    let unsavedOccurrence: TriggerRuleOccurrence?
+  }
+  case noRuleMatch(NoMatchSource)
+  case match(MatchedItem)
 }
 
 struct TriggerRule: Decodable, Hashable {
