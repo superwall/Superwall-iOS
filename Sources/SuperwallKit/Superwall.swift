@@ -471,7 +471,8 @@ extension Superwall: PaywallViewControllerEventDelegate {
 
       if case .paywall = result,
         paywallViewController.info.presentedByEventWithName != SuperwallEventObjc.paywallDecline.description {
-        // Do nothing, track will handle it.
+        // If the presentation result will be anything other than paywall_decline,
+        // do nothing, track will be responsible for closing the paywall.
       } else {
         dismiss(
           paywallViewController,
