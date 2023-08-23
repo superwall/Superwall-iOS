@@ -45,7 +45,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     paywallVc.loadViewIfNeeded()
     let expectation = expectation(description: "Called publisher")
     do {
-      try await Superwall.shared.getPresenter(
+      try await Superwall.shared.getPresenterIfNecessary(
         for: paywallVc,
         rulesOutcome: RuleEvaluationOutcome(triggerResult: .paywall(experiment)),
         request: request,
@@ -104,7 +104,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     paywallVc.loadViewIfNeeded()
     let expectation = expectation(description: "Called publisher")
     do {
-      try await Superwall.shared.getPresenter(
+      try await Superwall.shared.getPresenterIfNecessary(
         for: paywallVc,
         rulesOutcome: RuleEvaluationOutcome(triggerResult: .paywall(experiment)),
         request: request,
@@ -147,7 +147,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     let paywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil)
     paywallVc.loadViewIfNeeded()
     do {
-      try await Superwall.shared.getPresenter(
+      try await Superwall.shared.getPresenterIfNecessary(
         for: paywallVc,
         rulesOutcome: RuleEvaluationOutcome(triggerResult: .paywall(experiment)),
         request: request,
