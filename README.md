@@ -72,7 +72,9 @@ To include the *Superwall* SDK in your app, add the following to your Podfile:
 pod 'SuperwallKit', '< 4.0.0'
 ```
 
-Then, run `pod install`.
+Next, run `pod repo update` to update your local spec repo.
+
+Then, run `pod install` from your terminal.
 
 ## Getting Started
 

@@ -19,14 +19,9 @@ extension Superwall {
       )
       let rulesOutcome = try await evaluateRules(from: request)
 
-      let experiment = try await getExperiment(
-        request: request,
-        rulesOutcome: rulesOutcome
-      )
-
       let paywallViewController = try await getPaywallViewController(
         request: request,
-        experiment: experiment,
+        rulesOutcome: rulesOutcome,
         debugInfo: debugInfo
       )
 

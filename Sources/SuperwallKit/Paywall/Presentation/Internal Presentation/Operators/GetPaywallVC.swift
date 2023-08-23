@@ -9,29 +9,35 @@ import Foundation
 import Combine
 
 extension Superwall {
-  /// Requests the paywall view controller to present. If an error occurred during this,
-  /// or a paywall is already presented, it cancels the pipeline and sends an `error`
-  /// state to the paywall state publisher.
+  /// Requests the paywall view controller to present.
   ///
   /// - Parameters:
   ///   - request: The presentation request.
-  ///   - experiment: The experiment that this paywall is part of.
-  ///   - rulesOutput: The output from evaluating rules.
+  ///   - rulesOutcome: The outcome from evaluating rules.
   ///   - debugInfo: Information to help with debugging.
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   ///   - dependencyContainer: Used with testing only.
   ///
   /// - Returns: A ``PaywallViewController``.
+  /// - throws: An error if unable to retrieve paywall or a paywall is
+  /// already presented.
   func getPaywallViewController(
     request: PresentationRequest,
-    experiment: Experiment?,
+    rulesOutcome: RuleEvaluationOutcome,
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
     dependencyContainer: DependencyContainer? = nil
   ) async throws -> PaywallViewController {
+    let experiment = try await getExperiment(
+      request: request,
+      rulesOutcome: rulesOutcome,
+      debugInfo: debugInfo,
+      paywallStatePublisher: paywallStatePublisher
+    )
+
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     let responseIdentifiers = ResponseIdentifiers(
-      paywallId: experiment?.variant.paywallId,
+      paywallId: experiment.variant.paywallId,
       experiment: experiment
     )
 

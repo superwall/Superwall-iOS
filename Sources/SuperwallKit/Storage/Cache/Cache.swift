@@ -71,11 +71,13 @@ class Cache {
     var data = memCache.object(forKey: keyType.key as AnyObject) as? Data
 
     if data == nil {
-      let directory = directory ?? keyType.directory
-      if let path = cachePath(forKey: keyType.key, directory: directory),
-        let dataFromDisk = fileManager.contents(atPath: path) {
-        data = dataFromDisk
-        memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
+      ioQueue.sync {
+        let directory = directory ?? keyType.directory
+        if let path = cachePath(forKey: keyType.key, directory: directory),
+          let dataFromDisk = fileManager.contents(atPath: path) {
+          data = dataFromDisk
+          memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
+        }
       }
     }
     guard let data = data else {
@@ -101,10 +103,13 @@ class Cache {
     let directory = directory ?? keyType.directory
 
     if let path = cachePath(forKey: keyType.key, directory: directory),
-      data == nil,
-      let dataFromDisk = fileManager.contents(atPath: path) {
-      data = dataFromDisk
-      memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
+      data == nil {
+      ioQueue.sync {
+        if let dataFromDisk = fileManager.contents(atPath: path) {
+          data = dataFromDisk
+          memCache.setObject(dataFromDisk as AnyObject, forKey: keyType.key as AnyObject)
+        }
+      }
     }
 
     if let data = data {

@@ -30,6 +30,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       _ = try await Superwall.shared.getExperiment(
         request: .stub(),
         rulesOutcome: input,
+        debugInfo: [:],
         paywallStatePublisher: statePublisher
       )
     } catch {
@@ -77,6 +78,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       _ = try await Superwall.shared.getExperiment(
         request: .stub(),
         rulesOutcome: input,
+        debugInfo: [:],
         paywallStatePublisher: statePublisher
       )
       XCTFail("Should fail")
@@ -127,6 +129,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       _ = try await Superwall.shared.getExperiment(
         request: .stub(),
         rulesOutcome: input,
+        debugInfo: [:],
         paywallStatePublisher: statePublisher
       )
       XCTFail("Should fail")
@@ -177,6 +180,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       _ = try await Superwall.shared.getExperiment(
         request: .stub(),
         rulesOutcome: input,
+        debugInfo: [:],
         paywallStatePublisher: statePublisher
       )
       XCTFail("Should fail")
@@ -227,6 +231,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       _ = try await Superwall.shared.getExperiment(
         request: .stub(),
         rulesOutcome: input,
+        debugInfo: [:],
         paywallStatePublisher: statePublisher
       )
       XCTFail("Should fail")
