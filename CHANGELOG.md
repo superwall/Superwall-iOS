@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.3.2
+
+### Fixes
+
+- Fixes issue where paywall assignments may not have been cleared when resetting.
+
 ## 3.3.1
 
 ### Enhancements
