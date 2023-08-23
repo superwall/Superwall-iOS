@@ -27,15 +27,13 @@ struct ExpressionEvaluator {
 
   func evaluateExpression(
     fromRule rule: TriggerRule,
-    eventData: EventData,
-    isPreemptive: Bool
+    eventData: EventData
   ) async -> TriggerFireOutcome {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
       let shouldFire = await shouldFire(
         forOccurrence: rule.occurrence,
-        ruleMatched: true,
-        isPreemptive: isPreemptive
+        ruleMatched: true
       )
       return shouldFire
     }
@@ -80,8 +78,7 @@ struct ExpressionEvaluator {
 
     let shouldFire = await shouldFire(
       forOccurrence: rule.occurrence,
-      ruleMatched: isMatched,
-      isPreemptive: isPreemptive
+      ruleMatched: isMatched
     )
 
     return shouldFire
@@ -121,8 +118,7 @@ struct ExpressionEvaluator {
 
   func shouldFire(
     forOccurrence occurrence: TriggerRuleOccurrence?,
-    ruleMatched: Bool,
-    isPreemptive: Bool
+    ruleMatched: Bool
   ) async -> TriggerFireOutcome {
     if ruleMatched {
       guard let occurrence = occurrence else {
@@ -144,8 +140,7 @@ struct ExpressionEvaluator {
 
       var unsavedOccurrence: TriggerRuleOccurrence?
 
-      if shouldFire,
-        !isPreemptive {
+      if shouldFire {
         unsavedOccurrence = occurrence
       }
 

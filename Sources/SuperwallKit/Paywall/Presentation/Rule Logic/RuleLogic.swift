@@ -44,8 +44,7 @@ struct RuleLogic {
   /// - Returns: An assignment to confirm, if available.
   func evaluateRules(
     forEvent event: EventData,
-    triggers: [String: Trigger],
-    isPreemptive: Bool
+    triggers: [String: Trigger]
   ) async -> RuleEvaluationOutcome {
     guard let trigger = triggers[event.name] else {
       return RuleEvaluationOutcome(triggerResult: .eventNotFound)
@@ -53,8 +52,7 @@ struct RuleLogic {
 
     guard let ruleOutcome = await findMatchingRule(
       for: event,
-      withTrigger: trigger,
-      isPreemptive: isPreemptive
+      withTrigger: trigger
     ) else {
       return RuleEvaluationOutcome(triggerResult: .noRuleMatch)
     }
@@ -120,8 +118,7 @@ struct RuleLogic {
 
   func findMatchingRule(
     for event: EventData,
-    withTrigger trigger: Trigger,
-    isPreemptive: Bool
+    withTrigger trigger: Trigger
   ) async -> TriggerRuleOutcome? {
     let expressionEvaluator = ExpressionEvaluator(
       storage: storage,
@@ -131,8 +128,7 @@ struct RuleLogic {
     for rule in trigger.rules {
       let outcome = await expressionEvaluator.evaluateExpression(
         fromRule: rule,
-        eventData: event,
-        isPreemptive: isPreemptive
+        eventData: event
       )
       if outcome.shouldFire {
         return TriggerRuleOutcome(

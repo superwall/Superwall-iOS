@@ -12,6 +12,8 @@ extension Superwall {
   /// Cancels the state publisher if the user is already subscribed unless the trigger result is ``TriggerResult/paywall(_:)``.
   /// This is because a paywall can be presented to a user regardless of subscription status.
   ///
+  ///
+  ///
   /// - Parameters:
   ///   - request: The presentation request.
   ///   - triggerResult: The trigger result.
@@ -19,16 +21,20 @@ extension Superwall {
   func checkUserSubscription(
     request: PresentationRequest,
     triggerResult: TriggerResult,
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
   ) async throws {
+  // TODO: Explain why this is only for presentation type
+    guard request.flags.type == .presentation else {
+      return
+    }
     switch triggerResult {
     case .paywall:
       return
     default:
       let subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
       if subscriptionStatus == .active {
-        paywallStatePublisher.send(.skipped(.userIsSubscribed))
-        paywallStatePublisher.send(completion: .finished)
+        paywallStatePublisher?.send(.skipped(.userIsSubscribed))
+        paywallStatePublisher?.send(completion: .finished)
         throw PresentationPipelineError.userIsSubscribed
       }
     }

@@ -13,10 +13,18 @@ extension Superwall {
   /// - Parameters:
   ///    - request: The presentation request.
   ///    - message: A message to log.
-  func logPresentation(
-    request: PresentationRequest,
-    message: String
-  ) -> [String: Any] {
+  func logPresentation(request: PresentationRequest) -> [String: Any] {
+    var message = "Called "
+    switch request.flags.type {
+    case .getPaywall:
+      message += "Superwall.shared.getPaywall"
+    case .presentation:
+      message += "Superwall.shared.register"
+    case .getPresentationResult:
+      message += "Superwall.shared.getPresentationResult"
+    case .getImplicitPresentationResult:
+      message += "Superwall.shared.getImplicitPresentationResult"
+    }
     let eventData = request.presentationInfo.eventData
     let debugInfo: [String: Any] = [
       "on": request.presenter.debugDescription,

@@ -23,8 +23,7 @@ extension Superwall {
       )
       return await ruleLogic.evaluateRules(
         forEvent: eventData,
-        triggers: dependencyContainer.configManager.triggersByEventName,
-        isPreemptive: request.flags.type == .getPresentationResult
+        triggers: dependencyContainer.configManager.triggersByEventName
       )
     } else {
       // Called if the debugger is shown.
