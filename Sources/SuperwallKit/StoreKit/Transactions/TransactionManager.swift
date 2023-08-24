@@ -184,7 +184,7 @@ final class TransactionManager {
     if let transaction = transaction {
       await self.sessionEventsManager.enqueue(transaction)
     }
-    
+
     await storeKitManager.loadPurchasedProducts()
 
     await trackTransactionDidSucceed(
