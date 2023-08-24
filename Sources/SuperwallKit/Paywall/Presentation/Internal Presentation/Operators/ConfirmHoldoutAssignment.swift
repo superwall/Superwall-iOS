@@ -17,9 +17,13 @@ extension Superwall {
   ///   - rulesOutput: The output from evaluating rules.
   ///   - dependencyContainer: Used for testing only.
   func confirmHoldoutAssignment(
+    request: PresentationRequest,
     from rulesOutcome: RuleEvaluationOutcome,
     dependencyContainer: DependencyContainer? = nil
   ) {
+    guard request.flags.type.couldPresent else {
+      return
+    }
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     guard case .holdout = rulesOutcome.triggerResult else {
       return

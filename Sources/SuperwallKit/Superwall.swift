@@ -467,12 +467,18 @@ extension Superwall: PaywallViewControllerEventDelegate {
     case .closed:
       let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: paywallViewController.info)
 
-      let result = await getImplicitPresentationResult(forEvent: "paywall_decline")
+      let presentationResult = await internallyGetPresentationResult(
+        forEvent: trackedEvent,
+        requestType: .getImplicitPresentationResult
+      )
+      let paywallPresenterEvent = paywallViewController.info.presentedByEventWithName
+      let presentedByPaywallDecline = paywallPresenterEvent == SuperwallEventObjc.paywallDecline.description
 
-      if case .paywall = result,
-        paywallViewController.info.presentedByEventWithName != SuperwallEventObjc.paywallDecline.description {
-        // If the presentation result will be anything other than paywall_decline,
-        // do nothing, track will be responsible for closing the paywall.
+      if case .paywall = presentationResult,
+        !presentedByPaywallDecline {
+        // If a paywall_decline trigger is active and the current paywall wasn't presented
+        // by paywall_decline, it lands here so as not to dismiss the paywall.
+        // track() will do that before presenting the next paywall.
       } else {
         dismiss(
           paywallViewController,

@@ -166,7 +166,7 @@ extension StoreKitManager {
         scope: .paywallTransactions,
         message: "Transactions Restored"
       )
-      transactionWasRestored(paywallViewController: paywallViewController)
+      await transactionWasRestored(paywallViewController: paywallViewController)
     } else {
       Logger.debug(
         logLevel: .debug,
@@ -182,21 +182,19 @@ extension StoreKitManager {
     }
   }
 
-  @MainActor
-  private func transactionWasRestored(paywallViewController: PaywallViewController) {
-    let paywallInfo = paywallViewController.info
-    Task.detached(priority: .utility) {
-      let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .restore,
-        paywallInfo: paywallInfo,
-        product: nil,
-        model: nil
-      )
-      await Superwall.shared.track(trackedEvent)
-    }
+  private func transactionWasRestored(paywallViewController: PaywallViewController) async {
+    let paywallInfo = await paywallViewController.info
+
+    let trackedEvent = InternalSuperwallEvent.Transaction(
+      state: .restore,
+      paywallInfo: paywallInfo,
+      product: nil,
+      model: nil
+    )
+    await Superwall.shared.track(trackedEvent)
 
     if Superwall.shared.options.paywalls.automaticallyDismiss {
-      Superwall.shared.dismiss(paywallViewController, result: .restored)
+      await Superwall.shared.dismiss(paywallViewController, result: .restored)
     }
   }
 }

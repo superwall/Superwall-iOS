@@ -6,6 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
+- Fixes issue where a rule added with `paywall_decline` would result in the feature block being called too early.
 - Fixes issue where paywall assignments may not have been cleared when resetting.
 
 ## 3.3.1

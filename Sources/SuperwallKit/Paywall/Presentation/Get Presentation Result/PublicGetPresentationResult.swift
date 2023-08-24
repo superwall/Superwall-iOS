@@ -27,10 +27,16 @@ extension Superwall {
     forEvent event: String,
     params: [String: Any]? = nil
   ) async -> PresentationResult {
+    let event = UserInitiatedEvent.Track(
+      rawName: event,
+      canImplicitlyTriggerPaywall: false,
+      customParameters: params ?? [:],
+      isFeatureGatable: false
+    )
+
     return await internallyGetPresentationResult(
       forEvent: event,
-      params: params,
-      type: .getPresentationResult
+      requestType: .getPresentationResult
     )
   }
 
@@ -58,37 +64,25 @@ extension Superwall {
     }
   }
 
-  /// Called internally when you need to get the presentation result from an implicit event.
-  /// This prevents logs being fired.
-  func getImplicitPresentationResult(forEvent event: String) async -> PresentationResult {
-    return await internallyGetPresentationResult(
-      forEvent: event,
-      type: .getImplicitPresentationResult
-    )
-  }
-
-  private func internallyGetPresentationResult(
-    forEvent event: String,
-    params: [String: Any]? = nil,
-    type: PresentationRequestType
+  /// Called when you need to get the presentation result from an event, whether implicitly or explicitly.
+  ///
+  /// - Parameters:
+  ///   - event: The event that's being tracked.
+  ///   - requestType: The presentation request type, which will control the flow of the pipeline.
+  func internallyGetPresentationResult(
+    forEvent event: Trackable,
+    requestType: PresentationRequestType
   ) async -> PresentationResult {
     let eventCreatedAt = Date()
 
-    let trackableEvent = UserInitiatedEvent.Track(
-      rawName: event,
-      canImplicitlyTriggerPaywall: false,
-      customParameters: params ?? [:],
-      isFeatureGatable: false
-    )
-
     let parameters = await TrackingLogic.processParameters(
-      fromTrackableEvent: trackableEvent,
+      fromTrackableEvent: event,
       eventCreatedAt: eventCreatedAt,
       appSessionId: dependencyContainer.appSessionManager.appSession.id
     )
 
     let eventData = EventData(
-      name: event,
+      name: event.rawName,
       parameters: JSON(parameters.eventParams),
       createdAt: eventCreatedAt
     )
@@ -97,7 +91,7 @@ extension Superwall {
       .explicitTrigger(eventData),
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: type
+      type: requestType
     )
 
     return await getPresentationResult(for: presentationRequest)

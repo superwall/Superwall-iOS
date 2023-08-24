@@ -12,26 +12,9 @@ extension Superwall {
   @discardableResult
   func getPresentationResult(for request: PresentationRequest) async -> PresentationResult {
     do {
-      try await waitToPresent(request)
-      let debugInfo = logPresentation(
-        request: request,
-        message: "Called Superwall.shared.getPresentationResult"
-      )
-      let rulesOutcome = try await evaluateRules(from: request)
-
-      let paywallViewController = try await getPaywallViewController(
-        request: request,
-        rulesOutcome: rulesOutcome,
-        debugInfo: debugInfo
-      )
-
-      try await getPresenter(
-        for: paywallViewController,
-        rulesOutcome: rulesOutcome,
-        request: request,
-        debugInfo: debugInfo
-      )
-      let presentationResult = GetPresentationResultLogic.convertTriggerResult(rulesOutcome.triggerResult)
+      let paywallComponents = try await getPaywallComponents(request)
+      let triggerResult = paywallComponents.rulesOutcome.triggerResult
+      let presentationResult = GetPresentationResultLogic.convertTriggerResult(triggerResult)
       return presentationResult
     } catch let error as PresentationPipelineError {
       return handle(error, requestType: request.flags.type)

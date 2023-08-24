@@ -89,7 +89,7 @@ class AppSessionManager {
 
   @objc private func applicationWillResignActive() {
     storage.recordFirstSessionTracked()
-    Task.detached(priority: .utility) {
+    Task {
       await Superwall.shared.track(InternalSuperwallEvent.AppClose())
     }
     lastAppClose = Date()
@@ -101,7 +101,7 @@ class AppSessionManager {
   }
 
   @objc private func applicationDidBecomeActive() {
-    Task.detached(priority: .userInitiated) {
+    Task {
       await Superwall.shared.track(InternalSuperwallEvent.AppOpen())
     }
     sessionCouldRefresh()
@@ -124,7 +124,7 @@ class AppSessionManager {
 
     if didStartNewSession {
       appSession = AppSession()
-      Task.detached(priority: .userInitiated) {
+      Task {
         await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
       }
     } else {
@@ -136,7 +136,7 @@ class AppSessionManager {
     if didTrackAppLaunch {
       return
     }
-    Task.detached(priority: .userInitiated) {
+    Task {
       await Superwall.shared.track(InternalSuperwallEvent.AppLaunch())
     }
     didTrackAppLaunch = true
