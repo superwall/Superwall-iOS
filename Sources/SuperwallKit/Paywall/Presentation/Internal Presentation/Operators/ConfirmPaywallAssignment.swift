@@ -20,9 +20,13 @@ extension Superwall {
   ///   - dependendencyContainer: Used for tests only.
   func confirmPaywallAssignment(
     _ confirmableAssignment: ConfirmableAssignment?,
+    request: PresentationRequest,
     isDebuggerLaunched: Bool,
     dependencyContainer: DependencyContainer? = nil
   ) {
+    guard request.flags.type.couldPresent else {
+      return
+    }
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     // Debuggers shouldn't confirm assignments.
     if isDebuggerLaunched {

@@ -20,8 +20,7 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
     )
     let outcome = await evaluator.shouldFire(
       forOccurrence: .stub(),
-      ruleMatched: false,
-      isPreemptive: false
+      ruleMatched: false
     )
     XCTAssertFalse(outcome.shouldFire)
   }
@@ -35,8 +34,7 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
     )
     let outcome = await evaluator.shouldFire(
       forOccurrence: nil,
-      ruleMatched: true,
-      isPreemptive: false
+      ruleMatched: true
     )
     XCTAssertTrue(outcome.shouldFire)
   }
@@ -52,8 +50,7 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
     let outcome = await evaluator.shouldFire(
       forOccurrence: .stub()
         .setting(\.maxCount, to: 1),
-      ruleMatched: true,
-      isPreemptive: false
+      ruleMatched: true
     )
     XCTAssertFalse(outcome.shouldFire)
   }
@@ -69,8 +66,7 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
     let outcome = await evaluator.shouldFire(
       forOccurrence: .stub()
         .setting(\.maxCount, to: 1),
-      ruleMatched: true,
-      isPreemptive: false
+      ruleMatched: true
     )
     XCTAssertTrue(outcome.shouldFire)
   }
@@ -86,8 +82,7 @@ final class ExpressionEvaluatorLogicTests: XCTestCase {
     let outcome = await evaluator.shouldFire(
       forOccurrence: .stub()
         .setting(\.maxCount, to: 4),
-      ruleMatched: true,
-      isPreemptive: false
+      ruleMatched: true
     )
     XCTAssertTrue(outcome.shouldFire)
   }

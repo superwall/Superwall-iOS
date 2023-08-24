@@ -148,16 +148,15 @@ final class TransactionManager {
     )
 
     let paywallInfo = await paywallViewController.info
-    Task.detached(priority: .utility) {
-      await self.sessionEventsManager.triggerSession.trackBeginTransaction(of: product)
-      let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .start(product),
-        paywallInfo: paywallInfo,
-        product: product,
-        model: nil
-      )
-      await Superwall.shared.track(trackedEvent)
-    }
+
+    await self.sessionEventsManager.triggerSession.trackBeginTransaction(of: product)
+    let trackedEvent = InternalSuperwallEvent.Transaction(
+      state: .start(product),
+      paywallInfo: paywallInfo,
+      product: product,
+      model: nil
+    )
+    await Superwall.shared.track(trackedEvent)
 
     lastPaywallViewController = paywallViewController
     await MainActor.run {
@@ -181,11 +180,11 @@ final class TransactionManager {
       ],
       error: nil
     )
-    Task.detached(priority: .background) {
-      if let transaction = transaction {
-        await self.sessionEventsManager.enqueue(transaction)
-      }
+
+    if let transaction = transaction {
+      await self.sessionEventsManager.enqueue(transaction)
     }
+
     await storeKitManager.loadPurchasedProducts()
 
     await trackTransactionDidSucceed(
@@ -207,25 +206,23 @@ final class TransactionManager {
     product: StoreProduct,
     from paywallViewController: PaywallViewController
   ) async {
-    Task.detached(priority: .utility) {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .paywallTransactions,
-        message: "Transaction Abandoned",
-        info: ["product_id": product.productIdentifier, "paywall_vc": paywallViewController],
-        error: nil
-      )
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallTransactions,
+      message: "Transaction Abandoned",
+      info: ["product_id": product.productIdentifier, "paywall_vc": paywallViewController],
+      error: nil
+    )
 
-      let paywallInfo = await paywallViewController.info
-      let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .abandon(product),
-        paywallInfo: paywallInfo,
-        product: product,
-        model: nil
-      )
-      await Superwall.shared.track(trackedEvent)
-      await self.sessionEventsManager.triggerSession.trackTransactionAbandon()
-    }
+    let paywallInfo = await paywallViewController.info
+    let trackedEvent = InternalSuperwallEvent.Transaction(
+      state: .abandon(product),
+      paywallInfo: paywallInfo,
+      product: product,
+      model: nil
+    )
+    await Superwall.shared.track(trackedEvent)
+    await sessionEventsManager.triggerSession.trackTransactionAbandon()
 
     await MainActor.run {
       paywallViewController.loadingState = .ready
@@ -242,16 +239,15 @@ final class TransactionManager {
     )
 
     let paywallInfo = await paywallViewController.info
-    Task.detached(priority: .utility) {
-      let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .fail(.pending("Needs parental approval")),
-        paywallInfo: paywallInfo,
-        product: nil,
-        model: nil
-      )
-      await Superwall.shared.track(trackedEvent)
-      await self.sessionEventsManager.triggerSession.trackPendingTransaction()
-    }
+
+    let trackedEvent = InternalSuperwallEvent.Transaction(
+      state: .fail(.pending("Needs parental approval")),
+      paywallInfo: paywallInfo,
+      product: nil,
+      model: nil
+    )
+    await Superwall.shared.track(trackedEvent)
+    await self.sessionEventsManager.triggerSession.trackPendingTransaction()
 
     await paywallViewController.presentAlert(
       title: "Waiting for Approval",

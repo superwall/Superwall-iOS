@@ -30,60 +30,19 @@ extension Superwall {
     Task {
       do {
         try await checkNoPaywallAlreadyPresented(request, publisher)
-        try await waitToPresent(request, paywallStatePublisher: publisher)
-        let debugInfo = logPresentation(
-          request: request,
-          message: "Called Superwall.shared.register"
-        )
 
-        try checkDebuggerPresentation(
-          request: request,
-          paywallStatePublisher: publisher
-        )
+        let paywallComponents = try await getPaywallComponents(request, publisher)
 
-        let rulesOutcome = try await evaluateRules(from: request)
-
-        try await checkUserSubscription(
-          request: request,
-          triggerResult: rulesOutcome.triggerResult,
-          paywallStatePublisher: publisher
-        )
-
-        confirmHoldoutAssignment(from: rulesOutcome)
-
-        let experiment = try await getExperiment(
-          request: request,
-          rulesOutcome: rulesOutcome,
-          debugInfo: debugInfo,
-          paywallStatePublisher: publisher
-        )
-        let paywallViewController = try await getPaywallViewController(
-          request: request,
-          experiment: experiment,
-          debugInfo: debugInfo,
-          paywallStatePublisher: publisher
-        )
-
-        guard let presenter = try await getPresenter(
-          for: paywallViewController,
-          rulesOutcome: rulesOutcome,
-          request: request,
-          debugInfo: debugInfo,
-          paywallStatePublisher: publisher
-        ) else {
+        guard let presenter = paywallComponents.presenter else {
+          // Will never get here as an error would have already been thrown.
           return
         }
 
-        confirmPaywallAssignment(
-          rulesOutcome.confirmableAssignment,
-          isDebuggerLaunched: request.flags.isDebuggerLaunched
-        )
-
         try await presentPaywallViewController(
-          paywallViewController,
+          paywallComponents.viewController,
           on: presenter,
-          unsavedOccurrence: rulesOutcome.unsavedOccurrence,
-          debugInfo: debugInfo,
+          unsavedOccurrence: paywallComponents.rulesOutcome.unsavedOccurrence,
+          debugInfo: paywallComponents.debugInfo,
           request: request,
           paywallStatePublisher: publisher
         )

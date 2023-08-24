@@ -22,7 +22,7 @@ extension Superwall {
   func getExperiment(
     request: PresentationRequest,
     rulesOutcome: RuleEvaluationOutcome,
-    debugInfo: [String: Any]? = nil,
+    debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
   ) async throws -> Experiment {
     let errorType: PresentationPipelineError

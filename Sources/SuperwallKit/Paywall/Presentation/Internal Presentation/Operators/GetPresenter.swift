@@ -29,7 +29,7 @@ extension Superwall {
   ///
   /// - Returns: A `UIViewController`to present on.
   @discardableResult
-  func getPresenter(
+  func getPresenterIfNecessary(
     for paywallViewController: PaywallViewController,
     rulesOutcome: RuleEvaluationOutcome,
     request: PresentationRequest,
@@ -51,9 +51,19 @@ extension Superwall {
       throw PresentationPipelineError.userIsSubscribed
     }
 
-    // Return early with if we're just getting the paywall result.
-    guard request.flags.type == .presentation else {
+    switch request.flags.type {
+    case .getPaywall:
+      await activateSession(
+        for: request,
+        paywall: paywallViewController.paywall,
+        triggerResult: rulesOutcome.triggerResult
+      )
       return nil
+    case .getImplicitPresentationResult,
+      .getPresentationResult:
+      return nil
+    case .presentation:
+      break
     }
 
     if request.presenter == nil {
@@ -85,15 +95,27 @@ extension Superwall {
       throw PresentationPipelineError.noPresenter
     }
 
-    let sessionEventsManager = dependencyContainer.sessionEventsManager
-    await sessionEventsManager?.triggerSession.activateSession(
-      for: request.presentationInfo,
-      on: request.presenter,
+    await activateSession(
+      for: request,
       paywall: paywallViewController.paywall,
       triggerResult: rulesOutcome.triggerResult
     )
 
     return presenter
+  }
+
+  private func activateSession(
+    for request: PresentationRequest,
+    paywall: Paywall,
+    triggerResult: TriggerResult
+  ) async {
+    let sessionEventsManager = dependencyContainer.sessionEventsManager
+    await sessionEventsManager?.triggerSession.activateSession(
+      for: request.presentationInfo,
+      on: request.presenter,
+      paywall: paywall,
+      triggerResult: triggerResult
+    )
   }
 
   @MainActor

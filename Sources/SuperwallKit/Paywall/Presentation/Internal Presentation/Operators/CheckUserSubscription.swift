@@ -19,7 +19,7 @@ extension Superwall {
   func checkUserSubscription(
     request: PresentationRequest,
     triggerResult: TriggerResult,
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
   ) async throws {
     switch triggerResult {
     case .paywall:
@@ -27,8 +27,8 @@ extension Superwall {
     default:
       let subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
       if subscriptionStatus == .active {
-        paywallStatePublisher.send(.skipped(.userIsSubscribed))
-        paywallStatePublisher.send(completion: .finished)
+        paywallStatePublisher?.send(.skipped(.userIsSubscribed))
+        paywallStatePublisher?.send(completion: .finished)
         throw PresentationPipelineError.userIsSubscribed
       }
     }
