@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 extension Superwall {
-  /// Runs a pipeline of operations to get a paywall and associated components.
+  /// Runs a pipeline of operations to get a paywall to present and associated components.
   ///
   /// - Parameters:
   ///   - request: The presentation request.
@@ -21,7 +21,7 @@ extension Superwall {
     _ request: PresentationRequest,
     _ publisher: PassthroughSubject<PaywallState, Never>? = nil
   ) async throws -> PaywallComponents {
-    try await waitToPresent(request, paywallStatePublisher: publisher)
+    try await waitForSubsStatusAndConfig(request, paywallStatePublisher: publisher)
 
     let debugInfo = logPresentation(request: request)
 

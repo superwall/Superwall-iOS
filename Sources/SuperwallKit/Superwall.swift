@@ -471,7 +471,8 @@ extension Superwall: PaywallViewControllerEventDelegate {
         forEvent: trackedEvent,
         requestType: .getImplicitPresentationResult
       )
-      let presentedByPaywallDecline = paywallViewController.info.presentedByEventWithName == SuperwallEventObjc.paywallDecline.description
+      let paywallPresenterEvent = paywallViewController.info.presentedByEventWithName
+      let presentedByPaywallDecline = paywallPresenterEvent == SuperwallEventObjc.paywallDecline.description
 
       if case .paywall = presentationResult,
         !presentedByPaywallDecline {
