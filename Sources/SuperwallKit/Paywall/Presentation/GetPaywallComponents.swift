@@ -13,7 +13,9 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   - request: The presentation request.
-  ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
+  ///   - publisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
+  /// - Returns: A `PaywallComponents` object that contains objects associated with the
+  /// paywall view controller.
   /// - Throws: A `PresentationPipelineError` object associated with stages of the pipeline.
   func getPaywallComponents(
     _ request: PresentationRequest,
