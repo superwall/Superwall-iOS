@@ -62,6 +62,10 @@ final class PaywallMessageHandler: WebEventDelegate {
     case .close:
       hapticFeedback()
       delegate?.eventDidOccur(.closed)
+    case .paywallOpen:
+      Task {
+        await self.pass(eventName: "paywall_open", from: paywall)
+      }
     case .openUrl(let url):
       openUrl(url)
     case .openUrlInSafari(let url):
@@ -77,40 +81,57 @@ final class PaywallMessageHandler: WebEventDelegate {
     }
   }
 
+  nonisolated private func pass(
+    eventName: String,
+    from paywall: Paywall
+  ) async {
+    let event = [
+      "event_name": eventName,
+      "paywall_id": paywall.databaseId,
+      "paywall_identifier": paywall.identifier
+    ]
+    guard let jsonEncodedEvent = try? JSONEncoder().encode(event) else {
+      return
+    }
+    let base64Event = jsonEncodedEvent.base64EncodedString()
+    await passMessageToWebView(base64Event)
+  }
+
   /// Passes the templated variables and params to the webview.
   ///
   /// This is called every paywall open incase variables like user attributes have changed.
   nonisolated private func passTemplatesToWebView(from paywall: Paywall) async {
     let eventData = await delegate?.request?.presentationInfo.eventData
-    let templates = await TemplateLogic.getBase64EncodedTemplates(
+    let base64Templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
       event: eventData,
       factory: factory
     )
+    await passMessageToWebView(base64Templates)
+  }
 
-    let templateScript = """
-      window.paywall.accept64('\(templates)');
+  private func passMessageToWebView(_ base64String: String) {
+    let messageScript = """
+      window.paywall.accept64('\(base64String)');
     """
 
     Logger.debug(
       logLevel: .debug,
       scope: .paywallViewController,
       message: "Posting Message",
-      info: ["message": templateScript],
+      info: ["message": messageScript],
       error: nil
     )
 
-    await MainActor.run {
-      self.delegate?.webView.evaluateJavaScript(templateScript) { _, error in
-        if let error = error {
-          Logger.debug(
-            logLevel: .error,
-            scope: .paywallViewController,
-            message: "Error Evaluating JS",
-            info: ["message": templateScript],
-            error: error
-          )
-        }
+    delegate?.webView.evaluateJavaScript(messageScript) { _, error in
+      if let error = error {
+        Logger.debug(
+          logLevel: .error,
+          scope: .paywallViewController,
+          message: "Error Evaluating JS",
+          info: ["message": messageScript],
+          error: error
+        )
       }
     }
   }

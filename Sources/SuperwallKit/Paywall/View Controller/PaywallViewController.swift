@@ -230,6 +230,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     let triggerSessionManager = factory.getTriggerSessionManager()
     await triggerSessionManager.trackPaywallOpen()
     storage.trackPaywallOpen()
+    await webView.messageHandler.handle(.paywallOpen)
     let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: info)
     await Superwall.shared.track(trackedEvent)
   }
