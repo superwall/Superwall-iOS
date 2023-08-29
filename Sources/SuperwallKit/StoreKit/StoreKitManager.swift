@@ -1,12 +1,13 @@
 import Foundation
+import StoreKit
 import Combine
 
 actor StoreKitManager {
   /// Coordinates: The purchasing, restoring and retrieving of products; the checking
   /// of transactions; and the determining of the user's subscription status.
-  lazy var coordinator = factory.makeStoreKitCoordinator()
-  private unowned let factory: StoreKitCoordinatorFactory
-  private lazy var receiptManager = ReceiptManager(delegate: self)
+  private let productsFetcher = ProductsFetcherSK1()
+  private lazy var receiptManager = ReceiptManager(delegate: productsFetcher)
+  let purchaseController: InternalPurchaseController
 
   private(set) var productsById: [String: StoreProduct] = [:]
   private struct ProductProcessingResult {
@@ -15,8 +16,8 @@ actor StoreKitManager {
     let products: [Product]
   }
 
-  init(factory: StoreKitCoordinatorFactory) {
-    self.factory = factory
+  init(purchaseController: InternalPurchaseController) {
+    self.purchaseController = purchaseController
   }
 
   func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
@@ -52,7 +53,7 @@ actor StoreKitManager {
       responseProducts: responseProducts
     )
 
-    let products = try await products(
+    let products = try await productsFetcher.products(
       identifiers: processingResult.productIdsToLoad,
       forPaywall: paywallName
     )
@@ -133,7 +134,7 @@ extension StoreKitManager {
 
     paywallViewController.loadingState = .loadingPurchase
 
-    let restorationResult = await coordinator.txnRestorer.restorePurchases()
+    let restorationResult = await purchaseController.restorePurchases()
 
     await processRestoration(
       restorationResult: restorationResult,
@@ -151,7 +152,7 @@ extension StoreKitManager {
   ) async {
     let hasRestored = restorationResult == .restored
 
-    if !Superwall.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
+    if !purchaseController.isDeveloperProvided {
       await refreshReceipt()
       if hasRestored {
         await loadPurchasedProducts()
@@ -231,18 +232,5 @@ extension StoreKitManager {
   /// the outcome will default to whether or not the user has already purchased that product.
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool {
     return await receiptManager.isFreeTrialAvailable(for: product)
-  }
-}
-
-// MARK: - ProductsFetcher
-extension StoreKitManager: ProductsFetcher {
-  nonisolated func products(
-    identifiers: Set<String>,
-    forPaywall paywallName: String?
-  ) async throws -> Set<StoreProduct> {
-    return try await coordinator.productFetcher.products(
-      identifiers: identifiers,
-      forPaywall: paywallName
-    )
   }
 }

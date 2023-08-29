@@ -12,11 +12,11 @@ actor ReceiptManager: NSObject {
   var purchasedSubscriptionGroupIds: Set<String>?
   private var purchases: Set<InAppPurchase> = []
   private var receiptRefreshCompletion: ((Bool) -> Void)?
-  private weak var delegate: ProductsFetcher?
+  private weak var delegate: ProductsFetcherSK1?
   private let receiptData: () -> Data?
 
   init(
-    delegate: ProductsFetcher,
+    delegate: ProductsFetcherSK1,
     receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData
   ) {
     self.delegate = delegate
@@ -27,7 +27,7 @@ actor ReceiptManager: NSObject {
   /// purchases and active purchases.
   @discardableResult
   func loadPurchasedProducts() async -> Set<StoreProduct>? {
-    let hasPurchaseController = Superwall.shared.dependencyContainer.delegateAdapter.hasPurchaseController
+    let hasPurchaseController = Superwall.shared.dependencyContainer.storeKitManager.purchaseController.isDeveloperProvided
 
     guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
       if !hasPurchaseController {

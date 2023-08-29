@@ -7,27 +7,12 @@
 
 import Foundation
 import Combine
+import StoreKit
 
 /// An adapter between the internal SDK and the public swift/objective c delegate.
 final class SuperwallDelegateAdapter {
-  var hasPurchaseController: Bool {
-    return swiftPurchaseController != nil || objcPurchaseController != nil
-  }
-
   var swiftDelegate: SuperwallDelegate?
   var objcDelegate: SuperwallDelegateObjc?
-  var swiftPurchaseController: PurchaseController?
-  var objcPurchaseController: PurchaseControllerObjc?
-
-  /// Called on init of the Superwall instance via
-  /// ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``.
-  init(
-    swiftPurchaseController: PurchaseController?,
-    objcPurchaseController: PurchaseControllerObjc?
-  ) {
-    self.swiftPurchaseController = swiftPurchaseController
-    self.objcPurchaseController = objcPurchaseController
-  }
 
   @MainActor
   func handleCustomPaywallAction(withName name: String) {
@@ -134,66 +119,5 @@ final class SuperwallDelegateAdapter {
         error: error
       )
     }
-  }
-}
-
-// MARK: - Product Purchaser
-extension SuperwallDelegateAdapter: ProductPurchaser {
-  @MainActor
-  func purchase(
-    product: StoreProduct
-  ) async -> PurchaseResult {
-    if let purchaseController = swiftPurchaseController {
-      guard let sk1Product = product.sk1Product else {
-        return .failed(PurchaseError.productUnavailable)
-      }
-      return await purchaseController.purchase(product: sk1Product)
-    } else if let purchaseController = objcPurchaseController {
-      guard let sk1Product = product.sk1Product else {
-        return .failed(PurchaseError.productUnavailable)
-      }
-      return await withCheckedContinuation { continuation in
-        purchaseController.purchase(product: sk1Product) { result, error in
-          if let error = error {
-            continuation.resume(returning: .failed(error))
-          } else {
-            switch result {
-            case .purchased:
-              continuation.resume(returning: .purchased)
-            case .pending:
-              continuation.resume(returning: .pending)
-            case .cancelled:
-              continuation.resume(returning: .cancelled)
-            case .failed:
-              break
-            }
-          }
-        }
-      }
-    }
-    return .cancelled
-  }
-}
-
-// MARK: - TransactionRestorer
-extension SuperwallDelegateAdapter: TransactionRestorer {
-  @MainActor
-  func restorePurchases() async -> RestorationResult {
-    var result: RestorationResult = .failed(nil)
-    if let purchaseController = swiftPurchaseController {
-      result = await purchaseController.restorePurchases()
-    } else if let purchaseController = objcPurchaseController {
-      result = await withCheckedContinuation { continuation in
-        purchaseController.restorePurchases { result, error in
-          switch result {
-          case .restored:
-            continuation.resume(returning: .restored)
-          case .failed:
-            continuation.resume(returning: .failed(error))
-          }
-        }
-      }
-    }
-    return result
   }
 }

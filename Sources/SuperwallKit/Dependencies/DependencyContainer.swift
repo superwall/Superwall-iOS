@@ -41,11 +41,16 @@ final class DependencyContainer {
     objcPurchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
-    storeKitManager = StoreKitManager(factory: self)
-    delegateAdapter = SuperwallDelegateAdapter(
+    /*
+     StoreKitManager needs purchase controller to: restore, 
+     */
+    let purchaseController = InternalPurchaseController(
+      factory: self,
       swiftPurchaseController: swiftPurchaseController,
       objcPurchaseController: objcPurchaseController
     )
+    storeKitManager = StoreKitManager(purchaseController: purchaseController)
+    delegateAdapter = SuperwallDelegateAdapter()
     storage = Storage(factory: self)
     network = Network(factory: self)
 
@@ -115,6 +120,9 @@ final class DependencyContainer {
       sessionEventsManager: sessionEventsManager,
       factory: self
     )
+
+    // Initialise the product purchaser so that it can immediately start listening to transactions.
+    _ = storeKitManager.purchaseController.productPurchaser
   }
 }
 
@@ -376,17 +384,6 @@ extension DependencyContainer: ConfigManagerFactory {
   }
 }
 
-// MARK: - StoreKitCoordinatorFactory
-extension DependencyContainer: StoreKitCoordinatorFactory {
-  func makeStoreKitCoordinator() -> StoreKitCoordinator {
-    return StoreKitCoordinator(
-      delegateAdapter: delegateAdapter,
-      storeKitManager: storeKitManager,
-      factory: self
-    )
-  }
-}
-
 // MARK: - StoreTransactionFactory
 extension DependencyContainer: StoreTransactionFactory {
   func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction {
@@ -417,18 +414,7 @@ extension DependencyContainer: ProductPurchaserFactory {
     return ProductPurchaserSK1(
       storeKitManager: storeKitManager,
       sessionEventsManager: sessionEventsManager,
-      delegateAdapter: delegateAdapter,
       factory: self
-    )
-  }
-}
-
-// MARK: - Purchase Manager Factory
-extension DependencyContainer: PurchaseManagerFactory {
-  func makePurchaseManager() -> PurchaseManager {
-    return PurchaseManager(
-      storeKitManager: storeKitManager,
-      hasPurchaseController: delegateAdapter.hasPurchaseController
     )
   }
 }
@@ -450,7 +436,7 @@ extension DependencyContainer: TriggerFactory {
 // MARK: - Purchase Controller Factory
 extension DependencyContainer: HasPurchaseControllerFactory {
   func makeHasPurchaseController() -> Bool {
-    return delegateAdapter.hasPurchaseController
+    return storeKitManager.purchaseController.isDeveloperProvided
   }
 }
 
