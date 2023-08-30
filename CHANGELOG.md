@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.3.3
+
+### Fixes
+
+- Fixes issue where verification was happening after the finishing of transactions when not using a `PurchaseController`.
+
 ## 3.3.2
 
 ### Fixes
