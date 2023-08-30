@@ -9,7 +9,6 @@ actor StoreKitManager {
   /// Retrieves products from storekit.
   private let productsFetcher: ProductsFetcherSK1
 
-  /// 
   private lazy var receiptManager = ReceiptManager(
     delegate: productsFetcher,
     purchaseController: purchaseController
