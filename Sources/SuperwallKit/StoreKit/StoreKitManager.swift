@@ -3,12 +3,17 @@ import StoreKit
 import Combine
 
 actor StoreKitManager {
-  /// Coordinates: The purchasing, restoring and retrieving of products; the checking
-  /// of transactions; and the determining of the user's subscription status.
-  private let productsFetcher = ProductsFetcherSK1()
-  private lazy var receiptManager = ReceiptManager(delegate: productsFetcher)
+  /// Handler purchasing and restoring.
   let purchaseController: InternalPurchaseController
 
+  /// Retrieves products from storekit.
+  private let productsFetcher: ProductsFetcherSK1
+
+  /// 
+  private lazy var receiptManager = ReceiptManager(
+    delegate: productsFetcher,
+    purchaseController: purchaseController
+  )
   private(set) var productsById: [String: StoreProduct] = [:]
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
@@ -16,8 +21,13 @@ actor StoreKitManager {
     let products: [Product]
   }
 
-  init(purchaseController: InternalPurchaseController) {
+  init(
+    purchaseController: InternalPurchaseController,
+    productsFetcher: ProductsFetcherSK1 = ProductsFetcherSK1()
+  ) {
+    self.productsFetcher = productsFetcher
     self.purchaseController = purchaseController
+    purchaseController.delegate = self
   }
 
   func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
@@ -123,7 +133,16 @@ actor StoreKitManager {
 }
 
 // MARK: - Restoration
-extension StoreKitManager {
+extension StoreKitManager: RestoreDelegate {
+  func didRestore(result: RestorationResult) async {
+    let hasRestored = result == .restored
+    await refreshReceipt()
+    if hasRestored {
+      await loadPurchasedProducts()
+    }
+  }
+
+  /// Resto
   @MainActor
   func tryToRestore(_ paywallViewController: PaywallViewController) async {
     Logger.debug(
@@ -136,29 +155,7 @@ extension StoreKitManager {
 
     let restorationResult = await purchaseController.restorePurchases()
 
-    await processRestoration(
-      restorationResult: restorationResult,
-      paywallViewController: paywallViewController
-    )
-  }
-
-  /// After restoring, it checks to see whether the user is actually subscribed or not.
-  ///
-  /// This is accessed by both the transaction manager and the restoration manager.
-  @MainActor
-  func processRestoration(
-    restorationResult: RestorationResult,
-    paywallViewController: PaywallViewController
-  ) async {
     let hasRestored = restorationResult == .restored
-
-    if !purchaseController.isDeveloperProvided {
-      await refreshReceipt()
-      if hasRestored {
-        await loadPurchasedProducts()
-      }
-    }
-
     let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
 
     if hasRestored && isUserSubscribed {

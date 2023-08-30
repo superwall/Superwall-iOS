@@ -192,11 +192,9 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     }
   }
 
-  // TODO: REmember, we need this observer to run straight away.
-  // TODO: REname this function:
   /// Sends a `PurchaseResult` to the completion block and stores the latest purchased transaction.
   private func updatePurchaseCompletionBlock(for skTransaction: SKPaymentTransaction) async {
-    // Only continue if no purchase controller. The transaction may be
+    // Only continue if using internal purchase controller. The transaction may be
     // readded to the queue if finishing fails so we need to make sure
     // we can re-finish the transaction.
     if storeKitManager?.purchaseController.isDeveloperProvided == true {
@@ -219,8 +217,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         SKPaymentQueue.default().finishTransaction(skTransaction)
         await purchasing.completePurchase(result: .failed(error))
       }
-
-      // TODO: Finishing could fail. Should we store state of transaction. If purchased/restored>?
     case .failed:
       SKPaymentQueue.default().finishTransaction(skTransaction)
       if let error = skTransaction.error {

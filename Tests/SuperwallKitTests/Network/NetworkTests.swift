@@ -16,12 +16,11 @@ final class NetworkTests: XCTestCase {
     urlSession: CustomURLSessionMock,
     injectedApplicationStatePublisher: AnyPublisher<UIApplication.State, Never>,
     completion: @escaping () -> Void
-  ) async {
-    let task = Task {
+  ) {
+    _ = Task {
       let dependencyContainer = DependencyContainer()
       let network = Network(urlSession: urlSession, factory: dependencyContainer)
-      let requestId = "abc"
-
+      
       _ = try? await network.getConfig(
         injectedApplicationStatePublisher: injectedApplicationStatePublisher,
         isRetryingCallback: {}
@@ -37,7 +36,7 @@ final class NetworkTests: XCTestCase {
       .eraseToAnyPublisher()
     let expectation = expectation(description: "config completed")
     expectation.isInverted = true
-    await configWrapper(
+    configWrapper(
       urlSession: urlSession,
       injectedApplicationStatePublisher: publisher
     ) {

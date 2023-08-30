@@ -7,7 +7,7 @@
 
 import Foundation
 
-public extension DecodingError
+extension DecodingError
 {
 	/// Returns a `.typeMismatch` error describing the expected type.
 	///

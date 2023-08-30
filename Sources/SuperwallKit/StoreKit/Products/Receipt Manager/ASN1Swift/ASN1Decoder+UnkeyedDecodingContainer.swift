@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: ASN1UnkeyedDecodingContainer
 
-public protocol ASN1UnkeyedDecodingContainerProtocol: UnkeyedDecodingContainer
+protocol ASN1UnkeyedDecodingContainerProtocol: UnkeyedDecodingContainer
 {
 	var rawData: Data { get }
 	var valueData: Data { get }
@@ -136,10 +136,10 @@ internal struct ASN1UnkeyedDecodingContainer
 	private let state: _ASN1Decoder.State
 	
 	/// The path of coding keys taken to get to this point in decoding.
-	public var codingPath: [CodingKey]
+	var codingPath: [CodingKey]
 	
 	/// The index of the element we're about to decode.
-	private(set) public var currentIndex: Int
+	private(set) var currentIndex: Int
 	
 	var count: Int?
 	

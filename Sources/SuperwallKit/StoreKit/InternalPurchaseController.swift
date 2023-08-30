@@ -8,6 +8,10 @@
 import Foundation
 import StoreKit
 
+protocol RestoreDelegate: AnyObject {
+  func didRestore(result: RestorationResult) async
+}
+
 final class InternalPurchaseController {
   var isDeveloperProvided: Bool {
     return swiftPurchaseController != nil || objcPurchaseController != nil
@@ -16,6 +20,7 @@ final class InternalPurchaseController {
   private var objcPurchaseController: PurchaseControllerObjc?
   lazy var productPurchaser = factory.makeSK1ProductPurchaser()
   private let factory: ProductPurchaserFactory
+  weak var delegate: RestoreDelegate?
 
   init(
     factory: ProductPurchaserFactory,
@@ -26,12 +31,25 @@ final class InternalPurchaseController {
     self.objcPurchaseController = objcPurchaseController
     self.factory = factory
   }
+
+  func syncSubscriptionStatus(withPurchases purchases: Set<InAppPurchase>) async {
+    if isDeveloperProvided {
+      return
+    }
+    let activePurchases = purchases.filter { $0.isActive }
+    await MainActor.run {
+      if activePurchases.isEmpty {
+        Superwall.shared.subscriptionStatus = .inactive
+      } else {
+        Superwall.shared.subscriptionStatus = .active
+      }
+    }
+  }
 }
 
-  // MARK: - Purchase Controller
+// MARK: - Purchase Controller
 extension InternalPurchaseController: PurchaseController {
   func purchase(product: SKProduct) async -> PurchaseResult {
-    // TODO: CHeck this is actually on mainactor
     if let purchaseController = swiftPurchaseController {
       return await purchaseController.purchase(product: product)
     } else if let purchaseController = objcPurchaseController {
@@ -73,7 +91,9 @@ extension InternalPurchaseController: PurchaseController {
         }
       }
     } else {
-      return await productPurchaser.restorePurchases()
+      let result = await productPurchaser.restorePurchases()
+      await delegate?.didRestore(result: result)
+      return result
     }
   }
 }

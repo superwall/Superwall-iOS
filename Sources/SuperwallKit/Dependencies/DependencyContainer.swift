@@ -41,9 +41,6 @@ final class DependencyContainer {
     objcPurchaseController: PurchaseControllerObjc? = nil,
     options: SuperwallOptions? = nil
   ) {
-    /*
-     StoreKitManager needs purchase controller to: restore, 
-     */
     let purchaseController = InternalPurchaseController(
       factory: self,
       swiftPurchaseController: swiftPurchaseController,

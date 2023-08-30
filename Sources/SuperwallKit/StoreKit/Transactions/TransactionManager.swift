@@ -88,11 +88,6 @@ final class TransactionManager {
           paywallViewController: paywallViewController
         )
       }
-//    case .restored:
-//      await storeKitManager.processRestoration(
-//        restorationResult: .restored,
-//        paywallViewController: paywallViewController
-//      )
     case .pending:
       await handlePendingTransaction(from: paywallViewController)
     case .cancelled:
@@ -218,7 +213,7 @@ final class TransactionManager {
       }
       return nil
     } else {
-      if let transaction  = await storeKitManager.purchaseController.productPurchaser.purchasing.lastTransaction {
+      if let transaction = await storeKitManager.purchaseController.productPurchaser.purchasing.lastTransaction {
         return await factory.makeStoreTransaction(from: transaction)
       }
       return nil
