@@ -25,9 +25,9 @@ internal struct ASN1KeyedDecodingContainer<K : CodingKey> : KeyedDecodingContain
 	private let state: _ASN1Decoder.State
 	
 	/// The path of coding keys taken to get to this point in decoding.
-	private(set) public var codingPath: [CodingKey]
+	private(set) var codingPath: [CodingKey]
 	
-	public var rawData: Data { return container.rawData }
+	var rawData: Data { return container.rawData }
 	
 	// MARK: - Initialization
 	
@@ -44,12 +44,12 @@ internal struct ASN1KeyedDecodingContainer<K : CodingKey> : KeyedDecodingContain
 	
 	// MARK: - KeyedDecodingContainerProtocol Methods
 	
-	public var allKeys: [Key]
+	var allKeys: [Key]
 	{
 		return []
 	}
 	
-	public func contains(_ key: Key) -> Bool
+	func contains(_ key: Key) -> Bool
 	{
 		return false
 	}
@@ -59,19 +59,19 @@ internal struct ASN1KeyedDecodingContainer<K : CodingKey> : KeyedDecodingContain
 		return "\(key) (\"\(key.stringValue)\")"
 	}
 	
-	public func decodeNil(forKey key: Key) throws -> Bool
+	func decodeNil(forKey key: Key) throws -> Bool
 	{
 		assertionFailure("Not supposed to be here")
 		return false
 	}
 	
-	public func decode(_ type: Bool.Type, forKey key: Key) throws -> Bool
+	func decode(_ type: Bool.Type, forKey key: Key) throws -> Bool
 	{
 		assertionFailure("Not supposed to be here")
 		return false
 	}
 	
-	public func decode(_ type: Int.Type, forKey key: Key) throws -> Int
+	func decode(_ type: Int.Type, forKey key: Key) throws -> Int
 	{
 		self.decoder.codingPath.append(key)
 		defer { self.decoder.codingPath.removeLast() }
@@ -85,18 +85,18 @@ internal struct ASN1KeyedDecodingContainer<K : CodingKey> : KeyedDecodingContain
 		return value
 	}
 	
-	public func decode(_ type: Int8.Type, forKey key: Key) throws -> Int8 {
+	func decode(_ type: Int8.Type, forKey key: Key) throws -> Int8 {
 		assertionFailure("Not supposed to be here")
 		return 0
 	}
 	
-	public func decode(_ type: Int16.Type, forKey key: Key) throws -> Int16
+	func decode(_ type: Int16.Type, forKey key: Key) throws -> Int16
 	{
 		assertionFailure("Not supposed to be here")
 		return 0
 	}
 	
-	public func decode(_ type: Int32.Type, forKey key: Key) throws -> Int32
+	func decode(_ type: Int32.Type, forKey key: Key) throws -> Int32
 	{
 		self.decoder.codingPath.append(key)
 		defer { self.decoder.codingPath.removeLast() }
@@ -110,47 +110,47 @@ internal struct ASN1KeyedDecodingContainer<K : CodingKey> : KeyedDecodingContain
 		return value
 	}
 	
-	public func decode(_ type: Int64.Type, forKey key: Key) throws -> Int64 {
+	func decode(_ type: Int64.Type, forKey key: Key) throws -> Int64 {
 		assertionFailure("Not supposed to be here")
 		return 0
 	}
 	
-	public func decode(_ type: UInt.Type, forKey key: Key) throws -> UInt {
+	func decode(_ type: UInt.Type, forKey key: Key) throws -> UInt {
 		assertionFailure("Not supposed to be here")
 		return 0
 	}
 	
-	public func decode(_ type: UInt8.Type, forKey key: Key) throws -> UInt8 {
+	func decode(_ type: UInt8.Type, forKey key: Key) throws -> UInt8 {
 		assertionFailure("Not supposed to be here")
 		return 0
 	}
 	
-	public func decode(_ type: UInt16.Type, forKey key: Key) throws -> UInt16 {
+	func decode(_ type: UInt16.Type, forKey key: Key) throws -> UInt16 {
 		assertionFailure("Not supposed to be here")
 		return 0
 	}
 	
-	public func decode(_ type: UInt32.Type, forKey key: Key) throws -> UInt32 {
+	func decode(_ type: UInt32.Type, forKey key: Key) throws -> UInt32 {
 		assertionFailure("Not supposed to be here")
 		return 0
 	}
 	
-	public func decode(_ type: UInt64.Type, forKey key: Key) throws -> UInt64 {
+	func decode(_ type: UInt64.Type, forKey key: Key) throws -> UInt64 {
 		assertionFailure("Not supposed to be here")
 		return 0
 	}
 	
-	public func decode(_ type: Float.Type, forKey key: Key) throws -> Float {
+	func decode(_ type: Float.Type, forKey key: Key) throws -> Float {
 		assertionFailure("Not supposed to be here")
 		return 0
 	}
 	
-	public func decode(_ type: Double.Type, forKey key: Key) throws -> Double {
+	func decode(_ type: Double.Type, forKey key: Key) throws -> Double {
 		assertionFailure("Not supposed to be here")
 		return 0
 	}
 	
-	public func decode(_ type: String.Type, forKey key: Key) throws -> String
+	func decode(_ type: String.Type, forKey key: Key) throws -> String
 	{
 		self.decoder.codingPath.append(key)
 		defer { self.decoder.codingPath.removeLast() }
@@ -164,7 +164,7 @@ internal struct ASN1KeyedDecodingContainer<K : CodingKey> : KeyedDecodingContain
 		return value
 	}
 	
-	public func decodeSkippedField(forKey key: Key) throws -> ASN1SkippedField
+	func decodeSkippedField(forKey key: Key) throws -> ASN1SkippedField
 	{
 		self.decoder.codingPath.append(key)
 		defer { self.decoder.codingPath.removeLast() }
@@ -179,7 +179,7 @@ internal struct ASN1KeyedDecodingContainer<K : CodingKey> : KeyedDecodingContain
 		return value
 	}
 	
-	public func decodeData(forKey key: Key) throws -> Data
+	func decodeData(forKey key: Key) throws -> Data
 	{
 		self.decoder.codingPath.append(key)
 		defer { self.decoder.codingPath.removeLast() }
@@ -194,7 +194,7 @@ internal struct ASN1KeyedDecodingContainer<K : CodingKey> : KeyedDecodingContain
 		return value
 	}
 	
-	public func decode<T : Decodable>(_ type: T.Type, forKey key: Key) throws -> T
+	func decode<T : Decodable>(_ type: T.Type, forKey key: Key) throws -> T
 	{
 		if type == Data.self || type == NSData.self
 		{
@@ -239,14 +239,14 @@ internal struct ASN1KeyedDecodingContainer<K : CodingKey> : KeyedDecodingContain
 		return obj
 	}
 	
-	public func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: Key) throws -> KeyedDecodingContainer<NestedKey>
+	func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: Key) throws -> KeyedDecodingContainer<NestedKey>
 	{
 		assertionFailure("Hasn't implemented yet")
 		let container = try ASN1KeyedDecodingContainer<NestedKey>(referencing: self.decoder, wrapping: self.container)
 		return KeyedDecodingContainer(container)
 	}
 	
-	public func nestedUnkeyedContainer(forKey key: Key) throws -> UnkeyedDecodingContainer
+	func nestedUnkeyedContainer(forKey key: Key) throws -> UnkeyedDecodingContainer
 	{
 		return try ASN1UnkeyedDecodingContainer(referencing: self.decoder, wrapping: objToUnbox(forKey: key))
 	}
@@ -261,13 +261,13 @@ internal struct ASN1KeyedDecodingContainer<K : CodingKey> : KeyedDecodingContain
 		return _ASN1Decoder(referencing: try objToUnbox(forKey: k as! K), at: self.decoder.codingPath, options: self.decoder.options)
 	}
 	
-	public func superDecoder() throws -> Decoder
+	func superDecoder() throws -> Decoder
 	{
 		assertionFailure("Hasn't implemented yet")
 		return try _superDecoder(forKey: ASN1Key.super)
 	}
 	
-	public func superDecoder(forKey key: Key) throws -> Decoder
+	func superDecoder(forKey key: Key) throws -> Decoder
 	{
 		return try _superDecoder(forKey: key)
 	}

@@ -35,12 +35,12 @@ enum InternalSuperwallEvent {
   struct AppInstall: TrackableSuperwallEvent {
     let superwallEvent: SuperwallEvent = .appInstall
     let appInstalledAtString: String
-    let hasPurchaseController: Bool
+    let hasExternalPurchaseController: Bool
     var customParameters: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       return [
         "application_installed_at": appInstalledAtString,
-        "using_purchase_controller": hasPurchaseController
+        "using_purchase_controller": hasExternalPurchaseController
       ]
     }
   }

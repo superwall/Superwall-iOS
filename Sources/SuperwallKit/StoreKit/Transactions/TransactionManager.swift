@@ -13,8 +13,11 @@ import Combine
 final class TransactionManager {
   private unowned let storeKitManager: StoreKitManager
   private unowned let sessionEventsManager: SessionEventsManager
-  private let purchaseManager: PurchaseManager
-  private let factory: PurchaseManagerFactory & OptionsFactory & TriggerFactory
+  typealias Factories = ProductPurchaserFactory
+    & OptionsFactory
+    & TriggerFactory
+    & StoreTransactionFactory
+  private let factory: Factories
 
   /// The paywall view controller that the last product was purchased from.
   private var lastPaywallViewController: PaywallViewController?
@@ -22,12 +25,11 @@ final class TransactionManager {
   init(
     storeKitManager: StoreKitManager,
     sessionEventsManager: SessionEventsManager,
-    factory: PurchaseManagerFactory & OptionsFactory & TriggerFactory
+    factory: Factories
   ) {
     self.storeKitManager = storeKitManager
     self.sessionEventsManager = sessionEventsManager
     self.factory = factory
-    purchaseManager = factory.makePurchaseManager()
   }
 
   /// Purchases the given product and handles the result appropriately.
@@ -35,7 +37,7 @@ final class TransactionManager {
   /// - Parameters:
   ///   - productId: The ID of the product to purchase.
   ///   - paywallViewController: The `PaywallViewController` that the product is being
-  ///   purhcased from.
+  ///   purchased from.
   func purchase(
     _ productId: String,
     from paywallViewController: PaywallViewController
@@ -46,14 +48,13 @@ final class TransactionManager {
 
     await prepareToStartTransaction(of: product, from: paywallViewController)
 
-    let result = await purchaseManager.purchase(product: product)
+    let result = await purchase(product)
 
     switch result {
-    case .purchased(let transaction):
+    case .purchased:
       await didPurchase(
         product,
-        from: paywallViewController,
-        transaction: transaction
+        from: paywallViewController
       )
     case .failed(let error):
       let superwallOptions = factory.makeSuperwallOptions()
@@ -87,16 +88,18 @@ final class TransactionManager {
           paywallViewController: paywallViewController
         )
       }
-    case .restored:
-      await storeKitManager.processRestoration(
-        restorationResult: .restored,
-        paywallViewController: paywallViewController
-      )
     case .pending:
       await handlePendingTransaction(from: paywallViewController)
     case .cancelled:
       await trackCancelled(product: product, from: paywallViewController)
     }
+  }
+
+  private func purchase(_ product: StoreProduct) async -> PurchaseResult {
+    guard let sk1Product = product.sk1Product else {
+      return .failed(PurchaseError.productUnavailable)
+    }
+    return await storeKitManager.purchaseController.purchase(product: sk1Product)
   }
 
   /// Cancels the transaction timeout when the application resigns active.
@@ -167,8 +170,7 @@ final class TransactionManager {
   /// Dismisses the view controller, if the developer hasn't disabled the option.
   private func didPurchase(
     _ product: StoreProduct,
-    from paywallViewController: PaywallViewController,
-    transaction: StoreTransaction?
+    from paywallViewController: PaywallViewController
   ) async {
     Logger.debug(
       logLevel: .debug,
@@ -180,6 +182,8 @@ final class TransactionManager {
       ],
       error: nil
     )
+
+    let transaction = await getLatestTransaction(of: product.productIdentifier)
 
     if let transaction = transaction {
       await self.sessionEventsManager.enqueue(transaction)
@@ -198,6 +202,21 @@ final class TransactionManager {
         paywallViewController,
         result: .purchased(productId: product.productIdentifier)
       )
+    }
+  }
+
+  private func getLatestTransaction(of productId: String) async -> StoreTransaction? {
+    if #available(iOS 15.0, *) {
+      let verificationResult = await Transaction.latest(for: productId)
+      if let transaction = verificationResult.map({ $0.unsafePayloadValue }) {
+        return await factory.makeStoreTransaction(from: transaction)
+      }
+      return nil
+    } else {
+      if let transaction = await storeKitManager.purchaseController.productPurchaser.purchasing.lastTransaction {
+        return await factory.makeStoreTransaction(from: transaction)
+      }
+      return nil
     }
   }
 

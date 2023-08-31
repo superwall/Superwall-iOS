@@ -72,8 +72,6 @@ final class GetPaywallVcOperatorTests: XCTestCase {
 
   @MainActor
   func test_getPaywallViewController_error_userNotSubscribed() async {
-    let experiment = Experiment(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
-
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
     stateExpectation.expectedFulfillmentCount = 2
@@ -127,8 +125,6 @@ final class GetPaywallVcOperatorTests: XCTestCase {
 
   @MainActor
   func test_getPaywallViewController_success_paywallNotAlreadyPresented() async {
-    let experiment = Experiment(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
-
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
     stateExpectation.isInverted = true

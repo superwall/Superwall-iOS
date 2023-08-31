@@ -14,7 +14,6 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_noParams() async {
     // Given
     let event = InternalSuperwallEvent.AppLaunch()
-    let storage = StorageMock()
 
     // When
     let parameters = await TrackingLogic.processParameters(
@@ -112,7 +111,6 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_attributes_withCustomParams() async {
     // Given
-    let eventName = "TestName"
     let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       customParameters: [
@@ -140,7 +138,6 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_containsDollar() async {
     // Given
-    let eventName = "TestName"
     let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       customParameters: [
@@ -168,7 +165,6 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_containArray() async {
     // Given
-    let eventName = "TestName"
     let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       customParameters: [
@@ -196,7 +192,6 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_containDictionary() async {
     // Given
-    let eventName = "TestName"
     let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       customParameters: [
@@ -225,7 +220,6 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_containsDate() async {
     // Given
     let date = Date(timeIntervalSince1970: 1650534735)
-    let eventName = "TestName"
     let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       customParameters: [
@@ -254,7 +248,6 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_containsUrl() async {
     // Given
     let url = URL(string: "https://www.google.com")!
-    let eventName = "TestName"
     let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       customParameters: [
@@ -282,7 +275,6 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_nilValue() async {
     // Given
-    let eventName = "TestName"
     let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       customParameters: [
@@ -334,7 +326,7 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(appInstalledAtString: "", hasPurchaseController: false),
+      InternalSuperwallEvent.AppInstall(appInstalledAtString: "", hasExternalPurchaseController: false),
       triggers: Set(["app_install"]),
       paywallViewController: paywallVc
     )
@@ -343,7 +335,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testDidStartNewSession_canTriggerPaywall_isntTrigger() {
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(appInstalledAtString: "", hasPurchaseController: false),
+      InternalSuperwallEvent.AppInstall(appInstalledAtString: "", hasExternalPurchaseController: false),
       triggers: [],
       paywallViewController: nil
     )
@@ -352,7 +344,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testDidStartNewSession_canTriggerPaywall_isAllowedInternalEvent() {
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallEvent.AppInstall(appInstalledAtString: "", hasPurchaseController: false),
+      InternalSuperwallEvent.AppInstall(appInstalledAtString: "", hasExternalPurchaseController: false),
       triggers: ["app_install"],
       paywallViewController: nil
     )

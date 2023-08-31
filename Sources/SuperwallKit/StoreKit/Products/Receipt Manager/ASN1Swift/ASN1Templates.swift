@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class ASN1Template
+class ASN1Template
 {
 	var expectedTags: [ASN1Tag] = []
 	
@@ -16,19 +16,19 @@ public class ASN1Template
 		expectedTags.append(kind)
 	}
 	
-	public func implicit(tag: ASN1Tag) -> ASN1Template
+	func implicit(tag: ASN1Tag) -> ASN1Template
 	{
 		return self
 	}
 	
-	public func explicit(tag: ASN1Tag) -> ASN1Template
+	func explicit(tag: ASN1Tag) -> ASN1Template
 	{
 		expectedTags.append(tag)
 		
 		return self
 	}
 	
-	public func constructed() -> ASN1Template
+	func constructed() -> ASN1Template
 	{
 		if expectedTags.isEmpty
 		{
@@ -45,7 +45,7 @@ public class ASN1Template
 	}
 }
 
-public extension ASN1Template
+extension ASN1Template
 {
 	static func contextSpecific(_ id: ASN1Tag) -> ASN1Template
 	{
