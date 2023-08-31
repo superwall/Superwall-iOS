@@ -1,11 +1,11 @@
 ## Changes in this pull request
 
-Issue fixed: #
+- 
 
 ### Checklist
 
 - [ ] All unit and UI tests pass. Demo project builds and runs.
-- [ ] I added tests, an experiment, or detailed why my change isn't tested.
+- [ ] I added/updated tests or detailed why my change isn't tested.
 - [ ] I added an entry to the `CHANGELOG.md` for any breaking changes, enhancements, or bug fixes.
 - [ ] I have run `swiftlint` in the main directory and fixed any issues.
 - [ ] I have updated the SDK documentation as well as the online docs.

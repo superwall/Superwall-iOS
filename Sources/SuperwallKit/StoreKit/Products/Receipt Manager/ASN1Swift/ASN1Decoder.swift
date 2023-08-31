@@ -9,7 +9,7 @@ import Foundation
 
 typealias ASN1DecoderConsumedValue = Int
 
-open class ASN1Decoder
+final class ASN1Decoder
 {
 	//fileprivate //TODO
 	struct EncodingOptions
@@ -18,7 +18,7 @@ open class ASN1Decoder
 		let userInfo: [CodingUserInfoKey : Any] = [:]
 	}
 	
-	public init() {}
+  init() {}
 	
 	// MARK: - Decoding Values
 	
@@ -30,7 +30,7 @@ open class ASN1Decoder
 	/// - returns: A value of the requested type.
 	/// - throws: `DecodingError.dataCorrupted` if values requested from the payload are corrupted, or if the given data is not valid ASN1.
 	/// - throws: An error if any value throws an error during decoding.
-	open func decode<T : ASN1Decodable>(_ type: T.Type, from data: Data, template: ASN1Template? = nil) throws -> T
+  func decode<T : ASN1Decodable>(_ type: T.Type, from data: Data, template: ASN1Template? = nil) throws -> T
 	{
 		let t: ASN1Template = template ?? type.template
 		
@@ -55,20 +55,20 @@ open class ASN1Decoder
 
 internal struct ASN1Key: CodingKey
 {
-	public var stringValue: String
-	public var intValue: Int?
+  var stringValue: String
+  var intValue: Int?
 	
-	public init?(stringValue: String) {
+  init?(stringValue: String) {
 		self.stringValue = stringValue
 		self.intValue = nil
 	}
 	
-	public init?(intValue: Int) {
+  init?(intValue: Int) {
 		self.stringValue = "\(intValue)"
 		self.intValue = intValue
 	}
 	
-	public init(stringValue: String, intValue: Int?) {
+  init(stringValue: String, intValue: Int?) {
 		self.stringValue = stringValue
 		self.intValue = intValue
 	}
@@ -83,7 +83,7 @@ internal struct ASN1Key: CodingKey
 
 // MARK: _ASN1Decoder
 
-public protocol ASN1DecoderProtocol: Decoder
+protocol ASN1DecoderProtocol: Decoder
 {
 	var dataToDecode: Data { get }
 	func extractValueData() throws -> Data
@@ -91,18 +91,18 @@ public protocol ASN1DecoderProtocol: Decoder
 
 extension _ASN1Decoder
 {
-	public var dataToDecode: Data
+	var dataToDecode: Data
 	{
 		return self.storage.current.rawData
 	}
 	
-	public func extractValueData() throws -> Data
+	func extractValueData() throws -> Data
 	{
 		return self.storage.current.valueData
 	}
 }
-//TODO: private
-class _ASN1Decoder: ASN1DecoderProtocol
+
+final class _ASN1Decoder: ASN1DecoderProtocol
 {
 	internal struct Storage
 	{
@@ -141,7 +141,7 @@ class _ASN1Decoder: ASN1DecoderProtocol
 		}
 	}
 	
-	class State
+	final class State
 	{
 		var dataPtr: UnsafePointer<UInt8>
 		var consumedMyself: Int
@@ -170,9 +170,9 @@ class _ASN1Decoder: ASN1DecoderProtocol
 		}
 	}
 	
-	public var codingPath: [CodingKey] = []
+	var codingPath: [CodingKey] = []
 	
-	public var userInfo: [CodingUserInfoKey: Any] { return options.userInfo }
+  var userInfo: [CodingUserInfoKey: Any] { return options.userInfo }
 	
 	var options: ASN1Decoder.EncodingOptions!
 	
@@ -188,8 +188,7 @@ class _ASN1Decoder: ASN1DecoderProtocol
 		self.options = options
 	}
 	
-	public init()
-	{
+  init() {
 		self.storage = Storage()
 	}
 	
@@ -200,7 +199,7 @@ class _ASN1Decoder: ASN1DecoderProtocol
 	/// - returns: A keyed decoding container view into this decoder.
 	/// - throws: `DecodingError.typeMismatch` if the encountered stored value is
 	///   not a keyed container.
-	public func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key>
+  func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key>
 	{
 		let container = try ASN1KeyedDecodingContainer<Key>(referencing: self, wrapping: self.storage.current)
 		return KeyedDecodingContainer(container)
@@ -212,7 +211,7 @@ class _ASN1Decoder: ASN1DecoderProtocol
 	/// - returns: An unkeyed container view into this decoder.
 	/// - throws: `DecodingError.typeMismatch` if the encountered stored value is
 	///   not an unkeyed container.
-	public func unkeyedContainer() throws -> UnkeyedDecodingContainer
+  func unkeyedContainer() throws -> UnkeyedDecodingContainer
 	{
 		return try ASN1UnkeyedDecodingContainer(referencing: self, wrapping: self.storage.current)
 	}
@@ -223,7 +222,7 @@ class _ASN1Decoder: ASN1DecoderProtocol
 	/// - returns: A single value container view into this decoder.
 	/// - throws: `DecodingError.typeMismatch` if the encountered stored value is
 	///   not a single value container.
-	public func singleValueContainer() throws -> SingleValueDecodingContainer
+  func singleValueContainer() throws -> SingleValueDecodingContainer
 	{
 		return self
 	}

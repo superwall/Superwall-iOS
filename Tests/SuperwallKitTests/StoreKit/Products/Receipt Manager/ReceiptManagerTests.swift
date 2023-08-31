@@ -10,37 +10,24 @@ import XCTest
 @testable import SuperwallKit
 
 class ReceiptManagerTests: XCTestCase {
-  var storeKitCoordinatorFactoryMock: StoreKitCoordinatorFactoryMock!
-  
-  // MARK: - loadPurchasedProducts
-  private func makeStoreKitManager(with productsFetcher: ProductsFetcherSK1) -> StoreKitManager {
-    let dependencyContainer = DependencyContainer()
-    let coordinator = StoreKitCoordinator(
-      delegateAdapter: dependencyContainer.delegateAdapter,
-      storeKitManager: dependencyContainer.storeKitManager,
-      factory: dependencyContainer,
-      productsFetcher: productsFetcher
-    )
-    storeKitCoordinatorFactoryMock = StoreKitCoordinatorFactoryMock(
-      coordinator: coordinator
-    )
-    let storeKitManager = StoreKitManager(factory: storeKitCoordinatorFactoryMock)
-
-    return storeKitManager
-  }
+  let dependencyContainer = DependencyContainer()
+  lazy var purchaseController = InternalPurchaseController(
+    factory: dependencyContainer,
+    swiftPurchaseController: nil,
+    objcPurchaseController: nil
+  )
 
   func test_loadPurchasedProducts_nilProducts() async {
     let product = MockSkProduct(subscriptionGroupIdentifier: "abc")
     let productsFetcher = ProductsFetcherSK1Mock(
       productCompletionResult: .success([StoreProduct(sk1Product: product)])
     )
-    let manager = makeStoreKitManager(with: productsFetcher)
-
     let getReceiptData: () -> Data = {
       return MockReceiptData.newReceipt
     }
     let receiptManager = ReceiptManager(
-      delegate: manager,
+      delegate: productsFetcher,
+      purchaseController: purchaseController,
       receiptData: getReceiptData
     )
 
@@ -53,13 +40,12 @@ class ReceiptManagerTests: XCTestCase {
     let productsFetcher = ProductsFetcherSK1Mock(
       productCompletionResult: .failure(TestError("error"))
     )
-    let manager = makeStoreKitManager(with: productsFetcher)
-
     let getReceiptData: () -> Data = {
       return MockReceiptData.newReceipt
     }
     let receiptManager = ReceiptManager(
-      delegate: manager,
+      delegate: productsFetcher,
+      purchaseController: purchaseController,
       receiptData: getReceiptData
     )
 

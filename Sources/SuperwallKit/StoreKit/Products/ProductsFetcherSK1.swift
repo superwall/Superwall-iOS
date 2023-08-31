@@ -14,7 +14,7 @@
 import Foundation
 import StoreKit
 
-class ProductsFetcherSK1: NSObject, ProductsFetcher {
+class ProductsFetcherSK1: NSObject {
 	private var cachedProductsByIdentifier: [String: SKProduct] = [:]
 	private let queue = DispatchQueue(label: "com.superwall.ProductsManager")
 	private var productsByRequest: [SKRequest: Set<String>] = [:]
