@@ -32,7 +32,7 @@ final class TrackingTests: XCTestCase {
 
   func test_appInstall() async {
     let appInstalledAtString = "now"
-    let result = await Superwall.shared.track(InternalSuperwallEvent.AppInstall(appInstalledAtString: appInstalledAtString, hasPurchaseController: true))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.AppInstall(appInstalledAtString: appInstalledAtString, hasExternalPurchaseController: true))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertTrue(result.parameters.eventParams["$using_purchase_controller"] as! Bool)

@@ -141,7 +141,6 @@ extension StoreKitManager: RestoreDelegate {
     }
   }
 
-  /// Resto
   @MainActor
   func tryToRestore(_ paywallViewController: PaywallViewController) async {
     Logger.debug(

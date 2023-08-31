@@ -93,8 +93,8 @@ protocol DeviceHelperFactory: AnyObject {
   func makeIsSandbox() -> Bool
 }
 
-protocol HasPurchaseControllerFactory: AnyObject {
-  func makeHasPurchaseController() -> Bool
+protocol HasExternalPurchaseControllerFactory: AnyObject {
+  func makeHasExternalPurchaseController() -> Bool
 }
 
 protocol ApiFactory: AnyObject {
