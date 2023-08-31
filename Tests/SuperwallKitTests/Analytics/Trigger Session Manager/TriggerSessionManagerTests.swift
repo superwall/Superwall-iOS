@@ -187,7 +187,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     // When
     await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
-      triggerResult: .noRuleMatch
+      triggerResult: .noRuleMatch([])
     )
 
     let triggerSessions = await queue.triggerSessions

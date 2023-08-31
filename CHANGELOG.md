@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- When you experience `no_rule_match`, the `TriggerFire` event will specify which part of the rules didn't match in the format `unmatched_rule_<id> = <outcome>`. Where `outcome` will either be `OCCURRENCE`, referring to the limit applied to a rule, or `EXPRESSION`.
+- When you experience `no_rule_match`, the `TriggerFire` event params will specify which part of the rules didn't match in the format `"unmatched_rule_<id>": "<outcome>"`. Where `outcome` will either be `OCCURRENCE`, referring to the limit applied to a rule, or `EXPRESSION`. The `id` is the experiment id.
 
 ### Fixes
 

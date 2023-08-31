@@ -10,7 +10,101 @@ import Foundation
 import XCTest
 @testable import SuperwallKit
 
+@available(iOS 14.0, *)
 final class ExpressionEvaluatorTests: XCTestCase {
+  // MARK: - tryToMatchOccurrence
+  func test_tryToMatchOccurrence_noMatch() async {
+    let dependencyContainer = DependencyContainer()
+    let storage = StorageMock()
+    let evaluator = ExpressionEvaluator(
+      storage: storage,
+      factory: dependencyContainer
+    )
+    let rule = TriggerRule.stub()
+      .setting(\.occurrence, to: .stub())
+    let outcome = await evaluator.tryToMatchOccurrence(
+      from: rule,
+      expressionMatched: false
+    )
+    XCTAssertEqual(outcome, .noMatch(source: .expression, experimentId: rule.experiment.id))
+  }
+
+  func test_tryToMatchOccurrence_noOccurrenceRule() async {
+    let dependencyContainer = DependencyContainer()
+    let storage = StorageMock()
+    let evaluator = ExpressionEvaluator(
+      storage: storage,
+      factory: dependencyContainer
+    )
+    let rule = TriggerRule.stub()
+      .setting(\.occurrence, to: nil)
+    let outcome = await evaluator.tryToMatchOccurrence(
+      from: rule,
+      expressionMatched: true
+    )
+    XCTAssertEqual(outcome, .match(rule: rule))
+  }
+
+  func test_tryToMatchOccurrence_shouldntFire_maxCountGTCount() async {
+    let dependencyContainer = DependencyContainer()
+    let coreDataManagerMock = CoreDataManagerFakeDataMock(internalOccurrenceCount: 1)
+    let storage = StorageMock(coreDataManager: coreDataManagerMock)
+    let evaluator = ExpressionEvaluator(
+      storage: storage,
+      factory: dependencyContainer
+    )
+
+    let rule = TriggerRule.stub()
+      .setting(\.occurrence, to: .stub().setting(\.maxCount, to: 1))
+    let outcome = await evaluator.tryToMatchOccurrence(
+      from: rule,
+      expressionMatched: true
+    )
+
+    XCTAssertEqual(outcome, .noMatch(source: .occurrence, experimentId: rule.experiment.id))
+  }
+
+  func test_tryToMatchOccurrence_shouldFire_maxCountEqualToCount() async {
+    let dependencyContainer = DependencyContainer()
+    let coreDataManagerMock = CoreDataManagerFakeDataMock(internalOccurrenceCount: 0)
+    let storage = StorageMock(coreDataManager: coreDataManagerMock)
+    let evaluator = ExpressionEvaluator(
+      storage: storage,
+      factory: dependencyContainer
+    )
+
+    let occurrence: TriggerRuleOccurrence = .stub().setting(\.maxCount, to: 1)
+    let rule = TriggerRule.stub()
+      .setting(\.occurrence, to: occurrence)
+    let outcome = await evaluator.tryToMatchOccurrence(
+      from: rule,
+      expressionMatched: true
+    )
+
+    XCTAssertEqual(outcome, .match(rule: rule, unsavedOccurrence: occurrence))
+  }
+
+  func test_tryToMatchOccurrence_shouldFire_maxCountLtCount() async {
+    let dependencyContainer = DependencyContainer()
+    let coreDataManagerMock = CoreDataManagerFakeDataMock(internalOccurrenceCount: 1)
+    let storage = StorageMock(coreDataManager: coreDataManagerMock)
+    let evaluator = ExpressionEvaluator(
+      storage: storage,
+      factory: dependencyContainer
+    )
+
+    let occurrence: TriggerRuleOccurrence = .stub().setting(\.maxCount, to: 4)
+    let rule = TriggerRule.stub()
+      .setting(\.occurrence, to: occurrence)
+    let outcome = await evaluator.tryToMatchOccurrence(
+      from: rule,
+      expressionMatched: true
+    )
+
+    XCTAssertEqual(outcome, .match(rule: rule, unsavedOccurrence: occurrence))
+  }
+
+  // MARK: - evaluateExpression
   func testExpressionMatchesAll() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
@@ -18,13 +112,16 @@ final class ExpressionEvaluatorTests: XCTestCase {
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
+
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: nil)
+      .setting(\.expressionJs, to: nil)
     let result = await evaluator.evaluateExpression(
-      fromRule: .stub()
-        .setting(\.expression, to: nil)
-        .setting(\.expressionJs, to: nil),
+      fromRule: rule,
       eventData: .stub()
     )
-    XCTAssertTrue(result.shouldFire)
+
+    XCTAssertEqual(result, .match(rule: rule))
   }
 
   // MARK: - Expression
@@ -37,13 +134,14 @@ final class ExpressionEvaluatorTests: XCTestCase {
       factory: dependencyContainer
     )
     dependencyContainer.identityManager.mergeUserAttributes(["a": "b"])
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "user.a == \"b\"")
     let result = await evaluator.evaluateExpression(
-      fromRule: .stub()
-        .setting(\.expression, to: "user.a == \"b\""),
+      fromRule: rule,
       eventData: EventData(name: "ss", parameters: [:], createdAt: Date())
     )
-    XCTAssertTrue(result.shouldFire)
-    XCTAssertNil(result.unsavedOccurrence)
+
+    XCTAssertEqual(result, .match(rule: rule))
   }
 
   func testExpressionEvaluator_expression_withOccurrence() async  {
@@ -55,14 +153,15 @@ final class ExpressionEvaluatorTests: XCTestCase {
     )
     dependencyContainer.identityManager.mergeUserAttributes(["a": "b"])
     let occurrence = TriggerRuleOccurrence(key: "a", maxCount: 1, interval: .infinity)
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "user.a == \"b\"")
+      .setting(\.occurrence, to: occurrence)
     let result = await evaluator.evaluateExpression(
-      fromRule: .stub()
-        .setting(\.expression, to: "user.a == \"b\"")
-        .setting(\.occurrence, to: occurrence),
+      fromRule: rule,
       eventData: EventData(name: "ss", parameters: [:], createdAt: Date())
     )
-    XCTAssertTrue(result.shouldFire)
-    XCTAssertEqual(result.unsavedOccurrence, occurrence)
+
+    XCTAssertEqual(result, .match(rule: rule, unsavedOccurrence: occurrence))
   }
 
   func testExpressionEvaluator_expressionParams() async {
@@ -73,12 +172,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
       factory: dependencyContainer
     )
     dependencyContainer.identityManager.mergeUserAttributes([:])
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "params.a == \"b\"")
     let result = await evaluator.evaluateExpression(
-      fromRule: .stub()
-        .setting(\.expression, to: "params.a == \"b\""),
+      fromRule: rule,
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertTrue(result.shouldFire)
+    XCTAssertEqual(result, .match(rule: rule))
   }
 
   func testExpressionEvaluator_expressionDeviceTrue() async {
@@ -89,12 +189,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
       factory: dependencyContainer
     )
     dependencyContainer.identityManager.mergeUserAttributes([:])
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "device.platform == \"iOS\"")
     let result = await evaluator.evaluateExpression(
-      fromRule: .stub()
-        .setting(\.expression, to: "device.platform == \"iOS\""),
+      fromRule: rule,
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertTrue(result.shouldFire)
+    XCTAssertEqual(result, .match(rule: rule))
   }
 
   func testExpressionEvaluator_expressionDeviceFalse() async {
@@ -105,12 +206,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
       factory: dependencyContainer
     )
     dependencyContainer.identityManager.mergeUserAttributes([:])
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "device.platform == \"Android\"")
     let result = await evaluator.evaluateExpression(
-        fromRule: .stub()
-          .setting(\.expression, to: "device.platform == \"Android\""),
+        fromRule: rule,
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertFalse(result.shouldFire)
+    XCTAssertEqual(result, .noMatch(source: .expression, experimentId: rule.experiment.id))
   }
 
   func testExpressionEvaluator_expressionFalse() async {
@@ -121,12 +223,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
       factory: dependencyContainer
     )
     dependencyContainer.identityManager.mergeUserAttributes([:])
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "a == \"b\"")
     let result = await evaluator.evaluateExpression(
-      fromRule: .stub()
-        .setting(\.expression, to: "a == \"b\""),
+      fromRule: rule,
       eventData: .stub()
     )
-    XCTAssertFalse(result.shouldFire)
+    XCTAssertEqual(result, .noMatch(source: .expression, experimentId: rule.experiment.id))
   }
 /*
   func testExpressionEvaluator_events() {
@@ -151,12 +254,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
+    let rule: TriggerRule = .stub()
+      .setting(\.expressionJs, to: "function superwallEvaluator(){ return true }; superwallEvaluator")
     let result = await evaluator.evaluateExpression(
-      fromRule: .stub()
-        .setting(\.expressionJs, to: "function superwallEvaluator(){ return true }; superwallEvaluator"),
+      fromRule: rule,
       eventData: .stub()
     )
-    XCTAssertTrue(result.shouldFire)
+    XCTAssertEqual(result, .match(rule: rule))
   }
 
   func testExpressionEvaluator_expressionJSValues_true() async {
@@ -165,12 +269,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
         storage: dependencyContainer.storage,
         factory: dependencyContainer
       )
+    let rule: TriggerRule = .stub()
+      .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator")
     let result = await evaluator.evaluateExpression(
-      fromRule: .stub()
-        .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator"),
+      fromRule: rule,
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertTrue(result.shouldFire)
+    XCTAssertEqual(result, .match(rule: rule))
   }
 
   func testExpressionEvaluator_expressionJSValues_false() async {
@@ -179,12 +284,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
+    let rule: TriggerRule = .stub()
+      .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator")
     let result = await evaluator.evaluateExpression(
-      fromRule: .stub()
-        .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator"),
+      fromRule: rule,
       eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertTrue(result.shouldFire)
+    XCTAssertEqual(result, .match(rule: rule))
   }
 
   func testExpressionEvaluator_expressionJSNumbers() async {
@@ -193,12 +299,13 @@ final class ExpressionEvaluatorTests: XCTestCase {
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
+    let rule: TriggerRule = .stub()
+      .setting(\.expressionJs, to: "function superwallEvaluator(values) { return 1 == 1 }; superwallEvaluator")
     let result = await evaluator.evaluateExpression(
-      fromRule: .stub()
-        .setting(\.expressionJs, to: "function superwallEvaluator(values) { return 1 == 1 }; superwallEvaluator"),
+      fromRule: rule,
       eventData: .stub()
     )
-    XCTAssertTrue(result.shouldFire)
+    XCTAssertEqual(result, .match(rule: rule))
   }
 /*
   func testExpressionEvaluator_expressionJSValues_events() {
@@ -221,11 +328,12 @@ final class ExpressionEvaluatorTests: XCTestCase {
       storage: dependencyContainer.storage,
       factory: dependencyContainer
     )
+    let rule: TriggerRule = .stub()
+      .setting(\.expressionJs, to: "")
     let result = await evaluator.evaluateExpression(
-      fromRule: .stub()
-        .setting(\.expressionJs, to: ""),
+      fromRule: rule,
       eventData: .stub()
     )
-    XCTAssertFalse(result.shouldFire)
+    XCTAssertEqual(result, .noMatch(source: .expression, experimentId: rule.experiment.id))
   }
 }
