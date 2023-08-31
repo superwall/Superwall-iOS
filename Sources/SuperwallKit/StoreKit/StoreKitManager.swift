@@ -140,59 +140,6 @@ extension StoreKitManager: RestoreDelegate {
       await loadPurchasedProducts()
     }
   }
-
-  @MainActor
-  func tryToRestore(_ paywallViewController: PaywallViewController) async {
-    Logger.debug(
-      logLevel: .debug,
-      scope: .paywallTransactions,
-      message: "Attempting Restore"
-    )
-
-    paywallViewController.loadingState = .loadingPurchase
-
-    let restorationResult = await purchaseController.restorePurchases()
-
-    let hasRestored = restorationResult == .restored
-    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
-
-    if hasRestored && isUserSubscribed {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .paywallTransactions,
-        message: "Transactions Restored"
-      )
-      await transactionWasRestored(paywallViewController: paywallViewController)
-    } else {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .paywallTransactions,
-        message: "Transactions Failed to Restore"
-      )
-
-      paywallViewController.presentAlert(
-        title: Superwall.shared.options.paywalls.restoreFailed.title,
-        message: Superwall.shared.options.paywalls.restoreFailed.message,
-        closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle
-      )
-    }
-  }
-
-  private func transactionWasRestored(paywallViewController: PaywallViewController) async {
-    let paywallInfo = await paywallViewController.info
-
-    let trackedEvent = InternalSuperwallEvent.Transaction(
-      state: .restore,
-      paywallInfo: paywallInfo,
-      product: nil,
-      model: nil
-    )
-    await Superwall.shared.track(trackedEvent)
-
-    if Superwall.shared.options.paywalls.automaticallyDismiss {
-      await Superwall.shared.dismiss(paywallViewController, result: .restored)
-    }
-  }
 }
 
 // MARK: - Receipt API
