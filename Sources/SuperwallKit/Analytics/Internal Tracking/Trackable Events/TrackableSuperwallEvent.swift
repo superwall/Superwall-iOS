@@ -233,11 +233,11 @@ enum InternalSuperwallEvent {
   }
 
   struct TriggerFire: TrackableSuperwallEvent {
-    let triggerResult: TriggerResult
+    let triggerResult: InternalTriggerResult
     var superwallEvent: SuperwallEvent {
       return .triggerFire(
         eventName: triggerName,
-        result: triggerResult
+        result: triggerResult.toPublicType()
       )
     }
     let triggerName: String
@@ -254,10 +254,14 @@ enum InternalSuperwallEvent {
       }
 
       switch triggerResult {
-      case .noRuleMatch:
-        return params + [
+      case .noRuleMatch(let unmatchedRules):
+        params += [
           "result": "no_rule_match"
         ]
+        for unmatchedRule in unmatchedRules {
+          params["unmatched_rule_\(unmatchedRule.experimentId)"] = unmatchedRule.source.rawValue
+        }
+        return params
       case .holdout(let experiment):
         return params + [
           "variant_id": experiment.variant.id as Any,

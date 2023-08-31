@@ -9,7 +9,7 @@ import Foundation
 
 enum GetPresentationResultLogic {
   /// Converts a ``TriggerResult`` to a ``PresentationResult``
-  static func convertTriggerResult(_ triggerResult: TriggerResult) -> PresentationResult {
+  static func convertTriggerResult(_ triggerResult: InternalTriggerResult) -> PresentationResult {
     switch triggerResult {
     case .eventNotFound:
       return .eventNotFound

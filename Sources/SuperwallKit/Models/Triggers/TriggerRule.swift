@@ -7,17 +7,37 @@
 
 import Foundation
 
+struct UnmatchedRule: Equatable {
+  enum Source: String {
+    case expression = "EXPRESSION"
+    case occurrence = "OCCURRENCE"
+  }
+  let source: Source
+  let experimentId: String
+}
+
+struct MatchedItem {
+  let rule: TriggerRule
+  let unsavedOccurrence: TriggerRuleOccurrence?
+}
+
 enum TriggerRuleOutcome {
-  enum NoMatchSource {
-    case expression
-    case occurrence
-  }
-  struct MatchedItem {
-    let rule: TriggerRule
-    let unsavedOccurrence: TriggerRuleOccurrence?
-  }
-  case noRuleMatch(NoMatchSource)
+  case noMatch(UnmatchedRule)
   case match(MatchedItem)
+
+  static func noMatch(
+    source: UnmatchedRule.Source,
+    experimentId: String
+  ) -> TriggerRuleOutcome {
+    return .noMatch(.init(source: source, experimentId: experimentId))
+  }
+
+  static func match(
+    rule: TriggerRule,
+    unsavedOccurrence: TriggerRuleOccurrence? = nil
+  ) -> TriggerRuleOutcome {
+    return .match(.init(rule: rule, unsavedOccurrence: unsavedOccurrence))
+  }
 }
 
 struct TriggerRule: Decodable, Hashable {

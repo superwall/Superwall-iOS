@@ -107,7 +107,7 @@ extension Superwall {
   private func activateSession(
     for request: PresentationRequest,
     paywall: Paywall,
-    triggerResult: TriggerResult
+    triggerResult: InternalTriggerResult
   ) async {
     let sessionEventsManager = dependencyContainer.sessionEventsManager
     await sessionEventsManager?.triggerSession.activateSession(
