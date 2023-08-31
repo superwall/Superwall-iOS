@@ -494,7 +494,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
         from: paywallViewController
       )
     case .initiateRestore:
-      await dependencyContainer.storeKitManager.purchaseController.tryToRestore(paywallViewController)
+      await dependencyContainer.storeKitManager.purchaseController.tryToRestore(from: paywallViewController)
     case .openedURL(let url):
       dependencyContainer.delegateAdapter.paywallWillOpenURL(url: url)
     case .openedUrlInSafari(let url):

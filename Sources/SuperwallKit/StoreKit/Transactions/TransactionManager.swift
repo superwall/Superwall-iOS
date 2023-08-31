@@ -37,7 +37,7 @@ final class TransactionManager {
   /// - Parameters:
   ///   - productId: The ID of the product to purchase.
   ///   - paywallViewController: The `PaywallViewController` that the product is being
-  ///   purhcased from.
+  ///   purchased from.
   func purchase(
     _ productId: String,
     from paywallViewController: PaywallViewController

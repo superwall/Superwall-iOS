@@ -18,8 +18,8 @@ final class InternalPurchaseController: PurchaseController {
   }
   private var swiftPurchaseController: PurchaseController?
   private var objcPurchaseController: PurchaseControllerObjc?
-  lazy var productPurchaser = factory.makeSK1ProductPurchaser()
   private let factory: ProductPurchaserFactory
+  lazy var productPurchaser = factory.makeSK1ProductPurchaser()
   weak var delegate: RestoreDelegate?
 
   init(
@@ -75,7 +75,7 @@ extension InternalPurchaseController {
   }
 
   @MainActor
-  func tryToRestore(_ paywallViewController: PaywallViewController) async {
+  func tryToRestore(from paywallViewController: PaywallViewController) async {
     Logger.debug(
       logLevel: .debug,
       scope: .paywallTransactions,
