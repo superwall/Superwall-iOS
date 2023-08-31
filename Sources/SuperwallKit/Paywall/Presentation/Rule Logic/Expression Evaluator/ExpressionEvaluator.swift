@@ -12,11 +12,6 @@ struct ExpressionEvaluator {
   private let storage: Storage
   private unowned let factory: RuleAttributesFactory
 
-  struct TriggerFireOutcome {
-    let shouldFire: Bool
-    var unsavedOccurrence: TriggerRuleOccurrence?
-  }
-
   init(
     storage: Storage,
     factory: RuleAttributesFactory
@@ -28,18 +23,18 @@ struct ExpressionEvaluator {
   func evaluateExpression(
     fromRule rule: TriggerRule,
     eventData: EventData
-  ) async -> TriggerFireOutcome {
+  ) async -> TriggerRuleOutcome {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
-      let shouldFire = await shouldFire(
-        forOccurrence: rule.occurrence,
-        ruleMatched: true
+      let ruleMatched = await tryToMatchOccurrence(
+        from: rule,
+        expressionMatched: true
       )
-      return shouldFire
+      return ruleMatched
     }
 
     guard let jsCtx = JSContext() else {
-      return TriggerFireOutcome(shouldFire: false)
+      return .noMatch(source: .expression, experimentId: rule.experiment.id)
     }
     jsCtx.exceptionHandler = { (_, value: JSValue?) in
       guard let value = value else {
@@ -62,30 +57,30 @@ struct ExpressionEvaluator {
       )
     }
 
-    guard let postfix = await getPostfix(
-      forRule: rule,
+    guard let base64Params = await getBase64Params(
+      from: rule,
       withEventData: eventData
     ) else {
-      return TriggerFireOutcome(shouldFire: false)
+      return .noMatch(source: .expression, experimentId: rule.experiment.id)
     }
 
-    let result = jsCtx.evaluateScript(script + "\n " + postfix)
+    let result = jsCtx.evaluateScript(script + "\n " + base64Params)
     if result?.isString == nil {
-      return TriggerFireOutcome(shouldFire: false)
+      return .noMatch(source: .expression, experimentId: rule.experiment.id)
     }
 
-    let isMatched = result?.toString() == "true"
+    let expressionMatched = result?.toString() == "true"
 
-    let shouldFire = await shouldFire(
-      forOccurrence: rule.occurrence,
-      ruleMatched: isMatched
+    let ruleMatched = await tryToMatchOccurrence(
+      from: rule,
+      expressionMatched: expressionMatched
     )
 
-    return shouldFire
+    return ruleMatched
   }
 
-  private func getPostfix(
-    forRule rule: TriggerRule,
+  private func getBase64Params(
+    from rule: TriggerRule,
     withEventData eventData: EventData
   ) async -> String? {
     let attributes = await factory.makeRuleAttributes(
@@ -116,19 +111,19 @@ struct ExpressionEvaluator {
     return nil
   }
 
-  func shouldFire(
-    forOccurrence occurrence: TriggerRuleOccurrence?,
-    ruleMatched: Bool
-  ) async -> TriggerFireOutcome {
-    if ruleMatched {
-      guard let occurrence = occurrence else {
+  func tryToMatchOccurrence(
+    from rule: TriggerRule,
+    expressionMatched: Bool
+  ) async -> TriggerRuleOutcome {
+    if expressionMatched {
+      guard let occurrence = rule.occurrence else {
         Logger.debug(
           logLevel: .debug,
           scope: .paywallPresentation,
           message: "No occurrence parameter found for trigger rule."
         )
 
-        return TriggerFireOutcome(shouldFire: true)
+        return .match(rule: rule)
       }
 
       let count = await storage
@@ -142,14 +137,12 @@ struct ExpressionEvaluator {
 
       if shouldFire {
         unsavedOccurrence = occurrence
+        return .match(rule: rule, unsavedOccurrence: unsavedOccurrence)
+      } else {
+        return .noMatch(source: .occurrence, experimentId: rule.experiment.id)
       }
-
-      return TriggerFireOutcome(
-        shouldFire: shouldFire,
-        unsavedOccurrence: unsavedOccurrence
-      )
     }
 
-    return TriggerFireOutcome(shouldFire: false)
+    return .noMatch(source: .expression, experimentId: rule.experiment.id)
   }
 }

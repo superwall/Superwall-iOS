@@ -39,3 +39,51 @@ public enum TriggerResult: Sendable, Equatable {
   /// In these instances, consider falling back to a native paywall.
   case error(NSError)
 }
+
+/// The result of a paywall trigger. `noRuleMatch` is an associated enum.
+///
+/// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
+enum InternalTriggerResult: Equatable {
+  /// This event was not found on the dashboard.
+  ///
+  /// Please make sure you have added the event to a campaign on the dashboard and
+  /// double check its spelling.
+  case eventNotFound
+
+  /// No matching rule was found for this trigger so no paywall will be shown.
+  case noRuleMatch([UnmatchedRule])
+
+  /// A matching rule was found and this user will be shown a paywall.
+  ///
+  /// - Parameters:
+  ///   - experiment: The experiment associated with the trigger.
+  case paywall(Experiment)
+
+  /// A matching rule was found and this user was assigned to a holdout group so will not be shown a paywall.
+  ///
+  /// - Parameters:
+  ///   - experiment: The experiment  associated with the trigger.
+  case holdout(Experiment)
+
+  /// An error occurred and the user will not be shown a paywall.
+  ///
+  /// If the error code is `101`, it means that no view controller could be found to present on. Otherwise a network failure may have occurred.
+  ///
+  /// In these instances, consider falling back to a native paywall.
+  case error(NSError)
+
+  func toPublicType() -> TriggerResult {
+    switch self {
+    case .eventNotFound:
+      return .eventNotFound
+    case .noRuleMatch:
+      return .noRuleMatch
+    case .paywall(let experiment):
+      return .paywall(experiment)
+    case .holdout(let experiment):
+      return .holdout(experiment)
+    case .error(let nSError):
+      return .error(nSError)
+    }
+  }
+}

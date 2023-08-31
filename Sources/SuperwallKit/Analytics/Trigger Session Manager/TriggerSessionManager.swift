@@ -136,7 +136,7 @@ actor TriggerSessionManager {
     for presentationInfo: PresentationInfo,
     on presentingViewController: UIViewController? = nil,
     paywall: Paywall? = nil,
-    triggerResult: TriggerResult?,
+    triggerResult: InternalTriggerResult?,
     trackEvent: (Trackable) async -> TrackingResult = Superwall.shared.track
   ) async {
     guard let eventName = presentationInfo.eventName else {
@@ -152,7 +152,7 @@ actor TriggerSessionManager {
       presentationInfo: presentationInfo,
       presentingViewController: presentingViewController,
       paywall: paywall,
-      triggerResult: triggerResult
+      triggerResult: triggerResult?.toPublicType()
     ) else {
       return
     }
