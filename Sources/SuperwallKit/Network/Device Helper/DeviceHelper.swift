@@ -147,6 +147,13 @@ class DeviceHelper {
     return result
   }()
 
+  let appBuildNumber: String = {
+    guard let buildNumber = Bundle.main.infoDictionary?[kCFBundleVersionKey as String] as? String else {
+      return ""
+    }
+    return buildNumber
+  }()
+
   let interfaceType: String = {
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
@@ -180,6 +187,27 @@ class DeviceHelper {
       return nil
     }
     return installDate
+  }()
+
+  private let sdkVersionPadded: String = {
+    let components = sdkVersion.split(separator: "-")
+    let versionNumber = String(components[0])
+
+    var appendix = ""
+
+    if components.count > 1 {
+      let appendixComponents = components[1].split(separator: ".")
+      let appendixVersion = String(format: "%03d", Int(appendixComponents[1]) ?? 0)
+      appendix = "-" + String(appendixComponents[0]) + "." + appendixVersion
+    }
+
+    let versionComponents = versionNumber.split(separator: ".")
+    let major = String(format: "%03d", Int(versionComponents[0]) ?? 0)
+    let minor = String(format: "%03d", Int(versionComponents[1]) ?? 0)
+    let patch = String(format: "%03d", Int(versionComponents[2]) ?? 0)
+
+    let newVersion = "\(major).\(minor).\(patch)\(appendix)"
+    return newVersion
   }()
 
   private var daysSinceInstall: Int {
@@ -367,9 +395,11 @@ class DeviceHelper {
       localDateTime: localDateTimeString,
       isSandbox: isSandbox,
       subscriptionStatus: Superwall.shared.subscriptionStatus.description,
-      isFirstAppOpen: isFirstAppOpen
+      isFirstAppOpen: isFirstAppOpen,
+      sdkVersion: sdkVersion,
+      sdkVersionPadded: sdkVersionPadded,
+      appBuildNumber: appBuildNumber
     )
-
     return template.toDictionary()
   }
 
