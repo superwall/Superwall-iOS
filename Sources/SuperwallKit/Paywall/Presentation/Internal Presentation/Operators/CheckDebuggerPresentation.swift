@@ -16,8 +16,11 @@ extension Superwall {
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   func checkDebuggerPresentation(
     request: PresentationRequest,
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
   ) throws {
+    guard request.flags.type == .presentation else {
+      return
+    }
     guard request.flags.isDebuggerLaunched else {
       return
     }
@@ -31,8 +34,8 @@ extension Superwall {
       value: "Trying to present paywall when debugger is launched."
     )
     let state: PaywallState = .presentationError(error)
-    paywallStatePublisher.send(state)
-    paywallStatePublisher.send(completion: .finished)
+    paywallStatePublisher?.send(state)
+    paywallStatePublisher?.send(completion: .finished)
     throw PresentationPipelineError.debuggerPresented
   }
 }

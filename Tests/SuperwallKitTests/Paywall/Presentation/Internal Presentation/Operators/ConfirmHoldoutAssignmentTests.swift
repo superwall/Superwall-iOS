@@ -32,7 +32,10 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
+    let request = PresentationRequest.stub()
+      .setting(\.flags.type, to: .presentation)
     Superwall.shared.confirmHoldoutAssignment(
+      request: request,
       from: input,
       dependencyContainer: dependencyContainer
     )
@@ -57,8 +60,10 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
     let input = RuleEvaluationOutcome(
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
-
+    let request = PresentationRequest.stub()
+      .setting(\.flags.type, to: .presentation)
     Superwall.shared.confirmHoldoutAssignment(
+      request: request,
       from: input,
       dependencyContainer: dependencyContainer
     )
@@ -84,10 +89,71 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
+    let request = PresentationRequest.stub()
+      .setting(\.flags.type, to: .presentation)
     Superwall.shared.confirmHoldoutAssignment(
+      request: request,
       from: input,
       dependencyContainer: dependencyContainer
     )
     XCTAssertTrue(configManager.confirmedAssignment)
+  }
+
+  func test_confirmHoldoutAssignment_holdout_getPresentationResult() async {
+    let dependencyContainer = DependencyContainer()
+    let configManager = ConfigManagerMock(
+      options: nil,
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      paywallManager: dependencyContainer.paywallManager,
+      factory: dependencyContainer
+    )
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
+    dependencyContainer.configManager = configManager
+
+    let input = RuleEvaluationOutcome(
+      confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
+    )
+
+    let request = PresentationRequest.stub()
+      .setting(\.flags.type, to: .getPresentationResult)
+    Superwall.shared.confirmHoldoutAssignment(
+      request: request,
+      from: input,
+      dependencyContainer: dependencyContainer
+    )
+    XCTAssertFalse(configManager.confirmedAssignment)
+  }
+
+  func test_confirmHoldoutAssignment_holdout_getImplicitPresentationResult() async {
+    let dependencyContainer = DependencyContainer()
+    let configManager = ConfigManagerMock(
+      options: nil,
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      paywallManager: dependencyContainer.paywallManager,
+      factory: dependencyContainer
+    )
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
+    dependencyContainer.configManager = configManager
+
+    let input = RuleEvaluationOutcome(
+      confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
+    )
+
+    let request = PresentationRequest.stub()
+      .setting(\.flags.type, to: .getImplicitPresentationResult)
+    Superwall.shared.confirmHoldoutAssignment(
+      request: request,
+      from: input,
+      dependencyContainer: dependencyContainer
+    )
+    XCTAssertFalse(configManager.confirmedAssignment)
   }
 }

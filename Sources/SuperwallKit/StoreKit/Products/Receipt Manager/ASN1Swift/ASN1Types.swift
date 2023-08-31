@@ -43,18 +43,18 @@ extension ASN1Object
 	}
 }
 
-public typealias ASN1Tag = UInt8
+typealias ASN1Tag = UInt8
 
-public struct ASN1SkippedField: ASN1Decodable
+struct ASN1SkippedField: ASN1Decodable
 {
-	public var rawData: Data
+	var rawData: Data
 	
-	public static var template: ASN1Template { ASN1Template.universal(0) }
+	static var template: ASN1Template { ASN1Template.universal(0) }
 }
 
-public struct ASN1Null: ASN1Decodable
+struct ASN1Null: ASN1Decodable
 {
-	public static var template: ASN1Template { ASN1Template.universal(ASN1Identifier.Tag.null) }
+	static var template: ASN1Template { ASN1Template.universal(ASN1Identifier.Tag.null) }
 }
 
 extension ASN1Tag
@@ -86,77 +86,77 @@ extension ASN1Tag
 	}
 }
 
-public struct ASN1Identifier
+struct ASN1Identifier
 {
-	public struct Modifiers
+	struct Modifiers
 	{
-		public static let methodMask: UInt8 = 0x20
-		public static let primitiv: UInt8 = 0x00
-		public static let constructed: UInt8 = 0x20
+		static let methodMask: UInt8 = 0x20
+		static let primitiv: UInt8 = 0x00
+		static let constructed: UInt8 = 0x20
 		
-		public static let classMask: UInt8 = 0xc0
-		public static let universal: UInt8 = 0x00
-		public static let application: UInt8 = 0x40
-		public static let contextSpecific: UInt8 = 0x80
-		public static let `private`: UInt8 = 0xc0
+		static let classMask: UInt8 = 0xc0
+		static let universal: UInt8 = 0x00
+		static let application: UInt8 = 0x40
+		static let contextSpecific: UInt8 = 0x80
+		static let `private`: UInt8 = 0xc0
 		
-		public static let any: UInt32 = 0x00400
+		static let any: UInt32 = 0x00400
 	}
 	
-	public struct Tag
+	struct Tag
 	{
-		public static let tagMask: UInt8 = 0xff
-		public static let tagNumMask: UInt8 = 0x7f
+		static let tagMask: UInt8 = 0xff
+		static let tagNumMask: UInt8 = 0x7f
 		
-		public static let endOfContent: ASN1Tag = 0x00
-		public static let boolean: ASN1Tag = 0x01
-		public static let integer: ASN1Tag = 0x02
-		public static let bitString: ASN1Tag = 0x03
-		public static let octetString: ASN1Tag = 0x04
-		public static let null: ASN1Tag = 0x05
-		public static let objectIdentifier: ASN1Tag = 0x06
-		public static let objectDescriptor: ASN1Tag = 0x07
-		public static let external: ASN1Tag = 0x08
-		public static let read: ASN1Tag = 0x09
-		public static let enumerated: ASN1Tag = 0x0A
-		public static let embeddedPdv: ASN1Tag = 0x0B
-		public static let utf8String: ASN1Tag = 0x0C
-		public static let relativeOid: ASN1Tag = 0x0D
-		public static let sequence: ASN1Tag = 0x10
-		public static let set: ASN1Tag = 0x11
-		public static let numericString: ASN1Tag = 0x12
-		public static let printableString: ASN1Tag = 0x13
-		public static let t61String: ASN1Tag = 0x14
-		public static let videotexString: ASN1Tag = 0x15
-		public static let ia5String: ASN1Tag = 0x16
-		public static let utcTime: ASN1Tag = 0x17
-		public static let generalizedTime: ASN1Tag = 0x18
-		public static let graphicString: ASN1Tag = 0x19
-		public static let visibleString: ASN1Tag = 0x1A
-		public static let generalString: ASN1Tag = 0x1B
-		public static let universalString: ASN1Tag = 0x1C
-		public static let characterString: ASN1Tag = 0x1D
-		public static let bmpString: ASN1Tag = 0x1E
-		public static let highTag: ASN1Tag = 0x1f
+		static let endOfContent: ASN1Tag = 0x00
+		static let boolean: ASN1Tag = 0x01
+		static let integer: ASN1Tag = 0x02
+		static let bitString: ASN1Tag = 0x03
+		static let octetString: ASN1Tag = 0x04
+		static let null: ASN1Tag = 0x05
+		static let objectIdentifier: ASN1Tag = 0x06
+		static let objectDescriptor: ASN1Tag = 0x07
+		static let external: ASN1Tag = 0x08
+		static let read: ASN1Tag = 0x09
+		static let enumerated: ASN1Tag = 0x0A
+		static let embeddedPdv: ASN1Tag = 0x0B
+		static let utf8String: ASN1Tag = 0x0C
+		static let relativeOid: ASN1Tag = 0x0D
+		static let sequence: ASN1Tag = 0x10
+		static let set: ASN1Tag = 0x11
+		static let numericString: ASN1Tag = 0x12
+		static let printableString: ASN1Tag = 0x13
+		static let t61String: ASN1Tag = 0x14
+		static let videotexString: ASN1Tag = 0x15
+		static let ia5String: ASN1Tag = 0x16
+		static let utcTime: ASN1Tag = 0x17
+		static let generalizedTime: ASN1Tag = 0x18
+		static let graphicString: ASN1Tag = 0x19
+		static let visibleString: ASN1Tag = 0x1A
+		static let generalString: ASN1Tag = 0x1B
+		static let universalString: ASN1Tag = 0x1C
+		static let characterString: ASN1Tag = 0x1D
+		static let bmpString: ASN1Tag = 0x1E
+		static let highTag: ASN1Tag = 0x1f
 			
-		public init()
+		init()
 		{
 			assertionFailure("You can't construct this struct")
 		}
 		
-		public static func custom(raw: UInt8) -> ASN1Tag
+		static func custom(raw: UInt8) -> ASN1Tag
 		{
 			return raw
 		}
 	}
 	
-	public enum Method: UInt8
+	enum Method: UInt8
 	{
 		case primitive = 0x00
 		case constructed = 0x01
 	}
 	
-	public enum Class: UInt8, RawRepresentable
+	enum Class: UInt8, RawRepresentable
 	{
 		case universal = 0x00 //0
 		case application = 0x01 //1

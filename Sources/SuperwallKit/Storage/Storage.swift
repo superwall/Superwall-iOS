@@ -73,12 +73,12 @@ class Storage {
   /// The disk cache.
   private let cache: Cache
 
-  private unowned let factory: DeviceHelperFactory & HasPurchaseControllerFactory
+  private unowned let factory: DeviceHelperFactory & HasExternalPurchaseControllerFactory
 
   // MARK: - Configuration
 
   init(
-    factory: DeviceHelperFactory & HasPurchaseControllerFactory,
+    factory: DeviceHelperFactory & HasExternalPurchaseControllerFactory,
     cache: Cache = Cache(),
     coreDataManager: CoreDataManager = CoreDataManager()
   ) {
@@ -172,13 +172,13 @@ class Storage {
       return
     }
 
-    let hasPurchaseController = factory.makeHasPurchaseController()
+    let hasExternalPurchaseController = factory.makeHasExternalPurchaseController()
     let deviceInfo = factory.makeDeviceInfo()
 
     Task {
       let event = InternalSuperwallEvent.AppInstall(
         appInstalledAtString: deviceInfo.appInstalledAtString,
-        hasPurchaseController: hasPurchaseController
+        hasExternalPurchaseController: hasExternalPurchaseController
       )
       _ = await trackEvent(event)
     }

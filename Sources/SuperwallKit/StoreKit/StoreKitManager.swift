@@ -1,13 +1,18 @@
 import Foundation
+import StoreKit
 import Combine
 
 actor StoreKitManager {
-  /// Coordinates: The purchasing, restoring and retrieving of products; the checking
-  /// of transactions; and the determining of the user's subscription status.
-  lazy var coordinator = factory.makeStoreKitCoordinator()
-  private unowned let factory: StoreKitCoordinatorFactory
-  private lazy var receiptManager = ReceiptManager(delegate: self)
+  /// Handler purchasing and restoring.
+  let purchaseController: InternalPurchaseController
 
+  /// Retrieves products from storekit.
+  private let productsFetcher: ProductsFetcherSK1
+
+  private lazy var receiptManager = ReceiptManager(
+    delegate: productsFetcher,
+    purchaseController: purchaseController
+  )
   private(set) var productsById: [String: StoreProduct] = [:]
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
@@ -15,8 +20,13 @@ actor StoreKitManager {
     let products: [Product]
   }
 
-  init(factory: StoreKitCoordinatorFactory) {
-    self.factory = factory
+  init(
+    purchaseController: InternalPurchaseController,
+    productsFetcher: ProductsFetcherSK1 = ProductsFetcherSK1()
+  ) {
+    self.productsFetcher = productsFetcher
+    self.purchaseController = purchaseController
+    purchaseController.delegate = self
   }
 
   func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
@@ -52,7 +62,7 @@ actor StoreKitManager {
       responseProducts: responseProducts
     )
 
-    let products = try await products(
+    let products = try await productsFetcher.products(
       identifiers: processingResult.productIdsToLoad,
       forPaywall: paywallName
     )
@@ -122,81 +132,12 @@ actor StoreKitManager {
 }
 
 // MARK: - Restoration
-extension StoreKitManager {
-  @MainActor
-  func tryToRestore(_ paywallViewController: PaywallViewController) async {
-    Logger.debug(
-      logLevel: .debug,
-      scope: .paywallTransactions,
-      message: "Attempting Restore"
-    )
-
-    paywallViewController.loadingState = .loadingPurchase
-
-    let restorationResult = await coordinator.txnRestorer.restorePurchases()
-
-    await processRestoration(
-      restorationResult: restorationResult,
-      paywallViewController: paywallViewController
-    )
-  }
-
-  /// After restoring, it checks to see whether the user is actually subscribed or not.
-  ///
-  /// This is accessed by both the transaction manager and the restoration manager.
-  @MainActor
-  func processRestoration(
-    restorationResult: RestorationResult,
-    paywallViewController: PaywallViewController
-  ) async {
-    let hasRestored = restorationResult == .restored
-
-    if !Superwall.shared.dependencyContainer.delegateAdapter.hasPurchaseController {
-      await refreshReceipt()
-      if hasRestored {
-        await loadPurchasedProducts()
-      }
-    }
-
-    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
-
-    if hasRestored && isUserSubscribed {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .paywallTransactions,
-        message: "Transactions Restored"
-      )
-      transactionWasRestored(paywallViewController: paywallViewController)
-    } else {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .paywallTransactions,
-        message: "Transactions Failed to Restore"
-      )
-
-      paywallViewController.presentAlert(
-        title: Superwall.shared.options.paywalls.restoreFailed.title,
-        message: Superwall.shared.options.paywalls.restoreFailed.message,
-        closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle
-      )
-    }
-  }
-
-  @MainActor
-  private func transactionWasRestored(paywallViewController: PaywallViewController) {
-    let paywallInfo = paywallViewController.info
-    Task.detached(priority: .utility) {
-      let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .restore,
-        paywallInfo: paywallInfo,
-        product: nil,
-        model: nil
-      )
-      await Superwall.shared.track(trackedEvent)
-    }
-
-    if Superwall.shared.options.paywalls.automaticallyDismiss {
-      Superwall.shared.dismiss(paywallViewController, result: .restored)
+extension StoreKitManager: RestoreDelegate {
+  func didRestore(result: RestorationResult) async {
+    let hasRestored = result == .restored
+    await refreshReceipt()
+    if hasRestored {
+      await loadPurchasedProducts()
     }
   }
 }
@@ -233,18 +174,5 @@ extension StoreKitManager {
   /// the outcome will default to whether or not the user has already purchased that product.
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool {
     return await receiptManager.isFreeTrialAvailable(for: product)
-  }
-}
-
-// MARK: - ProductsFetcher
-extension StoreKitManager: ProductsFetcher {
-  nonisolated func products(
-    identifiers: Set<String>,
-    forPaywall paywallName: String?
-  ) async throws -> Set<StoreProduct> {
-    return try await coordinator.productFetcher.products(
-      identifiers: identifiers,
-      forPaywall: paywallName
-    )
   }
 }

@@ -7,15 +7,15 @@
 
 import Foundation
 
-public typealias ASN1Codable = ASN1Encodable & ASN1Decodable
+typealias ASN1Codable = ASN1Encodable & ASN1Decodable
 
-public protocol ASN1Encodable: Encodable { }
-public protocol ASN1Decodable: Decodable
+protocol ASN1Encodable: Encodable { }
+protocol ASN1Decodable: Decodable
 {
 	static var template: ASN1Template { get }
 }
 
-public protocol ASN1CodingKey: CodingKey
+protocol ASN1CodingKey: CodingKey
 {
 	var template: ASN1Template { get }
 	

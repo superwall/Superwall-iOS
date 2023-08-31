@@ -16,7 +16,7 @@ extension Superwall {
   /// - Parameters:
   ///   - request: The presentation request.
   ///   - dependencyContainer: Used for testing only.
-  func waitToPresent(
+  func waitForSubsStatusAndConfig(
     _ request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
     dependencyContainer: DependencyContainer? = nil

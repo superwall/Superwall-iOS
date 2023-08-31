@@ -2,6 +2,19 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.3.3
+
+### Fixes
+
+- Fixes issue where verification was happening after the finishing of transactions when not using a `PurchaseController`.
+
+## 3.3.2
+
+### Fixes
+
+- Fixes issue where a rule added with `paywall_decline` would result in the feature block being called too early.
+- Fixes issue where paywall assignments may not have been cleared when resetting.
+
 ## 3.3.1
 
 ### Enhancements
@@ -20,7 +33,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds the ability to add a paywall exit survey. Surveys are configured via the dashboard and added to paywalls. When added to a paywall, it will attempt to display when the user taps the close button. If the paywall has the `modalPresentationStyle` of `pageSheet`, `formSheet`, or `popover`, the survey will also attempt to display when the user tries to drag to dismiss the paywall. The probability of the survey showing is determined by the survey's configuration in the dashboard. A user will only ever see the survey once unless you reset responses via the dashboard. The survey will always show on exit of the paywall in the debugger.
-- Adds the ability to add `survey_close` as a trigger and use the selected option title in rules.
+- Adds the ability to add `survey_response` as a trigger and use the selected option title in rules.
 - Adds new `PaywallCloseReason` `.manualClose`.
 
 ### Fixes

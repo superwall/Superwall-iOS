@@ -53,8 +53,7 @@ class AssignmentLogicTests: XCTestCase {
     )
     let outcome = await assignmentLogic.evaluateRules(
       forEvent: eventData,
-      triggers: triggers,
-      isPreemptive: false
+      triggers: triggers
     )
 
     // MARK: Then
@@ -117,8 +116,7 @@ class AssignmentLogicTests: XCTestCase {
     // MARK: When
     let outcome = await assignmentLogic.evaluateRules(
       forEvent: eventData,
-      triggers: triggers,
-      isPreemptive: false
+      triggers: triggers
     )
 
     // MARK: Then
@@ -179,8 +177,7 @@ class AssignmentLogicTests: XCTestCase {
     // MARK: When
     let outcome = await assignmentLogic.evaluateRules(
       forEvent: eventData,
-      triggers: triggers,
-      isPreemptive: false
+      triggers: triggers
     )
 
     // MARK: Then
@@ -243,8 +240,7 @@ class AssignmentLogicTests: XCTestCase {
     // MARK: When
     let outcome = await assignmentLogic.evaluateRules(
       forEvent: eventData,
-      triggers: triggers,
-      isPreemptive: false
+      triggers: triggers
     )
 
     // MARK: Then
@@ -304,8 +300,7 @@ class AssignmentLogicTests: XCTestCase {
     // MARK: When
     let outcome = await assignmentLogic.evaluateRules(
       forEvent: eventData,
-      triggers: triggers,
-      isPreemptive: false
+      triggers: triggers
     )
 
     // MARK: Then
@@ -360,8 +355,7 @@ class AssignmentLogicTests: XCTestCase {
     // MARK: When
     let outcome = await assignmentLogic.evaluateRules(
       forEvent: eventData,
-      triggers: triggers,
-      isPreemptive: false
+      triggers: triggers
     )
 
     // MARK: Then

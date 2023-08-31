@@ -32,7 +32,7 @@ final class TrackingTests: XCTestCase {
 
   func test_appInstall() async {
     let appInstalledAtString = "now"
-    let result = await Superwall.shared.track(InternalSuperwallEvent.AppInstall(appInstalledAtString: appInstalledAtString, hasPurchaseController: true))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.AppInstall(appInstalledAtString: appInstalledAtString, hasExternalPurchaseController: true))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertTrue(result.parameters.eventParams["$using_purchase_controller"] as! Bool)
@@ -96,7 +96,6 @@ final class TrackingTests: XCTestCase {
 
   func test_surveyResponse() async {
     // Given
-    let eventName = "TestName"
     let survey = Survey.stub()
     let paywallInfo = PaywallInfo.stub()
     let event = InternalSuperwallEvent.SurveyResponse(
@@ -1242,8 +1241,7 @@ final class TrackingTests: XCTestCase {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
-    let dependencyContainer = DependencyContainer()
-    let skTransaction = MockSKPaymentTransaction(state: .purchased)
+
     let result = await Superwall.shared.track(InternalSuperwallEvent.SubscriptionStart(paywallInfo: paywallInfo, product: product))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
@@ -1318,8 +1316,6 @@ final class TrackingTests: XCTestCase {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
-    let dependencyContainer = DependencyContainer()
-    let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let result = await Superwall.shared.track(InternalSuperwallEvent.FreeTrialStart(paywallInfo: paywallInfo, product: product))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
@@ -1394,8 +1390,6 @@ final class TrackingTests: XCTestCase {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
-    let dependencyContainer = DependencyContainer()
-    let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let result = await Superwall.shared.track(InternalSuperwallEvent.NonRecurringProductPurchase(paywallInfo: paywallInfo, product: product))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
