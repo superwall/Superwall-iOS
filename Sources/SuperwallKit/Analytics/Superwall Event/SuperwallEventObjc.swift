@@ -125,6 +125,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the response to a paywall survey as been recorded.
   case surveyResponse
 
+  case touchesBegan
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -201,6 +203,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "paywallPresentationRequest"
     case .surveyResponse:
       return "survey_response"
+    case .touchesBegan:
+      return "touches_began"
     }
   }
 }
