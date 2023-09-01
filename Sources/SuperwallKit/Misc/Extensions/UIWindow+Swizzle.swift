@@ -9,8 +9,8 @@ import UIKit
 
 extension UIWindow {
   static var hasTouched = false
+  private static var swizzleSemaphore = DispatchSemaphore(value: 1)
 
-  // TODO: What if we have multiple windows?? Need to make sure swizzledSendEvnet is only called once.
   /// Intercepts the very first touch on the UIWindow
   static func swizzleSendEvent() {
     let originalSelector = #selector(UIWindow.sendEvent(_:))
@@ -27,6 +27,12 @@ extension UIWindow {
   }
 
   @objc private func swizzledSendEvent(_ event: UIEvent) {
+    // TODO: This will block the main thread if multiple windows
+    Self.swizzleSemaphore.wait()
+    defer {
+      Self.swizzleSemaphore.signal()
+    }
+
     if event.type == .touches {
       // Handle touch events
       guard let _ = event.allTouches?.filter({ $0.phase == .began }) else {
