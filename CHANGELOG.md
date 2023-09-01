@@ -6,7 +6,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds `sdk_version`, `sdk_version_padded`, and `app_build_number` to the device object for use in rules. `sdk_version` is the version of the sdk, e.g. `3.3.3`. `sdk_version_padded` is the sdk version padded with zeros for use with string comparison. For example `003.003.003`. The `app_build_number` is the build number of your app.
 - Adds `sdk_version`, `sdk_version_padded`, `app_build_string`, and `app_build_string_number` to the device object for use in rules. `sdk_version` is the version of the sdk, e.g. `3.3.3`. `sdk_version_padded` is the sdk version padded with zeros for use with string comparison. For example `003.003.003`. `app_build_string` is the build of your app and `app_build_string_number` is the build of your app casted as an Int.
 - When you experience `no_rule_match`, the `TriggerFire` event params will specify which part of the rules didn't match in the format `"unmatched_rule_<id>": "<outcome>"`. Where `outcome` will either be `OCCURRENCE`, referring to the limit applied to a rule, or `EXPRESSION`. The `id` is the experiment id.
 
