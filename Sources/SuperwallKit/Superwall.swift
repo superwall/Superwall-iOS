@@ -465,29 +465,11 @@ extension Superwall: PaywallViewControllerEventDelegate {
 
     switch paywallEvent {
     case .closed:
-      let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: paywallViewController.info)
-
-      let presentationResult = await internallyGetPresentationResult(
-        forEvent: trackedEvent,
-        requestType: .getImplicitPresentationResult
+      dismiss(
+        paywallViewController,
+        result: .declined,
+        closeReason: .manualClose
       )
-      let paywallPresenterEvent = paywallViewController.info.presentedByEventWithName
-      let presentedByPaywallDecline = paywallPresenterEvent == SuperwallEventObjc.paywallDecline.description
-
-      if case .paywall = presentationResult,
-        !presentedByPaywallDecline {
-        // If a paywall_decline trigger is active and the current paywall wasn't presented
-        // by paywall_decline, it lands here so as not to dismiss the paywall.
-        // track() will do that before presenting the next paywall.
-      } else {
-        dismiss(
-          paywallViewController,
-          result: .declined,
-          closeReason: .manualClose
-        )
-      }
-
-      await Superwall.shared.track(trackedEvent)
     case .initiatePurchase(let productId):
       await dependencyContainer.transactionManager.purchase(
         productId,

@@ -771,7 +771,27 @@ extension PaywallViewController {
     let isDeclined = paywallResult == .declined
     let isManualClose = closeReason == .manualClose
 
-    func dismissView() {
+    func dismissView() async {
+      if isDeclined, isManualClose {
+        let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: info)
+
+        let presentationResult = await Superwall.shared.internallyGetPresentationResult(
+          forEvent: trackedEvent,
+          requestType: .getImplicitPresentationResult
+        )
+        let paywallPresenterEvent = info.presentedByEventWithName
+        let presentedByPaywallDecline = paywallPresenterEvent == SuperwallEventObjc.paywallDecline.description
+
+        await Superwall.shared.track(trackedEvent)
+
+        if case .paywall = presentationResult,
+          !presentedByPaywallDecline {
+          // If a paywall_decline trigger is active and the current paywall wasn't presented
+          // by paywall_decline, it lands here so as not to dismiss the paywall.
+          // track() will do that before presenting the next paywall.
+          return
+        }
+      }
       if let delegate = delegate {
         didCallDelegate = true
         delegate.didFinish(
@@ -780,7 +800,7 @@ extension PaywallViewController {
           shouldDismiss: true
         )
       } else {
-        dismiss(animated: presentationIsAnimated)
+        await dismiss(animated: presentationIsAnimated)
       }
     }
 
@@ -795,7 +815,9 @@ extension PaywallViewController {
       factory: factory
     ) { [weak self] result in
       self?.surveyPresentationResult = result
-      dismissView()
+      Task {
+        await dismissView()
+      }
     }
   }
 
