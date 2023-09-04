@@ -76,6 +76,7 @@ class ConfigManager {
 
       triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
       choosePaywallVariants(from: config.triggers)
+      await checkForTouchesBeganTrigger(in: config.triggers)
       configState.send(.retrieved(config))
 
       Task { await preloadPaywalls() }
@@ -99,6 +100,14 @@ class ConfigManager {
     unconfirmedAssignments.removeAll()
     choosePaywallVariants(from: config.triggers)
     Task { await preloadPaywalls() }
+  }
+
+  /// Swizzles the UIWindow's `sendEvent` to intercept the first `began` touch event if
+  /// config's triggers contain `touches_began`.
+  private func checkForTouchesBeganTrigger(in triggers: Set<Trigger>) async {
+    if triggers.contains(where: { $0.eventName == SuperwallEvent.touchesBegan.description }) {
+      await UIWindow.swizzleSendEvent()
+    }
   }
 
   // MARK: - Assignments

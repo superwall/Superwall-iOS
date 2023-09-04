@@ -192,8 +192,6 @@ public final class Superwall: NSObject, ObservableObject {
 
     subscriptionStatus = dependencyContainer.storage.get(ActiveSubscriptionStatus.self) ?? .unknown
 
-    UIWindow.swizzleSendEvent()
-
     addListeners()
 
     // This task runs on a background thread, even if called from a main thread.
