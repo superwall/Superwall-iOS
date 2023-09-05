@@ -138,6 +138,8 @@ public enum SuperwallEvent {
     reason: PaywallPresentationRequestStatusReason?
   )
 
+  case touchesBegan
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -147,7 +149,8 @@ public enum SuperwallEvent {
       .transactionFail,
       .paywallDecline,
       .transactionAbandon,
-      .surveyResponse:
+      .surveyResponse,
+      .touchesBegan:
       return true
     default:
       return false
@@ -247,6 +250,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallPresentationRequest)
     case .surveyResponse:
       return .init(objcEvent: .surveyResponse)
+    case .touchesBegan:
+      return .init(objcEvent: .touchesBegan)
     }
   }
 }
