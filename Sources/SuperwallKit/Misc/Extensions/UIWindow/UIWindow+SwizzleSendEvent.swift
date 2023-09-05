@@ -28,9 +28,12 @@ extension UIWindow {
   @objc private func swizzledSendEvent(_ event: UIEvent) {
     if event.type == .touches {
       // Check for a began touch event.
-      guard event.allTouches?.filter({ $0.phase == .began }) != nil else {
-        // If there isn't a touches began event, forward touch to original
-        // `sendEvent` function.
+      guard
+        let allTouches = event.allTouches,
+        !allTouches.filter({ $0.phase == .began }).isEmpty
+      else {
+        // If there aren't any touches or there isn't a touches began event,
+        // forward touch to original `sendEvent` function.
         swizzledSendEvent(event)
         return
       }
