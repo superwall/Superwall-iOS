@@ -29,7 +29,10 @@ enum NotificationScheduler {
     }
   }
 
-  static func scheduleNotifications(_ notifications: [LocalNotification]) async {
+  static func scheduleNotifications(
+    _ notifications: [LocalNotification],
+    factory: DeviceHelperFactory
+  ) async {
     if notifications.isEmpty {
       return
     }
@@ -40,21 +43,31 @@ enum NotificationScheduler {
     await withTaskGroup(of: Void.self) { taskGroup in
       for notification in notifications {
         taskGroup.addTask {
-          await scheduleNotification(notification)
+          await scheduleNotification(notification, factory: factory)
         }
       }
     }
   }
 
-  private static func scheduleNotification(_ notification: LocalNotification) async {
+  private static func scheduleNotification(
+    _ notification: LocalNotification,
+    factory: DeviceHelperFactory
+  ) async {
     let content = UNMutableNotificationContent()
     content.title = notification.title
     content.subtitle = notification.subtitle ?? ""
     content.body = notification.body
 
+    var delay = notification.delay / 1000
+
+    let isSandbox = factory.makeIsSandbox()
+    if isSandbox {
+      delay = delay / 24 / 60
+    }
+
     // Show this notification X seconds from now.
     let trigger = UNTimeIntervalNotificationTrigger(
-      timeInterval: notification.delay / 1000,
+      timeInterval: delay,
       repeats: false
     )
 

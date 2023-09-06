@@ -23,7 +23,7 @@ public final class LocalNotification: NSObject, Decodable {
   /// The body text of the notification.
   public let body: String
 
-  /// The delay to the notification in minutes.
+  /// The delay to the notification in milliseconds.
   public let delay: Milliseconds
 }
 
