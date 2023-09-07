@@ -145,10 +145,10 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       let isPaywallPresented = Superwall.shared.isPaywallPresented
       let paywallViewController = Superwall.shared.paywallViewController
       for transaction in transactions {
+        storeIfPurchased(transaction)
         await checkForTimeout(of: transaction, in: paywallViewController)
         await updatePurchaseCompletionBlock(for: transaction)
         await checkForRestoration(transaction, isPaywallPresented: isPaywallPresented)
-        storeIfPurchased(transaction)
         Task(priority: .background) {
           await record(transaction)
         }
