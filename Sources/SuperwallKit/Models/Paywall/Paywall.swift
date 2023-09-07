@@ -52,6 +52,9 @@ struct Paywall: Decodable {
   /// A survey to potentially show on close of the paywall.
   var survey: Survey?
 
+  /// An enum whose cases indicate when a survey should show.
+  var surveyShowCondition: SurveyShowCondition?
+
   /// The products associated with the paywall.
   var products: [Product] {
     didSet {
@@ -120,6 +123,7 @@ struct Paywall: Decodable {
     case localNotifications
     case computedPropertyRequests = "computedProperties"
     case survey
+    case surveyShowCondition
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -142,6 +146,7 @@ struct Paywall: Decodable {
     url = try values.decode(URL.self, forKey: .url)
     htmlSubstitutions = try values.decode(String.self, forKey: .htmlSubstitutions)
     survey = try values.decodeIfPresent(Survey.self, forKey: .survey)
+    surveyShowCondition = try values.decodeIfPresent(SurveyShowCondition.self, forKey: .surveyShowCondition)
 
     let presentationStyle = try values.decode(PaywallPresentationStyle.self, forKey: .presentationStyle)
     let presentationCondition = try values.decode(PresentationCondition.self, forKey: .presentationCondition)
@@ -285,7 +290,8 @@ struct Paywall: Decodable {
       closeReason: closeReason,
       localNotifications: localNotifications,
       computedPropertyRequests: computedPropertyRequests,
-      survey: survey
+      survey: survey,
+      surveyShowCondition: surveyShowCondition
     )
   }
 

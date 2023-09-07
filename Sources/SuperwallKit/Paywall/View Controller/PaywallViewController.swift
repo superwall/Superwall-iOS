@@ -4,7 +4,7 @@
 //
 //  Created by brian on 7/21/21.
 //
-// swiftlint:disable file_length type_body_length
+// swiftlint:disable file_length type_body_length function_body_length
 
 import WebKit
 import UIKit
@@ -769,6 +769,13 @@ extension PaywallViewController {
     paywall.closeReason = closeReason
 
     let isDeclined = paywallResult == .declined
+    let isPurchased: Bool
+    switch paywallResult {
+    case .purchased:
+      isPurchased = true
+    default:
+      isPurchased = false
+    }
     let isManualClose = closeReason == .manualClose
 
     func dismissView() async {
@@ -804,11 +811,21 @@ extension PaywallViewController {
       }
     }
 
+    let shouldShowSurvey: Bool
+    switch paywall.surveyShowCondition {
+    case .onManualClose:
+      shouldShowSurvey = isDeclined && isManualClose
+    case .onPurchase:
+      shouldShowSurvey = isPurchased
+    default:
+      shouldShowSurvey = false
+    }
+
     SurveyManager.presentSurveyIfAvailable(
       paywall.survey,
       using: self,
       loadingState: loadingState,
-      paywallIsManuallyDeclined: isDeclined && isManualClose,
+      shouldShow: shouldShowSurvey,
       isDebuggerLaunched: request?.flags.isDebuggerLaunched == true,
       paywallInfo: info,
       storage: storage,

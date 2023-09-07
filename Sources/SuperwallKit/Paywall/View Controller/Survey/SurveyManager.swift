@@ -15,7 +15,7 @@ final class SurveyManager {
     _ survey: Survey?,
     using presenter: PaywallViewController,
     loadingState: PaywallLoadingState,
-    paywallIsManuallyDeclined: Bool,
+    shouldShow: Bool,
     isDebuggerLaunched: Bool,
     paywallInfo: PaywallInfo,
     storage: Storage,
@@ -26,11 +26,13 @@ final class SurveyManager {
       completion(.noShow)
       return
     }
-    guard loadingState == .ready else {
+    guard
+      loadingState == .ready || loadingState == .loadingPurchase
+    else {
       completion(.noShow)
       return
     }
-    guard paywallIsManuallyDeclined else {
+    guard shouldShow else {
       completion(.noShow)
       return
     }

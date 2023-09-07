@@ -103,9 +103,14 @@ public final class PaywallInfo: NSObject {
   /// The local notifications associated with the paywall.
   public let localNotifications: [LocalNotification]
 
+  /// An array of requests to compute a device property associated with an event at runtime.
   public let computedPropertyRequests: [ComputedPropertyRequest]
 
+  /// A survey attached to a paywall.
   public let survey: Survey?
+
+  /// An enum whose cases indicate when a survey should show.
+  public let surveyShowCondition: SurveyShowCondition?
 
   private unowned let factory: TriggerSessionManagerFactory
 
@@ -134,7 +139,8 @@ public final class PaywallInfo: NSObject {
     closeReason: PaywallCloseReason = .none,
     localNotifications: [LocalNotification] = [],
     computedPropertyRequests: [ComputedPropertyRequest] = [],
-    survey: Survey?
+    survey: Survey?,
+    surveyShowCondition: SurveyShowCondition?
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -153,6 +159,7 @@ public final class PaywallInfo: NSObject {
     self.localNotifications = localNotifications
     self.computedPropertyRequests = computedPropertyRequests
     self.survey = survey
+    self.surveyShowCondition = surveyShowCondition
 
     if eventData != nil {
       self.presentedBy = "event"
@@ -315,7 +322,8 @@ extension PaywallInfo: Stubbable {
       isFreeTrialAvailable: false,
       presentationSourceType: "register",
       factory: dependencyContainer,
-      survey: nil
+      survey: nil,
+      surveyShowCondition: nil
     )
   }
 }

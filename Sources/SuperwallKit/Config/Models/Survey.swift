@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// A survey attached to a paywall.
 @objc(SWKSurvey)
 @objcMembers
 final public class Survey: NSObject, Decodable {

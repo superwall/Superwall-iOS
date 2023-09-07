@@ -39,7 +39,7 @@ final class SurveyManagerTests: XCTestCase {
       survey,
       using: paywallVc,
       loadingState: .ready,
-      paywallIsManuallyDeclined: false,
+      shouldShow: false,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
@@ -79,7 +79,7 @@ final class SurveyManagerTests: XCTestCase {
       nil,
       using: paywallVc,
       loadingState: .ready,
-      paywallIsManuallyDeclined: true,
+      shouldShow: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
@@ -94,6 +94,7 @@ final class SurveyManagerTests: XCTestCase {
 
   func test_presentSurveyIfAvailable_loadingState_loadingPurchase() {
     let expectation = expectation(description: "called completion block")
+    expectation.isInverted = true
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
@@ -119,17 +120,17 @@ final class SurveyManagerTests: XCTestCase {
       .stub(),
       using: paywallVc,
       loadingState: .loadingPurchase,
-      paywallIsManuallyDeclined: true,
+      shouldShow: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
       factory: dependencyContainer,
       completion: { result in
-        XCTAssertEqual(result, .noShow)
+        XCTAssertEqual(result, .show)
         expectation.fulfill()
       }
     )
-    wait(for: [expectation])
+    wait(for: [expectation], timeout: 0.2)
   }
 
   func test_presentSurveyIfAvailable_loadingState_loadingURL() {
@@ -159,7 +160,7 @@ final class SurveyManagerTests: XCTestCase {
       .stub(),
       using: paywallVc,
       loadingState: .loadingURL,
-      paywallIsManuallyDeclined: true,
+      shouldShow: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
@@ -199,7 +200,7 @@ final class SurveyManagerTests: XCTestCase {
       .stub(),
       using: paywallVc,
       loadingState: .manualLoading,
-      paywallIsManuallyDeclined: true,
+      shouldShow: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
@@ -239,7 +240,7 @@ final class SurveyManagerTests: XCTestCase {
       .stub(),
       using: paywallVc,
       loadingState: .unknown,
-      paywallIsManuallyDeclined: true,
+      shouldShow: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: StorageMock(),
@@ -283,7 +284,7 @@ final class SurveyManagerTests: XCTestCase {
       survey,
       using: paywallVc,
       loadingState: .ready,
-      paywallIsManuallyDeclined: true,
+      shouldShow: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: storageMock,
@@ -330,7 +331,7 @@ final class SurveyManagerTests: XCTestCase {
       survey,
       using: paywallVc,
       loadingState: .ready,
-      paywallIsManuallyDeclined: true,
+      shouldShow: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: storageMock,
@@ -376,7 +377,7 @@ final class SurveyManagerTests: XCTestCase {
       survey,
       using: paywallVc,
       loadingState: .ready,
-      paywallIsManuallyDeclined: true,
+      shouldShow: true,
       isDebuggerLaunched: true,
       paywallInfo: .stub(),
       storage: storageMock,
@@ -424,7 +425,7 @@ final class SurveyManagerTests: XCTestCase {
       survey,
       using: paywallVc,
       loadingState: .ready,
-      paywallIsManuallyDeclined: true,
+      shouldShow: true,
       isDebuggerLaunched: false,
       paywallInfo: .stub(),
       storage: storageMock,
