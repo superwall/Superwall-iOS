@@ -8,6 +8,7 @@
 import UIKit
 import Combine
 import SystemConfiguration
+import StoreKit
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
@@ -131,4 +132,10 @@ protocol OptionsFactory: AnyObject {
 
 protocol TriggerFactory: AnyObject {
   func makeTriggers() -> Set<String>
+}
+
+protocol PurchasedTransactionsFactory {
+  func makeInternallyPurchasedTransaction() async -> SKPaymentTransaction?
+
+  func makeLastPurchasedTransaction(for productId: String) -> SKPaymentTransaction?
 }

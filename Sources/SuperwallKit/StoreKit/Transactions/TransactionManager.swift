@@ -18,6 +18,7 @@ final class TransactionManager {
     & TriggerFactory
     & StoreTransactionFactory
     & DeviceHelperFactory
+    & PurchasedTransactionsFactory
   private let factory: Factories
 
   /// The paywall view controller that the last product was purchased from.
@@ -206,19 +207,28 @@ final class TransactionManager {
     }
   }
 
+  /// Gets the latest transaction of a specified product ID.
   private func getLatestTransaction(of productId: String) async -> StoreTransaction? {
+    // If on iOS 15+, try and get latest transaction using SK2.
     if #available(iOS 15.0, *) {
       let verificationResult = await Transaction.latest(for: productId)
       if let transaction = verificationResult.map({ $0.unsafePayloadValue }) {
         return await factory.makeStoreTransaction(from: transaction)
       }
-      return nil
-    } else {
-      if let transaction = await storeKitManager.purchaseController.productPurchaser.purchasing.lastTransaction {
-        return await factory.makeStoreTransaction(from: transaction)
-      }
-      return nil
     }
+
+    // If no transaction retrieved, try to get last transaction if the SDK handled
+    // purchasing.
+    if let transaction = await factory.makeInternallyPurchasedTransaction() {
+      return await factory.makeStoreTransaction(from: transaction)
+    }
+
+    // Otherwise filter last purchased transaction for product on the payment queue.
+    if let transaction = factory.makeLastPurchasedTransaction(for: productId) {
+      return await factory.makeStoreTransaction(from: transaction)
+    }
+
+    return nil
   }
 
   /// Track the cancelled

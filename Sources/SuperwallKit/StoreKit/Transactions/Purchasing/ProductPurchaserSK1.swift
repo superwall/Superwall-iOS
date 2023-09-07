@@ -38,6 +38,7 @@ final class ProductPurchaserSK1: NSObject {
     }
   }
   let purchasing = Purchasing()
+  var purchasedTransactions: [String: SKPaymentTransaction] = [:]
 
   // MARK: Restoration
   final class Restoration {
@@ -147,7 +148,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         await checkForTimeout(of: transaction, in: paywallViewController)
         await updatePurchaseCompletionBlock(for: transaction)
         await checkForRestoration(transaction, isPaywallPresented: isPaywallPresented)
-
+        storeIfPurchased(transaction)
         Task(priority: .background) {
           await record(transaction)
         }
@@ -158,6 +159,15 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   }
 
   // MARK: - Private API
+
+  /// Stores the transaction if purchased. This is used as a fallback if we can't
+  /// retrieve the transaction using SK2.
+  private func storeIfPurchased(_ transaction: SKPaymentTransaction) {
+    guard case .purchased = transaction.transactionState else {
+      return
+    }
+    purchasedTransactions[transaction.payment.productIdentifier] = transaction
+  }
 
   private func checkForTimeout(
     of transaction: SKPaymentTransaction,
