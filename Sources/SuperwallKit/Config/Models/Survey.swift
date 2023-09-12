@@ -39,7 +39,7 @@ final public class Survey: NSObject, Decodable {
   public let includeOtherOption: Bool
 
   /// Whether a close button should appear to allow users to skip the survey.
-  public let includeCloseButton: Bool
+  public let includeCloseOption: Bool
 
   /// Rolls dice to see if survey should present or is in holdout.
   ///
@@ -91,7 +91,7 @@ final public class Survey: NSObject, Decodable {
     options: [SurveyOption],
     presentationProbability: Double,
     includeOtherOption: Bool,
-    includeCloseButton: Bool
+    includeCloseOption: Bool,
     surveyPresentationCondition: SurveyShowCondition
   ) {
     self.id = id
@@ -101,7 +101,7 @@ final public class Survey: NSObject, Decodable {
     self.options = options
     self.presentationProbability = presentationProbability
     self.includeOtherOption = includeOtherOption
-    self.includeCloseButton = includeCloseButton
+    self.includeCloseOption = includeCloseOption
     self.surveyPresentationCondition = surveyPresentationCondition
   }
 }
@@ -117,7 +117,7 @@ extension Survey: Stubbable {
       options: [.stub()],
       presentationProbability: 1,
       includeOtherOption: true,
-      includeCloseButton: true
+      includeCloseOption: true,
       surveyPresentationCondition: .onManualClose
     )
   }

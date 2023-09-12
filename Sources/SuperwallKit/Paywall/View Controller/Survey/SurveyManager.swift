@@ -149,7 +149,7 @@ final class SurveyManager {
       alertController.addAction(otherAction)
     }
 
-    if survey.includeCloseButton {
+    if survey.includeCloseOption {
       let closeButton = UIAlertAction(title: "Close", style: .cancel) { _ in
         Task {
           let event = InternalSuperwallEvent.SurveyClose()

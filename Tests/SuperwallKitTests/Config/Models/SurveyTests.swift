@@ -28,7 +28,7 @@ final class SurveyTests: XCTestCase {
       options: [.stub()],
       presentationProbability: 0,
       includeOtherOption: true,
-      includeCloseButton: true
+      includeCloseOption: true,
       surveyPresentationCondition: .onManualClose
     )
     let isHoldout = survey.shouldAssignHoldout(
@@ -47,7 +47,7 @@ final class SurveyTests: XCTestCase {
       options: [.stub()],
       presentationProbability: 1,
       includeOtherOption: true,
-      includeCloseButton: true
+      includeCloseOption: true,
       surveyPresentationCondition: .onManualClose
     )
     let isHoldout = survey.shouldAssignHoldout(
@@ -66,7 +66,7 @@ final class SurveyTests: XCTestCase {
       options: [.stub()],
       presentationProbability: 0.4,
       includeOtherOption: true,
-      includeCloseButton: true
+      includeCloseOption: true,
       surveyPresentationCondition: .onManualClose
     )
     func random(in: Range<Double>) -> Double {
@@ -96,7 +96,7 @@ final class SurveyTests: XCTestCase {
       options: [.stub()],
       presentationProbability: 0.4,
       includeOtherOption: true,
-      includeCloseButton: true
+      includeCloseOption: true,
       surveyPresentationCondition: .onManualClose
     )
     let existingAssignmentKey = "abc"
@@ -114,7 +114,7 @@ final class SurveyTests: XCTestCase {
       options: [.stub()],
       presentationProbability: 0.4,
       includeOtherOption: true,
-      includeCloseButton: true
+      includeCloseOption: true,
       surveyPresentationCondition: .onManualClose
     )
     let existingAssignmentKey = "abc"
