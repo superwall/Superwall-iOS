@@ -4,7 +4,7 @@
 //
 //  Created by brian on 7/21/21.
 //
-// swiftlint:disable file_length type_body_length function_body_length
+// swiftlint:disable file_length type_body_length
 
 import WebKit
 import UIKit
@@ -671,10 +671,8 @@ extension PaywallViewController {
       return false
     }
 
-    for survey in paywall.surveys {
-      if survey.hasSeenSurvey(storage: storage) {
-        return false
-      }
+    for survey in paywall.surveys where survey.hasSeenSurvey(storage: storage) {
+      return false
     }
     return true
   }

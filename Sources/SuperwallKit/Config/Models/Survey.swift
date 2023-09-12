@@ -29,7 +29,7 @@ final public class Survey: NSObject, Decodable {
   public let options: [SurveyOption]
 
   /// An enum whose cases indicate when the survey should show.
-  public let surveyPresentationCondition: SurveyShowCondition
+  public internal(set) var surveyPresentationCondition: SurveyShowCondition
 
   /// The probability that the survey will present to the user.
   public internal(set) var presentationProbability: Double
