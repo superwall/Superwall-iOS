@@ -12,27 +12,29 @@ final class SurveyManager {
   static private var otherAlertController: UIAlertController?
 
   static func presentSurveyIfAvailable(
-    _ survey: Survey?,
+    _ surveys: [Survey],
+    paywallResult: PaywallResult,
+    paywallCloseReason: PaywallCloseReason,
     using presenter: PaywallViewController,
     loadingState: PaywallLoadingState,
-    shouldShow: Bool,
     isDebuggerLaunched: Bool,
     paywallInfo: PaywallInfo,
     storage: Storage,
     factory: TriggerFactory,
     completion: @escaping (SurveyPresentationResult) -> Void
   ) {
-    guard let survey = survey else {
+    guard let survey = selectSurvey(
+      from: surveys,
+      paywallResult: paywallResult,
+      paywallCloseReason: paywallCloseReason
+    ) else {
       completion(.noShow)
       return
     }
+
     guard
       loadingState == .ready || loadingState == .loadingPurchase
     else {
-      completion(.noShow)
-      return
-    }
-    guard shouldShow else {
       completion(.noShow)
       return
     }
@@ -193,6 +195,40 @@ final class SurveyManager {
       }
     }
     otherAlertController = nil
+  }
+
+  private static func selectSurvey(
+    from surveys: [Survey],
+    paywallResult: PaywallResult,
+    paywallCloseReason: PaywallCloseReason
+  ) -> Survey? {
+    let isPurchased: Bool
+    switch paywallResult {
+    case .purchased:
+      isPurchased = true
+    default:
+      isPurchased = false
+    }
+    let isDeclined = paywallResult == .declined
+    let isManualClose = paywallCloseReason == .manualClose
+
+    let onManualClose = isDeclined && isManualClose
+    let onPurchase = isPurchased
+
+    for survey in surveys {
+      switch survey.surveyPresentationCondition {
+      case .onManualClose:
+        if onManualClose {
+          return survey
+        }
+      case .onPurchase:
+        if onPurchase {
+          return survey
+        }
+      }
+    }
+
+    return nil
   }
 
   @objc

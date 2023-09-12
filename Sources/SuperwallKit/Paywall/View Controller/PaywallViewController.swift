@@ -559,10 +559,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     )
 
     present(alertController, animated: true) { [weak self] in
-      if let loadingState = self?.loadingState,
-        loadingState != .loadingURL {
-        self?.loadingState = .ready
-      }
+      self?.loadingState = .ready
     }
   }
 }
@@ -661,17 +658,33 @@ extension PaywallViewController {
     presentationWillBegin()
   }
 
+  /// Determines whether a survey will show.
+  private var willShowSurvey: Bool {
+    guard
+      modalPresentationStyle == .formSheet ||
+      modalPresentationStyle == .pageSheet ||
+      modalPresentationStyle == .popover
+    else {
+      return false
+    }
+    guard presentationController?.delegate == nil else {
+      return false
+    }
+
+    for survey in paywall.surveys {
+      if survey.hasSeenSurvey(storage: storage) {
+        return false
+      }
+    }
+    return true
+  }
+
   /// Prepares the view controller for presentation. Only called once per presentation.
   private func presentationWillBegin() {
     guard presentationWillPrepare else {
       return
     }
-    if let survey = paywall.survey,
-      survey.hasSeenSurvey(storage: storage) == false,
-      modalPresentationStyle == .formSheet
-      || modalPresentationStyle == .pageSheet
-      || modalPresentationStyle == .popover,
-      presentationController?.delegate == nil {
+    if willShowSurvey {
       didDisableSwipeForSurvey = true
       presentationController?.delegate = self
       isModalInPresentation = true
@@ -769,13 +782,6 @@ extension PaywallViewController {
     paywall.closeReason = closeReason
 
     let isDeclined = paywallResult == .declined
-    let isPurchased: Bool
-    switch paywallResult {
-    case .purchased:
-      isPurchased = true
-    default:
-      isPurchased = false
-    }
     let isManualClose = closeReason == .manualClose
 
     func dismissView() async {
@@ -811,21 +817,12 @@ extension PaywallViewController {
       }
     }
 
-    let shouldShowSurvey: Bool
-    switch paywall.surveyShowCondition {
-    case .onManualClose:
-      shouldShowSurvey = isDeclined && isManualClose
-    case .onPurchase:
-      shouldShowSurvey = isPurchased
-    default:
-      shouldShowSurvey = false
-    }
-
     SurveyManager.presentSurveyIfAvailable(
-      paywall.survey,
+      paywall.surveys,
+      paywallResult: result,
+      paywallCloseReason: closeReason,
       using: self,
       loadingState: loadingState,
-      shouldShow: shouldShowSurvey,
       isDebuggerLaunched: request?.flags.isDebuggerLaunched == true,
       paywallInfo: info,
       storage: storage,
@@ -871,7 +868,6 @@ extension PaywallViewController {
     // Reset state
     Superwall.shared.destroyPresentingWindow()
     GameControllerManager.shared.clearDelegate(self)
-
 
     if didDisableSwipeForSurvey {
       presentationController?.delegate = nil

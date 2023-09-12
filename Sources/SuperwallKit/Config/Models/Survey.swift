@@ -28,6 +28,9 @@ final public class Survey: NSObject, Decodable {
   /// The options to display in the alert controller.
   public let options: [SurveyOption]
 
+  /// An enum whose cases indicate when the survey should show.
+  public let surveyPresentationCondition: SurveyShowCondition
+
   /// The probability that the survey will present to the user.
   public internal(set) var presentationProbability: Double
 
@@ -84,7 +87,8 @@ final public class Survey: NSObject, Decodable {
     message: String,
     options: [SurveyOption],
     presentationProbability: Double,
-    includeOtherOption: Bool
+    includeOtherOption: Bool,
+    surveyPresentationCondition: SurveyShowCondition
   ) {
     self.id = id
     self.assignmentKey = assignmentKey
@@ -93,6 +97,7 @@ final public class Survey: NSObject, Decodable {
     self.options = options
     self.presentationProbability = presentationProbability
     self.includeOtherOption = includeOtherOption
+    self.surveyPresentationCondition = surveyPresentationCondition
   }
 }
 
@@ -106,7 +111,8 @@ extension Survey: Stubbable {
       message: "test",
       options: [.stub()],
       presentationProbability: 1,
-      includeOtherOption: true
+      includeOtherOption: true,
+      surveyPresentationCondition: .onManualClose
     )
   }
 }

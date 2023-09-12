@@ -49,11 +49,8 @@ struct Paywall: Decodable {
   /// Indicates whether the caching of the paywall is enabled or not.
   let onDeviceCache: OnDeviceCaching
 
-  /// A survey to potentially show on close of the paywall.
-  var survey: Survey?
-
-  /// An enum whose cases indicate when a survey should show.
-  var surveyShowCondition: SurveyShowCondition?
+  /// A surveys to potentially show when an action happens in the paywall.
+  var surveys: [Survey]
 
   /// The products associated with the paywall.
   var products: [Product] {
@@ -122,8 +119,7 @@ struct Paywall: Decodable {
     case onDeviceCache
     case localNotifications
     case computedPropertyRequests = "computedProperties"
-    case survey
-    case surveyShowCondition
+    case surveys
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -145,8 +141,12 @@ struct Paywall: Decodable {
     name = try values.decode(String.self, forKey: .name)
     url = try values.decode(URL.self, forKey: .url)
     htmlSubstitutions = try values.decode(String.self, forKey: .htmlSubstitutions)
-    survey = try values.decodeIfPresent(Survey.self, forKey: .survey)
-    surveyShowCondition = try values.decodeIfPresent(SurveyShowCondition.self, forKey: .surveyShowCondition)
+
+    let throwableSurveys = try values.decodeIfPresent(
+      [Throwable<Survey>].self,
+      forKey: .surveys
+    ) ?? []
+    surveys = throwableSurveys.compactMap { try? $0.result.get() }
 
     let presentationStyle = try values.decode(PaywallPresentationStyle.self, forKey: .presentationStyle)
     let presentationCondition = try values.decode(PresentationCondition.self, forKey: .presentationCondition)
@@ -232,7 +232,7 @@ struct Paywall: Decodable {
     onDeviceCache: OnDeviceCaching = .disabled,
     localNotifications: [LocalNotification] = [],
     computedPropertyRequests: [ComputedPropertyRequest] = [],
-    survey: Survey? = nil
+    surveys: [Survey] = []
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -258,7 +258,7 @@ struct Paywall: Decodable {
     self.onDeviceCache = onDeviceCache
     self.localNotifications = localNotifications
     self.computedPropertyRequests = computedPropertyRequests
-    self.survey = survey
+    self.surveys = surveys
   }
 
   func getInfo(
@@ -290,8 +290,7 @@ struct Paywall: Decodable {
       closeReason: closeReason,
       localNotifications: localNotifications,
       computedPropertyRequests: computedPropertyRequests,
-      survey: survey,
-      surveyShowCondition: surveyShowCondition
+      surveys: surveys
     )
   }
 

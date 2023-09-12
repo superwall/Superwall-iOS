@@ -25,12 +25,20 @@ public enum SurveyShowCondition: Int, Decodable {
   public init(from decoder: Decoder) throws {
     let container = try decoder.singleValueContainer()
     let rawValue = try container.decode(String.self)
-    let reason = CodingKeys(rawValue: rawValue) ?? .onManualClose
+    let reason = CodingKeys(rawValue: rawValue)
     switch reason {
     case .onManualClose:
       self = .onManualClose
     case .onPurchase:
       self = .onPurchase
+    case .none:
+      throw DecodingError.valueNotFound(
+        String.self,
+        .init(
+          codingPath: [],
+          debugDescription: "Unsupported survey condition."
+        )
+      )
     }
   }
 }
