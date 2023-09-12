@@ -51,6 +51,12 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
+  struct SurveyClose: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .surveyClose
+    var customParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
   struct SurveyResponse: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .surveyResponse(
