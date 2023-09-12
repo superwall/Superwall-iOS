@@ -559,10 +559,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     )
 
     present(alertController, animated: true) { [weak self] in
-      if let loadingState = self?.loadingState,
-        loadingState != .loadingURL {
-        self?.loadingState = .ready
-      }
+      self?.loadingState = .ready
     }
   }
 }
@@ -661,17 +658,31 @@ extension PaywallViewController {
     presentationWillBegin()
   }
 
+  /// Determines whether a survey will show.
+  private var willShowSurvey: Bool {
+    guard
+      modalPresentationStyle == .formSheet ||
+      modalPresentationStyle == .pageSheet ||
+      modalPresentationStyle == .popover
+    else {
+      return false
+    }
+    guard presentationController?.delegate == nil else {
+      return false
+    }
+
+    for survey in paywall.surveys where survey.hasSeenSurvey(storage: storage) {
+      return false
+    }
+    return true
+  }
+
   /// Prepares the view controller for presentation. Only called once per presentation.
   private func presentationWillBegin() {
     guard presentationWillPrepare else {
       return
     }
-    if let survey = paywall.survey,
-      survey.hasSeenSurvey(storage: storage) == false,
-      modalPresentationStyle == .formSheet
-      || modalPresentationStyle == .pageSheet
-      || modalPresentationStyle == .popover,
-      presentationController?.delegate == nil {
+    if willShowSurvey {
       didDisableSwipeForSurvey = true
       presentationController?.delegate = self
       isModalInPresentation = true
@@ -805,10 +816,11 @@ extension PaywallViewController {
     }
 
     SurveyManager.presentSurveyIfAvailable(
-      paywall.survey,
+      paywall.surveys,
+      paywallResult: result,
+      paywallCloseReason: closeReason,
       using: self,
       loadingState: loadingState,
-      paywallIsManuallyDeclined: isDeclined && isManualClose,
       isDebuggerLaunched: request?.flags.isDebuggerLaunched == true,
       paywallInfo: info,
       storage: storage,
@@ -854,7 +866,6 @@ extension PaywallViewController {
     // Reset state
     Superwall.shared.destroyPresentingWindow()
     GameControllerManager.shared.clearDelegate(self)
-
 
     if didDisableSwipeForSurvey {
       presentationController?.delegate = nil

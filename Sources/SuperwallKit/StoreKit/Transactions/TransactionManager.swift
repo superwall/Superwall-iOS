@@ -17,6 +17,7 @@ final class TransactionManager {
     & OptionsFactory
     & TriggerFactory
     & StoreTransactionFactory
+    & DeviceHelperFactory
   private let factory: Factories
 
   /// The paywall view controller that the last product was purchased from.
@@ -333,7 +334,7 @@ final class TransactionManager {
         $0.type == .trialStarted
       }
 
-      await NotificationScheduler.scheduleNotifications(notifications)
+      await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
     } else {
       let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
         paywallInfo: paywallInfo,

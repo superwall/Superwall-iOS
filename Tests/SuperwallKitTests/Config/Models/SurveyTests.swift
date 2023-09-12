@@ -29,6 +29,7 @@ final class SurveyTests: XCTestCase {
       presentationProbability: 0,
       includeOtherOption: true,
       includeCloseButton: true
+      surveyPresentationCondition: .onManualClose
     )
     let isHoldout = survey.shouldAssignHoldout(
       isDebuggerLaunched: false,
@@ -47,6 +48,7 @@ final class SurveyTests: XCTestCase {
       presentationProbability: 1,
       includeOtherOption: true,
       includeCloseButton: true
+      surveyPresentationCondition: .onManualClose
     )
     let isHoldout = survey.shouldAssignHoldout(
       isDebuggerLaunched: false,
@@ -65,6 +67,7 @@ final class SurveyTests: XCTestCase {
       presentationProbability: 0.4,
       includeOtherOption: true,
       includeCloseButton: true
+      surveyPresentationCondition: .onManualClose
     )
     func random(in: Range<Double>) -> Double {
       return 0.5
@@ -94,6 +97,7 @@ final class SurveyTests: XCTestCase {
       presentationProbability: 0.4,
       includeOtherOption: true,
       includeCloseButton: true
+      surveyPresentationCondition: .onManualClose
     )
     let existingAssignmentKey = "abc"
     let storage = StorageMock(internalSurveyAssignmentKey: existingAssignmentKey)
@@ -111,6 +115,7 @@ final class SurveyTests: XCTestCase {
       presentationProbability: 0.4,
       includeOtherOption: true,
       includeCloseButton: true
+      surveyPresentationCondition: .onManualClose
     )
     let existingAssignmentKey = "abc"
     let storage = StorageMock(internalSurveyAssignmentKey: existingAssignmentKey)

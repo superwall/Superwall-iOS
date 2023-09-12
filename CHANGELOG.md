@@ -10,6 +10,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - When you experience `no_rule_match`, the `TriggerFire` event params will specify which part of the rules didn't match in the format `"unmatched_rule_<id>": "<outcome>"`. Where `outcome` will either be `OCCURRENCE`, referring to the limit applied to a rule, or `EXPRESSION`. The `id` is the experiment id.
 - Adds a `touches_began` implicit trigger. By adding the `touches_began` event to a campaign, you can show a paywall the first time a user touches anywhere in your app.
 - Adds the ability to include a close button on a survey.
+- If running in sandbox, the duration of a free trial notification added to a paywall will be converted from days to minutes for testing purposes.
+- Adds the ability to show a survey after purchasing a product.
 
 ### Fixes
 
