@@ -227,7 +227,7 @@ final class SurveyManager {
     let onPurchase = isPurchased
 
     for survey in surveys {
-      switch survey.surveyPresentationCondition {
+      switch survey.presentationCondition {
       case .onManualClose:
         if onManualClose {
           return survey

@@ -29,7 +29,7 @@ final public class Survey: NSObject, Decodable {
   public let options: [SurveyOption]
 
   /// An enum whose cases indicate when the survey should show.
-  public internal(set) var surveyPresentationCondition: SurveyShowCondition
+  public internal(set) var presentationCondition: SurveyShowCondition
 
   /// The probability that the survey will present to the user.
   public internal(set) var presentationProbability: Double
@@ -92,7 +92,7 @@ final public class Survey: NSObject, Decodable {
     presentationProbability: Double,
     includeOtherOption: Bool,
     includeCloseOption: Bool,
-    surveyPresentationCondition: SurveyShowCondition
+    presentationCondition: SurveyShowCondition
   ) {
     self.id = id
     self.assignmentKey = assignmentKey
@@ -102,7 +102,7 @@ final public class Survey: NSObject, Decodable {
     self.presentationProbability = presentationProbability
     self.includeOtherOption = includeOtherOption
     self.includeCloseOption = includeCloseOption
-    self.surveyPresentationCondition = surveyPresentationCondition
+    self.presentationCondition = presentationCondition
   }
 }
 
@@ -118,7 +118,7 @@ extension Survey: Stubbable {
       presentationProbability: 1,
       includeOtherOption: true,
       includeCloseOption: true,
-      surveyPresentationCondition: .onManualClose
+      presentationCondition: .onManualClose
     )
   }
 }
