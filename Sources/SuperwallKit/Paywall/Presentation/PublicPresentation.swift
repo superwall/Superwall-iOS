@@ -30,7 +30,7 @@ extension Superwall {
     }
   }
 
-  /// Dismisses the presented paywall.
+  /// Dismisses the presented paywall, if one exists.
   @MainActor
   @nonobjc
   public func dismiss() async {
@@ -47,6 +47,7 @@ extension Superwall {
     }
   }
 
+  /// Dismisses the presented paywall, if it exists, in order to present a different one.
   @MainActor
   func dismissForNextPaywall() async {
     guard let paywallViewController = paywallViewController else {

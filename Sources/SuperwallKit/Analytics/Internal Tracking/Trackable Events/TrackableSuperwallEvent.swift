@@ -51,6 +51,12 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
+  struct SurveyClose: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .surveyClose
+    var customParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
   struct SurveyResponse: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .surveyResponse(
@@ -358,7 +364,7 @@ enum InternalSuperwallEvent {
 
     func getSuperwallParameters() async -> [String: Any] {
       var params: [String: Any] = [
-        "survey_attached": paywallInfo.survey == nil ? false : true
+        "survey_attached": paywallInfo.surveys.isEmpty ? false : true
       ]
 
       if surveyPresentationResult != .noShow {

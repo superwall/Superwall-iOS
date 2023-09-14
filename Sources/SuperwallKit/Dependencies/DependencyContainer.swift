@@ -84,12 +84,6 @@ final class DependencyContainer {
       configManager: configManager
     )
 
-    appSessionManager = AppSessionManager(
-      configManager: configManager,
-      storage: storage,
-      delegate: self
-    )
-
     identityManager = IdentityManager(
       deviceHelper: deviceHelper,
       storage: storage,
@@ -106,6 +100,13 @@ final class DependencyContainer {
       network: network,
       configManager: configManager,
       factory: self
+    )
+
+    // Must be after session events
+    appSessionManager = AppSessionManager(
+      configManager: configManager,
+      storage: storage,
+      delegate: self
     )
 
     debugManager = DebugManager(

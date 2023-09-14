@@ -586,7 +586,7 @@ final class TrackingTests: XCTestCase {
 
   func test_paywallClose_survey_show() async {
     let paywall: Paywall = .stub()
-      .setting(\.survey, to: .stub())
+      .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromEvent: .stub(), factory: DependencyContainer())
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallClose(
@@ -638,7 +638,7 @@ final class TrackingTests: XCTestCase {
 
   func test_paywallClose_survey_noShow() async {
     let paywall: Paywall = .stub()
-      .setting(\.survey, to: .stub())
+      .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromEvent: .stub(), factory: DependencyContainer())
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallClose(
@@ -690,7 +690,7 @@ final class TrackingTests: XCTestCase {
 
   func test_paywallClose_survey_holdout() async {
     let paywall: Paywall = .stub()
-      .setting(\.survey, to: .stub())
+      .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromEvent: .stub(), factory: DependencyContainer())
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallClose(
@@ -742,7 +742,7 @@ final class TrackingTests: XCTestCase {
 
   func test_paywallClose_noSurvey() async {
     let paywall: Paywall = .stub()
-      .setting(\.survey, to: nil)
+      .setting(\.surveys, to: [])
     let paywallInfo = paywall.getInfo(fromEvent: .stub(), factory: DependencyContainer())
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallClose(
