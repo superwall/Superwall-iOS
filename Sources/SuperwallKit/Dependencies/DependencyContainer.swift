@@ -455,11 +455,7 @@ extension DependencyContainer: ComputedPropertyRequestsFactory {
 
 // MARK: - Purchased Transactions Factory
 extension DependencyContainer: PurchasedTransactionsFactory {
-  func makeInternallyPurchasedTransaction() async -> SKPaymentTransaction? {
-    return await storeKitManager.purchaseController.productPurchaser.purchasing.lastTransaction
-  }
-
-  func makeLastPurchasedTransaction(for productId: String) -> SKPaymentTransaction? {
-    return storeKitManager.purchaseController.productPurchaser.purchasedTransactions[productId]
+  func makePurchasingCoordinator() -> PurchasingCoordinator {
+    return storeKitManager.purchaseController.productPurchaser.coordinator
   }
 }

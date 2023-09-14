@@ -135,7 +135,5 @@ protocol TriggerFactory: AnyObject {
 }
 
 protocol PurchasedTransactionsFactory {
-  func makeInternallyPurchasedTransaction() async -> SKPaymentTransaction?
-
-  func makeLastPurchasedTransaction(for productId: String) -> SKPaymentTransaction?
+  func makePurchasingCoordinator() -> PurchasingCoordinator
 }

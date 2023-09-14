@@ -185,7 +185,11 @@ final class TransactionManager {
       error: nil
     )
 
-    let transaction = await getLatestTransaction(of: product.productIdentifier)
+    let purchasingCoordinator = factory.makePurchasingCoordinator()
+    let transaction = await purchasingCoordinator.getLatestTransaction(
+      forProductId: product.productIdentifier,
+      factory: factory
+    )
 
     if let transaction = transaction {
       await self.sessionEventsManager.enqueue(transaction)
@@ -205,30 +209,6 @@ final class TransactionManager {
         result: .purchased(productId: product.productIdentifier)
       )
     }
-  }
-
-  /// Gets the latest transaction of a specified product ID.
-  private func getLatestTransaction(of productId: String) async -> StoreTransaction? {
-    // If on iOS 15+, try and get latest transaction using SK2.
-    if #available(iOS 15.0, *) {
-      let verificationResult = await Transaction.latest(for: productId)
-      if let transaction = verificationResult.map({ $0.unsafePayloadValue }) {
-        return await factory.makeStoreTransaction(from: transaction)
-      }
-    }
-
-    // If no transaction retrieved, try to get last transaction if the SDK handled
-    // purchasing.
-    if let transaction = await factory.makeInternallyPurchasedTransaction() {
-      return await factory.makeStoreTransaction(from: transaction)
-    }
-
-    // Otherwise filter last purchased transaction for product on the payment queue.
-    if let transaction = factory.makeLastPurchasedTransaction(for: productId) {
-      return await factory.makeStoreTransaction(from: transaction)
-    }
-
-    return nil
   }
 
   /// Track the cancelled

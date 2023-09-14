@@ -14,7 +14,7 @@ final class SurveyManagerTests: XCTestCase {
   func test_presentSurveyIfAvailable_paywallDeclined_purchaseSurvey() {
     let surveys = [
       Survey.stub()
-        .setting(\.surveyPresentationCondition, to: .onPurchase)
+        .setting(\.presentationCondition, to: .onPurchase)
     ]
     let expectation = expectation(description: "called completion block")
     let dependencyContainer = DependencyContainer()
@@ -122,7 +122,7 @@ final class SurveyManagerTests: XCTestCase {
     )
 
     SurveyManager.presentSurveyIfAvailable(
-      [.stub().setting(\.surveyPresentationCondition, to: .onPurchase)],
+      [.stub().setting(\.presentationCondition, to: .onPurchase)],
       paywallResult: .purchased(productId: "abc"),
       paywallCloseReason: .systemLogic,
       using: paywallVc,
@@ -163,7 +163,7 @@ final class SurveyManagerTests: XCTestCase {
     )
 
     SurveyManager.presentSurveyIfAvailable(
-      [.stub().setting(\.surveyPresentationCondition, to: .onManualClose)],
+      [.stub().setting(\.presentationCondition, to: .onManualClose)],
       paywallResult: .declined,
       paywallCloseReason: .manualClose,
       using: paywallVc,
@@ -204,7 +204,7 @@ final class SurveyManagerTests: XCTestCase {
     )
 
     SurveyManager.presentSurveyIfAvailable(
-      [.stub().setting(\.surveyPresentationCondition, to: .onManualClose)],
+      [.stub().setting(\.presentationCondition, to: .onManualClose)],
       paywallResult: .declined,
       paywallCloseReason: .manualClose,
       using: paywallVc,
@@ -245,7 +245,7 @@ final class SurveyManagerTests: XCTestCase {
     )
 
     SurveyManager.presentSurveyIfAvailable(
-      [.stub().setting(\.surveyPresentationCondition, to: .onManualClose)],
+      [.stub().setting(\.presentationCondition, to: .onManualClose)],
       paywallResult: .declined,
       paywallCloseReason: .manualClose,
       using: paywallVc,
@@ -267,7 +267,7 @@ final class SurveyManagerTests: XCTestCase {
     let surveys = [
       Survey.stub()
         .setting(\.assignmentKey, to: "1")
-        .setting(\.surveyPresentationCondition, to: .onManualClose)
+        .setting(\.presentationCondition, to: .onManualClose)
     ]
     let expectation = expectation(description: "called completion block")
     let dependencyContainer = DependencyContainer()
@@ -316,7 +316,7 @@ final class SurveyManagerTests: XCTestCase {
     let surveys = [
       Survey.stub()
         .setting(\.presentationProbability, to: 0)
-        .setting(\.surveyPresentationCondition, to: .onManualClose)
+        .setting(\.presentationCondition, to: .onManualClose)
     ]
 
     let expectation = expectation(description: "called completion block")
@@ -415,7 +415,7 @@ final class SurveyManagerTests: XCTestCase {
     let surveys = [
       Survey.stub()
         .setting(\.presentationProbability, to: 1)
-        .setting(\.surveyPresentationCondition, to: .onManualClose)
+        .setting(\.presentationCondition, to: .onManualClose)
     ]
 
     let expectation = expectation(description: "called completion block")

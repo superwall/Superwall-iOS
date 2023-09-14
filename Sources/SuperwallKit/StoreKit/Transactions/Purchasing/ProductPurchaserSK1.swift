@@ -10,35 +10,7 @@ import StoreKit
 
 final class ProductPurchaserSK1: NSObject {
   // MARK: Purchasing
-  actor Purchasing {
-    private var completion: ((PurchaseResult) -> Void)?
-    private var productId: String?
-    var lastTransaction: SKPaymentTransaction?
-
-    func productId(is productId: String) -> Bool {
-      return productId == self.productId
-    }
-
-    func setCompletion(_ completion: @escaping (PurchaseResult) -> Void) {
-      self.completion = completion
-    }
-
-    func beginPurchase(of productId: String) {
-      self.productId = productId
-    }
-
-    func completePurchase(
-      of transaction: SK1Transaction? = nil,
-      result: PurchaseResult
-    ) {
-      lastTransaction = transaction
-      completion?(result)
-      self.completion = nil
-      self.productId = nil
-    }
-  }
-  let purchasing = Purchasing()
-  var purchasedTransactions: [String: SKPaymentTransaction] = [:]
+  let coordinator = PurchasingCoordinator()
 
   // MARK: Restoration
   final class Restoration {
@@ -76,12 +48,12 @@ final class ProductPurchaserSK1: NSObject {
   /// Purchases a product, waiting for the completion block to be fired and
   /// returning a purchase result.
   func purchase(product: SKProduct) async -> PurchaseResult {
-    await purchasing.beginPurchase(of: product.productIdentifier)
+    await coordinator.beginPurchase(of: product.productIdentifier)
 
     let task = Task {
       return await withCheckedContinuation { continuation in
         Task {
-          await purchasing.setCompletion { result in
+          await coordinator.setCompletion { result in
             continuation.resume(returning: result)
           }
         }
@@ -145,7 +117,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       let isPaywallPresented = Superwall.shared.isPaywallPresented
       let paywallViewController = Superwall.shared.paywallViewController
       for transaction in transactions {
-        storeIfPurchased(transaction)
+        await coordinator.storeIfPurchased(transaction)
         await checkForTimeout(of: transaction, in: paywallViewController)
         await updatePurchaseCompletionBlock(for: transaction)
         await checkForRestoration(transaction, isPaywallPresented: isPaywallPresented)
@@ -159,15 +131,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   }
 
   // MARK: - Private API
-
-  /// Stores the transaction if purchased. This is used as a fallback if we can't
-  /// retrieve the transaction using SK2.
-  private func storeIfPurchased(_ transaction: SKPaymentTransaction) {
-    guard case .purchased = transaction.transactionState else {
-      return
-    }
-    purchasedTransactions[transaction.payment.productIdentifier] = transaction
-  }
 
   private func checkForTimeout(
     of transaction: SKPaymentTransaction,
@@ -219,13 +182,14 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           withProductId: skTransaction.payment.productIdentifier
         )
         SKPaymentQueue.default().finishTransaction(skTransaction)
-        await purchasing.completePurchase(
+
+        await coordinator.completePurchase(
           of: skTransaction,
           result: .purchased
         )
       } catch {
         SKPaymentQueue.default().finishTransaction(skTransaction)
-        await purchasing.completePurchase(result: .failed(error))
+        await coordinator.completePurchase(result: .failed(error))
       }
     case .failed:
       SKPaymentQueue.default().finishTransaction(skTransaction)
@@ -234,7 +198,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           switch error.code {
           case .paymentCancelled,
             .overlayCancelled:
-            return await purchasing.completePurchase(result: .cancelled)
+            return await coordinator.completePurchase(result: .cancelled)
           default:
             break
           }
@@ -242,17 +206,17 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           if #available(iOS 14, *) {
             switch error.code {
             case .overlayTimeout:
-              await purchasing.completePurchase(result: .cancelled)
+              await coordinator.completePurchase(result: .cancelled)
             default:
               break
             }
           }
         }
-        await purchasing.completePurchase(result: .failed(error))
+        await coordinator.completePurchase(result: .failed(error))
       }
     case .deferred:
       SKPaymentQueue.default().finishTransaction(skTransaction)
-      await purchasing.completePurchase(of: skTransaction, result: .pending)
+      await coordinator.completePurchase(of: skTransaction, result: .pending)
     default:
       break
     }
