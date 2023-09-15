@@ -660,6 +660,9 @@ extension PaywallViewController {
 
   /// Determines whether a survey will show.
   private var willShowSurvey: Bool {
+    if paywall.surveys.isEmpty {
+      return false
+    }
     guard
       modalPresentationStyle == .formSheet ||
       modalPresentationStyle == .pageSheet ||

@@ -9,6 +9,7 @@
 import UIKit
 import Combine
 import SystemConfiguration
+import StoreKit
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
 ///
@@ -449,5 +450,12 @@ extension DependencyContainer: FeatureFlagsFactory {
 extension DependencyContainer: ComputedPropertyRequestsFactory {
   func makeComputedPropertyRequests() -> [ComputedPropertyRequest] {
     return configManager.config?.allComputedProperties ?? []
+  }
+}
+
+// MARK: - Purchased Transactions Factory
+extension DependencyContainer: PurchasedTransactionsFactory {
+  func makePurchasingCoordinator() -> PurchasingCoordinator {
+    return storeKitManager.purchaseController.productPurchaser.coordinator
   }
 }

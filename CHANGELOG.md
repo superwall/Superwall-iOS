@@ -17,6 +17,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes issue where a survey attached to a paywall wouldn't show if you were also using the `paywall_decline` trigger.
 - Fixes issue where verification was happening after the finishing of transactions when not using a `PurchaseController`.
+- Fixes issue where the retrieved `StoreTransaction` associated with the purchased product may be `nil`.
 - Fixes issue where a `presentationRequest` wasn't being tracked for implicit triggers like `session_start` when there was no internet.
 
 ## 3.3.2

@@ -83,11 +83,11 @@ extension Superwall {
       type: .presentation
     )
 
-     do {
-       try await waitForSubsStatusAndConfig(request, paywallStatePublisher: nil)
-     } catch {
-       return logErrors(from: request, error)
-     }
+    do {
+      try await waitForSubsStatusAndConfig(request, paywallStatePublisher: nil)
+    } catch {
+      return logErrors(from: request, error)
+    }
 
     let outcome = TrackingLogic.canTriggerPaywall(
       event,
