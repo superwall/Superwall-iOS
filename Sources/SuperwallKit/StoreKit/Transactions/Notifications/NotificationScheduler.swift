@@ -11,15 +11,15 @@ import UserNotifications
 enum NotificationScheduler {
   static let superwallIdentifier = "com.superwall.ios"
 
-  private static func askForPermissionsIfNecessary() async -> Bool {
-    if await checkIsAuthorized() {
+  private static func askForPermissionsIfNecessary(
+    using notificationCenter: NotificationAuthorizable
+  ) async -> Bool {
+    if await checkIsAuthorized(using: notificationCenter) {
       return true
     }
 
-    let center = UNUserNotificationCenter.current()
-
     return await withCheckedContinuation { continuation in
-      center.requestAuthorization(options: [.alert, .sound, .badge]) { isAuthorized, _ in
+      notificationCenter.requestAuthorization(options: [.alert, .sound, .badge]) { isAuthorized, _ in
         if isAuthorized {
           return continuation.resume(returning: true)
         } else {
@@ -31,19 +31,20 @@ enum NotificationScheduler {
 
   static func scheduleNotifications(
     _ notifications: [LocalNotification],
-    factory: DeviceHelperFactory
+    factory: DeviceHelperFactory,
+    notificationCenter: NotificationAuthorizable = UNUserNotificationCenter.current()
   ) async {
     if notifications.isEmpty {
       return
     }
-    guard await NotificationScheduler.askForPermissionsIfNecessary() else {
+    guard await NotificationScheduler.askForPermissionsIfNecessary(using: notificationCenter) else {
       return
     }
 
     await withTaskGroup(of: Void.self) { taskGroup in
       for notification in notifications {
         taskGroup.addTask {
-          await scheduleNotification(notification, factory: factory)
+          await scheduleNotification(notification, factory: factory, notificationCenter: notificationCenter)
         }
       }
     }
@@ -51,7 +52,8 @@ enum NotificationScheduler {
 
   private static func scheduleNotification(
     _ notification: LocalNotification,
-    factory: DeviceHelperFactory
+    factory: DeviceHelperFactory,
+    notificationCenter: NotificationAuthorizable
   ) async {
     let content = UNMutableNotificationContent()
     content.title = notification.title
@@ -80,7 +82,7 @@ enum NotificationScheduler {
 
     // Add our notification request
     do {
-      try await UNUserNotificationCenter.current().add(request)
+      try await notificationCenter.add(request)
     } catch {
       Logger.debug(
         logLevel: .warn,
@@ -90,9 +92,9 @@ enum NotificationScheduler {
     }
   }
 
-  private static func checkIsAuthorized() async -> Bool {
+  private static func checkIsAuthorized(using notificationCenter: NotificationAuthorizable) async -> Bool {
     return await withCheckedContinuation { continuation in
-      UNUserNotificationCenter.current().getNotificationSettings { settings in
+      notificationCenter.getSettings { settings in
         switch settings.authorizationStatus {
         case .authorized,
           .ephemeral,
