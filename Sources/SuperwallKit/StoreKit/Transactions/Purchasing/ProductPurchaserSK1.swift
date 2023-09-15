@@ -189,7 +189,10 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         )
       } catch {
         SKPaymentQueue.default().finishTransaction(skTransaction)
-        await coordinator.completePurchase(result: .failed(error))
+        await coordinator.completePurchase(
+          of: skTransaction,
+          result: .failed(error)
+        )
       }
     case .failed:
       SKPaymentQueue.default().finishTransaction(skTransaction)
@@ -198,7 +201,10 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           switch error.code {
           case .paymentCancelled,
             .overlayCancelled:
-            return await coordinator.completePurchase(result: .cancelled)
+            return await coordinator.completePurchase(
+              of: skTransaction,
+              result: .cancelled
+            )
           default:
             break
           }
@@ -206,13 +212,18 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           if #available(iOS 14, *) {
             switch error.code {
             case .overlayTimeout:
-              await coordinator.completePurchase(result: .cancelled)
+              await coordinator.completePurchase(
+                of: skTransaction,
+                result: .cancelled
+              )
             default:
               break
             }
           }
         }
-        await coordinator.completePurchase(result: .failed(error))
+        await coordinator.completePurchase(
+          of: skTransaction,
+          result: .failed(error))
       }
     case .deferred:
       SKPaymentQueue.default().finishTransaction(skTransaction)

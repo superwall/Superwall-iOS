@@ -113,19 +113,19 @@ actor PurchasingCoordinator {
   }
 
   func completePurchase(
-    of transaction: SK1Transaction? = nil,
+    of transaction: SK1Transaction,
     result: PurchaseResult
   ) {
     // Only complete if the product ID of the transaction is the same as
     // the purchasing transaction.
-    guard productId == transaction?.payment.productIdentifier else {
+    guard productId == transaction.payment.productIdentifier else {
       return
     }
     // If the transaction completed a purchase, check it is within the last
     // hour since starting purchase. Otherwise old purchased products may come
     // through and complete the purchase.
     if result == .purchased {
-      guard dateIsWithinLastHour(transaction?.transactionDate) else {
+      guard dateIsWithinLastHour(transaction.transactionDate) else {
         return
       }
     }
