@@ -21,6 +21,7 @@ public typealias SK1Product = SKProduct
 @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 public typealias SK2Product = StoreKit.Product
 
+/// A convenience wrapper around a StoreKit 1 or StoreKit 2 product.
 @objc(SWKStoreProduct)
 @objcMembers
 public final class StoreProduct: NSObject, StoreProductType, Sendable {

@@ -8,8 +8,12 @@
 import Foundation
 import StoreKit
 
+/// The error that occurred when a transaction failed.
 public enum TransactionError: Error {
+  /// The transaction is pending approval via a parent or guardian.
   case pending(String)
+
+  /// The transaction failed.
   case failure(String, StoreProduct)
 }
 

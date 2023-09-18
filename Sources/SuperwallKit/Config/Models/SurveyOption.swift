@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// An option to display in a paywall survey.
 @objc(SWKSurveyOption)
 @objcMembers
 final public class SurveyOption: NSObject, Decodable {
