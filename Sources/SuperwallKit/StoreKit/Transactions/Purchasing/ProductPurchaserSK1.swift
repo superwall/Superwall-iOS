@@ -116,10 +116,11 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     Task {
       let isPaywallPresented = Superwall.shared.isPaywallPresented
       let paywallViewController = Superwall.shared.paywallViewController
+      let purchaseDate = await coordinator.purchaseDate
       for transaction in transactions {
         await coordinator.storeIfPurchased(transaction)
         await checkForTimeout(of: transaction, in: paywallViewController)
-        await updatePurchaseCompletionBlock(for: transaction)
+        await updatePurchaseCompletionBlock(for: transaction, purchaseDate: purchaseDate)
         await checkForRestoration(transaction, isPaywallPresented: isPaywallPresented)
         Task(priority: .background) {
           await record(transaction)
@@ -166,11 +167,14 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   }
 
   /// Sends a `PurchaseResult` to the completion block and stores the latest purchased transaction.
-  private func updatePurchaseCompletionBlock(for skTransaction: SKPaymentTransaction) async {
+  private func updatePurchaseCompletionBlock(
+    for skTransaction: SKPaymentTransaction,
+    purchaseDate: Date?
+  ) async {
     // Only continue if using internal purchase controller. The transaction may be
     // readded to the queue if finishing fails so we need to make sure
     // we can re-finish the transaction.
-    if storeKitManager?.purchaseController.isDeveloperProvided == true {
+    if storeKitManager?.purchaseController.hasExternalPurchaseController == true {
       return
     }
 
@@ -179,6 +183,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       do {
         try await ProductPurchaserLogic.validate(
           transaction: skTransaction,
+          since: purchaseDate,
           withProductId: skTransaction.payment.productIdentifier
         )
         SKPaymentQueue.default().finishTransaction(skTransaction)

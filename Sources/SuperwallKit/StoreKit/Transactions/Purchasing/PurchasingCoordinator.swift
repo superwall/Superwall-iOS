@@ -8,6 +8,25 @@
 import Foundation
 import StoreKit
 
+@available(iOS 15.0, *)
+extension Transaction {
+  /// Gets the latest transaction for a given `productId` since
+  /// an hour up to a given `purchaseDate`.
+  static func latest(
+    for productId: String,
+    since purchaseDate: Date
+  ) async -> VerificationResult<Transaction>? {
+    let verificationResult = await Transaction.latest(for: productId)
+
+    if let transaction = verificationResult.map({ $0.unsafePayloadValue }),
+      purchaseDate.addingTimeInterval(-3600).compare(transaction.purchaseDate) == .orderedAscending {
+      return verificationResult
+    }
+
+    return nil
+  }
+}
+
 /// An actor that manages and coordinates the storing of types associated with purchasing.
 actor PurchasingCoordinator {
   private var completion: ((PurchaseResult) -> Void)?
@@ -50,13 +69,12 @@ actor PurchasingCoordinator {
 
     // If on iOS 15+, try and get latest transaction using SK2.
     if #available(iOS 15.0, *) {
-      let verificationResult = await Transaction.latest(for: productId)
-
-      // Get the unverified transaction (as verification step will have
-      // been done by now).
-      // The date must be within an hour of purchase.
-      if let transaction = verificationResult.map({ $0.unsafePayloadValue }),
-        purchaseDate.addingTimeInterval(-3600).compare(transaction.purchaseDate) == .orderedAscending {
+      if let verificationResult = await Transaction.latest(
+        for: productId,
+        since: purchaseDate
+      ) {
+        // Skip verification step as this has already been done.
+        let transaction = verificationResult.unsafePayloadValue
         return await factory.makeStoreTransaction(from: transaction)
       }
     }
