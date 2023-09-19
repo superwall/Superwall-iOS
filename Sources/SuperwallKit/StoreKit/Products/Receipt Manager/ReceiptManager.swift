@@ -12,54 +12,36 @@ actor ReceiptManager: NSObject {
   var purchasedSubscriptionGroupIds: Set<String>?
   private var purchases: Set<InAppPurchase> = []
   private var receiptRefreshCompletion: ((Bool) -> Void)?
-  private weak var delegate: ProductsFetcher?
+  private weak var delegate: ProductsFetcherSK1?
   private let receiptData: () -> Data?
+  private let purchaseController: InternalPurchaseController
 
   init(
-    delegate: ProductsFetcher,
+    delegate: ProductsFetcherSK1,
+    purchaseController: InternalPurchaseController,
     receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData
   ) {
     self.delegate = delegate
     self.receiptData = receiptData
+    self.purchaseController = purchaseController
   }
 
   /// Loads purchased products from the receipt, storing the purchased subscription group identifiers,
   /// purchases and active purchases.
   @discardableResult
   func loadPurchasedProducts() async -> Set<StoreProduct>? {
-    let hasPurchaseController = Superwall.shared.dependencyContainer.delegateAdapter.hasPurchaseController
-
-    guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
-      if !hasPurchaseController {
-        await MainActor.run {
-          Superwall.shared.subscriptionStatus = .inactive
-        }
-      }
-      return nil
-    }
-    guard let delegate = delegate else {
-      if !hasPurchaseController {
-        await MainActor.run {
-          Superwall.shared.subscriptionStatus = .inactive
-        }
-      }
+    guard
+      let payload = ReceiptLogic.getPayload(using: receiptData),
+      let delegate = delegate
+    else {
+      await purchaseController.syncSubscriptionStatus(withPurchases: [])
       return nil
     }
 
     let purchases = payload.purchases
     self.purchases = purchases
 
-
-    if !hasPurchaseController {
-      let activePurchases = purchases.filter { $0.isActive }
-      await MainActor.run {
-        if activePurchases.isEmpty {
-          Superwall.shared.subscriptionStatus = .inactive
-        } else {
-          Superwall.shared.subscriptionStatus = .active
-        }
-      }
-    }
+    await purchaseController.syncSubscriptionStatus(withPurchases: purchases)
 
     let purchasedProductIds = Set(purchases.map { $0.productIdentifier })
 

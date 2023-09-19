@@ -125,6 +125,14 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the response to a paywall survey as been recorded.
   case surveyResponse
 
+  /// When the user touches the app's UIWindow for the first time.
+  ///
+  /// This is only tracked if there is an active `touches_began` trigger in a campaign.
+  case touchesBegan
+
+  /// When the user taps the close button to skip the survey without recording a response.
+  case surveyClose
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -201,6 +209,10 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "paywallPresentationRequest"
     case .surveyResponse:
       return "survey_response"
+    case .touchesBegan:
+      return "touches_began"
+    case .surveyClose:
+      return "survey_close"
     }
   }
 }

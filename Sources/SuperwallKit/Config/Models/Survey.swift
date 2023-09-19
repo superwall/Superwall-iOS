@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// A survey attached to a paywall.
 @objc(SWKSurvey)
 @objcMembers
 final public class Survey: NSObject, Decodable {
@@ -27,12 +28,18 @@ final public class Survey: NSObject, Decodable {
   /// The options to display in the alert controller.
   public let options: [SurveyOption]
 
+  /// An enum whose cases indicate when the survey should show.
+  public internal(set) var presentationCondition: SurveyShowCondition
+
   /// The probability that the survey will present to the user.
   public internal(set) var presentationProbability: Double
 
   /// Whether the "Other" option should appear to allow a user to provide a custom
   /// response.
   public let includeOtherOption: Bool
+
+  /// Whether a close button should appear to allow users to skip the survey.
+  public let includeCloseOption: Bool
 
   /// Rolls dice to see if survey should present or is in holdout.
   ///
@@ -83,7 +90,9 @@ final public class Survey: NSObject, Decodable {
     message: String,
     options: [SurveyOption],
     presentationProbability: Double,
-    includeOtherOption: Bool
+    includeOtherOption: Bool,
+    includeCloseOption: Bool,
+    presentationCondition: SurveyShowCondition
   ) {
     self.id = id
     self.assignmentKey = assignmentKey
@@ -92,6 +101,8 @@ final public class Survey: NSObject, Decodable {
     self.options = options
     self.presentationProbability = presentationProbability
     self.includeOtherOption = includeOtherOption
+    self.includeCloseOption = includeCloseOption
+    self.presentationCondition = presentationCondition
   }
 }
 
@@ -105,7 +116,9 @@ extension Survey: Stubbable {
       message: "test",
       options: [.stub()],
       presentationProbability: 1,
-      includeOtherOption: true
+      includeOtherOption: true,
+      includeCloseOption: true,
+      presentationCondition: .onManualClose
     )
   }
 }

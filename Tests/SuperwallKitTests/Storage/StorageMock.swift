@@ -18,7 +18,7 @@ final class StorageMock: Storage {
   var didClearCachedSessionEvents = false
   var didSave = false
 
-  class DeviceInfoFactoryMock: DeviceHelperFactory, HasPurchaseControllerFactory {
+  class DeviceInfoFactoryMock: DeviceHelperFactory, HasExternalPurchaseControllerFactory {
     func makeDeviceInfo() -> DeviceInfo {
       return DeviceInfo(appInstalledAtString: "a", locale: "b")
     }
@@ -27,7 +27,7 @@ final class StorageMock: Storage {
       return true
     }
 
-    func makeHasPurchaseController() -> Bool {
+    func makeHasExternalPurchaseController() -> Bool {
       return false
     }
   }

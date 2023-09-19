@@ -9,7 +9,7 @@ import Foundation
 
 extension String: ASN1Decodable
 {
-	public static var template: ASN1Template
+	static var template: ASN1Template
 	{
 		return ASN1Template.universal(ASN1Identifier.Tag.utf8String)
 	}
@@ -17,7 +17,7 @@ extension String: ASN1Decodable
 
 extension Int: ASN1Decodable
 {
-	public static var template: ASN1Template
+	static var template: ASN1Template
 	{
 		return ASN1Template.universal(2)
 	}
@@ -25,7 +25,7 @@ extension Int: ASN1Decodable
 
 extension Int32: ASN1Decodable
 {
-	public static var template: ASN1Template
+	static var template: ASN1Template
 	{
 		return ASN1Template.universal(2)
 	}
@@ -33,7 +33,7 @@ extension Int32: ASN1Decodable
 
 extension Data: ASN1Decodable
 {
-	public static var template: ASN1Template
+	static var template: ASN1Template
 	{
 		assertionFailure("Provide template")
 		return ASN1Template.universal(0)
@@ -43,7 +43,7 @@ extension Data: ASN1Decodable
 
 extension String.Encoding
 {
-	public var template: ASN1Template
+	var template: ASN1Template
 	{
 		switch self
 		{

@@ -2,6 +2,24 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.4.0
+
+### Enhancements
+
+- Adds `sdk_version`, `sdk_version_padded`, `app_build_string`, and `app_build_string_number` to the device object for use in rules. `sdk_version` is the version of the sdk, e.g. `3.4.0`. `sdk_version_padded` is the sdk version padded with zeros for use with string comparison. For example `003.004.000`. `app_build_string` is the build of your app and `app_build_string_number` is the build of your app casted as an Int.
+- When you experience `no_rule_match`, the `TriggerFire` event params will specify which part of the rules didn't match in the format `"unmatched_rule_<id>": "<outcome>"`. Where `outcome` will either be `OCCURRENCE`, referring to the limit applied to a rule, or `EXPRESSION`. The `id` is the experiment id.
+- Adds a `touches_began` implicit trigger. By adding the `touches_began` event to a campaign, you can show a paywall the first time a user touches anywhere in your app.
+- Adds the ability to include a close button on a survey.
+- If running in sandbox, the duration of a free trial notification added to a paywall will be converted from days to minutes for testing purposes.
+- Adds the ability to show a survey after purchasing a product.
+
+### Fixes
+
+- Fixes issue where a survey attached to a paywall wouldn't show if you were also using the `paywall_decline` trigger.
+- Fixes issue where verification was happening after the finishing of transactions when not using a `PurchaseController`.
+- Fixes issue where the retrieved `StoreTransaction` associated with the purchased product may be `nil`.
+- Fixes issue where a `presentationRequest` wasn't being tracked for implicit triggers like `session_start` when there was no internet.
+
 ## 3.3.2
 
 ### Fixes
@@ -27,7 +45,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds the ability to add a paywall exit survey. Surveys are configured via the dashboard and added to paywalls. When added to a paywall, it will attempt to display when the user taps the close button. If the paywall has the `modalPresentationStyle` of `pageSheet`, `formSheet`, or `popover`, the survey will also attempt to display when the user tries to drag to dismiss the paywall. The probability of the survey showing is determined by the survey's configuration in the dashboard. A user will only ever see the survey once unless you reset responses via the dashboard. The survey will always show on exit of the paywall in the debugger.
-- Adds the ability to add `survey_close` as a trigger and use the selected option title in rules.
+- Adds the ability to add `survey_response` as a trigger and use the selected option title in rules.
 - Adds new `PaywallCloseReason` `.manualClose`.
 
 ### Fixes

@@ -12,7 +12,6 @@ enum TrackingLogic {
   enum ImplicitTriggerOutcome {
     case triggerPaywall
     case deepLinkTrigger
-    case disallowedEventAsTrigger
     case dontTriggerPaywall
     case closePaywallThenTriggerPaywall
   }

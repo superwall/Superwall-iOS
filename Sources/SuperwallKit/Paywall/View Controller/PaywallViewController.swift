@@ -559,10 +559,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     )
 
     present(alertController, animated: true) { [weak self] in
-      if let loadingState = self?.loadingState,
-        loadingState != .loadingURL {
-        self?.loadingState = .ready
-      }
+      self?.loadingState = .ready
     }
   }
 }
@@ -661,17 +658,34 @@ extension PaywallViewController {
     presentationWillBegin()
   }
 
+  /// Determines whether a survey will show.
+  private var willShowSurvey: Bool {
+    if paywall.surveys.isEmpty {
+      return false
+    }
+    guard
+      modalPresentationStyle == .formSheet ||
+      modalPresentationStyle == .pageSheet ||
+      modalPresentationStyle == .popover
+    else {
+      return false
+    }
+    guard presentationController?.delegate == nil else {
+      return false
+    }
+
+    for survey in paywall.surveys where survey.hasSeenSurvey(storage: storage) {
+      return false
+    }
+    return true
+  }
+
   /// Prepares the view controller for presentation. Only called once per presentation.
   private func presentationWillBegin() {
     guard presentationWillPrepare else {
       return
     }
-    if let survey = paywall.survey,
-      survey.hasSeenSurvey(storage: storage) == false,
-      modalPresentationStyle == .formSheet
-      || modalPresentationStyle == .pageSheet
-      || modalPresentationStyle == .popover,
-      presentationController?.delegate == nil {
+    if willShowSurvey {
       didDisableSwipeForSurvey = true
       presentationController?.delegate = self
       isModalInPresentation = true
@@ -771,7 +785,27 @@ extension PaywallViewController {
     let isDeclined = paywallResult == .declined
     let isManualClose = closeReason == .manualClose
 
-    func dismissView() {
+    func dismissView() async {
+      if isDeclined, isManualClose {
+        let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: info)
+
+        let presentationResult = await Superwall.shared.internallyGetPresentationResult(
+          forEvent: trackedEvent,
+          isImplicit: true
+        )
+        let paywallPresenterEvent = info.presentedByEventWithName
+        let presentedByPaywallDecline = paywallPresenterEvent == SuperwallEventObjc.paywallDecline.description
+
+        await Superwall.shared.track(trackedEvent)
+
+        if case .paywall = presentationResult,
+          !presentedByPaywallDecline {
+          // If a paywall_decline trigger is active and the current paywall wasn't presented
+          // by paywall_decline, it lands here so as not to dismiss the paywall.
+          // track() will do that before presenting the next paywall.
+          return
+        }
+      }
       if let delegate = delegate {
         didCallDelegate = true
         delegate.didFinish(
@@ -780,22 +814,25 @@ extension PaywallViewController {
           shouldDismiss: true
         )
       } else {
-        dismiss(animated: presentationIsAnimated)
+        await dismiss(animated: presentationIsAnimated)
       }
     }
 
     SurveyManager.presentSurveyIfAvailable(
-      paywall.survey,
+      paywall.surveys,
+      paywallResult: result,
+      paywallCloseReason: closeReason,
       using: self,
       loadingState: loadingState,
-      paywallIsManuallyDeclined: isDeclined && isManualClose,
       isDebuggerLaunched: request?.flags.isDebuggerLaunched == true,
       paywallInfo: info,
       storage: storage,
       factory: factory
     ) { [weak self] result in
       self?.surveyPresentationResult = result
-      dismissView()
+      Task {
+        await dismissView()
+      }
     }
   }
 
@@ -832,7 +869,6 @@ extension PaywallViewController {
     // Reset state
     Superwall.shared.destroyPresentingWindow()
     GameControllerManager.shared.clearDelegate(self)
-
 
     if didDisableSwipeForSurvey {
       presentationController?.delegate = nil

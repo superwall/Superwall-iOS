@@ -32,7 +32,7 @@ final class TrackingTests: XCTestCase {
 
   func test_appInstall() async {
     let appInstalledAtString = "now"
-    let result = await Superwall.shared.track(InternalSuperwallEvent.AppInstall(appInstalledAtString: appInstalledAtString, hasPurchaseController: true))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.AppInstall(appInstalledAtString: appInstalledAtString, hasExternalPurchaseController: true))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertTrue(result.parameters.eventParams["$using_purchase_controller"] as! Bool)
@@ -96,7 +96,6 @@ final class TrackingTests: XCTestCase {
 
   func test_surveyResponse() async {
     // Given
-    let eventName = "TestName"
     let survey = Survey.stub()
     let paywallInfo = PaywallInfo.stub()
     let event = InternalSuperwallEvent.SurveyResponse(
@@ -289,12 +288,18 @@ final class TrackingTests: XCTestCase {
   func test_triggerFire_noRuleMatch() async {
     let triggerName = "My Trigger"
     let dependencyContainer = DependencyContainer()
-    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .noRuleMatch, triggerName: triggerName, sessionEventsManager: dependencyContainer.sessionEventsManager))
+    let unmatchedRules: [UnmatchedRule] = [
+      .init(source: .expression, experimentId: "1"),
+      .init(source: .occurrence, experimentId: "2")
+    ]
+    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .noRuleMatch(unmatchedRules), triggerName: triggerName, sessionEventsManager: dependencyContainer.sessionEventsManager))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "trigger_fire")
     XCTAssertEqual(result.parameters.eventParams["$result"] as! String, "no_rule_match")
     XCTAssertEqual(result.parameters.eventParams["$trigger_name"] as! String, triggerName)
+    XCTAssertEqual(result.parameters.eventParams["$unmatched_rule_1"] as! String, "EXPRESSION")
+    XCTAssertEqual(result.parameters.eventParams["$unmatched_rule_2"] as! String, "OCCURRENCE")
     // TODO: Missing test for trigger_session_id here. Need to figure out a way to activate it
   }
 
@@ -581,7 +586,7 @@ final class TrackingTests: XCTestCase {
 
   func test_paywallClose_survey_show() async {
     let paywall: Paywall = .stub()
-      .setting(\.survey, to: .stub())
+      .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromEvent: .stub(), factory: DependencyContainer())
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallClose(
@@ -633,7 +638,7 @@ final class TrackingTests: XCTestCase {
 
   func test_paywallClose_survey_noShow() async {
     let paywall: Paywall = .stub()
-      .setting(\.survey, to: .stub())
+      .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromEvent: .stub(), factory: DependencyContainer())
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallClose(
@@ -685,7 +690,7 @@ final class TrackingTests: XCTestCase {
 
   func test_paywallClose_survey_holdout() async {
     let paywall: Paywall = .stub()
-      .setting(\.survey, to: .stub())
+      .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromEvent: .stub(), factory: DependencyContainer())
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallClose(
@@ -737,7 +742,7 @@ final class TrackingTests: XCTestCase {
 
   func test_paywallClose_noSurvey() async {
     let paywall: Paywall = .stub()
-      .setting(\.survey, to: nil)
+      .setting(\.surveys, to: [])
     let paywallInfo = paywall.getInfo(fromEvent: .stub(), factory: DependencyContainer())
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallClose(
@@ -1242,8 +1247,7 @@ final class TrackingTests: XCTestCase {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
-    let dependencyContainer = DependencyContainer()
-    let skTransaction = MockSKPaymentTransaction(state: .purchased)
+
     let result = await Superwall.shared.track(InternalSuperwallEvent.SubscriptionStart(paywallInfo: paywallInfo, product: product))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
@@ -1318,8 +1322,6 @@ final class TrackingTests: XCTestCase {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
-    let dependencyContainer = DependencyContainer()
-    let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let result = await Superwall.shared.track(InternalSuperwallEvent.FreeTrialStart(paywallInfo: paywallInfo, product: product))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
@@ -1394,8 +1396,6 @@ final class TrackingTests: XCTestCase {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
-    let dependencyContainer = DependencyContainer()
-    let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let result = await Superwall.shared.track(InternalSuperwallEvent.NonRecurringProductPurchase(paywallInfo: paywallInfo, product: product))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)

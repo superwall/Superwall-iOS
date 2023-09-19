@@ -11,23 +11,12 @@ import XCTest
 import StoreKit
 
 class StoreKitManagerTests: XCTestCase {
-  var storeKitCoordinatorFactoryMock: StoreKitCoordinatorFactoryMock!
-
-  private func makeStoreKitManager(with productsFetcher: ProductsFetcherSK1) -> StoreKitManager {
-    let dependencyContainer = DependencyContainer()
-    let coordinator = StoreKitCoordinator(
-      delegateAdapter: dependencyContainer.delegateAdapter,
-      storeKitManager: dependencyContainer.storeKitManager,
-      factory: dependencyContainer,
-      productsFetcher: productsFetcher
-    )
-    storeKitCoordinatorFactoryMock = StoreKitCoordinatorFactoryMock(
-      coordinator: coordinator
-    )
-    let storeKitManager = StoreKitManager(factory: storeKitCoordinatorFactoryMock)
-
-    return storeKitManager
-  }
+  let dependencyContainer = DependencyContainer()
+  lazy var purchaseController = InternalPurchaseController(
+    factory: dependencyContainer,
+    swiftPurchaseController: nil,
+    objcPurchaseController: nil
+  )
 
   func test_getProducts_primaryProduct() async {
     let dependencyContainer = DependencyContainer()
@@ -107,7 +96,10 @@ class StoreKitManagerTests: XCTestCase {
   func test_getProducts_substitutePrimaryProduct_oneResponseProduct() async {
     let productsResult: Result<Set<StoreProduct>, Error> = .success([])
     let productsFetcher = ProductsFetcherSK1Mock(productCompletionResult: productsResult)
-    let manager = makeStoreKitManager(with: productsFetcher)
+    let manager = StoreKitManager(
+      purchaseController: purchaseController,
+      productsFetcher: productsFetcher
+    )
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = PaywallProducts(
@@ -131,7 +123,10 @@ class StoreKitManagerTests: XCTestCase {
       StoreProduct(sk1Product: responseProduct2)
     ])
     let productsFetcher = ProductsFetcherSK1Mock(productCompletionResult: productsResult)
-    let manager = makeStoreKitManager(with: productsFetcher)
+    let manager = StoreKitManager(
+      purchaseController: purchaseController,
+      productsFetcher: productsFetcher
+    )
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = PaywallProducts(

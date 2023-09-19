@@ -8,6 +8,7 @@
 import UIKit
 import Combine
 import SystemConfiguration
+import StoreKit
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
@@ -80,10 +81,6 @@ protocol ConfigManagerFactory: AnyObject {
   ) -> Paywall?
 }
 
-protocol StoreKitCoordinatorFactory: AnyObject {
-  func makeStoreKitCoordinator() -> StoreKitCoordinator
-}
-
 protocol IdentityInfoFactory: AnyObject {
   func makeIdentityInfo() async -> IdentityInfo
 }
@@ -97,8 +94,8 @@ protocol DeviceHelperFactory: AnyObject {
   func makeIsSandbox() -> Bool
 }
 
-protocol HasPurchaseControllerFactory: AnyObject {
-  func makeHasPurchaseController() -> Bool
+protocol HasExternalPurchaseControllerFactory: AnyObject {
+  func makeHasExternalPurchaseController() -> Bool
 }
 
 protocol ApiFactory: AnyObject {
@@ -129,14 +126,14 @@ protocol StoreTransactionFactory: AnyObject {
   func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction
 }
 
-protocol PurchaseManagerFactory: AnyObject {
-  func makePurchaseManager() -> PurchaseManager
-}
-
 protocol OptionsFactory: AnyObject {
   func makeSuperwallOptions() -> SuperwallOptions
 }
 
 protocol TriggerFactory: AnyObject {
   func makeTriggers() -> Set<String>
+}
+
+protocol PurchasedTransactionsFactory {
+  func makePurchasingCoordinator() -> PurchasingCoordinator
 }

@@ -82,13 +82,6 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       type: .getPaywall(.stub())
     )
 
-    let input = PresentablePipelineOutput(
-      debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
-      presenter: UIViewController(),
-      confirmableAssignment: ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
-    )
-
     Superwall.shared.confirmPaywallAssignment(
       ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
       request: request,
@@ -119,13 +112,6 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       type: .getPresentationResult
     )
 
-    let input = PresentablePipelineOutput(
-      debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
-      presenter: UIViewController(),
-      confirmableAssignment: ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
-    )
-
     Superwall.shared.confirmPaywallAssignment(
       ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
       request: request,
@@ -154,13 +140,6 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       isPaywallPresented: false,
       type: .getImplicitPresentationResult
-    )
-
-    let input = PresentablePipelineOutput(
-      debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
-      presenter: UIViewController(),
-      confirmableAssignment: ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
     )
 
     Superwall.shared.confirmPaywallAssignment(

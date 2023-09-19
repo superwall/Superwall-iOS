@@ -8,6 +8,7 @@
 import Foundation
 import StoreKit
 
+/// The payment for the transaction.
 @objc(SWKStorePayment)
 @objcMembers
 public final class StorePayment: NSObject, Encodable, Sendable {

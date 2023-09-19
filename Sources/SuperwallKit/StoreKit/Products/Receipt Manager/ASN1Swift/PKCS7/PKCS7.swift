@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum OID: String
+enum OID: String
 {
 	/// NIST Algorithm
 	case sha1 = "1.3.14.3.2.26"
@@ -26,7 +26,7 @@ public enum OID: String
 	case encryptedData = "1.2.840.113549.1.7.6"
 }
 
-public extension OID
+extension OID
 {
 	@available(iOS 10.0, *)
 	func encryptionAlgorithm() -> SecKeyAlgorithm
@@ -48,10 +48,10 @@ public extension OID
 	}
 }
 
-public struct PKCS7Container: ASN1Decodable
+struct PKCS7Container: ASN1Decodable
 {
-	public var oid: ASN1SkippedField
-	public private(set) var signedData: SignedData
+	var oid: ASN1SkippedField
+	private(set) var signedData: SignedData
 	
 	enum CodingKeys: ASN1CodingKey
 	{
@@ -72,20 +72,20 @@ public struct PKCS7Container: ASN1Decodable
 	
 }
 
-public extension PKCS7Container
+extension PKCS7Container
 {
 	struct SignedData: ASN1Decodable
 	{
-		public static var template: ASN1Template
+		static var template: ASN1Template
 		{
 			return ASN1Template.contextSpecific(0).constructed().explicit(tag: 16).constructed()
 		}
 		
-		public var version: Int32
-		public var alg: DigestAlgorithmIdentifiersContainer
-		public var contentInfo: ContentInfo
-		public var certificates: CetrificatesContaner
-		public var signerInfos: SignerInfos
+		var version: Int32
+		var alg: DigestAlgorithmIdentifiersContainer
+		var contentInfo: ContentInfo
+		var certificates: CetrificatesContaner
+		var signerInfos: SignerInfos
 		
 		enum CodingKeys: ASN1CodingKey
 		{
@@ -116,9 +116,9 @@ public extension PKCS7Container
 	
 	struct DigestAlgorithmIdentifiersContainer: ASN1Decodable
 	{
-		public var items: [Item]
+		var items: [Item]
 		
-		public init(from decoder: Decoder) throws
+		init(from decoder: Decoder) throws
 		{
 			var container: UnkeyedDecodingContainer = try decoder.unkeyedContainer()
 			
@@ -132,12 +132,12 @@ public extension PKCS7Container
 			self.items = items
 		}
 		
-		public static var template: ASN1Template { ASN1Template.universal(ASN1Identifier.Tag.set).constructed() }
+		static var template: ASN1Template { ASN1Template.universal(ASN1Identifier.Tag.set).constructed() }
 		
-		public struct Item: ASN1Decodable
+		struct Item: ASN1Decodable
 		{
-			public var algorithm: String
-			public var parameters: ASN1Null
+			var algorithm: String
+			var parameters: ASN1Null
 			
 			enum CodingKeys: ASN1CodingKey
 			{
@@ -156,7 +156,7 @@ public extension PKCS7Container
 				}
 			}
 			
-			public static var template: ASN1Template
+			static var template: ASN1Template
 			{
 				return ASN1Template.universal(ASN1Identifier.Tag.sequence).constructed()
 			}
@@ -166,13 +166,13 @@ public extension PKCS7Container
 	
 	struct ContentInfo: ASN1Decodable
 	{
-		public static var template: ASN1Template
+		static var template: ASN1Template
 		{
 			return ASN1Template.universal(ASN1Identifier.Tag.sequence).constructed()
 		}
 		
-		public var oid: ASN1SkippedField
-		public var payload: ASN1SkippedField
+		var oid: ASN1SkippedField
+		var payload: ASN1SkippedField
 		
 		enum CodingKeys: ASN1CodingKey
 		{
@@ -195,11 +195,11 @@ public extension PKCS7Container
 	
 	struct Certificate: ASN1Decodable
 	{
-		public var cert: TPSCertificate
-		public var signatureAlgorithm: ASN1SkippedField
-		public var signatureValue: Data
+		var cert: TPSCertificate
+		var signatureAlgorithm: ASN1SkippedField
+		var signatureValue: Data
 		
-		public var rawData: Data
+		var rawData: Data
 		
 		enum CodingKeys: ASN1CodingKey
 		{
@@ -221,7 +221,7 @@ public extension PKCS7Container
 			}
 		}
 		
-		public init(from decoder: Decoder) throws
+		init(from decoder: Decoder) throws
 		{
 			let dec = decoder as! ASN1DecoderProtocol
 			let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -232,7 +232,7 @@ public extension PKCS7Container
 			self.signatureValue = try container.decode(Data.self, forKey: .signatureValue)
 		}
 		
-		public static var template: ASN1Template
+		static var template: ASN1Template
 		{
 			return ASN1Template.universal(ASN1Identifier.Tag.sequence).constructed()
 		}
@@ -240,14 +240,14 @@ public extension PKCS7Container
 	
 	struct TPSCertificate: ASN1Decodable
 	{
-		public var version: Int
-		public var serialNumber: Int
-		public var signature: ASN1SkippedField
-		public var issuer: ASN1SkippedField
-		public var validity: ASN1SkippedField
-		public var subject: ASN1SkippedField
-		public var subjectPublicKeyInfo: Data // We will need only this field
-		public var extensions: ASN1SkippedField
+		var version: Int
+		var serialNumber: Int
+		var signature: ASN1SkippedField
+		var issuer: ASN1SkippedField
+		var validity: ASN1SkippedField
+		var subject: ASN1SkippedField
+		var subjectPublicKeyInfo: Data // We will need only this field
+		var extensions: ASN1SkippedField
 		
 		enum CodingKeys: ASN1CodingKey
 		{
@@ -284,7 +284,7 @@ public extension PKCS7Container
 			}
 		}
 		
-		public init(from decoder: Decoder) throws
+		init(from decoder: Decoder) throws
 		{
 			let container = try decoder.container(keyedBy: CodingKeys.self)
 			
@@ -301,7 +301,7 @@ public extension PKCS7Container
 			self.extensions = try container.decode(ASN1SkippedField.self, forKey: .extensions)
 		}
 		
-		public static var template: ASN1Template
+		static var template: ASN1Template
 		{
 			return ASN1Template.universal(ASN1Identifier.Tag.sequence).constructed()
 		}
@@ -309,9 +309,9 @@ public extension PKCS7Container
 	
 	struct CetrificatesContaner: ASN1Decodable
 	{
-		public let certificates: [Certificate]
+		let certificates: [Certificate]
 		
-		public init(from decoder: Decoder) throws
+		init(from decoder: Decoder) throws
 		{
 			var container: UnkeyedDecodingContainer = try decoder.unkeyedContainer()
 			
@@ -324,7 +324,7 @@ public extension PKCS7Container
 			self.certificates = certificates
 		}
 		
-		public static var template: ASN1Template
+		static var template: ASN1Template
 		{
 			return ASN1Template.contextSpecific(0).constructed().implicit(tag: ASN1Identifier.Tag.sequence)
 		}
@@ -332,16 +332,16 @@ public extension PKCS7Container
 	
 	struct SignerInfos: ASN1Decodable
 	{
-		public static var template: ASN1Template
+		static var template: ASN1Template
 		{
 			return ASN1Template.universal(ASN1Identifier.Tag.set).constructed().explicit(tag: ASN1Identifier.Tag.sequence).constructed()
 		}
 		
-		public var version: Int
-		public var signerIdentifier: ASN1SkippedField
-		public var digestAlgorithm: ASN1SkippedField
-		public var digestEncryptionAlgorithm: ASN1SkippedField
-		public var encryptedDigest: Data
+		var version: Int
+		var signerIdentifier: ASN1SkippedField
+		var digestAlgorithm: ASN1SkippedField
+		var digestEncryptionAlgorithm: ASN1SkippedField
+		var encryptedDigest: Data
 		
 		enum CodingKeys: ASN1CodingKey
 		{
@@ -373,7 +373,7 @@ public extension PKCS7Container
 
 extension PKCS7Container
 {
-	public static var template: ASN1Template
+	static var template: ASN1Template
 	{
 		return ASN1Template.universal(16).constructed()
 	}

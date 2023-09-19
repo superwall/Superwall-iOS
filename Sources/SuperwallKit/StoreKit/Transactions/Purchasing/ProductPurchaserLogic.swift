@@ -9,10 +9,31 @@ import Foundation
 import StoreKit
 
 enum ProductPurchaserLogic {
+  /// Validates the latest transaction
   static func validate(
     transaction: SKPaymentTransaction,
+    since purchaseDate: Date?,
     withProductId productId: String
-  ) throws {
+  ) async throws {
+    guard let purchaseDate = purchaseDate else {
+      throw PurchaseError.unknown
+    }
+
+    // Get latest transaction since the purchase date using sk2.
+    // Check that it's verified.
+    if #available(iOS 15.0, *) {
+      if let verificationResult = await Transaction.latest(
+        for: productId,
+        since: purchaseDate
+      ) {
+        guard case .verified = verificationResult else {
+          throw PurchaseError.unverifiedTransaction
+        }
+        return
+      }
+    }
+
+    // Otherwise, check that the local receipt is valid.
     guard transaction.payment.productIdentifier == productId else {
       throw PurchaseError.noTransactionDetected
     }
@@ -20,7 +41,6 @@ enum ProductPurchaserLogic {
       throw PurchaseError.noTransactionDetected
     }
 
-    // Validation
     guard let localReceipt = try? InAppReceipt() else {
       throw PurchaseError.unverifiedTransaction
     }
