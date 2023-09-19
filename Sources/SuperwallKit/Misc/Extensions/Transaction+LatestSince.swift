@@ -18,7 +18,7 @@ extension Transaction {
     let verificationResult = await Transaction.latest(for: productId)
 
     if let transaction = verificationResult.map({ $0.unsafePayloadValue }),
-      purchaseDate.addingTimeInterval(-3600).compare(transaction.purchaseDate) == .orderedAscending {
+      transaction.purchaseDate.isWithinAnHourBefore(purchaseDate) {
       return verificationResult
     }
 

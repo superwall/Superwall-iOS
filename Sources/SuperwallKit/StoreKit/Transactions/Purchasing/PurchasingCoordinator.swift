@@ -17,15 +17,14 @@ actor PurchasingCoordinator {
   var transactions: [String: SKPaymentTransaction] = [:]
 
   /// A boolean indicating whether the given `date` is within an hour of the `purchaseDate`.
-  func dateIsWithinLastHour(_ date: Date?) -> Bool {
+  func dateIsWithinLastHour(_ transactionDate: Date?) -> Bool {
     guard
-      let date = date,
-      let transactionDate = purchaseDate
+      let transactionDate = transactionDate,
+      let purchaseDate = purchaseDate
     else {
       return false
     }
-    let oneHourBeforePurchase = date.addingTimeInterval(-3600)
-    return oneHourBeforePurchase.compare(transactionDate) == .orderedAscending
+    return transactionDate.isWithinAnHourBefore(purchaseDate)
   }
 
   func setCompletion(_ completion: @escaping (PurchaseResult) -> Void) {
