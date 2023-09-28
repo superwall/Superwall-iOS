@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes issue where multiple events registered in quick succession may not be performed in serial, resulting in unexpected paywalls.
+- Fixes issue where transaction data wouldn't be available for those who are using a purchase controller.
 
 ## 3.4.0
 
