@@ -134,10 +134,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// `true` if there's a survey to complete and the paywall is displayed in a modal style.
   private var didDisableSwipeForSurvey = false
 
-  /// The presenting view controller, saved for presenting surveys from when
-  /// the view disappears.
-  private var internalPresentingViewController: UIViewController?
-
   /// Whether the survey was shown, not shown, or in a holdout. Defaults to not shown.
   private var surveyPresentationResult: SurveyPresentationResult = .noShow
 
@@ -707,10 +703,8 @@ extension PaywallViewController {
     presentationWillPrepare = false
   }
 
-
   public override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
-    internalPresentingViewController = presentingViewController
     presentationDidFinish()
   }
 

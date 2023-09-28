@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// **Do not edit the cases of this as it's used in events**
 enum SurveyPresentationResult: String {
   case show
   case holdout

@@ -441,8 +441,10 @@ final class DebugViewController: UIViewController {
       type: .presentation
     )
 
-    cancellable = Superwall.shared
-      .internallyPresent(presentationRequest)
+
+    let publisher = PassthroughSubject<PaywallState, Never>()
+    cancellable = publisher
+      .receive(on: DispatchQueue.main)
       .sink { state in
         switch state {
         case .presented:
@@ -497,6 +499,10 @@ final class DebugViewController: UIViewController {
           self.activityIndicator.stopAnimating()
         }
       }
+
+    Task {
+      await Superwall.shared.internallyPresent(presentationRequest, publisher)
+    }
   }
 
   override func viewDidDisappear(_ animated: Bool) {

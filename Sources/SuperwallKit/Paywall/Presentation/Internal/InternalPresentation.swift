@@ -20,40 +20,32 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   - request: A presentation request of type `PresentationRequest` to feed into a presentation pipeline.
-  ///   - paywallStatePublisher: A publisher fed into the pipeline that sends state updates. Defaults to `init()` and used by `presentAgain()` to pass in the existing state publisher.
-  /// - Returns: A publisher that outputs a ``PaywallState``.
-  @discardableResult
+  ///   - paywallStatePublisher: A publisher fed into the pipeline that sends state updates.
   func internallyPresent(
     _ request: PresentationRequest,
-    _ publisher: PassthroughSubject<PaywallState, Never> = .init()
-  ) -> PaywallStatePublisher {
-    Task {
-      do {
-        try await checkNoPaywallAlreadyPresented(request, publisher)
+    _ publisher: PassthroughSubject<PaywallState, Never>
+  ) async {
+    do {
+      try await checkNoPaywallAlreadyPresented(request, publisher)
 
-        let paywallComponents = try await getPaywallComponents(request, publisher)
+      let paywallComponents = try await getPaywallComponents(request, publisher)
 
-        guard let presenter = paywallComponents.presenter else {
-          // Will never get here as an error would have already been thrown.
-          return
-        }
-
-        try await presentPaywallViewController(
-          paywallComponents.viewController,
-          on: presenter,
-          unsavedOccurrence: paywallComponents.rulesOutcome.unsavedOccurrence,
-          debugInfo: paywallComponents.debugInfo,
-          request: request,
-          paywallStatePublisher: publisher
-        )
-      } catch {
-        logErrors(from: request, error)
+      guard let presenter = paywallComponents.presenter else {
+        // Will never get here as an error would have already been thrown.
+        return
       }
-    }
 
-    return publisher
-      .receive(on: DispatchQueue.main)
-      .eraseToAnyPublisher()
+      try await presentPaywallViewController(
+        paywallComponents.viewController,
+        on: presenter,
+        unsavedOccurrence: paywallComponents.rulesOutcome.unsavedOccurrence,
+        debugInfo: paywallComponents.debugInfo,
+        request: request,
+        paywallStatePublisher: publisher
+      )
+    } catch {
+      logErrors(from: request, error)
+    }
   }
 
   @MainActor
