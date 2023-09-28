@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.4.1
+
+### Fixes
+
+- Fixes issue where multiple events registered in quick succession may not be performed in serial, resulting in unexpected paywalls.
+
 ## 3.4.0
 
 ### Enhancements
