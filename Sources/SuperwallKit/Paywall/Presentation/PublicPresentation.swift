@@ -86,9 +86,12 @@ extension Superwall {
     handler: PaywallPresentationHandler? = nil,
     feature: @escaping () -> Void
   ) {
-    Task {
-      await internallyRegister(event: event, params: params, handler: handler, feature: feature)
-    }
+    internallyRegister(
+      event: event,
+      params: params,
+      handler: handler,
+      feature: feature
+    )
   }
 
   /// Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -108,9 +111,7 @@ extension Superwall {
     params: [String: Any]? = nil,
     handler: PaywallPresentationHandler? = nil
   ) {
-    Task {
-      await internallyRegister(event: event, params: params, handler: handler)
-    }
+    internallyRegister(event: event, params: params, handler: handler)
   }
 
   private func internallyRegister(
@@ -118,15 +119,11 @@ extension Superwall {
     params: [String: Any]? = nil,
     handler: PaywallPresentationHandler? = nil,
     feature completion: (() -> Void)? = nil
-  ) async {
-    let publisher = await asyncPublisher(
-      forEvent: event,
-      params: params,
-      paywallOverrides: nil,
-      isFeatureGatable: completion != nil
-    )
+  ) {
+    let publisher = PassthroughSubject<PaywallState, Never>()
 
     publisher
+      .receive(on: DispatchQueue.main)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
         receiveValue: { state in
@@ -167,6 +164,16 @@ extension Superwall {
           }
         }
       ))
+
+    serialTaskManager.addTask {
+      await self.trackAndPresentPaywall(
+        forEvent: event,
+        params: params,
+        paywallOverrides: nil,
+        isFeatureGatable: completion != nil,
+        publisher: publisher
+      )
+    }
   }
 
   /// Objective-C-only convenience method. Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -181,9 +188,7 @@ extension Superwall {
   ///   -  event: The name of the event you wish to register.
   @available(swift, obsoleted: 1.0)
   @objc public func register(event: String) {
-    Task {
-      await internallyRegister(event: event)
-    }
+    internallyRegister(event: event)
   }
 
   /// Objective-C-only convenience method. Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -202,9 +207,7 @@ extension Superwall {
     event: String,
     params: [String: Any]?
   ) {
-    Task {
-      await internallyRegister(event: event, params: params)
-    }
+    internallyRegister(event: event, params: params)
   }
 
   /// Returns a publisher that registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
@@ -228,29 +231,36 @@ extension Superwall {
     isFeatureGatable: Bool
   ) -> PaywallStatePublisher {
     return Future {
-      return await self.asyncPublisher(
+      let publisher = PassthroughSubject<PaywallState, Never>()
+
+      await self.trackAndPresentPaywall(
         forEvent: event,
         params: params,
         paywallOverrides: paywallOverrides,
-        isFeatureGatable: isFeatureGatable
+        isFeatureGatable: isFeatureGatable,
+        publisher: publisher
       )
+      return publisher
     }
     .flatMap { publisher in
       return publisher
     }
+    .receive(on: DispatchQueue.main)
     .eraseToAnyPublisher()
   }
 
-  private func asyncPublisher(
+
+  private func trackAndPresentPaywall(
     forEvent event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
-    isFeatureGatable: Bool
-  ) async -> PaywallStatePublisher {
+    isFeatureGatable: Bool,
+    publisher: PassthroughSubject<PaywallState, Never>
+  ) async {
     do {
       try TrackingLogic.checkNotSuperwallEvent(event)
     } catch {
-      return Just(.presentationError(error)).eraseToAnyPublisher()
+      return
     }
 
     let trackableEvent = UserInitiatedEvent.Track(
@@ -267,7 +277,6 @@ extension Superwall {
       isPaywallPresented: isPaywallPresented,
       type: .presentation
     )
-    return internallyPresent(presentationRequest)
-      .eraseToAnyPublisher()
+    await internallyPresent(presentationRequest, publisher)
   }
 }

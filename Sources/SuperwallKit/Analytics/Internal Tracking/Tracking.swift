@@ -20,7 +20,6 @@ extension Superwall {
     let eventCreatedAt = Date()
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: eventCreatedAt,
       appSessionId: dependencyContainer.appSessionManager.appSession.id
     )
 
@@ -75,6 +74,22 @@ extension Superwall {
     forEvent event: Trackable,
     withData eventData: EventData
   ) async {
+    serialTaskManager.addTask { [weak self] in
+      guard let self = self else {
+        return
+      }
+      await self.internallyHandleImplicitTrigger(
+        forEvent: event,
+        withData: eventData
+      )
+    }
+  }
+
+  @MainActor
+  private func internallyHandleImplicitTrigger(
+    forEvent event: Trackable,
+    withData eventData: EventData
+  ) async {
     let presentationInfo: PresentationInfo = .implicitTrigger(eventData)
 
     var request = dependencyContainer.makePresentationRequest(
@@ -114,6 +129,6 @@ extension Superwall {
 
     request.flags.isPaywallPresented = isPaywallPresented
 
-    internallyPresent(request, statePublisher)
+    await internallyPresent(request, statePublisher)
   }
 }

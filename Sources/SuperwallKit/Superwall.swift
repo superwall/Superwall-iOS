@@ -147,7 +147,6 @@ public final class Superwall: NSObject, ObservableObject {
   // MARK: - Non-public Properties
   private static var superwall: Superwall?
 
-
   /// The presented paywall view controller.
   var paywallViewController: PaywallViewController? {
     return dependencyContainer.paywallManager.presentedViewController
@@ -169,6 +168,9 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Handles all dependencies.
   let dependencyContainer: DependencyContainer
+
+  /// Used to serially execute register calls.
+  let serialTaskManager = SerialTaskManager()
 
   // MARK: - Private Functions
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {

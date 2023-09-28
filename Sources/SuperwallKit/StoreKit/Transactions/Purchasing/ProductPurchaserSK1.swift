@@ -48,8 +48,6 @@ final class ProductPurchaserSK1: NSObject {
   /// Purchases a product, waiting for the completion block to be fired and
   /// returning a purchase result.
   func purchase(product: SKProduct) async -> PurchaseResult {
-    await coordinator.beginPurchase(of: product.productIdentifier)
-
     let task = Task {
       return await withCheckedContinuation { continuation in
         Task {
