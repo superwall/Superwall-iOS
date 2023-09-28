@@ -130,6 +130,7 @@ actor PurchasingCoordinator {
     lastInternalTransaction = transaction
     completion?(result)
     completion = nil
+    purchaseDate = nil
     productId = nil
   }
 }

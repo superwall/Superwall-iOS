@@ -132,6 +132,9 @@ extension InternalPurchaseController {
 extension InternalPurchaseController {
   @MainActor
   func purchase(product: SKProduct) async -> PurchaseResult {
+    await productPurchaser.coordinator.beginPurchase(
+      of: product.productIdentifier
+    )
     if let purchaseController = swiftPurchaseController {
       return await purchaseController.purchase(product: product)
     } else if let purchaseController = objcPurchaseController {

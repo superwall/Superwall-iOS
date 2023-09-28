@@ -113,6 +113,7 @@ extension Superwall {
   ) {
     internallyRegister(event: event, params: params, handler: handler)
   }
+
   private func internallyRegister(
     event: String,
     params: [String: Any]? = nil,
@@ -165,12 +166,12 @@ extension Superwall {
       ))
 
     serialTaskManager.addTask {
-      await self.asyncPublisher(
-        publisher,
+      await self.trackAndPresentPaywall(
         forEvent: event,
         params: params,
         paywallOverrides: nil,
-        isFeatureGatable: completion != nil
+        isFeatureGatable: completion != nil,
+        publisher: publisher
       )
     }
   }
@@ -232,12 +233,12 @@ extension Superwall {
     return Future {
       let publisher = PassthroughSubject<PaywallState, Never>()
 
-      await self.asyncPublisher(
-        publisher,
+      await self.trackAndPresentPaywall(
         forEvent: event,
         params: params,
         paywallOverrides: paywallOverrides,
-        isFeatureGatable: isFeatureGatable
+        isFeatureGatable: isFeatureGatable,
+        publisher: publisher
       )
       return publisher
     }
@@ -249,12 +250,12 @@ extension Superwall {
   }
 
 
-  private func asyncPublisher(
-    _ publisher: PassthroughSubject<PaywallState, Never>,
+  private func trackAndPresentPaywall(
     forEvent event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
-    isFeatureGatable: Bool
+    isFeatureGatable: Bool,
+    publisher: PassthroughSubject<PaywallState, Never>
   ) async {
     do {
       try TrackingLogic.checkNotSuperwallEvent(event)
