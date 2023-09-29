@@ -18,7 +18,6 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
@@ -55,7 +54,6 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
@@ -98,7 +96,6 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: event.eventData!.createdAt,
       appSessionId: "abc"
     )
 
@@ -121,7 +118,6 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
@@ -148,7 +144,6 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
@@ -175,7 +170,6 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
@@ -202,7 +196,6 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
@@ -230,7 +223,6 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
@@ -258,7 +250,6 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 
@@ -285,7 +276,6 @@ final class TrackingLogicTests: XCTestCase {
     // When
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: Date(),
       appSessionId: "abc"
     )
 

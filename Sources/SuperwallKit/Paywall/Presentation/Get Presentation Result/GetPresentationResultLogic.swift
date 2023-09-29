@@ -19,8 +19,8 @@ enum GetPresentationResultLogic {
       return .paywallNotAvailable
     case .noRuleMatch:
       return .noRuleMatch
-    case .paywall(let paywall):
-      return .paywall(paywall)
+    case .paywall(let experiment):
+      return .paywall(experiment)
     }
   }
 }

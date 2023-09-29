@@ -77,7 +77,6 @@ extension Superwall {
 
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: eventCreatedAt,
       appSessionId: dependencyContainer.appSessionManager.appSession.id
     )
 

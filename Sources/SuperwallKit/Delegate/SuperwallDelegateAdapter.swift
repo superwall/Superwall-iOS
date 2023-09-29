@@ -86,6 +86,7 @@ final class SuperwallDelegateAdapter {
     }
   }
 
+  @MainActor
   func subscriptionStatusDidChange(to newValue: SubscriptionStatus) {
     if let swiftDelegate = swiftDelegate {
       swiftDelegate.subscriptionStatusDidChange(to: newValue)
