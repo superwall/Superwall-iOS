@@ -238,9 +238,9 @@ public final class Superwall: NSObject, ObservableObject {
             return
           }
           self.dependencyContainer.storage.save(newValue, forType: ActiveSubscriptionStatus.self)
-          self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
 
           Task {
+            await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
             let event = InternalSuperwallEvent.SubscriptionStatusDidChange(subscriptionStatus: newValue)
             await self.track(event)
           }
