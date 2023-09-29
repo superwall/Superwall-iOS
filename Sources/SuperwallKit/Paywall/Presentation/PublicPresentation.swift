@@ -249,7 +249,6 @@ extension Superwall {
     .eraseToAnyPublisher()
   }
 
-
   private func trackAndPresentPaywall(
     forEvent event: String,
     params: [String: Any]? = nil,
