@@ -12,14 +12,12 @@ enum TrackingLogic {
   enum ImplicitTriggerOutcome {
     case triggerPaywall
     case deepLinkTrigger
-    case disallowedEventAsTrigger
     case dontTriggerPaywall
     case closePaywallThenTriggerPaywall
   }
 
   static func processParameters(
     fromTrackableEvent trackableEvent: Trackable,
-    eventCreatedAt: Date,
     appSessionId: String
   ) async -> TrackingParameters {
     var superwallParameters = await trackableEvent.getSuperwallParameters()

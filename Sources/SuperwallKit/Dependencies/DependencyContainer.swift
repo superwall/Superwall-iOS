@@ -9,6 +9,7 @@
 import UIKit
 import Combine
 import SystemConfiguration
+import StoreKit
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
 ///
@@ -83,12 +84,6 @@ final class DependencyContainer {
       configManager: configManager
     )
 
-    appSessionManager = AppSessionManager(
-      configManager: configManager,
-      storage: storage,
-      delegate: self
-    )
-
     identityManager = IdentityManager(
       deviceHelper: deviceHelper,
       storage: storage,
@@ -105,6 +100,13 @@ final class DependencyContainer {
       network: network,
       configManager: configManager,
       factory: self
+    )
+
+    // Must be after session events
+    appSessionManager = AppSessionManager(
+      configManager: configManager,
+      storage: storage,
+      delegate: self
     )
 
     debugManager = DebugManager(
@@ -433,7 +435,7 @@ extension DependencyContainer: TriggerFactory {
 // MARK: - Purchase Controller Factory
 extension DependencyContainer: HasExternalPurchaseControllerFactory {
   func makeHasExternalPurchaseController() -> Bool {
-    return storeKitManager.purchaseController.isDeveloperProvided
+    return storeKitManager.purchaseController.hasExternalPurchaseController
   }
 }
 
@@ -448,5 +450,12 @@ extension DependencyContainer: FeatureFlagsFactory {
 extension DependencyContainer: ComputedPropertyRequestsFactory {
   func makeComputedPropertyRequests() -> [ComputedPropertyRequest] {
     return configManager.config?.allComputedProperties ?? []
+  }
+}
+
+// MARK: - Purchased Transactions Factory
+extension DependencyContainer: PurchasedTransactionsFactory {
+  func makePurchasingCoordinator() -> PurchasingCoordinator {
+    return storeKitManager.purchaseController.productPurchaser.coordinator
   }
 }

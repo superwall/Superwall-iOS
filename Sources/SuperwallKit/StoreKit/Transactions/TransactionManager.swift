@@ -17,6 +17,8 @@ final class TransactionManager {
     & OptionsFactory
     & TriggerFactory
     & StoreTransactionFactory
+    & DeviceHelperFactory
+    & PurchasedTransactionsFactory
   private let factory: Factories
 
   /// The paywall view controller that the last product was purchased from.
@@ -183,7 +185,11 @@ final class TransactionManager {
       error: nil
     )
 
-    let transaction = await getLatestTransaction(of: product.productIdentifier)
+    let purchasingCoordinator = factory.makePurchasingCoordinator()
+    let transaction = await purchasingCoordinator.getLatestTransaction(
+      forProductId: product.productIdentifier,
+      factory: factory
+    )
 
     if let transaction = transaction {
       await self.sessionEventsManager.enqueue(transaction)
@@ -202,21 +208,6 @@ final class TransactionManager {
         paywallViewController,
         result: .purchased(productId: product.productIdentifier)
       )
-    }
-  }
-
-  private func getLatestTransaction(of productId: String) async -> StoreTransaction? {
-    if #available(iOS 15.0, *) {
-      let verificationResult = await Transaction.latest(for: productId)
-      if let transaction = verificationResult.map({ $0.unsafePayloadValue }) {
-        return await factory.makeStoreTransaction(from: transaction)
-      }
-      return nil
-    } else {
-      if let transaction = await storeKitManager.purchaseController.productPurchaser.purchasing.lastTransaction {
-        return await factory.makeStoreTransaction(from: transaction)
-      }
-      return nil
     }
   }
 
@@ -333,7 +324,7 @@ final class TransactionManager {
         $0.type == .trialStarted
       }
 
-      await NotificationScheduler.scheduleNotifications(notifications)
+      await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
     } else {
       let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
         paywallInfo: paywallInfo,

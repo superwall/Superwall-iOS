@@ -6,7 +6,7 @@ import Combine
 
 /// The primary class for integrating Superwall into your application. After configuring via
 /// ``configure(apiKey:purchaseController:options:completion:)-52tke``, it provides access to
-/// all its featured via instance functions and variables.
+/// all its features via instance functions and variables.
 @objcMembers
 public final class Superwall: NSObject, ObservableObject {
   // MARK: - Public Properties
@@ -147,7 +147,6 @@ public final class Superwall: NSObject, ObservableObject {
   // MARK: - Non-public Properties
   private static var superwall: Superwall?
 
-
   /// The presented paywall view controller.
   var paywallViewController: PaywallViewController? {
     return dependencyContainer.paywallManager.presentedViewController
@@ -169,6 +168,9 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Handles all dependencies.
   let dependencyContainer: DependencyContainer
+
+  /// Used to serially execute register calls.
+  let serialTaskManager = SerialTaskManager()
 
   // MARK: - Private Functions
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
@@ -236,9 +238,9 @@ public final class Superwall: NSObject, ObservableObject {
             return
           }
           self.dependencyContainer.storage.save(newValue, forType: ActiveSubscriptionStatus.self)
-          self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
 
           Task {
+            await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
             let event = InternalSuperwallEvent.SubscriptionStatusDidChange(subscriptionStatus: newValue)
             await self.track(event)
           }
@@ -465,29 +467,11 @@ extension Superwall: PaywallViewControllerEventDelegate {
 
     switch paywallEvent {
     case .closed:
-      let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: paywallViewController.info)
-
-      let presentationResult = await internallyGetPresentationResult(
-        forEvent: trackedEvent,
-        requestType: .getImplicitPresentationResult
+      dismiss(
+        paywallViewController,
+        result: .declined,
+        closeReason: .manualClose
       )
-      let paywallPresenterEvent = paywallViewController.info.presentedByEventWithName
-      let presentedByPaywallDecline = paywallPresenterEvent == SuperwallEventObjc.paywallDecline.description
-
-      if case .paywall = presentationResult,
-        !presentedByPaywallDecline {
-        // If a paywall_decline trigger is active and the current paywall wasn't presented
-        // by paywall_decline, it lands here so as not to dismiss the paywall.
-        // track() will do that before presenting the next paywall.
-      } else {
-        dismiss(
-          paywallViewController,
-          result: .declined,
-          closeReason: .manualClose
-        )
-      }
-
-      await Superwall.shared.track(trackedEvent)
     case .initiatePurchase(let productId):
       await dependencyContainer.transactionManager.purchase(
         productId,

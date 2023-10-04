@@ -27,6 +27,7 @@ public protocol SuperwallDelegate: AnyObject {
   ///
   /// - Parameters:
   ///   - newValue: The new value of ``Superwall/subscriptionStatus``.
+  @MainActor
   func subscriptionStatusDidChange(to newValue: SubscriptionStatus)
 
   /// Called whenever an internal analytics event is tracked.

@@ -19,7 +19,12 @@ extension Superwall {
     case .getPaywall:
       message += "Superwall.shared.getPaywall"
     case .presentation:
-      message += "Superwall.shared.register"
+      switch request.presentationInfo.triggerType {
+      case .explicit:
+        message += "Superwall.shared.register"
+      case .implicit:
+        message = "Tracking an implicit trigger"
+      }
     case .getPresentationResult:
       message += "Superwall.shared.getPresentationResult"
     case .getImplicitPresentationResult:

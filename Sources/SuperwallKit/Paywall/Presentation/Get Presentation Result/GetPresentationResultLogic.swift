@@ -9,7 +9,7 @@ import Foundation
 
 enum GetPresentationResultLogic {
   /// Converts a ``TriggerResult`` to a ``PresentationResult``
-  static func convertTriggerResult(_ triggerResult: TriggerResult) -> PresentationResult {
+  static func convertTriggerResult(_ triggerResult: InternalTriggerResult) -> PresentationResult {
     switch triggerResult {
     case .eventNotFound:
       return .eventNotFound
@@ -19,8 +19,8 @@ enum GetPresentationResultLogic {
       return .paywallNotAvailable
     case .noRuleMatch:
       return .noRuleMatch
-    case .paywall(let paywall):
-      return .paywall(paywall)
+    case .paywall(let experiment):
+      return .paywall(experiment)
     }
   }
 }

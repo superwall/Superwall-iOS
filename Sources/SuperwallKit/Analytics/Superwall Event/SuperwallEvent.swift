@@ -138,6 +138,14 @@ public enum SuperwallEvent {
     reason: PaywallPresentationRequestStatusReason?
   )
 
+  /// When the first touch was detected on the UIWindow of the app.
+  ///
+  /// This is only registered if there's an active `touches_began` trigger on your dashboard.
+  case touchesBegan
+
+  /// When the user chose the close button on a survey instead of responding.
+  case surveyClose
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -147,7 +155,8 @@ public enum SuperwallEvent {
       .transactionFail,
       .paywallDecline,
       .transactionAbandon,
-      .surveyResponse:
+      .surveyResponse,
+      .touchesBegan:
       return true
     default:
       return false
@@ -247,6 +256,10 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallPresentationRequest)
     case .surveyResponse:
       return .init(objcEvent: .surveyResponse)
+    case .touchesBegan:
+      return .init(objcEvent: .touchesBegan)
+    case .surveyClose:
+      return .init(objcEvent: .surveyClose)
     }
   }
 }

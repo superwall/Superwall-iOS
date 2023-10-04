@@ -13,7 +13,7 @@ protocol RestoreDelegate: AnyObject {
 }
 
 final class InternalPurchaseController: PurchaseController {
-  var isDeveloperProvided: Bool {
+  var hasExternalPurchaseController: Bool {
     return swiftPurchaseController != nil || objcPurchaseController != nil
   }
   private var swiftPurchaseController: PurchaseController?
@@ -36,7 +36,7 @@ final class InternalPurchaseController: PurchaseController {
 // MARK: - Subscription Status
 extension InternalPurchaseController {
   func syncSubscriptionStatus(withPurchases purchases: Set<InAppPurchase>) async {
-    if isDeveloperProvided {
+    if hasExternalPurchaseController {
       return
     }
     let activePurchases = purchases.filter { $0.isActive }
@@ -132,6 +132,9 @@ extension InternalPurchaseController {
 extension InternalPurchaseController {
   @MainActor
   func purchase(product: SKProduct) async -> PurchaseResult {
+    await productPurchaser.coordinator.beginPurchase(
+      of: product.productIdentifier
+    )
     if let purchaseController = swiftPurchaseController {
       return await purchaseController.purchase(product: product)
     } else if let purchaseController = objcPurchaseController {

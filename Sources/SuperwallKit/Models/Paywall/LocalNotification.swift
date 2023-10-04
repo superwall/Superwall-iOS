@@ -23,8 +23,36 @@ public final class LocalNotification: NSObject, Decodable {
   /// The body text of the notification.
   public let body: String
 
-  /// The delay to the notification in minutes.
+  /// The delay to the notification in milliseconds.
   public let delay: Milliseconds
+
+  init(
+    type: LocalNotificationType,
+    title: String,
+    subtitle: String?,
+    body: String,
+    delay: Milliseconds
+  ) {
+    self.type = type
+    self.title = title
+    self.subtitle = subtitle
+    self.body = body
+    self.delay = delay
+  }
+}
+
+// MARK: - Stubbable
+extension LocalNotification: Stubbable {
+  static func stub() -> LocalNotification {
+    let oneDay: Milliseconds = 86400000
+    return .init(
+      type: .trialStarted,
+      title: "title",
+      subtitle: "subtitle",
+      body: "body",
+      delay: oneDay
+    )
+  }
 }
 
 /// The type of notification.

@@ -42,6 +42,10 @@ struct DeviceTemplate: Codable {
   var isSandbox: String
   var subscriptionStatus: String
   var isFirstAppOpen: Bool
+  var sdkVersion: String
+  var sdkVersionPadded: String
+  var appBuildString: String
+  var appBuildStringNumber: Int?
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

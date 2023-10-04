@@ -3,7 +3,7 @@
 //
 //  Created by Jake Mor on 8/10/21.
 //
-// swiftlint:disable type_body_length
+// swiftlint:disable type_body_length file_length
 
 import UIKit
 import Foundation
@@ -147,6 +147,13 @@ class DeviceHelper {
     return result
   }()
 
+  let appBuildString: String = {
+    guard let build = Bundle.main.infoDictionary?[kCFBundleVersionKey as String] as? String else {
+      return ""
+    }
+    return build
+  }()
+
   let interfaceType: String = {
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
@@ -181,6 +188,8 @@ class DeviceHelper {
     }
     return installDate
   }()
+
+  private let sdkVersionPadded: String
 
   private var daysSinceInstall: Int {
     let fromDate = appInstallDate ?? Date()
@@ -329,6 +338,52 @@ class DeviceHelper {
     return output
   }
 
+  static func makePaddedSdkVersion(using sdkVersion: String) -> String {
+    // Separate out the "beta" part from the main version.
+    let components = sdkVersion.split(separator: "-")
+    if components.isEmpty {
+      return ""
+    }
+    let versionNumber = String(components[0])
+
+    var appendix = ""
+
+    // If there is a "beta" part...
+    if components.count > 1 {
+      // Separate out the number from the name, e.g. beta.1 -> [beta, 1]
+      let appendixComponents = components[1].split(separator: ".")
+      appendix = "-" + String(appendixComponents[0])
+
+      var appendixVersion = ""
+
+      // Pad beta number and add to appendix
+      if appendixComponents.count > 1 {
+        appendixVersion = String(format: "%03d", Int(appendixComponents[1]) ?? 0)
+        appendix += "." + appendixVersion
+      }
+    }
+
+    // Separate out the version numbers.
+    let versionComponents = versionNumber.split(separator: ".")
+    var newVersion = ""
+    if !versionComponents.isEmpty {
+      let major = String(format: "%03d", Int(versionComponents[0]) ?? 0)
+      newVersion += major
+    }
+    if versionComponents.count > 1 {
+      let minor = String(format: "%03d", Int(versionComponents[1]) ?? 0)
+      newVersion += ".\(minor)"
+    }
+    if versionComponents.count > 2 {
+      let patch = String(format: "%03d", Int(versionComponents[2]) ?? 0)
+      newVersion += ".\(patch)"
+    }
+
+    newVersion += appendix
+
+    return newVersion
+  }
+
   private func getTemplateDevice() async -> [String: Any] {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
@@ -367,9 +422,12 @@ class DeviceHelper {
       localDateTime: localDateTimeString,
       isSandbox: isSandbox,
       subscriptionStatus: Superwall.shared.subscriptionStatus.description,
-      isFirstAppOpen: isFirstAppOpen
+      isFirstAppOpen: isFirstAppOpen,
+      sdkVersion: sdkVersion,
+      sdkVersionPadded: sdkVersionPadded,
+      appBuildString: appBuildString,
+      appBuildStringNumber: Int(appBuildString)
     )
-
     return template.toDictionary()
   }
 
@@ -385,5 +443,6 @@ class DeviceHelper {
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
     self.factory = factory
     reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.hostDomain)
+    self.sdkVersionPadded = Self.makePaddedSdkVersion(using: sdkVersion)
   }
 }

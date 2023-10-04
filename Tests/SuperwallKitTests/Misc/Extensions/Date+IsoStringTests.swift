@@ -4,11 +4,10 @@
 //
 //  Created by Yusuf Tör on 09/03/2022.
 //
+// swiftlint:disable all
 
 import XCTest
 @testable import SuperwallKit
-
-// swiftlint:disable all
 
 class Date_IsoStringTests: XCTestCase {
   func testIsoString() {

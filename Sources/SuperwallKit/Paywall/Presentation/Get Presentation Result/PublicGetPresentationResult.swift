@@ -36,7 +36,7 @@ extension Superwall {
 
     return await internallyGetPresentationResult(
       forEvent: event,
-      requestType: .getPresentationResult
+      isImplicit: false
     )
   }
 
@@ -71,13 +71,12 @@ extension Superwall {
   ///   - requestType: The presentation request type, which will control the flow of the pipeline.
   func internallyGetPresentationResult(
     forEvent event: Trackable,
-    requestType: PresentationRequestType
+    isImplicit: Bool
   ) async -> PresentationResult {
     let eventCreatedAt = Date()
 
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: eventCreatedAt,
       appSessionId: dependencyContainer.appSessionManager.appSession.id
     )
 
@@ -91,7 +90,7 @@ extension Superwall {
       .explicitTrigger(eventData),
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: requestType
+      type: isImplicit ? .getImplicitPresentationResult : .getPresentationResult
     )
 
     return await getPresentationResult(for: presentationRequest)

@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import StoreKit
+import Combine
 
 extension Superwall {
   /// Tracks an analytical event by sending it to the server and, for internal Superwall events, the delegate.
@@ -20,7 +20,6 @@ extension Superwall {
     let eventCreatedAt = Date()
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
-      eventCreatedAt: eventCreatedAt,
       appSessionId: dependencyContainer.appSessionManager.appSession.id
     )
 
@@ -75,15 +74,35 @@ extension Superwall {
     forEvent event: Trackable,
     withData eventData: EventData
   ) async {
-    do {
-      try await dependencyContainer.configManager.configState
-        .compactMap { $0.getConfig() }
-        .throwableAsync()
-    } catch {
-      return
+    serialTaskManager.addTask { [weak self] in
+      guard let self = self else {
+        return
+      }
+      await self.internallyHandleImplicitTrigger(
+        forEvent: event,
+        withData: eventData
+      )
     }
+  }
 
+  @MainActor
+  private func internallyHandleImplicitTrigger(
+    forEvent event: Trackable,
+    withData eventData: EventData
+  ) async {
     let presentationInfo: PresentationInfo = .implicitTrigger(eventData)
+
+    var request = dependencyContainer.makePresentationRequest(
+      presentationInfo,
+      isPaywallPresented: isPaywallPresented,
+      type: .presentation
+    )
+
+    do {
+      try await waitForSubsStatusAndConfig(request, paywallStatePublisher: nil)
+    } catch {
+      return logErrors(from: request, error)
+    }
 
     let outcome = TrackingLogic.canTriggerPaywall(
       event,
@@ -91,50 +110,25 @@ extension Superwall {
       paywallViewController: paywallViewController
     )
 
+    var statePublisher = PassthroughSubject<PaywallState, Never>()
+
     switch outcome {
     case .deepLinkTrigger:
-      if isPaywallPresented {
-        await dismiss()
-      }
-      let presentationRequest = dependencyContainer.makePresentationRequest(
-        presentationInfo,
-        isPaywallPresented: isPaywallPresented,
-        type: .presentation
-      )
-      _ = try? await internallyPresent(presentationRequest).throwableAsync()
+      await dismiss()
     case .closePaywallThenTriggerPaywall:
       guard let lastPresentationItems = presentationItems.last else {
         return
       }
-      if isPaywallPresented {
-        await dismissForNextPaywall()
-      }
-      let presentationRequest = dependencyContainer.makePresentationRequest(
-        presentationInfo,
-        isPaywallPresented: isPaywallPresented,
-        type: .presentation
-      )
-      _ = try? await internallyPresent(
-        presentationRequest,
-        lastPresentationItems.statePublisher
-      ).throwableAsync()
+      await dismissForNextPaywall()
+      statePublisher = lastPresentationItems.statePublisher
     case .triggerPaywall:
-      let presentationRequest = dependencyContainer.makePresentationRequest(
-        presentationInfo,
-        isPaywallPresented: isPaywallPresented,
-        type: .presentation
-      )
-      _ = try? await internallyPresent(presentationRequest).throwableAsync()
-    case .disallowedEventAsTrigger:
-      Logger.debug(
-        logLevel: .warn,
-        scope: .superwallCore,
-        message: "Event Used as Trigger",
-        info: ["message": "You can't use events as triggers"],
-        error: nil
-      )
+      break
     case .dontTriggerPaywall:
       return
     }
+
+    request.flags.isPaywallPresented = isPaywallPresented
+
+    await internallyPresent(request, statePublisher)
   }
 }

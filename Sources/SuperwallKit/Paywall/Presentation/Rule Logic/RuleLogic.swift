@@ -16,7 +16,12 @@ struct ConfirmableAssignment: Equatable {
 struct RuleEvaluationOutcome {
   var confirmableAssignment: ConfirmableAssignment?
   var unsavedOccurrence: TriggerRuleOccurrence?
-  var triggerResult: TriggerResult
+  var triggerResult: InternalTriggerResult
+}
+
+enum RuleMatchOutcome {
+  case matched(MatchedItem)
+  case noMatchingRules([UnmatchedRule])
 }
 
 struct RuleLogic {
@@ -50,16 +55,23 @@ struct RuleLogic {
       return RuleEvaluationOutcome(triggerResult: .eventNotFound)
     }
 
-    guard let ruleOutcome = await findMatchingRule(
+    let ruleMatchOutcome = await findMatchingRule(
       for: event,
       withTrigger: trigger
-    ) else {
-      return RuleEvaluationOutcome(triggerResult: .noRuleMatch)
+    )
+
+    let matchedRuleItem: MatchedItem
+
+    switch ruleMatchOutcome {
+    case .matched(let item):
+      matchedRuleItem = item
+    case .noMatchingRules(let unmatchedRules):
+      return.init(triggerResult: .noRuleMatch(unmatchedRules))
     }
 
     let variant: Experiment.Variant
     var confirmableAssignment: ConfirmableAssignment?
-    let rule = ruleOutcome.rule
+    let rule = matchedRuleItem.rule
     // For a matching rule there will be an unconfirmed (in-memory) or confirmed (on disk) variant assignment.
     // First check the disk, otherwise check memory.
     let confirmedAssignments = storage.getConfirmedAssignments()
@@ -92,7 +104,7 @@ struct RuleLogic {
     case .holdout:
       return RuleEvaluationOutcome(
         confirmableAssignment: confirmableAssignment,
-        unsavedOccurrence: ruleOutcome.unsavedOccurrence,
+        unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .holdout(
           Experiment(
             id: rule.experiment.id,
@@ -104,7 +116,7 @@ struct RuleLogic {
     case .treatment:
       return RuleEvaluationOutcome(
         confirmableAssignment: confirmableAssignment,
-        unsavedOccurrence: ruleOutcome.unsavedOccurrence,
+        unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .paywall(
           Experiment(
             id: rule.experiment.id,
@@ -119,24 +131,28 @@ struct RuleLogic {
   func findMatchingRule(
     for event: EventData,
     withTrigger trigger: Trigger
-  ) async -> TriggerRuleOutcome? {
+  ) async -> RuleMatchOutcome {
     let expressionEvaluator = ExpressionEvaluator(
       storage: storage,
       factory: factory
     )
+
+    var unmatchedRules: [UnmatchedRule] = []
 
     for rule in trigger.rules {
       let outcome = await expressionEvaluator.evaluateExpression(
         fromRule: rule,
         eventData: event
       )
-      if outcome.shouldFire {
-        return TriggerRuleOutcome(
-          rule: rule,
-          unsavedOccurrence: outcome.unsavedOccurrence
-        )
+
+      switch outcome {
+      case .match(let item):
+        return .matched(item)
+      case .noMatch(let noRuleMatch):
+        unmatchedRules.append(noRuleMatch)
       }
     }
-    return nil
+
+    return .noMatchingRules(unmatchedRules)
   }
 }

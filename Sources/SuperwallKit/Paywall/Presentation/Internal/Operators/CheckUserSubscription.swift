@@ -18,7 +18,7 @@ extension Superwall {
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   func checkUserSubscription(
     request: PresentationRequest,
-    triggerResult: TriggerResult,
+    triggerResult: InternalTriggerResult,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
   ) async throws {
     switch triggerResult {
