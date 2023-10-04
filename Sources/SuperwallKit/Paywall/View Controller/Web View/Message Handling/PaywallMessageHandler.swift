@@ -90,7 +90,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       "paywall_id": paywall.databaseId,
       "paywall_identifier": paywall.identifier
     ]
-    guard let jsonEncodedEvent = try? JSONEncoder().encode(event) else {
+    guard let jsonEncodedEvent = try? JSONEncoder().encode([event]) else {
       return
     }
     let base64Event = jsonEncodedEvent.base64EncodedString()
