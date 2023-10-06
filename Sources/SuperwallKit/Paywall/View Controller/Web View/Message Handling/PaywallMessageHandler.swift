@@ -172,7 +172,11 @@ final class PaywallMessageHandler: WebEventDelegate {
             error: error
           )
         }
-        self?.delegate?.loadingState = .ready
+
+        let delay = self?.delegate?.paywall.presentation.delay ?? 0
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delay)) {
+          self?.delegate?.loadingState = .ready
+        }
       }
 
       // block selection
