@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 06/12/2022.
 //
+// swiftlint:disable function_body_length
 
 import Foundation
 import StoreKit
