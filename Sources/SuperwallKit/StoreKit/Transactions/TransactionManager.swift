@@ -59,7 +59,10 @@ final class TransactionManager {
         from: paywallViewController
       )
     case .restored:
-      await transactionWasRestored(paywallViewController: paywallViewController)
+      await transactionWasRestored(
+        paywallViewController: paywallViewController,
+        viaPurchase: true
+      )
     case .failed(let error):
       let superwallOptions = factory.makeSuperwallOptions()
       guard let outcome = TransactionErrorLogic.handle(
@@ -120,7 +123,10 @@ final class TransactionManager {
         scope: .paywallTransactions,
         message: "Transactions Restored"
       )
-      await transactionWasRestored(paywallViewController: paywallViewController)
+      await transactionWasRestored(
+        paywallViewController: paywallViewController,
+        viaPurchase: false
+      )
     } else {
       Logger.debug(
         logLevel: .debug,
@@ -136,11 +142,14 @@ final class TransactionManager {
     }
   }
 
-  private func transactionWasRestored(paywallViewController: PaywallViewController) async {
+  private func transactionWasRestored(
+    paywallViewController: PaywallViewController,
+    viaPurchase: Bool
+  ) async {
     let paywallInfo = await paywallViewController.info
 
     let trackedEvent = InternalSuperwallEvent.Transaction(
-      state: .restore,
+      state: .restore(viaPurchase: viaPurchase),
       paywallInfo: paywallInfo,
       product: nil,
       model: nil
