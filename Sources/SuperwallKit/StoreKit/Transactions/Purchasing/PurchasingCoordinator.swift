@@ -126,8 +126,8 @@ actor PurchasingCoordinator {
       guard dateIsWithinLastHour(transaction.transactionDate) else {
         return
       }
+      lastInternalTransaction = transaction
     }
-    lastInternalTransaction = transaction
     completion?(result)
     completion = nil
     productId = nil

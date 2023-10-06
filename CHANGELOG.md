@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.4.3-beta.1
+
+### Fixes
+
+- Adds a `.restored` case to `PurchaseResult` and `PurchaseResultObjc`. Return this from your `PurchaseController` when you detect a user has tried to purchase a product that they've already purchased. If you let Superwall handle purchasing, then we will automatically detect this.
+
+
 ## 3.4.2
 
 ### Fixes
