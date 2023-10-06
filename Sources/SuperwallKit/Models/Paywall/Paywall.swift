@@ -155,7 +155,7 @@ struct Paywall: Decodable {
     let presentationStyle = try values.decode(PaywallPresentationStyle.self, forKey: .presentationStyle)
     let presentationCondition = try values.decode(PresentationCondition.self, forKey: .presentationCondition)
     let presentationDelay = try values.decode(Int.self, forKey: .presentationDelay)
-    
+
     presentation = Presentation(
       style: presentationStyle,
       condition: presentationCondition,
