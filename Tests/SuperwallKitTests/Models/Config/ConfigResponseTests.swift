@@ -400,6 +400,7 @@ let response = #"""
       "productId": "sk.superwall.annual.89.99_7"
     }],
     "presentation_condition": "CHECK_USER_SUBSCRIPTION",
+    "presentation_delay": 0,
     "presentation_style": "FULLSCREEN",
     "presentation_style_v2": "FULLSCREEN",
     "launch_option": "EXPLICIT",

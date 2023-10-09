@@ -41,6 +41,9 @@ class NotificationSchedulerTests: XCTestCase {
       func makeDeviceInfo() -> DeviceInfo {
         return .init(appInstalledAtString: "", locale: "")
       }
+      func makeSessionDeviceAttributes() async -> [String : Any] {
+        return [:]
+      }
     }
 
     class AuthorizedNotificationSettings: NotificationSettings {
@@ -76,6 +79,9 @@ class NotificationSchedulerTests: XCTestCase {
       }
       func makeDeviceInfo() -> DeviceInfo {
         return .init(appInstalledAtString: "", locale: "")
+      }
+      func makeSessionDeviceAttributes() async -> [String : Any] {
+        return [:]
       }
     }
 
