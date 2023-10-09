@@ -384,7 +384,7 @@ class DeviceHelper {
     return newVersion
   }
 
-  private func getTemplateDevice() async -> [String: Any] {
+  func getTemplateDevice() async -> [String: Any] {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
 

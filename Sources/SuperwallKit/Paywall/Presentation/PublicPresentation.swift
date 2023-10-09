@@ -165,7 +165,10 @@ extension Superwall {
         }
       ))
 
-    serialTaskManager.addTask {
+    serialTaskManager.addTask { [weak self] in
+      guard let self = self else {
+        return
+      }
       await self.trackAndPresentPaywall(
         forEvent: event,
         params: params,

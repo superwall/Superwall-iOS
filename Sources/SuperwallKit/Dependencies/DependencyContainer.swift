@@ -161,6 +161,20 @@ extension DependencyContainer: DeviceHelperFactory {
   func makeIsSandbox() -> Bool {
     return deviceHelper.isSandbox == "true"
   }
+
+  func makeSessionDeviceAttributes() async -> [String: Any] {
+    var attributes = await deviceHelper.getTemplateDevice()
+
+    attributes["utcDate"] = nil
+    attributes["localDate"] = nil
+    attributes["localDate"] = nil
+    attributes["localTime"] = nil
+    attributes["utcTime"] = nil
+    attributes["utcDateTime"] = nil
+    attributes["localDateTime"] = nil
+
+    return attributes
+  }
 }
 
 // MARK: - DeviceInfofactory

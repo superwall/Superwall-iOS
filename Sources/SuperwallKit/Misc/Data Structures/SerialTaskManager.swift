@@ -34,12 +34,12 @@ final class SerialTaskManager {
         return
       }
       // Check if there are tasks in the queue
-      if taskQueue.isEmpty {
+      if self.taskQueue.isEmpty {
         return
       }
 
       // Get the next task from the queue
-      guard let nextTask = taskQueue.dequeue() else {
+      guard let nextTask = self.taskQueue.dequeue() else {
         return
       }
 

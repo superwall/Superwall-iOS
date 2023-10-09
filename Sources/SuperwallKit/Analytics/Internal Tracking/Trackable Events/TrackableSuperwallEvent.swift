@@ -182,6 +182,18 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
+  struct DeviceAttributes: TrackableSuperwallEvent {
+    var superwallEvent: SuperwallEvent {
+      return .deviceAttributes(attributes: deviceAttributes)
+    }
+    let deviceAttributes: [String: Any]
+
+    var customParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] {
+      return deviceAttributes
+    }
+  }
+
   struct PaywallLoad: TrackableSuperwallEvent {
     enum State {
       case start
