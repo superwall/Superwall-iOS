@@ -8,7 +8,13 @@
 import Foundation
 @testable import SuperwallKit
 
-class AppManagerDelegateMock: AppManagerDelegate {
+class AppManagerDelegateMock: AppManagerDelegate, DeviceHelperFactory {
+  func makeDeviceInfo() -> SuperwallKit.DeviceInfo {
+    return .init(appInstalledAtString: "", locale: "")
+  }
+  func makeIsSandbox() -> Bool { return true}
+  func makeSessionDeviceAttributes() async -> [String : Any] { [:] }
+
   func didUpdateAppSession(_ appSession: AppSession) async {}
 }
 
@@ -24,7 +30,11 @@ final class AppSessionManagerMock: AppSessionManager {
     storage: Storage
   ) {
     internalAppSession = appSession
-    super.init(configManager: configManager, storage: storage, delegate: AppManagerDelegateMock())
+    super.init(
+      configManager: configManager,
+      storage: storage,
+      delegate: AppManagerDelegateMock()
+    )
   }
 
   override func listenForAppSessionTimeout() {
