@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 20/10/2022.
 //
-// swiftlint:disable type_body_length
+// swiftlint:disable type_body_length file_length
 
 import StoreKit
 import UIKit
@@ -59,9 +59,9 @@ final class TransactionManager {
         from: paywallViewController
       )
     case .restored:
-      await transactionWasRestored(
-        paywallViewController: paywallViewController,
-        viaPurchase: true
+      await didRestore(
+        product: product,
+        paywallViewController: paywallViewController
       )
     case .failed(let error):
       let superwallOptions = factory.makeSuperwallOptions()
@@ -123,9 +123,8 @@ final class TransactionManager {
         scope: .paywallTransactions,
         message: "Transactions Restored"
       )
-      await transactionWasRestored(
-        paywallViewController: paywallViewController,
-        viaPurchase: false
+      await didRestore(
+        paywallViewController: paywallViewController
       )
     } else {
       Logger.debug(
@@ -142,17 +141,31 @@ final class TransactionManager {
     }
   }
 
-  private func transactionWasRestored(
-    paywallViewController: PaywallViewController,
-    viaPurchase: Bool
+  private func didRestore(
+    product: StoreProduct? = nil,
+    paywallViewController: PaywallViewController
   ) async {
+    let purchasingCoordinator = factory.makePurchasingCoordinator()
+    var transaction: StoreTransaction?
+    let restoreType: RestoreType
+
+    if let product = product {
+      transaction = await purchasingCoordinator.getLatestTransaction(
+        forProductId: product.productIdentifier,
+        factory: factory
+      )
+      restoreType = .viaPurchase(transaction)
+    } else {
+      restoreType = .viaRestore
+    }
+
     let paywallInfo = await paywallViewController.info
 
     let trackedEvent = InternalSuperwallEvent.Transaction(
-      state: .restore(viaPurchase: viaPurchase),
+      state: .restore(restoreType),
       paywallInfo: paywallInfo,
-      product: nil,
-      model: nil
+      product: product,
+      model: transaction
     )
     await Superwall.shared.track(trackedEvent)
 

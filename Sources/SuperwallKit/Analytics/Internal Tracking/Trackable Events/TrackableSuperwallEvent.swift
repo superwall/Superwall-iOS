@@ -399,7 +399,7 @@ enum InternalSuperwallEvent {
       case fail(TransactionError)
       case abandon(StoreProduct)
       case complete(StoreProduct, StoreTransaction?)
-      case restore(viaPurchase: Bool)
+      case restore(RestoreType)
       case timeout
     }
     let state: State
@@ -427,8 +427,11 @@ enum InternalSuperwallEvent {
           product: product,
           paywallInfo: paywallInfo
         )
-      case .restore:
-        return .transactionRestore(paywallInfo: paywallInfo)
+      case .restore(let restoreType):
+        return .transactionRestore(
+          restoreType: restoreType,
+          paywallInfo: paywallInfo
+        )
       case .timeout:
         return .transactionTimeout(paywallInfo: paywallInfo)
       }
@@ -442,12 +445,12 @@ enum InternalSuperwallEvent {
 
     func getSuperwallParameters() async -> [String: Any] {
       switch state {
-      case .restore(let viaPurchase):
+      case .restore:
         var eventParams = await paywallInfo.eventParams(forProduct: product)
         if let transactionDict = model?.dictionary(withSnakeCase: true) {
           eventParams += transactionDict
         }
-        eventParams["restore_via_purchase_attempt"] = viaPurchase
+        eventParams["restore_via_purchase_attempt"] = model != nil
         return eventParams
       case .start,
         .abandon,

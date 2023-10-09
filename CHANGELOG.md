@@ -4,10 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.4.3-beta.1
 
-### Fixes
+### Enhancements
 
 - Adds a `.restored` case to `PurchaseResult` and `PurchaseResultObjc`. Return this from your `PurchaseController` when you detect a user has tried to purchase a product that they've already purchased. If you let Superwall handle purchasing, then we will automatically detect this.
-- Adds `restore_via_purchase_attempt` to a `transaction_restore` event.
+- Adds `restore_via_purchase_attempt` to a `transaction_restore` event. This indicates whether the restoration happened due to the user purchasing or restoring.
 
 ## 3.4.2
 
