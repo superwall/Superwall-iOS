@@ -24,6 +24,10 @@ let response = #"""
       "experiment_id": "80",
       "expression": null,
       "expression_js": null,
+      "preload": {
+        "behavior": "ALWAYS",
+        "requires_re_evaluation": true
+      },
       "variants": [{
         "percentage": 0,
         "variant_type": "HOLDOUT",
@@ -43,6 +47,10 @@ let response = #"""
       "experiment_id": "66",
       "expression": null,
       "expression_js": null,
+      "preload": {
+        "behavior": "ALWAYS",
+        "requires_re_evaluation": true
+      },
       "variants": [{
         "percentage": 0,
         "variant_type": "HOLDOUT",

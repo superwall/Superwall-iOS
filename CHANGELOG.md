@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Exposes `isPaywallPresented` convenience variable.
 - Adds `device_attributes` event, which tracks the device attributes every new session.
+- Stops preloading paywalls that we know won't ever match.
 
 ## 3.4.2
 

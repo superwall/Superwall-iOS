@@ -16,9 +16,27 @@ struct UnmatchedRule: Equatable {
   let experimentId: String
 }
 
+extension UnmatchedRule: Stubbable {
+  static func stub() -> UnmatchedRule {
+    return UnmatchedRule(
+      source: .expression,
+      experimentId: "1"
+    )
+  }
+}
+
 struct MatchedItem {
   let rule: TriggerRule
   let unsavedOccurrence: TriggerRuleOccurrence?
+}
+
+extension MatchedItem: Stubbable {
+  static func stub() -> MatchedItem {
+    return MatchedItem(
+      rule: .stub(),
+      unsavedOccurrence: nil
+    )
+  }
 }
 
 enum TriggerRuleOutcome: Equatable {
@@ -59,6 +77,37 @@ struct TriggerRule: Decodable, Hashable {
   var expressionJs: String?
   var occurrence: TriggerRuleOccurrence?
   let computedPropertyRequests: [ComputedPropertyRequest]
+  var preload: TriggerPreload
+
+  struct TriggerPreload: Decodable, Hashable {
+    enum TriggerPreloadBehavior: String, Decodable {
+      case ifTrue = "IF_TRUE"
+      case always = "ALWAYS"
+      case never = "NEVER"
+    }
+    let behavior: TriggerPreloadBehavior
+
+    enum CodingKeys: String, CodingKey {
+      case behavior
+      case requiresReEvaluation
+    }
+
+    init(from decoder: Decoder) throws {
+      let values = try decoder.container(keyedBy: CodingKeys.self)
+
+      let behavior = try values.decode(TriggerPreloadBehavior.self, forKey: .behavior)
+      let requiresReevaluation = try values.decodeIfPresent(Bool.self, forKey: .requiresReEvaluation) ?? false
+      if requiresReevaluation {
+        self.behavior = .always
+      } else {
+        self.behavior = behavior
+      }
+    }
+
+    init(behavior: TriggerPreloadBehavior) {
+      self.behavior = behavior
+    }
+  }
 
   enum CodingKeys: String, CodingKey {
     case experimentGroupId
@@ -68,6 +117,7 @@ struct TriggerRule: Decodable, Hashable {
     case expressionJs
     case occurrence
     case computedPropertyRequests = "computedProperties"
+    case preload
   }
 
   init(from decoder: Decoder) throws {
@@ -86,6 +136,7 @@ struct TriggerRule: Decodable, Hashable {
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
     expressionJs = try values.decodeIfPresent(String.self, forKey: .expressionJs)
     occurrence = try values.decodeIfPresent(TriggerRuleOccurrence.self, forKey: .occurrence)
+    preload = try values.decode(TriggerPreload.self, forKey: .preload)
 
     let throwableComputedProperties = try values.decodeIfPresent(
       [Throwable<ComputedPropertyRequest>].self,
@@ -99,13 +150,15 @@ struct TriggerRule: Decodable, Hashable {
     expression: String?,
     expressionJs: String?,
     occurrence: TriggerRuleOccurrence? = nil,
-    computedPropertyRequests: [ComputedPropertyRequest]
+    computedPropertyRequests: [ComputedPropertyRequest],
+    preload: TriggerPreload
   ) {
     self.experiment = experiment
     self.expression = expression
     self.expressionJs = expressionJs
     self.occurrence = occurrence
     self.computedPropertyRequests = computedPropertyRequests
+    self.preload = preload
   }
 }
 
@@ -127,7 +180,8 @@ extension TriggerRule: Stubbable {
       expression: nil,
       expressionJs: nil,
       occurrence: nil,
-      computedPropertyRequests: []
+      computedPropertyRequests: [],
+      preload: .init(behavior: .always)
     )
   }
 }
