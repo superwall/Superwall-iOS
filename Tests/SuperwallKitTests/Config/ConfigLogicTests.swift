@@ -146,12 +146,12 @@ final class ConfigLogicTests: XCTestCase {
   // MARK: - getRulesPerTriggerGroup
 
   func test_getRulesPerTriggerGroup_noTriggers() {
-    let rules = ConfigLogic.getRulesPerTriggerGroup(from: [])
+    let rules = ConfigLogic.getRulesPerCampaign(from: [])
     XCTAssertTrue(rules.isEmpty)
   }
 
   func test_getRulesPerTriggerGroup_noRules() {
-    let rules = ConfigLogic.getRulesPerTriggerGroup(from: [
+    let rules = ConfigLogic.getRulesPerCampaign(from: [
       .stub()
       .setting(\.rules, to: [])
     ])
@@ -174,7 +174,7 @@ final class ConfigLogicTests: XCTestCase {
         .stub()
         .setting(\.experiment.groupId, to: "2")
       ])
-    let rules = ConfigLogic.getRulesPerTriggerGroup(from: [
+    let rules = ConfigLogic.getRulesPerCampaign(from: [
       trigger1, trigger2, trigger3
     ])
     XCTAssertEqual(rules.count, 2)
@@ -571,8 +571,7 @@ final class ConfigLogicTests: XCTestCase {
   }
 
   // MARK: - getAllActiveTreatmentPaywallIds
-
-  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment() {
+  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_alwaysPreload() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
 
@@ -585,20 +584,118 @@ final class ConfigLogicTests: XCTestCase {
            to: .stub()
             .setting(\.id, to: experiment1)
         )
+        .setting(\.preload, to: .init(behavior: .always))
       ])
     ]
     let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
       experiment1: .init(id: paywallId1, type: .treatment, paywallId: paywallId1)
     ]
-    let ids = ConfigLogic.getAllActiveTreatmentPaywallIds(
+
+    let evaluator = ExpressionEvaluatorMock(outcome: .match(rule: .stub()))
+
+    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:]
+      unconfirmedAssignments: [:],
+      expressionEvaluator: evaluator
     )
     XCTAssertEqual(ids, [paywallId1])
   }
 
-  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_multipleTriggerSameGroupId() {
+  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_neverPreload() async {
+    let paywallId1 = "abc"
+    let experiment1 = "def"
+
+    let triggers: Set<Trigger> = [
+      .stub()
+      .setting(\.rules, to: [
+        .stub()
+        .setting(
+          \.experiment,
+           to: .stub()
+            .setting(\.id, to: experiment1)
+        )
+        .setting(\.preload, to: .init(behavior: .never))
+      ])
+    ]
+    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
+      experiment1: .init(id: paywallId1, type: .treatment, paywallId: paywallId1)
+    ]
+
+    let evaluator = ExpressionEvaluatorMock(outcome: .match(rule: .stub()))
+
+    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      confirmedAssignments: confirmedAssignments,
+      unconfirmedAssignments: [:], 
+      expressionEvaluator: evaluator
+    )
+    XCTAssertTrue(ids.isEmpty)
+  }
+
+  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_ifTrue_evaluatesFalse() async {
+    let paywallId1 = "abc"
+    let experiment1 = "def"
+
+    let triggers: Set<Trigger> = [
+      .stub()
+      .setting(\.rules, to: [
+        .stub()
+        .setting(
+          \.experiment,
+           to: .stub()
+            .setting(\.id, to: experiment1)
+        )
+        .setting(\.preload, to: .init(behavior: .ifTrue))
+      ])
+    ]
+    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
+      experiment1: .init(id: paywallId1, type: .treatment, paywallId: paywallId1)
+    ]
+
+    let evaluator = ExpressionEvaluatorMock(outcome: .noMatch(.stub()))
+
+    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      confirmedAssignments: confirmedAssignments,
+      unconfirmedAssignments: [:],
+      expressionEvaluator: evaluator
+    )
+    XCTAssertTrue(ids.isEmpty)
+  }
+
+  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_ifTrue_evaluatesTrue() async {
+    let paywallId1 = "abc"
+    let experiment1 = "def"
+
+    let triggers: Set<Trigger> = [
+      .stub()
+      .setting(\.rules, to: [
+        .stub()
+        .setting(
+          \.experiment,
+           to: .stub()
+            .setting(\.id, to: experiment1)
+        )
+        .setting(\.preload, to: .init(behavior: .ifTrue))
+      ])
+    ]
+    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
+      experiment1: .init(id: paywallId1, type: .treatment, paywallId: paywallId1)
+    ]
+
+    let evaluator = ExpressionEvaluatorMock(outcome: .match(.stub()))
+
+    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      confirmedAssignments: confirmedAssignments,
+      unconfirmedAssignments: [:],
+      expressionEvaluator: evaluator
+    )
+    XCTAssertEqual(ids, [paywallId1])
+  }
+
+  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_multipleTriggerSameGroupId() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
 
@@ -625,15 +722,18 @@ final class ConfigLogicTests: XCTestCase {
     let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
       experiment1: .init(id: paywallId1, type: .treatment, paywallId: paywallId1)
     ]
-    let ids = ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let evaluator = ExpressionEvaluatorMock(outcome: .match(rule: .stub()))
+
+    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:]
+      unconfirmedAssignments: [:],
+      expressionEvaluator: evaluator
     )
     XCTAssertEqual(ids, [paywallId1])
   }
 
-  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_holdout() {
+  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_holdout() async {
     let experiment1 = "def"
 
     let triggers: Set<Trigger> = [
@@ -650,15 +750,18 @@ final class ConfigLogicTests: XCTestCase {
     let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
       experiment1: .init(id: "variantId1", type: .holdout, paywallId: nil)
     ]
-    let ids = ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let evaluator = ExpressionEvaluatorMock(outcome: .match(rule: .stub()))
+
+    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:]
+      unconfirmedAssignments: [:],
+      expressionEvaluator: evaluator
     )
     XCTAssertTrue(ids.isEmpty)
   }
 
-  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_filterOldOnes() {
+  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_filterOldOnes() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let paywallId2 = "efg"
@@ -679,15 +782,18 @@ final class ConfigLogicTests: XCTestCase {
       experiment1: .init(id: "variantId1", type: .treatment, paywallId: paywallId1),
       experiment2: .init(id: "variantId2", type: .treatment, paywallId: paywallId2)
     ]
-    let ids = ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let evaluator = ExpressionEvaluatorMock(outcome: .match(rule: .stub()))
+
+    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:]
+      unconfirmedAssignments: [:],
+      expressionEvaluator: evaluator
     )
     XCTAssertEqual(ids, [paywallId1])
   }
 
-  func test_getAllActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_filterOldOnes() {
+  func test_getAllActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_filterOldOnes() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let paywallId2 = "efg"
@@ -721,10 +827,13 @@ final class ConfigLogicTests: XCTestCase {
       experiment1: .init(id: "variantId1", type: .treatment, paywallId: paywallId1),
       experiment2: .init(id: "variantId2", type: .treatment, paywallId: paywallId2)
     ]
-    let ids = ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let evaluator = ExpressionEvaluatorMock(outcome: .match(rule: .stub()))
+
+    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [experiment3: .init(id: "variantId3", type: .treatment, paywallId: paywallId3)]
+      unconfirmedAssignments: [experiment3: .init(id: "variantId3", type: .treatment, paywallId: paywallId3)],
+      expressionEvaluator: evaluator
     )
     XCTAssertEqual(ids, [paywallId1, paywallId3])
   }

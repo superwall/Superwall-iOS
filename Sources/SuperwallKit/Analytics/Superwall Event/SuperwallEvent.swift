@@ -32,6 +32,9 @@ public enum SuperwallEvent {
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case sessionStart
 
+  /// When device attributes are sent to the backend.
+  case deviceAttributes(attributes: [String: Any])
+
   /// When the user's subscription status changes.
   case subscriptionStatusDidChange
 
@@ -196,6 +199,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .appInstall)
     case .sessionStart:
       return .init(objcEvent: .sessionStart)
+    case .deviceAttributes:
+      return .init(objcEvent: .deviceAttributes)
     case .subscriptionStatusDidChange:
       return .init(objcEvent: .subscriptionStatusDidChange)
     case .appClose:

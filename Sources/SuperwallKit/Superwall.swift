@@ -162,7 +162,7 @@ public final class Superwall: NSObject, ObservableObject {
   let presentationItems = PresentationItems()
 
   /// Determines whether a paywall is being presented.
-  var isPaywallPresented: Bool {
+  public var isPaywallPresented: Bool {
     paywallViewController != nil
   }
 

@@ -30,6 +30,10 @@ final class StorageMock: Storage {
     func makeHasExternalPurchaseController() -> Bool {
       return false
     }
+    
+    func makeSessionDeviceAttributes() async -> [String : Any] {
+      return [:]
+    }
   }
 
   init(

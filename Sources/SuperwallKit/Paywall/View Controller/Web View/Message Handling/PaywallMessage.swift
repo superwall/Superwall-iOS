@@ -45,6 +45,7 @@ enum PaywallMessage: Decodable, Equatable {
   case openDeepLink(url: URL)
   case purchase(productId: String)
   case custom(data: String)
+  case paywallOpen
 
   private enum MessageTypes: String, Decodable {
     case onReady = "ping"
