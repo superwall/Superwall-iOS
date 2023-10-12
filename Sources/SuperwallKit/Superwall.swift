@@ -162,7 +162,7 @@ public final class Superwall: NSObject, ObservableObject {
   let presentationItems = PresentationItems()
 
   /// Determines whether a paywall is being presented.
-  var isPaywallPresented: Bool {
+  public var isPaywallPresented: Bool {
     paywallViewController != nil
   }
 
@@ -478,7 +478,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
         from: paywallViewController
       )
     case .initiateRestore:
-      await dependencyContainer.storeKitManager.purchaseController.tryToRestore(from: paywallViewController)
+      await dependencyContainer.transactionManager.tryToRestore(from: paywallViewController)
     case .openedURL(let url):
       dependencyContainer.delegateAdapter.paywallWillOpenURL(url: url)
     case .openedUrlInSafari(let url):

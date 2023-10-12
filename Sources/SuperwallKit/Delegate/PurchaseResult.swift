@@ -39,6 +39,9 @@ public enum PurchaseResult: Sendable, Equatable {
   /// The product was purchased.
   case purchased
 
+  /// The product was restored.
+  case restored
+
   /// The purchase is pending and requires action from the developer.
   ///
   /// In StoreKit 1, this is the same as the `.deferred` transaction state.
@@ -86,6 +89,9 @@ public enum PurchaseResultObjc: Int, Sendable, Equatable {
 
   /// The product was purchased.
   case purchased
+
+  /// The product was restored.
+  case restored
 
   /// The purchase is pending and requires action from the developer.
   ///

@@ -36,7 +36,8 @@ actor PurchasingCoordinator {
     self.productId = productId
   }
 
-  /// Gets the latest transaction of a specified product ID.
+  /// Gets the latest transaction of a specified product ID. Used with purchases, including when a purchase has
+  /// resulted in a restore.
   func getLatestTransaction(
     forProductId productId: String,
     factory: StoreTransactionFactory
@@ -62,7 +63,9 @@ actor PurchasingCoordinator {
     // If no transaction retrieved, try to get last transaction if
     // the SDK handled purchasing.
     if let transaction = lastInternalTransaction {
-      return await factory.makeStoreTransaction(from: transaction)
+      let storeTransaction = await factory.makeStoreTransaction(from: transaction)
+      lastInternalTransaction = nil
+      return storeTransaction
     }
 
     func getLastExternalStoreTransaction() async -> StoreTransaction? {
@@ -73,7 +76,10 @@ actor PurchasingCoordinator {
       return nil
     }
 
-    // Otherwise get the last externally purchased transaction from the payment queue.
+    // Otherwise get the last externally purchased
+    // transaction from the payment queue. This won't work
+    // with a purchase that results in a restore. That
+    // should be caught by the above  instead.
     if let transaction = await getLastExternalStoreTransaction() {
       return transaction
     }

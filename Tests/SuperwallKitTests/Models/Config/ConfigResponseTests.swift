@@ -24,6 +24,10 @@ let response = #"""
       "experiment_id": "80",
       "expression": null,
       "expression_js": null,
+      "preload": {
+        "behavior": "ALWAYS",
+        "requires_re_evaluation": true
+      },
       "variants": [{
         "percentage": 0,
         "variant_type": "HOLDOUT",
@@ -43,6 +47,10 @@ let response = #"""
       "experiment_id": "66",
       "expression": null,
       "expression_js": null,
+      "preload": {
+        "behavior": "ALWAYS",
+        "requires_re_evaluation": true
+      },
       "variants": [{
         "percentage": 0,
         "variant_type": "HOLDOUT",
@@ -400,6 +408,7 @@ let response = #"""
       "productId": "sk.superwall.annual.89.99_7"
     }],
     "presentation_condition": "CHECK_USER_SUBSCRIPTION",
+    "presentation_delay": 0,
     "presentation_style": "FULLSCREEN",
     "presentation_style_v2": "FULLSCREEN",
     "launch_option": "EXPLICIT",

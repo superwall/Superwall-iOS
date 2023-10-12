@@ -31,13 +31,16 @@ struct Paywall: Decodable {
   struct Presentation {
     var style: PaywallPresentationStyle = .modal
     let condition: PresentationCondition
+    let delay: Int
 
     init(
       style: PaywallPresentationStyle,
-      condition: PresentationCondition
+      condition: PresentationCondition,
+      delay: Int
     ) {
       self.style = style
       self.condition = condition
+      self.delay = delay
     }
   }
   let presentation: Presentation
@@ -113,6 +116,7 @@ struct Paywall: Decodable {
     case htmlSubstitutions = "paywalljsEvent"
     case presentationStyle = "presentationStyleV2"
     case presentationCondition
+    case presentationDelay
     case backgroundColorHex
     case products
     case featureGating
@@ -150,10 +154,12 @@ struct Paywall: Decodable {
 
     let presentationStyle = try values.decode(PaywallPresentationStyle.self, forKey: .presentationStyle)
     let presentationCondition = try values.decode(PresentationCondition.self, forKey: .presentationCondition)
+    let presentationDelay = try values.decode(Int.self, forKey: .presentationDelay)
 
     presentation = Presentation(
       style: presentationStyle,
-      condition: presentationCondition
+      condition: presentationCondition,
+      delay: presentationDelay
     )
 
     backgroundColorHex = try values.decode(String.self, forKey: .backgroundColorHex)
@@ -327,7 +333,8 @@ extension Paywall: Stubbable {
       htmlSubstitutions: "",
       presentation: Presentation(
         style: .modal,
-        condition: .checkUserSubscription
+        condition: .checkUserSubscription,
+        delay: 0
       ),
       backgroundColorHex: "",
       backgroundColor: .black,

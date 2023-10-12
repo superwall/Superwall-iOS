@@ -32,6 +32,9 @@ public enum SuperwallEvent {
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case sessionStart
 
+  /// When device attributes are sent to the backend.
+  case deviceAttributes(attributes: [String: Any])
+
   /// When the user's subscription status changes.
   case subscriptionStatusDidChange
 
@@ -79,8 +82,8 @@ public enum SuperwallEvent {
   /// When the user successfully completes a transaction for a subscription product with an introductory offer.
   case freeTrialStart(product: StoreProduct, paywallInfo: PaywallInfo)
 
-  /// When the user successfully restores their purchases.
-  case transactionRestore(paywallInfo: PaywallInfo)
+  /// When the user successfully restores purchases..
+  case transactionRestore(restoreType: RestoreType, paywallInfo: PaywallInfo)
 
   /// When the transaction took > 5 seconds to show the payment sheet.
   case transactionTimeout(paywallInfo: PaywallInfo)
@@ -196,6 +199,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .appInstall)
     case .sessionStart:
       return .init(objcEvent: .sessionStart)
+    case .deviceAttributes:
+      return .init(objcEvent: .deviceAttributes)
     case .subscriptionStatusDidChange:
       return .init(objcEvent: .subscriptionStatusDidChange)
     case .appClose:

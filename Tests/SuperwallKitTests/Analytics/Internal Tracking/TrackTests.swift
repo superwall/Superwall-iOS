@@ -1006,11 +1006,12 @@ final class TrackingTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
-    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .restore, paywallInfo: paywallInfo, product: product, model: transaction))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .restore(RestoreType.viaPurchase(transaction)), paywallInfo: paywallInfo, product: product, model: transaction))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
 
     XCTAssertEqual(result.parameters.eventParams["$paywall_id"] as! String, paywallInfo.databaseId)
+    XCTAssertTrue(result.parameters.eventParams["$restore_via_purchase_attempt"] as! Bool)
     XCTAssertEqual(result.parameters.eventParams["$paywalljs_version"] as? String, paywallInfo.paywalljsVersion)
     XCTAssertEqual(result.parameters.eventParams["$paywall_identifier"] as! String, paywallInfo.identifier)
     XCTAssertEqual(result.parameters.eventParams["$paywall_name"] as! String, paywallInfo.name)
