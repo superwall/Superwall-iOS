@@ -45,12 +45,18 @@ final class RCPurchaseController: PurchaseController {
   /// someone tries to purchase a product on one of your paywalls.
   func purchase(product: SKProduct) async -> PurchaseResult {
     do {
+      let purchaseDate = Date()
       let storeProduct = RevenueCat.StoreProduct(sk1Product: product)
       let revenueCatResult = try await Purchases.shared.purchase(product: storeProduct)
       if revenueCatResult.userCancelled {
         return .cancelled
       } else {
-        return .purchased
+        if let transaction = revenueCatResult.transaction,
+           purchaseDate > transaction.purchaseDate {
+          return .restored
+        } else {
+          return .purchased
+        }
       }
     } catch let error as ErrorCode {
       if error == .paymentPendingError {

@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 06/12/2022.
 //
+// swiftlint:disable function_body_length
 
 import Foundation
 import StoreKit
@@ -186,10 +187,17 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         )
         SKPaymentQueue.default().finishTransaction(skTransaction)
 
-        await coordinator.completePurchase(
-          of: skTransaction,
-          result: .purchased
-        )
+        if hasRestored(skTransaction, purchaseDate: purchaseDate) {
+          await coordinator.completePurchase(
+            of: skTransaction,
+            result: .restored
+          )
+        } else {
+          await coordinator.completePurchase(
+            of: skTransaction,
+            result: .purchased
+          )
+        }
       } catch {
         SKPaymentQueue.default().finishTransaction(skTransaction)
         await coordinator.completePurchase(
@@ -258,29 +266,18 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     )
   }
 
-  @available(iOS 15.0, *)
   private func hasRestored(
-    _ transaction: StoreTransaction,
-    purchaseStartAt: Date?
+    _ transaction: SKPaymentTransaction,
+    purchaseDate: Date?
   ) -> Bool {
-    guard let purchaseStartAt = purchaseStartAt else {
+    guard let purchaseDate = purchaseDate else {
       return false
     }
     // If has a transaction date and that happened before purchase
     // button was pressed...
     if let transactionDate = transaction.transactionDate,
-      transactionDate < purchaseStartAt {
-      // ...and if it has an expiration date that expires in the future,
-      // then we must have restored.
-      if let expirationDate = transaction.expirationDate {
-        if expirationDate >= Date() {
-          return true
-        }
-      } else {
-        // If no expiration date, it must be a non-consumable product
-        // which has been restored.
-        return true
-      }
+      transactionDate < purchaseDate {
+      return true
     }
 
     return false

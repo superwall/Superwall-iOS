@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 20/10/2022.
 //
-// swiftlint:disable type_body_length
+// swiftlint:disable type_body_length file_length
 
 import StoreKit
 import UIKit
@@ -20,9 +20,6 @@ final class TransactionManager {
     & DeviceHelperFactory
     & PurchasedTransactionsFactory
   private let factory: Factories
-
-  /// The paywall view controller that the last product was purchased from.
-  private var lastPaywallViewController: PaywallViewController?
 
   init(
     storeKitManager: StoreKitManager,
@@ -57,6 +54,11 @@ final class TransactionManager {
       await didPurchase(
         product,
         from: paywallViewController
+      )
+    case .restored:
+      await didRestore(
+        product: product,
+        paywallViewController: paywallViewController
       )
     case .failed(let error):
       let superwallOptions = factory.makeSuperwallOptions()
@@ -94,6 +96,81 @@ final class TransactionManager {
       await handlePendingTransaction(from: paywallViewController)
     case .cancelled:
       await trackCancelled(product: product, from: paywallViewController)
+    }
+  }
+
+  @MainActor
+  func tryToRestore(from paywallViewController: PaywallViewController) async {
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallTransactions,
+      message: "Attempting Restore"
+    )
+
+    paywallViewController.loadingState = .loadingPurchase
+
+    let restorationResult = await storeKitManager.purchaseController.restorePurchases()
+
+    let hasRestored = restorationResult == .restored
+    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
+
+    if hasRestored && isUserSubscribed {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallTransactions,
+        message: "Transactions Restored"
+      )
+      await didRestore(
+        paywallViewController: paywallViewController
+      )
+    } else {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallTransactions,
+        message: "Transactions Failed to Restore"
+      )
+
+      paywallViewController.presentAlert(
+        title: Superwall.shared.options.paywalls.restoreFailed.title,
+        message: Superwall.shared.options.paywalls.restoreFailed.message,
+        closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle
+      )
+    }
+  }
+
+  private func didRestore(
+    product: StoreProduct? = nil,
+    paywallViewController: PaywallViewController
+  ) async {
+    let purchasingCoordinator = factory.makePurchasingCoordinator()
+    var transaction: StoreTransaction?
+    let restoreType: RestoreType
+
+    if let product = product {
+      // Product exists so much have been via a purchase of a specific product.
+      transaction = await purchasingCoordinator.getLatestTransaction(
+        forProductId: product.productIdentifier,
+        factory: factory
+      )
+      restoreType = .viaPurchase(transaction)
+    } else {
+      // Otherwise it was a generic restore.
+      restoreType = .viaRestore
+    }
+
+    let paywallInfo = await paywallViewController.info
+
+    let trackedEvent = InternalSuperwallEvent.Transaction(
+      state: .restore(restoreType),
+      paywallInfo: paywallInfo,
+      product: product,
+      model: transaction
+    )
+    await Superwall.shared.track(trackedEvent)
+
+    let superwallOptions = factory.makeSuperwallOptions()
+    if superwallOptions.paywalls.automaticallyDismiss {
+      await Superwall.shared.dismiss(paywallViewController, result: .restored)
     }
   }
 
@@ -163,7 +240,6 @@ final class TransactionManager {
     )
     await Superwall.shared.track(trackedEvent)
 
-    lastPaywallViewController = paywallViewController
     await MainActor.run {
       paywallViewController.loadingState = .loadingPurchase
     }
@@ -199,7 +275,8 @@ final class TransactionManager {
 
     await trackTransactionDidSucceed(
       transaction,
-      product: product
+      product: product,
+      paywallViewController: paywallViewController
     )
 
     let superwallOptions = factory.makeSuperwallOptions()
@@ -278,12 +355,9 @@ final class TransactionManager {
 
   func trackTransactionDidSucceed(
     _ transaction: StoreTransaction?,
-    product: StoreProduct
+    product: StoreProduct,
+    paywallViewController: PaywallViewController
   ) async {
-    guard let paywallViewController = lastPaywallViewController else {
-      return
-    }
-
     let paywallShowingFreeTrial = await paywallViewController.paywall.isFreeTrialAvailable == true
     let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
 
@@ -332,7 +406,5 @@ final class TransactionManager {
       )
       await Superwall.shared.track(trackedEvent)
     }
-
-    lastPaywallViewController = nil
   }
 }
