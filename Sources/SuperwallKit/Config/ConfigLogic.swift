@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 21/07/2022.
 //
-// swiftlint:disable array_constructor
+// swiftlint:disable array_constructor type_body_length
 
 import Foundation
 
@@ -13,6 +13,7 @@ enum ConfigLogic {
     case noVariantsFound
     case invalidState
   }
+
   struct AssignmentOutcome {
     let confirmed: [Experiment.ID: Experiment.Variant]
     let unconfirmed: [Experiment.ID: Experiment.Variant]
@@ -85,32 +86,32 @@ enum ConfigLogic {
     throw TriggerRuleError.invalidState
   }
 
-  /// Gets the rules per unique experiment group. If any trigger belongs to an experimnt who's rule has
+  /// Gets the rules per unique experiment group. If any trigger belongs to an experiment whose rule has
   /// already been retrieved, it gets skipped.
   ///
   /// - Parameters:
   ///   - triggers: A set of triggers
   ///
   /// - Returns: A `Set` of `TriggerRule` arrays.
-  static func getRulesPerTriggerGroup(
+  static func getRulesPerCampaign(
     from triggers: Set<Trigger>
   ) -> Set<[TriggerRule]> {
-    var groupIds: Set<String> = []
-    var groupedTriggerRules: Set<[TriggerRule]> = []
+    var campaignIds: Set<String> = []
+    var uniqueTriggerRules: Set<[TriggerRule]> = []
     for trigger in triggers {
       guard let firstRule = trigger.rules.first else {
         continue
       }
-      let groupId = firstRule.experiment.groupId
+      let campaignId = firstRule.experiment.groupId
 
-      if groupIds.contains(groupId) {
+      if campaignIds.contains(campaignId) {
         continue
       }
 
-      groupIds.insert(groupId)
-      groupedTriggerRules.insert(trigger.rules)
+      campaignIds.insert(campaignId)
+      uniqueTriggerRules.insert(trigger.rules)
     }
-    return groupedTriggerRules
+    return uniqueTriggerRules
   }
 
   static func chooseAssignments(
@@ -120,7 +121,7 @@ enum ConfigLogic {
     var confirmedAssignments = confirmedAssignments
     var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
-    let groupedTriggerRules = getRulesPerTriggerGroup(from: triggers)
+    let groupedTriggerRules = getRulesPerCampaign(from: triggers)
 
     // Loop through each trigger and each of its rules.
     for ruleGroup in groupedTriggerRules {
@@ -256,26 +257,64 @@ enum ConfigLogic {
   static func getAllActiveTreatmentPaywallIds(
     fromTriggers triggers: Set<Trigger>,
     confirmedAssignments: [Experiment.ID: Experiment.Variant],
-    unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
-  ) -> Set<String> {
+    unconfirmedAssignments: [Experiment.ID: Experiment.Variant],
+    expressionEvaluator: ExpressionEvaluating
+  ) async -> Set<String> {
     var confirmedAssignments = confirmedAssignments
 
-    // Don't preload any experiment IDs that are on disk but no longer in static config.
-    // This could happen when a campaign has been archived.
     let confirmedExperimentIds = Set(confirmedAssignments.keys)
-    let groupedTriggerRules = getRulesPerTriggerGroup(from: triggers)
-    let triggerExperimentIds = groupedTriggerRules.flatMap { $0.map { $0.experiment.id } }
-    let oldExperimentIds = confirmedExperimentIds.subtracting(triggerExperimentIds)
-    for id in oldExperimentIds {
-      confirmedAssignments[id] = nil
+    let triggerRulesPerCampaign = getRulesPerCampaign(from: triggers)
+
+    // Loop through all the rules and check their preloading behaviour.
+    // If they should never preload or set to ifTrue but don't match,
+    // skip the experiment.
+    var allExperimentIds: Set<String> = []
+    var skippedExperimentIds: Set<String> = []
+
+    for campaignRules in triggerRulesPerCampaign {
+      for rule in campaignRules {
+        allExperimentIds.insert(rule.experiment.id)
+
+        switch rule.preload.behavior {
+        case .ifTrue:
+          let outcome = await expressionEvaluator.evaluateExpression(
+            fromRule: rule,
+            eventData: nil
+          )
+          switch outcome {
+          case .noMatch:
+            skippedExperimentIds.insert(rule.experiment.id)
+          case .match:
+            continue
+          }
+        case .always:
+          continue
+        case .never:
+          skippedExperimentIds.insert(rule.experiment.id)
+        }
+      }
     }
 
-    let confirmedVariants = [Experiment.Variant](confirmedAssignments.values)
-    let unconfirmedVariants = [Experiment.Variant](unconfirmedAssignments.values)
-    let mergedVariants = confirmedVariants + unconfirmedVariants
+    // Remove any confirmed experiment IDs that are no
+    // longer part of a trigger. This could happen when a campaign
+    // has been archived.
+    let unusedExperimentIds = confirmedExperimentIds.subtracting(allExperimentIds)
+    for id in unusedExperimentIds {
+      confirmedAssignments.removeValue(forKey: id)
+    }
+
+    // Remove any assignments whose variants we don't want to preload.
+    var mergedAssignments = confirmedAssignments + unconfirmedAssignments
+    for id in skippedExperimentIds {
+      mergedAssignments.removeValue(forKey: id)
+    }
+    let preloadableVariants = mergedAssignments.values
+
+    // Only select the variants that will result in a paywall rather
+    // than a holdout.
     var identifiers = Set<String>()
 
-    for variant in mergedVariants {
+    for variant in preloadableVariants {
       if variant.type == .treatment,
         let paywallId = variant.paywallId {
         identifiers.insert(paywallId)
@@ -291,7 +330,7 @@ enum ConfigLogic {
     unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
   ) -> Set<String> {
     let mergedAssignments = confirmedAssignments.merging(unconfirmedAssignments)
-    let groupedTriggerRules = getRulesPerTriggerGroup(from: triggers)
+    let groupedTriggerRules = getRulesPerCampaign(from: triggers)
     let triggerExperimentIds = groupedTriggerRules.flatMap { $0.map { $0.experiment.id } }
 
     var identifiers = Set<String>()

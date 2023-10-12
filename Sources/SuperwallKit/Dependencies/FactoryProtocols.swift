@@ -92,6 +92,7 @@ protocol LocaleIdentifierFactory: AnyObject {
 protocol DeviceHelperFactory: AnyObject {
   func makeDeviceInfo() -> DeviceInfo
   func makeIsSandbox() -> Bool
+  func makeSessionDeviceAttributes() async -> [String: Any]
 }
 
 protocol HasExternalPurchaseControllerFactory: AnyObject {

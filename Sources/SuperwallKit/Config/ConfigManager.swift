@@ -35,7 +35,6 @@ class ConfigManager {
   /// A memory store of assignments that are yet to be confirmed.
   ///
   /// When the trigger is fired, the assignment is confirmed and stored to disk.
-
   @DispatchQueueBacked
   var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
@@ -44,7 +43,7 @@ class ConfigManager {
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
 
-  private let factory: RequestFactory
+  private let factory: RequestFactory & RuleAttributesFactory
 
   init(
     options: SuperwallOptions?,
@@ -52,7 +51,7 @@ class ConfigManager {
     storage: Storage,
     network: Network,
     paywallManager: PaywallManager,
-    factory: RequestFactory
+    factory: RequestFactory & RuleAttributesFactory
   ) {
     if let options = options {
       self.options = options
@@ -226,16 +225,20 @@ class ConfigManager {
       .throwableAsync() else {
         return
       }
-
+    let expressionEvaluator = ExpressionEvaluator(
+      storage: storage,
+      factory: factory
+    )
     let triggers = ConfigLogic.filterTriggers(
       config.triggers,
       removing: config.preloadingDisabled
     )
     let confirmedAssignments = storage.getConfirmedAssignments()
-    let paywallIds = ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
+      unconfirmedAssignments: unconfirmedAssignments,
+      expressionEvaluator: expressionEvaluator
     )
     preloadPaywalls(withIdentifiers: paywallIds)
   }

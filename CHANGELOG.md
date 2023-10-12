@@ -2,6 +2,14 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.4.4
+
+### Enhancements
+
+- Exposes `isPaywallPresented` convenience variable.
+- Adds `device_attributes` event, which tracks the device attributes every new session.
+- Stops preloading paywalls that we know won't ever match.
+
 ## 3.4.2
 
 ### Fixes

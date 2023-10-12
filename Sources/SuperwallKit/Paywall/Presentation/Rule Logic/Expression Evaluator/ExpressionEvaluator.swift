@@ -8,7 +8,14 @@
 import Foundation
 import JavaScriptCore
 
-struct ExpressionEvaluator {
+protocol ExpressionEvaluating {
+  func evaluateExpression(
+    fromRule rule: TriggerRule,
+    eventData: EventData?
+  ) async -> TriggerRuleOutcome
+}
+
+struct ExpressionEvaluator: ExpressionEvaluating {
   private let storage: Storage
   private unowned let factory: RuleAttributesFactory
 
@@ -22,7 +29,7 @@ struct ExpressionEvaluator {
 
   func evaluateExpression(
     fromRule rule: TriggerRule,
-    eventData: EventData
+    eventData: EventData?
   ) async -> TriggerRuleOutcome {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
@@ -81,7 +88,7 @@ struct ExpressionEvaluator {
 
   private func getBase64Params(
     from rule: TriggerRule,
-    withEventData eventData: EventData
+    withEventData eventData: EventData?
   ) async -> String? {
     let attributes = await factory.makeRuleAttributes(
       forEvent: eventData,

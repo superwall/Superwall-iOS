@@ -33,6 +33,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// This event can be used to trigger a paywall. Just add the `session_start` event to a campaign.
   case sessionStart
 
+  /// When device attributes are sent to the backend.
+  case deviceAttributes
+
   /// Anytime the app leaves the foreground.
   case appClose
 
@@ -149,6 +152,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "app_install"
     case .sessionStart:
       return "session_start"
+    case .deviceAttributes:
+      return "device_attributes"
     case .subscriptionStatusDidChange:
       return "subscriptionStatus_didChange"
     case .appClose:
