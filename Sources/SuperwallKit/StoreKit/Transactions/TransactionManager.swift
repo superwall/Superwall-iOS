@@ -21,9 +21,6 @@ final class TransactionManager {
     & PurchasedTransactionsFactory
   private let factory: Factories
 
-  /// The paywall view controller that the last product was purchased from.
-  private var lastPaywallViewController: PaywallViewController?
-
   init(
     storeKitManager: StoreKitManager,
     sessionEventsManager: SessionEventsManager,
@@ -150,12 +147,14 @@ final class TransactionManager {
     let restoreType: RestoreType
 
     if let product = product {
+      // Product exists so much have been via a purchase of a specific product.
       transaction = await purchasingCoordinator.getLatestTransaction(
         forProductId: product.productIdentifier,
         factory: factory
       )
       restoreType = .viaPurchase(transaction)
     } else {
+      // Otherwise it was a generic restore.
       restoreType = .viaRestore
     }
 
@@ -169,7 +168,8 @@ final class TransactionManager {
     )
     await Superwall.shared.track(trackedEvent)
 
-    if Superwall.shared.options.paywalls.automaticallyDismiss {
+    let superwallOptions = factory.makeSuperwallOptions()
+    if superwallOptions.paywalls.automaticallyDismiss {
       await Superwall.shared.dismiss(paywallViewController, result: .restored)
     }
   }
@@ -240,7 +240,6 @@ final class TransactionManager {
     )
     await Superwall.shared.track(trackedEvent)
 
-    lastPaywallViewController = paywallViewController
     await MainActor.run {
       paywallViewController.loadingState = .loadingPurchase
     }
@@ -276,7 +275,8 @@ final class TransactionManager {
 
     await trackTransactionDidSucceed(
       transaction,
-      product: product
+      product: product,
+      paywallViewController: paywallViewController
     )
 
     let superwallOptions = factory.makeSuperwallOptions()
@@ -355,12 +355,9 @@ final class TransactionManager {
 
   func trackTransactionDidSucceed(
     _ transaction: StoreTransaction?,
-    product: StoreProduct
+    product: StoreProduct,
+    paywallViewController: PaywallViewController
   ) async {
-    guard let paywallViewController = lastPaywallViewController else {
-      return
-    }
-
     let paywallShowingFreeTrial = await paywallViewController.paywall.isFreeTrialAvailable == true
     let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
 
@@ -409,7 +406,5 @@ final class TransactionManager {
       )
       await Superwall.shared.track(trackedEvent)
     }
-
-    lastPaywallViewController = nil
   }
 }

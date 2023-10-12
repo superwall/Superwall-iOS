@@ -2,14 +2,14 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
-## 3.4.4
+## 3.4.3
 
 ### Enhancements
 
 - Exposes `isPaywallPresented` convenience variable.
 - Adds `device_attributes` event, which tracks the device attributes every new session.
 - Stops preloading paywalls that we know won't ever match.
-- Adds a `.restored` case to `PurchaseResult` and `PurchaseResultObjc`. Return this from your `PurchaseController` when you detect a user has tried to purchase a product that they've already purchased. If you let Superwall handle purchasing, then we will automatically detect this.
+- Adds a `.restored` case to `PurchaseResult` and `PurchaseResultObjc`. Return this from your `PurchaseController` when you detect a user has tried to purchase a product that they've already purchased. This happens when `transaction.transactionDate < purchaseDate`, where `purchaseDate` is the date that the purchase was initiated. Check out `RCPurchaseController.swift` in our Superwall-UIKit+RevenueCat example app for how to implement this. If you let Superwall handle purchasing, then we will automatically detect this.
 - Adds `restore_via_purchase_attempt` to a `transaction_restore` event. This indicates whether the restoration happened due to the user purchasing or restoring.
 
 ## 3.4.2
