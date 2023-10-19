@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Jake Mor on 10/9/21.
 //
@@ -12,8 +12,8 @@ import UIKit
 extension Superwall {
   // MARK: - Dismiss
   /// Dismisses the presented paywall.
-  /// 
-	/// - Parameter completion: An optional completion block that gets called after the paywall is dismissed.
+  ///
+  /// - Parameter completion: An optional completion block that gets called after the paywall is dismissed.
   /// Defaults to `nil`.
   @objc public func dismiss(completion: (() -> Void)? = nil) {
     Task { [weak self] in
@@ -165,11 +165,12 @@ extension Superwall {
         }
       ))
 
-    serialTaskManager.addTask { [weak self] in
-      guard let self = self else {
-        return
-      }
-      await self.trackAndPresentPaywall(
+    // Assign the current register task while capturing the previous one.
+    previousRegisterTask = Task { [weak self, previousRegisterTask] in
+      // Wait until the previous task is finished before continuing.
+      await previousRegisterTask?.value
+
+      await self?.trackAndPresentPaywall(
         forEvent: event,
         params: params,
         paywallOverrides: nil,
@@ -264,6 +265,8 @@ extension Superwall {
     } catch {
       return
     }
+
+    print("*** processing", event, params?["test"])
 
     let trackableEvent = UserInitiatedEvent.Track(
       rawName: event,
