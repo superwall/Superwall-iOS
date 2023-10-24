@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.4.4
 
+### Enhancements
+
+- Tracks user attributes on session start.
+
 ### Fixes
 
 - Changes the way paywall presentation serialization is performed to avoid mixing of concurrency paradigms.
