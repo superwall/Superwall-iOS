@@ -266,8 +266,6 @@ extension Superwall {
       return
     }
 
-    print("*** processing", event, params?["test"])
-
     let trackableEvent = UserInitiatedEvent.Track(
       rawName: event,
       canImplicitlyTriggerPaywall: false,
