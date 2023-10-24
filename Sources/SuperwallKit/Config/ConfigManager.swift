@@ -43,6 +43,9 @@ class ConfigManager {
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
 
+  /// A task that is non-`nil` when preloading all paywalls.
+  private var currentPreloadingTask: Task<Void, Never>?
+
   private let factory: RequestFactory & RuleAttributesFactory
 
   init(
@@ -220,27 +223,34 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by triggers.
   func preloadAllPaywalls() async {
-    guard let config = try? await configState
-      .compactMap({ $0.getConfig() })
-      .throwableAsync() else {
+    guard currentPreloadingTask == nil else {
+      return
+    }
+    currentPreloadingTask = Task {
+      guard let config = try? await configState
+        .compactMap({ $0.getConfig() })
+        .throwableAsync() else {
         return
       }
-    let expressionEvaluator = ExpressionEvaluator(
-      storage: storage,
-      factory: factory
-    )
-    let triggers = ConfigLogic.filterTriggers(
-      config.triggers,
-      removing: config.preloadingDisabled
-    )
-    let confirmedAssignments = storage.getConfirmedAssignments()
-    let paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
-      fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments,
-      expressionEvaluator: expressionEvaluator
-    )
-    preloadPaywalls(withIdentifiers: paywallIds)
+      let expressionEvaluator = ExpressionEvaluator(
+        storage: storage,
+        factory: factory
+      )
+      let triggers = ConfigLogic.filterTriggers(
+        config.triggers,
+        removing: config.preloadingDisabled
+      )
+      let confirmedAssignments = storage.getConfirmedAssignments()
+      let paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+        fromTriggers: triggers,
+        confirmedAssignments: confirmedAssignments,
+        unconfirmedAssignments: unconfirmedAssignments,
+        expressionEvaluator: expressionEvaluator
+      )
+      await preloadPaywalls(withIdentifiers: paywallIds)
+
+      currentPreloadingTask = nil
+    }
   }
 
   /// Preloads paywalls referenced by the provided triggers.
@@ -252,30 +262,32 @@ class ConfigManager {
       }
     let triggersToPreload = config.triggers.filter { eventNames.contains($0.eventName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
-    preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
+    await preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
   }
 
   /// Preloads paywalls referenced by triggers.
-  private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) {
-    for identifier in paywallIdentifiers {
-      Task { [weak self] in
-        guard let self = self else {
-          return
+  private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) async {
+    await withTaskGroup(of: Void.self) { group in
+      for identifier in paywallIdentifiers {
+        group.addTask { [weak self] in
+          guard let self = self else {
+            return
+          }
+          let request = self.factory.makePaywallRequest(
+            eventData: nil,
+            responseIdentifiers: .init(paywallId: identifier),
+            overrides: nil,
+            isDebuggerLaunched: false,
+            presentationSourceType: nil,
+            retryCount: 6
+          )
+          _ = try? await self.paywallManager.getPaywallViewController(
+            from: request,
+            isForPresentation: true,
+            isPreloading: true,
+            delegate: nil
+          )
         }
-        let request = self.factory.makePaywallRequest(
-          eventData: nil,
-          responseIdentifiers: .init(paywallId: identifier),
-          overrides: nil,
-          isDebuggerLaunched: false,
-          presentationSourceType: nil,
-          retryCount: 6
-        )
-        _ = try? await self.paywallManager.getPaywallViewController(
-          from: request,
-          isForPresentation: true,
-          isPreloading: true,
-          delegate: nil
-        )
       }
     }
   }
