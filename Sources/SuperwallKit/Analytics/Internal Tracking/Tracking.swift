@@ -74,11 +74,12 @@ extension Superwall {
     forEvent event: Trackable,
     withData eventData: EventData
   ) async {
-    serialTaskManager.addTask { [weak self] in
-      guard let self = self else {
-        return
-      }
-      await self.internallyHandleImplicitTrigger(
+    // Assign the current register task while capturing the previous one.
+    previousRegisterTask = Task { [weak self, previousRegisterTask] in
+      // Wait until the previous register task is finished before continuing.
+      await previousRegisterTask?.value
+
+      await self?.internallyHandleImplicitTrigger(
         forEvent: event,
         withData: eventData
       )

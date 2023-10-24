@@ -138,3 +138,7 @@ protocol TriggerFactory: AnyObject {
 protocol PurchasedTransactionsFactory {
   func makePurchasingCoordinator() -> PurchasingCoordinator
 }
+
+protocol UserAttributesEventFactory {
+  func makeUserAttributesEvent() -> InternalSuperwallEvent.Attributes
+}

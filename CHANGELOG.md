@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.4.4
+
+### Fixes
+
+- Changes the way paywall presentation serialization is performed to avoid mixing of concurrency paradigms.
+
 ## 3.4.3
 
 ### Enhancements

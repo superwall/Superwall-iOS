@@ -28,12 +28,13 @@ class AppSessionManager {
 
   private unowned let configManager: ConfigManager
   private unowned let storage: Storage
-  private unowned let delegate: AppManagerDelegate & DeviceHelperFactory
+  private unowned let delegate: AppManagerDelegate & DeviceHelperFactory & UserAttributesEventFactory
 
   init(
     configManager: ConfigManager,
+    identityManager: IdentityManager,
     storage: Storage,
-    delegate: DeviceHelperFactory & AppManagerDelegate
+    delegate: AppManagerDelegate & DeviceHelperFactory & UserAttributesEventFactory
   ) {
     self.configManager = configManager
     self.storage = storage
@@ -125,11 +126,22 @@ class AppSessionManager {
     if didStartNewSession {
       appSession = AppSession()
       Task {
-        let attributes = await delegate.makeSessionDeviceAttributes()
-        await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
-        await Superwall.shared.track(InternalSuperwallEvent.DeviceAttributes(
-          deviceAttributes: attributes
-        ))
+        let deviceAttributes = await delegate.makeSessionDeviceAttributes()
+        let userAttributes = delegate.makeUserAttributesEvent()
+
+        await withTaskGroup(of: Void.self) { group in
+          group.addTask {
+            await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
+          }
+          group.addTask {
+            await Superwall.shared.track(
+              InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
+            )
+          }
+          group.addTask {
+            await Superwall.shared.track(userAttributes)
+          }
+        }
       }
     } else {
       appSession.endAt = nil

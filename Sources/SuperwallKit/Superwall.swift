@@ -170,7 +170,7 @@ public final class Superwall: NSObject, ObservableObject {
   let dependencyContainer: DependencyContainer
 
   /// Used to serially execute register calls.
-  let serialTaskManager = SerialTaskManager()
+  var previousRegisterTask: Task<Void, Never>?
 
   // MARK: - Private Functions
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
