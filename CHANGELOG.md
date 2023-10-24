@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Changes the way paywall presentation serialization is performed to avoid mixing of concurrency paradigms.
+- Prevents `preloadAllPaywalls()` from being called if the SDK is already preloading paywalls.
 
 ## 3.4.3
 
