@@ -85,8 +85,8 @@ public final class ComputedPropertyRequest: NSObject, Decodable {
     public init(from decoder: Decoder) throws {
       let container = try decoder.singleValueContainer()
       let rawValue = try container.decode(String.self)
-      let gatingType = CodingKeys(rawValue: rawValue)
-      switch gatingType {
+      let type = CodingKeys(rawValue: rawValue)
+      switch type {
       case .minutesSince:
         self = .minutesSince
       case .hoursSince:
