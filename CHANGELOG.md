@@ -15,6 +15,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Prevents `preloadAllPaywalls()` from being called if the SDK is already preloading paywalls.
 - Fixes issue where experiment and trigger session details were missing from transaction events if a paywall was closed before returning a `PurchaseResult` in the `PurchaseController`.
 - Prevents multiple taps on a purchase button from firing the `PurchaseController` purchase function multiple times.
+- Tracks `survey_response` when selected in debugger.
 
 ## 3.4.3
 
