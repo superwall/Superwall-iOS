@@ -14,6 +14,7 @@ class AppSessionManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     appSessionManager = AppSessionManager(
       configManager: dependencyContainer.configManager,
+      identityManager: dependencyContainer.identityManager,
       storage: dependencyContainer.storage,
       delegate: delegate
     )

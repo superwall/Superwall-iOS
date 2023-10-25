@@ -105,6 +105,7 @@ final class DependencyContainer {
     // Must be after session events
     appSessionManager = AppSessionManager(
       configManager: configManager,
+      identityManager: identityManager,
       storage: storage,
       delegate: self
     )
@@ -471,5 +472,15 @@ extension DependencyContainer: ComputedPropertyRequestsFactory {
 extension DependencyContainer: PurchasedTransactionsFactory {
   func makePurchasingCoordinator() -> PurchasingCoordinator {
     return storeKitManager.purchaseController.productPurchaser.coordinator
+  }
+}
+
+// MARK: - User Attributes Event Factory
+extension DependencyContainer: UserAttributesEventFactory {
+  func makeUserAttributesEvent() -> InternalSuperwallEvent.Attributes {
+    return InternalSuperwallEvent.Attributes(
+      appInstalledAtString: deviceHelper.appInstalledAtString,
+      customParameters: identityManager.userAttributes
+    )
   }
 }

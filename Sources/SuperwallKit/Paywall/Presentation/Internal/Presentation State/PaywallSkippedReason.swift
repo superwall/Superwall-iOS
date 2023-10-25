@@ -8,7 +8,7 @@
 import Foundation
 
 /// The reason the paywall presentation was skipped.
-public enum PaywallSkippedReason: Error, Sendable, Equatable {
+public enum PaywallSkippedReason: Error, Sendable, Equatable, CustomStringConvertible {
   /// The user was assigned to a holdout.
   ///
   /// A holdout is a control group which you can analyse against
@@ -35,6 +35,19 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable {
   /// By default, paywalls do not show to users who are already subscribed. You can override this
   /// behavior in the paywall editor.
   case userIsSubscribed
+
+  public var description: String {
+    switch self {
+    case .eventNotFound:
+      return "The paywall was skipped because the event is not part of a campaign."
+    case .holdout:
+      return "The paywall was skipped because the user is part of a holdout."
+    case .noRuleMatch:
+      return "The paywall was skipped because the user doesn't match any rules."
+    case .userIsSubscribed:
+      return "The paywall was skipped because the user is subscribed."
+    }
+  }
 
   public static func == (lhs: PaywallSkippedReason, rhs: PaywallSkippedReason) -> Bool {
     switch (lhs, rhs) {
@@ -65,7 +78,7 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable {
 
 /// Objective-C-only enum. Specifies the reason the paywall presentation was skipped.
 @objc(SWKPaywallSkippedReason)
-public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable {
+public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable, CustomStringConvertible {
   /// The user was assigned to a holdout group.
   case holdout
 
@@ -90,4 +103,19 @@ public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable {
 
   /// The presentation wasn't skipped.
   case none
+
+  public var description: String {
+    switch self {
+    case .eventNotFound:
+      return "The paywall was skipped because the event is not part of a campaign."
+    case .holdout:
+      return "The paywall was skipped because the user is part of a holdout."
+    case .noRuleMatch:
+      return "The paywall was skipped because the user doesn't match any rules."
+    case .userIsSubscribed:
+      return "The paywall was skipped because the user is subscribed."
+    case .none:
+      return "The paywall was not skipped."
+    }
+  }
 }

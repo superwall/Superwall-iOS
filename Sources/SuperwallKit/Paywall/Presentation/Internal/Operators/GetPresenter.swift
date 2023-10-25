@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 11/05/2023.
 //
-// swiftlint:disable strict_fileprivate
+// swiftlint:disable strict_fileprivate function_body_length
 
 import UIKit
 import Combine
@@ -53,11 +53,14 @@ extension Superwall {
 
     switch request.flags.type {
     case .getPaywall:
-      await activateSession(
+      let sessionId = await activateSession(
         for: request,
         paywall: paywallViewController.paywall,
         triggerResult: rulesOutcome.triggerResult
       )
+      await MainActor.run {
+        paywallViewController.paywall.triggerSessionId = sessionId
+      }
       return nil
     case .getImplicitPresentationResult,
       .getPresentationResult:
@@ -95,11 +98,15 @@ extension Superwall {
       throw PresentationPipelineError.noPresenter
     }
 
-    await activateSession(
+    let sessionId = await activateSession(
       for: request,
       paywall: paywallViewController.paywall,
       triggerResult: rulesOutcome.triggerResult
     )
+
+    await MainActor.run {
+      paywallViewController.paywall.triggerSessionId = sessionId
+    }
 
     return presenter
   }
@@ -108,9 +115,9 @@ extension Superwall {
     for request: PresentationRequest,
     paywall: Paywall,
     triggerResult: InternalTriggerResult
-  ) async {
+  ) async -> String? {
     let sessionEventsManager = dependencyContainer.sessionEventsManager
-    await sessionEventsManager?.triggerSession.activateSession(
+    return await sessionEventsManager?.triggerSession.activateSession(
       for: request.presentationInfo,
       on: request.presenter,
       paywall: paywall,

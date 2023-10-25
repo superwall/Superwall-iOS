@@ -2,6 +2,23 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.4.4
+
+### Enhancements
+
+- Tracks user attributes on session start.
+- Exposes `triggerSessionId` on the `PaywallInfo` object.
+- Makes `PaywallSkippedReason` conform to `CustomStringConvertible`.
+- Adds the Superwall SDK version and your app's version/build number to the debugger menu. Press the hamburger icon on the top left in the debugger to access it.
+
+### Fixes
+
+- Changes the way paywall presentation serialization is performed to avoid mixing of concurrency paradigms.
+- Prevents `preloadAllPaywalls()` from being called if the SDK is already preloading paywalls.
+- Fixes issue where experiment and trigger session details were missing from transaction events if a paywall was closed before returning a `PurchaseResult` in the `PurchaseController`.
+- Prevents multiple taps on a purchase button from firing the `PurchaseController` purchase function multiple times.
+- Tracks `survey_response` when selected in debugger.
+
 ## 3.4.3
 
 ### Enhancements

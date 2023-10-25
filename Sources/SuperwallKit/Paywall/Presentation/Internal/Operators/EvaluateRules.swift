@@ -8,10 +8,11 @@
 import Foundation
 
 extension Superwall {
-  /// Evaluates the rules from the campaign that the event belongs to
+  /// Evaluates the rules from the campaign that the event belongs to.
   ///
   /// - Parameter request: The presentation request
-  /// - Returns: An `EvaluateRulesOutput` object containing the trigger result and confirmable assignment.
+  /// - Returns: A `RuleEvaluationOutcome` object containing the trigger result,
+  /// confirmable assignment, and unsaved occurrence.
   func evaluateRules(
     from request: PresentationRequest
   ) async throws -> RuleEvaluationOutcome {

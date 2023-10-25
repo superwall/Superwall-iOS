@@ -20,6 +20,10 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// A `Task` that is associated with purchasing. This is used to prevent multiple purchases
+  /// from occurring.
+  private var purchaseTask: Task<Void, Never>?
+
   /// The Objective-C delegate that handles Superwall lifecycle events.
   @available(swift, obsoleted: 1.0)
   @objc(delegate)
@@ -170,7 +174,7 @@ public final class Superwall: NSObject, ObservableObject {
   let dependencyContainer: DependencyContainer
 
   /// Used to serially execute register calls.
-  let serialTaskManager = SerialTaskManager()
+  var previousRegisterTask: Task<Void, Never>?
 
   // MARK: - Private Functions
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
@@ -473,10 +477,17 @@ extension Superwall: PaywallViewControllerEventDelegate {
         closeReason: .manualClose
       )
     case .initiatePurchase(let productId):
-      await dependencyContainer.transactionManager.purchase(
-        productId,
-        from: paywallViewController
-      )
+      if purchaseTask != nil {
+        return
+      }
+      purchaseTask = Task {
+        await dependencyContainer.transactionManager.purchase(
+          productId,
+          from: paywallViewController
+        )
+        purchaseTask = nil
+      }
+      await purchaseTask?.value
     case .initiateRestore:
       await dependencyContainer.transactionManager.tryToRestore(from: paywallViewController)
     case .openedURL(let url):

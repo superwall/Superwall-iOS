@@ -75,6 +75,9 @@ struct Paywall: Decodable {
   /// The experiment associated with the paywall.
   var experiment: Experiment?
 
+  /// The trigger session ID associated with the paywall.
+  var triggerSessionId: String?
+
   /// An ordered list of SWProducts that this paywall uses. This is accessed by the trigger session.
   var swProducts: [SWProduct]? = []
 
@@ -218,6 +221,7 @@ struct Paywall: Decodable {
     identifier: String,
     name: String,
     experiment: Experiment? = nil,
+    triggerSessionId: String? = nil,
     url: URL,
     htmlSubstitutions: String,
     presentation: Paywall.Presentation,
@@ -244,6 +248,7 @@ struct Paywall: Decodable {
     self.identifier = identifier
     self.name = name
     self.experiment = experiment
+    self.triggerSessionId = triggerSessionId
     self.url = url
     self.htmlSubstitutions = htmlSubstitutions
     self.presentation = presentation
@@ -288,6 +293,7 @@ struct Paywall: Decodable {
       productsLoadFailTime: productsLoadingInfo.failAt,
       productsLoadCompleteTime: productsLoadingInfo.endAt,
       experiment: experiment,
+      triggerSessionId: triggerSessionId,
       paywalljsVersion: paywalljsVersion,
       isFreeTrialAvailable: isFreeTrialAvailable,
       presentationSourceType: presentationSourceType,

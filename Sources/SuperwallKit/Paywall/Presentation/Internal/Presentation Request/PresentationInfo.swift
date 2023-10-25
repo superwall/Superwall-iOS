@@ -11,6 +11,8 @@ import Foundation
 enum PresentationInfo {
   case implicitTrigger(EventData)
   case explicitTrigger(EventData)
+
+  /// Only used in the `DebugViewController`
   case fromIdentifier(_ identifier: String, freeTrialOverride: Bool)
 
   var freeTrialOverride: Bool? {

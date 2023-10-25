@@ -83,12 +83,13 @@ final class TriggerSessionManagerTests: XCTestCase {
     await sessionManager.createSessions(from: config)
     
     // When
-    await sessionManager.activateSession(
+    let sessionId = await sessionManager.activateSession(
       for: .fromIdentifier("123", freeTrialOverride: false),
       triggerResult: nil
     )
 
     let triggerSession = await queue.triggerSessions.last
+    XCTAssertNil(sessionId)
     XCTAssertNil(triggerSession?.presentationOutcome)
   }
 
@@ -103,13 +104,14 @@ final class TriggerSessionManagerTests: XCTestCase {
       .setting(\.name, to: "AnotherTrigger")
 
     // When
-    await sessionManager.activateSession(
+    let sessionId = await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       triggerResult: .eventNotFound
     )
 
     let presentationOutcome = await queue.triggerSessions.last!.presentationOutcome
     XCTAssertNil(presentationOutcome)
+    XCTAssertNil(sessionId)
   }
 
   func testActivatePendingSession() async {
@@ -133,13 +135,13 @@ final class TriggerSessionManagerTests: XCTestCase {
     )
 
     // When
-    await sessionManager.activateSession(
+    let sessionId = await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       triggerResult: .paywall(experiment)
     )
 
-
     let triggerSessions = await queue.triggerSessions
+    XCTAssertEqual(sessionId, triggerSessions.last!.id)
     XCTAssertEqual(triggerSessions.count, 2)
     XCTAssertNil(triggerSessions.last!.endAt)
     XCTAssertEqual(triggerSessions.last!.presentationOutcome, .paywall)
@@ -165,12 +167,13 @@ final class TriggerSessionManagerTests: XCTestCase {
       .setting(\.name, to: eventName)
 
     // When
-    await sessionManager.activateSession(
+    let sessionId = await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       triggerResult: .holdout(experiment)
     )
 
     let triggerSessions = await queue.triggerSessions
+    XCTAssertEqual(sessionId, triggerSessions.last!.id)
     XCTAssertEqual(triggerSessions.count, 2)
     XCTAssertNotNil(triggerSessions.last!.endAt)
     XCTAssertEqual(triggerSessions.last!.presentationOutcome, .holdout)
@@ -185,12 +188,13 @@ final class TriggerSessionManagerTests: XCTestCase {
       .setting(\.name, to: eventName)
 
     // When
-    await sessionManager.activateSession(
+    let sessionId = await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       triggerResult: .noRuleMatch([])
     )
 
     let triggerSessions = await queue.triggerSessions
+    XCTAssertEqual(sessionId, triggerSessions.last!.id)
     XCTAssertEqual(triggerSessions.count, 2)
     XCTAssertNotNil(triggerSessions.last!.endAt)
     XCTAssertEqual(triggerSessions.last!.presentationOutcome, .noRuleMatch)
@@ -255,7 +259,7 @@ final class TriggerSessionManagerTests: XCTestCase {
       groupId: rawExperiment.groupId,
       variant: rawExperiment.variants.first!.toVariant()
     )
-    await sessionManager.activateSession(
+    _ = await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       triggerResult: .paywall(experiment)
     )
@@ -346,7 +350,7 @@ final class TriggerSessionManagerTests: XCTestCase {
     let paywallResponse: Paywall = .stub()
       .setting(\.databaseId, to: paywallId)
       .setting(\.swProducts, to: products)
-    await sessionManager.activateSession(
+    _ = await sessionManager.activateSession(
       for: .explicitTrigger(eventData),
       paywall: paywallResponse,
       triggerResult: .paywall(
