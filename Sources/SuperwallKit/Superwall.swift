@@ -500,5 +500,4 @@ extension Superwall: PaywallViewControllerEventDelegate {
       dependencyContainer.delegateAdapter.handleCustomPaywallAction(withName: string)
     }
   }
-
 }

@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 11/05/2023.
 //
-// swiftlint:disable strict_fileprivate
+// swiftlint:disable strict_fileprivate function_body_length
 
 import UIKit
 import Combine
