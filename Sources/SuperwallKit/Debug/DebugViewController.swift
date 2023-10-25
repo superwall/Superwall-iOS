@@ -344,9 +344,11 @@ final class DebugViewController: UIViewController {
   }
 
   @objc func pressedConsoleButton() {
+    let releaseVersionNumber = Bundle.main.releaseVersionNumber ?? ""
+    let buildVersionNumber = Bundle.main.buildVersionNumber ?? ""
     presentAlert(
       title: nil,
-      message: "Menu",
+      message: "Superwall v\(sdkVersion) | App v\(releaseVersionNumber) (\(buildVersionNumber))",
       options: [
         AlertOption(title: "Localization", action: showLocalizationPicker, style: .default),
         AlertOption(title: "Templates", action: showConsole, style: .default)
