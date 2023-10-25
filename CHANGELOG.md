@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Tracks user attributes on session start.
 - Exposes `triggerSessionId` on the `PaywallInfo` object.
+- Makes `PaywallSkippedReason` conform to `CustomStringConvertible`.
 
 ### Fixes
 
