@@ -7,11 +7,13 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Tracks user attributes on session start.
+- Exposes `triggerSessionId` on the `PaywallInfo` object.
 
 ### Fixes
 
 - Changes the way paywall presentation serialization is performed to avoid mixing of concurrency paradigms.
 - Prevents `preloadAllPaywalls()` from being called if the SDK is already preloading paywalls.
+- Fixes issue where experiment and trigger session details were missing from transaction events if a paywall was closed before returning a `PurchaseResult` in the `PurchaseController`.
 
 ## 3.4.3
 

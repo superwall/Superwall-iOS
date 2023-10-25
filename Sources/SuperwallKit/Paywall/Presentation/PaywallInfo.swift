@@ -23,6 +23,9 @@ public final class PaywallInfo: NSObject {
   /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
   public let experiment: Experiment?
 
+  /// The trigger session ID associated with the paywall.
+  public let triggerSessionId: String?
+
   /// The products associated with the paywall.
   public let products: [Product]
 
@@ -127,15 +130,16 @@ public final class PaywallInfo: NSObject {
     productsLoadStartTime: Date?,
     productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
-    experiment: Experiment? = nil,
-    paywalljsVersion: String? = nil,
+    experiment: Experiment?,
+    triggerSessionId: String?,
+    paywalljsVersion: String?,
     isFreeTrialAvailable: Bool,
-    presentationSourceType: String? = nil,
+    presentationSourceType: String?,
     factory: TriggerSessionManagerFactory,
-    featureGatingBehavior: FeatureGatingBehavior = .nonGated,
-    closeReason: PaywallCloseReason = .none,
-    localNotifications: [LocalNotification] = [],
-    computedPropertyRequests: [ComputedPropertyRequest] = [],
+    featureGatingBehavior: FeatureGatingBehavior,
+    closeReason: PaywallCloseReason,
+    localNotifications: [LocalNotification],
+    computedPropertyRequests: [ComputedPropertyRequest],
     surveys: [Survey]
   ) {
     self.databaseId = databaseId
@@ -147,6 +151,7 @@ public final class PaywallInfo: NSObject {
     self.presentedByEventWithId = eventData?.id.lowercased()
     self.presentationSourceType = presentationSourceType
     self.experiment = experiment
+    self.triggerSessionId = triggerSessionId
     self.paywalljsVersion = paywalljsVersion
     self.products = products
     self.productIds = products.map { $0.id }
@@ -220,17 +225,11 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_start_time": productsLoadStartTime as Any,
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
       "paywall_products_load_fail_time": productsLoadFailTime as Any,
-      "paywall_products_load_duration": productsLoadDuration as Any
+      "paywall_products_load_duration": productsLoadDuration as Any,
+      "trigger_session_id": triggerSessionId as Any,
+      "experiment_id": experiment?.id as Any,
+      "variant_id": experiment?.variant.id as Any
     ]
-
-    let triggerSessionManager = factory.getTriggerSessionManager()
-    if let triggerSession = await triggerSessionManager.activeTriggerSession,
-      let databaseId = triggerSession.paywall?.databaseId,
-      databaseId == self.databaseId {
-      output["trigger_session_id"] = triggerSession.id
-      output["experiment_id"] = triggerSession.trigger.experiment?.id
-      output["variant_id"] = triggerSession.trigger.experiment?.variant.id
-    }
 
     var loadingVars: [String: Any] = [:]
     for key in output.keys {
@@ -314,9 +313,16 @@ extension PaywallInfo: Stubbable {
       productsLoadStartTime: nil,
       productsLoadFailTime: nil,
       productsLoadCompleteTime: nil,
+      experiment: nil,
+      triggerSessionId: nil,
+      paywalljsVersion: nil,
       isFreeTrialAvailable: false,
       presentationSourceType: "register",
       factory: dependencyContainer,
+      featureGatingBehavior: .nonGated,
+      closeReason: .manualClose,
+      localNotifications: [],
+      computedPropertyRequests: [],
       surveys: []
     )
   }

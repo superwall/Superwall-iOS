@@ -138,15 +138,15 @@ actor TriggerSessionManager {
     paywall: Paywall? = nil,
     triggerResult: InternalTriggerResult?,
     trackEvent: (Trackable) async -> TrackingResult = Superwall.shared.track
-  ) async {
+  ) async -> String? {
     guard let eventName = presentationInfo.eventName else {
       // The paywall is being presented by identifier, which is what the debugger uses,
       // and that's not supported.
-      return
+      return nil
     }
 
     guard var session = pendingTriggerSessions[eventName] else {
-      return
+      return nil
     }
     guard let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: presentationInfo,
@@ -154,7 +154,7 @@ actor TriggerSessionManager {
       paywall: paywall,
       triggerResult: triggerResult?.toPublicType()
     ) else {
-      return
+      return nil
     }
 
     // Update trigger session
@@ -188,6 +188,8 @@ actor TriggerSessionManager {
     case .paywall:
       await enqueueCurrentTriggerSession()
     }
+
+    return session.id
   }
 
   /// Ends the active trigger session and resets it to `nil`.
