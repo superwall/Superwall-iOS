@@ -40,12 +40,26 @@ extension Superwall {
       )
     }
 
-		let eventData = EventData(
+    let eventData = EventData(
       name: event.rawName,
       parameters: JSON(parameters.eventParams),
       createdAt: eventCreatedAt
     )
-    await dependencyContainer.queue.enqueue(event: eventData.jsonData)
+
+    // If config doesn't exist yet we rely on previous saved feature flag
+    // to determine whether to disable verbose events.
+    let existingDisableVerboseEvents = dependencyContainer.configManager.config?.featureFlags.disableVerboseEvents
+    let previousDisableVerboseEvents = dependencyContainer.storage.get(DisableVerboseEvents.self)
+
+    let verboseEvents = existingDisableVerboseEvents ?? previousDisableVerboseEvents
+
+    if TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: verboseEvents,
+      isSandbox: dependencyContainer.makeIsSandbox()
+    ) {
+      await dependencyContainer.queue.enqueue(event: eventData.jsonData)
+    }
     dependencyContainer.storage.coreDataManager.saveEventData(eventData)
 
     if event.canImplicitlyTriggerPaywall {

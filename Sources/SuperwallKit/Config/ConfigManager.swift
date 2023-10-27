@@ -76,9 +76,8 @@ class ConfigManager {
 
       Task { await sendProductsBack(from: config) }
 
-      triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
-      choosePaywallVariants(from: config.triggers)
-      await checkForTouchesBeganTrigger(in: config.triggers)
+      await processConfig(config)
+
       configState.send(.retrieved(config))
 
       Task { await preloadPaywalls() }
@@ -92,6 +91,13 @@ class ConfigManager {
         error: error
       )
     }
+  }
+
+  private func processConfig(_ config: Config) async {
+    storage.save(config.featureFlags.disableVerboseEvents, forType: DisableVerboseEvents.self)
+    triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
+    choosePaywallVariants(from: config.triggers)
+    await checkForTouchesBeganTrigger(in: config.triggers)
   }
 
   /// Reassigns variants and preloads paywalls again.

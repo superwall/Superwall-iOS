@@ -83,6 +83,52 @@ enum TrackingLogic {
     )
   }
 
+  static func isNotDisabledVerboseEvent(
+    _ event: Trackable,
+    disableVerboseEvents: Bool?,
+    isSandbox: Bool
+  ) -> Bool {
+    guard let disableVerboseEvents = disableVerboseEvents else {
+      return true
+    }
+    if isSandbox {
+      return true
+    }
+
+    if event is InternalSuperwallEvent.PresentationRequest {
+      return !disableVerboseEvents
+    }
+
+    if let event = event as? InternalSuperwallEvent.PaywallLoad {
+      switch event.state {
+      case .start, .complete:
+        return !disableVerboseEvents
+      default:
+        return true
+      }
+    }
+
+    if let event = event as? InternalSuperwallEvent.PaywallProductsLoad {
+      switch event.state {
+      case .start, .complete:
+        return !disableVerboseEvents
+      default:
+        return true
+      }
+    }
+
+    if let event = event as? InternalSuperwallEvent.PaywallWebviewLoad {
+      switch event.state {
+      case .start, .complete:
+        return !disableVerboseEvents
+      default:
+        return true
+      }
+    }
+
+    return true
+  }
+
   /// Makes optional variables non-optional. Removes `nil`, `NSArray`, `NSDictionary`, and anything that can't be `JSON`, `Date` or `URL`.
   private static func clean(input: Any?) -> Any? {
     guard let input = input else {

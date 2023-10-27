@@ -152,3 +152,11 @@ enum SurveyAssignmentKey: Storable {
   static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = String
 }
+
+enum DisableVerboseEvents: Storable {
+  static var key: String {
+    "store.disableVerboseEvents"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}

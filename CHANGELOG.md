@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.4.5
+
+### Enhancements
+
+- Adds internal feature flag to disable verbose events like `paywallResponseLoad_start`.
+
 ## 3.4.4
 
 ### Enhancements

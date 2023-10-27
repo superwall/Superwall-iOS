@@ -332,6 +332,7 @@ extension DependencyContainer: ApiFactory {
       "X-Bundle-ID": deviceHelper.bundleId,
       "X-Low-Power-Mode": deviceHelper.isLowPowerModeEnabled,
       "X-Is-Sandbox": deviceHelper.isSandbox,
+      "X-Subscription-Status": Superwall.shared.subscriptionStatus.description,
       "Content-Type": "application/json"
     ]
 
