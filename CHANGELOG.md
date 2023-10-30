@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds internal feature flag to disable verbose events like `paywallResponseLoad_start`.
+- Tracks a Superwall Event `reset` whenever `Superwall.shared.reset()` is called.
 
 ## 3.4.4
 

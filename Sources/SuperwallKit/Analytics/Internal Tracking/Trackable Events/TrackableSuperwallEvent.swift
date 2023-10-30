@@ -170,6 +170,12 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
+  struct Reset: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .reset
+    var customParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
   struct AppClose: TrackableSuperwallEvent {
     let superwallEvent: SuperwallEvent = .appClose
     var customParameters: [String: Any] = [:]

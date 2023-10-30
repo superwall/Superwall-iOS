@@ -133,6 +133,11 @@ class Storage {
       self?._confirmedAssignments = nil
       self?._didTrackFirstSeen = false
     }
+
+    Task {
+      await Superwall.shared.track(InternalSuperwallEvent.Reset())
+    }
+
     recordFirstSeenTracked()
   }
 
