@@ -23,7 +23,8 @@ extension Superwall {
     request: PresentationRequest,
     rulesOutcome: RuleEvaluationOutcome,
     debugInfo: [String: Any],
-    paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
+    storage: Storage
   ) async throws -> Experiment {
     let errorType: PresentationPipelineError
 
@@ -32,6 +33,9 @@ extension Superwall {
       return experiment
     case .holdout(let experiment):
       await activateSession(request: request, rulesOutcome: rulesOutcome)
+      if let unsavedOccurrence = rulesOutcome.unsavedOccurrence {
+        storage.coreDataManager.save(triggerRuleOccurrence: unsavedOccurrence)
+      }
       errorType = .holdout(experiment)
       paywallStatePublisher?.send(.skipped(.holdout(experiment)))
     case .noRuleMatch:

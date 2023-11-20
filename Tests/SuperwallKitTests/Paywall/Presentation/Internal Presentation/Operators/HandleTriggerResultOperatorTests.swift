@@ -9,6 +9,7 @@ import XCTest
 @testable import SuperwallKit
 import Combine
 
+@available(iOS 14.0, *)
 final class HandleTriggerResultOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
@@ -31,7 +32,8 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
         request: .stub(),
         rulesOutcome: input,
         debugInfo: [:],
-        paywallStatePublisher: statePublisher
+        paywallStatePublisher: statePublisher,
+        storage: StorageMock()
       )
     } catch {
       XCTFail()
@@ -79,7 +81,8 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
         request: .stub(),
         rulesOutcome: input,
         debugInfo: [:],
-        paywallStatePublisher: statePublisher
+        paywallStatePublisher: statePublisher,
+        storage: StorageMock()
       )
       XCTFail("Should fail")
     } catch {
@@ -130,7 +133,8 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
         request: .stub(),
         rulesOutcome: input,
         debugInfo: [:],
-        paywallStatePublisher: statePublisher
+        paywallStatePublisher: statePublisher,
+        storage: StorageMock()
       )
       XCTFail("Should fail")
     } catch {
@@ -181,7 +185,8 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
         request: .stub(),
         rulesOutcome: input,
         debugInfo: [:],
-        paywallStatePublisher: statePublisher
+        paywallStatePublisher: statePublisher,
+        storage: StorageMock()
       )
       XCTFail("Should fail")
     } catch {
@@ -232,7 +237,8 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
         request: .stub(),
         rulesOutcome: input,
         debugInfo: [:],
-        paywallStatePublisher: statePublisher
+        paywallStatePublisher: statePublisher,
+        storage: StorageMock()
       )
       XCTFail("Should fail")
     } catch {

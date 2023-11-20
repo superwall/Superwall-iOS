@@ -47,7 +47,8 @@ extension Superwall {
       request: request,
       rulesOutcome: rulesOutcome,
       debugInfo: debugInfo,
-      paywallStatePublisher: publisher
+      paywallStatePublisher: publisher,
+      dependencyContainer: dependencyContainer
     )
 
     let presenter = try await getPresenterIfNecessary(

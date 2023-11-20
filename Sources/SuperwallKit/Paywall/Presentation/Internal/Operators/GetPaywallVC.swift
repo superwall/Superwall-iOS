@@ -26,16 +26,16 @@ extension Superwall {
     rulesOutcome: RuleEvaluationOutcome,
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
-    dependencyContainer: DependencyContainer? = nil
+    dependencyContainer: DependencyContainer
   ) async throws -> PaywallViewController {
     let experiment = try await getExperiment(
       request: request,
       rulesOutcome: rulesOutcome,
       debugInfo: debugInfo,
-      paywallStatePublisher: paywallStatePublisher
+      paywallStatePublisher: paywallStatePublisher,
+      storage: dependencyContainer.storage
     )
 
-    let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     let responseIdentifiers = ResponseIdentifiers(
       paywallId: experiment.variant.paywallId,
       experiment: experiment

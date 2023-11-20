@@ -9,6 +9,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds internal feature flag to disable verbose events like `paywallResponseLoad_start`.
 - Tracks a Superwall Event `reset` whenever `Superwall.shared.reset()` is called.
 
+### Fixes
+
+- Fixes issue where holdouts were still matching even if the limit set for their corresponding rules were exceeded.
+
 ## 3.4.4
 
 ### Enhancements
