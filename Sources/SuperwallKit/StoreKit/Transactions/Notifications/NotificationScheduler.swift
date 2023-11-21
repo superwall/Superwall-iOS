@@ -67,6 +67,15 @@ enum NotificationScheduler {
       delay = delay / 24 / 60
     }
 
+    guard delay > 0 else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallViewController,
+        message: "Notification delay isn't greater than 0 seconds. Notifications will not be scheduled."
+      )
+      return
+    }
+
     // Show this notification X seconds from now.
     let trigger = UNTimeIntervalNotificationTrigger(
       timeInterval: delay,
