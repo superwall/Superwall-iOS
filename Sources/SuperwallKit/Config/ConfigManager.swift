@@ -46,7 +46,7 @@ class ConfigManager {
   /// A task that is non-`nil` when preloading all paywalls.
   private var currentPreloadingTask: Task<Void, Never>?
 
-  private let factory: RequestFactory & RuleAttributesFactory
+  private let factory: RequestFactory & RuleAttributesFactory & ReceiptFactory
 
   init(
     options: SuperwallOptions?,
@@ -54,7 +54,7 @@ class ConfigManager {
     storage: Storage,
     network: Network,
     paywallManager: PaywallManager,
-    factory: RequestFactory & RuleAttributesFactory
+    factory: RequestFactory & RuleAttributesFactory & ReceiptFactory
   ) {
     if let options = options {
       self.options = options
@@ -68,7 +68,7 @@ class ConfigManager {
 
   func fetchConfiguration() async {
     do {
-      await storeKitManager.loadPurchasedProducts()
+      _ = await factory.loadPurchasedProducts()
 
       let config = try await network.getConfig { [weak self] in
         self?.configState.send(.retrying)

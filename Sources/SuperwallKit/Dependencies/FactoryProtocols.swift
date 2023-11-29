@@ -116,10 +116,6 @@ protocol ApiFactory: AnyObject {
   ) async -> [String: String]
 }
 
-protocol ProductPurchaserFactory: AnyObject {
-  func makeSK1ProductPurchaser() -> ProductPurchaserSK1
-}
-
 protocol StoreTransactionFactory: AnyObject {
   func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction
 
@@ -137,8 +133,16 @@ protocol TriggerFactory: AnyObject {
 
 protocol PurchasedTransactionsFactory {
   func makePurchasingCoordinator() -> PurchasingCoordinator
+  func purchase(product: SKProduct) async -> PurchaseResult
+  func restorePurchases() async -> RestorationResult
 }
 
 protocol UserAttributesEventFactory {
   func makeUserAttributesEvent() -> InternalSuperwallEvent.Attributes
+}
+
+protocol ReceiptFactory {
+  func loadPurchasedProducts() async -> Set<StoreProduct>?
+  func refreshReceipt() async
+  func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
 }
