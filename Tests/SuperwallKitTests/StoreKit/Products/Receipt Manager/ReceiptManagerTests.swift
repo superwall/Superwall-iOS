@@ -11,11 +11,9 @@ import XCTest
 
 class ReceiptManagerTests: XCTestCase {
   let dependencyContainer = DependencyContainer()
-  lazy var purchaseController = InternalPurchaseController(
-    factory: dependencyContainer,
-    swiftPurchaseController: nil,
-    objcPurchaseController: nil
-  )
+  lazy var purchaseController: AutomaticPurchaseController = {
+    return AutomaticPurchaseController(factory: dependencyContainer)
+  }()
 
   func test_loadPurchasedProducts_nilProducts() async {
     let product = MockSkProduct(subscriptionGroupIdentifier: "abc")
@@ -27,7 +25,7 @@ class ReceiptManagerTests: XCTestCase {
     }
     let receiptManager = ReceiptManager(
       delegate: productsFetcher,
-      purchaseController: purchaseController,
+      receiptDelegate: purchaseController,
       receiptData: getReceiptData
     )
 
@@ -45,7 +43,7 @@ class ReceiptManagerTests: XCTestCase {
     }
     let receiptManager = ReceiptManager(
       delegate: productsFetcher,
-      purchaseController: purchaseController,
+      receiptDelegate: purchaseController,
       receiptData: getReceiptData
     )
 
