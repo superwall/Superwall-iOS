@@ -38,7 +38,7 @@ final class DependencyContainer {
   var productPurchaser: ProductPurchaserSK1!
   var receiptManager: ReceiptManager!
   var purchaseController: PurchaseController!
-  var productsFetcher: ProductsFetcherSK1!
+  let productsFetcher: ProductsFetcherSK1 = ProductsFetcherSK1()
   // swiftlint:enable implicitly_unwrapped_optional
 
   init(
@@ -46,8 +46,10 @@ final class DependencyContainer {
     options: SuperwallOptions? = nil
   ) {
     purchaseController = controller ?? AutomaticPurchaseController(factory: self)
-    productsFetcher = ProductsFetcherSK1()
-    receiptManager = ReceiptManager(delegate: productsFetcher, receiptDelegate: purchaseController as? ReceiptDelegate)
+    receiptManager = ReceiptManager(
+      delegate: productsFetcher,
+      receiptDelegate: purchaseController as? ReceiptDelegate
+    )
 
     storeKitManager = StoreKitManager(productsFetcher: productsFetcher)
     delegateAdapter = SuperwallDelegateAdapter()

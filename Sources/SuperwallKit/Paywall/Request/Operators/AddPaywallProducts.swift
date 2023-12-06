@@ -48,8 +48,8 @@ extension PaywallRequestManager {
         productsById: result.productsById,
         isFreeTrialAvailableOverride: request.overrides.isFreeTrial,
         isFreeTrialAvailable: { [weak self] product in
-          guard let self else { return false }
-          return await factory.isFreeTrialAvailable(for: product)
+          guard let self = self else { return false }
+          return await self.factory.isFreeTrialAvailable(for: product)
         }
       )
       paywall.swProducts = outcome.orderedSwProducts

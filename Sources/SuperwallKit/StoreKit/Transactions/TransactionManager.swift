@@ -11,18 +11,23 @@ import UIKit
 import Combine
 
 final class TransactionManager {
-  private var storeKitManager: StoreKitManager
-  private var receiptManager: ReceiptManager
-  private var purchaseController: PurchaseController
-  private var sessionEventsManager: SessionEventsManager
-  private var factory: OptionsFactory & TriggerFactory & PurchasedTransactionsFactory & StoreTransactionFactory & DeviceHelperFactory
+  private let storeKitManager: StoreKitManager
+  private let receiptManager: ReceiptManager
+  private let purchaseController: PurchaseController
+  private let sessionEventsManager: SessionEventsManager
+  private let factory: Factory
+  typealias Factory = OptionsFactory
+    & TriggerFactory
+    & PurchasedTransactionsFactory
+    & StoreTransactionFactory
+    & DeviceHelperFactory
 
   init(
     storeKitManager: StoreKitManager,
     receiptManager: ReceiptManager,
     purchaseController: PurchaseController,
     sessionEventsManager: SessionEventsManager,
-    factory: OptionsFactory & TriggerFactory & PurchasedTransactionsFactory & StoreTransactionFactory & DeviceHelperFactory
+    factory: Factory
   ) {
     self.storeKitManager = storeKitManager
     self.receiptManager = receiptManager
@@ -178,6 +183,9 @@ final class TransactionManager {
     guard let sk1Product = product.sk1Product else {
       return .failed(PurchaseError.productUnavailable)
     }
+    await factory.makePurchasingCoordinator().beginPurchase(
+      of: product.productIdentifier
+    )
     return await purchaseController.purchase(product: sk1Product)
   }
 

@@ -26,10 +26,10 @@ final class ProductPurchaserSK1: NSObject {
   private let restoration = Restoration()
 
   // MARK: Dependencies
-  private var storeKitManager: StoreKitManager
-  private var receiptManager: ReceiptManager
-  private var sessionEventsManager: SessionEventsManager
-  private var factory: HasExternalPurchaseControllerFactory & StoreTransactionFactory
+  private let storeKitManager: StoreKitManager
+  private let receiptManager: ReceiptManager
+  private let sessionEventsManager: SessionEventsManager
+  private let factory: HasExternalPurchaseControllerFactory & StoreTransactionFactory
 
   deinit {
     SKPaymentQueue.default().remove(self)
@@ -177,8 +177,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     // Only continue if using internal purchase controller. The transaction may be
     // readded to the queue if finishing fails so we need to make sure
     // we can re-finish the transaction.
-    let isUsingInternalPurchaseController = !factory.makeHasExternalPurchaseController()
-    guard isUsingInternalPurchaseController == true else {
+    if factory.makeHasExternalPurchaseController() {
       return
     }
 

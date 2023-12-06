@@ -8,14 +8,14 @@
 import Foundation
 import StoreKit
 
-public class PurchaseControllerObjcAdapter: PurchaseController {
+final class PurchaseControllerObjcAdapter: PurchaseController {
   private let objcController: PurchaseControllerObjc
 
-  public init(objcController: PurchaseControllerObjc) {
+  init(objcController: PurchaseControllerObjc) {
     self.objcController = objcController
   }
 
-  public func purchase(product: SKProduct) async -> PurchaseResult {
+  func purchase(product: SKProduct) async -> PurchaseResult {
     return await withCheckedContinuation { continuation in
       objcController.purchase(product: product) { result, error in
         if let error = error {
@@ -38,7 +38,7 @@ public class PurchaseControllerObjcAdapter: PurchaseController {
     }
   }
 
-  public func restorePurchases() async -> RestorationResult {
+  func restorePurchases() async -> RestorationResult {
     return await withCheckedContinuation { continuation in
       objcController.restorePurchases { (result, error) in
         switch result {
