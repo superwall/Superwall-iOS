@@ -40,7 +40,7 @@ final class PurchaseControllerObjcAdapter: PurchaseController {
 
   func restorePurchases() async -> RestorationResult {
     return await withCheckedContinuation { continuation in
-      objcController.restorePurchases { (result, error) in
+      objcController.restorePurchases { result, error in
         switch result {
         case .restored:
           continuation.resume(returning: .restored)

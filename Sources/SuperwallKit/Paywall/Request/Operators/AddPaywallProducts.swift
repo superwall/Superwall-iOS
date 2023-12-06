@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/05/2023.
 //
+// swiftlint:disable trailing_closure
 
 import Foundation
 

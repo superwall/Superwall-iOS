@@ -38,8 +38,8 @@ final class DependencyContainer {
   var productPurchaser: ProductPurchaserSK1!
   var receiptManager: ReceiptManager!
   var purchaseController: PurchaseController!
-  let productsFetcher: ProductsFetcherSK1 = ProductsFetcherSK1()
   // swiftlint:enable implicitly_unwrapped_optional
+  let productsFetcher = ProductsFetcherSK1()
 
   init(
     purchaseController controller: PurchaseController? = nil,

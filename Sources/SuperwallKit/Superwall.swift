@@ -364,7 +364,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
     superwall = Superwall(
       apiKey: apiKey,
-      purchaseController: purchaseController.flatMap({ PurchaseControllerObjcAdapter(objcController: $0) }),
+      purchaseController: purchaseController.flatMap { PurchaseControllerObjcAdapter(objcController: $0) },
       options: options,
       completion: completion
     )

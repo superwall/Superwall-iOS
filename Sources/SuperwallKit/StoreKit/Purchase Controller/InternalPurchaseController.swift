@@ -13,6 +13,6 @@ protocol InternalPurchaseController {
 
 extension PurchaseController {
   var isInternal: Bool {
-      return (self as? InternalPurchaseController)?.isInternal ?? false
+    return (self as? InternalPurchaseController)?.isInternal ?? false
   }
 }
