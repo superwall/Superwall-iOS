@@ -292,7 +292,7 @@ final class TrackingTests: XCTestCase {
       .init(source: .expression, experimentId: "1"),
       .init(source: .occurrence, experimentId: "2")
     ]
-    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .noRuleMatch(unmatchedRules), triggerName: triggerName, sessionEventsManager: dependencyContainer.sessionEventsManager))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .noRuleMatch(unmatchedRules), sessionId: "sessionId", triggerName: triggerName))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "trigger_fire")
@@ -307,7 +307,7 @@ final class TrackingTests: XCTestCase {
     let triggerName = "My Trigger"
     let dependencyContainer = DependencyContainer()
     let experiment: Experiment = .stub()
-    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .holdout(experiment), triggerName: triggerName, sessionEventsManager: dependencyContainer.sessionEventsManager))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .holdout(experiment), sessionId: "sessionId", triggerName: triggerName))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "trigger_fire")
@@ -322,7 +322,7 @@ final class TrackingTests: XCTestCase {
     let triggerName = "My Trigger"
     let dependencyContainer = DependencyContainer()
     let experiment: Experiment = .stub()
-    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .paywall(experiment), triggerName: triggerName, sessionEventsManager: dependencyContainer.sessionEventsManager))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .paywall(experiment), sessionId: "sessionId", triggerName: triggerName))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "trigger_fire")
@@ -337,7 +337,7 @@ final class TrackingTests: XCTestCase {
   func test_triggerFire_eventNotFound() async {
     let triggerName = "My Trigger"
     let dependencyContainer = DependencyContainer()
-    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .eventNotFound, triggerName: triggerName, sessionEventsManager: dependencyContainer.sessionEventsManager))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .eventNotFound, sessionId: "sessionId", triggerName: triggerName))
     print(result)
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
@@ -349,7 +349,7 @@ final class TrackingTests: XCTestCase {
     let triggerName = "My Trigger"
     let dependencyContainer = DependencyContainer()
     let error = NSError(domain: "com.superwall", code: 400)
-    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .error(error), triggerName: triggerName, sessionEventsManager: dependencyContainer.sessionEventsManager))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.TriggerFire(triggerResult: .error(error), sessionId: "sessionId", triggerName: triggerName))
     print(result)
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)

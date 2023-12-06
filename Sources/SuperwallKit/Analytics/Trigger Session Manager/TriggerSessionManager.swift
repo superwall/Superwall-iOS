@@ -175,8 +175,8 @@ actor TriggerSessionManager {
     if let triggerResult = triggerResult {
       let trackedEvent = InternalSuperwallEvent.TriggerFire(
         triggerResult: triggerResult,
-        triggerName: eventName,
-        sessionEventsManager: sessionEventsManager
+        sessionId: session.id,
+        triggerName: eventName
       )
       _ = await trackEvent(trackedEvent)
     }

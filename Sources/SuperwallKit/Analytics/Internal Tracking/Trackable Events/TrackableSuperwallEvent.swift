@@ -264,6 +264,7 @@ enum InternalSuperwallEvent {
 
   struct TriggerFire: TrackableSuperwallEvent {
     let triggerResult: InternalTriggerResult
+    let sessionId: String
     var superwallEvent: SuperwallEvent {
       return .triggerFire(
         eventName: triggerName,
@@ -272,16 +273,13 @@ enum InternalSuperwallEvent {
     }
     let triggerName: String
     var customParameters: [String: Any] = [:]
-    unowned let sessionEventsManager: SessionEventsManager
 
     func getSuperwallParameters() async -> [String: Any] {
       var params: [String: Any] = [
         "trigger_name": triggerName
       ]
 
-      if let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession {
-        params["trigger_session_id"] = triggerSession.id
-      }
+      params["trigger_session_id"] = sessionId
 
       switch triggerResult {
       case .noRuleMatch(let unmatchedRules):

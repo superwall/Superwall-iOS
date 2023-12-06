@@ -144,7 +144,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private unowned let factory: TriggerSessionManagerFactory & TriggerFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
-  private unowned let paywallManager: PaywallManager
   private weak var cache: PaywallViewControllerCache?
 
 	// MARK: - View Lifecycle
@@ -156,7 +155,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     deviceHelper: DeviceHelper,
     factory: TriggerSessionManagerFactory & TriggerFactory,
     storage: Storage,
-    paywallManager: PaywallManager,
     webView: SWWebView,
     cache: PaywallViewControllerCache?
   ) {
@@ -172,7 +170,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     self.factory = factory
     self.storage = storage
     self.paywall = paywall
-    self.paywallManager = paywallManager
     self.webView = webView
 
     presentationStyle = paywall.presentation.style

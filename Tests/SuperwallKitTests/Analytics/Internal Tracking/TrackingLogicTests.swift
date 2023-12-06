@@ -310,7 +310,6 @@ final class TrackingLogicTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )

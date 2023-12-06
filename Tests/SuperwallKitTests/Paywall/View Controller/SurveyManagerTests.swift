@@ -33,7 +33,6 @@ final class SurveyManagerTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )
@@ -74,7 +73,6 @@ final class SurveyManagerTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )
@@ -116,7 +114,6 @@ final class SurveyManagerTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )
@@ -157,7 +154,6 @@ final class SurveyManagerTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )
@@ -198,7 +194,6 @@ final class SurveyManagerTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )
@@ -239,7 +234,6 @@ final class SurveyManagerTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )
@@ -286,7 +280,6 @@ final class SurveyManagerTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )
@@ -336,7 +329,6 @@ final class SurveyManagerTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )
@@ -384,7 +376,6 @@ final class SurveyManagerTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )
@@ -436,7 +427,6 @@ final class SurveyManagerTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )

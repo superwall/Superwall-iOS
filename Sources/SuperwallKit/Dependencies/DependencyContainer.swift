@@ -219,7 +219,6 @@ extension DependencyContainer: ViewControllerFactory {
       deviceHelper: deviceHelper,
       factory: self,
       storage: storage,
-      paywallManager: paywallManager,
       webView: webView,
       cache: cache
     )
@@ -412,23 +411,19 @@ extension DependencyContainer: ConfigManagerFactory {
 // MARK: - StoreTransactionFactory
 extension DependencyContainer: StoreTransactionFactory {
   func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction {
-    let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
     return StoreTransaction(
       transaction: SK1StoreTransaction(transaction: transaction),
       configRequestId: configManager.config?.requestId ?? "",
-      appSessionId: appSessionManager.appSession.id,
-      triggerSessionId: triggerSession?.id
+      appSessionId: appSessionManager.appSession.id
     )
   }
 
   @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction {
-    let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
     return StoreTransaction(
       transaction: SK2StoreTransaction(transaction: transaction),
       configRequestId: configManager.config?.requestId ?? "",
-      appSessionId: appSessionManager.appSession.id,
-      triggerSessionId: triggerSession?.id
+      appSessionId: appSessionManager.appSession.id
     )
   }
 }
