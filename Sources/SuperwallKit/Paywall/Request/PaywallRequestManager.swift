@@ -19,6 +19,7 @@ actor PaywallRequestManager {
   typealias Factory = DeviceHelperFactory
     & TriggerSessionManagerFactory
     & ConfigManagerFactory
+    & ReceiptFactory
 
   init(
     storeKitManager: StoreKitManager,

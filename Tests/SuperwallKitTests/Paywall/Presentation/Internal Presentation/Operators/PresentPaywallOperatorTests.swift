@@ -44,7 +44,6 @@ final class PresentPaywallOperatorTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )
@@ -109,7 +108,6 @@ final class PresentPaywallOperatorTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )

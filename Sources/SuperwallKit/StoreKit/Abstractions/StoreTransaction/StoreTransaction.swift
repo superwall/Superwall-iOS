@@ -25,7 +25,6 @@ public final class StoreTransaction: NSObject, StoreTransactionType, Encodable {
 
   public let configRequestId: String
   public let appSessionId: String
-  public let triggerSessionId: String?
 
   public var transactionDate: Date? { transaction.transactionDate }
   public var originalTransactionIdentifier: String { transaction.originalTransactionIdentifier }
@@ -56,13 +55,11 @@ public final class StoreTransaction: NSObject, StoreTransactionType, Encodable {
   init(
     transaction: StoreTransactionType,
     configRequestId: String,
-    appSessionId: String,
-    triggerSessionId: String?
+    appSessionId: String
   ) {
     self.transaction = transaction
     self.configRequestId = configRequestId
     self.appSessionId = appSessionId
-    self.triggerSessionId = triggerSessionId
   }
 
   public enum CodingKeys: String, CodingKey {
@@ -90,7 +87,6 @@ public final class StoreTransaction: NSObject, StoreTransactionType, Encodable {
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encode(configRequestId, forKey: .configRequestId)
     try container.encode(appSessionId, forKey: .appSessionId)
-    try container.encodeIfPresent(triggerSessionId, forKey: .triggerSessionId)
     try container.encodeIfPresent(transactionDate, forKey: .transactionDate)
     try container.encode(originalTransactionIdentifier, forKey: .originalTransactionIdentifier)
     try container.encode(state, forKey: .state)
@@ -115,8 +111,7 @@ extension StoreTransaction: Stubbable {
     return StoreTransaction(
       transaction: SK1StoreTransaction(transaction: SKPaymentTransaction()),
       configRequestId: "abc",
-      appSessionId: "def",
-      triggerSessionId: "ghi"
+      appSessionId: "def"
     )
   }
 }

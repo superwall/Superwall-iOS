@@ -23,9 +23,7 @@ final class SWBounceButton: UIButton {
   var toggleKey = "key"
   var isOn = false
   var canToggle = false
-
   var oldTitle: String = ""
-
   var showLoading = false {
     didSet {
       if showLoading {
@@ -52,15 +50,6 @@ final class SWBounceButton: UIButton {
     view.color = primaryColor
     return view
   }()
-
-  var customTint: UIColor? {
-    didSet {
-      if let customTint = customTint {
-        backgroundColor = customTint.withAlphaComponent(0.15)
-        setTitleColor(customTint, for: .normal)
-      }
-    }
-  }
 
   var onBackgroundColor: UIColor = primaryButtonBackgroundColor
   var offBackgroundColor: UIColor = secondaryButtonBackgroundColor
@@ -91,14 +80,6 @@ final class SWBounceButton: UIButton {
         }
       }
       super.isHighlighted = isHighlighted
-    }
-  }
-
-  private var _borderColor: UIColor?
-  var borderColor: UIColor? {
-    didSet {
-      _borderColor = borderColor
-      self.layer.borderColor = (borderColor ?? UIColor.clear).cgColor
     }
   }
 
@@ -199,10 +180,6 @@ final class SWBounceButton: UIButton {
     ) {
       self.titleLabel?.alpha = alpha
     }
-  }
-
-  override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-    self.borderColor = _borderColor
   }
 
   override func didMoveToSuperview() {

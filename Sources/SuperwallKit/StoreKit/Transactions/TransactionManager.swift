@@ -11,22 +11,27 @@ import UIKit
 import Combine
 
 final class TransactionManager {
-  private unowned let storeKitManager: StoreKitManager
-  private unowned let sessionEventsManager: SessionEventsManager
-  typealias Factories = ProductPurchaserFactory
-    & OptionsFactory
+  private let storeKitManager: StoreKitManager
+  private let receiptManager: ReceiptManager
+  private let purchaseController: PurchaseController
+  private let sessionEventsManager: SessionEventsManager
+  private let factory: Factory
+  typealias Factory = OptionsFactory
     & TriggerFactory
+    & PurchasedTransactionsFactory
     & StoreTransactionFactory
     & DeviceHelperFactory
-    & PurchasedTransactionsFactory
-  private let factory: Factories
 
   init(
     storeKitManager: StoreKitManager,
+    receiptManager: ReceiptManager,
+    purchaseController: PurchaseController,
     sessionEventsManager: SessionEventsManager,
-    factory: Factories
+    factory: Factory
   ) {
     self.storeKitManager = storeKitManager
+    self.receiptManager = receiptManager
+    self.purchaseController = purchaseController
     self.sessionEventsManager = sessionEventsManager
     self.factory = factory
   }
@@ -109,7 +114,7 @@ final class TransactionManager {
 
     paywallViewController.loadingState = .loadingPurchase
 
-    let restorationResult = await storeKitManager.purchaseController.restorePurchases()
+    let restorationResult = await purchaseController.restorePurchases()
 
     let hasRestored = restorationResult == .restored
     let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
@@ -178,7 +183,10 @@ final class TransactionManager {
     guard let sk1Product = product.sk1Product else {
       return .failed(PurchaseError.productUnavailable)
     }
-    return await storeKitManager.purchaseController.purchase(product: sk1Product)
+    await factory.makePurchasingCoordinator().beginPurchase(
+      of: product.productIdentifier
+    )
+    return await purchaseController.purchase(product: sk1Product)
   }
 
   /// Cancels the transaction timeout when the application resigns active.
@@ -271,7 +279,7 @@ final class TransactionManager {
       await self.sessionEventsManager.enqueue(transaction)
     }
 
-    await storeKitManager.loadPurchasedProducts()
+    await receiptManager.loadPurchasedProducts()
 
     await trackTransactionDidSucceed(
       transaction,

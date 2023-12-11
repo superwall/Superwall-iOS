@@ -17,6 +17,7 @@ struct FeatureFlags: Decodable {
   var enablePostback: Bool
   var enableExpressionParameters: Bool
   var enableUserIdSeed: Bool
+  var disableVerboseEvents: Bool
 
   enum CodingKeys: String, CodingKey {
     case toggles
@@ -30,18 +31,21 @@ struct FeatureFlags: Decodable {
     enableExpressionParameters = rawFeatureFlags.value(forKey: "enable_expression_params", default: false)
     enablePostback = rawFeatureFlags.value(forKey: "enable_postback", default: false)
     enableUserIdSeed = rawFeatureFlags.value(forKey: "enable_userid_seed", default: false)
+    disableVerboseEvents = rawFeatureFlags.value(forKey: "disable_verbose_events", default: false)
   }
 
   init(
     enableSessionEvents: Bool,
     enablePostback: Bool,
     enableExpressionParameters: Bool,
-    enableUserIdSeed: Bool
+    enableUserIdSeed: Bool,
+    disableVerboseEvents: Bool
   ) {
     self.enableSessionEvents = enableSessionEvents
     self.enablePostback = enablePostback
     self.enableExpressionParameters = enableExpressionParameters
     self.enableUserIdSeed = enableUserIdSeed
+    self.disableVerboseEvents = disableVerboseEvents
   }
 }
 
@@ -63,7 +67,8 @@ extension FeatureFlags: Stubbable {
       enableSessionEvents: true,
       enablePostback: true,
       enableExpressionParameters: true,
-      enableUserIdSeed: true
+      enableUserIdSeed: true,
+      disableVerboseEvents: true
     )
   }
 }

@@ -46,7 +46,7 @@ class ConfigManager {
   /// A task that is non-`nil` when preloading all paywalls.
   private var currentPreloadingTask: Task<Void, Never>?
 
-  private let factory: RequestFactory & RuleAttributesFactory
+  private let factory: RequestFactory & RuleAttributesFactory & ReceiptFactory
 
   init(
     options: SuperwallOptions?,
@@ -54,7 +54,7 @@ class ConfigManager {
     storage: Storage,
     network: Network,
     paywallManager: PaywallManager,
-    factory: RequestFactory & RuleAttributesFactory
+    factory: RequestFactory & RuleAttributesFactory & ReceiptFactory
   ) {
     if let options = options {
       self.options = options
@@ -68,7 +68,7 @@ class ConfigManager {
 
   func fetchConfiguration() async {
     do {
-      await storeKitManager.loadPurchasedProducts()
+      _ = await factory.loadPurchasedProducts()
 
       let config = try await network.getConfig { [weak self] in
         self?.configState.send(.retrying)
@@ -76,9 +76,8 @@ class ConfigManager {
 
       Task { await sendProductsBack(from: config) }
 
-      triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
-      choosePaywallVariants(from: config.triggers)
-      await checkForTouchesBeganTrigger(in: config.triggers)
+      await processConfig(config)
+
       configState.send(.retrieved(config))
 
       Task { await preloadPaywalls() }
@@ -92,6 +91,13 @@ class ConfigManager {
         error: error
       )
     }
+  }
+
+  private func processConfig(_ config: Config) async {
+    storage.save(config.featureFlags.disableVerboseEvents, forType: DisableVerboseEvents.self)
+    triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
+    choosePaywallVariants(from: config.triggers)
+    await checkForTouchesBeganTrigger(in: config.triggers)
   }
 
   /// Reassigns variants and preloads paywalls again.

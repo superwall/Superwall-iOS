@@ -149,6 +149,9 @@ public enum SuperwallEvent {
   /// When the user chose the close button on a survey instead of responding.
   case surveyClose
 
+  /// When ``Superwall/reset()`` is called.
+  case reset
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -265,6 +268,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .touchesBegan)
     case .surveyClose:
       return .init(objcEvent: .surveyClose)
+    case .reset:
+      return .init(objcEvent: .reset)
     }
   }
 }

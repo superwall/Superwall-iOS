@@ -139,7 +139,6 @@ struct ExpressionEvaluator: ExpressionEvaluating {
           for: occurrence
         ) + 1
       let shouldFire = count <= occurrence.maxCount
-
       var unsavedOccurrence: TriggerRuleOccurrence?
 
       if shouldFire {

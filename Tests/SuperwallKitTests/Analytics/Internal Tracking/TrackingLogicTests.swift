@@ -310,7 +310,6 @@ final class TrackingLogicTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
-      paywallManager: dependencyContainer.paywallManager,
       webView: webView,
       cache: nil
     )
@@ -365,5 +364,149 @@ final class TrackingLogicTests: XCTestCase {
     } catch {
       XCTFail("Should have failed")
     }
+  }
+
+  // MARK: - isNotDisabledVerboseEvent
+  
+  // This happens when config is null
+  func test_isNotDisabledVerboseEvent_nullVerboseEvents() {
+    let event = InternalSuperwallEvent.SessionStart()
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: nil,
+      isSandbox: true
+    )
+    XCTAssertTrue(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isSandbox_disabledEvents() {
+    let event = InternalSuperwallEvent.SessionStart()
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: true,
+      isSandbox: true
+    )
+    XCTAssertTrue(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_presentationReq() {
+    let event = InternalSuperwallEvent.PresentationRequest(eventData: .stub(), type: .presentation, status: .presentation, statusReason: nil, factory: DependencyContainer())
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: false,
+      isSandbox: false
+    )
+    XCTAssertTrue(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_presentationReq() {
+    let event = InternalSuperwallEvent.PresentationRequest(eventData: .stub(), type: .presentation, status: .presentation, statusReason: nil, factory: DependencyContainer())
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: true,
+      isSandbox: false
+    )
+    XCTAssertFalse(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_paywallLoadStart() {
+    let event = InternalSuperwallEvent.PaywallLoad(state: .start, eventData: nil)
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: true,
+      isSandbox: false
+    )
+    XCTAssertFalse(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_paywallLoadStart() {
+    let event = InternalSuperwallEvent.PaywallLoad(state: .start, eventData: nil)
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: false,
+      isSandbox: false
+    )
+    XCTAssertTrue(result)
+  }
+
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_paywallLoadComplete() {
+    let event = InternalSuperwallEvent.PaywallLoad(state: .complete(paywallInfo: .stub()), eventData: nil)
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: true,
+      isSandbox: false
+    )
+    XCTAssertFalse(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_paywallLoadComplete() {
+    let event = InternalSuperwallEvent.PaywallLoad(state: .complete(paywallInfo: .stub()), eventData: nil)
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: false,
+      isSandbox: false
+    )
+    XCTAssertTrue(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_productsLoadStart() {
+    let event = InternalSuperwallEvent.PaywallProductsLoad(state: .start, paywallInfo: .stub(), eventData: nil)
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: true,
+      isSandbox: false
+    )
+    XCTAssertFalse(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_productsLoadStart() {
+    let event = InternalSuperwallEvent.PaywallLoad(state: .complete(paywallInfo: .stub()), eventData: nil)
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: false,
+      isSandbox: false
+    )
+    XCTAssertTrue(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_webviewLoadStart() {
+    let event = InternalSuperwallEvent.PaywallWebviewLoad(state: .start, paywallInfo: .stub())
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: true,
+      isSandbox: false
+    )
+    XCTAssertFalse(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_webviewLoadStart() {
+    let event = InternalSuperwallEvent.PaywallLoad(state: .complete(paywallInfo: .stub()), eventData: nil)
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: false,
+      isSandbox: false
+    )
+    XCTAssertTrue(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_sessionStart() {
+    let event = InternalSuperwallEvent.SessionStart()
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: false,
+      isSandbox: false
+    )
+    XCTAssertTrue(result)
+  }
+
+  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_sessionStart() {
+    let event = InternalSuperwallEvent.SessionStart()
+    let result = TrackingLogic.isNotDisabledVerboseEvent(
+      event,
+      disableVerboseEvents: true,
+      isSandbox: false
+    )
+    XCTAssertTrue(result)
   }
 }

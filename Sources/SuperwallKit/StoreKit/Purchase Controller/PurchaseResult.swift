@@ -8,14 +8,6 @@
 import Foundation
 import StoreKit
 
-enum InternalPurchaseResult {
-  case purchased(StoreTransaction?)
-  case restored
-  case cancelled
-  case pending
-  case failed(Error)
-}
-
 /// An enum that defines the possible outcomes of attempting to purchase a product.
 ///
 /// When implementing the ``PurchaseController/purchase(product:)`` delegate

@@ -12,11 +12,9 @@ import StoreKit
 
 class StoreKitManagerTests: XCTestCase {
   let dependencyContainer = DependencyContainer()
-  lazy var purchaseController = InternalPurchaseController(
-    factory: dependencyContainer,
-    swiftPurchaseController: nil,
-    objcPurchaseController: nil
-  )
+  lazy var purchaseController: AutomaticPurchaseController = {
+    return AutomaticPurchaseController(factory: dependencyContainer)
+  }()
 
   func test_getProducts_primaryProduct() async {
     let dependencyContainer = DependencyContainer()
@@ -97,7 +95,6 @@ class StoreKitManagerTests: XCTestCase {
     let productsResult: Result<Set<StoreProduct>, Error> = .success([])
     let productsFetcher = ProductsFetcherSK1Mock(productCompletionResult: productsResult)
     let manager = StoreKitManager(
-      purchaseController: purchaseController,
       productsFetcher: productsFetcher
     )
 
@@ -124,7 +121,6 @@ class StoreKitManagerTests: XCTestCase {
     ])
     let productsFetcher = ProductsFetcherSK1Mock(productCompletionResult: productsResult)
     let manager = StoreKitManager(
-      purchaseController: purchaseController,
       productsFetcher: productsFetcher
     )
 

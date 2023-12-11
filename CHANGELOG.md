@@ -2,6 +2,18 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.4.5
+
+### Enhancements
+
+- Adds internal feature flag to disable verbose events like `paywallResponseLoad_start`.
+- Tracks a Superwall Event `reset` whenever `Superwall.shared.reset()` is called.
+
+### Fixes
+
+- Fixes issue where holdouts were still matching even if the limit set for their corresponding rules were exceeded.
+- Fixes potential crash if the free trial notification delay was set to zero seconds.
+
 ## 3.4.4
 
 ### Enhancements

@@ -136,6 +136,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the user taps the close button to skip the survey without recording a response.
   case surveyClose
 
+  /// When ``Superwall/reset()`` is called.
+  case reset
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -218,6 +221,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "touches_began"
     case .surveyClose:
       return "survey_close"
+    case .reset:
+      return "reset"
     }
   }
 }

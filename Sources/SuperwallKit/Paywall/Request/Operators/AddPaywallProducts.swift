@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/05/2023.
 //
+// swiftlint:disable trailing_closure
 
 import Foundation
 
@@ -47,7 +48,10 @@ extension PaywallRequestManager {
         fromProducts: result.products,
         productsById: result.productsById,
         isFreeTrialAvailableOverride: request.overrides.isFreeTrial,
-        isFreeTrialAvailable: storeKitManager.isFreeTrialAvailable(for:)
+        isFreeTrialAvailable: { [weak self] product in
+          guard let self = self else { return false }
+          return await self.factory.isFreeTrialAvailable(for: product)
+        }
       )
       paywall.swProducts = outcome.orderedSwProducts
       paywall.productVariables = outcome.productVariables

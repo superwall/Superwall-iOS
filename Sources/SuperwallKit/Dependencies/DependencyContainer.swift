@@ -35,19 +35,23 @@ final class DependencyContainer {
   var api: Api!
   var transactionManager: TransactionManager!
   var delegateAdapter: SuperwallDelegateAdapter!
+  var productPurchaser: ProductPurchaserSK1!
+  var receiptManager: ReceiptManager!
+  var purchaseController: PurchaseController!
   // swiftlint:enable implicitly_unwrapped_optional
+  let productsFetcher = ProductsFetcherSK1()
 
   init(
-    swiftPurchaseController: PurchaseController? = nil,
-    objcPurchaseController: PurchaseControllerObjc? = nil,
+    purchaseController controller: PurchaseController? = nil,
     options: SuperwallOptions? = nil
   ) {
-    let purchaseController = InternalPurchaseController(
-      factory: self,
-      swiftPurchaseController: swiftPurchaseController,
-      objcPurchaseController: objcPurchaseController
+    purchaseController = controller ?? AutomaticPurchaseController(factory: self)
+    receiptManager = ReceiptManager(
+      delegate: productsFetcher,
+      receiptDelegate: purchaseController as? ReceiptDelegate
     )
-    storeKitManager = StoreKitManager(purchaseController: purchaseController)
+
+    storeKitManager = StoreKitManager(productsFetcher: productsFetcher)
     delegateAdapter = SuperwallDelegateAdapter()
     storage = Storage(factory: self)
     network = Network(factory: self)
@@ -117,12 +121,18 @@ final class DependencyContainer {
 
     transactionManager = TransactionManager(
       storeKitManager: storeKitManager,
+      receiptManager: receiptManager,
+      purchaseController: purchaseController,
       sessionEventsManager: sessionEventsManager,
       factory: self
     )
 
-    // Initialise the product purchaser so that it can immediately start listening to transactions.
-    _ = storeKitManager.purchaseController.productPurchaser
+    productPurchaser = ProductPurchaserSK1(
+      storeKitManager: storeKitManager,
+      receiptManager: receiptManager,
+      sessionEventsManager: sessionEventsManager,
+      factory: self
+    )
   }
 }
 
@@ -209,7 +219,6 @@ extension DependencyContainer: ViewControllerFactory {
       deviceHelper: deviceHelper,
       factory: self,
       storage: storage,
-      paywallManager: paywallManager,
       webView: webView,
       cache: cache
     )
@@ -332,6 +341,7 @@ extension DependencyContainer: ApiFactory {
       "X-Bundle-ID": deviceHelper.bundleId,
       "X-Low-Power-Mode": deviceHelper.isLowPowerModeEnabled,
       "X-Is-Sandbox": deviceHelper.isSandbox,
+      "X-Subscription-Status": Superwall.shared.subscriptionStatus.description,
       "Content-Type": "application/json"
     ]
 
@@ -401,34 +411,19 @@ extension DependencyContainer: ConfigManagerFactory {
 // MARK: - StoreTransactionFactory
 extension DependencyContainer: StoreTransactionFactory {
   func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction {
-    let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
     return StoreTransaction(
       transaction: SK1StoreTransaction(transaction: transaction),
       configRequestId: configManager.config?.requestId ?? "",
-      appSessionId: appSessionManager.appSession.id,
-      triggerSessionId: triggerSession?.id
+      appSessionId: appSessionManager.appSession.id
     )
   }
 
   @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction {
-    let triggerSession = await sessionEventsManager.triggerSession.activeTriggerSession
     return StoreTransaction(
       transaction: SK2StoreTransaction(transaction: transaction),
       configRequestId: configManager.config?.requestId ?? "",
-      appSessionId: appSessionManager.appSession.id,
-      triggerSessionId: triggerSession?.id
-    )
-  }
-}
-
-// MARK: - Product Purchaser Factory
-extension DependencyContainer: ProductPurchaserFactory {
-  func makeSK1ProductPurchaser() -> ProductPurchaserSK1 {
-    return ProductPurchaserSK1(
-      storeKitManager: storeKitManager,
-      sessionEventsManager: sessionEventsManager,
-      factory: self
+      appSessionId: appSessionManager.appSession.id
     )
   }
 }
@@ -450,7 +445,7 @@ extension DependencyContainer: TriggerFactory {
 // MARK: - Purchase Controller Factory
 extension DependencyContainer: HasExternalPurchaseControllerFactory {
   func makeHasExternalPurchaseController() -> Bool {
-    return storeKitManager.purchaseController.hasExternalPurchaseController
+    return purchaseController.isInternal == false
   }
 }
 
@@ -471,7 +466,15 @@ extension DependencyContainer: ComputedPropertyRequestsFactory {
 // MARK: - Purchased Transactions Factory
 extension DependencyContainer: PurchasedTransactionsFactory {
   func makePurchasingCoordinator() -> PurchasingCoordinator {
-    return storeKitManager.purchaseController.productPurchaser.coordinator
+    return productPurchaser.coordinator
+  }
+
+  func purchase(product: SKProduct) async -> PurchaseResult {
+    return await productPurchaser.purchase(product: product)
+  }
+
+  func restorePurchases() async -> RestorationResult {
+    return await productPurchaser.restorePurchases()
   }
 }
 
@@ -482,5 +485,20 @@ extension DependencyContainer: UserAttributesEventFactory {
       appInstalledAtString: deviceHelper.appInstalledAtString,
       customParameters: identityManager.userAttributes
     )
+  }
+}
+
+// MARK: - Receipt factory
+extension DependencyContainer: ReceiptFactory {
+  func loadPurchasedProducts() async -> Set<StoreProduct>? {
+    return await receiptManager.loadPurchasedProducts()
+  }
+
+  func refreshReceipt() async {
+    return await receiptManager.refreshReceipt()
+  }
+
+  func isFreeTrialAvailable(for product: StoreProduct) async -> Bool {
+    return await receiptManager.isFreeTrialAvailable(for: product)
   }
 }
