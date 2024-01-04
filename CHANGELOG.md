@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.4.6
+
+### Enhancements
+
+- Adds internal code for SDK wrappers like flutter.
+
 ## 3.4.5
 
 ### Enhancements
