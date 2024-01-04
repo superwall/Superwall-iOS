@@ -321,6 +321,7 @@ extension DependencyContainer: ApiFactory {
       "Authorization": auth,
       "X-Platform": "iOS",
       "X-Platform-Environment": "SDK",
+      "X-Platform-Wrapper": deviceHelper.platformWrapper ?? "",
       "X-App-User-ID": identityManager.appUserId ?? "",
       "X-Alias-ID": identityManager.aliasId,
       "X-URL-Scheme": deviceHelper.urlScheme,

@@ -109,6 +109,8 @@ class DeviceHelper {
     }
 	}
 
+  var platformWrapper: String?
+
   var isLowPowerModeEnabled: String {
     return ProcessInfo.processInfo.isLowPowerModeEnabled ? "true" : "false"
   }

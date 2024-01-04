@@ -301,6 +301,7 @@ public final class Superwall: NSObject, ObservableObject {
 
     return shared
   }
+
   /// Objective-C-only function that configures a shared instance of ``Superwall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out
@@ -397,6 +398,11 @@ public final class Superwall: NSObject, ObservableObject {
     Task { [weak self] in
       await self?.dependencyContainer.configManager.preloadPaywalls(for: eventNames)
     }
+  }
+
+  /// For internal use only. Do not use this.
+  public func setPlatformWrapper(_ platformWrapper: String) {
+    dependencyContainer.deviceHelper.platformWrapper = platformWrapper
   }
 
   // MARK: - Deep Links
