@@ -82,8 +82,7 @@ extension Superwall {
         logLevel: .error,
         scope: .paywallPresentation,
         message: "No Presenter To Present Paywall",
-        info: debugInfo,
-        error: nil
+        info: debugInfo
       )
 
       let error = InternalPresentationLogic.presentationError(

@@ -787,14 +787,18 @@ extension PaywallViewController {
         )
         let paywallPresenterEvent = info.presentedByEventWithName
         let presentedByPaywallDecline = paywallPresenterEvent == SuperwallEventObjc.paywallDecline.description
+        let presentedByTransactionAbandon = paywallPresenterEvent == SuperwallEventObjc.transactionAbandon.description
+        let presentedByTransactionFail = paywallPresenterEvent == SuperwallEventObjc.transactionFail.description
 
         await Superwall.shared.track(trackedEvent)
 
         if case .paywall = presentationResult,
-          !presentedByPaywallDecline {
+          !presentedByPaywallDecline,
+          !presentedByTransactionAbandon,
+          !presentedByTransactionFail {
           // If a paywall_decline trigger is active and the current paywall wasn't presented
-          // by paywall_decline, it lands here so as not to dismiss the paywall.
-          // track() will do that before presenting the next paywall.
+          // by paywall_decline, transaction_abandon, or transaction_fail, it lands here so
+          // as not to dismiss the paywall. track() will do that before presenting the next paywall.
           return
         }
       }

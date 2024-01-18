@@ -2,11 +2,17 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.4.7
+
+### Fixes
+
+- Fixes bug where a `transaction_abandon` or `transaction_fail` event would prevent the presented paywall from dismissing if `paywall_decline` was a trigger.
+
 ## 3.4.6
 
 ### Enhancements
 
-- Adds internal code for SDK wrappers like flutter.
+- Adds internal code for SDK wrappers like Flutter.
 
 ## 3.4.5
 
