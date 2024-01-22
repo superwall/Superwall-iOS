@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes bug where a `transaction_abandon` or `transaction_fail` event would prevent the presented paywall from dismissing if `paywall_decline` was a trigger.
+- SW-2678: Fixes issue where the `subscription_start` event was being fired even if a non-recurring product was purchased.
 
 ## 3.4.6
 

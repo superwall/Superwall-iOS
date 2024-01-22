@@ -399,26 +399,26 @@ final class TransactionManager {
         product: product
       )
       await Superwall.shared.track(trackedEvent)
-    }
-
-    if didStartFreeTrial {
-      let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
-        paywallInfo: paywallInfo,
-        product: product
-      )
-      await Superwall.shared.track(trackedEvent)
-
-      let notifications = paywallInfo.localNotifications.filter {
-        $0.type == .trialStarted
-      }
-
-      await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
     } else {
-      let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
-        paywallInfo: paywallInfo,
-        product: product
-      )
-      await Superwall.shared.track(trackedEvent)
+      if didStartFreeTrial {
+        let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
+          paywallInfo: paywallInfo,
+          product: product
+        )
+        await Superwall.shared.track(trackedEvent)
+
+        let notifications = paywallInfo.localNotifications.filter {
+          $0.type == .trialStarted
+        }
+
+        await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
+      } else {
+        let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
+          paywallInfo: paywallInfo,
+          product: product
+        )
+        await Superwall.shared.track(trackedEvent)
+      }
     }
   }
 }
