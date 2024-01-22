@@ -119,8 +119,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       logLevel: .debug,
       scope: .paywallViewController,
       message: "Posting Message",
-      info: ["message": messageScript],
-      error: nil
+      info: ["message": messageScript]
     )
 
     delegate?.webView.evaluateJavaScript(messageScript) { _, error in
