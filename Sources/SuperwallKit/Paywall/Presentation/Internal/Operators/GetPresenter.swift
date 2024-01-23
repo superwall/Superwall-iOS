@@ -142,6 +142,7 @@ extension Superwall {
 
   @MainActor
   func destroyPresentingWindow() {
+    presentationItems.window?.windowScene = nil
     presentationItems.window = nil
   }
 }
