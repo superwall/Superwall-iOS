@@ -66,9 +66,9 @@ class DeviceHelper {
 
   var languageCode: String {
     if #available(iOS 16, *) {
-      Locale.autoupdatingCurrent.language.languageCode?.identifier ?? ""
+      return Locale.autoupdatingCurrent.language.languageCode?.identifier ?? ""
     } else {
-      Locale.autoupdatingCurrent.languageCode ?? ""
+      return Locale.autoupdatingCurrent.languageCode ?? ""
     }
   }
 
