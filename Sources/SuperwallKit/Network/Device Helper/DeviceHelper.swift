@@ -15,6 +15,14 @@ class DeviceHelper {
     let localeIdentifier = factory.makeLocaleIdentifier()
     return localeIdentifier ?? Locale.autoupdatingCurrent.identifier
   }
+
+  var preferredLocale: String {
+    guard let preferredIdentifier = Locale.preferredLanguages.first else {
+      return locale
+    }
+    return Locale(identifier: preferredIdentifier).identifier
+  }
+
   let appInstalledAtString: String
 
   private let reachability: SCNetworkReachability?
@@ -57,7 +65,22 @@ class DeviceHelper {
   }()
 
   var languageCode: String {
-    Locale.autoupdatingCurrent.languageCode ?? ""
+    if #available(iOS 16, *) {
+      Locale.autoupdatingCurrent.language.languageCode?.identifier ?? ""
+    } else {
+      Locale.autoupdatingCurrent.languageCode ?? ""
+    }
+  }
+
+  var preferredLanguageCode: String {
+    guard let preferredIdentifier = Locale.preferredLanguages.first else {
+      return languageCode
+    }
+    if #available(iOS 16, *) {
+      return Locale(identifier: preferredIdentifier).language.languageCode?.identifier ?? ""
+    } else {
+      return Locale(identifier: preferredIdentifier).languageCode ?? ""
+    }
   }
 
   var currencyCode: String {
@@ -400,7 +423,9 @@ class DeviceHelper {
       osVersion: osVersion,
       deviceModel: model,
       deviceLocale: locale,
+      preferredLocale: preferredLocale,
       deviceLanguageCode: languageCode,
+      preferredLanguageCode: preferredLanguageCode,
       deviceCurrencyCode: currencyCode,
       deviceCurrencySymbol: currencySymbol,
       interfaceType: interfaceType,

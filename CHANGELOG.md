@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.4.7
 
+### Enhancements
+
+- SW-2667: Adds `preferredLanguageCode` and `preferredLocale` to device attributes. If your app isn't already localized for a language you're trying to target, the `deviceLanguageCode` and `deviceLocale` may not be what you're expecting. Use these device attributes instead to access the first preferred locale the user has in their device settings.
+
 ### Fixes
 
 - Fixes bug where a `transaction_abandon` or `transaction_fail` event would prevent the presented paywall from dismissing if `paywall_decline` was a trigger.

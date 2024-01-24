@@ -17,7 +17,9 @@ struct DeviceTemplate: Codable {
   var osVersion: String
   var deviceModel: String
   var deviceLocale: String
+  var preferredLocale: String
   var deviceLanguageCode: String
+  var preferredLanguageCode: String
   var deviceCurrencyCode: String
   var deviceCurrencySymbol: String
   var interfaceType: String
