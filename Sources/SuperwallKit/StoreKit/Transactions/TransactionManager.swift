@@ -15,6 +15,7 @@ final class TransactionManager {
   private let receiptManager: ReceiptManager
   private let purchaseController: PurchaseController
   private let sessionEventsManager: SessionEventsManager
+  private let eventsQueue: EventsQueue
   private let factory: Factory
   typealias Factory = OptionsFactory
     & TriggerFactory
@@ -27,12 +28,14 @@ final class TransactionManager {
     receiptManager: ReceiptManager,
     purchaseController: PurchaseController,
     sessionEventsManager: SessionEventsManager,
+    eventsQueue: EventsQueue,
     factory: Factory
   ) {
     self.storeKitManager = storeKitManager
     self.receiptManager = receiptManager
     self.purchaseController = purchaseController
     self.sessionEventsManager = sessionEventsManager
+    self.eventsQueue = eventsQueue
     self.factory = factory
   }
 
@@ -387,32 +390,35 @@ final class TransactionManager {
     )
     await Superwall.shared.track(trackedEvent)
 
+    // Immediately flush the events queue on transaction complete.
+    await eventsQueue.flushInternal()
+
     if product.subscriptionPeriod == nil {
       let trackedEvent = InternalSuperwallEvent.NonRecurringProductPurchase(
         paywallInfo: paywallInfo,
         product: product
       )
       await Superwall.shared.track(trackedEvent)
-    }
-
-    if didStartFreeTrial {
-      let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
-        paywallInfo: paywallInfo,
-        product: product
-      )
-      await Superwall.shared.track(trackedEvent)
-
-      let notifications = paywallInfo.localNotifications.filter {
-        $0.type == .trialStarted
-      }
-
-      await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
     } else {
-      let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
-        paywallInfo: paywallInfo,
-        product: product
-      )
-      await Superwall.shared.track(trackedEvent)
+      if didStartFreeTrial {
+        let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
+          paywallInfo: paywallInfo,
+          product: product
+        )
+        await Superwall.shared.track(trackedEvent)
+
+        let notifications = paywallInfo.localNotifications.filter {
+          $0.type == .trialStarted
+        }
+
+        await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
+      } else {
+        let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
+          paywallInfo: paywallInfo,
+          product: product
+        )
+        await Superwall.shared.track(trackedEvent)
+      }
     }
   }
 }

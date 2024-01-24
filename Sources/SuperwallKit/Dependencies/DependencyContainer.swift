@@ -30,7 +30,7 @@ final class DependencyContainer {
   var paywallManager: PaywallManager!
   var paywallRequestManager: PaywallRequestManager!
   var deviceHelper: DeviceHelper!
-  var queue: EventsQueue!
+  var eventsQueue: EventsQueue!
   var debugManager: DebugManager!
   var api: Api!
   var transactionManager: TransactionManager!
@@ -83,7 +83,7 @@ final class DependencyContainer {
       factory: self
     )
 
-    queue = EventsQueue(
+    eventsQueue = EventsQueue(
       network: network,
       configManager: configManager
     )
@@ -124,6 +124,7 @@ final class DependencyContainer {
       receiptManager: receiptManager,
       purchaseController: purchaseController,
       sessionEventsManager: sessionEventsManager,
+      eventsQueue: eventsQueue,
       factory: self
     )
 

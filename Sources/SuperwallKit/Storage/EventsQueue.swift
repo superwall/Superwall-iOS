@@ -82,7 +82,7 @@ actor EventsQueue {
     return true
   }
 
-  private func flushInternal(depth: Int = 10) {
+  func flushInternal(depth: Int = 10) {
     var eventsToSend: [JSON] = []
 
     var i = 0
