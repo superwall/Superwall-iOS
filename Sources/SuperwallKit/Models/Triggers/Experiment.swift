@@ -68,7 +68,7 @@ public final class Experiment: NSObject, Codable, Sendable {
     /// The identifier of the paywall variant. Only valid when the variant `type` is `treatment`.
     public let paywallId: String?
 
-    public init(id: String, type: VariantType, paywallId: String?) {
+    init(id: String, type: VariantType, paywallId: String?) {
       self.id = id
       self.type = type
       self.paywallId = paywallId
@@ -100,7 +100,7 @@ public final class Experiment: NSObject, Codable, Sendable {
     case paywallId = "paywall_identifier"
   }
 
-  public init(
+  init(
     id: String,
     groupId: String,
     variant: Variant
