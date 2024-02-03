@@ -300,6 +300,8 @@ final class PaywallMessageHandler: WebEventDelegate {
     if Superwall.shared.options.isGameControllerEnabled {
       return
     }
+    #if !os(visionOS)
     UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)
+    #endif
   }
 }
