@@ -113,7 +113,9 @@ final class SWBounceButton: UIButton {
 
   @objc func tappedBounceButton(sender: SWBounceButton) {
     if isEnabled {
+      #if !os(visionOS)
       UIImpactFeedbackGenerator(style: .light).impactOccurred()
+      #endif
       // AudioServicesPlayAlertSound(1104)
     }
 

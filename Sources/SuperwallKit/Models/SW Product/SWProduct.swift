@@ -30,7 +30,11 @@ struct SWProduct: Codable {
     productIdentifier = product.productIdentifier
     isDownloadable = product.isDownloadable
     downloadContentLengths = product.downloadContentLengths.map { $0.doubleValue }
+    #if os(visionOS)
+    contentVersion = ""
+    #else
     contentVersion = product.contentVersion
+    #endif
     downloadContentVersion = product.downloadContentVersion
 
     if #available(iOS 14.0, *) {

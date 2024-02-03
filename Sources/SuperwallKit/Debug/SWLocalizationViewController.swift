@@ -51,8 +51,9 @@ final class SWLocalizationViewController: UITableViewController {
 		reloadTableView()
 
 		navigationItem.titleView = searchBar
-
+    #if !os(visionOS)
 		tableView.keyboardDismissMode = .onDrag
+    #endif
 
 		navigationController?.navigationBar.tintColor = primaryColor
 		view.tintColor = primaryColor
