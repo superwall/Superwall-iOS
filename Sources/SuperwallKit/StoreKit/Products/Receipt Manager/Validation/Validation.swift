@@ -15,6 +15,8 @@ import WatchKit
 #elseif os(macOS)
 import IOKit
 import Cocoa
+#else
+import VisionKit
 #endif
 
 import CommonCrypto
@@ -273,7 +275,7 @@ private func guid() -> Data {
     return data
   }
   return Data()
-#elseif !targetEnvironment(macCatalyst) && (os(iOS) || os(tvOS))
+#elseif !targetEnvironment(macCatalyst) && (os(iOS) || os(tvOS) || os(visionOS))
   if let identifierForVendor = UIDevice.current.identifierForVendor {
     var rawUUID = identifierForVendor.uuid
     let count = MemoryLayout.size(ofValue: rawUUID)
