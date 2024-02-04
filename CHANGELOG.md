@@ -2,6 +2,15 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.5.0-rc.1
+
+This is our first visionOS pre-release, we'll test this on a few devices to
+ensure everything works as expected!
+
+### Enhancements
+ 
+- Adds support for visionOS!
+
 ## 3.4.8
 
 ### Enhancements
