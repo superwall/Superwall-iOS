@@ -188,7 +188,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   private func configureUI() {
     modalPresentationCapturesStatusBarAppearance = true
+    #if !os(visionOS)
     setNeedsStatusBarAppearanceUpdate()
+    #endif
     view.backgroundColor = paywall.backgroundColor
 
     view.addSubview(webView)
@@ -517,6 +519,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       modalPresentationStyle = .overFullScreen
     case .drawer:
       modalPresentationStyle = .pageSheet
+      #if !os(visionOS)
       if #available(iOS 16.0, *),
         UIDevice.current.userInterfaceIdiom == .phone {
         sheetPresentationController?.detents = [
@@ -525,6 +528,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
           })
         ]
       }
+      #endif
     case .none:
       break
     }
@@ -610,7 +614,9 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       return
     }
     let safariVC = SFSafariViewController(url: url)
+      #if !os(visionOS)
     safariVC.delegate = self
+      #endif
     self.isSafariVCPresented = true
     present(safariVC, animated: true)
   }
@@ -881,12 +887,14 @@ extension PaywallViewController {
   }
 }
 
+#if !os(visionOS)
 // MARK: - SFSafariViewControllerDelegate
 extension PaywallViewController: SFSafariViewControllerDelegate {
   public func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
 		isSafariVCPresented = false
 	}
 }
+#endif
 
 // MARK: - GameControllerDelegate
 extension PaywallViewController: GameControllerDelegate {

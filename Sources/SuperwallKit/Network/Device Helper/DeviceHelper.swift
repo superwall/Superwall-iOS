@@ -8,7 +8,9 @@
 import UIKit
 import Foundation
 import SystemConfiguration
+#if canImport(CoreTelephony)
 import CoreTelephony
+#endif
 
 class DeviceHelper {
   var locale: String {
@@ -119,17 +121,21 @@ class DeviceHelper {
   }
 
   var interfaceStyle: String {
-    let style = UIScreen.main.traitCollection.userInterfaceStyle
-    switch style {
-    case .unspecified:
-      return "Unspecified"
-    case .light:
-      return "Light"
-    case .dark:
-      return "Dark"
-    default:
+      #if os(visionOS)
       return "Unknown"
-    }
+      #else
+      let style = UIScreen.main.traitCollection.userInterfaceStyle
+      switch style {
+      case .unspecified:
+        return "Unspecified"
+      case .light:
+        return "Light"
+      case .dark:
+        return "Dark"
+      default:
+        return "Unknown"
+      }
+      #endif
 	}
 
   var platformWrapper: String?
