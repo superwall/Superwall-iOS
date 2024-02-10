@@ -150,7 +150,7 @@ class DeviceHelper {
 
   /// Returns true if built with the debug flag, or using TestFlight.
   let isSandbox: String = {
-    #if DEBUG
+    #if targetEnvironment(simulator)
       return "true"
     #else
 
