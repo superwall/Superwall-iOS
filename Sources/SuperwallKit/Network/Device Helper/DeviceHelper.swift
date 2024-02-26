@@ -121,21 +121,21 @@ class DeviceHelper {
   }
 
   var interfaceStyle: String {
-      #if os(visionOS)
+    #if os(visionOS)
+    return "Unknown"
+    #else
+    let style = UIScreen.main.traitCollection.userInterfaceStyle
+    switch style {
+    case .unspecified:
+      return "Unspecified"
+    case .light:
+      return "Light"
+    case .dark:
+      return "Dark"
+    default:
       return "Unknown"
-      #else
-      let style = UIScreen.main.traitCollection.userInterfaceStyle
-      switch style {
-      case .unspecified:
-        return "Unspecified"
-      case .light:
-        return "Light"
-      case .dark:
-        return "Dark"
-      default:
-        return "Unknown"
-      }
-      #endif
+    }
+    #endif
 	}
 
   var platformWrapper: String?

@@ -306,7 +306,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
   }
 
-	func loadingStateDidChange(from oldValue: PaywallLoadingState) {
+  func loadingStateDidChange(from oldValue: PaywallLoadingState) {
     switch loadingState {
     case .unknown:
       break
@@ -341,9 +341,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
             self.shimmerView = nil
           }
         )
-			}
-		}
-	}
+      }
+    }
+  }
 
   private func addShimmerView(onPresent: Bool = false) {
     guard shimmerView == nil else {

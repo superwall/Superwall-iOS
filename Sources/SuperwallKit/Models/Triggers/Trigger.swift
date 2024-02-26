@@ -10,14 +10,6 @@ import Foundation
 struct Trigger: Decodable, Hashable {
   var eventName: String
   var rules: [TriggerRule]
-
-  init(
-    eventName: String,
-    rules: [TriggerRule]
-  ) {
-    self.eventName = eventName
-    self.rules = rules
-  }
 }
 
 extension Trigger: Stubbable {

@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 	s.name         = "SuperwallKit"
-    s.version      = "3.4.8"
+    s.version      = "3.5.0-rc.3"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. superwall.com"
 
@@ -9,7 +9,7 @@ Pod::Spec.new do |s|
 	s.license      =  { :type => 'MIT', :text => <<-LICENSE
 		MIT License
 
-		Copyright (c) 2023 Superwall
+		Copyright (c) 2024 Superwall
 
 		Permission is hereby granted, free of charge, to any person obtaining a copy
 		of this software and associated documentation files (the "Software"), to deal
@@ -39,10 +39,12 @@ Pod::Spec.new do |s|
 	s.requires_arc = true
 
   s.source_files  = "Sources/**/*.{swift}"
-  s.resources = [
-    "Sources/SuperwallKit/**/*.xcassets",
-    "Sources/SuperwallKit/**/*.xcdatamodeld",
-    "Sources/SuperwallKit/**/*.cer"
-  ]
+  s.resource_bundles = {
+    'SuperwallKit' => [
+      "Sources/SuperwallKit/**/*.xcassets",
+      "Sources/SuperwallKit/**/*.xcdatamodeld",
+      "Sources/SuperwallKit/**/*.cer"
+    ]
+  }
 
 end
