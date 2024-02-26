@@ -18,5 +18,5 @@ let sdkVersion = """
 */
 
 let sdkVersion = """
-3.5.0-rc.1
+3.5.0-rc.2
 """
