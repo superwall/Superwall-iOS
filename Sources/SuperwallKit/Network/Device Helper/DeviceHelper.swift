@@ -187,9 +187,13 @@ class DeviceHelper {
 
 
   let interfaceType: String = {
-    if #available(iOS 17.0, *), UIDevice.current.userInterfaceIdiom == .vision {
-      return "vision"
+    #if compiler(>=5.9.2)
+    if #available(iOS 17.0, *) {
+      if UIDevice.current.userInterfaceIdiom == .vision {
+        return "vision"
+      }
     }
+    #endif
     // Ignore the exhaustive message because we need to be able to let devs using lower versions of xcode to build
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
