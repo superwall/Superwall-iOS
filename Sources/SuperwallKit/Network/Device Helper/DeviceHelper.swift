@@ -185,7 +185,12 @@ class DeviceHelper {
     return build
   }()
 
+
   let interfaceType: String = {
+    if #available(iOS 17.0, *), UIDevice.current.userInterfaceIdiom == .vision {
+      return "vision"
+    }
+    // Ignore the exhaustive message because we need to be able to let devs using lower versions of xcode to build
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
       return "ipad"
@@ -197,8 +202,6 @@ class DeviceHelper {
       return "carplay"
     case .tv:
       return "tv"
-    case .vision:
-      return "vision"
     case .unspecified:
       fallthrough
     @unknown default:
