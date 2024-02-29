@@ -70,18 +70,6 @@ actor EventsQueue {
     elements.append(event)
   }
 
-  private func externalDataCollectionAllowed(from event: Trackable) -> Bool {
-    if Superwall.shared.options.isExternalDataCollectionEnabled {
-      return true
-    }
-    if event is InternalSuperwallEvent.TriggerFire
-      || event is InternalSuperwallEvent.Attributes
-      || event is UserInitiatedEvent.Track {
-      return false
-    }
-    return true
-  }
-
   func flushInternal(depth: Int = 10) {
     var eventsToSend: [JSON] = []
 

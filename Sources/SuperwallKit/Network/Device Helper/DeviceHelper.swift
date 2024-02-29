@@ -197,6 +197,8 @@ class DeviceHelper {
       return "carplay"
     case .tv:
       return "tv"
+    case .vision:
+      return "vision"
     case .unspecified:
       fallthrough
     @unknown default:
