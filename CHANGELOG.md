@@ -2,6 +2,16 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.5.0
+
+### Enhancements
+
+- Adds visionOS support.
+
+### Fixes
+
+- Moves resources into their own resources bundle when installing via CocoaPods.
+
 ## 3.5.0-rc.3
 
 ### Fixes

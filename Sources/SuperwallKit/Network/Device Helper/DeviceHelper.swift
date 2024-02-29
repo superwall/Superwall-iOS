@@ -150,7 +150,7 @@ class DeviceHelper {
 
   /// Returns true if built with the debug flag, or using TestFlight.
   let isSandbox: String = {
-    #if DEBUG
+    #if targetEnvironment(simulator)
       return "true"
     #else
 
@@ -185,7 +185,16 @@ class DeviceHelper {
     return build
   }()
 
+
   let interfaceType: String = {
+    #if compiler(>=5.9.2)
+    if #available(iOS 17.0, *) {
+      if UIDevice.current.userInterfaceIdiom == .vision {
+        return "vision"
+      }
+    }
+    #endif
+    // Ignore the exhaustive message because we need to be able to let devs using lower versions of xcode to build
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
       return "ipad"

@@ -221,6 +221,9 @@ final class PaywallMessageHandler: WebEventDelegate {
   }
 
   private func openUrl(_ url: URL) {
+    #if os(visionOS)
+    openUrlInSafari(url)
+    #else
     detectHiddenPaywallEvent(
       "openUrl",
       userInfo: ["url": url]
@@ -228,6 +231,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     hapticFeedback()
     delegate?.eventDidOccur(.openedURL(url: url))
     delegate?.presentSafariInApp(url)
+    #endif
   }
 
   private func openUrlInSafari(_ url: URL) {
