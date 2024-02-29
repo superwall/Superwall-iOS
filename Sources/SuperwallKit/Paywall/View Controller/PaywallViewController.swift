@@ -614,9 +614,9 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       return
     }
     let safariVC = SFSafariViewController(url: url)
-      #if !os(visionOS)
+    #if !os(visionOS)
     safariVC.delegate = self
-      #endif
+    #endif
     self.isSafariVCPresented = true
     present(safariVC, animated: true)
   }
