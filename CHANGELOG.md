@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Calls the completion block even if Superwall.configure is called more than once.
+- `getPresentationResult` now confirms assignments for holdouts.
 
 ## 3.5.0
 
