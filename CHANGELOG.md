@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
 
+## 3.5.1
+
+### Fixes
+
+- Calls the completion block even if Superwall.configure is called more than once.
+
 ## 3.5.0
 
 ### Enhancements
