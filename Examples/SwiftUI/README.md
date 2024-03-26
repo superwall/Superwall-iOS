@@ -24,7 +24,7 @@ This example app uses:
 
 ## Getting Started
 
-Clone or download the SuperwallKit from the [project home page](https://github.com/superwall-me/Superwall-iOS). Then, open **Superwall-SwiftUI.xcodeproj** in Xcode and take a look at the code inside the [Superwall-SwiftUI](Superwall-SwiftUI) folder. 
+Clone or download the SuperwallKit from the [project home page](https://github.com/superwall/Superwall-iOS). Then, open **Superwall-SwiftUI.xcodeproj** in Xcode and take a look at the code inside the [Superwall-SwiftUI](Superwall-SwiftUI) folder. 
 
 You'll see a few folders relating to the design and components used in the app, which you don't need to worry about. [SuperwallSwiftUIExampleApp.swift](Superwall-SwiftUI/SuperwallSwiftUIExampleApp.swift) handles the setup of the Superwall SDK and is used to control which views show, depending on whether the user has logged in or not. If you're not logged in, [WelcomeView.swift](Superwall-SwiftUI/WelcomeView.swift) shows. Otherwise, [HomeView.swift](Superwall-SwiftUI/HomeView.swift) shows. This view handles the presentation of a paywall.
 

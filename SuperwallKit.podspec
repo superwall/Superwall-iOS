@@ -5,7 +5,7 @@ Pod::Spec.new do |s|
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. superwall.com"
 
-	s.homepage     = "https://github.com/superwall-me/Superwall-iOS"
+	s.homepage     = "https://github.com/superwall/Superwall-iOS"
 	s.license      =  { :type => 'MIT', :text => <<-LICENSE
 		MIT License
 
@@ -30,7 +30,7 @@ Pod::Spec.new do |s|
 		SOFTWARE.
 	    LICENSE
 	}
-	s.source       = { :git => "https://github.com/superwall-me/Superwall-iOS.git", :tag => "#{s.version}" }
+	s.source       = { :git => "https://github.com/superwall/Superwall-iOS.git", :tag => "#{s.version}" }
 
 	s.author       = { "Jake Mor" => "jake@superwall.com" }
 	s.documentation_url = "https://docs.superwall.com/"

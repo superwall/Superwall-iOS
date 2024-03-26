@@ -24,7 +24,7 @@ This example app uses:
 
 ## Getting Started
 
-Clone or download SuperwallKit from the [project home page](https://github.com/superwall-me/Superwall-iOS). Then, open **Superwall-UIKit-Swift.xcodeproj** in Xcode and take a look at the code inside the [Superwall-UIKit-Swift](Superwall-UIKit-Swift) folder.
+Clone or download SuperwallKit from the [project home page](https://github.com/superwall/Superwall-iOS). Then, open **Superwall-UIKit-Swift.xcodeproj** in Xcode and take a look at the code inside the [Superwall-UIKit-Swift](Superwall-UIKit-Swift) folder.
 
 You'll see a few folders relating to the design and components used in the app, which you don't need to worry about.
 
