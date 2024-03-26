@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.5.1
 
+### Enhancements
+
+- SW-2767: Adds `device.regionCode` and `device.preferredRegionCode`, which returns the `regionCode` of the locale. For example, if a locale is `en_GB`, the `regionCode` will be `GB`. You can use this in the filters of your campaign.
+
 ### Fixes
 
 - Calls the completion block even if Superwall.configure is called more than once.
