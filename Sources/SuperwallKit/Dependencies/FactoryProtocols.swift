@@ -27,7 +27,7 @@ protocol CacheFactory: AnyObject {
 
 protocol VariablesFactory: AnyObject {
   func makeJsonVariables(
-    productVariables: [ProductVariable]?,
+    products: [ProductVariable]?,
     computedPropertyRequests: [ComputedPropertyRequest],
     event: EventData?
   ) async -> JSON

@@ -56,9 +56,13 @@ struct Paywall: Decodable {
   var surveys: [Survey]
 
   /// The products associated with the paywall.
-  var products: [Product] {
+  var products: [Product]
+
+  /// An ordered list of products associated with the paywall.
+  var productItems: [ProductItem] {
     didSet {
-      productIds = products.map { $0.id }
+      productIds = productItems.map { $0.id }
+      products = Self.makeProducts(from: productItems)
     }
   }
 
@@ -78,18 +82,13 @@ struct Paywall: Decodable {
   /// The trigger session ID associated with the paywall.
   var triggerSessionId: String?
 
-  /// An ordered list of SWProducts that this paywall uses. This is accessed by the trigger session.
+  /// A list of SWProducts that this paywall uses. This is accessed by the trigger session.
   var swProducts: [SWProduct]? = []
 
-  /// The product variables associated with the paywall.
+  /// An list of product attributes associated with the paywall.
   ///
   /// Each contains a product type and their attributes.
   var productVariables: [ProductVariable]? = []
-
-  /// As of yet unused product variables in a different format.
-  ///
-  /// Each consists of a type and a dictionary of SWTemplateVariable properties.
-  var swProductVariablesTemplate: [ProductVariable]? = []
 
   /// The paywall.js version being used. Added when the website fires `onReady`.
   var paywalljsVersion: String?
@@ -121,7 +120,7 @@ struct Paywall: Decodable {
     case presentationCondition
     case presentationDelay
     case backgroundColorHex
-    case products
+    case productItems = "productsV2"
     case featureGating
     case onDeviceCache
     case localNotifications
@@ -169,8 +168,10 @@ struct Paywall: Decodable {
     let backgroundColor = UIColor(hexString: backgroundColorHex)
     self.backgroundColor = backgroundColor
 
-    products = try values.decode([Product].self, forKey: .products)
-    productIds = products.map { $0.id }
+    let allProductItems = try values.decode([ProductItem].self, forKey: .productItems)
+    productItems = allProductItems.filter { $0.store == .appStore }
+    productIds = productItems.map { $0.id }
+    products = Self.makeProducts(from: productItems)
 
     let responseLoadStartTime = try values.decodeIfPresent(Date.self, forKey: .responseLoadStartTime)
     let responseLoadCompleteTime = try values.decodeIfPresent(Date.self, forKey: .responseLoadCompleteTime)
@@ -215,6 +216,28 @@ struct Paywall: Decodable {
     computedPropertyRequests = throwableComputedPropertyRequests.compactMap { try? $0.result.get() }
   }
 
+  private static func makeProducts(from productItems: [ProductItem]) -> [Product] {
+    var output: [Product] = []
+
+    for productItem in productItems {
+      if productItem.name == "primary" {
+        output.append(
+          Product(type: .primary, id: productItem.id)
+        )
+      } else if productItem.name == "secondary" {
+        output.append(
+          Product(type: .secondary, id: productItem.id)
+        )
+      } else if productItem.name == "tertiary" {
+        output.append(
+          Product(type: .tertiary, id: productItem.id)
+        )
+      }
+    }
+
+    return output
+  }
+
   // Only used in stub
   private init(
     databaseId: String,
@@ -227,7 +250,7 @@ struct Paywall: Decodable {
     presentation: Paywall.Presentation,
     backgroundColorHex: String,
     backgroundColor: UIColor,
-    products: [Product],
+    productItems: [ProductItem],
     productIds: [String],
     responseLoadingInfo: LoadingInfo,
     webviewLoadingInfo: LoadingInfo,
@@ -235,7 +258,7 @@ struct Paywall: Decodable {
     paywalljsVersion: String,
     swProducts: [SWProduct]? = [],
     productVariables: [ProductVariable]? = [],
-    swTemplateProductVariables: [ProductVariable]? = [],
+    swTemplateProductVariables: [JSON]? = [],
     isFreeTrialAvailable: Bool = false,
     presentationSourceType: String? = nil,
     featureGating: FeatureGatingBehavior = .nonGated,
@@ -254,7 +277,7 @@ struct Paywall: Decodable {
     self.presentation = presentation
     self.backgroundColor = backgroundColor
     self.backgroundColorHex = backgroundColorHex
-    self.products = products
+    self.productItems = productItems
     self.productIds = productIds
     self.responseLoadingInfo = responseLoadingInfo
     self.webviewLoadingInfo = webviewLoadingInfo
@@ -262,7 +285,6 @@ struct Paywall: Decodable {
     self.paywalljsVersion = paywalljsVersion
     self.swProducts = swProducts
     self.productVariables = productVariables
-    self.swProductVariablesTemplate = swTemplateProductVariables
     self.isFreeTrialAvailable = isFreeTrialAvailable
     self.presentationSourceType = presentationSourceType
     self.featureGating = featureGating
@@ -270,6 +292,7 @@ struct Paywall: Decodable {
     self.localNotifications = localNotifications
     self.computedPropertyRequests = computedPropertyRequests
     self.surveys = surveys
+    self.products = Self.makeProducts(from: productItems)
   }
 
   func getInfo(
@@ -282,6 +305,8 @@ struct Paywall: Decodable {
       name: name,
       url: url,
       products: products,
+      productItems: productItems,
+      productIds: productIds,
       fromEventData: fromEvent,
       responseLoadStartTime: responseLoadingInfo.startAt,
       responseLoadCompleteTime: responseLoadingInfo.endAt,
@@ -307,11 +332,9 @@ struct Paywall: Decodable {
   }
 
   mutating func update(from paywall: Paywall) {
-    products = paywall.products
-    productIds = paywall.productIds
+    productItems = paywall.productItems
     swProducts = paywall.swProducts
     productVariables = paywall.productVariables
-    swProductVariablesTemplate = paywall.swProductVariablesTemplate
     isFreeTrialAvailable = paywall.isFreeTrialAvailable
     productsLoadingInfo = paywall.productsLoadingInfo
     presentationSourceType = paywall.presentationSourceType
@@ -344,7 +367,7 @@ extension Paywall: Stubbable {
       ),
       backgroundColorHex: "",
       backgroundColor: .black,
-      products: [],
+      productItems: [],
       productIds: [],
       responseLoadingInfo: .init(),
       webviewLoadingInfo: .init(),

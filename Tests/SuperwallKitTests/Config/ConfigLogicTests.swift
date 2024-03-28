@@ -204,6 +204,27 @@ final class ConfigLogicTests: XCTestCase {
     XCTAssertEqual(variant.confirmed, confirmedAssignments)
   }
 
+  func test_chooseVariant_1Percent99Percent_choose1Percent() {
+      do {
+        let options: [VariantOption] = [
+          .stub()
+          .setting(\.percentage, to: 1),
+          .stub()
+          .setting(\.percentage, to: 99)
+        ]
+        let variant = try ConfigLogic.chooseVariant(
+          from: options,
+          randomiser: { range in
+            XCTAssertEqual(range, 0..<100)
+            return 0
+          }
+        )
+        XCTAssertEqual(options.first!.toVariant(), variant)
+      } catch {
+        XCTFail("Should have produced a no variant error")
+      }
+    }
+
   func test_chooseAssignments_noRules() {
     // Given
     let confirmedAssignments = [

@@ -194,7 +194,8 @@ class DeviceHelper {
       }
     }
     #endif
-    // Ignore the exhaustive message because we need to be able to let devs using lower versions of xcode to build
+    // Ignore the exhaustive message because we need to be able to let devs using lower versions
+    // of xcode to build and they don't have vision support.
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
       return "ipad"

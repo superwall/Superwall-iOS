@@ -13,12 +13,13 @@ struct Variables: Encodable {
   let user: JSON
   let device: JSON
   let params: JSON
+  var products: [ProductVariable] = []
   var primary: JSON = [:]
   var secondary: JSON = [:]
   var tertiary: JSON = [:]
 
   init(
-    productVariables: [ProductVariable]?,
+    products: [ProductVariable]?,
     params: JSON?,
     userAttributes: [String: Any],
     templateDeviceDictionary: [String: Any]?
@@ -26,19 +27,25 @@ struct Variables: Encodable {
     self.params = params ?? [:]
     self.user = JSON(userAttributes)
     self.device = JSON(templateDeviceDictionary ?? [:])
-    guard let productVariables = productVariables else {
+    guard let products = products else {
       return
     }
-    for productVariable in productVariables {
-      switch productVariable.type {
-      case .primary:
-        primary = productVariable.attributes
-      case .secondary:
-        secondary = productVariable.attributes
-      case .tertiary:
-        tertiary = productVariable.attributes
+
+    // For backwards compatibility
+    for product in products {
+      switch product.name {
+      case "primary":
+        primary = product.attributes
+      case "secondary":
+        secondary = product.attributes
+      case "tertiary":
+        tertiary = product.attributes
+      default:
+        break
       }
     }
+
+    self.products = products
   }
 
   func templated() -> JSON {
@@ -49,3 +56,5 @@ struct Variables: Encodable {
     return JSON(template)
   }
 }
+
+

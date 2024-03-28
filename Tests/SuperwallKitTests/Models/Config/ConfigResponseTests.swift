@@ -403,9 +403,10 @@ let response = #"""
         }
       }]
     }],
-    "products": [{
-      "product": "primary",
-      "productId": "sk.superwall.annual.89.99_7"
+    "products_v2": [{
+      "name": "primary",
+      "id": "sk.superwall.annual.89.99_7",
+      "store": "appStore"
     }],
     "presentation_condition": "CHECK_USER_SUBSCRIPTION",
     "presentation_delay": 0,

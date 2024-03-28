@@ -248,7 +248,7 @@ extension DependencyContainer: ViewControllerFactory {
 
 extension DependencyContainer: VariablesFactory {
   func makeJsonVariables(
-    productVariables: [ProductVariable]?,
+    products: [ProductVariable]?,
     computedPropertyRequests: [ComputedPropertyRequest],
     event: EventData?
   ) async -> JSON {
@@ -258,7 +258,7 @@ extension DependencyContainer: VariablesFactory {
     )
 
     return Variables(
-      productVariables: productVariables,
+      products: products,
       params: event?.parameters,
       userAttributes: identityManager.userAttributes,
       templateDeviceDictionary: templateDeviceDict

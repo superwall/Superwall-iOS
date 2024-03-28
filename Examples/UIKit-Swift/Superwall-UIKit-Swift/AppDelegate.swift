@@ -16,7 +16,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
   ) -> Bool {
     // MARK: Configure Superwall
     #warning("Replace the API key with your own.")
-    Superwall.configure(apiKey: "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9")
+    let options = SuperwallOptions()
+    options.paywalls.shouldPreload = false
+    Superwall.configure(apiKey: "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9", options: options)
 
     return true
   }

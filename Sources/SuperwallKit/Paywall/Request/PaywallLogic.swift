@@ -19,8 +19,7 @@ struct ResponseIdentifiers: Equatable {
 
 struct ProductProcessingOutcome {
   var productVariables: [ProductVariable]
-  var swProductVariablesTemplate: [ProductVariable]
-  var orderedSwProducts: [SWProduct]
+  var swProducts: [SWProduct]
   var isFreeTrialAvailable: Bool
 }
 
@@ -29,12 +28,12 @@ enum PaywallLogic {
     identifier: String? = nil,
     event: EventData? = nil,
     locale: String,
-    paywallProducts: PaywallProducts?
+    joinedSubstituteProductIds: String?
   ) -> String {
     let id = identifier ?? event?.name ?? "$called_manually"
     var substitutions = ""
-    if let paywallProducts = paywallProducts {
-      substitutions = paywallProducts.ids.joined()
+    if let joinedSubstituteProductIds = joinedSubstituteProductIds {
+      substitutions = joinedSubstituteProductIds
     }
     return "\(id)_\(locale)_\(substitutions)"
   }
@@ -91,35 +90,30 @@ enum PaywallLogic {
   }
 
   static func getVariablesAndFreeTrial(
-    fromProducts products: [Product],
+    productItems: [ProductItem],
     productsById: [String: StoreProduct],
     isFreeTrialAvailableOverride: Bool?,
     isFreeTrialAvailable: @escaping (StoreProduct) async -> Bool
   ) async -> ProductProcessingOutcome {
-    var productVariables: [ProductVariable] = []
-    var swTemplateProductVariables: [ProductVariable] = []
-    var hasFreeTrial = false
-    var orderedSwProducts: [SWProduct] = []
 
-    for product in products {
-      // Get skproduct
-      guard let storeProduct = productsById[product.id] else {
+    var productVariables: [ProductVariable] = []
+    var swProducts: [SWProduct] = []
+    var hasFreeTrial = false
+
+    for productItem in productItems {
+      guard let storeProduct = productsById[productItem.id] else {
         continue
       }
-      orderedSwProducts.append(storeProduct.swProduct)
 
-      let productVariable = ProductVariable(
-        type: product.type,
-        attributes: storeProduct.attributesJson
+      swProducts.append(storeProduct.swProduct)
+      productVariables.append(
+        ProductVariable(
+          name: productItem.name,
+          attributes: storeProduct.attributesJson
+        )
       )
-      productVariables.append(productVariable)
 
-      let swTemplateProductVariable = ProductVariable(
-        type: product.type,
-        attributes: storeProduct.swProductTemplateVariablesJson
-      )
-      swTemplateProductVariables.append(swTemplateProductVariable)
-
+      // Check for a free trial only if we haven't already found one
       if !hasFreeTrial {
         hasFreeTrial = await isFreeTrialAvailable(storeProduct)
       }
@@ -132,8 +126,7 @@ enum PaywallLogic {
 
     return ProductProcessingOutcome(
       productVariables: productVariables,
-      swProductVariablesTemplate: swTemplateProductVariables,
-      orderedSwProducts: orderedSwProducts,
+      swProducts: swProducts,
       isFreeTrialAvailable: hasFreeTrial
     )
   }

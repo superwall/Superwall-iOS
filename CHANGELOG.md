@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.5.1
 
+### Enhancements
+
+- Adds support for unlimited products in a paywall.
+
 ### Fixes
 
 - Calls the completion block even if Superwall.configure is called more than once.
