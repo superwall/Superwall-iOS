@@ -11,7 +11,7 @@ import StoreKit
 /// Defines primary, secondary and tertiary products to be used on the paywall.
 ///
 /// Pass an instance of this to ``PaywallOverrides/products`` to replace your remotely defined products.
-@available(*, deprecated, message: "Use ")
+@available(*, deprecated, message: "When overriding paywall products, pass a dictionary to productsByName in the PaywallOverrides object instead")
 @objc(SWKPaywallProducts)
 @objcMembers
 public final class PaywallProducts: NSObject, Sendable {
