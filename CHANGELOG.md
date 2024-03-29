@@ -1,16 +1,18 @@
 # CHANGELOG
 
-The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall-me/Superwall-iOS/releases) on GitHub.
+The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
 ## 3.5.1
 
 ### Enhancements
 
 - Adds support for unlimited products in a paywall.
+- SW-2767: Adds `device.regionCode` and `device.preferredRegionCode`, which returns the `regionCode` of the locale. For example, if a locale is `en_GB`, the `regionCode` will be `GB`. You can use this in the filters of your campaign.
 
 ### Fixes
 
 - Calls the completion block even if Superwall.configure is called more than once.
+- `getPresentationResult` now confirms assignments for holdouts.
 
 ## 3.5.0
 
@@ -34,7 +36,7 @@ This is our first visionOS pre-release, we'll test this on a few devices to
 ensure everything works as expected!
 
 ### Enhancements
- 
+
 - Adds support for visionOS!
 
 ## 3.4.8

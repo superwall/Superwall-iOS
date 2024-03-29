@@ -21,7 +21,7 @@ extension Superwall {
     from rulesOutcome: RuleEvaluationOutcome,
     dependencyContainer: DependencyContainer? = nil
   ) {
-    guard request.flags.type.couldPresent else {
+    if request.flags.type == .getImplicitPresentationResult {
       return
     }
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
