@@ -259,7 +259,6 @@ struct Paywall: Decodable {
     paywalljsVersion: String,
     swProducts: [SWProduct]? = [],
     productVariables: [ProductVariable]? = [],
-    swTemplateProductVariables: [JSON]? = [],
     isFreeTrialAvailable: Bool = false,
     presentationSourceType: String? = nil,
     featureGating: FeatureGatingBehavior = .nonGated,
