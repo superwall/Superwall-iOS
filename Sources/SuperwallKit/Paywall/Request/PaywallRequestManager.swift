@@ -41,8 +41,9 @@ actor PaywallRequestManager {
   func getPaywall(from request: PaywallRequest) async throws -> Paywall {
     let deviceInfo = factory.makeDeviceInfo()
     let joinedSubstituteProductIds = request.overrides.products?.values
-      .sorted(by: { $0.productIdentifier < $1.productIdentifier })
-      .map { $0.productIdentifier }.joined()
+      .sorted { $0.productIdentifier < $1.productIdentifier }
+      .map { $0.productIdentifier }
+      .joined()
 
     let requestHash = PaywallLogic.requestHash(
       identifier: request.responseIdentifiers.paywallId,

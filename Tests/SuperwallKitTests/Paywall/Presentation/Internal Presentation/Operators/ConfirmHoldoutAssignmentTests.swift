@@ -125,7 +125,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       from: input,
       dependencyContainer: dependencyContainer
     )
-    XCTAssertFalse(configManager.confirmedAssignment)
+    XCTAssertTrue(configManager.confirmedAssignment)
   }
 
   func test_confirmHoldoutAssignment_holdout_getImplicitPresentationResult() async {

@@ -95,7 +95,6 @@ enum PaywallLogic {
     isFreeTrialAvailableOverride: Bool?,
     isFreeTrialAvailable: @escaping (StoreProduct) async -> Bool
   ) async -> ProductProcessingOutcome {
-
     var productVariables: [ProductVariable] = []
     var swProducts: [SWProduct] = []
     var hasFreeTrial = false

@@ -56,5 +56,3 @@ struct Variables: Encodable {
     return JSON(template)
   }
 }
-
-

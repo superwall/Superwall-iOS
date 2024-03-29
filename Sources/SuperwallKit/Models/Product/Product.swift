@@ -140,13 +140,13 @@ public final class ProductItem: NSObject, Codable, Sendable {
 
   public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
-    
+
     // Encode name as "product" for templating
     try container.encode(name, forKey: .product)
 
     // Encode name as "productId" for templating
     try container.encode(id, forKey: .productId)
-    
+
     try container.encode(store, forKey: .store)
   }
 
