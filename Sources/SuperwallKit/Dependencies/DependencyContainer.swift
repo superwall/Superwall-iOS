@@ -349,6 +349,10 @@ extension DependencyContainer: ApiFactory {
 
     return headers
   }
+
+   func makeDefaultComponents(host: EndpointHost) -> ApiHostConfig {
+       return self.api.getConfig(host: host)
+    }
 }
 
 // MARK: - Rule Params

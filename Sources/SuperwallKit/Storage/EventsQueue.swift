@@ -39,7 +39,14 @@ actor EventsQueue {
   }
 
   private func setupTimer() {
-    let timeInterval = configManager.options.networkEnvironment == .release ? 20.0 : 1.0
+      let timeInterval: Double
+      switch configManager.options.networkEnvironment {
+      case .release:
+          timeInterval = 20.0
+          break
+      default:
+          timeInterval = 1.0
+      }
     let timer = Timer(
       timeInterval: timeInterval,
       repeats: true

@@ -185,7 +185,6 @@ class DeviceHelper {
     return build
   }()
 
-
   let interfaceType: String = {
     #if compiler(>=5.9.2)
     if #available(iOS 17.0, *) {
@@ -484,7 +483,7 @@ class DeviceHelper {
     self.storage = storage
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
     self.factory = factory
-    reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.hostDomain)
+      reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
     self.sdkVersionPadded = Self.makePaddedSdkVersion(using: sdkVersion)
   }
 }
