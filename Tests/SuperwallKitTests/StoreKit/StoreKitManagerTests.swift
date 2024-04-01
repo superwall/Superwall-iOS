@@ -53,7 +53,7 @@ class StoreKitManagerTests: XCTestCase {
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
       XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
       XCTAssertTrue(products.contains { $0.name == "primary" })
-      XCTAssertTrue(products.contains { $0.store == .appStore })
+      XCTAssertTrue(products.contains { $0.objcAdapter.store == .appStore })
       XCTAssertTrue(products.contains { $0.id == tertiary.productIdentifier })
       XCTAssertTrue(products.contains { $0.name == "tertiary" })
       XCTAssertEqual(products.count, 2)

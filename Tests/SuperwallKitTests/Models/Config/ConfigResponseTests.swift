@@ -403,11 +403,22 @@ let response = #"""
         }
       }]
     }],
-    "products_v2": [{
-      "name": "primary",
-      "id": "sk.superwall.annual.89.99_7",
-      "store": "appStore"
-    }],
+    "products_v2": [
+      {
+        "reference_name": "primary",
+        "store_product": {
+          "store": "APP_STORE",
+          "product_identifier": "sk.superwall.annual.89.99_7"
+        }
+      },
+      {
+        "reference_name": "secondary android",
+        "store_product": {
+          "store": "PLAY_STORE",
+          "product_identifier": "androidproduct:base-plan:offer"
+        }
+      }
+    ],
     "presentation_condition": "CHECK_USER_SUBSCRIPTION",
     "presentation_delay": 0,
     "presentation_style": "FULLSCREEN",

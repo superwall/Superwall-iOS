@@ -169,8 +169,12 @@ struct Paywall: Decodable {
     let backgroundColor = UIColor(hexString: backgroundColorHex)
     self.backgroundColor = backgroundColor
 
-    let allProductItems = try values.decode([ProductItem].self, forKey: .productItems)
-    productItems = allProductItems.filter { $0.store == .appStore }
+    let appStoreProductItems = try values.decodeIfPresent(
+      [Throwable<ProductItem>].self,
+      forKey: .productItems
+    ) ?? []
+    productItems = appStoreProductItems.compactMap { try? $0.result.get() }
+
     productIds = productItems.map { $0.id }
     products = Self.makeProducts(from: productItems)
 

@@ -109,16 +109,14 @@ actor StoreKitManager {
         // Update the product ID at the found index
         productItems[index] = ProductItem(
           name: productItems[index].name,
-          id: productId,
-          store: productItems[index].store
+          type: .appStore(.init(id: productId))
         )
       } else {
         // If it isn't found, just append to the list.
         productItems.append(
           ProductItem(
             name: name,
-            id: productId,
-            store: .appStore
+            type: .appStore(.init(id: productId))
           )
         )
       }

@@ -7,46 +7,127 @@
 
 import Foundation
 
-/// The product in the paywall.
-@objc(SWKProductItem)
-@objcMembers
-public final class ProductItem: NSObject, Codable, Sendable {
-  public enum Store: Codable, Sendable {
-    /// An Apple App Store product.
-    case appStore
+/// An enum whose types specify the store which the product belongs to.
+@objc(SWKStore)
+public enum Store: Int, Codable, Sendable {
+  /// An Apple App Store product.
+  case appStore
 
-    /// A Google Play Store product.
-    case playStore
-
-    /// An unsupported store type.
-    case unknown
+  enum CodingKeys: String, CodingKey {
+    case appStore = "APPSTORE"
   }
 
-  /// The label attached to the product.
-  public let name: String
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    let rawValue = try container.decode(String.self)
+    let type = CodingKeys(rawValue: rawValue)
+    switch type {
+    case .appStore:
+      self = .appStore
+    case .none:
+      throw DecodingError.valueNotFound(
+        String.self,
+        .init(
+          codingPath: [],
+          debugDescription: "Unsupported computed property type."
+        )
+      )
+    }
+  }
+}
+
+/// An Apple App Store product.
+@objc(SWKAppStoreProduct)
+@objcMembers
+public final class AppStoreProduct: NSObject, Decodable, Sendable {
+  /// The store the product belongs to.
+  let store: Store
 
   /// The product identifier.
   public let id: String
 
-  /// The ``ProductItem/Store-swift.enum`` the product belongs to.
-  public let store: Store
-
-  private enum CodingKeys: String, CodingKey {
-    case product
-    case name
-    case id
-    case productId
+  enum CodingKeys: String, CodingKey {
+    case id = "productIdentifier"
     case store
   }
 
   init(
+    store: Store = .appStore,
+    id: String
+  ) {
+    self.store = store
+    self.id = id
+  }
+}
+
+/// An objc-only type that specifies a store and a product.
+@objc(SWKStoreProductAdapter)
+@objcMembers
+public final class StoreProductAdapterObjc: NSObject, Decodable, Sendable {
+  /// The store associated with the product.
+  public let store: Store
+
+  /// The App Store product. This is non-nil if `store` is
+  /// `appStore`.
+  public let appStoreProduct: AppStoreProduct?
+
+  init(
+    store: Store,
+    appStoreProduct: AppStoreProduct?
+  ) {
+    self.store = store
+    self.appStoreProduct = appStoreProduct
+  }
+}
+
+/// The product in the paywall.
+@objc(SWKProductItem)
+@objcMembers
+public final class ProductItem: NSObject, Codable, Sendable {
+  /// The type of store and its associated product.
+  public enum StoreProductType: Decodable, Sendable {
+    case appStore(AppStoreProduct)
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case product
+    case name = "referenceName"
+    case productId
+    case storeProduct
+  }
+
+  /// The name of the product in the editor.
+  public let name: String
+
+  /// The type of product
+  public let type: StoreProductType
+
+  /// Convenience variable that accesses the product's identifier.
+  public var id: String {
+    switch type {
+    case .appStore(let product):
+      return product.id
+    }
+  }
+
+  /// The objc-only type of product
+  @objc(adapter)
+  public let objcAdapter: StoreProductAdapterObjc
+
+  init(
     name: String,
-    id: String,
-    store: Store
+    type: StoreProductType
   ) {
     self.name = name
-    self.id = id
-    self.store = store
+    self.type = type
+
+    switch type {
+    case .appStore(let product):
+      objcAdapter = .init(
+        store: .appStore,
+        appStoreProduct: product
+      )
+    }
   }
 
   public func encode(to encoder: Encoder) throws {
@@ -55,22 +136,22 @@ public final class ProductItem: NSObject, Codable, Sendable {
     // Encode name as "product" for templating
     try container.encode(name, forKey: .product)
 
-    // Encode name as "productId" for templating
-    try container.encode(id, forKey: .productId)
-
-    try container.encode(store, forKey: .store)
+    switch type {
+    case .appStore(let product):
+      // Encode name as "productId" for templating
+      try container.encode(product.id, forKey: .productId)
+    }
   }
 
   // Custom decoding to handle the specific key requirements
   public required init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     name = try container.decode(String.self, forKey: .name)
-    id = try container.decode(String.self, forKey: .id)
 
-    do {
-      store = try container.decode(Store.self, forKey: .store)
-    } catch {
-      store = .unknown
-    }
+    // This will throw an error if it's not an AppStoreProduct, which must be caught in a
+    // `Throwable` and ignored in the paywall object.
+    let storeProduct = try container.decode(AppStoreProduct.self, forKey: .storeProduct)
+    type = .appStore(storeProduct)
+    objcAdapter = .init(store: .appStore, appStoreProduct: storeProduct)
   }
 }

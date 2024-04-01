@@ -144,8 +144,7 @@ class PaywallLogicTests: XCTestCase {
     let productId = "id1"
     let products = [ProductItem(
       name: "primary",
-      id: productId,
-      store: .appStore
+      type: .appStore(.init(id: productId))
     )]
 
     let skProductId = "id2"
@@ -178,8 +177,7 @@ class PaywallLogicTests: XCTestCase {
     let productId = "id1"
     let products = [ProductItem(
       name: "secondary",
-      id: productId,
-      store: .appStore
+      type: .appStore(.init(id: productId))
     )]
 
     let product = StoreProduct(
@@ -214,8 +212,7 @@ class PaywallLogicTests: XCTestCase {
     let productId = "id1"
     let products = [ProductItem(
       name: "primary",
-      id: productId,
-      store: .appStore
+      type: .appStore(.init(id: productId))
     )]
     let mockIntroPeriod = MockIntroductoryPeriod(
       testSubscriptionPeriod: MockSubscriptionPeriod()
@@ -257,8 +254,7 @@ class PaywallLogicTests: XCTestCase {
     let productId = "id1"
     let products = [ProductItem(
       name: "primary",
-      id: productId,
-      store: .appStore
+      type: .appStore(.init(id: productId))
     )]
     let mockIntroPeriod = MockIntroductoryPeriod(
       testSubscriptionPeriod: MockSubscriptionPeriod()
@@ -298,8 +294,7 @@ class PaywallLogicTests: XCTestCase {
     let productId = "id1"
     let products = [ProductItem(
       name: "primary",
-      id: productId,
-      store: .appStore
+      type: .appStore(.init(id: productId))
     )]
     let mockIntroPeriod = MockIntroductoryPeriod(
       testSubscriptionPeriod: MockSubscriptionPeriod()

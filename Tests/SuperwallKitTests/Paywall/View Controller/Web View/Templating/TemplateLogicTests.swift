@@ -38,7 +38,12 @@ final class TemplateLogicTests: XCTestCase {
 
   func test_getBase64EncodedTemplates_oneProduct_noFreeTrial_userAttributes() async {
     // MARK: Given
-    let products = [ProductItem(name: "primary", id: "123", store: .appStore)]
+    let products = [
+      ProductItem(
+        name: "primary",
+        type: .appStore(.init(id: "123"))
+      )
+    ]
     let productVariables = [ProductVariable(name: "primary", attributes: ["period": "month"])]
     let userAttributes = [
       "name": "Yusuf"
@@ -91,7 +96,12 @@ final class TemplateLogicTests: XCTestCase {
 
   func test_getBase64EncodedTemplates_oneProduct_freeTrial_userAttributes() async {
     // MARK: Given
-    let productItems = [ProductItem(name: "primary", id: "123", store: .appStore)]
+    let productItems = [
+      ProductItem(
+        name: "primary",
+        type: .appStore(.init(id: "123"))
+      )
+    ]
     let productVariables = [ProductVariable(name: "primary", attributes: ["period": "month"])]
     let userAttributes = [
       "name": "Yusuf"
@@ -147,9 +157,18 @@ final class TemplateLogicTests: XCTestCase {
   func test_getBase64EncodedTemplates_threeProducts_freeTrial_userAttributes() async {
     // MARK: Given
     let products = [
-      ProductItem(name: "primary", id: "123", store: .appStore),
-      ProductItem(name: "secondary", id: "456", store: .appStore),
-      ProductItem(name: "tertiary", id: "789", store: .appStore),
+      ProductItem(
+        name: "primary",
+        type: .appStore(.init(id: "123"))
+      ),
+      ProductItem(
+        name: "secondary",
+        type: .appStore(.init(id: "456"))
+      ),
+      ProductItem(
+        name: "tertiary",
+        type: .appStore(.init(id: "789"))
+      )
     ]
     let productVariables = [
       ProductVariable(name: "primary", attributes: ["period": "month"]),
@@ -216,9 +235,18 @@ final class TemplateLogicTests: XCTestCase {
   func test_getBase64EncodedTemplates_threeProducts_freeTrial_userAttributes_variablesTemplate() async {
     // MARK: Given
     let products = [
-      ProductItem(name: "primary", id: "123", store: .appStore),
-      ProductItem(name: "secondary", id: "456", store: .appStore),
-      ProductItem(name: "tertiary", id: "789", store: .appStore),
+      ProductItem(
+        name: "primary",
+        type: .appStore(.init(id: "123"))
+      ),
+      ProductItem(
+        name: "secondary",
+        type: .appStore(.init(id: "456"))
+      ),
+      ProductItem(
+        name: "tertiary",
+        type: .appStore(.init(id: "789"))
+      )
     ]
     let productVariables = [
       ProductVariable(name: "primary", attributes: ["period": "month"]),
