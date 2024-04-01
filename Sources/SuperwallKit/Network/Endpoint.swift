@@ -32,11 +32,11 @@ struct Endpoint<Response: Decodable> {
     let url: URL
 
     if let components = components {
-        let defaultComponents = factory.makeDefaultComponents(host: components.host ?? .base)
+      let defaultComponents = factory.makeDefaultComponents(host: components.host ?? .base)
       var component = URLComponents()
-        component.scheme = defaultComponents.scheme
-        component.host = defaultComponents.host
-        component.port = defaultComponents.port
+      component.scheme = defaultComponents.scheme
+      component.host = defaultComponents.host
+      component.port = defaultComponents.port
       component.queryItems = components.queryItems
       component.path = components.path
 

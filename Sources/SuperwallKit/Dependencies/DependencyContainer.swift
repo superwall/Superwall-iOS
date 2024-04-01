@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 23/12/2022.
 //
@@ -350,9 +350,9 @@ extension DependencyContainer: ApiFactory {
     return headers
   }
 
-   func makeDefaultComponents(host: EndpointHost) -> ApiHostConfig {
-       return self.api.getConfig(host: host)
-    }
+  func makeDefaultComponents(host: EndpointHost) -> ApiHostConfig {
+    return self.api.getConfig(host: host)
+  }
 }
 
 // MARK: - Rule Params

@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 11/07/2022.
 //
@@ -27,69 +27,68 @@ public final class SuperwallOptions: NSObject {
     case releaseCandidate
     /// **WARNING**: Uses the nightly build environment. This is not meant for a production environment.
     case developer
-		/// **WARNING**: Uses a custom environment. This is not meant for a production environment.
+    /// **WARNING**: Uses a custom environment. This is not meant for a production environment.
     case custom(String)
 
     var scheme: String {
       switch self {
-        case .custom(let domain):
+      case .custom(let domain):
         if let url = URL(string: domain) {
           return url.scheme ?? "https"
         }
-          break
       default:
         return "https"
       }
-    return "https"
+      return "https"
     }
 
-      var port: Int? {
-          switch self {
-          case .custom(let domain):
-              if let url = URL(string: domain) {
-                  return url.port
-              }
-          default:
-              return nil
-          }
-          return nil
+    var port: Int? {
+      switch self {
+      case .custom(let domain):
+        if let url = URL(string: domain) {
+          return url.port
+        }
+      default:
+        return nil
       }
+      return nil
+    }
 
     var hostDomain: String {
-        switch self {
-        case .release:
-            return "superwall.me"
-        case .releaseCandidate:
-            return "superwallcanary.com"
-        case .developer:
-            return "superwall.dev"
-        case .custom(let domain):
-            if let url = URL(string: domain) {
-                if let host = url.host {
-                    return host
-                }
-            }
-            return domain
+      switch self {
+      case .release:
+        return "superwall.me"
+      case .releaseCandidate:
+        return "superwallcanary.com"
+      case .developer:
+        return "superwall.dev"
+      case .custom(let domain):
+        if let url = URL(string: domain) {
+          if let host = url.host {
+            return host
+          }
         }
+        return domain
+      }
     }
 
     var baseHost: String {
-        switch self {
-        case .custom:
+      switch self {
+      case .custom:
 
-            return hostDomain
-        default:
-            return "api.\(hostDomain)"
-        }
+        return hostDomain
+      default:
+        return "api.\(hostDomain)"
+      }
     }
 
     var collectorHost: String {
-        switch self {
-        case .custom:
-            return hostDomain
-        default:
-            return "collector.\(hostDomain)"
-        }
+      switch self {
+      case .custom:
+        return hostDomain
+      default:
+        return "collector.\(hostDomain)"
+      }
     }
   }
 
