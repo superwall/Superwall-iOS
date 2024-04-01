@@ -6,12 +6,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- SW-2767: Adds `device.regionCode` and `device.preferredRegionCode`, which
-  returns the `regionCode` of the locale. For example, if a locale is `en_GB`,
-  the `regionCode` will be `GB`. You can use this in the filters of your
-  campaign.
-- Adds ability to specify custom api endpoints using SuperwallOptions to
-  facilitate local testing more easily
+- SW-2767: Adds `device.regionCode` and `device.preferredRegionCode`, which returns the `regionCode` of the locale. For example, if a locale is `en_GB`,the `regionCode` will be `GB`. You can use this in the filters of your campaign.
+- Adds ability to specify custom API endpoints using `SuperwallOptions` to facilitate local testing more easily.
 
 ### Fixes
 
