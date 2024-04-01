@@ -36,17 +36,6 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
     }
   }
 
-  var couldPresent: Bool {
-    switch self {
-    case .presentation,
-      .getPaywall:
-      return true
-    case .getPresentationResult,
-      .getImplicitPresentationResult:
-      return false
-    }
-  }
-
   func getPaywallVcDelegateAdapter() -> PaywallViewControllerDelegateAdapter? {
     switch self {
     case .getPaywall(let adapter):

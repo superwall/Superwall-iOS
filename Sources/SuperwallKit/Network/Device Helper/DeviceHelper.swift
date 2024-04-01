@@ -85,6 +85,25 @@ class DeviceHelper {
     }
   }
 
+  private var regionCode: String {
+    if #available(iOS 16, *) {
+      return Locale.autoupdatingCurrent.language.region?.identifier ?? ""
+    } else {
+      return Locale.autoupdatingCurrent.regionCode ?? ""
+    }
+  }
+
+  var preferredRegionCode: String {
+    guard let preferredIdentifier = Locale.preferredLanguages.first else {
+      return regionCode
+    }
+    if #available(iOS 16, *) {
+      return Locale(identifier: preferredIdentifier).language.region?.identifier ?? ""
+    } else {
+      return Locale(identifier: preferredIdentifier).regionCode ?? ""
+    }
+  }
+
   var currencyCode: String {
     Locale.autoupdatingCurrent.currencyCode ?? ""
   }
@@ -440,6 +459,8 @@ class DeviceHelper {
       preferredLocale: preferredLocale,
       deviceLanguageCode: languageCode,
       preferredLanguageCode: preferredLanguageCode,
+      regionCode: regionCode,
+      preferredRegionCode: preferredRegionCode,
       deviceCurrencyCode: currencyCode,
       deviceCurrencySymbol: currencySymbol,
       interfaceType: interfaceType,
