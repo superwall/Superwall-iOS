@@ -459,6 +459,7 @@ final class ConfigTypeTests: XCTestCase {
     )
     XCTAssertTrue(parsedResponse.featureFlags.enableSessionEvents)
 
+    XCTAssertTrue(parsedResponse.paywalls.first!.productItems.count != 0)
     guard let trigger = parsedResponse.triggers.filter({ $0.eventName == "MyEvent" }).first
     else {
       return XCTFail("opened_application trigger not found")
