@@ -14,7 +14,7 @@ public enum Store: Int, Codable, Sendable {
   case appStore
 
   enum CodingKeys: String, CodingKey {
-    case appStore = "APPSTORE"
+    case appStore = "APP_STORE"
   }
 
   public init(from decoder: Decoder) throws {
