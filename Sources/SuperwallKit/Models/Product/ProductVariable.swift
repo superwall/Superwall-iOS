@@ -11,6 +11,7 @@ struct ProductVariable: Encodable, Equatable {
   let name: String
   let attributes: JSON
 
+  /// Encodes in the format `"name": [attributes]`
   func encode(to encoder: Encoder) throws {
     // Create a container for the custom key (the product name)
     var container = encoder.container(keyedBy: DynamicCodingKey.self)
