@@ -412,10 +412,14 @@ let response = #"""
         }
       },
       {
-        "reference_name": "secondary android",
+        "reference_name": "primary",
         "store_product": {
           "store": "PLAY_STORE",
-          "product_identifier": "androidproduct:base-plan:offer"
+          "product_identifier": "my-android-product",
+          "base_plan_identifier": "base-plan",
+          "offer": {
+            "type": "AUTOMATIC"
+          }
         }
       }
     ],
