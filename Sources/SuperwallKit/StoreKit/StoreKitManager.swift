@@ -89,7 +89,7 @@ actor StoreKitManager {
     // If there are no substitutions, return what we have
     guard let substituteProductsByLabel = substituteProductsByLabel else {
       return ProductProcessingResult(
-        productIdsToLoad: Set(paywallProductIds),
+        productIdsToLoad: Set(productIdsToLoad),
         substituteProductsById: substituteProductsById,
         productItems: productItems
       )
@@ -108,7 +108,7 @@ actor StoreKitManager {
       if let index = productItems.firstIndex(where: { $0.name == name }) {
         // Update the product ID at the found index
         productItems[index] = ProductItem(
-          name: productItems[index].name,
+          name: name,
           type: .appStore(.init(id: productId))
         )
       } else {
@@ -122,11 +122,11 @@ actor StoreKitManager {
       }
 
       // Make sure we don't load the substitute product id
-      productIdsToLoad.removeAll { $0 == name }
+      productIdsToLoad.removeAll { $0 == productId }
     }
 
     return ProductProcessingResult(
-      productIdsToLoad: Set(paywallProductIds),
+      productIdsToLoad: Set(productIdsToLoad),
       substituteProductsById: substituteProductsById,
       productItems: productItems
     )
