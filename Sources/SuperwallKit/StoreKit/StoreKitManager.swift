@@ -10,7 +10,7 @@ actor StoreKitManager {
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
     let substituteProductsById: [String: StoreProduct]
-    let products: [Product]
+    let productItems: [ProductItem]
   }
 
   init(productsFetcher: ProductsFetcherSK1) {
@@ -25,29 +25,34 @@ actor StoreKitManager {
       return []
     }
 
-    let variables = paywall.products.compactMap { product -> ProductVariable? in
-      guard let storeProduct = output.productsById[product.id] else {
-        return nil
+    var productAttributes: [ProductVariable] = []
+
+    // Add the StoreProduct attributes for each product at its corresponding index
+    paywall.productItems.forEach { productItem in
+      guard let storeProduct = output.productsById[productItem.id] else {
+        return
       }
-      return ProductVariable(
-        type: product.type,
-        attributes: storeProduct.attributesJson
+      productAttributes.append(
+        ProductVariable(
+          name: productItem.name,
+          attributes: storeProduct.attributesJson
+        )
       )
     }
 
-    return variables
+    return productAttributes
   }
 
   func getProducts(
-    withIds responseProductIds: [String],
+    withIds paywallProductIds: [String],
     forPaywall paywallName: String? = nil,
-    responseProducts: [Product] = [],
-    substituting substituteProducts: PaywallProducts? = nil
-  ) async throws -> (productsById: [String: StoreProduct], products: [Product]) {
+    productItems: [ProductItem] = [],
+    substituting substituteProductsByLabel: [String: StoreProduct]? = nil
+  ) async throws -> (productsById: [String: StoreProduct], productItems: [ProductItem]) {
     let processingResult = removeAndStore(
-      substituteProducts: substituteProducts,
-      fromResponseProductIds: responseProductIds,
-      responseProducts: responseProducts
+      substituteProductsByLabel: substituteProductsByLabel,
+      paywallProductIds: paywallProductIds,
+      productItems: productItems
     )
 
     let products = try await productsFetcher.products(
@@ -62,59 +67,68 @@ actor StoreKitManager {
       self.productsById[product.productIdentifier] = product
     }
 
-    return (productsById, processingResult.products)
+    return (productsById, processingResult.productItems)
   }
 
-  /// For each product to substitute, this removes the response product at the given index and stores
+  /// For each product to substitute, this replaces the paywall product at the given index and stores
   /// the substitute product in memory.
   private func removeAndStore(
-    substituteProducts: PaywallProducts?,
-    fromResponseProductIds responseProductIds: [String],
-    responseProducts: [Product]
+    substituteProductsByLabel: [String: StoreProduct]?,
+    paywallProductIds: [String],
+    productItems: [ProductItem]
   ) -> ProductProcessingResult {
-    var responseProductIds = responseProductIds
+    /// Product IDs to load in the future. Initialised to the given paywall products.
+    var productIdsToLoad = paywallProductIds
+
+    /// Products to substitute, initially empty.
     var substituteProductsById: [String: StoreProduct] = [:]
-    var products: [Product] = responseProducts
 
-    func storeAndSubstitute(
-      _ product: StoreProduct,
-      type: ProductType,
-      index: Int
-    ) {
-      let id = product.productIdentifier
-      substituteProductsById[id] = product
-      self.productsById[id] = product
-      let product = Product(type: type, id: id)
-      products[guarded: index] = product
-      responseProductIds.remove(safeAt: index)
+    /// The final product IDs by index. Initialised with the ones from the paywall object.
+    var productItems: [ProductItem] = productItems
+
+    // If there are no substitutions, return what we have
+    guard let substituteProductsByLabel = substituteProductsByLabel else {
+      return ProductProcessingResult(
+        productIdsToLoad: Set(productIdsToLoad),
+        substituteProductsById: substituteProductsById,
+        productItems: productItems
+      )
     }
 
-    if let primaryProduct = substituteProducts?.primary {
-      storeAndSubstitute(
-        primaryProduct,
-        type: .primary,
-        index: 0
-      )
-    }
-    if let secondaryProduct = substituteProducts?.secondary {
-      storeAndSubstitute(
-        secondaryProduct,
-        type: .secondary,
-        index: 1
-      )
-    }
-    if let tertiaryProduct = substituteProducts?.tertiary {
-      storeAndSubstitute(
-        tertiaryProduct,
-        type: .tertiary,
-        index: 2
-      )
+    // Otherwise, iterate over each substitute product
+    for (name, product) in substituteProductsByLabel {
+      let productId = product.productIdentifier
+
+      // Map substitute product by its ID.
+      substituteProductsById[productId] = product
+
+      // Store the substitute product by id in the class' dictionary
+      self.productsById[productId] = product
+
+      if let index = productItems.firstIndex(where: { $0.name == name }) {
+        // Update the product ID at the found index
+        productItems[index] = ProductItem(
+          name: name,
+          type: .appStore(.init(id: productId))
+        )
+      } else {
+        // If it isn't found, just append to the list.
+        productItems.append(
+          ProductItem(
+            name: name,
+            type: .appStore(.init(id: productId))
+          )
+        )
+      }
+
+      // Make sure we don't load the substitute product id
+      productIdsToLoad.removeAll { $0 == productId }
     }
 
     return ProductProcessingResult(
-      productIdsToLoad: Set(responseProductIds),
+      productIdsToLoad: Set(productIdsToLoad),
       substituteProductsById: substituteProductsById,
-      products: products
+      productItems: productItems
     )
   }
 }

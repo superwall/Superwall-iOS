@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 11/07/2022.
 //
@@ -20,13 +20,39 @@ public final class SuperwallOptions: NSObject {
   /// **WARNING**:  The different network environments that the SDK should use.
   /// Only use this enum to set ``SuperwallOptions/networkEnvironment-swift.property``
   ///  if told so explicitly by the Superwall team.
-  public enum NetworkEnvironment: Int {
+  public enum NetworkEnvironment {
     /// Default: Uses the standard latest environment.
     case release
     /// **WARNING**: Uses a release candidate environment. This is not meant for a production environment.
     case releaseCandidate
     /// **WARNING**: Uses the nightly build environment. This is not meant for a production environment.
     case developer
+    /// **WARNING**: Uses a custom environment. This is not meant for a production environment.
+    case custom(String)
+
+    var scheme: String {
+      switch self {
+      case .custom(let domain):
+        if let url = URL(string: domain) {
+          return url.scheme ?? "https"
+        }
+      default:
+        return "https"
+      }
+      return "https"
+    }
+
+    var port: Int? {
+      switch self {
+      case .custom(let domain):
+        if let url = URL(string: domain) {
+          return url.port
+        }
+      default:
+        return nil
+      }
+      return nil
+    }
 
     var hostDomain: String {
       switch self {
@@ -36,15 +62,33 @@ public final class SuperwallOptions: NSObject {
         return "superwallcanary.com"
       case .developer:
         return "superwall.dev"
+      case .custom(let domain):
+        if let url = URL(string: domain) {
+          if let host = url.host {
+            return host
+          }
+        }
+        return domain
       }
     }
 
     var baseHost: String {
-      "api.\(hostDomain)"
+      switch self {
+      case .custom:
+
+        return hostDomain
+      default:
+        return "api.\(hostDomain)"
+      }
     }
 
     var collectorHost: String {
-      return "collector.\(hostDomain)"
+      switch self {
+      case .custom:
+        return hostDomain
+      default:
+        return "collector.\(hostDomain)"
+      }
     }
   }
 

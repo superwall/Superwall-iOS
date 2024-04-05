@@ -58,7 +58,10 @@ extension Superwall {
       disableVerboseEvents: verboseEvents,
       isSandbox: dependencyContainer.makeIsSandbox()
     ) {
-      await dependencyContainer.eventsQueue.enqueue(event: eventData.jsonData)
+      await dependencyContainer.eventsQueue.enqueue(
+        data: eventData.jsonData,
+        from: event
+      )
     }
     dependencyContainer.storage.coreDataManager.saveEventData(eventData)
 

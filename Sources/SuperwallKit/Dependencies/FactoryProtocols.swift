@@ -27,7 +27,7 @@ protocol CacheFactory: AnyObject {
 
 protocol VariablesFactory: AnyObject {
   func makeJsonVariables(
-    productVariables: [ProductVariable]?,
+    products: [ProductVariable]?,
     computedPropertyRequests: [ComputedPropertyRequest],
     event: EventData?
   ) async -> JSON
@@ -99,6 +99,8 @@ protocol HasExternalPurchaseControllerFactory: AnyObject {
   func makeHasExternalPurchaseController() -> Bool
 }
 
+struct DummyDecodable: Decodable {}
+
 protocol ApiFactory: AnyObject {
   // TODO: Think of an alternative way such that we don't need to do this:
   // swiftlint:disable implicitly_unwrapped_optional
@@ -114,6 +116,10 @@ protocol ApiFactory: AnyObject {
     isForDebugging: Bool,
     requestId: String
   ) async -> [String: String]
+
+  func makeDefaultComponents(
+    host: EndpointHost
+  ) -> ApiHostConfig
 }
 
 protocol StoreTransactionFactory: AnyObject {

@@ -25,7 +25,7 @@ This example app uses:
 
 ## Getting Started
 
-Clone or download SuperwallKit from the [project home page](https://github.com/superwall-me/Superwall-iOS). Then, open **Superwall-UIKit+RevenueCat.xcodeproj** in Xcode and take a look at the code inside the [Superwall-UIKit+RevenueCat](Superwall-UIKit+RevenueCat) folder.
+Clone or download SuperwallKit from the [project home page](https://github.com/superwall/Superwall-iOS). Then, open **Superwall-UIKit+RevenueCat.xcodeproj** in Xcode and take a look at the code inside the [Superwall-UIKit+RevenueCat](Superwall-UIKit+RevenueCat) folder.
 
 You'll see a file called [RCPurchaseController.swift](Superwall-UIKit+RevenueCat/RCPurchaseController.swift) which handles the subscription-related logic of both Superwall and RevenueCat.
 

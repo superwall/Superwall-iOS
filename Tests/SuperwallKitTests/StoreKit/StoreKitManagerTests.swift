@@ -21,15 +21,17 @@ class StoreKitManagerTests: XCTestCase {
     let manager = dependencyContainer.storeKitManager!
 
     let primary = MockSkProduct(productIdentifier: "abc")
-    let substituteProducts = PaywallProducts(
-      primary: StoreProduct(sk1Product: primary)
-    )
+    let substituteProducts = [
+      "primary": StoreProduct(sk1Product: primary)
+    ]
 
     do {
       let (productsById, products) = try await manager.getProducts(withIds: [], substituting: substituteProducts)
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
-      XCTAssertEqual(products.first!.id, primary.productIdentifier)
-      XCTAssertEqual(products.first!.type, .primary)
+      XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
+      XCTAssertTrue(products.contains { $0.name == "primary" })
+
+      XCTAssertEqual(products.count, 1)
     } catch {
       XCTFail("couldn't get products")
     }
@@ -41,20 +43,22 @@ class StoreKitManagerTests: XCTestCase {
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let tertiary = MockSkProduct(productIdentifier: "def")
-    let substituteProducts = PaywallProducts(
-      primary: StoreProduct(sk1Product: primary),
-      tertiary: StoreProduct(sk1Product: tertiary)
-    )
+    let substituteProducts = [
+      "primary": StoreProduct(sk1Product: primary),
+      "tertiary": StoreProduct(sk1Product: tertiary)
+    ]
 
     do {
       let (productsById, products) = try await manager.getProducts(withIds: [], substituting: substituteProducts)
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
-      XCTAssertEqual(products[0].id, primary.productIdentifier)
-      XCTAssertEqual(products[0].type, .primary)
+      XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
+      XCTAssertTrue(products.contains { $0.name == "primary" })
+      XCTAssertTrue(products.contains { $0.objcAdapter.store == .appStore })
+      XCTAssertTrue(products.contains { $0.id == tertiary.productIdentifier })
+      XCTAssertTrue(products.contains { $0.name == "tertiary" })
+      XCTAssertEqual(products.count, 2)
 
       XCTAssertEqual(productsById[tertiary.productIdentifier]?.sk1Product, tertiary)
-      XCTAssertEqual(products[1].id, tertiary.productIdentifier)
-      XCTAssertEqual(products[1].type, .tertiary)
     } catch {
       XCTFail("couldn't get products")
     }
@@ -67,25 +71,26 @@ class StoreKitManagerTests: XCTestCase {
     let primary = MockSkProduct(productIdentifier: "abc")
     let secondary = MockSkProduct(productIdentifier: "def")
     let tertiary = MockSkProduct(productIdentifier: "ghi")
-    let substituteProducts = PaywallProducts(
-      primary: StoreProduct(sk1Product: primary),
-      secondary: StoreProduct(sk1Product: secondary),
-      tertiary: StoreProduct(sk1Product: tertiary)
-    )
+    let substituteProducts = [
+      "primary": StoreProduct(sk1Product: primary),
+      "secondary": StoreProduct(sk1Product: secondary),
+      "tertiary": StoreProduct(sk1Product: tertiary)
+    ]
 
     do {
       let (productsById, products) = try await manager.getProducts(withIds: [], substituting: substituteProducts)
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
-      XCTAssertEqual(products[0].id, primary.productIdentifier)
-      XCTAssertEqual(products[0].type, .primary)
+      XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
+      XCTAssertTrue(products.contains { $0.name == "primary" })
 
       XCTAssertEqual(productsById[secondary.productIdentifier]?.sk1Product, secondary)
-      XCTAssertEqual(products[1].id, secondary.productIdentifier)
-      XCTAssertEqual(products[1].type, .secondary)
+      XCTAssertTrue(products.contains { $0.id == secondary.productIdentifier })
+      XCTAssertTrue(products.contains { $0.name == "secondary" })
 
       XCTAssertEqual(productsById[tertiary.productIdentifier]?.sk1Product, tertiary)
-      XCTAssertEqual(products[2].id, tertiary.productIdentifier)
-      XCTAssertEqual(products[2].type, .tertiary)
+      XCTAssertTrue(products.contains { $0.id == tertiary.productIdentifier })
+      XCTAssertTrue(products.contains { $0.name == "tertiary" })
+      XCTAssertEqual(products.count, 3)
     } catch {
       XCTFail("couldn't get products")
     }
@@ -99,16 +104,17 @@ class StoreKitManagerTests: XCTestCase {
     )
 
     let primary = MockSkProduct(productIdentifier: "abc")
-    let substituteProducts = PaywallProducts(
-      primary: StoreProduct(sk1Product: primary)
-    )
+    let substituteProducts = [
+      "primary": StoreProduct(sk1Product: primary)
+    ]
 
     do {
       let (productsById, products) = try await manager.getProducts(withIds: ["1"], substituting: substituteProducts)
       XCTAssertEqual(productsById.count, 1)
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
-      XCTAssertEqual(products.first!.id, primary.productIdentifier)
-      XCTAssertEqual(products.first!.type, .primary)
+      XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
+      XCTAssertTrue(products.contains { $0.name == "primary" })
+      XCTAssertEqual(products.count, 1)
     } catch {
       XCTFail("couldn't get products")
     }
@@ -125,17 +131,17 @@ class StoreKitManagerTests: XCTestCase {
     )
 
     let primary = MockSkProduct(productIdentifier: "abc")
-    let substituteProducts = PaywallProducts(
-      primary: StoreProduct(sk1Product: primary)
-    )
+    let substituteProducts = [
+      "primary": StoreProduct(sk1Product: primary)
+    ]
 
     do {
       let (productsById, products) = try await manager.getProducts(withIds: ["1", "2"], substituting: substituteProducts)
       XCTAssertEqual(productsById.count, 2)
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
       XCTAssertEqual(products.count, 1)
-      XCTAssertEqual(products.first!.id, primary.productIdentifier)
-      XCTAssertEqual(products.first!.type, .primary)
+      XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
+      XCTAssertTrue(products.contains { $0.name == "primary" })
       XCTAssertEqual(productsById["2"]?.sk1Product, responseProduct2)
     } catch {
       XCTFail("couldn't get products")

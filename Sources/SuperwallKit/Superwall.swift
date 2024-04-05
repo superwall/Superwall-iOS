@@ -282,6 +282,7 @@ public final class Superwall: NSObject, ObservableObject {
         scope: .superwallCore,
         message: "Superwall.configure called multiple times. Please make sure you only call this once on app launch."
       )
+      completion?()
       return shared
     }
     superwall = Superwall(
@@ -361,6 +362,7 @@ public final class Superwall: NSObject, ObservableObject {
         scope: .superwallCore,
         message: "Superwall.configure called multiple times. Please make sure you only call this once on app launch."
       )
+      completion?()
       return shared
     }
     superwall = Superwall(

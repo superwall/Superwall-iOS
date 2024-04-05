@@ -39,7 +39,13 @@ actor EventsQueue {
   }
 
   private func setupTimer() {
-    let timeInterval = configManager.options.networkEnvironment == .release ? 20.0 : 1.0
+    let timeInterval: Double
+    switch configManager.options.networkEnvironment {
+    case .release:
+      timeInterval = 20.0
+    default:
+      timeInterval = 1.0
+    }
     let timer = Timer(
       timeInterval: timeInterval,
       repeats: true
@@ -66,8 +72,26 @@ actor EventsQueue {
       }
   }
 
-  func enqueue(event: JSON) {
-    elements.append(event)
+  func enqueue(
+    data: JSON,
+    from event: Trackable
+  ) {
+    guard externalDataCollectionAllowed(from: event) else {
+      return
+    }
+    elements.append(data)
+  }
+
+  private func externalDataCollectionAllowed(from event: Trackable) -> Bool {
+    if Superwall.shared.options.isExternalDataCollectionEnabled {
+      return true
+    }
+    if event is InternalSuperwallEvent.TriggerFire
+      || event is InternalSuperwallEvent.Attributes
+      || event is UserInitiatedEvent.Track {
+      return false
+    }
+    return true
   }
 
   func flushInternal(depth: Int = 10) {

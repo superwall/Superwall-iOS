@@ -85,6 +85,25 @@ class DeviceHelper {
     }
   }
 
+  private var regionCode: String {
+    if #available(iOS 16, *) {
+      return Locale.autoupdatingCurrent.language.region?.identifier ?? ""
+    } else {
+      return Locale.autoupdatingCurrent.regionCode ?? ""
+    }
+  }
+
+  var preferredRegionCode: String {
+    guard let preferredIdentifier = Locale.preferredLanguages.first else {
+      return regionCode
+    }
+    if #available(iOS 16, *) {
+      return Locale(identifier: preferredIdentifier).language.region?.identifier ?? ""
+    } else {
+      return Locale(identifier: preferredIdentifier).regionCode ?? ""
+    }
+  }
+
   var currencyCode: String {
     Locale.autoupdatingCurrent.currencyCode ?? ""
   }
@@ -185,7 +204,6 @@ class DeviceHelper {
     return build
   }()
 
-
   let interfaceType: String = {
     #if compiler(>=5.9.2)
     if #available(iOS 17.0, *) {
@@ -194,7 +212,8 @@ class DeviceHelper {
       }
     }
     #endif
-    // Ignore the exhaustive message because we need to be able to let devs using lower versions of xcode to build
+    // Ignore the exhaustive message because we need to be able to let devs using lower versions
+    // of xcode to build and they don't have vision support.
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
       return "ipad"
@@ -441,6 +460,8 @@ class DeviceHelper {
       preferredLocale: preferredLocale,
       deviceLanguageCode: languageCode,
       preferredLanguageCode: preferredLanguageCode,
+      regionCode: regionCode,
+      preferredRegionCode: preferredRegionCode,
       deviceCurrencyCode: currencyCode,
       deviceCurrencySymbol: currencySymbol,
       interfaceType: interfaceType,
@@ -484,7 +505,7 @@ class DeviceHelper {
     self.storage = storage
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
     self.factory = factory
-    reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.hostDomain)
+      reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
     self.sdkVersionPadded = Self.makePaddedSdkVersion(using: sdkVersion)
   }
 }

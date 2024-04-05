@@ -38,14 +38,14 @@ extension PaywallRequestManager {
       let result = try await storeKitManager.getProducts(
         withIds: paywall.productIds,
         forPaywall: paywall.name,
-        responseProducts: paywall.products,
+        productItems: paywall.productItems,
         substituting: request.overrides.products
       )
 
-      paywall.products = result.products
+      paywall.productItems = result.productItems
 
       let outcome = await PaywallLogic.getVariablesAndFreeTrial(
-        fromProducts: result.products,
+        productItems: result.productItems,
         productsById: result.productsById,
         isFreeTrialAvailableOverride: request.overrides.isFreeTrial,
         isFreeTrialAvailable: { [weak self] product in
@@ -53,9 +53,8 @@ extension PaywallRequestManager {
           return await self.factory.isFreeTrialAvailable(for: product)
         }
       )
-      paywall.swProducts = outcome.orderedSwProducts
+      paywall.swProducts = outcome.swProducts
       paywall.productVariables = outcome.productVariables
-      paywall.swProductVariablesTemplate = outcome.swProductVariablesTemplate
       paywall.isFreeTrialAvailable = outcome.isFreeTrialAvailable
 
       return paywall

@@ -118,7 +118,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
      )
-   XCTAssertFalse(configManager.confirmedAssignment)
+   XCTAssertTrue(configManager.confirmedAssignment)
   }
 
   @MainActor

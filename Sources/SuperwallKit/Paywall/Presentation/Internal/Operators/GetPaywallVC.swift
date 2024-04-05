@@ -52,7 +52,7 @@ extension Superwall {
       eventData: request.presentationInfo.eventData,
       responseIdentifiers: responseIdentifiers,
       overrides: .init(
-        products: request.paywallOverrides?.products,
+        products: request.paywallOverrides?.productsByName,
         isFreeTrial: request.presentationInfo.freeTrialOverride
       ),
       isDebuggerLaunched: request.flags.isDebuggerLaunched,

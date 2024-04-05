@@ -403,10 +403,26 @@ let response = #"""
         }
       }]
     }],
-    "products": [{
-      "product": "primary",
-      "productId": "sk.superwall.annual.89.99_7"
-    }],
+    "products_v2": [
+      {
+        "reference_name": "primary",
+        "store_product": {
+          "store": "APP_STORE",
+          "product_identifier": "sk.superwall.annual.89.99_7"
+        }
+      },
+      {
+        "reference_name": "primary",
+        "store_product": {
+          "store": "PLAY_STORE",
+          "product_identifier": "my-android-product",
+          "base_plan_identifier": "base-plan",
+          "offer": {
+            "type": "AUTOMATIC"
+          }
+        }
+      }
+    ],
     "presentation_condition": "CHECK_USER_SUBSCRIPTION",
     "presentation_delay": 0,
     "presentation_style": "FULLSCREEN",
@@ -447,6 +463,7 @@ final class ConfigTypeTests: XCTestCase {
     )
     XCTAssertTrue(parsedResponse.featureFlags.enableSessionEvents)
 
+    XCTAssertTrue(parsedResponse.paywalls.first!.productItems.count != 0)
     guard let trigger = parsedResponse.triggers.filter({ $0.eventName == "MyEvent" }).first
     else {
       return XCTFail("opened_application trigger not found")

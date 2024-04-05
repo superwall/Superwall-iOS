@@ -27,9 +27,18 @@ public final class PaywallInfo: NSObject {
   public let triggerSessionId: String?
 
   /// The products associated with the paywall.
+  @available(
+    *,
+    deprecated,
+    renamed: "productItems",
+    message: "Use productItems because a paywall can support more than three products"
+  )
   public let products: [Product]
 
-  /// An array of product IDs that this paywall is displaying in `[Primary, Secondary, Tertiary]` order.
+  /// An array of products associated with the paywall.
+  public let productItems: [ProductItem]
+
+  /// An ordered array of product IDs that this paywall is displaying.
   public let productIds: [String]
 
   /// The name set for this paywall in Superwall's web dashboard.
@@ -120,6 +129,8 @@ public final class PaywallInfo: NSObject {
     name: String,
     url: URL,
     products: [Product],
+    productItems: [ProductItem],
+    productIds: [String],
     fromEventData eventData: EventData?,
     responseLoadStartTime: Date?,
     responseLoadCompleteTime: Date?,
@@ -153,8 +164,10 @@ public final class PaywallInfo: NSObject {
     self.experiment = experiment
     self.triggerSessionId = triggerSessionId
     self.paywalljsVersion = paywalljsVersion
+    self.productItems = productItems
+    // Legacy support
     self.products = products
-    self.productIds = products.map { $0.id }
+    self.productIds = productIds
     self.isFreeTrialAvailable = isFreeTrialAvailable
     self.featureGatingBehavior = featureGatingBehavior
     self.localNotifications = localNotifications
@@ -278,14 +291,20 @@ public final class PaywallInfo: NSObject {
       "presented_by": presentedBy as Any
     ]
 
-    let levels = ["primary", "secondary", "tertiary"]
+    output["primary_product_id"] = ""
+    output["secondary_product_id"] = ""
+    output["tertiary_product_id"] = ""
 
-    for (id, level) in levels.enumerated() {
-      let key = "\(level)_product_id"
-      output[key] = ""
-      if id < products.count {
-        output[key] = productIds[id]
+    for (index, product) in productItems.enumerated() {
+      if index == 0 {
+        output["primary_product_id"] = product.id
+      } else if index == 1 {
+        output["secondary_product_id"] = product.id
+      } else if index == 2 {
+        output["tertiary_product_id"] = product.id
       }
+      let key = "\(product.name)_product_id"
+      output[key] = product.id
     }
 
     return output
@@ -303,6 +322,8 @@ extension PaywallInfo: Stubbable {
       name: "Test",
       url: URL(string: "https://www.google.com")!,
       products: [],
+      productItems: [],
+      productIds: [],
       fromEventData: nil,
       responseLoadStartTime: nil,
       responseLoadCompleteTime: nil,

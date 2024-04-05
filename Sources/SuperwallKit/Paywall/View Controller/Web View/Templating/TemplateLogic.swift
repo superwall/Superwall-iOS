@@ -17,11 +17,11 @@ enum TemplateLogic {
   ) async -> String {
     let productsTemplate = ProductTemplate(
       eventName: "products",
-      products: paywall.products
+      products: paywall.productItems
     )
 
     let variablesTemplate = await factory.makeJsonVariables(
-      productVariables: paywall.productVariables,
+      products: paywall.productVariables,
       computedPropertyRequests: paywall.computedPropertyRequests,
       event: event
     )
@@ -31,15 +31,10 @@ enum TemplateLogic {
       prefix: paywall.isFreeTrialAvailable ? "freeTrial" : nil
     )
 
-    let swProductTemplate = swProductTemplate(
-      from: paywall.swProductVariablesTemplate ?? []
-    )
-
     let encodedTemplates = [
       utf8Encoded(productsTemplate),
       utf8Encoded(variablesTemplate),
-      utf8Encoded(freeTrialTemplate),
-      utf8Encoded(swProductTemplate)
+      utf8Encoded(freeTrialTemplate)
     ]
 
     let templatesString = "[" + encodedTemplates.joined(separator: ",") + "]"
@@ -54,23 +49,5 @@ enum TemplateLogic {
     } else {
       return "{}"
     }
-  }
-
-  private static func swProductTemplate(
-    from swProductTemplateVariables: [ProductVariable]
-  ) -> JSON {
-    var variables: [String: Any] = [:]
-
-    for variable in swProductTemplateVariables {
-      variables[variable.type.description] = JSON(variable.attributes)
-    }
-
-    // swiftlint:disable:next array_constructor
-    let values: [String: Any] = [
-      "event_name": "template_product_variables",
-      "variables": variables
-    ]
-
-    return JSON(values)
   }
 }
