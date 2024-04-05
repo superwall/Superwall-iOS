@@ -12,9 +12,9 @@ struct Endpoint<Response: Decodable> {
     case get = "GET"
     case post = "POST"
   }
+
   struct Components {
-    var scheme: String? = Api.scheme
-    let host: String?
+    let host: EndpointHost?
     let path: String
     var queryItems: [URLQueryItem]?
     var bodyData: Data?
@@ -32,9 +32,11 @@ struct Endpoint<Response: Decodable> {
     let url: URL
 
     if let components = components {
+      let defaultComponents = factory.makeDefaultComponents(host: components.host ?? .base)
       var component = URLComponents()
-      component.scheme = components.scheme
-      component.host = components.host
+      component.scheme = defaultComponents.scheme
+      component.host = defaultComponents.host
+      component.port = defaultComponents.port
       component.queryItems = components.queryItems
       component.path = components.path
 
@@ -79,11 +81,10 @@ struct Endpoint<Response: Decodable> {
 extension Endpoint where Response == EventsResponse {
   static func events(eventsRequest: EventsRequest, factory: ApiFactory) -> Self {
     let bodyData = try? JSONEncoder.toSnakeCase.encode(eventsRequest)
-    let collectorHost = factory.api.collector.host
 
     return Endpoint(
       components: Components(
-        host: collectorHost,
+        host: .collector,
         path: Api.version1 + "events",
         bodyData: bodyData
       ),
@@ -94,11 +95,10 @@ extension Endpoint where Response == EventsResponse {
 
   static func sessionEvents(_ session: SessionEventsRequest, factory: ApiFactory) -> Self {
     let bodyData = try? JSONEncoder.toSnakeCase.encode(session)
-    let collectorHost = factory.api.collector.host
 
     return Endpoint(
       components: Components(
-        host: collectorHost,
+        host: .collector,
         path: Api.version1 + "session_events",
         bodyData: bodyData
       ),
@@ -131,12 +131,11 @@ extension Endpoint where Response == Paywall {
       let body = PaywallRequestBody(appUserId: factory.identityManager.userId)
       bodyData = try? JSONEncoder.toSnakeCase.encode(body)
     }
-    let baseHost = factory.api.base.host
 
     return Endpoint(
       retryCount: retryCount,
       components: Components(
-        host: baseHost,
+        host: .base,
         path: Api.version1 + "paywall",
         bodyData: bodyData
       ),
@@ -178,12 +177,11 @@ extension Endpoint where Response == Paywall {
         }
       }
     }
-    let baseHost = factory.api.base.host
 
     return Endpoint(
       retryCount: retryCount,
       components: Components(
-        host: baseHost,
+        host: .base,
         path: Api.version1 + "paywall/\(identifier)",
         queryItems: queryItems
       ),
@@ -196,10 +194,9 @@ extension Endpoint where Response == Paywall {
 // MARK: - PaywallsResponse
 extension Endpoint where Response == Paywalls {
   static func paywalls(factory: ApiFactory) -> Self {
-    let baseHost = factory.api.base.host
     return Endpoint(
       components: Components(
-        host: baseHost,
+        host: .base,
         path: Api.version1 + "paywalls"
       ),
       method: .get,
@@ -216,11 +213,10 @@ extension Endpoint where Response == Config {
     factory: ApiFactory
   ) -> Self {
     let queryItems = [URLQueryItem(name: "pk", value: factory.storage.apiKey)]
-    let baseHost = factory.api.base.host
 
     return Endpoint(
       components: Components(
-        host: baseHost,
+        host: .base,
         path: Api.version1 + "static_config",
         queryItems: queryItems
       ),
@@ -234,11 +230,9 @@ extension Endpoint where Response == Config {
 // MARK: - ConfirmedAssignmentResponse
 extension Endpoint where Response == ConfirmedAssignmentResponse {
   static func assignments(factory: ApiFactory) -> Self {
-    let baseHost = factory.api.base.host
-
     return Endpoint(
       components: Components(
-        host: baseHost,
+        host: .base,
         path: Api.version1 + "assignments"
       ),
       method: .get,
@@ -251,11 +245,10 @@ extension Endpoint where Response == ConfirmedAssignmentResponse {
     factory: ApiFactory
   ) -> Self {
     let bodyData = try? JSONEncoder.toSnakeCase.encode(confirmableAssignments)
-    let baseHost = factory.api.base.host
 
     return Endpoint(
       components: Components(
-        host: baseHost,
+        host: .base,
         path: Api.version1 + "confirm_assignments",
         bodyData: bodyData
       ),
@@ -272,11 +265,9 @@ extension Endpoint where Response == PostBackResponse {
     factory: ApiFactory
   ) -> Self {
     let bodyData = try? JSONEncoder.toSnakeCase.encode(postback)
-    let collectorHost = factory.api.collector.host
-
     return Endpoint(
       components: Components(
-        host: collectorHost,
+        host: .collector,
         path: Api.version1 + "postback",
         bodyData: bodyData
       ),

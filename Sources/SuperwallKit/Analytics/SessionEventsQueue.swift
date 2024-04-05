@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 06/05/2022.
 //
@@ -64,7 +64,13 @@ actor SessionEventsQueue: SessionEnqueuable {
   }
 
   private func setupTimer() {
-    let timeInterval = configManager.options.networkEnvironment == .release ? 20.0 : 1.0
+    let timeInterval: Double
+    switch configManager.options.networkEnvironment {
+    case .release:
+      timeInterval = 20.0
+    default:
+      timeInterval = 1.0
+    }
     let timer = Timer(
       timeInterval: timeInterval,
       repeats: true
