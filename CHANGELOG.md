@@ -6,7 +6,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- SW-2767: Adds `device.regionCode` and `device.preferredRegionCode`, which returns the `regionCode` of the locale. For example, if a locale is `en_GB`,the `regionCode` will be `GB`. You can use this in the filters of your campaign.
+- Adds support for unlimited products in a paywall.
+- SW-2767: Adds `device.regionCode` and `device.preferredRegionCode`, which returns the `regionCode` of the locale. For example, if a locale is `en_GB`, the `regionCode` will be `GB`. You can use this in the filters of your campaign.
 - Adds ability to specify custom API endpoints using `SuperwallOptions` to facilitate local testing more easily.
 
 ### Fixes
@@ -36,7 +37,7 @@ This is our first visionOS pre-release, we'll test this on a few devices to
 ensure everything works as expected!
 
 ### Enhancements
- 
+
 - Adds support for visionOS!
 
 ## 3.4.8

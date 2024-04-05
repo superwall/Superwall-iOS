@@ -20,9 +20,8 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     identityManager.reset(duringIdentify: false)
   }
 
-  func test_waitForSubsStatusAndConfig_noIdentity_unknownStatus() {
+  func test_waitForSubsStatusAndConfig_noIdentity_unknownStatus() async {
     let expectation1 = expectation(description: "Got identity")
-    expectation1.isInverted = true
 
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.unknown)
       .eraseToAnyPublisher()
@@ -40,16 +39,17 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    Task {
+    do {
       try await Superwall.shared.waitForSubsStatusAndConfig(
         request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
       )
+    } catch {
       expectation1.fulfill()
     }
 
-    wait(for: [expectation1, stateExpectation], timeout: 5.5)
+    await fulfillment(of: [expectation1, stateExpectation], timeout: 5.5)
   }
 
   func test_waitToPresent_noIdentity_unknownStatus_becomesActive() {
