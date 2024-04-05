@@ -208,24 +208,24 @@ public final class PaywallOverrides: NSObject, Sendable {
     var tertiaryProduct: StoreProduct?
 
     if let primary = products["primary"] {
-        primaryProduct = primary
+      primaryProduct = primary
     }
     if let secondary = products["secondary"] {
-        secondaryProduct = secondary
+      secondaryProduct = secondary
     }
     if let tertiary = products["tertiary"] {
-        tertiaryProduct = tertiary
+      tertiaryProduct = tertiary
     }
 
     var paywallProducts: PaywallProducts?
 
     // Only initialise PaywallProducts if at least one product is not nil
     if primaryProduct != nil || secondaryProduct != nil || tertiaryProduct != nil {
-        paywallProducts = PaywallProducts(
-          primary: primaryProduct,
-          secondary: secondaryProduct,
-          tertiary: tertiaryProduct
-        )
+      paywallProducts = PaywallProducts(
+        primary: primaryProduct,
+        secondary: secondaryProduct,
+        tertiary: tertiaryProduct
+      )
     }
 
     return paywallProducts
