@@ -52,7 +52,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     await fulfillment(of: [expectation1, stateExpectation], timeout: 5.5)
   }
 
-  func test_waitToPresent_noIdentity_unknownStatus_becomesActive() {
+  func test_waitToPresent_noIdentity_unknownStatus_becomesActive() async {
     let expectation1 = expectation(description: "Got identity")
 
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.unknown)
@@ -71,22 +71,20 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    Task {
-      do {
-        try await Superwall.shared.waitForSubsStatusAndConfig(
-          request,
-          paywallStatePublisher: statePublisher,
-          dependencyContainer: dependencyContainer
-        )
-      } catch {
-        expectation1.fulfill()
-      }
+    do {
+      try await Superwall.shared.waitForSubsStatusAndConfig(
+        request,
+        paywallStatePublisher: statePublisher,
+        dependencyContainer: dependencyContainer
+      )
+    } catch {
+      expectation1.fulfill()
     }
 
-    wait(for: [expectation1, stateExpectation], timeout: 5.5)
+    await fulfillment(of: [expectation1, stateExpectation], timeout: 5.5)
   }
 
-  func test_waitForSubsStatusAndConfig_activeStatus_noConfigEvenAfterDelay() {
+  func test_waitForSubsStatusAndConfig_activeStatus_noConfigEvenAfterDelay() async {
     let expectation1 = expectation(description: "Got identity")
 
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
@@ -105,23 +103,21 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    Task {
-      do {
-        try await Superwall.shared.waitForSubsStatusAndConfig(
-          stub,
-          paywallStatePublisher: statePublisher,
-          dependencyContainer: dependencyContainer
-        )
-        XCTFail()
-      } catch {
-        expectation1.fulfill()
-      }
+    do {
+      try await Superwall.shared.waitForSubsStatusAndConfig(
+        stub,
+        paywallStatePublisher: statePublisher,
+        dependencyContainer: dependencyContainer
+      )
+      XCTFail()
+    } catch {
+      expectation1.fulfill()
     }
 
-    wait(for: [expectation1, stateExpectation], timeout: 1.1)
+    await fulfillment(of: [expectation1, stateExpectation], timeout: 1.1)
   }
 
-  func test_waitForSubsStatusAndConfig_activeStatus_noConfig_configFailedState() {
+  func test_waitForSubsStatusAndConfig_activeStatus_noConfig_configFailedState() async {
     let expectation1 = expectation(description: "Got identity")
 
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
@@ -143,23 +139,21 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
 
     dependencyContainer.configManager.configState.send(.failed)
 
-    Task {
-      do {
-        try await Superwall.shared.waitForSubsStatusAndConfig(
-          stub,
-          paywallStatePublisher: statePublisher,
-          dependencyContainer: dependencyContainer
-        )
-        XCTFail()
-      } catch {
-        expectation1.fulfill()
-      }
+    do {
+      try await Superwall.shared.waitForSubsStatusAndConfig(
+        stub,
+        paywallStatePublisher: statePublisher,
+        dependencyContainer: dependencyContainer
+      )
+      XCTFail()
+    } catch {
+      expectation1.fulfill()
     }
 
-    wait(for: [expectation1, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [expectation1, stateExpectation], timeout: 0.1)
   }
 
-  func test_waitForSubsStatusAndConfig_activeStatus_noConfig_configRetryingState() {
+  func test_waitForSubsStatusAndConfig_activeStatus_noConfig_configRetryingState() async {
     let expectation1 = expectation(description: "Got identity")
 
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
@@ -181,23 +175,21 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
 
     dependencyContainer.configManager.configState.send(.retrying)
 
-    Task {
-      do {
-        try await Superwall.shared.waitForSubsStatusAndConfig(
-          stub,
-          paywallStatePublisher: statePublisher,
-          dependencyContainer: dependencyContainer
-        )
-        XCTFail()
-      } catch {
-        expectation1.fulfill()
-      }
+    do {
+      try await Superwall.shared.waitForSubsStatusAndConfig(
+        stub,
+        paywallStatePublisher: statePublisher,
+        dependencyContainer: dependencyContainer
+      )
+      XCTFail()
+    } catch {
+      expectation1.fulfill()
     }
 
-    wait(for: [expectation1, stateExpectation], timeout: 0.1)
+    await fulfillment(of: [expectation1, stateExpectation], timeout: 0.1)
   }
 
-  func test_waitForSubsStatusAndConfig_activeStatus_noConfig_hasConfigAfterDelay() {
+  func test_waitForSubsStatusAndConfig_activeStatus_noConfig_hasConfigAfterDelay() async {
     let expectation1 = expectation(description: "Got identity")
 
     let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
@@ -219,20 +211,18 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
       self.dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     }
 
-    Task {
-      do {
-        try await Superwall.shared.waitForSubsStatusAndConfig(
-          stub,
-          paywallStatePublisher: statePublisher,
-          dependencyContainer: dependencyContainer
-        )
-        expectation1.fulfill()
-      } catch {
-        XCTFail()
-      }
+    do {
+      try await Superwall.shared.waitForSubsStatusAndConfig(
+        stub,
+        paywallStatePublisher: statePublisher,
+        dependencyContainer: dependencyContainer
+      )
+      expectation1.fulfill()
+    } catch {
+      XCTFail()
     }
 
-    wait(for: [expectation1], timeout: 1.1)
+    await fulfillment(of: [expectation1], timeout: 1.1)
   }
 
   func test_waitForSubsStatusAndConfig_noIdentity_activeStatus_hasConfig() async {
