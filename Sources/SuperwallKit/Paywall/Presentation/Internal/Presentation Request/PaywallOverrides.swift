@@ -75,6 +75,63 @@ public final class PaywallOverrides: NSObject, Sendable {
 
   /// Override the default behavior and products of a paywall.
   ///
+  /// You can override one or more products of your choosing. For example, this is how you would override the first and third product on the paywall:
+  ///
+  /// ```
+  ///  PaywallOverrides(
+  ///    products: [
+  ///      "primary": firstProduct,
+  ///      "tertiary": thirdProduct
+  ///    ]
+  ///  )
+  /// ```
+  ///
+  /// This assumes that your products have the names "primary" and "tertiary" in the Paywall Editor.
+  ///
+  /// Provide an instance of this to ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)``.
+  ///
+  /// - parameters:
+  ///   - productsByName: A dictionary mapping the name of the product to override on the paywall with a ``StoreProduct``.
+  public init(
+    productsByName: [String: StoreProduct]
+  ) {
+    self.productsByName = productsByName
+    self.products = Self.mapToPaywallProducts(productsByName)
+    self.ignoreSubscriptionStatus = false
+    self.presentationStyle = .none
+  }
+
+  /// Override the default behavior and products of a paywall.
+  ///
+  /// You can override one or more products of your choosing. For example, this is how you would override the first and third product on the paywall:
+  ///
+  /// ```
+  ///  PaywallOverrides(
+  ///    products: [
+  ///      "primary": firstProduct,
+  ///      "tertiary": thirdProduct
+  ///    ]
+  ///  )
+  /// ```
+  ///
+  /// This assumes that your products have the names "primary" and "tertiary" in the Paywall Editor.
+  ///
+  /// Provide an instance of this to ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)``.
+  ///
+  /// - parameters:
+  ///   - productsByName: A dictionary mapping the name of the product to override on the paywall with a ``StoreProduct``.
+  public init(
+    productsByName: [String: StoreProduct],
+    ignoreSubscriptionStatus: Bool = false
+  ) {
+    self.productsByName = productsByName
+    self.products = Self.mapToPaywallProducts(productsByName)
+    self.ignoreSubscriptionStatus = ignoreSubscriptionStatus
+    self.presentationStyle = .none
+  }
+
+  /// Override the default behavior and products of a paywall.
+  ///
   /// Provide an instance of this to ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)``.
   ///
   /// - parameters:
