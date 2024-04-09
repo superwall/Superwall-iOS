@@ -33,6 +33,8 @@ targets:
     sources: [Tests/]
     type: bundle.unit-test
     platform: iOS
+    dependencies:
+      - target: SuperwallKit
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.SuperwallTests"
 
