@@ -26,7 +26,8 @@ let package = Package(
       dependencies: [],
       exclude: ["Resources/BundleHelper.swift"],
       resources: [
-        .process("Resources/Certificates")
+        .process("Resources/Certificates"),
+        .copy("Resources/PrivacyInfo.xcprivacy")
       ]
     ),
     .testTarget(

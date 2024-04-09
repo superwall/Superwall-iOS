@@ -1,10 +1,6 @@
 name: SuperwallKit
 options:
   bundleIdentifer: com.superwall
-packages:
-  ASN1Swift:
-    url: https://github.com/tikhop/ASN1Swift
-    from: 1.2.4
 
 targets:
   SuperwallKit:
@@ -32,16 +28,11 @@ targets:
     platform: iOS
     deploymentTarget: "13.0"
     sources: [Sources/]
-    dependencies:
-      - package: ASN1Swift
   SuperwallKitTests:
     scheme: {}
     sources: [Tests/]
     type: bundle.unit-test
     platform: iOS
-    dependencies:
-      - target: SuperwallKit
-      - package: ASN1Swift
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.SuperwallTests"
 
