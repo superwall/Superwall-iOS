@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.6.1
+
+### Enhancements
+
+- Adds privacy manifest.
+
 ## 3.6.0
 
 ### Enhancements

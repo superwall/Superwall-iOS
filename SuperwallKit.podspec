@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 	s.name         = "SuperwallKit"
-    s.version      = "3.6.0"
+    s.version      = "3.6.1"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. superwall.com"
 
@@ -43,7 +43,8 @@ Pod::Spec.new do |s|
     'SuperwallKit' => [
       "Sources/SuperwallKit/**/*.xcassets",
       "Sources/SuperwallKit/**/*.xcdatamodeld",
-      "Sources/SuperwallKit/**/*.cer"
+      "Sources/SuperwallKit/**/*.cer",
+      "Sources/SuperwallKit/**/PrivacyInfo.xcprivacy"
     ]
   }
 
