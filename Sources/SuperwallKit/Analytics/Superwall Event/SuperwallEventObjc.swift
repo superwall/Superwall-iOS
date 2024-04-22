@@ -28,6 +28,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// This event can be used to trigger a paywall. Just add the `app_install` event to a campaign.
   case appInstall
 
+  /// When the user's identity aliases after calling identify.
+  case identityAlias
+
   /// When the app is opened at least an hour since last  ``SuperwallEvent/appClose``.
   ///
   /// This event can be used to trigger a paywall. Just add the `session_start` event to a campaign.
@@ -151,6 +154,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "app_open"
     case .appLaunch:
       return "app_launch"
+    case .identityAlias:
+      return "identity_alias"
     case .appInstall:
       return "app_install"
     case .sessionStart:

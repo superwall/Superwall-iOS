@@ -194,6 +194,11 @@ class IdentityManager {
 
       self._appUserId = userId
 
+      Task {
+        let trackableEvent = InternalSuperwallEvent.IdentityAlias()
+        await Superwall.shared.track(trackableEvent)
+      }
+
       // Regenerate seed based on userId.
       self.group.enter()
       Task {

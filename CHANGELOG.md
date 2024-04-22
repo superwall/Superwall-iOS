@@ -2,6 +2,14 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.6.2
+
+### Enhancements
+
+- Tracks an `identity_alias` event whenever identify is called to alias Superwall's anonymous ID with a developer provided id.
+- Adds `setInterfaceStyle(to:)` which can be used to override the system interface style.
+- Adds `device.interfaceStyleMode` to the device template, which can be `automatic` or `manual` if overriding the interface style.
+
 ## 3.6.1
 
 ### Enhancements

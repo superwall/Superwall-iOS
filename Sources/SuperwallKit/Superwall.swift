@@ -407,6 +407,14 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.deviceHelper.platformWrapper = platformWrapper
   }
 
+
+  /// Sets the user interface style, which overrides the system setting. Set to `nil` to revert
+  /// back to using the system setting.
+  public func setInterfaceStyle(to interfaceStyle: InterfaceStyle?) {
+    dependencyContainer.deviceHelper.interfaceStyleOverride = interfaceStyle
+  }
+
+
   // MARK: - Deep Links
   /// Handles a deep link sent to your app to open a preview of your paywall.
   ///

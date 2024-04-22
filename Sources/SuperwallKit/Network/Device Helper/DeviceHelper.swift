@@ -139,7 +139,12 @@ class DeviceHelper {
     }
   }
 
+  var interfaceStyleOverride: InterfaceStyle?
+
   var interfaceStyle: String {
+    if let interfaceStyleOverride = interfaceStyleOverride {
+      return interfaceStyleOverride.description
+    }
     #if os(visionOS)
     return "Unknown"
     #else
@@ -489,7 +494,8 @@ class DeviceHelper {
       sdkVersion: sdkVersion,
       sdkVersionPadded: sdkVersionPadded,
       appBuildString: appBuildString,
-      appBuildStringNumber: Int(appBuildString)
+      appBuildStringNumber: Int(appBuildString),
+      interfaceStyleMode: interfaceStyleOverride == nil ? "automatic" : "manual"
     )
     return template.toDictionary()
   }
