@@ -10,6 +10,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds `setInterfaceStyle(to:)` which can be used to override the system interface style.
 - Adds `device.interfaceStyleMode` to the device template, which can be `automatic` or `manual` if overriding the interface style.
 
+### Fixes
+
+- Changes the `$feature_gating` parameter in `PaywallInfo` from 0 and 1 to `GATED` and `NON_GATED` to prevent confusion.
+
 ## 3.6.1
 
 ### Enhancements

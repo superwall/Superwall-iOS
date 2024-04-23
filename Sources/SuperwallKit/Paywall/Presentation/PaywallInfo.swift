@@ -287,7 +287,7 @@ public final class PaywallInfo: NSObject {
       "presented_by_event_name": presentedByEventWithName as Any,
       "paywall_product_ids": productIds.joined(separator: ","),
       "is_free_trial_available": isFreeTrialAvailable as Any,
-      "feature_gating": featureGatingBehavior.rawValue as Any,
+      "feature_gating": featureGatingBehavior.description as Any,
       "presented_by": presentedBy as Any
     ]
 
