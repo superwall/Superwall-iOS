@@ -343,6 +343,7 @@ struct Paywall: Decodable {
     productsLoadingInfo = paywall.productsLoadingInfo
     presentationSourceType = paywall.presentationSourceType
     experiment = paywall.experiment
+    featureGating = paywall.featureGating
   }
 }
 

@@ -53,7 +53,8 @@ extension Superwall {
       responseIdentifiers: responseIdentifiers,
       overrides: .init(
         products: request.paywallOverrides?.productsByName,
-        isFreeTrial: request.presentationInfo.freeTrialOverride
+        isFreeTrial: request.presentationInfo.freeTrialOverride,
+        featureGatingBehavior: request.paywallOverrides?.featureGatingBehavior
       ),
       isDebuggerLaunched: request.flags.isDebuggerLaunched,
       presentationSourceType: request.presentationSourceType,

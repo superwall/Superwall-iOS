@@ -16,6 +16,9 @@ struct PaywallRequest {
 
     /// Whether to override the displaying of a free trial.
     var isFreeTrial: Bool?
+
+    /// Whether to override the feature gating behavior of the paywall.
+    var featureGatingBehavior: FeatureGatingBehavior?
   }
 
   /// The event data
