@@ -110,6 +110,10 @@ struct Paywall: Decodable {
 
   /// The local notifications for the paywall, e.g. to notify the user of free trial expiry.
   var localNotifications: [LocalNotification]
+  
+  // A listing of all the filtes referenced in a paywall
+  // to be able to preload the whole paywall into a web archive
+  var manifest: ArchivalManifest?
 
   enum CodingKeys: String, CodingKey {
     case id
@@ -127,6 +131,7 @@ struct Paywall: Decodable {
     case localNotifications
     case computedPropertyRequests = "computedProperties"
     case surveys
+    case manifest
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -219,6 +224,8 @@ struct Paywall: Decodable {
       forKey: .computedPropertyRequests
     ) ?? []
     computedPropertyRequests = throwableComputedPropertyRequests.compactMap { try? $0.result.get() }
+    
+    manifest = try? values.decodeIfPresent(ArchivalManifest.self, forKey: .manifest)
   }
 
   private static func makeProducts(from productItems: [ProductItem]) -> [Product] {
@@ -269,7 +276,8 @@ struct Paywall: Decodable {
     onDeviceCache: OnDeviceCaching = .disabled,
     localNotifications: [LocalNotification] = [],
     computedPropertyRequests: [ComputedPropertyRequest] = [],
-    surveys: [Survey] = []
+    surveys: [Survey] = [],
+    manifest: ArchivalManifest? = nil
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -297,6 +305,7 @@ struct Paywall: Decodable {
     self.computedPropertyRequests = computedPropertyRequests
     self.surveys = surveys
     self.products = Self.makeProducts(from: productItems)
+    self.manifest = manifest
   }
 
   func getInfo(

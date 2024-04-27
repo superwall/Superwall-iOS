@@ -145,6 +145,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private weak var cache: PaywallViewControllerCache?
+  private weak var paywallArchivalManager: PaywallArchivalManager?
 
 	// MARK: - View Lifecycle
 
@@ -156,9 +157,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     factory: TriggerSessionManagerFactory & TriggerFactory,
     storage: Storage,
     webView: SWWebView,
-    cache: PaywallViewControllerCache?
+    cache: PaywallViewControllerCache?,
+    paywallArchivalManager: PaywallArchivalManager?
   ) {
     self.cache = cache
+    self.paywallArchivalManager = paywallArchivalManager
     self.cacheKey = PaywallCacheLogic.key(
       identifier: paywall.identifier,
       locale: deviceHelper.locale
@@ -273,7 +276,52 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         state: .start
       )
     }
+    
+    //
+    // The web archival method for loading a paywall can be
+    // always, never, ifAvailableOnPaywallOpen
+    //
+    // This will return true if always, otherwise we'll just try and
+    // use the archive if it's availble when we need it.
+    //
+    if let paywallArchivalManager = self.paywallArchivalManager  {
+      if paywallArchivalManager.shouldWaitForWebArchiveToLoad(paywall: self.paywall) {
+        Task {
+          //
+          // There is still a chance something goes wrong so we can fall back to the
+          // other loading method if we really need to
+          //
+          if let webArchiveURL = await paywallArchivalManager.cachedArchiveForPaywall(paywall: self.paywall) {
+            DispatchQueue.main.async {
+              self.loadWebViewFromArchivalPath(webArchiveURL: webArchiveURL)
+            }
+          } else {
+            DispatchQueue.main.async {
+              self.loadWebViewFromURL(url: url)
+            }
+          }
+        }
+        
+        loadingState = .loadingURL
+        return
+      }
+    }
 
+    if let webArchiveURL = self.paywallArchivalManager?.cachedArchiveForPaywallImmediately(paywall: self.paywall) {
+      self.loadWebViewFromArchivalPath(webArchiveURL: webArchiveURL)
+    } else {
+      loadWebViewFromURL(url: url)
+    }
+
+    loadingState = .loadingURL
+  }
+  
+  func loadWebViewFromArchivalPath(webArchiveURL: URL) {
+    webView.loadFileURL(webArchiveURL, allowingReadAccessTo: webArchiveURL)
+  }
+  
+  
+  func loadWebViewFromURL(url: URL) {
     if paywall.onDeviceCache == .enabled {
       let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
       webView.load(request)
@@ -281,8 +329,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       let request = URLRequest(url: url)
       webView.load(request)
     }
-
-    loadingState = .loadingURL
   }
 
   @objc private func reloadWebView() {
