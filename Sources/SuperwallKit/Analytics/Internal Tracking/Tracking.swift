@@ -122,7 +122,14 @@ extension Superwall {
       return logErrors(from: request, error)
     }
 
-    let outcome = TrackingLogic.canTriggerPaywall(
+    // Make sure the result of presenting will be a paywall, otherwise do not proceed.
+    // This is important to stop the paywall from being skipped and firing the feature block when it shouldn't.
+    let presentationResult = await internallyGetPresentationResult(forEvent: event, isImplicit: true)
+    guard case .paywall = presentationResult else {
+      return
+    }
+
+    let triggeringOutcome = TrackingLogic.canTriggerPaywall(
       event,
       triggers: Set(dependencyContainer.configManager.triggersByEventName.keys),
       paywallViewController: paywallViewController
@@ -130,7 +137,7 @@ extension Superwall {
 
     var statePublisher = PassthroughSubject<PaywallState, Never>()
 
-    switch outcome {
+    switch triggeringOutcome {
     case .deepLinkTrigger:
       await dismiss()
     case .closePaywallThenTriggerPaywall:
@@ -138,6 +145,8 @@ extension Superwall {
         return
       }
       await dismissForNextPaywall()
+
+      request.paywallOverrides = PaywallOverrides(featureGatingBehavior: lastPresentationItems.featureGatingBehavior)
       statePublisher = lastPresentationItems.statePublisher
     case .triggerPaywall:
       break

@@ -13,6 +13,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Changes the `$feature_gating` parameter in `PaywallInfo` from 0 and 1 to `GATED` and `NON_GATED` to prevent confusion.
+- Fixes issue where feature gating wasn't working correctly when an implicit event triggered by `paywall_decline`, `transaction_fail`, `transaction_abandon`, or `survey_response` was resulting in a `skipped` `PaywallState`.
+- Fixes issue where a `transaction_abandon` implicit event that resulted in a `skipped` `PaywallState` was accidentally closing a paywall when it shouldn't have.
 
 ## 3.6.1
 

@@ -718,7 +718,11 @@ extension PaywallViewController {
       return
     }
     if let paywallStateSubject = paywallStateSubject {
-      Superwall.shared.storePresentationObjects(request, paywallStateSubject)
+      Superwall.shared.storePresentationObjects(
+        request: request,
+        paywallStatePublisher: paywallStateSubject,
+        featureGatingBehavior: paywall.featureGating
+      )
     }
     if let unsavedOccurrence = unsavedOccurrence {
       storage.coreDataManager.save(triggerRuleOccurrence: unsavedOccurrence)

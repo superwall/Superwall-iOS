@@ -25,7 +25,9 @@ final class StorePresentationObjectsOperatorTests: XCTestCase {
     )
 
     Superwall.shared.storePresentationObjects(
-      request, .init()
+      request: request,
+      paywallStatePublisher: .init(),
+      featureGatingBehavior: .gated
     )
 
     XCTAssertNotNil(Superwall.shared.presentationItems.last)
