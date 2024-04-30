@@ -97,6 +97,9 @@ actor PaywallRequestManager {
     var paywall = paywall
     paywall.experiment = request.responseIdentifiers.experiment
     paywall.presentationSourceType = request.presentationSourceType
+    if let featureGating = request.overrides.featureGatingBehavior {
+      paywall.featureGating = featureGating
+    }
     return paywall
   }
 

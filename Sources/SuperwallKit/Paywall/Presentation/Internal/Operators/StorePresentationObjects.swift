@@ -17,15 +17,17 @@ extension Superwall {
   ///
   /// - Returns: A publisher that contains info for the next pipeline operator.
   func storePresentationObjects(
-    _ request: PresentationRequest?,
-    _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+    request: PresentationRequest?,
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
+    featureGatingBehavior: FeatureGatingBehavior
   ) {
     guard let request = request else {
       return
     }
     let lastPaywallPresentation = LastPresentationItems(
       request: request,
-      statePublisher: paywallStatePublisher
+      statePublisher: paywallStatePublisher,
+      featureGatingBehavior: featureGatingBehavior
     )
     presentationItems.last = lastPaywallPresentation
   }

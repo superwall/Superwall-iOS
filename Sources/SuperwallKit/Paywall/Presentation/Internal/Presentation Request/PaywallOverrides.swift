@@ -41,6 +41,9 @@ public final class PaywallOverrides: NSObject, Sendable {
   /// Sets a custom presentation style for the paywall.
   public let presentationStyle: PaywallPresentationStyle
 
+  /// An internally used override. This overrides the feature gating behavior of the presented paywall.
+  let featureGatingBehavior: FeatureGatingBehavior?
+
   /// Override the default behavior and products of a paywall.
   ///
   /// You can override one or more products of your choosing. For example, this is how you would override the first and third product on the paywall:
@@ -71,6 +74,16 @@ public final class PaywallOverrides: NSObject, Sendable {
     self.products = Self.mapToPaywallProducts(productsByName)
     self.ignoreSubscriptionStatus = ignoreSubscriptionStatus
     self.presentationStyle = presentationStyleOverride
+    self.featureGatingBehavior = nil
+  }
+
+  /// Internal init used for overriding the feature gating behavior for implicitly triggered paywalls.
+  init(featureGatingBehavior: FeatureGatingBehavior) {
+    self.productsByName = [:]
+    self.products = nil
+    self.ignoreSubscriptionStatus = false
+    self.presentationStyle = .none
+    self.featureGatingBehavior = featureGatingBehavior
   }
 
   /// Override the default behavior and products of a paywall.
@@ -99,6 +112,7 @@ public final class PaywallOverrides: NSObject, Sendable {
     self.products = Self.mapToPaywallProducts(productsByName)
     self.ignoreSubscriptionStatus = false
     self.presentationStyle = .none
+    self.featureGatingBehavior = nil
   }
 
   /// Override the default behavior and products of a paywall.
@@ -128,6 +142,7 @@ public final class PaywallOverrides: NSObject, Sendable {
     self.products = Self.mapToPaywallProducts(productsByName)
     self.ignoreSubscriptionStatus = ignoreSubscriptionStatus
     self.presentationStyle = .none
+    self.featureGatingBehavior = nil
   }
 
   /// Override the default behavior and products of a paywall.
@@ -148,6 +163,7 @@ public final class PaywallOverrides: NSObject, Sendable {
     self.products = products
     self.ignoreSubscriptionStatus = ignoreSubscriptionStatus
     self.presentationStyle = presentationStyleOverride
+    self.featureGatingBehavior = nil
   }
 
   /// Override the default behavior and products of a paywall.
@@ -163,6 +179,7 @@ public final class PaywallOverrides: NSObject, Sendable {
     self.products = products
     self.ignoreSubscriptionStatus = false
     self.presentationStyle = .none
+    self.featureGatingBehavior = nil
   }
 
   /// Override the default behavior and products of a paywall.
@@ -182,6 +199,7 @@ public final class PaywallOverrides: NSObject, Sendable {
     self.products = products
     self.ignoreSubscriptionStatus = ignoreSubscriptionStatus
     self.presentationStyle = .none
+    self.featureGatingBehavior = nil
   }
 
   private static func mapFromPaywallProducts(

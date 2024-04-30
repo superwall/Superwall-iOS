@@ -96,7 +96,10 @@ class PaywallManager {
     
     if !request.isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
-      if !isPreloading {
+      // Do not adjust paywall or vc delegate if we are preloading or aren't going to
+      // present the paywall.
+      if !isPreloading,
+        isForPresentation {
         viewController.delegate = delegate
         viewController.paywall.update(from: paywall)
       }
