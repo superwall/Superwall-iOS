@@ -76,6 +76,7 @@ final class TemplateLogicTests: XCTestCase {
 
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")
+    XCTAssertEqual(jsonArray[0]["unlimited_products"], true)
     XCTAssertEqual(jsonArray[0]["products"][0]["productId"].stringValue, products.first!.id)
     XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, products.first!.name)
     XCTAssertEqual(jsonArray[0]["products"].count, 1)
@@ -136,6 +137,7 @@ final class TemplateLogicTests: XCTestCase {
 
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")
+    XCTAssertEqual(jsonArray[0]["unlimited_products"], true)
     XCTAssertEqual(jsonArray[0]["products"][0]["productId"].stringValue, productItems.first!.id)
     XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, productItems.first!.name.description)
     XCTAssertEqual(jsonArray[0]["products"].count, 1)
@@ -208,6 +210,7 @@ final class TemplateLogicTests: XCTestCase {
 
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")
+    XCTAssertEqual(jsonArray[0]["unlimited_products"], true)
     XCTAssertEqual(jsonArray[0]["products"][0]["productId"].stringValue, products.first!.id)
     XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, products.first!.name)
     XCTAssertEqual(jsonArray[0]["products"][1]["productId"].stringValue, products[1].id)
@@ -286,6 +289,7 @@ final class TemplateLogicTests: XCTestCase {
 
     // MARK: Then
     XCTAssertEqual(jsonArray[0]["event_name"], "products")
+    XCTAssertEqual(jsonArray[0]["unlimited_products"], true)
     XCTAssertEqual(jsonArray[0]["products"][0]["productId"].stringValue, products.first!.id)
     XCTAssertEqual(jsonArray[0]["products"][0]["product"].stringValue, products.first!.name)
     XCTAssertEqual(jsonArray[0]["products"][1]["productId"].stringValue, products[1].id)
