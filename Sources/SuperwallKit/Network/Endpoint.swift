@@ -24,6 +24,7 @@ struct Endpoint<Response: Decodable> {
   var components: Components?
   var url: URL?
   var method: HttpMethod = .get
+  var cachePolicy: URLRequest.CachePolicy = .reloadRevalidatingCacheData
   var requestId: String = UUID().uuidString
   var isForDebugging = false
   let factory: ApiFactory
@@ -53,7 +54,7 @@ struct Endpoint<Response: Decodable> {
     }
 
     var request = URLRequest(url: url)
-    request.cachePolicy = .reloadRevalidatingCacheData
+    request.cachePolicy = cachePolicy
     request.httpMethod = method.rawValue
 
     if let bodyData = components?.bodyData {

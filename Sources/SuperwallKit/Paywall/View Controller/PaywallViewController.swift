@@ -376,7 +376,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       if !spinnerDidShow {
         UIView.animate(
           withDuration: 0.6,
-          delay: 0.25,
+          delay: 0.0,
           animations: {
             self.shimmerView?.alpha = 0.0
             self.webView.alpha = 1.0

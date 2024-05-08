@@ -293,7 +293,7 @@ class ConfigManager {
             _ = try? await self.paywallManager.getPaywallViewController(
               from: request,
               isForPresentation: true,
-              isPreloading: true,
+              isPreloading: false,
               delegate: nil
             )
           }
