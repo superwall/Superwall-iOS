@@ -34,7 +34,8 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
-      cache: nil
+      cache: nil,
+      paywallArchivalManager: nil
     )
 
     SurveyManager.presentSurveyIfAvailable(
@@ -74,7 +75,8 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
-      cache: nil
+      cache: nil,
+      paywallArchivalManager: nil
     )
 
     SurveyManager.presentSurveyIfAvailable(
@@ -115,7 +117,8 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
-      cache: nil
+      cache: nil,
+      paywallArchivalManager: nil
     )
 
     SurveyManager.presentSurveyIfAvailable(
@@ -155,7 +158,8 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
-      cache: nil
+      cache: nil,
+      paywallArchivalManager: nil
     )
 
     SurveyManager.presentSurveyIfAvailable(
@@ -195,7 +199,8 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
-      cache: nil
+      cache: nil,
+      paywallArchivalManager: nil
     )
 
     SurveyManager.presentSurveyIfAvailable(
@@ -235,7 +240,8 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
-      cache: nil
+      cache: nil,
+      paywallArchivalManager: nil
     )
 
     SurveyManager.presentSurveyIfAvailable(
@@ -281,7 +287,8 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
-      cache: nil
+      cache: nil,
+      paywallArchivalManager: nil
     )
 
     SurveyManager.presentSurveyIfAvailable(
@@ -330,7 +337,8 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
-      cache: nil
+      cache: nil,
+      paywallArchivalManager: nil
     )
 
 
@@ -377,7 +385,8 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
-      cache: nil
+      cache: nil,
+      paywallArchivalManager: nil
     )
 
     SurveyManager.presentSurveyIfAvailable(
@@ -428,7 +437,8 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
-      cache: nil
+      cache: nil,
+      paywallArchivalManager: nil
     )
 
     SurveyManager.presentSurveyIfAvailable(

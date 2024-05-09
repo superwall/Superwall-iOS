@@ -287,16 +287,15 @@ class ConfigManager {
             presentationSourceType: nil,
             retryCount: 6
           )
-          
-          let shouldSkip = try? await self.paywallManager.preloadViaPaywallArchivalAndShouldSkipViewControllerCache(form: request)
-          if (shouldSkip != nil && shouldSkip == true) {
-            _ = try? await self.paywallManager.getPaywallViewController(
-              from: request,
-              isForPresentation: true,
-              isPreloading: true,
-              delegate: nil
-            )
-          }
+
+          await self.paywallManager.attemptToPreloadArchive(from: request)
+
+          _ = try? await self.paywallManager.getPaywallViewController(
+            from: request,
+            isForPresentation: true,
+            isPreloading: true,
+            delegate: nil
+          )
         }
       }
     }

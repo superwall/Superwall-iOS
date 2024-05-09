@@ -139,7 +139,12 @@ final class GetPaywallVcOperatorTests: XCTestCase {
       factory: dependencyContainer,
       paywallRequestManager: dependencyContainer.paywallRequestManager
     )
-    paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil)
+    paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(
+      for: .stub(),
+      withCache: nil,
+      withPaywallArchivalManager: nil,
+      delegate: nil
+    )
     dependencyContainer.paywallManager = paywallManager
 
     let request = PresentationRequest.stub()

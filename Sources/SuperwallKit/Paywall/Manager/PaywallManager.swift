@@ -14,21 +14,26 @@ class PaywallManager {
 	}
   private let queue = DispatchQueue(label: "com.superwall.paywallmanager")
   private unowned let paywallRequestManager: PaywallRequestManager
-  private unowned let factory: ViewControllerFactory & CacheFactory & DeviceHelperFactory & PaywallArchivalManagerFactory
+  private unowned let factory: ViewControllerFactory
+    & CacheFactory
+    & DeviceHelperFactory
+    & PaywallArchivalManagerFactory
 
   private var cache: PaywallViewControllerCache {
     return queue.sync { _cache ?? createCache() }
   }
   private var _cache: PaywallViewControllerCache?
-  
+
   private var paywallArchivalManager: PaywallArchivalManager {
     return queue.sync { _paywallArchivalManager ?? createPaywallArchivalManager() }
   }
   private var _paywallArchivalManager: PaywallArchivalManager?
-  
 
   init(
-    factory: ViewControllerFactory & CacheFactory & DeviceHelperFactory & PaywallArchivalManagerFactory,
+    factory: ViewControllerFactory
+      & CacheFactory
+      & DeviceHelperFactory
+      & PaywallArchivalManagerFactory,
     paywallRequestManager: PaywallRequestManager
   ) {
     self.factory = factory
@@ -40,7 +45,7 @@ class PaywallManager {
     _cache = cache
     return cache
   }
-  
+
   private func createPaywallArchivalManager() -> PaywallArchivalManager {
     let paywallArchivalManager = factory.makePaywallArchivalManager()
     _paywallArchivalManager = paywallArchivalManager
@@ -54,18 +59,22 @@ class PaywallManager {
 	func resetCache() {
 		cache.removeAll()
 	}
-  
+
   /// First, this gets the paywall response for a specified paywall identifier or trigger event.
   /// It then checks with the archival manager to tell us if we should still eagerly create the
   /// view controller or not.
   ///
   /// - Parameters:
   ///   - request: The request to get the paywall.
-  func preloadViaPaywallArchivalAndShouldSkipViewControllerCache(
-    form request: PaywallRequest
-  ) async throws -> Bool {
-    let paywall = try await paywallRequestManager.getPaywall(from: request)
-    return paywallArchivalManager.preloadArchiveAndShouldSkipViewControllerCache(paywall: paywall)
+  ///
+  /// - Returns: A `Bool` indicating whether it was possible to preload.
+  func attemptToPreloadArchive(
+    from request: PaywallRequest
+  ) async {
+    guard let paywall = try? await paywallRequestManager.getPaywall(from: request) else {
+      return
+    }
+    await paywallArchivalManager.preloadArchive(paywall: paywall)
   }
 
   /// First, this gets the paywall response for a specified paywall identifier or trigger event.
@@ -93,7 +102,7 @@ class PaywallManager {
       identifier: paywall.identifier,
       locale: deviceInfo.locale
     )
-    
+
     if !request.isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
       // Do not adjust paywall or vc delegate if we are preloading or aren't going to

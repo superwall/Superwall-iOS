@@ -276,52 +276,34 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         state: .start
       )
     }
-    
-    //
-    // The web archival method for loading a paywall can be
-    // always, never, ifAvailableOnPaywallOpen
-    //
-    // This will return true if always, otherwise we'll just try and
-    // use the archive if it's availble when we need it.
-    //
-    if let paywallArchivalManager = self.paywallArchivalManager  {
-      if paywallArchivalManager.shouldWaitForWebArchiveToLoad(paywall: self.paywall) {
-        Task {
-          //
-          // There is still a chance something goes wrong so we can fall back to the
-          // other loading method if we really need to
-          //
-          if let webArchiveURL = await paywallArchivalManager.cachedArchiveForPaywall(paywall: self.paywall) {
-            DispatchQueue.main.async {
-              self.loadWebViewFromArchivalPath(webArchiveURL: webArchiveURL)
-            }
-          } else {
-            DispatchQueue.main.async {
-              self.loadWebViewFromURL(url: url)
-            }
-          }
-        }
-        
-        loadingState = .loadingURL
-        return
-      }
-    }
-
-    if let webArchiveURL = self.paywallArchivalManager?.cachedArchiveForPaywallImmediately(paywall: self.paywall) {
-      self.loadWebViewFromArchivalPath(webArchiveURL: webArchiveURL)
-    } else {
-      loadWebViewFromURL(url: url)
-    }
 
     loadingState = .loadingURL
+
+    if let paywallArchivalManager = self.paywallArchivalManager,
+      paywallArchivalManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest) {
+      Task {
+        if let url = await paywallArchivalManager.getArchiveURL(manifest: paywall.manifest) {
+          loadWebViewFromArchive(url: url)
+        } else {
+          // Fallback to old way if couldn't get archive
+          loadWebViewFromNetwork(url: url)
+        }
+      }
+      return
+    }
+
+    if let webArchiveURL = paywallArchivalManager?.getCachedArchiveURL(manifest: paywall.manifest) {
+      loadWebViewFromArchive(url: webArchiveURL)
+    } else {
+      loadWebViewFromNetwork(url: url)
+    }
   }
-  
-  func loadWebViewFromArchivalPath(webArchiveURL: URL) {
-    webView.loadFileURL(webArchiveURL, allowingReadAccessTo: webArchiveURL)
+
+  private func loadWebViewFromArchive(url: URL) {
+    webView.loadFileURL(url, allowingReadAccessTo: url)
   }
-  
-  
-  func loadWebViewFromURL(url: URL) {
+
+  private func loadWebViewFromNetwork(url: URL) {
     if paywall.onDeviceCache == .enabled {
       let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
       webView.load(request)
