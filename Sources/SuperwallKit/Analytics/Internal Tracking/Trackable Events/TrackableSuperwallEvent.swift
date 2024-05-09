@@ -108,6 +108,12 @@ enum InternalSuperwallEvent {
     var customParameters: [String: Any] = [:]
   }
 
+  struct IdentityAlias: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .identityAlias
+    var customParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
   struct DeepLink: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       .deepLink(url: url)

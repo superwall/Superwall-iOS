@@ -63,4 +63,7 @@ struct LastPresentationItems {
 
   /// The last state publisher.
   let statePublisher: PassthroughSubject<PaywallState, Never>
+
+  /// The feature gating behavior of the previous paywall.
+  let featureGatingBehavior: FeatureGatingBehavior
 }

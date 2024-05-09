@@ -2,6 +2,20 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.6.2
+
+### Enhancements
+
+- Tracks an `identity_alias` event whenever identify is called to alias Superwall's anonymous ID with a developer provided id.
+- Adds `setInterfaceStyle(to:)` which can be used to override the system interface style.
+- Adds `device.interfaceStyleMode` to the device template, which can be `automatic` or `manual` if overriding the interface style.
+
+### Fixes
+
+- Changes the `$feature_gating` parameter in `PaywallInfo` from 0 and 1 to `GATED` and `NON_GATED` to prevent confusion.
+- Fixes issue where feature gating wasn't working correctly when an implicit event triggered by `paywall_decline`, `transaction_fail`, `transaction_abandon`, or `survey_response` was resulting in a `skipped` `PaywallState`.
+- Fixes issue where a `transaction_abandon` implicit event that resulted in a `skipped` `PaywallState` was accidentally closing a paywall when it shouldn't have.
+
 ## 3.6.1
 
 ### Enhancements

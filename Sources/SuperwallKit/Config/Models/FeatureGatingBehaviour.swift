@@ -10,7 +10,7 @@ import Foundation
 /// An enum whose cases indicate whether the ``Superwall/register(event:params:handler:feature:)``
 /// `feature` block executes or not.
 @objc(SWKFeatureGatingBehavior)
-public enum FeatureGatingBehavior: Int, Codable {
+public enum FeatureGatingBehavior: Int, Codable, CustomStringConvertible, Sendable {
   /// Prevents the ``Superwall/register(event:params:handler:feature:)`` `feature`
   /// block from executing on dismiss of the paywall unless the user has an active subscription.
   case gated
@@ -22,6 +22,15 @@ public enum FeatureGatingBehavior: Int, Codable {
   enum CodingKeys: String, CodingKey {
     case gated = "GATED"
     case nonGated = "NON_GATED"
+  }
+
+  public var description: String {
+    switch self {
+    case .gated:
+      return "GATED"
+    case .nonGated:
+      return "NON_GATED"
+    }
   }
 
   public init(from decoder: Decoder) throws {

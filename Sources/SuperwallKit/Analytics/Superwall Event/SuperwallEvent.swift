@@ -22,6 +22,9 @@ public enum SuperwallEvent {
   /// The raw value of this event can be added to a campaign to trigger a paywall.
   case appLaunch
 
+  /// When the user's identity aliases after calling identify
+  case identityAlias
+
   /// When the SDK is configured for the first time.
   ///
   /// The raw value of this event can be added to a campaign to trigger a paywall.
@@ -196,6 +199,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .firstSeen)
     case .appOpen:
       return .init(objcEvent: .appOpen)
+    case .identityAlias:
+      return .init(objcEvent: .identityAlias)
     case .appLaunch:
       return .init(objcEvent: .appLaunch)
     case .appInstall:

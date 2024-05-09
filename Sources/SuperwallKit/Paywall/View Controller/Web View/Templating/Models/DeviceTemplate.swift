@@ -50,6 +50,7 @@ struct DeviceTemplate: Codable {
   var sdkVersionPadded: String
   var appBuildString: String
   var appBuildStringNumber: Int?
+  var interfaceStyleMode: String
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {
