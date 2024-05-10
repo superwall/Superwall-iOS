@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.6.3
+
+### Enhancements
+
+- Adds the Superwall `appUserId` as the `applicationUsername` for internal `SKPayments`.
+
 ## 3.6.2
 
 ### Enhancements
