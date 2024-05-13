@@ -15,11 +15,12 @@ class StorageTests: XCTestCase {
     let storage = Storage(factory: dependencyContainer)
     let network = NetworkMock(factory: dependencyContainer)
     let configManager = ConfigManager(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
 

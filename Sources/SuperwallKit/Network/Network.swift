@@ -156,6 +156,21 @@ class Network {
     }
   }
 
+  func getGeoInfo() async -> GeoInfo? {
+    do {
+      let geoWrapper = try await urlSession.request(.geo(factory: factory))
+      return geoWrapper.info
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /geo",
+        error: error
+      )
+      return nil
+    }
+  }
+
   func confirmAssignments(_ confirmableAssignments: AssignmentPostback) async {
     do {
       try await urlSession.request(.confirmAssignments(confirmableAssignments, factory: factory))

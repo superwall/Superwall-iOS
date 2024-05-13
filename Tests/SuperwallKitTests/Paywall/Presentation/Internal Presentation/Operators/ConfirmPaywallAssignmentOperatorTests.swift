@@ -16,11 +16,12 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
   func test_confirmPaywallAssignment_debuggerLaunched() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -40,11 +41,12 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
   func test_confirmPaywallAssignment_noAssignment() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -65,11 +67,12 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
   func test_confirmPaywallAssignment_confirmAssignment() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -95,11 +98,12 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
   func test_confirmPaywallAssignment_getPresentationResult() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -125,11 +129,12 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
   func test_confirmPaywallAssignment_getImplicitPresentationResult() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
