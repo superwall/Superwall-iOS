@@ -502,6 +502,7 @@ class DeviceHelper {
       ipRegionCode: geoInfo?.regionCode,
       ipCountry: geoInfo?.country,
       ipCity: geoInfo?.city,
+      ipContinent: geoInfo?.continent,
       ipTimezone: geoInfo?.timezone
     )
     return template.toDictionary()

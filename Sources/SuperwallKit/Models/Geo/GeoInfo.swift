@@ -14,6 +14,7 @@ struct GeoInfo: Codable {
   let latitude: Double?
   let region: String?
   let regionCode: String?
+  let continent: String?
   let metroCode: String?
   let postalCode: String?
   let timezone: String?
