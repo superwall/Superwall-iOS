@@ -293,10 +293,15 @@ class ConfigManager {
             retryCount: 6
           )
 
-          await self.paywallManager.attemptToPreloadArchive(from: request)
+          guard let paywall = try? await paywallManager.getPaywall(from: request) else {
+            return
+          }
 
-          _ = try? await self.paywallManager.getPaywallViewController(
-            from: request,
+          await self.paywallManager.attemptToPreloadArchive(from: paywall)
+
+          _ = try? await self.paywallManager.getViewController(
+            for: paywall,
+            isDebuggerLaunched: request.isDebuggerLaunched,
             isForPresentation: true,
             isPreloading: true,
             delegate: nil

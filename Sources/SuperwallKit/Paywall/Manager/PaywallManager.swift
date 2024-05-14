@@ -60,20 +60,14 @@ class PaywallManager {
 		cache.removeAll()
 	}
 
-  /// First, this gets the paywall response for a specified paywall identifier or trigger event.
-  /// It then checks with the archive manager to tell us if we should still eagerly create the
-  /// view controller or not.
+  func getPaywall(from request: PaywallRequest) async throws -> Paywall {
+    return try await paywallRequestManager.getPaywall(from: request)
+  }
+
+  /// Tries to preload the archive for the paywall, if available.
   ///
-  /// - Parameters:
-  ///   - request: The request to get the paywall.
-  ///
-  /// - Returns: A `Bool` indicating whether it was possible to preload.
-  func attemptToPreloadArchive(
-    from request: PaywallRequest
-  ) async {
-    guard let paywall = try? await paywallRequestManager.getPaywall(from: request) else {
-      return
-    }
+  /// - Parameter paywall: The paywall whose archive to preload.
+  func attemptToPreloadArchive(from paywall: Paywall) async {
     await paywallArchiveManager.preloadArchive(paywall: paywall)
   }
 
@@ -89,21 +83,20 @@ class PaywallManager {
   ///   - isPreloading: Whether or not the paywall is being preloaded.
   ///   - delegate: The delegate for the `PaywallViewController`.
   @MainActor
-  func getPaywallViewController(
-    from request: PaywallRequest,
+  func getViewController(
+    for paywall: Paywall,
+    isDebuggerLaunched: Bool,
     isForPresentation: Bool,
     isPreloading: Bool,
     delegate: PaywallViewControllerDelegateAdapter?
   ) async throws -> PaywallViewController {
-    let paywall = try await paywallRequestManager.getPaywall(from: request)
-
     let deviceInfo = factory.makeDeviceInfo()
     let cacheKey = PaywallCacheLogic.key(
       identifier: paywall.identifier,
       locale: deviceInfo.locale
     )
 
-    if !request.isDebuggerLaunched,
+    if !isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
       // Do not adjust paywall or vc delegate if we are preloading or aren't going to
       // present the paywall.

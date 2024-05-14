@@ -13,8 +13,9 @@ final class PaywallManagerMock: PaywallManager {
   var getPaywallError: Error?
   var getPaywallVc: PaywallViewController?
 
-  override func getPaywallViewController(
-    from request: PaywallRequest,
+  override func getViewController(
+    for paywall: Paywall,
+    isDebuggerLaunched: Bool,
     isForPresentation: Bool,
     isPreloading: Bool,
     delegate: PaywallViewControllerDelegateAdapter?
@@ -24,5 +25,9 @@ final class PaywallManagerMock: PaywallManager {
     } else {
       return getPaywallVc!
     }
+  }
+
+  override func getPaywall(from request: PaywallRequest) async throws -> Paywall {
+    return .stub()
   }
 }
