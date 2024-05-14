@@ -7,35 +7,23 @@
 
 import Foundation
 
-final class PaywallArchivalManager {
+final class PaywallArchiveManager {
   private let webArchiveManager: WebArchiveManager?
 
-  init(
-    baseDirectory: URL? = nil,
-    webArchiveManager: WebArchiveManager? = nil
-  ) {
-    let directory: URL
+  init() {
+    let cacheDirectory = try? FileManager.default.url(
+      for: .cachesDirectory,
+      in: .userDomainMask,
+      appropriateFor: nil,
+      create: true
+    )
+    .appendingPathComponent("paywalls")
 
-    if let baseDirectory = baseDirectory {
-      directory = baseDirectory
-    } else {
-      let cacheDirectory = try? FileManager.default.url(
-        for: .cachesDirectory,
-        in: .userDomainMask,
-        appropriateFor: nil,
-        create: true
-      )
-      .appendingPathComponent("paywalls")
-
-      guard let cacheDirectory = cacheDirectory else {
-        self.webArchiveManager = nil
-        return
-      }
-
-      directory = cacheDirectory
+    guard let cacheDirectory = cacheDirectory else {
+      self.webArchiveManager = nil
+      return
     }
-
-    self.webArchiveManager = webArchiveManager ?? WebArchiveManager(baseURL: directory)
+    self.webArchiveManager = WebArchiveManager(baseURL: cacheDirectory)
   }
 
   /// Attempts to preload the archive.
@@ -53,7 +41,7 @@ final class PaywallArchivalManager {
   }
 
   /// Determines whether the loading of the paywall webview should wait for the web archive to finish loading.
-  func shouldAlwaysUseWebArchive(manifest: ArchivalManifest?) -> Bool {
+  func shouldAlwaysUseWebArchive(manifest: ArchiveManifest?) -> Bool {
     if webArchiveManager == nil {
       return false
     }
@@ -67,7 +55,7 @@ final class PaywallArchivalManager {
   }
 
   /// Returns the URL of the cached archive, if available.
-  func getCachedArchiveURL(manifest: ArchivalManifest?) -> URL? {
+  func getCachedArchiveURL(manifest: ArchiveManifest?) -> URL? {
     guard let webArchiveManager = webArchiveManager else {
       return nil
     }
@@ -81,7 +69,7 @@ final class PaywallArchivalManager {
   }
 
   /// Returns the URL of the archive.
-  func getArchiveURL(manifest: ArchivalManifest?) async -> URL? {
+  func getArchiveURL(forManifest manifest: ArchiveManifest?) async -> URL? {
     guard let webArchiveManager = webArchiveManager else {
       return nil
     }

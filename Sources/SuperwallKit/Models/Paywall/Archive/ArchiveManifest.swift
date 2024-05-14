@@ -7,15 +7,15 @@
 
 import Foundation
 
-struct ArchivalManifest: Codable {
-  let use: ArchivalManifestUsage
-  let document: ArchivalManifestItem
-  let resources: [ArchivalManifestItem]
+struct ArchiveManifest: Codable {
+  let use: ArchiveManifestUsage
+  let document: ArchiveManifestItem
+  let resources: [ArchiveManifestItem]
 
   init(
-    document: ArchivalManifestItem,
-    resources: [ArchivalManifestItem],
-    use: ArchivalManifestUsage
+    document: ArchiveManifestItem,
+    resources: [ArchiveManifestItem],
+    use: ArchiveManifestUsage
   ) {
     self.document = document
     self.resources = resources
@@ -23,7 +23,7 @@ struct ArchivalManifest: Codable {
   }
 }
 
-struct ArchivalManifestItem: Codable, Identifiable {
+struct ArchiveManifestItem: Codable, Identifiable {
   var id: String { url.absoluteString }
   let url: URL
   let mimeType: String

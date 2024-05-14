@@ -7,10 +7,10 @@
 
 import Foundation
 
-/// A downloaded archival manifest.
-struct ArchivalManifestDownloaded: Codable {
-  let document: ArchivalManifestItemDownloaded
-  let items: [ArchivalManifestItemDownloaded]
+/// A downloaded archive manifest.
+struct ArchiveManifestDownloaded: Codable {
+  let document: ArchiveManifestItemDownloaded
+  let items: [ArchiveManifestItemDownloaded]
 
   var webArchive: WebArchive {
     return WebArchive(
@@ -21,7 +21,7 @@ struct ArchivalManifestDownloaded: Codable {
 }
 
 /// A downloaded manifest item.
-struct ArchivalManifestItemDownloaded: Codable {
+struct ArchiveManifestItemDownloaded: Codable {
   let url: URL
   let mimeType: String
   let data: Data

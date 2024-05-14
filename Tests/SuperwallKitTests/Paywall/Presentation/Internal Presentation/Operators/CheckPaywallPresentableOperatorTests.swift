@@ -44,7 +44,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     let paywallVc = dependencyContainer.makePaywallViewController(
       for: .stub(),
       withCache: nil,
-      withPaywallArchivalManager: nil,
+      withPaywallArchiveManager: nil,
       delegate: nil
     )
     paywallVc.loadViewIfNeeded()
@@ -108,7 +108,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     let paywallVc = dependencyContainer.makePaywallViewController(
       for: .stub(),
       withCache: nil,
-      withPaywallArchivalManager: nil,
+      withPaywallArchiveManager: nil,
       delegate: nil
     )
     paywallVc.loadViewIfNeeded()
@@ -157,7 +157,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     let paywallVc = dependencyContainer.makePaywallViewController(
       for: .stub(),
       withCache: nil,
-      withPaywallArchivalManager: nil,
+      withPaywallArchiveManager: nil,
       delegate: nil
     )
     paywallVc.loadViewIfNeeded()

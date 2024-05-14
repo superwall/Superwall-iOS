@@ -156,7 +156,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private weak var cache: PaywallViewControllerCache?
-  private weak var paywallArchivalManager: PaywallArchivalManager?
+  private weak var paywallArchiveManager: PaywallArchiveManager?
 
 	// MARK: - View Lifecycle
 
@@ -169,10 +169,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     storage: Storage,
     webView: SWWebView,
     cache: PaywallViewControllerCache?,
-    paywallArchivalManager: PaywallArchivalManager?
+    paywallArchiveManager: PaywallArchiveManager?
   ) {
     self.cache = cache
-    self.paywallArchivalManager = paywallArchivalManager
+    self.paywallArchiveManager = paywallArchiveManager
     self.cacheKey = PaywallCacheLogic.key(
       identifier: paywall.identifier,
       locale: deviceHelper.locale
@@ -289,10 +289,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
     loadingState = .loadingURL
 
-    if let paywallArchivalManager = self.paywallArchivalManager,
-      paywallArchivalManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest) {
+    if let paywallArchiveManager = self.paywallArchiveManager,
+      paywallArchiveManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest) {
       Task {
-        if let url = await paywallArchivalManager.getArchiveURL(manifest: paywall.manifest) {
+        if let url = await paywallArchiveManager.getArchiveURL(forManifest: paywall.manifest) {
           loadWebViewFromArchive(url: url)
         } else {
           // Fallback to old way if couldn't get archive
@@ -302,7 +302,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       return
     }
 
-    if let webArchiveURL = paywallArchivalManager?.getCachedArchiveURL(manifest: paywall.manifest) {
+    if let webArchiveURL = paywallArchiveManager?.getCachedArchiveURL(manifest: paywall.manifest) {
       loadWebViewFromArchive(url: webArchiveURL)
     } else {
       loadWebViewFromNetwork(url: url)
@@ -315,7 +315,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   private func loadWebViewFromNetwork(url: URL) {
     if paywall.onDeviceCache == .enabled {
-      let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
+      let request = URLRequest(
+        url: url,
+        cachePolicy: .returnCacheDataElseLoad
+      )
       webView.load(request)
     } else {
       let request = URLRequest(url: url)

@@ -312,7 +312,7 @@ final class TrackingLogicTests: XCTestCase {
       storage: dependencyContainer.storage,
       webView: webView,
       cache: nil,
-      paywallArchivalManager: nil
+      paywallArchiveManager: nil
     )
 
     let outcome = TrackingLogic.canTriggerPaywall(

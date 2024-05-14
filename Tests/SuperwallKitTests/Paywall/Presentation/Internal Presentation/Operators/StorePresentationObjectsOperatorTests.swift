@@ -22,7 +22,7 @@ final class StorePresentationObjectsOperatorTests: XCTestCase {
       paywallViewController: dependencyContainer.makePaywallViewController(
         for: .stub(),
         withCache: nil,
-        withPaywallArchivalManager: nil,
+        withPaywallArchiveManager: nil,
         delegate: nil
       ),
       presenter: UIViewController(),

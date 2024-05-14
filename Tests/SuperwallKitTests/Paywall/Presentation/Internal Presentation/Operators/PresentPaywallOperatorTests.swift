@@ -46,7 +46,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
       storage: dependencyContainer.storage,
       webView: webView,
       cache: nil,
-      paywallArchivalManager: nil
+      paywallArchiveManager: nil
     )
 
     webView.delegate = paywallVc
@@ -111,7 +111,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
       storage: dependencyContainer.storage,
       webView: webView,
       cache: nil,
-      paywallArchivalManager: nil
+      paywallArchiveManager: nil
     )
     paywallVc.shouldPresent = false
     webView.delegate = paywallVc

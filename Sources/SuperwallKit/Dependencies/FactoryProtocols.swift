@@ -15,7 +15,7 @@ protocol ViewControllerFactory: AnyObject {
   func makePaywallViewController(
     for paywall: Paywall,
     withCache cache: PaywallViewControllerCache?,
-    withPaywallArchivalManager archivalManager: PaywallArchivalManager?,
+    withPaywallArchiveManager archiveManager: PaywallArchiveManager?,
     delegate: PaywallViewControllerDelegateAdapter?
   ) -> PaywallViewController
 
@@ -26,8 +26,8 @@ protocol CacheFactory: AnyObject {
   func makeCache() -> PaywallViewControllerCache
 }
 
-protocol PaywallArchivalManagerFactory: AnyObject {
-  func makePaywallArchivalManager() -> PaywallArchivalManager
+protocol PaywallArchiveManagerFactory: AnyObject {
+  func makePaywallArchiveManager() -> PaywallArchiveManager
 }
 
 protocol VariablesFactory: AnyObject {

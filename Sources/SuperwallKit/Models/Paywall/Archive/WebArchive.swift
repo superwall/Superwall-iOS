@@ -17,7 +17,7 @@ struct WebArchive: Encodable {
 
   init(
     resource: WebArchiveResource,
-    items: [ArchivalManifestItemDownloaded]
+    items: [ArchiveManifestItemDownloaded]
   ) {
     self.mainResource = WebArchiveMainResource(baseResource: resource)
 

@@ -117,7 +117,7 @@ struct Paywall: Decodable {
 
   /// A listing of all the files referenced in a paywall to be able to preload the whole
   /// paywall into a web archive.
-  let manifest: ArchivalManifest?
+  let manifest: ArchiveManifest?
 
   /// Indicates whether the manifest should be used.
   var isUsingManifest: Bool {
@@ -250,7 +250,7 @@ struct Paywall: Decodable {
     ) ?? []
     computedPropertyRequests = throwableComputedPropertyRequests.compactMap { try? $0.result.get() }
 
-    manifest = try values.decodeIfPresent(ArchivalManifest.self, forKey: .manifest)
+    manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
   }
 
   private static func makeProducts(from productItems: [ProductItem]) -> [Product] {
@@ -304,7 +304,7 @@ struct Paywall: Decodable {
     localNotifications: [LocalNotification] = [],
     computedPropertyRequests: [ComputedPropertyRequest] = [],
     surveys: [Survey] = [],
-    manifest: ArchivalManifest? = nil
+    manifest: ArchiveManifest? = nil
   ) {
     self.databaseId = databaseId
     self.identifier = identifier

@@ -22,7 +22,7 @@ class PaywallViewControllerCacheTests: XCTestCase {
     let paywall = dependencyContainer.makePaywallViewController(
       for: .stub(),
       withCache: paywallCache,
-      withPaywallArchivalManager: nil,
+      withPaywallArchiveManager: nil,
       delegate: nil
     )
     paywall.cacheKey = key
@@ -47,7 +47,7 @@ class PaywallViewControllerCacheTests: XCTestCase {
     let paywall = dependencyContainer.makePaywallViewController(
       for: .stub(),
       withCache: paywallCache,
-      withPaywallArchivalManager: nil,
+      withPaywallArchiveManager: nil,
       delegate: nil
     )
     paywall.cacheKey = key
@@ -79,7 +79,7 @@ class PaywallViewControllerCacheTests: XCTestCase {
     let paywall1 = dependencyContainer.makePaywallViewController(
       for: .stub(),
       withCache: paywallCache,
-      withPaywallArchivalManager: nil,
+      withPaywallArchiveManager: nil,
       delegate: nil
     )
     paywall1.cacheKey = key1
@@ -89,7 +89,7 @@ class PaywallViewControllerCacheTests: XCTestCase {
     let paywall2 = dependencyContainer.makePaywallViewController(
       for: .stub(),
       withCache: paywallCache,
-      withPaywallArchivalManager: nil,
+      withPaywallArchiveManager: nil,
       delegate: nil
     )
     paywall2.cacheKey = key2

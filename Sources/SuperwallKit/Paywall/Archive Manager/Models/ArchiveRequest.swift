@@ -7,10 +7,10 @@
 
 import Foundation
 
-/// The request to get the archival from the manifest.
-struct ArchivalRequest: Identifiable {
+/// The request to get the archive from the manifest.
+struct ArchiveRequest: Identifiable {
   var id: String {
     return manifest.document.url.absoluteString
   }
-  let manifest: ArchivalManifest
+  let manifest: ArchiveManifest
 }

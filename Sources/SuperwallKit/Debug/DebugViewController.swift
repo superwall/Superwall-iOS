@@ -268,7 +268,7 @@ final class DebugViewController: UIViewController {
     let child = factory.makePaywallViewController(
       for: paywall,
       withCache: nil,
-      withPaywallArchivalManager: nil,
+      withPaywallArchiveManager: nil,
       delegate: nil
     )
     addChild(child)

@@ -11,28 +11,31 @@ struct ManifestDataFetchable: Identifiable {
   var id: String {
     return item.id
   }
-  let item: ArchivalManifestItem
+  let item: ArchiveManifestItem
   let isMainDocument: Bool
 }
 
 struct ManifestDataFetcher: TaskExecutor {
   private let urlSession = URLSession(configuration: .default)
 
-  func perform(using input: ManifestDataFetchable) async throws -> ArchivalManifestItemDownloaded {
+  func perform(using input: ManifestDataFetchable) async throws -> ArchiveManifestItemDownloaded {
     return try await fetchDataForManifest(
       manifest: input.item,
       isMainDocument: input.isMainDocument
     )
   }
 
-  func fetchDataForManifest(
-    manifest: ArchivalManifestItem,
+  private func fetchDataForManifest(
+    manifest: ArchiveManifestItem,
     isMainDocument: Bool
-  ) async throws -> ArchivalManifestItemDownloaded {
-    let request = URLRequest(url: manifest.url)
+  ) async throws -> ArchiveManifestItemDownloaded {
+    let request = URLRequest(
+      url: manifest.url,
+      cachePolicy: .returnCacheDataElseLoad
+    )
     let (data, _) = try await urlSession.data(for: request)
 
-    return ArchivalManifestItemDownloaded(
+    return ArchiveManifestItemDownloaded(
       url: manifest.url,
       mimeType: manifest.mimeType,
       data: data,

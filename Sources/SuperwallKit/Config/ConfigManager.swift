@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 22/06/2022.
 //
+// swiftlint:disable type_body_length
 
 import UIKit
 import Combine
@@ -77,7 +78,7 @@ class ConfigManager {
       async let geoRequest: Void = deviceHelper.getGeoInfo()
 
       let (config, _) = try await (configRequest, geoRequest)
-      
+
       Task { await sendProductsBack(from: config) }
 
       await processConfig(config)

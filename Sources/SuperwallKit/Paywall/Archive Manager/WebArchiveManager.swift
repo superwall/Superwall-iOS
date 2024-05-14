@@ -14,41 +14,27 @@ final class WebArchiveManager {
     plistEncoder.outputFormat = .binary
     return plistEncoder
   }()
-  private let cachePolicy = URLRequest.CachePolicy.returnCacheDataElseLoad
   private let baseURL: URL
   private let manifestDataManager: TaskCoalescer<ManifestDataFetcher>
   private let archiveRequestManager: TaskCoalescer<ArchiveURLFetcher>
-  private let archivalFileSystemManager: WebArchiveFileSytemManager
+  private let archiveFileSystemManager: WebArchiveFileSytemManager
 
-  init(
-    baseURL: URL,
-    manifestDataManager: TaskCoalescer<ManifestDataFetcher>? = nil,
-    archiveRequestManager: TaskCoalescer<ArchiveURLFetcher>? = nil,
-    archivalFileSystemManager: WebArchiveFileSytemManager? = nil
-  ) {
+  init(baseURL: URL) {
     self.baseURL = baseURL
-    self.archivalFileSystemManager = archivalFileSystemManager ?? WebArchiveFileSytemManager(archiveURL: baseURL)
+    self.archiveFileSystemManager = WebArchiveFileSytemManager(archiveURL: baseURL)
 
-    if let manifestDataManager = manifestDataManager {
-      self.manifestDataManager = manifestDataManager
-    } else {
-      let manifestDataFetcher = ManifestDataFetcher()
-      self.manifestDataManager = TaskCoalescer(executor: manifestDataFetcher)
-    }
+    let manifestDataFetcher = ManifestDataFetcher()
+    self.manifestDataManager = TaskCoalescer(executor: manifestDataFetcher)
 
-    if let archiveRequestManager = archiveRequestManager {
-      self.archiveRequestManager = archiveRequestManager
-    } else {
-      let archiveURLFetcher = ArchiveURLFetcher()
-      self.archiveRequestManager = TaskCoalescer(executor: archiveURLFetcher)
-      archiveURLFetcher.archiveManager = self
-    }
+    let archiveURLFetcher = ArchiveURLFetcher()
+    self.archiveRequestManager = TaskCoalescer(executor: archiveURLFetcher)
+    archiveURLFetcher.archiveManager = self
   }
 
   /// Gets the archive URL from the cache, if available.
   ///
   /// - Returns: An optional `URL` of the archive in the file system.
-  func getArchiveURLFromCache(forManifest manifest: ArchivalManifest) -> URL? {
+  func getArchiveURLFromCache(forManifest manifest: ArchiveManifest) -> URL? {
     let archiveURL = getFileSystemURL(forURL: manifest.document.url)
     let fsManager = WebArchiveFileSytemManager(archiveURL: archiveURL)
     if fsManager.archiveExists {
@@ -62,12 +48,12 @@ final class WebArchiveManager {
   ///
   /// - Parameter manifest: The manifest to load.
   /// - Returns: An optional `URL` of the archive in the file system.
-  func getArchiveURL(forManifest manifest: ArchivalManifest) async throws -> URL? {
+  func getArchiveURL(forManifest manifest: ArchiveManifest) async throws -> URL? {
     if let archiveURL = getArchiveURLFromCache(forManifest: manifest) {
       return archiveURL
     }
 
-    let request = ArchivalRequest(manifest: manifest)
+    let request = ArchiveRequest(manifest: manifest)
     return try? await archiveRequestManager.get(using: request)
   }
 
@@ -75,7 +61,7 @@ final class WebArchiveManager {
   ///
   /// - Parameter manifest: The manifest to load.
   /// - Returns: A file system `URL` where the downloaded manifest is stored.
-  func getArchiveURLForManifest(manifest: ArchivalManifest) async throws -> URL {
+  func getArchiveURLForManifest(_ manifest: ArchiveManifest) async throws -> URL {
     let downloadedManifest = try await downloadManifest(manifest)
     let targetURL = getFileSystemURL(forURL: manifest.document.url)
     try await writeManifest(downloadedManifest, to: targetURL)
@@ -101,16 +87,18 @@ final class WebArchiveManager {
     return path
   }
 
-  /// Downloads the main document and resources of the manifest file and compiles it into an `ArchivalManifestDownloaded`.
-  private func downloadManifest(_ manifest: ArchivalManifest) async throws -> ArchivalManifestDownloaded {
+  /// Downloads the main document and resources of the manifest file and compiles it into an `ArchiveManifestDownloaded`.
+  private func downloadManifest(
+    _ manifest: ArchiveManifest
+  ) async throws -> ArchiveManifestDownloaded {
     let results = await withThrowingTaskGroup(
-      of: ArchivalManifestItemDownloaded.self,
-      returning: [ArchivalManifestItemDownloaded].self
+      of: ArchiveManifestItemDownloaded.self,
+      returning: [ArchiveManifestItemDownloaded].self
     ) { [weak self] group in
       guard let self = self else {
         return []
       }
-      var results: [ArchivalManifestItemDownloaded] = []
+      var results: [ArchiveManifestItemDownloaded] = []
 
       group.addTask {
         let fetchableData = ManifestDataFetchable(
@@ -146,14 +134,14 @@ final class WebArchiveManager {
       throw ArchivingError.mainDocumentUnavailable
     }
     let restOfItems = results.filter { !$0.isMainDocument }
-    return ArchivalManifestDownloaded(
+    return ArchiveManifestDownloaded(
       document: mainDocument,
       items: restOfItems
     )
   }
 
   /// Writes the manifest to disk.
-  private func writeManifest(_ manifest: ArchivalManifestDownloaded, to url: URL) async throws {
+  private func writeManifest(_ manifest: ArchiveManifestDownloaded, to url: URL) async throws {
     let fsManager = WebArchiveFileSytemManager(archiveURL: url)
     try fsManager.write(archive: manifest.webArchive)
   }

@@ -8,7 +8,7 @@
 import Foundation
 
 /// An enum whose cases specify whether the manifest should be used.
-enum ArchivalManifestUsage: Codable {
+enum ArchiveManifestUsage: Codable {
   /// Always use the manifest
   case always
 

@@ -17,23 +17,23 @@ class PaywallManager {
   private unowned let factory: ViewControllerFactory
     & CacheFactory
     & DeviceHelperFactory
-    & PaywallArchivalManagerFactory
+    & PaywallArchiveManagerFactory
 
   private var cache: PaywallViewControllerCache {
     return queue.sync { _cache ?? createCache() }
   }
   private var _cache: PaywallViewControllerCache?
 
-  private var paywallArchivalManager: PaywallArchivalManager {
-    return queue.sync { _paywallArchivalManager ?? createPaywallArchivalManager() }
+  private var paywallArchiveManager: PaywallArchiveManager {
+    return queue.sync { _paywallArchiveManager ?? createPaywallArchiveManager() }
   }
-  private var _paywallArchivalManager: PaywallArchivalManager?
+  private var _paywallArchiveManager: PaywallArchiveManager?
 
   init(
     factory: ViewControllerFactory
       & CacheFactory
       & DeviceHelperFactory
-      & PaywallArchivalManagerFactory,
+      & PaywallArchiveManagerFactory,
     paywallRequestManager: PaywallRequestManager
   ) {
     self.factory = factory
@@ -46,10 +46,10 @@ class PaywallManager {
     return cache
   }
 
-  private func createPaywallArchivalManager() -> PaywallArchivalManager {
-    let paywallArchivalManager = factory.makePaywallArchivalManager()
-    _paywallArchivalManager = paywallArchivalManager
-    return paywallArchivalManager
+  private func createPaywallArchiveManager() -> PaywallArchiveManager {
+    let paywallArchiveManager = factory.makePaywallArchiveManager()
+    _paywallArchiveManager = paywallArchiveManager
+    return paywallArchiveManager
   }
 
 	func removePaywallViewController(forKey key: String) {
@@ -61,7 +61,7 @@ class PaywallManager {
 	}
 
   /// First, this gets the paywall response for a specified paywall identifier or trigger event.
-  /// It then checks with the archival manager to tell us if we should still eagerly create the
+  /// It then checks with the archive manager to tell us if we should still eagerly create the
   /// view controller or not.
   ///
   /// - Parameters:
@@ -74,7 +74,7 @@ class PaywallManager {
     guard let paywall = try? await paywallRequestManager.getPaywall(from: request) else {
       return
     }
-    await paywallArchivalManager.preloadArchive(paywall: paywall)
+    await paywallArchiveManager.preloadArchive(paywall: paywall)
   }
 
   /// First, this gets the paywall response for a specified paywall identifier or trigger event.
@@ -118,7 +118,7 @@ class PaywallManager {
     let paywallViewController = factory.makePaywallViewController(
       for: paywall,
       withCache: cache,
-      withPaywallArchivalManager: paywallArchivalManager,
+      withPaywallArchiveManager: paywallArchiveManager,
       delegate: delegate
     )
     cache.save(paywallViewController, forKey: cacheKey)

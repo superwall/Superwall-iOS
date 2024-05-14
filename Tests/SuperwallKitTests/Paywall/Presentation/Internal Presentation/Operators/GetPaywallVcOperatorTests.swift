@@ -142,7 +142,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     paywallManager.getPaywallVc = dependencyContainer.makePaywallViewController(
       for: .stub(),
       withCache: nil,
-      withPaywallArchivalManager: nil,
+      withPaywallArchiveManager: nil,
       delegate: nil
     )
     dependencyContainer.paywallManager = paywallManager
