@@ -2,6 +2,14 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.6.3
+
+### Enhancements
+
+- SW-2828: Adds the Superwall `appUserId` as the `applicationUsername` for internal `SKPayments`.
+- SW-2817: Adds support for dark mode paywall background color.
+- SW-2815: Adds ability to target devices based on their IP address location. Use `device.ipRegion`, `device.ipRegionCode`, `device.ipCountry`, `device.ipCity`, `device.ipContinent`, or `device.ipTimezone`.
+
 ## 3.6.2
 
 ### Enhancements

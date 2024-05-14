@@ -24,11 +24,12 @@ final class ConfigManagerTests: XCTestCase {
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
     configManager.confirmAssignment(assignment)
@@ -49,11 +50,12 @@ final class ConfigManagerTests: XCTestCase {
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
 
@@ -75,11 +77,12 @@ final class ConfigManagerTests: XCTestCase {
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
     configManager.configState.send(.retrieved(.stub()
@@ -96,11 +99,12 @@ final class ConfigManagerTests: XCTestCase {
     let network = NetworkMock(factory: dependencyContainer)
     let storage = StorageMock()
     let configManager = ConfigManager(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
 

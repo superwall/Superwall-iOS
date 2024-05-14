@@ -67,20 +67,23 @@ final class DependencyContainer {
       paywallRequestManager: paywallRequestManager
     )
 
+    let options = options ?? SuperwallOptions()
+    api = Api(networkEnvironment: options.networkEnvironment)
+
+    deviceHelper = DeviceHelper(
+      api: api,
+      storage: storage,
+      network: network,
+      factory: self
+    )
+
     configManager = ConfigManager(
       options: options,
       storeKitManager: storeKitManager,
       storage: storage,
       network: network,
       paywallManager: paywallManager,
-      factory: self
-    )
-
-    api = Api(networkEnvironment: configManager.options.networkEnvironment)
-
-    deviceHelper = DeviceHelper(
-      api: api,
-      storage: storage,
+      deviceHelper: deviceHelper,
       factory: self
     )
 
@@ -133,6 +136,7 @@ final class DependencyContainer {
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
       sessionEventsManager: sessionEventsManager,
+      identityManager: identityManager,
       factory: self
     )
   }

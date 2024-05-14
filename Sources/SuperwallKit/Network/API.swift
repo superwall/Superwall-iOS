@@ -10,6 +10,7 @@ import Foundation
 enum EndpointHost {
   case base
   case collector
+  case geo
 }
 
 protocol ApiHostConfig {
@@ -21,11 +22,13 @@ protocol ApiHostConfig {
 struct Api {
   let base: Base
   let collector: Collector
+  let geo: Geo
   static let version1 = "/api/v1/"
 
   init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
     self.base = Base(networkEnvironment: networkEnvironment)
     self.collector = Collector(networkEnvironment: networkEnvironment)
+    self.geo = Geo(networkEnvironment: networkEnvironment)
   }
 
   func getConfig(host: EndpointHost) -> ApiHostConfig {
@@ -34,6 +37,8 @@ struct Api {
       return base
     case .collector:
       return collector
+    case .geo:
+      return geo
     }
   }
 
@@ -74,6 +79,26 @@ struct Api {
 
     var host: String {
       return networkEnvironment.collectorHost
+    }
+  }
+
+  struct Geo: ApiHostConfig {
+    private let networkEnvironment: SuperwallOptions.NetworkEnvironment
+
+    init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
+      self.networkEnvironment = networkEnvironment
+    }
+
+    var port: Int? {
+      return networkEnvironment.port
+    }
+
+    var scheme: String {
+      return networkEnvironment.scheme
+    }
+
+    var host: String {
+      return networkEnvironment.geoHost
     }
   }
 }

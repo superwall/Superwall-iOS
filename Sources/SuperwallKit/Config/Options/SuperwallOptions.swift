@@ -75,7 +75,6 @@ public final class SuperwallOptions: NSObject {
     var baseHost: String {
       switch self {
       case .custom:
-
         return hostDomain
       default:
         return "api.\(hostDomain)"
@@ -89,6 +88,10 @@ public final class SuperwallOptions: NSObject {
       default:
         return "collector.\(hostDomain)"
       }
+    }
+
+    var geoHost: String {
+      "geo-api.superwall.com"
     }
   }
 

@@ -94,6 +94,17 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
 
+  /// The background color of the paywall, depending on whether the device is in dark mode.
+  private var backgroundColor: UIColor {
+    let style = UIScreen.main.traitCollection.userInterfaceStyle
+    switch style {
+    case .dark:
+      return paywall.darkBackgroundColor ?? paywall.backgroundColor
+    default:
+      return paywall.backgroundColor
+    }
+  }
+
   /// A loading spinner that appears when making a purchase.
   private var loadingViewController: LoadingViewController?
 
@@ -194,12 +205,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     #if !os(visionOS)
     setNeedsStatusBarAppearanceUpdate()
     #endif
-    view.backgroundColor = paywall.backgroundColor
 
     view.addSubview(webView)
     webView.alpha = 0.0
 
-    let loadingColor = self.paywall.backgroundColor.readableOverlayColor
+    let loadingColor = backgroundColor.readableOverlayColor
     view.addSubview(refreshPaywallButton)
     refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
 
@@ -384,9 +394,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       return
     }
     let shimmerView = ShimmerView(
-      backgroundColor: paywall.backgroundColor,
-      tintColor: paywall.backgroundColor.readableOverlayColor,
-      isLightBackground: !paywall.backgroundColor.isDarkColor
+      backgroundColor: backgroundColor,
+      tintColor: backgroundColor.readableOverlayColor,
+      isLightBackground: !backgroundColor.isDarkColor
     )
     view.insertSubview(shimmerView, belowSubview: webView)
     NSLayoutConstraint.activate([

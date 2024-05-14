@@ -26,7 +26,7 @@ class ConfigManager {
   }
 
   /// Options for configuring the SDK.
-  var options = SuperwallOptions()
+  var options: SuperwallOptions
 
   /// A dictionary of triggers by their event name.
   @DispatchQueueBacked
@@ -42,6 +42,7 @@ class ConfigManager {
   private unowned let storage: Storage
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
+  private unowned let deviceHelper: DeviceHelper
 
   /// A task that is non-`nil` when preloading all paywalls.
   private var currentPreloadingTask: Task<Void, Never>?
@@ -49,20 +50,20 @@ class ConfigManager {
   private let factory: RequestFactory & RuleAttributesFactory & ReceiptFactory
 
   init(
-    options: SuperwallOptions?,
+    options: SuperwallOptions,
     storeKitManager: StoreKitManager,
     storage: Storage,
     network: Network,
     paywallManager: PaywallManager,
+    deviceHelper: DeviceHelper,
     factory: RequestFactory & RuleAttributesFactory & ReceiptFactory
   ) {
-    if let options = options {
-      self.options = options
-    }
+    self.options = options
     self.storeKitManager = storeKitManager
     self.storage = storage
     self.network = network
     self.paywallManager = paywallManager
+    self.deviceHelper = deviceHelper
     self.factory = factory
   }
 
@@ -70,10 +71,13 @@ class ConfigManager {
     do {
       _ = await factory.loadPurchasedProducts()
 
-      let config = try await network.getConfig { [weak self] in
+      async let configRequest = network.getConfig { [weak self] in
         self?.configState.send(.retrying)
       }
+      async let geoRequest: Void = deviceHelper.getGeoInfo()
 
+      let (config, _) = try await (configRequest, geoRequest)
+      
       Task { await sendProductsBack(from: config) }
 
       await processConfig(config)

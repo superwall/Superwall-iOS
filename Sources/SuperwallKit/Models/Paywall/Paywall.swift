@@ -46,8 +46,12 @@ struct Paywall: Decodable {
   }
   let presentation: Presentation
 
+  let darkBackgroundColorHex: String?
+  let darkBackgroundColor: UIColor?
+
   let backgroundColorHex: String
   let backgroundColor: UIColor
+
   let computedPropertyRequests: [ComputedPropertyRequest]
 
   /// Indicates whether the caching of the paywall is enabled or not.
@@ -136,6 +140,7 @@ struct Paywall: Decodable {
     case presentationCondition
     case presentationDelay
     case backgroundColorHex
+    case darkBackgroundColorHex
     case productItems = "productsV2"
     case featureGating
     case onDeviceCache
@@ -184,6 +189,15 @@ struct Paywall: Decodable {
     backgroundColorHex = try values.decode(String.self, forKey: .backgroundColorHex)
     let backgroundColor = UIColor(hexString: backgroundColorHex)
     self.backgroundColor = backgroundColor
+
+    if let darkBackgroundColorHex = try values.decodeIfPresent(String.self, forKey: .darkBackgroundColorHex) {
+      let darkBackgroundColor = UIColor(hexString: darkBackgroundColorHex)
+      self.darkBackgroundColor = darkBackgroundColor
+      self.darkBackgroundColorHex = darkBackgroundColorHex
+    } else {
+      self.darkBackgroundColor = nil
+      self.darkBackgroundColorHex = nil
+    }
 
     let appStoreProductItems = try values.decodeIfPresent(
       [Throwable<ProductItem>].self,
@@ -273,6 +287,8 @@ struct Paywall: Decodable {
     presentation: Paywall.Presentation,
     backgroundColorHex: String,
     backgroundColor: UIColor,
+    darkBackgroundColorHex: String?,
+    darkBackgroundColor: UIColor?,
     productItems: [ProductItem],
     productIds: [String],
     responseLoadingInfo: LoadingInfo,
@@ -300,6 +316,8 @@ struct Paywall: Decodable {
     self.presentation = presentation
     self.backgroundColor = backgroundColor
     self.backgroundColorHex = backgroundColorHex
+    self.darkBackgroundColor = darkBackgroundColor
+    self.darkBackgroundColorHex = darkBackgroundColorHex
     self.productItems = productItems
     self.productIds = productIds
     self.responseLoadingInfo = responseLoadingInfo
@@ -392,6 +410,8 @@ extension Paywall: Stubbable {
       ),
       backgroundColorHex: "",
       backgroundColor: .black,
+      darkBackgroundColorHex: nil,
+      darkBackgroundColor: nil,
       productItems: [],
       productIds: [],
       responseLoadingInfo: .init(),
