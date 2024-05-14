@@ -18,10 +18,11 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Git Checkout
-        uses: actions/checkout@v3
-      - name: xcodegen
-        uses: xavierLowmiller/xcodegen-action@1.2.0
-      - name: Run Tests
-        run: |
-          xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -sdk iphonesimulator -destination 'platform=iOS Simulator,OS=latest,name=iPhone 15 Pro' test
+      - uses: actions/checkout@v4
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "5.5.0"
+      - name: Build
+        run: swift build
+      - name: Run tests
+        run: swift test
