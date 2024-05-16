@@ -122,13 +122,6 @@ extension Superwall {
       return logErrors(from: request, error)
     }
 
-    // Make sure the result of presenting will be a paywall, otherwise do not proceed.
-    // This is important to stop the paywall from being skipped and firing the feature block when it shouldn't.
-    let presentationResult = await internallyGetPresentationResult(forEvent: event, isImplicit: true)
-    guard case .paywall = presentationResult else {
-      return
-    }
-
     let triggeringOutcome = TrackingLogic.canTriggerPaywall(
       event,
       triggers: Set(dependencyContainer.configManager.triggersByEventName.keys),
@@ -142,6 +135,16 @@ extension Superwall {
       await dismiss()
     case .closePaywallThenTriggerPaywall:
       guard let lastPresentationItems = presentationItems.last else {
+        return
+      }
+
+      // Make sure the result of presenting will be a paywall, otherwise do not proceed.
+      // This is important to stop the paywall from being skipped and firing the feature
+      // block when it shouldn't. This has to be done only to those triggers that reassign
+      // the statePublisher. Others like app_launch are fine to skip and users are relying
+      // on paywallPresentationRequest for those.
+      let presentationResult = await internallyGetPresentationResult(forEvent: event, isImplicit: true)
+      guard case .paywall = presentationResult else {
         return
       }
       await dismissForNextPaywall()

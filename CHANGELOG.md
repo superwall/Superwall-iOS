@@ -10,6 +10,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - SW-2817: Adds support for dark mode paywall background color.
 - SW-2815: Adds ability to target devices based on their IP address location. Use `device.ipRegion`, `device.ipRegionCode`, `device.ipCountry`, `device.ipCity`, `device.ipContinent`, or `device.ipTimezone`.
 
+### Fixes
+
+- Fixes issue where implicit triggers weren't sending a `paywallPresentationRequest` when they didn't result in a paywall. Now this applies only to implicit triggers that are derived from an action on the paywall, like `paywall_decline`.
+
 ## 3.6.2
 
 ### Enhancements
