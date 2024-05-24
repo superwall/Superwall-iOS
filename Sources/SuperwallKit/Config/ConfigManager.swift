@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 22/06/2022.
 //
+// swiftlint:disable type_body_length
 
 import UIKit
 import Combine
@@ -77,7 +78,7 @@ class ConfigManager {
       async let geoRequest: Void = deviceHelper.getGeoInfo()
 
       let (config, _) = try await (configRequest, geoRequest)
-      
+
       Task { await sendProductsBack(from: config) }
 
       await processConfig(config)
@@ -291,8 +292,16 @@ class ConfigManager {
             presentationSourceType: nil,
             retryCount: 6
           )
-          _ = try? await self.paywallManager.getPaywallViewController(
-            from: request,
+
+          guard let paywall = try? await paywallManager.getPaywall(from: request) else {
+            return
+          }
+
+          await self.paywallManager.attemptToPreloadArchive(from: paywall)
+
+          _ = try? await self.paywallManager.getViewController(
+            for: paywall,
+            isDebuggerLaunched: request.isDebuggerLaunched,
             isForPresentation: true,
             isPreloading: true,
             delegate: nil

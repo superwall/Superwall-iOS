@@ -19,7 +19,12 @@ final class StorePresentationObjectsOperatorTests: XCTestCase {
     let request = PresentationRequest.stub()
     let input = PresentablePipelineOutput(
       debugInfo: [:],
-      paywallViewController: dependencyContainer.makePaywallViewController(for: .stub(), withCache: nil, delegate: nil),
+      paywallViewController: dependencyContainer.makePaywallViewController(
+        for: .stub(),
+        withCache: nil,
+        withPaywallArchiveManager: nil,
+        delegate: nil
+      ),
       presenter: UIViewController(),
       confirmableAssignment: nil
     )

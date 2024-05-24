@@ -156,6 +156,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private weak var cache: PaywallViewControllerCache?
+  private weak var paywallArchiveManager: PaywallArchiveManager?
 
 	// MARK: - View Lifecycle
 
@@ -167,9 +168,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     factory: TriggerSessionManagerFactory & TriggerFactory,
     storage: Storage,
     webView: SWWebView,
-    cache: PaywallViewControllerCache?
+    cache: PaywallViewControllerCache?,
+    paywallArchiveManager: PaywallArchiveManager?
   ) {
     self.cache = cache
+    self.paywallArchiveManager = paywallArchiveManager
     self.cacheKey = PaywallCacheLogic.key(
       identifier: paywall.identifier,
       locale: deviceHelper.locale
@@ -284,15 +287,43 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       )
     }
 
+    loadingState = .loadingURL
+
+    if let paywallArchiveManager = self.paywallArchiveManager,
+      paywallArchiveManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest) {
+      Task {
+        if let url = await paywallArchiveManager.getArchiveURL(forManifest: paywall.manifest) {
+          loadWebViewFromArchive(url: url)
+        } else {
+          // Fallback to old way if couldn't get archive
+          loadWebViewFromNetwork(url: url)
+        }
+      }
+      return
+    }
+
+    if let webArchiveURL = paywallArchiveManager?.getCachedArchiveURL(manifest: paywall.manifest) {
+      loadWebViewFromArchive(url: webArchiveURL)
+    } else {
+      loadWebViewFromNetwork(url: url)
+    }
+  }
+
+  private func loadWebViewFromArchive(url: URL) {
+    webView.loadFileURL(url, allowingReadAccessTo: url)
+  }
+
+  private func loadWebViewFromNetwork(url: URL) {
     if paywall.onDeviceCache == .enabled {
-      let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
+      let request = URLRequest(
+        url: url,
+        cachePolicy: .returnCacheDataElseLoad
+      )
       webView.load(request)
     } else {
       let request = URLRequest(url: url)
       webView.load(request)
     }
-
-    loadingState = .loadingURL
   }
 
   @objc private func reloadWebView() {

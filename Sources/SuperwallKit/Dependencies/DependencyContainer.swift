@@ -40,6 +40,7 @@ final class DependencyContainer {
   var purchaseController: PurchaseController!
   // swiftlint:enable implicitly_unwrapped_optional
   let productsFetcher = ProductsFetcherSK1()
+  let paywallArchiveManager = PaywallArchiveManager()
 
   init(
     purchaseController controller: PurchaseController? = nil,
@@ -165,6 +166,13 @@ extension DependencyContainer: CacheFactory {
   }
 }
 
+// MARK: - PaywallArchiveManagerFactory
+extension DependencyContainer: PaywallArchiveManagerFactory {
+  func makePaywallArchiveManager() -> PaywallArchiveManager {
+    return paywallArchiveManager
+  }
+}
+
 // MARK: - DeviceInfofactory
 extension DependencyContainer: DeviceHelperFactory {
   func makeDeviceInfo() -> DeviceInfo {
@@ -206,6 +214,7 @@ extension DependencyContainer: ViewControllerFactory {
   func makePaywallViewController(
     for paywall: Paywall,
     withCache cache: PaywallViewControllerCache?,
+    withPaywallArchiveManager archiveManager: PaywallArchiveManager?,
     delegate: PaywallViewControllerDelegateAdapter?
   ) -> PaywallViewController {
     let messageHandler = PaywallMessageHandler(
@@ -225,7 +234,8 @@ extension DependencyContainer: ViewControllerFactory {
       factory: self,
       storage: storage,
       webView: webView,
-      cache: cache
+      cache: cache,
+      paywallArchiveManager: paywallArchiveManager
     )
 
     webView.delegate = paywallViewController
