@@ -40,6 +40,7 @@ final class DependencyContainer {
   var purchaseController: PurchaseController!
   // swiftlint:enable implicitly_unwrapped_optional
   let productsFetcher = ProductsFetcherSK1()
+  let paywallArchiveManager = PaywallArchiveManager()
 
   init(
     purchaseController controller: PurchaseController? = nil,
@@ -66,20 +67,23 @@ final class DependencyContainer {
       paywallRequestManager: paywallRequestManager
     )
 
+    let options = options ?? SuperwallOptions()
+    api = Api(networkEnvironment: options.networkEnvironment)
+
+    deviceHelper = DeviceHelper(
+      api: api,
+      storage: storage,
+      network: network,
+      factory: self
+    )
+
     configManager = ConfigManager(
       options: options,
       storeKitManager: storeKitManager,
       storage: storage,
       network: network,
       paywallManager: paywallManager,
-      factory: self
-    )
-
-    api = Api(networkEnvironment: configManager.options.networkEnvironment)
-
-    deviceHelper = DeviceHelper(
-      api: api,
-      storage: storage,
+      deviceHelper: deviceHelper,
       factory: self
     )
 
@@ -132,6 +136,7 @@ final class DependencyContainer {
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
       sessionEventsManager: sessionEventsManager,
+      identityManager: identityManager,
       factory: self
     )
   }
@@ -158,6 +163,13 @@ extension DependencyContainer: AppManagerDelegate {
 extension DependencyContainer: CacheFactory {
   func makeCache() -> PaywallViewControllerCache {
     return PaywallViewControllerCache(deviceLocaleString: deviceHelper.locale)
+  }
+}
+
+// MARK: - PaywallArchiveManagerFactory
+extension DependencyContainer: PaywallArchiveManagerFactory {
+  func makePaywallArchiveManager() -> PaywallArchiveManager {
+    return paywallArchiveManager
   }
 }
 
@@ -202,6 +214,7 @@ extension DependencyContainer: ViewControllerFactory {
   func makePaywallViewController(
     for paywall: Paywall,
     withCache cache: PaywallViewControllerCache?,
+    withPaywallArchiveManager archiveManager: PaywallArchiveManager?,
     delegate: PaywallViewControllerDelegateAdapter?
   ) -> PaywallViewController {
     let messageHandler = PaywallMessageHandler(
@@ -221,7 +234,8 @@ extension DependencyContainer: ViewControllerFactory {
       factory: self,
       storage: storage,
       webView: webView,
-      cache: cache
+      cache: cache,
+      paywallArchiveManager: paywallArchiveManager
     )
 
     webView.delegate = paywallViewController

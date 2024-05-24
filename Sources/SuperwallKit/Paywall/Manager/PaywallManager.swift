@@ -14,15 +14,26 @@ class PaywallManager {
 	}
   private let queue = DispatchQueue(label: "com.superwall.paywallmanager")
   private unowned let paywallRequestManager: PaywallRequestManager
-  private unowned let factory: ViewControllerFactory & CacheFactory & DeviceHelperFactory
+  private unowned let factory: ViewControllerFactory
+    & CacheFactory
+    & DeviceHelperFactory
+    & PaywallArchiveManagerFactory
 
   private var cache: PaywallViewControllerCache {
     return queue.sync { _cache ?? createCache() }
   }
   private var _cache: PaywallViewControllerCache?
 
+  private var paywallArchiveManager: PaywallArchiveManager {
+    return queue.sync { _paywallArchiveManager ?? createPaywallArchiveManager() }
+  }
+  private var _paywallArchiveManager: PaywallArchiveManager?
+
   init(
-    factory: ViewControllerFactory & CacheFactory & DeviceHelperFactory,
+    factory: ViewControllerFactory
+      & CacheFactory
+      & DeviceHelperFactory
+      & PaywallArchiveManagerFactory,
     paywallRequestManager: PaywallRequestManager
   ) {
     self.factory = factory
@@ -35,6 +46,12 @@ class PaywallManager {
     return cache
   }
 
+  private func createPaywallArchiveManager() -> PaywallArchiveManager {
+    let paywallArchiveManager = factory.makePaywallArchiveManager()
+    _paywallArchiveManager = paywallArchiveManager
+    return paywallArchiveManager
+  }
+
 	func removePaywallViewController(forKey key: String) {
     cache.removePaywallViewController(forKey: key)
 	}
@@ -42,6 +59,17 @@ class PaywallManager {
 	func resetCache() {
 		cache.removeAll()
 	}
+
+  func getPaywall(from request: PaywallRequest) async throws -> Paywall {
+    return try await paywallRequestManager.getPaywall(from: request)
+  }
+
+  /// Tries to preload the archive for the paywall, if available.
+  ///
+  /// - Parameter paywall: The paywall whose archive to preload.
+  func attemptToPreloadArchive(from paywall: Paywall) async {
+    await paywallArchiveManager.preloadArchive(paywall: paywall)
+  }
 
   /// First, this gets the paywall response for a specified paywall identifier or trigger event.
   /// It then creates the paywall view controller from that response, and caches it.
@@ -55,21 +83,20 @@ class PaywallManager {
   ///   - isPreloading: Whether or not the paywall is being preloaded.
   ///   - delegate: The delegate for the `PaywallViewController`.
   @MainActor
-  func getPaywallViewController(
-    from request: PaywallRequest,
+  func getViewController(
+    for paywall: Paywall,
+    isDebuggerLaunched: Bool,
     isForPresentation: Bool,
     isPreloading: Bool,
     delegate: PaywallViewControllerDelegateAdapter?
   ) async throws -> PaywallViewController {
-    let paywall = try await paywallRequestManager.getPaywall(from: request)
-
     let deviceInfo = factory.makeDeviceInfo()
     let cacheKey = PaywallCacheLogic.key(
       identifier: paywall.identifier,
       locale: deviceInfo.locale
     )
 
-    if !request.isDebuggerLaunched,
+    if !isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
       // Do not adjust paywall or vc delegate if we are preloading or aren't going to
       // present the paywall.
@@ -84,6 +111,7 @@ class PaywallManager {
     let paywallViewController = factory.makePaywallViewController(
       for: paywall,
       withCache: cache,
+      withPaywallArchiveManager: paywallArchiveManager,
       delegate: delegate
     )
     cache.save(paywallViewController, forKey: cacheKey)

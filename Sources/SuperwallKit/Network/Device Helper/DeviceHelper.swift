@@ -25,6 +25,8 @@ class DeviceHelper {
     return Locale(identifier: preferredIdentifier).identifier
   }
 
+  private var geoInfo: GeoInfo?
+
   let appInstalledAtString: String
 
   private let reachability: SCNetworkReachability?
@@ -495,23 +497,36 @@ class DeviceHelper {
       sdkVersionPadded: sdkVersionPadded,
       appBuildString: appBuildString,
       appBuildStringNumber: Int(appBuildString),
-      interfaceStyleMode: interfaceStyleOverride == nil ? "automatic" : "manual"
+      interfaceStyleMode: interfaceStyleOverride == nil ? "automatic" : "manual",
+      ipRegion: geoInfo?.region,
+      ipRegionCode: geoInfo?.regionCode,
+      ipCountry: geoInfo?.country,
+      ipCity: geoInfo?.city,
+      ipContinent: geoInfo?.continent,
+      ipTimezone: geoInfo?.timezone
     )
     return template.toDictionary()
   }
 
+  private unowned let network: Network
   private unowned let storage: Storage
   private unowned let factory: IdentityInfoFactory & LocaleIdentifierFactory
 
   init(
     api: Api,
     storage: Storage,
+    network: Network,
     factory: IdentityInfoFactory & LocaleIdentifierFactory
   ) {
     self.storage = storage
+    self.network = network
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
     self.factory = factory
       reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
     self.sdkVersionPadded = Self.makePaddedSdkVersion(using: sdkVersion)
+  }
+
+  func getGeoInfo() async {
+    geoInfo = await network.getGeoInfo()
   }
 }

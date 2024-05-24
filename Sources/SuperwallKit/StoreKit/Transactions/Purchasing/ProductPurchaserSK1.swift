@@ -29,6 +29,7 @@ final class ProductPurchaserSK1: NSObject {
   private let storeKitManager: StoreKitManager
   private let receiptManager: ReceiptManager
   private let sessionEventsManager: SessionEventsManager
+  private let identityManager: IdentityManager
   private let factory: HasExternalPurchaseControllerFactory & StoreTransactionFactory
 
   deinit {
@@ -39,11 +40,13 @@ final class ProductPurchaserSK1: NSObject {
     storeKitManager: StoreKitManager,
     receiptManager: ReceiptManager,
     sessionEventsManager: SessionEventsManager,
+    identityManager: IdentityManager,
     factory: HasExternalPurchaseControllerFactory & StoreTransactionFactory
   ) {
     self.storeKitManager = storeKitManager
     self.receiptManager = receiptManager
     self.sessionEventsManager = sessionEventsManager
+    self.identityManager = identityManager
     self.factory = factory
 
     super.init()
@@ -62,7 +65,8 @@ final class ProductPurchaserSK1: NSObject {
         }
       }
     }
-    let payment = SKPayment(product: product)
+    let payment = SKMutablePayment(product: product)
+    payment.applicationUsername = identityManager.appUserId
     SKPaymentQueue.default().add(payment)
 
     return await task.value

@@ -16,11 +16,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let configManager = ConfigManagerMock(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
 
@@ -45,11 +46,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
   func test_confirmHoldoutAssignment_holdout_noConfirmableAssignments() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
 
@@ -73,11 +75,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
   func test_confirmHoldoutAssignment_holdout_hasConfirmableAssignments() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -102,11 +105,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
   func test_confirmHoldoutAssignment_holdout_getPresentationResult() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -131,11 +135,12 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
   func test_confirmHoldoutAssignment_holdout_getImplicitPresentationResult() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
-      options: nil,
+      options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)

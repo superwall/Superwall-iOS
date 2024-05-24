@@ -276,3 +276,17 @@ extension Endpoint where Response == PostBackResponse {
     )
   }
 }
+
+// MARK: - GeoWrapper
+extension Endpoint where Response == GeoWrapper {
+  static func geo(factory: ApiFactory) -> Self {
+    return Endpoint(
+      components: Components(
+        host: .geo,
+        path: Api.version1 + "geo"
+      ),
+      method: .get,
+      factory: factory
+    )
+  }
+}

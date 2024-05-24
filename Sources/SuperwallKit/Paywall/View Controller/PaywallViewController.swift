@@ -94,6 +94,17 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
 
+  /// The background color of the paywall, depending on whether the device is in dark mode.
+  private var backgroundColor: UIColor {
+    let style = UIScreen.main.traitCollection.userInterfaceStyle
+    switch style {
+    case .dark:
+      return paywall.darkBackgroundColor ?? paywall.backgroundColor
+    default:
+      return paywall.backgroundColor
+    }
+  }
+
   /// A loading spinner that appears when making a purchase.
   private var loadingViewController: LoadingViewController?
 
@@ -145,6 +156,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private weak var cache: PaywallViewControllerCache?
+  private weak var paywallArchiveManager: PaywallArchiveManager?
 
 	// MARK: - View Lifecycle
 
@@ -156,9 +168,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     factory: TriggerSessionManagerFactory & TriggerFactory,
     storage: Storage,
     webView: SWWebView,
-    cache: PaywallViewControllerCache?
+    cache: PaywallViewControllerCache?,
+    paywallArchiveManager: PaywallArchiveManager?
   ) {
     self.cache = cache
+    self.paywallArchiveManager = paywallArchiveManager
     self.cacheKey = PaywallCacheLogic.key(
       identifier: paywall.identifier,
       locale: deviceHelper.locale
@@ -191,12 +205,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     #if !os(visionOS)
     setNeedsStatusBarAppearanceUpdate()
     #endif
-    view.backgroundColor = paywall.backgroundColor
 
     view.addSubview(webView)
     webView.alpha = 0.0
 
-    let loadingColor = self.paywall.backgroundColor.readableOverlayColor
+    let loadingColor = backgroundColor.readableOverlayColor
     view.addSubview(refreshPaywallButton)
     refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
 
@@ -274,15 +287,43 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       )
     }
 
+    loadingState = .loadingURL
+
+    if let paywallArchiveManager = self.paywallArchiveManager,
+      paywallArchiveManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest) {
+      Task {
+        if let url = await paywallArchiveManager.getArchiveURL(forManifest: paywall.manifest) {
+          loadWebViewFromArchive(url: url)
+        } else {
+          // Fallback to old way if couldn't get archive
+          loadWebViewFromNetwork(url: url)
+        }
+      }
+      return
+    }
+
+    if let webArchiveURL = paywallArchiveManager?.getCachedArchiveURL(manifest: paywall.manifest) {
+      loadWebViewFromArchive(url: webArchiveURL)
+    } else {
+      loadWebViewFromNetwork(url: url)
+    }
+  }
+
+  private func loadWebViewFromArchive(url: URL) {
+    webView.loadFileURL(url, allowingReadAccessTo: url)
+  }
+
+  private func loadWebViewFromNetwork(url: URL) {
     if paywall.onDeviceCache == .enabled {
-      let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
+      let request = URLRequest(
+        url: url,
+        cachePolicy: .returnCacheDataElseLoad
+      )
       webView.load(request)
     } else {
       let request = URLRequest(url: url)
       webView.load(request)
     }
-
-    loadingState = .loadingURL
   }
 
   @objc private func reloadWebView() {
@@ -356,9 +397,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       return
     }
     let shimmerView = ShimmerView(
-      backgroundColor: paywall.backgroundColor,
-      tintColor: paywall.backgroundColor.readableOverlayColor,
-      isLightBackground: !paywall.backgroundColor.isDarkColor
+      backgroundColor: backgroundColor,
+      tintColor: backgroundColor.readableOverlayColor,
+      isLightBackground: !backgroundColor.isDarkColor
     )
     view.insertSubview(shimmerView, belowSubview: webView)
     NSLayoutConstraint.activate([

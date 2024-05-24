@@ -51,6 +51,12 @@ struct DeviceTemplate: Codable {
   var appBuildString: String
   var appBuildStringNumber: Int?
   var interfaceStyleMode: String
+  var ipRegion: String?
+  var ipRegionCode: String?
+  var ipCountry: String?
+  var ipCity: String?
+  var ipContinent: String?
+  var ipTimezone: String?
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

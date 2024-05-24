@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
-// swiftlint:disable function_body_length type_body_length
+// swiftlint:disable function_body_length type_body_length file_length
 
 import UIKit
 
@@ -46,8 +46,12 @@ struct Paywall: Decodable {
   }
   let presentation: Presentation
 
+  let darkBackgroundColorHex: String?
+  let darkBackgroundColor: UIColor?
+
   let backgroundColorHex: String
   let backgroundColor: UIColor
+
   let computedPropertyRequests: [ComputedPropertyRequest]
 
   /// Indicates whether the caching of the paywall is enabled or not.
@@ -111,6 +115,21 @@ struct Paywall: Decodable {
   /// The local notifications for the paywall, e.g. to notify the user of free trial expiry.
   var localNotifications: [LocalNotification]
 
+  /// A listing of all the files referenced in a paywall to be able to preload the whole
+  /// paywall into a web archive.
+  let manifest: ArchiveManifest?
+
+  /// Indicates whether the manifest should be used.
+  var isUsingManifest: Bool {
+    guard let manifest = manifest else {
+      return false
+    }
+    if manifest.use == .never {
+      return false
+    }
+    return true
+  }
+
   enum CodingKeys: String, CodingKey {
     case id
     case identifier
@@ -121,12 +140,14 @@ struct Paywall: Decodable {
     case presentationCondition
     case presentationDelay
     case backgroundColorHex
+    case darkBackgroundColorHex
     case productItems = "productsV2"
     case featureGating
     case onDeviceCache
     case localNotifications
     case computedPropertyRequests = "computedProperties"
     case surveys
+    case manifest
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -168,6 +189,15 @@ struct Paywall: Decodable {
     backgroundColorHex = try values.decode(String.self, forKey: .backgroundColorHex)
     let backgroundColor = UIColor(hexString: backgroundColorHex)
     self.backgroundColor = backgroundColor
+
+    if let darkBackgroundColorHex = try values.decodeIfPresent(String.self, forKey: .darkBackgroundColorHex) {
+      let darkBackgroundColor = UIColor(hexString: darkBackgroundColorHex)
+      self.darkBackgroundColor = darkBackgroundColor
+      self.darkBackgroundColorHex = darkBackgroundColorHex
+    } else {
+      self.darkBackgroundColor = nil
+      self.darkBackgroundColorHex = nil
+    }
 
     let appStoreProductItems = try values.decodeIfPresent(
       [Throwable<ProductItem>].self,
@@ -219,6 +249,8 @@ struct Paywall: Decodable {
       forKey: .computedPropertyRequests
     ) ?? []
     computedPropertyRequests = throwableComputedPropertyRequests.compactMap { try? $0.result.get() }
+
+    manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
   }
 
   private static func makeProducts(from productItems: [ProductItem]) -> [Product] {
@@ -255,6 +287,8 @@ struct Paywall: Decodable {
     presentation: Paywall.Presentation,
     backgroundColorHex: String,
     backgroundColor: UIColor,
+    darkBackgroundColorHex: String?,
+    darkBackgroundColor: UIColor?,
     productItems: [ProductItem],
     productIds: [String],
     responseLoadingInfo: LoadingInfo,
@@ -269,7 +303,8 @@ struct Paywall: Decodable {
     onDeviceCache: OnDeviceCaching = .disabled,
     localNotifications: [LocalNotification] = [],
     computedPropertyRequests: [ComputedPropertyRequest] = [],
-    surveys: [Survey] = []
+    surveys: [Survey] = [],
+    manifest: ArchiveManifest? = nil
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -281,6 +316,8 @@ struct Paywall: Decodable {
     self.presentation = presentation
     self.backgroundColor = backgroundColor
     self.backgroundColorHex = backgroundColorHex
+    self.darkBackgroundColor = darkBackgroundColor
+    self.darkBackgroundColorHex = darkBackgroundColorHex
     self.productItems = productItems
     self.productIds = productIds
     self.responseLoadingInfo = responseLoadingInfo
@@ -297,6 +334,7 @@ struct Paywall: Decodable {
     self.computedPropertyRequests = computedPropertyRequests
     self.surveys = surveys
     self.products = Self.makeProducts(from: productItems)
+    self.manifest = manifest
   }
 
   func getInfo(
@@ -372,6 +410,8 @@ extension Paywall: Stubbable {
       ),
       backgroundColorHex: "",
       backgroundColor: .black,
+      darkBackgroundColorHex: nil,
+      darkBackgroundColor: nil,
       productItems: [],
       productIds: [],
       responseLoadingInfo: .init(),
