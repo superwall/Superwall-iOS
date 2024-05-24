@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Q5H-aZ-jXR">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Q5H-aZ-jXR">
     <device id="retina6_5" orientation="portrait" appearance="light"/>
     <dependencies>
-        <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21678"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22685"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
@@ -153,26 +152,26 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JHi-ua-mAu">
-                                <rect key="frame" x="20" y="63.999999999999986" width="374" height="170.66666666666663"/>
-                                <string key="text">The button below registers an event "MyEvent".
+                                <rect key="frame" x="20" y="63.999999999999986" width="374" height="208.66666666666663"/>
+                                <string key="text">The button below registers a placement "campaign_trigger".
 
-This event has been added to a campaign on the Superwall dashboard.
+This placement has been added to a campaign on the Superwall dashboard.
 
-When this event is registered, the rules in the campaign are evaluated.
+When this placement is registered, the audience filters in the campaign are evaluated.
 
-The rules match and cause a paywall to show.</string>
+The audience matches and causes a paywall to show.</string>
                                 <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You do not have an active subscription so the paywall will show when tapping the button." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yY5-8L-kgo">
-                                <rect key="frame" x="20" y="331.66666666666669" width="374" height="38"/>
+                                <rect key="frame" x="20" y="369.66666666666669" width="374" height="38"/>
                                 <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="gFw-H8-1gc">
-                                <rect key="frame" x="20" y="282.66666666666669" width="374" height="1"/>
+                                <rect key="frame" x="20" y="320.66666666666669" width="374" height="1"/>
                                 <color key="backgroundColor" systemColor="systemGray2Color"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="1" id="Gti-31-pJd"/>
@@ -211,7 +210,7 @@ The rules match and cause a paywall to show.</string>
                                     <color key="baseForegroundColor" name="Neutral"/>
                                 </buttonConfiguration>
                                 <connections>
-                                    <action selector="registerEvent:" destination="gix-OZ-Ey9" eventType="touchUpInside" id="aV2-Ap-IO2"/>
+                                    <action selector="registerPlacement:" destination="gix-OZ-Ey9" eventType="touchUpInside" id="c97-Cg-niA"/>
                                 </connections>
                             </button>
                         </subviews>

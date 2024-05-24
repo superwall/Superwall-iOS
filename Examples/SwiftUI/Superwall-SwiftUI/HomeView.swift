@@ -28,7 +28,7 @@ struct HomeView: View {
     VStack(spacing: 48) {
       ScrollView {
         InfoView(
-          text: "The Launch Feature button below registers an event \"campaign_trigger\".\n\nThis event has been added to a campaign on the Superwall dashboard.\n\nWhen this event is registered, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
+          text: "The Launch Feature button below registers a placement \"campaign_trigger\".\n\nThis placement has been added to a campaign on the Superwall dashboard.\n\nWhen this placement is registered, the audience filters in the campaign are evaluated.\n\nThe audience matches and causes a paywall to show."
         )
 
         Divider()
@@ -63,7 +63,7 @@ struct HomeView: View {
             }
           }
 
-          Superwall.shared.register(event: "campaign_trigger", handler: handler) {
+          Superwall.shared.register(placement: "campaign_trigger", handler: handler) {
             // code in here can be remotely configured to execute. Either
             // (1) always after presentation or
             // (2) only if the user pays

@@ -9,7 +9,7 @@ import UIKit
 import Combine
 
 enum PresentationRequestType: Equatable, CustomStringConvertible {
-  /// Presenting via ``Superwall/register(event:params:handler:feature:)``.
+  /// Presenting via ``Superwall/register(placement:params:handler:feature:)``.
   case presentation
 
   /// Getting the paywall view controller via

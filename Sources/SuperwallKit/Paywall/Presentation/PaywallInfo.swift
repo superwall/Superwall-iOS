@@ -105,7 +105,7 @@ public final class PaywallInfo: NSObject {
   public let isFreeTrialAvailable: Bool
 
   /// A ``FeatureGatingBehavior`` case that indicates whether the
-  /// ``Superwall/register(event:params:handler:feature:)``
+  /// ``Superwall/register(placement:params:handler:feature:)``
   /// `feature` block executes or not.
   public let featureGatingBehavior: FeatureGatingBehavior
 
