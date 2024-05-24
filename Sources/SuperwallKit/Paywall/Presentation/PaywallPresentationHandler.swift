@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// The handler for ``Superwall/register(placement:params:handler:feature:)`` whose
+/// The handler for ``Superwall/register(event:params:handler:feature:)`` whose
 /// functions provide status updates for a paywall.
 @objc(SWKPaywallPresentationHandler)
 @objcMembers

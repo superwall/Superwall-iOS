@@ -16,7 +16,7 @@ extension Superwall {
   /// in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``register(placement:params:handler:feature:)``.
+  /// ``register(event:params:handler:feature:)``.
   ///
   /// - Parameters:
   ///     - event: The name of the event you want to register.
@@ -46,7 +46,7 @@ extension Superwall {
   /// in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``register(placement:params:handler:feature:)``.
+  /// ``register(event:params:handler:feature:)``.
   ///
   /// - Parameters:
   ///     - event: The name of the event you want to register.
@@ -102,7 +102,7 @@ extension Superwall {
   /// in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``register(placement:params:handler:feature:)``.
+  /// ``register(event:params:handler:feature:)``.
   ///
   /// - Parameters:
   ///     - event: The name of the event you want to register.
@@ -124,7 +124,7 @@ extension Superwall {
   /// in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``register(placement:params:handler:feature:)``.
+  /// ``register(event:params:handler:feature:)``.
   ///
   /// - Parameters event: The name of the event you want to register.
   /// - Returns: A ``PresentationResultObjc`` object that contains information about the result of tracking an event.

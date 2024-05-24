@@ -44,7 +44,7 @@
 
 #pragma mark - Actions
 
-- (IBAction)registerPlacement:(id)sender {
+- (IBAction)registerEvent:(id)sender {
   SWKPaywallPresentationHandler *handler = [[SWKPaywallPresentationHandler alloc] init];
 
   [handler onDismiss:^(SWKPaywallInfo * _Nonnull paywallInfo) {
@@ -79,7 +79,7 @@
     NSLog(@"The paywall presentation failed with error %@", error);
   }];
 
-  [[Superwall sharedInstance] registerWithPlacement:@"campaign_trigger" params:nil handler:handler feature:^{
+  [[Superwall sharedInstance] registerWithEvent:@"campaign_trigger" params:nil handler:handler feature:^{
     UIAlertController* alert = [UIAlertController
       alertControllerWithTitle:@"Feature Launched"
       message:@"Wrap your awesome features in register calls like this to remotely paywall your app. You can remotely decide whether these are paid features."

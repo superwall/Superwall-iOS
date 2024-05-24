@@ -28,10 +28,10 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 
 ### Presenting and Dismissing a Paywall
 
-- ``register(placement:params:handler:feature:)``
-- ``register(placement:params:handler:)``
-- ``register(placement:)``
-- ``register(placement:params:)``
+- ``register(event:params:handler:feature:)``
+- ``register(event:params:handler:)``
+- ``register(event:)``
+- ``register(event:params:)``
 - ``getPaywall(forEvent:params:paywallOverrides:delegate:)``
 - ``getPaywall(forEvent:params:paywallOverrides:delegate:completion:)-8u1n``
 - ``getPaywall(forEvent:params:paywallOverrides:delegate:completion:)-5vtpb``

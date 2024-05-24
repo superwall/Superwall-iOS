@@ -108,7 +108,7 @@ struct Paywall: Decodable {
   var closeReason: PaywallCloseReason = .none
 
   /// Determines whether a paywall executes the
-  /// ``Superwall/register(placement:params:handler:feature:)`` feature block if the
+  /// ``Superwall/register(event:params:handler:feature:)`` feature block if the
   /// user does not purchase.
   var featureGating: FeatureGatingBehavior
 

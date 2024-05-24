@@ -69,7 +69,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   // MARK: - Private Properties
   /// Internal passthrough subject that emits ``PaywallState`` objects. These state objects feed back to
-  /// the caller of ``Superwall/register(placement:params:handler:feature:)``
+  /// the caller of ``Superwall/register(event:params:handler:feature:)``
   ///
   /// This publisher is set on presentation of the paywall.
   private var paywallStateSubject: PassthroughSubject<PaywallState, Never>?

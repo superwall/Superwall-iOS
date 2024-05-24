@@ -87,7 +87,7 @@ final class HomeViewController: UIViewController {
       }
     }
 
-    Superwall.shared.register(placement: "campaign_trigger", handler: handler) {
+    Superwall.shared.register(event: "campaign_trigger", handler: handler) {
       // code in here can be remotely configured to execute. Either
       // (1) always after presentation or
       // (2) only if the user pays

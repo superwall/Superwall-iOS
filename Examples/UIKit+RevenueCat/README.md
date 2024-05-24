@@ -55,7 +55,7 @@ You'll see an overview screen:
 
 ## Presenting a Paywall
 
-At the heart of Superwall's SDK lies [Superwall.shared.register(placement:params:handler:feature:)](Superwall-UIKit+RevenueCat/HomeViewController.swift#L62).
+At the heart of Superwall's SDK lies [Superwall.shared.register(event:params:handler:feature:)](Superwall-UIKit+RevenueCat/HomeViewController.swift#L62).
 
 This allows you to register an event to access a feature that may or may not be paywalled later in time. It also allows you to choose whether the user can access the feature even if they don't make a purchase. You can read more about this [in our docs](https://docs.superwall.com/docs).
 
@@ -63,7 +63,7 @@ On the [Superwall Dashboard](https://superwall.com/dashboard) you add this event
 
 When an event is registered, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall.
 
-By calling [Superwall.shared.register(placement:params:handler:feature:)](Superwall-UIKit+RevenueCat/HomeViewController.swift#L62), you present a paywall in response to the event `campaign_trigger`.
+By calling [Superwall.shared.register(event:params:handler:feature:)](Superwall-UIKit+RevenueCat/HomeViewController.swift#L62), you present a paywall in response to the event `campaign_trigger`.
 
 On screen you'll see some explanatory text and a button to launch a feature that is behind a paywall:
 
