@@ -18,6 +18,10 @@ struct FeatureFlags: Decodable {
   var enableExpressionParameters: Bool
   var enableUserIdSeed: Bool
   var disableVerboseEvents: Bool
+  var enableWebviewProcessPool: Bool
+  var enableSuppressesIncrementalRendering: Bool
+  var enableThrottleSchedulingPolicy: Bool
+  var enableNoneSchedulingPolicy: Bool
 
   enum CodingKeys: String, CodingKey {
     case toggles
@@ -32,6 +36,13 @@ struct FeatureFlags: Decodable {
     enablePostback = rawFeatureFlags.value(forKey: "enable_postback", default: false)
     enableUserIdSeed = rawFeatureFlags.value(forKey: "enable_userid_seed", default: false)
     disableVerboseEvents = rawFeatureFlags.value(forKey: "disable_verbose_events", default: false)
+    enableWebviewProcessPool = rawFeatureFlags.value(forKey: "enable_webview_process_pool", default: false)
+    enableSuppressesIncrementalRendering = rawFeatureFlags.value(
+      forKey: "enable_suppresses_incremental_rendering",
+      default: false
+    )
+    enableThrottleSchedulingPolicy = rawFeatureFlags.value(forKey: "enable_throttle_scheduling_policy", default: false)
+    enableNoneSchedulingPolicy = rawFeatureFlags.value(forKey: "enable_none_scheduling_policy", default: false)
   }
 
   init(
@@ -39,13 +50,21 @@ struct FeatureFlags: Decodable {
     enablePostback: Bool,
     enableExpressionParameters: Bool,
     enableUserIdSeed: Bool,
-    disableVerboseEvents: Bool
+    disableVerboseEvents: Bool,
+    enableWebviewProcessPool: Bool,
+    enableSuppressesIncrementalRendering: Bool,
+    enableThrottleSchedulingPolicy: Bool,
+    enableNoneSchedulingPolicy: Bool
   ) {
     self.enableSessionEvents = enableSessionEvents
     self.enablePostback = enablePostback
     self.enableExpressionParameters = enableExpressionParameters
     self.enableUserIdSeed = enableUserIdSeed
     self.disableVerboseEvents = disableVerboseEvents
+    self.enableWebviewProcessPool = enableWebviewProcessPool
+    self.enableSuppressesIncrementalRendering = enableSuppressesIncrementalRendering
+    self.enableThrottleSchedulingPolicy = enableThrottleSchedulingPolicy
+    self.enableNoneSchedulingPolicy = enableNoneSchedulingPolicy
   }
 }
 
@@ -68,7 +87,11 @@ extension FeatureFlags: Stubbable {
       enablePostback: true,
       enableExpressionParameters: true,
       enableUserIdSeed: true,
-      disableVerboseEvents: true
+      disableVerboseEvents: true,
+      enableWebviewProcessPool: true,
+      enableSuppressesIncrementalRendering: true,
+      enableThrottleSchedulingPolicy: true,
+      enableNoneSchedulingPolicy: false
     )
   }
 }

@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 03/03/2022.
 //
-// swiftlint:disable implicitly_unwrapped_optional
+// swiftlint:disable implicitly_unwrapped_optional function_body_length
 
 import Foundation
 import WebKit
@@ -27,7 +27,8 @@ class SWWebView: WKWebView {
   init(
     isMac: Bool,
     sessionEventsManager: SessionEventsManager,
-    messageHandler: PaywallMessageHandler
+    messageHandler: PaywallMessageHandler,
+    factory: FeatureFlagsFactory
   ) {
     self.isMac = isMac
     self.sessionEventsManager = sessionEventsManager
@@ -38,8 +39,14 @@ class SWWebView: WKWebView {
     config.allowsAirPlayForMediaPlayback = true
     config.allowsPictureInPictureMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
-    config.processPool = Self.processPool
-    config.suppressesIncrementalRendering = true
+
+    let featureFlags = factory.makeFeatureFlags()
+    if featureFlags?.enableWebviewProcessPool == true {
+      config.processPool = Self.processPool
+    }
+    if featureFlags?.enableSuppressesIncrementalRendering == true {
+      config.suppressesIncrementalRendering = true
+    }
 
     let preferences = WKPreferences()
     if #available(iOS 15.0, *),
@@ -47,6 +54,17 @@ class SWWebView: WKWebView {
       preferences.isTextInteractionEnabled = false // ignore-xcode-12
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true
+
+    #if compiler(>=5.9.0)
+    if #available(iOS 17.0, *) {
+      if featureFlags?.enableThrottleSchedulingPolicy == true {
+        preferences.inactiveSchedulingPolicy = .throttle
+      } else if featureFlags?.enableNoneSchedulingPolicy == true {
+        preferences.inactiveSchedulingPolicy = .none
+      }
+    }
+    #endif
+
     config.preferences = preferences
     wkConfig = config
 

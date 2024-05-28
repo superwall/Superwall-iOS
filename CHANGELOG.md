@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.6.5
+
+### Enhancements
+
+- Adds `enable_webview_process_pool`, `enable_suppresses_incremental_rendering`, `enable_throttle_scheduling_policy`, `enable_none_scheduling_policy` as feature flags for the webview configuration. 
+
 ## 3.6.4
 
 ### Enhancements

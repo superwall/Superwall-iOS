@@ -19,7 +19,8 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let webView = FakeWebView(
       isMac: false,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
-      messageHandler: messageHandler
+      messageHandler: messageHandler,
+      factory: dependencyContainer
     )
     let delegate = PaywallMessageHandlerDelegateMock(
       paywallInfo: .stub(),
@@ -43,7 +44,8 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let webView = FakeWebView(
       isMac: false,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
-      messageHandler: messageHandler
+      messageHandler: messageHandler,
+      factory: dependencyContainer
     )
     let delegate = PaywallMessageHandlerDelegateMock(
       paywallInfo: .stub(),
@@ -68,7 +70,8 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let webView = FakeWebView(
       isMac: false,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
-      messageHandler: messageHandler
+      messageHandler: messageHandler,
+      factory: dependencyContainer
     )
     let delegate = PaywallMessageHandlerDelegateMock(
       paywallInfo: .stub(),
@@ -90,7 +93,8 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let webView = FakeWebView(
       isMac: false,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
-      messageHandler: messageHandler
+      messageHandler: messageHandler,
+      factory: dependencyContainer
     )
     let delegate = PaywallMessageHandlerDelegateMock(
       paywallInfo: .stub(),
@@ -114,7 +118,8 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let webView = FakeWebView(
       isMac: false,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
-      messageHandler: messageHandler
+      messageHandler: messageHandler,
+      factory: dependencyContainer
     )
     let delegate = PaywallMessageHandlerDelegateMock(
       paywallInfo: .stub(),
@@ -138,7 +143,8 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let webView = FakeWebView(
       isMac: false,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
-      messageHandler: messageHandler
+      messageHandler: messageHandler,
+      factory: dependencyContainer
     )
     let delegate = PaywallMessageHandlerDelegateMock(
       paywallInfo: .stub(),
@@ -162,7 +168,8 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let webView = FakeWebView(
       isMac: false,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
-      messageHandler: messageHandler
+      messageHandler: messageHandler,
+      factory: dependencyContainer
     )
     let delegate = PaywallMessageHandlerDelegateMock(
       paywallInfo: .stub(),
@@ -184,7 +191,8 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let webView = FakeWebView(
       isMac: false,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
-      messageHandler: messageHandler
+      messageHandler: messageHandler,
+      factory: dependencyContainer
     )
     let delegate = PaywallMessageHandlerDelegateMock(
       paywallInfo: .stub(),
@@ -207,7 +215,8 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let webView = FakeWebView(
       isMac: false,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
-      messageHandler: messageHandler
+      messageHandler: messageHandler,
+      factory: dependencyContainer
     )
     let delegate = PaywallMessageHandlerDelegateMock(
       paywallInfo: .stub(),
