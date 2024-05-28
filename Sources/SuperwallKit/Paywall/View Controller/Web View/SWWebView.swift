@@ -55,6 +55,7 @@ class SWWebView: WKWebView {
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true
 
+    #if compiler(>=5.9.0)
     if #available(iOS 17.0, *) {
       if featureFlags?.enableThrottleSchedulingPolicy == true {
         preferences.inactiveSchedulingPolicy = .throttle
@@ -62,6 +63,7 @@ class SWWebView: WKWebView {
         preferences.inactiveSchedulingPolicy = .none
       }
     }
+    #endif
 
     config.preferences = preferences
     wkConfig = config
