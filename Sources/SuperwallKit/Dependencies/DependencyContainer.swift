@@ -224,7 +224,8 @@ extension DependencyContainer: ViewControllerFactory {
     let webView = SWWebView(
       isMac: deviceHelper.isMac,
       sessionEventsManager: sessionEventsManager,
-      messageHandler: messageHandler
+      messageHandler: messageHandler,
+      factory: self
     )
     let paywallViewController = PaywallViewController(
       paywall: paywall,
