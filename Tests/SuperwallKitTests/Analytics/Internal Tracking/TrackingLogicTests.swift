@@ -303,7 +303,8 @@ final class TrackingLogicTests: XCTestCase {
     let webView = SWWebView(
       isMac: false,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
-      messageHandler: messageHandler
+      messageHandler: messageHandler,
+      factory: dependencyContainer
     )
     let paywallVc = PaywallViewControllerMock(
       paywall: .stub(),

@@ -37,7 +37,10 @@ struct FeatureFlags: Decodable {
     enableUserIdSeed = rawFeatureFlags.value(forKey: "enable_userid_seed", default: false)
     disableVerboseEvents = rawFeatureFlags.value(forKey: "disable_verbose_events", default: false)
     enableWebviewProcessPool = rawFeatureFlags.value(forKey: "enable_webview_process_pool", default: false)
-    enableSuppressesIncrementalRendering = rawFeatureFlags.value(forKey: "enable_suppresses_incremental_rendering", default: false)
+    enableSuppressesIncrementalRendering = rawFeatureFlags.value(
+      forKey: "enable_suppresses_incremental_rendering",
+      default: false
+    )
     enableThrottleSchedulingPolicy = rawFeatureFlags.value(forKey: "enable_throttle_scheduling_policy", default: false)
     enableNoneSchedulingPolicy = rawFeatureFlags.value(forKey: "enable_none_scheduling_policy", default: false)
   }
