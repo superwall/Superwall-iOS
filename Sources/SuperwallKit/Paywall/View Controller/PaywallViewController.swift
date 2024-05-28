@@ -205,6 +205,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     #if !os(visionOS)
     setNeedsStatusBarAppearanceUpdate()
     #endif
+    view.backgroundColor = backgroundColor
 
     view.addSubview(webView)
     webView.alpha = 0.0
