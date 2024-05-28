@@ -4,7 +4,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.6.5
 
-### Fixes
+### Enhancements
 
 - Adds `enable_webview_process_pool`, `enable_suppresses_incremental_rendering`, `enable_throttle_scheduling_policy`, `enable_none_scheduling_policy` as feature flags for the webview configuration. 
 
