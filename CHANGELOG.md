@@ -2,6 +2,16 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.6.4
+
+### Enhancements
+
+- Tweaks to webview configuration for performance improvements.
+
+### Fixes
+
+- Fixes bug where paywall background wasn't being set.
+
 ## 3.6.3
 
 ### Enhancements

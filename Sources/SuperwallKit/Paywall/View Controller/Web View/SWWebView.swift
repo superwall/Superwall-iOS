@@ -21,6 +21,7 @@ class SWWebView: WKWebView {
   var didFailToLoad = false
   private let wkConfig: WKWebViewConfiguration
   private let isMac: Bool
+  private static let processPool = WKProcessPool()
   private unowned let sessionEventsManager: SessionEventsManager
 
   init(
@@ -37,6 +38,8 @@ class SWWebView: WKWebView {
     config.allowsAirPlayForMediaPlayback = true
     config.allowsPictureInPictureMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
+    config.processPool = Self.processPool
+    config.suppressesIncrementalRendering = true
 
     let preferences = WKPreferences()
     if #available(iOS 15.0, *),
