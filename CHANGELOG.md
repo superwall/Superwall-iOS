@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.6.6
+
+### Fixes
+
+- Makes sure the formatting of SK2 product variables use the same locale as the product.
+
 ## 3.6.5
 
 ### Enhancements

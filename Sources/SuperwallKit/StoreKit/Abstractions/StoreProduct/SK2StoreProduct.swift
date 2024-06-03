@@ -67,7 +67,10 @@ struct SK2StoreProduct: StoreProductType {
     guard let currencyCode = self.currencyCode else {
       return nil
     }
-    return priceFormatterProvider.priceFormatterForSK2(withCurrencyCode: currencyCode)
+    return priceFormatterProvider.priceFormatterForSK2(
+      withCurrencyCode: currencyCode,
+      locale: underlyingSK2Product.priceFormatStyle.locale
+    )
   }
 
   private func priceFormatter(locale: Locale) -> NumberFormatter {

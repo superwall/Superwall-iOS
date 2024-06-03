@@ -42,19 +42,23 @@ final class PriceFormatterProvider {
     }
   }
 
-  func priceFormatterForSK2(withCurrencyCode currencyCode: String) -> NumberFormatter {
+  func priceFormatterForSK2(
+    withCurrencyCode currencyCode: String,
+    locale: Locale = .autoupdatingCurrent
+  ) -> NumberFormatter {
     queue.sync {
       func makePriceFormatterForSK2(with currencyCode: String) -> NumberFormatter {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = locale
         formatter.currencyCode = currencyCode
         return formatter
       }
 
       guard
         let formatter = cachedPriceFormatterForSK2,
-        formatter.currencyCode == currencyCode
+        formatter.currencyCode == currencyCode,
+        formatter.locale == locale
       else {
         let newFormatter = makePriceFormatterForSK2(with: currencyCode)
         cachedPriceFormatterForSK2 = newFormatter
