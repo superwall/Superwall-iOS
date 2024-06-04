@@ -147,7 +147,7 @@ final class TransactionManager {
       var message = "Transactions Failed to Restore."
 
       if !isUserSubscribed && hasRestored {
-        message += " The user's subscription status is inactive, but the restoration result is \"restored\". Ensure the subscription status is active before confirming successful restoration."
+        message += " The user's subscription status is \"inactive\", but the restoration result is \"restored\". Ensure the subscription status is active before confirming successful restoration."
       }
       if case .failed(let error) = restorationResult,
         let error = error {
