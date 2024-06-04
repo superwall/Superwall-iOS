@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - SW-2804: Exposes a `presentation` property on the `PaywallInfo` object. This contains information about the presentation of the paywall.
+- Adds `restore_start`, `restore_complete`, and `restore_fail` events.
 
 ### Fixes
 
@@ -16,7 +17,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds `enable_webview_process_pool`, `enable_suppresses_incremental_rendering`, `enable_throttle_scheduling_policy`, `enable_none_scheduling_policy` as feature flags for the webview configuration. 
+- Adds `enable_webview_process_pool`, `enable_suppresses_incremental_rendering`, `enable_throttle_scheduling_policy`, `enable_none_scheduling_policy` as feature flags for the webview configuration.
 
 ## 3.6.4
 

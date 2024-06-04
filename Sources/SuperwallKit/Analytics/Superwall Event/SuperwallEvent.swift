@@ -155,6 +155,15 @@ public enum SuperwallEvent {
   /// When ``Superwall/reset()`` is called.
   case reset
 
+  /// When a restore is initiated
+  case restoreStart
+
+  /// When a restore fails.
+  case restoreFail(message: String)
+
+  /// When a restore completes.
+  case restoreComplete
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -275,6 +284,12 @@ extension SuperwallEvent {
       return .init(objcEvent: .surveyClose)
     case .reset:
       return .init(objcEvent: .reset)
+    case .restoreStart:
+      return .init(objcEvent: .restoreStart)
+    case .restoreFail:
+      return .init(objcEvent: .restoreFail)
+    case .restoreComplete:
+      return .init(objcEvent: .restoreComplete)
     }
   }
 }
