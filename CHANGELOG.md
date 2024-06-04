@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.6.6
 
+### Enhancements
+
+- SW-2804: Exposes a `presentation` property on the `PaywallInfo` object. This contains information about the presentation of the paywall.
+
 ### Fixes
 
 - Makes sure the formatting of SK2 product variables use the same locale as the product.
