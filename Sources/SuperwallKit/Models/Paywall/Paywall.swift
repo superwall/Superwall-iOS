@@ -29,22 +29,7 @@ struct Paywall: Decodable {
   /// by the webview.
   let htmlSubstitutions: String
 
-  struct Presentation {
-    var style: PaywallPresentationStyle = .modal
-    let condition: PresentationCondition
-    let delay: Int
-
-    init(
-      style: PaywallPresentationStyle,
-      condition: PresentationCondition,
-      delay: Int
-    ) {
-      self.style = style
-      self.condition = condition
-      self.delay = delay
-    }
-  }
-  let presentation: Presentation
+  let presentation: PaywallPresentationInfo
 
   let darkBackgroundColorHex: String?
   let darkBackgroundColor: UIColor?
@@ -180,7 +165,7 @@ struct Paywall: Decodable {
     let presentationCondition = try values.decode(PresentationCondition.self, forKey: .presentationCondition)
     let presentationDelay = try values.decode(Int.self, forKey: .presentationDelay)
 
-    presentation = Presentation(
+    presentation = PaywallPresentationInfo(
       style: presentationStyle,
       condition: presentationCondition,
       delay: presentationDelay
@@ -284,7 +269,7 @@ struct Paywall: Decodable {
     triggerSessionId: String? = nil,
     url: URL,
     htmlSubstitutions: String,
-    presentation: Paywall.Presentation,
+    presentation: PaywallPresentationInfo,
     backgroundColorHex: String,
     backgroundColor: UIColor,
     darkBackgroundColorHex: String?,
@@ -369,7 +354,8 @@ struct Paywall: Decodable {
       closeReason: closeReason,
       localNotifications: localNotifications,
       computedPropertyRequests: computedPropertyRequests,
-      surveys: surveys
+      surveys: surveys,
+      presentation: presentation
     )
   }
 
@@ -403,7 +389,7 @@ extension Paywall: Stubbable {
       name: "abc",
       url: URL(string: "https://google.com")!,
       htmlSubstitutions: "",
-      presentation: Presentation(
+      presentation: PaywallPresentationInfo(
         style: .modal,
         condition: .checkUserSubscription,
         delay: 0
