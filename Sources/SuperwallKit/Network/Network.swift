@@ -123,19 +123,11 @@ class Network {
     }
   }
 
-  @MainActor
   func getConfig(
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
     isRetryingCallback: @escaping () -> Void
   ) async throws -> Config {
-    let existingApplicationStatePublisher = self.applicationStateSubject.eraseToAnyPublisher()
-    let applicationStatePublisher = injectedApplicationStatePublisher ?? existingApplicationStatePublisher
-
-      // Suspend until app is in foreground.
-    try await applicationStatePublisher
-      .subscribe(on: DispatchQueue.main)
-      .filter { $0 != .background }
-      .throwableAsync()
+    try await appInForeground(injectedApplicationStatePublisher)
 
     do {
       let requestId = UUID().uuidString
@@ -156,8 +148,25 @@ class Network {
     }
   }
 
-  func getGeoInfo() async -> GeoInfo? {
+  @MainActor
+  private func appInForeground(
+    _ injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
+  ) async throws {
+    let existingApplicationStatePublisher = self.applicationStateSubject.eraseToAnyPublisher()
+    let applicationStatePublisher = injectedApplicationStatePublisher ?? existingApplicationStatePublisher
+
+    // Suspend until app is in foreground.
+    try await applicationStatePublisher
+      .subscribe(on: DispatchQueue.main)
+      .filter { $0 != .background }
+      .throwableAsync()
+  }
+
+  func getGeoInfo(
+    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
+  ) async -> GeoInfo? {
     do {
+      try await appInForeground(injectedApplicationStatePublisher)
       let geoWrapper = try await urlSession.request(.geo(factory: factory))
       return geoWrapper.info
     } catch {

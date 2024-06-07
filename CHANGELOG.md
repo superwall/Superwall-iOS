@@ -10,6 +10,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds `restore_start`, `restore_complete`, and `restore_fail` events.
 - SW-2850: Adds error message to `paywallWebviewLoad_fail`.
 - SW-2851: Adds error message to `paywallProductsLoad_fail`.
+- SW-2783: Logs error when trying to purchase a product that has failed to load.
 
 ### Fixes
 

@@ -50,6 +50,11 @@ final class TransactionManager {
     from paywallViewController: PaywallViewController
   ) async {
     guard let product = await storeKitManager.productsById[productId] else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallTransactions,
+        message: "Trying to purchase \(productId) but the product has failed to load. Visit https://superwall.com/l/missing-products to diagnose."
+      )
       return
     }
 
