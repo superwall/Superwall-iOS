@@ -9,6 +9,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - SW-2804: Exposes a `presentation` property on the `PaywallInfo` object. This contains information about the presentation of the paywall.
 - Adds `restore_start`, `restore_complete`, and `restore_fail` events.
 - SW-2850: Adds error message to `paywallWebviewLoad_fail`.
+- SW-2851: Adds error message to `paywallProductsLoad_fail`.
 
 ### Fixes
 

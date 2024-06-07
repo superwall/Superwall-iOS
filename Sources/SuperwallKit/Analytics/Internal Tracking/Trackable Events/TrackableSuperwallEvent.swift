@@ -616,7 +616,7 @@ enum InternalSuperwallEvent {
   struct PaywallProductsLoad: TrackableSuperwallEvent {
     enum State {
       case start
-      case fail
+      case fail(Error)
       case complete
     }
     let state: State
@@ -642,6 +642,9 @@ enum InternalSuperwallEvent {
       var params: [String: Any] = [
         "is_triggered_from_event": fromEvent
       ]
+      if case .fail(let error) = state {
+        params["error_message"] = error.safeLocalizedDescription
+      }
       params += await paywallInfo.eventParams()
       return params
     }
