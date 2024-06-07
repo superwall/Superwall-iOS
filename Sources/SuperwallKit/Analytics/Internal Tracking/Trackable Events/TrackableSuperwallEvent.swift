@@ -581,7 +581,7 @@ enum InternalSuperwallEvent {
   struct PaywallWebviewLoad: TrackableSuperwallEvent {
     enum State {
       case start
-      case fail
+      case fail(Error)
       case timeout
       case complete
     }
@@ -602,7 +602,11 @@ enum InternalSuperwallEvent {
     let paywallInfo: PaywallInfo
 
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams()
+      var eventParams = await paywallInfo.eventParams()
+      if case .fail(let error) = state {
+        eventParams["error_message"] = error.safeLocalizedDescription
+      }
+      return eventParams
     }
     var customParameters: [String: Any] {
       return paywallInfo.customParams()

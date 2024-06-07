@@ -151,7 +151,7 @@ final class TransactionManager {
       }
       if case .failed(let error) = restorationResult,
         let error = error {
-        message += " Original restoration error message: \(error.localizedDescription)"
+        message += " Original restoration error message: \(error.safeLocalizedDescription)"
       }
 
       Logger.debug(

@@ -219,7 +219,7 @@ class Cache {
           Logger.debug(
             logLevel: .error,
             scope: .cache,
-            message: "Error while creating cache folder: \(error.localizedDescription)"
+            message: "Error while creating cache folder: \(error.safeLocalizedDescription)"
           )
         }
       }
@@ -257,7 +257,7 @@ class Cache {
         Logger.debug(
           logLevel: .error,
           scope: .cache,
-          message: "Error while deleting file: \(error.localizedDescription)"
+          message: "Error while deleting file: \(error.safeLocalizedDescription)"
         )
       }
     }
@@ -290,7 +290,7 @@ extension Cache {
         Logger.debug(
           logLevel: .error,
           scope: .cache,
-          message: "Error when clean disk: \(error.localizedDescription)"
+          message: "Error when clean disk: \(error.safeLocalizedDescription)"
         )
       }
     }
@@ -317,7 +317,7 @@ extension Cache {
           Logger.debug(
             logLevel: .error,
             scope: .cache,
-            message: "Error while removing files \(error.localizedDescription)"
+            message: "Error while removing files \(error.safeLocalizedDescription)"
           )
         }
       }
@@ -343,7 +343,7 @@ extension Cache {
             Logger.debug(
               logLevel: .error,
               scope: .cache,
-              message: "Error while removing files \(error.localizedDescription)"
+              message: "Error while removing files \(error.safeLocalizedDescription)"
             )
           }
 
@@ -412,7 +412,7 @@ extension Cache {
         Logger.debug(
           logLevel: .error,
           scope: .cache,
-          message: "Error while iterating files \(error.localizedDescription)"
+          message: "Error while iterating files \(error.safeLocalizedDescription)"
         )
       }
     }

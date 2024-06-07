@@ -128,7 +128,7 @@ struct InAppReceiptPayload: ASN1Decodable {
           break
         }
       } catch {
-        assertionFailure("Something wrong here \(error.localizedDescription)")
+        assertionFailure("Something wrong here \(error.safeLocalizedDescription)")
       }
     }
 
