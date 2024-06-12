@@ -463,6 +463,9 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
     dependencyContainer.configManager.reset()
+    Task {
+      await Superwall.shared.track(InternalSuperwallEvent.Reset())
+    }
   }
 }
 

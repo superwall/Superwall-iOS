@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.6.7
+
+### Fixes
+
+- Fixes error message `undefined is not an object` that sometimes appeared when opening a paywall.
+
 ## 3.6.6
 
 ### Enhancements

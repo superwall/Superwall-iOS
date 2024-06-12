@@ -29,6 +29,13 @@ final class PaywallMessageHandler: WebEventDelegate {
   private unowned let sessionEventsManager: SessionEventsManager
   private let factory: VariablesFactory
 
+  struct EnqueuedMessage {
+    let name: String
+    let paywall: Paywall
+  }
+  /// Used to enqueue `paywall_open` messages if the paywall isn't ready to receive them yet.
+  private var messageQueue: Queue<EnqueuedMessage> = Queue()
+
   init(
     sessionEventsManager: SessionEventsManager,
     factory: VariablesFactory
@@ -63,8 +70,17 @@ final class PaywallMessageHandler: WebEventDelegate {
       hapticFeedback()
       delegate?.eventDidOccur(.closed)
     case .paywallOpen:
-      Task {
-        await self.pass(eventName: "paywall_open", from: paywall)
+      let eventName = "paywall_open"
+      if delegate?.paywall.paywalljsVersion == nil {
+        let message = EnqueuedMessage(
+          name: eventName,
+          paywall: paywall
+        )
+        messageQueue.enqueue(message)
+      } else {
+        Task {
+          await self.pass(eventName: eventName, from: paywall)
+        }
       }
     case .openUrl(let url):
       openUrl(url)
@@ -217,6 +233,17 @@ final class PaywallMessageHandler: WebEventDelegate {
 
       let preventZoom: String = "var meta = document.createElement('meta');" + "meta.name = 'viewport';" + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';" + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
       self.delegate?.webView.evaluateJavaScript(preventZoom)
+
+      while !messageQueue.isEmpty {
+        if let message = messageQueue.dequeue() {
+          Task {
+            await self.pass(
+              eventName: message.name,
+              from: message.paywall
+            )
+          }
+        }
+      }
     }
   }
 

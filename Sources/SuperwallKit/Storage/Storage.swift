@@ -134,10 +134,6 @@ class Storage {
       self?._didTrackFirstSeen = false
     }
 
-    Task {
-      await Superwall.shared.track(InternalSuperwallEvent.Reset())
-    }
-
     recordFirstSeenTracked()
   }
 
