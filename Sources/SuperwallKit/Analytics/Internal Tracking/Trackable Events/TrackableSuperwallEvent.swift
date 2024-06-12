@@ -415,6 +415,37 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct Restore: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case fail(String)
+      case complete
+    }
+    let state: State
+    let paywallInfo: PaywallInfo
+
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .restoreStart
+      case .fail(let message):
+        return .restoreFail(message: message)
+      case .complete:
+        return .restoreComplete
+      }
+    }
+    var customParameters: [String: Any] {
+      return paywallInfo.customParams()
+    }
+    func getSuperwallParameters() async -> [String: Any] {
+      var eventParams = await paywallInfo.eventParams()
+      if case .fail(let message) = state {
+        eventParams["error_message"] = message
+      }
+      return eventParams
+    }
+  }
+
   struct Transaction: TrackableSuperwallEvent {
     enum State {
       case start(StoreProduct)
@@ -550,7 +581,7 @@ enum InternalSuperwallEvent {
   struct PaywallWebviewLoad: TrackableSuperwallEvent {
     enum State {
       case start
-      case fail
+      case fail(Error)
       case timeout
       case complete
     }
@@ -571,7 +602,11 @@ enum InternalSuperwallEvent {
     let paywallInfo: PaywallInfo
 
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams()
+      var eventParams = await paywallInfo.eventParams()
+      if case .fail(let error) = state {
+        eventParams["error_message"] = error.safeLocalizedDescription
+      }
+      return eventParams
     }
     var customParameters: [String: Any] {
       return paywallInfo.customParams()
@@ -581,7 +616,7 @@ enum InternalSuperwallEvent {
   struct PaywallProductsLoad: TrackableSuperwallEvent {
     enum State {
       case start
-      case fail
+      case fail(Error)
       case complete
     }
     let state: State
@@ -607,6 +642,9 @@ enum InternalSuperwallEvent {
       var params: [String: Any] = [
         "is_triggered_from_event": fromEvent
       ]
+      if case .fail(let error) = state {
+        params["error_message"] = error.safeLocalizedDescription
+      }
       params += await paywallInfo.eventParams()
       return params
     }

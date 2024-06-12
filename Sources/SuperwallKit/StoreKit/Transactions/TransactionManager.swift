@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 20/10/2022.
 //
-// swiftlint:disable type_body_length file_length
+// swiftlint:disable type_body_length file_length line_length
 
 import StoreKit
 import UIKit
@@ -50,6 +50,11 @@ final class TransactionManager {
     from paywallViewController: PaywallViewController
   ) async {
     guard let product = await storeKitManager.productsById[productId] else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallTransactions,
+        message: "Trying to purchase \(productId) but the product has failed to load. Visit https://superwall.com/l/missing-products to diagnose."
+      )
       return
     }
 
@@ -117,6 +122,12 @@ final class TransactionManager {
 
     paywallViewController.loadingState = .loadingPurchase
 
+    let trackedEvent = InternalSuperwallEvent.Restore(
+      state: .start,
+      paywallInfo: paywallViewController.info
+    )
+    await Superwall.shared.track(trackedEvent)
+
     let restorationResult = await purchaseController.restorePurchases()
 
     let hasRestored = restorationResult == .restored
@@ -131,12 +142,34 @@ final class TransactionManager {
       await didRestore(
         paywallViewController: paywallViewController
       )
+
+      let trackedEvent = InternalSuperwallEvent.Restore(
+        state: .complete,
+        paywallInfo: paywallViewController.info
+      )
+      await Superwall.shared.track(trackedEvent)
     } else {
+      var message = "Transactions Failed to Restore."
+
+      if !isUserSubscribed && hasRestored {
+        message += " The user's subscription status is \"inactive\", but the restoration result is \"restored\". Ensure the subscription status is active before confirming successful restoration."
+      }
+      if case .failed(let error) = restorationResult,
+        let error = error {
+        message += " Original restoration error message: \(error.safeLocalizedDescription)"
+      }
+
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
-        message: "Transactions Failed to Restore"
+        message: message
       )
+
+      let trackedEvent = InternalSuperwallEvent.Restore(
+        state: .fail(message),
+        paywallInfo: paywallViewController.info
+      )
+      await Superwall.shared.track(trackedEvent)
 
       paywallViewController.presentAlert(
         title: Superwall.shared.options.paywalls.restoreFailed.title,

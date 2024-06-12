@@ -110,6 +110,17 @@ class SWWebView: WKWebView {
 
 // MARK: - WKNavigationDelegate
 extension SWWebView: WKNavigationDelegate {
+  enum WebViewError: LocalizedError {
+    case network(Int)
+
+    var errorDescription: String? {
+      switch self {
+      case .network(let errorCode):
+        return "The network failed with error code \(errorCode)"
+      }
+    }
+  }
+
   func webView(
     _ webView: WKWebView,
     decidePolicyFor navigationResponse: WKNavigationResponse
@@ -121,7 +132,7 @@ extension SWWebView: WKNavigationDelegate {
 
     // Track paywall errors
     if statusCode >= 400 {
-      await trackPaywallError()
+      await trackPaywallError(WebViewError.network(statusCode))
       return .cancel
     }
 
@@ -163,11 +174,14 @@ extension SWWebView: WKNavigationDelegate {
     delegate?.webViewDidFail()
     let date = Date()
     Task {
-      await trackPaywallError(at: date)
+      await trackPaywallError(error, at: date)
     }
   }
 
-  func trackPaywallError(at failAt: Date = Date()) async {
+  func trackPaywallError(
+    _ error: Error,
+    at failAt: Date = Date()
+  ) async {
     delegate?.paywall.webviewLoadingInfo.failAt = failAt
 
     guard let paywallInfo = delegate?.info else {
@@ -180,7 +194,7 @@ extension SWWebView: WKNavigationDelegate {
     )
 
     let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
-      state: .fail,
+      state: .fail(error),
       paywallInfo: paywallInfo
     )
     await Superwall.shared.track(trackedEvent)

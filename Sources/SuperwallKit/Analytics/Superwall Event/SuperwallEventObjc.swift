@@ -142,6 +142,15 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When ``Superwall/reset()`` is called.
   case reset
 
+  /// When a restore is initiated.
+  case restoreStart
+
+  /// When a restore fails.
+  case restoreFail
+
+  /// When a restore completes.
+  case restoreComplete
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -228,6 +237,12 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "survey_close"
     case .reset:
       return "reset"
+    case .restoreStart:
+      return "restore_start"
+    case .restoreFail:
+      return "restore_fail"
+    case .restoreComplete:
+      return "restore_complete"
     }
   }
 }

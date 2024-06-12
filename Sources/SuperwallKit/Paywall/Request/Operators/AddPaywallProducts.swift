@@ -66,7 +66,8 @@ extension PaywallRequestManager {
       )
       await trackProductLoadFail(
         paywallInfo: paywallInfo,
-        event: request.eventData
+        event: request.eventData,
+        error: error
       )
       throw error
     }
@@ -97,10 +98,11 @@ extension PaywallRequestManager {
 
   private func trackProductLoadFail(
     paywallInfo: PaywallInfo,
-    event: EventData?
+    event: EventData?,
+    error: Error
   ) async {
     let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
-      state: .fail,
+      state: .fail(error),
       paywallInfo: paywallInfo,
       eventData: event
     )

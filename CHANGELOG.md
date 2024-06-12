@@ -2,11 +2,25 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.6.6
+
+### Enhancements
+
+- SW-2804: Exposes a `presentation` property on the `PaywallInfo` object. This contains information about the presentation of the paywall.
+- Adds `restore_start`, `restore_complete`, and `restore_fail` events.
+- SW-2850: Adds error message to `paywallWebviewLoad_fail`.
+- SW-2851: Adds error message to `paywallProductsLoad_fail`.
+- SW-2783: Logs error when trying to purchase a product that has failed to load.
+
+### Fixes
+
+- Makes sure the formatting of SK2 product variables use the same locale as the product.
+
 ## 3.6.5
 
 ### Enhancements
 
-- Adds `enable_webview_process_pool`, `enable_suppresses_incremental_rendering`, `enable_throttle_scheduling_policy`, `enable_none_scheduling_policy` as feature flags for the webview configuration. 
+- Adds `enable_webview_process_pool`, `enable_suppresses_incremental_rendering`, `enable_throttle_scheduling_policy`, `enable_none_scheduling_policy` as feature flags for the webview configuration.
 
 ## 3.6.4
 
