@@ -20,63 +20,64 @@ final class RawWebMessageHandler: NSObject, WKScriptMessageHandler {
     self.delegate = delegate
   }
 
-  @MainActor
   func userContentController(
     _ userContentController: WKUserContentController,
     didReceive message: WKScriptMessage
   ) {
-    Logger.debug(
-      logLevel: .debug,
-      scope: .paywallViewController,
-      message: "Did Receive Message",
-      info: ["message": message.debugDescription],
-      error: nil
-    )
-
-    guard let bodyString = message.body as? String else {
+    Task { @MainActor in
       Logger.debug(
-        logLevel: .warn,
+        logLevel: .debug,
         scope: .paywallViewController,
-        message: "Unable to Convert Message to String",
-        info: ["message": message.debugDescription]
+        message: "Did Receive Message",
+        info: ["message": message.debugDescription],
+        error: nil
       )
-      return
-    }
-
-    guard let bodyData = bodyString.data(using: .utf8) else {
+      
+      guard let bodyString = message.body as? String else {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .paywallViewController,
+          message: "Unable to Convert Message to String",
+          info: ["message": message.debugDescription]
+        )
+        return
+      }
+      
+      guard let bodyData = bodyString.data(using: .utf8) else {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .paywallViewController,
+          message: "Unable to Convert Message to Data",
+          info: ["message": message.debugDescription]
+        )
+        return
+      }
+      
+      guard let wrappedPaywallMessages = try? JSONDecoder.fromSnakeCase.decode(
+        WrappedPaywallMessages.self,
+        from: bodyData
+      ) else {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .paywallViewController,
+          message: "Invalid WrappedPaywallEvent",
+          info: ["message": message.debugDescription]
+        )
+        return
+      }
+      
       Logger.debug(
-        logLevel: .warn,
+        logLevel: .debug,
         scope: .paywallViewController,
-        message: "Unable to Convert Message to Data",
-        info: ["message": message.debugDescription]
+        message: "Body Converted",
+        info: ["message": message.debugDescription, "events": wrappedPaywallMessages]
       )
-      return
-    }
-
-    guard let wrappedPaywallMessages = try? JSONDecoder.fromSnakeCase.decode(
-      WrappedPaywallMessages.self,
-      from: bodyData
-    ) else {
-      Logger.debug(
-        logLevel: .warn,
-        scope: .paywallViewController,
-        message: "Invalid WrappedPaywallEvent",
-        info: ["message": message.debugDescription]
-      )
-      return
-    }
-
-    Logger.debug(
-      logLevel: .debug,
-      scope: .paywallViewController,
-      message: "Body Converted",
-      info: ["message": message.debugDescription, "events": wrappedPaywallMessages]
-    )
-
-    let messages = wrappedPaywallMessages.payload.messages
-
-    for message in messages {
-      delegate?.handle(message)
+      
+      let messages = wrappedPaywallMessages.payload.messages
+      
+      for message in messages {
+        delegate?.handle(message)
+      }
     }
   }
 }

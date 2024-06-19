@@ -236,16 +236,16 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   nonisolated private func trackOpen() async {
-    let triggerSessionManager = factory.getTriggerSessionManager()
+    let triggerSessionManager = await factory.getTriggerSessionManager()
     await triggerSessionManager.trackPaywallOpen()
-    storage.trackPaywallOpen()
+    await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
     let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: info)
     await Superwall.shared.track(trackedEvent)
   }
 
   nonisolated private func trackClose() async {
-    let triggerSessionManager = factory.getTriggerSessionManager()
+    let triggerSessionManager = await factory.getTriggerSessionManager()
     let trackedEvent = await InternalSuperwallEvent.PaywallClose(
       paywallInfo: info,
       surveyPresentationResult: surveyPresentationResult

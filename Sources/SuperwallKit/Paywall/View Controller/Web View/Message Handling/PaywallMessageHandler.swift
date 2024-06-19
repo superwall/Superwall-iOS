@@ -70,7 +70,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       hapticFeedback()
       delegate?.eventDidOccur(.closed)
     case .paywallOpen:
-      let eventName = "paywall_open"
+      let eventName = SuperwallEventObjc.paywallOpen.description
       if delegate?.paywall.paywalljsVersion == nil {
         let message = EnqueuedMessage(
           name: eventName,
@@ -81,6 +81,51 @@ final class PaywallMessageHandler: WebEventDelegate {
         Task {
           await self.pass(eventName: eventName, from: paywall)
         }
+      }
+    case .restoreStart:
+      let eventName = SuperwallEventObjc.restoreStart.description
+      Task {
+        await self.pass(eventName: eventName, from: paywall)
+      }
+    case .restoreComplete:
+      let eventName = SuperwallEventObjc.restoreComplete.description
+      Task {
+        await self.pass(eventName: eventName, from: paywall)
+      }
+    case .restoreFail:
+      let eventName = SuperwallEventObjc.restoreFail.description
+      Task {
+        await self.pass(eventName: eventName, from: paywall)
+      }
+    case .transactionRestore:
+      let eventName = SuperwallEventObjc.transactionRestore.description
+      Task {
+        await self.pass(eventName: eventName, from: paywall)
+      }
+    case .transactionStart:
+      let eventName = SuperwallEventObjc.transactionStart.description
+      Task {
+        await self.pass(eventName: eventName, from: paywall)
+      }
+    case .transactionComplete:
+      let eventName = SuperwallEventObjc.transactionComplete.description
+      Task {
+        await self.pass(eventName: eventName, from: paywall)
+      }
+    case .transactionFail:
+      let eventName = SuperwallEventObjc.transactionFail.description
+      Task {
+        await self.pass(eventName: eventName, from: paywall)
+      }
+    case .transactionAbandon:
+      let eventName = SuperwallEventObjc.transactionAbandon.description
+      Task {
+        await self.pass(eventName: eventName, from: paywall)
+      }
+    case .transactionTimeout:
+      let eventName = SuperwallEventObjc.transactionTimeout.description
+      Task {
+        await self.pass(eventName: eventName, from: paywall)
       }
     case .openUrl(let url):
       openUrl(url)

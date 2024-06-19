@@ -19,6 +19,7 @@ protocol ViewControllerFactory: AnyObject {
     delegate: PaywallViewControllerDelegateAdapter?
   ) -> PaywallViewController
 
+  @MainActor
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
 }
 

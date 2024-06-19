@@ -163,6 +163,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
               model: nil
             )
             await Superwall.shared.track(trackedEvent)
+            await paywallViewController.webView.messageHandler.handle(.transactionTimeout)
           default:
             break
           }

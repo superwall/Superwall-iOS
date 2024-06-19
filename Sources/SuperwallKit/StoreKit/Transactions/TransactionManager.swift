@@ -127,6 +127,7 @@ final class TransactionManager {
       paywallInfo: paywallViewController.info
     )
     await Superwall.shared.track(trackedEvent)
+    paywallViewController.webView.messageHandler.handle(.restoreStart)
 
     let restorationResult = await purchaseController.restorePurchases()
 
@@ -148,6 +149,7 @@ final class TransactionManager {
         paywallInfo: paywallViewController.info
       )
       await Superwall.shared.track(trackedEvent)
+      paywallViewController.webView.messageHandler.handle(.restoreComplete)
     } else {
       var message = "Transactions Failed to Restore."
 
@@ -170,6 +172,7 @@ final class TransactionManager {
         paywallInfo: paywallViewController.info
       )
       await Superwall.shared.track(trackedEvent)
+      paywallViewController.webView.messageHandler.handle(.restoreFail(message))
 
       paywallViewController.presentAlert(
         title: Superwall.shared.options.paywalls.restoreFailed.title,
@@ -208,6 +211,7 @@ final class TransactionManager {
       model: transaction
     )
     await Superwall.shared.track(trackedEvent)
+    await paywallViewController.webView.messageHandler.handle(.transactionRestore)
 
     let superwallOptions = factory.makeSuperwallOptions()
     if superwallOptions.paywalls.automaticallyDismiss {
@@ -256,6 +260,7 @@ final class TransactionManager {
         model: nil
       )
       await Superwall.shared.track(trackedEvent)
+      await paywallViewController.webView.messageHandler.handle(.transactionFail)
       await self.sessionEventsManager.triggerSession.trackTransactionError()
     }
   }
@@ -283,6 +288,7 @@ final class TransactionManager {
       model: nil
     )
     await Superwall.shared.track(trackedEvent)
+    await paywallViewController.webView.messageHandler.handle(.transactionStart)
 
     await MainActor.run {
       paywallViewController.loadingState = .loadingPurchase
@@ -354,6 +360,7 @@ final class TransactionManager {
     )
     await Superwall.shared.track(trackedEvent)
     await sessionEventsManager.triggerSession.trackTransactionAbandon()
+    await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
 
     await MainActor.run {
       paywallViewController.loadingState = .ready
@@ -379,6 +386,7 @@ final class TransactionManager {
     )
     await Superwall.shared.track(trackedEvent)
     await self.sessionEventsManager.triggerSession.trackPendingTransaction()
+    await paywallViewController.webView.messageHandler.handle(.transactionFail)
 
     await paywallViewController.presentAlert(
       title: "Waiting for Approval",
@@ -422,6 +430,7 @@ final class TransactionManager {
       model: transaction
     )
     await Superwall.shared.track(trackedEvent)
+    await paywallViewController.webView.messageHandler.handle(.transactionComplete)
 
     // Immediately flush the events queue on transaction complete.
     await eventsQueue.flushInternal()
