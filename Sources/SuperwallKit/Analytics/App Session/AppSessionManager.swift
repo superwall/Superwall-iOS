@@ -82,7 +82,9 @@ class AppSessionManager {
           // Account for the fact that dev may have delayed the init of Superwall
           // such that applicationDidBecomeActive() doesn't activate.
           if !self.didTrackAppLaunch {
-            self.sessionCouldRefresh()
+            Task {
+              await self.sessionCouldRefresh()
+            }
           }
         }
       )
@@ -104,20 +106,23 @@ class AppSessionManager {
   @objc private func applicationDidBecomeActive() {
     Task {
       await Superwall.shared.track(InternalSuperwallEvent.AppOpen())
+      await sessionCouldRefresh()
     }
-    sessionCouldRefresh()
   }
 
   // MARK: - Logic
 
-  /// Tries to track a new app session, app launch, and first seen.
-  private func sessionCouldRefresh() {
-    detectNewSession()
-    trackAppLaunch()
+  /// Tries to track a new app session, then app launch, then first seen.
+  ///
+  /// Note: Order is important here because we need to check if it's an app launch
+  /// when deciding whether to track device attributes.
+  private func sessionCouldRefresh() async {
+    await detectNewSession()
+    await trackAppLaunch()
     storage.recordFirstSeenTracked()
   }
 
-  private func detectNewSession() {
+  private func detectNewSession() async {
     let didStartNewSession = AppSessionLogic.didStartNewSession(
       lastAppClose,
       withSessionTimeout: appSessionTimeout
@@ -125,22 +130,23 @@ class AppSessionManager {
 
     if didStartNewSession {
       appSession = AppSession()
-      Task {
-        let deviceAttributes = await delegate.makeSessionDeviceAttributes()
-        let userAttributes = delegate.makeUserAttributesEvent()
 
-        await withTaskGroup(of: Void.self) { group in
-          group.addTask {
-            await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
-          }
+      let deviceAttributes = await delegate.makeSessionDeviceAttributes()
+      let userAttributes = delegate.makeUserAttributesEvent()
+
+      await withTaskGroup(of: Void.self) { group in
+        group.addTask {
+          await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
+        }
+        if didTrackAppLaunch {
           group.addTask {
             await Superwall.shared.track(
               InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
             )
           }
-          group.addTask {
-            await Superwall.shared.track(userAttributes)
-          }
+        }
+        group.addTask {
+          await Superwall.shared.track(userAttributes)
         }
       }
     } else {
@@ -148,13 +154,11 @@ class AppSessionManager {
     }
   }
 
-  private func trackAppLaunch() {
+  private func trackAppLaunch() async {
     if didTrackAppLaunch {
       return
     }
-    Task {
-      await Superwall.shared.track(InternalSuperwallEvent.AppLaunch())
-    }
+    await Superwall.shared.track(InternalSuperwallEvent.AppLaunch())
     didTrackAppLaunch = true
   }
 }

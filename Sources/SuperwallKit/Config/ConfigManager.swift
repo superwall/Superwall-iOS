@@ -48,7 +48,11 @@ class ConfigManager {
   /// A task that is non-`nil` when preloading all paywalls.
   private var currentPreloadingTask: Task<Void, Never>?
 
-  private let factory: RequestFactory & RuleAttributesFactory & ReceiptFactory
+  typealias Factory = RequestFactory
+    & RuleAttributesFactory
+    & ReceiptFactory
+    & DeviceHelperFactory
+  private let factory: Factory
 
   init(
     options: SuperwallOptions,
@@ -57,7 +61,7 @@ class ConfigManager {
     network: Network,
     paywallManager: PaywallManager,
     deviceHelper: DeviceHelper,
-    factory: RequestFactory & RuleAttributesFactory & ReceiptFactory
+    factory: Factory
   ) {
     self.options = options
     self.storeKitManager = storeKitManager
@@ -78,6 +82,11 @@ class ConfigManager {
       async let geoRequest: Void = deviceHelper.getGeoInfo()
 
       let (config, _) = try await (configRequest, geoRequest)
+
+      let deviceAttributes = await factory.makeSessionDeviceAttributes()
+      await Superwall.shared.track(
+        InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
+      )
 
       Task { await sendProductsBack(from: config) }
 

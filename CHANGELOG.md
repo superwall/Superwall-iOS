@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes error message `undefined is not an object` that sometimes appeared when opening a paywall.
+- SW-2871: Makes sure to track device attributes after geo location data is found.
 
 ## 3.6.6
 
