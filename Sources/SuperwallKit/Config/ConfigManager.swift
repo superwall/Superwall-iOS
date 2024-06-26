@@ -72,6 +72,29 @@ class ConfigManager {
     self.factory = factory
   }
 
+  /// This refreshes the config. It fails quietly, falling back to the old config.
+  func refreshConfiguration() async {
+    do {
+      let config = try await network.getConfig()
+
+      // TODO: Only remove the cached paywalls which are outdated.
+      await paywallManager.resetRequestCache()
+      
+
+      await processConfig(config, isFirstTime: false)
+      configState.send(.retrieved(config))
+      Task { await preloadPaywalls() }
+    } catch {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: "Failed to Refresh Configuration",
+        info: nil,
+        error: error
+      )
+    }
+  }
+
   func fetchConfiguration() async {
     do {
       _ = await factory.loadPurchasedProducts()
@@ -90,10 +113,18 @@ class ConfigManager {
 
       Task { await sendProductsBack(from: config) }
 
-      await processConfig(config)
+      await processConfig(config, isFirstTime: true)
 
       configState.send(.retrieved(config))
 
+      // TODO: If preloading is off:
+      /*
+       We need to make sure paywall is refreshed eevn if preloading isn't on.
+       - Paywalls that already exist: refresh
+       - Paywalls that aren't in memory - need a way to say the first time they are loaded, check whether config has refreshed and whether they were updated after that time or not.
+       - Must not intefere with preloading.
+       - Use time? Add loadedAt time on config, and add for paywall object too.
+       */
       Task { await preloadPaywalls() }
     } catch {
       configState.send(completion: .failure(error))
@@ -107,11 +138,16 @@ class ConfigManager {
     }
   }
 
-  private func processConfig(_ config: Config) async {
+  private func processConfig(
+    _ config: Config,
+    isFirstTime: Bool
+  ) async {
     storage.save(config.featureFlags.disableVerboseEvents, forType: DisableVerboseEvents.self)
     triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
-    await checkForTouchesBeganTrigger(in: config.triggers)
+    if isFirstTime {
+      await checkForTouchesBeganTrigger(in: config.triggers)
+    }
   }
 
   /// Reassigns variants and preloads paywalls again.
@@ -282,11 +318,14 @@ class ConfigManager {
       }
     let triggersToPreload = config.triggers.filter { eventNames.contains($0.eventName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
-    await preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
+    await preloadPaywalls(
+      withIdentifiers: triggerPaywallIdentifiers
+    )
   }
 
   /// Preloads paywalls referenced by triggers.
-  private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) async {
+  private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>
+  ) async {
     await withTaskGroup(of: Void.self) { group in
       for identifier in paywallIdentifiers {
         group.addTask { [weak self] in
@@ -301,7 +340,6 @@ class ConfigManager {
             presentationSourceType: nil,
             retryCount: 6
           )
-
           guard let paywall = try? await paywallManager.getPaywall(from: request) else {
             return
           }

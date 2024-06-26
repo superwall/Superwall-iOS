@@ -60,6 +60,10 @@ class PaywallManager {
 		cache.removeAll()
 	}
 
+  func resetRequestCache() async {
+    await paywallRequestManager.reset()
+  }
+
   func getPaywall(from request: PaywallRequest) async throws -> Paywall {
     return try await paywallRequestManager.getPaywall(from: request)
   }
@@ -98,13 +102,26 @@ class PaywallManager {
 
     if !isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
-      // Do not adjust paywall or vc delegate if we are preloading or aren't going to
-      // present the paywall.
-      if !isPreloading,
-        isForPresentation {
-        viewController.delegate = delegate
-        viewController.paywall.update(from: paywall)
+      let outcomes = PaywallManagerLogic.handleCachedPaywall(
+        newPaywall: paywall,
+        oldPaywall: viewController.paywall,
+        isPreloading: isPreloading,
+        isForPresentation: isForPresentation
+      )
+
+      for outcome in outcomes {
+        switch outcome {
+        case .loadWebView:
+          viewController.loadWebView()
+        case .replacePaywall:
+          viewController.paywall = paywall
+        case .setDelegate:
+          viewController.delegate = delegate
+        case .updatePaywall:
+          viewController.paywall.update(from: paywall)
+        }
       }
+
       return viewController
     }
 

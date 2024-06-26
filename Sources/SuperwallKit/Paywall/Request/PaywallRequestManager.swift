@@ -31,6 +31,11 @@ actor PaywallRequestManager {
     self.factory = factory
   }
 
+  /// Called after refreshing config.
+  func reset() {
+    paywallsByHash.removeAll()
+  }
+
   ///  Gets a paywall from a given request.
   ///
   ///  If a request for the same paywall is already in progress, it suspends until the request returns.
@@ -68,7 +73,6 @@ actor PaywallRequestManager {
       do {
         let rawPaywall = try await getRawPaywall(from: request)
         let paywallWithProducts = try await addProducts(to: rawPaywall, request: request)
-
         saveRequestHash(
           requestHash,
           paywall: paywallWithProducts,

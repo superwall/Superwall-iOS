@@ -267,7 +267,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
   }
 
-  private func loadWebView() {
+  func loadWebView() {
     let url = paywall.url
 
     if paywall.webviewLoadingInfo.startAt == nil {

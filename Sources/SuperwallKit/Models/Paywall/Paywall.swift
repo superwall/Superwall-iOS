@@ -23,7 +23,7 @@ struct Paywall: Decodable {
   let name: String
 
   /// The URL of the paywall webpage
-  let url: URL
+  var url: URL
 
   /// Contains the website modifications that are made on the paywall editor to be accepted
   /// by the webview.
