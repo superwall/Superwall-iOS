@@ -87,6 +87,7 @@ class ConfigManager {
       await Superwall.shared.track(
         InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
+      await Superwall.shared.track(InternalSuperwallEvent.SessionStart(configTimestamp: config.ts))
 
       Task { await sendProductsBack(from: config) }
 

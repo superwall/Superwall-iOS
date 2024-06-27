@@ -24,6 +24,7 @@ struct Config: Decodable {
       }
     }
   }
+  let ts: Int
 
   enum CodingKeys: String, CodingKey {
     case triggers = "triggerOptions"
@@ -34,6 +35,7 @@ struct Config: Decodable {
     case appSessionTimeout = "appSessionTimeoutMs"
     case featureFlags = "toggles"
     case preloadingDisabled = "disablePreload"
+    case ts
   }
 
   init(from decoder: Decoder) throws {
@@ -49,6 +51,7 @@ struct Config: Decodable {
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
+    ts = try values.decode(Int.self, forKey: .ts)
   }
 
   init(
@@ -59,7 +62,8 @@ struct Config: Decodable {
     locales: Set<String>,
     appSessionTimeout: Milliseconds,
     featureFlags: FeatureFlags,
-    preloadingDisabled: PreloadingDisabled
+    preloadingDisabled: PreloadingDisabled,
+    ts: Int
   ) {
     self.triggers = triggers
     self.paywalls = paywalls
@@ -69,6 +73,7 @@ struct Config: Decodable {
     self.appSessionTimeout = appSessionTimeout
     self.featureFlags = featureFlags
     self.preloadingDisabled = preloadingDisabled
+    self.ts = ts
   }
 }
 
@@ -83,7 +88,8 @@ extension Config: Stubbable {
       locales: [],
       appSessionTimeout: 3600000,
       featureFlags: .stub(),
-      preloadingDisabled: .stub()
+      preloadingDisabled: .stub(),
+      ts: 1719479293597
     )
   }
 }

@@ -134,15 +134,20 @@ class AppSessionManager {
       let deviceAttributes = await delegate.makeSessionDeviceAttributes()
       let userAttributes = delegate.makeUserAttributesEvent()
 
-      await withTaskGroup(of: Void.self) { group in
-        group.addTask {
-          await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
+      await withTaskGroup(of: Void.self) { [weak self] group in
+        guard let self = self else {
+          return
         }
-        if didTrackAppLaunch {
+        if self.didTrackAppLaunch {
           group.addTask {
             await Superwall.shared.track(
               InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
             )
+          }
+          group.addTask {
+            if let config = self.configManager.config {
+              await Superwall.shared.track(InternalSuperwallEvent.SessionStart(configTimestamp: config.ts))
+            }
           }
         }
         group.addTask {

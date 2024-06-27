@@ -372,7 +372,7 @@ final class TrackingLogicTests: XCTestCase {
   
   // This happens when config is null
   func test_isNotDisabledVerboseEvent_nullVerboseEvents() {
-    let event = InternalSuperwallEvent.SessionStart()
+    let event = InternalSuperwallEvent.SessionStart(configTimestamp: 0)
     let result = TrackingLogic.isNotDisabledVerboseEvent(
       event,
       disableVerboseEvents: nil,
@@ -382,7 +382,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isSandbox_disabledEvents() {
-    let event = InternalSuperwallEvent.SessionStart()
+    let event = InternalSuperwallEvent.SessionStart(configTimestamp: 0)
     let result = TrackingLogic.isNotDisabledVerboseEvent(
       event,
       disableVerboseEvents: true,
@@ -493,7 +493,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_sessionStart() {
-    let event = InternalSuperwallEvent.SessionStart()
+    let event = InternalSuperwallEvent.SessionStart(configTimestamp: 0)
     let result = TrackingLogic.isNotDisabledVerboseEvent(
       event,
       disableVerboseEvents: false,
@@ -503,7 +503,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_sessionStart() {
-    let event = InternalSuperwallEvent.SessionStart()
+    let event = InternalSuperwallEvent.SessionStart(configTimestamp: 0)
     let result = TrackingLogic.isNotDisabledVerboseEvent(
       event,
       disableVerboseEvents: true,
