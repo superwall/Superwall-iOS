@@ -16,6 +16,7 @@ let response = #"""
     "enabled": true
   }
   ],
+  "ts": 1719479293597,
   "trigger_options": [{
     "trigger_version": "V2",
     "event_name": "MyEvent",

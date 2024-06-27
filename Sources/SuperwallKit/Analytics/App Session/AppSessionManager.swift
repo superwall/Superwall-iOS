@@ -115,7 +115,7 @@ class AppSessionManager {
   /// Tries to track a new app session, then app launch, then first seen.
   ///
   /// Note: Order is important here because we need to check if it's an app launch
-  /// when deciding whether to track device attributes.
+  /// when deciding whether to track device attributes/session start.
   private func sessionCouldRefresh() async {
     await detectNewSession()
     await trackAppLaunch()

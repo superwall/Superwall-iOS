@@ -56,13 +56,14 @@ class AppSessionManagerTests: XCTestCase {
 
   func testAppWillBecomeActive_newSession() async {
     let oldAppSession = appSessionManager.appSession
-
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     try? await Task.sleep(nanoseconds: 10_000_000)
 
     await NotificationCenter.default.post(
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
 
+    try? await Task.sleep(nanoseconds: 10_000_000)
     XCTAssertNotEqual(appSessionManager.appSession.id, oldAppSession.id)
   }
 
