@@ -10,6 +10,7 @@ import XCTest
 @testable import SuperwallKit
 import WebKit
 
+@available(iOS 16.0, *)
 final class RawWebMessageHandlerTests: XCTestCase {
   class MockWKScriptMessage: WKScriptMessage {
     private var internalBody: Any
@@ -32,7 +33,7 @@ final class RawWebMessageHandlerTests: XCTestCase {
   }
 
   @MainActor
-  func test_userContentController() {
+  func test_userContentController() async {
     let delegate = MockWebEventDelegate()
     let rawWebMessageHandler = RawWebMessageHandler(delegate: delegate)
     let body = """
@@ -44,7 +45,8 @@ final class RawWebMessageHandlerTests: XCTestCase {
       WKUserContentController(),
       didReceive: message
     )
-
+    
+    try? await Task.sleep(for: .milliseconds(10))
     XCTAssertEqual(delegate.handledMessages, [.onReady(paywallJsVersion: "2023-01-12")])
   }
 }
