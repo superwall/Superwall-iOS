@@ -450,6 +450,9 @@ class DeviceHelper {
     return newVersion
   }
 
+  private let capabilities = ""
+  private let capabilitiesConfig: [Capability] = []
+
   func getTemplateDevice() async -> [String: Any] {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
@@ -503,7 +506,9 @@ class DeviceHelper {
       ipCountry: geoInfo?.country,
       ipCity: geoInfo?.city,
       ipContinent: geoInfo?.continent,
-      ipTimezone: geoInfo?.timezone
+      ipTimezone: geoInfo?.timezone,
+      capabilities: capabilities,
+      capabilitiesConfig: capabilitiesConfig
     )
     return template.toDictionary()
   }

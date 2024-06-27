@@ -7,6 +7,12 @@
 
 import Foundation
 
+struct Capability: Codable {
+  let name: String
+  let store: String?
+  let provider: String?
+}
+
 struct DeviceTemplate: Codable {
   var publicApiKey: String
   var platform: String
@@ -57,6 +63,8 @@ struct DeviceTemplate: Codable {
   var ipCity: String?
   var ipContinent: String?
   var ipTimezone: String?
+  var capabilities: String
+  var capabilitiesConfig: [Capability]
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {
