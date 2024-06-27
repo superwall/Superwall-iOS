@@ -115,7 +115,7 @@ class AppSessionManager {
   /// Tries to track a new app session, then app launch, then first seen.
   ///
   /// Note: Order is important here because we need to check if it's an app launch
-  /// when deciding whether to track device attributes.
+  /// when deciding whether to track device attributes/session start.
   private func sessionCouldRefresh() async {
     await detectNewSession()
     await trackAppLaunch()
@@ -134,15 +134,20 @@ class AppSessionManager {
       let deviceAttributes = await delegate.makeSessionDeviceAttributes()
       let userAttributes = delegate.makeUserAttributesEvent()
 
-      await withTaskGroup(of: Void.self) { group in
-        group.addTask {
-          await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
+      await withTaskGroup(of: Void.self) { [weak self] group in
+        guard let self = self else {
+          return
         }
-        if didTrackAppLaunch {
+        if self.didTrackAppLaunch {
           group.addTask {
             await Superwall.shared.track(
               InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
             )
+          }
+          group.addTask {
+            if let config = self.configManager.config {
+              await Superwall.shared.track(InternalSuperwallEvent.SessionStart(configTimestamp: config.ts))
+            }
           }
         }
         group.addTask {

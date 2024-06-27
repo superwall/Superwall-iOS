@@ -88,7 +88,7 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_sessionStart() async {
-    let result = await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
+    let result = await Superwall.shared.track(InternalSuperwallEvent.SessionStart(configTimestamp: 0))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "session_start")
