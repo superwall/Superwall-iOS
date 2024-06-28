@@ -36,6 +36,7 @@ struct Paywall: Decodable {
   /// The URL of the paywall webpage
   let url: URL
 
+  /// An array of potential URLs to load the paywall from.
   let urlConfig: WebViewURLConfig
 
   /// Contains the website modifications that are made on the paywall editor to be accepted
