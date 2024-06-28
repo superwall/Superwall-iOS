@@ -136,9 +136,7 @@ class SWWebView: WKWebView {
       maxAttempts: urlConfig.maxAttempts,
       endpoints: urlConfig.endpoints
     )
-    if didLoad {
-      
-    } else {
+    if !didLoad {
       delegate?.webViewDidFail()
     }
   }

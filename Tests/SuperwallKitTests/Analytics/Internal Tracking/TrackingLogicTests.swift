@@ -304,6 +304,7 @@ final class TrackingLogicTests: XCTestCase {
       isMac: false,
       sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
     )
     let paywallVc = PaywallViewControllerMock(

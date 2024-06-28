@@ -32,7 +32,7 @@ final class RawWebMessageHandler: NSObject, WKScriptMessageHandler {
         info: ["message": message.debugDescription],
         error: nil
       )
-      
+
       guard let bodyString = message.body as? String else {
         Logger.debug(
           logLevel: .warn,
@@ -42,7 +42,7 @@ final class RawWebMessageHandler: NSObject, WKScriptMessageHandler {
         )
         return
       }
-      
+
       guard let bodyData = bodyString.data(using: .utf8) else {
         Logger.debug(
           logLevel: .warn,
@@ -52,7 +52,7 @@ final class RawWebMessageHandler: NSObject, WKScriptMessageHandler {
         )
         return
       }
-      
+
       guard let wrappedPaywallMessages = try? JSONDecoder.fromSnakeCase.decode(
         WrappedPaywallMessages.self,
         from: bodyData
@@ -65,16 +65,16 @@ final class RawWebMessageHandler: NSObject, WKScriptMessageHandler {
         )
         return
       }
-      
+
       Logger.debug(
         logLevel: .debug,
         scope: .paywallViewController,
         message: "Body Converted",
         info: ["message": message.debugDescription, "events": wrappedPaywallMessages]
       )
-      
+
       let messages = wrappedPaywallMessages.payload.messages
-      
+
       for message in messages {
         delegate?.handle(message)
       }
