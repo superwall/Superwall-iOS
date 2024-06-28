@@ -1515,7 +1515,7 @@ final class TrackingTests: XCTestCase {
 
   func test_paywallWebviewLoad_fail() async {
     let paywallInfo: PaywallInfo = .stub()
-    let result = await Superwall.shared.track(InternalSuperwallEvent.PaywallWebviewLoad(state: .fail(NetworkError.unknown), paywallInfo: paywallInfo))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.PaywallWebviewLoad(state: .fail(NetworkError.unknown, []), paywallInfo: paywallInfo))
     XCTAssertNotNil(result.parameters.eventParams["$app_session_id"])
     XCTAssertTrue(result.parameters.eventParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.eventParams["$event_name"] as! String, "paywallWebviewLoad_fail")

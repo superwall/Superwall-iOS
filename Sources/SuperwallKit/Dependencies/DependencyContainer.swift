@@ -225,6 +225,7 @@ extension DependencyContainer: ViewControllerFactory {
       isMac: deviceHelper.isMac,
       sessionEventsManager: sessionEventsManager,
       messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: paywall.onDeviceCache == .enabled,
       factory: self
     )
     let paywallViewController = PaywallViewController(

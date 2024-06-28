@@ -121,6 +121,9 @@ public enum SuperwallEvent {
   /// When the loading of a paywall's website times out.
   case paywallWebviewLoadTimeout(paywallInfo: PaywallInfo)
 
+  /// When a paywall's website completes loading.
+  case paywallWebviewLoadFallback(paywallInfo: PaywallInfo)
+
   /// When the request to load the paywall's products started.
   case paywallProductsLoadStart(triggeredEventName: String?, paywallInfo: PaywallInfo)
 
@@ -268,6 +271,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallWebviewLoadComplete)
     case .paywallWebviewLoadTimeout:
       return .init(objcEvent: .paywallWebviewLoadTimeout)
+    case .paywallWebviewLoadFallback:
+      return .init(objcEvent: .paywallWebviewLoadFallback)
     case .paywallProductsLoadStart:
       return .init(objcEvent: .paywallProductsLoadStart)
     case .paywallProductsLoadFail:
