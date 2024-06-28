@@ -268,8 +268,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   private func loadWebView() {
-    let url = paywall.url
-
     if paywall.webviewLoadingInfo.startAt == nil {
       paywall.webviewLoadingInfo.startAt = Date()
     }
@@ -297,7 +295,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
           loadWebViewFromArchive(url: url)
         } else {
           // Fallback to old way if couldn't get archive
-          loadWebViewFromNetwork(url: url)
+          await webView.load(urlConfig: paywall.urlConfig)
         }
       }
       return
@@ -306,25 +304,14 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     if let webArchiveURL = paywallArchiveManager?.getCachedArchiveURL(manifest: paywall.manifest) {
       loadWebViewFromArchive(url: webArchiveURL)
     } else {
-      loadWebViewFromNetwork(url: url)
+      Task {
+        await webView.load(urlConfig: paywall.urlConfig)
+      }
     }
   }
 
   private func loadWebViewFromArchive(url: URL) {
     webView.loadFileURL(url, allowingReadAccessTo: url)
-  }
-
-  private func loadWebViewFromNetwork(url: URL) {
-    if paywall.onDeviceCache == .enabled {
-      let request = URLRequest(
-        url: url,
-        cachePolicy: .returnCacheDataElseLoad
-      )
-      webView.load(request)
-    } else {
-      let request = URLRequest(url: url)
-      webView.load(request)
-    }
   }
 
   @objc private func reloadWebView() {
@@ -693,7 +680,7 @@ extension PaywallViewController {
       webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
     }
 
-    if webView.didFailToLoad {
+    if webView.loadingHandler.didFailToLoad {
       loadWebView()
     }
 

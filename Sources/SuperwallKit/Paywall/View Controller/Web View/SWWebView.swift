@@ -15,24 +15,45 @@ protocol SWWebViewDelegate: AnyObject {
   func webViewDidFail()
 }
 
+enum WebViewError: LocalizedError {
+  case network(Int)
+  case exceededAttempts
+  case noEndpoints
+
+  var errorDescription: String? {
+    switch self {
+    case .network(let errorCode):
+      return "The network failed with error code \(errorCode)."
+    case .exceededAttempts:
+      return "The webview has attempted to load too many times."
+    case .noEndpoints:
+      return "There were no paywall URLs provided."
+    }
+  }
+}
+
 class SWWebView: WKWebView {
   let messageHandler: PaywallMessageHandler
+  let loadingHandler = SWWebViewLoadingHandler()
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
-  var didFailToLoad = false
   private let wkConfig: WKWebViewConfiguration
   private let isMac: Bool
   private static let processPool = WKProcessPool()
   private unowned let sessionEventsManager: SessionEventsManager
+  private let isOnDeviceCacheEnabled: Bool
+  private var completion: ((Error?) -> Void)?
 
   init(
     isMac: Bool,
     sessionEventsManager: SessionEventsManager,
     messageHandler: PaywallMessageHandler,
+    isOnDeviceCacheEnabled: Bool,
     factory: FeatureFlagsFactory
   ) {
     self.isMac = isMac
     self.sessionEventsManager = sessionEventsManager
     self.messageHandler = messageHandler
+    self.isOnDeviceCacheEnabled = isOnDeviceCacheEnabled
 
     let config = WKWebViewConfiguration()
     config.allowsInlineMediaPlayback = true
@@ -72,6 +93,9 @@ class SWWebView: WKWebView {
       frame: .zero,
       configuration: wkConfig
     )
+    self.loadingHandler.loadingDelegate = self
+    self.loadingHandler.webViewDelegate = delegate
+
     wkConfig.userContentController.add(
       RawWebMessageHandler(delegate: messageHandler),
       name: "paywallMessageHandler"
@@ -106,21 +130,47 @@ class SWWebView: WKWebView {
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
+
+  func load(urlConfig: WebViewURLConfig) async {
+    let didLoad = await loadingHandler.load(
+      maxAttempts: urlConfig.maxAttempts,
+      endpoints: urlConfig.endpoints
+    )
+    if didLoad {
+      
+    } else {
+      delegate?.webViewDidFail()
+    }
+  }
+}
+
+extension SWWebView: SWWebViewLoadingDelegate {
+  func loadWebView(with url: URL) async throws {
+    if isOnDeviceCacheEnabled {
+      let request = URLRequest(
+        url: url,
+        cachePolicy: .returnCacheDataElseLoad
+      )
+      load(request)
+    } else {
+      let request = URLRequest(url: url)
+      load(request)
+    }
+    return try await withCheckedThrowingContinuation { continuation in
+      self.completion = { [weak self] error in
+        if let error = error {
+          continuation.resume(with: .failure(error))
+        } else {
+          continuation.resume(with: .success(()))
+        }
+        self?.completion = nil
+      }
+    }
+  }
 }
 
 // MARK: - WKNavigationDelegate
 extension SWWebView: WKNavigationDelegate {
-  enum WebViewError: LocalizedError {
-    case network(Int)
-
-    var errorDescription: String? {
-      switch self {
-      case .network(let errorCode):
-        return "The network failed with error code \(errorCode)"
-      }
-    }
-  }
-
   func webView(
     _ webView: WKWebView,
     decidePolicyFor navigationResponse: WKNavigationResponse
@@ -132,7 +182,7 @@ extension SWWebView: WKNavigationDelegate {
 
     // Track paywall errors
     if statusCode >= 400 {
-      await trackPaywallError(WebViewError.network(statusCode))
+      completion?(WebViewError.network(statusCode))
       return .cancel
     }
 
@@ -152,8 +202,8 @@ extension SWWebView: WKNavigationDelegate {
     return .cancel
   }
 
-  func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-    didFailToLoad = false
+  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    completion?(nil)
   }
 
   func webView(
@@ -161,8 +211,7 @@ extension SWWebView: WKNavigationDelegate {
     didFailProvisionalNavigation navigation: WKNavigation!,
     withError error: Error
   ) {
-    didFailToLoad = true
-    delegate?.webViewDidFailProvisionalNavigation()
+    completion?(error)
   }
 
   func webView(
@@ -170,33 +219,6 @@ extension SWWebView: WKNavigationDelegate {
     didFail navigation: WKNavigation!,
     withError error: Error
   ) {
-    didFailToLoad = true
-    delegate?.webViewDidFail()
-    let date = Date()
-    Task {
-      await trackPaywallError(error, at: date)
-    }
-  }
-
-  func trackPaywallError(
-    _ error: Error,
-    at failAt: Date = Date()
-  ) async {
-    delegate?.paywall.webviewLoadingInfo.failAt = failAt
-
-    guard let paywallInfo = delegate?.info else {
-      return
-    }
-
-    await sessionEventsManager.triggerSession.trackWebviewLoad(
-      forPaywallId: paywallInfo.databaseId,
-      state: .fail
-    )
-
-    let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
-      state: .fail(error),
-      paywallInfo: paywallInfo
-    )
-    await Superwall.shared.track(trackedEvent)
+    completion?(error)
   }
 }

@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.6.7
 
+### Enhancements
+
+- Adds support for multiple paywall URLs, incase one CDN provider fails.
+
 ### Fixes
 
 - Fixes error message `undefined is not an object` that sometimes appeared when opening a paywall.

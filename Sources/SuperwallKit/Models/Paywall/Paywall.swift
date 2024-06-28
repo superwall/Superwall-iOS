@@ -12,6 +12,17 @@ struct Paywalls: Decodable {
   var paywalls: [Paywall]
 }
 
+struct WebViewURLConfig: Decodable {
+  let endpoints: [WebViewEndpoint]
+  let maxAttempts: Int
+}
+
+struct WebViewEndpoint: Decodable {
+  let url: URL
+  let timeout: Milliseconds
+  let percentage: Double
+}
+
 struct Paywall: Decodable {
   /// The id of the paywall in the database.
   var databaseId: String
@@ -24,6 +35,8 @@ struct Paywall: Decodable {
 
   /// The URL of the paywall webpage
   let url: URL
+
+  let urlConfig: WebViewURLConfig
 
   /// Contains the website modifications that are made on the paywall editor to be accepted
   /// by the webview.
@@ -120,6 +133,7 @@ struct Paywall: Decodable {
     case identifier
     case name
     case url
+    case urlConfig
     case htmlSubstitutions = "paywalljsEvent"
     case presentationStyle = "presentationStyleV2"
     case presentationCondition
@@ -153,6 +167,7 @@ struct Paywall: Decodable {
     identifier = try values.decode(String.self, forKey: .identifier)
     name = try values.decode(String.self, forKey: .name)
     url = try values.decode(URL.self, forKey: .url)
+    urlConfig = try values.decode(WebViewURLConfig.self, forKey: .urlConfig)
     htmlSubstitutions = try values.decode(String.self, forKey: .htmlSubstitutions)
 
     let throwableSurveys = try values.decodeIfPresent(
@@ -268,6 +283,7 @@ struct Paywall: Decodable {
     experiment: Experiment? = nil,
     triggerSessionId: String? = nil,
     url: URL,
+    urlConfig: WebViewURLConfig,
     htmlSubstitutions: String,
     presentation: PaywallPresentationInfo,
     backgroundColorHex: String,
@@ -297,6 +313,7 @@ struct Paywall: Decodable {
     self.experiment = experiment
     self.triggerSessionId = triggerSessionId
     self.url = url
+    self.urlConfig = urlConfig
     self.htmlSubstitutions = htmlSubstitutions
     self.presentation = presentation
     self.backgroundColor = backgroundColor
@@ -388,6 +405,7 @@ extension Paywall: Stubbable {
       identifier: "identifier",
       name: "abc",
       url: URL(string: "https://google.com")!,
+      urlConfig: .init(endpoints: [], maxAttempts: 0),
       htmlSubstitutions: "",
       presentation: PaywallPresentationInfo(
         style: .modal,
