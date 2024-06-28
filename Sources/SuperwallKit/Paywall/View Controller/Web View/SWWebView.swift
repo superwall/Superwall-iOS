@@ -157,9 +157,9 @@ extension SWWebView: SWWebViewLoadingDelegate {
     return try await withCheckedThrowingContinuation { continuation in
       self.completion = { [weak self] error in
         if let error = error {
-          continuation.resume(with: .failure(error))
+          continuation.resume(throwing: error)
         } else {
-          continuation.resume(with: .success(()))
+          continuation.resume(returning: ())
         }
         self?.completion = nil
       }
