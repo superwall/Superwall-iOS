@@ -4,10 +4,16 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.6.7
 
+### Enhancements
+
+- Adds the ability for the SDK to refresh the Superwall configuration every session start.
+- Tracks a `config_refresh` Superwall event when the configuration is refreshed.
+
 ### Fixes
 
 - Fixes error message `undefined is not an object` that sometimes appeared when opening a paywall.
 - SW-2871: Makes sure to track device attributes after geo location data is found.
+- Fixes issue where restored transactions were being finished even if a `PurchaseController` was supplied in configure.
 
 ## 3.6.6
 

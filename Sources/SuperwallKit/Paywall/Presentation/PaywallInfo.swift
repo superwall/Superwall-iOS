@@ -124,8 +124,6 @@ public final class PaywallInfo: NSObject {
   /// Information about the presentation of the paywall.
   public let presentation: PaywallPresentationInfo
 
-  private unowned let factory: TriggerSessionManagerFactory
-
   init(
     databaseId: String,
     identifier: String,
@@ -149,7 +147,6 @@ public final class PaywallInfo: NSObject {
     paywalljsVersion: String?,
     isFreeTrialAvailable: Bool,
     presentationSourceType: String?,
-    factory: TriggerSessionManagerFactory,
     featureGatingBehavior: FeatureGatingBehavior,
     closeReason: PaywallCloseReason,
     localNotifications: [LocalNotification],
@@ -217,7 +214,6 @@ public final class PaywallInfo: NSObject {
     } else {
       self.productsLoadDuration = nil
     }
-    self.factory = factory
     self.closeReason = closeReason
   }
 
@@ -344,7 +340,6 @@ extension PaywallInfo: Stubbable {
       paywalljsVersion: nil,
       isFreeTrialAvailable: false,
       presentationSourceType: "register",
-      factory: dependencyContainer,
       featureGatingBehavior: .nonGated,
       closeReason: .manualClose,
       localNotifications: [],

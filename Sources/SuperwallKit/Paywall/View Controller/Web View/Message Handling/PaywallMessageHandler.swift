@@ -215,11 +215,6 @@ final class PaywallMessageHandler: WebEventDelegate {
         paywallInfo: paywallInfo
       )
       await Superwall.shared.track(trackedEvent)
-
-      await sessionEventsManager.triggerSession.trackWebviewLoad(
-        forPaywallId: paywallInfo.databaseId,
-        state: .end
-      )
     }
 
     let htmlSubstitutions = paywall.htmlSubstitutions

@@ -152,13 +152,6 @@ extension DependencyContainer: IdentityInfoFactory {
   }
 }
 
-// MARK: - AppManagerDelegate
-extension DependencyContainer: AppManagerDelegate {
-  func didUpdateAppSession(_ appSession: AppSession) async {
-    await sessionEventsManager.updateAppSession(appSession)
-  }
-}
-
 // MARK: - CacheFactory
 extension DependencyContainer: CacheFactory {
   func makeCache() -> PaywallViewControllerCache {
@@ -396,17 +389,10 @@ extension DependencyContainer: TriggerSessionManagerFactory {
   func makeTriggerSessionManager() -> TriggerSessionManager {
     // Separating delegate and sessionEventsManager to support testing.
     return TriggerSessionManager(
-      delegate: sessionEventsManager,
-      sessionEventsManager: sessionEventsManager,
-      storage: storage,
       configManager: configManager,
       appSessionManager: appSessionManager,
       identityManager: identityManager
     )
-  }
-
-  func getTriggerSessionManager() -> TriggerSessionManager {
-    return sessionEventsManager.triggerSession
   }
 }
 

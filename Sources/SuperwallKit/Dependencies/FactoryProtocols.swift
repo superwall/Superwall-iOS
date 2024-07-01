@@ -77,7 +77,6 @@ protocol ComputedPropertyRequestsFactory: AnyObject {
 
 protocol TriggerSessionManagerFactory: AnyObject {
   func makeTriggerSessionManager() -> TriggerSessionManager
-  func getTriggerSessionManager() -> TriggerSessionManager
 }
 
 protocol ConfigManagerFactory: AnyObject {

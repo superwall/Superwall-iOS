@@ -21,8 +21,6 @@ class SWWebView: WKWebView {
   var didFailToLoad = false
   private let wkConfig: WKWebViewConfiguration
   private let isMac: Bool
-  private static let processPool = WKProcessPool()
-  private unowned let sessionEventsManager: SessionEventsManager
 
   init(
     isMac: Bool,
@@ -31,7 +29,6 @@ class SWWebView: WKWebView {
     factory: FeatureFlagsFactory
   ) {
     self.isMac = isMac
-    self.sessionEventsManager = sessionEventsManager
     self.messageHandler = messageHandler
 
     let config = WKWebViewConfiguration()
@@ -41,9 +38,6 @@ class SWWebView: WKWebView {
     config.mediaTypesRequiringUserActionForPlayback = []
 
     let featureFlags = factory.makeFeatureFlags()
-    if featureFlags?.enableWebviewProcessPool == true {
-      config.processPool = Self.processPool
-    }
     if featureFlags?.enableSuppressesIncrementalRendering == true {
       config.suppressesIncrementalRendering = true
     }
@@ -187,11 +181,6 @@ extension SWWebView: WKNavigationDelegate {
     guard let paywallInfo = delegate?.info else {
       return
     }
-
-    await sessionEventsManager.triggerSession.trackWebviewLoad(
-      forPaywallId: paywallInfo.databaseId,
-      state: .fail
-    )
 
     let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
       state: .fail(error),

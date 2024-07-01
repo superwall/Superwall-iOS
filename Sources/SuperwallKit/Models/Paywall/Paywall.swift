@@ -322,10 +322,7 @@ struct Paywall: Decodable {
     self.manifest = manifest
   }
 
-  func getInfo(
-    fromEvent: EventData?,
-    factory: TriggerSessionManagerFactory
-  ) -> PaywallInfo {
+  func getInfo(fromEvent: EventData?) -> PaywallInfo {
     return PaywallInfo(
       databaseId: databaseId,
       identifier: identifier,
@@ -349,7 +346,6 @@ struct Paywall: Decodable {
       paywalljsVersion: paywalljsVersion,
       isFreeTrialAvailable: isFreeTrialAvailable,
       presentationSourceType: presentationSourceType,
-      factory: factory,
       featureGatingBehavior: featureGating,
       closeReason: closeReason,
       localNotifications: localNotifications,

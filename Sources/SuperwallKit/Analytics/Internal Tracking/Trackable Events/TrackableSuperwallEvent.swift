@@ -194,6 +194,12 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
+  struct ConfigRefresh: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .configRefresh
+    var customParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
   struct DeviceAttributes: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .deviceAttributes(attributes: deviceAttributes)

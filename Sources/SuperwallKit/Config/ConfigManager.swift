@@ -74,21 +74,26 @@ class ConfigManager {
 
   /// This refreshes the config. It fails quietly, falling back to the old config.
   func refreshConfiguration() async {
+    // Make sure config already exists and that config feature flag enabled.
+    guard config?.featureFlags.enableConfigRefresh == true else {
+      return
+    }
+
     do {
       let config = try await network.getConfig()
 
       // TODO: Only remove the cached paywalls which are outdated.
       await paywallManager.resetRequestCache()
-      
 
       await processConfig(config, isFirstTime: false)
       configState.send(.retrieved(config))
+      await Superwall.shared.track(InternalSuperwallEvent.ConfigRefresh())
       Task { await preloadPaywalls() }
     } catch {
       Logger.debug(
         logLevel: .warn,
         scope: .superwallCore,
-        message: "Failed to Refresh Configuration",
+        message: "Failed to refresh configuration.",
         info: nil,
         error: error
       )
