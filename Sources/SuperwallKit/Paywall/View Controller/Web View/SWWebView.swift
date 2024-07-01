@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 03/03/2022.
 //
-// swiftlint:disable implicitly_unwrapped_optional function_body_length
+// swiftlint:disable implicitly_unwrapped_optional
 
 import Foundation
 import WebKit

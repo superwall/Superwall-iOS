@@ -82,7 +82,6 @@ class ConfigManager {
     do {
       let config = try await network.getConfig()
 
-      // TODO: Only remove the cached paywalls which are outdated.
       await paywallManager.resetRequestCache()
 
       await processConfig(config, isFirstTime: false)
@@ -122,14 +121,6 @@ class ConfigManager {
 
       configState.send(.retrieved(config))
 
-      // TODO: If preloading is off:
-      /*
-       We need to make sure paywall is refreshed eevn if preloading isn't on.
-       - Paywalls that already exist: refresh
-       - Paywalls that aren't in memory - need a way to say the first time they are loaded, check whether config has refreshed and whether they were updated after that time or not.
-       - Must not intefere with preloading.
-       - Use time? Add loadedAt time on config, and add for paywall object too.
-       */
       Task { await preloadPaywalls() }
     } catch {
       configState.send(completion: .failure(error))
@@ -329,8 +320,7 @@ class ConfigManager {
   }
 
   /// Preloads paywalls referenced by triggers.
-  private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>
-  ) async {
+  private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) async {
     await withTaskGroup(of: Void.self) { group in
       for identifier in paywallIdentifiers {
         group.addTask { [weak self] in

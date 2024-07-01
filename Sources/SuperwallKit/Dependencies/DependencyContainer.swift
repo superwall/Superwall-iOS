@@ -388,11 +388,7 @@ extension DependencyContainer: RuleAttributesFactory {
 extension DependencyContainer: TriggerSessionManagerFactory {
   func makeTriggerSessionManager() -> TriggerSessionManager {
     // Separating delegate and sessionEventsManager to support testing.
-    return TriggerSessionManager(
-      configManager: configManager,
-      appSessionManager: appSessionManager,
-      identityManager: identityManager
-    )
+    return TriggerSessionManager(configManager: configManager)
   }
 }
 

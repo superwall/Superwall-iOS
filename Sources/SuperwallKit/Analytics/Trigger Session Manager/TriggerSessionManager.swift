@@ -4,7 +4,6 @@
 //
 //  Created by Yusuf Tör on 29/04/2022.
 //
-// swiftlint:disable type_body_length file_length
 
 import UIKit
 import StoreKit
@@ -18,8 +17,6 @@ actor TriggerSessionManager {
   var activeTriggerSession: TriggerSession?
 
   private unowned let configManager: ConfigManager
-  private unowned let appSessionManager: AppSessionManager
-  private unowned let identityManager: IdentityManager
 
   /// A local count for transactions used within the trigger session.
   private var transactionCount: TriggerSession.Transaction.Count?
@@ -35,13 +32,9 @@ actor TriggerSessionManager {
   }
 
   init(
-    configManager: ConfigManager,
-    appSessionManager: AppSessionManager,
-    identityManager: IdentityManager
+    configManager: ConfigManager
   ) {
     self.configManager = configManager
-    self.appSessionManager = appSessionManager
-    self.identityManager = identityManager
     Task {
       await listenForConfig()
     }
@@ -68,22 +61,15 @@ actor TriggerSessionManager {
   /// Creates a session for each potential trigger on config and manual paywall presentation and sends them off to the server.
   func createSessions(from config: Config) async {
     // Loop through triggers and create a session for each.
-    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
     for trigger in config.triggers {
       // If an existing trigger exists, we don't want to
       // recreate the trigger session. This could happen if the
       // config is refreshed.
       if let activeTriggerSession = activeTriggerSession,
-         activeTriggerSession.trigger.eventName == trigger.eventName {
+        activeTriggerSession.eventName == trigger.eventName {
         continue
       }
-      let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-        configRequestId: configManager.config?.requestId,
-        userAttributes: identityManager.userAttributes,
-        isSubscribed: isUserSubscribed,
-        eventName: trigger.eventName,
-        appSession: appSessionManager.appSession
-      )
+      let pendingTriggerSession = TriggerSession(eventName: trigger.eventName)
       pendingTriggerSessions[trigger.eventName] = pendingTriggerSession
     }
   }
@@ -107,29 +93,15 @@ actor TriggerSessionManager {
       return nil
     }
 
-    guard var session = pendingTriggerSessions[eventName] else {
+    guard let session = pendingTriggerSessions[eventName] else {
       return nil
     }
     guard let outcome = TriggerSessionManagerLogic.outcome(
       presentationInfo: presentationInfo,
-      presentingViewController: presentingViewController,
-      paywall: paywall,
       triggerResult: triggerResult?.toPublicType()
     ) else {
       return nil
     }
-
-    // Update trigger session
-    session.userAttributes = JSON(identityManager.userAttributes)
-    session.presentationOutcome = outcome.presentationOutcome
-    session.trigger = outcome.trigger
-    session.paywall = outcome.paywall
-    session.products = TriggerSession.Products(
-      allProducts: paywall?.swProducts ?? [],
-      loadingInfo: paywall?.productsLoadingInfo
-    )
-
-    session.appSession = appSessionManager.appSession
 
     self.activeTriggerSession = session
     pendingTriggerSessions[eventName] = nil
@@ -143,7 +115,7 @@ actor TriggerSessionManager {
       _ = await trackEvent(trackedEvent)
     }
 
-    switch outcome.presentationOutcome {
+    switch outcome {
     case .holdout,
       .noRuleMatch:
       await endSession()
@@ -156,22 +128,13 @@ actor TriggerSessionManager {
 
   /// Ends the active trigger session and resets it to `nil`.
   func endSession() async {
-    guard var currentTriggerSession = activeTriggerSession else {
+    guard let currentTriggerSession = activeTriggerSession else {
       return
     }
 
     // Recreate a pending trigger session
-    let eventName = currentTriggerSession.trigger.eventName
-    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
-    let pendingTriggerSession = TriggerSessionManagerLogic.createPendingTriggerSession(
-      configRequestId: configManager.config?.requestId,
-      userAttributes: identityManager.userAttributes,
-      isSubscribed: isUserSubscribed,
-      eventName: eventName,
-      products: currentTriggerSession.products.allProducts,
-      appSession: appSessionManager.appSession
-    )
-    pendingTriggerSessions[eventName] = pendingTriggerSession
+    let eventName = currentTriggerSession.eventName
+    pendingTriggerSessions[eventName] = TriggerSession(eventName: eventName)
 
     // Reset state of current trigger session
     activeTriggerSession = nil
