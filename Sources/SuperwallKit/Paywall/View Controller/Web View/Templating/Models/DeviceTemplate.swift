@@ -57,6 +57,8 @@ struct DeviceTemplate: Codable {
   var ipCity: String?
   var ipContinent: String?
   var ipTimezone: String?
+  var capabilities: String
+  var capabilitiesConfig: JSON
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

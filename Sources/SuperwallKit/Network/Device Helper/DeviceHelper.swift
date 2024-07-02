@@ -450,6 +450,10 @@ class DeviceHelper {
     return newVersion
   }
 
+  private let capabilitiesConfig = [
+    PaywallEventReceiverCapability()
+  ]
+
   func getTemplateDevice() async -> [String: Any] {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
@@ -503,7 +507,9 @@ class DeviceHelper {
       ipCountry: geoInfo?.country,
       ipCity: geoInfo?.city,
       ipContinent: geoInfo?.continent,
-      ipTimezone: geoInfo?.timezone
+      ipTimezone: geoInfo?.timezone,
+      capabilities: capabilitiesConfig.namesCommaSeparated(),
+      capabilitiesConfig: capabilitiesConfig.toJson()
     )
     return template.toDictionary()
   }
