@@ -138,9 +138,11 @@ class AppSessionManager {
               InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
             )
           }
-        }
-        group.addTask { [weak self] in
-          await self?.configManager.refreshConfiguration()
+
+          // Refresh only after we have a config and not on first app open.
+          group.addTask { [weak self] in
+            await self?.configManager.refreshConfiguration()
+          }
         }
         group.addTask {
           await Superwall.shared.track(userAttributes)
