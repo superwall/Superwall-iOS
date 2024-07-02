@@ -293,12 +293,15 @@ class ConfigManager {
         removing: config.preloadingDisabled
       )
       let confirmedAssignments = storage.getConfirmedAssignments()
-      let paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+      var paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
         fromTriggers: triggers,
         confirmedAssignments: confirmedAssignments,
         unconfirmedAssignments: unconfirmedAssignments,
         expressionEvaluator: expressionEvaluator
       )
+      if let presentedPaywallId = await Superwall.shared.paywallViewController?.paywall.identifier {
+        paywallIds.remove(presentedPaywallId)
+      }
       await preloadPaywalls(withIdentifiers: paywallIds)
 
       currentPreloadingTask = nil
