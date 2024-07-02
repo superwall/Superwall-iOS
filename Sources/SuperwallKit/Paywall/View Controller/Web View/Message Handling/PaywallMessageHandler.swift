@@ -82,6 +82,19 @@ final class PaywallMessageHandler: WebEventDelegate {
           await self.pass(eventName: eventName, from: paywall)
         }
       }
+    case .paywallClose:
+      let eventName = SuperwallEventObjc.paywallClose.description
+      if delegate?.paywall.paywalljsVersion == nil {
+        let message = EnqueuedMessage(
+          name: eventName,
+          paywall: paywall
+        )
+        messageQueue.enqueue(message)
+      } else {
+        Task {
+          await self.pass(eventName: eventName, from: paywall)
+        }
+      }
     case .restoreStart:
       let eventName = SuperwallEventObjc.restoreStart.description
       Task {
