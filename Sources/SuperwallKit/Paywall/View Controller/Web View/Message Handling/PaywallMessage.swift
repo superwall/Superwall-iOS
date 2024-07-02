@@ -48,6 +48,7 @@ enum PaywallMessage: Decodable, Equatable {
 
   // All cases below here are sent from device to paywall
   case paywallOpen
+
   case restoreStart
   case restoreFail(String)
   case restoreComplete

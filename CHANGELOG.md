@@ -8,6 +8,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes error message `undefined is not an object` that sometimes appeared when opening a paywall.
 - SW-2871: Makes sure to track device attributes after geo location data is found.
+- SW-2879: Adds `capabilities` to device attributes. This is a comma-separated list of capabilities the SDK has that you can target in audience filters. This release adds the `paywall_event_receiver` capability. This indicates that the paywall can receive transaction and restore events from the SDK.
+- SW-2879: Adds `configCapabilties` which contains a `name` of the capability and any additional info. The `paywall_event_receiver` capability contains a list of eventNames specifying the exact events paywalljs can receive.
 
 ## 3.6.6
 

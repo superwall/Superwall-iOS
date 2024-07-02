@@ -7,10 +7,25 @@
 
 import Foundation
 
-struct Capability: Codable {
-  let name: String
-  let store: String?
-  let provider: String?
+protocol Capability: Encodable {
+  var name: String { get }
+}
+
+struct PaywallEventReceiverCapability: Capability {
+  let name = "paywall_event_receiver"
+
+  let eventNames = [
+    SuperwallEventObjc.restoreStart.description,
+    SuperwallEventObjc.restoreComplete.description,
+    SuperwallEventObjc.restoreFail.description,
+    SuperwallEventObjc.transactionRestore.description,
+    SuperwallEventObjc.transactionStart.description,
+    SuperwallEventObjc.transactionComplete.description,
+    SuperwallEventObjc.transactionFail.description,
+    SuperwallEventObjc.transactionAbandon.description,
+    SuperwallEventObjc.transactionTimeout.description,
+    SuperwallEventObjc.paywallOpen.description
+  ]
 }
 
 struct DeviceTemplate: Codable {
@@ -64,7 +79,7 @@ struct DeviceTemplate: Codable {
   var ipContinent: String?
   var ipTimezone: String?
   var capabilities: String
-  var capabilitiesConfig: [Capability]
+  var capabilitiesConfig: JSON
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

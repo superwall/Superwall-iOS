@@ -450,8 +450,9 @@ class DeviceHelper {
     return newVersion
   }
 
-  private let capabilities = ""
-  private let capabilitiesConfig: [Capability] = []
+  private let capabilitiesConfig = [
+    PaywallEventReceiverCapability()
+  ]
 
   func getTemplateDevice() async -> [String: Any] {
     let identityInfo = await factory.makeIdentityInfo()
@@ -507,8 +508,8 @@ class DeviceHelper {
       ipCity: geoInfo?.city,
       ipContinent: geoInfo?.continent,
       ipTimezone: geoInfo?.timezone,
-      capabilities: capabilities,
-      capabilitiesConfig: capabilitiesConfig
+      capabilities: capabilitiesConfig.namesCommaSeparated(),
+      capabilitiesConfig: capabilitiesConfig.toJson()
     )
     return template.toDictionary()
   }
