@@ -246,6 +246,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       paywallInfo: info,
       surveyPresentationResult: surveyPresentationResult
     )
+    await webView.messageHandler.handle(.paywallClose)
     await Superwall.shared.track(trackedEvent)
   }
 
