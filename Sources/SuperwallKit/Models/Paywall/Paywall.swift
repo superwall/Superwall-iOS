@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
-// swiftlint:disable function_body_length type_body_length file_length
+// swiftlint:disable function_body_length type_body_length
 
 import UIKit
 
@@ -68,12 +68,6 @@ struct Paywall: Decodable {
 
   /// The experiment associated with the paywall.
   var experiment: Experiment?
-
-  /// The trigger session ID associated with the paywall.
-  var triggerSessionId: String?
-
-  /// A list of SWProducts that this paywall uses. This is accessed by the trigger session.
-  var swProducts: [SWProduct]? = []
 
   /// An list of product attributes associated with the paywall.
   ///
@@ -266,7 +260,6 @@ struct Paywall: Decodable {
     identifier: String,
     name: String,
     experiment: Experiment? = nil,
-    triggerSessionId: String? = nil,
     url: URL,
     htmlSubstitutions: String,
     presentation: PaywallPresentationInfo,
@@ -280,7 +273,6 @@ struct Paywall: Decodable {
     webviewLoadingInfo: LoadingInfo,
     productsLoadingInfo: LoadingInfo,
     paywalljsVersion: String,
-    swProducts: [SWProduct]? = [],
     productVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false,
     presentationSourceType: String? = nil,
@@ -295,7 +287,6 @@ struct Paywall: Decodable {
     self.identifier = identifier
     self.name = name
     self.experiment = experiment
-    self.triggerSessionId = triggerSessionId
     self.url = url
     self.htmlSubstitutions = htmlSubstitutions
     self.presentation = presentation
@@ -309,7 +300,6 @@ struct Paywall: Decodable {
     self.webviewLoadingInfo = webviewLoadingInfo
     self.productsLoadingInfo = productsLoadingInfo
     self.paywalljsVersion = paywalljsVersion
-    self.swProducts = swProducts
     self.productVariables = productVariables
     self.isFreeTrialAvailable = isFreeTrialAvailable
     self.presentationSourceType = presentationSourceType
@@ -342,7 +332,6 @@ struct Paywall: Decodable {
       productsLoadFailTime: productsLoadingInfo.failAt,
       productsLoadCompleteTime: productsLoadingInfo.endAt,
       experiment: experiment,
-      triggerSessionId: triggerSessionId,
       paywalljsVersion: paywalljsVersion,
       isFreeTrialAvailable: isFreeTrialAvailable,
       presentationSourceType: presentationSourceType,
@@ -357,7 +346,6 @@ struct Paywall: Decodable {
 
   mutating func update(from paywall: Paywall) {
     productItems = paywall.productItems
-    swProducts = paywall.swProducts
     productVariables = paywall.productVariables
     isFreeTrialAvailable = paywall.isFreeTrialAvailable
     productsLoadingInfo = paywall.productsLoadingInfo

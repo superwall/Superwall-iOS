@@ -53,7 +53,6 @@ extension PaywallRequestManager {
           return await self.factory.isFreeTrialAvailable(for: product)
         }
       )
-      paywall.swProducts = outcome.swProducts
       paywall.productVariables = outcome.productVariables
       paywall.isFreeTrialAvailable = outcome.isFreeTrialAvailable
 

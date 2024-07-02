@@ -19,11 +19,10 @@ final class FileManagerMigratorTests: XCTestCase {
     cache.write(["a": "b"], forType: UserAttributes.self, inDirectory: .cache)
     cache.write(true, forType: DidTrackAppInstall.self, inDirectory: .cache)
     cache.write("true", forType: LegacyDidTrackFirstSeen.self)
-    cache.write([.stub()], forType: TriggerSessions.self)
     cache.write([.stub()], forType: Transactions.self)
 
     // Check that they're in the cache and not in documents
-    XCTAssertEqual(cache.internalCache.count, 7)
+    XCTAssertEqual(cache.internalCache.count, 6)
     XCTAssertEqual(cache.internalUserDocuments.count, 0)
     XCTAssertEqual(cache.internalAppDocuments.count, 0)
 
@@ -31,7 +30,7 @@ final class FileManagerMigratorTests: XCTestCase {
     FileManagerMigrator.migrate(fromVersion: .v1, cache: cache)
     
     // Check they're all in the documents, except trigger sessions and transactions.
-    XCTAssertEqual(cache.internalCache.count, 2)
+    XCTAssertEqual(cache.internalCache.count, 1)
     XCTAssertEqual(cache.internalAppDocuments.count, 2)
     XCTAssertEqual(cache.internalUserDocuments.count, 4)
 

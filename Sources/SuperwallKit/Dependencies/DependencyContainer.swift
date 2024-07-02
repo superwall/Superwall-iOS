@@ -106,8 +106,7 @@ final class DependencyContainer {
       ),
       storage: storage,
       network: network,
-      configManager: configManager,
-      factory: self
+      configManager: configManager
     )
 
     // Must be after session events
@@ -381,14 +380,6 @@ extension DependencyContainer: RuleAttributesFactory {
       "device": deviceAttributes,
       "params": event?.parameters.dictionaryObject ?? ""
     ] as [String: Any])
-  }
-}
-
-// MARK: - TriggerSessionManager
-extension DependencyContainer: TriggerSessionManagerFactory {
-  func makeTriggerSessionManager() -> TriggerSessionManager {
-    // Separating delegate and sessionEventsManager to support testing.
-    return TriggerSessionManager(configManager: configManager)
   }
 }
 

@@ -12,11 +12,8 @@ import Combine
 ///
 /// This is used to be able to inject a mock version for testing.
 protocol SessionEnqueuable: Actor {
-  var triggerSessions: [TriggerSession] { get set }
   var transactions: [StoreTransaction] { get }
 
-  func enqueue(_ triggerSession: TriggerSession)
-  func enqueue(_ triggerSessions: [TriggerSession])
   func enqueue(_ transaction: StoreTransaction)
   func removeAllTriggerSessions()
   func flushInternal(depth: Int)
@@ -33,12 +30,10 @@ extension SessionEnqueuable {
 /// **Note**: this currently has a limit of 500 events per flush.
 actor SessionEventsQueue: SessionEnqueuable {
   private let maxEventCount = 50
-  var triggerSessions: [TriggerSession] = []
   var transactions: [StoreTransaction] = []
   private var timer: Timer?
   @MainActor
   private var willResignActiveObserver: AnyCancellable?
-  private lazy var lastTwentySessions = LimitedQueue<TriggerSession>(limit: 20)
   private lazy var lastTwentyTransactions = LimitedQueue<StoreTransaction>(limit: 20)
   private unowned let storage: Storage
   private unowned let network: Network
@@ -105,44 +100,23 @@ actor SessionEventsQueue: SessionEnqueuable {
     saveCacheToDisk()
   }
 
-  func enqueue(_ triggerSession: TriggerSession) {
-    triggerSessions.append(triggerSession)
-    lastTwentySessions.enqueue(triggerSession)
-  }
-
   func enqueue(_ transaction: StoreTransaction) {
     transactions.append(transaction)
     lastTwentyTransactions.enqueue(transaction)
   }
 
-  func enqueue(_ triggerSessions: [TriggerSession]) {
-    self.triggerSessions += triggerSessions
-
-    for session in triggerSessions {
-      lastTwentySessions.enqueue(session)
-    }
-  }
-
   func flushInternal(depth: Int) {
-    var triggerSessionsToSend: [TriggerSession] = []
     var transactionsToSend: [StoreTransaction] = []
 
     var i = 0
-    while i < maxEventCount && !triggerSessions.isEmpty {
-      triggerSessionsToSend.append(triggerSessions.removeFirst())
-      i += 1
-    }
-
-    i = 0
     while i < maxEventCount && !transactions.isEmpty {
       transactionsToSend.append(transactions.removeFirst())
       i += 1
     }
 
-    if !triggerSessionsToSend.isEmpty || !transactionsToSend.isEmpty {
+    if !transactionsToSend.isEmpty {
       // Send to network
       let sessionEvents = SessionEventsRequest(
-        triggerSessions: triggerSessionsToSend,
         transactions: transactionsToSend
       )
       Task {
@@ -150,19 +124,13 @@ actor SessionEventsQueue: SessionEnqueuable {
       }
     }
 
-    if (!triggerSessions.isEmpty || !transactions.isEmpty) && depth > 0 {
+    if !transactions.isEmpty && depth > 0 {
       return flushInternal(depth: depth - 1)
     }
   }
 
   func saveCacheToDisk() {
-    saveLatestSessionsToDisk()
     saveLatestTransactionsToDisk()
-  }
-
-  private func saveLatestSessionsToDisk() {
-    let sessions = lastTwentySessions.getArray()
-    storage.save(sessions, forType: TriggerSessions.self)
   }
 
   private func saveLatestTransactionsToDisk() {

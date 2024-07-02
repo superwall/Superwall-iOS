@@ -8,7 +8,7 @@
 import Foundation
 @testable import SuperwallKit
 
-class AppManagerDelegateMock: AppManagerDelegate, DeviceHelperFactory, UserAttributesEventFactory {
+class AppManagerDelegateMock: DeviceHelperFactory, UserAttributesEventFactory {
   func makeDeviceInfo() -> SuperwallKit.DeviceInfo {
     return .init(appInstalledAtString: "", locale: "")
   }
@@ -17,6 +17,4 @@ class AppManagerDelegateMock: AppManagerDelegate, DeviceHelperFactory, UserAttri
   func makeUserAttributesEvent() -> InternalSuperwallEvent.Attributes { 
     return InternalSuperwallEvent.Attributes(appInstalledAtString: "")
   }
-
-  func didUpdateAppSession(_ appSession: AppSession) async {}
 }
