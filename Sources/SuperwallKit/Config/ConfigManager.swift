@@ -74,8 +74,13 @@ class ConfigManager {
 
   /// This refreshes the config. It fails quietly, falling back to the old config.
   func refreshConfiguration() async {
-    // Make sure config already exists and that config feature flag enabled.
-    guard config?.featureFlags.enableConfigRefresh == true else {
+    // Make sure config already exists
+    guard let config = config else {
+      return
+    }
+
+    // Ensuere the config refresh feature flag is enabled
+    guard config.featureFlags.enableConfigRefresh == true else {
       return
     }
 

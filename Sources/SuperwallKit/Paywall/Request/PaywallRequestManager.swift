@@ -30,7 +30,7 @@ actor PaywallRequestManager {
     self.factory = factory
   }
 
-  /// Called after refreshing config.
+  /// Removes all the cached `Paywall` objects.
   func reset() {
     paywallsByHash.removeAll()
   }

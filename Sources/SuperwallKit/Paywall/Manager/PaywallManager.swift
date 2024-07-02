@@ -60,6 +60,8 @@ class PaywallManager {
 		cache.removeAll()
 	}
 
+  /// Removes cached `Paywall` objects so that they can be fetched again
+  /// when the config refreshes.
   func resetRequestCache() async {
     await paywallRequestManager.reset()
   }
