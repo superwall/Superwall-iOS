@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
-// swiftlint:disable line_length function_body_length
+// swiftlint:disable line_length function_body_length type_body_length
 
 import UIKit
 import WebKit
@@ -71,6 +71,19 @@ final class PaywallMessageHandler: WebEventDelegate {
       delegate?.eventDidOccur(.closed)
     case .paywallOpen:
       let eventName = SuperwallEventObjc.paywallOpen.description
+      if delegate?.paywall.paywalljsVersion == nil {
+        let message = EnqueuedMessage(
+          name: eventName,
+          paywall: paywall
+        )
+        messageQueue.enqueue(message)
+      } else {
+        Task {
+          await self.pass(eventName: eventName, from: paywall)
+        }
+      }
+    case .paywallClose:
+      let eventName = SuperwallEventObjc.paywallClose.description
       if delegate?.paywall.paywalljsVersion == nil {
         let message = EnqueuedMessage(
           name: eventName,
