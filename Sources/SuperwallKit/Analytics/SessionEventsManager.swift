@@ -13,7 +13,7 @@ protocol SessionEventsDelegate: AnyObject {
 }
 
 class SessionEventsManager {
-  /// A queue of trigger session events that get sent to the server.
+  /// A queue of transaction events that get sent to the server.
   private let queue: SessionEnqueuable
 
   private var cancellables: [AnyCancellable] = []
@@ -38,7 +38,7 @@ class SessionEventsManager {
     }
   }
 
-  /// Gets the last 20 cached trigger sessions and transactions from the last time the app was terminated,
+  /// Gets the last 20 cached transactions from the last time the app was terminated,
   /// sends them back to the server, then clears cache.
   private func postCachedSessionEvents() async {
     guard configManager.config?.featureFlags.enableSessionEvents == true else {

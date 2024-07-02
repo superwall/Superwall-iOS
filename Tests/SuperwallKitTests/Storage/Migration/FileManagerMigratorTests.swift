@@ -29,7 +29,7 @@ final class FileManagerMigratorTests: XCTestCase {
     // Migrate
     FileManagerMigrator.migrate(fromVersion: .v1, cache: cache)
     
-    // Check they're all in the documents, except trigger sessions and transactions.
+    // Check they're all in the documents, except transactions.
     XCTAssertEqual(cache.internalCache.count, 1)
     XCTAssertEqual(cache.internalAppDocuments.count, 2)
     XCTAssertEqual(cache.internalUserDocuments.count, 4)
