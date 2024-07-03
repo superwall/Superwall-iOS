@@ -16,6 +16,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes issue where restored transactions were being finished even if a `PurchaseController` was supplied in configure.
 - SW-2879: Adds `capabilities` to device attributes. This is a comma-separated list of capabilities the SDK has that you can target in audience filters. This release adds the `paywall_event_receiver` capability. This indicates that the paywall can receive transaction and restore events from the SDK.
 - SW-2879: Adds `configCapabilties` which contains a `name` of the capability and any additional info. The `paywall_event_receiver` capability contains a list of eventNames specifying the exact events paywalljs can receive.
+- Fixes a crash caused by an arithmetic overflow if there was an issue with audience filter limits.
 
 ## 3.6.6
 
