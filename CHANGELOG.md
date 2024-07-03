@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds the ability for the SDK to refresh the Superwall configuration every session start.
+- Adds the ability for the SDK to refresh the Superwall configuration every session start, subject to a feature flag.
 - Tracks a `config_refresh` Superwall event when the configuration is refreshed.
 
 ### Fixes
