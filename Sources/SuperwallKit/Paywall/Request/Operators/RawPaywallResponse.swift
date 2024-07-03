@@ -17,10 +17,7 @@ extension PaywallRequestManager {
     )
     let paywall = try await getPaywallResponse(from: request)
 
-    let paywallInfo = paywall.getInfo(
-      fromEvent: request.eventData,
-      factory: factory
-    )
+    let paywallInfo = paywall.getInfo(fromEvent: request.eventData)
     await trackResponseLoaded(
       paywallInfo,
       event: request.eventData
@@ -51,11 +48,6 @@ extension PaywallRequestManager {
         )
       }
     } catch {
-      let triggerSessionManager = factory.getTriggerSessionManager()
-      await triggerSessionManager.trackPaywallResponseLoad(
-        forPaywallId: request.responseIdentifiers.paywallId,
-        state: .fail
-      )
       let errorResponse = PaywallLogic.handlePaywallError(
         error,
         forEvent: event
@@ -75,11 +67,6 @@ extension PaywallRequestManager {
     paywallId: String?,
     event: EventData?
   ) async {
-    let triggerSessionManager = factory.getTriggerSessionManager()
-    await triggerSessionManager.trackPaywallResponseLoad(
-      forPaywallId: paywallId,
-      state: .start
-    )
     let trackedEvent = InternalSuperwallEvent.PaywallLoad(
       state: .start,
       eventData: event
@@ -96,11 +83,5 @@ extension PaywallRequestManager {
       eventData: event
     )
     await Superwall.shared.track(responseLoadEvent)
-
-    let triggerSessionManager = factory.getTriggerSessionManager()
-    await triggerSessionManager.trackPaywallResponseLoad(
-      forPaywallId: paywallInfo.databaseId,
-      state: .end
-    )
   }
 }

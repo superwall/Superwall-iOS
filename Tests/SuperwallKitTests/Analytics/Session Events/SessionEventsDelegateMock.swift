@@ -10,22 +10,11 @@ import Foundation
 
 final class SessionEventsDelegateMock: SessionEventsDelegate {
   var queue: SessionEnqueuable
-  var triggerSession: TriggerSessionManager
 
   init(
-    queue: SessionEnqueuable,
-    factory: TriggerSessionManagerFactory
+    queue: SessionEnqueuable
   ) {
     self.queue = queue
-    self.triggerSession = factory.makeTriggerSessionManager()
-  }
-
-  func enqueue(_ triggerSession: TriggerSession) async {
-    await queue.enqueue(triggerSession)
-  }
-
-  func enqueue(_ triggerSessions: [TriggerSession]) async {
-    await queue.enqueue(triggerSessions)
   }
 
   func enqueue(_ transaction: StoreTransaction) async {

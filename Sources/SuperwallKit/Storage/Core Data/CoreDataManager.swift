@@ -167,7 +167,8 @@ class CoreDataManager {
           scope: .coreData,
           message: "Calendar couldn't calculate date by adding \(minutes) minutes and returned nil."
         )
-        return .max
+        // Return maxCount so that it won't fire the trigger.
+        return ruleOccurrence.maxCount
       }
       fetchRequest.predicate = NSPredicate(
         format: "createdAt >= %@ AND occurrenceKey == %@",

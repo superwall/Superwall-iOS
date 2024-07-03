@@ -60,6 +60,24 @@ class PaywallManager {
 		cache.removeAll()
 	}
 
+  func removePaywallViewControllers(withIds ids: Set<String>) {
+    let deviceInfo = factory.makeDeviceInfo()
+
+    for id in ids {
+      let cacheKey = PaywallCacheLogic.key(
+        identifier: id,
+        locale: deviceInfo.locale
+      )
+      cache.removePaywallViewController(forKey: cacheKey)
+    }
+  }
+
+  /// Removes cached `Paywall` objects so that they can be fetched again
+  /// when the config refreshes.
+  func resetPaywallRequestCache() async {
+    await paywallRequestManager.reset()
+  }
+
   func getPaywall(from request: PaywallRequest) async throws -> Paywall {
     return try await paywallRequestManager.getPaywall(from: request)
   }
@@ -98,13 +116,26 @@ class PaywallManager {
 
     if !isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
-      // Do not adjust paywall or vc delegate if we are preloading or aren't going to
-      // present the paywall.
-      if !isPreloading,
-        isForPresentation {
-        viewController.delegate = delegate
-        viewController.paywall.update(from: paywall)
+      let outcomes = PaywallManagerLogic.handleCachedPaywall(
+        newPaywall: paywall,
+        oldPaywall: viewController.paywall,
+        isPreloading: isPreloading,
+        isForPresentation: isForPresentation
+      )
+
+      for outcome in outcomes {
+        switch outcome {
+        case .loadWebView:
+          viewController.loadWebView()
+        case .replacePaywall:
+          viewController.paywall = paywall
+        case .setDelegate:
+          viewController.delegate = delegate
+        case .updatePaywall:
+          viewController.paywall.update(from: paywall)
+        }
       }
+
       return viewController
     }
 

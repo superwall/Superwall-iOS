@@ -164,6 +164,9 @@ public enum SuperwallEvent {
   /// When a restore completes.
   case restoreComplete
 
+  /// When the Superwall configuration is refreshed.
+  case configRefresh
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -290,6 +293,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .restoreFail)
     case .restoreComplete:
       return .init(objcEvent: .restoreComplete)
+    case .configRefresh:
+      return .init(objcEvent: .configRefresh)
     }
   }
 }

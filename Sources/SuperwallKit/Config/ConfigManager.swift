@@ -72,6 +72,58 @@ class ConfigManager {
     self.factory = factory
   }
 
+  /// This refreshes the config. It fails quietly, falling back to the old config.
+  func refreshConfiguration() async {
+    // Make sure config already exists
+    guard let oldConfig = config else {
+      return
+    }
+
+    // Ensure the config refresh feature flag is enabled
+    guard oldConfig.featureFlags.enableConfigRefresh == true else {
+      return
+    }
+
+    do {
+      let newConfig = try await network.getConfig()
+
+      await removeUnusedPaywallVCsFromCache(
+        oldConfig: oldConfig,
+        newConfig: newConfig
+      )
+
+      await paywallManager.resetPaywallRequestCache()
+
+      await processConfig(newConfig, isFirstTime: false)
+      configState.send(.retrieved(newConfig))
+      await Superwall.shared.track(InternalSuperwallEvent.ConfigRefresh())
+      Task { await preloadPaywalls() }
+    } catch {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: "Failed to refresh configuration.",
+        info: nil,
+        error: error
+      )
+    }
+  }
+
+  private func removeUnusedPaywallVCsFromCache(
+    oldConfig: Config,
+    newConfig: Config
+  ) async {
+    var oldPaywallIds = Set(oldConfig.paywalls.map { $0.identifier })
+    let newPaywallIds = Set(newConfig.paywalls.map { $0.identifier })
+
+    if let presentedPaywallId = await paywallManager.presentedViewController?.paywall.identifier {
+      oldPaywallIds.remove(presentedPaywallId)
+    }
+    let missingPaywallIds = oldPaywallIds.subtracting(newPaywallIds)
+
+    paywallManager.removePaywallViewControllers(withIds: missingPaywallIds)
+  }
+
   func fetchConfiguration() async {
     do {
       _ = await factory.loadPurchasedProducts()
@@ -90,7 +142,7 @@ class ConfigManager {
 
       Task { await sendProductsBack(from: config) }
 
-      await processConfig(config)
+      await processConfig(config, isFirstTime: true)
 
       configState.send(.retrieved(config))
 
@@ -107,11 +159,16 @@ class ConfigManager {
     }
   }
 
-  private func processConfig(_ config: Config) async {
+  private func processConfig(
+    _ config: Config,
+    isFirstTime: Bool
+  ) async {
     storage.save(config.featureFlags.disableVerboseEvents, forType: DisableVerboseEvents.self)
     triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
-    await checkForTouchesBeganTrigger(in: config.triggers)
+    if isFirstTime {
+      await checkForTouchesBeganTrigger(in: config.triggers)
+    }
   }
 
   /// Reassigns variants and preloads paywalls again.
@@ -261,12 +318,15 @@ class ConfigManager {
         removing: config.preloadingDisabled
       )
       let confirmedAssignments = storage.getConfirmedAssignments()
-      let paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+      var paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
         fromTriggers: triggers,
         confirmedAssignments: confirmedAssignments,
         unconfirmedAssignments: unconfirmedAssignments,
         expressionEvaluator: expressionEvaluator
       )
+      if let presentedPaywallId = await paywallManager.presentedViewController?.paywall.identifier {
+        paywallIds.remove(presentedPaywallId)
+      }
       await preloadPaywalls(withIdentifiers: paywallIds)
 
       currentPreloadingTask = nil
@@ -282,7 +342,9 @@ class ConfigManager {
       }
     let triggersToPreload = config.triggers.filter { eventNames.contains($0.eventName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
-    await preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
+    await preloadPaywalls(
+      withIdentifiers: triggerPaywallIdentifiers
+    )
   }
 
   /// Preloads paywalls referenced by triggers.
@@ -301,7 +363,6 @@ class ConfigManager {
             presentationSourceType: nil,
             retryCount: 6
           )
-
           guard let paywall = try? await paywallManager.getPaywall(from: request) else {
             return
           }

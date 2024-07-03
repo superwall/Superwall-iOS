@@ -4,12 +4,19 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.6.7
 
+### Enhancements
+
+- Adds the ability for the SDK to refresh the Superwall configuration every session start, subject to a feature flag.
+- Tracks a `config_refresh` Superwall event when the configuration is refreshed.
+
 ### Fixes
 
 - Fixes error message `undefined is not an object` that sometimes appeared when opening a paywall.
 - SW-2871: Makes sure to track device attributes after geo location data is found.
+- Fixes issue where restored transactions were being finished even if a `PurchaseController` was supplied in configure.
 - SW-2879: Adds `capabilities` to device attributes. This is a comma-separated list of capabilities the SDK has that you can target in audience filters. This release adds the `paywall_event_receiver` capability. This indicates that the paywall can receive transaction and restore events from the SDK.
 - SW-2879: Adds `configCapabilties` which contains a `name` of the capability and any additional info. The `paywall_event_receiver` capability contains a list of eventNames specifying the exact events paywalljs can receive.
+- Fixes a crash caused by an arithmetic overflow if there was an issue with audience filter limits.
 
 ## 3.6.6
 

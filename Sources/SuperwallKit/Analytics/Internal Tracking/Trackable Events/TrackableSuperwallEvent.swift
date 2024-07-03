@@ -194,6 +194,12 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
+  struct ConfigRefresh: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .configRefresh
+    var customParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
   struct DeviceAttributes: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .deviceAttributes(attributes: deviceAttributes)
@@ -270,7 +276,6 @@ enum InternalSuperwallEvent {
 
   struct TriggerFire: TrackableSuperwallEvent {
     let triggerResult: InternalTriggerResult
-    let sessionId: String
     var superwallEvent: SuperwallEvent {
       return .triggerFire(
         eventName: triggerName,
@@ -285,7 +290,8 @@ enum InternalSuperwallEvent {
         "trigger_name": triggerName
       ]
 
-      params["trigger_session_id"] = sessionId
+      // TODO: Remove in v4:
+      params["trigger_session_id"] = ""
 
       switch triggerResult {
       case .noRuleMatch(let unmatchedRules):

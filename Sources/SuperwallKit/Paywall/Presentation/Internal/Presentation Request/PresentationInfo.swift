@@ -52,13 +52,4 @@ enum PresentationInfo {
       return nil
     }
   }
-
-  var triggerType: TriggerSession.Trigger.TriggerType {
-    switch self {
-    case .implicitTrigger:
-      return .implicit
-    default:
-      return .explicit
-    }
-  }
 }

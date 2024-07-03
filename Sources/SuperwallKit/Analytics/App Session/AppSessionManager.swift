@@ -8,33 +8,23 @@
 import UIKit
 import Combine
 
-protocol AppManagerDelegate: AnyObject {
-  func didUpdateAppSession(_ appSession: AppSession) async
-}
-
 class AppSessionManager {
   var appSessionTimeout: Milliseconds?
 
-  private(set) var appSession = AppSession() {
-    didSet {
-      Task {
-        await delegate.didUpdateAppSession(appSession)
-      }
-    }
-  }
+  private(set) var appSession = AppSession()
   private var lastAppClose: Date?
   private var didTrackAppLaunch = false
   private var cancellable: AnyCancellable?
 
   private unowned let configManager: ConfigManager
   private unowned let storage: Storage
-  private unowned let delegate: AppManagerDelegate & DeviceHelperFactory & UserAttributesEventFactory
+  private unowned let delegate: DeviceHelperFactory & UserAttributesEventFactory
 
   init(
     configManager: ConfigManager,
     identityManager: IdentityManager,
     storage: Storage,
-    delegate: AppManagerDelegate & DeviceHelperFactory & UserAttributesEventFactory
+    delegate: DeviceHelperFactory & UserAttributesEventFactory
   ) {
     self.configManager = configManager
     self.storage = storage
@@ -138,11 +128,20 @@ class AppSessionManager {
         group.addTask {
           await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
         }
+
+        // Only track device attributes if we've already tracked app launch before.
+        // This is because we track device attributes after the config is first fetched.
+        // Otherwise we'd track it twice and it won't contain geo info here on cold app start.
         if didTrackAppLaunch {
           group.addTask {
             await Superwall.shared.track(
               InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
             )
+          }
+
+          // Refresh only after we have a config and not on first app open.
+          group.addTask { [weak self] in
+            await self?.configManager.refreshConfiguration()
           }
         }
         group.addTask {
