@@ -72,7 +72,8 @@ class ConfigManager {
     self.factory = factory
   }
 
-  /// This refreshes the config. It fails quietly, falling back to the old config.
+  /// This refreshes config, requiring paywalls to reload and removing unused paywall view controllers.
+  /// It fails quietly, falling back to the old config.
   func refreshConfiguration() async {
     // Make sure config already exists
     guard let oldConfig = config else {
