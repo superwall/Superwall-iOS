@@ -75,22 +75,27 @@ class ConfigManager {
   /// This refreshes the config. It fails quietly, falling back to the old config.
   func refreshConfiguration() async {
     // Make sure config already exists
-    guard let config = config else {
+    guard let oldConfig = config else {
       return
     }
 
-    // Ensuere the config refresh feature flag is enabled
-    guard config.featureFlags.enableConfigRefresh == true else {
+    // Ensure the config refresh feature flag is enabled
+    guard oldConfig.featureFlags.enableConfigRefresh == true else {
       return
     }
 
     do {
-      let config = try await network.getConfig()
+      let newConfig = try await network.getConfig()
 
-      await paywallManager.resetRequestCache()
+      await removeUnusedPaywallVCsFromCache(
+        oldConfig: oldConfig,
+        newConfig: newConfig
+      )
 
-      await processConfig(config, isFirstTime: false)
-      configState.send(.retrieved(config))
+      await paywallManager.resetPaywallRequestCache()
+
+      await processConfig(newConfig, isFirstTime: false)
+      configState.send(.retrieved(newConfig))
       await Superwall.shared.track(InternalSuperwallEvent.ConfigRefresh())
       Task { await preloadPaywalls() }
     } catch {
@@ -102,6 +107,21 @@ class ConfigManager {
         error: error
       )
     }
+  }
+
+  private func removeUnusedPaywallVCsFromCache(
+    oldConfig: Config,
+    newConfig: Config
+  ) async {
+    var oldPaywallIds = Set(oldConfig.paywalls.map { $0.identifier })
+    let newPaywallIds = Set(newConfig.paywalls.map { $0.identifier })
+
+    if let presentedPaywallId = await paywallManager.presentedViewController?.paywall.identifier {
+      oldPaywallIds.remove(presentedPaywallId)
+    }
+    let missingPaywallIds = oldPaywallIds.subtracting(newPaywallIds)
+
+    paywallManager.removePaywallViewControllers(withIds: missingPaywallIds)
   }
 
   func fetchConfiguration() async {
@@ -304,7 +324,7 @@ class ConfigManager {
         unconfirmedAssignments: unconfirmedAssignments,
         expressionEvaluator: expressionEvaluator
       )
-      if let presentedPaywallId = await Superwall.shared.paywallViewController?.paywall.identifier {
+      if let presentedPaywallId = await paywallManager.presentedViewController?.paywall.identifier {
         paywallIds.remove(presentedPaywallId)
       }
       await preloadPaywalls(withIdentifiers: paywallIds)
