@@ -167,6 +167,8 @@ public enum SuperwallEvent {
   /// When the Superwall configuration is refreshed.
   case configRefresh
 
+  case paywallEngagementEvent(paywallInfo: PaywallInfo)
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -177,7 +179,8 @@ public enum SuperwallEvent {
       .paywallDecline,
       .transactionAbandon,
       .surveyResponse,
-      .touchesBegan:
+      .touchesBegan,
+      .paywallEngagementEvent:
       return true
     default:
       return false
@@ -295,6 +298,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .restoreComplete)
     case .configRefresh:
       return .init(objcEvent: .configRefresh)
+    case .paywallEngagementEvent:
+      return .init(objcEvent: .paywallEngagementEvent)
     }
   }
 }

@@ -421,6 +421,22 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct PaywallEngagementEvent: TrackableSuperwallEvent {
+    var superwallEvent: SuperwallEvent {
+      return .paywallEngagementEvent(paywallInfo: paywallInfo)
+    }
+    let paywallInfo: PaywallInfo
+    let params: [String: Any]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      let eventParams = await paywallInfo.eventParams()
+      return params + eventParams
+    }
+    var customParameters: [String: Any] {
+      return paywallInfo.customParams()
+    }
+  }
+
   struct Restore: TrackableSuperwallEvent {
     enum State {
       case start

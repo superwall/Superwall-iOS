@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds the ability for the SDK to refresh the Superwall configuration every session start, subject to a feature flag.
 - Tracks a `config_refresh` Superwall event when the configuration is refreshed.
+- Adds a `paywall_engagement_event` that you can attach to any element in the paywall with a dictionary of parameters. This will be tracked whenever that element is tapped. This gets sent to the `handleSuperwallEvent(withInfo:)` delegate method which you can forward to your analytics provider. You can also add this as a placement to a campaign and access its params in audience filters.
 
 ### Fixes
 
