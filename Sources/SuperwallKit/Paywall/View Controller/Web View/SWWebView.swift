@@ -62,9 +62,6 @@ class SWWebView: WKWebView {
     config.mediaTypesRequiringUserActionForPlayback = []
 
     let featureFlags = factory.makeFeatureFlags()
-    if featureFlags?.enableWebviewProcessPool == true {
-      config.processPool = Self.processPool
-    }
     if featureFlags?.enableSuppressesIncrementalRendering == true {
       config.suppressesIncrementalRendering = true
     }

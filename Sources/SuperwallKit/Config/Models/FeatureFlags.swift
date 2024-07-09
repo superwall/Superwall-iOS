@@ -18,7 +18,6 @@ struct FeatureFlags: Decodable {
   var enableExpressionParameters: Bool
   var enableUserIdSeed: Bool
   var disableVerboseEvents: Bool
-  var enableWebviewProcessPool: Bool
   var enableSuppressesIncrementalRendering: Bool
   var enableThrottleSchedulingPolicy: Bool
   var enableNoneSchedulingPolicy: Bool
@@ -36,7 +35,6 @@ struct FeatureFlags: Decodable {
     enablePostback = rawFeatureFlags.value(forKey: "enable_postback", default: false)
     enableUserIdSeed = rawFeatureFlags.value(forKey: "enable_userid_seed", default: false)
     disableVerboseEvents = rawFeatureFlags.value(forKey: "disable_verbose_events", default: false)
-    enableWebviewProcessPool = rawFeatureFlags.value(forKey: "enable_webview_process_pool", default: false)
     enableSuppressesIncrementalRendering = rawFeatureFlags.value(
       forKey: "enable_suppresses_incremental_rendering",
       default: false
@@ -51,7 +49,6 @@ struct FeatureFlags: Decodable {
     enableExpressionParameters: Bool,
     enableUserIdSeed: Bool,
     disableVerboseEvents: Bool,
-    enableWebviewProcessPool: Bool,
     enableSuppressesIncrementalRendering: Bool,
     enableThrottleSchedulingPolicy: Bool,
     enableNoneSchedulingPolicy: Bool
@@ -61,7 +58,6 @@ struct FeatureFlags: Decodable {
     self.enableExpressionParameters = enableExpressionParameters
     self.enableUserIdSeed = enableUserIdSeed
     self.disableVerboseEvents = disableVerboseEvents
-    self.enableWebviewProcessPool = enableWebviewProcessPool
     self.enableSuppressesIncrementalRendering = enableSuppressesIncrementalRendering
     self.enableThrottleSchedulingPolicy = enableThrottleSchedulingPolicy
     self.enableNoneSchedulingPolicy = enableNoneSchedulingPolicy
@@ -88,7 +84,6 @@ extension FeatureFlags: Stubbable {
       enableExpressionParameters: true,
       enableUserIdSeed: true,
       disableVerboseEvents: true,
-      enableWebviewProcessPool: true,
       enableSuppressesIncrementalRendering: true,
       enableThrottleSchedulingPolicy: true,
       enableNoneSchedulingPolicy: false
