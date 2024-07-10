@@ -13,14 +13,27 @@ struct Paywalls: Decodable {
 }
 
 struct WebViewURLConfig: Decodable {
-  let endpoints: [WebViewEndpoint]
+  let urls: [WebViewEndpoint]
   let maxAttempts: Int
 }
 
 struct WebViewEndpoint: Decodable {
   let url: URL
-  let timeout: Milliseconds
+  let timeout: TimeInterval
   let percentage: Double
+
+  enum CodingKeys: String, CodingKey {
+    case url
+    case timeoutMs
+    case percentage
+  }
+
+  init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.url = try container.decode(URL.self, forKey: .url)
+    self.timeout = try container.decode(Milliseconds.self, forKey: .timeoutMs) * 1000
+    self.percentage = try container.decode(Double.self, forKey: .percentage)
+  }
 }
 
 struct Paywall: Decodable {
@@ -406,7 +419,7 @@ extension Paywall: Stubbable {
       identifier: "identifier",
       name: "abc",
       url: URL(string: "https://google.com")!,
-      urlConfig: .init(endpoints: [], maxAttempts: 0),
+      urlConfig: .init(urls: [], maxAttempts: 0),
       htmlSubstitutions: "",
       presentation: PaywallPresentationInfo(
         style: .modal,

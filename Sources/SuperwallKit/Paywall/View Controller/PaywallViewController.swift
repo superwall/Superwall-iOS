@@ -296,7 +296,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
           loadWebViewFromArchive(url: url)
         } else {
           // Fallback to old way if couldn't get archive
-          await webView.load(urlConfig: paywall.urlConfig)
+          await webView.loadURL(from: paywall)
         }
       }
       return
@@ -306,7 +306,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       loadWebViewFromArchive(url: webArchiveURL)
     } else {
       Task {
-        await webView.load(urlConfig: paywall.urlConfig)
+        await webView.loadURL(from: paywall)
       }
     }
   }

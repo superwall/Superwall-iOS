@@ -9,45 +9,70 @@ import Foundation
 
 protocol SWWebViewLoadingDelegate: AnyObject {
   func loadWebView(
-    with url: URL
+    with url: URL,
+    timeout: TimeInterval?
   ) async throws
 }
 
 final class SWWebViewLoadingHandler {
   weak var loadingDelegate: SWWebViewLoadingDelegate?
   weak var webViewDelegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
+  let enableMultiplePaywallUrls: Bool
   var didFailToLoad = false
 
-  func load(
+  init(enableMultiplePaywallUrls: Bool) {
+    self.enableMultiplePaywallUrls = enableMultiplePaywallUrls
+  }
+
+  func loadURL(
     attempts: Int = 0,
-    maxAttempts: Int,
-    attemptedURLs: [URL] = [],
-    endpoints: [WebViewEndpoint]
+    paywallUrlConfig: WebViewURLConfig,
+    paywallUrl: URL,
+    attemptedURLs: [URL] = []
   ) async -> Bool {
     guard let delegate = loadingDelegate else {
       didFailToLoad = true
       return false
     }
-    var endpoints = endpoints
 
-    guard attempts < maxAttempts else {
+    if !enableMultiplePaywallUrls {
+      do {
+        try await delegate.loadWebView(
+          with: paywallUrl,
+          timeout: nil
+        )
+        didFailToLoad = false
+        return true
+      } catch {
+        await trackWebViewLoadFailure(error, urls: [paywallUrl])
+        didFailToLoad = true
+        return false
+      }
+    }
+
+    var endpoints = paywallUrlConfig.urls
+
+    guard attempts < paywallUrlConfig.maxAttempts else {
       await trackWebViewLoadFailure(WebViewError.exceededAttempts, urls: attemptedURLs)
       didFailToLoad = true
       return false
     }
-    guard let url = SWWebViewLogic.chooseURL(from: endpoints) else {
+    guard let endpoint = SWWebViewLogic.chooseEndpoint(from: endpoints) else {
       await trackWebViewLoadFailure(WebViewError.noEndpoints, urls: [])
       didFailToLoad = true
       return false
     }
 
     do {
-      try await delegate.loadWebView(with: url)
+      try await delegate.loadWebView(
+        with: endpoint.url,
+        timeout: endpoint.timeout
+      )
       didFailToLoad = false
       return true
     } catch {
-      if let invalidURLIndex = endpoints.firstIndex(where: { $0.url == url }) {
-        await trackWebViewLoadFailure(error, urls: [url])
+      if let invalidURLIndex = endpoints.firstIndex(where: { $0.url == endpoint.url }) {
+        await trackWebViewLoadFailure(error, urls: [endpoint.url])
 
         endpoints.remove(at: invalidURLIndex)
         if endpoints.isEmpty {
@@ -58,11 +83,14 @@ final class SWWebViewLoadingHandler {
 
         await trackWebViewLoadFallback(error)
 
-        return await load(
+        return await loadURL(
           attempts: attempts + 1,
-          maxAttempts: maxAttempts,
-          attemptedURLs: attemptedURLs + [url],
-          endpoints: endpoints
+          paywallUrlConfig: WebViewURLConfig(
+            urls: endpoints,
+            maxAttempts: paywallUrlConfig.maxAttempts
+          ),
+          paywallUrl: paywallUrl,
+          attemptedURLs: attemptedURLs + [endpoint.url]
         )
       }
     }

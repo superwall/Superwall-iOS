@@ -34,7 +34,7 @@ enum WebViewError: LocalizedError {
 
 class SWWebView: WKWebView {
   let messageHandler: PaywallMessageHandler
-  let loadingHandler = SWWebViewLoadingHandler()
+  let loadingHandler: SWWebViewLoadingHandler
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
   private let wkConfig: WKWebViewConfiguration
   private let isMac: Bool
@@ -54,6 +54,9 @@ class SWWebView: WKWebView {
     self.sessionEventsManager = sessionEventsManager
     self.messageHandler = messageHandler
     self.isOnDeviceCacheEnabled = isOnDeviceCacheEnabled
+    let featureFlags = factory.makeFeatureFlags()
+
+    self.loadingHandler = SWWebViewLoadingHandler(enableMultiplePaywallUrls: featureFlags?.enableMultiplePaywallUrls == true)
 
     let config = WKWebViewConfiguration()
     config.allowsInlineMediaPlayback = true
@@ -61,7 +64,6 @@ class SWWebView: WKWebView {
     config.allowsPictureInPictureMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
 
-    let featureFlags = factory.makeFeatureFlags()
     if featureFlags?.enableSuppressesIncrementalRendering == true {
       config.suppressesIncrementalRendering = true
     }
@@ -128,10 +130,10 @@ class SWWebView: WKWebView {
     fatalError("init(coder:) has not been implemented")
   }
 
-  func load(urlConfig: WebViewURLConfig) async {
-    let didLoad = await loadingHandler.load(
-      maxAttempts: urlConfig.maxAttempts,
-      endpoints: urlConfig.endpoints
+  func loadURL(from paywall: Paywall) async {
+    let didLoad = await loadingHandler.loadURL(
+      paywallUrlConfig: paywall.urlConfig,
+      paywallUrl: paywall.url
     )
     if !didLoad {
       delegate?.webViewDidFail()
@@ -140,17 +142,27 @@ class SWWebView: WKWebView {
 }
 
 extension SWWebView: SWWebViewLoadingDelegate {
-  func loadWebView(with url: URL) async throws {
+  func loadWebView(
+    with url: URL,
+    timeout: TimeInterval?
+  ) async throws {
     if isOnDeviceCacheEnabled {
-      let request = URLRequest(
+      var request = URLRequest(
         url: url,
         cachePolicy: .returnCacheDataElseLoad
       )
+      if let timeout = timeout {
+        request.timeoutInterval = timeout
+      }
       load(request)
     } else {
-      let request = URLRequest(url: url)
+      var request = URLRequest(url: url)
+      if let timeout = timeout {
+        request.timeoutInterval = timeout
+      }
       load(request)
     }
+    
     return try await withCheckedThrowingContinuation { continuation in
       self.completion = { [weak self] error in
         if let error = error {
