@@ -352,6 +352,7 @@ extension DependencyContainer: ApiFactory {
       "X-Is-Sandbox": deviceHelper.isSandbox,
       "X-Subscription-Status": Superwall.shared.subscriptionStatus.description,
       "X-Static-Config-Build-Id": configManager.config?.buildId ?? "",
+      "X-Current-Time": Date().isoString,
       "Content-Type": "application/json"
     ]
     return headers
