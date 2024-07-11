@@ -36,7 +36,6 @@ final class PresentPaywallOperatorTests: XCTestCase {
     )
     let webView = SWWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -103,7 +102,6 @@ final class PresentPaywallOperatorTests: XCTestCase {
     )
     let webView = SWWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer

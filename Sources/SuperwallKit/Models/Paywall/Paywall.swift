@@ -4,36 +4,12 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
-// swiftlint:disable function_body_length type_body_length
+// swiftlint:disable function_body_length type_body_length file_length
 
 import UIKit
 
 struct Paywalls: Decodable {
   var paywalls: [Paywall]
-}
-
-struct WebViewURLConfig: Decodable {
-  let urls: [WebViewEndpoint]
-  let maxAttempts: Int
-}
-
-struct WebViewEndpoint: Decodable {
-  let url: URL
-  let timeout: TimeInterval
-  let percentage: Double
-
-  enum CodingKeys: String, CodingKey {
-    case url
-    case timeoutMs
-    case percentage
-  }
-
-  init(from decoder: any Decoder) throws {
-    let container = try decoder.container(keyedBy: CodingKeys.self)
-    self.url = try container.decode(URL.self, forKey: .url)
-    self.timeout = try container.decode(Milliseconds.self, forKey: .timeoutMs) * 1000
-    self.percentage = try container.decode(Double.self, forKey: .percentage)
-  }
 }
 
 struct Paywall: Decodable {

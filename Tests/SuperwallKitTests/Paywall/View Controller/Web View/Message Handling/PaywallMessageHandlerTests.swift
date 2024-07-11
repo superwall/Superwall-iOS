@@ -18,7 +18,6 @@ final class PaywallMessageHandlerTests: XCTestCase {
     )
     let webView = FakeWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -44,7 +43,6 @@ final class PaywallMessageHandlerTests: XCTestCase {
     )
     let webView = FakeWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -71,7 +69,6 @@ final class PaywallMessageHandlerTests: XCTestCase {
     )
     let webView = FakeWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -95,7 +92,6 @@ final class PaywallMessageHandlerTests: XCTestCase {
     )
     let webView = FakeWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -121,7 +117,6 @@ final class PaywallMessageHandlerTests: XCTestCase {
     )
     let webView = FakeWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -147,7 +142,6 @@ final class PaywallMessageHandlerTests: XCTestCase {
     )
     let webView = FakeWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -173,7 +167,6 @@ final class PaywallMessageHandlerTests: XCTestCase {
     )
     let webView = FakeWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -197,7 +190,6 @@ final class PaywallMessageHandlerTests: XCTestCase {
     )
     let webView = FakeWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -222,7 +214,6 @@ final class PaywallMessageHandlerTests: XCTestCase {
     )
     let webView = FakeWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer

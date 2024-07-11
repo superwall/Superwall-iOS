@@ -9,7 +9,8 @@ import Foundation
 
 enum SWWebViewLogic {
   static func chooseEndpoint(
-    from endpoints: [WebViewEndpoint]
+    from endpoints: [WebViewEndpoint],
+    randomiser: (Range<Double>) -> Double = Double.random(in:)
   ) -> WebViewEndpoint? {
     // Check if the endpoints array is empty. If it is, return nil.
     if endpoints.isEmpty {
@@ -23,7 +24,8 @@ enum SWWebViewLogic {
 
     // If the sum of the percentages is 0 or less, return a random endpoint's URL.
     if endpointPercentageSum <= 0 {
-      return endpoints.randomElement()
+      let randomEndpointIndex = randomiser(0..<Double(endpoints.count))
+      return endpoints[Int(randomEndpointIndex)]
     }
 
     // Generate a random number between 0 and endpoint percentage sum.

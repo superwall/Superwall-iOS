@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 03/03/2022.
 //
-// swiftlint:disable implicitly_unwrapped_optional
+// swiftlint:disable implicitly_unwrapped_optional function_body_length line_length
 
 import Foundation
 import WebKit
@@ -158,7 +158,7 @@ extension SWWebView: SWWebViewLoadingDelegate {
       }
       load(request)
     }
-    
+
     return try await withCheckedThrowingContinuation { continuation in
       self.completion = { [weak self] error in
         if let error = error {
