@@ -125,7 +125,7 @@ class Network {
 
   func getConfig(
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
-    isRetryingCallback: @escaping () -> Void
+    isRetryingCallback: (() -> Void)? = nil
   ) async throws -> Config {
     try await appInForeground(injectedApplicationStatePublisher)
 

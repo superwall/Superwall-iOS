@@ -51,8 +51,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// The paywall info
   @objc public var info: PaywallInfo {
     return paywall.getInfo(
-      fromEvent: request?.presentationInfo.eventData,
-      factory: factory
+      fromEvent: request?.presentationInfo.eventData
     )
   }
 
@@ -152,7 +151,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// paywall presentation.
   private var unsavedOccurrence: TriggerRuleOccurrence?
 
-  private unowned let factory: TriggerSessionManagerFactory & TriggerFactory
+  private unowned let factory: TriggerFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private weak var cache: PaywallViewControllerCache?
@@ -165,7 +164,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     eventDelegate: PaywallViewControllerEventDelegate? = nil,
     delegate: PaywallViewControllerDelegateAdapter? = nil,
     deviceHelper: DeviceHelper,
-    factory: TriggerSessionManagerFactory & TriggerFactory,
+    factory: TriggerFactory,
     storage: Storage,
     webView: SWWebView,
     cache: PaywallViewControllerCache?,
@@ -236,8 +235,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   nonisolated private func trackOpen() async {
-    let triggerSessionManager = await factory.getTriggerSessionManager()
-    await triggerSessionManager.trackPaywallOpen()
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
     let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: info)
@@ -245,14 +242,12 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   nonisolated private func trackClose() async {
-    let triggerSessionManager = await factory.getTriggerSessionManager()
     let trackedEvent = await InternalSuperwallEvent.PaywallClose(
       paywallInfo: info,
       surveyPresentationResult: surveyPresentationResult
     )
     await webView.messageHandler.handle(.paywallClose)
     await Superwall.shared.track(trackedEvent)
-    await triggerSessionManager.trackPaywallClose()
   }
 
   /// Triggered by user closing the paywall when the webview hasn't loaded.
@@ -268,7 +263,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
   }
 
-  private func loadWebView() {
+  func loadWebView() {
+    let url = paywall.url
+
     if paywall.webviewLoadingInfo.startAt == nil {
       paywall.webviewLoadingInfo.startAt = Date()
     }
@@ -279,12 +276,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         paywallInfo: self.info
       )
       await Superwall.shared.track(trackedEvent)
-
-      let triggerSessionManager = factory.getTriggerSessionManager()
-      await triggerSessionManager.trackWebviewLoad(
-        forPaywallId: info.databaseId,
-        state: .start
-      )
     }
 
     loadingState = .loadingURL

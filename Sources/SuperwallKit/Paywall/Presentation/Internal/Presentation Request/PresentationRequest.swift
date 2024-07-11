@@ -80,10 +80,11 @@ struct PresentationRequest {
 
   /// The source function type that initiated the presentation request.
   var presentationSourceType: String? {
-    switch presentationInfo.triggerType {
-    case .implicit:
+    switch presentationInfo {
+    case .implicitTrigger:
       return "implicit"
-    case .explicit:
+    case .explicitTrigger,
+      .fromIdentifier:
       switch flags.type {
       case .getPaywall:
         return "getPaywall"

@@ -23,8 +23,11 @@ public final class PaywallInfo: NSObject {
   /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
   public let experiment: Experiment?
 
+  // TODO: Remove this in v4
   /// The trigger session ID associated with the paywall.
-  public let triggerSessionId: String?
+  ///
+  /// Note: This will always be an empty string and will be removed in the next major update of the SDK.
+  public let triggerSessionId: String = ""
 
   /// The products associated with the paywall.
   @available(
@@ -124,8 +127,6 @@ public final class PaywallInfo: NSObject {
   /// Information about the presentation of the paywall.
   public let presentation: PaywallPresentationInfo
 
-  private unowned let factory: TriggerSessionManagerFactory
-
   init(
     databaseId: String,
     identifier: String,
@@ -145,11 +146,9 @@ public final class PaywallInfo: NSObject {
     productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
     experiment: Experiment?,
-    triggerSessionId: String?,
     paywalljsVersion: String?,
     isFreeTrialAvailable: Bool,
     presentationSourceType: String?,
-    factory: TriggerSessionManagerFactory,
     featureGatingBehavior: FeatureGatingBehavior,
     closeReason: PaywallCloseReason,
     localNotifications: [LocalNotification],
@@ -166,7 +165,6 @@ public final class PaywallInfo: NSObject {
     self.presentedByEventWithId = eventData?.id.lowercased()
     self.presentationSourceType = presentationSourceType
     self.experiment = experiment
-    self.triggerSessionId = triggerSessionId
     self.paywalljsVersion = paywalljsVersion
     self.productItems = productItems
     // Legacy support
@@ -217,7 +215,6 @@ public final class PaywallInfo: NSObject {
     } else {
       self.productsLoadDuration = nil
     }
-    self.factory = factory
     self.closeReason = closeReason
   }
 
@@ -244,7 +241,8 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
       "paywall_products_load_fail_time": productsLoadFailTime as Any,
       "paywall_products_load_duration": productsLoadDuration as Any,
-      "trigger_session_id": triggerSessionId as Any,
+      // TODO: Remove in v4:
+      "trigger_session_id": "" as Any,
       "experiment_id": experiment?.id as Any,
       "variant_id": experiment?.variant.id as Any
     ]
@@ -340,11 +338,9 @@ extension PaywallInfo: Stubbable {
       productsLoadFailTime: nil,
       productsLoadCompleteTime: nil,
       experiment: nil,
-      triggerSessionId: nil,
       paywalljsVersion: nil,
       isFreeTrialAvailable: false,
       presentationSourceType: "register",
-      factory: dependencyContainer,
       featureGatingBehavior: .nonGated,
       closeReason: .manualClose,
       localNotifications: [],

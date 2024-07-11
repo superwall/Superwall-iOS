@@ -22,6 +22,7 @@ struct FeatureFlags: Decodable {
   var enableThrottleSchedulingPolicy: Bool
   var enableNoneSchedulingPolicy: Bool
   var enableMultiplePaywallUrls: Bool
+  var enableConfigRefresh: Bool
 
   enum CodingKeys: String, CodingKey {
     case toggles
@@ -43,6 +44,7 @@ struct FeatureFlags: Decodable {
     enableThrottleSchedulingPolicy = rawFeatureFlags.value(forKey: "enable_throttle_scheduling_policy", default: false)
     enableNoneSchedulingPolicy = rawFeatureFlags.value(forKey: "enable_none_scheduling_policy", default: false)
     enableMultiplePaywallUrls = rawFeatureFlags.value(forKey: "enable_multiple_paywall_urls", default: false)
+    enableConfigRefresh = rawFeatureFlags.value(forKey: "enable_config_refresh", default: false)
   }
 
   init(
@@ -54,7 +56,8 @@ struct FeatureFlags: Decodable {
     enableSuppressesIncrementalRendering: Bool,
     enableThrottleSchedulingPolicy: Bool,
     enableNoneSchedulingPolicy: Bool,
-    enableMultiplePaywallUrls: Bool
+    enableMultiplePaywallUrls: Bool,
+    enableConfigRefresh: Bool
   ) {
     self.enableSessionEvents = enableSessionEvents
     self.enablePostback = enablePostback
@@ -65,6 +68,7 @@ struct FeatureFlags: Decodable {
     self.enableThrottleSchedulingPolicy = enableThrottleSchedulingPolicy
     self.enableNoneSchedulingPolicy = enableNoneSchedulingPolicy
     self.enableMultiplePaywallUrls = enableMultiplePaywallUrls
+    self.enableConfigRefresh = enableConfigRefresh
   }
 }
 
@@ -91,7 +95,8 @@ extension FeatureFlags: Stubbable {
       enableSuppressesIncrementalRendering: true,
       enableThrottleSchedulingPolicy: true,
       enableNoneSchedulingPolicy: true,
-      enableMultiplePaywallUrls: true
+      enableMultiplePaywallUrls: true,
+      enableConfigRefresh: true
     )
   }
 }

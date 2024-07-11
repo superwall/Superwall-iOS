@@ -75,11 +75,6 @@ protocol ComputedPropertyRequestsFactory: AnyObject {
   func makeComputedPropertyRequests() -> [ComputedPropertyRequest]
 }
 
-protocol TriggerSessionManagerFactory: AnyObject {
-  func makeTriggerSessionManager() -> TriggerSessionManager
-  func getTriggerSessionManager() -> TriggerSessionManager
-}
-
 protocol ConfigManagerFactory: AnyObject {
   func makeStaticPaywall(
     withId paywallId: String?,

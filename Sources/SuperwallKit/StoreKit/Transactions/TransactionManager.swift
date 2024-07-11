@@ -261,7 +261,6 @@ final class TransactionManager {
       )
       await Superwall.shared.track(trackedEvent)
       await paywallViewController.webView.messageHandler.handle(.transactionFail)
-      await self.sessionEventsManager.triggerSession.trackTransactionError()
     }
   }
 
@@ -280,7 +279,6 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
 
-    await self.sessionEventsManager.triggerSession.trackBeginTransaction(of: product)
     let trackedEvent = InternalSuperwallEvent.Transaction(
       state: .start(product),
       paywallInfo: paywallInfo,
@@ -359,7 +357,6 @@ final class TransactionManager {
       model: nil
     )
     await Superwall.shared.track(trackedEvent)
-    await sessionEventsManager.triggerSession.trackTransactionAbandon()
     await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
 
     await MainActor.run {
@@ -385,7 +382,6 @@ final class TransactionManager {
       model: nil
     )
     await Superwall.shared.track(trackedEvent)
-    await self.sessionEventsManager.triggerSession.trackPendingTransaction()
     await paywallViewController.webView.messageHandler.handle(.transactionFail)
 
     await paywallViewController.presentAlert(
@@ -414,14 +410,6 @@ final class TransactionManager {
     let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
 
     let paywallInfo = await paywallViewController.info
-
-    if let transaction = transaction {
-      await self.sessionEventsManager.triggerSession.trackTransactionSucceeded(
-        withId: transaction.storeTransactionId,
-        for: product,
-        isFreeTrialAvailable: didStartFreeTrial
-      )
-    }
 
     let trackedEvent = InternalSuperwallEvent.Transaction(
       state: .complete(product, transaction),

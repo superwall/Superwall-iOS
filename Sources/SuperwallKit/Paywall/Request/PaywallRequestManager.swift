@@ -17,7 +17,6 @@ actor PaywallRequestManager {
   private var activeTasks: [String: Task<Paywall, Error>] = [:]
   private var paywallsByHash: [String: Paywall] = [:]
   typealias Factory = DeviceHelperFactory
-    & TriggerSessionManagerFactory
     & ConfigManagerFactory
     & ReceiptFactory
 
@@ -29,6 +28,11 @@ actor PaywallRequestManager {
     self.storeKitManager = storeKitManager
     self.network = network
     self.factory = factory
+  }
+
+  /// Removes all the cached `Paywall` objects.
+  func reset() {
+    paywallsByHash.removeAll()
   }
 
   ///  Gets a paywall from a given request.
@@ -68,7 +72,6 @@ actor PaywallRequestManager {
       do {
         let rawPaywall = try await getRawPaywall(from: request)
         let paywallWithProducts = try await addProducts(to: rawPaywall, request: request)
-
         saveRequestHash(
           requestHash,
           paywall: paywallWithProducts,

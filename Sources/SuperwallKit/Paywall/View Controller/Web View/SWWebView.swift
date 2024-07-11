@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 03/03/2022.
 //
-// swiftlint:disable implicitly_unwrapped_optional function_body_length
+// swiftlint:disable implicitly_unwrapped_optional
 
 import Foundation
 import WebKit
@@ -38,20 +38,16 @@ class SWWebView: WKWebView {
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
   private let wkConfig: WKWebViewConfiguration
   private let isMac: Bool
-  private static let processPool = WKProcessPool()
-  private unowned let sessionEventsManager: SessionEventsManager
   private let isOnDeviceCacheEnabled: Bool
   private var completion: ((Error?) -> Void)?
 
   init(
     isMac: Bool,
-    sessionEventsManager: SessionEventsManager,
     messageHandler: PaywallMessageHandler,
     isOnDeviceCacheEnabled: Bool,
     factory: FeatureFlagsFactory
   ) {
     self.isMac = isMac
-    self.sessionEventsManager = sessionEventsManager
     self.messageHandler = messageHandler
     self.isOnDeviceCacheEnabled = isOnDeviceCacheEnabled
     let featureFlags = factory.makeFeatureFlags()

@@ -11,7 +11,6 @@ import Foundation
 
 @available(iOS 14.0, *)
 final class StorageMock: Storage {
-  var internalCachedTriggerSessions: [TriggerSession]
   var internalCachedTransactions: [StoreTransaction]
   var internalConfirmedAssignments: [Experiment.ID: Experiment.Variant]
   var internalSurveyAssignmentKey: String?
@@ -37,14 +36,12 @@ final class StorageMock: Storage {
   }
 
   init(
-    internalCachedTriggerSessions: [TriggerSession] = [],
     internalCachedTransactions: [StoreTransaction] = [],
     internalSurveyAssignmentKey: String? = nil,
     coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock(),
     confirmedAssignments: [Experiment.ID : Experiment.Variant] = [:],
     cache: Cache = Cache()
   ) {
-    self.internalCachedTriggerSessions = internalCachedTriggerSessions
     self.internalCachedTransactions = internalCachedTransactions
     self.internalConfirmedAssignments = confirmedAssignments
     self.internalSurveyAssignmentKey = internalSurveyAssignmentKey
@@ -53,9 +50,7 @@ final class StorageMock: Storage {
   }
 
   override func get<Key>(_ keyType: Key.Type) -> Key.Value? where Key : Storable {
-    if keyType == TriggerSessions.self {
-      return internalCachedTriggerSessions as? Key.Value
-    } else if keyType == Transactions.self {
+    if keyType == Transactions.self {
       return internalCachedTransactions as? Key.Value
     } else if keyType == SurveyAssignmentKey.self {
       return internalSurveyAssignmentKey as? Key.Value
@@ -64,9 +59,7 @@ final class StorageMock: Storage {
   }
 
   override func get<Key>(_ keyType: Key.Type) -> Key.Value? where Key : Storable, Key.Value : Decodable {
-    if keyType == TriggerSessions.self {
-      return internalCachedTriggerSessions as? Key.Value
-    } else if keyType == Transactions.self {
+    if keyType == Transactions.self {
       return internalCachedTransactions as? Key.Value
     } else if keyType == SurveyAssignmentKey.self {
       return internalSurveyAssignmentKey as? Key.Value

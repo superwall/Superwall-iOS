@@ -53,17 +53,13 @@ extension PaywallRequestManager {
           return await self.factory.isFreeTrialAvailable(for: product)
         }
       )
-      paywall.swProducts = outcome.swProducts
       paywall.productVariables = outcome.productVariables
       paywall.isFreeTrialAvailable = outcome.isFreeTrialAvailable
 
       return paywall
     } catch {
       paywall.productsLoadingInfo.failAt = Date()
-      let paywallInfo = paywall.getInfo(
-        fromEvent: request.eventData,
-        factory: factory
-      )
+      let paywallInfo = paywall.getInfo(fromEvent: request.eventData)
       await trackProductLoadFail(
         paywallInfo: paywallInfo,
         event: request.eventData,
@@ -77,10 +73,7 @@ extension PaywallRequestManager {
   private func trackProductsLoadStart(paywall: Paywall, request: PaywallRequest) async -> Paywall {
     var paywall = paywall
     paywall.productsLoadingInfo.startAt = Date()
-    let paywallInfo = paywall.getInfo(
-      fromEvent: request.eventData,
-      factory: factory
-    )
+    let paywallInfo = paywall.getInfo(fromEvent: request.eventData)
     let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
       state: .start,
       paywallInfo: paywallInfo,
@@ -88,11 +81,6 @@ extension PaywallRequestManager {
     )
     await Superwall.shared.track(productLoadEvent)
 
-    let triggerSessionManager = factory.getTriggerSessionManager()
-    await triggerSessionManager.trackProductsLoad(
-      forPaywallId: paywallInfo.databaseId,
-      state: .start
-    )
     return paywall
   }
 
@@ -107,12 +95,6 @@ extension PaywallRequestManager {
       eventData: event
     )
     await Superwall.shared.track(productLoadEvent)
-
-    let triggerSessionManager = factory.getTriggerSessionManager()
-    await triggerSessionManager.trackProductsLoad(
-      forPaywallId: paywallInfo.databaseId,
-      state: .fail
-    )
   }
 
   private func trackProductsLoadFinish(
@@ -121,15 +103,7 @@ extension PaywallRequestManager {
   ) async -> Paywall {
     var paywall = paywall
     paywall.productsLoadingInfo.endAt = Date()
-    let paywallInfo = paywall.getInfo(
-      fromEvent: event,
-      factory: factory
-    )
-    let triggerSessionManager = factory.getTriggerSessionManager()
-    await triggerSessionManager.trackProductsLoad(
-      forPaywallId: paywallInfo.databaseId,
-      state: .end
-    )
+    let paywallInfo = paywall.getInfo(fromEvent: event)
     let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
       state: .complete,
       paywallInfo: paywallInfo,

@@ -187,7 +187,6 @@ class Storage {
   }
 
   func clearCachedSessionEvents() {
-    cache.delete(TriggerSessions.self)
     cache.delete(Transactions.self)
   }
 

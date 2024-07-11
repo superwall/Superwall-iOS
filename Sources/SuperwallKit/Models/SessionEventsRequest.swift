@@ -8,6 +8,5 @@
 import Foundation
 
 struct SessionEventsRequest: Encodable {
-  var triggerSessions: [TriggerSession]
   var transactions: [StoreTransaction]
 }

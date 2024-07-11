@@ -174,7 +174,7 @@ class DeviceHelper {
     return Bundle.main.bundleIdentifier ?? ""
   }()
 
-  /// Returns true if built with the debug flag, or using TestFlight.
+  /// Returns true if built for the simulator or using TestFlight.
   let isSandbox: String = {
     #if targetEnvironment(simulator)
       return "true"

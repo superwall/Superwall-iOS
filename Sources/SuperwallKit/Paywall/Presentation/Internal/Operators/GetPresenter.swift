@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 11/05/2023.
 //
-// swiftlint:disable strict_fileprivate function_body_length
+// swiftlint:disable strict_fileprivate
 
 import UIKit
 import Combine
@@ -53,14 +53,10 @@ extension Superwall {
 
     switch request.flags.type {
     case .getPaywall:
-      let sessionId = await activateSession(
+      await attemptTriggerFire(
         for: request,
-        paywall: paywallViewController.paywall,
         triggerResult: rulesOutcome.triggerResult
       )
-      await MainActor.run {
-        paywallViewController.paywall.triggerSessionId = sessionId
-      }
       return nil
     case .getImplicitPresentationResult,
       .getPresentationResult:
@@ -97,31 +93,41 @@ extension Superwall {
       throw PresentationPipelineError.noPresenter
     }
 
-    let sessionId = await activateSession(
+    await attemptTriggerFire(
       for: request,
-      paywall: paywallViewController.paywall,
       triggerResult: rulesOutcome.triggerResult
     )
-
-    await MainActor.run {
-      paywallViewController.paywall.triggerSessionId = sessionId
-    }
 
     return presenter
   }
 
-  private func activateSession(
+  func attemptTriggerFire(
     for request: PresentationRequest,
-    paywall: Paywall,
     triggerResult: InternalTriggerResult
-  ) async -> String? {
-    let sessionEventsManager = dependencyContainer.sessionEventsManager
-    return await sessionEventsManager?.triggerSession.activateSession(
-      for: request.presentationInfo,
-      on: request.presenter,
-      paywall: paywall,
-      triggerResult: triggerResult
+  ) async {
+    guard let eventName = request.presentationInfo.eventName else {
+      // The paywall is being presented by identifier, which is what the debugger uses and that's not supported.
+      return
+    }
+    switch request.presentationInfo {
+    case .implicitTrigger,
+      .explicitTrigger:
+      switch triggerResult {
+      case .error,
+        .eventNotFound:
+        return
+      default:
+        break
+      }
+    case .fromIdentifier:
+      break
+    }
+
+    let trackedEvent = InternalSuperwallEvent.TriggerFire(
+      triggerResult: triggerResult,
+      triggerName: eventName
     )
+    await Superwall.shared.track(trackedEvent)
   }
 
   @MainActor

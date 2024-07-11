@@ -128,7 +128,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         await coordinator.storeIfPurchased(transaction)
         await checkForTimeout(of: transaction, in: paywallViewController)
         await updatePurchaseCompletionBlock(for: transaction, purchaseDate: purchaseDate)
-        await checkForRestoration(transaction, isPaywallPresented: isPaywallPresented)
         Task(priority: .background) {
           await record(transaction)
         }
@@ -248,31 +247,11 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     case .deferred:
       SKPaymentQueue.default().finishTransaction(skTransaction)
       await coordinator.completePurchase(of: skTransaction, result: .pending)
+    case .restored:
+      SKPaymentQueue.default().finishTransaction(skTransaction)
     default:
       break
     }
-  }
-
-  /// Updates the session event for any restored product.
-  private func checkForRestoration(
-    _ transaction: SKPaymentTransaction,
-    isPaywallPresented: Bool
-  ) async {
-    guard case .restored = transaction.transactionState else {
-      return
-    }
-    SKPaymentQueue.default().finishTransaction(transaction)
-    guard let product = await storeKitManager.productsById[transaction.payment.productIdentifier] else {
-      return
-    }
-    guard isPaywallPresented else {
-      return
-    }
-
-    await sessionEventsManager.triggerSession.trackTransactionRestoration(
-      withId: transaction.transactionIdentifier,
-      product: product
-    )
   }
 
   private func hasRestored(
