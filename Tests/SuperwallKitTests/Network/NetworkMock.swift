@@ -23,7 +23,7 @@ final class NetworkMock: Network {
   @MainActor
   override func getConfig(
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
-    isRetryingCallback: @escaping () -> Void
+    isRetryingCallback: (() -> Void)?
   ) async throws -> Config {
     getConfigCalled = true
 

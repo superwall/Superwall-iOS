@@ -106,8 +106,7 @@ final class DependencyContainer {
       ),
       storage: storage,
       network: network,
-      configManager: configManager,
-      factory: self
+      configManager: configManager
     )
 
     // Must be after session events
@@ -149,13 +148,6 @@ extension DependencyContainer: IdentityInfoFactory {
       aliasId: identityManager.aliasId,
       appUserId: identityManager.appUserId
     )
-  }
-}
-
-// MARK: - AppManagerDelegate
-extension DependencyContainer: AppManagerDelegate {
-  func didUpdateAppSession(_ appSession: AppSession) async {
-    await sessionEventsManager.updateAppSession(appSession)
   }
 }
 
@@ -388,25 +380,6 @@ extension DependencyContainer: RuleAttributesFactory {
       "device": deviceAttributes,
       "params": event?.parameters.dictionaryObject ?? ""
     ] as [String: Any])
-  }
-}
-
-// MARK: - TriggerSessionManager
-extension DependencyContainer: TriggerSessionManagerFactory {
-  func makeTriggerSessionManager() -> TriggerSessionManager {
-    // Separating delegate and sessionEventsManager to support testing.
-    return TriggerSessionManager(
-      delegate: sessionEventsManager,
-      sessionEventsManager: sessionEventsManager,
-      storage: storage,
-      configManager: configManager,
-      appSessionManager: appSessionManager,
-      identityManager: identityManager
-    )
-  }
-
-  func getTriggerSessionManager() -> TriggerSessionManager {
-    return sessionEventsManager.triggerSession
   }
 }
 

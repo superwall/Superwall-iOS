@@ -83,7 +83,7 @@ class AppSessionManagerTests: XCTestCase {
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
 
-    try? await Task.sleep(nanoseconds: 10_000_000)
+    try? await Task.sleep(nanoseconds: 30_000_000)
 
     XCTAssertNil(appSessionManager.appSession.endAt)
 

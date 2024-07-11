@@ -151,6 +151,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When a restore completes.
   case restoreComplete
 
+  /// When the Superwall configuration refreshes.
+  case configRefresh
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -243,6 +246,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "restore_fail"
     case .restoreComplete:
       return "restore_complete"
+    case .configRefresh:
+      return "config_refresh"
     }
   }
 }

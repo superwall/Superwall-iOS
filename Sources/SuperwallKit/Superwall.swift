@@ -413,7 +413,6 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.deviceHelper.interfaceStyleOverride = interfaceStyle
   }
 
-
   // MARK: - Deep Links
   /// Handles a deep link sent to your app to open a preview of your paywall.
   ///
