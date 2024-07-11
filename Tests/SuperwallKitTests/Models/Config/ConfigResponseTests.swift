@@ -16,6 +16,7 @@ let response = #"""
     "enabled": true
   }
   ],
+  "build_id": "poWduJZYQvCA8QbWLrjJC",
   "ts": 1719479293597,
   "trigger_options": [{
     "trigger_version": "V2",

@@ -359,9 +359,9 @@ extension DependencyContainer: ApiFactory {
       "X-Low-Power-Mode": deviceHelper.isLowPowerModeEnabled,
       "X-Is-Sandbox": deviceHelper.isSandbox,
       "X-Subscription-Status": Superwall.shared.subscriptionStatus.description,
+      "X-Static-Config-Build-Id": configManager.config?.buildId ?? "",
       "Content-Type": "application/json"
     ]
-
     return headers
   }
 

@@ -138,16 +138,14 @@ class AppSessionManager {
         guard let self = self else {
           return
         }
+        group.addTask {
+          await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
+        }
         if self.didTrackAppLaunch {
           group.addTask {
             await Superwall.shared.track(
               InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
             )
-          }
-          group.addTask {
-            if let config = self.configManager.config {
-              await Superwall.shared.track(InternalSuperwallEvent.SessionStart(configTimestamp: config.ts))
-            }
           }
         }
         group.addTask {

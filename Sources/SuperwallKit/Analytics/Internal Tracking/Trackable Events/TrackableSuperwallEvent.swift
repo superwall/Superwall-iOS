@@ -190,13 +190,8 @@ enum InternalSuperwallEvent {
 
   struct SessionStart: TrackableSuperwallEvent {
     let superwallEvent: SuperwallEvent = .sessionStart
-    let configTimestamp: Int
     var customParameters: [String: Any] = [:]
-    func getSuperwallParameters() async -> [String: Any] {
-      return [
-        "config_ts": configTimestamp
-      ]
-    }
+    func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
   struct DeviceAttributes: TrackableSuperwallEvent {
