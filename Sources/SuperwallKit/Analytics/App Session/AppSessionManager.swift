@@ -105,7 +105,7 @@ class AppSessionManager {
   /// Tries to track a new app session, then app launch, then first seen.
   ///
   /// Note: Order is important here because we need to check if it's an app launch
-  /// when deciding whether to track device attributes.
+  /// when deciding whether to track device attributes/session start.
   private func sessionCouldRefresh() async {
     await detectNewSession()
     await trackAppLaunch()
@@ -124,7 +124,10 @@ class AppSessionManager {
       let deviceAttributes = await delegate.makeSessionDeviceAttributes()
       let userAttributes = delegate.makeUserAttributesEvent()
 
-      await withTaskGroup(of: Void.self) { group in
+      await withTaskGroup(of: Void.self) { [weak self] group in
+        guard let self = self else {
+          return
+        }
         group.addTask {
           await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
         }
@@ -132,7 +135,7 @@ class AppSessionManager {
         // Only track device attributes if we've already tracked app launch before.
         // This is because we track device attributes after the config is first fetched.
         // Otherwise we'd track it twice and it won't contain geo info here on cold app start.
-        if didTrackAppLaunch {
+        if self.didTrackAppLaunch {
           group.addTask {
             await Superwall.shared.track(
               InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
