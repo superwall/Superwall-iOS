@@ -36,8 +36,8 @@ final class PresentPaywallOperatorTests: XCTestCase {
     )
     let webView = SWWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
     )
     let paywallVc = PaywallViewControllerMock(
@@ -102,8 +102,8 @@ final class PresentPaywallOperatorTests: XCTestCase {
     )
     let webView = SWWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
     )
     let paywallVc = PaywallViewControllerMock(

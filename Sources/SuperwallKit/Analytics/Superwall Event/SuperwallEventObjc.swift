@@ -116,6 +116,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the loading of a paywall's website times out.
   case paywallWebviewLoadTimeout
 
+  /// When the loading of a paywall's website falls back to a different CDN.
+  case paywallWebviewLoadFallback
+
   /// When the request to load the paywall's products started.
   case paywallProductsLoadStart
 
@@ -224,6 +227,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "paywallWebviewLoad_complete"
     case .paywallWebviewLoadTimeout:
       return "paywallWebviewLoad_timeout"
+    case .paywallWebviewLoadFallback:
+      return "paywallWebviewLoad_fallback"
     case .paywallProductsLoadStart:
       return "paywallProductsLoad_start"
     case .paywallProductsLoadFail:
