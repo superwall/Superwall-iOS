@@ -379,7 +379,7 @@ extension Paywall: Stubbable {
       identifier: "identifier",
       name: "abc",
       url: URL(string: "https://google.com")!,
-      urlConfig: .init(urls: [], maxAttempts: 0),
+      urlConfig: .init(endpoints: [], maxAttempts: 0),
       htmlSubstitutions: "",
       presentation: PaywallPresentationInfo(
         style: .modal,

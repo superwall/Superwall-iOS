@@ -93,7 +93,7 @@ let response = #"""
     "url_config": {
       "endpoints": [{
         "url": "https://www.fitnessai.com/superwall-video?sw_cache_key=1659989801716",
-        "timeout": 1000,
+        "timeout_ms": 1000,
         "percentage": 100
       }],
       "max_attempts": 10

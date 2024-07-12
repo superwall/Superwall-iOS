@@ -50,7 +50,7 @@ final class SWWebViewLoadingHandler {
       }
     }
 
-    var endpoints = paywallUrlConfig.urls
+    var endpoints = paywallUrlConfig.endpoints
 
     guard attempts < paywallUrlConfig.maxAttempts else {
       await trackWebViewLoadFailure(WebViewError.exceededAttempts, urls: attemptedURLs)
@@ -86,7 +86,7 @@ final class SWWebViewLoadingHandler {
         return await loadURL(
           attempts: attempts + 1,
           paywallUrlConfig: WebViewURLConfig(
-            urls: endpoints,
+            endpoints: endpoints,
             maxAttempts: paywallUrlConfig.maxAttempts
           ),
           paywallUrl: paywallUrl,

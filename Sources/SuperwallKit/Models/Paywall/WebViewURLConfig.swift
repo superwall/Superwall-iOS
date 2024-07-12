@@ -8,7 +8,7 @@
 import Foundation
 
 struct WebViewURLConfig: Decodable {
-  let urls: [WebViewEndpoint]
+  let endpoints: [WebViewEndpoint]
   let maxAttempts: Int
 }
 

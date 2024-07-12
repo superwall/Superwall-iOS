@@ -12,7 +12,7 @@ final class SWWebViewLoadingHandlerTests: XCTestCase {
   func test_loadURL_noDelegate() async {
     let handler = SWWebViewLoadingHandler(enableMultiplePaywallUrls: true)
     let didLoad = await handler.loadURL(
-      paywallUrlConfig: .init(urls: [.stub()], maxAttempts: 2),
+      paywallUrlConfig: .init(endpoints: [.stub()], maxAttempts: 2),
       paywallUrl: URL(string: "https://google.com")!
     )
     XCTAssertFalse(didLoad)
@@ -24,7 +24,7 @@ final class SWWebViewLoadingHandlerTests: XCTestCase {
     let handler = SWWebViewLoadingHandler(enableMultiplePaywallUrls: false)
     handler.loadingDelegate = delegate
     let didLoad = await handler.loadURL(
-      paywallUrlConfig: .init(urls: [.stub()], maxAttempts: 2),
+      paywallUrlConfig: .init(endpoints: [.stub()], maxAttempts: 2),
       paywallUrl: URL(string: "https://google.com")!
     )
     XCTAssertTrue(didLoad)
@@ -36,7 +36,7 @@ final class SWWebViewLoadingHandlerTests: XCTestCase {
     let handler = SWWebViewLoadingHandler(enableMultiplePaywallUrls: false)
     handler.loadingDelegate = delegate
     let didLoad = await handler.loadURL(
-      paywallUrlConfig: .init(urls: [.stub()], maxAttempts: 2),
+      paywallUrlConfig: .init(endpoints: [.stub()], maxAttempts: 2),
       paywallUrl: URL(string: "https://google.com")!
     )
     // TODO: Make sure webview failure is tracked
@@ -50,7 +50,7 @@ final class SWWebViewLoadingHandlerTests: XCTestCase {
     handler.loadingDelegate = delegate
     let didLoad = await handler.loadURL(
       attempts: 2,
-      paywallUrlConfig: .init(urls: [.stub()], maxAttempts: 2),
+      paywallUrlConfig: .init(endpoints: [.stub()], maxAttempts: 2),
       paywallUrl: URL(string: "https://google.com")!
     )
     // TODO: Make sure webview failure is tracked
@@ -64,7 +64,7 @@ final class SWWebViewLoadingHandlerTests: XCTestCase {
     handler.loadingDelegate = delegate
     let didLoad = await handler.loadURL(
       attempts: 2,
-      paywallUrlConfig: .init(urls: [], maxAttempts: 2),
+      paywallUrlConfig: .init(endpoints: [], maxAttempts: 2),
       paywallUrl: URL(string: "https://google.com")!
     )
     // TODO: Make sure webview failure is tracked
@@ -77,7 +77,7 @@ final class SWWebViewLoadingHandlerTests: XCTestCase {
     let handler = SWWebViewLoadingHandler(enableMultiplePaywallUrls: true)
     handler.loadingDelegate = delegate
     let didLoad = await handler.loadURL(
-      paywallUrlConfig: .init(urls: [.stub()], maxAttempts: 2),
+      paywallUrlConfig: .init(endpoints: [.stub()], maxAttempts: 2),
       paywallUrl: URL(string: "https://google.com")!
     )
     XCTAssertTrue(didLoad)
@@ -89,7 +89,7 @@ final class SWWebViewLoadingHandlerTests: XCTestCase {
     let handler = SWWebViewLoadingHandler(enableMultiplePaywallUrls: true)
     handler.loadingDelegate = delegate
     let didLoad = await handler.loadURL(
-      paywallUrlConfig: .init(urls: [.stub(), .stub()], maxAttempts: 2),
+      paywallUrlConfig: .init(endpoints: [.stub(), .stub()], maxAttempts: 2),
       paywallUrl: URL(string: "https://google.com")!
     )
     // TODO: Make sure webview failure is tracked
@@ -102,7 +102,7 @@ final class SWWebViewLoadingHandlerTests: XCTestCase {
     let handler = SWWebViewLoadingHandler(enableMultiplePaywallUrls: true)
     handler.loadingDelegate = delegate
     let didLoad = await handler.loadURL(
-      paywallUrlConfig: .init(urls: [.stub(), .stub()], maxAttempts: 2),
+      paywallUrlConfig: .init(endpoints: [.stub(), .stub()], maxAttempts: 2),
       paywallUrl: URL(string: "https://google.com")!
     )
     // TODO: Make sure webview failure is tracked
@@ -115,7 +115,7 @@ final class SWWebViewLoadingHandlerTests: XCTestCase {
     let handler = SWWebViewLoadingHandler(enableMultiplePaywallUrls: true)
     handler.loadingDelegate = delegate
     let didLoad = await handler.loadURL(
-      paywallUrlConfig: .init(urls: [.stub(), .stub(), .stub()], maxAttempts: 2),
+      paywallUrlConfig: .init(endpoints: [.stub(), .stub(), .stub()], maxAttempts: 2),
       paywallUrl: URL(string: "https://google.com")!
     )
     // TODO: Make sure webview failure is tracked
