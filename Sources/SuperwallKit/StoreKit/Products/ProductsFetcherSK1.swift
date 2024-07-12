@@ -26,7 +26,7 @@ class ProductsFetcherSK1: NSObject {
   struct ProductRequest {
     let identifiers: Set<String>
     let paywallName: String?
-    var retriesLeft: Int
+    let retriesLeft: Int
   }
 
   // MARK: - ProductsFetcher
