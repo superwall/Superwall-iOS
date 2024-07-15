@@ -11,6 +11,8 @@
 //
 //  Created by Andrés Boedo on 7/14/20.
 //
+// swiftlint:disable function_body_length
+
 import Foundation
 import StoreKit
 
