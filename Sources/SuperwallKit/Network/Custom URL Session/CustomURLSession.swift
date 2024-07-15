@@ -34,7 +34,7 @@ class CustomURLSession {
   @discardableResult
   func request<Response>(
     _ endpoint: Endpoint<Response>,
-    isRetryingCallback: (() -> Void)? = nil
+    isRetryingCallback: ((Int) -> Void)? = nil
   ) async throws -> Response {
     guard let request = await endpoint.makeRequest() else {
       throw NetworkError.unknown

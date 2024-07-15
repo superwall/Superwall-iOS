@@ -353,6 +353,7 @@ extension DependencyContainer: ApiFactory {
       "X-Subscription-Status": Superwall.shared.subscriptionStatus.description,
       "X-Static-Config-Build-Id": configManager.config?.buildId ?? "",
       "X-Current-Time": Date().isoString,
+      "X-Retry-Count": "\(configManager.configRetryCount)",
       "Content-Type": "application/json"
     ]
     return headers

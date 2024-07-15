@@ -39,6 +39,8 @@ class ConfigManager {
   @DispatchQueueBacked
   var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
+  var configRetryCount = 0
+
   private unowned let storeKitManager: StoreKitManager
   private unowned let storage: Storage
   private unowned let network: Network
@@ -88,12 +90,13 @@ class ConfigManager {
     do {
       let newConfig = try await network.getConfig()
 
-      await removeUnusedPaywallVCsFromCache(
-        oldConfig: oldConfig,
-        newConfig: newConfig
-      )
-
+      // Have to reset all here, rather than cherry pick because not all paywalls will be within
+      // static config to be able to know which paywalls to refresh (e.g. localised v3 ones).
       await paywallManager.resetPaywallRequestCache()
+
+      // We can remove the unused paywalls. But again we don't know which localised v3 ones are unused.
+      let unusedPaywallIds = await getUnusedPaywallIds(oldConfig: oldConfig, newConfig: newConfig)
+      paywallManager.removePaywallViewControllers(withIds: unusedPaywallIds)
 
       await processConfig(newConfig, isFirstTime: false)
       configState.send(.retrieved(newConfig))
@@ -110,26 +113,27 @@ class ConfigManager {
     }
   }
 
-  private func removeUnusedPaywallVCsFromCache(
+  /// Gets the paywall IDs that no longer exist in the newly retrieved config, minus
+  /// any presenting paywall.
+  private func getUnusedPaywallIds(
     oldConfig: Config,
     newConfig: Config
-  ) async {
+  ) async -> Set<String> {
     var oldPaywallIds = Set(oldConfig.paywalls.map { $0.identifier })
     let newPaywallIds = Set(newConfig.paywalls.map { $0.identifier })
 
     if let presentedPaywallId = await paywallManager.presentedViewController?.paywall.identifier {
       oldPaywallIds.remove(presentedPaywallId)
     }
-    let missingPaywallIds = oldPaywallIds.subtracting(newPaywallIds)
-
-    paywallManager.removePaywallViewControllers(withIds: missingPaywallIds)
+    return oldPaywallIds.subtracting(newPaywallIds)
   }
 
   func fetchConfiguration() async {
     do {
       _ = await factory.loadPurchasedProducts()
 
-      async let configRequest = network.getConfig { [weak self] in
+      async let configRequest = network.getConfig { [weak self] attempt in
+        self?.configRetryCount = attempt
         self?.configState.send(.retrying)
       }
       async let geoRequest: Void = deviceHelper.getGeoInfo()
