@@ -267,6 +267,16 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
         request.cancel()
       } else {
         self.queue.asyncAfter(deadline: .now() + .seconds(3)) {
+          Logger.debug(
+            logLevel: .info,
+            scope: .productsManager,
+            message: "Retrying product request.",
+            info: [
+              "retry_count": Self.numberOfRetries - productRequest.retriesLeft - 1,
+              "product_ids": productRequest.identifiers
+            ],
+            error: error
+          )
           self.startRequest(
             forIdentifiers: productRequest.identifiers,
             paywallName: productRequest.paywallName,
