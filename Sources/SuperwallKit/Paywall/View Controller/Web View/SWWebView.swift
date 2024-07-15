@@ -142,22 +142,21 @@ extension SWWebView: SWWebViewLoadingDelegate {
     with url: URL,
     timeout: TimeInterval?
   ) async throws {
+    var request: URLRequest
+
     if isOnDeviceCacheEnabled {
-      var request = URLRequest(
+      request = URLRequest(
         url: url,
         cachePolicy: .returnCacheDataElseLoad
       )
-      if let timeout = timeout {
-        request.timeoutInterval = timeout
-      }
-      load(request)
     } else {
-      var request = URLRequest(url: url)
-      if let timeout = timeout {
-        request.timeoutInterval = timeout
-      }
-      load(request)
+      request = URLRequest(url: url)
     }
+
+    if let timeout = timeout {
+      request.timeoutInterval = timeout
+    }
+    load(request)
 
     return try await withCheckedThrowingContinuation { continuation in
       self.completion = { [weak self] error in

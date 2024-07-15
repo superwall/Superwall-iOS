@@ -36,10 +36,8 @@ actor PaywallRequestManager {
   }
 
   func removeUnusedPaywallsFromCache(withIds ids: Set<String>) {
-    for (hash, paywall) in paywallsByHash {
-      if ids.contains(paywall.identifier) {
-        paywallsByHash.removeValue(forKey: hash)
-      }
+    for (hash, paywall) in paywallsByHash where ids.contains(paywall.identifier) {
+      paywallsByHash.removeValue(forKey: hash)
     }
   }
 
