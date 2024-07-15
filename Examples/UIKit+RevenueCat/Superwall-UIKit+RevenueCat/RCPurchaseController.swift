@@ -11,6 +11,10 @@ import StoreKit
 import RevenueCat
 import Combine
 
+enum PurchasingError: Error {
+  case productNotFound
+}
+
 // MARK: Quickstart (v3.0.0+)
 /// 1. Copy this file into your app
 /// 2. Create an `RCPurchaseController` wherever Superwall and RevenueCat are being initialized.
@@ -45,8 +49,11 @@ final class RCPurchaseController: PurchaseController {
   /// someone tries to purchase a product on one of your paywalls.
   func purchase(product: SKProduct) async -> PurchaseResult {
     do {
+      guard let storeProduct = await Purchases.shared.products([product.productIdentifier]).first else {
+        throw PurchasingError.productNotFound
+      }
+      
       let purchaseDate = Date()
-      let storeProduct = RevenueCat.StoreProduct(sk1Product: product)
       let revenueCatResult = try await Purchases.shared.purchase(product: storeProduct)
       if revenueCatResult.userCancelled {
         return .cancelled
