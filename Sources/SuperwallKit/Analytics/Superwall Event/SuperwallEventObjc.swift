@@ -128,6 +128,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the request to load the paywall's products completed.
   case paywallProductsLoadComplete
 
+  /// When the request to load the paywall's products has failed and is being retried.
+  case paywallProductsLoadRetry
+
   /// Information about a paywall presentation request
   case paywallPresentationRequest
 
@@ -233,6 +236,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "paywallProductsLoad_start"
     case .paywallProductsLoadFail:
       return "paywallProductsLoad_fail"
+    case .paywallProductsLoadRetry:
+      return "paywallProductsLoad_retry"
     case .paywallProductsLoadComplete:
       return "paywallProductsLoad_complete"
     case .paywallPresentationRequest:

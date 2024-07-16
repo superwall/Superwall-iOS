@@ -27,7 +27,8 @@ class ProductsFetcherSK1: NSObject {
 
   struct ProductRequest {
     let identifiers: Set<String>
-    let paywallName: String?
+    let paywall: Paywall?
+    let event: EventData?
     let retriesLeft: Int
   }
 
@@ -40,10 +41,11 @@ class ProductsFetcherSK1: NSObject {
   /// - Throws: An error if it couldn't retrieve the products.
   func products(
     identifiers: Set<String>,
-    forPaywall paywallName: String?
+    forPaywall paywall: Paywall?,
+    event: EventData?
   ) async throws -> Set<StoreProduct> {
     let sk1Products = try await withCheckedThrowingContinuation { continuation in
-      products(withIdentifiers: identifiers, forPaywall: paywallName) { result in
+      products(withIdentifiers: identifiers, forPaywall: paywall, event: event) { result in
         continuation.resume(with: result)
       }
     }
@@ -55,7 +57,8 @@ class ProductsFetcherSK1: NSObject {
 
 	private func products(
     withIdentifiers identifiers: Set<String>,
-    forPaywall paywallName: String?,
+    forPaywall paywall: Paywall?,
+    event: EventData?,
     completion: @escaping ProductRequestCompletionBlock
   ) {
     // Return if there aren't any product IDs.
@@ -111,7 +114,8 @@ class ProductsFetcherSK1: NSObject {
       self.completionHandlers[identifiers] = [completion]
       startRequest(
         forIdentifiers: identifiers,
-        paywallName: paywallName,
+        paywall: paywall,
+        event: event,
         retriesLeft: Self.numberOfRetries
       )
 		}
@@ -120,14 +124,16 @@ class ProductsFetcherSK1: NSObject {
   // Note: this isn't thread-safe and must therefore be used inside of `queue` only.
   private func startRequest(
     forIdentifiers identifiers: Set<String>,
-    paywallName: String?,
+    paywall: Paywall?,
+    event: EventData?,
     retriesLeft: Int
   ) {
     let request = SKProductsRequest(productIdentifiers: identifiers)
     request.delegate = self
     self.productsByRequest[request] = ProductRequest(
       identifiers: identifiers,
-      paywallName: paywallName,
+      paywall: paywall,
+      event: event,
       retriesLeft: retriesLeft
     )
     request.start()
@@ -269,19 +275,32 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
         request.cancel()
       } else {
         self.queue.asyncAfter(deadline: .now() + .seconds(3)) {
+          let retryCount = Self.numberOfRetries - (productRequest.retriesLeft - 1)
+          Task {
+            guard let paywall = productRequest.paywall else {
+              return
+            }
+            let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
+              state: .retry(retryCount),
+              paywallInfo: paywall.getInfo(fromEvent: productRequest.event),
+              eventData: productRequest.event
+            )
+            await Superwall.shared.track(productLoadEvent)
+          }
           Logger.debug(
             logLevel: .info,
             scope: .productsManager,
             message: "Retrying product request.",
             info: [
-              "retry_count": Self.numberOfRetries - productRequest.retriesLeft - 1,
+              "retry_count": retryCount,
               "product_ids": productRequest.identifiers
             ],
             error: error
           )
           self.startRequest(
             forIdentifiers: productRequest.identifiers,
-            paywallName: productRequest.paywallName,
+            paywall: productRequest.paywall,
+            event: productRequest.event,
             retriesLeft: productRequest.retriesLeft - 1
           )
         }

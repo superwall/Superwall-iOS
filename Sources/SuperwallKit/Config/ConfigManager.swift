@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 22/06/2022.
 //
-// swiftlint:disable type_body_length file_length
+// swiftlint:disable type_body_length
 
 import UIKit
 import Combine
@@ -144,8 +144,6 @@ class ConfigManager {
       await Superwall.shared.track(
         InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
-
-      Task { await sendProductsBack(from: config) }
 
       await processConfig(config, isFirstTime: true)
 
@@ -383,34 +381,6 @@ class ConfigManager {
           )
         }
       }
-    }
-  }
-
-  /// This sends product data back to the dashboard.
-  private func sendProductsBack(from config: Config) async {
-    guard config.featureFlags.enablePostback else {
-      return
-    }
-    let milliseconds = 1000
-    let nanoseconds = UInt64(milliseconds * 1_000_000)
-    let duration = UInt64(config.postback.postbackDelay) * nanoseconds
-
-    do {
-      try await Task.sleep(nanoseconds: duration)
-
-      let productIds = config.postback.productsToPostBack.map { $0.identifier }
-      let products = try await storeKitManager.getProducts(withIds: productIds)
-      let postbackProducts = products.productsById.values.map(PostbackProduct.init)
-      let postback = Postback(products: postbackProducts)
-      await network.sendPostback(postback)
-    } catch {
-      Logger.debug(
-        logLevel: .error,
-        scope: .debugViewController,
-        message: "No Paywall Response",
-        info: nil,
-        error: error
-      )
     }
   }
 }

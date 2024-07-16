@@ -630,6 +630,7 @@ enum InternalSuperwallEvent {
       case start
       case fail(Error)
       case complete
+      case retry(Int)
     }
     let state: State
     var customParameters: [String: Any] {
@@ -644,6 +645,12 @@ enum InternalSuperwallEvent {
         return .paywallProductsLoadFail(triggeredEventName: eventData?.name, paywallInfo: paywallInfo)
       case .complete:
         return .paywallProductsLoadComplete(triggeredEventName: eventData?.name)
+      case .retry(let attempt):
+        return .paywallProductsLoadRetry(
+          triggeredEventName: eventData?.name,
+          paywallInfo: paywallInfo,
+          attempt: attempt
+        )
       }
     }
     let paywallInfo: PaywallInfo
