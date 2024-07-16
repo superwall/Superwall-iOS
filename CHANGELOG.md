@@ -10,7 +10,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds the ability for the SDK to refresh the Superwall configuration every session start, subject to a feature flag.
 - Tracks a `config_refresh` Superwall event when the configuration is refreshed.
 - Adds product retrying if we fail to fetch an `SKProduct`.
-- Adds `Superwall.shared.localeIdentifier` as a convenience variable that you can use to dynamically update the locale used for evaluating rules and getting localized paywalls.
+- SW-2899: Adds `Superwall.shared.localeIdentifier` as a convenience variable that you can use to dynamically update the locale used for evaluating rules and getting localized paywalls.
 
 ### Fixes
 
