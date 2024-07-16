@@ -22,6 +22,7 @@ struct FeatureFlags: Decodable {
   var enableNoneSchedulingPolicy: Bool
   var enableMultiplePaywallUrls: Bool
   var enableConfigRefresh: Bool
+  var enableTextInteraction: Bool
 
   enum CodingKeys: String, CodingKey {
     case toggles
@@ -43,6 +44,7 @@ struct FeatureFlags: Decodable {
     enableNoneSchedulingPolicy = rawFeatureFlags.value(forKey: "enable_none_scheduling_policy", default: false)
     enableMultiplePaywallUrls = rawFeatureFlags.value(forKey: "enable_multiple_paywall_urls", default: false)
     enableConfigRefresh = rawFeatureFlags.value(forKey: "enable_config_refresh", default: false)
+    enableTextInteraction = rawFeatureFlags.value(forKey: "enable_text_interaction", default: false)
   }
 
   init(
@@ -54,7 +56,8 @@ struct FeatureFlags: Decodable {
     enableThrottleSchedulingPolicy: Bool,
     enableNoneSchedulingPolicy: Bool,
     enableMultiplePaywallUrls: Bool,
-    enableConfigRefresh: Bool
+    enableConfigRefresh: Bool,
+    enableTextInteraction: Bool
   ) {
     self.enableSessionEvents = enableSessionEvents
     self.enableExpressionParameters = enableExpressionParameters
@@ -65,6 +68,7 @@ struct FeatureFlags: Decodable {
     self.enableNoneSchedulingPolicy = enableNoneSchedulingPolicy
     self.enableMultiplePaywallUrls = enableMultiplePaywallUrls
     self.enableConfigRefresh = enableConfigRefresh
+    self.enableTextInteraction = enableTextInteraction
   }
 }
 
@@ -91,7 +95,8 @@ extension FeatureFlags: Stubbable {
       enableThrottleSchedulingPolicy: true,
       enableNoneSchedulingPolicy: true,
       enableMultiplePaywallUrls: true,
-      enableConfigRefresh: true
+      enableConfigRefresh: true,
+      enableTextInteraction: true
     )
   }
 }

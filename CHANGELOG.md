@@ -11,6 +11,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Tracks a `config_refresh` Superwall event when the configuration is refreshed.
 - Adds product retrying if we fail to fetch an `SKProduct`. This tracks a `paywallProductsLoad_retry` event whenever the product loading request gets retried.
 - SW-2899: Adds `Superwall.shared.localeIdentifier` as a convenience variable that you can use to dynamically update the locale used for evaluating rules and getting localized paywalls.
+- Adds feature flag to enable text interaction with a paywall.
 
 ### Fixes
 
