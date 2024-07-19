@@ -35,12 +35,6 @@ actor PaywallRequestManager {
     paywallsByHash.removeAll()
   }
 
-  func removeUnusedPaywallsFromCache(withIds ids: Set<String>) {
-    for (hash, paywall) in paywallsByHash where ids.contains(paywall.identifier) {
-      paywallsByHash.removeValue(forKey: hash)
-    }
-  }
-
   ///  Gets a paywall from a given request.
   ///
   ///  If a request for the same paywall is already in progress, it suspends until the request returns.

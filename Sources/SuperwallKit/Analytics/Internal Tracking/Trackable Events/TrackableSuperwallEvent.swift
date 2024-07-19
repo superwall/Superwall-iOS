@@ -499,7 +499,14 @@ enum InternalSuperwallEvent {
     let product: StoreProduct?
     let model: StoreTransaction?
     var customParameters: [String: Any] {
-      return paywallInfo.customParams()
+      switch state {
+      case .abandon(let product):
+        var params = paywallInfo.customParams()
+        params["abandoned_product_id"] = product.productIdentifier
+        return params
+      default:
+        return paywallInfo.customParams()
+      }
     }
 
     func getSuperwallParameters() async -> [String: Any] {
