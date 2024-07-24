@@ -7,7 +7,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds support for multiple paywall URLs, incase one CDN provider fails.
-- Adds the ability for the SDK to refresh the Superwall configuration every session start, subject to a feature flag.
+- Adds the ability for the SDK to refresh the Superwall configuration every session start, subject to a feature flag. This means the paywalls will be kept updated even if the app has been open for a long time in the background.
+- Adds `build_id` and `cache_key` to `PaywallInfo`.
 - Tracks a `config_refresh` Superwall event when the configuration is refreshed.
 - Adds product retrying if we fail to fetch an `SKProduct`. This tracks a `paywallProductsLoad_retry` event whenever the product loading request gets retried.
 - SW-2899: Adds `Superwall.shared.localeIdentifier` as a convenience variable that you can use to dynamically update the locale used for evaluating rules and getting localized paywalls.

@@ -90,13 +90,9 @@ class ConfigManager {
     do {
       let newConfig = try await network.getConfig()
 
-      // Have to reset all here, rather than cherry pick because not all paywalls will be within
-      // static config to be able to know which paywalls to refresh (e.g. localised v3 ones).
-      await paywallManager.resetPaywallRequestCache()
-
-      // We can remove the unused paywalls. But again we don't know which localised v3 ones are unused.
-      let unusedPaywallIds = await getUnusedPaywallIds(oldConfig: oldConfig, newConfig: newConfig)
-      paywallManager.removePaywallViewControllers(withIds: unusedPaywallIds)
+      // Remove all paywalls and paywall vcs that have either been removed or changed.
+      let removedOrChangedPaywallIds = await getRemovedOrChangedPaywallIds(oldConfig: oldConfig, newConfig: newConfig)
+      await paywallManager.removePaywalls(withIds: removedOrChangedPaywallIds)
 
       await processConfig(newConfig, isFirstTime: false)
       configState.send(.retrieved(newConfig))
@@ -115,17 +111,32 @@ class ConfigManager {
 
   /// Gets the paywall IDs that no longer exist in the newly retrieved config, minus
   /// any presenting paywall.
-  private func getUnusedPaywallIds(
+  private func getRemovedOrChangedPaywallIds(
     oldConfig: Config,
     newConfig: Config
   ) async -> Set<String> {
-    var oldPaywallIds = Set(oldConfig.paywalls.map { $0.identifier })
-    let newPaywallIds = Set(newConfig.paywalls.map { $0.identifier })
+    let oldPaywalls = oldConfig.paywalls
+    let newPaywalls = newConfig.paywalls
 
-    if let presentedPaywallId = await paywallManager.presentedViewController?.paywall.identifier {
-      oldPaywallIds.remove(presentedPaywallId)
-    }
-    return oldPaywallIds.subtracting(newPaywallIds)
+    let oldPaywallIds = Set(oldPaywalls.map { $0.identifier })
+    let newPaywallIds = Set(newPaywalls.map { $0.identifier })
+
+    // Create dictionary for quick lookup of cacheKeys
+    let oldPaywallCacheKeys = Dictionary(uniqueKeysWithValues: oldPaywalls.map { ($0.identifier, $0.cacheKey) })
+
+    let removedPaywallIds = oldPaywallIds.subtracting(newPaywallIds)
+
+    // Find identifiers that are no longer in the new configuration or whose cacheKey has changed
+    let removedOrChangedPaywallIds = removedPaywallIds
+      .union(
+        newPaywalls.filter { paywall in
+          let cacheKeyExists = oldPaywallCacheKeys[paywall.identifier] != nil
+          let cacheKeyChanged = oldPaywallCacheKeys[paywall.identifier] != paywall.cacheKey
+          return cacheKeyExists && cacheKeyChanged
+        }.map { $0.identifier }
+      )
+
+    return removedOrChangedPaywallIds
   }
 
   func fetchConfiguration() async {
@@ -327,6 +338,8 @@ class ConfigManager {
         unconfirmedAssignments: unconfirmedAssignments,
         expressionEvaluator: expressionEvaluator
       )
+      // Do not preload the presented paywall. This is because if config refreshes, we
+      // don't want to refresh the presented paywall until it's dismissed and presented again.
       if let presentedPaywallId = await paywallManager.presentedViewController?.paywall.identifier {
         paywallIds.remove(presentedPaywallId)
       }

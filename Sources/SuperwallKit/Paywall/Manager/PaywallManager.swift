@@ -52,15 +52,15 @@ class PaywallManager {
     return paywallArchiveManager
   }
 
-	func removePaywallViewController(forKey key: String) {
-    cache.removePaywallViewController(forKey: key)
-	}
-
 	func resetCache() {
 		cache.removeAll()
 	}
 
-  func removePaywallViewControllers(withIds ids: Set<String>) {
+  /// Removes cached `Paywall` and `PaywallViewController` objects so that
+  /// they can be fetched again when the config refreshes.
+  func removePaywalls(withIds ids: Set<String>) async {
+    await paywallRequestManager.removePaywalls(withIds: ids)
+
     let deviceInfo = factory.makeDeviceInfo()
 
     for id in ids {
@@ -70,12 +70,6 @@ class PaywallManager {
       )
       cache.removePaywallViewController(forKey: cacheKey)
     }
-  }
-
-  /// Removes cached `Paywall` objects so that they can be fetched again
-  /// when the config refreshes.
-  func resetPaywallRequestCache() async {
-    await paywallRequestManager.reset()
   }
 
   func getPaywall(from request: PaywallRequest) async throws -> Paywall {

@@ -18,6 +18,12 @@ public final class PaywallInfo: NSObject {
   /// The identifier set for this paywall in the Superwall dashboard.
   public let identifier: String
 
+  /// The cache key for the paywall.
+  public let cacheKey: String
+
+  /// The build ID of the Superwall configuration.
+  public let buildId: String
+
   /// The trigger experiment that caused the paywall to present.
   ///
   /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
@@ -131,6 +137,8 @@ public final class PaywallInfo: NSObject {
     databaseId: String,
     identifier: String,
     name: String,
+    cacheKey: String,
+    buildId: String,
     url: URL,
     products: [Product],
     productItems: [ProductItem],
@@ -159,6 +167,8 @@ public final class PaywallInfo: NSObject {
     self.databaseId = databaseId
     self.identifier = identifier
     self.name = name
+    self.cacheKey = cacheKey
+    self.buildId = buildId
     self.url = url
     self.presentedByEventWithName = eventData?.name
     self.presentedByEventAt = eventData?.createdAt.isoString
@@ -244,7 +254,9 @@ public final class PaywallInfo: NSObject {
       // TODO: Remove in v4:
       "trigger_session_id": "" as Any,
       "experiment_id": experiment?.id as Any,
-      "variant_id": experiment?.variant.id as Any
+      "variant_id": experiment?.variant.id as Any,
+      "cache_key": cacheKey,
+      "build_id": buildId
     ]
 
     var loadingVars: [String: Any] = [:]
@@ -323,6 +335,8 @@ extension PaywallInfo: Stubbable {
       databaseId: "abc",
       identifier: "1",
       name: "Test",
+      cacheKey: "cacheKey",
+      buildId: "buildId",
       url: URL(string: "https://www.google.com")!,
       products: [],
       productItems: [],

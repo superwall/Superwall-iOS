@@ -22,6 +22,12 @@ struct Paywall: Decodable {
   /// The name of the paywall
   let name: String
 
+  /// The key used to cache the paywall object.
+  let cacheKey: String
+
+  /// The build ID of the Superwall configuration.
+  let buildId: String
+
   /// The URL of the paywall webpage
   var url: URL
 
@@ -116,6 +122,8 @@ struct Paywall: Decodable {
     case id
     case identifier
     case name
+    case cacheKey
+    case buildId
     case url
     case urlConfig
     case htmlSubstitutions = "paywalljsEvent"
@@ -150,6 +158,8 @@ struct Paywall: Decodable {
     databaseId = try values.decode(String.self, forKey: .id)
     identifier = try values.decode(String.self, forKey: .identifier)
     name = try values.decode(String.self, forKey: .name)
+    cacheKey = try values.decode(String.self, forKey: .cacheKey)
+    buildId = try values.decode(String.self, forKey: .buildId)
     url = try values.decode(URL.self, forKey: .url)
     urlConfig = try values.decode(WebViewURLConfig.self, forKey: .urlConfig)
     htmlSubstitutions = try values.decode(String.self, forKey: .htmlSubstitutions)
@@ -264,6 +274,8 @@ struct Paywall: Decodable {
     databaseId: String,
     identifier: String,
     name: String,
+    cacheKey: String,
+    buildId: String,
     experiment: Experiment? = nil,
     url: URL,
     urlConfig: WebViewURLConfig,
@@ -292,6 +304,8 @@ struct Paywall: Decodable {
     self.databaseId = databaseId
     self.identifier = identifier
     self.name = name
+    self.cacheKey = cacheKey
+    self.buildId = buildId
     self.experiment = experiment
     self.url = url
     self.urlConfig = urlConfig
@@ -324,6 +338,8 @@ struct Paywall: Decodable {
       databaseId: databaseId,
       identifier: identifier,
       name: name,
+      cacheKey: cacheKey,
+      buildId: buildId,
       url: url,
       products: products,
       productItems: productItems,
@@ -378,6 +394,8 @@ extension Paywall: Stubbable {
       databaseId: "id",
       identifier: "identifier",
       name: "abc",
+      cacheKey: "cacheKey",
+      buildId: "buildId",
       url: URL(string: "https://google.com")!,
       urlConfig: .init(endpoints: [], maxAttempts: 0),
       htmlSubstitutions: "",
