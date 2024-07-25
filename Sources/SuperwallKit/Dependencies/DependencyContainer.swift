@@ -215,8 +215,8 @@ extension DependencyContainer: ViewControllerFactory {
     )
     let webView = SWWebView(
       isMac: deviceHelper.isMac,
-      sessionEventsManager: sessionEventsManager,
       messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: paywall.onDeviceCache == .enabled,
       factory: self
     )
     let paywallViewController = PaywallViewController(
@@ -351,9 +351,11 @@ extension DependencyContainer: ApiFactory {
       "X-Low-Power-Mode": deviceHelper.isLowPowerModeEnabled,
       "X-Is-Sandbox": deviceHelper.isSandbox,
       "X-Subscription-Status": Superwall.shared.subscriptionStatus.description,
+      "X-Static-Config-Build-Id": configManager.config?.buildId ?? "",
+      "X-Current-Time": Date().isoString,
+      "X-Retry-Count": "\(configManager.configRetryCount)",
       "Content-Type": "application/json"
     ]
-
     return headers
   }
 

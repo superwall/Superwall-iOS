@@ -26,7 +26,7 @@ enum PaywallManagerLogic {
       return outcome
     }
 
-    if newPaywall.url != oldPaywall.url {
+    if newPaywall.cacheKey != oldPaywall.cacheKey {
       outcome.append(.replacePaywall)
       outcome.append(.loadWebView)
       if !isPreloading {

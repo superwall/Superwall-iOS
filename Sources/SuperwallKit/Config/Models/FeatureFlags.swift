@@ -14,14 +14,15 @@ struct RawFeatureFlag: Decodable {
 
 struct FeatureFlags: Decodable {
   var enableSessionEvents: Bool
-  var enablePostback: Bool
   var enableExpressionParameters: Bool
   var enableUserIdSeed: Bool
   var disableVerboseEvents: Bool
   var enableSuppressesIncrementalRendering: Bool
   var enableThrottleSchedulingPolicy: Bool
   var enableNoneSchedulingPolicy: Bool
+  var enableMultiplePaywallUrls: Bool
   var enableConfigRefresh: Bool
+  var enableTextInteraction: Bool
 
   enum CodingKeys: String, CodingKey {
     case toggles
@@ -33,7 +34,6 @@ struct FeatureFlags: Decodable {
 
     enableSessionEvents = rawFeatureFlags.value(forKey: "enable_session_events", default: false)
     enableExpressionParameters = rawFeatureFlags.value(forKey: "enable_expression_params", default: false)
-    enablePostback = rawFeatureFlags.value(forKey: "enable_postback", default: false)
     enableUserIdSeed = rawFeatureFlags.value(forKey: "enable_userid_seed", default: false)
     disableVerboseEvents = rawFeatureFlags.value(forKey: "disable_verbose_events", default: false)
     enableSuppressesIncrementalRendering = rawFeatureFlags.value(
@@ -42,29 +42,33 @@ struct FeatureFlags: Decodable {
     )
     enableThrottleSchedulingPolicy = rawFeatureFlags.value(forKey: "enable_throttle_scheduling_policy", default: false)
     enableNoneSchedulingPolicy = rawFeatureFlags.value(forKey: "enable_none_scheduling_policy", default: false)
+    enableMultiplePaywallUrls = rawFeatureFlags.value(forKey: "enable_multiple_paywall_urls", default: false)
     enableConfigRefresh = rawFeatureFlags.value(forKey: "enable_config_refresh", default: false)
+    enableTextInteraction = rawFeatureFlags.value(forKey: "enable_text_interaction", default: false)
   }
 
   init(
     enableSessionEvents: Bool,
-    enablePostback: Bool,
     enableExpressionParameters: Bool,
     enableUserIdSeed: Bool,
     disableVerboseEvents: Bool,
     enableSuppressesIncrementalRendering: Bool,
     enableThrottleSchedulingPolicy: Bool,
     enableNoneSchedulingPolicy: Bool,
-    enableConfigRefresh: Bool
+    enableMultiplePaywallUrls: Bool,
+    enableConfigRefresh: Bool,
+    enableTextInteraction: Bool
   ) {
     self.enableSessionEvents = enableSessionEvents
-    self.enablePostback = enablePostback
     self.enableExpressionParameters = enableExpressionParameters
     self.enableUserIdSeed = enableUserIdSeed
     self.disableVerboseEvents = disableVerboseEvents
     self.enableSuppressesIncrementalRendering = enableSuppressesIncrementalRendering
     self.enableThrottleSchedulingPolicy = enableThrottleSchedulingPolicy
     self.enableNoneSchedulingPolicy = enableNoneSchedulingPolicy
+    self.enableMultiplePaywallUrls = enableMultiplePaywallUrls
     self.enableConfigRefresh = enableConfigRefresh
+    self.enableTextInteraction = enableTextInteraction
   }
 }
 
@@ -84,14 +88,15 @@ extension FeatureFlags: Stubbable {
   static func stub() -> FeatureFlags {
     return FeatureFlags(
       enableSessionEvents: true,
-      enablePostback: true,
       enableExpressionParameters: true,
       enableUserIdSeed: true,
       disableVerboseEvents: true,
       enableSuppressesIncrementalRendering: true,
       enableThrottleSchedulingPolicy: true,
-      enableNoneSchedulingPolicy: false,
-      enableConfigRefresh: true
+      enableNoneSchedulingPolicy: true,
+      enableMultiplePaywallUrls: true,
+      enableConfigRefresh: true,
+      enableTextInteraction: true
     )
   }
 }

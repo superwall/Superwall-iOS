@@ -30,9 +30,13 @@ actor PaywallRequestManager {
     self.factory = factory
   }
 
-  /// Removes all the cached `Paywall` objects.
-  func reset() {
-    paywallsByHash.removeAll()
+  /// Removes cached `Paywall` objects by paywall ID.
+  func removePaywalls(withIds ids: Set<String>) {
+    for (hash, paywall) in paywallsByHash {
+      if ids.contains(paywall.identifier) {
+        paywallsByHash.removeValue(forKey: hash)
+      }
+    }
   }
 
   ///  Gets a paywall from a given request.

@@ -13,7 +13,7 @@ extension Task where Failure == Error {
   static func retrying(
     priority: TaskPriority? = nil,
     maxRetryCount: Int,
-    isRetryingCallback: (() -> Void)?,
+    isRetryingCallback: ((Int) -> Void)?,
     operation: @Sendable @escaping () async throws -> Success
   ) -> Task {
     Task(priority: priority) {
@@ -21,7 +21,7 @@ extension Task where Failure == Error {
         do {
           return try await operation()
         } catch {
-          isRetryingCallback?()
+          isRetryingCallback?(attempt + 1)
           guard let delay = TaskRetryLogic.delay(
             forAttempt: attempt,
             maxRetries: maxRetryCount

@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 03/03/2022.
 //
-// swiftlint:disable implicitly_unwrapped_optional
+// swiftlint:disable implicitly_unwrapped_optional function_body_length line_length
 
 import Foundation
 import WebKit
@@ -15,21 +15,44 @@ protocol SWWebViewDelegate: AnyObject {
   func webViewDidFail()
 }
 
+enum WebViewError: LocalizedError {
+  case network(Int)
+  case exceededAttempts
+  case noEndpoints
+
+  var errorDescription: String? {
+    switch self {
+    case .network(let errorCode):
+      return "The network failed with error code \(errorCode)."
+    case .exceededAttempts:
+      return "The webview has attempted to load too many times."
+    case .noEndpoints:
+      return "There were no paywall URLs provided."
+    }
+  }
+}
+
 class SWWebView: WKWebView {
   let messageHandler: PaywallMessageHandler
+  let loadingHandler: SWWebViewLoadingHandler
   weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
-  var didFailToLoad = false
   private let wkConfig: WKWebViewConfiguration
   private let isMac: Bool
+  private let isOnDeviceCacheEnabled: Bool
+  private var completion: ((Error?) -> Void)?
 
   init(
     isMac: Bool,
-    sessionEventsManager: SessionEventsManager,
     messageHandler: PaywallMessageHandler,
+    isOnDeviceCacheEnabled: Bool,
     factory: FeatureFlagsFactory
   ) {
     self.isMac = isMac
     self.messageHandler = messageHandler
+    self.isOnDeviceCacheEnabled = isOnDeviceCacheEnabled
+    let featureFlags = factory.makeFeatureFlags()
+
+    self.loadingHandler = SWWebViewLoadingHandler(enableMultiplePaywallUrls: featureFlags?.enableMultiplePaywallUrls == true)
 
     let config = WKWebViewConfiguration()
     config.allowsInlineMediaPlayback = true
@@ -37,15 +60,15 @@ class SWWebView: WKWebView {
     config.allowsPictureInPictureMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
 
-    let featureFlags = factory.makeFeatureFlags()
     if featureFlags?.enableSuppressesIncrementalRendering == true {
       config.suppressesIncrementalRendering = true
     }
 
     let preferences = WKPreferences()
+
     if #available(iOS 15.0, *),
       !isMac {
-      preferences.isTextInteractionEnabled = false // ignore-xcode-12
+      preferences.isTextInteractionEnabled = featureFlags?.enableTextInteraction == true // ignore-xcode-12
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true
 
@@ -66,6 +89,9 @@ class SWWebView: WKWebView {
       frame: .zero,
       configuration: wkConfig
     )
+    self.loadingHandler.loadingDelegate = self
+    self.loadingHandler.webViewDelegate = delegate
+
     wkConfig.userContentController.add(
       RawWebMessageHandler(delegate: messageHandler),
       name: "paywallMessageHandler"
@@ -100,21 +126,54 @@ class SWWebView: WKWebView {
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
+
+  func loadURL(from paywall: Paywall) async {
+    let didLoad = await loadingHandler.loadURL(
+      paywallUrlConfig: paywall.urlConfig,
+      paywallUrl: paywall.url
+    )
+    if !didLoad {
+      delegate?.webViewDidFail()
+    }
+  }
+}
+
+extension SWWebView: SWWebViewLoadingDelegate {
+  func loadWebView(
+    with url: URL,
+    timeout: TimeInterval?
+  ) async throws {
+    var request: URLRequest
+
+    if isOnDeviceCacheEnabled {
+      request = URLRequest(
+        url: url,
+        cachePolicy: .returnCacheDataElseLoad
+      )
+    } else {
+      request = URLRequest(url: url)
+    }
+
+    if let timeout = timeout {
+      request.timeoutInterval = timeout
+    }
+    load(request)
+
+    return try await withCheckedThrowingContinuation { continuation in
+      self.completion = { [weak self] error in
+        if let error = error {
+          continuation.resume(throwing: error)
+        } else {
+          continuation.resume(returning: ())
+        }
+        self?.completion = nil
+      }
+    }
+  }
 }
 
 // MARK: - WKNavigationDelegate
 extension SWWebView: WKNavigationDelegate {
-  enum WebViewError: LocalizedError {
-    case network(Int)
-
-    var errorDescription: String? {
-      switch self {
-      case .network(let errorCode):
-        return "The network failed with error code \(errorCode)"
-      }
-    }
-  }
-
   func webView(
     _ webView: WKWebView,
     decidePolicyFor navigationResponse: WKNavigationResponse
@@ -126,7 +185,7 @@ extension SWWebView: WKNavigationDelegate {
 
     // Track paywall errors
     if statusCode >= 400 {
-      await trackPaywallError(WebViewError.network(statusCode))
+      completion?(WebViewError.network(statusCode))
       return .cancel
     }
 
@@ -146,8 +205,8 @@ extension SWWebView: WKNavigationDelegate {
     return .cancel
   }
 
-  func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-    didFailToLoad = false
+  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    completion?(nil)
   }
 
   func webView(
@@ -155,8 +214,7 @@ extension SWWebView: WKNavigationDelegate {
     didFailProvisionalNavigation navigation: WKNavigation!,
     withError error: Error
   ) {
-    didFailToLoad = true
-    delegate?.webViewDidFailProvisionalNavigation()
+    completion?(error)
   }
 
   func webView(
@@ -164,28 +222,6 @@ extension SWWebView: WKNavigationDelegate {
     didFail navigation: WKNavigation!,
     withError error: Error
   ) {
-    didFailToLoad = true
-    delegate?.webViewDidFail()
-    let date = Date()
-    Task {
-      await trackPaywallError(error, at: date)
-    }
-  }
-
-  func trackPaywallError(
-    _ error: Error,
-    at failAt: Date = Date()
-  ) async {
-    delegate?.paywall.webviewLoadingInfo.failAt = failAt
-
-    guard let paywallInfo = delegate?.info else {
-      return
-    }
-
-    let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
-      state: .fail(error),
-      paywallInfo: paywallInfo
-    )
-    await Superwall.shared.track(trackedEvent)
+    completion?(error)
   }
 }

@@ -14,7 +14,7 @@ final class CustomURLSessionMock: CustomURLSession {
   @discardableResult
   override func request<Response>(
     _ endpoint: Endpoint<Response>,
-    isRetryingCallback: (() -> Void)? = nil
+    isRetryingCallback: ((Int) -> Void)? = nil
   ) async throws -> Response {
     didRequest = true
     return try await super.request(endpoint)

@@ -23,7 +23,7 @@ final class NetworkTests: XCTestCase {
       
       _ = try? await network.getConfig(
         injectedApplicationStatePublisher: injectedApplicationStatePublisher,
-        isRetryingCallback: {}
+        isRetryingCallback: { _ in }
       )
       completion()
     }
@@ -57,7 +57,7 @@ final class NetworkTests: XCTestCase {
 
     _ = try? await network.getConfig(
       injectedApplicationStatePublisher: publisher,
-      isRetryingCallback: {}
+      isRetryingCallback: { _ in }
     )
     XCTAssertTrue(urlSession.didRequest)
   }
@@ -72,7 +72,7 @@ final class NetworkTests: XCTestCase {
 
     _ = try? await network.getConfig(
       injectedApplicationStatePublisher: publisher,
-      isRetryingCallback: {}
+      isRetryingCallback: { _ in }
     )
     XCTAssertTrue(urlSession.didRequest)
   }

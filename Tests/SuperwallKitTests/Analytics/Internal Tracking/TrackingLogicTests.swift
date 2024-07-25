@@ -302,8 +302,8 @@ final class TrackingLogicTests: XCTestCase {
     )
     let webView = SWWebView(
       isMac: false,
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
     )
     let paywallVc = PaywallViewControllerMock(

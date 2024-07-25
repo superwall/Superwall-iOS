@@ -515,7 +515,14 @@ enum InternalSuperwallEvent {
     let product: StoreProduct?
     let model: StoreTransaction?
     var customParameters: [String: Any] {
-      return paywallInfo.customParams()
+      switch state {
+      case .abandon(let product):
+        var params = paywallInfo.customParams()
+        params["abandoned_product_id"] = product.productIdentifier
+        return params
+      default:
+        return paywallInfo.customParams()
+      }
     }
 
     func getSuperwallParameters() async -> [String: Any] {
@@ -603,9 +610,10 @@ enum InternalSuperwallEvent {
   struct PaywallWebviewLoad: TrackableSuperwallEvent {
     enum State {
       case start
-      case fail(Error)
+      case fail(Error, [URL])
       case timeout
       case complete
+      case fallback
     }
     let state: State
 
@@ -619,14 +627,19 @@ enum InternalSuperwallEvent {
         return .paywallWebviewLoadTimeout(paywallInfo: paywallInfo)
       case .complete:
         return .paywallWebviewLoadComplete(paywallInfo: paywallInfo)
+      case .fallback:
+        return .paywallWebviewLoadFallback(paywallInfo: paywallInfo)
       }
     }
     let paywallInfo: PaywallInfo
 
     func getSuperwallParameters() async -> [String: Any] {
       var eventParams = await paywallInfo.eventParams()
-      if case .fail(let error) = state {
+      if case .fail(let error, let urls) = state {
         eventParams["error_message"] = error.safeLocalizedDescription
+        for (index, url) in urls.enumerated() {
+          eventParams["url_\(index)"] = url.absoluteString
+        }
       }
       return eventParams
     }
@@ -640,6 +653,7 @@ enum InternalSuperwallEvent {
       case start
       case fail(Error)
       case complete
+      case retry(Int)
     }
     let state: State
     var customParameters: [String: Any] {
@@ -654,6 +668,12 @@ enum InternalSuperwallEvent {
         return .paywallProductsLoadFail(triggeredEventName: eventData?.name, paywallInfo: paywallInfo)
       case .complete:
         return .paywallProductsLoadComplete(triggeredEventName: eventData?.name)
+      case .retry(let attempt):
+        return .paywallProductsLoadRetry(
+          triggeredEventName: eventData?.name,
+          paywallInfo: paywallInfo,
+          attempt: attempt
+        )
       }
     }
     let paywallInfo: PaywallInfo

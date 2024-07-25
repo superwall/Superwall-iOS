@@ -16,6 +16,8 @@ let response = #"""
     "enabled": true
   }
   ],
+  "build_id": "poWduJZYQvCA8QbWLrjJC",
+  "ts": 1719479293597,
   "trigger_options": [{
     "trigger_version": "V2",
     "event_name": "MyEvent",
@@ -88,6 +90,14 @@ let response = #"""
     }],
     "id": "571",
     "url": "https://www.fitnessai.com/superwall-video?sw_cache_key=1659989801716",
+    "url_config": {
+      "endpoints": [{
+        "url": "https://www.fitnessai.com/superwall-video?sw_cache_key=1659989801716",
+        "timeout_ms": 1000,
+        "percentage": 100
+      }],
+      "max_attempts": 10
+    },
     "name": "Example Paywall",
     "identifier": "example-paywall-4de1-2022-03-15",
     "slug": "example-paywall-4de1-2022-03-15",
