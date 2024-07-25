@@ -14,6 +14,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - SW-2899: Adds `Superwall.shared.localeIdentifier` as a convenience variable that you can use to dynamically update the locale used for evaluating rules and getting localized paywalls.
 - Adds feature flag to enable text interaction with a paywall.
 - SW-2901: Adds `abandoned_product_id` to a `transaction_abandon` event to use in audience filters. You can use this to show a paywall if a user abandons the transaction for a specific product.
+- Updates RevenueCat example app to use v5 of their SDK.
 
 ### Fixes
 
