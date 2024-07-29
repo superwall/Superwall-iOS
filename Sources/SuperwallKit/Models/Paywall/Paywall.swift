@@ -23,7 +23,7 @@ struct Paywall: Decodable {
   let name: String
 
   /// The key used to cache the paywall object.
-  let cacheKey: String
+  var cacheKey: String
 
   /// The build ID of the Superwall configuration.
   let buildId: String

@@ -43,7 +43,8 @@ final class PaywallManagerLogicTests: XCTestCase {
   func testHandleCachedPaywall_diffPaywallURLs_isNotPreloading() {
     let outcomes = PaywallManagerLogic.handleCachedPaywall(
       newPaywall: .stub().setting(\.url, to: URL(string: "https://twitter.com")!),
-      oldPaywall: .stub(),
+      oldPaywall: .stub()
+        .setting(\.cacheKey, to: "123"),
       isPreloading: false,
       isForPresentation: true
     )
@@ -53,7 +54,8 @@ final class PaywallManagerLogicTests: XCTestCase {
   func testHandleCachedPaywall_diffPaywallURLs_isPreloading() {
     let outcomes = PaywallManagerLogic.handleCachedPaywall(
       newPaywall: .stub().setting(\.url, to: URL(string: "https://twitter.com")!),
-      oldPaywall: .stub(),
+      oldPaywall: .stub()
+        .setting(\.cacheKey, to: "123"),
       isPreloading: true,
       isForPresentation: true
     )

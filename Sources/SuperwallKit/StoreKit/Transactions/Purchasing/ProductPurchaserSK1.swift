@@ -121,7 +121,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   ) {
     restoration.dispatchGroup.enter()
     Task {
-      let isPaywallPresented = Superwall.shared.isPaywallPresented
       let paywallViewController = Superwall.shared.paywallViewController
       let purchaseDate = await coordinator.purchaseDate
       for transaction in transactions {

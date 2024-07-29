@@ -89,6 +89,8 @@ let response = #"""
       "delay": 5000
     }],
     "id": "571",
+    "cache_key": "abc?sw=10293",
+    "build_id": "abc?sw=10293",
     "url": "https://www.fitnessai.com/superwall-video?sw_cache_key=1659989801716",
     "url_config": {
       "endpoints": [{

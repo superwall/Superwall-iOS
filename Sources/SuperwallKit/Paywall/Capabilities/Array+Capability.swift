@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension Array where Element: Capability {
+extension Array where Element == Capability {
   func toJson() -> JSON {
     let encoder = JSONEncoder()
     var result: [[String: Any]] = []
@@ -34,7 +34,7 @@ extension Array where Element: Capability {
   }
 }
 
-extension Array where Element: Capability {
+extension Array where Element == Capability {
   func namesCommaSeparated() -> String {
     return self.map { $0.name }.joined(separator: ",")
   }
