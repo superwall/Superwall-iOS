@@ -133,7 +133,8 @@ class ConfigManager {
           let cacheKeyExists = oldPaywallCacheKeys[paywall.identifier] != nil
           let cacheKeyChanged = oldPaywallCacheKeys[paywall.identifier] != paywall.cacheKey
           return cacheKeyExists && cacheKeyChanged
-        }.map { $0.identifier }
+        }
+        .map { $0.identifier }
       )
 
     return removedOrChangedPaywallIds

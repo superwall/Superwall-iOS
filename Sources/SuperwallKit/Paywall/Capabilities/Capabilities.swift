@@ -28,3 +28,15 @@ struct PaywallEventReceiverCapability: Capability {
     SuperwallEventObjc.paywallClose.description
   ]
 }
+
+struct MultiplePaywallUrlsCapability: Capability {
+  let name = "multiple_paywall_urls"
+}
+
+struct ConfigRefreshCapability: Capability {
+  let name = "config_refresh"
+}
+
+struct WebViewTextInteractionCapability: Capability {
+  let name = "webview_text_interaction"
+}

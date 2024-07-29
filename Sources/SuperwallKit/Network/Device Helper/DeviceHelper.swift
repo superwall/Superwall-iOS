@@ -450,8 +450,11 @@ class DeviceHelper {
     return newVersion
   }
 
-  private let capabilitiesConfig = [
-    PaywallEventReceiverCapability()
+  private let capabilitiesConfig: [Capability] = [
+    PaywallEventReceiverCapability(),
+    MultiplePaywallUrlsCapability(),
+    ConfigRefreshCapability(),
+    WebViewTextInteractionCapability()
   ]
 
   func getTemplateDevice() async -> [String: Any] {
@@ -511,6 +514,7 @@ class DeviceHelper {
       capabilities: capabilitiesConfig.namesCommaSeparated(),
       capabilitiesConfig: capabilitiesConfig.toJson()
     )
+
     return template.toDictionary()
   }
 
