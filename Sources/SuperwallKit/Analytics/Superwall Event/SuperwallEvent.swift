@@ -121,6 +121,9 @@ public enum SuperwallEvent {
   /// When the loading of a paywall's website times out.
   case paywallWebviewLoadTimeout(paywallInfo: PaywallInfo)
 
+  /// When a paywall's website completes loading.
+  case paywallWebviewLoadFallback(paywallInfo: PaywallInfo)
+
   /// When the request to load the paywall's products started.
   case paywallProductsLoadStart(triggeredEventName: String?, paywallInfo: PaywallInfo)
 
@@ -129,6 +132,9 @@ public enum SuperwallEvent {
 
   /// When the request to load the paywall's products completed.
   case paywallProductsLoadComplete(triggeredEventName: String?)
+
+  /// When the request to load the paywall's products has failed and is being retried.
+  case paywallProductsLoadRetry(triggeredEventName: String?, paywallInfo: PaywallInfo, attempt: Int)
 
   /// When the response to a paywall survey is recorded.
   case surveyResponse(
@@ -163,6 +169,9 @@ public enum SuperwallEvent {
 
   /// When a restore completes.
   case restoreComplete
+
+  /// When the Superwall configuration is refreshed.
+  case configRefresh
 
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
@@ -268,10 +277,14 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallWebviewLoadComplete)
     case .paywallWebviewLoadTimeout:
       return .init(objcEvent: .paywallWebviewLoadTimeout)
+    case .paywallWebviewLoadFallback:
+      return .init(objcEvent: .paywallWebviewLoadFallback)
     case .paywallProductsLoadStart:
       return .init(objcEvent: .paywallProductsLoadStart)
     case .paywallProductsLoadFail:
       return .init(objcEvent: .paywallProductsLoadFail)
+    case .paywallProductsLoadRetry:
+      return .init(objcEvent: .paywallProductsLoadRetry)
     case .paywallProductsLoadComplete:
       return .init(objcEvent: .paywallProductsLoadComplete)
     case .paywallPresentationRequest:
@@ -290,6 +303,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .restoreFail)
     case .restoreComplete:
       return .init(objcEvent: .restoreComplete)
+    case .configRefresh:
+      return .init(objcEvent: .configRefresh)
     }
   }
 }

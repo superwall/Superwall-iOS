@@ -378,8 +378,8 @@ final class DebugViewController: UIViewController {
       return
     }
     guard let (productsById, _) = try? await storeKitManager.getProducts(
-      withIds: paywall.productIds,
-      forPaywall: paywall.name
+      forPaywall: paywall,
+      event: nil
     ) else {
       return
     }

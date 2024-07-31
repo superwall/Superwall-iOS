@@ -19,6 +19,7 @@ protocol ViewControllerFactory: AnyObject {
     delegate: PaywallViewControllerDelegateAdapter?
   ) -> PaywallViewController
 
+  @MainActor
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
 }
 
@@ -72,11 +73,6 @@ protocol FeatureFlagsFactory: AnyObject {
 
 protocol ComputedPropertyRequestsFactory: AnyObject {
   func makeComputedPropertyRequests() -> [ComputedPropertyRequest]
-}
-
-protocol TriggerSessionManagerFactory: AnyObject {
-  func makeTriggerSessionManager() -> TriggerSessionManager
-  func getTriggerSessionManager() -> TriggerSessionManager
 }
 
 protocol ConfigManagerFactory: AnyObject {

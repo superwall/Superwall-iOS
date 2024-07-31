@@ -22,8 +22,17 @@ struct Paywall: Decodable {
   /// The name of the paywall
   let name: String
 
+  /// The key used to cache the paywall object.
+  var cacheKey: String
+
+  /// The build ID of the Superwall configuration.
+  let buildId: String
+
   /// The URL of the paywall webpage
-  let url: URL
+  var url: URL
+
+  /// An array of potential URLs to load the paywall from.
+  let urlConfig: WebViewURLConfig
 
   /// Contains the website modifications that are made on the paywall editor to be accepted
   /// by the webview.
@@ -69,12 +78,6 @@ struct Paywall: Decodable {
   /// The experiment associated with the paywall.
   var experiment: Experiment?
 
-  /// The trigger session ID associated with the paywall.
-  var triggerSessionId: String?
-
-  /// A list of SWProducts that this paywall uses. This is accessed by the trigger session.
-  var swProducts: [SWProduct]? = []
-
   /// An list of product attributes associated with the paywall.
   ///
   /// Each contains a product type and their attributes.
@@ -119,7 +122,10 @@ struct Paywall: Decodable {
     case id
     case identifier
     case name
+    case cacheKey
+    case buildId
     case url
+    case urlConfig
     case htmlSubstitutions = "paywalljsEvent"
     case presentationStyle = "presentationStyleV2"
     case presentationCondition
@@ -152,7 +158,10 @@ struct Paywall: Decodable {
     databaseId = try values.decode(String.self, forKey: .id)
     identifier = try values.decode(String.self, forKey: .identifier)
     name = try values.decode(String.self, forKey: .name)
+    cacheKey = try values.decode(String.self, forKey: .cacheKey)
+    buildId = try values.decode(String.self, forKey: .buildId)
     url = try values.decode(URL.self, forKey: .url)
+    urlConfig = try values.decode(WebViewURLConfig.self, forKey: .urlConfig)
     htmlSubstitutions = try values.decode(String.self, forKey: .htmlSubstitutions)
 
     let throwableSurveys = try values.decodeIfPresent(
@@ -265,9 +274,11 @@ struct Paywall: Decodable {
     databaseId: String,
     identifier: String,
     name: String,
+    cacheKey: String,
+    buildId: String,
     experiment: Experiment? = nil,
-    triggerSessionId: String? = nil,
     url: URL,
+    urlConfig: WebViewURLConfig,
     htmlSubstitutions: String,
     presentation: PaywallPresentationInfo,
     backgroundColorHex: String,
@@ -280,7 +291,6 @@ struct Paywall: Decodable {
     webviewLoadingInfo: LoadingInfo,
     productsLoadingInfo: LoadingInfo,
     paywalljsVersion: String,
-    swProducts: [SWProduct]? = [],
     productVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false,
     presentationSourceType: String? = nil,
@@ -294,9 +304,11 @@ struct Paywall: Decodable {
     self.databaseId = databaseId
     self.identifier = identifier
     self.name = name
+    self.cacheKey = cacheKey
+    self.buildId = buildId
     self.experiment = experiment
-    self.triggerSessionId = triggerSessionId
     self.url = url
+    self.urlConfig = urlConfig
     self.htmlSubstitutions = htmlSubstitutions
     self.presentation = presentation
     self.backgroundColor = backgroundColor
@@ -309,7 +321,6 @@ struct Paywall: Decodable {
     self.webviewLoadingInfo = webviewLoadingInfo
     self.productsLoadingInfo = productsLoadingInfo
     self.paywalljsVersion = paywalljsVersion
-    self.swProducts = swProducts
     self.productVariables = productVariables
     self.isFreeTrialAvailable = isFreeTrialAvailable
     self.presentationSourceType = presentationSourceType
@@ -322,14 +333,13 @@ struct Paywall: Decodable {
     self.manifest = manifest
   }
 
-  func getInfo(
-    fromEvent: EventData?,
-    factory: TriggerSessionManagerFactory
-  ) -> PaywallInfo {
+  func getInfo(fromEvent: EventData?) -> PaywallInfo {
     return PaywallInfo(
       databaseId: databaseId,
       identifier: identifier,
       name: name,
+      cacheKey: cacheKey,
+      buildId: buildId,
       url: url,
       products: products,
       productItems: productItems,
@@ -345,11 +355,9 @@ struct Paywall: Decodable {
       productsLoadFailTime: productsLoadingInfo.failAt,
       productsLoadCompleteTime: productsLoadingInfo.endAt,
       experiment: experiment,
-      triggerSessionId: triggerSessionId,
       paywalljsVersion: paywalljsVersion,
       isFreeTrialAvailable: isFreeTrialAvailable,
       presentationSourceType: presentationSourceType,
-      factory: factory,
       featureGatingBehavior: featureGating,
       closeReason: closeReason,
       localNotifications: localNotifications,
@@ -361,7 +369,6 @@ struct Paywall: Decodable {
 
   mutating func update(from paywall: Paywall) {
     productItems = paywall.productItems
-    swProducts = paywall.swProducts
     productVariables = paywall.productVariables
     isFreeTrialAvailable = paywall.isFreeTrialAvailable
     productsLoadingInfo = paywall.productsLoadingInfo
@@ -387,7 +394,10 @@ extension Paywall: Stubbable {
       databaseId: "id",
       identifier: "identifier",
       name: "abc",
+      cacheKey: "cacheKey",
+      buildId: "buildId",
       url: URL(string: "https://google.com")!,
+      urlConfig: .init(endpoints: [], maxAttempts: 0),
       htmlSubstitutions: "",
       presentation: PaywallPresentationInfo(
         style: .modal,

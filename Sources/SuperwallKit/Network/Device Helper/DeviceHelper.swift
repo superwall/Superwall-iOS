@@ -174,7 +174,7 @@ class DeviceHelper {
     return Bundle.main.bundleIdentifier ?? ""
   }()
 
-  /// Returns true if built with the debug flag, or using TestFlight.
+  /// Returns true if built for the simulator or using TestFlight.
   let isSandbox: String = {
     #if targetEnvironment(simulator)
       return "true"
@@ -450,6 +450,13 @@ class DeviceHelper {
     return newVersion
   }
 
+  private let capabilitiesConfig: [Capability] = [
+    PaywallEventReceiverCapability(),
+    MultiplePaywallUrlsCapability(),
+    ConfigRefreshCapability(),
+    WebViewTextInteractionCapability()
+  ]
+
   func getTemplateDevice() async -> [String: Any] {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
@@ -503,8 +510,11 @@ class DeviceHelper {
       ipCountry: geoInfo?.country,
       ipCity: geoInfo?.city,
       ipContinent: geoInfo?.continent,
-      ipTimezone: geoInfo?.timezone
+      ipTimezone: geoInfo?.timezone,
+      capabilities: capabilitiesConfig.namesCommaSeparated(),
+      capabilitiesConfig: capabilitiesConfig.toJson()
     )
+
     return template.toDictionary()
   }
 

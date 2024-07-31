@@ -8,6 +8,7 @@
 import Foundation
 
 struct Config: Decodable {
+  let buildId: String
   var triggers: Set<Trigger>
   var paywalls: [Paywall]
   var logLevel: Int
@@ -26,6 +27,7 @@ struct Config: Decodable {
   }
 
   enum CodingKeys: String, CodingKey {
+    case buildId
     case triggers = "triggerOptions"
     case paywalls = "paywallResponses"
     case logLevel
@@ -39,6 +41,7 @@ struct Config: Decodable {
   init(from decoder: Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
 
+    buildId = try values.decode(String.self, forKey: .buildId)
     triggers = try values.decode(Set<Trigger>.self, forKey: .triggers)
     paywalls = try values.decode([Paywall].self, forKey: .paywalls)
     logLevel = try values.decode(Int.self, forKey: .logLevel)
@@ -52,6 +55,7 @@ struct Config: Decodable {
   }
 
   init(
+    buildId: String,
     triggers: Set<Trigger>,
     paywalls: [Paywall],
     logLevel: Int,
@@ -61,6 +65,7 @@ struct Config: Decodable {
     featureFlags: FeatureFlags,
     preloadingDisabled: PreloadingDisabled
   ) {
+    self.buildId = buildId
     self.triggers = triggers
     self.paywalls = paywalls
     self.logLevel = logLevel
@@ -76,6 +81,7 @@ struct Config: Decodable {
 extension Config: Stubbable {
   static func stub() -> Config {
     return Config(
+      buildId: "poWduJZYQbCA8QbWLrjJC",
       triggers: [.stub()],
       paywalls: [.stub()],
       logLevel: 0,

@@ -26,7 +26,11 @@ class StoreKitManagerTests: XCTestCase {
     ]
 
     do {
-      let (productsById, products) = try await manager.getProducts(withIds: [], substituting: substituteProducts)
+      let (productsById, products) = try await manager.getProducts(
+        forPaywall: .stub(),
+        event: nil,
+        substituting: substituteProducts
+      )
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
       XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
       XCTAssertTrue(products.contains { $0.name == "primary" })
@@ -49,7 +53,11 @@ class StoreKitManagerTests: XCTestCase {
     ]
 
     do {
-      let (productsById, products) = try await manager.getProducts(withIds: [], substituting: substituteProducts)
+      let (productsById, products) = try await manager.getProducts(
+        forPaywall: .stub(),
+        event: nil,
+        substituting: substituteProducts
+      )
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
       XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
       XCTAssertTrue(products.contains { $0.name == "primary" })
@@ -78,7 +86,11 @@ class StoreKitManagerTests: XCTestCase {
     ]
 
     do {
-      let (productsById, products) = try await manager.getProducts(withIds: [], substituting: substituteProducts)
+      let (productsById, products) = try await manager.getProducts(
+        forPaywall: .stub(),
+        event: nil,
+        substituting: substituteProducts
+      )
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
       XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
       XCTAssertTrue(products.contains { $0.name == "primary" })
@@ -109,7 +121,12 @@ class StoreKitManagerTests: XCTestCase {
     ]
 
     do {
-      let (productsById, products) = try await manager.getProducts(withIds: ["1"], substituting: substituteProducts)
+      let (productsById, products) = try await manager.getProducts(
+        forPaywall: .stub()
+          .setting(\.productIds, to: ["1"]),
+        event: nil,
+        substituting: substituteProducts
+      )
       XCTAssertEqual(productsById.count, 1)
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
       XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
@@ -136,7 +153,12 @@ class StoreKitManagerTests: XCTestCase {
     ]
 
     do {
-      let (productsById, products) = try await manager.getProducts(withIds: ["1", "2"], substituting: substituteProducts)
+      let (productsById, products) = try await manager.getProducts(
+        forPaywall: .stub()
+          .setting(\.productIds, to: ["1", "2"]),
+        event: nil,
+        substituting: substituteProducts
+      )
       XCTAssertEqual(productsById.count, 2)
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
       XCTAssertEqual(products.count, 1)

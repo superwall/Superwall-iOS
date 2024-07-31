@@ -11,16 +11,26 @@
 //
 //  Created by Andrés Boedo on 7/14/20.
 //
+// swiftlint:disable function_body_length
+
 import Foundation
 import StoreKit
 
 class ProductsFetcherSK1: NSObject {
 	private var cachedProductsByIdentifier: [String: SKProduct] = [:]
 	private let queue = DispatchQueue(label: "com.superwall.ProductsManager")
-	private var productsByRequest: [SKRequest: Set<String>] = [:]
+	private var productsByRequest: [SKRequest: ProductRequest] = [:]
   private var paywallNameByRequest: [SKRequest: String] = [:]
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
+  private static let numberOfRetries: Int = 10
+
+  struct ProductRequest {
+    let identifiers: Set<String>
+    let paywall: Paywall?
+    let event: EventData?
+    let retriesLeft: Int
+  }
 
   // MARK: - ProductsFetcher
   /// Gets StoreKit 1 products from identifiers.
@@ -31,10 +41,11 @@ class ProductsFetcherSK1: NSObject {
   /// - Throws: An error if it couldn't retrieve the products.
   func products(
     identifiers: Set<String>,
-    forPaywall paywallName: String?
+    forPaywall paywall: Paywall?,
+    event: EventData?
   ) async throws -> Set<StoreProduct> {
     let sk1Products = try await withCheckedThrowingContinuation { continuation in
-      products(withIdentifiers: identifiers, forPaywall: paywallName) { result in
+      products(withIdentifiers: identifiers, forPaywall: paywall, event: event) { result in
         continuation.resume(with: result)
       }
     }
@@ -46,7 +57,8 @@ class ProductsFetcherSK1: NSObject {
 
 	private func products(
     withIdentifiers identifiers: Set<String>,
-    forPaywall paywallName: String?,
+    forPaywall paywall: Paywall?,
+    event: EventData?,
     completion: @escaping ProductRequestCompletionBlock
   ) {
     // Return if there aren't any product IDs.
@@ -99,14 +111,33 @@ class ProductsFetcherSK1: NSObject {
         info: ["product_ids": identifiers],
         error: nil
       )
-			let request = SKProductsRequest(productIdentifiers: identifiers)
-			request.delegate = self
-			self.completionHandlers[identifiers] = [completion]
-			self.productsByRequest[request] = identifiers
-      self.paywallNameByRequest[request] = paywallName
-			request.start()
+      self.completionHandlers[identifiers] = [completion]
+      startRequest(
+        forIdentifiers: identifiers,
+        paywall: paywall,
+        event: event,
+        retriesLeft: Self.numberOfRetries
+      )
 		}
 	}
+
+  // Note: this isn't thread-safe and must therefore be used inside of `queue` only.
+  private func startRequest(
+    forIdentifiers identifiers: Set<String>,
+    paywall: Paywall?,
+    event: EventData?,
+    retriesLeft: Int
+  ) {
+    let request = SKProductsRequest(productIdentifiers: identifiers)
+    request.delegate = self
+    self.productsByRequest[request] = ProductRequest(
+      identifiers: identifiers,
+      paywall: paywall,
+      event: event,
+      retriesLeft: retriesLeft
+    )
+    request.start()
+  }
 
   private func cacheProducts(_ products: [SKProduct]) {
     let productsByIdentifier = products.reduce(into: [:]) { resultDict, product in
@@ -150,7 +181,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
         )
 				return
 			}
-			guard let completionBlocks = self.completionHandlers[requestProducts] else {
+      guard let completionBlocks = self.completionHandlers[requestProducts.identifiers] else {
 				Logger.debug(
           logLevel: .error,
           scope: .productsManager,
@@ -161,11 +192,11 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 				return
 			}
 
-			self.completionHandlers.removeValue(forKey: requestProducts)
+      self.completionHandlers.removeValue(forKey: requestProducts.identifiers)
 			self.productsByRequest.removeValue(forKey: request)
 
       if response.products.isEmpty,
-        !requestProducts.isEmpty {
+        !requestProducts.identifiers.isEmpty {
         var errorMessage = "Could not load products"
         if let paywallName = self.paywallNameByRequest[request] {
           errorMessage += " from paywall \"\(paywallName)\""
@@ -174,7 +205,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
           logLevel: .error,
           scope: .productsManager,
           message: "\(errorMessage). Visit https://superwall.com/l/missing-products to diagnose.",
-          info: ["product_ids": requestProducts.description]
+          info: ["product_ids": requestProducts.identifiers.description]
         )
       }
       self.cacheProducts(response.products)
@@ -200,48 +231,81 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
 	}
 
 	func request(_ request: SKRequest, didFailWithError error: Error) {
-		queue.async { [weak self] in
+    queue.async { [weak self] in
       guard let self = self else {
         return
       }
-			Logger.debug(
+      Logger.debug(
         logLevel: .error,
         scope: .productsManager,
         message: "Request Failed",
         info: ["request": request.debugDescription],
         error: error
       )
-      guard let products = self.productsByRequest[request] else {
-				Logger.debug(
+      guard let productRequest = self.productsByRequest[request] else {
+        Logger.debug(
           logLevel: .error,
           scope: .productsManager,
           message: "Requested Products Not Found.",
           info: ["request": request.debugDescription],
           error: error
         )
-				return
-			}
-      guard let completionBlocks = self.completionHandlers[products] else {
-				Logger.debug(
-          logLevel: .error,
-          scope: .productsManager,
-          message: "Callbacks Not Found for Failed Request",
-          info: ["request": request.debugDescription],
-          error: error
-        )
-				return
-			}
-
-      self.completionHandlers.removeValue(forKey: products)
-      self.productsByRequest.removeValue(forKey: request)
-      self.paywallNameByRequest.removeValue(forKey: request)
-			for completion in completionBlocks {
-        DispatchQueue.main.async {
-          completion(.failure(error))
+        return
+      }
+      if productRequest.retriesLeft <= 0 {
+        guard let completionBlocks = self.completionHandlers[productRequest.identifiers] else {
+          Logger.debug(
+            logLevel: .error,
+            scope: .productsManager,
+            message: "Callbacks Not Found for Failed Request",
+            info: ["request": request.debugDescription],
+            error: error
+          )
+          return
         }
-			}
-		}
-		request.cancel()
+
+        self.completionHandlers.removeValue(forKey: productRequest.identifiers)
+        self.productsByRequest.removeValue(forKey: request)
+        self.paywallNameByRequest.removeValue(forKey: request)
+        for completion in completionBlocks {
+          DispatchQueue.main.async {
+            completion(.failure(error))
+          }
+        }
+        request.cancel()
+      } else {
+        self.queue.asyncAfter(deadline: .now() + .seconds(3)) {
+          let retryCount = Self.numberOfRetries - (productRequest.retriesLeft - 1)
+          Task {
+            guard let paywall = productRequest.paywall else {
+              return
+            }
+            let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
+              state: .retry(retryCount),
+              paywallInfo: paywall.getInfo(fromEvent: productRequest.event),
+              eventData: productRequest.event
+            )
+            await Superwall.shared.track(productLoadEvent)
+          }
+          Logger.debug(
+            logLevel: .info,
+            scope: .productsManager,
+            message: "Retrying product request.",
+            info: [
+              "retry_count": retryCount,
+              "product_ids": productRequest.identifiers
+            ],
+            error: error
+          )
+          self.startRequest(
+            forIdentifiers: productRequest.identifiers,
+            paywall: productRequest.paywall,
+            event: productRequest.event,
+            retriesLeft: productRequest.retriesLeft - 1
+          )
+        }
+      }
+    }
 	}
 }
 

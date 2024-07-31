@@ -46,6 +46,23 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Sets the device locale identifier to use when evaluating rules and getting localized paywalls.
+  ///
+  /// This defaults to the `autoupdatingCurrent` locale identifier. However, you can set
+  /// this to any locale identifier to override it. E.g. `en_GB`. This is typically used for testing
+  /// purposes.
+  ///
+  /// You can also preview your paywall in different locales using
+  /// [In-App Previews](https://docs.superwall.com/docs/in-app-paywall-previews).
+  public var localeIdentifier: String? {
+    get {
+      return options.localeIdentifier
+    }
+    set {
+      options.localeIdentifier = newValue
+    }
+  }
+
   /// Properties stored about the user, set using ``setUserAttributes(_:)-1wql2``.
   public var userAttributes: [String: Any] {
     return dependencyContainer.identityManager.userAttributes
@@ -413,7 +430,6 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.deviceHelper.interfaceStyleOverride = interfaceStyle
   }
 
-
   // MARK: - Deep Links
   /// Handles a deep link sent to your app to open a preview of your paywall.
   ///
@@ -463,6 +479,9 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
     dependencyContainer.configManager.reset()
+    Task {
+      await Superwall.shared.track(InternalSuperwallEvent.Reset())
+    }
   }
 }
 

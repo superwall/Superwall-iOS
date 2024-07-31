@@ -81,14 +81,6 @@ enum UserAttributes: Storable {
   typealias Value = [String: Any]
 }
 
-enum TriggerSessions: Storable {
-  static var key: String {
-    "store.triggerSessions"
-  }
-  static var directory: SearchPathDirectory = .cache
-  typealias Value = [TriggerSession]
-}
-
 enum Transactions: Storable {
   static var key: String {
     "store.transactions.v2"

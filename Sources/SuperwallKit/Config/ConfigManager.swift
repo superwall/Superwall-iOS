@@ -39,6 +39,8 @@ class ConfigManager {
   @DispatchQueueBacked
   var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
+  var configRetryCount = 0
+
   private unowned let storeKitManager: StoreKitManager
   private unowned let storage: Storage
   private unowned let network: Network
@@ -48,7 +50,11 @@ class ConfigManager {
   /// A task that is non-`nil` when preloading all paywalls.
   private var currentPreloadingTask: Task<Void, Never>?
 
-  private let factory: RequestFactory & RuleAttributesFactory & ReceiptFactory
+  typealias Factory = RequestFactory
+    & RuleAttributesFactory
+    & ReceiptFactory
+    & DeviceHelperFactory
+  private let factory: Factory
 
   init(
     options: SuperwallOptions,
@@ -57,7 +63,7 @@ class ConfigManager {
     network: Network,
     paywallManager: PaywallManager,
     deviceHelper: DeviceHelper,
-    factory: RequestFactory & RuleAttributesFactory & ReceiptFactory
+    factory: Factory
   ) {
     self.options = options
     self.storeKitManager = storeKitManager
@@ -68,20 +74,62 @@ class ConfigManager {
     self.factory = factory
   }
 
+  /// This refreshes config, requiring paywalls to reload and removing unused paywall view controllers.
+  /// It fails quietly, falling back to the old config.
+  func refreshConfiguration() async {
+    // Make sure config already exists
+    guard let oldConfig = config else {
+      return
+    }
+
+    // Ensure the config refresh feature flag is enabled
+    guard oldConfig.featureFlags.enableConfigRefresh == true else {
+      return
+    }
+
+    do {
+      let newConfig = try await network.getConfig()
+
+      // Remove all paywalls and paywall vcs that have either been removed or changed.
+      let removedOrChangedPaywallIds = ConfigLogic.getRemovedOrChangedPaywallIds(
+        oldConfig: oldConfig,
+        newConfig: newConfig
+      )
+      await paywallManager.removePaywalls(withIds: removedOrChangedPaywallIds)
+
+      await processConfig(newConfig, isFirstTime: false)
+      configState.send(.retrieved(newConfig))
+      await Superwall.shared.track(InternalSuperwallEvent.ConfigRefresh())
+      Task { await preloadPaywalls() }
+    } catch {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: "Failed to refresh configuration.",
+        info: nil,
+        error: error
+      )
+    }
+  }
+
   func fetchConfiguration() async {
     do {
       _ = await factory.loadPurchasedProducts()
 
-      async let configRequest = network.getConfig { [weak self] in
+      async let configRequest = network.getConfig { [weak self] attempt in
+        self?.configRetryCount = attempt
         self?.configState.send(.retrying)
       }
       async let geoRequest: Void = deviceHelper.getGeoInfo()
 
       let (config, _) = try await (configRequest, geoRequest)
 
-      Task { await sendProductsBack(from: config) }
+      let deviceAttributes = await factory.makeSessionDeviceAttributes()
+      await Superwall.shared.track(
+        InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
+      )
 
-      await processConfig(config)
+      await processConfig(config, isFirstTime: true)
 
       configState.send(.retrieved(config))
 
@@ -98,11 +146,16 @@ class ConfigManager {
     }
   }
 
-  private func processConfig(_ config: Config) async {
+  private func processConfig(
+    _ config: Config,
+    isFirstTime: Bool
+  ) async {
     storage.save(config.featureFlags.disableVerboseEvents, forType: DisableVerboseEvents.self)
     triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
-    await checkForTouchesBeganTrigger(in: config.triggers)
+    if isFirstTime {
+      await checkForTouchesBeganTrigger(in: config.triggers)
+    }
   }
 
   /// Reassigns variants and preloads paywalls again.
@@ -252,12 +305,17 @@ class ConfigManager {
         removing: config.preloadingDisabled
       )
       let confirmedAssignments = storage.getConfirmedAssignments()
-      let paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+      var paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
         fromTriggers: triggers,
         confirmedAssignments: confirmedAssignments,
         unconfirmedAssignments: unconfirmedAssignments,
         expressionEvaluator: expressionEvaluator
       )
+      // Do not preload the presented paywall. This is because if config refreshes, we
+      // don't want to refresh the presented paywall until it's dismissed and presented again.
+      if let presentedPaywallId = await paywallManager.presentedViewController?.paywall.identifier {
+        paywallIds.remove(presentedPaywallId)
+      }
       await preloadPaywalls(withIdentifiers: paywallIds)
 
       currentPreloadingTask = nil
@@ -273,7 +331,9 @@ class ConfigManager {
       }
     let triggersToPreload = config.triggers.filter { eventNames.contains($0.eventName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
-    await preloadPaywalls(withIdentifiers: triggerPaywallIdentifiers)
+    await preloadPaywalls(
+      withIdentifiers: triggerPaywallIdentifiers
+    )
   }
 
   /// Preloads paywalls referenced by triggers.
@@ -292,7 +352,6 @@ class ConfigManager {
             presentationSourceType: nil,
             retryCount: 6
           )
-
           guard let paywall = try? await paywallManager.getPaywall(from: request) else {
             return
           }
@@ -308,34 +367,6 @@ class ConfigManager {
           )
         }
       }
-    }
-  }
-
-  /// This sends product data back to the dashboard.
-  private func sendProductsBack(from config: Config) async {
-    guard config.featureFlags.enablePostback else {
-      return
-    }
-    let milliseconds = 1000
-    let nanoseconds = UInt64(milliseconds * 1_000_000)
-    let duration = UInt64(config.postback.postbackDelay) * nanoseconds
-
-    do {
-      try await Task.sleep(nanoseconds: duration)
-
-      let productIds = config.postback.productsToPostBack.map { $0.identifier }
-      let products = try await storeKitManager.getProducts(withIds: productIds)
-      let postbackProducts = products.productsById.values.map(PostbackProduct.init)
-      let postback = Postback(products: postbackProducts)
-      await network.sendPostback(postback)
-    } catch {
-      Logger.debug(
-        logLevel: .error,
-        scope: .debugViewController,
-        message: "No Paywall Response",
-        info: nil,
-        error: error
-      )
     }
   }
 }

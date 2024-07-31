@@ -66,7 +66,6 @@ public final class StoreTransaction: NSObject, StoreTransactionType, Encodable {
     case id
     case configRequestId
     case appSessionId
-    case triggerSessionId
     case transactionDate
     case originalTransactionIdentifier
     case state

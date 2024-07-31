@@ -116,6 +116,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the loading of a paywall's website times out.
   case paywallWebviewLoadTimeout
 
+  /// When the loading of a paywall's website falls back to a different CDN.
+  case paywallWebviewLoadFallback
+
   /// When the request to load the paywall's products started.
   case paywallProductsLoadStart
 
@@ -124,6 +127,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
 
   /// When the request to load the paywall's products completed.
   case paywallProductsLoadComplete
+
+  /// When the request to load the paywall's products has failed and is being retried.
+  case paywallProductsLoadRetry
 
   /// Information about a paywall presentation request
   case paywallPresentationRequest
@@ -150,6 +156,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
 
   /// When a restore completes.
   case restoreComplete
+
+  /// When the Superwall configuration refreshes.
+  case configRefresh
 
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
@@ -221,10 +230,14 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "paywallWebviewLoad_complete"
     case .paywallWebviewLoadTimeout:
       return "paywallWebviewLoad_timeout"
+    case .paywallWebviewLoadFallback:
+      return "paywallWebviewLoad_fallback"
     case .paywallProductsLoadStart:
       return "paywallProductsLoad_start"
     case .paywallProductsLoadFail:
       return "paywallProductsLoad_fail"
+    case .paywallProductsLoadRetry:
+      return "paywallProductsLoad_retry"
     case .paywallProductsLoadComplete:
       return "paywallProductsLoad_complete"
     case .paywallPresentationRequest:
@@ -243,6 +256,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "restore_fail"
     case .restoreComplete:
       return "restore_complete"
+    case .configRefresh:
+      return "config_refresh"
     }
   }
 }

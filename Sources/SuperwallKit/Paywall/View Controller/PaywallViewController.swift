@@ -51,8 +51,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// The paywall info
   @objc public var info: PaywallInfo {
     return paywall.getInfo(
-      fromEvent: request?.presentationInfo.eventData,
-      factory: factory
+      fromEvent: request?.presentationInfo.eventData
     )
   }
 
@@ -96,6 +95,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   /// The background color of the paywall, depending on whether the device is in dark mode.
   private var backgroundColor: UIColor {
+    #if os(visionOS)
+    return paywall.backgroundColor
+    #endif
     let style = UIScreen.main.traitCollection.userInterfaceStyle
     switch style {
     case .dark:
@@ -152,7 +154,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// paywall presentation.
   private var unsavedOccurrence: TriggerRuleOccurrence?
 
-  private unowned let factory: TriggerSessionManagerFactory & TriggerFactory
+  private unowned let factory: TriggerFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private weak var cache: PaywallViewControllerCache?
@@ -165,7 +167,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     eventDelegate: PaywallViewControllerEventDelegate? = nil,
     delegate: PaywallViewControllerDelegateAdapter? = nil,
     deviceHelper: DeviceHelper,
-    factory: TriggerSessionManagerFactory & TriggerFactory,
+    factory: TriggerFactory,
     storage: Storage,
     webView: SWWebView,
     cache: PaywallViewControllerCache?,
@@ -236,22 +238,19 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   nonisolated private func trackOpen() async {
-    let triggerSessionManager = factory.getTriggerSessionManager()
-    await triggerSessionManager.trackPaywallOpen()
-    storage.trackPaywallOpen()
+    await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
     let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: info)
     await Superwall.shared.track(trackedEvent)
   }
 
   nonisolated private func trackClose() async {
-    let triggerSessionManager = factory.getTriggerSessionManager()
     let trackedEvent = await InternalSuperwallEvent.PaywallClose(
       paywallInfo: info,
       surveyPresentationResult: surveyPresentationResult
     )
+    await webView.messageHandler.handle(.paywallClose)
     await Superwall.shared.track(trackedEvent)
-    await triggerSessionManager.trackPaywallClose()
   }
 
   /// Triggered by user closing the paywall when the webview hasn't loaded.
@@ -267,7 +266,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
   }
 
-  private func loadWebView() {
+  func loadWebView() {
     let url = paywall.url
 
     if paywall.webviewLoadingInfo.startAt == nil {
@@ -280,12 +279,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         paywallInfo: self.info
       )
       await Superwall.shared.track(trackedEvent)
-
-      let triggerSessionManager = factory.getTriggerSessionManager()
-      await triggerSessionManager.trackWebviewLoad(
-        forPaywallId: info.databaseId,
-        state: .start
-      )
     }
 
     loadingState = .loadingURL
@@ -297,7 +290,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
           loadWebViewFromArchive(url: url)
         } else {
           // Fallback to old way if couldn't get archive
-          loadWebViewFromNetwork(url: url)
+          await webView.loadURL(from: paywall)
         }
       }
       return
@@ -306,25 +299,14 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     if let webArchiveURL = paywallArchiveManager?.getCachedArchiveURL(manifest: paywall.manifest) {
       loadWebViewFromArchive(url: webArchiveURL)
     } else {
-      loadWebViewFromNetwork(url: url)
+      Task {
+        await webView.loadURL(from: paywall)
+      }
     }
   }
 
   private func loadWebViewFromArchive(url: URL) {
     webView.loadFileURL(url, allowingReadAccessTo: url)
-  }
-
-  private func loadWebViewFromNetwork(url: URL) {
-    if paywall.onDeviceCache == .enabled {
-      let request = URLRequest(
-        url: url,
-        cachePolicy: .returnCacheDataElseLoad
-      )
-      webView.load(request)
-    } else {
-      let request = URLRequest(url: url)
-      webView.load(request)
-    }
   }
 
   @objc private func reloadWebView() {
@@ -693,7 +675,7 @@ extension PaywallViewController {
       webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
     }
 
-    if webView.didFailToLoad {
+    if webView.loadingHandler.didFailToLoad {
       loadWebView()
     }
 

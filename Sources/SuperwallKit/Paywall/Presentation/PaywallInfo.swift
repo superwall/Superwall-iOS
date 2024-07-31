@@ -18,13 +18,22 @@ public final class PaywallInfo: NSObject {
   /// The identifier set for this paywall in the Superwall dashboard.
   public let identifier: String
 
+  /// The cache key for the paywall.
+  public let cacheKey: String
+
+  /// The build ID of the Superwall configuration.
+  public let buildId: String
+
   /// The trigger experiment that caused the paywall to present.
   ///
   /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
   public let experiment: Experiment?
 
+  // TODO: Remove this in v4
   /// The trigger session ID associated with the paywall.
-  public let triggerSessionId: String?
+  ///
+  /// Note: This will always be an empty string and will be removed in the next major update of the SDK.
+  public let triggerSessionId: String = ""
 
   /// The products associated with the paywall.
   @available(
@@ -124,12 +133,12 @@ public final class PaywallInfo: NSObject {
   /// Information about the presentation of the paywall.
   public let presentation: PaywallPresentationInfo
 
-  private unowned let factory: TriggerSessionManagerFactory
-
   init(
     databaseId: String,
     identifier: String,
     name: String,
+    cacheKey: String,
+    buildId: String,
     url: URL,
     products: [Product],
     productItems: [ProductItem],
@@ -145,11 +154,9 @@ public final class PaywallInfo: NSObject {
     productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
     experiment: Experiment?,
-    triggerSessionId: String?,
     paywalljsVersion: String?,
     isFreeTrialAvailable: Bool,
     presentationSourceType: String?,
-    factory: TriggerSessionManagerFactory,
     featureGatingBehavior: FeatureGatingBehavior,
     closeReason: PaywallCloseReason,
     localNotifications: [LocalNotification],
@@ -160,13 +167,14 @@ public final class PaywallInfo: NSObject {
     self.databaseId = databaseId
     self.identifier = identifier
     self.name = name
+    self.cacheKey = cacheKey
+    self.buildId = buildId
     self.url = url
     self.presentedByEventWithName = eventData?.name
     self.presentedByEventAt = eventData?.createdAt.isoString
     self.presentedByEventWithId = eventData?.id.lowercased()
     self.presentationSourceType = presentationSourceType
     self.experiment = experiment
-    self.triggerSessionId = triggerSessionId
     self.paywalljsVersion = paywalljsVersion
     self.productItems = productItems
     // Legacy support
@@ -217,7 +225,6 @@ public final class PaywallInfo: NSObject {
     } else {
       self.productsLoadDuration = nil
     }
-    self.factory = factory
     self.closeReason = closeReason
   }
 
@@ -244,9 +251,12 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
       "paywall_products_load_fail_time": productsLoadFailTime as Any,
       "paywall_products_load_duration": productsLoadDuration as Any,
-      "trigger_session_id": triggerSessionId as Any,
+      // TODO: Remove in v4:
+      "trigger_session_id": "" as Any,
       "experiment_id": experiment?.id as Any,
-      "variant_id": experiment?.variant.id as Any
+      "variant_id": experiment?.variant.id as Any,
+      "cache_key": cacheKey,
+      "build_id": buildId
     ]
 
     var loadingVars: [String: Any] = [:]
@@ -325,6 +335,8 @@ extension PaywallInfo: Stubbable {
       databaseId: "abc",
       identifier: "1",
       name: "Test",
+      cacheKey: "cacheKey",
+      buildId: "buildId",
       url: URL(string: "https://www.google.com")!,
       products: [],
       productItems: [],
@@ -340,11 +352,9 @@ extension PaywallInfo: Stubbable {
       productsLoadFailTime: nil,
       productsLoadCompleteTime: nil,
       experiment: nil,
-      triggerSessionId: nil,
       paywalljsVersion: nil,
       isFreeTrialAvailable: false,
       presentationSourceType: "register",
-      factory: dependencyContainer,
       featureGatingBehavior: .nonGated,
       closeReason: .manualClose,
       localNotifications: [],
