@@ -91,7 +91,10 @@ class ConfigManager {
       let newConfig = try await network.getConfig()
 
       // Remove all paywalls and paywall vcs that have either been removed or changed.
-      let removedOrChangedPaywallIds = await getRemovedOrChangedPaywallIds(oldConfig: oldConfig, newConfig: newConfig)
+      let removedOrChangedPaywallIds = ConfigLogic.getRemovedOrChangedPaywallIds(
+        oldConfig: oldConfig,
+        newConfig: newConfig
+      )
       await paywallManager.removePaywalls(withIds: removedOrChangedPaywallIds)
 
       await processConfig(newConfig, isFirstTime: false)
@@ -107,37 +110,6 @@ class ConfigManager {
         error: error
       )
     }
-  }
-
-  /// Gets the paywall IDs that no longer exist in the newly retrieved config, minus
-  /// any presenting paywall.
-  private func getRemovedOrChangedPaywallIds(
-    oldConfig: Config,
-    newConfig: Config
-  ) async -> Set<String> {
-    let oldPaywalls = oldConfig.paywalls
-    let newPaywalls = newConfig.paywalls
-
-    let oldPaywallIds = Set(oldPaywalls.map { $0.identifier })
-    let newPaywallIds = Set(newPaywalls.map { $0.identifier })
-
-    // Create dictionary for quick lookup of cacheKeys
-    let oldPaywallCacheKeys = Dictionary(uniqueKeysWithValues: oldPaywalls.map { ($0.identifier, $0.cacheKey) })
-
-    let removedPaywallIds = oldPaywallIds.subtracting(newPaywallIds)
-
-    // Find identifiers that are no longer in the new configuration or whose cacheKey has changed
-    let removedOrChangedPaywallIds = removedPaywallIds
-      .union(
-        newPaywalls.filter { paywall in
-          let cacheKeyExists = oldPaywallCacheKeys[paywall.identifier] != nil
-          let cacheKeyChanged = oldPaywallCacheKeys[paywall.identifier] != paywall.cacheKey
-          return cacheKeyExists && cacheKeyChanged
-        }
-        .map { $0.identifier }
-      )
-
-    return removedOrChangedPaywallIds
   }
 
   func fetchConfiguration() async {

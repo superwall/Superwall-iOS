@@ -1067,4 +1067,71 @@ final class ConfigLogicTests: XCTestCase {
     )
     XCTAssertEqual(filteredTriggers.count, 2)
   }
+
+  // MARK: - getRemovedOrChangedPaywalls
+
+  func test_getRemovedOrChangedPaywallIds_allPaywallsRemoved() {
+    let paywall = Paywall.stub()
+    let oldConfig = Config.stub()
+      .setting(\.paywalls, to: [paywall])
+    let newConfig = Config.stub()
+      .setting(\.paywalls, to: [])
+
+    let result = ConfigLogic.getRemovedOrChangedPaywallIds(
+      oldConfig: oldConfig,
+      newConfig: newConfig
+    )
+
+    XCTAssertEqual(result, Set([paywall.identifier]))
+  }
+
+  func test_getRemovedOrChangedPaywallIds_noPaywallsRemoved() {
+    let oldConfig = Config.stub()
+    let newConfig = Config.stub()
+
+    let result = ConfigLogic.getRemovedOrChangedPaywallIds(
+      oldConfig: oldConfig,
+      newConfig: newConfig
+    )
+
+    XCTAssertTrue(result.isEmpty)
+  }
+
+  func test_getRemovedOrChangedPaywallIds_cacheKeyChanged() {
+    let oldPaywall = Paywall.stub()
+    let newPaywall = Paywall.stub()
+      .setting(\.cacheKey, to: "444")
+
+    let oldConfig = Config.stub()
+      .setting(\.paywalls, to: [oldPaywall])
+    let newConfig = Config.stub()
+      .setting(\.paywalls, to: [newPaywall])
+
+    let result = ConfigLogic.getRemovedOrChangedPaywallIds(
+      oldConfig: oldConfig,
+      newConfig: newConfig
+    )
+
+    XCTAssertEqual(result, Set([oldPaywall.identifier]))
+  }
+
+  func test_getRemovedOrChangedPaywallIds_cacheKeyChanged_andOneRemoved() {
+    let removedPaywall = Paywall.stub()
+      .setting(\.identifier, to: "3368")
+    let oldPaywall = Paywall.stub()
+    let newPaywall = Paywall.stub()
+      .setting(\.cacheKey, to: "444")
+
+    let oldConfig = Config.stub()
+      .setting(\.paywalls, to: [removedPaywall, oldPaywall])
+    let newConfig = Config.stub()
+      .setting(\.paywalls, to: [newPaywall])
+
+    let result = ConfigLogic.getRemovedOrChangedPaywallIds(
+      oldConfig: oldConfig,
+      newConfig: newConfig
+    )
+
+    XCTAssertEqual(result, Set([oldPaywall.identifier, removedPaywall.identifier]))
+  }
 }
