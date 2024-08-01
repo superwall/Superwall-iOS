@@ -426,11 +426,16 @@ enum InternalSuperwallEvent {
       return .paywallEngagementEvent(paywallInfo: paywallInfo)
     }
     let paywallInfo: PaywallInfo
+    let name: String
     let params: [String: Any]
 
     func getSuperwallParameters() async -> [String: Any] {
-      let eventParams = await paywallInfo.eventParams()
-      return params + eventParams
+      var eventParams = await paywallInfo.eventParams()
+      eventParams += params
+      eventParams += [
+        "name": name
+      ]
+      return eventParams
     }
     var customParameters: [String: Any] {
       return paywallInfo.customParams()

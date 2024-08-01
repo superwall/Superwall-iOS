@@ -45,7 +45,7 @@ enum PaywallMessage: Decodable, Equatable {
   case openDeepLink(url: URL)
   case purchase(productId: String)
   case custom(data: String)
-  case triggerEvent(JSON)
+  case registerPlacement(name: String, params: JSON)
 
   // All cases below here are sent from device to paywall
   case paywallClose
@@ -71,7 +71,7 @@ enum PaywallMessage: Decodable, Equatable {
     case openDeepLink = "open_deep_link"
     case purchase
     case custom
-    case triggerEvent
+    case registerPlacement = "register_placement"
   }
 
   // Everyone write to eventName, other may use the remaining keys
@@ -82,6 +82,8 @@ enum PaywallMessage: Decodable, Equatable {
     case link
     case data
     case version
+    case name
+    case params
   }
 
   enum PaywallMessageError: Error {
@@ -130,9 +132,10 @@ enum PaywallMessage: Decodable, Equatable {
           self = .custom(data: dataString)
           return
         }
-      case .triggerEvent:
-        if let dataDictionary = try? values.decode(JSON.self, forKey: .data) {
-          self = .triggerEvent(dataDictionary)
+      case .registerPlacement:
+        if let name = try? values.decode(String.self, forKey: .name),
+          let params = try? values.decode(JSON.self, forKey: .params) {
+          self = .registerPlacement(name: name, params: params)
           return
         }
       }
