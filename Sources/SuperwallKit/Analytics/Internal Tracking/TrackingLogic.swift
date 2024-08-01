@@ -199,7 +199,7 @@ enum TrackingLogic {
       SuperwallEventObjc.transactionAbandon.description,
       SuperwallEventObjc.transactionFail.description,
       SuperwallEventObjc.paywallDecline.description,
-      SuperwallEventObjc.paywallEngagementEvent.description,
+      SuperwallEventObjc.customPlacement.description,
     ]
 
     if let referringEventName = paywallViewController?.info.presentedByEventWithName,
@@ -223,7 +223,7 @@ enum TrackingLogic {
     }
 
     if let event = event as? TrackableSuperwallEvent,
-      case .paywallEngagementEvent = event.superwallEvent {
+      case .customPlacement = event.superwallEvent {
       return .closePaywallThenTriggerPaywall
     }
 

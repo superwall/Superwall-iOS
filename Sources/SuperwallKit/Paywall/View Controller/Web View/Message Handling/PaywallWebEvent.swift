@@ -15,5 +15,5 @@ enum PaywallWebEvent: Equatable {
   case openedURL(url: URL)
   case openedUrlInSafari(_ url: URL)
   case openedDeepLink(url: URL)
-  case registerPlacement(name: String, params: JSON)
+  case customPlacement(name: String, params: JSON)
 }

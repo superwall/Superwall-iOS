@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.7.1
+
+### Enhancements
+
+- Adds a `custom_placement` event that you can attach to any element in the paywall with a dictionary of parameters. When the element is tapped, the event will be tracked. The name you provide to the placement can be used to trigger a paywall and its params used in audience filters.
+
 ## 3.7.0
 
 ### Enhancements
@@ -10,7 +16,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds the ability for the SDK to refresh the Superwall configuration every session start, subject to a feature flag. This means the paywalls will be kept updated even if the app has been open for a long time in the background.
 - Adds `build_id` and `cache_key` to `PaywallInfo`.
 - Tracks a `config_refresh` Superwall event when the configuration is refreshed.
-- Adds a `paywall_engagement_event` that you can attach to any element in the paywall with a dictionary of parameters. This will be tracked whenever that element is tapped. This gets sent to the `handleSuperwallEvent(withInfo:)` delegate method which you can forward to your analytics provider. You can also add this as a placement to a campaign and access its params in audience filters.
 - Adds product retrying if we fail to fetch an `SKProduct`. This tracks a `paywallProductsLoad_retry` event whenever the product loading request gets retried.
 - SW-2899: Adds `Superwall.shared.localeIdentifier` as a convenience variable that you can use to dynamically update the locale used for evaluating rules and getting localized paywalls.
 - Adds feature flag to enable text interaction with a paywall.

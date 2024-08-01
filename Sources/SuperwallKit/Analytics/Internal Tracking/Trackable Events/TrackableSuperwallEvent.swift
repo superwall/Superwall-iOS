@@ -421,9 +421,16 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct PaywallEngagementEvent: TrackableSuperwallEvent {
+  struct CustomPlacement: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
-      return .paywallEngagementEvent(paywallInfo: paywallInfo)
+      return .customPlacement(
+        name: name, 
+        params: params,
+        paywallInfo: paywallInfo
+      )
+    }
+    var rawName: String {
+      return name
     }
     let paywallInfo: PaywallInfo
     let name: String

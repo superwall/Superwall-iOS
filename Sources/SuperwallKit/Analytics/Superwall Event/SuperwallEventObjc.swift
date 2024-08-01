@@ -160,7 +160,7 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the Superwall configuration refreshes.
   case configRefresh
 
-  case paywallEngagementEvent
+  case customPlacement
 
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
@@ -260,8 +260,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "restore_complete"
     case .configRefresh:
       return "config_refresh"
-    case .paywallEngagementEvent:
-      return "paywall_engagement_event"
+    case .customPlacement:
+      return "custom_placement"
     }
   }
 }
