@@ -205,19 +205,14 @@ enum InternalSuperwallEvent {
     let options: SuperwallOptions
     let hasExternalPurchaseController: Bool
     let hasDelegate: Bool
-    var platformWrapper: String?
 
     var customParameters: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       var params = options.toDictionary()
       params += [
         "using_purchase_controller": hasExternalPurchaseController,
-        "has_delegate": hasDelegate,
-        "platform": "iOS"
+        "has_delegate": hasDelegate
       ]
-      if let platformWrapper = platformWrapper {
-        params["platform_wrapper"] = platformWrapper
-      }
       return params
     }
   }

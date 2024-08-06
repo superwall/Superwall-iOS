@@ -508,8 +508,7 @@ extension DependencyContainer: ConfigAttributesFactory {
     return InternalSuperwallEvent.ConfigAttributes(
       options: configManager.options,
       hasExternalPurchaseController: purchaseController.isInternal == false,
-      hasDelegate: hasSwiftDelegate || hasObjcDelegate,
-      platformWrapper: deviceHelper.platformWrapper
+      hasDelegate: hasSwiftDelegate || hasObjcDelegate
     )
   }
 }

@@ -447,13 +447,18 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// For internal use only. Do not use this.
-  public func setPlatformWrapper(_ platformWrapper: String) {
+  /// **For internal use only. Do not use this.**
+  public func setPlatformWrapper(
+    _ platformWrapper: String,
+    version: String
+  ) {
     dependencyContainer.deviceHelper.platformWrapper = platformWrapper
+    dependencyContainer.deviceHelper.platformWrapperVersion = version
 
-    let configAttributes = dependencyContainer.makeConfigAttributes()
     Task {
-      await track(configAttributes)
+      let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
+      let event = InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
+      await track(event)
     }
   }
 

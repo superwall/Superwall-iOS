@@ -166,6 +166,8 @@ class DeviceHelper {
 
   var platformWrapper: String?
 
+  var platformWrapperVersion: String?
+
   var isLowPowerModeEnabled: String {
     return ProcessInfo.processInfo.isLowPowerModeEnabled ? "true" : "false"
   }
@@ -512,7 +514,9 @@ class DeviceHelper {
       ipContinent: geoInfo?.continent,
       ipTimezone: geoInfo?.timezone,
       capabilities: capabilitiesConfig.namesCommaSeparated(),
-      capabilitiesConfig: capabilitiesConfig.toJson()
+      capabilitiesConfig: capabilitiesConfig.toJson(),
+      platformWrapper: platformWrapper,
+      platformWrapperVersion: platformWrapperVersion
     )
 
     return template.toDictionary()
