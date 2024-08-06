@@ -176,6 +176,9 @@ public enum SuperwallEvent {
   /// When the user taps on an element in the paywall that has a `custom_placement` action attached to it.
   case customPlacement(name: String, params: [String: Any], paywallInfo: PaywallInfo)
 
+  /// When the attributes that affect the configuration of Superwall are set or change.
+  case configAttributes
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -311,6 +314,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .configRefresh)
     case .customPlacement:
       return .init(objcEvent: .customPlacement)
+    case .configAttributes:
+      return .init(objcEvent: .configAttributes)
     }
   }
 }

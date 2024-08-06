@@ -13,14 +13,14 @@ import Foundation
 /// ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``.
 @objc(SWKSuperwallOptions)
 @objcMembers
-public final class SuperwallOptions: NSObject {
+public final class SuperwallOptions: NSObject, Encodable {
   /// Configures the appearance and behaviour of paywalls.
   public var paywalls = PaywallOptions()
 
   /// **WARNING**:  The different network environments that the SDK should use.
   /// Only use this enum to set ``SuperwallOptions/networkEnvironment-swift.property``
   ///  if told so explicitly by the Superwall team.
-  public enum NetworkEnvironment {
+  public enum NetworkEnvironment: Encodable, CustomStringConvertible {
     /// Default: Uses the standard latest environment.
     case release
     /// **WARNING**: Uses a release candidate environment. This is not meant for a production environment.
@@ -29,6 +29,19 @@ public final class SuperwallOptions: NSObject {
     case developer
     /// **WARNING**: Uses a custom environment. This is not meant for a production environment.
     case custom(String)
+
+    public var description: String {
+      switch self {
+      case .release:
+        return "release"
+      case .developer:
+        return "developer"
+      case .custom:
+        return "custom"
+      case .releaseCandidate:
+        return "releaseCandidate"
+      }
+    }
 
     var scheme: String {
       switch self {
@@ -93,6 +106,22 @@ public final class SuperwallOptions: NSObject {
     var geoHost: String {
       "geo-api.superwall.com"
     }
+
+    private enum CodingKeys: String, CodingKey {
+      case networkEnvironment
+      case customDomain
+    }
+
+    public func encode(to encoder: Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      switch self {
+      case .custom(let domain):
+        try container.encode(domain, forKey: .customDomain)
+      default:
+        break
+      }
+      try container.encode(description, forKey: .networkEnvironment)
+    }
   }
 
   /// **WARNING:**: Determines which network environment your SDK should use.
@@ -125,13 +154,54 @@ public final class SuperwallOptions: NSObject {
   /// Configuration for printing to the console.
   @objc(SWKLogging)
   @objcMembers
-  public final class Logging: NSObject {
+  public final class Logging: NSObject, Encodable {
     /// Defines the minimum log level to print to the console. Defaults to `warn`.
     public var level: LogLevel = .info
 
     /// Defines the scope of logs to print to the console. Defaults to .all.
     public var scopes: Set<LogScope> = [.all]
+
+    private enum CodingKeys: String, CodingKey {
+      case logLevel
+      case logScopes
+    }
+
+    public func encode(to encoder: Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(level, forKey: .logLevel)
+      try container.encode(scopes, forKey: .logScopes)
+    }
   }
   /// The log scope and level to print to the console.
   public var logging = Logging()
+
+  private enum CodingKeys: String, CodingKey {
+    case isExternalDataCollectionEnabled
+    case localeIdentifier
+    case isGameControllerEnabled
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    // Manually encode PaywallOptions properties
+    try paywalls.encode(to: encoder)
+    try networkEnvironment.encode(to: encoder)
+    try logging.encode(to: encoder)
+
+    try container.encode(isExternalDataCollectionEnabled, forKey: .isExternalDataCollectionEnabled)
+    try container.encode(localeIdentifier, forKey: .localeIdentifier)
+    try container.encode(isGameControllerEnabled, forKey: .isGameControllerEnabled)
+  }
+
+  func toDictionary() -> [String: Any] {
+    guard let data = try? JSONEncoder().encode(self) else {
+      return [:]
+    }
+    let jsonObject = try? JSONSerialization.jsonObject(with: data, options: .allowFragments)
+    if let dictionary = jsonObject.flatMap({ $0 as? [String: Any] }) {
+      return dictionary
+    } else {
+      return [:]
+    }
+  }
 }

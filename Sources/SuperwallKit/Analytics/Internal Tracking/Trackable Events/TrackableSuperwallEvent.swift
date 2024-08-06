@@ -200,6 +200,23 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
+  struct ConfigAttributes: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .configAttributes
+    let options: SuperwallOptions
+    let hasExternalPurchaseController: Bool
+    let hasDelegate: Bool
+
+    var customParameters: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] {
+      var params = options.toDictionary()
+      params += [
+        "using_purchase_controller": hasExternalPurchaseController,
+        "has_delegate": hasDelegate
+      ]
+      return params
+    }
+  }
+
   struct DeviceAttributes: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .deviceAttributes(attributes: deviceAttributes)

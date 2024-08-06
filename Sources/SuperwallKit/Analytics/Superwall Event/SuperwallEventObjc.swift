@@ -160,7 +160,11 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the Superwall configuration refreshes.
   case configRefresh
 
+  /// When a custom placement on the paywall is tapped.
   case customPlacement
+
+  /// When the attributes that affect the configuration of Superwall are set or change.
+  case configAttributes
 
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
@@ -262,6 +266,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "config_refresh"
     case .customPlacement:
       return "custom_placement"
+    case .configAttributes:
+      return "config_attributes"
     }
   }
 }

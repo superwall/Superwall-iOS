@@ -9,7 +9,7 @@ import Foundation
 
 /// The possible scope of logs to print to the console.
 @objc(SWKLogScope)
-public enum LogScope: Int, Sendable, CustomStringConvertible {
+public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
   case localizationManager
   case bounceButton
   case coreData
