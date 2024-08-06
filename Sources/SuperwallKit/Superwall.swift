@@ -450,7 +450,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// For internal use only. Do not use this.
   public func setPlatformWrapper(_ platformWrapper: String) {
     dependencyContainer.deviceHelper.platformWrapper = platformWrapper
-    
+
     let configAttributes = dependencyContainer.makeConfigAttributes()
     Task {
       await track(configAttributes)
