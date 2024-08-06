@@ -576,7 +576,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
       Task {
         let paramsDict = params.dictionaryValue
         let trackedEvent = InternalSuperwallEvent.CustomPlacement(
-          paywallInfo: paywallViewController.info, 
+          paywallInfo: paywallViewController.info,
           name: name,
           params: paramsDict
         )

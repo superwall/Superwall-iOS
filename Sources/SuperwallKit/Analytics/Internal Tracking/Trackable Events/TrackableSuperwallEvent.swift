@@ -441,7 +441,7 @@ enum InternalSuperwallEvent {
   struct CustomPlacement: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .customPlacement(
-        name: name, 
+        name: name,
         params: params,
         paywallInfo: paywallInfo
       )
