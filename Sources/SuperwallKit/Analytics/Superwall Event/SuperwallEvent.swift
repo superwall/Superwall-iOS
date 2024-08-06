@@ -173,6 +173,9 @@ public enum SuperwallEvent {
   /// When the Superwall configuration is refreshed.
   case configRefresh
 
+  /// When the attributes that affect the configuration of Superwall are set or change.
+  case configAttributes
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -305,6 +308,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .restoreComplete)
     case .configRefresh:
       return .init(objcEvent: .configRefresh)
+    case .configAttributes:
+      return .init(objcEvent: .configAttributes)
     }
   }
 }

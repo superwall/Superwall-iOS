@@ -17,6 +17,11 @@ public final class Superwall: NSObject, ObservableObject {
     }
     set {
       dependencyContainer.delegateAdapter.swiftDelegate = newValue
+
+      let configAttributes = dependencyContainer.makeConfigAttributes()
+      Task {
+        await track(configAttributes)
+      }
     }
   }
 
@@ -33,6 +38,11 @@ public final class Superwall: NSObject, ObservableObject {
     }
     set {
       dependencyContainer.delegateAdapter.objcDelegate = newValue
+
+      let configAttributes = dependencyContainer.makeConfigAttributes()
+      Task {
+        await track(configAttributes)
+      }
     }
   }
 
@@ -43,6 +53,11 @@ public final class Superwall: NSObject, ObservableObject {
     }
     set {
       options.logging.level = newValue
+
+      let configAttributes = dependencyContainer.makeConfigAttributes()
+      Task {
+        await track(configAttributes)
+      }
     }
   }
 
@@ -60,6 +75,11 @@ public final class Superwall: NSObject, ObservableObject {
     }
     set {
       options.localeIdentifier = newValue
+
+      let configAttributes = dependencyContainer.makeConfigAttributes()
+      Task {
+        await track(configAttributes)
+      }
     }
   }
 
@@ -128,7 +148,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// Alternatively, you can use the completion handler from
   /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
   @Published
-  public var isConfigured = false
+  public private(set) var isConfigured = false
 
   /// The configured shared instance of ``Superwall``.
   ///
@@ -227,6 +247,14 @@ public final class Superwall: NSObject, ObservableObject {
       async let configureIdentity: () = await dependencyContainer.identityManager.configure()
 
       _ = await (fetchConfig, configureIdentity)
+
+      await track(
+        InternalSuperwallEvent.ConfigAttributes(
+          options: dependencyContainer.configManager.options,
+          hasExternalPurchaseController: purchaseController != nil,
+          hasDelegate: delegate != nil
+        )
+      )
 
       await MainActor.run {
         completion?()
@@ -422,12 +450,23 @@ public final class Superwall: NSObject, ObservableObject {
   /// For internal use only. Do not use this.
   public func setPlatformWrapper(_ platformWrapper: String) {
     dependencyContainer.deviceHelper.platformWrapper = platformWrapper
+    
+    let configAttributes = dependencyContainer.makeConfigAttributes()
+    Task {
+      await track(configAttributes)
+    }
   }
 
   /// Sets the user interface style, which overrides the system setting. Set to `nil` to revert
   /// back to using the system setting.
   public func setInterfaceStyle(to interfaceStyle: InterfaceStyle?) {
     dependencyContainer.deviceHelper.interfaceStyleOverride = interfaceStyle
+    Task {
+      let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
+      await Superwall.shared.track(
+        InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
+      )
+    }
   }
 
   // MARK: - Deep Links

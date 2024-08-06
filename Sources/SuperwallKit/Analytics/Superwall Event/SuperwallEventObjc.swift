@@ -160,6 +160,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the Superwall configuration refreshes.
   case configRefresh
 
+  /// When the attributes that affect the configuration of Superwall are set or change.
+  case configAttributes
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -258,6 +261,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "restore_complete"
     case .configRefresh:
       return "config_refresh"
+    case .configAttributes:
+      return "config_attributes"
     }
   }
 }

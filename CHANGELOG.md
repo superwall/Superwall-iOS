@@ -2,6 +2,14 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.7.1
+
+### Enhancements
+
+- Tracks a `config_attributes` event after calling `Superwall.configure`, which contains info about the configuration of the SDK. This gets tracked whenever you set the delegate.
+- Adds in device attributes tracking after setting the interface style override.
+
+
 ## 3.7.0
 
 ### Enhancements

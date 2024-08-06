@@ -484,7 +484,7 @@ extension DependencyContainer: UserAttributesEventFactory {
   }
 }
 
-// MARK: - Receipt factory
+// MARK: - Receipt Factory
 extension DependencyContainer: ReceiptFactory {
   func loadPurchasedProducts() async -> Set<StoreProduct>? {
     return await receiptManager.loadPurchasedProducts()
@@ -496,5 +496,20 @@ extension DependencyContainer: ReceiptFactory {
 
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool {
     return await receiptManager.isFreeTrialAvailable(for: product)
+  }
+}
+
+// MARK: - Config Attributes Factory
+extension DependencyContainer: ConfigAttributesFactory {
+  func makeConfigAttributes() -> InternalSuperwallEvent.ConfigAttributes {
+    let hasSwiftDelegate = delegateAdapter.swiftDelegate != nil
+    let hasObjcDelegate = delegateAdapter.objcDelegate != nil
+
+    return InternalSuperwallEvent.ConfigAttributes(
+      options: configManager.options,
+      hasExternalPurchaseController: purchaseController.isInternal == false,
+      hasDelegate: hasSwiftDelegate || hasObjcDelegate,
+      platformWrapper: deviceHelper.platformWrapper
+    )
   }
 }
