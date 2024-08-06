@@ -152,6 +152,8 @@ final class PaywallMessageHandler: WebEventDelegate {
       purchaseProduct(withId: id)
     case .custom(data: let customEvent):
       handleCustomEvent(customEvent)
+    case let .customPlacement(name: name, params: params):
+      handleCustomPlacement(name: name, params: params)
     }
   }
 
@@ -351,6 +353,10 @@ final class PaywallMessageHandler: WebEventDelegate {
       userInfo: ["custom_event": customEvent]
     )
     delegate?.eventDidOccur(.custom(string: customEvent))
+  }
+
+  private func handleCustomPlacement(name: String, params: JSON) {
+    delegate?.eventDidOccur(.customPlacement(name: name, params: params))
   }
 
   private func detectHiddenPaywallEvent(

@@ -30,7 +30,7 @@ extension Superwall {
     let event = UserInitiatedEvent.Track(
       rawName: event,
       canImplicitlyTriggerPaywall: false,
-      customParameters: params ?? [:],
+      audienceFilterParams: params ?? [:],
       isFeatureGatable: false
     )
 
@@ -82,7 +82,7 @@ extension Superwall {
 
     let eventData = EventData(
       name: event.rawName,
-      parameters: JSON(parameters.eventParams),
+      parameters: JSON(parameters.audienceFilterParams),
       createdAt: eventCreatedAt
     )
 

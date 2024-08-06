@@ -23,7 +23,7 @@ enum TrackingLogic {
     var superwallParameters = await trackableEvent.getSuperwallParameters()
     superwallParameters["app_session_id"] = appSessionId
 
-    let customParameters = trackableEvent.customParameters
+    let uncleanEventAudienceFilterParams = trackableEvent.audienceFilterParams
     let eventName = trackableEvent.rawName
 
     var delegateParams: [String: Any] = [
@@ -33,7 +33,7 @@ enum TrackingLogic {
     // Add a special property if it's a superwall event
     let isStandardEvent = trackableEvent is TrackableSuperwallEvent
 
-    var eventParams: [String: Any] = [
+    var audienceFilterParams: [String: Any] = [
       "$is_standard_event": isStandardEvent,
       "$event_name": eventName,
       "event_name": eventName
@@ -46,15 +46,15 @@ enum TrackingLogic {
       }
 
       let keyWithDollar = "$\(key)"
-      eventParams[keyWithDollar] = value
+      audienceFilterParams[keyWithDollar] = value
 
       // no $ for delegate methods
       delegateParams[key] = value
     }
 
     // Filter then assign custom parameters
-    for key in customParameters.keys {
-      guard let value = clean(input: customParameters[key]) else {
+    for key in uncleanEventAudienceFilterParams.keys {
+      guard let value = clean(input: uncleanEventAudienceFilterParams[key]) else {
         Logger.debug(
           logLevel: .debug,
           scope: .events,
@@ -73,13 +73,13 @@ enum TrackingLogic {
         )
       } else {
         delegateParams[key] = value
-        eventParams[key] = value
+        audienceFilterParams[key] = value
       }
     }
 
     return TrackingParameters(
       delegateParams: delegateParams,
-      eventParams: eventParams
+      audienceFilterParams: audienceFilterParams
     )
   }
 
@@ -198,7 +198,8 @@ enum TrackingLogic {
     let notAllowedReferringEventNames: Set<String> = [
       SuperwallEventObjc.transactionAbandon.description,
       SuperwallEventObjc.transactionFail.description,
-      SuperwallEventObjc.paywallDecline.description
+      SuperwallEventObjc.paywallDecline.description,
+      SuperwallEventObjc.customPlacement.description
     ]
 
     if let referringEventName = paywallViewController?.info.presentedByEventWithName,
@@ -218,6 +219,11 @@ enum TrackingLogic {
 
     if let event = event as? TrackableSuperwallEvent,
       case .paywallDecline = event.superwallEvent {
+      return .closePaywallThenTriggerPaywall
+    }
+
+    if let event = event as? TrackableSuperwallEvent,
+      case .customPlacement = event.superwallEvent {
       return .closePaywallThenTriggerPaywall
     }
 

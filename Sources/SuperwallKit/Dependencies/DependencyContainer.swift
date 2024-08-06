@@ -479,7 +479,7 @@ extension DependencyContainer: UserAttributesEventFactory {
   func makeUserAttributesEvent() -> InternalSuperwallEvent.Attributes {
     return InternalSuperwallEvent.Attributes(
       appInstalledAtString: deviceHelper.appInstalledAtString,
-      customParameters: identityManager.userAttributes
+      audienceFilterParams: identityManager.userAttributes
     )
   }
 }

@@ -9,14 +9,14 @@ import Foundation
 
 struct TrackingParameters {
   let delegateParams: [String: Any]
-  let eventParams: [String: Any]
+  let audienceFilterParams: [String: Any]
 }
 
 extension TrackingParameters: Stubbable {
   static func stub() -> TrackingParameters {
     return TrackingParameters(
       delegateParams: [:],
-      eventParams: [:]
+      audienceFilterParams: [:]
     )
   }
 }

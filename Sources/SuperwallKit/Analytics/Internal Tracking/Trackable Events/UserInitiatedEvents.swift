@@ -15,7 +15,7 @@ enum UserInitiatedEvent {
   struct Track: TrackableUserInitiatedEvent {
     let rawName: String
     let canImplicitlyTriggerPaywall: Bool
-    var customParameters: [String: Any] = [:]
+    var audienceFilterParams: [String: Any] = [:]
     var isFeatureGatable: Bool
 
     func getSuperwallParameters() async -> [String: Any] {
@@ -46,6 +46,6 @@ enum UserInitiatedEvent {
     let state: State
     let pushNotificationId: String?
     let canImplicitlyTriggerPaywall = true
-    var customParameters: [String: Any] = [:]
+    var audienceFilterParams: [String: Any] = [:]
   }*/
 }

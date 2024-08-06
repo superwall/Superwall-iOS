@@ -572,6 +572,16 @@ extension Superwall: PaywallViewControllerEventDelegate {
       dependencyContainer.delegateAdapter.paywallWillOpenDeepLink(url: url)
     case .custom(let string):
       dependencyContainer.delegateAdapter.handleCustomPaywallAction(withName: string)
+    case let .customPlacement(name: name, params: params):
+      Task {
+        let paramsDict = params.dictionaryValue
+        let trackedEvent = InternalSuperwallEvent.CustomPlacement(
+          paywallInfo: paywallViewController.info,
+          name: name,
+          params: paramsDict
+        )
+        await Superwall.shared.track(trackedEvent)
+      }
     }
   }
 }
