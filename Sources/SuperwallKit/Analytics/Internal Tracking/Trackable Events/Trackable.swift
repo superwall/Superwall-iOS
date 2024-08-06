@@ -13,8 +13,8 @@ protocol Trackable {
   ///
   /// For  a `TrackableSuperwallEvent`,  this is the raw value of an ``SuperwallEvent`` assigned to it.
   var rawName: String { get }
-  /// Any non-superwall parameters that you want to track. Do not include $ signs in parameter names as they will be dropped.
-  var customParameters: [String: Any] { get }
+  /// Parameters that can be used in audience filters. Do not include $ signs in parameter names as they will be dropped.
+  var audienceFilterParams: [String: Any] { get }
   /// Determines whether the event has the potential to trigger a paywall. Defaults to true.
   var canImplicitlyTriggerPaywall: Bool { get }
 

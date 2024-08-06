@@ -232,7 +232,7 @@ public final class PaywallInfo: NSObject {
     forProduct product: StoreProduct? = nil,
     otherParams: [String: Any]? = nil
   ) async -> [String: Any] {
-    var output = customParams()
+    var output = audienceFilterParams()
 
     output += [
       "paywalljs_version": paywalljsVersion as Any,
@@ -294,8 +294,8 @@ public final class PaywallInfo: NSObject {
     return output
   }
 
-  /// Parameters that can be used in rules.
-  func customParams() -> [String: Any] {
+  /// Parameters that can be used in audience filters.
+  func audienceFilterParams() -> [String: Any] {
     var output: [String: Any] = [
       "paywall_id": databaseId,
       "paywall_name": name,
@@ -330,7 +330,6 @@ public final class PaywallInfo: NSObject {
 // MARK: - Stubbable
 extension PaywallInfo: Stubbable {
   static func stub() -> PaywallInfo {
-    let dependencyContainer = DependencyContainer()
     return PaywallInfo(
       databaseId: "abc",
       identifier: "1",
