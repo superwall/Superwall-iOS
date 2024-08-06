@@ -206,7 +206,7 @@ enum InternalSuperwallEvent {
     let hasExternalPurchaseController: Bool
     let hasDelegate: Bool
 
-    var customParameters: [String: Any] = [:]
+    var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       var params = options.toDictionary()
       params += [
