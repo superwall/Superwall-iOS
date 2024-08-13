@@ -173,6 +173,12 @@ public enum SuperwallEvent {
   /// When the Superwall configuration is refreshed.
   case configRefresh
 
+  /// When the user taps on an element in the paywall that has a `custom_placement` action attached to it.
+  case customPlacement(name: String, params: [String: Any], paywallInfo: PaywallInfo)
+
+  /// When the attributes that affect the configuration of Superwall are set or change.
+  case configAttributes
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -183,7 +189,8 @@ public enum SuperwallEvent {
       .paywallDecline,
       .transactionAbandon,
       .surveyResponse,
-      .touchesBegan:
+      .touchesBegan,
+      .customPlacement:
       return true
     default:
       return false
@@ -305,6 +312,10 @@ extension SuperwallEvent {
       return .init(objcEvent: .restoreComplete)
     case .configRefresh:
       return .init(objcEvent: .configRefresh)
+    case .customPlacement:
+      return .init(objcEvent: .customPlacement)
+    case .configAttributes:
+      return .init(objcEvent: .configAttributes)
     }
   }
 }

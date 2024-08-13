@@ -10,7 +10,7 @@ import Foundation
 /// Options for configuring the appearance and behavior of paywalls.
 @objc(SWKPaywallOptions)
 @objcMembers
-public final class PaywallOptions: NSObject {
+public final class PaywallOptions: NSObject, Encodable {
   /// Determines whether the paywall should use haptic feedback. Defaults to true.
   ///
   /// Haptic feedback occurs when a user purchases or restores a product, opens a URL
@@ -21,7 +21,7 @@ public final class PaywallOptions: NSObject {
 
   @objc(SWKRestoreFailed)
   @objcMembers
-  public final class RestoreFailed: NSObject {
+  public final class RestoreFailed: NSObject, Encodable {
     /// The title of the alert presented to the user when restoring a transaction fails. Defaults to
     /// `No Subscription Found`.
     public var title = "No Subscription Found"
@@ -33,6 +33,19 @@ public final class PaywallOptions: NSObject {
     /// Defines the title of the close button in the alert presented to the user when restoring a
     /// transaction fails. Defaults to `Okay`.
     public var closeButtonTitle = "Okay"
+
+    private enum CodingKeys: CodingKey {
+      case restoreTitle
+      case restoreMessage
+      case restoreCloseButtonTitle
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(title, forKey: .restoreTitle)
+      try container.encode(message, forKey: .restoreMessage)
+      try container.encode(closeButtonTitle, forKey: .restoreCloseButtonTitle)
+    }
   }
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
   public var restoreFailed = RestoreFailed()
@@ -58,12 +71,30 @@ public final class PaywallOptions: NSObject {
 
   /// Defines the different types of views that can appear behind Apple's payment sheet during a transaction.
   @objc(SWKTransactionBackgroundView)
-  public enum TransactionBackgroundView: Int, Sendable {
+  public enum TransactionBackgroundView: Int, Encodable, CustomStringConvertible, Sendable {
     /// This shows your paywall background color overlayed with an activity indicator.
     case spinner
 
     /// Removes the background view during a transaction.
     case none
+
+    public var description: String {
+      switch self {
+      case .spinner:
+        return "spinner"
+      case .none:
+        return "none"
+      }
+    }
+
+    private enum CodingKeys: CodingKey {
+      case transactionBackgroundView
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(description, forKey: .transactionBackgroundView)
+    }
   }
   /// The view that appears behind Apple's payment sheet during a transaction. Defaults to `.spinner`.
   ///
@@ -71,4 +102,22 @@ public final class PaywallOptions: NSObject {
   ///
   /// **Note:** This feature is still in development and could change.
   public var transactionBackgroundView: TransactionBackgroundView = .spinner
+
+  private enum CodingKeys: String, CodingKey {
+    case isHapticFeedbackEnabled
+    case shouldShowPurchaseFailureAlert
+    case shouldPreload
+    case automaticallyDismiss
+    case transactionBackgroundView
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try transactionBackgroundView.encode(to: encoder)
+    try restoreFailed.encode(to: encoder)
+    try container.encode(isHapticFeedbackEnabled, forKey: .isHapticFeedbackEnabled)
+    try container.encode(shouldShowPurchaseFailureAlert, forKey: .shouldShowPurchaseFailureAlert)
+    try container.encode(shouldPreload, forKey: .shouldPreload)
+    try container.encode(automaticallyDismiss, forKey: .automaticallyDismiss)
+  }
 }

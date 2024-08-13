@@ -2,6 +2,15 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.7.1
+
+### Enhancements
+
+- Adds a `custom_placement` event that you can attach to any element in the paywall with a dictionary of parameters. When the element is tapped, the event will be tracked. The name of the placement can be used to trigger a paywall and its params used in audience filters.
+- Tracks a `config_attributes` event after calling `Superwall.configure`, which contains info about the configuration of the SDK. This gets tracked whenever you set the delegate.
+- Adds in device attributes tracking after setting the interface style override.
+- Adds `close_reason` to `PaywallInfo` properties.
+
 ## 3.7.0
 
 ### Enhancements

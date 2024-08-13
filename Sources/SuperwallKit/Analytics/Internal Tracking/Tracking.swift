@@ -13,7 +13,7 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   - trackableEvent: The event you want to track.
-  ///   - customParameters: Any extra non-Superwall parameters that you want to track.
+  ///   - audienceFilterParams: Any extra non-Superwall parameters that you want to track.
 	@discardableResult
   func track(_ event: Trackable) async -> TrackingResult {
     // Get parameters to be sent to the delegate and stored in an event.
@@ -36,13 +36,13 @@ extension Superwall {
         logLevel: .debug,
         scope: .events,
         message: "Logged Event",
-        info: parameters.eventParams
+        info: parameters.audienceFilterParams
       )
     }
 
     let eventData = EventData(
       name: event.rawName,
-      parameters: JSON(parameters.eventParams),
+      parameters: JSON(parameters.audienceFilterParams),
       createdAt: eventCreatedAt
     )
 

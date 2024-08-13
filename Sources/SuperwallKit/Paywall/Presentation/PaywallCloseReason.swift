@@ -10,7 +10,7 @@ import Foundation
 /// An enum whose cases indicate whether the paywall was closed by user
 /// interaction or because another paywall will show.
 @objc(SWKPaywallCloseReason)
-public enum PaywallCloseReason: Int, Codable, Equatable, Sendable {
+public enum PaywallCloseReason: Int, Codable, Equatable, Sendable, CustomStringConvertible {
   /// The paywall was closed by system logic, either after a purchase or because
   /// a deeplink was presented.
   case systemLogic
@@ -32,6 +32,21 @@ public enum PaywallCloseReason: Int, Codable, Equatable, Sendable {
 
   /// The paywall hasn't been closed yet.
   case none
+
+  public var description: String {
+    switch self {
+    case .systemLogic:
+      return "systemLogic"
+    case .forNextPaywall:
+      return "forNextPaywall"
+    case .webViewFailedToLoad:
+      return "webViewFailedToLoad"
+    case .manualClose:
+      return "manualClsoe"
+    case .none:
+      return "none"
+    }
+  }
 
   /// Indicates whether the paywall state publisher should receive a completion.
   var stateShouldComplete: Bool {

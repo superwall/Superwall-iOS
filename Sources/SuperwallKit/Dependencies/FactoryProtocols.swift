@@ -153,3 +153,7 @@ protocol ReceiptFactory {
   func refreshReceipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
 }
+
+protocol ConfigAttributesFactory {
+  func makeConfigAttributes() -> InternalSuperwallEvent.ConfigAttributes
+}

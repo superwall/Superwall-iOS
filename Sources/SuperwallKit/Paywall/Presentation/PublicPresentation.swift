@@ -269,7 +269,7 @@ extension Superwall {
     let trackableEvent = UserInitiatedEvent.Track(
       rawName: event,
       canImplicitlyTriggerPaywall: false,
-      customParameters: params ?? [:],
+      audienceFilterParams: params ?? [:],
       isFeatureGatable: isFeatureGatable
     )
     let trackResult = await track(trackableEvent)
