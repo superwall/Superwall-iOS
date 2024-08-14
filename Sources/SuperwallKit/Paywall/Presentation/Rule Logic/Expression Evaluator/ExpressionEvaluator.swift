@@ -7,6 +7,7 @@
 
 import Foundation
 import JavaScriptCore
+import SuperCEL
 
 protocol ExpressionEvaluating {
   func evaluateExpression(
@@ -18,6 +19,7 @@ protocol ExpressionEvaluating {
 struct ExpressionEvaluator: ExpressionEvaluating {
   private let storage: Storage
   private unowned let factory: RuleAttributesFactory
+  private let expressionLogic: ExpressionLogic
 
   init(
     storage: Storage,
@@ -25,6 +27,7 @@ struct ExpressionEvaluator: ExpressionEvaluating {
   ) {
     self.storage = storage
     self.factory = factory
+    self.expressionLogic = ExpressionLogic(storage: storage)
   }
 
   func evaluateExpression(
@@ -33,7 +36,7 @@ struct ExpressionEvaluator: ExpressionEvaluating {
   ) async -> TriggerRuleOutcome {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
-      let ruleMatched = await tryToMatchOccurrence(
+      let ruleMatched = await expressionLogic.tryToMatchOccurrence(
         from: rule,
         expressionMatched: true
       )
@@ -78,7 +81,7 @@ struct ExpressionEvaluator: ExpressionEvaluating {
 
     let expressionMatched = result?.toString() == "true"
 
-    let ruleMatched = await tryToMatchOccurrence(
+    let ruleMatched = await expressionLogic.tryToMatchOccurrence(
       from: rule,
       expressionMatched: expressionMatched
     )
@@ -116,39 +119,5 @@ struct ExpressionEvaluator: ExpressionEvaluating {
       return nil
     }
     return nil
-  }
-
-  func tryToMatchOccurrence(
-    from rule: TriggerRule,
-    expressionMatched: Bool
-  ) async -> TriggerRuleOutcome {
-    if expressionMatched {
-      guard let occurrence = rule.occurrence else {
-        Logger.debug(
-          logLevel: .debug,
-          scope: .paywallPresentation,
-          message: "No occurrence parameter found for trigger rule."
-        )
-
-        return .match(rule: rule)
-      }
-
-      let count = await storage
-        .coreDataManager
-        .countTriggerRuleOccurrences(
-          for: occurrence
-        ) + 1
-      let shouldFire = count <= occurrence.maxCount
-      var unsavedOccurrence: TriggerRuleOccurrence?
-
-      if shouldFire {
-        unsavedOccurrence = occurrence
-        return .match(rule: rule, unsavedOccurrence: unsavedOccurrence)
-      } else {
-        return .noMatch(source: .occurrence, experimentId: rule.experiment.id)
-      }
-    }
-
-    return .noMatch(source: .expression, experimentId: rule.experiment.id)
   }
 }
