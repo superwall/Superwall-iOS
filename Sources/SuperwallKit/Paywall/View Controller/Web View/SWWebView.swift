@@ -126,9 +126,6 @@ class SWWebView: WKWebView {
     scrollView.backgroundColor = .clear
     scrollView.isOpaque = false
 
-//    layer.borderColor = UIColor.red.cgColor
-//    layer.borderWidth = 2
-
   }
 
   required init?(coder: NSCoder) {
@@ -136,11 +133,11 @@ class SWWebView: WKWebView {
   }
 
   func loadURL(from paywall: Paywall) async {
-    let url = URL(string: "http://localhost:2001/runtime/dev/dev/live/document/0iOFBa6fzZ28medYvQ1L5".replacingOccurrences(of: "localhost", with: "192.168.1.88"))!
-    print("the url is \(url.absoluteString)")
+//    let url = URL(string: "http://localhost:2001/runtime/dev/dev/live/document/0iOFBa6fzZ28medYvQ1L5".replacingOccurrences(of: "localhost", with: "192.168.1.88"))!
+//    print("the url is \(url.absoluteString)")
     let didLoad = await loadingHandler.loadURL(
       paywallUrlConfig: paywall.urlConfig,
-      paywallUrl: url//paywall.url
+      paywallUrl: paywall.url
     )
     if !didLoad {
       delegate?.webViewDidFail()
@@ -157,8 +154,8 @@ extension SWWebView: SWWebViewLoadingDelegate {
 
     if isOnDeviceCacheEnabled {
       request = URLRequest(
-        url: url
-//        cachePolicy: .returnCacheDataElseLoad
+        url: url,
+        cachePolicy: .returnCacheDataElseLoad
       )
     } else {
       request = URLRequest(url: url)
