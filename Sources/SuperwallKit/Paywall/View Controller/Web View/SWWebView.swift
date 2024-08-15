@@ -40,6 +40,7 @@ class SWWebView: WKWebView {
   private let isMac: Bool
   private let isOnDeviceCacheEnabled: Bool
   private var completion: ((Error?) -> Void)?
+  var isTextInteractionEnabled = false
 
   init(
     isMac: Bool,
@@ -51,6 +52,7 @@ class SWWebView: WKWebView {
     self.messageHandler = messageHandler
     self.isOnDeviceCacheEnabled = isOnDeviceCacheEnabled
     let featureFlags = factory.makeFeatureFlags()
+
 
     self.loadingHandler = SWWebViewLoadingHandler(enableMultiplePaywallUrls: featureFlags?.enableMultiplePaywallUrls == true)
 
@@ -69,8 +71,10 @@ class SWWebView: WKWebView {
     if #available(iOS 15.0, *),
       !isMac {
       preferences.isTextInteractionEnabled = featureFlags?.enableTextInteraction == true // ignore-xcode-12
+      isTextInteractionEnabled = featureFlags?.enableTextInteraction == true
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true
+
 
     #if compiler(>=5.9.0)
     if #available(iOS 17.0, *) {
@@ -121,6 +125,10 @@ class SWWebView: WKWebView {
     scrollView.minimumZoomScale = 1.0
     scrollView.backgroundColor = .clear
     scrollView.isOpaque = false
+
+//    layer.borderColor = UIColor.red.cgColor
+//    layer.borderWidth = 2
+
   }
 
   required init?(coder: NSCoder) {
@@ -128,9 +136,11 @@ class SWWebView: WKWebView {
   }
 
   func loadURL(from paywall: Paywall) async {
+    let url = URL(string: "http://localhost:2001/runtime/dev/dev/live/document/0iOFBa6fzZ28medYvQ1L5".replacingOccurrences(of: "localhost", with: "192.168.1.88"))!
+    print("the url is \(url.absoluteString)")
     let didLoad = await loadingHandler.loadURL(
       paywallUrlConfig: paywall.urlConfig,
-      paywallUrl: paywall.url
+      paywallUrl: url//paywall.url
     )
     if !didLoad {
       delegate?.webViewDidFail()
@@ -147,8 +157,8 @@ extension SWWebView: SWWebViewLoadingDelegate {
 
     if isOnDeviceCacheEnabled {
       request = URLRequest(
-        url: url,
-        cachePolicy: .returnCacheDataElseLoad
+        url: url
+//        cachePolicy: .returnCacheDataElseLoad
       )
     } else {
       request = URLRequest(url: url)
@@ -225,3 +235,4 @@ extension SWWebView: WKNavigationDelegate {
     completion?(error)
   }
 }
+

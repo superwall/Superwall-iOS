@@ -78,6 +78,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Defines whether the view controller is being presented or not.
   private var isPresented = false
 
+  /// Defines whether text interaction is enabled
+  private var isTextInteractionEnabled = false
+
   /// Stores the completion block when calling dismiss.
   private var dismissCompletionBlock: (() -> Void)?
 
@@ -219,22 +222,33 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     view.addSubview(exitButton)
     exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
 
-    NSLayoutConstraint.activate([
+    var constraints = [
       webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       webView.topAnchor.constraint(equalTo: view.topAnchor),
-      webView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
-
       refreshPaywallButton.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
       refreshPaywallButton.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor, constant: 0),
       refreshPaywallButton.widthAnchor.constraint(equalToConstant: 55),
       refreshPaywallButton.heightAnchor.constraint(equalToConstant: 55),
-
       exitButton.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
       exitButton.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor, constant: 0),
       exitButton.widthAnchor.constraint(equalToConstant: 55),
       exitButton.heightAnchor.constraint(equalToConstant: 55)
-    ])
+    ]
+
+
+    if #available(iOS 15.0, *) {
+      if (webView.isTextInteractionEnabled) {
+        constraints.append(view.keyboardLayoutGuide.topAnchor.constraint(
+          equalToSystemSpacingBelow: webView.bottomAnchor, multiplier: 0))
+      } else {
+        constraints.append(webView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0))
+      }
+    } else {
+      constraints.append(webView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0))
+    }
+
+    NSLayoutConstraint.activate(constraints)
   }
 
   nonisolated private func trackOpen() async {
@@ -242,6 +256,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     await webView.messageHandler.handle(.paywallOpen)
     let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: info)
     await Superwall.shared.track(trackedEvent)
+
+
   }
 
   nonisolated private func trackClose() async {
@@ -758,6 +774,9 @@ extension PaywallViewController {
       await trackOpen()
     }
     GameControllerManager.shared.setDelegate(self)
+    if (webView.isTextInteractionEnabled) {
+      webView.swizzle_removeInputAccessory()
+    }
     presentationDidFinishPrepare = true
   }
 
@@ -912,6 +931,7 @@ extension PaywallViewController {
 
     dismissCompletionBlock?()
     dismissCompletionBlock = nil
+
   }
 }
 
@@ -939,5 +959,59 @@ extension PaywallViewController: GameControllerDelegate {
       info: ["payload": payload],
       error: nil
     )
+  }
+}
+
+// MARK: Swizzle to remove keyboard accessory (form input / next / previous / done bar)
+
+
+fileprivate final class InputAccessoryHackHelper: NSObject {
+  @objc var inputAccessoryView: AnyObject? { return nil }
+}
+
+extension WKWebView {
+
+  private struct AssociatedKeys {
+    static var originalClass = "originalClass"
+  }
+
+  func swizzle_removeInputAccessory() {
+    guard let target = scrollView.subviews.first(where: {
+      String(describing: type(of: $0)).hasPrefix("WKContent")
+    }), let superclass = target.superclass else {
+      return
+    }
+
+    let noInputAccessoryViewClassName = "\(superclass)_NoInputAccessoryView"
+    var newClass: AnyClass? = NSClassFromString(noInputAccessoryViewClassName)
+
+    if newClass == nil, let targetClass = object_getClass(target), let classNameCString = noInputAccessoryViewClassName.cString(using: .ascii) {
+      newClass = objc_allocateClassPair(targetClass, classNameCString, 0)
+
+      if let newClass = newClass {
+        objc_registerClassPair(newClass)
+      }
+    }
+
+    guard let noInputAccessoryClass = newClass, let originalMethod = class_getInstanceMethod(InputAccessoryHackHelper.self, #selector(getter: InputAccessoryHackHelper.inputAccessoryView)) else {
+      return
+    }
+
+    // Store the original class before swizzling
+    objc_setAssociatedObject(self, &AssociatedKeys.originalClass, object_getClass(target), .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+
+    class_addMethod(noInputAccessoryClass.self, #selector(getter: InputAccessoryHackHelper.inputAccessoryView), method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod))
+    object_setClass(target, noInputAccessoryClass)
+  }
+
+  func unswizzle_removeInputAccessory() {
+    guard let target = scrollView.subviews.first(where: {
+      String(describing: type(of: $0)).hasPrefix("WKContent")
+    }), let originalClass = objc_getAssociatedObject(self, &AssociatedKeys.originalClass) as? AnyClass else {
+      return
+    }
+
+    // Restore the original class
+    object_setClass(target, originalClass)
   }
 }
