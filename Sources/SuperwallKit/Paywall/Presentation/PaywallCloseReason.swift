@@ -36,15 +36,15 @@ public enum PaywallCloseReason: Int, Codable, Equatable, Sendable, CustomStringC
   public var description: String {
     switch self {
     case .systemLogic:
-      "systemLogic"
+      return "systemLogic"
     case .forNextPaywall:
-      "forNextPaywall"
+      return "forNextPaywall"
     case .webViewFailedToLoad:
-      "webViewFailedToLoad"
+      return "webViewFailedToLoad"
     case .manualClose:
-      "manualClsoe"
+      return "manualClsoe"
     case .none:
-      "none"
+      return "none"
     }
   }
 
