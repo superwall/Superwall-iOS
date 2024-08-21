@@ -71,7 +71,7 @@ enum PaywallMessage: Decodable, Equatable {
     case openDeepLink = "open_deep_link"
     case purchase
     case custom
-    case customPlacement = "register_placement"
+    case customPlacement = "custom_placement"
   }
 
   // Everyone write to eventName, other may use the remaining keys
