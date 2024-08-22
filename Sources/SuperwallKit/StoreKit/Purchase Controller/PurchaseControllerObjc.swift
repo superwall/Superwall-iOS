@@ -33,7 +33,7 @@ public protocol PurchaseControllerObjc: AnyObject {
   ///    **Note:** Make sure you handle all cases of ``PurchaseResult``.
   @MainActor
   @objc func purchase(
-    product: SKProduct,
+    product: StoreProduct,
     completion: @escaping (PurchaseResultObjc, Error?) -> Void
   )
 

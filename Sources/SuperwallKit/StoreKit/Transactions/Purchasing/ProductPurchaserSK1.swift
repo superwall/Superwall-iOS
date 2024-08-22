@@ -9,6 +9,8 @@
 import Foundation
 import StoreKit
 
+// TODO: Add in ProductPurchaserSK2
+
 final class ProductPurchaserSK1: NSObject {
   // MARK: Purchasing
   let coordinator = PurchasingCoordinator()
@@ -55,7 +57,10 @@ final class ProductPurchaserSK1: NSObject {
 
   /// Purchases a product, waiting for the completion block to be fired and
   /// returning a purchase result.
-  func purchase(product: SKProduct) async -> PurchaseResult {
+  func purchase(product: StoreProduct) async -> PurchaseResult {
+    guard let product = product.sk1Product else {
+      return .failed(PurchaseError.noSk1Product)
+    }
     let task = Task {
       return await withCheckedContinuation { continuation in
         Task {

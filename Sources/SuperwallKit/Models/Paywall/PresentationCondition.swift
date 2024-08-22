@@ -35,3 +35,13 @@ public enum PresentationCondition: Int, Decodable {
     }
   }
 }
+
+/*
+ if only rules then its straight forward
+ If we have rules and presentation conditions, then 
+
+ When we move to entitlements did we decide to show paywalls:
+ 1. Based on rules only
+ 2. Based on the presentation condition attached to the paywall
+ 3. Based on both rules and the presentation condition
+ */

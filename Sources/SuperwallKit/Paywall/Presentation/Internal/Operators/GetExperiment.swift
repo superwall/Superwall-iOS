@@ -21,7 +21,7 @@ extension Superwall {
   /// - Returns: A struct that contains info for the next operation.
   func getExperiment(
     request: PresentationRequest,
-    rulesOutcome: RuleEvaluationOutcome,
+    rulesOutcome: AudienceEvaluationOutcome,
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
     storage: Storage
@@ -66,7 +66,7 @@ extension Superwall {
 
   private func activateSession(
     request: PresentationRequest,
-    rulesOutcome: RuleEvaluationOutcome
+    rulesOutcome: AudienceEvaluationOutcome
   ) async {
     if request.flags.type == .getImplicitPresentationResult ||
       request.flags.type == .getPresentationResult {

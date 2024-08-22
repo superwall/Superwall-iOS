@@ -25,7 +25,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       type: .getPaywall(.stub())
     )
 
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
@@ -78,7 +78,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       type: .getPaywall(.stub())
     )
 
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
@@ -117,7 +117,7 @@ final class CheckUserSubscriptionOperatorTests: XCTestCase {
       type: .getPaywall(.stub())
     )
 
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 

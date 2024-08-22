@@ -13,7 +13,7 @@ extension Superwall {
   struct PaywallComponents {
     let viewController: PaywallViewController
     let presenter: UIViewController?
-    let rulesOutcome: RuleEvaluationOutcome
+    let rulesOutcome: AudienceEvaluationOutcome
     let debugInfo: [String: Any]
   }
 

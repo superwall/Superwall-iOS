@@ -13,7 +13,7 @@ struct ConfirmableAssignment: Equatable {
   let variant: Experiment.Variant
 }
 
-struct RuleEvaluationOutcome {
+struct AudienceEvaluationOutcome {
   var confirmableAssignment: ConfirmableAssignment?
   var unsavedOccurrence: TriggerRuleOccurrence?
   var triggerResult: InternalTriggerResult
@@ -24,7 +24,7 @@ enum RuleMatchOutcome {
   case noMatchingRules([UnmatchedRule])
 }
 
-struct RuleLogic {
+struct AudienceFilterLogic {
   unowned let configManager: ConfigManager
   unowned let storage: Storage
   unowned let factory: RuleAttributesFactory
@@ -47,12 +47,12 @@ struct RuleLogic {
   ///   evaluated. Setting this to `true` prevents the rule's occurrence count from being incremented
   ///   in Core Data.
   /// - Returns: An assignment to confirm, if available.
-  func evaluateRules(
+  func evaluate(
     forEvent event: EventData,
     triggers: [String: Trigger]
-  ) async -> RuleEvaluationOutcome {
+  ) async -> AudienceEvaluationOutcome {
     guard let trigger = triggers[event.name] else {
-      return RuleEvaluationOutcome(triggerResult: .eventNotFound)
+      return AudienceEvaluationOutcome(triggerResult: .eventNotFound)
     }
 
     let ruleMatchOutcome = await findMatchingRule(
@@ -97,12 +97,12 @@ struct RuleLogic {
         code: 404,
         userInfo: userInfo
       )
-      return RuleEvaluationOutcome(triggerResult: .error(error))
+      return AudienceEvaluationOutcome(triggerResult: .error(error))
     }
 
     switch variant.type {
     case .holdout:
-      return RuleEvaluationOutcome(
+      return AudienceEvaluationOutcome(
         confirmableAssignment: confirmableAssignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .holdout(
@@ -114,7 +114,7 @@ struct RuleLogic {
         )
       )
     case .treatment:
-      return RuleEvaluationOutcome(
+      return AudienceEvaluationOutcome(
         confirmableAssignment: confirmableAssignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .paywall(

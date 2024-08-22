@@ -2,6 +2,14 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-alpha.1
+
+### Breaking Changes
+
+- Removes `trigger_session_id` from `PaywallInfo` params.
+- `ProductInfo` is renamed to `Product` and the old `Product` class no longer exists.
+- Removes `Superwall.shared.subscriptionStatus` in favor of entitlements.
+
 ## 3.7.1
 
 ### Enhancements

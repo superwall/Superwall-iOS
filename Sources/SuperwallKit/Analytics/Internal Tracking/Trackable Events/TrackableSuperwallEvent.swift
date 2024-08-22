@@ -307,9 +307,6 @@ enum InternalSuperwallEvent {
         "trigger_name": triggerName
       ]
 
-      // TODO: Remove in v4:
-      params["trigger_session_id"] = ""
-
       switch triggerResult {
       case .noRuleMatch(let unmatchedRules):
         params += [

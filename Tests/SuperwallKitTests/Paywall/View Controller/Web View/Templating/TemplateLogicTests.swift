@@ -39,7 +39,7 @@ final class TemplateLogicTests: XCTestCase {
   func test_getBase64EncodedTemplates_oneProduct_noFreeTrial_userAttributes() async {
     // MARK: Given
     let products = [
-      ProductItem(
+      Product(
         name: "primary",
         type: .appStore(.init(id: "123"))
       )
@@ -62,7 +62,7 @@ final class TemplateLogicTests: XCTestCase {
     // Encode
     let encodedTemplates = await TemplateLogic.getBase64EncodedTemplates(
       from: .stub()
-        .setting(\.productItems, to: products)
+        .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables),
       event: .stub()
         .setting(\.parameters, to: ["myparam": "test"]),
@@ -97,7 +97,7 @@ final class TemplateLogicTests: XCTestCase {
   func test_getBase64EncodedTemplates_oneProduct_freeTrial_userAttributes() async {
     // MARK: Given
     let productItems = [
-      ProductItem(
+      Product(
         name: "primary",
         type: .appStore(.init(id: "123"))
       )
@@ -121,7 +121,7 @@ final class TemplateLogicTests: XCTestCase {
     // Encode
     let encodedTemplates = await TemplateLogic.getBase64EncodedTemplates(
       from: .stub()
-        .setting(\.productItems, to: productItems)
+        .setting(\.products, to: productItems)
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true),
       event: .stub()
@@ -157,15 +157,15 @@ final class TemplateLogicTests: XCTestCase {
   func test_getBase64EncodedTemplates_threeProducts_freeTrial_userAttributes() async {
     // MARK: Given
     let products = [
-      ProductItem(
+      Product(
         name: "primary",
         type: .appStore(.init(id: "123"))
       ),
-      ProductItem(
+      Product(
         name: "secondary",
         type: .appStore(.init(id: "456"))
       ),
-      ProductItem(
+      Product(
         name: "tertiary",
         type: .appStore(.init(id: "789"))
       )
@@ -193,7 +193,7 @@ final class TemplateLogicTests: XCTestCase {
     // Encode
     let encodedTemplates = await TemplateLogic.getBase64EncodedTemplates(
       from: .stub()
-        .setting(\.productItems, to: products)
+        .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true),
       event: .stub()
@@ -235,15 +235,15 @@ final class TemplateLogicTests: XCTestCase {
   func test_getBase64EncodedTemplates_threeProducts_freeTrial_userAttributes_variablesTemplate() async {
     // MARK: Given
     let products = [
-      ProductItem(
+      Product(
         name: "primary",
         type: .appStore(.init(id: "123"))
       ),
-      ProductItem(
+      Product(
         name: "secondary",
         type: .appStore(.init(id: "456"))
       ),
-      ProductItem(
+      Product(
         name: "tertiary",
         type: .appStore(.init(id: "789"))
       )
@@ -271,7 +271,7 @@ final class TemplateLogicTests: XCTestCase {
     // Encode
     let encodedTemplates = await TemplateLogic.getBase64EncodedTemplates(
       from: .stub()
-        .setting(\.productItems, to: products)
+        .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true),
       event: .stub()

@@ -14,7 +14,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
 
   func test_handleTriggerResult_paywall() async {
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
@@ -45,7 +45,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
   func test_handleTriggerResult_holdout() async {
     //TODO: THis doesn't take into account activateSession
     let experimentId = "abc"
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       triggerResult: .holdout(.init(id: experimentId, groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
@@ -98,7 +98,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
   }
 
   func test_handleTriggerResult_noRuleMatch() async {
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       triggerResult: .noRuleMatch([])
     )
 
@@ -150,7 +150,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
   }
 
   func test_handleTriggerResult_eventNotFound() async {
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       triggerResult: .eventNotFound
     )
 
@@ -206,7 +206,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       domain: "Test",
       code: 1
     )
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       triggerResult: .error(outputError)
     )
 

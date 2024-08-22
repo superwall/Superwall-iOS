@@ -40,7 +40,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     .store(in: &cancellables)
 
     do {
-      try await Superwall.shared.waitForSubsStatusAndConfig(
+      try await Superwall.shared.waitForEntitlementsAndConfig(
         request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -72,7 +72,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     .store(in: &cancellables)
 
     do {
-      try await Superwall.shared.waitForSubsStatusAndConfig(
+      try await Superwall.shared.waitForEntitlementsAndConfig(
         request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -104,7 +104,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     .store(in: &cancellables)
 
     do {
-      try await Superwall.shared.waitForSubsStatusAndConfig(
+      try await Superwall.shared.waitForEntitlementsAndConfig(
         stub,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -140,7 +140,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     dependencyContainer.configManager.configState.send(.failed)
 
     do {
-      try await Superwall.shared.waitForSubsStatusAndConfig(
+      try await Superwall.shared.waitForEntitlementsAndConfig(
         stub,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -176,7 +176,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     dependencyContainer.configManager.configState.send(.retrying)
 
     do {
-      try await Superwall.shared.waitForSubsStatusAndConfig(
+      try await Superwall.shared.waitForEntitlementsAndConfig(
         stub,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -212,7 +212,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     }
 
     do {
-      try await Superwall.shared.waitForSubsStatusAndConfig(
+      try await Superwall.shared.waitForEntitlementsAndConfig(
         stub,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -247,7 +247,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     identityManager.identitySubject.send(false)
     
     Task {
-      try await Superwall.shared.waitForSubsStatusAndConfig(request, dependencyContainer: dependencyContainer)
+      try await Superwall.shared.waitForEntitlementsAndConfig(request, dependencyContainer: dependencyContainer)
       expectation.fulfill()
     }
 
@@ -271,7 +271,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
     Task {
-      try await Superwall.shared.waitForSubsStatusAndConfig(request, dependencyContainer: dependencyContainer)
+      try await Superwall.shared.waitForEntitlementsAndConfig(request, dependencyContainer: dependencyContainer)
       expectation.fulfill()
     }
 
@@ -311,7 +311,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
     .setting(\.flags.subscriptionStatus, to: unknownSubscriptionPublisher)
 
     Task {
-      try await Superwall.shared.waitForSubsStatusAndConfig(
+      try await Superwall.shared.waitForEntitlementsAndConfig(
         request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -356,7 +356,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
       try? await Task.sleep(nanoseconds: 1_000_000_000)
       identityManager.identitySubject.send(false)
 
-      try await Superwall.shared.waitForSubsStatusAndConfig(
+      try await Superwall.shared.waitForEntitlementsAndConfig(
         request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -399,7 +399,7 @@ final class WaitForSubsStatusAndConfigTests: XCTestCase {
       // Sleep to allow reset to complete, then set identity as true.
       identityManager.identitySubject.send(true)
 
-      try await Superwall.shared.waitForSubsStatusAndConfig(
+      try await Superwall.shared.waitForEntitlementsAndConfig(
         request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer

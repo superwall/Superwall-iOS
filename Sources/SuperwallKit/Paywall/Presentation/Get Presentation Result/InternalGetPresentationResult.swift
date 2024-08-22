@@ -57,7 +57,7 @@ extension Superwall {
       .noPresenter,
       .paywallAlreadyPresented,
       .noConfig,
-      .subscriptionStatusTimeout:
+      .entitlementsTimeout:
       return .paywallNotAvailable
     }
   }

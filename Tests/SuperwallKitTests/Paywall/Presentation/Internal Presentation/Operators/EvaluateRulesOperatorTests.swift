@@ -27,7 +27,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
     )
 
     do {
-      let output = try await Superwall.shared.evaluateRules(
+      let output = try await Superwall.shared.evaluateAudienceFilters(
         from: request
       )
       XCTAssertNil(output.confirmableAssignment)
@@ -60,7 +60,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
     )
 
     do {
-      let output = try await Superwall.shared.evaluateRules(
+      let output = try await Superwall.shared.evaluateAudienceFilters(
         from: request
       )
       XCTAssertNil(output.confirmableAssignment)

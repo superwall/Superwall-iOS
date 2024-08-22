@@ -81,9 +81,9 @@ public final class StoreProductAdapterObjc: NSObject, Decodable, Sendable {
 }
 
 /// The product in the paywall.
-@objc(SWKProductItem)
+@objc(SWKProduct)
 @objcMembers
-public final class ProductItem: NSObject, Codable, Sendable {
+public final class Product: NSObject, Codable, Sendable {
   /// The type of store and its associated product.
   public enum StoreProductType: Decodable, Sendable {
     case appStore(AppStoreProduct)
@@ -94,6 +94,7 @@ public final class ProductItem: NSObject, Codable, Sendable {
     case name = "referenceName"
     case productId
     case storeProduct
+    case entitlements
   }
 
   /// The name of the product in the editor.
@@ -110,16 +111,21 @@ public final class ProductItem: NSObject, Codable, Sendable {
     }
   }
 
-  /// The objc-only type of product
+  /// The entitlement associated with the product.
+  public let entitlements: Set<Entitlement>
+
+  /// The objc-only type of product.
   @objc(adapter)
   public let objcAdapter: StoreProductAdapterObjc
 
   init(
     name: String,
-    type: StoreProductType
+    type: StoreProductType,
+    entitlements: Set<Entitlement>
   ) {
     self.name = name
     self.type = type
+    self.entitlements = entitlements
 
     switch type {
     case .appStore(let product):
@@ -136,6 +142,8 @@ public final class ProductItem: NSObject, Codable, Sendable {
     // Encode name as "product" for templating
     try container.encode(name, forKey: .product)
 
+    try container.encode(entitlements, forKey: .entitlements)
+
     switch type {
     case .appStore(let product):
       // Encode name as "productId" for templating
@@ -147,6 +155,7 @@ public final class ProductItem: NSObject, Codable, Sendable {
   public required init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     name = try container.decode(String.self, forKey: .name)
+    entitlements = try container.decode(Set<Entitlement>.self, forKey: .entitlements)
 
     // This will throw an error if it's not an AppStoreProduct, which must be caught in a
     // `Throwable` and ignored in the paywall object.

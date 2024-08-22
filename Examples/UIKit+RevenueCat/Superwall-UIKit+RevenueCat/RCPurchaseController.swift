@@ -34,12 +34,8 @@ final class RCPurchaseController: PurchaseController {
     Task {
       for await customerInfo in Purchases.shared.customerInfoStream {
         // Gets called whenever new CustomerInfo is available
-        let hasActiveSubscription = !customerInfo.entitlements.active.isEmpty // Why? -> https://www.revenuecat.com/docs/entitlements#entitlements
-        if hasActiveSubscription {
-          Superwall.shared.subscriptionStatus = .active
-        } else {
-          Superwall.shared.subscriptionStatus = .inactive
-        }
+        let superwallEntitlements = customerInfo.entitlements.active.keys.map { Entitlement(id: $0) }
+        Superwall.shared.entitlements.set(superwallEntitlements)
       }
     }
   }
@@ -47,7 +43,7 @@ final class RCPurchaseController: PurchaseController {
   // MARK: Handle Purchases
   /// Makes a purchase with RevenueCat and returns its result. This gets called when
   /// someone tries to purchase a product on one of your paywalls.
-  func purchase(product: SKProduct) async -> PurchaseResult {
+  func purchase(product: SuperwallKit.StoreProduct) async -> PurchaseResult {
     do {
       guard let storeProduct = await Purchases.shared.products([product.productIdentifier]).first else {
         throw PurchasingError.productNotFound

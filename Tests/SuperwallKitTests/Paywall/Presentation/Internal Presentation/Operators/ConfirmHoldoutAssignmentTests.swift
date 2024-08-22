@@ -29,7 +29,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
@@ -59,7 +59,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
     let request = PresentationRequest.stub()
@@ -87,7 +87,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
@@ -117,7 +117,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
@@ -147,7 +147,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
 
     dependencyContainer.configManager = configManager
 
-    let input = RuleEvaluationOutcome(
+    let input = AudienceEvaluationOutcome(
       confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )

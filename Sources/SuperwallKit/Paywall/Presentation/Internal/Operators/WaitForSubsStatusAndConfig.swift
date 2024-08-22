@@ -16,39 +16,45 @@ extension Superwall {
   /// - Parameters:
   ///   - request: The presentation request.
   ///   - dependencyContainer: Used for testing only.
-  func waitForSubsStatusAndConfig(
+  func waitForEntitlementsAndConfig(
     _ request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
     dependencyContainer: DependencyContainer? = nil
   ) async throws {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
 
-    let subscriptionStatusTask = Task {
-      return try await request.flags.subscriptionStatus
-        .filter { $0 != .unknown }
-        .throwableAsync()
+    // TODO: Wait for entitlements,
+    // TODO: Add some form of unknown entitlement state.
+    // We need to map from subs status to entitlements. If there are no entitlements active
+
+    let isEntitlementsReadyTask = Task {
+      for try await value in request.flags.didSetActiveEntitlements.values {
+        if value == true {
+          return
+        }
+      }
+      throw CancellationError()
     }
 
-    // Create a 5 sec timer. If the subscription status is retrieved, it'll
+    // Create a 5 sec timer. If the entitlements are retrieved it'll
     // get cancelled. Otherwise will log a timeout and fail the request.
     let timer = Timer(
       timeInterval: 5,
       repeats: false
     ) { _ in
-      subscriptionStatusTask.cancel()
+      isEntitlementsReadyTask.cancel()
     }
     RunLoop.main.add(timer, forMode: .default)
 
-    let subscriptionStatus: SubscriptionStatus
     do {
-      subscriptionStatus = try await subscriptionStatusTask.value
+      try await isEntitlementsReadyTask.value
     } catch {
       Task {
         let trackedEvent = InternalSuperwallEvent.PresentationRequest(
           eventData: request.presentationInfo.eventData,
           type: request.flags.type,
           status: .timeout,
-          statusReason: .subscriptionStatusTimeout,
+          statusReason: .entitlementsTimeout,
           factory: dependencyContainer
         )
         await self.track(trackedEvent)
@@ -56,24 +62,43 @@ extension Superwall {
       Logger.debug(
         logLevel: .info,
         scope: .paywallPresentation,
-        message: "Timeout: Superwall.shared.subscriptionStatus has been \"unknown\" for over 5 seconds resulting in a failure."
+        message: "Timeout: Superwall.shared.entitlements have not been set for over 5 seconds resulting in a failure."
       )
       let error = InternalPresentationLogic.presentationError(
         domain: "SWKPresentationError",
         code: 105,
         title: "Timeout",
-        value: "The subscription status failed to change from \"unknown\"."
+        value: "The entitlements were not set."
       )
       paywallStatePublisher?.send(.presentationError(error))
       paywallStatePublisher?.send(completion: .finished)
-      throw PresentationPipelineError.subscriptionStatusTimeout
+      throw PresentationPipelineError.entitlementsTimeout
     }
 
     timer.invalidate()
 
     let configState = dependencyContainer.configManager.configState
 
-    if subscriptionStatus == .active {
+    if Superwall.shared.entitlements.active.isEmpty {
+      do {
+        // If the user has no active entitlements, wait for config to return.
+        try await dependencyContainer.configManager.configState
+          .compactMap { $0.getConfig() }
+          .throwableAsync()
+      } catch {
+        // If config completely dies, then throw an error
+        let error = InternalPresentationLogic.presentationError(
+          domain: "SWKPresentationError",
+          code: 104,
+          title: "No Config",
+          value: "Trying to present paywall without the Superwall config."
+        )
+        let state: PaywallState = .presentationError(error)
+        paywallStatePublisher?.send(state)
+        paywallStatePublisher?.send(completion: .finished)
+        throw PresentationPipelineError.noConfig
+      }
+    } else {
       if configState.value.getConfig() == nil {
         if configState.value == .retrieving {
           // If config is nil and we're still retrieving, wait for <=1 second.
@@ -125,25 +150,6 @@ extension Superwall {
         }
       } else {
         // If the user is subscribed and there is config, continue.
-      }
-    } else {
-      do {
-        // If the user isn't subscribed, wait for config to return.
-        try await dependencyContainer.configManager.configState
-          .compactMap { $0.getConfig() }
-          .throwableAsync()
-      } catch {
-        // If config completely dies, then throw an error
-        let error = InternalPresentationLogic.presentationError(
-          domain: "SWKPresentationError",
-          code: 104,
-          title: "No Config",
-          value: "Trying to present paywall without the Superwall config."
-        )
-        let state: PaywallState = .presentationError(error)
-        paywallStatePublisher?.send(state)
-        paywallStatePublisher?.send(completion: .finished)
-        throw PresentationPipelineError.noConfig
       }
     }
 

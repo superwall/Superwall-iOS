@@ -114,7 +114,7 @@ extension SuperwallDelegate {
 
   public func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {}
 
-  public func subscriptionStatusDidChange(to newValue: SubscriptionStatus) {}
+  public func activeEntitlementsDidChange(to newValue: Set<Entitlement>) {}
 
   public func handleLog(
     level: String,

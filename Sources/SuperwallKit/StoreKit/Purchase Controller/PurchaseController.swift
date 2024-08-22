@@ -25,12 +25,12 @@ public protocol PurchaseController: AnyObject {
   /// Add your purchase logic here and return its result. You can use Apple's StoreKit APIs,
   /// or if you use RevenueCat, you can call [`Purchases.shared.purchase(product:)`](https://revenuecat.github.io/purchases-ios-docs/4.13.4/documentation/revenuecat/purchases/purchase(product:completion:)).
   /// - Parameters:
-  ///   - product: The `SKProduct` the user would like to purchase.
+  ///   - product: The ``StoreProduct`` the user would like to purchase.
   ///
   /// - Returns: A``PurchaseResult`` object, which is the result of your purchase logic.
   /// **Note**: Make sure you handle all cases of ``PurchaseResult``.
   @MainActor
-  func purchase(product: SKProduct) async -> PurchaseResult
+  func purchase(product: StoreProduct) async -> PurchaseResult
 
   /// Called when the user initiates a restore.
   ///

@@ -20,6 +20,8 @@ struct SK1StoreProduct: StoreProductType {
   private let priceFormatterProvider = PriceFormatterProvider()
   let underlyingSK1Product: SK1Product
 
+  let entitlements: Set<Entitlement>
+
   var productIdentifier: String {
     return underlyingSK1Product.productIdentifier
   }
@@ -561,7 +563,11 @@ struct SK1StoreProduct: StoreProductType {
     underlyingSK1Product.isFamilyShareable
   }
 
-  init(sk1Product: SK1Product) {
+  init(
+    sk1Product: SK1Product,
+    entitlements: Set<Entitlement>
+  ) {
     self.underlyingSK1Product = sk1Product
+    self.entitlements = entitlements
   }
 }

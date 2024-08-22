@@ -99,7 +99,7 @@ struct PresentationRequest {
 
   struct Flags {
     var isDebuggerLaunched: Bool
-    var subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>
+    var didSetActiveEntitlements: AnyPublisher<Bool, Never>
     var isPaywallPresented: Bool
     var type: PresentationRequestType
   }

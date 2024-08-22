@@ -142,7 +142,7 @@ class PaywallLogicTests: XCTestCase {
 
   func testGetVariablesAndFreeTrial_productNotFound() async {
     let productId = "id1"
-    let products = [ProductItem(
+    let products = [Product(
       name: "primary",
       type: .appStore(.init(id: productId))
     )]
@@ -175,7 +175,7 @@ class PaywallLogicTests: XCTestCase {
   func testGetVariablesAndFreeTrial_secondaryProduct() async {
     // Given
     let productId = "id1"
-    let products = [ProductItem(
+    let products = [Product(
       name: "secondary",
       type: .appStore(.init(id: productId))
     )]
@@ -210,7 +210,7 @@ class PaywallLogicTests: XCTestCase {
   func testGetVariablesAndFreeTrial_primaryProductHasPurchased_noOverride() async {
     // Given
     let productId = "id1"
-    let products = [ProductItem(
+    let products = [Product(
       name: "primary",
       type: .appStore(.init(id: productId))
     )]
@@ -252,7 +252,7 @@ class PaywallLogicTests: XCTestCase {
   func testGetVariablesAndFreeTrial_primaryProductHasntPurchased_noOverride() async {
     // Given
     let productId = "id1"
-    let products = [ProductItem(
+    let products = [Product(
       name: "primary",
       type: .appStore(.init(id: productId))
     )]
@@ -292,7 +292,7 @@ class PaywallLogicTests: XCTestCase {
   func testGetVariablesAndFreeTrial_primaryProductHasPurchased_withOverride() async {
     // Given
     let productId = "id1"
-    let products = [ProductItem(
+    let products = [Product(
       name: "primary",
       type: .appStore(.init(id: productId))
     )]

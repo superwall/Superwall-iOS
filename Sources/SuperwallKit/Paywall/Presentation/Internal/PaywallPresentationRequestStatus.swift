@@ -49,11 +49,11 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
   /// The config hasn't been retrieved from the server in time.
   case noConfig
 
-  /// The subscription status timed out.
+  /// The entitlements timed out.
   ///
-  /// This happens when the ``Superwall/subscriptionStatus``
-  /// stays ``SubscriptionStatus/unknown`` for more than 5 seconds.
-  case subscriptionStatusTimeout
+  /// This happens when the ``Superwall/entitlements``
+  /// haven't been set within 5 seconds.
+  case entitlementsTimeout
 
   public var description: String {
     switch self {
@@ -75,8 +75,8 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
       return "no_presenter"
     case .noConfig:
       return "no_config"
-    case .subscriptionStatusTimeout:
-      return "subscription_status_timeout"
+    case .entitlementsTimeout:
+      return "entitlements_timeout"
     }
   }
 }

@@ -47,12 +47,12 @@ class AssignmentLogicTests: XCTestCase {
     let storage = StorageMock()
 
     // MARK: When
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceFilterLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
-    let outcome = await assignmentLogic.evaluateRules(
+    let outcome = await assignmentLogic.evaluate(
       forEvent: eventData,
       triggers: triggers
     )
@@ -109,14 +109,14 @@ class AssignmentLogicTests: XCTestCase {
       rawExperiment.id: variant
     ]
     let storage = StorageMock()
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceFilterLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
 
     // MARK: When
-    let outcome = await assignmentLogic.evaluateRules(
+    let outcome = await assignmentLogic.evaluate(
       forEvent: eventData,
       triggers: triggers
     )
@@ -171,14 +171,14 @@ class AssignmentLogicTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let variant = variantOption.toVariant()
     let storage = StorageMock(confirmedAssignments: [rawExperiment.id: variant])
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceFilterLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
 
     // MARK: When
-    let outcome = await assignmentLogic.evaluateRules(
+    let outcome = await assignmentLogic.evaluate(
       forEvent: eventData,
       triggers: triggers
     )
@@ -235,14 +235,14 @@ class AssignmentLogicTests: XCTestCase {
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant2
     ]
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceFilterLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
 
     // MARK: When
-    let outcome = await assignmentLogic.evaluateRules(
+    let outcome = await assignmentLogic.evaluate(
       forEvent: eventData,
       triggers: triggers
     )
@@ -296,14 +296,14 @@ class AssignmentLogicTests: XCTestCase {
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceFilterLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
 
     // MARK: When
-    let outcome = await assignmentLogic.evaluateRules(
+    let outcome = await assignmentLogic.evaluate(
       forEvent: eventData,
       triggers: triggers
     )
@@ -352,14 +352,14 @@ class AssignmentLogicTests: XCTestCase {
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceFilterLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
 
     // MARK: When
-    let outcome = await assignmentLogic.evaluateRules(
+    let outcome = await assignmentLogic.evaluate(
       forEvent: eventData,
       triggers: triggers
     )

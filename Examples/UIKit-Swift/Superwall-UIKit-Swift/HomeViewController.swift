@@ -36,9 +36,12 @@ final class HomeViewController: UIViewController {
     super.viewDidLoad()
 
     // Subscribe to subscriptionStatus changes
-    subscribedCancellable = Superwall.shared.$subscriptionStatus
+    subscribedCancellable = Superwall.shared.entitlements.$active
       .receive(on: DispatchQueue.main)
-      .sink { [weak self] status in
+      .sink { [weak self] activeEntitlements in
+        if activeEntitlements.isEmpty {
+
+        }
         switch status {
         case .unknown:
           self?.subscriptionLabel.text = "Loading subscription status."

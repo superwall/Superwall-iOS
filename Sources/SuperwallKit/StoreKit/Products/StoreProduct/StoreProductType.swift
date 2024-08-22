@@ -19,6 +19,8 @@ protocol StoreProductType: Sendable {
   /// The string that identifies the product to the Apple App Store.
   var productIdentifier: String { get }
 
+  var entitlements: Set<Entitlement> { get }
+
   var price: Decimal { get }
 
   var subscriptionGroupIdentifier: String? { get }

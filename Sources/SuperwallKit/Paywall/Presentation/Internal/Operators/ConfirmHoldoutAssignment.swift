@@ -18,7 +18,7 @@ extension Superwall {
   ///   - dependencyContainer: Used for testing only.
   func confirmHoldoutAssignment(
     request: PresentationRequest,
-    from rulesOutcome: RuleEvaluationOutcome,
+    from rulesOutcome: AudienceEvaluationOutcome,
     dependencyContainer: DependencyContainer? = nil
   ) {
     if request.flags.type == .getImplicitPresentationResult {

@@ -46,6 +46,7 @@ class ConfigManager {
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
   private unowned let deviceHelper: DeviceHelper
+  private unowned let entitlementsInfo: EntitlementsInfo
 
   /// A task that is non-`nil` when preloading all paywalls.
   private var currentPreloadingTask: Task<Void, Never>?
@@ -63,6 +64,7 @@ class ConfigManager {
     network: Network,
     paywallManager: PaywallManager,
     deviceHelper: DeviceHelper,
+    entitlementsInfo: EntitlementsInfo,
     factory: Factory
   ) {
     self.options = options
@@ -71,6 +73,7 @@ class ConfigManager {
     self.network = network
     self.paywallManager = paywallManager
     self.deviceHelper = deviceHelper
+    self.entitlementsInfo = entitlementsInfo
     self.factory = factory
   }
 
@@ -114,8 +117,6 @@ class ConfigManager {
 
   func fetchConfiguration() async {
     do {
-      _ = await factory.loadPurchasedProducts()
-
       async let configRequest = network.getConfig { [weak self] attempt in
         self?.configRetryCount = attempt
         self?.configState.send(.retrying)
@@ -153,6 +154,11 @@ class ConfigManager {
     storage.save(config.featureFlags.disableVerboseEvents, forType: DisableVerboseEvents.self)
     triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
+    entitlementsInfo.entitlementsByProductId = ConfigLogic.extractEntitlementsByProductId(from: config.paywalls)
+
+    // Load the products after entitlementsInfo is set because we need to map
+    // purchased products to entitlements.
+    _ = await factory.loadPurchasedProducts()
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
     }
@@ -349,8 +355,7 @@ class ConfigManager {
             responseIdentifiers: .init(paywallId: identifier),
             overrides: nil,
             isDebuggerLaunched: false,
-            presentationSourceType: nil,
-            retryCount: 6
+            presentationSourceType: nil
           )
           guard let paywall = try? await paywallManager.getPaywall(from: request) else {
             return

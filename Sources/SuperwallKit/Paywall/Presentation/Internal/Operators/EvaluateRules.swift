@@ -11,18 +11,18 @@ extension Superwall {
   /// Evaluates the rules from the campaign that the event belongs to.
   ///
   /// - Parameter request: The presentation request
-  /// - Returns: A `RuleEvaluationOutcome` object containing the trigger result,
+  /// - Returns: An `AudienceEvaluationOutcome` object containing the trigger result,
   /// confirmable assignment, and unsaved occurrence.
-  func evaluateRules(
+  func evaluateAudienceFilters(
     from request: PresentationRequest
-  ) async throws -> RuleEvaluationOutcome {
+  ) async throws -> AudienceEvaluationOutcome {
     if let eventData = request.presentationInfo.eventData {
-      let ruleLogic = RuleLogic(
+      let audienceFilterLogic = AudienceFilterLogic(
         configManager: dependencyContainer.configManager,
         storage: dependencyContainer.storage,
         factory: dependencyContainer
       )
-      return await ruleLogic.evaluateRules(
+      return await audienceFilterLogic.evaluate(
         forEvent: eventData,
         triggers: dependencyContainer.configManager.triggersByEventName
       )
@@ -33,7 +33,7 @@ extension Superwall {
         // to force unwrapping.
         throw PresentationPipelineError.noPaywallViewController
       }
-      return RuleEvaluationOutcome(
+      return AudienceEvaluationOutcome(
         triggerResult: .paywall(.presentById(paywallId))
       )
     }

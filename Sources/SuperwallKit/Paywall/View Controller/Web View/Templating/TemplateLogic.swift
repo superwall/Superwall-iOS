@@ -17,7 +17,7 @@ enum TemplateLogic {
   ) async -> String {
     let productsTemplate = ProductTemplate(
       eventName: "products",
-      products: paywall.productItems
+      products: paywall.products
     )
 
     let variablesTemplate = await factory.makeJsonVariables(

@@ -29,23 +29,8 @@ public final class PaywallInfo: NSObject {
   /// An experiment is a set of paywall variants determined by probabilities. An experiment will result in a user seeing a paywall unless they are in a holdout group.
   public let experiment: Experiment?
 
-  // TODO: Remove this in v4
-  /// The trigger session ID associated with the paywall.
-  ///
-  /// Note: This will always be an empty string and will be removed in the next major update of the SDK.
-  public let triggerSessionId: String = ""
-
-  /// The products associated with the paywall.
-  @available(
-    *,
-    deprecated,
-    renamed: "productItems",
-    message: "Use productItems because a paywall can support more than three products"
-  )
-  public let products: [Product]
-
   /// An array of products associated with the paywall.
-  public let productItems: [ProductItem]
+  public let productItems: [Product]
 
   /// An ordered array of product IDs that this paywall is displaying.
   public let productIds: [String]
@@ -140,8 +125,7 @@ public final class PaywallInfo: NSObject {
     cacheKey: String,
     buildId: String,
     url: URL,
-    products: [Product],
-    productItems: [ProductItem],
+    productItems: [Product],
     productIds: [String],
     fromEventData eventData: EventData?,
     responseLoadStartTime: Date?,
@@ -177,8 +161,6 @@ public final class PaywallInfo: NSObject {
     self.experiment = experiment
     self.paywalljsVersion = paywalljsVersion
     self.productItems = productItems
-    // Legacy support
-    self.products = products
     self.productIds = productIds
     self.isFreeTrialAvailable = isFreeTrialAvailable
     self.featureGatingBehavior = featureGatingBehavior
@@ -251,8 +233,6 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
       "paywall_products_load_fail_time": productsLoadFailTime as Any,
       "paywall_products_load_duration": productsLoadDuration as Any,
-      // TODO: Remove in v4:
-      "trigger_session_id": "" as Any,
       "experiment_id": experiment?.id as Any,
       "variant_id": experiment?.variant.id as Any,
       "cache_key": cacheKey,
@@ -337,7 +317,6 @@ extension PaywallInfo: Stubbable {
       cacheKey: "cacheKey",
       buildId: "buildId",
       url: URL(string: "https://www.google.com")!,
-      products: [],
       productItems: [],
       productIds: [],
       fromEventData: nil,
