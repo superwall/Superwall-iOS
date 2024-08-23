@@ -48,7 +48,10 @@ final class DependencyContainer {
   ) {
     delegateAdapter = SuperwallDelegateAdapter()
     storage = Storage(factory: self)
-    entitlementsInfo = EntitlementsInfo(storage: storage)
+    entitlementsInfo = EntitlementsInfo(
+      storage: storage,
+      delegateAdapter: delegateAdapter
+    )
     productsFetcher = ProductsFetcherSK1(entitlementsInfo: entitlementsInfo)
     network = Network(factory: self)
     storeKitManager = StoreKitManager(productsFetcher: productsFetcher)

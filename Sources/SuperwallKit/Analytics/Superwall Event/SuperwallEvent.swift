@@ -39,7 +39,7 @@ public enum SuperwallEvent {
   case deviceAttributes(attributes: [String: Any])
 
   /// When the user's subscription status changes.
-  case subscriptionStatusDidChange
+  case activeEntitlementsDidChange
 
   /// Anytime the app leaves the foreground.
   case appClose
@@ -234,8 +234,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .sessionStart)
     case .deviceAttributes:
       return .init(objcEvent: .deviceAttributes)
-    case .subscriptionStatusDidChange:
-      return .init(objcEvent: .subscriptionStatusDidChange)
+    case .activeEntitlementsDidChange:
+      return .init(objcEvent: .activeEntitlementsDidChange)
     case .appClose:
       return .init(objcEvent: .appClose)
     case .deepLink:

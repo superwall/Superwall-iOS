@@ -269,20 +269,30 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.audienceFilterParams["presented_by_event_name"] as? String, paywallInfo.presentedByEventWithName)
   }
 
-  func test_subscriptionStatusDidChange_active() async {
-    let result = await Superwall.shared.track(InternalSuperwallEvent.SubscriptionStatusDidChange(subscriptionStatus: .active))
+  func test_subscriptionStatusDidChange_hasOneEntitlement() async {
+    let entitlement: Set<Entitlement> = [.stub()]
+    let result = await Superwall.shared.track(InternalSuperwallEvent.ActiveEntitlementsDidChange(activeEntitlements: entitlement))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "subscriptionStatus_didChange")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$subscription_status"] as! String, "ACTIVE")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "activeEntitlements_didChange")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$active_entitlements"] as! Set<Entitlement>, entitlement)
   }
 
-  func test_subscriptionStatusDidChange_inactive() async {
-    let result = await Superwall.shared.track(InternalSuperwallEvent.SubscriptionStatusDidChange(subscriptionStatus: .inactive))
+  func test_subscriptionStatusDidChange_hasTwoEntitlements() async {
+    let entitlements: Set<Entitlement> = [.stub(), Entitlement(id: "test2")]
+    let result = await Superwall.shared.track(InternalSuperwallEvent.ActiveEntitlementsDidChange(activeEntitlements: entitlements))
+    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
+    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "activeEntitlements_didChange")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$active_entitlements"] as! Set<Entitlement>, entitlements)
+  }
+
+  func test_subscriptionStatusDidChange_noEntitlements() async {
+    let result = await Superwall.shared.track(InternalSuperwallEvent.ActiveEntitlementsDidChange(activeEntitlements: []))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "subscriptionStatus_didChange")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$subscription_status"] as! String, "INACTIVE")
+    XCTAssertTrue((result.parameters.audienceFilterParams["$active_entitlements"] as! Set<Entitlement>).isEmpty)
   }
 
   func test_triggerFire_noRuleMatch() async {
@@ -838,7 +848,10 @@ final class TrackingTests: XCTestCase {
   func test_transaction_start() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
-    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: productId),
+      entitlements: [.stub()]
+    )
     let dependencyContainer = DependencyContainer()
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
@@ -920,7 +933,10 @@ final class TrackingTests: XCTestCase {
   func test_transaction_complete() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
-    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: productId),
+      entitlements: [.stub()]
+    )
     let dependencyContainer = DependencyContainer()
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
@@ -1002,7 +1018,10 @@ final class TrackingTests: XCTestCase {
   func test_transaction_restore() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
-    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: productId),
+      entitlements: [.stub()]
+    )
     let dependencyContainer = DependencyContainer()
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
@@ -1085,7 +1104,10 @@ final class TrackingTests: XCTestCase {
   func test_transaction_timeout() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
-    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: productId),
+      entitlements: [.stub()]
+    )
     let dependencyContainer = DependencyContainer()
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
@@ -1167,7 +1189,10 @@ final class TrackingTests: XCTestCase {
   func test_transaction_fail() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
-    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: productId),
+      entitlements: [.stub()]
+    )
     let dependencyContainer = DependencyContainer()
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
@@ -1247,7 +1272,10 @@ final class TrackingTests: XCTestCase {
   func test_subscriptionStart() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
-    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: productId),
+      entitlements: [.stub()]
+    )
 
     let result = await Superwall.shared.track(InternalSuperwallEvent.SubscriptionStart(paywallInfo: paywallInfo, product: product))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
@@ -1322,7 +1350,10 @@ final class TrackingTests: XCTestCase {
   func test_freeTrialStart() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
-    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: productId),
+      entitlements: [.stub()]
+    )
     let result = await Superwall.shared.track(InternalSuperwallEvent.FreeTrialStart(paywallInfo: paywallInfo, product: product))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -1396,8 +1427,12 @@ final class TrackingTests: XCTestCase {
   func test_nonRecurringProductPurchase() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
-    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: productId))
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: productId),
+      entitlements: [.stub()]
+    )
     let result = await Superwall.shared.track(InternalSuperwallEvent.NonRecurringProductPurchase(paywallInfo: paywallInfo, product: product))
+    print(result.parameters.audienceFilterParams)
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "nonRecurringProduct_purchase")

@@ -18,3 +18,10 @@ public final class Entitlement: NSObject, Codable, Sendable {
     self.id = id
   }
 }
+
+// MARK: - Stubbable
+extension Entitlement: Stubbable {
+  static func stub() -> Entitlement {
+    return Entitlement(id: "test")
+  }
+}

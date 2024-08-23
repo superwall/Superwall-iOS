@@ -9,6 +9,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Removes `trigger_session_id` from `PaywallInfo` params.
 - `ProductInfo` is renamed to `Product` and the old `Product` class no longer exists.
 - Removes `Superwall.shared.subscriptionStatus` in favor of entitlements.
+- Changes `subscriptionStatus_didChange` to `activeEntitlements_didChange`.
 
 ## 3.7.1
 

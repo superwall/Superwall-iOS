@@ -80,8 +80,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the user successfully completes a transaction for a subscription product with no introductory offers.
   case subscriptionStart
 
-  /// When the user's subscription status changes.
-  case subscriptionStatusDidChange
+  /// When the active entitlements change.
+  case activeEntitlementsDidChange
 
   /// When the user successfully completes a transaction for a subscription product with an introductory offer.
   case freeTrialStart
@@ -186,8 +186,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "session_start"
     case .deviceAttributes:
       return "device_attributes"
-    case .subscriptionStatusDidChange:
-      return "subscriptionStatus_didChange"
+    case .activeEntitlementsDidChange:
+      return "activeEntitlements_didChange"
     case .appClose:
       return "app_close"
     case .deepLink:

@@ -36,19 +36,17 @@ final class HomeViewController: UIViewController {
     super.viewDidLoad()
 
     // Subscribe to subscriptionStatus changes
-    subscribedCancellable = Superwall.shared.entitlements.$active
+    subscribedCancellable = Superwall.shared.entitlements.$didSetActiveEntitlements
       .receive(on: DispatchQueue.main)
-      .sink { [weak self] activeEntitlements in
-        if activeEntitlements.isEmpty {
-
-        }
-        switch status {
-        case .unknown:
-          self?.subscriptionLabel.text = "Loading subscription status."
-        case .active:
-          self?.subscriptionLabel.text = "You currently have an active subscription. Therefore, the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions."
-        case .inactive:
-          self?.subscriptionLabel.text = "You do not have an active subscription so the paywall will show when clicking the button."
+      .sink { [weak self] didSet in
+        if didSet {
+          if Superwall.shared.entitlements.active.isEmpty {
+            self?.subscriptionLabel.text = "You do not have any active entitlements so the paywall will always show when clicking the button."
+          } else {
+            self?.subscriptionLabel.text = "You currently have an active entitlement. The audience filter is configured to only show a paywall if there are no entitlements so the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions."
+          }
+        } else {
+          self?.subscriptionLabel.text = "Loading active entitlements."
         }
       }
 

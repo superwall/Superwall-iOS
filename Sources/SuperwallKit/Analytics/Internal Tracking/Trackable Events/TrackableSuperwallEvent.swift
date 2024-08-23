@@ -280,13 +280,13 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct SubscriptionStatusDidChange: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .subscriptionStatusDidChange
-    let subscriptionStatus: SubscriptionStatus
+  struct ActiveEntitlementsDidChange: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .activeEntitlementsDidChange
+    let activeEntitlements: Set<Entitlement>
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       return [
-        "subscription_status": subscriptionStatus.description
+        "active_entitlements": activeEntitlements
       ]
     }
   }
