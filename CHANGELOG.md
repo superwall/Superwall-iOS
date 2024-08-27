@@ -11,6 +11,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Removes `Superwall.shared.subscriptionStatus` in favor of entitlements.
 - Changes `subscriptionStatus_didChange` to `activeEntitlements_didChange`.
 
+## 3.7.4
+
+### Fixes
+
+- Fixes rare crash caused by a Combine issue.
+
 ## 3.7.3
 
 ### Fixes
