@@ -73,9 +73,19 @@ struct CELEvaluator: ExpressionEvaluating {
 }
 
 private class HostContextImpl: HostContext {
-  func computedProperty(name: String, args: String) -> String {
-    // TODO: Not implemented
-    return "TODO"
+  let storage: Storage
+
+  init(storage: Storage) {
+    self.storage = storage
+  }
+
+  func computedProperty(name: String, args: String) async -> String {
+//    if let value = await storage.coreDataManager.getComputedPropertySinceEvent(
+//      EventData(name: name, parameters: [:], createdAt: Date()),
+//      request: computedPropertyRequest
+//    ) {
+//      output[computedPropertyRequest.type.prefix + computedPropertyRequest.eventName] = value
+//    }
   }
 }
 
