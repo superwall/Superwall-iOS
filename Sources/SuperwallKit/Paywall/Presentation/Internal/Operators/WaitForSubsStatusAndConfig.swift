@@ -23,10 +23,6 @@ extension Superwall {
   ) async throws {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
 
-    // TODO: Wait for entitlements,
-    // TODO: Add some form of unknown entitlement state.
-    // We need to map from subs status to entitlements. If there are no entitlements active
-
     let isEntitlementsReadyTask = Task {
       for try await value in request.flags.didSetActiveEntitlements.values {
         if value == true {
@@ -79,7 +75,7 @@ extension Superwall {
 
     let configState = dependencyContainer.configManager.configState
 
-    if Superwall.shared.entitlements.active.isEmpty {
+    if request.flags.entitlements.active.isEmpty {
       do {
         // If the user has no active entitlements, wait for config to return.
         try await dependencyContainer.configManager.configState

@@ -41,7 +41,8 @@ final class TemplateLogicTests: XCTestCase {
     let products = [
       Product(
         name: "primary",
-        type: .appStore(.init(id: "123"))
+        type: .appStore(.init(id: "123")),
+        entitlements: [.stub()]
       )
     ]
     let productVariables = [ProductVariable(name: "primary", attributes: ["period": "month"])]
@@ -99,7 +100,8 @@ final class TemplateLogicTests: XCTestCase {
     let productItems = [
       Product(
         name: "primary",
-        type: .appStore(.init(id: "123"))
+        type: .appStore(.init(id: "123")),
+        entitlements: [.stub()]
       )
     ]
     let productVariables = [ProductVariable(name: "primary", attributes: ["period": "month"])]
@@ -159,15 +161,18 @@ final class TemplateLogicTests: XCTestCase {
     let products = [
       Product(
         name: "primary",
-        type: .appStore(.init(id: "123"))
+        type: .appStore(.init(id: "123")),
+        entitlements: [.stub()]
       ),
       Product(
         name: "secondary",
-        type: .appStore(.init(id: "456"))
+        type: .appStore(.init(id: "456")),
+        entitlements: [.stub()]
       ),
       Product(
         name: "tertiary",
-        type: .appStore(.init(id: "789"))
+        type: .appStore(.init(id: "789")),
+        entitlements: [.stub()]
       )
     ]
     let productVariables = [
@@ -237,15 +242,18 @@ final class TemplateLogicTests: XCTestCase {
     let products = [
       Product(
         name: "primary",
-        type: .appStore(.init(id: "123"))
+        type: .appStore(.init(id: "123")),
+        entitlements: [.stub()]
       ),
       Product(
         name: "secondary",
-        type: .appStore(.init(id: "456"))
+        type: .appStore(.init(id: "456")),
+        entitlements: [.stub()]
       ),
       Product(
         name: "tertiary",
-        type: .appStore(.init(id: "789"))
+        type: .appStore(.init(id: "789")),
+        entitlements: [.stub()]
       )
     ]
     let productVariables = [

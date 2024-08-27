@@ -22,6 +22,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
 
@@ -52,6 +53,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
 
@@ -81,6 +83,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -111,6 +114,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -141,6 +145,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       network: dependencyContainer.network,
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)

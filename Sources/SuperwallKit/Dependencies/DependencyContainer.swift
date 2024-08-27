@@ -314,6 +314,7 @@ extension DependencyContainer: RequestFactory {
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched, 
         didSetActiveEntitlements: Superwall.shared.entitlements.$didSetActiveEntitlements.eraseToAnyPublisher(),
+        entitlements: Superwall.shared.entitlements,
         isPaywallPresented: isPaywallPresented,
         type: type
       )

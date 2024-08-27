@@ -12,9 +12,12 @@ import StoreKit
 final class ProductsFetcherSK1Mock: ProductsFetcherSK1 {
   let productCompletionResult: Result<Set<StoreProduct>, Error>
 
-  init(productCompletionResult: Result<Set<StoreProduct>, Error>) {
+  init(
+    productCompletionResult: Result<Set<StoreProduct>, Error>,
+    entitlementsInfo: EntitlementsInfo
+  ) {
     self.productCompletionResult = productCompletionResult
-    super.init()
+    super.init(entitlementsInfo: entitlementsInfo)
   }
 
   override func products(
