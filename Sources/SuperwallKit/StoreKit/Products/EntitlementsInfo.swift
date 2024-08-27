@@ -19,10 +19,13 @@ import Combine
 @objc(SWKEntitlementsInfo)
 @objcMembers
 public final class EntitlementsInfo: NSObject {
-  private unowned let storage: Storage
-  private unowned let delegateAdapter: SuperwallDelegateAdapter
-
   /// The active entitlements.
+  ///
+  /// When this changes, the delegate method ``SuperwallDelegate/activeEntitlementsDidChange(to:)``
+  /// will fire with the new value.
+  ///
+  /// The first time this is set ``EntitlementsInfo/didSetActiveEntitlements`` will
+  /// be `true`.
   @Published public private(set) var active: Set<Entitlement> = [] {
     didSet {
       didSetActiveEntitlements = true
@@ -35,6 +38,9 @@ public final class EntitlementsInfo: NSObject {
       }
     }
   }
+
+  /// When the active entitlements have been set.
+  @Published public private(set) var didSetActiveEntitlements = false
 
   /// All entitlements, regardless of whether they're active or not.
   public private(set) var all: Set<Entitlement> = []
@@ -51,9 +57,8 @@ public final class EntitlementsInfo: NSObject {
       self.all = Set(entitlementsByProductId.values.joined())
     }
   }
-
-  /// When the active entitlements have been set.
-  @Published public var didSetActiveEntitlements = false
+  private unowned let storage: Storage
+  private unowned let delegateAdapter: SuperwallDelegateAdapter
 
   init(
     storage: Storage,
