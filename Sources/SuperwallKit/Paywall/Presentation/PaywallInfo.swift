@@ -236,7 +236,8 @@ public final class PaywallInfo: NSObject {
       "experiment_id": experiment?.id as Any,
       "variant_id": experiment?.variant.id as Any,
       "cache_key": cacheKey,
-      "build_id": buildId
+      "build_id": buildId,
+      "close_reason": closeReason.description
     ]
 
     var loadingVars: [String: Any] = [:]
