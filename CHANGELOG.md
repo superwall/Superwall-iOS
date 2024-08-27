@@ -2,6 +2,18 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.7.3
+
+### Fixes
+
+- Fixes issue with decoding custom placements from paywalls.
+
+## 3.7.2
+
+### Fixes
+
+- Changes access level of a property used by our Flutter and React Native wrapper SDKs.
+
 ## 3.7.1
 
 ### Enhancements

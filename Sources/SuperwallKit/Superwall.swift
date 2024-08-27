@@ -148,7 +148,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// Alternatively, you can use the completion handler from
   /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
   @Published
-  public private(set) var isConfigured = false
+  public var isConfigured = false // Public set necessary for wrapper SDKs
 
   /// The configured shared instance of ``Superwall``.
   ///
