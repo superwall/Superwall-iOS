@@ -286,7 +286,7 @@ enum InternalSuperwallEvent {
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       return [
-        "active_entitlements": activeEntitlements
+        "active_entitlements": activeEntitlements.map { $0.id }.joined()
       ]
     }
   }

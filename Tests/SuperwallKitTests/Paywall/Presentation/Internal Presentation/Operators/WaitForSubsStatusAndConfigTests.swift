@@ -9,6 +9,7 @@ import XCTest
 @testable import SuperwallKit
 import Combine
 
+@available(iOS 16.0, *)
 final class WaitForEntitlementsAndConfigTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
   let dependencyContainer = DependencyContainer()
@@ -52,45 +53,61 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     await fulfillment(of: [expectation1, stateExpectation], timeout: 5.5)
   }
 
-  func test_waitForEntitlementsAndConfig_noIdentity_unknownStatus_becomesActive() async {
+  func test_waitForEntitlementsAndConfig_noIdentity_delayedActiveEntitlements_hasEntitlements_hasConfig() async {
     let expectation1 = expectation(description: "Got identity")
+    expectation1.isInverted = true
 
-    let falsePublisher = CurrentValueSubject<Bool, Never>(false)
+    let entitlementsInfo = EntitlementsInfo(
+      storage: dependencyContainer.storage,
+      delegateAdapter: dependencyContainer.delegateAdapter,
+      isTesting: true
+    )
     let request = PresentationRequest.stub()
-      .setting(\.flags.didSetActiveEntitlements, to: falsePublisher.eraseToAnyPublisher())
+      .setting(\.flags.didSetActiveEntitlements, to: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher())
+      .setting(\.flags.entitlements, to: entitlementsInfo)
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
-    stateExpectation.expectedFulfillmentCount = 2
+    stateExpectation.isInverted = true
 
     statePublisher.sink { completion in
       stateExpectation.fulfill()
-      falsePublisher.send(true)
     } receiveValue: { state in
       stateExpectation.fulfill()
     }
     .store(in: &cancellables)
 
-    do {
-      try await Superwall.shared.waitForEntitlementsAndConfig(
-        request,
-        paywallStatePublisher: statePublisher,
-        dependencyContainer: dependencyContainer
-      )
-    } catch {
-      expectation1.fulfill()
+    Task {
+      do {
+        try await Superwall.shared.waitForEntitlementsAndConfig(
+          request,
+          paywallStatePublisher: statePublisher,
+          dependencyContainer: dependencyContainer
+        )
+      } catch {
+        expectation1.fulfill()
+      }
     }
+
+    try? await Task.sleep(for: .seconds(1))
+
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    entitlementsInfo.set([.stub()])
 
     await fulfillment(of: [expectation1, stateExpectation], timeout: 5.5)
   }
 
-  func test_waitForEntitlementsAndConfig_activeStatus_noConfigEvenAfterDelay() async {
+  func test_waitForEntitlementsAndConfig_hasEntitlements_noConfigEvenAfterDelay() async {
     let expectation1 = expectation(description: "Got identity")
 
-    let truePublisher = CurrentValueSubject<Bool, Never>(true)
-      .eraseToAnyPublisher()
-    let stub = PresentationRequest.stub()
-      .setting(\.flags.didSetActiveEntitlements, to: truePublisher)
+    let entitlementsInfo = EntitlementsInfo(
+      storage: dependencyContainer.storage,
+      delegateAdapter: dependencyContainer.delegateAdapter,
+      isTesting: true
+    )
+    let request = PresentationRequest.stub()
+      .setting(\.flags.didSetActiveEntitlements, to: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher())
+      .setting(\.flags.entitlements, to: entitlementsInfo)
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -103,9 +120,11 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     }
     .store(in: &cancellables)
 
+    entitlementsInfo.set([.stub()])
+
     do {
       try await Superwall.shared.waitForEntitlementsAndConfig(
-        stub,
+        request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
       )
@@ -117,13 +136,19 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     await fulfillment(of: [expectation1, stateExpectation], timeout: 1.1)
   }
 
-  func test_waitForEntitlementsAndConfig_activeStatus_noConfig_configFailedState() async {
+  func test_waitForEntitlementsAndConfig_hasEntitlements_noConfig_configFailedState() async {
     let expectation1 = expectation(description: "Got identity")
 
-    let truePublisher = CurrentValueSubject<Bool, Never>(true)
-      .eraseToAnyPublisher()
-    let stub = PresentationRequest.stub()
-      .setting(\.flags.didSetActiveEntitlements, to: truePublisher)
+    let entitlementsInfo = EntitlementsInfo(
+      storage: dependencyContainer.storage,
+      delegateAdapter: dependencyContainer.delegateAdapter,
+      isTesting: true
+    )
+    let request = PresentationRequest.stub()
+      .setting(\.flags.didSetActiveEntitlements, to: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher())
+      .setting(\.flags.entitlements, to: entitlementsInfo)
+
+    entitlementsInfo.set([.stub()])
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -141,7 +166,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
 
     do {
       try await Superwall.shared.waitForEntitlementsAndConfig(
-        stub,
+        request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
       )
@@ -153,13 +178,19 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     await fulfillment(of: [expectation1, stateExpectation], timeout: 0.1)
   }
 
-  func test_waitForEntitlementsAndConfig_activeStatus_noConfig_configRetryingState() async {
+  func test_waitForEntitlementsAndConfig_hasEntitlements_noConfig_configRetryingState() async {
     let expectation1 = expectation(description: "Got identity")
 
-    let truePublisher = CurrentValueSubject<Bool, Never>(true)
-      .eraseToAnyPublisher()
-    let stub = PresentationRequest.stub()
-      .setting(\.flags.didSetActiveEntitlements, to: truePublisher)
+    let entitlementsInfo = EntitlementsInfo(
+      storage: dependencyContainer.storage,
+      delegateAdapter: dependencyContainer.delegateAdapter,
+      isTesting: true
+    )
+    let request = PresentationRequest.stub()
+      .setting(\.flags.didSetActiveEntitlements, to: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher())
+      .setting(\.flags.entitlements, to: entitlementsInfo)
+
+    entitlementsInfo.set([.stub()])
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -172,12 +203,11 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-
     dependencyContainer.configManager.configState.send(.retrying)
 
     do {
       try await Superwall.shared.waitForEntitlementsAndConfig(
-        stub,
+        request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
       )
@@ -189,13 +219,18 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     await fulfillment(of: [expectation1, stateExpectation], timeout: 0.1)
   }
 
-  func test_waitForEntitlementsAndConfig_activeStatus_noConfig_hasConfigAfterDelay() async {
+  func test_waitForEntitlementsAndConfig_hasEntitlements_noConfig_hasConfigAfterDelay() async {
     let expectation1 = expectation(description: "Got identity")
+    let entitlementsInfo = EntitlementsInfo(
+      storage: dependencyContainer.storage,
+      delegateAdapter: dependencyContainer.delegateAdapter,
+      isTesting: true
+    )
+    let request = PresentationRequest.stub()
+      .setting(\.flags.didSetActiveEntitlements, to: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher())
+      .setting(\.flags.entitlements, to: entitlementsInfo)
 
-    let truePublisher = CurrentValueSubject<Bool, Never>(true)
-      .eraseToAnyPublisher()
-    let stub = PresentationRequest.stub()
-      .setting(\.flags.didSetActiveEntitlements, to: truePublisher)
+    entitlementsInfo.set([.stub()])
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
 
@@ -213,7 +248,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
 
     do {
       try await Superwall.shared.waitForEntitlementsAndConfig(
-        stub,
+        request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
       )
@@ -225,50 +260,20 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     await fulfillment(of: [expectation1], timeout: 1.1)
   }
 
-  func test_waitForEntitlementsAndConfig_noIdentity_activeStatus_hasConfig() async {
+  func test_waitToPresent_noEntitlements_noConfig() {
     let expectation = expectation(description: "Got identity")
     expectation.isInverted = true
 
-    let truePublisher = CurrentValueSubject<Bool, Never>(true)
-      .eraseToAnyPublisher()
-
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
-    let request = dependencyContainer.makePresentationRequest(
-      .explicitTrigger(.stub()),
-      paywallOverrides: nil,
-      isDebuggerLaunched: false,
-      isPaywallPresented: false,
-      type: .getPaywall(.stub())
+    let entitlementsInfo = EntitlementsInfo(
+      storage: dependencyContainer.storage,
+      delegateAdapter: dependencyContainer.delegateAdapter,
+      isTesting: true
     )
-    .setting(\.flags.didSetActiveEntitlements, to: truePublisher)
+    let request = PresentationRequest.stub()
+      .setting(\.flags.didSetActiveEntitlements, to: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher())
+      .setting(\.flags.entitlements, to: entitlementsInfo)
 
-    // Sleep to allow reset to complete, then set identity as false.
-    try? await Task.sleep(nanoseconds: 1_000_000_000)
-    identityManager.identitySubject.send(false)
-    
-    Task {
-      try await Superwall.shared.waitForEntitlementsAndConfig(request, dependencyContainer: dependencyContainer)
-      expectation.fulfill()
-    }
-
-    await fulfillment(of: [expectation], timeout: 0.1)
-  }
-
-  func test_waitToPresent_inactiveStatus_noConfig() {
-    let expectation = expectation(description: "Got identity")
-    expectation.isInverted = true
-
-    let truePublisher = CurrentValueSubject<Bool, Never>(true)
-      .eraseToAnyPublisher()
-
-    let request = dependencyContainer.makePresentationRequest(
-      .explicitTrigger(.stub()),
-      paywallOverrides: nil,
-      isDebuggerLaunched: false,
-      isPaywallPresented: false,
-      type: .getPaywall(.stub())
-    )
-    .setting(\.flags.didSetActiveEntitlements, to: truePublisher)
+    entitlementsInfo.set([])
 
     Task {
       try await Superwall.shared.waitForEntitlementsAndConfig(request, dependencyContainer: dependencyContainer)
@@ -282,8 +287,16 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     let expectation1 = expectation(description: "Got identity")
     expectation1.isInverted = true
 
-    let truePublisher = CurrentValueSubject<Bool, Never>(true)
-      .eraseToAnyPublisher()
+    let entitlementsInfo = EntitlementsInfo(
+      storage: dependencyContainer.storage,
+      delegateAdapter: dependencyContainer.delegateAdapter,
+      isTesting: true
+    )
+    let request = PresentationRequest.stub()
+      .setting(\.flags.didSetActiveEntitlements, to: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher())
+      .setting(\.flags.entitlements, to: entitlementsInfo)
+
+    entitlementsInfo.set([])
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -301,15 +314,6 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     let error = NetworkError.noInternet
     dependencyContainer.configManager.configState.send(completion: .failure(error))
 
-    let request = dependencyContainer.makePresentationRequest(
-      .explicitTrigger(.stub()),
-      paywallOverrides: nil,
-      isDebuggerLaunched: false,
-      isPaywallPresented: false,
-      type: .getPaywall(.stub())
-    )
-    .setting(\.flags.didSetActiveEntitlements, to: truePublisher)
-
     Task {
       try await Superwall.shared.waitForEntitlementsAndConfig(
         request,
@@ -326,8 +330,16 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     let expectation1 = expectation(description: "Got identity")
     expectation1.isInverted = true
 
-    let unknownSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
-      .eraseToAnyPublisher()
+    let entitlementsInfo = EntitlementsInfo(
+      storage: dependencyContainer.storage,
+      delegateAdapter: dependencyContainer.delegateAdapter,
+      isTesting: true
+    )
+    let request = PresentationRequest.stub()
+      .setting(\.flags.didSetActiveEntitlements, to: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher())
+      .setting(\.flags.entitlements, to: entitlementsInfo)
+
+    entitlementsInfo.set([])
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -343,15 +355,6 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     let truePublisher = CurrentValueSubject<Bool, Never>(true)
       .eraseToAnyPublisher()
-
-    let request = dependencyContainer.makePresentationRequest(
-      .explicitTrigger(.stub()),
-      paywallOverrides: nil,
-      isDebuggerLaunched: false,
-      isPaywallPresented: false,
-      type: .getPaywall(.stub())
-    )
-    .setting(\.flags.didSetActiveEntitlements, to: truePublisher)
 
     Task {
       // Sleep to allow reset to complete, then set identity as false.
@@ -372,8 +375,17 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
   func test_waitForEntitlementsAndConfig_inactiveStatus_hasConfig_hasIdentity() {
     let expectation1 = expectation(description: "Got identity")
 
-    let truePublisher = CurrentValueSubject<Bool, Never>(true)
-      .eraseToAnyPublisher()
+    let entitlementsInfo = EntitlementsInfo(
+      storage: dependencyContainer.storage,
+      delegateAdapter: dependencyContainer.delegateAdapter,
+      isTesting: true
+    )
+    let request = PresentationRequest.stub()
+      .setting(\.flags.didSetActiveEntitlements, to: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher())
+      .setting(\.flags.entitlements, to: entitlementsInfo)
+
+    entitlementsInfo.set([])
+
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
     stateExpectation.isInverted = true
@@ -386,15 +398,6 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     .store(in: &cancellables)
 
     dependencyContainer.configManager.configState.send(.retrieved(.stub()))
-
-    let request = dependencyContainer.makePresentationRequest(
-      .explicitTrigger(.stub()),
-      paywallOverrides: nil,
-      isDebuggerLaunched: false,
-      isPaywallPresented: false,
-      type: .getPaywall(.stub())
-    )
-    .setting(\.flags.didSetActiveEntitlements, to: truePublisher)
 
     Task {
       // Sleep to allow reset to complete, then set identity as true.

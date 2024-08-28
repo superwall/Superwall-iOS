@@ -25,14 +25,13 @@ final class AutomaticPurchaseController {
     var entitlements: Set<Entitlement> = []
 
     for activePurchase in activePurchases {
-      let purchaseEntitlements = entitlementsInfo.byProductId(activePurchase.productIdentifier) ?? []
+      let purchaseEntitlements = entitlementsInfo.byProductId(activePurchase.productIdentifier)
       entitlements = entitlements.union(purchaseEntitlements)
     }
 
-    // TODO: Check if this needs to be on main - it would if a published variable
-    //await MainActor.run {
-    Superwall.shared.entitlements.set(entitlements)
-    //}
+    await MainActor.run { [entitlements] in
+      Superwall.shared.entitlements.set(entitlements)
+    }
   }
 }
 

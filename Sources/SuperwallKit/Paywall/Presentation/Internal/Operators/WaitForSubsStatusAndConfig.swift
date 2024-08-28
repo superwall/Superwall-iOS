@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 11/05/2023.
 //
-// swiftlint:disable line_length function_body_length
+// swiftlint:disable function_body_length
 
 import Foundation
 import Combine
@@ -24,10 +24,8 @@ extension Superwall {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
 
     let isEntitlementsReadyTask = Task {
-      for try await value in request.flags.didSetActiveEntitlements.values {
-        if value == true {
-          return
-        }
+      for try await value in request.flags.didSetActiveEntitlements.values where value == true {
+        return
       }
       throw CancellationError()
     }

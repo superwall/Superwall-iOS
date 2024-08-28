@@ -30,7 +30,7 @@ public final class PaywallInfo: NSObject {
   public let experiment: Experiment?
 
   /// An array of products associated with the paywall.
-  public let productItems: [Product]
+  public let products: [Product]
 
   /// An ordered array of product IDs that this paywall is displaying.
   public let productIds: [String]
@@ -125,7 +125,7 @@ public final class PaywallInfo: NSObject {
     cacheKey: String,
     buildId: String,
     url: URL,
-    productItems: [Product],
+    products: [Product],
     productIds: [String],
     fromEventData eventData: EventData?,
     responseLoadStartTime: Date?,
@@ -160,7 +160,7 @@ public final class PaywallInfo: NSObject {
     self.presentationSourceType = presentationSourceType
     self.experiment = experiment
     self.paywalljsVersion = paywalljsVersion
-    self.productItems = productItems
+    self.products = products
     self.productIds = productIds
     self.isFreeTrialAvailable = isFreeTrialAvailable
     self.featureGatingBehavior = featureGatingBehavior
@@ -291,7 +291,7 @@ public final class PaywallInfo: NSObject {
     output["secondary_product_id"] = ""
     output["tertiary_product_id"] = ""
 
-    for (index, product) in productItems.enumerated() {
+    for (index, product) in products.enumerated() {
       if index == 0 {
         output["primary_product_id"] = product.id
       } else if index == 1 {
@@ -318,7 +318,7 @@ extension PaywallInfo: Stubbable {
       cacheKey: "cacheKey",
       buildId: "buildId",
       url: URL(string: "https://www.google.com")!,
-      productItems: [],
+      products: [],
       productIds: [],
       fromEventData: nil,
       responseLoadStartTime: nil,
@@ -341,7 +341,6 @@ extension PaywallInfo: Stubbable {
       surveys: [],
       presentation: .init(
         style: .fullscreen,
-        condition: .checkUserSubscription,
         delay: 0
       )
     )

@@ -421,7 +421,12 @@ let response = #"""
         "store_product": {
           "store": "APP_STORE",
           "product_identifier": "sk.superwall.annual.89.99_7"
-        }
+        },
+        "entitlements": [
+          {
+            "id": "test"
+          }
+        ]
       },
       {
         "reference_name": "primary",

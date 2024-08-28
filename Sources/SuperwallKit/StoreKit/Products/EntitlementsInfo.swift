@@ -8,11 +8,7 @@
 import Foundation
 import Combine
 
-// TODO: Figure out the synchronisation of entitlements.
-/*
- All Published properties have to be set on the main thread.
- The caller of the API can't know about that
- */
+// TODO: Figure out the synchronisation of entitlements - Published properties must be on main
 
 /// A class that handles the `Set` of ``Entitlement`` objects retrieved from
 /// the Superwall dashboard.
@@ -62,11 +58,15 @@ public final class EntitlementsInfo: NSObject {
 
   init(
     storage: Storage,
-    delegateAdapter: SuperwallDelegateAdapter
+    delegateAdapter: SuperwallDelegateAdapter,
+    isTesting: Bool = false
   ) {
     self.storage = storage
     self.delegateAdapter = delegateAdapter
     super.init()
+    if isTesting {
+      return
+    }
     entitlementsByProductId = storage.get(EntitlementsByProductId.self) ?? [:]
 
     if let activeEntitlements = storage.get(ActiveEntitlements.self) {
@@ -88,7 +88,7 @@ public final class EntitlementsInfo: NSObject {
   /// - Parameter entitlements: A `Set` of ``Entitlement`` objects.
   @objc(setActiveEntitlements:)
   public func set(_ entitlements: Set<Entitlement>) {
-      active = entitlements
+    active = entitlements
   }
 
   /// Sets the active entitlements.
@@ -96,7 +96,7 @@ public final class EntitlementsInfo: NSObject {
   /// - Parameter entitlements: A `Set` of ``Entitlement`` objects.
   @nonobjc
   public func set(_ entitlements: [Entitlement]) {
-      active = Set(entitlements)
+    active = Set(entitlements)
   }
 
   /// Returns a `Set` of ``Entitlement``s belonging to a given `productId`.

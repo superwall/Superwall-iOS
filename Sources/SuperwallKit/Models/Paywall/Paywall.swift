@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
-// swiftlint:disable function_body_length type_body_length file_length
+// swiftlint:disable function_body_length type_body_length
 
 import UIKit
 
@@ -167,12 +167,10 @@ struct Paywall: Decodable {
     surveys = throwableSurveys.compactMap { try? $0.result.get() }
 
     let presentationStyle = try values.decode(PaywallPresentationStyle.self, forKey: .presentationStyle)
-    let presentationCondition = try values.decode(PresentationCondition.self, forKey: .presentationCondition)
     let presentationDelay = try values.decode(Int.self, forKey: .presentationDelay)
 
     presentation = PaywallPresentationInfo(
       style: presentationStyle,
-      condition: presentationCondition,
       delay: presentationDelay
     )
 
@@ -313,7 +311,7 @@ struct Paywall: Decodable {
       cacheKey: cacheKey,
       buildId: buildId,
       url: url,
-      productItems: products,
+      products: products,
       productIds: productIds,
       fromEventData: fromEvent,
       responseLoadStartTime: responseLoadingInfo.startAt,
@@ -372,7 +370,6 @@ extension Paywall: Stubbable {
       htmlSubstitutions: "",
       presentation: PaywallPresentationInfo(
         style: .modal,
-        condition: .checkUserSubscription,
         delay: 0
       ),
       backgroundColorHex: "",

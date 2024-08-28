@@ -275,7 +275,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "activeEntitlements_didChange")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$active_entitlements"] as! Set<Entitlement>, entitlement)
+    XCTAssertEqual(result.parameters.audienceFilterParams["$active_entitlements"] as! String, entitlement.map { $0.id }.joined())
   }
 
   func test_subscriptionStatusDidChange_hasTwoEntitlements() async {
@@ -284,15 +284,15 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "activeEntitlements_didChange")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$active_entitlements"] as! Set<Entitlement>, entitlements)
+    XCTAssertEqual(result.parameters.audienceFilterParams["$active_entitlements"] as! String, entitlements.map { $0.id }.joined())
   }
 
   func test_subscriptionStatusDidChange_noEntitlements() async {
     let result = await Superwall.shared.track(InternalSuperwallEvent.ActiveEntitlementsDidChange(activeEntitlements: []))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "subscriptionStatus_didChange")
-    XCTAssertTrue((result.parameters.audienceFilterParams["$active_entitlements"] as! Set<Entitlement>).isEmpty)
+    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "activeEntitlements_didChange")
+    XCTAssertTrue((result.parameters.audienceFilterParams["$active_entitlements"] as! String) == "")
   }
 
   func test_triggerFire_noRuleMatch() async {

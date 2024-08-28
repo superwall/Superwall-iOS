@@ -312,9 +312,9 @@ extension DependencyContainer: RequestFactory {
       presenter: presenter,
       paywallOverrides: paywallOverrides,
       flags: .init(
-        isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched, 
-        didSetActiveEntitlements: Superwall.shared.entitlements.$didSetActiveEntitlements.eraseToAnyPublisher(),
-        entitlements: Superwall.shared.entitlements,
+        isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
+        didSetActiveEntitlements: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher(),
+        entitlements: entitlementsInfo,
         isPaywallPresented: isPaywallPresented,
         type: type
       )
