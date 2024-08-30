@@ -8,13 +8,14 @@
 import Foundation
 import Combine
 
-// TODO: Figure out the synchronisation of entitlements - Published properties must be on main
-
 /// A class that handles the `Set` of ``Entitlement`` objects retrieved from
 /// the Superwall dashboard.
 @objc(SWKEntitlementsInfo)
 @objcMembers
-public final class EntitlementsInfo: NSObject {
+public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Sendable {
+  /// The backing variable for ``EntitlementsInfo/active``.
+  private var backingActive: Set<Entitlement> = []
+
   /// The active entitlements.
   ///
   /// When this changes, the delegate method ``SuperwallDelegate/activeEntitlementsDidChange(to:)``
@@ -22,14 +23,29 @@ public final class EntitlementsInfo: NSObject {
   ///
   /// The first time this is set ``EntitlementsInfo/didSetActiveEntitlements`` will
   /// be `true`.
-  @Published public private(set) var active: Set<Entitlement> = [] {
-    didSet {
-      didSetActiveEntitlements = true
-      storage.save(active, forType: ActiveEntitlements.self)
+  public private(set) var active: Set<Entitlement> {
+    get {
+      queue.sync {
+        return backingActive
+      }
+    }
+    set {
+      queue.async { [weak self] in
+        guard let self = self else {
+          return
+        }
+        let oldValue = self.backingActive
+        self.backingActive = newValue
 
-      if oldValue != active {
-        Task {
-          await handleActiveEntitlementsChange(newValue: active)
+        DispatchQueue.main.async {
+          self.didSetActiveEntitlements = true
+        }
+        self.storage.save(newValue, forType: ActiveEntitlements.self)
+
+        if newValue != oldValue {
+          Task {
+            await self.handleActiveEntitlementsChange(newValue: newValue)
+          }
         }
       }
     }
@@ -38,12 +54,28 @@ public final class EntitlementsInfo: NSObject {
   /// When the active entitlements have been set.
   @Published public private(set) var didSetActiveEntitlements = false
 
+  /// The backing variable for ``EntitlementsInfo/all``.
+  private var backingAll: Set<Entitlement> = []
+
   /// All entitlements, regardless of whether they're active or not.
-  public private(set) var all: Set<Entitlement> = []
+  public private(set) var all: Set<Entitlement> {
+    get {
+      queue.sync {
+        return backingAll
+      }
+    }
+    set {
+      queue.async {
+        self.backingAll = newValue
+      }
+    }
+  }
 
   /// The inactive entitlements.
   public var inactive: Set<Entitlement> {
-    return all.subtracting(active)
+    return queue.sync {
+      return backingAll.subtracting(backingActive)
+    }
   }
 
   /// The entitlements that belong to each product ID.
@@ -53,8 +85,10 @@ public final class EntitlementsInfo: NSObject {
       self.all = Set(entitlementsByProductId.values.joined())
     }
   }
+
   private unowned let storage: Storage
   private unowned let delegateAdapter: SuperwallDelegateAdapter
+  private let queue = DispatchQueue(label: "com.superwall.entitlementsinfo.queue")
 
   init(
     storage: Storage,
@@ -67,13 +101,17 @@ public final class EntitlementsInfo: NSObject {
     if isTesting {
       return
     }
-    entitlementsByProductId = storage.get(EntitlementsByProductId.self) ?? [:]
 
-    if let activeEntitlements = storage.get(ActiveEntitlements.self) {
-      active = activeEntitlements
-      didSetActiveEntitlements = true
-    } else {
-      active = []
+    queue.sync {
+      entitlementsByProductId = storage.get(EntitlementsByProductId.self) ?? [:]
+
+      if let activeEntitlements = storage.get(ActiveEntitlements.self) {
+        active = activeEntitlements
+      } else {
+        active = []
+      }
+
+      backingAll = Set(entitlementsByProductId.values.joined())
     }
   }
 
@@ -87,16 +125,16 @@ public final class EntitlementsInfo: NSObject {
   ///
   /// - Parameter entitlements: A `Set` of ``Entitlement`` objects.
   @objc(setActiveEntitlements:)
-  public func set(_ entitlements: Set<Entitlement>) {
-    active = entitlements
+  public func set(_ activeEntitlements: Set<Entitlement>) {
+    active = activeEntitlements
   }
 
   /// Sets the active entitlements.
   ///
   /// - Parameter entitlements: A `Set` of ``Entitlement`` objects.
   @nonobjc
-  public func set(_ entitlements: [Entitlement]) {
-    active = Set(entitlements)
+  public func set(_ activeEntitlements: [Entitlement]) {
+    active = Set(activeEntitlements)
   }
 
   /// Returns a `Set` of ``Entitlement``s belonging to a given `productId`.
@@ -104,6 +142,8 @@ public final class EntitlementsInfo: NSObject {
   /// - Parameter productId: A `String` representing a `productId`
   /// - Returns: A `Set` of ``Entitlement``s
   public func byProductId(_ productId: String) -> Set<Entitlement> {
-    return entitlementsByProductId[productId] ?? []
+    return queue.sync {
+      entitlementsByProductId[productId] ?? []
+    }
   }
 }
