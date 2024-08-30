@@ -12,16 +12,43 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
   /// Presenting via ``Superwall/register(event:params:handler:feature:)``.
   case presentation
 
-  /// Getting the paywall view controller via
+  /// Get the paywall view controller via
   /// ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)``.
   case getPaywall(PaywallViewControllerDelegateAdapter)
 
-  /// Getting the presentation result via ``Superwall/getPresentationResult(forEvent:)``
+  /// Get the presentation result via ``Superwall/getPresentationResult(forEvent:)``
   case getPresentationResult
 
-  /// Getting the presentation result from an event that's used internally. Specifically, getting the result
-  /// of calling `paywall_decline`.
-  case getImplicitPresentationResult
+  /// Get the presentation result from an event that's used internally.
+  case handleImplicitTrigger
+
+  /// Get the presentation result for a `paywall_decline` event to decide whether to
+  /// close the paywall view controller or not.
+  case paywallDeclineCheck
+
+  var isGettingPresentationResult: Bool {
+    switch self {
+    case .presentation,
+      .getPaywall:
+      return false
+    case .getPresentationResult,
+      .handleImplicitTrigger,
+      .paywallDeclineCheck:
+      return true
+    }
+  }
+
+  var shouldConfirmAssignments: Bool {
+    switch self {
+    case .presentation,
+      .getPaywall,
+      .getPresentationResult,
+      .handleImplicitTrigger:
+      return true
+    case .paywallDeclineCheck:
+      return false
+    }
+  }
 
   var description: String {
     switch self {
@@ -31,7 +58,8 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
       return "getPaywallViewController"
     case .getPresentationResult:
       return "getPresentationResult"
-    case .getImplicitPresentationResult:
+    case .handleImplicitTrigger,
+      .paywallDeclineCheck:
       return "getImplicitPresentationResult"
     }
   }
@@ -56,7 +84,8 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
 
   static func == (lhs: PresentationRequestType, rhs: PresentationRequestType) -> Bool {
     switch (lhs, rhs) {
-    case (.getImplicitPresentationResult, .getImplicitPresentationResult),
+    case (.handleImplicitTrigger, .handleImplicitTrigger),
+      (.paywallDeclineCheck, .paywallDeclineCheck),
       (.getPresentationResult, .getPresentationResult),
       (.presentation, .presentation),
       (.getPaywall, .getPaywall):
@@ -90,7 +119,8 @@ struct PresentationRequest {
         return "getPaywall"
       case .presentation:
         return "register"
-      case .getImplicitPresentationResult,
+      case .paywallDeclineCheck,
+        .handleImplicitTrigger,
         .getPresentationResult:
         return nil
       }
