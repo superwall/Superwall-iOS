@@ -36,7 +36,7 @@ extension Superwall {
 
     return await internallyGetPresentationResult(
       forEvent: event,
-      isImplicit: false
+      requestType: .getPresentationResult
     )
   }
 
@@ -71,7 +71,7 @@ extension Superwall {
   ///   - requestType: The presentation request type, which will control the flow of the pipeline.
   func internallyGetPresentationResult(
     forEvent event: Trackable,
-    isImplicit: Bool
+    requestType: PresentationRequestType
   ) async -> PresentationResult {
     let eventCreatedAt = Date()
 
@@ -90,7 +90,7 @@ extension Superwall {
       .explicitTrigger(eventData),
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: isImplicit ? .getImplicitPresentationResult : .getPresentationResult
+      type: requestType
     )
 
     return await getPresentationResult(for: presentationRequest)
