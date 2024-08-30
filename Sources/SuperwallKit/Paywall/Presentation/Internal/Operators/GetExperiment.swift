@@ -32,22 +32,21 @@ extension Superwall {
     case .paywall(let experiment):
       return experiment
     case .holdout(let experiment):
-      await activateSession(request: request, rulesOutcome: rulesOutcome)
+      await attemptTriggerFire(request: request, rulesOutcome: rulesOutcome)
       if let unsavedOccurrence = rulesOutcome.unsavedOccurrence {
         storage.coreDataManager.save(triggerRuleOccurrence: unsavedOccurrence)
       }
       errorType = .holdout(experiment)
       paywallStatePublisher?.send(.skipped(.holdout(experiment)))
     case .noRuleMatch:
-      await activateSession(request: request, rulesOutcome: rulesOutcome)
+      await attemptTriggerFire(request: request, rulesOutcome: rulesOutcome)
       errorType = .noRuleMatch
       paywallStatePublisher?.send(.skipped(.noRuleMatch))
     case .eventNotFound:
       errorType = .eventNotFound
       paywallStatePublisher?.send(.skipped(.eventNotFound))
     case let .error(error):
-      if request.flags.type == .getImplicitPresentationResult ||
-        request.flags.type == .getPresentationResult {
+      if request.flags.type.isGettingPresentationResult {
         Logger.debug(
           logLevel: .error,
           scope: .paywallPresentation,
@@ -64,12 +63,11 @@ extension Superwall {
     throw errorType
   }
 
-  private func activateSession(
+  private func attemptTriggerFire(
     request: PresentationRequest,
     rulesOutcome: AudienceEvaluationOutcome
   ) async {
-    if request.flags.type == .getImplicitPresentationResult ||
-      request.flags.type == .getPresentationResult {
+    guard request.flags.type.shouldConfirmAssignments else {
       return
     }
 

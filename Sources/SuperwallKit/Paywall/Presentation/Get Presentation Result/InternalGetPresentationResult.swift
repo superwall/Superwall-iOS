@@ -34,7 +34,8 @@ extension Superwall {
     _ error: PresentationPipelineError,
     requestType: PresentationRequestType
   ) -> PresentationResult {
-    if requestType != .getImplicitPresentationResult {
+    if requestType != .paywallDeclineCheck,
+      requestType != .handleImplicitTrigger {
       Logger.debug(
         logLevel: .info,
         scope: .paywallPresentation,

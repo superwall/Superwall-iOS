@@ -21,7 +21,7 @@ extension Superwall {
     from rulesOutcome: AudienceEvaluationOutcome,
     dependencyContainer: DependencyContainer? = nil
   ) {
-    if request.flags.type == .getImplicitPresentationResult {
+    guard request.flags.type.shouldConfirmAssignments else {
       return
     }
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer

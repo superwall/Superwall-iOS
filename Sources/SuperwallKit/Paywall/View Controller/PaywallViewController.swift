@@ -817,7 +817,7 @@ extension PaywallViewController {
 
         let presentationResult = await Superwall.shared.internallyGetPresentationResult(
           forEvent: trackedEvent,
-          isImplicit: true
+          requestType: .paywallDeclineCheck
         )
         let paywallPresenterEvent = info.presentedByEventWithName
         let presentedByPaywallDecline = paywallPresenterEvent == SuperwallEventObjc.paywallDecline.description

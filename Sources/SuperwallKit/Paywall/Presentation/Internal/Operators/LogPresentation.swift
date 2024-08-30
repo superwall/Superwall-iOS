@@ -28,8 +28,9 @@ extension Superwall {
       }
     case .getPresentationResult:
       message += "Superwall.shared.getPresentationResult"
-    case .getImplicitPresentationResult:
-      message += "Superwall.shared.getImplicitPresentationResult"
+    case .handleImplicitTrigger,
+      .paywallDeclineCheck:
+      message += "Superwall.shared.handleImplicitTrigger"
     }
     let eventData = request.presentationInfo.eventData
     let debugInfo: [String: Any] = [

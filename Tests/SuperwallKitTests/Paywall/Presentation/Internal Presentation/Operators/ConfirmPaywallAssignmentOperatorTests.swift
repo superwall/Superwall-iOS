@@ -130,7 +130,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
   }
 
   @MainActor
-  func test_confirmPaywallAssignment_getImplicitPresentationResult() async {
+  func test_confirmPaywallAssignment_handleImplicitTrigger() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -149,7 +149,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
       isPaywallPresented: false,
-      type: .getImplicitPresentationResult
+      type: .handleImplicitTrigger
     )
 
     Superwall.shared.confirmPaywallAssignment(
@@ -158,6 +158,37 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
      )
-   XCTAssertFalse(configManager.confirmedAssignment)
+    XCTAssertTrue(configManager.confirmedAssignment)
+  }
+
+  @MainActor
+  func test_confirmPaywallAssignment_paywallDeclineCheck() async {
+    let dependencyContainer = DependencyContainer()
+    let configManager = ConfigManagerMock(
+      options: SuperwallOptions(),
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer
+    )
+    try? await Task.sleep(nanoseconds: 10_000_000)
+    dependencyContainer.configManager = configManager
+
+    let request = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      isDebuggerLaunched: false,
+      isPaywallPresented: false,
+      type: .paywallDeclineCheck
+    )
+
+    Superwall.shared.confirmPaywallAssignment(
+      ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      request: request,
+      isDebuggerLaunched: false,
+      dependencyContainer: dependencyContainer
+     )
+    XCTAssertFalse(configManager.confirmedAssignment)
   }
 }

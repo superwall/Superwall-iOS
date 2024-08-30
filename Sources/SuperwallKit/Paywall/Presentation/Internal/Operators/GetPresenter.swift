@@ -43,8 +43,10 @@ extension Superwall {
         triggerResult: rulesOutcome.triggerResult
       )
       return nil
-    case .getImplicitPresentationResult,
+    case .handleImplicitTrigger,
+      .paywallDeclineCheck,
       .getPresentationResult:
+      // We do not track trigger fire for these events (which would result in .paywall)
       return nil
     case .presentation:
       break
