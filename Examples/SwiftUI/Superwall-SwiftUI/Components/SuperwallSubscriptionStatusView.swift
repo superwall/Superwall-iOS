@@ -9,15 +9,16 @@ import SwiftUI
 import SuperwallKit
 
 struct SuperwallSubscriptionStatusView: View {
-  @StateObject private var superwall = Superwall.shared // ensures subscriptionStatus is auto updating
+  @StateObject private var entitlements = Superwall.shared.entitlements // ensures didSetActiveEntitlements is auto updating
   var text: String {
-    switch superwall.subscriptionStatus {
-    case .active:
-      return "You currently have an active subscription. Therefore, the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions."
-    case .inactive:
-      return "You do not have an active subscription so the paywall will show when clicking the button."
-    case .unknown:
-      return "Your subscription status is unknown"
+    if entitlements.didSetActiveEntitlements {
+      if entitlements.active.isEmpty {
+        return "You do not have any active entitlements so the paywall will always show when tapping the button."
+      } else {
+        return "You currently have an active entitlement. The audience filter is configured to only show a paywall if there are no entitlements so the paywall will never show. For the purposes of this app, delete and reinstall the app to clear entitlements."
+      }
+    } else {
+      return "Loading active entitlements."
     }
   }
 

@@ -43,7 +43,7 @@ final class HomeViewController: UIViewController {
           if Superwall.shared.entitlements.active.isEmpty {
             self?.subscriptionLabel.text = "You do not have any active entitlements so the paywall will always show when clicking the button."
           } else {
-            self?.subscriptionLabel.text = "You currently have an active entitlement. The audience filter is configured to only show a paywall if there are no entitlements so the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions."
+            self?.subscriptionLabel.text = "You currently have an active entitlement. The audience filter is configured to only show a paywall if there are no entitlements so the paywall will never show. For the purposes of this app, delete and reinstall the app to clear entitlements."
           }
         } else {
           self?.subscriptionLabel.text = "Loading active entitlements."
