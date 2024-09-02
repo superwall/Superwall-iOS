@@ -28,12 +28,12 @@
   self.navigationItem.hidesBackButton = YES;
 
   // Update for current subscription state.
-  [self updateForSubscriptionState:Superwall.sharedInstance.subscriptionStatus];
+  [self updateForEntitlements];
 
   // Listen for changes to the subscription state.
   __weak typeof(self) weakSelf = self;
-  [[NSNotificationCenter defaultCenter] addObserverForName:SSAAppDelegateDidUpdateSubscribedState object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
-    [weakSelf updateForSubscriptionState:Superwall.sharedInstance.subscriptionStatus];
+  [[NSNotificationCenter defaultCenter] addObserverForName:SSAAppDelegateDidUpdateEntitlements object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+    [weakSelf updateForEntitlements];
   }];
 }
 
@@ -103,17 +103,17 @@
 
 #pragma mark - Private
 
-- (void)updateForSubscriptionState:(SWKSubscriptionStatus)status {
-  switch (status) {
-    case SWKSubscriptionStatusActive:
-      self.subscriptionLabel.text = @"You currently have an active subscription. Therefore, the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions.";
-      break;
-    case SWKSubscriptionStatusInactive:
-      self.subscriptionLabel.text = @"You do not have an active subscription so the paywall will show when clicking the button.";
-      break;
-    case SWKSubscriptionStatusUnknown:
-      self.subscriptionLabel.text = @"Loading subscription status.";
-      break;
+- (void)updateForEntitlements {
+  bool didSetActiveEntitlements = Superwall.sharedInstance.entitlements.didSetActiveEntitlements;
+
+  if (didSetActiveEntitlements) {
+    if (Superwall.sharedInstance.entitlements.active.count == 0) {
+      self.subscriptionLabel.text = @"You do not have any active entitlements so the paywall will always show when clicking the button.";
+    } else {
+      self.subscriptionLabel.text = @"You currently have an active entitlement. The audience filter is configured to only show a paywall if there are no entitlements so the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions.";
+    }
+  } else {
+    self.subscriptionLabel.text = @"Loading entitlements.";
   }
 }
 
