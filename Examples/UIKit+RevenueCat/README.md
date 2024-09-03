@@ -45,7 +45,7 @@ SuperwallKit and RevenueCat are both [configured](Superwall-UIKit+RevenueCat/App
 
 On the welcome screen, enter your name in the **text field**. This saves to the Superwall user attributes using [Superwall.shared.setUserAttributes(_:)](Superwall-UIKit+RevenueCat/PaywallManager.swift#L84). You don't need to set user attributes, but it can be useful if you want to create a rule to present a paywall based on a specific attribute you've set. You can also recall user attributes on your paywall to personalise the messaging.
 
-Tap **Log In**. This identifies the user with Superwall and RevenueCat using the username that you inputted, retrieving any paywalls that have previously been assigned to you and retrieving the user's subscription status from RevenueCat. Every time the subscription status is updated, `Superwall.shared.subscriptionStatus` is set.
+Tap **Log In**. This identifies the user with Superwall and RevenueCat using the username that you inputted, retrieving any paywalls that have previously been assigned to you and retrieving the user's entitlements from RevenueCat. Every time the entitlements are updated, `Superwall.shared.entitlements` is set.
 
 You'll see an overview screen:
 

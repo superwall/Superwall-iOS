@@ -38,7 +38,7 @@ public enum SuperwallEvent {
   /// When device attributes are sent to the backend.
   case deviceAttributes(attributes: [String: Any])
 
-  /// When the user's subscription status changes.
+  /// When the user's active entitlements change.
   case activeEntitlementsDidChange
 
   /// Anytime the app leaves the foreground.

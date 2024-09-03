@@ -15,7 +15,7 @@ public enum PaywallPresentationRequestStatus: String {
   /// The request won't result in a paywall presentation.
   case noPresentation = "no_presentation"
 
-  /// There was a timeout when trying to get the user's subscription status, identity
+  /// There was a timeout when trying to get the user's entitlements, identity
   /// or configuration from the server.
   case timeout
 }

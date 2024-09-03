@@ -303,7 +303,6 @@ extension DependencyContainer: RequestFactory {
     paywallOverrides: PaywallOverrides? = nil,
     presenter: UIViewController? = nil,
     isDebuggerLaunched: Bool? = nil,
-    subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>? = nil,
     isPaywallPresented: Bool,
     type: PresentationRequestType
   ) -> PresentationRequest {

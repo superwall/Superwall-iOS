@@ -36,9 +36,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
       .build()
     )
 
-    // MARK: Step 4 – Sync Subscription Status
-    /// Keep Superwall's subscription status up-to-date with RevenueCat's.
-    purchaseController.syncSubscriptionStatus()
+    // MARK: Step 4 – Sync Entitlements
+    /// Keep Superwall's entitlements up-to-date with RevenueCat's.
+    purchaseController.syncEntitlements()
 
     return true
   }

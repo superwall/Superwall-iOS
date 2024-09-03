@@ -53,7 +53,6 @@ protocol RequestFactory: AnyObject {
     paywallOverrides: PaywallOverrides?,
     presenter: UIViewController?,
     isDebuggerLaunched: Bool?,
-    subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>?,
     isPaywallPresented: Bool,
     type: PresentationRequestType
   ) -> PresentationRequest

@@ -10,7 +10,7 @@ import Foundation
 import Combine
 
 extension Superwall {
-  /// Waits for config to be received and the identity and subscription status of the user to
+  /// Waits for config to be received and the identity and entitlements of the user to
   /// be established before continuing.
   ///
   /// - Parameters:

@@ -243,7 +243,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Listens to config and the subscription status
+  /// Listens to config.
   private func addListeners() {
     dependencyContainer.configManager.hasConfig
       .receive(on: DispatchQueue.main)
@@ -267,7 +267,7 @@ public final class Superwall: NSObject, ObservableObject {
   ///   an account, you can [sign up for free](https://superwall.com/sign-up).
   ///   - purchaseController: An optional object that conforms to ``PurchaseController``. Implement this if you'd
   ///   like to handle all subscription-related logic yourself. You'll need to also set the ``subscriptionStatus`` every time the user's
-  ///   subscription status changes. You can read more about that in [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
+  ///   entitlements change. You can read more about that in [Purchases and Entitlements](https://docs.superwall.com/docs/advanced-configuration).
   ///   If `nil`, Superwall will handle all subscription-related logic itself.  Defaults to `nil`.
   ///   - options: An optional ``SuperwallOptions`` object which allows you to customise the appearance and behavior
   ///   of the paywall.
@@ -316,8 +316,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you
   ///   can [sign up for free](https://superwall.com/sign-up).
   ///   - purchaseController: An optional object that conforms to ``PurchaseControllerObjc``. Implement this if you'd
-  ///   like to handle all subscription-related logic yourself. You'll need to also set the ``subscriptionStatus`` every time the user's
-  ///   subscription status changes. You can read more about that in [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
+  ///   like to handle all subscription-related logic yourself. You'll need to also set the ``entitlements`` every time the user's
+  ///   entitlements change. You can read more about that in [Purchases and Entitlements](https://docs.superwall.com/docs/advanced-configuration).
   ///   If `nil`, Superwall will handle all subscription-related logic itself.  Defaults to `nil`.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.

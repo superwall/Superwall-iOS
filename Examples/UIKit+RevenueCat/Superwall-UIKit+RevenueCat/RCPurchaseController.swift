@@ -23,13 +23,13 @@ enum PurchasingError: Error {
 ///   `Superwall.configure(apiKey: "superwall_api_key", purchaseController: purchaseController)`
 /// 4. Second, configure RevenueCat.
 ///   `Purchases.configure(withAPIKey: "revenuecat_api_key")`
-/// 5. Third, Keep Superwall's subscription status up-to-date with RevenueCat's.
-///   `purchaseController.syncSubscriptionStatus()`
+/// 5. Third, Keep Superwall's entitlements up-to-date with RevenueCat's.
+///   `purchaseController.syncEntitlements()`
 final class RCPurchaseController: PurchaseController {
-  // MARK: Sync Subscription Status
-  /// Makes sure that Superwall knows the customers subscription status by
-  /// changing `Superwall.shared.subscriptionStatus`
-  func syncSubscriptionStatus() {
+  // MARK: Sync Entitlements
+  /// Makes sure that Superwall knows the customer's entitlements by
+  /// changing `Superwall.shared.entitlements`
+  func syncEntitlements() {
     assert(Purchases.isConfigured, "You must configure RevenueCat before calling this method.")
     Task {
       for await customerInfo in Purchases.shared.customerInfoStream {
