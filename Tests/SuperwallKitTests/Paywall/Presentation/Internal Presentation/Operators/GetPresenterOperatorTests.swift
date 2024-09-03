@@ -89,8 +89,6 @@ final class GetPresenterOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
-      .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
       .setting(\.presenter, to: UIViewController())
 
