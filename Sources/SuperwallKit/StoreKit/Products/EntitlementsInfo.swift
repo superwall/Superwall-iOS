@@ -22,7 +22,7 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   /// will fire with the new value.
   ///
   /// The first time this is set ``EntitlementsInfo/didSetActiveEntitlements`` will
-  /// be `true`.
+  /// become `true`.
   public private(set) var active: Set<Entitlement> {
     get {
       queue.sync {
@@ -38,6 +38,7 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
         self.backingActive = newValue
 
         DispatchQueue.main.async {
+          self.publishedActive = newValue
           self.didSetActiveEntitlements = true
         }
         activeEntitlementsChanged(
@@ -47,6 +48,11 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
       }
     }
   }
+
+  /// A published property for ``EntitlementsInfo/active``.
+  ///
+  /// You can bind to this to be notified when active entitlements change.
+  @MainActor @Published public private(set) var publishedActive: Set<Entitlement> = []
 
   private func activeEntitlementsChanged(
     oldValue: Set<Entitlement>,
@@ -120,6 +126,7 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
       if let activeEntitlements = storage.get(ActiveEntitlements.self) {
         backingActive = activeEntitlements
         DispatchQueue.main.async { [weak self] in
+          self?.publishedActive = activeEntitlements
           self?.didSetActiveEntitlements = true
         }
       } else {
