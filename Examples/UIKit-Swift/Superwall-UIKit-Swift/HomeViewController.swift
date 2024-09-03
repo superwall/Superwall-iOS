@@ -35,12 +35,17 @@ final class HomeViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    // Subscribe to subscriptionStatus changes
-    subscribedCancellable = Superwall.shared.entitlements.$didSetActiveEntitlements
+    // TODO: Ideally need to know 1, when the entitlements became active, and 2 when the entitlements change from having entitlements to not having entitlements.
+    // Get notified when active entitlements changed.
+
+    subscribedCancellable = Publishers.CombineLatest(
+        Superwall.shared.entitlements.$didSetActiveEntitlements,
+        Superwall.shared.entitlements.$publishedActive
+      )
       .receive(on: DispatchQueue.main)
-      .sink { [weak self] didSet in
+      .sink { [weak self] didSet, activeEntitlements in
         if didSet {
-          if Superwall.shared.entitlements.active.isEmpty {
+          if activeEntitlements.isEmpty {
             self?.subscriptionLabel.text = "You do not have any active entitlements so the paywall will always show when clicking the button."
           } else {
             self?.subscriptionLabel.text = "You currently have an active entitlement. The audience filter is configured to only show a paywall if there are no entitlements so the paywall will never show. For the purposes of this app, delete and reinstall the app to clear entitlements."
