@@ -61,8 +61,7 @@ extension Superwall {
       retryCount: requestRetryCount
     )
     do {
-      let isForPresentation = !(request.flags.type == .getImplicitPresentationResult
-        || request.flags.type == .getPresentationResult)
+      let isForPresentation = !request.flags.type.isGettingPresentationResult
       let delegate = request.flags.type.getPaywallVcDelegateAdapter()
 
       let paywall = try await dependencyContainer.paywallManager.getPaywall(from: paywallRequest)
@@ -110,8 +109,7 @@ extension Superwall {
       return PresentationPipelineError.userIsSubscribed
     }
 
-    if request.flags.type != .getImplicitPresentationResult &&
-      request.flags.type != .getPresentationResult {
+    if !request.flags.type.isGettingPresentationResult {
       Logger.debug(
         logLevel: .error,
         scope: .paywallPresentation,

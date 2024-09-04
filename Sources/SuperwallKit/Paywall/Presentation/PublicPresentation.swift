@@ -234,20 +234,22 @@ extension Superwall {
     paywallOverrides: PaywallOverrides? = nil,
     isFeatureGatable: Bool
   ) -> PaywallStatePublisher {
-    return Future {
-      let publisher = PassthroughSubject<PaywallState, Never>()
+    return Deferred {
+      Future {
+        let publisher = PassthroughSubject<PaywallState, Never>()
 
-      await self.trackAndPresentPaywall(
-        forEvent: event,
-        params: params,
-        paywallOverrides: paywallOverrides,
-        isFeatureGatable: isFeatureGatable,
-        publisher: publisher
-      )
-      return publisher
-    }
-    .flatMap { publisher in
-      return publisher
+        await self.trackAndPresentPaywall(
+          forEvent: event,
+          params: params,
+          paywallOverrides: paywallOverrides,
+          isFeatureGatable: isFeatureGatable,
+          publisher: publisher
+        )
+        return publisher
+      }
+      .flatMap { publisher in
+        return publisher
+      }
     }
     .receive(on: DispatchQueue.main)
     .eraseToAnyPublisher()

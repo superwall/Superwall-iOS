@@ -143,7 +143,10 @@ extension Superwall {
       // block when it shouldn't. This has to be done only to those triggers that reassign
       // the statePublisher. Others like app_launch are fine to skip and users are relying
       // on paywallPresentationRequest for those.
-      let presentationResult = await internallyGetPresentationResult(forEvent: event, isImplicit: true)
+      let presentationResult = await internallyGetPresentationResult(
+        forEvent: event,
+        requestType: .handleImplicitTrigger
+      )
       guard case .paywall = presentationResult else {
         return
       }
