@@ -11,13 +11,13 @@ enum GetPresentationResultLogic {
   /// Converts a ``TriggerResult`` to a ``PresentationResult``
   static func convertTriggerResult(_ triggerResult: InternalTriggerResult) -> PresentationResult {
     switch triggerResult {
-    case .eventNotFound:
-      return .eventNotFound
+    case .placementNotFound:
+      return .placementNotFound
     case .holdout(let experiment):
       return .holdout(experiment)
     case .error:
       return .paywallNotAvailable
-    case .noRuleMatch:
+    case .noAudienceMatch:
       return .noRuleMatch
     case .paywall(let experiment):
       return .paywall(experiment)

@@ -32,7 +32,7 @@ class AssignmentLogicTests: XCTestCase {
       eventName: eventName,
       rules: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: eventName,
       parameters: [:],
       createdAt: Date()
@@ -96,7 +96,7 @@ class AssignmentLogicTests: XCTestCase {
       eventName: eventName,
       rules: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: eventName,
       parameters: [:],
       createdAt: Date()
@@ -161,7 +161,7 @@ class AssignmentLogicTests: XCTestCase {
       eventName: eventName,
       rules: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: eventName,
       parameters: [:],
       createdAt: Date()
@@ -219,7 +219,7 @@ class AssignmentLogicTests: XCTestCase {
       eventName: eventName,
       rules: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: eventName,
       parameters: [:],
       createdAt: Date()
@@ -283,7 +283,7 @@ class AssignmentLogicTests: XCTestCase {
       eventName: eventName,
       rules: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: eventName,
       parameters: [:],
       createdAt: Date()
@@ -309,8 +309,8 @@ class AssignmentLogicTests: XCTestCase {
     )
 
     // MARK: Then
-    guard case .noRuleMatch = outcome.triggerResult else {
-      return XCTFail("Incorrect outcome. Expected noRuleMatch")
+    guard case .noAudienceMatch = outcome.triggerResult else {
+      return XCTFail("Incorrect outcome. Expected noAudienceMatch")
     }
     let confirmableAssignments = outcome.confirmableAssignment
     XCTAssertNil(confirmableAssignments)
@@ -339,7 +339,7 @@ class AssignmentLogicTests: XCTestCase {
       eventName: eventName,
       rules: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: "other event",
       parameters: [:],
       createdAt: Date()

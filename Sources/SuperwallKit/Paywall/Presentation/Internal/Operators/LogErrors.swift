@@ -22,8 +22,8 @@ extension Superwall {
         return
       }
       if let reason = error as? PresentationPipelineError {
-        let trackedEvent = InternalSuperwallEvent.PresentationRequest(
-          eventData: request.presentationInfo.eventData,
+        let trackedEvent = InternalSuperwallPlacement.PresentationRequest(
+          placementData: request.presentationInfo.eventData,
           type: request.flags.type,
           status: .noPresentation,
           statusReason: reason,

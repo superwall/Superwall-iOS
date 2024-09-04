@@ -7,16 +7,16 @@
 
 import Foundation
 
-/// The result of tracking an event.
+/// The result of tracking a placement.
 ///
-/// Contains the possible cases resulting from tracking an event.
+/// Contains the possible cases resulting from tracking a placement.
 @objc(SWKPresentationValue)
 public enum PresentationValueObjc: Int, Sendable, Equatable {
-  /// This event was not found on the dashboard.
+  /// This placement was not found on the dashboard.
   ///
-  /// Please make sure you have added the event to a campaign on the dashboard and
+  /// Please make sure you have added the placement to a campaign on the dashboard and
   /// double check its spelling.
-  case eventNotFound
+  case placementNotFound
 
   /// No matching rule was found for this trigger so no paywall will be shown.
   case noRuleMatch
@@ -41,11 +41,11 @@ public enum PresentationValueObjc: Int, Sendable, Equatable {
   case userIsSubscribed
 }
 
-/// Information about the result of tracking an event.
+/// Information about the result of tracking a placement.
 @objc(SWKPresentationResult)
 @objcMembers
 public final class PresentationResultObjc: NSObject, Sendable {
-  /// The result of tracking an event.
+  /// The result of tracking a placement.
   public let value: PresentationValueObjc
 
   /// A campaign experiment that was assigned to a user.
@@ -59,8 +59,8 @@ public final class PresentationResultObjc: NSObject, Sendable {
     case .paywall(let experiment):
       self.value = .paywall
       self.experiment = experiment
-    case .eventNotFound:
-      self.value = .eventNotFound
+    case .placementNotFound:
+      self.value = .placementNotFound
       self.experiment = nil
     case .holdout(let experiment):
       self.value = .holdout

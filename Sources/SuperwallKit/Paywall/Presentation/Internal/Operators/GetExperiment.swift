@@ -38,13 +38,13 @@ extension Superwall {
       }
       errorType = .holdout(experiment)
       paywallStatePublisher?.send(.skipped(.holdout(experiment)))
-    case .noRuleMatch:
+    case .noAudienceMatch:
       await attemptTriggerFire(request: request, rulesOutcome: rulesOutcome)
       errorType = .noRuleMatch
       paywallStatePublisher?.send(.skipped(.noRuleMatch))
-    case .eventNotFound:
-      errorType = .eventNotFound
-      paywallStatePublisher?.send(.skipped(.eventNotFound))
+    case .placementNotFound:
+      errorType = .placementNotFound
+      paywallStatePublisher?.send(.skipped(.placementNotFound))
     case let .error(error):
       if request.flags.type.isGettingPresentationResult {
         Logger.debug(

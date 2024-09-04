@@ -8,14 +8,14 @@
 import Foundation
 
 struct Trigger: Decodable, Hashable {
-  var eventName: String
+  var placementName: String
   var rules: [TriggerRule]
 }
 
 extension Trigger: Stubbable {
   static func stub() -> Trigger {
     return Trigger(
-      eventName: "an_event",
+      placementName: "campaign_trigger",
       rules: []
     )
   }

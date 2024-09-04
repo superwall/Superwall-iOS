@@ -1,5 +1,5 @@
 //
-//  TrackEventView.swift
+//  HomeView.swift
 //  SuperwallSwiftUIExample
 //
 //  Created by Yusuf Tör on 11/03/2022.
@@ -28,7 +28,7 @@ struct HomeView: View {
     VStack(spacing: 48) {
       ScrollView {
         InfoView(
-          text: "The Launch Feature button below registers an event \"campaign_trigger\".\n\nThis event has been added to a campaign on the Superwall dashboard.\n\nWhen this event is registered, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
+          text: "The Launch Feature button below registers a placement \"campaign_trigger\".\n\nThis placement has been added to a campaign on the Superwall dashboard.\n\nWhen this placement is registered, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
         )
 
         Divider()
@@ -58,12 +58,12 @@ struct HomeView: View {
               print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
             case .noRuleMatch:
               print("Paywall not shown because user doesn't match any rules.")
-            case .eventNotFound:
-              print("Paywall not shown because this event isn't part of a campaign.")
+            case .placementNotFound:
+              print("Paywall not shown because this placement isn't part of a campaign.")
             }
           }
 
-          Superwall.shared.register(event: "campaign_trigger", handler: handler) {
+          Superwall.shared.register(placement: "campaign_trigger", handler: handler) {
             // code in here can be remotely configured to execute. Either
             // (1) always after presentation or
             // (2) only if the user pays
@@ -97,7 +97,7 @@ struct HomeView: View {
   }
 }
 
-struct TrackEventView_Previews: PreviewProvider {
+struct HomeView_Previews: PreviewProvider {
   static var previews: some View {
     HomeView(isLoggedIn: .constant(false))
   }

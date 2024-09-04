@@ -34,11 +34,11 @@ public protocol SuperwallDelegate: AnyObject {
   ///
   /// Use this method when you want to track internal analytics events in your own analytics.
   ///
-  /// You can switch over `eventInfo.event` for a list of possible cases. See [Superwall Events](https://docs.superwall.com/docs/tracking-analytics) for more info.
+  /// You can switch over `placementInfo.placement` for a list of possible cases. See [Superwall Placements](https://docs.superwall.com/docs/tracking-analytics) for more info.
   ///
-  /// - Parameter eventInfo: A `SuperwallEventInfo` object containing an `event` and a `params` parameter.
+  /// - Parameter placementInfo: A ``SuperwallPlacementInfo`` object containing a `placement` and a `params` parameter.
   @MainActor
-  func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo)
+  func handleSuperwallPlacement(withInfo placementInfo: SuperwallPlacementInfo)
 
   /// Called when the user taps an element on your paywall that has the click action `Custom action`,
   /// or a `data-pw-custom` tag attached.
@@ -112,7 +112,7 @@ extension SuperwallDelegate {
 
   public func paywallWillOpenDeepLink(url: URL) {}
 
-  public func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {}
+  public func handleSuperwallPlacement(withInfo placementInfo: SuperwallPlacementInfo) {}
 
   public func subscriptionStatusDidChange(to newValue: SubscriptionStatus) {}
 

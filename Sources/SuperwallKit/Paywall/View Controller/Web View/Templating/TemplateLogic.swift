@@ -12,7 +12,7 @@ enum TemplateLogic {
   /// webview.
   static func getBase64EncodedTemplates(
     from paywall: Paywall,
-    event: EventData?,
+    event: PlacementData?,
     factory: VariablesFactory
   ) async -> String {
     let productsTemplate = ProductTemplate(
@@ -23,7 +23,7 @@ enum TemplateLogic {
     let variablesTemplate = await factory.makeJsonVariables(
       products: paywall.productVariables,
       computedPropertyRequests: paywall.computedPropertyRequests,
-      event: event
+      placement: event
     )
 
     let freeTrialTemplate = FreeTrialTemplate(

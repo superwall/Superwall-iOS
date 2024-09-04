@@ -112,7 +112,7 @@ extension Endpoint where Response == EventsResponse {
 extension Endpoint where Response == Paywall {
   static func paywall(
     withIdentifier identifier: String? = nil,
-    fromEvent event: EventData? = nil,
+    fromPlacement placement: PlacementData? = nil,
     retryCount: Int,
     factory: ApiFactory
   ) -> Self {
@@ -124,8 +124,8 @@ extension Endpoint where Response == Paywall {
         retryCount: retryCount,
         factory: factory
       )
-    } else if let event = event {
-      let bodyDict = ["event": event.jsonData]
+    } else if let placement = placement {
+      let bodyDict = ["event": placement.jsonData]
       bodyData = try? JSONEncoder.toSnakeCase.encode(bodyDict)
     } else {
       let body = PaywallRequestBody(appUserId: factory.identityManager.userId)

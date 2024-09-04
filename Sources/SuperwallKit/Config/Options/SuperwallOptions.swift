@@ -129,7 +129,7 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// received the go-ahead from the Superwall team.
   public var networkEnvironment: NetworkEnvironment = .release
 
-  /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
+  /// Enables the sending of non-Superwall tracked placements and properties back to the Superwall servers.
   /// Defaults to `true`.
   ///
   /// Set this to `false` to stop external data collection. This will not affect

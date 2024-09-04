@@ -116,7 +116,7 @@ extension Superwall {
       .explicitTrigger:
       switch triggerResult {
       case .error,
-        .eventNotFound:
+        .placementNotFound:
         return
       default:
         break
@@ -125,7 +125,7 @@ extension Superwall {
       break
     }
 
-    let trackedEvent = InternalSuperwallEvent.TriggerFire(
+    let trackedEvent = InternalSuperwallPlacement.TriggerFire(
       triggerResult: triggerResult,
       triggerName: eventName
     )

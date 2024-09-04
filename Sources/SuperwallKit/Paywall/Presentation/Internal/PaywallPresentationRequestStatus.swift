@@ -37,8 +37,8 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
   /// No rules defined in the campaign for the event matched.
   case noRuleMatch
 
-  /// The event provided was not found in any campaign on the dashboard.
-  case eventNotFound
+  /// The placement provided was not found in any campaign on the dashboard.
+  case placementNotFound
 
   /// There was an error getting the paywall view controller.
   case noPaywallViewController
@@ -67,8 +67,8 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
       return "holdout"
     case .noRuleMatch:
       return "no_rule_match"
-    case .eventNotFound:
-      return "event_not_found"
+    case .placementNotFound:
+      return "placement_not_found"
     case .noPaywallViewController:
       return "no_paywall_view_controller"
     case .noPresenter:

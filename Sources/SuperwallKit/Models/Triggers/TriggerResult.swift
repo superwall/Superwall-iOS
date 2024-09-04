@@ -11,11 +11,11 @@ import Foundation
 ///
 /// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
 public enum TriggerResult: Sendable, Equatable {
-  /// This event was not found on the dashboard.
+  /// This placement was not found on the dashboard.
   ///
-  /// Please make sure you have added the event to a campaign on the dashboard and
+  /// Please make sure you have added the placement to a campaign on the dashboard and
   /// double check its spelling.
-  case eventNotFound
+  case placementNotFound
 
   /// No matching rule was found for this trigger so no paywall will be shown.
   case noRuleMatch
@@ -44,14 +44,14 @@ public enum TriggerResult: Sendable, Equatable {
 ///
 /// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
 enum InternalTriggerResult: Equatable {
-  /// This event was not found on the dashboard.
+  /// This placement was not found on the dashboard.
   ///
-  /// Please make sure you have added the event to a campaign on the dashboard and
+  /// Please make sure you have added the placement to a campaign on the dashboard and
   /// double check its spelling.
-  case eventNotFound
+  case placementNotFound
 
   /// No matching rule was found for this trigger so no paywall will be shown.
-  case noRuleMatch([UnmatchedRule])
+  case noAudienceMatch([UnmatchedRule])
 
   /// A matching rule was found and this user will be shown a paywall.
   ///
@@ -74,9 +74,9 @@ enum InternalTriggerResult: Equatable {
 
   func toPublicType() -> TriggerResult {
     switch self {
-    case .eventNotFound:
-      return .eventNotFound
-    case .noRuleMatch:
+    case .placementNotFound:
+      return .placementNotFound
+    case .noAudienceMatch:
       return .noRuleMatch
     case .paywall(let experiment):
       return .paywall(experiment)

@@ -249,7 +249,7 @@ public final class Superwall: NSObject, ObservableObject {
       _ = await (fetchConfig, configureIdentity)
 
       await track(
-        InternalSuperwallEvent.ConfigAttributes(
+        InternalSuperwallPlacement.ConfigAttributes(
           options: dependencyContainer.configManager.options,
           hasExternalPurchaseController: purchaseController != nil,
           hasDelegate: delegate != nil
@@ -288,7 +288,7 @@ public final class Superwall: NSObject, ObservableObject {
 
           Task {
             await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
-            let event = InternalSuperwallEvent.SubscriptionStatusDidChange(subscriptionStatus: newValue)
+            let event = InternalSuperwallPlacement.SubscriptionStatusDidChange(subscriptionStatus: newValue)
             await self.track(event)
           }
         }
@@ -440,10 +440,10 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
   /// - Parameters:
-  ///   - eventNames: A set of names of events whose paywalls you want to preload.
-  public func preloadPaywalls(forEvents eventNames: Set<String>) {
+  ///   - placementNames: A set of names of events whose paywalls you want to preload.
+  public func preloadPaywalls(forPlacements placementNames: Set<String>) {
     Task { [weak self] in
-      await self?.dependencyContainer.configManager.preloadPaywalls(for: eventNames)
+      await self?.dependencyContainer.configManager.preloadPaywalls(for: placementNames)
     }
   }
 
@@ -457,7 +457,7 @@ public final class Superwall: NSObject, ObservableObject {
 
     Task {
       let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
-      let event = InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
+      let event = InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
       await track(event)
     }
   }
@@ -469,7 +469,7 @@ public final class Superwall: NSObject, ObservableObject {
     Task {
       let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
       await Superwall.shared.track(
-        InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
+        InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
     }
   }
@@ -488,7 +488,7 @@ public final class Superwall: NSObject, ObservableObject {
   @discardableResult
   public func handleDeepLink(_ url: URL) -> Bool {
     Task {
-      await track(InternalSuperwallEvent.DeepLink(url: url))
+      await track(InternalSuperwallPlacement.DeepLink(url: url))
     }
     return dependencyContainer.debugManager.handle(deepLinkUrl: url)
   }
@@ -524,7 +524,7 @@ public final class Superwall: NSObject, ObservableObject {
     presentationItems.reset()
     dependencyContainer.configManager.reset()
     Task {
-      await Superwall.shared.track(InternalSuperwallEvent.Reset())
+      await Superwall.shared.track(InternalSuperwallPlacement.Reset())
     }
   }
 }
@@ -575,7 +575,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
     case let .customPlacement(name: name, params: params):
       Task {
         let paramsDict = params.dictionaryValue
-        let trackedEvent = InternalSuperwallEvent.CustomPlacement(
+        let trackedEvent = InternalSuperwallPlacement.CustomPlacement(
           paywallInfo: paywallViewController.info,
           name: name,
           params: paramsDict

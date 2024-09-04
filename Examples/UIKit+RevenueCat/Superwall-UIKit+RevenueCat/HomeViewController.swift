@@ -1,5 +1,5 @@
 //
-//  TrackEventViewController.swift
+//  HomeViewController.swift
 //  SuperwallUIKitExample
 //
 //  Created by Yusuf Tör on 05/04/2022.
@@ -82,12 +82,12 @@ final class HomeViewController: UIViewController {
         print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
       case .noRuleMatch:
         print("Paywall not shown because user doesn't match any rules.")
-      case .eventNotFound:
-        print("Paywall not shown because this event isn't part of a campaign.")
+      case .placementNotFound:
+        print("Paywall not shown because this placement isn't part of a campaign.")
       }
     }
 
-    Superwall.shared.register(event: "campaign_trigger", handler: handler) {
+    Superwall.shared.register(placement: "campaign_trigger", handler: handler) {
       // code in here can be remotely configured to execute. Either
       // (1) always after presentation or
       // (2) only if the user pays

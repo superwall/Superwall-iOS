@@ -154,7 +154,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         if let error = error as? SKError {
           switch error.code {
           case .overlayTimeout:
-            let trackedEvent = await InternalSuperwallEvent.Transaction(
+            let trackedEvent = await InternalSuperwallPlacement.Transaction(
               state: .timeout,
               paywallInfo: paywallViewController.info,
               product: nil,

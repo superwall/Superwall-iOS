@@ -7,15 +7,15 @@
 
 import Foundation
 
-/// The result of a tracking an event.
+/// The result of a tracking a placement.
 ///
-/// Contains the possible cases resulting from tracking an event.
+/// Contains the possible cases resulting from tracking a placement.
 public enum PresentationResult: Sendable, Equatable {
-  /// This event was not found on the dashboard.
+  /// This placement was not found on the dashboard.
   ///
-  /// Please make sure you have added the event to a campaign on the dashboard and
+  /// Please make sure you have added the placement to a campaign on the dashboard and
   /// double check its spelling.
-  case eventNotFound
+  case placementNotFound
 
   /// No matching rule was found for this trigger so no paywall will be shown.
   case noRuleMatch

@@ -145,7 +145,7 @@ enum SurveyAssignmentKey: Storable {
   typealias Value = String
 }
 
-enum DisableVerboseEvents: Storable {
+enum DisableVerbosePlacements: Storable {
   static var key: String {
     "store.disableVerboseEvents"
   }

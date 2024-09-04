@@ -24,7 +24,7 @@ extension Superwall {
       )
       return await ruleLogic.evaluateRules(
         forEvent: eventData,
-        triggers: dependencyContainer.configManager.triggersByEventName
+        triggers: dependencyContainer.configManager.triggersByPlacementName
       )
     } else {
       // Called if the debugger is shown.

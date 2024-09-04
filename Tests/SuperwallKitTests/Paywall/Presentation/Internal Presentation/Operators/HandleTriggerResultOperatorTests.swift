@@ -99,7 +99,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
 
   func test_handleTriggerResult_noRuleMatch() async {
     let input = RuleEvaluationOutcome(
-      triggerResult: .noRuleMatch([])
+      triggerResult: .noAudienceMatch([])
     )
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()

@@ -13,14 +13,14 @@ extension PaywallRequestManager {
   ) async throws -> Paywall {
     await trackResponseStarted(
       paywallId: request.responseIdentifiers.paywallId,
-      event: request.eventData
+      event: request.placementData
     )
     let paywall = try await getPaywallResponse(from: request)
 
-    let paywallInfo = paywall.getInfo(fromEvent: request.eventData)
+    let paywallInfo = paywall.getInfo(fromPlacement: request.placementData)
     await trackResponseLoaded(
       paywallInfo,
-      event: request.eventData
+      event: request.placementData
     )
 
     return paywall
@@ -31,7 +31,7 @@ extension PaywallRequestManager {
   ) async throws -> Paywall {
     let responseLoadStartTime = Date()
     let paywallId = request.responseIdentifiers.paywallId
-    let event = request.eventData
+    let event = request.placementData
     var paywall: Paywall
 
     do {
@@ -43,7 +43,7 @@ extension PaywallRequestManager {
       } else {
         paywall = try await network.getPaywall(
           withId: paywallId,
-          fromEvent: event,
+          fromPlacement: event,
           retryCount: request.retryCount
         )
       }
@@ -65,22 +65,22 @@ extension PaywallRequestManager {
   // MARK: - Analytics
   private func trackResponseStarted(
     paywallId: String?,
-    event: EventData?
+    event: PlacementData?
   ) async {
-    let trackedEvent = InternalSuperwallEvent.PaywallLoad(
+    let trackedEvent = InternalSuperwallPlacement.PaywallLoad(
       state: .start,
-      eventData: event
+      placementData: event
     )
     await Superwall.shared.track(trackedEvent)
   }
 
   private func trackResponseLoaded(
     _ paywallInfo: PaywallInfo,
-    event: EventData?
+    event: PlacementData?
   ) async {
-    let responseLoadEvent = InternalSuperwallEvent.PaywallLoad(
+    let responseLoadEvent = InternalSuperwallPlacement.PaywallLoad(
       state: .complete(paywallInfo: paywallInfo),
-      eventData: event
+      placementData: event
     )
     await Superwall.shared.track(responseLoadEvent)
   }

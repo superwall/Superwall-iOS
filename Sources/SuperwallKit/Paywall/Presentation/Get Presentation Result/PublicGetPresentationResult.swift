@@ -10,32 +10,32 @@ import Foundation
 typealias PresentationPipelineError = PaywallPresentationRequestStatusReason
 
 extension Superwall {
-  /// Preemptively gets the result of registering an event.
+  /// Preemptively gets the result of registering a placement.
   ///
-  /// This helps you determine whether a particular event will present a paywall
+  /// This helps you determine whether a particular placement will present a paywall
   /// in the future.
   ///
   /// Note that this method does not present a paywall. To do that, use
-  /// ``register(event:params:handler:feature:)``.
+  /// ``register(placement:params:handler:feature:)``.
   ///
   /// - Parameters:
-  ///     - event: The name of the event you want to register.
-  ///     - params: Optional parameters you'd like to pass with your event.
+  ///    - placement: The name of the placement you want to register.
+  ///    - params: Optional parameters you'd like to pass with your placement.
   ///
   /// - Returns: A ``PresentationResult`` that indicates the result of registering an event.
   public func getPresentationResult(
-    forEvent event: String,
+    forPlacement placement: String,
     params: [String: Any]? = nil
   ) async -> PresentationResult {
-    let event = UserInitiatedEvent.Track(
-      rawName: event,
+    let placement = UserInitiatedPlacement.Track(
+      rawName: placement,
       canImplicitlyTriggerPaywall: false,
       audienceFilterParams: params ?? [:],
       isFeatureGatable: false
     )
 
     return await internallyGetPresentationResult(
-      forEvent: event,
+      forPlacement: placement,
       requestType: .getPresentationResult
     )
   }
@@ -70,18 +70,18 @@ extension Superwall {
   ///   - event: The event that's being tracked.
   ///   - requestType: The presentation request type, which will control the flow of the pipeline.
   func internallyGetPresentationResult(
-    forEvent event: Trackable,
+    forPlacement placement: Trackable,
     requestType: PresentationRequestType
   ) async -> PresentationResult {
     let eventCreatedAt = Date()
 
     let parameters = await TrackingLogic.processParameters(
-      fromTrackableEvent: event,
+      fromTrackablePlacement: placement,
       appSessionId: dependencyContainer.appSessionManager.appSession.id
     )
 
-    let eventData = EventData(
-      name: event.rawName,
+    let eventData = PlacementData(
+      name: placement.rawName,
       parameters: JSON(parameters.audienceFilterParams),
       createdAt: eventCreatedAt
     )

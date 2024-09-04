@@ -19,16 +19,16 @@ class CoreDataManager {
     }
   }
 
-  func saveEventData(
-    _ eventData: EventData,
-    completion: ((ManagedEventData) -> Void)? = nil
+  func savePlacementData(
+    _ eventData: PlacementData,
+    completion: ((ManagedPlacementData) -> Void)? = nil
   ) {
     guard let backgroundContext = backgroundContext else {
       return
     }
     backgroundContext.perform {
       let data = try? JSONEncoder().encode(eventData.parameters)
-      guard let managedEventData = ManagedEventData(
+      guard let managedPlacementData = ManagedPlacementData(
         context: backgroundContext,
         id: eventData.id,
         createdAt: eventData.createdAt,
@@ -42,7 +42,7 @@ class CoreDataManager {
         if backgroundContext.hasChanges {
           try backgroundContext.save()
         }
-        completion?(managedEventData)
+        completion?(managedPlacementData)
       } catch let error as NSError {
         Logger.debug(
           logLevel: .error,
@@ -93,9 +93,9 @@ class CoreDataManager {
       return
     }
     let eventDataRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(
-      entityName: ManagedEventData.entityName
+      entityName: ManagedPlacementData.entityName
     )
-    let deleteEventDataRequest = NSBatchDeleteRequest(fetchRequest: eventDataRequest)
+    let deletePlacementDataRequest = NSBatchDeleteRequest(fetchRequest: eventDataRequest)
 
     let occurrenceRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(
       entityName: ManagedTriggerRuleOccurrence.entityName
@@ -104,7 +104,7 @@ class CoreDataManager {
 
     backgroundContext.performAndWait {
       do {
-        try backgroundContext.executeAndMergeChanges(using: deleteEventDataRequest)
+        try backgroundContext.executeAndMergeChanges(using: deletePlacementDataRequest)
         try backgroundContext.executeAndMergeChanges(using: deleteOccurrenceRequest)
         completion?()
       } catch {
@@ -118,18 +118,18 @@ class CoreDataManager {
     }
   }
 
-  func getComputedPropertySinceEvent(
-    _ event: EventData?,
+  func getComputedPropertySincePlacement(
+    _ event: PlacementData?,
     request: ComputedPropertyRequest
   ) async -> Int? {
     var lastEventDate: Date?
     if let event = event {
-      lastEventDate = event.name == request.eventName ? event.createdAt : nil
+      lastEventDate = event.name == request.placementName ? event.createdAt : nil
     }
 
     return await withCheckedContinuation { continuation in
       coreDataStack.getLastSavedEvent(
-        name: request.eventName,
+        name: request.placementName,
         before: lastEventDate
       ) { event in
         guard let event = event else {

@@ -52,8 +52,8 @@ extension Superwall {
       return .noRuleMatch
     case .holdout(let experiment):
       return .holdout(experiment)
-    case .eventNotFound:
-      return .eventNotFound
+    case .placementNotFound:
+      return .placementNotFound
     case .debuggerPresented,
       .noPresenter,
       .paywallAlreadyPresented,

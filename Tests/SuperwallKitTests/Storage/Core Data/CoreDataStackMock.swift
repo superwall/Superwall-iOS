@@ -24,7 +24,7 @@ final class CoreDataStackMock: CoreDataStack {
     }
   }
 
-  func batchInsertEventData(
+  func batchInsertPlacementData(
     eventName: String,
     count: Int,
     completion: @escaping () -> Void
@@ -32,14 +32,14 @@ final class CoreDataStackMock: CoreDataStack {
     var index = 0
 
     let batchInsert = NSBatchInsertRequest(
-      entity: ManagedEventData.entity()
+      entity: ManagedPlacementData.entity()
     ) { (managedObject: NSManagedObject) -> Bool in
       guard index < count else {
         return true
       }
 
-      if let eventData = managedObject as? ManagedEventData {
-        let stub = EventData.stub()
+      if let eventData = managedObject as? ManagedPlacementData {
+        let stub = PlacementData.stub()
           .setting(\.name, to: eventName)
         eventData.createdAt = stub.createdAt
         eventData.id = stub.id

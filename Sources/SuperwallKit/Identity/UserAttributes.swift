@@ -1,5 +1,5 @@
 //
-//  PublicEvents.swift
+//  UserAttributes.swift
 //  Superwall
 //
 //  Created by Yusuf Tör on 04/03/2022.

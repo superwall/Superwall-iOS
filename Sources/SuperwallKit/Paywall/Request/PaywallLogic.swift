@@ -26,7 +26,7 @@ struct ProductProcessingOutcome {
 enum PaywallLogic {
   static func requestHash(
     identifier: String? = nil,
-    event: EventData? = nil,
+    event: PlacementData? = nil,
     locale: String,
     joinedSubstituteProductIds: String?
   ) -> String {
@@ -40,14 +40,14 @@ enum PaywallLogic {
 
   static func handlePaywallError(
     _ error: Error,
-    forEvent event: EventData?,
+    forEvent event: PlacementData?,
     trackEvent: @escaping (Trackable) async -> TrackingResult = Superwall.shared.track
   ) -> NSError {
     if let error = error as? NetworkError,
       error == .notFound {
-      let trackedEvent = InternalSuperwallEvent.PaywallLoad(
+      let trackedEvent = InternalSuperwallPlacement.PaywallLoad(
         state: .notFound,
-        eventData: event
+        placementData: event
       )
       Task {
         _ = await trackEvent(trackedEvent)
@@ -66,9 +66,9 @@ enum PaywallLogic {
       )
       return error
     } else {
-      let trackedEvent = InternalSuperwallEvent.PaywallLoad(
+      let trackedEvent = InternalSuperwallPlacement.PaywallLoad(
         state: .fail,
-        eventData: event
+        placementData: event
       )
       Task {
         _ = await trackEvent(trackedEvent)

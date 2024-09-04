@@ -233,7 +233,7 @@ final class DebugViewController: UIViewController {
 
     do {
       let request = factory.makePaywallRequest(
-        eventData: nil,
+        placementData: nil,
         responseIdentifiers: .init(paywallId: paywallId),
         overrides: nil,
         isDebuggerLaunched: true,
@@ -379,7 +379,7 @@ final class DebugViewController: UIViewController {
     }
     guard let (productsById, _) = try? await storeKitManager.getProducts(
       forPaywall: paywall,
-      event: nil
+      placement: nil
     ) else {
       return
     }
@@ -466,8 +466,8 @@ final class DebugViewController: UIViewController {
             errorMessage = "The user was assigned to a holdout."
           case .noRuleMatch:
             errorMessage = "The user didn't match a rule."
-          case .eventNotFound:
-            errorMessage = "Couldn't find event."
+          case .placementNotFound:
+            errorMessage = "Couldn't find placement."
           case .userIsSubscribed:
             errorMessage = "The user is subscribed."
           }

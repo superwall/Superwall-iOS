@@ -25,7 +25,7 @@ extension PaywallRequestManager {
     )
     paywall = await trackProductsLoadFinish(
       paywall: paywall,
-      event: request.eventData
+      event: request.placementData
     )
 
     return paywall
@@ -37,7 +37,7 @@ extension PaywallRequestManager {
     do {
       let result = try await storeKitManager.getProducts(
         forPaywall: paywall,
-        event: request.eventData,
+        placement: request.placementData,
         substituting: request.overrides.products
       )
 
@@ -58,10 +58,10 @@ extension PaywallRequestManager {
       return paywall
     } catch {
       paywall.productsLoadingInfo.failAt = Date()
-      let paywallInfo = paywall.getInfo(fromEvent: request.eventData)
+      let paywallInfo = paywall.getInfo(fromPlacement: request.placementData)
       await trackProductLoadFail(
         paywallInfo: paywallInfo,
-        event: request.eventData,
+        event: request.placementData,
         error: error
       )
       throw error
@@ -72,11 +72,11 @@ extension PaywallRequestManager {
   private func trackProductsLoadStart(paywall: Paywall, request: PaywallRequest) async -> Paywall {
     var paywall = paywall
     paywall.productsLoadingInfo.startAt = Date()
-    let paywallInfo = paywall.getInfo(fromEvent: request.eventData)
-    let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
+    let paywallInfo = paywall.getInfo(fromPlacement: request.placementData)
+    let productLoadEvent = InternalSuperwallPlacement.PaywallProductsLoad(
       state: .start,
       paywallInfo: paywallInfo,
-      eventData: request.eventData
+      placementData: request.placementData
     )
     await Superwall.shared.track(productLoadEvent)
 
@@ -85,28 +85,28 @@ extension PaywallRequestManager {
 
   private func trackProductLoadFail(
     paywallInfo: PaywallInfo,
-    event: EventData?,
+    event: PlacementData?,
     error: Error
   ) async {
-    let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
+    let productLoadEvent = InternalSuperwallPlacement.PaywallProductsLoad(
       state: .fail(error),
       paywallInfo: paywallInfo,
-      eventData: event
+      placementData: event
     )
     await Superwall.shared.track(productLoadEvent)
   }
 
   private func trackProductsLoadFinish(
     paywall: Paywall,
-    event: EventData?
+    event: PlacementData?
   ) async -> Paywall {
     var paywall = paywall
     paywall.productsLoadingInfo.endAt = Date()
-    let paywallInfo = paywall.getInfo(fromEvent: event)
-    let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
+    let paywallInfo = paywall.getInfo(fromPlacement: event)
+    let productLoadEvent = InternalSuperwallPlacement.PaywallProductsLoad(
       state: .complete,
       paywallInfo: paywallInfo,
-      eventData: event
+      placementData: event
     )
     await Superwall.shared.track(productLoadEvent)
 

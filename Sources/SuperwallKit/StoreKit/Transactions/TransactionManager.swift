@@ -15,7 +15,7 @@ final class TransactionManager {
   private let receiptManager: ReceiptManager
   private let purchaseController: PurchaseController
   private let sessionEventsManager: SessionEventsManager
-  private let eventsQueue: EventsQueue
+  private let placementsQueue: PlacementsQueue
   private let factory: Factory
   typealias Factory = OptionsFactory
     & TriggerFactory
@@ -28,14 +28,14 @@ final class TransactionManager {
     receiptManager: ReceiptManager,
     purchaseController: PurchaseController,
     sessionEventsManager: SessionEventsManager,
-    eventsQueue: EventsQueue,
+    placementsQueue: PlacementsQueue,
     factory: Factory
   ) {
     self.storeKitManager = storeKitManager
     self.receiptManager = receiptManager
     self.purchaseController = purchaseController
     self.sessionEventsManager = sessionEventsManager
-    self.eventsQueue = eventsQueue
+    self.placementsQueue = placementsQueue
     self.factory = factory
   }
 
@@ -122,11 +122,11 @@ final class TransactionManager {
 
     paywallViewController.loadingState = .loadingPurchase
 
-    let trackedEvent = InternalSuperwallEvent.Restore(
+    let restore = InternalSuperwallPlacement.Restore(
       state: .start,
       paywallInfo: paywallViewController.info
     )
-    await Superwall.shared.track(trackedEvent)
+    await Superwall.shared.track(restore)
     paywallViewController.webView.messageHandler.handle(.restoreStart)
 
     let restorationResult = await purchaseController.restorePurchases()
@@ -144,7 +144,7 @@ final class TransactionManager {
         paywallViewController: paywallViewController
       )
 
-      let trackedEvent = InternalSuperwallEvent.Restore(
+      let trackedEvent = InternalSuperwallPlacement.Restore(
         state: .complete,
         paywallInfo: paywallViewController.info
       )
@@ -167,7 +167,7 @@ final class TransactionManager {
         message: message
       )
 
-      let trackedEvent = InternalSuperwallEvent.Restore(
+      let trackedEvent = InternalSuperwallPlacement.Restore(
         state: .fail(message),
         paywallInfo: paywallViewController.info
       )
@@ -204,7 +204,7 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
 
-    let trackedEvent = InternalSuperwallEvent.Transaction(
+    let trackedEvent = InternalSuperwallPlacement.Transaction(
       state: .restore(restoreType),
       paywallInfo: paywallInfo,
       product: product,
@@ -253,7 +253,7 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
     Task {
-      let trackedEvent = InternalSuperwallEvent.Transaction(
+      let trackedEvent = InternalSuperwallPlacement.Transaction(
         state: .fail(.failure(error.safeLocalizedDescription, product)),
         paywallInfo: paywallInfo,
         product: product,
@@ -279,7 +279,7 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
 
-    let trackedEvent = InternalSuperwallEvent.Transaction(
+    let trackedEvent = InternalSuperwallPlacement.Transaction(
       state: .start(product),
       paywallInfo: paywallInfo,
       product: product,
@@ -350,7 +350,7 @@ final class TransactionManager {
     )
 
     let paywallInfo = await paywallViewController.info
-    let trackedEvent = InternalSuperwallEvent.Transaction(
+    let trackedEvent = InternalSuperwallPlacement.Transaction(
       state: .abandon(product),
       paywallInfo: paywallInfo,
       product: product,
@@ -375,7 +375,7 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
 
-    let trackedEvent = InternalSuperwallEvent.Transaction(
+    let trackedEvent = InternalSuperwallPlacement.Transaction(
       state: .fail(.pending("Needs parental approval")),
       paywallInfo: paywallInfo,
       product: nil,
@@ -411,7 +411,7 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
 
-    let trackedEvent = InternalSuperwallEvent.Transaction(
+    let trackedEvent = InternalSuperwallPlacement.Transaction(
       state: .complete(product, transaction),
       paywallInfo: paywallInfo,
       product: product,
@@ -421,17 +421,17 @@ final class TransactionManager {
     await paywallViewController.webView.messageHandler.handle(.transactionComplete)
 
     // Immediately flush the events queue on transaction complete.
-    await eventsQueue.flushInternal()
+    await placementsQueue.flushInternal()
 
     if product.subscriptionPeriod == nil {
-      let trackedEvent = InternalSuperwallEvent.NonRecurringProductPurchase(
+      let trackedEvent = InternalSuperwallPlacement.NonRecurringProductPurchase(
         paywallInfo: paywallInfo,
         product: product
       )
       await Superwall.shared.track(trackedEvent)
     } else {
       if didStartFreeTrial {
-        let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
+        let trackedEvent = InternalSuperwallPlacement.FreeTrialStart(
           paywallInfo: paywallInfo,
           product: product
         )
@@ -443,7 +443,7 @@ final class TransactionManager {
 
         await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
       } else {
-        let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
+        let trackedEvent = InternalSuperwallPlacement.SubscriptionStart(
           paywallInfo: paywallInfo,
           product: product
         )

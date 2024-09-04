@@ -44,8 +44,8 @@ extension Superwall {
       subscriptionStatus = try await subscriptionStatusTask.value
     } catch {
       Task {
-        let trackedEvent = InternalSuperwallEvent.PresentationRequest(
-          eventData: request.presentationInfo.eventData,
+        let trackedEvent = InternalSuperwallPlacement.PresentationRequest(
+          placementData: request.presentationInfo.eventData,
           type: request.flags.type,
           status: .timeout,
           statusReason: .subscriptionStatusTimeout,
@@ -98,8 +98,8 @@ extension Superwall {
             if configState.value.getConfig() == nil {
               // Still failed to get config, call feature block.
               Task {
-                let trackedEvent = InternalSuperwallEvent.PresentationRequest(
-                  eventData: request.presentationInfo.eventData,
+                let trackedEvent = InternalSuperwallPlacement.PresentationRequest(
+                  placementData: request.presentationInfo.eventData,
                   type: request.flags.type,
                   status: .timeout,
                   statusReason: .noConfig,

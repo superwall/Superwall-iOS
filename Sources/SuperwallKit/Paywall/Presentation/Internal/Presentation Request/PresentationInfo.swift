@@ -9,8 +9,8 @@ import Foundation
 
 /// Contains information about the presentation of a paywall.
 enum PresentationInfo {
-  case implicitTrigger(EventData)
-  case explicitTrigger(EventData)
+  case implicitTrigger(PlacementData)
+  case explicitTrigger(PlacementData)
 
   /// Only used in the `DebugViewController`
   case fromIdentifier(_ identifier: String, freeTrialOverride: Bool)
@@ -24,7 +24,7 @@ enum PresentationInfo {
     }
   }
 
-  var eventData: EventData? {
+  var eventData: PlacementData? {
     switch self {
     case let .implicitTrigger(eventData),
       let .explicitTrigger(eventData):

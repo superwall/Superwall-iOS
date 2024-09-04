@@ -48,11 +48,11 @@ struct RuleLogic {
   ///   in Core Data.
   /// - Returns: An assignment to confirm, if available.
   func evaluateRules(
-    forEvent event: EventData,
+    forEvent event: PlacementData,
     triggers: [String: Trigger]
   ) async -> RuleEvaluationOutcome {
     guard let trigger = triggers[event.name] else {
-      return RuleEvaluationOutcome(triggerResult: .eventNotFound)
+      return RuleEvaluationOutcome(triggerResult: .placementNotFound)
     }
 
     let ruleMatchOutcome = await findMatchingRule(
@@ -66,7 +66,7 @@ struct RuleLogic {
     case .matched(let item):
       matchedRuleItem = item
     case .noMatchingRules(let unmatchedRules):
-      return.init(triggerResult: .noRuleMatch(unmatchedRules))
+      return.init(triggerResult: .noAudienceMatch(unmatchedRules))
     }
 
     let variant: Experiment.Variant
@@ -129,7 +129,7 @@ struct RuleLogic {
   }
 
   func findMatchingRule(
-    for event: EventData,
+    for event: PlacementData,
     withTrigger trigger: Trigger
   ) async -> RuleMatchOutcome {
     let expressionEvaluator = ExpressionEvaluator(
@@ -141,8 +141,8 @@ struct RuleLogic {
 
     for rule in trigger.rules {
       let outcome = await expressionEvaluator.evaluateExpression(
-        fromRule: rule,
-        eventData: event
+        fromAudienceFilter: rule,
+        placementData: event
       )
 
       switch outcome {

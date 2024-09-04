@@ -146,12 +146,12 @@ final class ConfigLogicTests: XCTestCase {
   // MARK: - getRulesPerTriggerGroup
 
   func test_getRulesPerTriggerGroup_noTriggers() {
-    let rules = ConfigLogic.getRulesPerCampaign(from: [])
+    let rules = ConfigLogic.getAudienceFiltersPerCampaign(from: [])
     XCTAssertTrue(rules.isEmpty)
   }
 
   func test_getRulesPerTriggerGroup_noRules() {
-    let rules = ConfigLogic.getRulesPerCampaign(from: [
+    let rules = ConfigLogic.getAudienceFiltersPerCampaign(from: [
       .stub()
       .setting(\.rules, to: [])
     ])
@@ -174,7 +174,7 @@ final class ConfigLogicTests: XCTestCase {
         .stub()
         .setting(\.experiment.groupId, to: "2")
       ])
-    let rules = ConfigLogic.getRulesPerCampaign(from: [
+    let rules = ConfigLogic.getAudienceFiltersPerCampaign(from: [
       trigger1, trigger2, trigger3
     ])
     XCTAssertEqual(rules.count, 2)
@@ -993,15 +993,15 @@ final class ConfigLogicTests: XCTestCase {
 
   func test_getTriggerDictionary() {
     let firstTrigger: Trigger = .stub()
-      .setting(\.eventName, to: "abc")
+      .setting(\.placementName, to: "abc")
     
     let secondTrigger: Trigger = .stub()
-      .setting(\.eventName, to: "def")
+      .setting(\.placementName, to: "def")
     
     let triggers: Set<Trigger> = [
       firstTrigger, secondTrigger
     ]
-    let dictionary = ConfigLogic.getTriggersByEventName(from: triggers)
+    let dictionary = ConfigLogic.getTriggersByPlacementName(from: triggers)
     XCTAssertEqual(dictionary["abc"], firstTrigger)
     XCTAssertEqual(dictionary["def"], secondTrigger)
   }
@@ -1049,7 +1049,7 @@ final class ConfigLogicTests: XCTestCase {
       removing: disabled
     )
     XCTAssertEqual(filteredTriggers.count, 1)
-    XCTAssertEqual(filteredTriggers.first!.eventName, "campaign_trigger")
+    XCTAssertEqual(filteredTriggers.first!.placementName, "campaign_trigger")
   }
 
   func test_filterTriggers_disableNone() {

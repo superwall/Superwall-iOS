@@ -28,7 +28,7 @@ class ProductsFetcherSK1: NSObject {
   struct ProductRequest {
     let identifiers: Set<String>
     let paywall: Paywall?
-    let event: EventData?
+    let event: PlacementData?
     let retriesLeft: Int
   }
 
@@ -42,7 +42,7 @@ class ProductsFetcherSK1: NSObject {
   func products(
     identifiers: Set<String>,
     forPaywall paywall: Paywall?,
-    event: EventData?
+    event: PlacementData?
   ) async throws -> Set<StoreProduct> {
     let sk1Products = try await withCheckedThrowingContinuation { continuation in
       products(withIdentifiers: identifiers, forPaywall: paywall, event: event) { result in
@@ -58,7 +58,7 @@ class ProductsFetcherSK1: NSObject {
 	private func products(
     withIdentifiers identifiers: Set<String>,
     forPaywall paywall: Paywall?,
-    event: EventData?,
+    event: PlacementData?,
     completion: @escaping ProductRequestCompletionBlock
   ) {
     // Return if there aren't any product IDs.
@@ -125,7 +125,7 @@ class ProductsFetcherSK1: NSObject {
   private func startRequest(
     forIdentifiers identifiers: Set<String>,
     paywall: Paywall?,
-    event: EventData?,
+    event: PlacementData?,
     retriesLeft: Int
   ) {
     let request = SKProductsRequest(productIdentifiers: identifiers)
@@ -280,10 +280,10 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
             guard let paywall = productRequest.paywall else {
               return
             }
-            let productLoadEvent = InternalSuperwallEvent.PaywallProductsLoad(
+            let productLoadEvent = InternalSuperwallPlacement.PaywallProductsLoad(
               state: .retry(retryCount),
-              paywallInfo: paywall.getInfo(fromEvent: productRequest.event),
-              eventData: productRequest.event
+              paywallInfo: paywall.getInfo(fromPlacement: productRequest.event),
+              placementData: productRequest.event
             )
             await Superwall.shared.track(productLoadEvent)
           }

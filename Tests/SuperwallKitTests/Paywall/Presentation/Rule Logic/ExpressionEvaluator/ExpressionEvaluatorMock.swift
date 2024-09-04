@@ -12,7 +12,7 @@ import Foundation
 struct ExpressionEvaluatorMock: ExpressionEvaluating {
   let outcome: TriggerRuleOutcome
 
-  func evaluateExpression(fromRule rule: TriggerRule, eventData: EventData?) async -> TriggerRuleOutcome {
+  func evaluateExpression(fromAudienceFilter rule: TriggerRule, placementData: PlacementData?) async -> TriggerRuleOutcome {
     return outcome
   }
 }

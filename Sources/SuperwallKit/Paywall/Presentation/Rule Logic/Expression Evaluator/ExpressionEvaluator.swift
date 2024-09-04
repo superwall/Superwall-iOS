@@ -10,8 +10,8 @@ import JavaScriptCore
 
 protocol ExpressionEvaluating {
   func evaluateExpression(
-    fromRule rule: TriggerRule,
-    eventData: EventData?
+    fromAudienceFilter rule: TriggerRule,
+    placementData: PlacementData?
   ) async -> TriggerRuleOutcome
 }
 
@@ -28,8 +28,8 @@ struct ExpressionEvaluator: ExpressionEvaluating {
   }
 
   func evaluateExpression(
-    fromRule rule: TriggerRule,
-    eventData: EventData?
+    fromAudienceFilter rule: TriggerRule,
+    placementData: PlacementData?
   ) async -> TriggerRuleOutcome {
     // Expression matches all
     if rule.expressionJs == nil && rule.expression == nil {
@@ -57,7 +57,7 @@ struct ExpressionEvaluator: ExpressionEvaluating {
       let moreInfo = "In method \(String(describing: stackTraceString)), Line number in file: \(String(describing: lineNumber)), column: \(String(describing: columnNumber))"
       Logger.debug(
         logLevel: .error,
-        scope: .events,
+        scope: .placements,
         message: "JS ERROR: \(String(describing: value)) \(moreInfo)",
         info: nil,
         error: nil
@@ -66,7 +66,7 @@ struct ExpressionEvaluator: ExpressionEvaluating {
 
     guard let base64Params = await getBase64Params(
       from: rule,
-      withEventData: eventData
+      withPlacementData: placementData
     ) else {
       return .noMatch(source: .expression, experimentId: rule.experiment.id)
     }
@@ -88,10 +88,10 @@ struct ExpressionEvaluator: ExpressionEvaluating {
 
   private func getBase64Params(
     from rule: TriggerRule,
-    withEventData eventData: EventData?
+    withPlacementData eventData: PlacementData?
   ) async -> String? {
-    let attributes = await factory.makeRuleAttributes(
-      forEvent: eventData,
+    let attributes = await factory.makeAudienceFilterAttributes(
+      forPlacement: eventData,
       withComputedProperties: rule.computedPropertyRequests
     )
     let jsonAttributes = JSON(attributes)

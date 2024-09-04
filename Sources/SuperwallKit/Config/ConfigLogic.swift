@@ -93,7 +93,7 @@ enum ConfigLogic {
   ///   - triggers: A set of triggers
   ///
   /// - Returns: A `Set` of `TriggerRule` arrays.
-  static func getRulesPerCampaign(
+  static func getAudienceFiltersPerCampaign(
     from triggers: Set<Trigger>
   ) -> Set<[TriggerRule]> {
     var campaignIds: Set<String> = []
@@ -121,7 +121,7 @@ enum ConfigLogic {
     var confirmedAssignments = confirmedAssignments
     var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
 
-    let groupedTriggerRules = getRulesPerCampaign(from: triggers)
+    let groupedTriggerRules = getAudienceFiltersPerCampaign(from: triggers)
 
     // Loop through each trigger and each of its rules.
     for ruleGroup in groupedTriggerRules {
@@ -183,7 +183,7 @@ enum ConfigLogic {
     }
 
     return triggers.filter {
-      !preloadingDisabled.triggers.contains($0.eventName)
+      !preloadingDisabled.triggers.contains($0.placementName)
     }
   }
 
@@ -263,7 +263,7 @@ enum ConfigLogic {
     var confirmedAssignments = confirmedAssignments
 
     let confirmedExperimentIds = Set(confirmedAssignments.keys)
-    let triggerRulesPerCampaign = getRulesPerCampaign(from: triggers)
+    let audienceFiltersPerCampaign = getAudienceFiltersPerCampaign(from: triggers)
 
     // Loop through all the rules and check their preloading behaviour.
     // If they should never preload or set to ifTrue but don't match,
@@ -271,26 +271,26 @@ enum ConfigLogic {
     var allExperimentIds: Set<String> = []
     var skippedExperimentIds: Set<String> = []
 
-    for campaignRules in triggerRulesPerCampaign {
-      for rule in campaignRules {
-        allExperimentIds.insert(rule.experiment.id)
+    for campaignAudienceFilters in audienceFiltersPerCampaign {
+      for audienceFilter in campaignAudienceFilters {
+        allExperimentIds.insert(audienceFilter.experiment.id)
 
-        switch rule.preload.behavior {
+        switch audienceFilter.preload.behavior {
         case .ifTrue:
           let outcome = await expressionEvaluator.evaluateExpression(
-            fromRule: rule,
-            eventData: nil
+            fromAudienceFilter: audienceFilter,
+            placementData: nil
           )
           switch outcome {
           case .noMatch:
-            skippedExperimentIds.insert(rule.experiment.id)
+            skippedExperimentIds.insert(audienceFilter.experiment.id)
           case .match:
             continue
           }
         case .always:
           continue
         case .never:
-          skippedExperimentIds.insert(rule.experiment.id)
+          skippedExperimentIds.insert(audienceFilter.experiment.id)
         }
       }
     }
@@ -330,7 +330,7 @@ enum ConfigLogic {
     unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
   ) -> Set<String> {
     let mergedAssignments = confirmedAssignments.merging(unconfirmedAssignments)
-    let groupedTriggerRules = getRulesPerCampaign(from: triggers)
+    let groupedTriggerRules = getAudienceFiltersPerCampaign(from: triggers)
     let triggerExperimentIds = groupedTriggerRules.flatMap { $0.map { $0.experiment.id } }
 
     var identifiers = Set<String>()
@@ -347,10 +347,10 @@ enum ConfigLogic {
     return identifiers
   }
 
-  static func getTriggersByEventName(from triggers: Set<Trigger>) -> [String: Trigger] {
+  static func getTriggersByPlacementName(from triggers: Set<Trigger>) -> [String: Trigger] {
     let triggersDictionary = triggers.reduce([String: Trigger]()) { result, trigger in
       var result = result
-      result[trigger.eventName] = trigger
+      result[trigger.placementName] = trigger
       return result
     }
     return triggersDictionary

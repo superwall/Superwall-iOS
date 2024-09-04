@@ -25,11 +25,11 @@ final class TemplateLogicTests: XCTestCase {
     func makeJsonVariables(
       products productVariables: [ProductVariable]?,
       computedPropertyRequests: [ComputedPropertyRequest],
-      event: EventData?
+      placement: PlacementData?
     ) async -> JSON {
       return Variables(
         products: productVariables,
-        params: event?.parameters,
+        params: placement?.parameters,
         userAttributes: userAttributes,
         templateDeviceDictionary: deviceDict
       ).templated()

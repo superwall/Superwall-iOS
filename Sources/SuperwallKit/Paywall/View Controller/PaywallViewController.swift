@@ -51,7 +51,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// The paywall info
   @objc public var info: PaywallInfo {
     return paywall.getInfo(
-      fromEvent: request?.presentationInfo.eventData
+      fromPlacement: request?.presentationInfo.eventData
     )
   }
 
@@ -240,12 +240,12 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   nonisolated private func trackOpen() async {
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
-    let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: info)
+    let trackedEvent = await InternalSuperwallPlacement.PaywallOpen(paywallInfo: info)
     await Superwall.shared.track(trackedEvent)
   }
 
   nonisolated private func trackClose() async {
-    let trackedEvent = await InternalSuperwallEvent.PaywallClose(
+    let trackedEvent = await InternalSuperwallPlacement.PaywallClose(
       paywallInfo: info,
       surveyPresentationResult: surveyPresentationResult
     )
@@ -274,7 +274,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
 
     Task(priority: .utility) {
-      let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
+      let trackedEvent = InternalSuperwallPlacement.PaywallWebviewLoad(
         state: .start,
         paywallInfo: self.info
       )
@@ -446,7 +446,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         self.exitButton.alpha = 0.0
 
         Task(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
+          let trackedEvent = InternalSuperwallPlacement.PaywallWebviewLoad(
             state: .timeout,
             paywallInfo: self.info
           )
@@ -813,16 +813,16 @@ extension PaywallViewController {
 
     func dismissView() async {
       if isDeclined, isManualClose {
-        let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: info)
+        let trackedEvent = InternalSuperwallPlacement.PaywallDecline(paywallInfo: info)
 
         let presentationResult = await Superwall.shared.internallyGetPresentationResult(
-          forEvent: trackedEvent,
+          forPlacement: trackedEvent,
           requestType: .paywallDeclineCheck
         )
-        let paywallPresenterEvent = info.presentedByEventWithName
-        let presentedByPaywallDecline = paywallPresenterEvent == SuperwallEventObjc.paywallDecline.description
-        let presentedByTransactionAbandon = paywallPresenterEvent == SuperwallEventObjc.transactionAbandon.description
-        let presentedByTransactionFail = paywallPresenterEvent == SuperwallEventObjc.transactionFail.description
+        let paywallPresenterEvent = info.presentedByPlacementWithName
+        let presentedByPaywallDecline = paywallPresenterEvent == SuperwallPlacementObjc.paywallDecline.description
+        let presentedByTransactionAbandon = paywallPresenterEvent == SuperwallPlacementObjc.transactionAbandon.description
+        let presentedByTransactionFail = paywallPresenterEvent == SuperwallPlacementObjc.transactionFail.description
 
         await Superwall.shared.track(trackedEvent)
 

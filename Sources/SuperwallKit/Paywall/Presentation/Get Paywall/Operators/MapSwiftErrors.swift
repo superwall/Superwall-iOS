@@ -23,11 +23,11 @@ extension Superwall {
         } else {
           return PaywallSkippedReason.noRuleMatch
         }
-      case .eventNotFound:
+      case .placementNotFound:
         if toObjc {
-          return PaywallSkippedReasonObjc.eventNotFound
+          return PaywallSkippedReasonObjc.placementNotFound
         } else {
-          return PaywallSkippedReason.eventNotFound
+          return PaywallSkippedReason.placementNotFound
         }
       case .userIsSubscribed:
         if toObjc {
