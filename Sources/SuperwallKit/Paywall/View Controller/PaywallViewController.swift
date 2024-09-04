@@ -51,7 +51,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// The paywall info
   @objc public var info: PaywallInfo {
     return paywall.getInfo(
-      fromPlacement: request?.presentationInfo.eventData
+      fromPlacement: request?.presentationInfo.placementData
     )
   }
 

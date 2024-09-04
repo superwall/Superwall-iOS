@@ -8,7 +8,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Renames `register(event:)` to `register(placement:)`.
 - Renames `preloadPaywalls(forEvents:)` to `preloadPaywalls(forPlacements:)`.
-
+- Renames `getPaywall(forEvent:)` to `getPaywall(forPlacement:)`.
+- Renames `getPresentationResult(forEvent:)` to `getPresentationResult(forPlacement:)`.
 
 ## 3.7.4
 

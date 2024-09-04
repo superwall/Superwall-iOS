@@ -8,7 +8,7 @@
 import Foundation
 
 extension Superwall {
-  /// Evaluates the rules from the campaign that the event belongs to.
+  /// Evaluates the audience filters from the campaign that the placement belongs to.
   ///
   /// - Parameter request: The presentation request
   /// - Returns: A `RuleEvaluationOutcome` object containing the trigger result,
@@ -16,14 +16,14 @@ extension Superwall {
   func evaluateRules(
     from request: PresentationRequest
   ) async throws -> RuleEvaluationOutcome {
-    if let eventData = request.presentationInfo.eventData {
+    if let placementData = request.presentationInfo.placementData {
       let ruleLogic = RuleLogic(
         configManager: dependencyContainer.configManager,
         storage: dependencyContainer.storage,
         factory: dependencyContainer
       )
       return await ruleLogic.evaluateRules(
-        forEvent: eventData,
+        forPlacement: placementData,
         triggers: dependencyContainer.configManager.triggersByPlacementName
       )
     } else {

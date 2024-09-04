@@ -88,10 +88,10 @@ struct ExpressionEvaluator: ExpressionEvaluating {
 
   private func getBase64Params(
     from rule: TriggerRule,
-    withPlacementData eventData: PlacementData?
+    withPlacementData placementData: PlacementData?
   ) async -> String? {
     let attributes = await factory.makeAudienceFilterAttributes(
-      forPlacement: eventData,
+      forPlacement: placementData,
       withComputedProperties: rule.computedPropertyRequests
     )
     let jsonAttributes = JSON(attributes)

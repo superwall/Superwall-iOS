@@ -39,6 +39,7 @@ extension Superwall {
   }
 
   // MARK: - V3 to V4
+
   @available(*, unavailable, renamed: "register(placement:params:handler:feature:)")
   @objc public func register(
     event: String,
@@ -103,5 +104,21 @@ extension Superwall {
     params: [String: Any]? = nil
   ) async -> PresentationResult {
     return .placementNotFound
+  }
+
+  @available(*, unavailable, renamed: "getPresentationResult(forPlacement:params:completion:)")
+  public func getPresentationResult(
+    forEvent event: String,
+    params: [String: Any]? = nil,
+    completion: @escaping (PresentationResult) -> Void
+  ) {}
+
+  @available(*, unavailable, renamed: "getPresentationResult(forPlacement:params:)")
+  @available(swift, obsoleted: 1.0)
+  @objc public func getPresentationResult(
+    forEvent event: String,
+    params: [String: Any]? = nil
+  ) async -> PresentationResultObjc {
+    return .init(trackResult: .placementNotFound)
   }
 }

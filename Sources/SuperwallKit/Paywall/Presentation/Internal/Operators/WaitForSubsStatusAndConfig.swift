@@ -44,14 +44,14 @@ extension Superwall {
       subscriptionStatus = try await subscriptionStatusTask.value
     } catch {
       Task {
-        let trackedEvent = InternalSuperwallPlacement.PresentationRequest(
-          placementData: request.presentationInfo.eventData,
+        let presentationRequest = InternalSuperwallPlacement.PresentationRequest(
+          placementData: request.presentationInfo.placementData,
           type: request.flags.type,
           status: .timeout,
           statusReason: .subscriptionStatusTimeout,
           factory: dependencyContainer
         )
-        await self.track(trackedEvent)
+        await self.track(presentationRequest)
       }
       Logger.debug(
         logLevel: .info,
@@ -98,14 +98,14 @@ extension Superwall {
             if configState.value.getConfig() == nil {
               // Still failed to get config, call feature block.
               Task {
-                let trackedEvent = InternalSuperwallPlacement.PresentationRequest(
-                  placementData: request.presentationInfo.eventData,
+                let presentationRequest = InternalSuperwallPlacement.PresentationRequest(
+                  placementData: request.presentationInfo.placementData,
                   type: request.flags.type,
                   status: .timeout,
                   statusReason: .noConfig,
                   factory: dependencyContainer
                 )
-                await self.track(trackedEvent)
+                await self.track(presentationRequest)
               }
               Logger.debug(
                 logLevel: .info,

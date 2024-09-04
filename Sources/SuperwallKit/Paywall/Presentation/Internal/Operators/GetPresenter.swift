@@ -107,7 +107,7 @@ extension Superwall {
     for request: PresentationRequest,
     triggerResult: InternalTriggerResult
   ) async {
-    guard let eventName = request.presentationInfo.eventName else {
+    guard let placementName = request.presentationInfo.placementName else {
       // The paywall is being presented by identifier, which is what the debugger uses and that's not supported.
       return
     }
@@ -125,11 +125,11 @@ extension Superwall {
       break
     }
 
-    let trackedEvent = InternalSuperwallPlacement.TriggerFire(
+    let triggerFire = InternalSuperwallPlacement.TriggerFire(
       triggerResult: triggerResult,
-      triggerName: eventName
+      triggerName: placementName
     )
-    await Superwall.shared.track(trackedEvent)
+    await Superwall.shared.track(triggerFire)
   }
 
   @MainActor

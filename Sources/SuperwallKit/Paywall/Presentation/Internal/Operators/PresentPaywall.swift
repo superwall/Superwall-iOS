@@ -30,14 +30,14 @@ extension Superwall {
     request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) async throws {
-    let trackedEvent = InternalSuperwallPlacement.PresentationRequest(
-      placementData: request.presentationInfo.eventData,
+    let presentationRequest = InternalSuperwallPlacement.PresentationRequest(
+      placementData: request.presentationInfo.placementData,
       type: request.flags.type,
       status: .presentation,
       statusReason: nil,
       factory: self.dependencyContainer
     )
-    await self.track(trackedEvent)
+    await self.track(presentationRequest)
 
     try await withCheckedThrowingContinuation { continuation in
       paywallViewController.present(

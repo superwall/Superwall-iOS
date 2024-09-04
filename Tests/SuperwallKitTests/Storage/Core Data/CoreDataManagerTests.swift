@@ -76,16 +76,16 @@ class CoreDataManagerTests: XCTestCase {
   // TODO: Fix this, doesn't work when run together but works when run individually
 //  func test_deleteAllEntities() async {
 //    // Save Event Data with Params
-//    let eventName = "abc"
+//    let placementName = "abc"
 //    let placementData: PlacementData = .stub()
-//      .setting(\.name, to: eventName)
+//      .setting(\.name, to: placementName)
 //      .setting(\.parameters, to: ["def": "ghi"])
 //
 //    let expectation1 = expectation(description: "Saved event")
 //
 //    coreDataManager.savePlacementData(eventData) { savedPlacementData in
-//      XCTAssertEqual(savedPlacementData.name, eventName)
-//      XCTAssertEqual(savedPlacementData.name, eventName)
+//      XCTAssertEqual(savedPlacementData.name, placementName)
+//      XCTAssertEqual(savedPlacementData.name, placementName)
 //      XCTAssertEqual(savedPlacementData.createdAt, eventData.createdAt)
 //
 //      let encodedParams = try? JSONEncoder().encode(eventData.parameters)
@@ -222,7 +222,7 @@ class CoreDataManagerTests: XCTestCase {
       let name = names[i]
       let count = 1000.0/(2.0*(Double(i)+1.0))
       print("COUNT is ", count)
-      coreDataStack.batchInsertPlacementData(eventName: name, count: Int(count)) {
+      coreDataStack.batchInsertPlacementData(placementName: name, count: Int(count)) {
         expectation1.fulfill()
       }
     }

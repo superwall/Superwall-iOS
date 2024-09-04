@@ -49,7 +49,7 @@ extension Superwall {
     }
 
     let paywallRequest = dependencyContainer.makePaywallRequest(
-      placementData: request.presentationInfo.eventData,
+      placementData: request.presentationInfo.placementData,
       responseIdentifiers: responseIdentifiers,
       overrides: .init(
         products: request.paywallOverrides?.productsByName,

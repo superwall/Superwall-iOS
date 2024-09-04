@@ -24,21 +24,21 @@ enum PresentationInfo {
     }
   }
 
-  var eventData: PlacementData? {
+  var placementData: PlacementData? {
     switch self {
-    case let .implicitTrigger(eventData),
-      let .explicitTrigger(eventData):
-      return eventData
+    case let .implicitTrigger(placementData),
+      let .explicitTrigger(placementData):
+      return placementData
     default:
       return nil
     }
   }
 
-  var eventName: String? {
+  var placementName: String? {
     switch self {
-    case let .implicitTrigger(eventData),
-      let .explicitTrigger(eventData):
-      return eventData.name
+    case let .implicitTrigger(placementData),
+      let .explicitTrigger(placementData):
+      return placementData.name
     case .fromIdentifier:
       return nil
     }

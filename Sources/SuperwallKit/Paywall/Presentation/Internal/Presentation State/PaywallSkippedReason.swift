@@ -17,7 +17,7 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable, CustomStringConver
   /// It's useful for testing a paywall's inclusing vs its exclusion.
   case holdout(Experiment)
 
-  /// No rule was matched for this event.
+  /// No rule was matched for this placement.
   case noRuleMatch
 
   /// This placement was not found on the dashboard.
@@ -82,7 +82,7 @@ public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable, CustomStr
   /// The user was assigned to a holdout group.
   case holdout
 
-  /// No rule was matched for this event.
+  /// No rule was matched for this placement.
   case noRuleMatch
 
   /// This placement was not found on the dashboard.

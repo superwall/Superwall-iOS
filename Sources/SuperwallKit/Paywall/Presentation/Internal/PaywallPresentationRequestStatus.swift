@@ -34,7 +34,7 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
   /// The user is in a holdout group.
   case holdout(Experiment)
 
-  /// No rules defined in the campaign for the event matched.
+  /// No rules defined in the campaign for the placement matched.
   case noRuleMatch
 
   /// The placement provided was not found in any campaign on the dashboard.

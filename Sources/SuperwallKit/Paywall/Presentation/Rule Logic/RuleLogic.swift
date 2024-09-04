@@ -29,17 +29,17 @@ struct RuleLogic {
   unowned let storage: Storage
   unowned let factory: RuleAttributesFactory
 
-  /// Determines the outcome of an event based on given triggers. It also determines
-  /// whether there is an assignment to confirm based on the rule.
+  /// Determines the outcome of a placement based on given triggers. It also determines
+  /// whether there is an assignment to confirm based on the audience filter.
   ///
-  /// This first finds a trigger for a given event name. Then it determines whether any of the
-  /// rules of the triggers match for that event.
-  /// It takes that rule and checks the disk for a confirmed variant assignment for the rule's
+  /// This first finds a trigger for a given placement name. Then it determines whether any of the
+  /// rules of the triggers match for that placement.
+  /// It takes that audience filter and checks the disk for a confirmed variant assignment for the audience's
   /// experiment ID. If there isn't one, it checks the unconfirmed assignments.
-  /// Then it returns the result of the event given the assignment.
+  /// Then it returns the result of the placement given the assignment.
   ///
   /// - Parameters:
-  ///   - event: The tracked event
+  ///   - placement: The tracked placement
   ///   - triggers: The triggers from config.
   ///   - configManager: A `ConfigManager` object used for dependency injection.
   ///   - storage: A `Storage` object used for dependency injection.
@@ -48,15 +48,15 @@ struct RuleLogic {
   ///   in Core Data.
   /// - Returns: An assignment to confirm, if available.
   func evaluateRules(
-    forEvent event: PlacementData,
+    forPlacement placement: PlacementData,
     triggers: [String: Trigger]
   ) async -> RuleEvaluationOutcome {
-    guard let trigger = triggers[event.name] else {
+    guard let trigger = triggers[placement.name] else {
       return RuleEvaluationOutcome(triggerResult: .placementNotFound)
     }
 
     let ruleMatchOutcome = await findMatchingRule(
-      for: event,
+      for: placement,
       withTrigger: trigger
     )
 
@@ -129,7 +129,7 @@ struct RuleLogic {
   }
 
   func findMatchingRule(
-    for event: PlacementData,
+    for placement: PlacementData,
     withTrigger trigger: Trigger
   ) async -> RuleMatchOutcome {
     let expressionEvaluator = ExpressionEvaluator(
@@ -142,7 +142,7 @@ struct RuleLogic {
     for rule in trigger.rules {
       let outcome = await expressionEvaluator.evaluateExpression(
         fromAudienceFilter: rule,
-        placementData: event
+        placementData: placement
       )
 
       switch outcome {

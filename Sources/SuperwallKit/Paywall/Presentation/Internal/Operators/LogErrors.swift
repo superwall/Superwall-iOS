@@ -22,14 +22,14 @@ extension Superwall {
         return
       }
       if let reason = error as? PresentationPipelineError {
-        let trackedEvent = InternalSuperwallPlacement.PresentationRequest(
-          placementData: request.presentationInfo.eventData,
+        let presentationRequest = InternalSuperwallPlacement.PresentationRequest(
+          placementData: request.presentationInfo.placementData,
           type: request.flags.type,
           status: .noPresentation,
           statusReason: reason,
           factory: self.dependencyContainer
         )
-        await self.track(trackedEvent)
+        await self.track(presentationRequest)
       }
     }
     Logger.debug(
