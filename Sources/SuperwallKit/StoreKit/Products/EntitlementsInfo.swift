@@ -63,7 +63,7 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     if newValue != oldValue {
       Task {
         await delegateAdapter.activeEntitlementsDidChange(to: newValue)
-        let event = InternalSuperwallEvent.ActiveEntitlementsDidChange(activeEntitlements: newValue)
+        let event = InternalSuperwallPlacement.ActiveEntitlementsDidChange(activeEntitlements: newValue)
         await Superwall.shared.track(event)
       }
     }

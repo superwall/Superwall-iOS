@@ -13,11 +13,7 @@ struct ConfirmableAssignment: Equatable {
   let variant: Experiment.Variant
 }
 
-<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
-struct AudienceEvaluationOutcome {
-========
 struct AudienceFilterEvaluationOutcome {
->>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
   var confirmableAssignment: ConfirmableAssignment?
   var unsavedOccurrence: TriggerAudienceOccurrence?
   var triggerResult: InternalTriggerResult
@@ -28,11 +24,7 @@ enum RuleMatchOutcome {
   case noMatchingAudiences([UnmatchedAudience])
 }
 
-<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
-struct AudienceFilterLogic {
-========
 struct AudienceLogic {
->>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
   unowned let configManager: ConfigManager
   unowned let storage: Storage
   unowned let factory: AudienceFilterAttributesFactory
@@ -55,21 +47,12 @@ struct AudienceLogic {
   ///   evaluated. Setting this to `true` prevents the rule's occurrence count from being incremented
   ///   in Core Data.
   /// - Returns: An assignment to confirm, if available.
-<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
-  func evaluate(
-    forEvent event: EventData,
-    triggers: [String: Trigger]
-  ) async -> AudienceEvaluationOutcome {
-    guard let trigger = triggers[event.name] else {
-      return AudienceEvaluationOutcome(triggerResult: .eventNotFound)
-========
   func evaluateAudienceFilters(
     forPlacement placement: PlacementData,
     triggers: [String: Trigger]
   ) async -> AudienceFilterEvaluationOutcome {
     guard let trigger = triggers[placement.name] else {
       return AudienceFilterEvaluationOutcome(triggerResult: .placementNotFound)
->>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
     }
 
     let ruleMatchOutcome = await findMatchingRule(
@@ -114,20 +97,12 @@ struct AudienceLogic {
         code: 404,
         userInfo: userInfo
       )
-<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
-      return AudienceEvaluationOutcome(triggerResult: .error(error))
-========
       return AudienceFilterEvaluationOutcome(triggerResult: .error(error))
->>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
     }
 
     switch variant.type {
     case .holdout:
-<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
-      return AudienceEvaluationOutcome(
-========
       return AudienceFilterEvaluationOutcome(
->>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
         confirmableAssignment: confirmableAssignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .holdout(
@@ -139,11 +114,7 @@ struct AudienceLogic {
         )
       )
     case .treatment:
-<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
-      return AudienceEvaluationOutcome(
-========
       return AudienceFilterEvaluationOutcome(
->>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
         confirmableAssignment: confirmableAssignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .paywall(

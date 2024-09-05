@@ -280,7 +280,7 @@ enum InternalSuperwallPlacement {
     }
   }
 
-  struct ActiveEntitlementsDidChange: TrackableSuperwallEvent {
+  struct ActiveEntitlementsDidChange: TrackableSuperwallPlacement {
     let superwallPlacement: SuperwallPlacement = .activeEntitlementsDidChange
     let activeEntitlements: Set<Entitlement>
     var audienceFilterParams: [String: Any] = [:]
