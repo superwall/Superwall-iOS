@@ -43,7 +43,7 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable, CustomStringConver
     case .holdout:
       return "The paywall was skipped because the user is part of a holdout."
     case .noAudienceMatch:
-      return "The paywall was skipped because the user doesn't match any audiences."
+      return "The paywall was skipped because the user doesn't match any audience."
     case .userIsSubscribed:
       return "The paywall was skipped because the user is subscribed."
     }
@@ -111,7 +111,7 @@ public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable, CustomStr
     case .holdout:
       return "The paywall was skipped because the user is part of a holdout."
     case .noAudienceMatch:
-      return "The paywall was skipped because the user doesn't match any audiences."
+      return "The paywall was skipped because the user doesn't match any audience."
     case .userIsSubscribed:
       return "The paywall was skipped because the user is subscribed."
     case .none:

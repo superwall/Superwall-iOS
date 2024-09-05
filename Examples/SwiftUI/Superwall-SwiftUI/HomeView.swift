@@ -56,8 +56,8 @@ struct HomeView: View {
               print("Paywall not shown because user is subscribed.")
             case .holdout(let experiment):
               print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
-            case .noRuleMatch:
-              print("Paywall not shown because user doesn't match any audiences.")
+            case .noAudienceMatch:
+              print("Paywall not shown because user doesn't match any audience.")
             case .placementNotFound:
               print("Paywall not shown because this placement isn't part of a campaign.")
             }
