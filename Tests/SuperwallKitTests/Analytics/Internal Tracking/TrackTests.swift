@@ -288,7 +288,7 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_subscriptionStatusDidChange_noEntitlements() async {
-    let result = await Superwall.shared.track(InternalSuperwallEvent.ActiveEntitlementsDidChange(activeEntitlements: []))
+    let result = await Superwall.shared.track(InternalSuperwallPlacement.ActiveEntitlementsDidChange(activeEntitlements: []))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "activeEntitlements_didChange")
