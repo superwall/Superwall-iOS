@@ -10,15 +10,15 @@ import Combine
 import UIKit
 
 extension Superwall {
-  /// Gets the  ``PaywallViewController`` object for an event, which you can present
+  /// Gets the  ``PaywallViewController`` object for a placement, which you can present
   /// however you want.
   ///
   /// - Note: The remotely configured presentation style will be ignored, it is up to you
   /// to set it programmatically.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event, as you have defined on the Superwall dashboard.
-  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules
+  ///   -  placement: The name of the placement, as you have defined on the Superwall dashboard.
+  ///   - params: Optional parameters you'd like to pass with your placement. These can be referenced within the audience filters
   ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
   ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
   ///   be dropped.
@@ -29,7 +29,7 @@ extension Superwall {
   ///   because its presentation should be skipped, the ``PaywallSkippedReason`` will be non-`nil`. Any errors
   ///   will be in the `Error` object.
   @nonobjc public func getPaywall(
-    forEvent event: String,
+    forPlacement placement: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     delegate: PaywallViewControllerDelegate,
@@ -38,7 +38,7 @@ extension Superwall {
     Task { @MainActor in
       do {
         let paywallViewController = try await getPaywall(
-          forEvent: event,
+          forPlacement: placement,
           params: params,
           paywallOverrides: paywallOverrides,
           delegate: delegate
@@ -59,8 +59,8 @@ extension Superwall {
   /// to set it programmatically.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event, as you have defined on the Superwall dashboard.
-  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules
+  ///   -  placement: The name of the placement, as you have defined on the Superwall dashboard.
+  ///   - params: Optional parameters you'd like to pass with your placement. These can be referenced within the audience filters
   ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
   ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
   ///   be dropped.
@@ -73,13 +73,13 @@ extension Superwall {
   /// more info. All other errors will be returned in the general catch block.
   @MainActor
   @nonobjc public func getPaywall(
-    forEvent event: String,
+    forPlacement placement: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     delegate: PaywallViewControllerDelegate
   ) async throws -> PaywallViewController {
     return try await internallyGetPaywall(
-      forEvent: event,
+      forPlacement: placement,
       params: params,
       paywallOverrides: paywallOverrides,
       delegate: .init(
@@ -96,8 +96,8 @@ extension Superwall {
   /// to set it programmatically.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event, as you have defined on the Superwall dashboard.
-  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules
+  ///   -  placement: The name of the placement, as you have defined on the Superwall dashboard.
+  ///   - params: Optional parameters you'd like to pass with your placement. These can be referenced within the audience filters
   ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
   ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
   ///   be dropped.
@@ -111,7 +111,7 @@ extension Superwall {
   ///   - delegate: A delegate responsible for handling user interactions with the retrieved ``PaywallViewController``.
   @available(swift, obsoleted: 1.0)
   @objc public func getPaywall(
-    forEvent event: String,
+    forPlacement placement: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     delegate: PaywallViewControllerDelegateObjc,
@@ -120,7 +120,7 @@ extension Superwall {
     Task { @MainActor in
       do {
         let paywallViewController = try await internallyGetPaywall(
-          forEvent: event,
+          forPlacement: placement,
           params: params,
           paywallOverrides: paywallOverrides,
           delegate: .init(
@@ -153,18 +153,18 @@ extension Superwall {
   }
 
   private func internallyGetPaywall(
-    forEvent event: String,
+    forPlacement placement: String,
     params: [String: Any]?,
     paywallOverrides: PaywallOverrides?,
     delegate: PaywallViewControllerDelegateAdapter
   ) async throws -> PaywallViewController {
-    let trackableEvent = UserInitiatedEvent.Track(
-      rawName: event,
+    let userInitiatedPlacement = UserInitiatedPlacement.Track(
+      rawName: placement,
       canImplicitlyTriggerPaywall: false,
       audienceFilterParams: params ?? [:],
       isFeatureGatable: false
     )
-    let trackResult = await track(trackableEvent)
+    let trackResult = await track(userInitiatedPlacement)
 
     let presentationRequest = dependencyContainer.makePresentationRequest(
       .explicitTrigger(trackResult.data),

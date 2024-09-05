@@ -7,26 +7,26 @@
 
 import Foundation
 
-/// A request to compute a device property associated with an event at runtime.
+/// A request to compute a device property associated with a placement at runtime.
 @objc(SWKComputedPropertyRequest)
 @objcMembers
 public final class ComputedPropertyRequest: NSObject, Decodable {
   /// The type of device property to compute.
   @objc(SWKComputedPropertyRequestType)
   public enum ComputedPropertyRequestType: Int, Decodable {
-    /// The number of minutes since the event occurred.
+    /// The number of minutes since the placement occurred.
     case minutesSince
 
-    /// The number of hours since the event occurred.
+    /// The number of hours since the placement occurred.
     case hoursSince
 
-    /// The number of days since the event occurred.
+    /// The number of days since the placement occurred.
     case daysSince
 
-    /// The number of months since the event occurred.
+    /// The number of months since the placement occurred.
     case monthsSince
 
-    /// The number of years since the event occurred.
+    /// The number of years since the placement occurred.
     case yearsSince
 
     var prefix: String {
@@ -112,6 +112,6 @@ public final class ComputedPropertyRequest: NSObject, Decodable {
   /// The type of device property to compute.
   public let type: ComputedPropertyRequestType
 
-  /// The name of the event used to compute the device property.
-  public let eventName: String
+  /// The name of the placement used to compute the device property.
+  public let placementName: String
 }

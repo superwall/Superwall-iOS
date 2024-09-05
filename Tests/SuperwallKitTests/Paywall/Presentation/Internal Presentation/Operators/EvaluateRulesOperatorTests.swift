@@ -27,7 +27,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
     )
 
     do {
-      let output = try await Superwall.shared.evaluateRules(
+      let output = try await Superwall.shared.evaluateAudienceFilter(
         from: request
       )
       XCTAssertNil(output.confirmableAssignment)
@@ -60,13 +60,13 @@ final class EvaluateRulesOperatorTests: XCTestCase {
     )
 
     do {
-      let output = try await Superwall.shared.evaluateRules(
+      let output = try await Superwall.shared.evaluateAudienceFilter(
         from: request
       )
       XCTAssertNil(output.confirmableAssignment)
 
       switch output.triggerResult {
-      case .eventNotFound:
+      case .placementNotFound:
         break
       default:
         XCTFail("Wrong trigger result")

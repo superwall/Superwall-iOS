@@ -42,7 +42,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       from: rule,
       expressionMatched: true
     )
-    XCTAssertEqual(outcome, .match(rule: rule))
+    XCTAssertEqual(outcome, .match(audience: rule))
   }
 
   func test_tryToMatchOccurrence_shouldntFire_maxCountGTCount() async {
@@ -73,7 +73,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       factory: dependencyContainer
     )
 
-    let occurrence: TriggerRuleOccurrence = .stub().setting(\.maxCount, to: 1)
+    let occurrence: TriggerAudienceOccurrence = .stub().setting(\.maxCount, to: 1)
     let rule = TriggerRule.stub()
       .setting(\.occurrence, to: occurrence)
     let outcome = await evaluator.tryToMatchOccurrence(
@@ -81,7 +81,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       expressionMatched: true
     )
 
-    XCTAssertEqual(outcome, .match(rule: rule, unsavedOccurrence: occurrence))
+    XCTAssertEqual(outcome, .match(audience: rule, unsavedOccurrence: occurrence))
   }
 
   func test_tryToMatchOccurrence_shouldFire_maxCountLtCount() async {
@@ -93,7 +93,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       factory: dependencyContainer
     )
 
-    let occurrence: TriggerRuleOccurrence = .stub().setting(\.maxCount, to: 4)
+    let occurrence: TriggerAudienceOccurrence = .stub().setting(\.maxCount, to: 4)
     let rule = TriggerRule.stub()
       .setting(\.occurrence, to: occurrence)
     let outcome = await evaluator.tryToMatchOccurrence(
@@ -101,7 +101,7 @@ final class ExpressionEvaluatorTests: XCTestCase {
       expressionMatched: true
     )
 
-    XCTAssertEqual(outcome, .match(rule: rule, unsavedOccurrence: occurrence))
+    XCTAssertEqual(outcome, .match(audience: rule, unsavedOccurrence: occurrence))
   }
 
   // MARK: - evaluateExpression
@@ -117,11 +117,11 @@ final class ExpressionEvaluatorTests: XCTestCase {
       .setting(\.expression, to: nil)
       .setting(\.expressionJs, to: nil)
     let result = await evaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: .stub()
+      fromAudienceFilter: rule,
+      placementData: .stub()
     )
 
-    XCTAssertEqual(result, .match(rule: rule))
+    XCTAssertEqual(result, .match(audience: rule))
   }
 
   // MARK: - Expression
@@ -137,11 +137,11 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.expression, to: "user.a == \"b\"")
     let result = await evaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: EventData(name: "ss", parameters: [:], createdAt: Date())
+      fromAudienceFilter: rule,
+      placementData: PlacementData(name: "ss", parameters: [:], createdAt: Date())
     )
 
-    XCTAssertEqual(result, .match(rule: rule))
+    XCTAssertEqual(result, .match(audience: rule))
   }
 
   func testExpressionEvaluator_expression_withOccurrence() async  {
@@ -152,16 +152,16 @@ final class ExpressionEvaluatorTests: XCTestCase {
       factory: dependencyContainer
     )
     dependencyContainer.identityManager.mergeUserAttributes(["a": "b"])
-    let occurrence = TriggerRuleOccurrence(key: "a", maxCount: 1, interval: .infinity)
+    let occurrence = TriggerAudienceOccurrence(key: "a", maxCount: 1, interval: .infinity)
     let rule: TriggerRule = .stub()
       .setting(\.expression, to: "user.a == \"b\"")
       .setting(\.occurrence, to: occurrence)
     let result = await evaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: EventData(name: "ss", parameters: [:], createdAt: Date())
+      fromAudienceFilter: rule,
+      placementData: PlacementData(name: "ss", parameters: [:], createdAt: Date())
     )
 
-    XCTAssertEqual(result, .match(rule: rule, unsavedOccurrence: occurrence))
+    XCTAssertEqual(result, .match(audience: rule, unsavedOccurrence: occurrence))
   }
 
   func testExpressionEvaluator_expressionParams() async {
@@ -175,10 +175,10 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.expression, to: "params.a == \"b\"")
     let result = await evaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+      fromAudienceFilter: rule,
+      placementData: PlacementData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertEqual(result, .match(rule: rule))
+    XCTAssertEqual(result, .match(audience: rule))
   }
 
   func testExpressionEvaluator_expressionDeviceTrue() async {
@@ -192,10 +192,10 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.expression, to: "device.platform == \"iOS\"")
     let result = await evaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+      fromAudienceFilter: rule,
+      placementData: PlacementData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertEqual(result, .match(rule: rule))
+    XCTAssertEqual(result, .match(audience: rule))
   }
 
   func testExpressionEvaluator_expressionDeviceFalse() async {
@@ -209,8 +209,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.expression, to: "device.platform == \"Android\"")
     let result = await evaluator.evaluateExpression(
-        fromRule: rule,
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+        fromAudienceFilter: rule,
+      placementData: PlacementData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
     XCTAssertEqual(result, .noMatch(source: .expression, experimentId: rule.experiment.id))
   }
@@ -226,14 +226,14 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.expression, to: "a == \"b\"")
     let result = await evaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: .stub()
+      fromAudienceFilter: rule,
+      placementData: .stub()
     )
     XCTAssertEqual(result, .noMatch(source: .expression, experimentId: rule.experiment.id))
   }
 /*
   func testExpressionEvaluator_events() {
-    let triggeredEvents: [String: [EventData]] = [
+    let triggeredEvents: [String: [PlacementData]] = [
       "a": [.stub()]
     ]
     let storage = StorageMock(internalTriggeredEvents: triggeredEvents)
@@ -257,10 +257,10 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.expressionJs, to: "function superwallEvaluator(){ return true }; superwallEvaluator")
     let result = await evaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: .stub()
+      fromAudienceFilter: rule,
+      placementData: .stub()
     )
-    XCTAssertEqual(result, .match(rule: rule))
+    XCTAssertEqual(result, .match(audience: rule))
   }
 
   func testExpressionEvaluator_expressionJSValues_true() async {
@@ -272,10 +272,10 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator")
     let result = await evaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+      fromAudienceFilter: rule,
+      placementData: PlacementData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertEqual(result, .match(rule: rule))
+    XCTAssertEqual(result, .match(audience: rule))
   }
 
   func testExpressionEvaluator_expressionJSValues_false() async {
@@ -287,10 +287,10 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.expressionJs, to: "function superwallEvaluator(values) { return values.params.a ==\"b\" }; superwallEvaluator")
     let result = await evaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: EventData(name: "ss", parameters: ["a": "b"], createdAt: Date())
+      fromAudienceFilter: rule,
+      placementData: PlacementData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertEqual(result, .match(rule: rule))
+    XCTAssertEqual(result, .match(audience: rule))
   }
 
   func testExpressionEvaluator_expressionJSNumbers() async {
@@ -302,14 +302,14 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.expressionJs, to: "function superwallEvaluator(values) { return 1 == 1 }; superwallEvaluator")
     let result = await evaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: .stub()
+      fromAudienceFilter: rule,
+      placementData: .stub()
     )
-    XCTAssertEqual(result, .match(rule: rule))
+    XCTAssertEqual(result, .match(audience: rule))
   }
 /*
   func testExpressionEvaluator_expressionJSValues_events() {
-    let triggeredEvents: [String: [EventData]] = [
+    let triggeredEvents: [String: [PlacementData]] = [
       "a": [.stub()]
     ]
     let storage = StorageMock(internalTriggeredEvents: triggeredEvents)
@@ -331,8 +331,8 @@ final class ExpressionEvaluatorTests: XCTestCase {
     let rule: TriggerRule = .stub()
       .setting(\.expressionJs, to: "")
     let result = await evaluator.evaluateExpression(
-      fromRule: rule,
-      eventData: .stub()
+      fromAudienceFilter: rule,
+      placementData: .stub()
     )
     XCTAssertEqual(result, .noMatch(source: .expression, experimentId: rule.experiment.id))
   }

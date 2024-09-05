@@ -35,13 +35,13 @@ protocol VariablesFactory: AnyObject {
   func makeJsonVariables(
     products: [ProductVariable]?,
     computedPropertyRequests: [ComputedPropertyRequest],
-    event: EventData?
+    placement: PlacementData?
   ) async -> JSON
 }
 
 protocol RequestFactory: AnyObject {
   func makePaywallRequest(
-    eventData: EventData?,
+    placementData: PlacementData?,
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides?,
     isDebuggerLaunched: Bool,
@@ -60,9 +60,9 @@ protocol RequestFactory: AnyObject {
   ) -> PresentationRequest
 }
 
-protocol RuleAttributesFactory: AnyObject {
-  func makeRuleAttributes(
-    forEvent event: EventData?,
+protocol AudienceFilterAttributesFactory: AnyObject {
+  func makeAudienceFilterAttributes(
+    forPlacement placement: PlacementData?,
     withComputedProperties computedPropertyRequests: [ComputedPropertyRequest]
   ) async -> JSON
 }
@@ -144,8 +144,8 @@ protocol PurchasedTransactionsFactory {
   func restorePurchases() async -> RestorationResult
 }
 
-protocol UserAttributesEventFactory {
-  func makeUserAttributesEvent() -> InternalSuperwallEvent.Attributes
+protocol UserAttributesPlacementFactory {
+  func makeUserAttributesPlacement() -> InternalSuperwallPlacement.Attributes
 }
 
 protocol ReceiptFactory {
@@ -155,5 +155,5 @@ protocol ReceiptFactory {
 }
 
 protocol ConfigAttributesFactory {
-  func makeConfigAttributes() -> InternalSuperwallEvent.ConfigAttributes
+  func makeConfigAttributes() -> InternalSuperwallPlacement.ConfigAttributes
 }

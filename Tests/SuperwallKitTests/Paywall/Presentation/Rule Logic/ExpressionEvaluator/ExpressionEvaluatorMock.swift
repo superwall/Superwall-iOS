@@ -10,9 +10,9 @@ import Foundation
 @testable import SuperwallKit
 
 struct ExpressionEvaluatorMock: ExpressionEvaluating {
-  let outcome: TriggerRuleOutcome
+  let outcome: TriggerAudienceOutcome
 
-  func evaluateExpression(fromRule rule: TriggerRule, eventData: EventData?) async -> TriggerRuleOutcome {
+  func evaluateExpression(fromAudienceFilter rule: TriggerRule, placementData: PlacementData?) async -> TriggerAudienceOutcome {
     return outcome
   }
 }

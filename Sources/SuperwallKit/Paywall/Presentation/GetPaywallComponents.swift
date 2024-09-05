@@ -30,22 +30,22 @@ extension Superwall {
       paywallStatePublisher: publisher
     )
 
-    let rulesOutcome = try await evaluateRules(from: request)
+    let audienceOutcome = try await evaluateAudienceFilter(from: request)
 
     try await checkUserSubscription(
       request: request,
-      triggerResult: rulesOutcome.triggerResult,
+      triggerResult: audienceOutcome.triggerResult,
       paywallStatePublisher: publisher
     )
 
     confirmHoldoutAssignment(
       request: request,
-      from: rulesOutcome
+      from: audienceOutcome
     )
 
     let paywallViewController = try await getPaywallViewController(
       request: request,
-      rulesOutcome: rulesOutcome,
+      audienceOutcome: audienceOutcome,
       debugInfo: debugInfo,
       paywallStatePublisher: publisher,
       dependencyContainer: dependencyContainer
@@ -53,14 +53,14 @@ extension Superwall {
 
     let presenter = try await getPresenterIfNecessary(
       for: paywallViewController,
-      rulesOutcome: rulesOutcome,
+      audienceOutcome: audienceOutcome,
       request: request,
       debugInfo: debugInfo,
       paywallStatePublisher: publisher
     )
 
     confirmPaywallAssignment(
-      rulesOutcome.confirmableAssignment,
+      audienceOutcome.confirmableAssignment,
       request: request,
       isDebuggerLaunched: request.flags.isDebuggerLaunched
     )
@@ -68,7 +68,7 @@ extension Superwall {
     return PaywallComponents(
       viewController: paywallViewController,
       presenter: presenter,
-      rulesOutcome: rulesOutcome,
+      audienceOutcome: audienceOutcome,
       debugInfo: debugInfo
     )
   }

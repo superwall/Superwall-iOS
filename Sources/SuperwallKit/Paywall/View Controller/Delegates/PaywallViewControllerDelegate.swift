@@ -9,7 +9,7 @@ import Foundation
 
 /// An interface for responding to user interactions with a ``PaywallViewController`` that
 /// has been retrieved using
-/// ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)``.
+/// ``Superwall/getPaywall(forPlacement:params:paywallOverrides:delegate:)``.
 public protocol PaywallViewControllerDelegate: AnyObject {
   /// Tells the delegate that the user finished interacting with the paywall and whether the delegate
   /// should dismiss the paywall.
@@ -32,7 +32,7 @@ public protocol PaywallViewControllerDelegate: AnyObject {
 
 /// Objective-C-only interface for responding to user interactions with a ``PaywallViewController`` that
 /// has been retrieved using
-/// ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:completion:)-5vtpb``.
+/// ``Superwall/getPaywall(forPlacement:params:paywallOverrides:delegate:completion:)-5vtpb``.
 @objc(SWKPaywallViewControllerDelegate)
 public protocol PaywallViewControllerDelegateObjc: AnyObject {
   /// Tells the delegate that the user finished interacting with the paywall and whether the delegate

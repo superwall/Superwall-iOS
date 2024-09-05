@@ -29,10 +29,10 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
-      rules: [triggerRule]
+      placementName: eventName,
+      audiences: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: eventName,
       parameters: [:],
       createdAt: Date()
@@ -47,13 +47,13 @@ class AssignmentLogicTests: XCTestCase {
     let storage = StorageMock()
 
     // MARK: When
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
-    let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+    let outcome = await assignmentLogic.evaluateAudienceFilters(
+      forPlacement: eventData,
       triggers: triggers
     )
 
@@ -93,10 +93,10 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
-      rules: [triggerRule]
+      placementName: eventName,
+      audiences: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: eventName,
       parameters: [:],
       createdAt: Date()
@@ -109,15 +109,15 @@ class AssignmentLogicTests: XCTestCase {
       rawExperiment.id: variant
     ]
     let storage = StorageMock()
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
 
     // MARK: When
-    let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+    let outcome = await assignmentLogic.evaluateAudienceFilters(
+      forPlacement: eventData,
       triggers: triggers
     )
 
@@ -158,10 +158,10 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
-      rules: [triggerRule]
+      placementName: eventName,
+      audiences: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: eventName,
       parameters: [:],
       createdAt: Date()
@@ -171,15 +171,15 @@ class AssignmentLogicTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let variant = variantOption.toVariant()
     let storage = StorageMock(confirmedAssignments: [rawExperiment.id: variant])
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
 
     // MARK: When
-    let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+    let outcome = await assignmentLogic.evaluateAudienceFilters(
+      forPlacement: eventData,
       triggers: triggers
     )
 
@@ -216,10 +216,10 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
-      rules: [triggerRule]
+      placementName: eventName,
+      audiences: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: eventName,
       parameters: [:],
       createdAt: Date()
@@ -235,15 +235,15 @@ class AssignmentLogicTests: XCTestCase {
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant2
     ]
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
 
     // MARK: When
-    let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+    let outcome = await assignmentLogic.evaluateAudienceFilters(
+      forPlacement: eventData,
       triggers: triggers
     )
 
@@ -280,10 +280,10 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
-      rules: [triggerRule]
+      placementName: eventName,
+      audiences: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: eventName,
       parameters: [:],
       createdAt: Date()
@@ -296,21 +296,21 @@ class AssignmentLogicTests: XCTestCase {
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
 
     // MARK: When
-    let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+    let outcome = await assignmentLogic.evaluateAudienceFilters(
+      forPlacement: eventData,
       triggers: triggers
     )
 
     // MARK: Then
-    guard case .noRuleMatch = outcome.triggerResult else {
-      return XCTFail("Incorrect outcome. Expected noRuleMatch")
+    guard case .noAudienceMatch = outcome.triggerResult else {
+      return XCTFail("Incorrect outcome. Expected noAudienceMatch")
     }
     let confirmableAssignments = outcome.confirmableAssignment
     XCTAssertNil(confirmableAssignments)
@@ -336,10 +336,10 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
-      rules: [triggerRule]
+      placementName: eventName,
+      audiences: [triggerRule]
     )
-    let eventData = EventData(
+    let eventData = PlacementData(
       name: "other event",
       parameters: [:],
       createdAt: Date()
@@ -352,20 +352,20 @@ class AssignmentLogicTests: XCTestCase {
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
-    let assignmentLogic = RuleLogic(
+    let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
       factory: dependencyContainer
     )
 
     // MARK: When
-    let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+    let outcome = await assignmentLogic.evaluateAudienceFilters(
+      forPlacement: eventData,
       triggers: triggers
     )
 
     // MARK: Then
-    guard case .eventNotFound = outcome.triggerResult else {
+    guard case .placementNotFound = outcome.triggerResult else {
       return XCTFail("Incorrect outcome. Expected unknown event")
     }
 

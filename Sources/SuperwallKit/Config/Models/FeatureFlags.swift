@@ -16,7 +16,7 @@ struct FeatureFlags: Decodable {
   var enableSessionEvents: Bool
   var enableExpressionParameters: Bool
   var enableUserIdSeed: Bool
-  var disableVerboseEvents: Bool
+  var disableVerbosePlacements: Bool
   var enableSuppressesIncrementalRendering: Bool
   var enableThrottleSchedulingPolicy: Bool
   var enableNoneSchedulingPolicy: Bool
@@ -35,7 +35,7 @@ struct FeatureFlags: Decodable {
     enableSessionEvents = rawFeatureFlags.value(forKey: "enable_session_events", default: false)
     enableExpressionParameters = rawFeatureFlags.value(forKey: "enable_expression_params", default: false)
     enableUserIdSeed = rawFeatureFlags.value(forKey: "enable_userid_seed", default: false)
-    disableVerboseEvents = rawFeatureFlags.value(forKey: "disable_verbose_events", default: false)
+    disableVerbosePlacements = rawFeatureFlags.value(forKey: "disable_verbose_events", default: false)
     enableSuppressesIncrementalRendering = rawFeatureFlags.value(
       forKey: "enable_suppresses_incremental_rendering",
       default: false
@@ -51,7 +51,7 @@ struct FeatureFlags: Decodable {
     enableSessionEvents: Bool,
     enableExpressionParameters: Bool,
     enableUserIdSeed: Bool,
-    disableVerboseEvents: Bool,
+    disableVerbosePlacements: Bool,
     enableSuppressesIncrementalRendering: Bool,
     enableThrottleSchedulingPolicy: Bool,
     enableNoneSchedulingPolicy: Bool,
@@ -62,7 +62,7 @@ struct FeatureFlags: Decodable {
     self.enableSessionEvents = enableSessionEvents
     self.enableExpressionParameters = enableExpressionParameters
     self.enableUserIdSeed = enableUserIdSeed
-    self.disableVerboseEvents = disableVerboseEvents
+    self.disableVerbosePlacements = disableVerbosePlacements
     self.enableSuppressesIncrementalRendering = enableSuppressesIncrementalRendering
     self.enableThrottleSchedulingPolicy = enableThrottleSchedulingPolicy
     self.enableNoneSchedulingPolicy = enableNoneSchedulingPolicy
@@ -90,7 +90,7 @@ extension FeatureFlags: Stubbable {
       enableSessionEvents: true,
       enableExpressionParameters: true,
       enableUserIdSeed: true,
-      disableVerboseEvents: true,
+      disableVerbosePlacements: true,
       enableSuppressesIncrementalRendering: true,
       enableThrottleSchedulingPolicy: true,
       enableNoneSchedulingPolicy: true,

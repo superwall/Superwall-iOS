@@ -30,7 +30,7 @@ final class DependencyContainer {
   var paywallManager: PaywallManager!
   var paywallRequestManager: PaywallRequestManager!
   var deviceHelper: DeviceHelper!
-  var eventsQueue: EventsQueue!
+  var placementsQueue: PlacementsQueue!
   var debugManager: DebugManager!
   var api: Api!
   var transactionManager: TransactionManager!
@@ -87,7 +87,7 @@ final class DependencyContainer {
       factory: self
     )
 
-    eventsQueue = EventsQueue(
+    placementsQueue = PlacementsQueue(
       network: network,
       configManager: configManager
     )
@@ -127,7 +127,7 @@ final class DependencyContainer {
       receiptManager: receiptManager,
       purchaseController: purchaseController,
       sessionEventsManager: sessionEventsManager,
-      eventsQueue: eventsQueue,
+      placementsQueue: placementsQueue,
       factory: self
     )
 
@@ -257,16 +257,16 @@ extension DependencyContainer: VariablesFactory {
   func makeJsonVariables(
     products: [ProductVariable]?,
     computedPropertyRequests: [ComputedPropertyRequest],
-    event: EventData?
+    placement: PlacementData?
   ) async -> JSON {
     let templateDeviceDict = await deviceHelper.getDeviceAttributes(
-      since: event,
+      since: placement,
       computedPropertyRequests: computedPropertyRequests
     )
 
     return Variables(
       products: products,
-      params: event?.parameters,
+      params: placement?.parameters,
       userAttributes: identityManager.userAttributes,
       templateDeviceDictionary: templateDeviceDict
     ).templated()
@@ -276,7 +276,7 @@ extension DependencyContainer: VariablesFactory {
 // MARK: - PaywallRequestFactory
 extension DependencyContainer: RequestFactory {
   func makePaywallRequest(
-    eventData: EventData? = nil,
+    placementData: PlacementData? = nil,
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides? = nil,
     isDebuggerLaunched: Bool,
@@ -284,7 +284,7 @@ extension DependencyContainer: RequestFactory {
     retryCount: Int
   ) -> PaywallRequest {
     return PaywallRequest(
-      eventData: eventData,
+      placementData: placementData,
       responseIdentifiers: responseIdentifiers,
       overrides: overrides ?? PaywallRequest.Overrides(),
       isDebuggerLaunched: isDebuggerLaunched,
@@ -364,23 +364,23 @@ extension DependencyContainer: ApiFactory {
   }
 }
 
-// MARK: - Rule Params
-extension DependencyContainer: RuleAttributesFactory {
-  func makeRuleAttributes(
-    forEvent event: EventData?,
+// MARK: - Audience Filter Params
+extension DependencyContainer: AudienceFilterAttributesFactory {
+  func makeAudienceFilterAttributes(
+    forPlacement placement: PlacementData?,
     withComputedProperties computedPropertyRequests: [ComputedPropertyRequest]
   ) async -> JSON {
     var userAttributes = identityManager.userAttributes
     userAttributes["isLoggedIn"] = identityManager.isLoggedIn
 
     let deviceAttributes = await deviceHelper.getDeviceAttributes(
-      since: event,
+      since: placement,
       computedPropertyRequests: computedPropertyRequests
     )
     return JSON([
       "user": userAttributes,
       "device": deviceAttributes,
-      "params": event?.parameters.dictionaryObject ?? ""
+      "params": placement?.parameters.dictionaryObject ?? ""
     ] as [String: Any])
   }
 }
@@ -434,7 +434,7 @@ extension DependencyContainer: OptionsFactory {
 // MARK: - Triggers Factory
 extension DependencyContainer: TriggerFactory {
   func makeTriggers() -> Set<String> {
-    return Set(configManager.triggersByEventName.keys)
+    return Set(configManager.triggersByPlacementName.keys)
   }
 }
 
@@ -474,10 +474,10 @@ extension DependencyContainer: PurchasedTransactionsFactory {
   }
 }
 
-// MARK: - User Attributes Event Factory
-extension DependencyContainer: UserAttributesEventFactory {
-  func makeUserAttributesEvent() -> InternalSuperwallEvent.Attributes {
-    return InternalSuperwallEvent.Attributes(
+// MARK: - User Attributes Placement Factory
+extension DependencyContainer: UserAttributesPlacementFactory {
+  func makeUserAttributesPlacement() -> InternalSuperwallPlacement.Attributes {
+    return InternalSuperwallPlacement.Attributes(
       appInstalledAtString: deviceHelper.appInstalledAtString,
       audienceFilterParams: identityManager.userAttributes
     )
@@ -501,11 +501,11 @@ extension DependencyContainer: ReceiptFactory {
 
 // MARK: - Config Attributes Factory
 extension DependencyContainer: ConfigAttributesFactory {
-  func makeConfigAttributes() -> InternalSuperwallEvent.ConfigAttributes {
+  func makeConfigAttributes() -> InternalSuperwallPlacement.ConfigAttributes {
     let hasSwiftDelegate = delegateAdapter.swiftDelegate != nil
     let hasObjcDelegate = delegateAdapter.objcDelegate != nil
 
-    return InternalSuperwallEvent.ConfigAttributes(
+    return InternalSuperwallPlacement.ConfigAttributes(
       options: configManager.options,
       hasExternalPurchaseController: purchaseController.isInternal == false,
       hasDelegate: hasSwiftDelegate || hasObjcDelegate

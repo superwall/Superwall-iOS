@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct UnmatchedRule: Equatable {
+struct UnmatchedAudience: Equatable {
   enum Source: String {
     case expression = "EXPRESSION"
     case occurrence = "OCCURRENCE"
@@ -16,9 +16,9 @@ struct UnmatchedRule: Equatable {
   let experimentId: String
 }
 
-extension UnmatchedRule: Stubbable {
-  static func stub() -> UnmatchedRule {
-    return UnmatchedRule(
+extension UnmatchedAudience: Stubbable {
+  static func stub() -> UnmatchedAudience {
+    return UnmatchedAudience(
       source: .expression,
       experimentId: "1"
     )
@@ -26,48 +26,48 @@ extension UnmatchedRule: Stubbable {
 }
 
 struct MatchedItem {
-  let rule: TriggerRule
-  let unsavedOccurrence: TriggerRuleOccurrence?
+  let audience: TriggerRule
+  let unsavedOccurrence: TriggerAudienceOccurrence?
 }
 
 extension MatchedItem: Stubbable {
   static func stub() -> MatchedItem {
     return MatchedItem(
-      rule: .stub(),
+      audience: .stub(),
       unsavedOccurrence: nil
     )
   }
 }
 
-enum TriggerRuleOutcome: Equatable {
-  static func == (lhs: TriggerRuleOutcome, rhs: TriggerRuleOutcome) -> Bool {
+enum TriggerAudienceOutcome: Equatable {
+  static func == (lhs: TriggerAudienceOutcome, rhs: TriggerAudienceOutcome) -> Bool {
     switch (lhs, rhs) {
     case let (.match(item1), .match(item2)):
-      return item1.rule == item2.rule
+      return item1.audience == item2.audience
         && item1.unsavedOccurrence == item2.unsavedOccurrence
-    case let (.noMatch(unmatchedRule1), .noMatch(unmatchedRule2)):
-      return unmatchedRule1.source == unmatchedRule2.source
-        && unmatchedRule1.experimentId == unmatchedRule2.experimentId
+    case let (.noMatch(unmatchedAudience1), .noMatch(unmatchedAudience2)):
+      return unmatchedAudience1.source == unmatchedAudience2.source
+        && unmatchedAudience1.experimentId == unmatchedAudience2.experimentId
     default:
       return false
     }
   }
 
-  case noMatch(UnmatchedRule)
+  case noMatch(UnmatchedAudience)
   case match(MatchedItem)
 
   static func noMatch(
-    source: UnmatchedRule.Source,
+    source: UnmatchedAudience.Source,
     experimentId: String
-  ) -> TriggerRuleOutcome {
+  ) -> TriggerAudienceOutcome {
     return .noMatch(.init(source: source, experimentId: experimentId))
   }
 
   static func match(
-    rule: TriggerRule,
-    unsavedOccurrence: TriggerRuleOccurrence? = nil
-  ) -> TriggerRuleOutcome {
-    return .match(.init(rule: rule, unsavedOccurrence: unsavedOccurrence))
+    audience: TriggerRule,
+    unsavedOccurrence: TriggerAudienceOccurrence? = nil
+  ) -> TriggerAudienceOutcome {
+    return .match(.init(audience: audience, unsavedOccurrence: unsavedOccurrence))
   }
 }
 
@@ -75,7 +75,7 @@ struct TriggerRule: Decodable, Hashable {
   var experiment: RawExperiment
   var expression: String?
   var expressionJs: String?
-  var occurrence: TriggerRuleOccurrence?
+  var occurrence: TriggerAudienceOccurrence?
   let computedPropertyRequests: [ComputedPropertyRequest]
   var preload: TriggerPreload
 
@@ -135,7 +135,7 @@ struct TriggerRule: Decodable, Hashable {
 
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
     expressionJs = try values.decodeIfPresent(String.self, forKey: .expressionJs)
-    occurrence = try values.decodeIfPresent(TriggerRuleOccurrence.self, forKey: .occurrence)
+    occurrence = try values.decodeIfPresent(TriggerAudienceOccurrence.self, forKey: .occurrence)
     preload = try values.decode(TriggerPreload.self, forKey: .preload)
 
     let throwableComputedProperties = try values.decodeIfPresent(
@@ -149,7 +149,7 @@ struct TriggerRule: Decodable, Hashable {
     experiment: RawExperiment,
     expression: String?,
     expressionJs: String?,
-    occurrence: TriggerRuleOccurrence? = nil,
+    occurrence: TriggerAudienceOccurrence? = nil,
     computedPropertyRequests: [ComputedPropertyRequest],
     preload: TriggerPreload
   ) {

@@ -29,9 +29,9 @@ class ConfigManager {
   /// Options for configuring the SDK.
   var options: SuperwallOptions
 
-  /// A dictionary of triggers by their event name.
+  /// A dictionary of triggers by their placement name.
   @DispatchQueueBacked
-  var triggersByEventName: [String: Trigger] = [:]
+  var triggersByPlacementName: [String: Trigger] = [:]
 
   /// A memory store of assignments that are yet to be confirmed.
   ///
@@ -51,7 +51,7 @@ class ConfigManager {
   private var currentPreloadingTask: Task<Void, Never>?
 
   typealias Factory = RequestFactory
-    & RuleAttributesFactory
+    & AudienceFilterAttributesFactory
     & ReceiptFactory
     & DeviceHelperFactory
   private let factory: Factory
@@ -99,7 +99,7 @@ class ConfigManager {
 
       await processConfig(newConfig, isFirstTime: false)
       configState.send(.retrieved(newConfig))
-      await Superwall.shared.track(InternalSuperwallEvent.ConfigRefresh())
+      await Superwall.shared.track(InternalSuperwallPlacement.ConfigRefresh())
       Task { await preloadPaywalls() }
     } catch {
       Logger.debug(
@@ -126,7 +126,7 @@ class ConfigManager {
 
       let deviceAttributes = await factory.makeSessionDeviceAttributes()
       await Superwall.shared.track(
-        InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
+        InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
 
       await processConfig(config, isFirstTime: true)
@@ -150,8 +150,8 @@ class ConfigManager {
     _ config: Config,
     isFirstTime: Bool
   ) async {
-    storage.save(config.featureFlags.disableVerboseEvents, forType: DisableVerboseEvents.self)
-    triggersByEventName = ConfigLogic.getTriggersByEventName(from: config.triggers)
+    storage.save(config.featureFlags.disableVerbosePlacements, forType: DisableVerbosePlacements.self)
+    triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
@@ -171,7 +171,7 @@ class ConfigManager {
   /// Swizzles the UIWindow's `sendEvent` to intercept the first `began` touch event if
   /// config's triggers contain `touches_began`.
   private func checkForTouchesBeganTrigger(in triggers: Set<Trigger>) async {
-    if triggers.contains(where: { $0.eventName == SuperwallEvent.touchesBegan.description }) {
+    if triggers.contains(where: { $0.placementName == SuperwallPlacement.touchesBegan.description }) {
       await UIWindow.swizzleSendEvent()
     }
   }
@@ -323,13 +323,13 @@ class ConfigManager {
   }
 
   /// Preloads paywalls referenced by the provided triggers.
-  func preloadPaywalls(for eventNames: Set<String>) async {
+  func preloadPaywalls(for placementNames: Set<String>) async {
     guard let config = try? await configState
       .compactMap({ $0.getConfig() })
       .throwableAsync() else {
         return
       }
-    let triggersToPreload = config.triggers.filter { eventNames.contains($0.eventName) }
+    let triggersToPreload = config.triggers.filter { placementNames.contains($0.placementName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
     await preloadPaywalls(
       withIdentifiers: triggerPaywallIdentifiers
@@ -345,7 +345,7 @@ class ConfigManager {
             return
           }
           let request = self.factory.makePaywallRequest(
-            eventData: nil,
+            placementData: nil,
             responseIdentifiers: .init(paywallId: identifier),
             overrides: nil,
             isDebuggerLaunched: false,

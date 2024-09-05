@@ -13,7 +13,7 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   - request: The presentation request.
-  ///   - rulesOutcome: The outcome from evaluating rules.
+  ///   - audienceOutcome: The outcome from evaluating audience filters.
   ///   - debugInfo: Information to help with debugging.
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   ///   - dependencyContainer: Used with testing only.
@@ -23,14 +23,14 @@ extension Superwall {
   /// already presented.
   func getPaywallViewController(
     request: PresentationRequest,
-    rulesOutcome: RuleEvaluationOutcome,
+    audienceOutcome: AudienceFilterEvaluationOutcome,
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
     dependencyContainer: DependencyContainer
   ) async throws -> PaywallViewController {
     let experiment = try await getExperiment(
       request: request,
-      rulesOutcome: rulesOutcome,
+      audienceOutcome: audienceOutcome,
       debugInfo: debugInfo,
       paywallStatePublisher: paywallStatePublisher,
       storage: dependencyContainer.storage
@@ -49,7 +49,7 @@ extension Superwall {
     }
 
     let paywallRequest = dependencyContainer.makePaywallRequest(
-      eventData: request.presentationInfo.eventData,
+      placementData: request.presentationInfo.placementData,
       responseIdentifiers: responseIdentifiers,
       overrides: .init(
         products: request.paywallOverrides?.productsByName,

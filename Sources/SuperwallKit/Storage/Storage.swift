@@ -146,7 +146,7 @@ class Storage {
       }
 
       Task {
-        await Superwall.shared.track(InternalSuperwallEvent.FirstSeen())
+        await Superwall.shared.track(InternalSuperwallPlacement.FirstSeen())
       }
       self.save(true, forType: DidTrackFirstSeen.self)
       self._didTrackFirstSeen = true
@@ -166,7 +166,7 @@ class Storage {
 
   /// Records the app install
   func recordAppInstall(
-    trackEvent: @escaping (Trackable) async -> TrackingResult
+  trackPlacement: @escaping (Trackable) async -> TrackingResult
   ) {
     let didTrackAppInstall = get(DidTrackAppInstall.self) ?? false
     if didTrackAppInstall {
@@ -177,11 +177,11 @@ class Storage {
     let deviceInfo = factory.makeDeviceInfo()
 
     Task {
-      let event = InternalSuperwallEvent.AppInstall(
+      let appInstall = InternalSuperwallPlacement.AppInstall(
         appInstalledAtString: deviceInfo.appInstalledAtString,
         hasExternalPurchaseController: hasExternalPurchaseController
       )
-      _ = await trackEvent(event)
+      _ = await trackPlacement(appInstall)
     }
     save(true, forType: DidTrackAppInstall.self)
   }

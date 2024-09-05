@@ -11,7 +11,7 @@ import Combine
 /// Sends n analytical events to the Superwall servers every 20 seconds, where n is defined by `maxEventCount`.
 ///
 /// **Note**: this currently has a limit of 500 events per flush.
-actor EventsQueue {
+actor PlacementsQueue {
   private let maxEventCount = 50
   private var elements: [JSON] = []
   private var timer: Timer?
@@ -74,21 +74,21 @@ actor EventsQueue {
 
   func enqueue(
     data: JSON,
-    from event: Trackable
+    from placement: Trackable
   ) {
-    guard externalDataCollectionAllowed(from: event) else {
+    guard externalDataCollectionAllowed(from: placement) else {
       return
     }
     elements.append(data)
   }
 
-  private func externalDataCollectionAllowed(from event: Trackable) -> Bool {
+  private func externalDataCollectionAllowed(from placement: Trackable) -> Bool {
     if Superwall.shared.options.isExternalDataCollectionEnabled {
       return true
     }
-    if event is InternalSuperwallEvent.TriggerFire
-      || event is InternalSuperwallEvent.Attributes
-      || event is UserInitiatedEvent.Track {
+    if placement is InternalSuperwallPlacement.TriggerFire
+      || placement is InternalSuperwallPlacement.Attributes
+      || placement is UserInitiatedPlacement.Track {
       return false
     }
     return true
