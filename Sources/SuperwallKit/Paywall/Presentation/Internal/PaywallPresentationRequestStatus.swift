@@ -68,7 +68,7 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
     case .noRuleMatch:
       return "no_rule_match"
     case .placementNotFound:
-      return "placement_not_found"
+      return "event_not_found"
     case .noPaywallViewController:
       return "no_paywall_view_controller"
     case .noPresenter:

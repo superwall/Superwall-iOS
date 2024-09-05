@@ -1025,8 +1025,8 @@ final class ConfigLogicTests: XCTestCase {
       triggers: []
     )
     let triggers: Set<Trigger > = [
-      Trigger(eventName: "app_open", rules: []),
-      Trigger(eventName: "campaign_trigger", rules: [.stub()])
+      Trigger(placementName: "app_open", rules: []),
+      Trigger(placementName: "campaign_trigger", rules: [.stub()])
     ]
     let filteredTriggers = ConfigLogic.filterTriggers(
       triggers,
@@ -1041,8 +1041,8 @@ final class ConfigLogicTests: XCTestCase {
       triggers: ["app_open"]
     )
     let triggers: Set<Trigger > = [
-      Trigger(eventName: "app_open", rules: []),
-      Trigger(eventName: "campaign_trigger", rules: [.stub()])
+      Trigger(placementName: "app_open", rules: []),
+      Trigger(placementName: "campaign_trigger", rules: [.stub()])
     ]
     let filteredTriggers = ConfigLogic.filterTriggers(
       triggers,
@@ -1058,8 +1058,8 @@ final class ConfigLogicTests: XCTestCase {
       triggers: []
     )
     let triggers: Set<Trigger > = [
-      Trigger(eventName: "app_open", rules: []),
-      Trigger(eventName: "campaign_trigger", rules: [.stub()])
+      Trigger(placementName: "app_open", rules: []),
+      Trigger(placementName: "campaign_trigger", rules: [.stub()])
     ]
     let filteredTriggers = ConfigLogic.filterTriggers(
       triggers,

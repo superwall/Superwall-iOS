@@ -18,7 +18,7 @@ final class CoreDataManagerMock: CoreDataManager {
   }
 
   func countAllEvents() async -> Int {
-    let fetchRequest = ManagedPlacementData.fetchRequest()
+    let fetchRequest = ManagedEventData.fetchRequest()
 
     return await withCheckedContinuation { continuation in
       internalDataStack.count(for: fetchRequest) { count in

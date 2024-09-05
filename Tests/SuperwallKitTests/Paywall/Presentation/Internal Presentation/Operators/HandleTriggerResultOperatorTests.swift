@@ -151,7 +151,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
 
   func test_handleTriggerResult_eventNotFound() async {
     let input = RuleEvaluationOutcome(
-      triggerResult: .eventNotFound
+      triggerResult: .placementNotFound
     )
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
@@ -169,7 +169,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       switch state {
       case .skipped(let reason):
         switch reason {
-        case .eventNotFound:
+        case .placementNotFound:
           stateExpectation.fulfill()
         default:
           break
@@ -191,7 +191,7 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
       XCTFail("Should fail")
     } catch {
       if let error = error as? PresentationPipelineError,
-        case .eventNotFound = error {
+        case .placementNotFound = error {
 
       } else {
         XCTFail("Wrong error type")

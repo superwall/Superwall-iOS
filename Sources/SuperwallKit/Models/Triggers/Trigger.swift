@@ -8,6 +8,11 @@
 import Foundation
 
 struct Trigger: Decodable, Hashable {
+  enum CodingKeys: String, CodingKey {
+    case rules
+    case placementName = "eventName"
+  }
+
   var placementName: String
   var rules: [TriggerRule]
 }

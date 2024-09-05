@@ -32,13 +32,13 @@ final class CoreDataStackMock: CoreDataStack {
     var index = 0
 
     let batchInsert = NSBatchInsertRequest(
-      entity: ManagedPlacementData.entity()
+      entity: ManagedEventData.entity()
     ) { (managedObject: NSManagedObject) -> Bool in
       guard index < count else {
         return true
       }
 
-      if let eventData = managedObject as? ManagedPlacementData {
+      if let eventData = managedObject as? ManagedEventData {
         let stub = PlacementData.stub()
           .setting(\.name, to: eventName)
         eventData.createdAt = stub.createdAt

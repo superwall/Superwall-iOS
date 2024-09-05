@@ -66,7 +66,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       XCTAssertNil(output.confirmableAssignment)
 
       switch output.triggerResult {
-      case .eventNotFound:
+      case .placementNotFound:
         break
       default:
         XCTFail("Wrong trigger result")

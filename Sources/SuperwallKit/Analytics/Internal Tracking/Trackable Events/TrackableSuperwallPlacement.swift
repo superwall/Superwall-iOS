@@ -334,7 +334,7 @@ enum InternalSuperwallPlacement {
         ]
       case .placementNotFound:
         return params + [
-          "result": "placementNotFound"
+          "result": "eventNotFound"
         ]
       case .error:
         return params + [

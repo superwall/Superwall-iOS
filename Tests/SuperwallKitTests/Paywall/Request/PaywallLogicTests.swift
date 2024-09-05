@@ -38,7 +38,7 @@ class PaywallLogicTests: XCTestCase {
     // When
     let hash = PaywallLogic.requestHash(
       identifier: id,
-      event: event,
+      placement: event,
       locale: locale,
       joinedSubstituteProductIds: nil
     )
@@ -59,7 +59,7 @@ class PaywallLogicTests: XCTestCase {
     // When
     let hash = PaywallLogic.requestHash(
       identifier: id,
-      event: event,
+      placement: event,
       locale: locale,
       joinedSubstituteProductIds: ids
     )
@@ -77,7 +77,7 @@ class PaywallLogicTests: XCTestCase {
 
     // When
     let hash = PaywallLogic.requestHash(
-      event: event,
+      placement: event,
       locale: locale,
       joinedSubstituteProductIds: nil
     )
@@ -111,7 +111,7 @@ class PaywallLogicTests: XCTestCase {
 
     // When
     let hash = PaywallLogic.requestHash(
-      event: event,
+      placement: event,
       locale: locale,
       joinedSubstituteProductIds: ids
     )

@@ -64,7 +64,7 @@ final class TemplateLogicTests: XCTestCase {
       from: .stub()
         .setting(\.productItems, to: products)
         .setting(\.productVariables, to: productVariables),
-      event: .stub()
+      placement: .stub()
         .setting(\.parameters, to: ["myparam": "test"]),
       factory: factory
     )
@@ -124,7 +124,7 @@ final class TemplateLogicTests: XCTestCase {
         .setting(\.productItems, to: productItems)
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true),
-      event: .stub()
+      placement: .stub()
         .setting(\.parameters, to: params),
       factory: factory
     )
@@ -196,7 +196,7 @@ final class TemplateLogicTests: XCTestCase {
         .setting(\.productItems, to: products)
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true),
-      event: .stub()
+      placement: .stub()
         .setting(\.parameters, to: params),
       factory: factory
     )
@@ -274,7 +274,7 @@ final class TemplateLogicTests: XCTestCase {
         .setting(\.productItems, to: products)
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true),
-      event: .stub()
+      placement: .stub()
         .setting(\.parameters, to: params),
       factory: factory
     )

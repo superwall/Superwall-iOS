@@ -29,7 +29,7 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
+      placementName: eventName,
       rules: [triggerRule]
     )
     let eventData = PlacementData(
@@ -53,7 +53,7 @@ class AssignmentLogicTests: XCTestCase {
       factory: dependencyContainer
     )
     let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+      forPlacement: eventData,
       triggers: triggers
     )
 
@@ -93,7 +93,7 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
+      placementName: eventName,
       rules: [triggerRule]
     )
     let eventData = PlacementData(
@@ -117,7 +117,7 @@ class AssignmentLogicTests: XCTestCase {
 
     // MARK: When
     let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+      forPlacement: eventData,
       triggers: triggers
     )
 
@@ -158,7 +158,7 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
+      placementName: eventName,
       rules: [triggerRule]
     )
     let eventData = PlacementData(
@@ -179,7 +179,7 @@ class AssignmentLogicTests: XCTestCase {
 
     // MARK: When
     let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+      forPlacement: eventData,
       triggers: triggers
     )
 
@@ -216,7 +216,7 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
+      placementName: eventName,
       rules: [triggerRule]
     )
     let eventData = PlacementData(
@@ -243,7 +243,7 @@ class AssignmentLogicTests: XCTestCase {
 
     // MARK: When
     let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+      forPlacement: eventData,
       triggers: triggers
     )
 
@@ -280,7 +280,7 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
+      placementName: eventName,
       rules: [triggerRule]
     )
     let eventData = PlacementData(
@@ -304,7 +304,7 @@ class AssignmentLogicTests: XCTestCase {
 
     // MARK: When
     let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+      forPlacement: eventData,
       triggers: triggers
     )
 
@@ -336,7 +336,7 @@ class AssignmentLogicTests: XCTestCase {
       preload: .init(behavior: .always)
     )
     let trigger = Trigger(
-      eventName: eventName,
+      placementName: eventName,
       rules: [triggerRule]
     )
     let eventData = PlacementData(
@@ -360,12 +360,12 @@ class AssignmentLogicTests: XCTestCase {
 
     // MARK: When
     let outcome = await assignmentLogic.evaluateRules(
-      forEvent: eventData,
+      forPlacement: eventData,
       triggers: triggers
     )
 
     // MARK: Then
-    guard case .eventNotFound = outcome.triggerResult else {
+    guard case .placementNotFound = outcome.triggerResult else {
       return XCTFail("Incorrect outcome. Expected unknown event")
     }
 

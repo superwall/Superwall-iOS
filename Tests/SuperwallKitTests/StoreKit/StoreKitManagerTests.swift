@@ -28,7 +28,7 @@ class StoreKitManagerTests: XCTestCase {
     do {
       let (productsById, products) = try await manager.getProducts(
         forPaywall: .stub(),
-        event: nil,
+        placement: nil,
         substituting: substituteProducts
       )
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
@@ -55,7 +55,7 @@ class StoreKitManagerTests: XCTestCase {
     do {
       let (productsById, products) = try await manager.getProducts(
         forPaywall: .stub(),
-        event: nil,
+        placement: nil,
         substituting: substituteProducts
       )
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
@@ -88,7 +88,7 @@ class StoreKitManagerTests: XCTestCase {
     do {
       let (productsById, products) = try await manager.getProducts(
         forPaywall: .stub(),
-        event: nil,
+        placement: nil,
         substituting: substituteProducts
       )
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
@@ -124,7 +124,7 @@ class StoreKitManagerTests: XCTestCase {
       let (productsById, products) = try await manager.getProducts(
         forPaywall: .stub()
           .setting(\.productIds, to: ["1"]),
-        event: nil,
+        placement: nil,
         substituting: substituteProducts
       )
       XCTAssertEqual(productsById.count, 1)
@@ -156,7 +156,7 @@ class StoreKitManagerTests: XCTestCase {
       let (productsById, products) = try await manager.getProducts(
         forPaywall: .stub()
           .setting(\.productIds, to: ["1", "2"]),
-        event: nil,
+        placement: nil,
         substituting: substituteProducts
       )
       XCTAssertEqual(productsById.count, 2)
