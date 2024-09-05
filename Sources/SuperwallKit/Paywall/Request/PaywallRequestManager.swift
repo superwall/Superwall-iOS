@@ -53,7 +53,7 @@ actor PaywallRequestManager {
 
     let requestHash = PaywallLogic.requestHash(
       identifier: request.responseIdentifiers.paywallId,
-      event: request.placementData,
+      placement: request.placementData,
       locale: deviceInfo.locale,
       joinedSubstituteProductIds: joinedSubstituteProductIds
     )

@@ -10,7 +10,7 @@ import Combine
 import UIKit
 
 extension Superwall {
-  /// Gets the  ``PaywallViewController`` object for an event, which you can present
+  /// Gets the  ``PaywallViewController`` object for a placement, which you can present
   /// however you want.
   ///
   /// - Note: The remotely configured presentation style will be ignored, it is up to you
@@ -60,7 +60,7 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   -  placement: The name of the placement, as you have defined on the Superwall dashboard.
-  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the audience filters
+  ///   - params: Optional parameters you'd like to pass with your placement. These can be referenced within the audience filters
   ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
   ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
   ///   be dropped.

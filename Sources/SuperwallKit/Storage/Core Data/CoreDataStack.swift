@@ -105,17 +105,17 @@ class CoreDataStack {
     }
   }
 
-  func getLastSavedEvent(
+  func getLastSavedPlacement(
     name: String,
     before date: Date?,
-    completion: @escaping ((ManagedPlacementData?) -> Void)
+    completion: @escaping ((ManagedEventData?) -> Void)
   ) {
     guard let backgroundContext = backgroundContext else {
       return completion(nil)
     }
 
     backgroundContext.perform {
-      let fetchRequest = ManagedPlacementData.fetchRequest()
+      let fetchRequest = ManagedEventData.fetchRequest()
       if let date = date {
         fetchRequest.predicate = NSPredicate(format: "name == %@ AND createdAt < %@", name, date as NSDate)
       } else {
@@ -126,16 +126,16 @@ class CoreDataStack {
 
       do {
         let results = try backgroundContext.fetch(fetchRequest)
-        guard let event = results.first else {
+        guard let placement = results.first else {
           return completion(nil)
         }
-        completion(event)
+        completion(placement)
       } catch {
         Logger.debug(
           logLevel: .error,
           scope: .coreData,
           message: "Error getting last saved event from Core Data.",
-          info: ["event": name],
+          info: ["placement": name],
           error: error
         )
         completion(nil)

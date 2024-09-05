@@ -74,21 +74,21 @@ actor PlacementsQueue {
 
   func enqueue(
     data: JSON,
-    from event: Trackable
+    from placement: Trackable
   ) {
-    guard externalDataCollectionAllowed(from: event) else {
+    guard externalDataCollectionAllowed(from: placement) else {
       return
     }
     elements.append(data)
   }
 
-  private func externalDataCollectionAllowed(from event: Trackable) -> Bool {
+  private func externalDataCollectionAllowed(from placement: Trackable) -> Bool {
     if Superwall.shared.options.isExternalDataCollectionEnabled {
       return true
     }
-    if event is InternalSuperwallPlacement.TriggerFire
-      || event is InternalSuperwallPlacement.Attributes
-      || event is UserInitiatedPlacement.Track {
+    if placement is InternalSuperwallPlacement.TriggerFire
+      || placement is InternalSuperwallPlacement.Attributes
+      || placement is UserInitiatedPlacement.Track {
       return false
     }
     return true

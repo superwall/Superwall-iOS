@@ -241,7 +241,7 @@ public final class Superwall: NSObject, ObservableObject {
     Task {
       dependencyContainer.storage.configure(apiKey: apiKey)
 
-      dependencyContainer.storage.recordAppInstall(trackEvent: track)
+      dependencyContainer.storage.recordAppInstall(trackPlacement: track)
 
       async let fetchConfig: () = await dependencyContainer.configManager.fetchConfiguration()
       async let configureIdentity: () = await dependencyContainer.identityManager.configure()
@@ -288,8 +288,8 @@ public final class Superwall: NSObject, ObservableObject {
 
           Task {
             await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
-            let event = InternalSuperwallPlacement.SubscriptionStatusDidChange(subscriptionStatus: newValue)
-            await self.track(event)
+            let subscriptionStatusDidChange = InternalSuperwallPlacement.SubscriptionStatusDidChange(subscriptionStatus: newValue)
+            await self.track(subscriptionStatusDidChange)
           }
         }
       ))
@@ -426,24 +426,23 @@ public final class Superwall: NSObject, ObservableObject {
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this
   /// function when you would like preloading to begin.
   ///
-  /// Note: This will not reload any paywalls you've already preloaded via ``preloadPaywalls(forEvents:)``.
+  /// Note: This will not reload any paywalls you've already preloaded via ``preloadPaywalls(forPlacements:)``.
   public func preloadAllPaywalls() {
     Task { [weak self] in
       await self?.dependencyContainer.configManager.preloadAllPaywalls()
     }
   }
 
-  /// Preloads paywalls for specific event names.
+  /// Preloads paywalls for specific placements.
   ///
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this
   /// function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
-  /// - Parameters:
-  ///   - placementNames: A set of names of events whose paywalls you want to preload.
-  public func preloadPaywalls(forPlacements placementNames: Set<String>) {
+  /// - Parameter placements: A set of names of events whose paywalls you want to preload.
+  public func preloadPaywalls(forPlacements placements: Set<String>) {
     Task { [weak self] in
-      await self?.dependencyContainer.configManager.preloadPaywalls(for: placementNames)
+      await self?.dependencyContainer.configManager.preloadPaywalls(for: placements)
     }
   }
 
@@ -457,8 +456,8 @@ public final class Superwall: NSObject, ObservableObject {
 
     Task {
       let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
-      let event = InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
-      await track(event)
+      let deviceAttributesPlacement = InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
+      await track(deviceAttributesPlacement)
     }
   }
 
@@ -575,12 +574,12 @@ extension Superwall: PaywallViewControllerEventDelegate {
     case let .customPlacement(name: name, params: params):
       Task {
         let paramsDict = params.dictionaryValue
-        let trackedEvent = InternalSuperwallPlacement.CustomPlacement(
+        let customPlacement = InternalSuperwallPlacement.CustomPlacement(
           paywallInfo: paywallViewController.info,
           name: name,
           params: paramsDict
         )
-        await Superwall.shared.track(trackedEvent)
+        await Superwall.shared.track(customPlacement)
       }
     }
   }

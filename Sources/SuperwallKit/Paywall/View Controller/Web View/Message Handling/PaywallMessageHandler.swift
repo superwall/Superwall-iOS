@@ -70,75 +70,75 @@ final class PaywallMessageHandler: WebEventDelegate {
       hapticFeedback()
       delegate?.eventDidOccur(.closed)
     case .paywallOpen:
-      let eventName = SuperwallPlacementObjc.paywallOpen.description
+      let paywallOpen = SuperwallPlacementObjc.paywallOpen.description
       if delegate?.paywall.paywalljsVersion == nil {
         let message = EnqueuedMessage(
-          name: eventName,
+          name: paywallOpen,
           paywall: paywall
         )
         messageQueue.enqueue(message)
       } else {
         Task {
-          await self.pass(eventName: eventName, from: paywall)
+          await self.pass(placement: paywallOpen, from: paywall)
         }
       }
     case .paywallClose:
-      let eventName = SuperwallPlacementObjc.paywallClose.description
+      let paywallClose = SuperwallPlacementObjc.paywallClose.description
       if delegate?.paywall.paywalljsVersion == nil {
         let message = EnqueuedMessage(
-          name: eventName,
+          name: paywallClose,
           paywall: paywall
         )
         messageQueue.enqueue(message)
       } else {
         Task {
-          await self.pass(eventName: eventName, from: paywall)
+          await self.pass(placement: paywallClose, from: paywall)
         }
       }
     case .restoreStart:
-      let eventName = SuperwallPlacementObjc.restoreStart.description
+      let restoreStart = SuperwallPlacementObjc.restoreStart.description
       Task {
-        await self.pass(eventName: eventName, from: paywall)
+        await self.pass(placement: restoreStart, from: paywall)
       }
     case .restoreComplete:
-      let eventName = SuperwallPlacementObjc.restoreComplete.description
+      let restoreComplete = SuperwallPlacementObjc.restoreComplete.description
       Task {
-        await self.pass(eventName: eventName, from: paywall)
+        await self.pass(placement: restoreComplete, from: paywall)
       }
     case .restoreFail:
-      let eventName = SuperwallPlacementObjc.restoreFail.description
+      let restoreFail = SuperwallPlacementObjc.restoreFail.description
       Task {
-        await self.pass(eventName: eventName, from: paywall)
+        await self.pass(placement: restoreFail, from: paywall)
       }
     case .transactionRestore:
-      let eventName = SuperwallPlacementObjc.transactionRestore.description
+      let transactionRestore = SuperwallPlacementObjc.transactionRestore.description
       Task {
-        await self.pass(eventName: eventName, from: paywall)
+        await self.pass(placement: transactionRestore, from: paywall)
       }
     case .transactionStart:
-      let eventName = SuperwallPlacementObjc.transactionStart.description
+      let transactionStart = SuperwallPlacementObjc.transactionStart.description
       Task {
-        await self.pass(eventName: eventName, from: paywall)
+        await self.pass(placement: transactionStart, from: paywall)
       }
     case .transactionComplete:
-      let eventName = SuperwallPlacementObjc.transactionComplete.description
+      let transactionComplete = SuperwallPlacementObjc.transactionComplete.description
       Task {
-        await self.pass(eventName: eventName, from: paywall)
+        await self.pass(placement: transactionComplete, from: paywall)
       }
     case .transactionFail:
-      let eventName = SuperwallPlacementObjc.transactionFail.description
+      let transactionFail = SuperwallPlacementObjc.transactionFail.description
       Task {
-        await self.pass(eventName: eventName, from: paywall)
+        await self.pass(placement: transactionFail, from: paywall)
       }
     case .transactionAbandon:
-      let eventName = SuperwallPlacementObjc.transactionAbandon.description
+      let transactionAbandon = SuperwallPlacementObjc.transactionAbandon.description
       Task {
-        await self.pass(eventName: eventName, from: paywall)
+        await self.pass(placement: transactionAbandon, from: paywall)
       }
     case .transactionTimeout:
-      let eventName = SuperwallPlacementObjc.transactionTimeout.description
+      let transactionTimeout = SuperwallPlacementObjc.transactionTimeout.description
       Task {
-        await self.pass(eventName: eventName, from: paywall)
+        await self.pass(placement: transactionTimeout, from: paywall)
       }
     case .openUrl(let url):
       openUrl(url)
@@ -150,19 +150,19 @@ final class PaywallMessageHandler: WebEventDelegate {
       restorePurchases()
     case .purchase(productId: let id):
       purchaseProduct(withId: id)
-    case .custom(data: let customEvent):
-      handleCustomEvent(customEvent)
+    case .custom(data: let name):
+      handleCustomEvent(name)
     case let .customPlacement(name: name, params: params):
       handleCustomPlacement(name: name, params: params)
     }
   }
 
   nonisolated private func pass(
-    eventName: String,
+    placement: String,
     from paywall: Paywall
   ) async {
     let event = [
-      "event_name": eventName,
+      "event_name": placement,
       "paywall_id": paywall.databaseId,
       "paywall_identifier": paywall.identifier
     ]
@@ -180,7 +180,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     let eventData = await delegate?.request?.presentationInfo.placementData
     let base64Templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
-      event: eventData,
+      placement: eventData,
       factory: factory
     )
     await passMessageToWebView(base64Templates)
@@ -225,18 +225,18 @@ final class PaywallMessageHandler: WebEventDelegate {
       delegate.paywall.webviewLoadingInfo.endAt = loadedAt
 
       let paywallInfo = delegate.info
-      let trackedEvent = InternalSuperwallPlacement.PaywallWebviewLoad(
+      let webViewLoad = InternalSuperwallPlacement.PaywallWebviewLoad(
         state: .complete,
         paywallInfo: paywallInfo
       )
-      await Superwall.shared.track(trackedEvent)
+      await Superwall.shared.track(webViewLoad)
     }
 
     let htmlSubstitutions = paywall.htmlSubstitutions
-    let eventData = await delegate?.request?.presentationInfo.placementData
+    let placementData = await delegate?.request?.presentationInfo.placementData
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
-      event: eventData,
+      placement: placementData,
       factory: factory
     )
     let scriptSrc = """
@@ -293,7 +293,7 @@ final class PaywallMessageHandler: WebEventDelegate {
         if let message = messageQueue.dequeue() {
           Task {
             await self.pass(
-              eventName: message.name,
+              placement: message.name,
               from: message.paywall
             )
           }

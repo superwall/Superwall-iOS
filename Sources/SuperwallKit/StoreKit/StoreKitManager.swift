@@ -57,7 +57,7 @@ actor StoreKitManager {
     let products = try await productsFetcher.products(
       identifiers: processingResult.productIdsToLoad,
       forPaywall: paywall,
-      event: placement
+      placement: placement
     )
 
     var productsById = processingResult.substituteProductsById

@@ -20,19 +20,19 @@ class CoreDataManager {
   }
 
   func savePlacementData(
-    _ eventData: PlacementData,
-    completion: ((ManagedPlacementData) -> Void)? = nil
+    _ placementData: PlacementData,
+    completion: ((ManagedEventData) -> Void)? = nil
   ) {
     guard let backgroundContext = backgroundContext else {
       return
     }
     backgroundContext.perform {
-      let data = try? JSONEncoder().encode(eventData.parameters)
-      guard let managedPlacementData = ManagedPlacementData(
+      let data = try? JSONEncoder().encode(placementData.parameters)
+      guard let managedEventData = ManagedEventData(
         context: backgroundContext,
-        id: eventData.id,
-        createdAt: eventData.createdAt,
-        name: eventData.name,
+        id: placementData.id,
+        createdAt: placementData.createdAt,
+        name: placementData.name,
         parameters: data ?? Data()
       ) else {
         return
@@ -42,7 +42,7 @@ class CoreDataManager {
         if backgroundContext.hasChanges {
           try backgroundContext.save()
         }
-        completion?(managedPlacementData)
+        completion?(managedEventData)
       } catch let error as NSError {
         Logger.debug(
           logLevel: .error,
@@ -93,7 +93,7 @@ class CoreDataManager {
       return
     }
     let eventDataRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(
-      entityName: ManagedPlacementData.entityName
+      entityName: ManagedEventData.entityName
     )
     let deletePlacementDataRequest = NSBatchDeleteRequest(fetchRequest: eventDataRequest)
 
@@ -119,23 +119,23 @@ class CoreDataManager {
   }
 
   func getComputedPropertySincePlacement(
-    _ event: PlacementData?,
+    _ placement: PlacementData?,
     request: ComputedPropertyRequest
   ) async -> Int? {
     var lastEventDate: Date?
-    if let event = event {
-      lastEventDate = event.name == request.placementName ? event.createdAt : nil
+    if let placement = placement {
+      lastEventDate = placement.name == request.placementName ? placement.createdAt : nil
     }
 
     return await withCheckedContinuation { continuation in
-      coreDataStack.getLastSavedEvent(
+      coreDataStack.getLastSavedPlacement(
         name: request.placementName,
         before: lastEventDate
-      ) { event in
-        guard let event = event else {
+      ) { placement in
+        guard let placement = placement else {
           return continuation.resume(returning: nil)
         }
-        let createdAt = event.createdAt
+        let createdAt = placement.createdAt
         let calendar = Calendar.current
         let currentDate = Date()
         let components = calendar.dateComponents(

@@ -144,11 +144,11 @@ final class TransactionManager {
         paywallViewController: paywallViewController
       )
 
-      let trackedEvent = InternalSuperwallPlacement.Restore(
+      let restoreComplete = InternalSuperwallPlacement.Restore(
         state: .complete,
         paywallInfo: paywallViewController.info
       )
-      await Superwall.shared.track(trackedEvent)
+      await Superwall.shared.track(restoreComplete)
       paywallViewController.webView.messageHandler.handle(.restoreComplete)
     } else {
       var message = "Transactions Failed to Restore."
@@ -167,11 +167,11 @@ final class TransactionManager {
         message: message
       )
 
-      let trackedEvent = InternalSuperwallPlacement.Restore(
+      let restoreFail = InternalSuperwallPlacement.Restore(
         state: .fail(message),
         paywallInfo: paywallViewController.info
       )
-      await Superwall.shared.track(trackedEvent)
+      await Superwall.shared.track(restoreFail)
       paywallViewController.webView.messageHandler.handle(.restoreFail(message))
 
       paywallViewController.presentAlert(
@@ -204,13 +204,13 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
 
-    let trackedEvent = InternalSuperwallPlacement.Transaction(
+    let transactionRestore = InternalSuperwallPlacement.Transaction(
       state: .restore(restoreType),
       paywallInfo: paywallInfo,
       product: product,
       model: transaction
     )
-    await Superwall.shared.track(trackedEvent)
+    await Superwall.shared.track(transactionRestore)
     await paywallViewController.webView.messageHandler.handle(.transactionRestore)
 
     let superwallOptions = factory.makeSuperwallOptions()
@@ -253,13 +253,13 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
     Task {
-      let trackedEvent = InternalSuperwallPlacement.Transaction(
+      let transactionFail = InternalSuperwallPlacement.Transaction(
         state: .fail(.failure(error.safeLocalizedDescription, product)),
         paywallInfo: paywallInfo,
         product: product,
         model: nil
       )
-      await Superwall.shared.track(trackedEvent)
+      await Superwall.shared.track(transactionFail)
       await paywallViewController.webView.messageHandler.handle(.transactionFail)
     }
   }
@@ -279,13 +279,13 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
 
-    let trackedEvent = InternalSuperwallPlacement.Transaction(
+    let transactionStart = InternalSuperwallPlacement.Transaction(
       state: .start(product),
       paywallInfo: paywallInfo,
       product: product,
       model: nil
     )
-    await Superwall.shared.track(trackedEvent)
+    await Superwall.shared.track(transactionStart)
     await paywallViewController.webView.messageHandler.handle(.transactionStart)
 
     await MainActor.run {
@@ -350,13 +350,13 @@ final class TransactionManager {
     )
 
     let paywallInfo = await paywallViewController.info
-    let trackedEvent = InternalSuperwallPlacement.Transaction(
+    let transactionAbandon = InternalSuperwallPlacement.Transaction(
       state: .abandon(product),
       paywallInfo: paywallInfo,
       product: product,
       model: nil
     )
-    await Superwall.shared.track(trackedEvent)
+    await Superwall.shared.track(transactionAbandon)
     await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
 
     await MainActor.run {
@@ -375,13 +375,13 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
 
-    let trackedEvent = InternalSuperwallPlacement.Transaction(
+    let transactionFail = InternalSuperwallPlacement.Transaction(
       state: .fail(.pending("Needs parental approval")),
       paywallInfo: paywallInfo,
       product: nil,
       model: nil
     )
-    await Superwall.shared.track(trackedEvent)
+    await Superwall.shared.track(transactionFail)
     await paywallViewController.webView.messageHandler.handle(.transactionFail)
 
     await paywallViewController.presentAlert(
@@ -411,31 +411,31 @@ final class TransactionManager {
 
     let paywallInfo = await paywallViewController.info
 
-    let trackedEvent = InternalSuperwallPlacement.Transaction(
+    let transactionComplete = InternalSuperwallPlacement.Transaction(
       state: .complete(product, transaction),
       paywallInfo: paywallInfo,
       product: product,
       model: transaction
     )
-    await Superwall.shared.track(trackedEvent)
+    await Superwall.shared.track(transactionComplete)
     await paywallViewController.webView.messageHandler.handle(.transactionComplete)
 
     // Immediately flush the events queue on transaction complete.
     await placementsQueue.flushInternal()
 
     if product.subscriptionPeriod == nil {
-      let trackedEvent = InternalSuperwallPlacement.NonRecurringProductPurchase(
+      let nonRecurringProductPurchase = InternalSuperwallPlacement.NonRecurringProductPurchase(
         paywallInfo: paywallInfo,
         product: product
       )
-      await Superwall.shared.track(trackedEvent)
+      await Superwall.shared.track(nonRecurringProductPurchase)
     } else {
       if didStartFreeTrial {
-        let trackedEvent = InternalSuperwallPlacement.FreeTrialStart(
+        let freeTrialStart = InternalSuperwallPlacement.FreeTrialStart(
           paywallInfo: paywallInfo,
           product: product
         )
-        await Superwall.shared.track(trackedEvent)
+        await Superwall.shared.track(freeTrialStart)
 
         let notifications = paywallInfo.localNotifications.filter {
           $0.type == .trialStarted
@@ -443,11 +443,11 @@ final class TransactionManager {
 
         await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
       } else {
-        let trackedEvent = InternalSuperwallPlacement.SubscriptionStart(
+        let subscriptionStart = InternalSuperwallPlacement.SubscriptionStart(
           paywallInfo: paywallInfo,
           product: product
         )
-        await Superwall.shared.track(trackedEvent)
+        await Superwall.shared.track(subscriptionStart)
       }
     }
   }

@@ -20,7 +20,7 @@ public final class SuperwallPlacementInfo: NSObject {
     return SuperwallPlacementObjc(placement: placement)
   }()
 
-  /// A dictionary of params associated with the event.
+  /// A dictionary of params associated with the placement.
   public let params: [String: Any]
 
   /// Initializes an instance of the the internally tracked superwall placement result.

@@ -98,7 +98,7 @@ extension Superwall {
   ///
   /// This shows a paywall to the user when: A placement you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches an audience filter in the campaign; and the user doesn't have an active subscription.
   ///
-  /// Before using this method, you'll first need to create a campaign and add the event to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
+  /// Before using this method, you'll first need to create a campaign and add the placement to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
   ///
   /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
   ///
@@ -195,17 +195,17 @@ extension Superwall {
     internallyRegister(placement: placement)
   }
 
-  /// Objective-C-only convenience method. Registers an event which, when added to a campaign on the Superwall dashboard, can show a paywall.
+  /// Objective-C-only convenience method. Registers a placement which, when added to a campaign on the Superwall dashboard, can show a paywall.
   ///
-  /// This shows a paywall to the user when: An event you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.
+  /// This shows a paywall to the user when: A placement you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches an audience in the campaign; and the user doesn't have an active subscription.
   ///
-  /// Before using this method, you'll first need to create a campaign and add the event to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
+  /// Before using this method, you'll first need to create a campaign and add the placement to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
   ///
-  /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
+  /// The paywall shown to the user is determined by the audience filters defined in the campaign. When a user is assigned a paywall within an audience, they will continue to see that paywall unless you remove the paywall from the audience or reset assignments to the paywall.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event you wish to register.
-  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped. Defaults to `nil`.
+  ///   -  placement: The name of the placement you wish to register.
+  ///   - params: Optional parameters you'd like to pass with your placement. These can be referenced within the audience filters of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped. Defaults to `nil`.
   @available(swift, obsoleted: 1.0)
   @objc public func register(
     placement: String,

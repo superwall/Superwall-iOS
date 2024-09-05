@@ -26,11 +26,11 @@ struct ProductProcessingOutcome {
 enum PaywallLogic {
   static func requestHash(
     identifier: String? = nil,
-    event: PlacementData? = nil,
+    placement: PlacementData? = nil,
     locale: String,
     joinedSubstituteProductIds: String?
   ) -> String {
-    let id = identifier ?? event?.name ?? "$called_manually"
+    let id = identifier ?? placement?.name ?? "$called_manually"
     var substitutions = ""
     if let joinedSubstituteProductIds = joinedSubstituteProductIds {
       substitutions = joinedSubstituteProductIds
@@ -40,17 +40,17 @@ enum PaywallLogic {
 
   static func handlePaywallError(
     _ error: Error,
-    forEvent event: PlacementData?,
-    trackEvent: @escaping (Trackable) async -> TrackingResult = Superwall.shared.track
+    forPlacement placement: PlacementData?,
+    trackPlacement: @escaping (Trackable) async -> TrackingResult = Superwall.shared.track
   ) -> NSError {
     if let error = error as? NetworkError,
       error == .notFound {
-      let trackedEvent = InternalSuperwallPlacement.PaywallLoad(
+      let paywallLoad = InternalSuperwallPlacement.PaywallLoad(
         state: .notFound,
-        placementData: event
+        placementData: placement
       )
       Task {
-        _ = await trackEvent(trackedEvent)
+        _ = await trackPlacement(paywallLoad)
       }
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(
@@ -66,12 +66,12 @@ enum PaywallLogic {
       )
       return error
     } else {
-      let trackedEvent = InternalSuperwallPlacement.PaywallLoad(
+      let paywallLoad = InternalSuperwallPlacement.PaywallLoad(
         state: .fail,
-        placementData: event
+        placementData: placement
       )
       Task {
-        _ = await trackEvent(trackedEvent)
+        _ = await trackPlacement(paywallLoad)
       }
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(

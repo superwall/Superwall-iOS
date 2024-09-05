@@ -13,14 +13,14 @@ extension PaywallRequestManager {
   ) async throws -> Paywall {
     await trackResponseStarted(
       paywallId: request.responseIdentifiers.paywallId,
-      event: request.placementData
+      placement: request.placementData
     )
     let paywall = try await getPaywallResponse(from: request)
 
     let paywallInfo = paywall.getInfo(fromPlacement: request.placementData)
     await trackResponseLoaded(
       paywallInfo,
-      event: request.placementData
+      placement: request.placementData
     )
 
     return paywall
@@ -31,7 +31,7 @@ extension PaywallRequestManager {
   ) async throws -> Paywall {
     let responseLoadStartTime = Date()
     let paywallId = request.responseIdentifiers.paywallId
-    let event = request.placementData
+    let placement = request.placementData
     var paywall: Paywall
 
     do {
@@ -43,14 +43,14 @@ extension PaywallRequestManager {
       } else {
         paywall = try await network.getPaywall(
           withId: paywallId,
-          fromPlacement: event,
+          fromPlacement: placement,
           retryCount: request.retryCount
         )
       }
     } catch {
       let errorResponse = PaywallLogic.handlePaywallError(
         error,
-        forEvent: event
+        forPlacement: placement
       )
       throw errorResponse
     }
@@ -65,23 +65,23 @@ extension PaywallRequestManager {
   // MARK: - Analytics
   private func trackResponseStarted(
     paywallId: String?,
-    event: PlacementData?
+    placement: PlacementData?
   ) async {
-    let trackedEvent = InternalSuperwallPlacement.PaywallLoad(
+    let paywallLoad = InternalSuperwallPlacement.PaywallLoad(
       state: .start,
-      placementData: event
+      placementData: placement
     )
-    await Superwall.shared.track(trackedEvent)
+    await Superwall.shared.track(paywallLoad)
   }
 
   private func trackResponseLoaded(
     _ paywallInfo: PaywallInfo,
-    event: PlacementData?
+    placement: PlacementData?
   ) async {
-    let responseLoadEvent = InternalSuperwallPlacement.PaywallLoad(
+    let paywallLoad = InternalSuperwallPlacement.PaywallLoad(
       state: .complete(paywallInfo: paywallInfo),
-      placementData: event
+      placementData: placement
     )
-    await Superwall.shared.track(responseLoadEvent)
+    await Superwall.shared.track(paywallLoad)
   }
 }

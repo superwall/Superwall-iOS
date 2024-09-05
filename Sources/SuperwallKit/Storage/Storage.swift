@@ -166,7 +166,7 @@ class Storage {
 
   /// Records the app install
   func recordAppInstall(
-    trackEvent: @escaping (Trackable) async -> TrackingResult
+  trackPlacement: @escaping (Trackable) async -> TrackingResult
   ) {
     let didTrackAppInstall = get(DidTrackAppInstall.self) ?? false
     if didTrackAppInstall {
@@ -177,11 +177,11 @@ class Storage {
     let deviceInfo = factory.makeDeviceInfo()
 
     Task {
-      let event = InternalSuperwallPlacement.AppInstall(
+      let appInstall = InternalSuperwallPlacement.AppInstall(
         appInstalledAtString: deviceInfo.appInstalledAtString,
         hasExternalPurchaseController: hasExternalPurchaseController
       )
-      _ = await trackEvent(event)
+      _ = await trackPlacement(appInstall)
     }
     save(true, forType: DidTrackAppInstall.self)
   }

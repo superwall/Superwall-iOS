@@ -8,8 +8,8 @@
 import Foundation
 import CoreData
 
-final class ManagedPlacementData: NSManagedObject {
-  static let entityName = "PlacementData"
+final class ManagedEventData: NSManagedObject {
+  static let entityName = "EventData"
   @NSManaged var id: String
   @NSManaged var createdAt: Date
   @NSManaged var name: String
@@ -23,7 +23,7 @@ final class ManagedPlacementData: NSManagedObject {
     parameters: Data
   ) {
     guard let entity = NSEntityDescription.entity(
-      forEntityName: "PlacementData",
+      forEntityName: "EventData",
       in: context
     ) else {
       Logger.debug(
@@ -42,8 +42,8 @@ final class ManagedPlacementData: NSManagedObject {
   }
 
   @nonobjc
-  class func fetchRequest() -> NSFetchRequest<ManagedPlacementData> {
-    return NSFetchRequest<ManagedPlacementData>(entityName: entityName)
+  class func fetchRequest() -> NSFetchRequest<ManagedEventData> {
+    return NSFetchRequest<ManagedEventData>(entityName: entityName)
   }
 
   @objc override private init(
