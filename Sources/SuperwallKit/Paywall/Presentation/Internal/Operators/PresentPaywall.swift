@@ -15,7 +15,7 @@ extension Superwall {
   /// - Parameters:
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   ///   - presenter: The view controller to present that paywall on.
-  ///   - unsavedOccurrence: The trigger rule occurrence to save, if available.
+  ///   - unsavedOccurrence: The audience occurrence to save, if available.
   ///   - debugInfo: Information to help with debugging.
   ///   - request: The request to present the paywall.
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
@@ -25,7 +25,7 @@ extension Superwall {
   func presentPaywallViewController(
     _ paywallViewController: PaywallViewController,
     on presenter: UIViewController,
-    unsavedOccurrence: TriggerRuleOccurrence?,
+    unsavedOccurrence: TriggerAudienceOccurrence?,
     debugInfo: [String: Any],
     request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>

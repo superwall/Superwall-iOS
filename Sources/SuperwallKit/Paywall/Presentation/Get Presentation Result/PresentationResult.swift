@@ -17,19 +17,19 @@ public enum PresentationResult: Sendable, Equatable {
   /// double check its spelling.
   case placementNotFound
 
-  /// No matching rule was found for this trigger so no paywall will be shown.
-  case noRuleMatch
+  /// No matching audience was found for this placement so no paywall will be shown.
+  case noAudienceMatch
 
-  /// A matching rule was found and this user will be shown a paywall.
+  /// A matching audience was found and this user will be shown a paywall.
   ///
   /// - Parameters:
-  ///   - experiment: The experiment associated with the trigger.
+  ///   - experiment: The experiment associated with the placement.
   case paywall(Experiment)
 
-  /// A matching rule was found and this user was assigned to a holdout group so will not be shown a paywall.
+  /// A matching audience was found and this user was assigned to a holdout group so will not be shown a paywall.
   ///
   /// - Parameters:
-  ///   - experiment: The experiment  associated with the trigger.
+  ///   - experiment: The experiment associated with the placement.
   case holdout(Experiment)
 
   /// The user is subscribed.

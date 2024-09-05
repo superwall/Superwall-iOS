@@ -18,13 +18,13 @@ public enum PresentationValueObjc: Int, Sendable, Equatable {
   /// double check its spelling.
   case placementNotFound
 
-  /// No matching rule was found for this trigger so no paywall will be shown.
-  case noRuleMatch
+  /// No matching audience was found for this placement so no paywall will be shown.
+  case noAudienceMatch
 
-  /// A matching rule was found and this user will be shown a paywall.
+  /// A matching audience was found and this user will be shown a paywall.
   case paywall
 
-  /// A matching rule was found and this user was assigned to a holdout group so will not be shown a paywall.
+  /// A matching audience was found and this user was assigned to a holdout group so will not be shown a paywall.
   case holdout
 
   /// No view controller could be found to present on.
@@ -45,7 +45,7 @@ public enum PresentationValueObjc: Int, Sendable, Equatable {
 @objc(SWKPresentationResult)
 @objcMembers
 public final class PresentationResultObjc: NSObject, Sendable {
-  /// The result of tracking a placement.
+  /// The result of registering a placement.
   public let value: PresentationValueObjc
 
   /// A campaign experiment that was assigned to a user.
@@ -65,8 +65,8 @@ public final class PresentationResultObjc: NSObject, Sendable {
     case .holdout(let experiment):
       self.value = .holdout
       self.experiment = experiment
-    case .noRuleMatch:
-      self.value = .noRuleMatch
+    case .noAudienceMatch:
+      self.value = .noAudienceMatch
       self.experiment = nil
     case .userIsSubscribed:
       self.value = .userIsSubscribed

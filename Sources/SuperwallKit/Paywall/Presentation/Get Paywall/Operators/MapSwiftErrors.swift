@@ -17,11 +17,11 @@ extension Superwall {
         } else {
           return PaywallSkippedReason.holdout(experiment)
         }
-      case .noRuleMatch:
+      case .noAudienceMatch:
         if toObjc {
-          return PaywallSkippedReasonObjc.noRuleMatch
+          return PaywallSkippedReasonObjc.noAudienceMatch
         } else {
-          return PaywallSkippedReason.noRuleMatch
+          return PaywallSkippedReason.noAudienceMatch
         }
       case .placementNotFound:
         if toObjc {

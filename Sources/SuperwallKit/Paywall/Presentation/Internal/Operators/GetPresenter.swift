@@ -22,7 +22,7 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   - paywallViewController: The ``PaywallViewController`` to present.
-  ///   - rulesOutput: The output from evaluating rules.
+  ///   - audienceOutcome: The output from evaluating audience filters.
   ///   - request: The presentation request.
   ///   - debugInfo: Info used to print debug logs.
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
@@ -31,7 +31,7 @@ extension Superwall {
   @discardableResult
   func getPresenterIfNecessary(
     for paywallViewController: PaywallViewController,
-    rulesOutcome: RuleEvaluationOutcome,
+    audienceOutcome: AudienceFilterEvaluationOutcome,
     request: PresentationRequest,
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
@@ -55,7 +55,7 @@ extension Superwall {
     case .getPaywall:
       await attemptTriggerFire(
         for: request,
-        triggerResult: rulesOutcome.triggerResult
+        triggerResult: audienceOutcome.triggerResult
       )
       return nil
     case .handleImplicitTrigger,
@@ -97,7 +97,7 @@ extension Superwall {
 
     await attemptTriggerFire(
       for: request,
-      triggerResult: rulesOutcome.triggerResult
+      triggerResult: audienceOutcome.triggerResult
     )
 
     return presenter

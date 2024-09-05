@@ -12,7 +12,7 @@ extension Superwall {
   ///
   /// If the existing user attributes dictionary already has a value for a given property, the old
   /// value is overwritten. Existing properties will not be affected.
-  /// Useful for analytics and conditional paywall rules you may define in the Superwall Dashboard.
+  /// Useful for analytics and campaign audience filters you may define in the Superwall Dashboard.
   /// They should **not** be used as a source of truth for sensitive information.
   ///
   /// Here's how you might set user attributes after retrieving your user's data:
@@ -40,7 +40,7 @@ extension Superwall {
   ///
   /// If the existing user attributes dictionary already has a value for a given property, the old
   /// value is overwritten. Existing properties will not be affected.
-  /// Useful for analytics and conditional paywall rules you may define in the Superwall Dashboard.
+  /// Useful for analytics and campaign audience filters you may define in the Superwall Dashboard.
   /// They should **not** be used as a source of truth for sensitive information.
   ///
   /// Here's how you might set user attributes after retrieving your user's data:

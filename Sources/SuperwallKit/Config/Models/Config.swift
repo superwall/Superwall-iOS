@@ -20,7 +20,7 @@ struct Config: Decodable {
   var requestId: String?
   var allComputedProperties: [ComputedPropertyRequest] {
     return triggers.flatMap {
-      $0.rules.flatMap {
+      $0.audiences.flatMap {
         $0.computedPropertyRequests
       }
     }

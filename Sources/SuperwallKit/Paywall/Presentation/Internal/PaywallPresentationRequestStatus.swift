@@ -34,8 +34,8 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
   /// The user is in a holdout group.
   case holdout(Experiment)
 
-  /// No rules defined in the campaign for the placement matched.
-  case noRuleMatch
+  /// No audiences defined in the campaign for the placement matched.
+  case noAudienceMatch
 
   /// The placement provided was not found in any campaign on the dashboard.
   case placementNotFound
@@ -65,7 +65,7 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
       return "user_is_subscribed"
     case .holdout:
       return "holdout"
-    case .noRuleMatch:
+    case .noAudienceMatch:
       return "no_rule_match"
     case .placementNotFound:
       return "event_not_found"

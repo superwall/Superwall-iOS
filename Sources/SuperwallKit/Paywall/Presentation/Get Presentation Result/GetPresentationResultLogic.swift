@@ -18,7 +18,7 @@ enum GetPresentationResultLogic {
     case .error:
       return .paywallNotAvailable
     case .noAudienceMatch:
-      return .noRuleMatch
+      return .noAudienceMatch
     case .paywall(let experiment):
       return .paywall(experiment)
     }

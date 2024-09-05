@@ -63,8 +63,8 @@
       case SWKPaywallSkippedReasonHoldout:
         NSLog(@"Paywall not shown because user is in a holdout group.");
         break;
-      case SWKPaywallSkippedReasonNoRuleMatch:
-        NSLog(@"Paywall not shown because user doesn't match any rules.");
+      case SWKPaywallSkippedReasonNoAudienceMatch:
+        NSLog(@"Paywall not shown because user doesn't match any audience.");
         break;
       case SWKPaywallSkippedReasonPlacementNotFound:
         NSLog(@"Paywall not shown because this placement isn't part of a campaign.");

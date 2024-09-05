@@ -61,7 +61,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Sets the device locale identifier to use when evaluating rules and getting localized paywalls.
+  /// Sets the device locale identifier to use when evaluating audience filters and getting localized paywalls.
   ///
   /// This defaults to the `autoupdatingCurrent` locale identifier. However, you can set
   /// this to any locale identifier to override it. E.g. `en_GB`. This is typically used for testing

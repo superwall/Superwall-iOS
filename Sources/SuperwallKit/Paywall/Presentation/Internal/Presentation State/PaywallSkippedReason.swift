@@ -12,13 +12,13 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable, CustomStringConver
   /// The user was assigned to a holdout.
   ///
   /// A holdout is a control group which you can analyse against
-  /// who don't receive any paywall when they match a rule.
+  /// who don't receive any paywall when they match an audience.
   ///
-  /// It's useful for testing a paywall's inclusing vs its exclusion.
+  /// It's useful for testing a paywall's inclusion vs its exclusion.
   case holdout(Experiment)
 
-  /// No rule was matched for this placement.
-  case noRuleMatch
+  /// No audience was matched for this placement.
+  case noAudienceMatch
 
   /// This placement was not found on the dashboard.
   ///
@@ -42,8 +42,8 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable, CustomStringConver
       return "The paywall was skipped because the placement is not part of a campaign."
     case .holdout:
       return "The paywall was skipped because the user is part of a holdout."
-    case .noRuleMatch:
-      return "The paywall was skipped because the user doesn't match any rules."
+    case .noAudienceMatch:
+      return "The paywall was skipped because the user doesn't match any audiences."
     case .userIsSubscribed:
       return "The paywall was skipped because the user is subscribed."
     }
@@ -51,7 +51,7 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable, CustomStringConver
 
   public static func == (lhs: PaywallSkippedReason, rhs: PaywallSkippedReason) -> Bool {
     switch (lhs, rhs) {
-    case (.noRuleMatch, .noRuleMatch),
+    case (.noAudienceMatch, .noAudienceMatch),
       (.placementNotFound, .placementNotFound),
       (.userIsSubscribed, .userIsSubscribed):
       return true
@@ -66,8 +66,8 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable, CustomStringConver
     switch self {
     case .holdout:
       return .holdout
-    case .noRuleMatch:
-      return .noRuleMatch
+    case .noAudienceMatch:
+      return .noAudienceMatch
     case .placementNotFound:
       return .placementNotFound
     case .userIsSubscribed:
@@ -82,8 +82,8 @@ public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable, CustomStr
   /// The user was assigned to a holdout group.
   case holdout
 
-  /// No rule was matched for this placement.
-  case noRuleMatch
+  /// No audience was matched for this placement.
+  case noAudienceMatch
 
   /// This placement was not found on the dashboard.
   ///
@@ -110,8 +110,8 @@ public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable, CustomStr
       return "The paywall was skipped because the placement is not part of a campaign."
     case .holdout:
       return "The paywall was skipped because the user is part of a holdout."
-    case .noRuleMatch:
-      return "The paywall was skipped because the user doesn't match any rules."
+    case .noAudienceMatch:
+      return "The paywall was skipped because the user doesn't match any audiences."
     case .userIsSubscribed:
       return "The paywall was skipped because the user is subscribed."
     case .none:

@@ -136,7 +136,7 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// your ability to create triggers based on properties.
   public var isExternalDataCollectionEnabled = true
 
-  /// Sets the device locale identifier to use when evaluating rules.
+  /// Sets the device locale identifier to use when evaluating audience filters.
   ///
   /// This defaults to the `autoupdatingCurrent` locale identifier. However, you can set
   /// this to any locale identifier to override it. E.g. `en_GB`. This is typically used for testing

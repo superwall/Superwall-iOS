@@ -17,19 +17,19 @@ public enum TriggerResult: Sendable, Equatable {
   /// double check its spelling.
   case placementNotFound
 
-  /// No matching rule was found for this trigger so no paywall will be shown.
-  case noRuleMatch
+  /// No matching audience was found for this placement so no paywall will be shown.
+  case noAudienceMatch
 
-  /// A matching rule was found and this user will be shown a paywall.
+  /// A matching audience was found and this user will be shown a paywall.
   ///
   /// - Parameters:
   ///   - experiment: The experiment associated with the trigger.
   case paywall(Experiment)
 
-  /// A matching rule was found and this user was assigned to a holdout group so will not be shown a paywall.
+  /// A matching audience was found and this user was assigned to a holdout group so will not be shown a paywall.
   ///
   /// - Parameters:
-  ///   - experiment: The experiment  associated with the trigger.
+  ///   - experiment: The experiment associated with the placement.
   case holdout(Experiment)
 
   /// An error occurred and the user will not be shown a paywall.
@@ -40,7 +40,7 @@ public enum TriggerResult: Sendable, Equatable {
   case error(NSError)
 }
 
-/// The result of a paywall trigger. `noRuleMatch` is an associated enum.
+/// The result of a paywall trigger. `noAudienceMatch` is an associated enum.
 ///
 /// Triggers can conditionally show paywalls. Contains the possible cases resulting from the trigger.
 enum InternalTriggerResult: Equatable {
@@ -50,8 +50,8 @@ enum InternalTriggerResult: Equatable {
   /// double check its spelling.
   case placementNotFound
 
-  /// No matching rule was found for this trigger so no paywall will be shown.
-  case noAudienceMatch([UnmatchedRule])
+  /// No matching audience was found for this placement so no paywall will be shown.
+  case noAudienceMatch([UnmatchedAudience])
 
   /// A matching rule was found and this user will be shown a paywall.
   ///
@@ -59,10 +59,10 @@ enum InternalTriggerResult: Equatable {
   ///   - experiment: The experiment associated with the trigger.
   case paywall(Experiment)
 
-  /// A matching rule was found and this user was assigned to a holdout group so will not be shown a paywall.
+  /// A matching audience was found and this user was assigned to a holdout group so will not be shown a paywall.
   ///
   /// - Parameters:
-  ///   - experiment: The experiment  associated with the trigger.
+  ///   - experiment: The experiment  associated with the placement.
   case holdout(Experiment)
 
   /// An error occurred and the user will not be shown a paywall.
@@ -77,7 +77,7 @@ enum InternalTriggerResult: Equatable {
     case .placementNotFound:
       return .placementNotFound
     case .noAudienceMatch:
-      return .noRuleMatch
+      return .noAudienceMatch
     case .paywall(let experiment):
       return .paywall(experiment)
     case .holdout(let experiment):

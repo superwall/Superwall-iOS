@@ -56,17 +56,17 @@ class CoreDataManager {
   }
 
   func save(
-    triggerRuleOccurrence ruleOccurence: TriggerRuleOccurrence,
+    triggerAudienceOccurrence audienceOccurence: TriggerAudienceOccurrence,
     completion: ((ManagedTriggerRuleOccurrence) -> Void)? = nil
   ) {
     guard let backgroundContext = backgroundContext else {
       return
     }
     backgroundContext.perform {
-      guard let managedRuleOccurrence = ManagedTriggerRuleOccurrence(
+      guard let managedAudienceOccurrence = ManagedTriggerRuleOccurrence(
         context: backgroundContext,
         createdAt: Date(),
-        occurrenceKey: ruleOccurence.key
+        occurrenceKey: audienceOccurence.key
       ) else {
         return
       }
@@ -75,7 +75,7 @@ class CoreDataManager {
         if backgroundContext.hasChanges {
           try backgroundContext.save()
         }
-        completion?(managedRuleOccurrence)
+        completion?(managedAudienceOccurrence)
       } catch let error as NSError {
         Logger.debug(
           logLevel: .error,
@@ -149,13 +149,13 @@ class CoreDataManager {
     }
   }
 
-  func countTriggerRuleOccurrences(
-    for ruleOccurrence: TriggerRuleOccurrence
+  func countAudienceOccurrences(
+    for audienceOccurrence: TriggerAudienceOccurrence
   ) async -> Int {
     let fetchRequest = ManagedTriggerRuleOccurrence.fetchRequest()
-    fetchRequest.fetchLimit = ruleOccurrence.maxCount
+    fetchRequest.fetchLimit = audienceOccurrence.maxCount
 
-    switch ruleOccurrence.interval {
+    switch audienceOccurrence.interval {
     case .minutes(let minutes):
       guard let date = Calendar.current.date(
         byAdding: .minute,
@@ -168,12 +168,12 @@ class CoreDataManager {
           message: "Calendar couldn't calculate date by adding \(minutes) minutes and returned nil."
         )
         // Return maxCount so that it won't fire the trigger.
-        return ruleOccurrence.maxCount
+        return audienceOccurrence.maxCount
       }
       fetchRequest.predicate = NSPredicate(
         format: "createdAt >= %@ AND occurrenceKey == %@",
         date as NSDate,
-        ruleOccurrence.key
+        audienceOccurrence.key
       )
 
       return await withCheckedContinuation { continuation in
@@ -182,7 +182,7 @@ class CoreDataManager {
         }
       }
     case .infinity:
-      fetchRequest.predicate = NSPredicate(format: "occurrenceKey == %@", ruleOccurrence.key)
+      fetchRequest.predicate = NSPredicate(format: "occurrenceKey == %@", audienceOccurrence.key)
       return await withCheckedContinuation { continuation in
         coreDataStack.count(for: fetchRequest) { count in
           continuation.resume(returning: count)

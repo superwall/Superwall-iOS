@@ -11,18 +11,18 @@ extension Superwall {
   /// Evaluates the audience filters from the campaign that the placement belongs to.
   ///
   /// - Parameter request: The presentation request
-  /// - Returns: A `RuleEvaluationOutcome` object containing the trigger result,
+  /// - Returns: An `AudienceFilterEvaluationOutcome` object containing the trigger result,
   /// confirmable assignment, and unsaved occurrence.
-  func evaluateRules(
+  func evaluateAudienceFilter(
     from request: PresentationRequest
-  ) async throws -> RuleEvaluationOutcome {
+  ) async throws -> AudienceFilterEvaluationOutcome {
     if let placementData = request.presentationInfo.placementData {
-      let ruleLogic = RuleLogic(
+      let audienceLogic = AudienceLogic(
         configManager: dependencyContainer.configManager,
         storage: dependencyContainer.storage,
         factory: dependencyContainer
       )
-      return await ruleLogic.evaluateRules(
+      return await audienceLogic.evaluateAudienceFilters(
         forPlacement: placementData,
         triggers: dependencyContainer.configManager.triggersByPlacementName
       )
@@ -33,7 +33,7 @@ extension Superwall {
         // to force unwrapping.
         throw PresentationPipelineError.noPaywallViewController
       }
-      return RuleEvaluationOutcome(
+      return AudienceFilterEvaluationOutcome(
         triggerResult: .paywall(.presentById(paywallId))
       )
     }

@@ -287,7 +287,7 @@ final class TrackingTests: XCTestCase {
 
   func test_triggerFire_noRuleMatch() async {
     let triggerName = "My Trigger"
-    let unmatchedRules: [UnmatchedRule] = [
+    let unmatchedRules: [UnmatchedAudience] = [
       .init(source: .expression, experimentId: "1"),
       .init(source: .occurrence, experimentId: "2")
     ]
@@ -297,8 +297,8 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "trigger_fire")
     XCTAssertEqual(result.parameters.audienceFilterParams["$result"] as! String, "no_rule_match")
     XCTAssertEqual(result.parameters.audienceFilterParams["$trigger_name"] as! String, triggerName)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$unmatched_rule_1"] as! String, "EXPRESSION")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$unmatched_rule_2"] as! String, "OCCURRENCE")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$unmatched_audience_1"] as! String, "EXPRESSION")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$unmatched_audience_2"] as! String, "OCCURRENCE")
     // TODO: Missing test for trigger_session_id here. Need to figure out a way to activate it
   }
 
@@ -399,7 +399,7 @@ final class TrackingTests: XCTestCase {
       placementData: placementData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
-      statusReason: .noRuleMatch,
+      statusReason: .noAudienceMatch,
       factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
@@ -421,7 +421,7 @@ final class TrackingTests: XCTestCase {
       placementData: placementData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
-      statusReason: .noRuleMatch,
+      statusReason: .noAudienceMatch,
       factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)

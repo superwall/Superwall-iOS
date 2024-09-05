@@ -311,12 +311,12 @@ enum InternalSuperwallPlacement {
       params["trigger_session_id"] = ""
 
       switch triggerResult {
-      case .noAudienceMatch(let unmatchedRules):
+      case .noAudienceMatch(let unmatchedAudiences):
         params += [
           "result": "no_rule_match"
         ]
-        for unmatchedRule in unmatchedRules {
-          params["unmatched_rule_\(unmatchedRule.experimentId)"] = unmatchedRule.source.rawValue
+        for unmatchedAudience in unmatchedAudiences {
+          params["unmatched_audience_\(unmatchedAudience.experimentId)"] = unmatchedAudience.source.rawValue
         }
         return params
       case .holdout(let experiment):
@@ -349,7 +349,7 @@ enum InternalSuperwallPlacement {
     let type: PresentationRequestType
     let status: PaywallPresentationRequestStatus
     let statusReason: PaywallPresentationRequestStatusReason?
-    let factory: RuleAttributesFactory & FeatureFlagsFactory & ComputedPropertyRequestsFactory
+    let factory: AudienceFilterAttributesFactory & FeatureFlagsFactory & ComputedPropertyRequestsFactory
 
     var superwallPlacement: SuperwallPlacement {
       return .paywallPresentationRequest(
@@ -369,13 +369,13 @@ enum InternalSuperwallPlacement {
       if let featureFlags = factory.makeFeatureFlags(),
         featureFlags.enableExpressionParameters {
         let computedPropertyRequests = factory.makeComputedPropertyRequests()
-        let rules = await factory.makeAudienceFilterAttributes(
+        let audienceFilters = await factory.makeAudienceFilterAttributes(
           forPlacement: placementData,
           withComputedProperties: computedPropertyRequests
         )
 
-        if let rulesDictionary = rules.dictionaryObject,
-          let jsonData = try? JSONSerialization.data(withJSONObject: rulesDictionary),
+        if let audienceFiltersDictionary = audienceFilters.dictionaryObject,
+          let jsonData = try? JSONSerialization.data(withJSONObject: audienceFiltersDictionary),
           let decoded = String(data: jsonData, encoding: .utf8) {
           params += [
             "expression_params": decoded

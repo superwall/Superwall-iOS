@@ -9,19 +9,19 @@ import Foundation
 
 struct Trigger: Decodable, Hashable {
   enum CodingKeys: String, CodingKey {
-    case rules
+    case audiences = "rules"
     case placementName = "eventName"
   }
 
   var placementName: String
-  var rules: [TriggerRule]
+  var audiences: [TriggerRule]
 }
 
 extension Trigger: Stubbable {
   static func stub() -> Trigger {
     return Trigger(
       placementName: "campaign_trigger",
-      rules: []
+      audiences: []
     )
   }
 }

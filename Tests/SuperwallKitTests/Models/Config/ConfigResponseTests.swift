@@ -481,7 +481,7 @@ final class ConfigTypeTests: XCTestCase {
       return XCTFail("opened_application trigger not found")
     }
 
-    let firstRule = trigger.rules[0]
+    let firstRule = trigger.audiences[0]
     XCTAssertNil(firstRule.expression)
     XCTAssertEqual(firstRule.experiment.id, "80")
 

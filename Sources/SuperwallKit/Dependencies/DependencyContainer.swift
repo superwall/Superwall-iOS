@@ -364,8 +364,8 @@ extension DependencyContainer: ApiFactory {
   }
 }
 
-// MARK: - Rule Params
-extension DependencyContainer: RuleAttributesFactory {
+// MARK: - Audience Filter Params
+extension DependencyContainer: AudienceFilterAttributesFactory {
   func makeAudienceFilterAttributes(
     forPlacement placement: PlacementData?,
     withComputedProperties computedPropertyRequests: [ComputedPropertyRequest]

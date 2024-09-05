@@ -28,7 +28,7 @@ struct HomeView: View {
     VStack(spacing: 48) {
       ScrollView {
         InfoView(
-          text: "The Launch Feature button below registers a placement \"campaign_trigger\".\n\nThis placement has been added to a campaign on the Superwall dashboard.\n\nWhen this placement is registered, the rules in the campaign are evaluated.\n\nThe rules match and cause a paywall to show."
+          text: "The Launch Feature button below registers a placement \"campaign_trigger\".\n\nThis placement has been added to a campaign on the Superwall dashboard.\n\nWhen this placement is registered, the audience filters in the campaign are evaluated.\n\nThe audience matches and causes a paywall to show."
         )
 
         Divider()
@@ -57,7 +57,7 @@ struct HomeView: View {
             case .holdout(let experiment):
               print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
             case .noRuleMatch:
-              print("Paywall not shown because user doesn't match any rules.")
+              print("Paywall not shown because user doesn't match any audiences.")
             case .placementNotFound:
               print("Paywall not shown because this placement isn't part of a campaign.")
             }

@@ -99,8 +99,8 @@ class CoreDataManagerTests: XCTestCase {
 //    // Save Trigger Rule Occurrence
 //    let key = "abc"
 //    let maxCount = 10
-//    let interval: TriggerRuleOccurrence.Interval = .minutes(60)
-//    let occurrence = TriggerRuleOccurrence(
+//    let interval: TriggerAudienceOccurrence.Interval = .minutes(60)
+//    let occurrence = TriggerAudienceOccurrence(
 //      key: key,
 //      maxCount: maxCount,
 //      interval: interval
@@ -139,8 +139,8 @@ class CoreDataManagerTests: XCTestCase {
   func test_saveTriggerRuleOccurrence() {
     let key = "abc"
     let maxCount = 10
-    let interval: TriggerRuleOccurrence.Interval = .minutes(60)
-    let occurrence = TriggerRuleOccurrence(
+    let interval: TriggerAudienceOccurrence.Interval = .minutes(60)
+    let occurrence = TriggerAudienceOccurrence(
       key: key,
       maxCount: maxCount,
       interval: interval
@@ -148,7 +148,7 @@ class CoreDataManagerTests: XCTestCase {
     let expectation = expectation(description: "Saved event")
     let date = Date().advanced(by: -5)
 
-    coreDataManager.save(triggerRuleOccurrence: occurrence) { savedPlacementData in
+    coreDataManager.save(triggerAudienceOccurrence: occurrence) { savedPlacementData in
       XCTAssertEqual(savedPlacementData.occurrenceKey, key)
       XCTAssertGreaterThan(savedPlacementData.createdAt, date)
       expectation.fulfill()
@@ -185,8 +185,8 @@ class CoreDataManagerTests: XCTestCase {
 
     let key = "1"
     let maxCount = 10
-    let interval: TriggerRuleOccurrence.Interval = .minutes(60)
-    let occurrence = TriggerRuleOccurrence(
+    let interval: TriggerAudienceOccurrence.Interval = .minutes(60)
+    let occurrence = TriggerAudienceOccurrence(
       key: key,
       maxCount: maxCount,
       interval: interval
@@ -197,7 +197,7 @@ class CoreDataManagerTests: XCTestCase {
       let exp = expectation(description: "Finished")
       Task {
         var count = 0
-        count = await coreDataManager.countTriggerRuleOccurrences(for: occurrence)
+        count = await coreDataManager.countAudienceOccurrences(for: occurrence)
         exp.fulfill()
         XCTAssertEqual(count, 10)
       }
@@ -260,7 +260,7 @@ class CoreDataManagerTests: XCTestCase {
 
     var count = 0
     measure {
-      count = coreDataManager.countTriggerRuleOccurrences(for: occurrence)
+      count = coreDataManager.countAudienceOccurrences(for: occurrence)
     }
 
     waitForExpectations(timeout: 2.0) { error in

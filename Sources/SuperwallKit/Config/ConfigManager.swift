@@ -51,7 +51,7 @@ class ConfigManager {
   private var currentPreloadingTask: Task<Void, Never>?
 
   typealias Factory = RequestFactory
-    & RuleAttributesFactory
+    & AudienceFilterAttributesFactory
     & ReceiptFactory
     & DeviceHelperFactory
   private let factory: Factory

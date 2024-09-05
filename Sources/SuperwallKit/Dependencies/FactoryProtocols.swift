@@ -60,7 +60,7 @@ protocol RequestFactory: AnyObject {
   ) -> PresentationRequest
 }
 
-protocol RuleAttributesFactory: AnyObject {
+protocol AudienceFilterAttributesFactory: AnyObject {
   func makeAudienceFilterAttributes(
     forPlacement placement: PlacementData?,
     withComputedProperties computedPropertyRequests: [ComputedPropertyRequest]

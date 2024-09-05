@@ -150,9 +150,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Whether the survey was shown, not shown, or in a holdout. Defaults to not shown.
   private var surveyPresentationResult: SurveyPresentationResult = .noShow
 
-  /// If the user match a rule with an occurrence, this needs to be saved on
+  /// If the user matches an audience with an occurrence, this needs to be saved on
   /// paywall presentation.
-  private var unsavedOccurrence: TriggerRuleOccurrence?
+  private var unsavedOccurrence: TriggerAudienceOccurrence?
 
   private unowned let factory: TriggerFactory
   private unowned let storage: Storage
@@ -484,7 +484,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   func set(
     request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
-    unsavedOccurrence: TriggerRuleOccurrence?
+    unsavedOccurrence: TriggerAudienceOccurrence?
   ) {
     self.request = request
     self.paywallStateSubject = paywallStatePublisher
@@ -494,7 +494,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   func present(
     on presenter: UIViewController,
     request: PresentationRequest,
-    unsavedOccurrence: TriggerRuleOccurrence?,
+    unsavedOccurrence: TriggerAudienceOccurrence?,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     completion: @escaping (Bool) -> Void
@@ -748,7 +748,7 @@ extension PaywallViewController {
       )
     }
     if let unsavedOccurrence = unsavedOccurrence {
-      storage.coreDataManager.save(triggerRuleOccurrence: unsavedOccurrence)
+      storage.coreDataManager.save(triggerAudienceOccurrence: unsavedOccurrence)
       self.unsavedOccurrence = nil
     }
     isPresented = true

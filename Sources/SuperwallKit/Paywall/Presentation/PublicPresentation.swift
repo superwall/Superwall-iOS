@@ -73,7 +73,7 @@ extension Superwall {
   ///
   /// Before using this method, you'll first need to create a campaign and add the placement to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
   ///
-  /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
+  /// The paywall shown to the user is determined by the audience filters defined in the campaign. When a user is assigned a paywall within an audience, they will continue to see that paywall unless you remove the paywall from the audience or reset assignments to the paywall.
   ///
   /// - Parameters:
   ///   -  placement: The name of the placement you wish to register.
@@ -100,7 +100,7 @@ extension Superwall {
   ///
   /// Before using this method, you'll first need to create a campaign and add the placement to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
   ///
-  /// The paywall shown to the user is determined by the rules defined in the campaign. When a user is assigned a paywall within a rule, they will continue to see that paywall unless you remove the paywall from the rule or reset assignments to the paywall.
+  /// The paywall shown to the user is determined by the audience filters defined in the campaign. When a user is assigned a paywall within an audience, they will continue to see that paywall unless you remove the paywall from the audience or reset assignments to the paywall.
   ///
   /// - Parameters:
   ///   -  placement: The name of the placement you wish to register.
@@ -182,7 +182,7 @@ extension Superwall {
 
   /// Objective-C-only convenience method. Registers a placement which, when added to a campaign on the Superwall dashboard, can show a paywall.
   ///
-  /// This shows a paywall to the user when: A placement you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches a rule in the campaign; and the user doesn't have an active subscription.
+  /// This shows a paywall to the user when: A placement you provide is added to a campaign on the [Superwall Dashboard](https://superwall.com/dashboard); the user matches an audience in the campaign; and the user doesn't have an active subscription.
   ///
   /// Before using this method, you'll first need to create a campaign and add the placement to the campaign on the [Superwall Dashboard](https://superwall.com/dashboard).
   ///

@@ -10,38 +10,38 @@ import JavaScriptCore
 
 protocol ExpressionEvaluating {
   func evaluateExpression(
-    fromAudienceFilter rule: TriggerRule,
+    fromAudienceFilter audience: TriggerRule,
     placementData: PlacementData?
-  ) async -> TriggerRuleOutcome
+  ) async -> TriggerAudienceOutcome
 }
 
 struct ExpressionEvaluator: ExpressionEvaluating {
   private let storage: Storage
-  private unowned let factory: RuleAttributesFactory
+  private unowned let factory: AudienceFilterAttributesFactory
 
   init(
     storage: Storage,
-    factory: RuleAttributesFactory
+    factory: AudienceFilterAttributesFactory
   ) {
     self.storage = storage
     self.factory = factory
   }
 
   func evaluateExpression(
-    fromAudienceFilter rule: TriggerRule,
+    fromAudienceFilter audience: TriggerRule,
     placementData: PlacementData?
-  ) async -> TriggerRuleOutcome {
+  ) async -> TriggerAudienceOutcome {
     // Expression matches all
-    if rule.expressionJs == nil && rule.expression == nil {
-      let ruleMatched = await tryToMatchOccurrence(
-        from: rule,
+    if audience.expressionJs == nil && audience.expression == nil {
+      let audienceMatched = await tryToMatchOccurrence(
+        from: audience,
         expressionMatched: true
       )
-      return ruleMatched
+      return audienceMatched
     }
 
     guard let jsCtx = JSContext() else {
-      return .noMatch(source: .expression, experimentId: rule.experiment.id)
+      return .noMatch(source: .expression, experimentId: audience.experiment.id)
     }
     jsCtx.exceptionHandler = { (_, value: JSValue?) in
       guard let value = value else {
@@ -65,38 +65,38 @@ struct ExpressionEvaluator: ExpressionEvaluating {
     }
 
     guard let base64Params = await getBase64Params(
-      from: rule,
+      from: audience,
       withPlacementData: placementData
     ) else {
-      return .noMatch(source: .expression, experimentId: rule.experiment.id)
+      return .noMatch(source: .expression, experimentId: audience.experiment.id)
     }
 
     let result = jsCtx.evaluateScript(script + "\n " + base64Params)
     if result?.isString == nil {
-      return .noMatch(source: .expression, experimentId: rule.experiment.id)
+      return .noMatch(source: .expression, experimentId: audience.experiment.id)
     }
 
     let expressionMatched = result?.toString() == "true"
 
-    let ruleMatched = await tryToMatchOccurrence(
-      from: rule,
+    let audienceMatched = await tryToMatchOccurrence(
+      from: audience,
       expressionMatched: expressionMatched
     )
 
-    return ruleMatched
+    return audienceMatched
   }
 
   private func getBase64Params(
-    from rule: TriggerRule,
+    from audience: TriggerRule,
     withPlacementData placementData: PlacementData?
   ) async -> String? {
     let attributes = await factory.makeAudienceFilterAttributes(
       forPlacement: placementData,
-      withComputedProperties: rule.computedPropertyRequests
+      withComputedProperties: audience.computedPropertyRequests
     )
     let jsonAttributes = JSON(attributes)
 
-    if let expressionJs = rule.expressionJs {
+    if let expressionJs = audience.expressionJs {
       if let base64Params = JsExpressionEvaluatorParams(
         expressionJs: expressionJs,
         values: jsonAttributes
@@ -105,7 +105,7 @@ struct ExpressionEvaluator: ExpressionEvaluating {
         return postfix
       }
       return nil
-    } else if let expression = rule.expression {
+    } else if let expression = audience.expression {
       if let base64Params = LiquidExpressionEvaluatorParams(
         expression: expression,
         values: jsonAttributes
@@ -119,36 +119,36 @@ struct ExpressionEvaluator: ExpressionEvaluating {
   }
 
   func tryToMatchOccurrence(
-    from rule: TriggerRule,
+    from audience: TriggerRule,
     expressionMatched: Bool
-  ) async -> TriggerRuleOutcome {
+  ) async -> TriggerAudienceOutcome {
     if expressionMatched {
-      guard let occurrence = rule.occurrence else {
+      guard let occurrence = audience.occurrence else {
         Logger.debug(
           logLevel: .debug,
           scope: .paywallPresentation,
-          message: "No occurrence parameter found for trigger rule."
+          message: "No occurrence parameter found for audience."
         )
 
-        return .match(rule: rule)
+        return .match(audience: audience)
       }
 
       let count = await storage
         .coreDataManager
-        .countTriggerRuleOccurrences(
+        .countAudienceOccurrences(
           for: occurrence
         ) + 1
       let shouldFire = count <= occurrence.maxCount
-      var unsavedOccurrence: TriggerRuleOccurrence?
+      var unsavedOccurrence: TriggerAudienceOccurrence?
 
       if shouldFire {
         unsavedOccurrence = occurrence
-        return .match(rule: rule, unsavedOccurrence: unsavedOccurrence)
+        return .match(audience: audience, unsavedOccurrence: unsavedOccurrence)
       } else {
-        return .noMatch(source: .occurrence, experimentId: rule.experiment.id)
+        return .noMatch(source: .occurrence, experimentId: audience.experiment.id)
       }
     }
 
-    return .noMatch(source: .expression, experimentId: rule.experiment.id)
+    return .noMatch(source: .expression, experimentId: audience.experiment.id)
   }
 }

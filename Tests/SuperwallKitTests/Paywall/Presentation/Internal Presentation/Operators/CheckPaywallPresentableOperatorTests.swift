@@ -52,7 +52,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     do {
       try await Superwall.shared.getPresenterIfNecessary(
         for: paywallVc,
-        rulesOutcome: RuleEvaluationOutcome(triggerResult: .paywall(experiment)),
+        audienceOutcome: AudienceFilterEvaluationOutcome(triggerResult: .paywall(experiment)),
         request: request,
         debugInfo: [:],
         paywallStatePublisher: statePublisher
@@ -116,7 +116,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     do {
       try await Superwall.shared.getPresenterIfNecessary(
         for: paywallVc,
-        rulesOutcome: RuleEvaluationOutcome(triggerResult: .paywall(experiment)),
+        audienceOutcome: AudienceFilterEvaluationOutcome(triggerResult: .paywall(experiment)),
         request: request,
         debugInfo: [:],
         paywallStatePublisher: statePublisher
@@ -164,7 +164,7 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     do {
       try await Superwall.shared.getPresenterIfNecessary(
         for: paywallVc,
-        rulesOutcome: RuleEvaluationOutcome(triggerResult: .paywall(experiment)),
+        audienceOutcome: AudienceFilterEvaluationOutcome(triggerResult: .paywall(experiment)),
         request: request,
         debugInfo: [:],
         paywallStatePublisher: statePublisher

@@ -464,8 +464,8 @@ final class DebugViewController: UIViewController {
           switch reason {
           case .holdout:
             errorMessage = "The user was assigned to a holdout."
-          case .noRuleMatch:
-            errorMessage = "The user didn't match a rule."
+          case .noAudienceMatch:
+            errorMessage = "The user didn't match an audience."
           case .placementNotFound:
             errorMessage = "Couldn't find placement."
           case .userIsSubscribed:
