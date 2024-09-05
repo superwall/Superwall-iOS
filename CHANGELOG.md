@@ -11,7 +11,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Renames `getPaywall(forEvent:)` to `getPaywall(forPlacement:)`.
 - Renames `getPresentationResult(forEvent:)` to `getPresentationResult(forPlacement:)`.
 - Renames the `TriggerResult` `eventNotFound` case to `placementNotFound`.
-- Renames the `PresentationResult` and `PaywallSkippedReason `noRuleMatch` case to `noAudienceMatch`.
+- Renames the `PresentationResult` and `PaywallSkippedReason` `noRuleMatch` case to `noAudienceMatch`.
 
 ## 3.7.4
 
