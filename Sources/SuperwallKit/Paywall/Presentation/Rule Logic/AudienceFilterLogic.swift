@@ -13,33 +13,41 @@ struct ConfirmableAssignment: Equatable {
   let variant: Experiment.Variant
 }
 
+<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
 struct AudienceEvaluationOutcome {
+========
+struct AudienceFilterEvaluationOutcome {
+>>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
   var confirmableAssignment: ConfirmableAssignment?
-  var unsavedOccurrence: TriggerRuleOccurrence?
+  var unsavedOccurrence: TriggerAudienceOccurrence?
   var triggerResult: InternalTriggerResult
 }
 
 enum RuleMatchOutcome {
   case matched(MatchedItem)
-  case noMatchingRules([UnmatchedRule])
+  case noMatchingAudiences([UnmatchedAudience])
 }
 
+<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
 struct AudienceFilterLogic {
+========
+struct AudienceLogic {
+>>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
   unowned let configManager: ConfigManager
   unowned let storage: Storage
-  unowned let factory: RuleAttributesFactory
+  unowned let factory: AudienceFilterAttributesFactory
 
-  /// Determines the outcome of an event based on given triggers. It also determines
-  /// whether there is an assignment to confirm based on the rule.
+  /// Determines the outcome of a placement based on given triggers. It also determines
+  /// whether there is an assignment to confirm based on the audience filter.
   ///
-  /// This first finds a trigger for a given event name. Then it determines whether any of the
-  /// rules of the triggers match for that event.
-  /// It takes that rule and checks the disk for a confirmed variant assignment for the rule's
+  /// This first finds a trigger for a given placement name. Then it determines whether any of the
+  /// audiences of the triggers match for that placement.
+  /// It takes that audience filter and checks the disk for a confirmed variant assignment for the audience's
   /// experiment ID. If there isn't one, it checks the unconfirmed assignments.
-  /// Then it returns the result of the event given the assignment.
+  /// Then it returns the result of the placement given the assignment.
   ///
   /// - Parameters:
-  ///   - event: The tracked event
+  ///   - placement: The tracked placement
   ///   - triggers: The triggers from config.
   ///   - configManager: A `ConfigManager` object used for dependency injection.
   ///   - storage: A `Storage` object used for dependency injection.
@@ -47,16 +55,25 @@ struct AudienceFilterLogic {
   ///   evaluated. Setting this to `true` prevents the rule's occurrence count from being incremented
   ///   in Core Data.
   /// - Returns: An assignment to confirm, if available.
+<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
   func evaluate(
     forEvent event: EventData,
     triggers: [String: Trigger]
   ) async -> AudienceEvaluationOutcome {
     guard let trigger = triggers[event.name] else {
       return AudienceEvaluationOutcome(triggerResult: .eventNotFound)
+========
+  func evaluateAudienceFilters(
+    forPlacement placement: PlacementData,
+    triggers: [String: Trigger]
+  ) async -> AudienceFilterEvaluationOutcome {
+    guard let trigger = triggers[placement.name] else {
+      return AudienceFilterEvaluationOutcome(triggerResult: .placementNotFound)
+>>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
     }
 
     let ruleMatchOutcome = await findMatchingRule(
-      for: event,
+      for: placement,
       withTrigger: trigger
     )
 
@@ -65,13 +82,13 @@ struct AudienceFilterLogic {
     switch ruleMatchOutcome {
     case .matched(let item):
       matchedRuleItem = item
-    case .noMatchingRules(let unmatchedRules):
-      return.init(triggerResult: .noRuleMatch(unmatchedRules))
+    case .noMatchingAudiences(let unmatchedAudiences):
+      return.init(triggerResult: .noAudienceMatch(unmatchedAudiences))
     }
 
     let variant: Experiment.Variant
     var confirmableAssignment: ConfirmableAssignment?
-    let rule = matchedRuleItem.rule
+    let rule = matchedRuleItem.audience
     // For a matching rule there will be an unconfirmed (in-memory) or confirmed (on disk) variant assignment.
     // First check the disk, otherwise check memory.
     let confirmedAssignments = storage.getConfirmedAssignments()
@@ -97,12 +114,20 @@ struct AudienceFilterLogic {
         code: 404,
         userInfo: userInfo
       )
+<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
       return AudienceEvaluationOutcome(triggerResult: .error(error))
+========
+      return AudienceFilterEvaluationOutcome(triggerResult: .error(error))
+>>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
     }
 
     switch variant.type {
     case .holdout:
+<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
       return AudienceEvaluationOutcome(
+========
+      return AudienceFilterEvaluationOutcome(
+>>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
         confirmableAssignment: confirmableAssignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .holdout(
@@ -114,7 +139,11 @@ struct AudienceFilterLogic {
         )
       )
     case .treatment:
+<<<<<<<< HEAD:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceFilterLogic.swift
       return AudienceEvaluationOutcome(
+========
+      return AudienceFilterEvaluationOutcome(
+>>>>>>>> v4:Sources/SuperwallKit/Paywall/Presentation/Rule Logic/AudienceLogic.swift
         confirmableAssignment: confirmableAssignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .paywall(
@@ -129,7 +158,7 @@ struct AudienceFilterLogic {
   }
 
   func findMatchingRule(
-    for event: EventData,
+    for placement: PlacementData,
     withTrigger trigger: Trigger
   ) async -> RuleMatchOutcome {
     let expressionEvaluator = ExpressionEvaluator(
@@ -137,22 +166,22 @@ struct AudienceFilterLogic {
       factory: factory
     )
 
-    var unmatchedRules: [UnmatchedRule] = []
+    var unmatchedAudiences: [UnmatchedAudience] = []
 
-    for rule in trigger.rules {
+    for audience in trigger.audiences {
       let outcome = await expressionEvaluator.evaluateExpression(
-        fromRule: rule,
-        eventData: event
+        fromAudienceFilter: audience,
+        placementData: placement
       )
 
       switch outcome {
       case .match(let item):
         return .matched(item)
-      case .noMatch(let noRuleMatch):
-        unmatchedRules.append(noRuleMatch)
+      case .noMatch(let unmatchedAudience):
+        unmatchedAudiences.append(unmatchedAudience)
       }
     }
 
-    return .noMatchingRules(unmatchedRules)
+    return .noMatchingAudiences(unmatchedAudiences)
   }
 }

@@ -58,7 +58,7 @@ final class GetPresenterOperatorTests: XCTestCase {
     do {
       try await Superwall.shared.getPresenterIfNecessary(
         for: paywallVc,
-        rulesOutcome: AudienceEvaluationOutcome(triggerResult: .paywall(experiment)),
+        audienceOutcome: AudienceFilterEvaluationOutcome(triggerResult: .paywall(experiment)),
         request: request,
         debugInfo: [:],
         paywallStatePublisher: statePublisher
@@ -103,7 +103,7 @@ final class GetPresenterOperatorTests: XCTestCase {
     do {
       try await Superwall.shared.getPresenterIfNecessary(
         for: paywallVc,
-        rulesOutcome: AudienceEvaluationOutcome(triggerResult: .paywall(experiment)),
+        audienceOutcome: AudienceFilterEvaluationOutcome(triggerResult: .paywall(experiment)),
         request: request,
         debugInfo: [:],
         paywallStatePublisher: statePublisher

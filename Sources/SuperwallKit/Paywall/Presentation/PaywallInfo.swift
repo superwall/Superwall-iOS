@@ -41,16 +41,16 @@ public final class PaywallInfo: NSObject {
   /// The URL where this paywall is hosted.
   public let url: URL
 
-  /// The name of the event that triggered this Paywall. Defaults to `nil` if `triggeredByEvent` is false.
-  public let presentedByEventWithName: String?
+  /// The name of the placement that triggered this Paywall. Defaults to `nil` if `triggeredByPlacement` is false.
+  public let presentedByPlacementWithName: String?
 
-  /// The Superwall internal id (for debugging) of the event that triggered this Paywall. Defaults to `nil` if `triggeredByEvent` is false.
-  public let presentedByEventWithId: String?
+  /// The Superwall internal id (for debugging) of the placement that triggered this Paywall. Defaults to `nil` if `triggeredByPlacement` is false.
+  public let presentedByPlacementWithId: String?
 
-  /// The ISO date string describing when the event triggered this paywall. Defaults to `nil` if `triggeredByEvent` is false.
-  public let presentedByEventAt: String?
+  /// The ISO date string describing when the placement triggered this paywall. Defaults to `nil` if `triggeredByPlacement` is false.
+  public let presentedByPlacementAt: String?
 
-  /// How the paywall was presented, either 'programmatically', 'identifier', or 'event'
+  /// How the paywall was presented, either 'programmatically', 'identifier', or 'placement'
   public let presentedBy: String
 
   /// The source function that retrieved the paywall. Either `implicit`, `getPaywall`, or `register`. `nil` only when preloading.
@@ -99,7 +99,7 @@ public final class PaywallInfo: NSObject {
   public let isFreeTrialAvailable: Bool
 
   /// A ``FeatureGatingBehavior`` case that indicates whether the
-  /// ``Superwall/register(event:params:handler:feature:)``
+  /// ``Superwall/register(placement:params:handler:feature:)``
   /// `feature` block executes or not.
   public let featureGatingBehavior: FeatureGatingBehavior
 
@@ -109,7 +109,7 @@ public final class PaywallInfo: NSObject {
   /// The local notifications associated with the paywall.
   public let localNotifications: [LocalNotification]
 
-  /// An array of requests to compute a device property associated with an event at runtime.
+  /// An array of requests to compute a device property associated with an placement at runtime.
   public let computedPropertyRequests: [ComputedPropertyRequest]
 
   /// Surveys attached to a paywall.
@@ -127,7 +127,7 @@ public final class PaywallInfo: NSObject {
     url: URL,
     products: [Product],
     productIds: [String],
-    fromEventData eventData: EventData?,
+    fromPlacementData placementData: PlacementData?,
     responseLoadStartTime: Date?,
     responseLoadCompleteTime: Date?,
     responseLoadFailTime: Date?,
@@ -154,9 +154,9 @@ public final class PaywallInfo: NSObject {
     self.cacheKey = cacheKey
     self.buildId = buildId
     self.url = url
-    self.presentedByEventWithName = eventData?.name
-    self.presentedByEventAt = eventData?.createdAt.isoString
-    self.presentedByEventWithId = eventData?.id.lowercased()
+    self.presentedByPlacementWithName = placementData?.name
+    self.presentedByPlacementAt = placementData?.createdAt.isoString
+    self.presentedByPlacementWithId = placementData?.id.lowercased()
     self.presentationSourceType = presentationSourceType
     self.experiment = experiment
     self.paywalljsVersion = paywalljsVersion
@@ -169,8 +169,8 @@ public final class PaywallInfo: NSObject {
     self.surveys = surveys
     self.presentation = presentation
 
-    if eventData != nil {
-      self.presentedBy = "event"
+    if placementData != nil {
+      self.presentedBy = "placement"
     } else {
       self.presentedBy = "programmatically"
     }
@@ -210,7 +210,7 @@ public final class PaywallInfo: NSObject {
     self.closeReason = closeReason
   }
 
-  func eventParams(
+  func placementParams(
     forProduct product: StoreProduct? = nil,
     otherParams: [String: Any]? = nil
   ) async -> [String: Any] {
@@ -220,8 +220,8 @@ public final class PaywallInfo: NSObject {
       "paywalljs_version": paywalljsVersion as Any,
       "paywall_identifier": identifier,
       "paywall_url": url.absoluteString,
-      "presented_by_event_id": presentedByEventWithId as Any,
-      "presented_by_event_timestamp": presentedByEventAt as Any,
+      "presented_by_event_id": presentedByPlacementWithId as Any,
+      "presented_by_event_timestamp": presentedByPlacementAt as Any,
       "presentation_source_type": presentationSourceType as Any,
       "paywall_response_load_start_time": responseLoadStartTime as Any,
       "paywall_response_load_complete_time": responseLoadCompleteTime as Any,
@@ -280,7 +280,7 @@ public final class PaywallInfo: NSObject {
     var output: [String: Any] = [
       "paywall_id": databaseId,
       "paywall_name": name,
-      "presented_by_event_name": presentedByEventWithName as Any,
+      "presented_by_event_name": presentedByPlacementWithName as Any,
       "paywall_product_ids": productIds.joined(separator: ","),
       "is_free_trial_available": isFreeTrialAvailable as Any,
       "feature_gating": featureGatingBehavior.description as Any,
@@ -320,7 +320,7 @@ extension PaywallInfo: Stubbable {
       url: URL(string: "https://www.google.com")!,
       products: [],
       productIds: [],
-      fromEventData: nil,
+      fromPlacementData: nil,
       responseLoadStartTime: nil,
       responseLoadCompleteTime: nil,
       responseLoadFailTime: nil,

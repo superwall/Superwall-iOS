@@ -92,7 +92,7 @@ struct Paywall: Decodable {
   var closeReason: PaywallCloseReason = .none
 
   /// Determines whether a paywall executes the
-  /// ``Superwall/register(event:params:handler:feature:)`` feature block if the
+  /// ``Superwall/register(placement:params:handler:feature:)`` feature block if the
   /// user does not purchase.
   var featureGating: FeatureGatingBehavior
 
@@ -303,7 +303,7 @@ struct Paywall: Decodable {
     self.manifest = manifest
   }
 
-  func getInfo(fromEvent: EventData?) -> PaywallInfo {
+  func getInfo(fromPlacement: PlacementData?) -> PaywallInfo {
     return PaywallInfo(
       databaseId: databaseId,
       identifier: identifier,
@@ -313,7 +313,7 @@ struct Paywall: Decodable {
       url: url,
       products: products,
       productIds: productIds,
-      fromEventData: fromEvent,
+      fromPlacementData: fromPlacement,
       responseLoadStartTime: responseLoadingInfo.startAt,
       responseLoadCompleteTime: responseLoadingInfo.endAt,
       responseLoadFailTime: responseLoadingInfo.failAt,

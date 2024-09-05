@@ -44,8 +44,8 @@ final class WelcomeViewController: UIViewController {
   }
 
   private func next() {
-    let trackEventViewController = HomeViewController.fromStoryboard()
-    navigationController?.pushViewController(trackEventViewController, animated: true)
+    let homeViewController = HomeViewController.fromStoryboard()
+    navigationController?.pushViewController(homeViewController, animated: true)
   }
 }
 

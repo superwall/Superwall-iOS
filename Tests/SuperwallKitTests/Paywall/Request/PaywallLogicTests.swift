@@ -33,12 +33,12 @@ class PaywallLogicTests: XCTestCase {
     // Given
     let id = "myid"
     let locale = "en_US"
-    let event: EventData = .stub()
+    let event: PlacementData = .stub()
 
     // When
     let hash = PaywallLogic.requestHash(
       identifier: id,
-      event: event,
+      placement: event,
       locale: locale,
       joinedSubstituteProductIds: nil
     )
@@ -51,7 +51,7 @@ class PaywallLogicTests: XCTestCase {
     // Given
     let id = "myid"
     let locale = "en_US"
-    let event: EventData = .stub()
+    let event: PlacementData = .stub()
     let product1 = StoreProduct(
       sk1Product: MockSkProduct(productIdentifier: "abc"),
       entitlements: []
@@ -65,7 +65,7 @@ class PaywallLogicTests: XCTestCase {
     // When
     let hash = PaywallLogic.requestHash(
       identifier: id,
-      event: event,
+      placement: event,
       locale: locale,
       joinedSubstituteProductIds: ids
     )
@@ -78,12 +78,12 @@ class PaywallLogicTests: XCTestCase {
     // Given
     let locale = "en_US"
     let eventName = "MyEvent"
-    let event: EventData = .stub()
+    let event: PlacementData = .stub()
       .setting(\.name, to: eventName)
 
     // When
     let hash = PaywallLogic.requestHash(
-      event: event,
+      placement: event,
       locale: locale,
       joinedSubstituteProductIds: nil
     )
@@ -110,7 +110,7 @@ class PaywallLogicTests: XCTestCase {
     // Given
     let locale = "en_US"
     let eventName = "MyEvent"
-    let event: EventData = .stub()
+    let event: PlacementData = .stub()
       .setting(\.name, to: eventName)
     let product1 = StoreProduct(
       sk1Product: MockSkProduct(productIdentifier: "abc"),
@@ -120,7 +120,7 @@ class PaywallLogicTests: XCTestCase {
 
     // When
     let hash = PaywallLogic.requestHash(
-      event: event,
+      placement: event,
       locale: locale,
       joinedSubstituteProductIds: ids
     )

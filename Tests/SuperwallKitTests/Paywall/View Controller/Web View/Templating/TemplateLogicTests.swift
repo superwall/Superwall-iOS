@@ -25,11 +25,11 @@ final class TemplateLogicTests: XCTestCase {
     func makeJsonVariables(
       products productVariables: [ProductVariable]?,
       computedPropertyRequests: [ComputedPropertyRequest],
-      event: EventData?
+      placement: PlacementData?
     ) async -> JSON {
       return Variables(
         products: productVariables,
-        params: event?.parameters,
+        params: placement?.parameters,
         userAttributes: userAttributes,
         templateDeviceDictionary: deviceDict
       ).templated()
@@ -65,7 +65,7 @@ final class TemplateLogicTests: XCTestCase {
       from: .stub()
         .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables),
-      event: .stub()
+      placement: .stub()
         .setting(\.parameters, to: ["myparam": "test"]),
       factory: factory
     )
@@ -126,7 +126,7 @@ final class TemplateLogicTests: XCTestCase {
         .setting(\.products, to: productItems)
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true),
-      event: .stub()
+      placement: .stub()
         .setting(\.parameters, to: params),
       factory: factory
     )
@@ -200,7 +200,7 @@ final class TemplateLogicTests: XCTestCase {
         .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true),
-      event: .stub()
+      placement: .stub()
         .setting(\.parameters, to: params),
       factory: factory
     )
@@ -282,7 +282,7 @@ final class TemplateLogicTests: XCTestCase {
         .setting(\.products, to: products)
         .setting(\.productVariables, to: productVariables)
         .setting(\.isFreeTrialAvailable, to: true),
-      event: .stub()
+      placement: .stub()
         .setting(\.parameters, to: params),
       factory: factory
     )

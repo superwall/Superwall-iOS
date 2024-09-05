@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct TriggerRuleOccurrence: Decodable, Hashable {
+struct TriggerAudienceOccurrence: Decodable, Hashable {
   struct RawInterval: Decodable {
     enum IntervalType: String, Decodable {
       case minutes = "MINUTES"
@@ -63,9 +63,9 @@ struct TriggerRuleOccurrence: Decodable, Hashable {
   }
 }
 
-extension TriggerRuleOccurrence: Stubbable {
-  static func stub() -> TriggerRuleOccurrence {
-    return TriggerRuleOccurrence(
+extension TriggerAudienceOccurrence: Stubbable {
+  static func stub() -> TriggerAudienceOccurrence {
+    return TriggerAudienceOccurrence(
       key: "abc",
       maxCount: 10,
       interval: .infinity

@@ -78,11 +78,11 @@ final class SuperwallDelegateAdapter {
   }
 
   @MainActor
-  func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {
+  func handleSuperwallPlacement(withInfo placementInfo: SuperwallPlacementInfo) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.handleSuperwallEvent(withInfo: eventInfo)
+      swiftDelegate.handleSuperwallPlacement(withInfo: placementInfo)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.handleSuperwallEvent?(withInfo: eventInfo)
+      objcDelegate.handleSuperwallPlacement?(withInfo: placementInfo)
     }
   }
 

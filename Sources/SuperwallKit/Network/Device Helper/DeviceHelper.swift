@@ -374,13 +374,13 @@ class DeviceHelper {
   }
 
   func getDeviceAttributes(
-    since event: EventData?,
+    since placement: PlacementData?,
     computedPropertyRequests: [ComputedPropertyRequest]
   ) async -> [String: Any] {
     var dictionary = await getTemplateDevice()
 
-    let computedProperties = await getComputedDevicePropertiesSinceEvent(
-      event,
+    let computedProperties = await getComputedDevicePropertiesSincePlacement(
+      placement,
       requests: computedPropertyRequests
     )
     dictionary += computedProperties
@@ -388,18 +388,18 @@ class DeviceHelper {
     return dictionary
   }
 
-  private func getComputedDevicePropertiesSinceEvent(
-    _ event: EventData?,
+  private func getComputedDevicePropertiesSincePlacement(
+    _ placement: PlacementData?,
     requests computedPropertyRequests: [ComputedPropertyRequest]
   ) async -> [String: Any] {
     var output: [String: Any] = [:]
 
     for computedPropertyRequest in computedPropertyRequests {
-      if let value = await storage.coreDataManager.getComputedPropertySinceEvent(
-        event,
+      if let value = await storage.coreDataManager.getComputedPropertySincePlacement(
+        placement,
         request: computedPropertyRequest
       ) {
-        output[computedPropertyRequest.type.prefix + computedPropertyRequest.eventName] = value
+        output[computedPropertyRequest.type.prefix + computedPropertyRequest.placementName] = value
       }
     }
 

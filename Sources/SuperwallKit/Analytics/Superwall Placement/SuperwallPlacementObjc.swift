@@ -7,11 +7,11 @@
 
 import Foundation
 
-/// Objective-C-only analytical events that are automatically tracked by Superwall.
+/// Objective-C-only analytical placements that are automatically tracked by Superwall.
 ///
-/// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallKit/SuperwallDelegateObjc/handleSuperwallEvent(withInfo:)``.
-@objc(SWKSuperwallEvent)
-public enum SuperwallEventObjc: Int, CaseIterable {
+/// These placements are tracked internally by the SDK and sent to the delegate method ``SuperwallKit/SuperwallDelegateObjc/handleSuperwallPlacement(withInfo:)``.
+@objc(SWKSuperwallPlacement)
+public enum SuperwallPlacementObjc: Int, CaseIterable {
   /// When the user is first seen in the app, regardless of whether the user is logged in or not.
   case firstSeen
 
@@ -20,20 +20,20 @@ public enum SuperwallEventObjc: Int, CaseIterable {
 
   /// When the app is launched from a cold start
   ///
-  /// This event can be used to trigger a paywall. Just add the `app_launch` event to a campaign.
+  /// This placement can be used to trigger a paywall. Just add the `app_launch` placement to a campaign.
   case appLaunch
 
   /// When the SDK is configured for the first time.
   ///
-  /// This event can be used to trigger a paywall. Just add the `app_install` event to a campaign.
+  /// This placement can be used to trigger a paywall. Just add the `app_install` placement to a campaign.
   case appInstall
 
   /// When the user's identity aliases after calling identify.
   case identityAlias
 
-  /// When the app is opened at least an hour since last  ``SuperwallEvent/appClose``.
+  /// When the app is opened at least an hour since last  ``SuperwallPlacement/appClose``.
   ///
-  /// This event can be used to trigger a paywall. Just add the `session_start` event to a campaign.
+  /// This placement can be used to trigger a paywall. Just add the `session_start` placement to a campaign.
   case sessionStart
 
   /// When device attributes are sent to the backend.
@@ -44,10 +44,10 @@ public enum SuperwallEventObjc: Int, CaseIterable {
 
   /// When a user opens the app via a deep link.
   ///
-  /// This event can be used to trigger a paywall. Just add the `deepLink_open` event to a campaign.
+  /// This placement can be used to trigger a paywall. Just add the `deepLink_open` placement to a campaign.
   case deepLink
 
-  /// When the tracked event matches an event added as a paywall trigger in a campaign.
+  /// When the registered placement triggers a paywall or holdout.
   case triggerFire
 
   /// When a paywall is opened.
@@ -166,8 +166,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the attributes that affect the configuration of Superwall are set or change.
   case configAttributes
 
-  public init(event: SuperwallEvent) {
-    self = event.backingData.objcEvent
+  public init(placement: SuperwallPlacement) {
+    self = placement.backingData.objcPlacement
   }
 
   var description: String {

@@ -44,7 +44,7 @@
 
 #pragma mark - Actions
 
-- (IBAction)registerEvent:(id)sender {
+- (IBAction)registerPlacement:(id)sender {
   SWKPaywallPresentationHandler *handler = [[SWKPaywallPresentationHandler alloc] init];
 
   [handler onDismiss:^(SWKPaywallInfo * _Nonnull paywallInfo) {
@@ -63,11 +63,11 @@
       case SWKPaywallSkippedReasonHoldout:
         NSLog(@"Paywall not shown because user is in a holdout group.");
         break;
-      case SWKPaywallSkippedReasonNoRuleMatch:
-        NSLog(@"Paywall not shown because user doesn't match any rules.");
+      case SWKPaywallSkippedReasonNoAudienceMatch:
+        NSLog(@"Paywall not shown because user doesn't match any audience.");
         break;
-      case SWKPaywallSkippedReasonEventNotFound:
-        NSLog(@"Paywall not shown because this event isn't part of a campaign.");
+      case SWKPaywallSkippedReasonPlacementNotFound:
+        NSLog(@"Paywall not shown because this placement isn't part of a campaign.");
         break;
       case SWKPaywallSkippedReasonNone:
         // The paywall wasn't skipped.
@@ -79,7 +79,7 @@
     NSLog(@"The paywall presentation failed with error %@", error);
   }];
 
-  [[Superwall sharedInstance] registerWithEvent:@"campaign_trigger" params:nil handler:handler feature:^{
+  [[Superwall sharedInstance] registerWithPlacement:@"campaign_trigger" params:nil handler:handler feature:^{
     UIAlertController* alert = [UIAlertController
       alertControllerWithTitle:@"Feature Launched"
       message:@"Wrap your awesome features in register calls like this to remotely paywall your app. You can remotely decide whether these are paid features."

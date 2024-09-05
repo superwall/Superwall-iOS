@@ -53,7 +53,7 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
     return product.subscriptionGroupIdentifier
   }
 
-  /// All the attributes that can be referenced in Superwall rules.
+  /// All the attributes that can be referenced in audience filters.
   public var attributes: [String: String] {
     return [
       "rawPrice": "\(price)",

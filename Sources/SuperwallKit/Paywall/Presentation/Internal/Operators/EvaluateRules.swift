@@ -8,23 +8,23 @@
 import Foundation
 
 extension Superwall {
-  /// Evaluates the rules from the campaign that the event belongs to.
+  /// Evaluates the audience filters from the campaign that the placement belongs to.
   ///
   /// - Parameter request: The presentation request
-  /// - Returns: An `AudienceEvaluationOutcome` object containing the trigger result,
+  /// - Returns: An `AudienceFilterEvaluationOutcome` object containing the trigger result,
   /// confirmable assignment, and unsaved occurrence.
-  func evaluateAudienceFilters(
+  func evaluateAudienceFilter(
     from request: PresentationRequest
-  ) async throws -> AudienceEvaluationOutcome {
-    if let eventData = request.presentationInfo.eventData {
-      let audienceFilterLogic = AudienceFilterLogic(
+  ) async throws -> AudienceFilterEvaluationOutcome {
+    if let placementData = request.presentationInfo.placementData {
+      let audienceLogic = AudienceLogic(
         configManager: dependencyContainer.configManager,
         storage: dependencyContainer.storage,
         factory: dependencyContainer
       )
-      return await audienceFilterLogic.evaluate(
-        forEvent: eventData,
-        triggers: dependencyContainer.configManager.triggersByEventName
+      return await audienceLogic.evaluateAudienceFilters(
+        forPlacement: placementData,
+        triggers: dependencyContainer.configManager.triggersByPlacementName
       )
     } else {
       // Called if the debugger is shown.
@@ -33,7 +33,7 @@ extension Superwall {
         // to force unwrapping.
         throw PresentationPipelineError.noPaywallViewController
       }
-      return AudienceEvaluationOutcome(
+      return AudienceFilterEvaluationOutcome(
         triggerResult: .paywall(.presentById(paywallId))
       )
     }

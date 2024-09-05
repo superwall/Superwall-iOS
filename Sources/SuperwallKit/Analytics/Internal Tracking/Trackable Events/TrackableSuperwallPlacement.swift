@@ -9,31 +9,31 @@
 import Foundation
 import StoreKit
 
-protocol TrackableSuperwallEvent: Trackable {
-  /// The ``SuperwallEvent`` to be tracked by this event.
-  var superwallEvent: SuperwallEvent { get }
+protocol TrackableSuperwallPlacement: Trackable {
+  /// The ``SuperwallPlacement`` to be tracked by this placement.
+  var superwallPlacement: SuperwallPlacement { get }
 }
 
-extension TrackableSuperwallEvent {
+extension TrackableSuperwallPlacement {
   var rawName: String {
-    return String(describing: superwallEvent)
+    return String(describing: superwallPlacement)
   }
 
   var canImplicitlyTriggerPaywall: Bool {
-    return superwallEvent.canImplicitlyTriggerPaywall
+    return superwallPlacement.canImplicitlyTriggerPaywall
   }
 }
 
-/// These are events that tracked internally and sent back to the user via the delegate.
-enum InternalSuperwallEvent {
-  struct AppOpen: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .appOpen
+/// These are placements that tracked internally and sent back to the user via the delegate.
+enum InternalSuperwallPlacement {
+  struct AppOpen: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .appOpen
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct AppInstall: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .appInstall
+  struct AppInstall: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .appInstall
     let appInstalledAtString: String
     let hasExternalPurchaseController: Bool
     var audienceFilterParams: [String: Any] = [:]
@@ -45,20 +45,20 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct TouchesBegan: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .touchesBegan
+  struct TouchesBegan: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .touchesBegan
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct SurveyClose: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .surveyClose
+  struct SurveyClose: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .surveyClose
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct SurveyResponse: TrackableSuperwallEvent {
-    var superwallEvent: SuperwallEvent {
+  struct SurveyResponse: TrackableSuperwallPlacement {
+    var superwallPlacement: SuperwallPlacement {
       return .surveyResponse(
         survey: survey,
         selectedOption: selectedOption,
@@ -85,19 +85,19 @@ enum InternalSuperwallEvent {
         "survey_selected_option_id": selectedOption.id
       ]
 
-      return await paywallInfo.eventParams(otherParams: params)
+      return await paywallInfo.placementParams(otherParams: params)
     }
   }
 
-  struct AppLaunch: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .appLaunch
+  struct AppLaunch: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .appLaunch
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct Attributes: TrackableSuperwallEvent {
+  struct Attributes: TrackableSuperwallPlacement {
     let appInstalledAtString: String
-    var superwallEvent: SuperwallEvent {
+    var superwallPlacement: SuperwallPlacement {
       return .userAttributes(audienceFilterParams)
     }
     func getSuperwallParameters() async -> [String: Any] {
@@ -108,14 +108,14 @@ enum InternalSuperwallEvent {
     var audienceFilterParams: [String: Any] = [:]
   }
 
-  struct IdentityAlias: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .identityAlias
+  struct IdentityAlias: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .identityAlias
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct DeepLink: TrackableSuperwallEvent {
-    var superwallEvent: SuperwallEvent {
+  struct DeepLink: TrackableSuperwallPlacement {
+    var superwallPlacement: SuperwallPlacement {
       .deepLink(url: url)
     }
     let url: URL
@@ -170,38 +170,38 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct FirstSeen: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .firstSeen
+  struct FirstSeen: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .firstSeen
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct Reset: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .reset
+  struct Reset: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .reset
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct AppClose: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .appClose
+  struct AppClose: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .appClose
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct SessionStart: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .sessionStart
+  struct SessionStart: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .sessionStart
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct ConfigRefresh: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .configRefresh
+  struct ConfigRefresh: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .configRefresh
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct ConfigAttributes: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .configAttributes
+  struct ConfigAttributes: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .configAttributes
     let options: SuperwallOptions
     let hasExternalPurchaseController: Bool
     let hasDelegate: Bool
@@ -217,8 +217,8 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct DeviceAttributes: TrackableSuperwallEvent {
-    var superwallEvent: SuperwallEvent {
+  struct DeviceAttributes: TrackableSuperwallPlacement {
+    var superwallPlacement: SuperwallPlacement {
       return .deviceAttributes(attributes: deviceAttributes)
     }
     let deviceAttributes: [String: Any]
@@ -229,7 +229,7 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct PaywallLoad: TrackableSuperwallEvent {
+  struct PaywallLoad: TrackableSuperwallPlacement {
     enum State {
       case start
       case notFound
@@ -238,22 +238,22 @@ enum InternalSuperwallEvent {
     }
     let state: State
 
-    var superwallEvent: SuperwallEvent {
+    var superwallPlacement: SuperwallPlacement {
       switch state {
       case .start:
-        return .paywallResponseLoadStart(triggeredEventName: eventData?.name)
+        return .paywallResponseLoadStart(triggeredPlacementName: placementData?.name)
       case .notFound:
-        return .paywallResponseLoadNotFound(triggeredEventName: eventData?.name)
+        return .paywallResponseLoadNotFound(triggeredPlacementName: placementData?.name)
       case .fail:
-        return .paywallResponseLoadFail(triggeredEventName: eventData?.name)
+        return .paywallResponseLoadFail(triggeredPlacementName: placementData?.name)
       case .complete(let paywallInfo):
         return .paywallResponseLoadComplete(
-          triggeredEventName: eventData?.name,
+          triggeredPlacementName: placementData?.name,
           paywallInfo: paywallInfo
         )
       }
     }
-    let eventData: EventData?
+    let placementData: PlacementData?
     var audienceFilterParams: [String: Any] {
       switch state {
       case .complete(paywallInfo: let paywallInfo):
@@ -264,9 +264,9 @@ enum InternalSuperwallEvent {
     }
 
     func getSuperwallParameters() async -> [String: Any] {
-      let fromEvent = eventData != nil
+      let fromPlacement = placementData != nil
       let params: [String: Any] = [
-        "is_triggered_from_event": fromEvent
+        "is_triggered_from_event": fromPlacement
       ]
 
       switch state {
@@ -275,13 +275,13 @@ enum InternalSuperwallEvent {
         .fail:
         return params
       case .complete(let paywallInfo):
-        return await paywallInfo.eventParams(otherParams: params)
+        return await paywallInfo.placementParams(otherParams: params)
       }
     }
   }
 
   struct ActiveEntitlementsDidChange: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .activeEntitlementsDidChange
+    let superwallPlacement: SuperwallPlacement = .activeEntitlementsDidChange
     let activeEntitlements: Set<Entitlement>
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
@@ -291,11 +291,11 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct TriggerFire: TrackableSuperwallEvent {
+  struct TriggerFire: TrackableSuperwallPlacement {
     let triggerResult: InternalTriggerResult
-    var superwallEvent: SuperwallEvent {
+    var superwallPlacement: SuperwallPlacement {
       return .triggerFire(
-        eventName: triggerName,
+        placementName: triggerName,
         result: triggerResult.toPublicType()
       )
     }
@@ -308,12 +308,12 @@ enum InternalSuperwallEvent {
       ]
 
       switch triggerResult {
-      case .noRuleMatch(let unmatchedRules):
+      case .noAudienceMatch(let unmatchedAudiences):
         params += [
           "result": "no_rule_match"
         ]
-        for unmatchedRule in unmatchedRules {
-          params["unmatched_rule_\(unmatchedRule.experimentId)"] = unmatchedRule.source.rawValue
+        for unmatchedAudience in unmatchedAudiences {
+          params["unmatched_audience_\(unmatchedAudience.experimentId)"] = unmatchedAudience.source.rawValue
         }
         return params
       case .holdout(let experiment):
@@ -329,7 +329,7 @@ enum InternalSuperwallEvent {
           "paywall_identifier": experiment.variant.paywallId as Any,
           "result": "present"
         ]
-      case .eventNotFound:
+      case .placementNotFound:
         return params + [
           "result": "eventNotFound"
         ]
@@ -341,14 +341,14 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct PresentationRequest: TrackableSuperwallEvent {
-    let eventData: EventData?
+  struct PresentationRequest: TrackableSuperwallPlacement {
+    let placementData: PlacementData?
     let type: PresentationRequestType
     let status: PaywallPresentationRequestStatus
     let statusReason: PaywallPresentationRequestStatusReason?
-    let factory: RuleAttributesFactory & FeatureFlagsFactory & ComputedPropertyRequestsFactory
+    let factory: AudienceFilterAttributesFactory & FeatureFlagsFactory & ComputedPropertyRequestsFactory
 
-    var superwallEvent: SuperwallEvent {
+    var superwallPlacement: SuperwallPlacement {
       return .paywallPresentationRequest(
         status: status,
         reason: statusReason
@@ -357,7 +357,7 @@ enum InternalSuperwallEvent {
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       var params = [
-        "source_event_name": eventData?.name ?? "",
+        "source_event_name": placementData?.name ?? "",
         "pipeline_type": type.description,
         "status": status.rawValue,
         "status_reason": statusReason?.description ?? ""
@@ -366,13 +366,13 @@ enum InternalSuperwallEvent {
       if let featureFlags = factory.makeFeatureFlags(),
         featureFlags.enableExpressionParameters {
         let computedPropertyRequests = factory.makeComputedPropertyRequests()
-        let rules = await factory.makeRuleAttributes(
-          forEvent: eventData,
+        let audienceFilters = await factory.makeAudienceFilterAttributes(
+          forPlacement: placementData,
           withComputedProperties: computedPropertyRequests
         )
 
-        if let rulesDictionary = rules.dictionaryObject,
-          let jsonData = try? JSONSerialization.data(withJSONObject: rulesDictionary),
+        if let audienceFiltersDictionary = audienceFilters.dictionaryObject,
+          let jsonData = try? JSONSerialization.data(withJSONObject: audienceFiltersDictionary),
           let decoded = String(data: jsonData, encoding: .utf8) {
           params += [
             "expression_params": decoded
@@ -384,21 +384,21 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct PaywallOpen: TrackableSuperwallEvent {
-    var superwallEvent: SuperwallEvent {
+  struct PaywallOpen: TrackableSuperwallPlacement {
+    var superwallPlacement: SuperwallPlacement {
       return .paywallOpen(paywallInfo: paywallInfo)
     }
     let paywallInfo: PaywallInfo
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams()
+      return await paywallInfo.placementParams()
     }
     var audienceFilterParams: [String: Any] {
       return paywallInfo.audienceFilterParams()
     }
   }
 
-  struct PaywallClose: TrackableSuperwallEvent {
-    var superwallEvent: SuperwallEvent {
+  struct PaywallClose: TrackableSuperwallPlacement {
+    var superwallPlacement: SuperwallPlacement {
       return .paywallClose(paywallInfo: paywallInfo)
     }
     let paywallInfo: PaywallInfo
@@ -413,8 +413,8 @@ enum InternalSuperwallEvent {
         params["survey_presentation"] = surveyPresentationResult.rawValue
       }
 
-      let eventParams = await paywallInfo.eventParams()
-      params += eventParams
+      let placementParams = await paywallInfo.placementParams()
+      params += placementParams
       return params
     }
     var audienceFilterParams: [String: Any] {
@@ -422,21 +422,21 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct PaywallDecline: TrackableSuperwallEvent {
-    var superwallEvent: SuperwallEvent {
+  struct PaywallDecline: TrackableSuperwallPlacement {
+    var superwallPlacement: SuperwallPlacement {
       return .paywallDecline(paywallInfo: paywallInfo)
     }
     let paywallInfo: PaywallInfo
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams()
+      return await paywallInfo.placementParams()
     }
     var audienceFilterParams: [String: Any] {
       return paywallInfo.audienceFilterParams()
     }
   }
 
-  struct CustomPlacement: TrackableSuperwallEvent {
-    var superwallEvent: SuperwallEvent {
+  struct CustomPlacement: TrackableSuperwallPlacement {
+    var superwallPlacement: SuperwallPlacement {
       return .customPlacement(
         name: name,
         params: params,
@@ -451,12 +451,12 @@ enum InternalSuperwallEvent {
     let params: [String: Any]
 
     func getSuperwallParameters() async -> [String: Any] {
-      var eventParams = await paywallInfo.eventParams()
-      eventParams += params
-      eventParams += [
+      var placementParams = await paywallInfo.placementParams()
+      placementParams += params
+      placementParams += [
         "name": name
       ]
-      return eventParams
+      return placementParams
     }
     var audienceFilterParams: [String: Any] {
       var customParams = paywallInfo.audienceFilterParams()
@@ -465,7 +465,7 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct Restore: TrackableSuperwallEvent {
+  struct Restore: TrackableSuperwallPlacement {
     enum State {
       case start
       case fail(String)
@@ -474,7 +474,7 @@ enum InternalSuperwallEvent {
     let state: State
     let paywallInfo: PaywallInfo
 
-    var superwallEvent: SuperwallEvent {
+    var superwallPlacement: SuperwallPlacement {
       switch state {
       case .start:
         return .restoreStart
@@ -488,15 +488,15 @@ enum InternalSuperwallEvent {
       return paywallInfo.audienceFilterParams()
     }
     func getSuperwallParameters() async -> [String: Any] {
-      var eventParams = await paywallInfo.eventParams()
+      var placementParams = await paywallInfo.placementParams()
       if case .fail(let message) = state {
-        eventParams["error_message"] = message
+        placementParams["error_message"] = message
       }
-      return eventParams
+      return placementParams
     }
   }
 
-  struct Transaction: TrackableSuperwallEvent {
+  struct Transaction: TrackableSuperwallPlacement {
     enum State {
       case start(StoreProduct)
       case fail(TransactionError)
@@ -507,7 +507,7 @@ enum InternalSuperwallEvent {
     }
     let state: State
 
-    var superwallEvent: SuperwallEvent {
+    var superwallPlacement: SuperwallPlacement {
       switch state {
       case .start(let product):
         return .transactionStart(
@@ -557,26 +557,26 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] {
       switch state {
       case .restore:
-        var eventParams = await paywallInfo.eventParams(forProduct: product)
+        var placementParams = await paywallInfo.placementParams(forProduct: product)
         if let transactionDict = model?.dictionary(withSnakeCase: true) {
-          eventParams += transactionDict
+          placementParams += transactionDict
         }
-        eventParams["restore_via_purchase_attempt"] = model != nil
-        return eventParams
+        placementParams["restore_via_purchase_attempt"] = model != nil
+        return placementParams
       case .start,
         .abandon,
         .complete,
         .timeout:
-        var eventParams = await paywallInfo.eventParams(forProduct: product)
+        var placementParams = await paywallInfo.placementParams(forProduct: product)
         if let transactionDict = model?.dictionary(withSnakeCase: true) {
-          eventParams += transactionDict
+          placementParams += transactionDict
         }
-        return eventParams
+        return placementParams
       case .fail(let error):
         switch error {
         case .failure(let message, _),
           .pending(let message):
-          return await paywallInfo.eventParams(
+          return await paywallInfo.placementParams(
             forProduct: product,
             otherParams: ["message": message]
           )
@@ -585,8 +585,8 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct SubscriptionStart: TrackableSuperwallEvent {
-    var superwallEvent: SuperwallEvent {
+  struct SubscriptionStart: TrackableSuperwallPlacement {
+    var superwallPlacement: SuperwallPlacement {
       return .subscriptionStart(product: product, paywallInfo: paywallInfo)
     }
     let paywallInfo: PaywallInfo
@@ -596,12 +596,12 @@ enum InternalSuperwallEvent {
     }
 
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams(forProduct: product)
+      return await paywallInfo.placementParams(forProduct: product)
     }
   }
 
-  struct FreeTrialStart: TrackableSuperwallEvent {
-    var superwallEvent: SuperwallEvent {
+  struct FreeTrialStart: TrackableSuperwallPlacement {
+    var superwallPlacement: SuperwallPlacement {
       return .freeTrialStart(
         product: product,
         paywallInfo: paywallInfo
@@ -614,12 +614,12 @@ enum InternalSuperwallEvent {
     }
 
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams(forProduct: product)
+      return await paywallInfo.placementParams(forProduct: product)
     }
   }
 
-  struct NonRecurringProductPurchase: TrackableSuperwallEvent {
-    var superwallEvent: SuperwallEvent {
+  struct NonRecurringProductPurchase: TrackableSuperwallPlacement {
+    var superwallPlacement: SuperwallPlacement {
       return .nonRecurringProductPurchase(
         product: .init(product: product),
         paywallInfo: paywallInfo
@@ -632,11 +632,11 @@ enum InternalSuperwallEvent {
     }
 
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams(forProduct: product)
+      return await paywallInfo.placementParams(forProduct: product)
     }
   }
 
-  struct PaywallWebviewLoad: TrackableSuperwallEvent {
+  struct PaywallWebviewLoad: TrackableSuperwallPlacement {
     enum State {
       case start
       case fail(Error, [URL])
@@ -646,7 +646,7 @@ enum InternalSuperwallEvent {
     }
     let state: State
 
-    var superwallEvent: SuperwallEvent {
+    var superwallPlacement: SuperwallPlacement {
       switch state {
       case .start:
         return .paywallWebviewLoadStart(paywallInfo: paywallInfo)
@@ -663,21 +663,21 @@ enum InternalSuperwallEvent {
     let paywallInfo: PaywallInfo
 
     func getSuperwallParameters() async -> [String: Any] {
-      var eventParams = await paywallInfo.eventParams()
+      var placementParams = await paywallInfo.placementParams()
       if case .fail(let error, let urls) = state {
-        eventParams["error_message"] = error.safeLocalizedDescription
+        placementParams["error_message"] = error.safeLocalizedDescription
         for (index, url) in urls.enumerated() {
-          eventParams["url_\(index)"] = url.absoluteString
+          placementParams["url_\(index)"] = url.absoluteString
         }
       }
-      return eventParams
+      return placementParams
     }
     var audienceFilterParams: [String: Any] {
       return paywallInfo.audienceFilterParams()
     }
   }
 
-  struct PaywallProductsLoad: TrackableSuperwallEvent {
+  struct PaywallProductsLoad: TrackableSuperwallPlacement {
     enum State {
       case start
       case fail(Error)
@@ -689,34 +689,34 @@ enum InternalSuperwallEvent {
       return paywallInfo.audienceFilterParams()
     }
 
-    var superwallEvent: SuperwallEvent {
+    var superwallPlacement: SuperwallPlacement {
       switch state {
       case .start:
-        return .paywallProductsLoadStart(triggeredEventName: eventData?.name, paywallInfo: paywallInfo)
+        return .paywallProductsLoadStart(triggeredPlacementName: placementData?.name, paywallInfo: paywallInfo)
       case .fail:
-        return .paywallProductsLoadFail(triggeredEventName: eventData?.name, paywallInfo: paywallInfo)
+        return .paywallProductsLoadFail(triggeredPlacementName: placementData?.name, paywallInfo: paywallInfo)
       case .complete:
-        return .paywallProductsLoadComplete(triggeredEventName: eventData?.name)
+        return .paywallProductsLoadComplete(triggeredPlacementName: placementData?.name)
       case .retry(let attempt):
         return .paywallProductsLoadRetry(
-          triggeredEventName: eventData?.name,
+          triggeredPlacementName: placementData?.name,
           paywallInfo: paywallInfo,
           attempt: attempt
         )
       }
     }
     let paywallInfo: PaywallInfo
-    let eventData: EventData?
+    let placementData: PlacementData?
 
     func getSuperwallParameters() async -> [String: Any] {
-      let fromEvent = eventData != nil
+      let fromPlacement = placementData != nil
       var params: [String: Any] = [
-        "is_triggered_from_event": fromEvent
+        "is_triggered_from_event": fromPlacement
       ]
       if case .fail(let error) = state {
         params["error_message"] = error.safeLocalizedDescription
       }
-      params += await paywallInfo.eventParams()
+      params += await paywallInfo.placementParams()
       return params
     }
   }

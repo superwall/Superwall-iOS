@@ -42,7 +42,7 @@ final class GetPaywallVcOperatorTests: XCTestCase {
     do {
       _ = try await Superwall.shared.getPaywallViewController(
         request: request,
-        rulesOutcome: .init(triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))),
+        audienceOutcome: .init(triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))),
         debugInfo: [:],
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer

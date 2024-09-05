@@ -22,7 +22,7 @@ extension Superwall {
   ///
   /// - Parameters:
   ///   - paywallViewController: The ``PaywallViewController`` to present.
-  ///   - rulesOutput: The output from evaluating rules.
+  ///   - audienceOutcome: The output from evaluating audience filters.
   ///   - request: The presentation request.
   ///   - debugInfo: Info used to print debug logs.
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
@@ -31,7 +31,7 @@ extension Superwall {
   @discardableResult
   func getPresenterIfNecessary(
     for paywallViewController: PaywallViewController,
-    rulesOutcome: AudienceEvaluationOutcome,
+    audienceOutcome: AudienceFilterEvaluationOutcome,
     request: PresentationRequest,
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
@@ -40,7 +40,7 @@ extension Superwall {
     case .getPaywall:
       await attemptTriggerFire(
         for: request,
-        triggerResult: rulesOutcome.triggerResult
+        triggerResult: audienceOutcome.triggerResult
       )
       return nil
     case .handleImplicitTrigger,
@@ -82,7 +82,7 @@ extension Superwall {
 
     await attemptTriggerFire(
       for: request,
-      triggerResult: rulesOutcome.triggerResult
+      triggerResult: audienceOutcome.triggerResult
     )
 
     return presenter
@@ -92,7 +92,7 @@ extension Superwall {
     for request: PresentationRequest,
     triggerResult: InternalTriggerResult
   ) async {
-    guard let eventName = request.presentationInfo.eventName else {
+    guard let placementName = request.presentationInfo.placementName else {
       // The paywall is being presented by identifier, which is what the debugger uses and that's not supported.
       return
     }
@@ -101,7 +101,7 @@ extension Superwall {
       .explicitTrigger:
       switch triggerResult {
       case .error,
-        .eventNotFound:
+        .placementNotFound:
         return
       default:
         break
@@ -110,11 +110,11 @@ extension Superwall {
       break
     }
 
-    let trackedEvent = InternalSuperwallEvent.TriggerFire(
+    let triggerFire = InternalSuperwallPlacement.TriggerFire(
       triggerResult: triggerResult,
-      triggerName: eventName
+      triggerName: placementName
     )
-    await Superwall.shared.track(trackedEvent)
+    await Superwall.shared.track(triggerFire)
   }
 
   @MainActor

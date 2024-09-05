@@ -144,14 +144,14 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// received the go-ahead from the Superwall team.
   public var networkEnvironment: NetworkEnvironment = .release
 
-  /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
+  /// Enables the sending of non-Superwall tracked placements and properties back to the Superwall servers.
   /// Defaults to `true`.
   ///
   /// Set this to `false` to stop external data collection. This will not affect
   /// your ability to create triggers based on properties.
   public var isExternalDataCollectionEnabled = true
 
-  /// Sets the device locale identifier to use when evaluating rules.
+  /// Sets the device locale identifier to use when evaluating audience filters.
   ///
   /// This defaults to the `autoupdatingCurrent` locale identifier. However, you can set
   /// this to any locale identifier to override it. E.g. `en_GB`. This is typically used for testing

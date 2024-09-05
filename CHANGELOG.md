@@ -10,9 +10,16 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - `ProductInfo` is renamed to `Product` and the old `Product` class no longer exists.
 
 // TODO: Add more info here
+
 - Removes `Superwall.shared.subscriptionStatus` in favor of entitlements.
 - Changes `subscriptionStatus_didChange` to `activeEntitlements_didChange`.
 - Renames `productItems` to `products` in `PaywallInfo`.
+- Renames `register(event:)` to `register(placement:)`.
+- Renames `preloadPaywalls(forEvents:)` to `preloadPaywalls(forPlacements:)`.
+- Renames `getPaywall(forEvent:)` to `getPaywall(forPlacement:)`.
+- Renames `getPresentationResult(forEvent:)` to `getPresentationResult(forPlacement:)`.
+- Renames the `TriggerResult` `eventNotFound` case to `placementNotFound`.
+- Renames the `PresentationResult` and `PaywallSkippedReason` `noRuleMatch` case to `noAudienceMatch`.
 
 ## 3.7.4
 

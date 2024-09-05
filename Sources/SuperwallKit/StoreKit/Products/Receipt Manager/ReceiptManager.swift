@@ -53,7 +53,7 @@ actor ReceiptManager: NSObject {
       let products = try await delegate.products(
         identifiers: purchasedProductIds,
         forPaywall: nil,
-        event: nil
+        placement: nil
       )
 
       var purchasedSubscriptionGroupIds: Set<String> = []

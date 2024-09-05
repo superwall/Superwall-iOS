@@ -23,7 +23,7 @@ final class ProductsFetcherSK1Mock: ProductsFetcherSK1 {
   override func products(
     identifiers: Set<String>,
     forPaywall paywall: Paywall?,
-    event: EventData?
+    placement: PlacementData?
   ) async throws -> Set<StoreProduct> {
     return try productCompletionResult.get()
   }

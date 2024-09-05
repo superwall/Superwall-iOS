@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct RuleAttributes {
+struct AudienceAttributes {
   let user: [String: Any]
   let device: [String: Any]
 }
