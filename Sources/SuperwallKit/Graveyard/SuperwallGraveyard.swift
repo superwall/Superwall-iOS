@@ -74,7 +74,7 @@ extension Superwall {
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
-      storage: dependencyContainer.storage, 
+      storage: dependencyContainer.storage,
       webView: SWWebView(
         isMac: false,
         messageHandler: .init(

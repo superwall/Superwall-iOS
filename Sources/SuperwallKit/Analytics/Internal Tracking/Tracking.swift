@@ -4,6 +4,7 @@
 //
 //  Created by Jake Mor on 8/16/21.
 //
+// swiftlint:disable line_length
 
 import Foundation
 import Combine

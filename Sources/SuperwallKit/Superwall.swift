@@ -288,7 +288,9 @@ public final class Superwall: NSObject, ObservableObject {
 
           Task {
             await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
-            let subscriptionStatusDidChange = InternalSuperwallPlacement.SubscriptionStatusDidChange(subscriptionStatus: newValue)
+            let subscriptionStatusDidChange = InternalSuperwallPlacement.SubscriptionStatusDidChange(
+              subscriptionStatus: newValue
+            )
             await self.track(subscriptionStatusDidChange)
           }
         }
