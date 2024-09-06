@@ -8,8 +8,8 @@
 import Foundation
 
 /// An enum whose types specify the store which the product belongs to.
-@objc(SWKStore)
-public enum Store: Int, Codable, Sendable {
+@objc(SWKProductStore)
+public enum ProductStore: Int, Codable, Sendable {
   /// An Apple App Store product.
   case appStore
 
@@ -29,7 +29,7 @@ public enum Store: Int, Codable, Sendable {
         String.self,
         .init(
           codingPath: [],
-          debugDescription: "Unsupported computed property type."
+          debugDescription: "Unsupported product store type."
         )
       )
     }
@@ -41,7 +41,7 @@ public enum Store: Int, Codable, Sendable {
 @objcMembers
 public final class AppStoreProduct: NSObject, Decodable, Sendable {
   /// The store the product belongs to.
-  let store: Store
+  let store: ProductStore
 
   /// The product identifier.
   public let id: String
@@ -52,7 +52,7 @@ public final class AppStoreProduct: NSObject, Decodable, Sendable {
   }
 
   init(
-    store: Store = .appStore,
+    store: ProductStore = .appStore,
     id: String
   ) {
     self.store = store
@@ -65,14 +65,14 @@ public final class AppStoreProduct: NSObject, Decodable, Sendable {
 @objcMembers
 public final class StoreProductAdapterObjc: NSObject, Decodable, Sendable {
   /// The store associated with the product.
-  public let store: Store
+  public let store: ProductStore
 
   /// The App Store product. This is non-nil if `store` is
   /// `appStore`.
   public let appStoreProduct: AppStoreProduct?
 
   init(
-    store: Store,
+    store: ProductStore,
     appStoreProduct: AppStoreProduct?
   ) {
     self.store = store
@@ -155,10 +155,11 @@ public final class Product: NSObject, Codable, Sendable {
   public required init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     name = try container.decode(String.self, forKey: .name)
-    entitlements = try container.decode(Set<Entitlement>.self, forKey: .entitlements)
 
-    // This will throw an error if it's not an AppStoreProduct, which must be caught in a
-    // `Throwable` and ignored in the paywall object.
+    // These will throw an error if the StoreProduct is not an AppStoreProduct or if the
+    // entitlement type is not `SERVICE_LEVEL`, which must be caught in a `Throwable` and
+    // ignored in the paywall object.
+    entitlements = try container.decode(Set<Entitlement>.self, forKey: .entitlements)
     let storeProduct = try container.decode(AppStoreProduct.self, forKey: .storeProduct)
     type = .appStore(storeProduct)
     objcAdapter = .init(store: .appStore, appStoreProduct: storeProduct)

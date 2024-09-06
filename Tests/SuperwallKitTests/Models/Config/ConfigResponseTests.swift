@@ -424,7 +424,8 @@ let response = #"""
         },
         "entitlements": [
           {
-            "id": "test"
+            "identifier": "test",
+            "type": "SERVICE_LEVEL"
           }
         ]
       },
