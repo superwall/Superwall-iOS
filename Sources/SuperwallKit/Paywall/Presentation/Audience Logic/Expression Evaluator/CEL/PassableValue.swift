@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 14/08/2024.
 //
+// swiftlint:disable cyclomatic_complexity
 
 import Foundation
 
@@ -81,7 +82,7 @@ indirect enum PassableValue: Codable {
       try container.encode(value, forKey: .list)
     case .map(let value):
       try container.encode(value, forKey: .map)
-    case .function(let value, let args):
+    case let .function(value, args):
       try container.encode(value, forKey: .value)
       try container.encode(args, forKey: .args)
     case .int(let value):

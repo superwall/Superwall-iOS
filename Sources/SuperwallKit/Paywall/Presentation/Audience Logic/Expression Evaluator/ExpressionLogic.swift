@@ -11,36 +11,36 @@ struct ExpressionLogic {
   unowned let storage: Storage
 
   func tryToMatchOccurrence(
-    from rule: TriggerRule,
+    from audience: TriggerRule,
     expressionMatched: Bool
-  ) async -> TriggerRuleOutcome {
+  ) async -> TriggerAudienceOutcome {
     if expressionMatched {
-      guard let occurrence = rule.occurrence else {
+      guard let occurrence = audience.occurrence else {
         Logger.debug(
           logLevel: .debug,
           scope: .paywallPresentation,
           message: "No occurrence parameter found for trigger rule."
         )
 
-        return .match(rule: rule)
+        return .match(audience: audience)
       }
 
       let count = await storage
         .coreDataManager
-        .countTriggerRuleOccurrences(
+        .countAudienceOccurrences(
           for: occurrence
         ) + 1
       let shouldFire = count <= occurrence.maxCount
-      var unsavedOccurrence: TriggerRuleOccurrence?
+      var unsavedOccurrence: TriggerAudienceOccurrence?
 
       if shouldFire {
         unsavedOccurrence = occurrence
-        return .match(rule: rule, unsavedOccurrence: unsavedOccurrence)
+        return .match(audience: audience, unsavedOccurrence: unsavedOccurrence)
       } else {
-        return .noMatch(source: .occurrence, experimentId: rule.experiment.id)
+        return .noMatch(source: .occurrence, experimentId: audience.experiment.id)
       }
     }
 
-    return .noMatch(source: .expression, experimentId: rule.experiment.id)
+    return .noMatch(source: .expression, experimentId: audience.experiment.id)
   }
 }
