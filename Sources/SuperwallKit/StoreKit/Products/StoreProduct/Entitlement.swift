@@ -14,6 +14,10 @@ public final class Entitlement: NSObject, Codable, Sendable {
   /// The identifier for the entitlement.
   public let id: String
 
+  private enum CodingKeys: String, CodingKey {
+    case id = "identifier"
+  }
+
   public init(id: String) {
     self.id = id
   }
