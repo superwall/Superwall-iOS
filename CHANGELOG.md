@@ -14,6 +14,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Renames the `PresentationResult` and `PaywallSkippedReason` `noRuleMatch` case to `noAudienceMatch`.
 - Moves `ComputedPropertyRequestType` to be a top-level type.
 
+### Enhancements
+
+- Adds CEL compatibility to audience filters. We created a new package called `SuperCEL` which is included as a dependency for `SuperwallKit`. This allows for a lot more complex audience filters.
+
 ## 3.7.4
 
 ### Fixes
