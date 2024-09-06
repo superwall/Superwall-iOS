@@ -61,7 +61,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Sets the device locale identifier to use when evaluating rules and getting localized paywalls.
+  /// Sets the device locale identifier to use when evaluating audience filters and getting localized paywalls.
   ///
   /// This defaults to the `autoupdatingCurrent` locale identifier. However, you can set
   /// this to any locale identifier to override it. E.g. `en_GB`. This is typically used for testing
@@ -241,7 +241,7 @@ public final class Superwall: NSObject, ObservableObject {
     Task {
       dependencyContainer.storage.configure(apiKey: apiKey)
 
-      dependencyContainer.storage.recordAppInstall(trackEvent: track)
+      dependencyContainer.storage.recordAppInstall(trackPlacement: track)
 
       async let fetchConfig: () = await dependencyContainer.configManager.fetchConfiguration()
       async let configureIdentity: () = await dependencyContainer.identityManager.configure()
@@ -249,7 +249,7 @@ public final class Superwall: NSObject, ObservableObject {
       _ = await (fetchConfig, configureIdentity)
 
       await track(
-        InternalSuperwallEvent.ConfigAttributes(
+        InternalSuperwallPlacement.ConfigAttributes(
           options: dependencyContainer.configManager.options,
           hasExternalPurchaseController: purchaseController != nil,
           hasDelegate: delegate != nil
@@ -288,8 +288,10 @@ public final class Superwall: NSObject, ObservableObject {
 
           Task {
             await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
-            let event = InternalSuperwallEvent.SubscriptionStatusDidChange(subscriptionStatus: newValue)
-            await self.track(event)
+            let subscriptionStatusDidChange = InternalSuperwallPlacement.SubscriptionStatusDidChange(
+              subscriptionStatus: newValue
+            )
+            await self.track(subscriptionStatusDidChange)
           }
         }
       ))
@@ -426,24 +428,23 @@ public final class Superwall: NSObject, ObservableObject {
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this
   /// function when you would like preloading to begin.
   ///
-  /// Note: This will not reload any paywalls you've already preloaded via ``preloadPaywalls(forEvents:)``.
+  /// Note: This will not reload any paywalls you've already preloaded via ``preloadPaywalls(forPlacements:)``.
   public func preloadAllPaywalls() {
     Task { [weak self] in
       await self?.dependencyContainer.configManager.preloadAllPaywalls()
     }
   }
 
-  /// Preloads paywalls for specific event names.
+  /// Preloads paywalls for specific placements.
   ///
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this
   /// function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
-  /// - Parameters:
-  ///   - eventNames: A set of names of events whose paywalls you want to preload.
-  public func preloadPaywalls(forEvents eventNames: Set<String>) {
+  /// - Parameter placements: A set of names of events whose paywalls you want to preload.
+  public func preloadPaywalls(forPlacements placements: Set<String>) {
     Task { [weak self] in
-      await self?.dependencyContainer.configManager.preloadPaywalls(for: eventNames)
+      await self?.dependencyContainer.configManager.preloadPaywalls(for: placements)
     }
   }
 
@@ -457,8 +458,8 @@ public final class Superwall: NSObject, ObservableObject {
 
     Task {
       let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
-      let event = InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
-      await track(event)
+      let deviceAttributesPlacement = InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
+      await track(deviceAttributesPlacement)
     }
   }
 
@@ -469,7 +470,7 @@ public final class Superwall: NSObject, ObservableObject {
     Task {
       let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
       await Superwall.shared.track(
-        InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
+        InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
     }
   }
@@ -488,7 +489,7 @@ public final class Superwall: NSObject, ObservableObject {
   @discardableResult
   public func handleDeepLink(_ url: URL) -> Bool {
     Task {
-      await track(InternalSuperwallEvent.DeepLink(url: url))
+      await track(InternalSuperwallPlacement.DeepLink(url: url))
     }
     return dependencyContainer.debugManager.handle(deepLinkUrl: url)
   }
@@ -524,7 +525,7 @@ public final class Superwall: NSObject, ObservableObject {
     presentationItems.reset()
     dependencyContainer.configManager.reset()
     Task {
-      await Superwall.shared.track(InternalSuperwallEvent.Reset())
+      await Superwall.shared.track(InternalSuperwallPlacement.Reset())
     }
   }
 }
@@ -575,12 +576,12 @@ extension Superwall: PaywallViewControllerEventDelegate {
     case let .customPlacement(name: name, params: params):
       Task {
         let paramsDict = params.dictionaryValue
-        let trackedEvent = InternalSuperwallEvent.CustomPlacement(
+        let customPlacement = InternalSuperwallPlacement.CustomPlacement(
           paywallInfo: paywallViewController.info,
           name: name,
           params: paramsDict
         )
-        await Superwall.shared.track(trackedEvent)
+        await Superwall.shared.track(customPlacement)
       }
     }
   }

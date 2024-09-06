@@ -121,7 +121,7 @@ final class ConfigManagerTests: XCTestCase {
     configManager.configState.send(.retrieved(.stub()
       .setting(\.triggers, to: [
         .stub()
-        .setting(\.rules, to: [
+        .setting(\.audiences, to: [
           .stub()
           .setting(\.experiment.id, to: experimentId)
           .setting(\.experiment.variants, to: [

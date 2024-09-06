@@ -13,33 +13,33 @@ struct ConfirmableAssignment: Equatable {
   let variant: Experiment.Variant
 }
 
-struct RuleEvaluationOutcome {
+struct AudienceFilterEvaluationOutcome {
   var confirmableAssignment: ConfirmableAssignment?
-  var unsavedOccurrence: TriggerRuleOccurrence?
+  var unsavedOccurrence: TriggerAudienceOccurrence?
   var triggerResult: InternalTriggerResult
 }
 
 enum RuleMatchOutcome {
   case matched(MatchedItem)
-  case noMatchingRules([UnmatchedRule])
+  case noMatchingAudiences([UnmatchedAudience])
 }
 
-struct RuleLogic {
+struct AudienceLogic {
   unowned let configManager: ConfigManager
   unowned let storage: Storage
-  unowned let factory: RuleAttributesFactory
+  unowned let factory: AudienceFilterAttributesFactory
 
-  /// Determines the outcome of an event based on given triggers. It also determines
-  /// whether there is an assignment to confirm based on the rule.
+  /// Determines the outcome of a placement based on given triggers. It also determines
+  /// whether there is an assignment to confirm based on the audience filter.
   ///
-  /// This first finds a trigger for a given event name. Then it determines whether any of the
-  /// rules of the triggers match for that event.
-  /// It takes that rule and checks the disk for a confirmed variant assignment for the rule's
+  /// This first finds a trigger for a given placement name. Then it determines whether any of the
+  /// audiences of the triggers match for that placement.
+  /// It takes that audience filter and checks the disk for a confirmed variant assignment for the audience's
   /// experiment ID. If there isn't one, it checks the unconfirmed assignments.
-  /// Then it returns the result of the event given the assignment.
+  /// Then it returns the result of the placement given the assignment.
   ///
   /// - Parameters:
-  ///   - event: The tracked event
+  ///   - placement: The tracked placement
   ///   - triggers: The triggers from config.
   ///   - configManager: A `ConfigManager` object used for dependency injection.
   ///   - storage: A `Storage` object used for dependency injection.
@@ -47,16 +47,16 @@ struct RuleLogic {
   ///   evaluated. Setting this to `true` prevents the rule's occurrence count from being incremented
   ///   in Core Data.
   /// - Returns: An assignment to confirm, if available.
-  func evaluateRules(
-    forEvent event: EventData,
+  func evaluateAudienceFilters(
+    forPlacement placement: PlacementData,
     triggers: [String: Trigger]
-  ) async -> RuleEvaluationOutcome {
-    guard let trigger = triggers[event.name] else {
-      return RuleEvaluationOutcome(triggerResult: .eventNotFound)
+  ) async -> AudienceFilterEvaluationOutcome {
+    guard let trigger = triggers[placement.name] else {
+      return AudienceFilterEvaluationOutcome(triggerResult: .placementNotFound)
     }
 
     let ruleMatchOutcome = await findMatchingRule(
-      for: event,
+      for: placement,
       withTrigger: trigger
     )
 
@@ -65,13 +65,13 @@ struct RuleLogic {
     switch ruleMatchOutcome {
     case .matched(let item):
       matchedRuleItem = item
-    case .noMatchingRules(let unmatchedRules):
-      return.init(triggerResult: .noRuleMatch(unmatchedRules))
+    case .noMatchingAudiences(let unmatchedAudiences):
+      return.init(triggerResult: .noAudienceMatch(unmatchedAudiences))
     }
 
     let variant: Experiment.Variant
     var confirmableAssignment: ConfirmableAssignment?
-    let rule = matchedRuleItem.rule
+    let rule = matchedRuleItem.audience
     // For a matching rule there will be an unconfirmed (in-memory) or confirmed (on disk) variant assignment.
     // First check the disk, otherwise check memory.
     let confirmedAssignments = storage.getConfirmedAssignments()
@@ -97,12 +97,12 @@ struct RuleLogic {
         code: 404,
         userInfo: userInfo
       )
-      return RuleEvaluationOutcome(triggerResult: .error(error))
+      return AudienceFilterEvaluationOutcome(triggerResult: .error(error))
     }
 
     switch variant.type {
     case .holdout:
-      return RuleEvaluationOutcome(
+      return AudienceFilterEvaluationOutcome(
         confirmableAssignment: confirmableAssignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .holdout(
@@ -114,7 +114,7 @@ struct RuleLogic {
         )
       )
     case .treatment:
-      return RuleEvaluationOutcome(
+      return AudienceFilterEvaluationOutcome(
         confirmableAssignment: confirmableAssignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .paywall(
@@ -129,7 +129,7 @@ struct RuleLogic {
   }
 
   func findMatchingRule(
-    for event: EventData,
+    for placement: PlacementData,
     withTrigger trigger: Trigger
   ) async -> RuleMatchOutcome {
     let expressionEvaluator = ExpressionEvaluator(
@@ -137,22 +137,22 @@ struct RuleLogic {
       factory: factory
     )
 
-    var unmatchedRules: [UnmatchedRule] = []
+    var unmatchedAudiences: [UnmatchedAudience] = []
 
-    for rule in trigger.rules {
+    for audience in trigger.audiences {
       let outcome = await expressionEvaluator.evaluateExpression(
-        fromRule: rule,
-        eventData: event
+        fromAudienceFilter: audience,
+        placementData: placement
       )
 
       switch outcome {
       case .match(let item):
         return .matched(item)
-      case .noMatch(let noRuleMatch):
-        unmatchedRules.append(noRuleMatch)
+      case .noMatch(let unmatchedAudience):
+        unmatchedAudiences.append(unmatchedAudience)
       }
     }
 
-    return .noMatchingRules(unmatchedRules)
+    return .noMatchingAudiences(unmatchedAudiences)
   }
 }

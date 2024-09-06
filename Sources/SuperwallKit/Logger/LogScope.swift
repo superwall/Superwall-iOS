@@ -24,7 +24,7 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
   case paywallEvents
   case productsManager
   case storeKitManager
-  case events
+  case placements
   case receipts
   case superwallCore
   case paywallPresentation
@@ -63,8 +63,8 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
       return "productsManager"
     case .storeKitManager:
       return "storeKitManager"
-    case .events:
-      return "events"
+    case .placements:
+      return "placements"
     case .receipts:
       return "receipts"
     case .superwallCore:

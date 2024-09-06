@@ -51,7 +51,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// The paywall info
   @objc public var info: PaywallInfo {
     return paywall.getInfo(
-      fromEvent: request?.presentationInfo.eventData
+      fromPlacement: request?.presentationInfo.placementData
     )
   }
 
@@ -68,7 +68,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   // MARK: - Private Properties
   /// Internal passthrough subject that emits ``PaywallState`` objects. These state objects feed back to
-  /// the caller of ``Superwall/register(event:params:handler:feature:)``
+  /// the caller of ``Superwall/register(placement:params:handler:feature:)``
   ///
   /// This publisher is set on presentation of the paywall.
   private var paywallStateSubject: PassthroughSubject<PaywallState, Never>?
@@ -150,9 +150,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Whether the survey was shown, not shown, or in a holdout. Defaults to not shown.
   private var surveyPresentationResult: SurveyPresentationResult = .noShow
 
-  /// If the user match a rule with an occurrence, this needs to be saved on
+  /// If the user matches an audience with an occurrence, this needs to be saved on
   /// paywall presentation.
-  private var unsavedOccurrence: TriggerRuleOccurrence?
+  private var unsavedOccurrence: TriggerAudienceOccurrence?
 
   private unowned let factory: TriggerFactory
   private unowned let storage: Storage
@@ -240,17 +240,17 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   nonisolated private func trackOpen() async {
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
-    let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: info)
-    await Superwall.shared.track(trackedEvent)
+    let paywallOpen = await InternalSuperwallPlacement.PaywallOpen(paywallInfo: info)
+    await Superwall.shared.track(paywallOpen)
   }
 
   nonisolated private func trackClose() async {
-    let trackedEvent = await InternalSuperwallEvent.PaywallClose(
+    let paywallClose = await InternalSuperwallPlacement.PaywallClose(
       paywallInfo: info,
       surveyPresentationResult: surveyPresentationResult
     )
     await webView.messageHandler.handle(.paywallClose)
-    await Superwall.shared.track(trackedEvent)
+    await Superwall.shared.track(paywallClose)
   }
 
   /// Triggered by user closing the paywall when the webview hasn't loaded.
@@ -267,18 +267,16 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   func loadWebView() {
-    let url = paywall.url
-
     if paywall.webviewLoadingInfo.startAt == nil {
       paywall.webviewLoadingInfo.startAt = Date()
     }
 
     Task(priority: .utility) {
-      let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
+      let webviewLoad = InternalSuperwallPlacement.PaywallWebviewLoad(
         state: .start,
         paywallInfo: self.info
       )
-      await Superwall.shared.track(trackedEvent)
+      await Superwall.shared.track(webviewLoad)
     }
 
     loadingState = .loadingURL
@@ -446,11 +444,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         self.exitButton.alpha = 0.0
 
         Task(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
+          let webviewTimeout = InternalSuperwallPlacement.PaywallWebviewLoad(
             state: .timeout,
             paywallInfo: self.info
           )
-          await Superwall.shared.track(trackedEvent)
+          await Superwall.shared.track(webviewTimeout)
         }
 
         UIView.springAnimate(withDuration: 2) {
@@ -480,12 +478,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   // MARK: - Presentation Logic
 
+  // TODO: update description here:
   /// Sets the event data for use in ``PaywallInfo`` and the state publisher
   /// for callbacks.
   func set(
     request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
-    unsavedOccurrence: TriggerRuleOccurrence?
+    unsavedOccurrence: TriggerAudienceOccurrence?
   ) {
     self.request = request
     self.paywallStateSubject = paywallStatePublisher
@@ -495,7 +494,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   func present(
     on presenter: UIViewController,
     request: PresentationRequest,
-    unsavedOccurrence: TriggerRuleOccurrence?,
+    unsavedOccurrence: TriggerAudienceOccurrence?,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     completion: @escaping (Bool) -> Void
@@ -749,7 +748,7 @@ extension PaywallViewController {
       )
     }
     if let unsavedOccurrence = unsavedOccurrence {
-      storage.coreDataManager.save(triggerRuleOccurrence: unsavedOccurrence)
+      storage.coreDataManager.save(triggerAudienceOccurrence: unsavedOccurrence)
       self.unsavedOccurrence = nil
     }
     isPresented = true
@@ -813,18 +812,18 @@ extension PaywallViewController {
 
     func dismissView() async {
       if isDeclined, isManualClose {
-        let trackedEvent = InternalSuperwallEvent.PaywallDecline(paywallInfo: info)
+        let paywallDecline = InternalSuperwallPlacement.PaywallDecline(paywallInfo: info)
 
         let presentationResult = await Superwall.shared.internallyGetPresentationResult(
-          forEvent: trackedEvent,
+          forPlacement: paywallDecline,
           requestType: .paywallDeclineCheck
         )
-        let paywallPresenterEvent = info.presentedByEventWithName
-        let presentedByPaywallDecline = paywallPresenterEvent == SuperwallEventObjc.paywallDecline.description
-        let presentedByTransactionAbandon = paywallPresenterEvent == SuperwallEventObjc.transactionAbandon.description
-        let presentedByTransactionFail = paywallPresenterEvent == SuperwallEventObjc.transactionFail.description
+        let presentingPlacement = info.presentedByPlacementWithName
+        let presentedByPaywallDecline = presentingPlacement == SuperwallPlacementObjc.paywallDecline.description
+        let presentedByTransactionAbandon = presentingPlacement == SuperwallPlacementObjc.transactionAbandon.description
+        let presentedByTransactionFail = presentingPlacement == SuperwallPlacementObjc.transactionFail.description
 
-        await Superwall.shared.track(trackedEvent)
+        await Superwall.shared.track(paywallDecline)
 
         if case .paywall = presentationResult,
           !presentedByPaywallDecline,

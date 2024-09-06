@@ -20,7 +20,7 @@ actor StoreKitManager {
   func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
     guard let output = try? await getProducts(
       forPaywall: paywall,
-      event: nil
+      placement: nil
     ) else {
       return []
     }
@@ -45,7 +45,7 @@ actor StoreKitManager {
 
   func getProducts(
     forPaywall paywall: Paywall?,
-    event: EventData?,
+    placement: PlacementData?,
     substituting substituteProductsByLabel: [String: StoreProduct]? = nil
   ) async throws -> (productsById: [String: StoreProduct], productItems: [ProductItem]) {
     let processingResult = removeAndStore(
@@ -57,7 +57,7 @@ actor StoreKitManager {
     let products = try await productsFetcher.products(
       identifiers: processingResult.productIdsToLoad,
       forPaywall: paywall,
-      event: event
+      placement: placement
     )
 
     var productsById = processingResult.substituteProductsById

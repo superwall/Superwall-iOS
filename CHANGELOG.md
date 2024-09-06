@@ -2,6 +2,17 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-alpha.1
+
+### Breaking Changes
+
+- Renames `register(event:)` to `register(placement:)`.
+- Renames `preloadPaywalls(forEvents:)` to `preloadPaywalls(forPlacements:)`.
+- Renames `getPaywall(forEvent:)` to `getPaywall(forPlacement:)`.
+- Renames `getPresentationResult(forEvent:)` to `getPresentationResult(forPlacement:)`.
+- Renames the `TriggerResult` `eventNotFound` case to `placementNotFound`.
+- Renames the `PresentationResult` and `PaywallSkippedReason` `noRuleMatch` case to `noAudienceMatch`.
+
 ## 3.7.4
 
 ### Fixes
