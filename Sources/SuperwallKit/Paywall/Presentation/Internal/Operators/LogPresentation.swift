@@ -13,7 +13,7 @@ extension Superwall {
   /// - Parameters:
   ///    - request: The presentation request.
   ///    - message: A message to log.
-  func logPresentation(request: PresentationRequest) -> [String: Any] {
+  func log(request: PresentationRequest) -> [String: Any] {
     var message = "Called "
     switch request.flags.type {
     case .getPaywall:

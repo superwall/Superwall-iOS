@@ -23,7 +23,7 @@ extension Superwall {
   ) async throws -> PaywallComponents {
     try await waitForSubsStatusAndConfig(request, paywallStatePublisher: publisher)
 
-    let debugInfo = logPresentation(request: request)
+    let debugInfo = log(request: request)
 
     try checkDebuggerPresentation(
       request: request,

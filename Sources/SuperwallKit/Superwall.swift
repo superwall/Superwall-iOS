@@ -378,6 +378,16 @@ public final class Superwall: NSObject, ObservableObject {
     )
   }
 
+  /// Gets an array of all confirmed experiment assignments.
+  ///
+  /// - Returns: An array of ``ConfirmedAssignment`` objects.
+  public func getAssignments() -> [ConfirmedAssignment] {
+    var confirmedAssignments = dependencyContainer.storage.getConfirmedAssignments()
+    return confirmedAssignments.map {
+      ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
+    }
+  }
+
   /// Objective-C-only function that configures a shared instance of ``Superwall`` for use throughout your app.
   ///
   /// Call this as soon as your app finishes launching in `application(_:didFinishLaunchingWithOptions:)`. Check out

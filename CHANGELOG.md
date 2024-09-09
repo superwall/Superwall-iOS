@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.7.5
+
+### Enhancements
+
+- Adds `Superwall.shared.getAssignments()` which returns an array of all confirmed experiment assignments.
+
 ## 3.7.4
 
 ### Fixes
