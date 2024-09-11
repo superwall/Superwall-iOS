@@ -11,6 +11,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes `UIScreen unavailable in visionOS` error message in `PaywallViewController`.
+- Fixes the error `Symbol not found: _$s10Foundation14NSDecimalRoundyySpySo0B0aG_SPyADGSiSo14NSRoundingModeVtF`, which is an Xcode 16 bug.
 
 ## 3.7.4
 

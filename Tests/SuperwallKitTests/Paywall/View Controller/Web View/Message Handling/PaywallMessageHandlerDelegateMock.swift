@@ -10,7 +10,7 @@ import Foundation
 
 final class FakeWebView: SWWebView {
   var willHandleJs = false
-  override func evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, Error?) -> Void)? = nil) {
+  override func evaluateJavaScript(_ javaScriptString: String, completionHandler: (@MainActor (Any?, (any Error)?) -> Void)? = nil) {
     willHandleJs = true
   }
 }

@@ -258,25 +258,6 @@ extension Endpoint where Response == ConfirmedAssignmentResponse {
   }
 }
 
-// MARK: - PostbackResponse
-extension Endpoint where Response == PostBackResponse {
-  static func postback(
-    _ postback: Postback,
-    factory: ApiFactory
-  ) -> Self {
-    let bodyData = try? JSONEncoder.toSnakeCase.encode(postback)
-    return Endpoint(
-      components: Components(
-        host: .collector,
-        path: Api.version1 + "postback",
-        bodyData: bodyData
-      ),
-      method: .post,
-      factory: factory
-    )
-  }
-}
-
 // MARK: - GeoWrapper
 extension Endpoint where Response == GeoWrapper {
   static func geo(factory: ApiFactory) -> Self {
