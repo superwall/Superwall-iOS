@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `Superwall.shared.getAssignments()` which returns an array of all confirmed experiment assignments.
 
+### Fixes
+
+- Fixes `UIScreen unavailable in visionOS` error message in `PaywallViewController`.
+
 ## 3.7.4
 
 ### Fixes
