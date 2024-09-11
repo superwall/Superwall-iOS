@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.9.3
+
+### Enhancements
+
+- Adds the `loadingStateDidChange` capability on the `PaywallViewControllerDelegate` to be notified when the loading state of the presented `PaywallViewController` did change.
+- Adds a published property `loadingStatePublisher` on the `PaywallViewController` to be notified when the loading state of the presented `PaywallViewController` did change.
+
 ## 3.9.2
 
 ### Fixes
