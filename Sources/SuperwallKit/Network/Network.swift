@@ -233,18 +233,4 @@ class Network {
       )
     }
   }
-
-  func sendPostback(_ postback: Postback) async {
-    do {
-      try await urlSession.request(.assignments(factory: factory))
-    } catch {
-      Logger.debug(
-        logLevel: .error,
-        scope: .network,
-        message: "Request Failed: /postback",
-        info: ["payload": postback],
-        error: error
-      )
-    }
-  }
 }

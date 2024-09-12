@@ -2,6 +2,18 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.8.0
+
+### Enhancements
+
+- Adds `Superwall.shared.confirmAllAssignments()`, which confirms assignments for all placements and returns an array of all confirmed experiment assignments. Note that the assignments may be different when a placement is registered due to changes in user, placement, or device parameters used in audience filters.
+- Adds a published property `Superwall.shared.configurationStatus`, which replaces `isConfigured`. This is an enum which can either be `pending`, `configured`, or `failed`.
+
+### Fixes
+
+- Fixes `UIScreen unavailable in visionOS` error message in `PaywallViewController`.
+- Fixes the error `Symbol not found: _$s10Foundation14NSDecimalRoundyySpySo0B0aG_SPyADGSiSo14NSRoundingModeVtF`, which is an Xcode 16 bug.
+
 ## 3.7.4
 
 ### Fixes

@@ -25,6 +25,10 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``PaywallOptions``
 - ``preloadAllPaywalls()``
 - ``preloadPaywalls(forEvents:)``
+- ``confirmAllAssignments()``
+- ``configurationStatus``
+- ``ConfigurationStatus``
+- ``isConfigured``
 
 ### Presenting and Dismissing a Paywall
 
@@ -85,4 +89,3 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``presentedViewController``
 - ``userId``
 - ``isLoggedIn``
-- ``isConfigured``

@@ -179,6 +179,9 @@ public enum SuperwallEvent {
   /// When the attributes that affect the configuration of Superwall are set or change.
   case configAttributes
 
+  /// When all the experiment assignments are confirmed by calling ``Superwall/confirmAllAssignments()``.
+  case confirmAllAssignments
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -316,6 +319,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .customPlacement)
     case .configAttributes:
       return .init(objcEvent: .configAttributes)
+    case .confirmAllAssignments:
+      return .init(objcEvent: .confirmAllAssignments)
     }
   }
 }

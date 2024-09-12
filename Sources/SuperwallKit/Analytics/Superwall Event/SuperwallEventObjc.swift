@@ -166,6 +166,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the attributes that affect the configuration of Superwall are set or change.
   case configAttributes
 
+  /// When all the experiment assignments are confirmed by calling ``Superwall/confirmAllAssignments()``.
+  case confirmAllAssignments
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -268,6 +271,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "custom_placement"
     case .configAttributes:
       return "config_attributes"
+    case .confirmAllAssignments:
+      return "confirm_all_assignments"
     }
   }
 }
