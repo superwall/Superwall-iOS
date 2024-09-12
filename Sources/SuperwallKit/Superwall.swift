@@ -148,7 +148,22 @@ public final class Superwall: NSObject, ObservableObject {
   /// Alternatively, you can use the completion handler from
   /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
   @Published
+  @available(
+    *,
+    deprecated,
+    message: "Use configurationStatus for a more explicit representation of the SDK's configuration status."
+  )
   public var isConfigured = false
+
+  /// A published property that indicates the configuration status of the SDK.
+  ///
+  /// This is ``ConfigurationStatus/pending`` when the SDK is yet to finish
+  /// configuring. Upon successful configuration, it will change to ``ConfigurationStatus/configured``.
+  /// On failure it will change to ``ConfigurationStatus/failed``.
+  ///
+  /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get notified when the status changes.
+  @Published
+  public var configurationStatus: ConfigurationStatus = .pending
 
   /// The configured shared instance of ``Superwall``.
   ///
@@ -264,6 +279,24 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Listens to config and the subscription status
   private func addListeners() {
+    dependencyContainer.configManager.configState
+      .receive(on: DispatchQueue.main)
+      .subscribe(Subscribers.Sink(
+        receiveCompletion: { _ in },
+        receiveValue: { [weak self] state in
+          switch state {
+          case .retrieving:
+            self?.configurationStatus = .pending
+          case .failed:
+            self?.configurationStatus = .failed
+          case .retrieved:
+            self?.configurationStatus = .configured
+          case .retrying:
+            break
+          }
+        }
+      ))
+
     dependencyContainer.configManager.hasConfig
       .receive(on: DispatchQueue.main)
       .subscribe(Subscribers.Sink(
@@ -312,7 +345,7 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - options: An optional ``SuperwallOptions`` object which allows you to customise the appearance and behavior
   ///   of the paywall.
   ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
-  ///   Alternatively, you can subscribe to the published variable ``isConfigured``.
+  ///   Alternatively, you can subscribe to the published variable ``configurationStatus`` for a more explicit representation of the SDK's configuration status.
   /// - Returns: The configured ``Superwall`` instance.
   @discardableResult
   public static func configure(
