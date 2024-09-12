@@ -603,6 +603,12 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct ConfirmAllAssignments: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .confirmAllAssignments
+    let audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
   struct FreeTrialStart: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .freeTrialStart(

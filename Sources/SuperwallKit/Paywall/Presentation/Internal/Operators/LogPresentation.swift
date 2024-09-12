@@ -31,6 +31,8 @@ extension Superwall {
     case .handleImplicitTrigger,
       .paywallDeclineCheck:
       message += "Superwall.shared.handleImplicitTrigger"
+    case .confirmAllAssignments:
+      message += "Superwall.shared.confirmAllAssignments"
     }
     let eventData = request.presentationInfo.eventData
     let debugInfo: [String: Any] = [

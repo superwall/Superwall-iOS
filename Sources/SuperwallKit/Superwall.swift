@@ -148,7 +148,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// Alternatively, you can use the completion handler from
   /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
   @Published
-  public var isConfigured = false // Public set necessary for wrapper SDKs
+  public var isConfigured = false
 
   /// The configured shared instance of ``Superwall``.
   ///
@@ -382,9 +382,66 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// - Returns: An array of ``ConfirmedAssignment`` objects.
   public func getAssignments() -> [ConfirmedAssignment] {
-    var confirmedAssignments = dependencyContainer.storage.getConfirmedAssignments()
+    let confirmedAssignments = dependencyContainer.storage.getConfirmedAssignments()
     return confirmedAssignments.map {
       ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
+    }
+  }
+
+  /// Confirms all experiment assignments and returns them in an array.
+  ///
+  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
+  ///
+  /// Note that the assignments may be different when a placement is registered due to changes
+  /// in user, placement, or device parameters used in audience filters.
+  ///
+  /// - Returns: And array of ``ConfirmedAssignment`` objects.
+  public func confirmAllAssignments() async -> [ConfirmedAssignment] {
+    let confirmAllAssignments = InternalSuperwallEvent.ConfirmAllAssignments()
+    await track(confirmAllAssignments)
+
+    guard let triggers = dependencyContainer.configManager.config?.triggers else {
+      return []
+    }
+
+    let storedAssignments = dependencyContainer.storage.getConfirmedAssignments()
+    var assignments = Set(storedAssignments.map {
+      ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
+    })
+
+    for trigger in triggers {
+      let eventData = EventData(
+        name: trigger.eventName,
+        parameters: [:],
+        createdAt: Date()
+      )
+
+      let presentationRequest = dependencyContainer.makePresentationRequest(
+        .explicitTrigger(eventData),
+        paywallOverrides: nil,
+        isPaywallPresented: false,
+        type: .confirmAllAssignments
+      )
+
+      if let assignment = await confirmAssignments(presentationRequest) {
+        assignments.insert(assignment)
+      }
+    }
+    return Array(assignments)
+  }
+
+  /// Confirms all experiment assignments and returns them in an array.
+  ///
+  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
+  ///
+  /// Note that the assignments may be different when a placement is registered due to changes
+  /// in user, placement, or device parameters used in audience filters.
+  ///
+  /// - Returns: And array of ``ConfirmedAssignment`` objects.
+  public func confirmAllAssignments(completion: (([ConfirmedAssignment]) -> Void)? = nil) {
+    Task {
+      let result = await confirmAllAssignments()
+      completion?(result)
     }
   }
 

@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// The confirmed assignment.
+/// A confirmed assignment.
 @objc(SWKConfirmedAssignment)
 @objcMembers
 public final class ConfirmedAssignment: NSObject {

@@ -72,4 +72,37 @@ extension Superwall {
       debugInfo: debugInfo
     )
   }
+
+  func confirmAssignments(
+    _ request: PresentationRequest
+  ) async -> ConfirmedAssignment? {
+    do {
+      try await waitForSubsStatusAndConfig(request, paywallStatePublisher: nil)
+
+      let rulesOutcome = try await evaluateRules(from: request)
+
+      confirmHoldoutAssignment(
+        request: request,
+        from: rulesOutcome
+      )
+
+      let confirmableAssignment = rulesOutcome.confirmableAssignment
+
+      confirmPaywallAssignment(
+        confirmableAssignment,
+        request: request,
+        isDebuggerLaunched: request.flags.isDebuggerLaunched
+      )
+
+      if let confirmableAssignment = confirmableAssignment {
+        return ConfirmedAssignment(
+          experimentId: confirmableAssignment.experimentId,
+          variant: confirmableAssignment.variant
+        )
+      }
+      return nil
+    } catch {
+      return nil
+    }
+  }
 }
