@@ -10,7 +10,7 @@ import Foundation
 /// An option to display in a paywall survey.
 @objc(SWKSurveyOption)
 @objcMembers
-final public class SurveyOption: NSObject, Decodable {
+final public class SurveyOption: NSObject, Codable {
   /// The id of the survey option.
   public let id: String
 

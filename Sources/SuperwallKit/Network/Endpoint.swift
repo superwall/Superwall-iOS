@@ -210,11 +210,13 @@ extension Endpoint where Response == Paywalls {
 extension Endpoint where Response == Config {
   static func config(
     requestId: String,
+    maxRetry: Int?,
     factory: ApiFactory
   ) -> Self {
     let queryItems = [URLQueryItem(name: "pk", value: factory.storage.apiKey)]
 
     return Endpoint(
+      retryCount: maxRetry ?? 6,
       components: Components(
         host: .base,
         path: Api.version1 + "static_config",

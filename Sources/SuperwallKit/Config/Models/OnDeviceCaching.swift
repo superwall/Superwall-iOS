@@ -8,7 +8,7 @@
 import Foundation
 
 /// An enum whose cases indicate whether caching of the paywall is enabled or not.
-enum OnDeviceCaching: Decodable {
+enum OnDeviceCaching: Codable {
   case enabled
   case disabled
 
@@ -27,5 +27,19 @@ enum OnDeviceCaching: Decodable {
     case .disabled:
       self = .disabled
     }
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+
+    let rawValue: String
+    switch self {
+    case .enabled:
+      rawValue = CodingKeys.enabled.rawValue
+    case .disabled:
+      rawValue = CodingKeys.disabled.rawValue
+    }
+
+    try container.encode(rawValue)
   }
 }

@@ -152,3 +152,19 @@ enum DisableVerboseEvents: Storable {
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = Bool
 }
+
+enum LatestConfig: Storable {
+  static var key: String {
+    "store.config"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Config
+}
+
+enum LatestGeoInfo: Storable {
+  static var key: String {
+    "store.geoInfo"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = GeoInfo
+}

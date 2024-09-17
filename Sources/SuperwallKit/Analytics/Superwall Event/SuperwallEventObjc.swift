@@ -169,6 +169,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When all the experiment assignments are confirmed by calling ``Superwall/confirmAllAssignments()``.
   case confirmAllAssignments
 
+  /// When the Superwall configuration fails to be retrieved.
+  case configFail
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -273,6 +276,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "config_attributes"
     case .confirmAllAssignments:
       return "confirm_all_assignments"
+    case .configFail:
+      return "config_fail"
     }
   }
 }

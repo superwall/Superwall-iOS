@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct VariantOption: Decodable, Hashable {
+struct VariantOption: Codable, Hashable {
   var type: Experiment.Variant.VariantType
   var id: String
   var percentage: Int
@@ -26,6 +26,14 @@ struct VariantOption: Decodable, Hashable {
     id = try values.decode(String.self, forKey: .variantId)
     percentage = try values.decode(Int.self, forKey: .percentage)
     paywallId = try values.decodeIfPresent(String.self, forKey: .paywallIdentifier)
+  }
+
+  func encode(to encoder: any Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(type, forKey: .variantType)
+    try container.encode(id, forKey: .variantId)
+    try container.encode(percentage, forKey: .percentage)
+    try container.encode(paywallId, forKey: .paywallIdentifier)
   }
 
   init(

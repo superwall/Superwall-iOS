@@ -182,6 +182,9 @@ public enum SuperwallEvent {
   /// When all the experiment assignments are confirmed by calling ``Superwall/confirmAllAssignments()``.
   case confirmAllAssignments
 
+  /// When the Superwall configuration fails to be retrieved.
+  case configFail
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -321,6 +324,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .configAttributes)
     case .confirmAllAssignments:
       return .init(objcEvent: .confirmAllAssignments)
+    case .configFail:
+      return .init(objcEvent: .configFail)
     }
   }
 }
