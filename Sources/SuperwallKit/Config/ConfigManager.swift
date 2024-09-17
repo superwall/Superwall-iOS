@@ -167,11 +167,12 @@ class ConfigManager {
       }
       let fetchDuration = Date().timeIntervalSince(startAt)
 
+      let cacheStatus: InternalSuperwallEvent.ConfigCacheStatus = isUsingCachedConfig ? .cached : .notCached
       Task {
         let configRefresh = InternalSuperwallEvent.ConfigRefresh(
           buildId: config.buildId,
           retryCount: configRetryCount,
-          cacheStatus: isUsingCachedConfig ? .cached : .notCached,
+          cacheStatus: cacheStatus,
           fetchDuration: fetchDuration
         )
         await Superwall.shared.track(configRefresh)
@@ -197,13 +198,13 @@ class ConfigManager {
       Task {
         await preloadPaywalls()
       }
-      Task {
-        if isUsingCachedGeoInfo {
+      if isUsingCachedGeoInfo {
+        Task {
           await deviceHelper.getGeoInfo()
         }
       }
-      Task {
-        if isUsingCachedConfig {
+      if isUsingCachedConfig {
+        Task {
           await refreshConfiguration()
         }
       }
