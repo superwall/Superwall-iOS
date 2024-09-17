@@ -9,7 +9,7 @@ import Foundation
 
 /// The condition for when a paywall should present.
 @objc(SWKPresentationCondition)
-public enum PresentationCondition: Int, Decodable {
+public enum PresentationCondition: Int, Codable {
   /// The paywall will always present, regardless of subscription status.
   case always
 
@@ -33,5 +33,19 @@ public enum PresentationCondition: Int, Decodable {
     case nil:
       self = .checkUserSubscription
     }
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+
+    let rawValue: String
+    switch self {
+    case .always:
+      rawValue = CodingKeys.always.rawValue
+    case .checkUserSubscription:
+      rawValue = CodingKeys.checkUserSubscription.rawValue
+    }
+
+    try container.encode(rawValue)
   }
 }

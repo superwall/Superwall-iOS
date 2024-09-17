@@ -268,8 +268,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   func loadWebView() {
-    let url = paywall.url
-
     if paywall.webviewLoadingInfo.startAt == nil {
       paywall.webviewLoadingInfo.startAt = Date()
     }
@@ -447,7 +445,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         self.exitButton.alpha = 0.0
 
         Task(priority: .utility) {
-          let trackedEvent = InternalSuperwallEvent.PaywallWebviewLoad(
+          let trackedEvent = await InternalSuperwallEvent.PaywallWebviewLoad(
             state: .timeout,
             paywallInfo: self.info
           )

@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct LocalizationConfig: Decodable {
-  struct LocaleConfig: Decodable {
+struct LocalizationConfig: Codable {
+  struct LocaleConfig: Codable {
     var locale: String
   }
 

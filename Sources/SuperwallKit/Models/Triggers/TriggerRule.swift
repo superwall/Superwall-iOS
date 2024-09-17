@@ -71,7 +71,7 @@ enum TriggerRuleOutcome: Equatable {
   }
 }
 
-struct TriggerRule: Decodable, Hashable {
+struct TriggerRule: Codable, Hashable {
   var experiment: RawExperiment
   var expression: String?
   var expressionJs: String?
@@ -79,8 +79,8 @@ struct TriggerRule: Decodable, Hashable {
   let computedPropertyRequests: [ComputedPropertyRequest]
   var preload: TriggerPreload
 
-  struct TriggerPreload: Decodable, Hashable {
-    enum TriggerPreloadBehavior: String, Decodable {
+  struct TriggerPreload: Codable, Hashable {
+    enum TriggerPreloadBehavior: String, Codable {
       case ifTrue = "IF_TRUE"
       case always = "ALWAYS"
       case never = "NEVER"
@@ -102,6 +102,13 @@ struct TriggerRule: Decodable, Hashable {
       } else {
         self.behavior = behavior
       }
+    }
+
+    func encode(to encoder: Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+
+      try container.encode(behavior, forKey: .behavior)
+      try container.encode(behavior == .always, forKey: .requiresReEvaluation)
     }
 
     init(behavior: TriggerPreloadBehavior) {
@@ -144,6 +151,23 @@ struct TriggerRule: Decodable, Hashable {
     ) ?? []
     computedPropertyRequests = throwableComputedProperties.compactMap { try? $0.result.get() }
   }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+
+    try container.encode(experiment.id, forKey: .experimentId)
+    try container.encode(experiment.groupId, forKey: .experimentGroupId)
+    try container.encode(experiment.variants, forKey: .variants)
+    try container.encodeIfPresent(expression, forKey: .expression)
+    try container.encodeIfPresent(expressionJs, forKey: .expressionJs)
+    try container.encodeIfPresent(occurrence, forKey: .occurrence)
+    try container.encode(preload, forKey: .preload)
+
+    if !computedPropertyRequests.isEmpty {
+      try container.encode(computedPropertyRequests, forKey: .computedPropertyRequests)
+    }
+  }
+
 
   init(
     experiment: RawExperiment,
