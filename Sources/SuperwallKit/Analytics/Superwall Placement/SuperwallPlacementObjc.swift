@@ -166,8 +166,14 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
   /// When the attributes that affect the configuration of Superwall are set or change.
   case configAttributes
 
+  /// When all the experiment assignments are confirmed by calling ``Superwall/confirmAllAssignments()``.
+  case confirmAllAssignments
+
+  /// When the Superwall configuration fails to be retrieved.
+  case configFail
+
   public init(placement: SuperwallPlacement) {
-    self = placement.backingData.objcPlacement
+    self = placement.backingData.objcEvent
   }
 
   var description: String {
@@ -268,6 +274,10 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
       return "custom_placement"
     case .configAttributes:
       return "config_attributes"
+    case .confirmAllAssignments:
+      return "confirm_all_assignments"
+    case .configFail:
+      return "config_fail"
     }
   }
 }

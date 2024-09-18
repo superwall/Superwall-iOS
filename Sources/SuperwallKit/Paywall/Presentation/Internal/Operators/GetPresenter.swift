@@ -60,7 +60,8 @@ extension Superwall {
       return nil
     case .handleImplicitTrigger,
       .paywallDeclineCheck,
-      .getPresentationResult:
+      .getPresentationResult,
+      .confirmAllAssignments:
       // We do not track trigger fire for these events (which would result in .paywall)
       return nil
     case .presentation:

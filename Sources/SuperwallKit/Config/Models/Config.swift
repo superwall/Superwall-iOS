@@ -7,12 +7,11 @@
 
 import Foundation
 
-struct Config: Decodable {
-  let buildId: String
+struct Config: Codable {
+  var buildId: String
   var triggers: Set<Trigger>
   var paywalls: [Paywall]
   var logLevel: Int
-  var postback: PostbackRequest
   var locales: Set<String>
   var appSessionTimeout: Milliseconds
   var featureFlags: FeatureFlags
@@ -31,7 +30,6 @@ struct Config: Decodable {
     case triggers = "triggerOptions"
     case paywalls = "paywallResponses"
     case logLevel
-    case postback
     case localization
     case appSessionTimeout = "appSessionTimeoutMs"
     case featureFlags = "toggles"
@@ -45,7 +43,6 @@ struct Config: Decodable {
     triggers = try values.decode(Set<Trigger>.self, forKey: .triggers)
     paywalls = try values.decode([Paywall].self, forKey: .paywalls)
     logLevel = try values.decode(Int.self, forKey: .logLevel)
-    postback = try values.decode(PostbackRequest.self, forKey: .postback)
     appSessionTimeout = try values.decode(Milliseconds.self, forKey: .appSessionTimeout)
     featureFlags = try FeatureFlags(from: decoder)
     preloadingDisabled = try values.decode(PreloadingDisabled.self, forKey: .preloadingDisabled)
@@ -54,12 +51,27 @@ struct Config: Decodable {
     locales = Set(localization.locales.map { $0.locale })
   }
 
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+
+    try container.encode(buildId, forKey: .buildId)
+    try container.encode(triggers, forKey: .triggers)
+    try container.encode(paywalls, forKey: .paywalls)
+    try container.encode(logLevel, forKey: .logLevel)
+    try container.encode(appSessionTimeout, forKey: .appSessionTimeout)
+    try container.encode(preloadingDisabled, forKey: .preloadingDisabled)
+
+    let localizationConfig = LocalizationConfig(locales: locales.map { LocalizationConfig.LocaleConfig(locale: $0) })
+    try container.encode(localizationConfig, forKey: .localization)
+
+    try featureFlags.encode(to: encoder)
+  }
+
   init(
     buildId: String,
     triggers: Set<Trigger>,
     paywalls: [Paywall],
     logLevel: Int,
-    postback: PostbackRequest,
     locales: Set<String>,
     appSessionTimeout: Milliseconds,
     featureFlags: FeatureFlags,
@@ -69,7 +81,6 @@ struct Config: Decodable {
     self.triggers = triggers
     self.paywalls = paywalls
     self.logLevel = logLevel
-    self.postback = postback
     self.locales = locales
     self.appSessionTimeout = appSessionTimeout
     self.featureFlags = featureFlags
@@ -85,7 +96,6 @@ extension Config: Stubbable {
       triggers: [.stub()],
       paywalls: [.stub()],
       logLevel: 0,
-      postback: .stub(),
       locales: [],
       appSessionTimeout: 3600000,
       featureFlags: .stub(),

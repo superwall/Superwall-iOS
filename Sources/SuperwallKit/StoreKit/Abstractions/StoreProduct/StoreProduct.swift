@@ -90,11 +90,6 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
     return JSON(attributes)
   }
 
-  /// An internally used Superwall representation of ``attributes``.
-  var swProductTemplateVariablesJson: JSON {
-    product.swProductTemplateVariablesJson
-  }
-
   /// An internally used Superwall representation of the product.
   var swProduct: SWProduct {
     product.swProduct

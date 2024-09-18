@@ -210,11 +210,13 @@ extension Endpoint where Response == Paywalls {
 extension Endpoint where Response == Config {
   static func config(
     requestId: String,
+    maxRetry: Int?,
     factory: ApiFactory
   ) -> Self {
     let queryItems = [URLQueryItem(name: "pk", value: factory.storage.apiKey)]
 
     return Endpoint(
+      retryCount: maxRetry ?? 6,
       components: Components(
         host: .base,
         path: Api.version1 + "static_config",
@@ -250,25 +252,6 @@ extension Endpoint where Response == ConfirmedAssignmentResponse {
       components: Components(
         host: .base,
         path: Api.version1 + "confirm_assignments",
-        bodyData: bodyData
-      ),
-      method: .post,
-      factory: factory
-    )
-  }
-}
-
-// MARK: - PostbackResponse
-extension Endpoint where Response == PostBackResponse {
-  static func postback(
-    _ postback: Postback,
-    factory: ApiFactory
-  ) -> Self {
-    let bodyData = try? JSONEncoder.toSnakeCase.encode(postback)
-    return Endpoint(
-      components: Components(
-        host: .collector,
-        path: Api.version1 + "postback",
         bodyData: bodyData
       ),
       method: .post,

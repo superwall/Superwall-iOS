@@ -194,13 +194,7 @@ enum InternalSuperwallPlacement {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct ConfigRefresh: TrackableSuperwallPlacement {
-    let superwallPlacement: SuperwallPlacement = .configRefresh
-    var audienceFilterParams: [String: Any] = [:]
-    func getSuperwallParameters() async -> [String: Any] { [:] }
-  }
-
-  struct ConfigAttributes: TrackableSuperwallPlacement {
+  struct ConfigAttributes: TrackableSuperwallEvent {
     let superwallPlacement: SuperwallPlacement = .configAttributes
     let options: SuperwallOptions
     let hasExternalPurchaseController: Bool
@@ -603,7 +597,13 @@ enum InternalSuperwallPlacement {
     }
   }
 
-  struct FreeTrialStart: TrackableSuperwallPlacement {
+  struct ConfirmAllAssignments: TrackableSuperwallEvent {
+    let superwallPlacement: SuperwallPlacement = .confirmAllAssignments
+    let audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
+  struct FreeTrialStart: TrackableSuperwallEvent {
     var superwallPlacement: SuperwallPlacement {
       return .freeTrialStart(
         product: product,
@@ -721,6 +721,41 @@ enum InternalSuperwallPlacement {
       }
       params += await paywallInfo.placementParams()
       return params
+    }
+  }
+
+  enum ConfigCacheStatus: String {
+    case cached = "CACHED"
+    case notCached = "NOT_CACHED"
+  }
+
+  struct ConfigRefresh: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .configRefresh
+    let buildId: String
+    let retryCount: Int
+    let cacheStatus: ConfigCacheStatus
+    let fetchDuration: TimeInterval
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "config_build_id": buildId,
+        "retry_count": retryCount,
+        "cache_status": cacheStatus.rawValue,
+        "fetch_duration": fetchDuration
+      ]
+    }
+  }
+
+  struct ConfigFail: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .configFail
+    let message: String
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "error_message": message
+      ]
     }
   }
 }

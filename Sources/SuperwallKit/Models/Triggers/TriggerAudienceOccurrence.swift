@@ -7,9 +7,9 @@
 
 import Foundation
 
-struct TriggerAudienceOccurrence: Decodable, Hashable {
-  struct RawInterval: Decodable {
-    enum IntervalType: String, Decodable {
+struct TriggerAudienceOccurrence: Codable, Hashable {
+  struct RawInterval: Codable {
+    enum IntervalType: String, Codable {
       case minutes = "MINUTES"
       case infinity = "INFINITY"
 
@@ -17,6 +17,11 @@ struct TriggerAudienceOccurrence: Decodable, Hashable {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(RawValue.self)
         self = IntervalType(rawValue: rawValue) ?? .infinity
+      }
+
+      func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(self.rawValue)
       }
     }
     let type: IntervalType
@@ -49,6 +54,22 @@ struct TriggerAudienceOccurrence: Decodable, Hashable {
       self.interval = .minutes(minutes)
     } else {
       self.interval = .infinity
+    }
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+
+    try container.encode(key, forKey: .key)
+    try container.encode(maxCount, forKey: .maxCount)
+
+    switch interval {
+    case .minutes(let minutes):
+      let rawInterval = RawInterval(type: .minutes, minutes: minutes)
+      try container.encode(rawInterval, forKey: .interval)
+    case .infinity:
+      let rawInterval = RawInterval(type: .infinity, minutes: nil)
+      try container.encode(rawInterval, forKey: .interval)
     }
   }
 
