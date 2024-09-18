@@ -142,7 +142,7 @@ class ConfigManager {
         }
 
         let timer = Timer(
-          timeInterval: 0.3,
+          timeInterval: 1,
           repeats: false
         ) { _ in
           getConfigTask.cancel()
