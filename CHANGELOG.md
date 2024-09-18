@@ -21,6 +21,25 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Renames the `TriggerResult` `eventNotFound` case to `placementNotFound`.
 - Renames the `PresentationResult` and `PaywallSkippedReason` `noRuleMatch` case to `noAudienceMatch`.
 - Renames `Store` to `ProductStore`.
+- Removes `Superwall.shared.isConfigured` in favor of `Superwall.shared.configurationStatus`.
+
+## 3.9.0
+
+- If a network issue occurs while retrieving the latest Superwall configuration, or it takes longer than 300ms to retrieve, the SDK falls back to a cached version. Then it tries to refresh it in the background. This behavior is behind a feature flag.
+- When the Superwall configuration is set or refreshed, a `config_refresh` event is tracked, which will give insight into whether a cached version of the Superwall configuration is being used or not.
+- When the Superwall configuration fails to be retrieved, a `config_fail` event is tracked.
+
+## 3.8.0
+
+### Enhancements
+
+- Adds `Superwall.shared.confirmAllAssignments()`, which confirms assignments for all placements and returns an array of all confirmed experiment assignments. Note that the assignments may be different when a placement is registered due to changes in user, placement, or device parameters used in audience filters.
+- Adds a published property `Superwall.shared.configurationStatus`, which replaces `isConfigured`. This is an enum which can either be `pending`, `configured`, or `failed`.
+
+### Fixes
+
+- Fixes `UIScreen unavailable in visionOS` error message in `PaywallViewController`.
+- Fixes the error `Symbol not found: _$s10Foundation14NSDecimalRoundyySpySo0B0aG_SPyADGSiSo14NSRoundingModeVtF`, which is an Xcode 16 bug.
 
 ## 3.7.4
 

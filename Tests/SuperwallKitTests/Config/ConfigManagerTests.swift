@@ -11,6 +11,33 @@ import XCTest
 
 @available(iOS 14.0, *)
 final class ConfigManagerTests: XCTestCase {
+  func test_refreshConfiguration() async {
+    let dependencyContainer = DependencyContainer()
+    let network = NetworkMock(factory: dependencyContainer)
+    let newConfig: Config = .stub()
+      .setting(\.buildId, to: "123")
+    network.configReturnValue = .success(newConfig)
+
+    let storage = StorageMock()
+    let configManager = ConfigManager(
+      options: SuperwallOptions(),
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: storage,
+      network: network,
+      paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer
+    )
+
+    let oldConfig: Config = .stub()
+      .setting(\.buildId, to: "abc")
+    configManager.configState.send(.retrieved(oldConfig))
+
+    await configManager.refreshConfiguration()
+
+    XCTAssertEqual(configManager.config?.buildId, "123")
+  }
+
   // MARK: - Confirm Assignments
   func test_confirmAssignment() async {
     let experimentId = "abc"

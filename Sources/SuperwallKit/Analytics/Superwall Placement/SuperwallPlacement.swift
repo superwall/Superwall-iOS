@@ -179,6 +179,12 @@ public enum SuperwallPlacement {
   /// When the attributes that affect the configuration of Superwall are set or change.
   case configAttributes
 
+  /// When all the experiment assignments are confirmed by calling ``Superwall/confirmAllAssignments()``.
+  case confirmAllAssignments
+
+  /// When the Superwall configuration fails to be retrieved.
+  case configFail
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -316,6 +322,10 @@ extension SuperwallPlacement {
       return .init(objcPlacement: .customPlacement)
     case .configAttributes:
       return .init(objcPlacement: .configAttributes)
+    case .confirmAllAssignments:
+      return .init(objcPlacement: .confirmAllAssignments)
+    case .configFail:
+      return .init(objcPlacement: .configFail)
     }
   }
 }

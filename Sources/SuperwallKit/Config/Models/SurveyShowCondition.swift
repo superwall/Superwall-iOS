@@ -10,7 +10,7 @@ import Foundation
 /// An enum whose cases indicate when a survey should
 /// show.
 @objc(SWKSurveyShowCondition)
-public enum SurveyShowCondition: Int, Decodable {
+public enum SurveyShowCondition: Int, Codable {
   /// Shows the survey when the user manually closes the paywall.
   case onManualClose
 
@@ -40,5 +40,19 @@ public enum SurveyShowCondition: Int, Decodable {
         )
       )
     }
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+
+    let rawValue: String
+    switch self {
+    case .onManualClose:
+      rawValue = CodingKeys.onManualClose.rawValue
+    case .onPurchase:
+      rawValue = CodingKeys.onPurchase.rawValue
+    }
+
+    try container.encode(rawValue)
   }
 }

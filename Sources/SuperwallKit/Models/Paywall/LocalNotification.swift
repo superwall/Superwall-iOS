@@ -10,7 +10,7 @@ import Foundation
 /// A local notification.
 @objc(SWKLocalNotification)
 @objcMembers
-public final class LocalNotification: NSObject, Decodable {
+public final class LocalNotification: NSObject, Codable {
   /// The type of the notification.
   public let type: LocalNotificationType
 
@@ -57,7 +57,7 @@ extension LocalNotification: Stubbable {
 
 /// The type of notification.
 @objc(SWKLocalNotificationType)
-public enum LocalNotificationType: Int, Decodable {
+public enum LocalNotificationType: Int, Codable {
   /// The notification will fire after a transaction.
   case trialStarted
 
@@ -81,5 +81,17 @@ public enum LocalNotificationType: Int, Decodable {
         )
       )
     }
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+
+    let rawValue: String
+    switch self {
+    case .trialStarted:
+      rawValue = CodingKeys.trialStarted.rawValue
+    }
+
+    try container.encode(rawValue)
   }
 }

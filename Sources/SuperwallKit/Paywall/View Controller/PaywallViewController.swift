@@ -97,7 +97,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var backgroundColor: UIColor {
     #if os(visionOS)
     return paywall.backgroundColor
-    #endif
+    #else
     let style = UIScreen.main.traitCollection.userInterfaceStyle
     switch style {
     case .dark:
@@ -105,6 +105,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     default:
       return paywall.backgroundColor
     }
+    #endif
   }
 
   /// A loading spinner that appears when making a purchase.
@@ -444,7 +445,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         self.exitButton.alpha = 0.0
 
         Task(priority: .utility) {
-          let webviewTimeout = InternalSuperwallPlacement.PaywallWebviewLoad(
+          let webviewTimeout = await InternalSuperwallPlacement.PaywallWebviewLoad(
             state: .timeout,
             paywallInfo: self.info
           )

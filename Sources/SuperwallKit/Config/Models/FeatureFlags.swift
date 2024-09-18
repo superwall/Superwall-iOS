@@ -7,12 +7,12 @@
 
 import Foundation
 
-struct RawFeatureFlag: Decodable {
+struct RawFeatureFlag: Codable {
   let key: String
   let enabled: Bool
 }
 
-struct FeatureFlags: Decodable {
+struct FeatureFlags: Codable {
   var enableSessionEvents: Bool
   var enableExpressionParameters: Bool
   var enableUserIdSeed: Bool
@@ -45,6 +45,25 @@ struct FeatureFlags: Decodable {
     enableMultiplePaywallUrls = rawFeatureFlags.value(forKey: "enable_multiple_paywall_urls", default: false)
     enableConfigRefresh = rawFeatureFlags.value(forKey: "enable_config_refresh", default: false)
     enableTextInteraction = rawFeatureFlags.value(forKey: "enable_text_interaction", default: false)
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+
+    let rawFeatureFlags = [
+      RawFeatureFlag(key: "enable_session_events", enabled: enableSessionEvents),
+      RawFeatureFlag(key: "enable_expression_params", enabled: enableExpressionParameters),
+      RawFeatureFlag(key: "enable_userid_seed", enabled: enableUserIdSeed),
+      RawFeatureFlag(key: "disable_verbose_events", enabled: disableVerbosePlacements),
+      RawFeatureFlag(key: "enable_suppresses_incremental_rendering", enabled: enableSuppressesIncrementalRendering),
+      RawFeatureFlag(key: "enable_throttle_scheduling_policy", enabled: enableThrottleSchedulingPolicy),
+      RawFeatureFlag(key: "enable_none_scheduling_policy", enabled: enableNoneSchedulingPolicy),
+      RawFeatureFlag(key: "enable_multiple_paywall_urls", enabled: enableMultiplePaywallUrls),
+      RawFeatureFlag(key: "enable_config_refresh", enabled: enableConfigRefresh),
+      RawFeatureFlag(key: "enable_text_interaction", enabled: enableTextInteraction)
+    ]
+
+    try container.encode(rawFeatureFlags, forKey: .toggles)
   }
 
   init(

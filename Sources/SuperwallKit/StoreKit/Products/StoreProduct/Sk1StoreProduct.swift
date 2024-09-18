@@ -30,10 +30,6 @@ struct SK1StoreProduct: StoreProductType {
     underlyingSK1Product.subscriptionGroupIdentifier
   }
 
-  var swProductTemplateVariablesJson: JSON {
-    return JSON(SWProductTemplateVariable(product: underlyingSK1Product).dictionary() as Any)
-  }
-
   var swProduct: SWProduct {
     return SWProduct(product: underlyingSK1Product)
   }

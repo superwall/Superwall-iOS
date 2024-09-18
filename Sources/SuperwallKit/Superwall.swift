@@ -117,16 +117,15 @@ public final class Superwall: NSObject, ObservableObject {
     return presentedPaywallInfo ?? presentationItems.paywallInfo
   }
 
-  /// A published property that is `true` when Superwall has finished configuring via
-  /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
+  /// A published property that indicates the configuration status of the SDK.
   ///
-  /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
-  /// notified when configuration has completed.
+  /// This is ``ConfigurationStatus/pending`` when the SDK is yet to finish
+  /// configuring. Upon successful configuration, it will change to ``ConfigurationStatus/configured``.
+  /// On failure it will change to ``ConfigurationStatus/failed``.
   ///
-  /// Alternatively, you can use the completion handler from
-  /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
+  /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get notified when the status changes.
   @Published
-  public var isConfigured = false // Public set necessary for wrapper SDKs
+  public var configurationStatus: ConfigurationStatus = .pending
 
   /// The ``Entitlement``s tied to the device.
   public var entitlements: EntitlementsInfo {
@@ -245,12 +244,21 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Listens to config.
   private func addListeners() {
-    dependencyContainer.configManager.hasConfig
+    dependencyContainer.configManager.configState
       .receive(on: DispatchQueue.main)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
-        receiveValue: { [weak self] _ in
-          self?.isConfigured = true
+        receiveValue: { [weak self] state in
+          switch state {
+          case .retrieving:
+            self?.configurationStatus = .pending
+          case .failed:
+            self?.configurationStatus = .failed
+          case .retrieved:
+            self?.configurationStatus = .configured
+          case .retrying:
+            break
+          }
         }
       ))
   }
@@ -272,7 +280,7 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - options: An optional ``SuperwallOptions`` object which allows you to customise the appearance and behavior
   ///   of the paywall.
   ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
-  ///   Alternatively, you can subscribe to the published variable ``isConfigured``.
+  ///   Alternatively, you can subscribe to the published variable ``configurationStatus`` for a more explicit representation of the SDK's configuration status.
   /// - Returns: The configured ``Superwall`` instance.
   @discardableResult
   public static func configure(
@@ -336,6 +344,73 @@ public final class Superwall: NSObject, ObservableObject {
       options: options,
       completion: completion
     )
+  }
+
+  /// Gets an array of all confirmed experiment assignments.
+  ///
+  /// - Returns: An array of ``ConfirmedAssignment`` objects.
+  public func getAssignments() -> [ConfirmedAssignment] {
+    let confirmedAssignments = dependencyContainer.storage.getConfirmedAssignments()
+    return confirmedAssignments.map {
+      ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
+    }
+  }
+
+  /// Confirms all experiment assignments and returns them in an array.
+  ///
+  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
+  ///
+  /// Note that the assignments may be different when a placement is registered due to changes
+  /// in user, placement, or device parameters used in audience filters.
+  ///
+  /// - Returns: And array of ``ConfirmedAssignment`` objects.
+  public func confirmAllAssignments() async -> [ConfirmedAssignment] {
+    let confirmAllAssignments = InternalSuperwallPlacement.ConfirmAllAssignments()
+    await track(confirmAllAssignments)
+
+    guard let triggers = dependencyContainer.configManager.config?.triggers else {
+      return []
+    }
+
+    let storedAssignments = dependencyContainer.storage.getConfirmedAssignments()
+    var assignments = Set(storedAssignments.map {
+      ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
+    })
+
+    for trigger in triggers {
+      let eventData = PlacementData(
+        name: trigger.placementName,
+        parameters: [:],
+        createdAt: Date()
+      )
+
+      let presentationRequest = dependencyContainer.makePresentationRequest(
+        .explicitTrigger(eventData),
+        paywallOverrides: nil,
+        isPaywallPresented: false,
+        type: .confirmAllAssignments
+      )
+
+      if let assignment = await confirmAssignments(presentationRequest) {
+        assignments.insert(assignment)
+      }
+    }
+    return Array(assignments)
+  }
+
+  /// Confirms all experiment assignments and returns them in an array.
+  ///
+  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
+  ///
+  /// Note that the assignments may be different when a placement is registered due to changes
+  /// in user, placement, or device parameters used in audience filters.
+  ///
+  /// - Returns: And array of ``ConfirmedAssignment`` objects.
+  public func confirmAllAssignments(completion: (([ConfirmedAssignment]) -> Void)? = nil) {
+    Task {
+      let result = await confirmAllAssignments()
+      completion?(result)
+    }
   }
 
   /// Objective-C-only function that configures a shared instance of ``Superwall`` for use throughout your app.

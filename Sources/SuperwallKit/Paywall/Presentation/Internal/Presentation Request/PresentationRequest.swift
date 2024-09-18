@@ -26,6 +26,9 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
   /// close the paywall view controller or not.
   case paywallDeclineCheck
 
+  /// Confirm all the assignments
+  case confirmAllAssignments
+
   var isGettingPresentationResult: Bool {
     switch self {
     case .presentation,
@@ -33,7 +36,8 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
       return false
     case .getPresentationResult,
       .handleImplicitTrigger,
-      .paywallDeclineCheck:
+      .paywallDeclineCheck,
+      .confirmAllAssignments:
       return true
     }
   }
@@ -43,7 +47,8 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
     case .presentation,
       .getPaywall,
       .getPresentationResult,
-      .handleImplicitTrigger:
+      .handleImplicitTrigger,
+      .confirmAllAssignments:
       return true
     case .paywallDeclineCheck:
       return false
@@ -61,6 +66,8 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
     case .handleImplicitTrigger,
       .paywallDeclineCheck:
       return "getImplicitPresentationResult"
+    case .confirmAllAssignments:
+      return "confirmAllAssignments"
     }
   }
 
@@ -88,7 +95,8 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
       (.paywallDeclineCheck, .paywallDeclineCheck),
       (.getPresentationResult, .getPresentationResult),
       (.presentation, .presentation),
-      (.getPaywall, .getPaywall):
+      (.getPaywall, .getPaywall),
+      (.confirmAllAssignments, .confirmAllAssignments):
       return true
     default:
       return false
@@ -121,7 +129,8 @@ struct PresentationRequest {
         return "register"
       case .paywallDeclineCheck,
         .handleImplicitTrigger,
-        .getPresentationResult:
+        .getPresentationResult,
+        .confirmAllAssignments:
         return nil
       }
     }

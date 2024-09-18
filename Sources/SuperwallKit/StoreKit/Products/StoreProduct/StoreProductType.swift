@@ -25,8 +25,6 @@ protocol StoreProductType: Sendable {
 
   var subscriptionGroupIdentifier: String? { get }
 
-  var swProductTemplateVariablesJson: JSON { get }
-
   var swProduct: SWProduct { get }
 
   var localizedPrice: String { get }

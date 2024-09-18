@@ -25,7 +25,7 @@ class DeviceHelper {
     return Locale(identifier: preferredIdentifier).identifier
   }
 
-  private var geoInfo: GeoInfo?
+  var geoInfo: GeoInfo?
 
   let appInstalledAtString: String
 
@@ -542,5 +542,8 @@ class DeviceHelper {
 
   func getGeoInfo() async {
     geoInfo = await network.getGeoInfo()
+    if let geoInfo = geoInfo {
+      storage.save(geoInfo, forType: LatestGeoInfo.self)
+    }
   }
 }

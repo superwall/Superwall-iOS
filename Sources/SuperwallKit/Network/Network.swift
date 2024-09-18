@@ -125,6 +125,7 @@ class Network {
 
   func getConfig(
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
+    maxRetry: Int? = nil,
     isRetryingCallback: ((Int) -> Void)? = nil
   ) async throws -> Config {
     try await appInForeground(injectedApplicationStatePublisher)
@@ -132,7 +133,11 @@ class Network {
     do {
       let requestId = UUID().uuidString
       var config = try await urlSession.request(
-        .config(requestId: requestId, factory: factory),
+        .config(
+          requestId: requestId,
+          maxRetry: maxRetry,
+          factory: factory
+        ),
         isRetryingCallback: isRetryingCallback
       )
       config.requestId = requestId
@@ -229,20 +234,6 @@ class Network {
         scope: .network,
         message: "Request Failed: /session_events",
         info: ["payload": session],
-        error: error
-      )
-    }
-  }
-
-  func sendPostback(_ postback: Postback) async {
-    do {
-      try await urlSession.request(.assignments(factory: factory))
-    } catch {
-      Logger.debug(
-        logLevel: .error,
-        scope: .network,
-        message: "Request Failed: /postback",
-        info: ["payload": postback],
         error: error
       )
     }

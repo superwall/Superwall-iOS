@@ -23,7 +23,7 @@ extension Superwall {
   ) async throws -> PaywallComponents {
     try await waitForEntitlementsAndConfig(request, paywallStatePublisher: publisher)
 
-    let debugInfo = logPresentation(request: request)
+    let debugInfo = log(request: request)
 
     try checkDebuggerPresentation(
       request: request,
@@ -65,5 +65,38 @@ extension Superwall {
       audienceOutcome: audienceOutcome,
       debugInfo: debugInfo
     )
+  }
+
+  func confirmAssignments(
+    _ request: PresentationRequest
+  ) async -> ConfirmedAssignment? {
+    do {
+      try await waitForSubsStatusAndConfig(request, paywallStatePublisher: nil)
+
+      let rulesOutcome = try await evaluateAudienceFilter(from: request)
+
+      confirmHoldoutAssignment(
+        request: request,
+        from: rulesOutcome
+      )
+
+      let confirmableAssignment = rulesOutcome.confirmableAssignment
+
+      confirmPaywallAssignment(
+        confirmableAssignment,
+        request: request,
+        isDebuggerLaunched: request.flags.isDebuggerLaunched
+      )
+
+      if let confirmableAssignment = confirmableAssignment {
+        return ConfirmedAssignment(
+          experimentId: confirmableAssignment.experimentId,
+          variant: confirmableAssignment.variant
+        )
+      }
+      return nil
+    } catch {
+      return nil
+    }
   }
 }
