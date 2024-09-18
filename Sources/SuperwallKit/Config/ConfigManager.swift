@@ -167,9 +167,9 @@ class ConfigManager {
       }
       let fetchDuration = Date().timeIntervalSince(startAt)
 
-      let cacheStatus: InternalSuperwallEvent.ConfigCacheStatus = isUsingCachedConfig ? .cached : .notCached
+      let cacheStatus: InternalSuperwallPlacement.ConfigCacheStatus = isUsingCachedConfig ? .cached : .notCached
       Task {
-        let configRefresh = InternalSuperwallEvent.ConfigRefresh(
+        let configRefresh = InternalSuperwallPlacement.ConfigRefresh(
           buildId: config.buildId,
           retryCount: configRetryCount,
           cacheStatus: cacheStatus,
@@ -211,7 +211,7 @@ class ConfigManager {
     } catch {
       configState.send(completion: .failure(error))
 
-      let configFallback = InternalSuperwallEvent.ConfigFail(
+      let configFallback = InternalSuperwallPlacement.ConfigFail(
         message: error.localizedDescription
       )
       await Superwall.shared.track(configFallback)

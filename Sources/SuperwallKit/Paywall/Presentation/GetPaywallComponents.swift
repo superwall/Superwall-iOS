@@ -79,7 +79,7 @@ extension Superwall {
     do {
       try await waitForSubsStatusAndConfig(request, paywallStatePublisher: nil)
 
-      let rulesOutcome = try await evaluateRules(from: request)
+      let rulesOutcome = try await evaluateAudienceFilter(from: request)
 
       confirmHoldoutAssignment(
         request: request,

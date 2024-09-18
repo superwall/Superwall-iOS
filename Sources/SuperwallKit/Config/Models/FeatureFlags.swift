@@ -54,7 +54,7 @@ struct FeatureFlags: Codable {
       RawFeatureFlag(key: "enable_session_events", enabled: enableSessionEvents),
       RawFeatureFlag(key: "enable_expression_params", enabled: enableExpressionParameters),
       RawFeatureFlag(key: "enable_userid_seed", enabled: enableUserIdSeed),
-      RawFeatureFlag(key: "disable_verbose_events", enabled: disableVerboseEvents),
+      RawFeatureFlag(key: "disable_verbose_events", enabled: disableVerbosePlacements),
       RawFeatureFlag(key: "enable_suppresses_incremental_rendering", enabled: enableSuppressesIncrementalRendering),
       RawFeatureFlag(key: "enable_throttle_scheduling_policy", enabled: enableThrottleSchedulingPolicy),
       RawFeatureFlag(key: "enable_none_scheduling_policy", enabled: enableNoneSchedulingPolicy),

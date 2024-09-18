@@ -139,22 +139,6 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown
 
-  /// A published property that is `true` when Superwall has finished configuring via
-  /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
-  ///
-  /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
-  /// notified when configuration has completed.
-  ///
-  /// Alternatively, you can use the completion handler from
-  /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
-  @Published
-  @available(
-    *,
-    deprecated,
-    message: "Use configurationStatus for a more explicit representation of the SDK's configuration status."
-  )
-  public var isConfigured = false
-
   /// A published property that indicates the configuration status of the SDK.
   ///
   /// This is ``ConfigurationStatus/pending`` when the SDK is yet to finish
@@ -297,15 +281,6 @@ public final class Superwall: NSObject, ObservableObject {
         }
       ))
 
-    dependencyContainer.configManager.hasConfig
-      .receive(on: DispatchQueue.main)
-      .subscribe(Subscribers.Sink(
-        receiveCompletion: { _ in },
-        receiveValue: { [weak self] _ in
-          self?.isConfigured = true
-        }
-      ))
-
     $subscriptionStatus
       .removeDuplicates()
       .dropFirst()
@@ -432,7 +407,7 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// - Returns: And array of ``ConfirmedAssignment`` objects.
   public func confirmAllAssignments() async -> [ConfirmedAssignment] {
-    let confirmAllAssignments = InternalSuperwallEvent.ConfirmAllAssignments()
+    let confirmAllAssignments = InternalSuperwallPlacement.ConfirmAllAssignments()
     await track(confirmAllAssignments)
 
     guard let triggers = dependencyContainer.configManager.config?.triggers else {
@@ -445,8 +420,8 @@ public final class Superwall: NSObject, ObservableObject {
     })
 
     for trigger in triggers {
-      let eventData = EventData(
-        name: trigger.eventName,
+      let eventData = PlacementData(
+        name: trigger.placementName,
         parameters: [:],
         createdAt: Date()
       )

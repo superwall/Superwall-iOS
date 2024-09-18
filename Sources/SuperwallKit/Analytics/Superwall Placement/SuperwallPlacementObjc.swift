@@ -173,7 +173,7 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
   case configFail
 
   public init(placement: SuperwallPlacement) {
-    self = placement.backingData.objcEvent
+    self = placement.backingData.objcPlacement
   }
 
   var description: String {

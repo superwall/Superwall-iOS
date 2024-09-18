@@ -12,6 +12,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Renames `getPresentationResult(forEvent:)` to `getPresentationResult(forPlacement:)`.
 - Renames the `TriggerResult` `eventNotFound` case to `placementNotFound`.
 - Renames the `PresentationResult` and `PaywallSkippedReason` `noRuleMatch` case to `noAudienceMatch`.
+- Removes `Superwall.shared.isConfigured` in favor of `Superwall.shared.configurationStatus`.
 
 ## 3.9.0
 

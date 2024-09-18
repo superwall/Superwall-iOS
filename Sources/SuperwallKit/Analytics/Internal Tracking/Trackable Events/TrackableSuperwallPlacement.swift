@@ -194,7 +194,7 @@ enum InternalSuperwallPlacement {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct ConfigAttributes: TrackableSuperwallEvent {
+  struct ConfigAttributes: TrackableSuperwallPlacement {
     let superwallPlacement: SuperwallPlacement = .configAttributes
     let options: SuperwallOptions
     let hasExternalPurchaseController: Bool
@@ -597,13 +597,13 @@ enum InternalSuperwallPlacement {
     }
   }
 
-  struct ConfirmAllAssignments: TrackableSuperwallEvent {
+  struct ConfirmAllAssignments: TrackableSuperwallPlacement {
     let superwallPlacement: SuperwallPlacement = .confirmAllAssignments
     let audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct FreeTrialStart: TrackableSuperwallEvent {
+  struct FreeTrialStart: TrackableSuperwallPlacement {
     var superwallPlacement: SuperwallPlacement {
       return .freeTrialStart(
         product: product,
@@ -729,8 +729,8 @@ enum InternalSuperwallPlacement {
     case notCached = "NOT_CACHED"
   }
 
-  struct ConfigRefresh: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .configRefresh
+  struct ConfigRefresh: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .configRefresh
     let buildId: String
     let retryCount: Int
     let cacheStatus: ConfigCacheStatus
@@ -747,8 +747,8 @@ enum InternalSuperwallPlacement {
     }
   }
 
-  struct ConfigFail: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .configFail
+  struct ConfigFail: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .configFail
     let message: String
     var audienceFilterParams: [String: Any] = [:]
 
