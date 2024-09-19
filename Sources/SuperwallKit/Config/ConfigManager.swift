@@ -432,7 +432,7 @@ class ConfigManager {
             presentationSourceType: nil,
             retryCount: 6
           )
-          guard let paywall = try? await paywallManager.getPaywall(from: request) else {
+          guard let paywall = try? await self.paywallManager.getPaywall(from: request) else {
             return
           }
 
