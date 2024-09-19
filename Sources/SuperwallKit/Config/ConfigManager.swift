@@ -145,7 +145,7 @@ class ConfigManager {
         }
 
         let timer = Timer(
-          timeInterval: 0.3,
+          timeInterval: 1,
           repeats: false
         ) { _ in
           getConfigTask.cancel()
@@ -439,7 +439,7 @@ class ConfigManager {
             isDebuggerLaunched: false,
             presentationSourceType: nil
           )
-          guard let paywall = try? await paywallManager.getPaywall(from: request) else {
+          guard let paywall = try? await self.paywallManager.getPaywall(from: request) else {
             return
           }
 

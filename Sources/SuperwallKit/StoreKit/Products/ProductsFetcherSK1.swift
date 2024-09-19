@@ -49,8 +49,8 @@ class ProductsFetcherSK1: NSObject {
     forPaywall paywall: Paywall?,
     placement: PlacementData?
   ) async throws -> Set<StoreProduct> {
-    let sk1Products = try await withCheckedThrowingContinuation { continuation in
-      products(withIdentifiers: identifiers, forPaywall: paywall, placement: placement) { result in
+    let sk1Products = try await withCheckedThrowingContinuation { [weak self] continuation in
+      self?.products(withIdentifiers: identifiers, forPaywall: paywall, placement: placement) { result in
         continuation.resume(with: result)
       }
     }

@@ -25,9 +25,15 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.9.0
 
-- If a network issue occurs while retrieving the latest Superwall configuration, or it takes longer than 300ms to retrieve, the SDK falls back to a cached version. Then it tries to refresh it in the background. This behavior is behind a feature flag.
+### Enhancements
+
+- If a network issue occurs while retrieving the latest Superwall configuration, or it takes longer than 1s to retrieve, the SDK falls back to a cached version. Then it tries to refresh it in the background. This behavior is behind a feature flag.
 - When the Superwall configuration is set or refreshed, a `config_refresh` event is tracked, which will give insight into whether a cached version of the Superwall configuration is being used or not.
 - When the Superwall configuration fails to be retrieved, a `config_fail` event is tracked.
+
+### Fixes
+
+- Adds in missing `weak self` references inside task group closures.
 
 ## 3.8.0
 
