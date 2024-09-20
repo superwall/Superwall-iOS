@@ -168,11 +168,12 @@ class Network {
   }
 
   func getGeoInfo(
-    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
-  ) async -> GeoInfo? {
+    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
+    maxRetry: Int?
+  ) async throws -> GeoInfo? {
     do {
       try await appInForeground(injectedApplicationStatePublisher)
-      let geoWrapper = try await urlSession.request(.geo(factory: factory))
+      let geoWrapper = try await urlSession.request(.geo(factory: factory, maxRetry: maxRetry))
       return geoWrapper.info
     } catch {
       Logger.debug(
@@ -181,7 +182,7 @@ class Network {
         message: "Request Failed: /geo",
         error: error
       )
-      return nil
+      throw error
     }
   }
 

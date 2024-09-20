@@ -540,8 +540,8 @@ class DeviceHelper {
     self.sdkVersionPadded = Self.makePaddedSdkVersion(using: sdkVersion)
   }
 
-  func getGeoInfo() async {
-    geoInfo = await network.getGeoInfo()
+  func getGeoInfo(maxRetry: Int? = nil) async {
+    geoInfo = try? await network.getGeoInfo(maxRetry: maxRetry)
     if let geoInfo = geoInfo {
       storage.save(geoInfo, forType: LatestGeoInfo.self)
     }

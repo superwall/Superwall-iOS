@@ -262,8 +262,12 @@ extension Endpoint where Response == ConfirmedAssignmentResponse {
 
 // MARK: - GeoWrapper
 extension Endpoint where Response == GeoWrapper {
-  static func geo(factory: ApiFactory) -> Self {
+  static func geo(
+    factory: ApiFactory,
+    maxRetry: Int?
+  ) -> Self {
     return Endpoint(
+      retryCount: maxRetry ?? 6,
       components: Components(
         host: .geo,
         path: Api.version1 + "geo"
