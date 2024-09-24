@@ -47,12 +47,6 @@ public enum FeatureGatingBehavior: Int, Codable, CustomStringConvertible, Sendab
 
   public func encode(to encoder: Encoder) throws {
     var container = encoder.singleValueContainer()
-
-    switch self {
-    case .gated:
-      try container.encode(FeatureGatingBehavior.gated.rawValue)
-    case .nonGated:
-      try container.encode(FeatureGatingBehavior.nonGated.rawValue)
-    }
+    try container.encode(description)
   }
 }

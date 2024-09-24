@@ -130,45 +130,72 @@ class ConfigManager {
     do {
       _ = await factory.loadPurchasedProducts()
 
-      let config: Config
-      var isUsingCachedConfig = false
-      var isUsingCachedGeoInfo = false
-
       let startAt = Date()
 
-      // If config is cached, get config from the network but timeout after 300ms
-      // and default to the cached version. Then, refresh in the background.
-      if let cachedConfig = storage.get(LatestConfig.self),
-        cachedConfig.featureFlags.enableConfigRefresh {
-        let getConfigTask = Task {
-          try await network.getConfig(maxRetry: 0)
-        }
+      // Retrieve cached config and determine if refresh is enabled
+      let cachedConfig = storage.get(LatestConfig.self)
+      let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
+      let timeout: TimeInterval = 1
 
-        let timer = Timer(
-          timeInterval: 1,
-          repeats: false
-        ) { _ in
-          getConfigTask.cancel()
+      // Prepare tasks for fetching config and geoInfo concurrently
+      // Return a tuple including the `isUsingCached` flag
+      async let configResult: (config: Config, isUsingCached: Bool) = { [weak self] in
+        guard let self = self else {
+          throw CancellationError()
         }
-        RunLoop.main.add(timer, forMode: .default)
+        if let cachedConfig = cachedConfig,
+          enableConfigRefresh {
+          do {
+            let result = try await self.fetchWithTimeout(
+              {
+                try await self.network.getConfig(maxRetry: 0)
+              },
+              timeout: timeout
+            )
+            return (result, false)
+          } catch {
+            // Return the cached config and set isUsingCached to true
+            return (cachedConfig, true)
+          }
+        } else {
+          let config = try await self.network.getConfig { attempt in
+            self.configRetryCount = attempt
+            self.configState.send(.retrying)
+          }
+          return (config, false)
+        }
+      }()
 
-        do {
-          config = try await getConfigTask.value
-        } catch {
-          isUsingCachedConfig = true
-          config = cachedConfig
+      async let isUsingCachedGeo: Bool = { [weak self] in
+        guard let self = self else {
+          return false
         }
+        let cachedGeoInfo = self.storage.get(LatestGeoInfo.self)
 
-        // Got config, cancel the timer.
-        timer.invalidate()
-      } else {
-        // Otherwise wait to get config
-        config = try await network.getConfig { [weak self] attempt in
-          self?.configRetryCount = attempt
-          self?.configState.send(.retrying)
+        if let cachedGeoInfo = cachedGeoInfo,
+          enableConfigRefresh {
+          do {
+            let geoInfo = try await self.fetchWithTimeout(
+              {
+                try await self.network.getGeoInfo(maxRetry: 0)
+              },
+              timeout: timeout
+            )
+            self.deviceHelper.geoInfo = geoInfo
+            return false
+          } catch {
+            self.deviceHelper.geoInfo = cachedGeoInfo
+            return true
+          }
+        } else {
+          await self.deviceHelper.getGeoInfo()
+          return false
         }
-      }
-      let fetchDuration = Date().timeIntervalSince(startAt)
+      }()
+
+      let (config, isUsingCachedConfig) = try await configResult
+      let configFetchDuration = Date().timeIntervalSince(startAt)
+      let isUsingCachedGeoInfo = await isUsingCachedGeo
 
       let cacheStatus: InternalSuperwallPlacement.ConfigCacheStatus = isUsingCachedConfig ? .cached : .notCached
       Task {
@@ -176,17 +203,9 @@ class ConfigManager {
           buildId: config.buildId,
           retryCount: configRetryCount,
           cacheStatus: cacheStatus,
-          fetchDuration: fetchDuration
+          fetchDuration: configFetchDuration
         )
         await Superwall.shared.track(configRefresh)
-      }
-
-      if let cachedGeoInfo = storage.get(LatestGeoInfo.self),
-        config.featureFlags.enableConfigRefresh {
-        deviceHelper.geoInfo = cachedGeoInfo
-        isUsingCachedGeoInfo = true
-      } else {
-        await deviceHelper.getGeoInfo()
       }
 
       let deviceAttributes = await factory.makeSessionDeviceAttributes()
@@ -211,6 +230,7 @@ class ConfigManager {
           await refreshConfiguration()
         }
       }
+
     } catch {
       configState.send(completion: .failure(error))
 
@@ -226,6 +246,32 @@ class ConfigManager {
         info: nil,
         error: error
       )
+    }
+  }
+
+  func fetchWithTimeout<T>(_ task: @escaping () async throws -> T, timeout: TimeInterval) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+      group.addTask {
+        try await task()
+      }
+
+      group.addTask {
+        try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+        throw CancellationError()
+      }
+
+      do {
+        let result = try await group.next()
+        group.cancelAll()
+        if let result = result {
+          return result
+        } else {
+          throw CancellationError()
+        }
+      } catch {
+        group.cancelAll()
+        throw error
+      }
     }
   }
 
