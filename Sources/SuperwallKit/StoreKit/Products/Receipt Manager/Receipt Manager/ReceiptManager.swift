@@ -27,11 +27,16 @@ actor ReceiptManager: NSObject {
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
     productsManager: ProductsManager,
-    receiptDelegate: ReceiptDelegate?,
-    receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData
+    receiptManager: ReceiptManagerType? = nil, // For testing
+    receiptDelegate: ReceiptDelegate?
   ) {
     self.storeKitVersion = storeKitVersion
     self.productsManager = productsManager
+
+    if let receiptManager = receiptManager {
+      self.manager = receiptManager
+      return
+    }
 
     if #available(iOS 15.0, *),
       storeKitVersion == .storeKit2 {

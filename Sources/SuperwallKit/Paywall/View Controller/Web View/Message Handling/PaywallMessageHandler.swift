@@ -35,9 +35,7 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// Used to enqueue `paywall_open` messages if the paywall isn't ready to receive them yet.
   private var messageQueue: Queue<EnqueuedMessage> = Queue()
 
-  init(
-    factory: VariablesFactory
-  ) {
+  init(factory: VariablesFactory) {
     self.factory = factory
   }
 

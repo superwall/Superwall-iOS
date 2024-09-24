@@ -9,7 +9,7 @@ import Foundation
 
 final class SK1ReceiptManager: ReceiptManagerType {
   private let receiptData: () -> Data?
-  private var purchasedSubscriptionGroupIds: Set<String>?
+  var purchasedSubscriptionGroupIds: Set<String>?
   private var purchases: Set<Purchase> = []
 
   init(receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData) {

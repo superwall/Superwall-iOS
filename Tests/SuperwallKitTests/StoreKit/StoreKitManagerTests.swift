@@ -115,12 +115,18 @@ class StoreKitManagerTests: XCTestCase {
 
   func test_getProducts_substitutePrimaryProduct_oneResponseProduct() async {
     let productsResult: Result<Set<StoreProduct>, Error> = .success([])
+    
     let productsFetcher = ProductsFetcherSK1Mock(
       productCompletionResult: productsResult,
       entitlementsInfo: dependencyContainer.entitlementsInfo
     )
-    let manager = StoreKitManager(
+    let productsManager = ProductsManager(
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      storeKitVersion: .storeKit1,
       productsFetcher: productsFetcher
+    )
+    let manager = StoreKitManager(
+      productsManager: productsManager
     )
 
     let primary = MockSkProduct(productIdentifier: "abc")
@@ -151,8 +157,13 @@ class StoreKitManagerTests: XCTestCase {
       StoreProduct(sk1Product: responseProduct2, entitlements: [])
     ])
     let productsFetcher = ProductsFetcherSK1Mock(productCompletionResult: productsResult, entitlementsInfo: dependencyContainer.entitlementsInfo)
-    let manager = StoreKitManager(
+    let productsManager = ProductsManager(
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      storeKitVersion: .storeKit1,
       productsFetcher: productsFetcher
+    )
+    let manager = StoreKitManager(
+      productsManager: productsManager
     )
 
     let primary = MockSkProduct(productIdentifier: "abc")

@@ -30,10 +30,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
     .store(in: &cancellables)
     let dependencyContainer = DependencyContainer()
 
-    let messageHandler = PaywallMessageHandler(
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
-      factory: dependencyContainer
-    )
+    let messageHandler = PaywallMessageHandler(factory: dependencyContainer)
     let webView = SWWebView(
       isMac: false,
       messageHandler: messageHandler,
@@ -96,10 +93,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
 
     let dependencyContainer = DependencyContainer()
 
-    let messageHandler = PaywallMessageHandler(
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
-      factory: dependencyContainer
-    )
+    let messageHandler = PaywallMessageHandler(factory: dependencyContainer)
     let webView = SWWebView(
       isMac: false,
       messageHandler: messageHandler,

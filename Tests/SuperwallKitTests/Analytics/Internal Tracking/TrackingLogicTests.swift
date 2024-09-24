@@ -297,7 +297,6 @@ final class TrackingLogicTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
-      sessionEventsManager: dependencyContainer.sessionEventsManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(

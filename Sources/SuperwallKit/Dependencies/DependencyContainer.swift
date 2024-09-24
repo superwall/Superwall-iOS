@@ -303,6 +303,7 @@ extension DependencyContainer: RequestFactory {
       paywallOverrides: paywallOverrides,
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
+        didSetActiveEntitlements: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher(),
         entitlements: entitlementsInfo,
         isPaywallPresented: isPaywallPresented,
         type: type

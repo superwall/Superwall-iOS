@@ -479,7 +479,6 @@ final class ConfigTypeTests: XCTestCase {
       Config.self,
       from: response.data(using: .utf8)!
     )
-    XCTAssertTrue(parsedResponse.featureFlags.enableSessionEvents)
 
     XCTAssertTrue(parsedResponse.paywalls.first!.products.count != 0)
     guard let trigger = parsedResponse.triggers.filter({ $0.placementName == "MyEvent" }).first

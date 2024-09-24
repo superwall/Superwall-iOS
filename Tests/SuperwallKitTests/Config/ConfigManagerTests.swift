@@ -26,6 +26,7 @@ final class ConfigManagerTests: XCTestCase {
       network: network,
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
 

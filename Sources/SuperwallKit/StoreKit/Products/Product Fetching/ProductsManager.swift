@@ -21,10 +21,15 @@ final class ProductsManager {
 
   init(
     entitlementsInfo: EntitlementsInfo,
-    storeKitVersion: SuperwallOptions.StoreKitVersion
+    storeKitVersion: SuperwallOptions.StoreKitVersion,
+    productsFetcher: ProductFetchable? = nil // For testing
   ) {
     self.storeKitVersion = storeKitVersion
 
+    if let productsFetcher = productsFetcher {
+      self.productsFetcher = productsFetcher
+      return
+    }
     if #available(iOS 15.0, *),
       storeKitVersion == .storeKit2 {
       self.productsFetcher = ProductsFetcherSK2(entitlementsInfo: entitlementsInfo)
