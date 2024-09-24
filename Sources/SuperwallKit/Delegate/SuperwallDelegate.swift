@@ -22,7 +22,7 @@ public protocol SuperwallDelegate: AnyObject {
   /// the device receipt. Otherwise, this will reflect the value that you set.
   ///
   /// You can use this function to update the state of your application. Alternatively, you can
-  /// use the published properties of ``EntitlementsInfo/active`` to react to
+  /// use the published properties of ``EntitlementsInfo/publishedActive`` to react to
   /// changes as they happen.
   ///
   /// - Parameter newValue: The new value of the active ``Superwall/entitlements``. 

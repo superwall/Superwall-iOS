@@ -33,7 +33,7 @@ class ReceiptManagerTests: XCTestCase {
       receiptData: getReceiptData
     )
 
-    _ = await receiptManager.loadPurchasedProducts()
+    await receiptManager.loadPurchasedProducts()
     let purchasedSubscriptionGroupIds = await receiptManager.purchasedSubscriptionGroupIds
     XCTAssertEqual(purchasedSubscriptionGroupIds, ["abc"])
   }
@@ -52,7 +52,7 @@ class ReceiptManagerTests: XCTestCase {
       receiptData: getReceiptData
     )
 
-    _ = await receiptManager.loadPurchasedProducts()
+    await receiptManager.loadPurchasedProducts()
     let purchasedSubscriptionGroupIds = await receiptManager.purchasedSubscriptionGroupIds
     XCTAssertNil(purchasedSubscriptionGroupIds)
   }

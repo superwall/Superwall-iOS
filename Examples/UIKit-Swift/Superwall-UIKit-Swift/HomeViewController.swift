@@ -35,9 +35,7 @@ final class HomeViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    // TODO: Ideally need to know 1, when the entitlements became active, and 2 when the entitlements change from having entitlements to not having entitlements.
     // Get notified when active entitlements changed.
-
     subscribedCancellable = Publishers.CombineLatest(
         Superwall.shared.entitlements.$didSetActiveEntitlements,
         Superwall.shared.entitlements.$publishedActive

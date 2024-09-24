@@ -20,17 +20,17 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// An enum representing the StoreKit versions the SDK should use.
   public enum StoreKitVersion {
     /// Use StoreKit 1.
-    case sk1
+    case storeKit1
 
     /// Use StoreKit 2.
-    case sk2
+    case storeKit2
   }
 
   /// The StoreKit version that the SDK should use.
   ///
   /// The SDK will use StoreKit 2 by default if the app is running on iOS 15+, otherwise it
   /// will fallback to StoreKit 1.
-  public var storeKitVersion: StoreKitVersion = .sk2
+  public var storeKitVersion: StoreKitVersion
 
   /// **WARNING**:  The different network environments that the SDK should use.
   /// Only use this enum to set ``SuperwallOptions/networkEnvironment-swift.property``
@@ -196,6 +196,14 @@ public final class SuperwallOptions: NSObject, Encodable {
     case isGameControllerEnabled
   }
 
+  public override init() {
+    if #available(iOS 15.0, *) {
+      self.storeKitVersion = .storeKit2
+    } else {
+      self.storeKitVersion = .storeKit1
+    }
+  }
+
   public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
     // Manually encode PaywallOptions properties
@@ -207,6 +215,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(localeIdentifier, forKey: .localeIdentifier)
     try container.encode(isGameControllerEnabled, forKey: .isGameControllerEnabled)
   }
+  
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

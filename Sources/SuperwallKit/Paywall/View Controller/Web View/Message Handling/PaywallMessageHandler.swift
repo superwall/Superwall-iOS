@@ -26,7 +26,6 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
 @MainActor
 final class PaywallMessageHandler: WebEventDelegate {
   weak var delegate: PaywallMessageHandlerDelegate?
-  private unowned let sessionEventsManager: SessionEventsManager
   private let factory: VariablesFactory
 
   struct EnqueuedMessage {
@@ -37,10 +36,8 @@ final class PaywallMessageHandler: WebEventDelegate {
   private var messageQueue: Queue<EnqueuedMessage> = Queue()
 
   init(
-    sessionEventsManager: SessionEventsManager,
     factory: VariablesFactory
   ) {
-    self.sessionEventsManager = sessionEventsManager
     self.factory = factory
   }
 

@@ -9,64 +9,59 @@ import Foundation
 import StoreKit
 
 protocol ReceiptDelegate: AnyObject {
-  func receiptLoaded(purchases: Set<InAppPurchase>) async
+  func syncEntitlements(purchases: Set<Purchase>) async
+}
+
+struct Purchase: Hashable {
+  let id: String
+  let isActive: Bool
 }
 
 actor ReceiptManager: NSObject {
-  var purchasedSubscriptionGroupIds: Set<String>?
-  private var purchases: Set<InAppPurchase> = []
   private var receiptRefreshCompletion: ((Bool) -> Void)?
-  private let receiptData: () -> Data?
-  private weak var delegate: ProductsFetcherSK1?
+  private unowned let productsManager: ProductsManager
   private weak var receiptDelegate: ReceiptDelegate?
+  private let manager: ReceiptManagerType
+  private let storeKitVersion: SuperwallOptions.StoreKitVersion
 
   init(
-    delegate: ProductsFetcherSK1?,
+    storeKitVersion: SuperwallOptions.StoreKitVersion,
+    productsManager: ProductsManager,
     receiptDelegate: ReceiptDelegate?,
     receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData
   ) {
-    self.delegate = delegate
+    self.storeKitVersion = storeKitVersion
+    self.productsManager = productsManager
+
+    if #available(iOS 15.0, *),
+      storeKitVersion == .storeKit2 {
+      self.manager = SK2ReceiptManager()
+    } else {
+      self.manager = SK1ReceiptManager()
+    }
+
     self.receiptDelegate = receiptDelegate
-    self.receiptData = receiptData
   }
 
   /// Loads purchased products from the receipt, storing the purchased subscription group identifiers,
   /// purchases and active purchases.
-  @discardableResult
-  func loadPurchasedProducts() async -> Set<StoreProduct>? {
-    guard
-      let payload = ReceiptLogic.getPayload(using: receiptData),
-      let delegate = delegate
-    else {
-      await receiptDelegate?.receiptLoaded(purchases: [])
-      return nil
+  func loadPurchasedProducts() async {
+    let purchases = await manager.loadPurchases()
+
+    await receiptDelegate?.syncEntitlements(purchases: purchases)
+
+    let purchasedProductIds = Set(purchases.map { $0.id })
+
+    guard let storeProducts = try? await productsManager.products(
+      identifiers: purchasedProductIds,
+      forPaywall: nil,
+      placement: nil
+    ) else {
+      return
     }
 
-    let purchases = payload.purchases
-    self.purchases = purchases
-
-    await receiptDelegate?.receiptLoaded(purchases: purchases)
-
-    let purchasedProductIds = Set(purchases.map { $0.productIdentifier })
-
-    do {
-      let products = try await delegate.products(
-        identifiers: purchasedProductIds,
-        forPaywall: nil,
-        placement: nil
-      )
-
-      var purchasedSubscriptionGroupIds: Set<String> = []
-      for product in products {
-        if let subscriptionGroupIdentifier = product.subscriptionGroupIdentifier {
-          purchasedSubscriptionGroupIds.insert(subscriptionGroupIdentifier)
-        }
-      }
-      self.purchasedSubscriptionGroupIds = purchasedSubscriptionGroupIds
-      return products
-    } catch {
-      return nil
-    }
+    // TODO: Could make this more efficient so we don't loop through everything every time.
+    await manager.loadIntroOfferEligibility(forProducts: storeProducts)
   }
 
   /// Determines whether a free trial is available based on the product the user is purchasing.
@@ -74,25 +69,18 @@ actor ReceiptManager: NSObject {
   /// A free trial is available if the user hasn't already purchased within the subscription group of the
   /// supplied product. If it isn't a subscription-based product or there are other issues retrieving the products,
   /// the outcome will default to whether or not the user has already purchased that product.
-  func isFreeTrialAvailable(for product: StoreProduct) -> Bool {
-    guard product.hasFreeTrial else {
-      return false
-    }
-    guard
-      let purchasedSubsGroupIds = purchasedSubscriptionGroupIds,
-      let subsGroupId = product.subscriptionGroupIdentifier
-    else {
-      return !hasPurchasedProduct(withId: product.productIdentifier)
-    }
-
-    return !purchasedSubsGroupIds.contains(subsGroupId)
+  func isFreeTrialAvailable(for storeProduct: StoreProduct) async -> Bool {
+    await manager.isEligibleForIntroOffer(storeProduct)
   }
 
   /// This refreshes the device receipt.
   ///
   /// - Warning: This will prompt the user to log in, so only do this on
   /// when restoring or after purchasing.
-  func refreshReceipt() async {
+  func refreshSK1Receipt() async {
+    guard storeKitVersion == .storeKit1 else {
+      return
+    }
     Logger.debug(
       logLevel: .debug,
       scope: .receipts,
@@ -108,11 +96,6 @@ actor ReceiptManager: NSObject {
         continuation.resume(returning: completed)
       }
     }
-  }
-
-  /// Determines whether the purchases already contain the given product ID.
-  func hasPurchasedProduct(withId productId: String) -> Bool {
-    return purchases.first { $0.productIdentifier == productId } != nil
   }
 }
 

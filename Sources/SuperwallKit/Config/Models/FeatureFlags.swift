@@ -13,7 +13,6 @@ struct RawFeatureFlag: Codable {
 }
 
 struct FeatureFlags: Codable {
-  var enableSessionEvents: Bool
   var enableExpressionParameters: Bool
   var enableUserIdSeed: Bool
   var disableVerbosePlacements: Bool
@@ -32,7 +31,6 @@ struct FeatureFlags: Codable {
     let values = try decoder.container(keyedBy: CodingKeys.self)
     let rawFeatureFlags = try values.decode([RawFeatureFlag].self, forKey: .toggles)
 
-    enableSessionEvents = rawFeatureFlags.value(forKey: "enable_session_events", default: false)
     enableExpressionParameters = rawFeatureFlags.value(forKey: "enable_expression_params", default: false)
     enableUserIdSeed = rawFeatureFlags.value(forKey: "enable_userid_seed", default: false)
     disableVerbosePlacements = rawFeatureFlags.value(forKey: "disable_verbose_events", default: false)
@@ -51,7 +49,6 @@ struct FeatureFlags: Codable {
     var container = encoder.container(keyedBy: CodingKeys.self)
 
     let rawFeatureFlags = [
-      RawFeatureFlag(key: "enable_session_events", enabled: enableSessionEvents),
       RawFeatureFlag(key: "enable_expression_params", enabled: enableExpressionParameters),
       RawFeatureFlag(key: "enable_userid_seed", enabled: enableUserIdSeed),
       RawFeatureFlag(key: "disable_verbose_events", enabled: disableVerbosePlacements),
@@ -67,7 +64,6 @@ struct FeatureFlags: Codable {
   }
 
   init(
-    enableSessionEvents: Bool,
     enableExpressionParameters: Bool,
     enableUserIdSeed: Bool,
     disableVerbosePlacements: Bool,
@@ -78,7 +74,6 @@ struct FeatureFlags: Codable {
     enableConfigRefresh: Bool,
     enableTextInteraction: Bool
   ) {
-    self.enableSessionEvents = enableSessionEvents
     self.enableExpressionParameters = enableExpressionParameters
     self.enableUserIdSeed = enableUserIdSeed
     self.disableVerbosePlacements = disableVerbosePlacements
@@ -106,7 +101,6 @@ extension Collection where Element == RawFeatureFlag {
 extension FeatureFlags: Stubbable {
   static func stub() -> FeatureFlags {
     return FeatureFlags(
-      enableSessionEvents: true,
       enableExpressionParameters: true,
       enableUserIdSeed: true,
       disableVerbosePlacements: true,

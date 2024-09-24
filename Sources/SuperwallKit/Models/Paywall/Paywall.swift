@@ -128,7 +128,7 @@ struct Paywall: Codable {
     case presentationDelay
     case backgroundColorHex
     case darkBackgroundColorHex
-    case productItems = "productsV2"
+    case products = "productsV2"
     case featureGating
     case onDeviceCache
     case localNotifications
@@ -189,7 +189,7 @@ struct Paywall: Codable {
 
     let appStoreProductItems = try values.decodeIfPresent(
       [Throwable<Product>].self,
-      forKey: .productItems
+      forKey: .products
     ) ?? []
     products = appStoreProductItems.compactMap { try? $0.result.get() }
 
@@ -257,7 +257,6 @@ struct Paywall: Codable {
     }
 
     try container.encode(presentation.style, forKey: .presentationStyle)
-    try container.encode(presentation.condition, forKey: .presentationCondition)
     try container.encode(presentation.delay, forKey: .presentationDelay)
 
     try container.encode(backgroundColorHex, forKey: .backgroundColorHex)
@@ -266,8 +265,8 @@ struct Paywall: Codable {
       try container.encode(darkBackgroundColorHex, forKey: .darkBackgroundColorHex)
     }
 
-    if !productItems.isEmpty {
-      try container.encode(productItems, forKey: .productItems)
+    if !products.isEmpty {
+      try container.encode(products, forKey: .products)
     }
 
     try container.encodeIfPresent(responseLoadingInfo.startAt, forKey: .responseLoadStartTime)
@@ -294,29 +293,6 @@ struct Paywall: Codable {
     }
 
     try container.encodeIfPresent(manifest, forKey: .manifest)
-  }
-
-
-  private static func makeProducts(from productItems: [ProductItem]) -> [Product] {
-    var output: [Product] = []
-
-    for productItem in productItems {
-      if productItem.name == "primary" {
-        output.append(
-          Product(type: .primary, id: productItem.id)
-        )
-      } else if productItem.name == "secondary" {
-        output.append(
-          Product(type: .secondary, id: productItem.id)
-        )
-      } else if productItem.name == "tertiary" {
-        output.append(
-          Product(type: .tertiary, id: productItem.id)
-        )
-      }
-    }
-
-    return output
   }
 
   // Only used in stub

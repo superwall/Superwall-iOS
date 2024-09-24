@@ -24,7 +24,7 @@ extension Superwall {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
 
     let isEntitlementsReadyTask = Task {
-      for try await value in request.flags.didSetActiveEntitlements.values where value == true {
+      for try await value in request.flags.entitlements.$didSetActiveEntitlements.values where value == true {
         return
       }
       throw CancellationError()

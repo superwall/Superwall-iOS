@@ -128,8 +128,6 @@ class ConfigManager {
 
   func fetchConfiguration() async {
     do {
-      _ = await factory.loadPurchasedProducts()
-
       let startAt = Date()
 
       // Retrieve cached config and determine if refresh is enabled
@@ -287,7 +285,7 @@ class ConfigManager {
 
     // Load the products after entitlementsInfo is set because we need to map
     // purchased products to entitlements.
-    _ = await factory.loadPurchasedProducts()
+    await factory.loadPurchasedProducts()
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
     }

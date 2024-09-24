@@ -147,8 +147,8 @@ protocol UserAttributesPlacementFactory {
 }
 
 protocol ReceiptFactory {
-  func loadPurchasedProducts() async -> Set<StoreProduct>?
-  func refreshReceipt() async
+  func loadPurchasedProducts() async
+  func refreshSK1Receipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
 }
 

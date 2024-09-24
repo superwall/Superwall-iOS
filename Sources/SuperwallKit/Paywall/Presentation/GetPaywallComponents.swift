@@ -71,7 +71,7 @@ extension Superwall {
     _ request: PresentationRequest
   ) async -> ConfirmedAssignment? {
     do {
-      try await waitForSubsStatusAndConfig(request, paywallStatePublisher: nil)
+      try await waitForEntitlementsAndConfig(request, paywallStatePublisher: nil)
 
       let rulesOutcome = try await evaluateAudienceFilter(from: request)
 

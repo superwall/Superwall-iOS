@@ -32,7 +32,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     /// Always configure RevenueCat after Superwall
     Purchases.configure(with:
       .builder(withAPIKey: "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql")
-      .with(storeKitVersion: .storeKit1)
       .build()
     )
 

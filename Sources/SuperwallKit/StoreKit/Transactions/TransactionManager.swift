@@ -14,7 +14,6 @@ final class TransactionManager {
   private let storeKitManager: StoreKitManager
   private let receiptManager: ReceiptManager
   private let purchaseController: PurchaseController
-  private let sessionEventsManager: SessionEventsManager
   private let placementsQueue: PlacementsQueue
   private let factory: Factory
   typealias Factory = OptionsFactory
@@ -27,14 +26,12 @@ final class TransactionManager {
     storeKitManager: StoreKitManager,
     receiptManager: ReceiptManager,
     purchaseController: PurchaseController,
-    sessionEventsManager: SessionEventsManager,
     placementsQueue: PlacementsQueue,
     factory: Factory
   ) {
     self.storeKitManager = storeKitManager
     self.receiptManager = receiptManager
     self.purchaseController = purchaseController
-    self.sessionEventsManager = sessionEventsManager
     self.placementsQueue = placementsQueue
     self.factory = factory
   }
@@ -311,10 +308,6 @@ final class TransactionManager {
       forProductId: product.productIdentifier,
       factory: factory
     )
-
-    if let transaction = transaction {
-      await self.sessionEventsManager.enqueue(transaction)
-    }
 
     await receiptManager.loadPurchasedProducts()
 

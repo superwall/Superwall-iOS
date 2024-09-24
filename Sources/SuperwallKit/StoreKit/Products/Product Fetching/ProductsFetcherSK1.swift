@@ -16,7 +16,14 @@
 import Foundation
 import StoreKit
 
-class ProductsFetcherSK1: NSObject {
+struct ProductRequest {
+  let identifiers: Set<String>
+  let paywall: Paywall?
+  let placement: PlacementData?
+  let retriesLeft: Int
+}
+
+class ProductsFetcherSK1: NSObject, ProductFetchable {
 	private var cachedProductsByIdentifier: [String: SKProduct] = [:]
 	private let queue = DispatchQueue(label: "com.superwall.ProductsManager")
 	private var productsByRequest: [SKRequest: ProductRequest] = [:]
@@ -25,13 +32,6 @@ class ProductsFetcherSK1: NSObject {
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
   private static let numberOfRetries: Int = 10
   private unowned let entitlementsInfo: EntitlementsInfo
-
-  struct ProductRequest {
-    let identifiers: Set<String>
-    let paywall: Paywall?
-    let placement: PlacementData?
-    let retriesLeft: Int
-  }
 
   init(entitlementsInfo: EntitlementsInfo) {
     self.entitlementsInfo = entitlementsInfo

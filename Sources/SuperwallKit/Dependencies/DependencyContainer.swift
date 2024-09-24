@@ -23,7 +23,6 @@ final class DependencyContainer {
   var identityManager: IdentityManager!
   var storeKitManager: StoreKitManager!
   var appSessionManager: AppSessionManager!
-  var sessionEventsManager: SessionEventsManager!
   var storage: Storage!
   var network: Network!
   var paywallManager: PaywallManager!
@@ -34,10 +33,10 @@ final class DependencyContainer {
   var api: Api!
   var transactionManager: TransactionManager!
   var delegateAdapter: SuperwallDelegateAdapter!
-  var productPurchaser: ProductPurchaserSK1!
+  var purchaseManager: PurchaseManager!
   var receiptManager: ReceiptManager!
   var purchaseController: PurchaseController!
-  var productsFetcher: ProductsFetcherSK1!
+  var productsManager: ProductsManager!
   var entitlementsInfo: EntitlementsInfo!
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
@@ -52,13 +51,19 @@ final class DependencyContainer {
       storage: storage,
       delegateAdapter: delegateAdapter
     )
-    productsFetcher = ProductsFetcherSK1(entitlementsInfo: entitlementsInfo)
+    let options = options ?? SuperwallOptions()
+    productsManager = ProductsManager(
+      entitlementsInfo: entitlementsInfo,
+      storeKitVersion: options.storeKitVersion
+    )
     network = Network(factory: self)
-    storeKitManager = StoreKitManager(productsFetcher: productsFetcher)
+    storeKitManager = StoreKitManager(productsManager: productsManager)
 
     purchaseController = controller ?? AutomaticPurchaseController(factory: self, entitlementsInfo: entitlementsInfo)
+    
     receiptManager = ReceiptManager(
-      delegate: productsFetcher,
+      storeKitVersion: options.storeKitVersion,
+      productsManager: productsManager,
       receiptDelegate: purchaseController as? ReceiptDelegate
     )
 
@@ -72,7 +77,6 @@ final class DependencyContainer {
       paywallRequestManager: paywallRequestManager
     )
 
-    let options = options ?? SuperwallOptions()
     api = Api(networkEnvironment: options.networkEnvironment)
 
     deviceHelper = DeviceHelper(
@@ -104,17 +108,6 @@ final class DependencyContainer {
       configManager: configManager
     )
 
-    sessionEventsManager = SessionEventsManager(
-      queue: SessionEventsQueue(
-        storage: storage,
-        network: network,
-        configManager: configManager
-      ),
-      storage: storage,
-      network: network,
-      configManager: configManager
-    )
-
     // Must be after session events
     appSessionManager = AppSessionManager(
       configManager: configManager,
@@ -132,15 +125,14 @@ final class DependencyContainer {
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
       purchaseController: purchaseController,
-      sessionEventsManager: sessionEventsManager,
       placementsQueue: placementsQueue,
       factory: self
     )
 
-    productPurchaser = ProductPurchaserSK1(
+    purchaseManager = PurchaseManager(
+      storeKitVersion: options.storeKitVersion,
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
-      sessionEventsManager: sessionEventsManager,
       identityManager: identityManager,
       factory: self
     )
@@ -216,7 +208,6 @@ extension DependencyContainer: ViewControllerFactory {
     delegate: PaywallViewControllerDelegateAdapter?
   ) -> PaywallViewController {
     let messageHandler = PaywallMessageHandler(
-      sessionEventsManager: sessionEventsManager,
       factory: self
     )
     let webView = SWWebView(
@@ -312,7 +303,6 @@ extension DependencyContainer: RequestFactory {
       paywallOverrides: paywallOverrides,
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
-        didSetActiveEntitlements: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher(),
         entitlements: entitlementsInfo,
         isPaywallPresented: isPaywallPresented,
         type: type
@@ -330,7 +320,6 @@ extension DependencyContainer: ApiFactory {
   ) async -> [String: String] {
     let key = isForDebugging ? storage.debugKey : storage.apiKey
     let auth = "Bearer \(key)"
-    // TODO: Removed subs status here, do we need one for entitlements?
     let headers = [
       "Authorization": auth,
       "X-Platform": "iOS",
@@ -359,6 +348,7 @@ extension DependencyContainer: ApiFactory {
       "X-Static-Config-Build-Id": configManager.config?.buildId ?? "",
       "X-Current-Time": Date().isoString,
       "X-Retry-Count": "\(configManager.configRetryCount)",
+      "X-Entitlements": Superwall.shared.entitlements.active.map { $0.id }.joined(),
       "Content-Type": "application/json"
     ]
     return headers
@@ -467,15 +457,15 @@ extension DependencyContainer: ComputedPropertyRequestsFactory {
 // MARK: - Purchased Transactions Factory
 extension DependencyContainer: PurchasedTransactionsFactory {
   func makePurchasingCoordinator() -> PurchasingCoordinator {
-    return productPurchaser.coordinator
+    return purchaseManager.coordinator
   }
 
   func purchase(product: StoreProduct) async -> PurchaseResult {
-    return await productPurchaser.purchase(product: product)
+    return await purchaseManager.purchase(product: product)
   }
 
   func restorePurchases() async -> RestorationResult {
-    return await productPurchaser.restorePurchases()
+    return await purchaseManager.restorePurchases()
   }
 }
 
@@ -491,12 +481,12 @@ extension DependencyContainer: UserAttributesPlacementFactory {
 
 // MARK: - Receipt Factory
 extension DependencyContainer: ReceiptFactory {
-  func loadPurchasedProducts() async -> Set<StoreProduct>? {
-    return await receiptManager.loadPurchasedProducts()
+  func loadPurchasedProducts() async {
+    await receiptManager.loadPurchasedProducts()
   }
 
-  func refreshReceipt() async {
-    return await receiptManager.refreshReceipt()
+  func refreshSK1Receipt() async {
+    return await receiptManager.refreshSK1Receipt()
   }
 
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool {

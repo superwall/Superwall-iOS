@@ -9,11 +9,9 @@
 import Foundation
 import StoreKit
 
-// TODO: Add in ProductPurchaserSK2
-
-final class ProductPurchaserSK1: NSObject {
+final class ProductPurchaserSK1: NSObject, Purchasing {
   // MARK: Purchasing
-  let coordinator = PurchasingCoordinator()
+  let coordinator: PurchasingCoordinator
 
   // MARK: Restoration
   final class Restoration {
@@ -30,7 +28,6 @@ final class ProductPurchaserSK1: NSObject {
   // MARK: Dependencies
   private let storeKitManager: StoreKitManager
   private let receiptManager: ReceiptManager
-  private let sessionEventsManager: SessionEventsManager
   private let identityManager: IdentityManager
   private let factory: HasExternalPurchaseControllerFactory & StoreTransactionFactory
 
@@ -41,15 +38,15 @@ final class ProductPurchaserSK1: NSObject {
   init(
     storeKitManager: StoreKitManager,
     receiptManager: ReceiptManager,
-    sessionEventsManager: SessionEventsManager,
     identityManager: IdentityManager,
+    coordinator: PurchasingCoordinator,
     factory: HasExternalPurchaseControllerFactory & StoreTransactionFactory
   ) {
     self.storeKitManager = storeKitManager
     self.receiptManager = receiptManager
-    self.sessionEventsManager = sessionEventsManager
     self.identityManager = identityManager
     self.factory = factory
+    self.coordinator = coordinator
 
     super.init()
     SKPaymentQueue.default().add(self)
@@ -132,9 +129,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         await coordinator.storeIfPurchased(transaction)
         await checkForTimeout(of: transaction, in: paywallViewController)
         await updatePurchaseCompletionBlock(for: transaction, purchaseDate: purchaseDate)
-        Task(priority: .background) {
-          await record(transaction)
-        }
       }
       await loadPurchasedProductsIfPossible(from: transactions)
       restoration.dispatchGroup.leave()
@@ -273,12 +267,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     }
 
     return false
-  }
-
-  /// Sends the transaction to the backend.
-  private func record(_ transaction: SKPaymentTransaction) async {
-    let storeTransaction = await factory.makeStoreTransaction(from: transaction)
-    await sessionEventsManager.enqueue(storeTransaction)
   }
 
   /// Loads purchased products in the StoreKitManager if a purchase or restore has occurred.
