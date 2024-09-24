@@ -37,6 +37,10 @@ struct ConfigRefreshCapability: Capability {
   let name = "config_refresh"
 }
 
+struct ConfigCaching: Capability {
+  let name = "config_caching"
+}
+
 struct WebViewTextInteractionCapability: Capability {
   let name = "webview_text_interaction"
 }
