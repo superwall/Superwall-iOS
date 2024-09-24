@@ -456,7 +456,8 @@ class DeviceHelper {
     PaywallEventReceiverCapability(),
     MultiplePaywallUrlsCapability(),
     ConfigRefreshCapability(),
-    WebViewTextInteractionCapability()
+    WebViewTextInteractionCapability(),
+    ConfigCaching()
   ]
 
   func getTemplateDevice() async -> [String: Any] {
