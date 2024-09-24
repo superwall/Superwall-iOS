@@ -42,14 +42,14 @@ final class SK2ReceiptManager: ReceiptManagerType {
         purchases.insert(
           Purchase(id: transaction.productID, isActive: true)
         )
-      case .unverified(_, _):
+      case .unverified:
         // TODO: Should we log here?
         break
       }
     }
     return purchases
   }
-  
+
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool {
     guard let product = storeProduct.product as? SK2StoreProduct else {
       return false

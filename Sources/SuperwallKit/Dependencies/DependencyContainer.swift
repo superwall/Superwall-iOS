@@ -60,7 +60,7 @@ final class DependencyContainer {
     storeKitManager = StoreKitManager(productsManager: productsManager)
 
     purchaseController = controller ?? AutomaticPurchaseController(factory: self, entitlementsInfo: entitlementsInfo)
-    
+
     receiptManager = ReceiptManager(
       storeKitVersion: options.storeKitVersion,
       productsManager: productsManager,

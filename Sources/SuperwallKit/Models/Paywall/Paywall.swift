@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
-// swiftlint:disable function_body_length type_body_length
+// swiftlint:disable function_body_length type_body_length file_length
 
 import UIKit
 

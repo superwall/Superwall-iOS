@@ -21,7 +21,7 @@ final actor ProductsFetcherSK2: ProductFetchable {
     forPaywall paywall: Paywall?,
     placement: PlacementData?
   ) async throws -> Set<StoreProduct> {
-      // TODO: Test if this needs to be cached or not
+    // TODO: Test if this needs to be cached or not
     let sk2Products = try await StoreKit.Product.products(for: identifiers)
 
     if sk2Products.isEmpty,

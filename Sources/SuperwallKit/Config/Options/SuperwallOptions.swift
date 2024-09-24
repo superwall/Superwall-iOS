@@ -215,7 +215,6 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(localeIdentifier, forKey: .localeIdentifier)
     try container.encode(isGameControllerEnabled, forKey: .isGameControllerEnabled)
   }
-  
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

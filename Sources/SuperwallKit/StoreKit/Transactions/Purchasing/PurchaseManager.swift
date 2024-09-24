@@ -16,10 +16,11 @@ final class PurchaseManager: Purchasing {
   let coordinator = PurchasingCoordinator()
   private let purchaser: Purchasing
 
+  // swiftlint:disable:next identifier_name
   var _sk2TransactionListener: Any?
   @available(iOS 15.0, *)
   var sk2TransactionListener: SK2TransactionListener {
-     // swiftlint:disable:next force_cast
+    // swiftlint:disable:next force_cast force_unwrapping
     return self._sk2TransactionListener! as! SK2TransactionListener
   }
 
