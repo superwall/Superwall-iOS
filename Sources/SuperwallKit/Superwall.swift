@@ -254,6 +254,14 @@ public final class Superwall: NSObject, ObservableObject {
     // This is because the function isn't marked to run on the main thread,
     // therefore, we don't need to make this detached.
     Task {
+      Task {
+        #if os(iOS) || os(macOS) || VISION_OS
+        if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
+          await dependencyContainer.attributionPoster.getAdServicesAttributesIfNeeded()
+        }
+        #endif
+      }
+
       dependencyContainer.storage.configure(apiKey: apiKey)
 
       dependencyContainer.storage.recordAppInstall(trackEvent: track)
@@ -625,6 +633,12 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.configManager.reset()
     Task {
       await Superwall.shared.track(InternalSuperwallEvent.Reset())
+
+      #if os(iOS) || os(macOS) || VISION_OS
+      if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
+        await dependencyContainer.attributionPoster.getAdServicesAttributesIfNeeded()
+      }
+      #endif
     }
   }
 }

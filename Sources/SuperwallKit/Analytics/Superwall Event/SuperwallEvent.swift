@@ -185,6 +185,15 @@ public enum SuperwallEvent {
   /// When the Superwall configuration fails to be retrieved.
   case configFail
 
+  /// When the AdServices attribution request starts.
+  case adServicesAttributionRequestStart
+
+  /// When the AdServices attribution request fails.
+  case adServicesAttributionRequestFail(error: Error)
+
+  /// When the AdServices attribution request finishes.
+  case adServicesAttributionRequestComplete(attributes: AdServicesAttributes)
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -326,6 +335,12 @@ extension SuperwallEvent {
       return .init(objcEvent: .confirmAllAssignments)
     case .configFail:
       return .init(objcEvent: .configFail)
+    case .adServicesAttributionRequestStart:
+      return .init(objcEvent: .adServicesAttributionRequestStart)
+    case .adServicesAttributionRequestFail:
+      return .init(objcEvent: .adServicesAttributionRequestFail)
+    case .adServicesAttributionRequestComplete:
+      return .init(objcEvent: .adServicesAttributionRequestComplete)
     }
   }
 }

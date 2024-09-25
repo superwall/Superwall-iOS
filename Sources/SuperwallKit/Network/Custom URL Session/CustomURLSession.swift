@@ -30,18 +30,25 @@ enum NetworkError: LocalizedError {
 
 class CustomURLSession {
   private let urlSession = URLSession(configuration: .default)
+  private let factory: ApiFactory
+
+  init(factory: ApiFactory) {
+    self.factory = factory
+  }
 
   @discardableResult
-  func request<Response>(
-    _ endpoint: Endpoint<Response>,
+  func request<Kind, Response>(
+    _ endpoint: Endpoint<Kind, Response>,
+    data: Kind.RequestData,
     isRetryingCallback: ((Int) -> Void)? = nil
   ) async throws -> Response {
-    guard let request = await endpoint.makeRequest() else {
+    guard let request = await endpoint.makeRequest(
+      with: data,
+      factory: factory
+    ) else {
       throw NetworkError.unknown
     }
-    guard let auth = request.allHTTPHeaderFields?["Authorization"] else {
-      throw NetworkError.notAuthenticated
-    }
+    let auth = request.allHTTPHeaderFields?["Authorization"]
 
     Logger.debug(
       logLevel: .debug,
@@ -56,6 +63,7 @@ class CustomURLSession {
     let startTime = Date().timeIntervalSince1970
     let (data, response) = try await Task.retrying(
       maxRetryCount: endpoint.retryCount,
+      retryInterval: endpoint.retryInterval,
       isRetryingCallback: isRetryingCallback
     ) {
       return try await self.urlSession.data(for: request)
@@ -75,14 +83,13 @@ class CustomURLSession {
       message: "Request Completed",
       info: [
         "request": request.debugDescription,
-        "api_key": auth,
+        "api_key": auth ?? "N/A",
         "url": request.url?.absoluteString ?? "unknown",
         "request_id": requestId,
         "request_duration": requestDuration
       ]
     )
-
-    guard let value = try? JSONDecoder.fromSnakeCase.decode(
+    guard let value = try? Kind.jsonDecoder.decode(
       Response.self,
       from: data
     ) else {
@@ -92,7 +99,7 @@ class CustomURLSession {
         message: "Request Error",
         info: [
           "request": request.debugDescription,
-          "api_key": auth,
+          "api_key": auth ?? "N/A",
           "url": request.url?.absoluteString ?? "unknown",
           "message": "Unable to decode response to type \(Response.self)",
           "info": String(decoding: data, as: UTF8.self),
@@ -108,7 +115,7 @@ class CustomURLSession {
   private func getRequestId(
     from request: URLRequest,
     checkingValidityOf response: URLResponse,
-    withAuth auth: String,
+    withAuth auth: String?,
     requestDuration: TimeInterval
   ) throws -> String {
     var requestId = "unknown"
@@ -125,7 +132,7 @@ class CustomURLSession {
           message: "Unable to Authenticate",
           info: [
             "request": request.debugDescription,
-            "api_key": auth,
+            "api_key": auth ?? "N/A",
             "url": request.url?.absoluteString ?? "unknown",
             "request_id": requestId,
             "request_duration": requestDuration
@@ -141,7 +148,7 @@ class CustomURLSession {
           message: "Not Found",
           info: [
             "request": request.debugDescription,
-            "api_key": auth,
+            "api_key": auth ?? "N/A",
             "url": request.url?.absoluteString ?? "unknown",
             "request_id": requestId,
             "request_duration": requestDuration

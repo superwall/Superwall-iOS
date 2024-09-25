@@ -134,4 +134,22 @@ public final class ComputedPropertyRequest: NSObject, Codable {
 
   /// The name of the event used to compute the device property.
   public let eventName: String
+
+  enum CodingKeys: CodingKey {
+    case type
+    case eventName
+  }
+
+  public func encode(to encoder: any Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(type, forKey: .type)
+    try container.encode(eventName, forKey: .eventName)
+  }
+
+  public init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    type = try container.decode(ComputedPropertyRequestType.self, forKey: .type)
+    eventName = try container.decode(String.self, forKey: .eventName)
+    super.init()
+  }
 }

@@ -107,6 +107,10 @@ public final class SuperwallOptions: NSObject, Encodable {
       "geo-api.superwall.com"
     }
 
+    var adServicesHost: String {
+      "api-adservices.apple.com"
+    }
+
     private enum CodingKeys: String, CodingKey {
       case networkEnvironment
       case customDomain
@@ -150,6 +154,11 @@ public final class SuperwallOptions: NSObject, Encodable {
   ///
   /// Set this to `true` to forward events from the Game Controller to the Paywall via ``Superwall/gamepadValueChanged(gamepad:element:)``.
   public var isGameControllerEnabled = false
+
+  /// Collects the `AdServices` attributes and attaches them to the user attributes.
+  ///
+  /// Defaults to `false`.
+  public var collectAdServicesAttribution = false
 
   /// Configuration for printing to the console.
   @objc(SWKLogging)
