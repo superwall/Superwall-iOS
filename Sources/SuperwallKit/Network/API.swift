@@ -11,6 +11,7 @@ enum EndpointHost {
   case base
   case collector
   case geo
+  case adServices
 }
 
 protocol ApiHostConfig {
@@ -23,12 +24,14 @@ struct Api {
   let base: Base
   let collector: Collector
   let geo: Geo
+  let adServices: AdServices
   static let version1 = "/api/v1/"
 
   init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
-    self.base = Base(networkEnvironment: networkEnvironment)
-    self.collector = Collector(networkEnvironment: networkEnvironment)
-    self.geo = Geo(networkEnvironment: networkEnvironment)
+    base = Base(networkEnvironment: networkEnvironment)
+    collector = Collector(networkEnvironment: networkEnvironment)
+    geo = Geo(networkEnvironment: networkEnvironment)
+    adServices = AdServices(networkEnvironment: networkEnvironment)
   }
 
   func getConfig(host: EndpointHost) -> ApiHostConfig {
@@ -39,66 +42,52 @@ struct Api {
       return collector
     case .geo:
       return geo
+    case .adServices:
+      return adServices
     }
   }
 
   struct Base: ApiHostConfig {
     private let networkEnvironment: SuperwallOptions.NetworkEnvironment
+    var port: Int? { return networkEnvironment.port }
+    var scheme: String { return networkEnvironment.scheme }
+    var host: String { return networkEnvironment.baseHost }
 
     init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
       self.networkEnvironment = networkEnvironment
-    }
-
-    var port: Int? {
-      return networkEnvironment.port
-    }
-
-    var scheme: String {
-      return networkEnvironment.scheme
-    }
-
-    var host: String {
-      return networkEnvironment.baseHost
     }
   }
 
   struct Collector: ApiHostConfig {
     private let networkEnvironment: SuperwallOptions.NetworkEnvironment
+    var port: Int? { return networkEnvironment.port }
+    var scheme: String { return networkEnvironment.scheme }
+    var host: String { return networkEnvironment.collectorHost }
 
     init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
       self.networkEnvironment = networkEnvironment
-    }
-
-    var port: Int? {
-      return networkEnvironment.port
-    }
-
-    var scheme: String {
-      return networkEnvironment.scheme
-    }
-
-    var host: String {
-      return networkEnvironment.collectorHost
     }
   }
 
   struct Geo: ApiHostConfig {
     private let networkEnvironment: SuperwallOptions.NetworkEnvironment
+    var port: Int? { return networkEnvironment.port }
+    var scheme: String { return networkEnvironment.scheme }
+    var host: String { return networkEnvironment.geoHost }
 
     init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
       self.networkEnvironment = networkEnvironment
     }
+  }
 
-    var port: Int? {
-      return networkEnvironment.port
-    }
+  struct AdServices: ApiHostConfig {
+    private let networkEnvironment: SuperwallOptions.NetworkEnvironment
+    var port: Int? { return networkEnvironment.port }
+    var scheme: String { return networkEnvironment.scheme }
+    var host: String { return networkEnvironment.adServicesHost }
 
-    var scheme: String {
-      return networkEnvironment.scheme
-    }
-
-    var host: String {
-      return networkEnvironment.geoHost
+    init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
+      self.networkEnvironment = networkEnvironment
     }
   }
 }

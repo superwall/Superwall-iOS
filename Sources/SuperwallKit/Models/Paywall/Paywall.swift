@@ -12,7 +12,7 @@ struct Paywalls: Decodable {
   var paywalls: [Paywall]
 }
 
-struct Paywall: Decodable {
+struct Paywall: Codable {
   /// The id of the paywall in the database.
   var databaseId: String
 
@@ -246,6 +246,63 @@ struct Paywall: Decodable {
 
     manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
   }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+
+    try container.encode(databaseId, forKey: .id)
+    try container.encode(identifier, forKey: .identifier)
+    try container.encode(name, forKey: .name)
+    try container.encode(cacheKey, forKey: .cacheKey)
+    try container.encode(buildId, forKey: .buildId)
+    try container.encode(url, forKey: .url)
+    try container.encode(urlConfig, forKey: .urlConfig)
+    try container.encode(htmlSubstitutions, forKey: .htmlSubstitutions)
+
+    if !surveys.isEmpty {
+      try container.encode(surveys, forKey: .surveys)
+    }
+
+    try container.encode(presentation.style, forKey: .presentationStyle)
+    try container.encode(presentation.condition, forKey: .presentationCondition)
+    try container.encode(presentation.delay, forKey: .presentationDelay)
+
+    try container.encode(backgroundColorHex, forKey: .backgroundColorHex)
+
+    if let darkBackgroundColorHex = darkBackgroundColorHex {
+      try container.encode(darkBackgroundColorHex, forKey: .darkBackgroundColorHex)
+    }
+
+    if !productItems.isEmpty {
+      try container.encode(productItems, forKey: .productItems)
+    }
+
+    try container.encodeIfPresent(responseLoadingInfo.startAt, forKey: .responseLoadStartTime)
+    try container.encodeIfPresent(responseLoadingInfo.endAt, forKey: .responseLoadCompleteTime)
+    try container.encodeIfPresent(responseLoadingInfo.failAt, forKey: .responseLoadFailTime)
+
+    try container.encodeIfPresent(webviewLoadingInfo.startAt, forKey: .webViewLoadStartTime)
+    try container.encodeIfPresent(webviewLoadingInfo.endAt, forKey: .webViewLoadCompleteTime)
+    try container.encodeIfPresent(webviewLoadingInfo.failAt, forKey: .webViewLoadFailTime)
+
+    try container.encodeIfPresent(productsLoadingInfo.startAt, forKey: .productsLoadStartTime)
+    try container.encodeIfPresent(productsLoadingInfo.endAt, forKey: .productsLoadCompleteTime)
+    try container.encodeIfPresent(productsLoadingInfo.failAt, forKey: .productsLoadFailTime)
+
+    try container.encodeIfPresent(featureGating, forKey: .featureGating)
+    try container.encodeIfPresent(onDeviceCache, forKey: .onDeviceCache)
+
+    if !localNotifications.isEmpty {
+      try container.encode(localNotifications, forKey: .localNotifications)
+    }
+
+    if !computedPropertyRequests.isEmpty {
+      try container.encode(computedPropertyRequests, forKey: .computedPropertyRequests)
+    }
+
+    try container.encodeIfPresent(manifest, forKey: .manifest)
+  }
+
 
   private static func makeProducts(from productItems: [ProductItem]) -> [Product] {
     var output: [Product] = []

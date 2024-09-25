@@ -25,7 +25,7 @@ class DeviceHelper {
     return Locale(identifier: preferredIdentifier).identifier
   }
 
-  private var geoInfo: GeoInfo?
+  var geoInfo: GeoInfo?
 
   let appInstalledAtString: String
 
@@ -456,7 +456,8 @@ class DeviceHelper {
     PaywallEventReceiverCapability(),
     MultiplePaywallUrlsCapability(),
     ConfigRefreshCapability(),
-    WebViewTextInteractionCapability()
+    WebViewTextInteractionCapability(),
+    ConfigCaching()
   ]
 
   func getTemplateDevice() async -> [String: Any] {
@@ -540,7 +541,10 @@ class DeviceHelper {
     self.sdkVersionPadded = Self.makePaddedSdkVersion(using: sdkVersion)
   }
 
-  func getGeoInfo() async {
-    geoInfo = await network.getGeoInfo()
+  func getGeoInfo(maxRetry: Int? = nil) async {
+    geoInfo = try? await network.getGeoInfo(maxRetry: maxRetry)
+    if let geoInfo = geoInfo {
+      storage.save(geoInfo, forType: LatestGeoInfo.self)
+    }
   }
 }

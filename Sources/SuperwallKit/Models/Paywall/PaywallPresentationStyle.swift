@@ -9,7 +9,7 @@ import Foundation
 
 /// Used to override the presentation style of the paywall set on the dashboard.
 @objc(SWKPaywallPresentationStyle)
-public enum PaywallPresentationStyle: Int, Decodable, Sendable {
+public enum PaywallPresentationStyle: Int, Codable, Sendable {
   /// A view presentation style that uses the modal presentation style `.pageSheet`.
   case modal
   /// A view presentation style in which the presented paywall slides up to cover the screen.
@@ -29,6 +29,7 @@ public enum PaywallPresentationStyle: Int, Decodable, Sendable {
     case fullscreenNoAnimation = "NO_ANIMATION"
     case push = "PUSH"
     case drawer = "DRAWER"
+    case none = "NONE"
   }
 
   public init(from decoder: Decoder) throws {
@@ -48,7 +49,31 @@ public enum PaywallPresentationStyle: Int, Decodable, Sendable {
       presentationStyle = .push
     case .drawer:
       presentationStyle = .drawer
+    case .none:
+      presentationStyle = .none
     }
     self = presentationStyle
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+
+    let internalPresentationStyle: InternalPresentationStyle
+    switch self {
+    case .modal:
+      internalPresentationStyle = .modal
+    case .fullscreen:
+      internalPresentationStyle = .fullscreen
+    case .fullscreenNoAnimation:
+      internalPresentationStyle = .fullscreenNoAnimation
+    case .push:
+      internalPresentationStyle = .push
+    case .drawer:
+      internalPresentationStyle = .drawer
+    case .none:
+      internalPresentationStyle = .none
+    }
+
+    try container.encode(internalPresentationStyle.rawValue)
   }
 }

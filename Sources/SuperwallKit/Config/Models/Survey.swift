@@ -10,7 +10,7 @@ import Foundation
 /// A survey attached to a paywall.
 @objc(SWKSurvey)
 @objcMembers
-final public class Survey: NSObject, Decodable {
+final public class Survey: NSObject, Codable {
   /// The id of the survey.
   public let id: String
 

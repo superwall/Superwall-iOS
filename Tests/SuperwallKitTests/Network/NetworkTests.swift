@@ -31,7 +31,8 @@ final class NetworkTests: XCTestCase {
 
   // MARK: - Config
   func test_config_inBackground() async {
-    let urlSession = CustomURLSessionMock()
+    let dependencyContainer = DependencyContainer()
+    let urlSession = CustomURLSessionMock(factory: dependencyContainer)
     let publisher = CurrentValueSubject<UIApplication.State, Never>(.background)
       .eraseToAnyPublisher()
     let expectation = expectation(description: "config completed")
@@ -49,8 +50,8 @@ final class NetworkTests: XCTestCase {
   }
 
   func test_config_inForeground() async {
-    let urlSession = CustomURLSessionMock()
     let dependencyContainer = DependencyContainer()
+    let urlSession = CustomURLSessionMock(factory: dependencyContainer)
     let network = Network(urlSession: urlSession, factory: dependencyContainer)
     let publisher = CurrentValueSubject<UIApplication.State, Never>(.active)
       .eraseToAnyPublisher()
@@ -63,8 +64,8 @@ final class NetworkTests: XCTestCase {
   }
 
   func test_config_inBackgroundThenForeground() async {
-    let urlSession = CustomURLSessionMock()
     let dependencyContainer = DependencyContainer()
+    let urlSession = CustomURLSessionMock(factory: dependencyContainer)
     let network = Network(urlSession: urlSession, factory: dependencyContainer)
     let publisher = [UIApplication.State.background, UIApplication.State.active]
       .publisher

@@ -10,10 +10,10 @@ import Foundation
 /// A request to compute a device property associated with an event at runtime.
 @objc(SWKComputedPropertyRequest)
 @objcMembers
-public final class ComputedPropertyRequest: NSObject, Decodable {
+public final class ComputedPropertyRequest: NSObject, Codable {
   /// The type of device property to compute.
   @objc(SWKComputedPropertyRequestType)
-  public enum ComputedPropertyRequestType: Int, Decodable {
+  public enum ComputedPropertyRequestType: Int, Codable {
     /// The number of minutes since the event occurred.
     case minutesSince
 
@@ -107,6 +107,26 @@ public final class ComputedPropertyRequest: NSObject, Decodable {
         )
       }
     }
+
+    public func encode(to encoder: Encoder) throws {
+      var container = encoder.singleValueContainer()
+      let rawValue: String
+
+      switch self {
+      case .minutesSince:
+        rawValue = CodingKeys.minutesSince.rawValue
+      case .hoursSince:
+        rawValue = CodingKeys.hoursSince.rawValue
+      case .daysSince:
+        rawValue = CodingKeys.daysSince.rawValue
+      case .monthsSince:
+        rawValue = CodingKeys.monthsSince.rawValue
+      case .yearsSince:
+        rawValue = CodingKeys.yearsSince.rawValue
+      }
+
+      try container.encode(rawValue)
+    }
   }
 
   /// The type of device property to compute.
@@ -114,4 +134,22 @@ public final class ComputedPropertyRequest: NSObject, Decodable {
 
   /// The name of the event used to compute the device property.
   public let eventName: String
+
+  enum CodingKeys: CodingKey {
+    case type
+    case eventName
+  }
+
+  public func encode(to encoder: any Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(type, forKey: .type)
+    try container.encode(eventName, forKey: .eventName)
+  }
+
+  public init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    type = try container.decode(ComputedPropertyRequestType.self, forKey: .type)
+    eventName = try container.decode(String.self, forKey: .eventName)
+    super.init()
+  }
 }

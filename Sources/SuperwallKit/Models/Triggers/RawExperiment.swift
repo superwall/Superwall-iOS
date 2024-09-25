@@ -8,7 +8,7 @@
 import Foundation
 
 /// An experiment without a confirmed variant assignment.
-struct RawExperiment: Decodable, Hashable {
+struct RawExperiment: Codable, Hashable {
   /// The ID of the experiment
   var id: String
 

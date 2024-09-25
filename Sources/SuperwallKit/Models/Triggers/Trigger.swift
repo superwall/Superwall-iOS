@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Trigger: Decodable, Hashable {
+struct Trigger: Codable, Hashable {
   var eventName: String
   var rules: [TriggerRule]
 }

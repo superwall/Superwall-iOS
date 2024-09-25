@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct Config: Decodable {
-  let buildId: String
+struct Config: Codable {
+  var buildId: String
   var triggers: Set<Trigger>
   var paywalls: [Paywall]
   var logLevel: Int
@@ -49,6 +49,22 @@ struct Config: Decodable {
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+
+    try container.encode(buildId, forKey: .buildId)
+    try container.encode(triggers, forKey: .triggers)
+    try container.encode(paywalls, forKey: .paywalls)
+    try container.encode(logLevel, forKey: .logLevel)
+    try container.encode(appSessionTimeout, forKey: .appSessionTimeout)
+    try container.encode(preloadingDisabled, forKey: .preloadingDisabled)
+
+    let localizationConfig = LocalizationConfig(locales: locales.map { LocalizationConfig.LocaleConfig(locale: $0) })
+    try container.encode(localizationConfig, forKey: .localization)
+
+    try featureFlags.encode(to: encoder)
   }
 
   init(

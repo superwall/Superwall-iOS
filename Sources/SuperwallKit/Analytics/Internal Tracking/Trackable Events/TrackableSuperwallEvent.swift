@@ -194,12 +194,6 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct ConfigRefresh: TrackableSuperwallEvent {
-    let superwallEvent: SuperwallEvent = .configRefresh
-    var audienceFilterParams: [String: Any] = [:]
-    func getSuperwallParameters() async -> [String: Any] { [:] }
-  }
-
   struct ConfigAttributes: TrackableSuperwallEvent {
     let superwallEvent: SuperwallEvent = .configAttributes
     let options: SuperwallOptions
@@ -727,6 +721,73 @@ enum InternalSuperwallEvent {
       }
       params += await paywallInfo.eventParams()
       return params
+    }
+  }
+
+  enum ConfigCacheStatus: String {
+    case cached = "CACHED"
+    case notCached = "NOT_CACHED"
+  }
+
+  struct ConfigRefresh: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .configRefresh
+    let buildId: String
+    let retryCount: Int
+    let cacheStatus: ConfigCacheStatus
+    let fetchDuration: TimeInterval
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "config_build_id": buildId,
+        "retry_count": retryCount,
+        "cache_status": cacheStatus.rawValue,
+        "fetch_duration": fetchDuration
+      ]
+    }
+  }
+
+  struct ConfigFail: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .configFail
+    let message: String
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "error_message": message
+      ]
+    }
+  }
+
+  struct AdServicesAttribution: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case fail(Error)
+      case complete(AdServicesAttributes)
+    }
+    let state: State
+
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .adServicesAttributionRequestStart
+      case .fail(let error):
+        return .adServicesAttributionRequestFail(error: error)
+      case .complete(let attributes):
+        return .adServicesAttributionRequestComplete(attributes: attributes)
+      }
+    }
+    let audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      switch state {
+      case .start:
+        return [:]
+      case .fail(let error):
+        return ["error_message": error.localizedDescription]
+      case .complete(let attributes):
+        return attributes.dictionary(withSnakeCase: true) ?? [:]
+      }
     }
   }
 }

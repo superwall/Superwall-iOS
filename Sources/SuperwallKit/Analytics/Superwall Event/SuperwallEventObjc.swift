@@ -169,6 +169,18 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When all the experiment assignments are confirmed by calling ``Superwall/confirmAllAssignments()``.
   case confirmAllAssignments
 
+  /// When the Superwall configuration fails to be retrieved.
+  case configFail
+
+  /// When the AdServices attribution request starts.
+  case adServicesAttributionRequestStart
+
+  /// When the AdServices attribution request fails.
+  case adServicesAttributionRequestFail
+
+  /// When the AdServices attribution request finishes.
+  case adServicesAttributionRequestComplete
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -273,6 +285,14 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "config_attributes"
     case .confirmAllAssignments:
       return "confirm_all_assignments"
+    case .configFail:
+      return "config_fail"
+    case .adServicesAttributionRequestStart:
+      return "adServicesAttributionRequest_start"
+    case .adServicesAttributionRequestFail:
+      return "adServicesAttributionRequest_fail"
+    case .adServicesAttributionRequestComplete:
+      return "adServicesAttributionRequest_complete"
     }
   }
 }

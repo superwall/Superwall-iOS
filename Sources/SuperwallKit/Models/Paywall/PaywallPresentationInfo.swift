@@ -10,7 +10,7 @@ import Foundation
 /// Information about the presentation of the paywall.
 @objc(SWKPaywallPresentationInfo)
 @objcMembers
-public final class PaywallPresentationInfo: NSObject {
+public final class PaywallPresentationInfo: NSObject, Codable {
   /// The presentation style of the paywall.
   public let style: PaywallPresentationStyle
 
