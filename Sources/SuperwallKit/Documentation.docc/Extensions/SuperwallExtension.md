@@ -84,8 +84,14 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``SuperwallOptions/Logging-swift.class``
 
 ### Helpers
+
 - ``togglePaywallSpinner(isHidden:)``
 - ``latestPaywallInfo``
 - ``presentedViewController``
 - ``userId``
 - ``isLoggedIn``
+
+### Apple AdServices Attribution
+
+- ``AdServicesAttributes``
+- ``SuperwallOptions/collectAdServicesAttribution``
