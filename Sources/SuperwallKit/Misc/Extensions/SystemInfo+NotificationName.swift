@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 26/09/2024.
 //
+// swiftlint:disable identifier_name
 
 #if os(iOS) || os(tvOS) || VISION_OS || targetEnvironment(macCatalyst)
 import UIKit
