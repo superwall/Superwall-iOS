@@ -169,10 +169,10 @@ enum LatestGeoInfo: Storable {
   typealias Value = GeoInfo
 }
 
-enum AdServicesAttributesStorage: Storable {
+enum AdServicesTokenStorage: Storable {
   static var key: String {
-    "store.adServicesAttributes"
+    "store.adServicesToken"
   }
   static var directory: SearchPathDirectory = .userSpecificDocuments
-  typealias Value = AdServicesAttributes
+  typealias Value = String
 }

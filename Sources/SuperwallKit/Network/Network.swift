@@ -268,22 +268,4 @@ class Network {
       )
     }
   }
-
-  func getAttributes(from token: String) async throws -> AdServicesAttributes {
-    do {
-      let result = try await urlSession.request(
-        .adServicesAttribution(token: token),
-        data: ()
-      )
-      return result
-    } catch {
-      Logger.debug(
-        logLevel: .error,
-        scope: .network,
-        message: "Request failed to get AdServices attributes",
-        error: error
-      )
-      throw error
-    }
-  }
 }

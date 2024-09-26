@@ -759,22 +759,22 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct AdServicesAttribution: TrackableSuperwallEvent {
+  struct AdServicesTokenRetrieval: TrackableSuperwallEvent {
     enum State {
       case start
       case fail(Error)
-      case complete(AdServicesAttributes)
+      case complete(String)
     }
     let state: State
 
     var superwallEvent: SuperwallEvent {
       switch state {
       case .start:
-        return .adServicesAttributionRequestStart
+        return .adServicesTokenRequestStart
       case .fail(let error):
-        return .adServicesAttributionRequestFail(error: error)
-      case .complete(let attributes):
-        return .adServicesAttributionRequestComplete(attributes: attributes)
+        return .adServicesTokenRequestFail(error: error)
+      case .complete(let token):
+        return .adServicesTokenRequestComplete(token: token)
       }
     }
     let audienceFilterParams: [String: Any] = [:]
@@ -785,8 +785,10 @@ enum InternalSuperwallEvent {
         return [:]
       case .fail(let error):
         return ["error_message": error.localizedDescription]
-      case .complete(let attributes):
-        return attributes.dictionary(withSnakeCase: true) ?? [:]
+      case .complete(let token):
+        return [
+          "token": token
+        ]
       }
     }
   }
