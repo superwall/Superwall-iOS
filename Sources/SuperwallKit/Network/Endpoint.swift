@@ -270,25 +270,3 @@ extension Endpoint where
     )
   }
 }
-
-// MARK: - AdServicesAttributes
-extension Endpoint where
-  Kind == EndpointKinds.AdServices,
-  Response == AdServicesAttributes {
-  static func adServicesAttribution(
-    token: String
-  ) -> Self {
-    let bodyData = Data(token.utf8)
-
-    return Endpoint(
-      retryCount: 3,
-      retryInterval: 5,
-      components: Components(
-        host: .adServices,
-        path: Api.version1,
-        bodyData: bodyData
-      ),
-      method: .post
-    )
-  }
-}

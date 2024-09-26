@@ -172,14 +172,14 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the Superwall configuration fails to be retrieved.
   case configFail
 
-  /// When the AdServices attribution request starts.
-  case adServicesAttributionRequestStart
+  /// When the AdServices token request starts.
+  case adServicesTokenRequestStart
 
-  /// When the AdServices attribution request fails.
-  case adServicesAttributionRequestFail
+  /// When the AdServices token request fails.
+  case adServicesTokenRequestFail
 
-  /// When the AdServices attribution request finishes.
-  case adServicesAttributionRequestComplete
+  /// When the AdServices token request finishes.
+  case adServicesTokenRequestComplete
 
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
@@ -287,12 +287,12 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "confirm_all_assignments"
     case .configFail:
       return "config_fail"
-    case .adServicesAttributionRequestStart:
-      return "adServicesAttributionRequest_start"
-    case .adServicesAttributionRequestFail:
-      return "adServicesAttributionRequest_fail"
-    case .adServicesAttributionRequestComplete:
-      return "adServicesAttributionRequest_complete"
+    case .adServicesTokenRequestStart:
+      return "adServicesTokenRequest_start"
+    case .adServicesTokenRequestFail:
+      return "adServicesTokenRequest_fail"
+    case .adServicesTokenRequestComplete:
+      return "adServicesTokenRequest_complete"
     }
   }
 }

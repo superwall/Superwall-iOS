@@ -11,7 +11,6 @@ final class AttributionPoster {
   private let attributionFetcher = AttributionFetcher()
   private let collectAdServicesAttribution: Bool
   private unowned let storage: Storage
-  private unowned let network: Network
 
   private var adServicesTokenToPostIfNeeded: String? {
     get async throws {
@@ -22,11 +21,11 @@ final class AttributionPoster {
         return nil
       }
 
-      guard storage.get(AdServicesAttributesStorage.self) == nil else {
+      guard storage.get(AdServicesTokenStorage.self) == nil else {
         return nil
       }
 
-      await Superwall.shared.track(InternalSuperwallEvent.AdServicesAttribution(state: .start))
+      await Superwall.shared.track(InternalSuperwallEvent.AdServicesTokenRetrieval(state: .start))
       return try await attributionFetcher.adServicesToken
       #endif
     }
@@ -34,45 +33,54 @@ final class AttributionPoster {
 
   init(
     collectAdServicesAttribution: Bool,
-    network: Network,
     storage: Storage
   ) {
     self.collectAdServicesAttribution = collectAdServicesAttribution
-    self.network = network
     self.storage = storage
+
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(applicationWillEnterForeground),
+      name: SystemInfo.applicationWillEnterForegroundNotification,
+      object: nil
+    )
+  }
+
+  @objc
+  private func applicationWillEnterForeground() {
+    #if os(iOS) || os(macOS) || VISION_OS
+    guard Superwall.isInitialized else {
+      return
+    }
+    Task(priority: .background) {
+      if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
+        await getAdServicesTokenIfNeeded()
+      }
+    }
+    #endif
   }
 
   // Should match OS availability in https://developer.apple.com/documentation/ad_services
   @available(iOS 14.3, tvOS 14.3, watchOS 6.2, macOS 11.1, macCatalyst 14.3, *)
   @available(tvOS, unavailable)
   @available(watchOS, unavailable)
-  func getAdServicesAttributesIfNeeded() async {
+  func getAdServicesTokenIfNeeded() async {
     do {
       guard collectAdServicesAttribution else {
         return
       }
-      guard let attributionToken = try await adServicesTokenToPostIfNeeded else {
+      guard let token = try await adServicesTokenToPostIfNeeded else {
         return
       }
 
-      let attributes = try await network.getAttributes(from: attributionToken)
-      attributes.token = attributionToken
-
-      storage.save(attributes, forType: AdServicesAttributesStorage.self)
-
-      // Remove the token because it changes after 24hrs and will be stored
-      // in complete event anyway.
-      var attributesDict = attributes.dictionary(withSnakeCase: true) ?? [:]
-      attributesDict["token"] = nil
-
-      Superwall.shared.setUserAttributes(attributesDict)
+      storage.save(token, forType: AdServicesTokenStorage.self)
 
       await Superwall.shared.track(
-        InternalSuperwallEvent.AdServicesAttribution(state: .complete(attributes))
+        InternalSuperwallEvent.AdServicesTokenRetrieval(state: .complete(token))
       )
     } catch {
       await Superwall.shared.track(
-        InternalSuperwallEvent.AdServicesAttribution(state: .fail(error))
+        InternalSuperwallEvent.AdServicesTokenRetrieval(state: .fail(error))
       )
     }
   }

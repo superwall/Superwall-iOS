@@ -257,7 +257,7 @@ public final class Superwall: NSObject, ObservableObject {
       Task {
         #if os(iOS) || os(macOS) || VISION_OS
         if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
-          await dependencyContainer.attributionPoster.getAdServicesAttributesIfNeeded()
+          await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
         }
         #endif
       }
@@ -636,7 +636,7 @@ public final class Superwall: NSObject, ObservableObject {
 
       #if os(iOS) || os(macOS) || VISION_OS
       if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
-        await dependencyContainer.attributionPoster.getAdServicesAttributesIfNeeded()
+        await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
       }
       #endif
     }

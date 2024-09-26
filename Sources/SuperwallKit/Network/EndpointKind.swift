@@ -58,18 +58,4 @@ enum EndpointKinds {
       }
     }
   }
-
-  enum AdServices: EndpointKind {
-    static var jsonDecoder = JSONDecoder()
-
-    static func prepare(
-      _ request: inout URLRequest,
-      with _: Void
-    ) async {
-      request.setValue(
-        "Content-Type",
-        forHTTPHeaderField: "text/plain"
-      )
-    }
-  }
 }
