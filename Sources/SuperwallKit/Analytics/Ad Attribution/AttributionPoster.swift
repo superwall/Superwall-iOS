@@ -25,7 +25,7 @@ final class AttributionPoster {
         return nil
       }
 
-      await Superwall.shared.track(InternalSuperwallEvent.AdServicesTokenRetrieval(state: .start))
+      await Superwall.shared.track(InternalSuperwallPlacement.AdServicesTokenRetrieval(state: .start))
       return try await attributionFetcher.adServicesToken
       #endif
     }
@@ -76,11 +76,11 @@ final class AttributionPoster {
       storage.save(token, forType: AdServicesTokenStorage.self)
 
       await Superwall.shared.track(
-        InternalSuperwallEvent.AdServicesTokenRetrieval(state: .complete(token))
+        InternalSuperwallPlacement.AdServicesTokenRetrieval(state: .complete(token))
       )
     } catch {
       await Superwall.shared.track(
-        InternalSuperwallEvent.AdServicesTokenRetrieval(state: .fail(error))
+        InternalSuperwallPlacement.AdServicesTokenRetrieval(state: .fail(error))
       )
     }
   }

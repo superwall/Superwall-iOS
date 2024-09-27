@@ -181,7 +181,7 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
   /// When the AdServices token request finishes.
   case adServicesTokenRequestComplete
 
-  public init(placement: SuperwallEvent) {
+  public init(placement: SuperwallPlacement) {
     self = placement.backingData.objcPlacement
   }
 

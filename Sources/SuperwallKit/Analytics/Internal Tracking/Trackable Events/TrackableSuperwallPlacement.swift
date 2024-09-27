@@ -759,7 +759,7 @@ enum InternalSuperwallPlacement {
     }
   }
 
-  struct AdServicesTokenRetrieval: TrackableSuperwallEvent {
+  struct AdServicesTokenRetrieval: TrackableSuperwallPlacement {
     enum State {
       case start
       case fail(Error)
@@ -767,7 +767,7 @@ enum InternalSuperwallPlacement {
     }
     let state: State
 
-    var superwallEvent: SuperwallEvent {
+    var superwallPlacement: SuperwallPlacement {
       switch state {
       case .start:
         return .adServicesTokenRequestStart
@@ -793,3 +793,5 @@ enum InternalSuperwallPlacement {
     }
   }
 }
+
+// TODO: We have changed some stuff from Event to Placement. Now when trying to retrieve this and decode, it won't match will it? This could mess up 1 time things... We may need to migrate.
