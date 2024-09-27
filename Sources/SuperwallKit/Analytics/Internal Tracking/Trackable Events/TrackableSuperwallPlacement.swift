@@ -758,4 +758,38 @@ enum InternalSuperwallPlacement {
       ]
     }
   }
+
+  struct AdServicesTokenRetrieval: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case fail(Error)
+      case complete(String)
+    }
+    let state: State
+
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .adServicesTokenRequestStart
+      case .fail(let error):
+        return .adServicesTokenRequestFail(error: error)
+      case .complete(let token):
+        return .adServicesTokenRequestComplete(token: token)
+      }
+    }
+    let audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      switch state {
+      case .start:
+        return [:]
+      case .fail(let error):
+        return ["error_message": error.localizedDescription]
+      case .complete(let token):
+        return [
+          "token": token
+        ]
+      }
+    }
+  }
 }

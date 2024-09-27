@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Endpoint<Response: Decodable> {
+struct Endpoint<Kind: EndpointKind, Response: Decodable> {
   enum HttpMethod: String {
     case get = "GET"
     case post = "POST"
@@ -21,14 +21,15 @@ struct Endpoint<Response: Decodable> {
   }
 
   var retryCount = 6
+  var retryInterval: Seconds?
   var components: Components?
   var url: URL?
   var method: HttpMethod = .get
-  var requestId: String = UUID().uuidString
-  var isForDebugging = false
-  let factory: ApiFactory
 
-  func makeRequest() async -> URLRequest? {
+  func makeRequest(
+    with data: Kind.RequestData,
+    factory: ApiFactory
+  ) async -> URLRequest? {
     let url: URL
 
     if let components = components {
@@ -59,27 +60,16 @@ struct Endpoint<Response: Decodable> {
     if let bodyData = components?.bodyData {
       request.httpBody = bodyData
     }
-
-    let headers = await factory.makeHeaders(
-      fromRequest: request,
-      isForDebugging: isForDebugging,
-      requestId: requestId
-    )
-
-    for header in headers {
-      request.setValue(
-        header.value,
-        forHTTPHeaderField: header.key
-      )
-    }
-
+    await Kind.prepare(&request, with: data)
     return request
   }
 }
 
 // MARK: - EventsResponse
-extension Endpoint where Response == EventsResponse {
-  static func events(eventsRequest: EventsRequest, factory: ApiFactory) -> Self {
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == EventsResponse {
+  static func events(eventsRequest: EventsRequest) -> Self {
     let bodyData = try? JSONEncoder.toSnakeCase.encode(eventsRequest)
 
     return Endpoint(
@@ -88,12 +78,11 @@ extension Endpoint where Response == EventsResponse {
         path: Api.version1 + "events",
         bodyData: bodyData
       ),
-      method: .post,
-      factory: factory
+      method: .post
     )
   }
 
-  static func sessionEvents(_ session: SessionEventsRequest, factory: ApiFactory) -> Self {
+  static func sessionEvents(_ session: SessionEventsRequest) -> Self {
     let bodyData = try? JSONEncoder.toSnakeCase.encode(session)
 
     return Endpoint(
@@ -102,33 +91,39 @@ extension Endpoint where Response == EventsResponse {
         path: Api.version1 + "session_events",
         bodyData: bodyData
       ),
-      method: .post,
-      factory: factory
+      method: .post
     )
   }
 }
 
 // MARK: - Paywall
-extension Endpoint where Response == Paywall {
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == Paywall {
   static func paywall(
     withIdentifier identifier: String? = nil,
     fromPlacement placement: PlacementData? = nil,
     retryCount: Int,
-    factory: ApiFactory
+    appUserId: String?,
+    apiKey: String,
+    config: Config?,
+    locale: String
   ) -> Self {
-    let bodyData: Data?
+    var bodyData: Data?
 
     if let identifier = identifier {
       return paywall(
         byIdentifier: identifier,
         retryCount: retryCount,
-        factory: factory
+        apiKey: apiKey,
+        config: config,
+        locale: locale
       )
     } else if let placement = placement {
       let bodyDict = ["event": placement.jsonData]
       bodyData = try? JSONEncoder.toSnakeCase.encode(bodyDict)
-    } else {
-      let body = PaywallRequestBody(appUserId: factory.identityManager.userId)
+    } else if let appUserId = appUserId {
+      let body = PaywallRequestBody(appUserId: appUserId)
       bodyData = try? JSONEncoder.toSnakeCase.encode(body)
     }
 
@@ -139,35 +134,36 @@ extension Endpoint where Response == Paywall {
         path: Api.version1 + "paywall",
         bodyData: bodyData
       ),
-      method: .post,
-      factory: factory
+      method: .post
     )
   }
 
   static private func paywall(
     byIdentifier identifier: String,
     retryCount: Int,
-    factory: ApiFactory
+    apiKey: String,
+    config: Config?,
+    locale: String
   ) -> Self {
     // WARNING: Do not modify anything about this request without considering our cache eviction code
     // we must know all the exact urls we need to invalidate so changing the order, inclusion, etc of any query
     // parameters will cause issues
-    var queryItems = [URLQueryItem(name: "pk", value: factory.storage.apiKey)]
+    var queryItems = [URLQueryItem(name: "pk", value: apiKey)]
 
     // In the config endpoint we return all the locales, this code will check if:
     // 1. The device locale (ex: en_US) exists in the locales list
     // 2. The shortend device locale (ex: en) exists in the locale list
     // If either exist (preferring the most specific) include the locale in the
     // the url as a query param.
-    if let config = factory.configManager.config {
-      if config.locales.contains(factory.deviceHelper.locale) {
+    if let config = config {
+      if config.locales.contains(locale) {
         let localeQuery = URLQueryItem(
           name: "locale",
-          value: factory.deviceHelper.locale
+          value: locale
         )
         queryItems.append(localeQuery)
       } else {
-        let shortLocale = factory.deviceHelper.locale.split(separator: "_")[0]
+        let shortLocale = locale.split(separator: "_")[0]
         if config.locales.contains(String(shortLocale)) {
           let localeQuery = URLQueryItem(
             name: "locale",
@@ -185,35 +181,35 @@ extension Endpoint where Response == Paywall {
         path: Api.version1 + "paywall/\(identifier)",
         queryItems: queryItems
       ),
-      method: .get,
-      factory: factory
+      method: .get
     )
   }
 }
 
 // MARK: - PaywallsResponse
-extension Endpoint where Response == Paywalls {
-  static func paywalls(factory: ApiFactory) -> Self {
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == Paywalls {
+  static func paywalls() -> Self {
     return Endpoint(
       components: Components(
         host: .base,
         path: Api.version1 + "paywalls"
       ),
-      method: .get,
-      isForDebugging: true,
-      factory: factory
+      method: .get
     )
   }
 }
 
 // MARK: - ConfigResponse
-extension Endpoint where Response == Config {
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == Config {
   static func config(
-    requestId: String,
     maxRetry: Int?,
-    factory: ApiFactory
+    apiKey: String
   ) -> Self {
-    let queryItems = [URLQueryItem(name: "pk", value: factory.storage.apiKey)]
+    let queryItems = [URLQueryItem(name: "pk", value: apiKey)]
 
     return Endpoint(
       retryCount: maxRetry ?? 6,
@@ -222,29 +218,27 @@ extension Endpoint where Response == Config {
         path: Api.version1 + "static_config",
         queryItems: queryItems
       ),
-      method: .get,
-      requestId: requestId,
-      factory: factory
+      method: .get
     )
   }
 }
 
 // MARK: - ConfirmedAssignmentResponse
-extension Endpoint where Response == ConfirmedAssignmentResponse {
-  static func assignments(factory: ApiFactory) -> Self {
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == ConfirmedAssignmentResponse {
+  static func assignments() -> Self {
     return Endpoint(
       components: Components(
         host: .base,
         path: Api.version1 + "assignments"
       ),
-      method: .get,
-      factory: factory
+      method: .get
     )
   }
 
   static func confirmAssignments(
-    _ confirmableAssignments: AssignmentPostback,
-    factory: ApiFactory
+    _ confirmableAssignments: AssignmentPostback
   ) -> Self {
     let bodyData = try? JSONEncoder.toSnakeCase.encode(confirmableAssignments)
 
@@ -254,16 +248,16 @@ extension Endpoint where Response == ConfirmedAssignmentResponse {
         path: Api.version1 + "confirm_assignments",
         bodyData: bodyData
       ),
-      method: .post,
-      factory: factory
+      method: .post
     )
   }
 }
 
 // MARK: - GeoWrapper
-extension Endpoint where Response == GeoWrapper {
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == GeoWrapper {
   static func geo(
-    factory: ApiFactory,
     maxRetry: Int?
   ) -> Self {
     return Endpoint(
@@ -272,8 +266,7 @@ extension Endpoint where Response == GeoWrapper {
         host: .geo,
         path: Api.version1 + "geo"
       ),
-      method: .get,
-      factory: factory
+      method: .get
     )
   }
 }

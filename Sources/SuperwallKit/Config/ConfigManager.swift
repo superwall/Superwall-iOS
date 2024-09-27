@@ -143,12 +143,10 @@ class ConfigManager {
         if let cachedConfig = cachedConfig,
           enableConfigRefresh {
           do {
-            let result = try await self.fetchWithTimeout(
-              {
-                try await self.network.getConfig(maxRetry: 0)
-              },
-              timeout: timeout
-            )
+            let result = try await self.fetchWithTimeout({
+              try await self.network.getConfig(maxRetry: 0)
+            },
+            timeout: timeout)
             return (result, false)
           } catch {
             // Return the cached config and set isUsingCached to true
@@ -172,12 +170,10 @@ class ConfigManager {
         if let cachedGeoInfo = cachedGeoInfo,
           enableConfigRefresh {
           do {
-            let geoInfo = try await self.fetchWithTimeout(
-              {
-                try await self.network.getGeoInfo(maxRetry: 0)
-              },
-              timeout: timeout
-            )
+            let geoInfo = try await self.fetchWithTimeout({
+              try await self.network.getGeoInfo(maxRetry: 0)
+            },
+            timeout: timeout)
             self.deviceHelper.geoInfo = geoInfo
             return false
           } catch {
@@ -227,7 +223,6 @@ class ConfigManager {
           await refreshConfiguration()
         }
       }
-
     } catch {
       configState.send(completion: .failure(error))
 
