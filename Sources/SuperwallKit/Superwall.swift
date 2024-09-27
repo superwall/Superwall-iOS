@@ -1,8 +1,8 @@
 // swiftlint:disable file_length type_body_length
 
+import Combine
 import Foundation
 import StoreKit
-import Combine
 
 /// The primary class for integrating Superwall into your application. After configuring via
 /// ``configure(apiKey:purchaseController:options:completion:)-52tke``, it provides access to
@@ -140,14 +140,14 @@ public final class Superwall: NSObject, ObservableObject {
   public static var shared: Superwall {
     guard let superwall = superwall else {
       #if DEBUG
-      // Code only executes when tests are running in a debug environment.
-      // This avoids lots of irrelevent error messages printed to console about Superwall not
-      // being configured, which slows down the tests.
-      if ProcessInfo.processInfo.arguments.contains("SUPERWALL_UNIT_TESTS") {
-        let superwall = Superwall()
-        self.superwall = superwall
-        return superwall
-      }
+        // Code only executes when tests are running in a debug environment.
+        // This avoids lots of irrelevent error messages printed to console about Superwall not
+        // being configured, which slows down the tests.
+        if ProcessInfo.processInfo.arguments.contains("SUPERWALL_UNIT_TESTS") {
+          let superwall = Superwall()
+          self.superwall = superwall
+          return superwall
+        }
       #endif
       Logger.debug(
         logLevel: .error,
@@ -219,6 +219,14 @@ public final class Superwall: NSObject, ObservableObject {
     // This is because the function isn't marked to run on the main thread,
     // therefore, we don't need to make this detached.
     Task {
+      Task {
+        #if os(iOS) || os(macOS) || VISION_OS
+          if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
+            await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
+          }
+        #endif
+      }
+
       dependencyContainer.storage.configure(apiKey: apiKey)
 
       dependencyContainer.storage.recordAppInstall(trackPlacement: track)
@@ -246,18 +254,20 @@ public final class Superwall: NSObject, ObservableObject {
   private func addListeners() {
     dependencyContainer.configManager.configState
       .receive(on: DispatchQueue.main)
-      .subscribe(Subscribers.Sink(
-        receiveCompletion: { _ in },
-        receiveValue: { [weak self] state in
-          switch state {
-          case .retrieving:
-            self?.configurationStatus = .pending
-          case .failed:
-            self?.configurationStatus = .failed
-          case .retrieved:
-            self?.configurationStatus = .configured
-          case .retrying:
-            break
+      .subscribe(
+        Subscribers.Sink(
+          receiveCompletion: { _ in },
+          receiveValue: { [weak self] state in
+            switch state {
+            case .retrieving:
+              self?.configurationStatus = .pending
+            case .failed:
+              self?.configurationStatus = .failed
+            case .retrieved:
+              self?.configurationStatus = .configured
+            case .retrying:
+              break
+            }
           }
         }
       ))
@@ -293,7 +303,8 @@ public final class Superwall: NSObject, ObservableObject {
       Logger.debug(
         logLevel: .warn,
         scope: .superwallCore,
-        message: "Superwall.configure called multiple times. Please make sure you only call this once on app launch."
+        message:
+          "Superwall.configure called multiple times. Please make sure you only call this once on app launch."
       )
       completion?()
       return shared
@@ -373,9 +384,10 @@ public final class Superwall: NSObject, ObservableObject {
     }
 
     let storedAssignments = dependencyContainer.storage.getConfirmedAssignments()
-    var assignments = Set(storedAssignments.map {
-      ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
-    })
+    var assignments = Set(
+      storedAssignments.map {
+        ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
+      })
 
     for trigger in triggers {
       let eventData = PlacementData(
@@ -440,14 +452,17 @@ public final class Superwall: NSObject, ObservableObject {
       Logger.debug(
         logLevel: .warn,
         scope: .superwallCore,
-        message: "Superwall.configure called multiple times. Please make sure you only call this once on app launch."
+        message:
+          "Superwall.configure called multiple times. Please make sure you only call this once on app launch."
       )
       completion?()
       return shared
     }
     superwall = Superwall(
       apiKey: apiKey,
-      purchaseController: purchaseController.flatMap { PurchaseControllerObjcAdapter(objcController: $0) },
+      purchaseController: purchaseController.flatMap {
+        PurchaseControllerObjcAdapter(objcController: $0)
+      },
       options: options,
       completion: completion
     )
@@ -491,7 +506,8 @@ public final class Superwall: NSObject, ObservableObject {
 
     Task {
       let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
-      let deviceAttributesPlacement = InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
+      let deviceAttributesPlacement = InternalSuperwallPlacement.DeviceAttributes(
+        deviceAttributes: deviceAttributes)
       await track(deviceAttributesPlacement)
     }
   }
@@ -536,7 +552,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - isHidden: Toggles the paywall loading spinner on and off.
   public func togglePaywallSpinner(isHidden: Bool) {
     Task { @MainActor in
-      guard let paywallViewController = dependencyContainer.paywallManager.presentedViewController else {
+      guard let paywallViewController = dependencyContainer.paywallManager.presentedViewController
+      else {
         return
       }
       paywallViewController.togglePaywallSpinner(isHidden: isHidden)
@@ -559,6 +576,12 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.configManager.reset()
     Task {
       await Superwall.shared.track(InternalSuperwallPlacement.Reset())
+
+      #if os(iOS) || os(macOS) || VISION_OS
+        if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
+          await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
+        }
+      #endif
     }
   }
 }

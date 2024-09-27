@@ -1,4 +1,4 @@
-# ``SuperwallKit``
+# `SuperwallKit`
 
 The client SDK for [Superwall](https://superwall.com), a service that lets you remotely configure, present and iterate paywalls – helping you find winners quickly.
 
@@ -11,9 +11,11 @@ See our [docs](https://docs.superwall.com/docs) for more information.
 ## Topics
 
 ### Essentials
-- ``SuperwallKit/Superwall``
-- ``SuperwallOptions``
+
+- `SuperwallKit/Superwall`
+- `SuperwallOptions`
 
 ### The Delegate
-- ``SuperwallDelegate``
-- ``PurchaseController``
+
+- `SuperwallDelegate`
+- `PurchaseController`

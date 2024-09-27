@@ -122,6 +122,10 @@ public final class SuperwallOptions: NSObject, Encodable {
       "geo-api.superwall.com"
     }
 
+    var adServicesHost: String {
+      "api-adservices.apple.com"
+    }
+
     private enum CodingKeys: String, CodingKey {
       case networkEnvironment
       case customDomain
@@ -166,6 +170,11 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Set this to `true` to forward events from the Game Controller to the Paywall via ``Superwall/gamepadValueChanged(gamepad:element:)``.
   public var isGameControllerEnabled = false
 
+  /// Collects the `AdServices` attributes and attaches them to the user attributes.
+  ///
+  /// Defaults to `false`.
+  public var collectAdServicesAttribution = false
+
   /// Configuration for printing to the console.
   @objc(SWKLogging)
   @objcMembers
@@ -194,6 +203,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     case isExternalDataCollectionEnabled
     case localeIdentifier
     case isGameControllerEnabled
+    case collectAdServicesAttribution
   }
 
   public func encode(to encoder: Encoder) throws {
@@ -206,6 +216,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(isExternalDataCollectionEnabled, forKey: .isExternalDataCollectionEnabled)
     try container.encode(localeIdentifier, forKey: .localeIdentifier)
     try container.encode(isGameControllerEnabled, forKey: .isGameControllerEnabled)
+    try container.encode(collectAdServicesAttribution, forKey: .collectAdServicesAttribution)
   }
 
   func toDictionary() -> [String: Any] {

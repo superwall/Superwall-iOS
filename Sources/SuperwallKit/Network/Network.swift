@@ -15,10 +15,10 @@ class Network {
   private var applicationStateSubject: CurrentValueSubject<UIApplication.State, Never> = .init(.background)
 
   init(
-    urlSession: CustomURLSession = CustomURLSession(),
+    urlSession: CustomURLSession? = nil,
     factory: ApiFactory
   ) {
-    self.urlSession = urlSession
+    self.urlSession = urlSession ?? CustomURLSession(factory: factory)
     self.factory = factory
 
     Task { @MainActor [weak self] in
@@ -47,7 +47,10 @@ class Network {
 
   func sendEvents(events: EventsRequest) async {
     do {
-      let result = try await urlSession.request(.events(eventsRequest: events, factory: factory))
+      let result = try await urlSession.request(
+        .events(eventsRequest: events),
+        data: SuperwallRequestData(factory: factory)
+      )
       switch result.status {
       case .ok:
         break
@@ -81,8 +84,12 @@ class Network {
           withIdentifier: identifier,
           fromPlacement: placement,
           retryCount: retryCount,
-          factory: factory
-        )
+          appUserId: factory.identityManager.userId,
+          apiKey: factory.storage.apiKey,
+          config: factory.configManager.config,
+          locale: factory.deviceHelper.locale
+        ),
+        data: SuperwallRequestData(factory: factory)
       )
     } catch {
       if identifier == nil {
@@ -110,7 +117,13 @@ class Network {
 
   func getPaywalls() async throws -> [Paywall] {
     do {
-      let response = try await urlSession.request(.paywalls(factory: factory))
+      let response = try await urlSession.request(
+        .paywalls(),
+        data: SuperwallRequestData(
+          factory: factory,
+          isForDebugging: true
+        )
+      )
       return response.paywalls
     } catch {
       Logger.debug(
@@ -134,9 +147,12 @@ class Network {
       let requestId = UUID().uuidString
       var config = try await urlSession.request(
         .config(
-          requestId: requestId,
           maxRetry: maxRetry,
-          factory: factory
+          apiKey: factory.storage.apiKey
+        ),
+        data: SuperwallRequestData(
+          factory: factory,
+          requestId: requestId
         ),
         isRetryingCallback: isRetryingCallback
       )
@@ -168,11 +184,15 @@ class Network {
   }
 
   func getGeoInfo(
-    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
-  ) async -> GeoInfo? {
+    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
+    maxRetry: Int?
+  ) async throws -> GeoInfo? {
     do {
       try await appInForeground(injectedApplicationStatePublisher)
-      let geoWrapper = try await urlSession.request(.geo(factory: factory))
+      let geoWrapper = try await urlSession.request(
+        .geo(maxRetry: maxRetry),
+        data: SuperwallRequestData(factory: factory)
+      )
       return geoWrapper.info
     } catch {
       Logger.debug(
@@ -181,13 +201,16 @@ class Network {
         message: "Request Failed: /geo",
         error: error
       )
-      return nil
+      throw error
     }
   }
 
   func confirmAssignments(_ confirmableAssignments: AssignmentPostback) async {
     do {
-      try await urlSession.request(.confirmAssignments(confirmableAssignments, factory: factory))
+      try await urlSession.request(
+        .confirmAssignments(confirmableAssignments),
+        data: SuperwallRequestData(factory: factory)
+      )
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -201,7 +224,10 @@ class Network {
 
   func getAssignments() async throws -> [Assignment] {
     do {
-      let result = try await urlSession.request(.assignments(factory: factory))
+      let result = try await urlSession.request(
+        .assignments(),
+        data: SuperwallRequestData(factory: factory)
+      )
       return result.assignments
     } catch {
       Logger.debug(
@@ -216,7 +242,10 @@ class Network {
 
   func sendSessionEvents(_ session: SessionEventsRequest) async {
     do {
-      let result = try await urlSession.request(.sessionEvents(session, factory: factory))
+      let result = try await urlSession.request(
+        .sessionEvents(session),
+        data: SuperwallRequestData(factory: factory)
+      )
       switch result.status {
       case .ok:
         break

@@ -172,6 +172,15 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
   /// When the Superwall configuration fails to be retrieved.
   case configFail
 
+  /// When the AdServices token request starts.
+  case adServicesTokenRequestStart
+
+  /// When the AdServices token request fails.
+  case adServicesTokenRequestFail
+
+  /// When the AdServices token request finishes.
+  case adServicesTokenRequestComplete
+
   public init(placement: SuperwallPlacement) {
     self = placement.backingData.objcPlacement
   }
@@ -278,6 +287,12 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
       return "confirm_all_assignments"
     case .configFail:
       return "config_fail"
+    case .adServicesTokenRequestStart:
+      return "adServicesTokenRequest_start"
+    case .adServicesTokenRequestFail:
+      return "adServicesTokenRequest_fail"
+    case .adServicesTokenRequestComplete:
+      return "adServicesTokenRequest_complete"
     }
   }
 }

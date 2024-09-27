@@ -11,6 +11,7 @@ import Foundation
 @objc(SWKLogScope)
 public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
   case localizationManager
+  case analytics
   case bounceButton
   case coreData
   case configManager
@@ -35,6 +36,8 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
 
   public var description: String {
     switch self {
+    case .analytics:
+      return "analytics"
     case .localizationManager:
       return "localizationManager"
     case .bounceButton:

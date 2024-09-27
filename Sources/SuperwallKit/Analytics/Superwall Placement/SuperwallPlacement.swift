@@ -185,6 +185,15 @@ public enum SuperwallPlacement {
   /// When the Superwall configuration fails to be retrieved.
   case configFail
 
+  /// When the AdServices token request starts.
+  case adServicesTokenRequestStart
+
+  /// When the AdServices token request fails.
+  case adServicesTokenRequestFail(error: Error)
+
+  /// When the AdServices token request finishes.
+  case adServicesTokenRequestComplete(token: String)
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -326,6 +335,12 @@ extension SuperwallPlacement {
       return .init(objcPlacement: .confirmAllAssignments)
     case .configFail:
       return .init(objcPlacement: .configFail)
+    case .adServicesTokenRequestStart:
+      return .init(objcPlacement: .adServicesTokenRequestStart)
+    case .adServicesTokenRequestFail:
+      return .init(objcPlacement: .adServicesTokenRequestFail)
+    case .adServicesTokenRequestComplete:
+      return .init(objcPlacement: .adServicesTokenRequestComplete)
     }
   }
 }
