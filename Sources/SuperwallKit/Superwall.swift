@@ -670,8 +670,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
       }
       purchaseTask = Task {
         await dependencyContainer.transactionManager.purchase(
-          productId,
-          from: paywallViewController
+          .internal(productId, paywallViewController)
         )
         purchaseTask = nil
       }

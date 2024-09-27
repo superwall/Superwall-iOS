@@ -59,6 +59,16 @@ public enum PurchaseResult: Sendable, Equatable {
       return false
     }
   }
+
+  func toObjc() -> PurchaseResultObjc {
+    switch self {
+    case .cancelled: return .cancelled
+    case .purchased: return .purchased
+    case .restored: return .restored
+    case .pending: return .pending
+    case .failed: return .failed
+    }
+  }
 }
 
 // MARK: - Objective-C Only

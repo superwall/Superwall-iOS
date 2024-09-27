@@ -127,9 +127,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         await coordinator.storeIfPurchased(transaction)
         await checkForTimeout(of: transaction, in: paywallViewController)
         await updatePurchaseCompletionBlock(for: transaction, purchaseDate: purchaseDate)
-        Task(priority: .background) {
-          await record(transaction)
-        }
       }
       await loadPurchasedProductsIfPossible(from: transactions)
       restoration.dispatchGroup.leave()
@@ -145,9 +142,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     guard #available(iOS 14, *) else {
       return
     }
-    guard let paywallViewController = paywallViewController else {
-      return
-    }
     switch transaction.transactionState {
     case .failed:
       if let error = transaction.error {
@@ -156,12 +150,12 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           case .overlayTimeout:
             let trackedEvent = await InternalSuperwallEvent.Transaction(
               state: .timeout,
-              paywallInfo: paywallViewController.info,
+              paywallInfo: paywallViewController?.info ?? .empty(),
               product: nil,
               model: nil
             )
             await Superwall.shared.track(trackedEvent)
-            await paywallViewController.webView.messageHandler.handle(.transactionTimeout)
+            await paywallViewController?.webView.messageHandler.handle(.transactionTimeout)
           default:
             break
           }
@@ -268,12 +262,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     }
 
     return false
-  }
-
-  /// Sends the transaction to the backend.
-  private func record(_ transaction: SKPaymentTransaction) async {
-    let storeTransaction = await factory.makeStoreTransaction(from: transaction)
-    await sessionEventsManager.enqueue(storeTransaction)
   }
 
   /// Loads purchased products in the StoreKitManager if a purchase or restore has occurred.
