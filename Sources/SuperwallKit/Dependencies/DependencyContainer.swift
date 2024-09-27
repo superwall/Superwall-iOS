@@ -38,6 +38,7 @@ final class DependencyContainer {
   var purchaseController: PurchaseController!
   var productsManager: ProductsManager!
   var entitlementsInfo: EntitlementsInfo!
+  var attributionPoster: AttributionPoster!
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
@@ -57,6 +58,7 @@ final class DependencyContainer {
       storeKitVersion: options.storeKitVersion
     )
     network = Network(factory: self)
+
     storeKitManager = StoreKitManager(productsManager: productsManager)
 
     purchaseController = controller ?? AutomaticPurchaseController(factory: self, entitlementsInfo: entitlementsInfo)
@@ -78,7 +80,10 @@ final class DependencyContainer {
     )
 
     api = Api(networkEnvironment: options.networkEnvironment)
-
+    attributionPoster = AttributionPoster(
+      collectAdServicesAttribution: options.collectAdServicesAttribution,
+      storage: storage
+    )
     deviceHelper = DeviceHelper(
       api: api,
       storage: storage,

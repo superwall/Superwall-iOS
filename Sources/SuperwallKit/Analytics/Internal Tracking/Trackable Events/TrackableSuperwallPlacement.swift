@@ -755,4 +755,40 @@ enum InternalSuperwallPlacement {
       ]
     }
   }
+
+  struct AdServicesTokenRetrieval: TrackableSuperwallPlacement {
+    enum State {
+      case start
+      case fail(Error)
+      case complete(String)
+    }
+    let state: State
+
+    var superwallPlacement: SuperwallPlacement {
+      switch state {
+      case .start:
+        return .adServicesTokenRequestStart
+      case .fail(let error):
+        return .adServicesTokenRequestFail(error: error)
+      case .complete(let token):
+        return .adServicesTokenRequestComplete(token: token)
+      }
+    }
+    let audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      switch state {
+      case .start:
+        return [:]
+      case .fail(let error):
+        return ["error_message": error.localizedDescription]
+      case .complete(let token):
+        return [
+          "token": token
+        ]
+      }
+    }
+  }
 }
+
+// TODO: We have changed some stuff from Event to Placement. Now when trying to retrieve this and decode, it won't match will it? This could mess up 1 time things... We may need to migrate.
