@@ -10,6 +10,8 @@ import Foundation
 final class AttributionPoster {
   private let attributionFetcher = AttributionFetcher()
   private let collectAdServicesAttribution: Bool
+  private var isCollecting = false
+
   private unowned let storage: Storage
 
   private var adServicesTokenToPostIfNeeded: String? {
@@ -52,6 +54,9 @@ final class AttributionPoster {
     guard Superwall.isInitialized else {
       return
     }
+    if isCollecting {
+      return
+    }
     Task(priority: .background) {
       if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
         await getAdServicesTokenIfNeeded()
@@ -65,7 +70,11 @@ final class AttributionPoster {
   @available(tvOS, unavailable)
   @available(watchOS, unavailable)
   func getAdServicesTokenIfNeeded() async {
+    defer {
+      isCollecting = false
+    }
     do {
+      isCollecting = true
       guard collectAdServicesAttribution else {
         return
       }
