@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.9.2
+
+### Fixes
+
+- Tweaks AdServices token logic to prevent getting the token twice.
+
 ## 3.9.1
 
 ### Fixes
