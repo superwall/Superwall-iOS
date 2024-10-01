@@ -32,7 +32,10 @@ final class AutomaticPurchaseController {
 extension AutomaticPurchaseController: PurchaseController {
   @MainActor
   func purchase(product: SKProduct) async -> PurchaseResult {
-    return await factory.purchase(product: product)
+    return await factory.purchase(
+      product: product,
+      isExternal: false
+    )
   }
 
   @MainActor

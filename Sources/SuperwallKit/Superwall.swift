@@ -436,7 +436,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// Note that the assignments may be different when a placement is registered due to changes
   /// in user, placement, or device parameters used in audience filters.
   ///
-  /// - Returns: And array of ``ConfirmedAssignment`` objects.
+  /// - Returns: An array of ``ConfirmedAssignment`` objects.
   public func confirmAllAssignments() async -> [ConfirmedAssignment] {
     let confirmAllAssignments = InternalSuperwallEvent.ConfirmAllAssignments()
     await track(confirmAllAssignments)
@@ -478,7 +478,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// Note that the assignments may be different when a placement is registered due to changes
   /// in user, placement, or device parameters used in audience filters.
   ///
-  /// - Returns: And array of ``ConfirmedAssignment`` objects.
+  /// - Parameter completion: A completion block that accepts an array of ``ConfirmedAssignment`` objects.
   public func confirmAllAssignments(completion: (([ConfirmedAssignment]) -> Void)? = nil) {
     Task {
       let result = await confirmAllAssignments()
@@ -639,6 +639,121 @@ public final class Superwall: NSObject, ObservableObject {
         await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
       }
       #endif
+    }
+  }
+
+  // MARK: - External Purchasing
+
+  /// Initiates a purchase of a `SKProduct`.
+  ///
+  /// Use this function to purchase any `SKProduct`, regardless of whether you
+  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
+  /// and return the ``PurchaseResult``. You'll see the data associated with the
+  /// purchase on the Superwall dashboard.
+  ///
+  /// - Parameter product: The `SKProduct` you wish to purchase.
+  /// - Returns: A ``PurchaseResult``.
+  /// - Note: You do not need to finish the transaction yourself after this.
+  /// ``Superwall`` will handle this for you.
+  public func purchase(_ product: SKProduct) async -> PurchaseResult {
+    let storeProduct = StoreProduct(sk1Product: product)
+    return await dependencyContainer.transactionManager.purchase(.external(storeProduct))
+  }
+
+  /// Initiates a purchase of a `SKProduct`.
+  ///
+  /// Use this function to purchase any `SKProduct`, regardless of whether you
+  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
+  /// and return the ``PurchaseResult``. You'll see the data associated with the
+  /// purchase on the Superwall dashboard.
+  ///
+  /// - Parameters:
+  ///   - product: The `SKProduct` you wish to purchase.
+  ///   - completion: A completion block that is called when the purchase completes.
+  ///   This accepts a ``PurchaseResult``.
+  /// - Note: You do not need to finish the transaction yourself in the completion block.
+  /// ``Superwall`` will handle this for you.
+  public func purchase(
+    _ product: SKProduct,
+    completion: @escaping (PurchaseResult) -> Void
+  ) {
+    Task {
+      let storeProduct = StoreProduct(sk1Product: product)
+      let result = await dependencyContainer.transactionManager.purchase(.external(storeProduct))
+      await MainActor.run {
+        completion(result)
+      }
+    }
+  }
+
+  /// Objective-C-only method. Initiates a purchase of a `SKProduct`.
+  ///
+  /// Use this function to purchase any `SKProduct`, regardless of whether you
+  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
+  /// and return the ``PurchaseResult``. You'll see the data associated with the
+  /// purchase on the Superwall dashboard.
+  ///
+  /// - Parameters:
+  ///   - product: The `SKProduct` you wish to purchase.
+  ///   - completion: A completion block that is called when the purchase completes.
+  ///   This accepts a ``PurchaseResult``.
+  /// - Note: You do not need to finish the transaction yourself in the completion block.
+  /// ``Superwall`` will handle this for you.
+  @available(swift, obsoleted: 1.0)
+  public func purchase(
+    _ product: SKProduct,
+    completion: @escaping (PurchaseResultObjc) -> Void
+  ) {
+    purchase(product) { result in
+      let objcResult = result.toObjc()
+      completion(objcResult)
+    }
+  }
+
+  /// Restores purchases.
+  ///
+  /// - Note: This could prompt the user to log in to their App Store account, so should only be performed
+  /// on request of the user. Typically with a button in settings or near your purchase UI.
+  /// - Returns: A ``RestorationResult`` object that defines if the restoration was successful or not.
+  /// - Warning: A successful restoration does not mean that the user is subscribed, only that
+  /// the restore  did not fail due to some error. User will see an alert if ``Superwall/subscriptionStatus``
+  /// is not ``SubscriptionStatus/active`` after returning this value.
+  public func restorePurchases() async -> RestorationResult {
+    let result = await dependencyContainer.restorePurchases()
+    return result
+  }
+
+  /// Restores purchases.
+  ///
+  /// - Note: This could prompt the user to log in to their App Store account, so should only be performed
+  /// on request of the user. Typically with a button in settings or near your purchase UI.
+  /// - Parameter completion: A completion block that is called when the restoration completes.
+  ///   This accepts a ``RestorationResult``.
+  /// - Warning: A successful restoration does not mean that the user is subscribed, only that
+  /// the restore  did not fail due to some error. User will see an alert if ``Superwall/subscriptionStatus``
+  /// is not ``SubscriptionStatus/active`` after returning this value.
+  public func restorePurchases(completion: @escaping (RestorationResult) -> Void) {
+    Task {
+      let result = await restorePurchases()
+      await MainActor.run {
+        completion(result)
+      }
+    }
+  }
+
+  /// Objective-C-only method. Restores purchases.
+  ///
+  /// - Note: This could prompt the user to log in to their App Store account, so should only be performed
+  /// on request of the user. Typically with a button in settings or near your purchase UI.
+  /// - Parameter completion: A completion block that is called when the restoration completes.
+  ///   This accepts a ``RestorationResultObjc``.
+  /// - Warning: A successful restoration does not mean that the user is subscribed, only that
+  /// the restore  did not fail due to some error. User will see an alert if ``Superwall/subscriptionStatus``
+  /// is not ``SubscriptionStatus/active`` after returning this value.
+  @available(swift, obsoleted: 1.0)
+  public func restorePurchases(completion: @escaping (RestorationResultObjc) -> Void) {
+    restorePurchases { result in
+      completion(result.toObjc())
     }
   }
 }

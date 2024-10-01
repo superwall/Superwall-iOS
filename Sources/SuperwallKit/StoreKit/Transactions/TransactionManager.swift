@@ -39,11 +39,6 @@ final class TransactionManager {
     self.factory = factory
   }
 
-  enum PurchaseType {
-    case `internal`(String, PaywallViewController)
-    case external(StoreProduct)
-  }
-
   /// Purchases the given product and handles the result appropriately.
   ///
   /// - Parameters:
@@ -51,10 +46,10 @@ final class TransactionManager {
   ///   - paywallViewController: The `PaywallViewController` that the product is being
   ///   purchased from.
   @discardableResult
-  func purchase(_ type: PurchaseType) async -> PurchaseResult {
+  func purchase(_ purchaseSource: PurchaseSource) async -> PurchaseResult {
     let product: StoreProduct
 
-    switch type {
+    switch purchaseSource {
     case .internal(let productId, _):
       guard let storeProduct = await storeKitManager.productsById[productId] else {
         Logger.debug(
@@ -70,21 +65,21 @@ final class TransactionManager {
     }
     let isEligibleForFreeTrial = await receiptManager.isFreeTrialAvailable(for: product)
 
-    await prepareToPurchase(product: product, type: type)
+    await prepareToPurchase(product: product, purchaseSource: purchaseSource)
 
-    let result = await purchase(product)
+    let result = await purchase(product, purchaseSource: purchaseSource)
 
     switch result {
     case .purchased:
       await didPurchase(
         product: product,
-        type: type,
+        purchaseSource: purchaseSource,
         didStartFreeTrial: isEligibleForFreeTrial
       )
     case .restored:
       await didRestore(
         product: product,
-        type: type
+        purchaseSource: purchaseSource
       )
     case .failed(let error):
       let superwallOptions = factory.makeSuperwallOptions()
@@ -96,9 +91,9 @@ final class TransactionManager {
         await trackFailure(
           error: error,
           product: product,
-          type: type
+          purchaseSource: purchaseSource
         )
-        if case let .internal(_, paywallViewController) = type {
+        if case let .internal(_, paywallViewController) = purchaseSource {
           await paywallViewController.togglePaywallSpinner(isHidden: true)
         }
         return result
@@ -107,24 +102,24 @@ final class TransactionManager {
       case .cancelled:
         await trackCancelled(
           product: product,
-          type: type
+          purchaseSource: purchaseSource
         )
       case .presentAlert:
         await trackFailure(
           error: error,
           product: product,
-          type: type
+          purchaseSource: purchaseSource
         )
         await presentAlert(
           title: "An error occurred",
           message: error.safeLocalizedDescription,
-          type: type
+          purchaseSource: purchaseSource
         )
       }
     case .pending:
-      await handlePendingTransaction(type: type)
+      await handlePendingTransaction(purchaseSource: purchaseSource)
     case .cancelled:
-      await trackCancelled(product: product, type: type)
+      await trackCancelled(product: product, purchaseSource: purchaseSource)
     }
 
     return result
@@ -159,7 +154,7 @@ final class TransactionManager {
         message: "Transactions Restored"
       )
 
-      await didRestore(type: .internal("", paywallViewController))
+      await didRestore(purchaseSource: .internal("", paywallViewController))
 
       let trackedEvent = InternalSuperwallEvent.Restore(
         state: .complete,
@@ -201,7 +196,7 @@ final class TransactionManager {
 
   private func didRestore(
     product: StoreProduct? = nil,
-    type: PurchaseType
+    purchaseSource: PurchaseSource
   ) async {
     let purchasingCoordinator = factory.makePurchasingCoordinator()
     var transaction: StoreTransaction?
@@ -219,7 +214,7 @@ final class TransactionManager {
       restoreType = .viaRestore
     }
 
-    switch type {
+    switch purchaseSource {
     case .internal(_, let paywallViewController):
       let paywallInfo = await paywallViewController.info
 
@@ -247,14 +242,31 @@ final class TransactionManager {
     }
   }
 
-  private func purchase(_ product: StoreProduct) async -> PurchaseResult {
+  private func purchase(
+    _ product: StoreProduct,
+    purchaseSource: PurchaseSource
+  ) async -> PurchaseResult {
     guard let sk1Product = product.sk1Product else {
       return .failed(PurchaseError.productUnavailable)
     }
-    await factory.makePurchasingCoordinator().beginPurchase(
-      of: product.productIdentifier
-    )
-    return await purchaseController.purchase(product: sk1Product)
+
+    switch purchaseSource {
+    case .internal:
+      await factory.makePurchasingCoordinator().beginPurchase(
+        of: product.productIdentifier,
+        isExternal: false
+      )
+      return await purchaseController.purchase(product: sk1Product)
+    case .external:
+      await factory.makePurchasingCoordinator().beginPurchase(
+        of: product.productIdentifier,
+        isExternal: true
+      )
+      return await factory.purchase(
+        product: sk1Product,
+        isExternal: true
+      )
+    }
   }
 
   /// Cancels the transaction timeout when the application resigns active.
@@ -266,9 +278,9 @@ final class TransactionManager {
   private func trackFailure(
     error: Error,
     product: StoreProduct,
-    type: PurchaseType
+    purchaseSource: PurchaseSource
   ) async {
-    switch type {
+    switch purchaseSource {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
@@ -318,9 +330,9 @@ final class TransactionManager {
   /// Tracks the analytics and logs the start of the transaction.
   private func prepareToPurchase(
     product: StoreProduct,
-    type: PurchaseType
+    purchaseSource: PurchaseSource
   ) async {
-    switch type {
+    switch purchaseSource {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
@@ -364,10 +376,10 @@ final class TransactionManager {
   /// Dismisses the view controller, if the developer hasn't disabled the option.
   private func didPurchase(
     product: StoreProduct,
-    type: PurchaseType,
+    purchaseSource: PurchaseSource,
     didStartFreeTrial: Bool
   ) async {
-    switch type {
+    switch purchaseSource {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
@@ -391,7 +403,7 @@ final class TransactionManager {
       await trackTransactionDidSucceed(
         transaction,
         product: product,
-        type: type,
+        purchaseSource: purchaseSource,
         didStartFreeTrial: didStartFreeTrial
       )
 
@@ -424,7 +436,7 @@ final class TransactionManager {
       await trackTransactionDidSucceed(
         transaction,
         product: product,
-        type: type,
+        purchaseSource: purchaseSource,
         didStartFreeTrial: didStartFreeTrial
       )
     }
@@ -433,9 +445,9 @@ final class TransactionManager {
   /// Track the cancelled
   private func trackCancelled(
     product: StoreProduct,
-    type: PurchaseType
+    purchaseSource: PurchaseSource
   ) async {
-    switch type {
+    switch purchaseSource {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
@@ -458,7 +470,7 @@ final class TransactionManager {
       await MainActor.run {
         paywallViewController.loadingState = .ready
       }
-    case .external(let storeProduct):
+    case .external:
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
@@ -477,8 +489,8 @@ final class TransactionManager {
     }
   }
 
-  private func handlePendingTransaction(type: PurchaseType) async {
-    switch type {
+  private func handlePendingTransaction(purchaseSource: PurchaseSource) async {
+    switch purchaseSource {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
@@ -498,7 +510,7 @@ final class TransactionManager {
       )
       await Superwall.shared.track(trackedEvent)
       await paywallViewController.webView.messageHandler.handle(.transactionFail)
-    case .external(let storeProduct):
+    case .external:
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
@@ -518,16 +530,16 @@ final class TransactionManager {
     await presentAlert(
       title: "Waiting for Approval",
       message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.",
-      type: type
+      purchaseSource: purchaseSource
     )
   }
 
   private func presentAlert(
     title: String,
     message: String,
-    type: PurchaseType
+    purchaseSource: PurchaseSource
   ) async {
-    switch type {
+    switch purchaseSource {
     case .internal(_, let paywallViewController):
       await paywallViewController.presentAlert(
         title: title,
@@ -554,10 +566,10 @@ final class TransactionManager {
   func trackTransactionDidSucceed(
     _ transaction: StoreTransaction?,
     product: StoreProduct,
-    type: PurchaseType,
+    purchaseSource: PurchaseSource,
     didStartFreeTrial: Bool
   ) async {
-    switch type {
+    switch purchaseSource {
     case .internal(_, let paywallViewController):
       let paywallShowingFreeTrial = await paywallViewController.paywall.isFreeTrialAvailable == true
       let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial

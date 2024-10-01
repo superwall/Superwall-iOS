@@ -2,7 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 3.9.2
+## 3.10.0
+
+### Enhancements
+
+- Adds `purchase(_:)` to initiate a purchase of an `SKProduct` via Superwall regardless of whether you are using paywalls or not.
+- Adds `restorePurchases()` to restore purchases via Superwall.
 
 ### Fixes
 
