@@ -30,6 +30,7 @@ final class ProductPurchaserSK1: NSObject {
   private let receiptManager: ReceiptManager
   private let sessionEventsManager: SessionEventsManager
   private let identityManager: IdentityManager
+  private let storage: Storage
   private let factory: HasExternalPurchaseControllerFactory & StoreTransactionFactory
 
   deinit {
@@ -41,6 +42,7 @@ final class ProductPurchaserSK1: NSObject {
     receiptManager: ReceiptManager,
     sessionEventsManager: SessionEventsManager,
     identityManager: IdentityManager,
+    storage: Storage,
     factory: HasExternalPurchaseControllerFactory & StoreTransactionFactory
   ) {
     self.storeKitManager = storeKitManager
@@ -48,6 +50,7 @@ final class ProductPurchaserSK1: NSObject {
     self.sessionEventsManager = sessionEventsManager
     self.identityManager = identityManager
     self.factory = factory
+    self.storage = storage
 
     super.init()
     SKPaymentQueue.default().add(self)
@@ -55,7 +58,10 @@ final class ProductPurchaserSK1: NSObject {
 
   /// Purchases a product, waiting for the completion block to be fired and
   /// returning a purchase result.
-  func purchase(product: SKProduct) async -> PurchaseResult {
+  func purchase(
+    product: SKProduct,
+    isExternal: Bool
+  ) async -> PurchaseResult {
     let task = Task {
       return await withCheckedContinuation { continuation in
         Task {
@@ -124,12 +130,10 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       let paywallViewController = Superwall.shared.paywallViewController
       let purchaseDate = await coordinator.purchaseDate
       for transaction in transactions {
+        await savePurchasedTransaction(transaction)
         await coordinator.storeIfPurchased(transaction)
         await checkForTimeout(of: transaction, in: paywallViewController)
         await updatePurchaseCompletionBlock(for: transaction, purchaseDate: purchaseDate)
-        Task(priority: .background) {
-          await record(transaction)
-        }
       }
       await loadPurchasedProductsIfPossible(from: transactions)
       restoration.dispatchGroup.leave()
@@ -145,9 +149,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     guard #available(iOS 14, *) else {
       return
     }
-    guard let paywallViewController = paywallViewController else {
-      return
-    }
     switch transaction.transactionState {
     case .failed:
       if let error = transaction.error {
@@ -156,12 +157,12 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           case .overlayTimeout:
             let trackedEvent = await InternalSuperwallEvent.Transaction(
               state: .timeout,
-              paywallInfo: paywallViewController.info,
+              paywallInfo: paywallViewController?.info ?? .empty(),
               product: nil,
               model: nil
             )
             await Superwall.shared.track(trackedEvent)
-            await paywallViewController.webView.messageHandler.handle(.transactionTimeout)
+            await paywallViewController?.webView.messageHandler.handle(.transactionTimeout)
           default:
             break
           }
@@ -172,15 +173,63 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     }
   }
 
+  private func savePurchasedTransaction(
+    _ transaction: SKPaymentTransaction
+  ) async {
+    guard transaction.transactionState == .purchased else {
+      return
+    }
+    guard let id = transaction.transactionIdentifier else {
+      return
+    }
+    var savedTransactions = storage.get(SavedTransactions.self) ?? []
+    guard savedTransactions.filter({ $0.id == id }).isEmpty else {
+      return
+    }
+    let isExternal = await coordinator.isExternalPurchase
+    let transaction = SavedTransaction(
+      id: id,
+      date: Date(),
+      hasExternalPurchaseController: factory.makeHasExternalPurchaseController(),
+      isExternal: isExternal
+    )
+    savedTransactions.insert(transaction)
+    storage.save(savedTransactions, forType: SavedTransactions.self)
+  }
+
+  func paymentQueue(_ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]) {
+    // Retrieve saved transactions from storage
+    var savedTransactions = storage.get(SavedTransactions.self) ?? []
+
+    // Filter out the transactions that have been removed
+    let removedTransactionIDs = Set(transactions.compactMap { $0.transactionIdentifier })
+
+    savedTransactions = savedTransactions.filter { savedTransaction in
+      // Keep only transactions that are not in the removedTransactionIDs
+      !removedTransactionIDs.contains(savedTransaction.id)
+    }
+
+    // Save the updated savedTransactions back to storage
+    storage.save(savedTransactions, forType: SavedTransactions.self)
+  }
+
   /// Sends a `PurchaseResult` to the completion block and stores the latest purchased transaction.
   private func updatePurchaseCompletionBlock(
     for skTransaction: SKPaymentTransaction,
     purchaseDate: Date?
   ) async {
-    // Only continue if using internal purchase controller. The transaction may be
+    // Doesn't continue if the purchase was initiated internally and an
+    // external purchase controller is being used. The transaction may be
     // readded to the queue if finishing fails so we need to make sure
     // we can re-finish the transaction.
-    if factory.makeHasExternalPurchaseController() {
+    let savedTransactions = storage.get(SavedTransactions.self) ?? []
+    guard let savedTransaction = savedTransactions.first(
+      where: { $0.id == skTransaction.transactionIdentifier }
+    ) else {
+      return
+    }
+    if !savedTransaction.isExternal,
+      savedTransaction.hasExternalPurchaseController {
       return
     }
 
@@ -268,12 +317,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     }
 
     return false
-  }
-
-  /// Sends the transaction to the backend.
-  private func record(_ transaction: SKPaymentTransaction) async {
-    let storeTransaction = await factory.makeStoreTransaction(from: transaction)
-    await sessionEventsManager.enqueue(storeTransaction)
   }
 
   /// Loads purchased products in the StoreKitManager if a purchase or restore has occurred.

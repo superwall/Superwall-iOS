@@ -42,7 +42,7 @@ public enum PaywallCloseReason: Int, Codable, Equatable, Sendable, CustomStringC
     case .webViewFailedToLoad:
       return "webViewFailedToLoad"
     case .manualClose:
-      return "manualClsoe"
+      return "manualClose"
     case .none:
       return "none"
     }

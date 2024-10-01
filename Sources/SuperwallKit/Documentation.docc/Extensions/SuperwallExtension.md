@@ -56,6 +56,15 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``PaywallSkippedReason``
 - ``PaywallSkippedReasonObjc``
 
+### Handling Purchases
+
+- ``purchase(_:)``
+- ``purchase(_:completion:)-6oyxm``
+- ``purchase(_:completion:)-4rj6r``
+- ``restorePurchases()``
+- ``restorePurchases(completion:)-4fx45``
+- ``restorePurchases(completion:)-4cxt5``
+
 ### In-App Previews
 
 - ``handleDeepLink(_:)``

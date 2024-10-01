@@ -14,9 +14,11 @@ import StoreKit
 /// When implementing the ``PurchaseController/restorePurchases()`` delegate
 /// method, all cases should be considered.
 public enum RestorationResult: Sendable, Equatable {
-  /// The restore was successful – this does not mean the user is subscribed, it just means your restore
-  /// logic did not fail due to some error. User will see an alert if `Superwall.shared.subscriptionStatus` is
-  /// not `.active` after returning this value.
+  /// The restore was successful
+  ///
+  /// - Warning: This does not mean the user is subscribed, it just means your restore
+  /// logic did not fail due to some error. User will see an alert if ``Superwall/subscriptionStatus`` is
+  /// not ``SubscriptionStatus/active`` after returning this value.
   case restored
 
   /// The restore failed for some reason (i.e. you were not able to determine if the user has an active subscription.
@@ -29,6 +31,15 @@ public enum RestorationResult: Sendable, Equatable {
       return true
     default:
       return false
+    }
+  }
+
+  func toObjc() -> RestorationResultObjc {
+    switch self {
+    case .restored:
+      return .restored
+    case .failed:
+      return .failed
     }
   }
 }
