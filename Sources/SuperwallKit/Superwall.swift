@@ -719,7 +719,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// the restore  did not fail due to some error. User will see an alert if ``Superwall/subscriptionStatus``
   /// is not ``SubscriptionStatus/active`` after returning this value.
   public func restorePurchases() async -> RestorationResult {
-    let result = await dependencyContainer.restorePurchases()
+    let result = await dependencyContainer.restorePurchases(isExternal: true)
     return result
   }
 

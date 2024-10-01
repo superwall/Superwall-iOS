@@ -479,8 +479,8 @@ extension DependencyContainer: PurchasedTransactionsFactory {
     )
   }
 
-  func restorePurchases() async -> RestorationResult {
-    return await productPurchaser.restorePurchases()
+  func restorePurchases(isExternal: Bool) async -> RestorationResult {
+    return await productPurchaser.restorePurchases(isExternal: isExternal)
   }
 }
 

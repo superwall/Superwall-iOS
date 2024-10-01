@@ -40,7 +40,7 @@ extension AutomaticPurchaseController: PurchaseController {
 
   @MainActor
   func restorePurchases() async -> RestorationResult {
-    let result = await factory.restorePurchases()
+    let result = await factory.restorePurchases(isExternal: false)
 
     let hasRestored = result == .restored
     await factory.refreshReceipt()

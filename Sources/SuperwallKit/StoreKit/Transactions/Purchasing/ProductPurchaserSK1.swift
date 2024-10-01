@@ -16,6 +16,7 @@ final class ProductPurchaserSK1: NSObject {
   // MARK: Restoration
   final class Restoration {
     var completion: ((Error?) -> Void)?
+    var isExternal = false
     var dispatchGroup = DispatchGroup()
     /// Used to serialise the async `SKPaymentQueue` calls when restoring.
     var queue = DispatchQueue(
@@ -78,7 +79,7 @@ final class ProductPurchaserSK1: NSObject {
     return await task.value
   }
 
-  func restorePurchases() async -> RestorationResult {
+  func restorePurchases(isExternal: Bool) async -> RestorationResult {
     let result = await withCheckedContinuation { continuation in
       // Using restoreCompletedTransactions instead of just refreshing
       // the receipt so that RC can pick up on the restored products,
@@ -86,6 +87,7 @@ final class ProductPurchaserSK1: NSObject {
       restoration.completion = { completed in
         return continuation.resume(returning: completed)
       }
+      restoration.isExternal = isExternal
       SKPaymentQueue.default().restoreCompletedTransactions()
     }
     restoration.completion = nil
@@ -130,7 +132,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       let paywallViewController = Superwall.shared.paywallViewController
       let purchaseDate = await coordinator.purchaseDate
       for transaction in transactions {
-        await savePurchasedTransaction(transaction)
+        await savePurchasedAndRestoredTransaction(transaction)
         await coordinator.storeIfPurchased(transaction)
         await checkForTimeout(of: transaction, in: paywallViewController)
         await updatePurchaseCompletionBlock(for: transaction, purchaseDate: purchaseDate)
@@ -173,22 +175,29 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     }
   }
 
-  private func savePurchasedTransaction(
+  private func savePurchasedAndRestoredTransaction(
     _ transaction: SKPaymentTransaction
   ) async {
-    guard transaction.transactionState == .purchased else {
-      return
-    }
     guard let id = transaction.transactionIdentifier else {
       return
     }
+    let state = SavedTransactionState.from(transaction.transactionState)
     var savedTransactions = storage.get(SavedTransactions.self) ?? []
-    guard savedTransactions.filter({ $0.id == id }).isEmpty else {
+    guard savedTransactions.filter({ $0.id == id && $0.state == state }).isEmpty else {
       return
     }
-    let isExternal = await coordinator.isExternalPurchase
+    let isExternal: Bool
+    switch transaction.transactionState {
+    case .purchased:
+      isExternal = await coordinator.isExternal
+    case .restored:
+      isExternal = restoration.isExternal
+    default:
+      return
+    }
     let transaction = SavedTransaction(
       id: id,
+      state: state,
       date: Date(),
       hasExternalPurchaseController: factory.makeHasExternalPurchaseController(),
       isExternal: isExternal
@@ -199,18 +208,18 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
 
   func paymentQueue(_ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]) {
     // Retrieve saved transactions from storage
-    var savedTransactions = storage.get(SavedTransactions.self) ?? []
+    var savedPurchasedTransactions = storage.get(SavedTransactions.self) ?? []
 
     // Filter out the transactions that have been removed
     let removedTransactionIDs = Set(transactions.compactMap { $0.transactionIdentifier })
 
-    savedTransactions = savedTransactions.filter { savedTransaction in
+    savedPurchasedTransactions = savedPurchasedTransactions.filter { savedTransaction in
       // Keep only transactions that are not in the removedTransactionIDs
       !removedTransactionIDs.contains(savedTransaction.id)
     }
 
     // Save the updated savedTransactions back to storage
-    storage.save(savedTransactions, forType: SavedTransactions.self)
+    storage.save(savedPurchasedTransactions, forType: SavedTransactions.self)
   }
 
   /// Sends a `PurchaseResult` to the completion block and stores the latest purchased transaction.
@@ -218,19 +227,32 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     for skTransaction: SKPaymentTransaction,
     purchaseDate: Date?
   ) async {
-    // Doesn't continue if the purchase was initiated internally and an
+    // Doesn't continue if the purchase/restore was initiated internally and an
     // external purchase controller is being used. The transaction may be
     // readded to the queue if finishing fails so we need to make sure
     // we can re-finish the transaction.
+
     let savedTransactions = storage.get(SavedTransactions.self) ?? []
-    guard let savedTransaction = savedTransactions.first(
+    if let savedTransactions = savedTransactions.first(
       where: { $0.id == skTransaction.transactionIdentifier }
-    ) else {
-      return
-    }
-    if !savedTransaction.isExternal,
-      savedTransaction.hasExternalPurchaseController {
-      return
+    ) {
+      // If an unfinished, purchased or restored transaction gets readded
+      // to the queue, we want to check how it was purchased originally and act accordingly.
+      if !savedTransactions.isExternal,
+        savedTransactions.hasExternalPurchaseController {
+        return
+      }
+    } else {
+      // Otherwise, we rely on what the current purchase coordinator says to determine whether
+      // the purchase was made internally or not.
+      // Restored transactions will be caught above so that relying on the purchase coordinator
+      // is fine.
+      let isInternal = await !coordinator.isExternal
+
+      if isInternal,
+        factory.makeHasExternalPurchaseController() {
+        return
+      }
     }
 
     switch skTransaction.transactionState {

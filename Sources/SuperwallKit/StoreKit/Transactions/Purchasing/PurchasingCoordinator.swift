@@ -12,7 +12,7 @@ import StoreKit
 actor PurchasingCoordinator {
   private var completion: ((PurchaseResult) -> Void)?
   var productId: String?
-  var isExternalPurchase = false
+  var isExternal = false
   var lastInternalTransaction: SKPaymentTransaction?
   var purchaseDate: Date?
   var transactions: [String: SKPaymentTransaction] = [:]
@@ -38,7 +38,7 @@ actor PurchasingCoordinator {
   ) {
     self.purchaseDate = Date()
     self.productId = productId
-    self.isExternalPurchase = isExternal
+    self.isExternal = isExternal
   }
 
   /// Gets the latest transaction of a specified product ID. Used with purchases, including when a purchase has

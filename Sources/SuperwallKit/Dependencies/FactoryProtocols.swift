@@ -144,7 +144,7 @@ protocol PurchasedTransactionsFactory {
     product: SKProduct,
     isExternal: Bool
   ) async -> PurchaseResult
-  func restorePurchases() async -> RestorationResult
+  func restorePurchases(isExternal: Bool) async -> RestorationResult
 }
 
 protocol UserAttributesEventFactory {
