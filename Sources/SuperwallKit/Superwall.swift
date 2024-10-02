@@ -719,7 +719,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// the restore  did not fail due to some error. User will see an alert if ``Superwall/subscriptionStatus``
   /// is not ``SubscriptionStatus/active`` after returning this value.
   public func restorePurchases() async -> RestorationResult {
-    let result = await dependencyContainer.restorePurchases(isExternal: true)
+    let result = await dependencyContainer.transactionManager.tryToRestore(.external)
     return result
   }
 
@@ -791,7 +791,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
       }
       await purchaseTask?.value
     case .initiateRestore:
-      await dependencyContainer.transactionManager.tryToRestore(from: paywallViewController)
+      await dependencyContainer.transactionManager.tryToRestore(.internal(paywallViewController))
     case .openedURL(let url):
       dependencyContainer.delegateAdapter.paywallWillOpenURL(url: url)
     case .openedUrlInSafari(let url):

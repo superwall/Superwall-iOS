@@ -22,6 +22,7 @@ final class TransactionManager {
     & PurchasedTransactionsFactory
     & StoreTransactionFactory
     & DeviceHelperFactory
+    & HasExternalPurchaseControllerFactory
 
   init(
     storeKitManager: StoreKitManager,
@@ -79,7 +80,7 @@ final class TransactionManager {
     case .restored:
       await didRestore(
         product: product,
-        purchaseSource: purchaseSource
+        restoreSource: purchaseSource.toRestoreSource()
       )
     case .failed(let error):
       let superwallOptions = factory.makeSuperwallOptions()
@@ -113,7 +114,7 @@ final class TransactionManager {
         await presentAlert(
           title: "An error occurred",
           message: error.safeLocalizedDescription,
-          purchaseSource: purchaseSource
+          source: purchaseSource.toGenericSource()
         )
       }
     case .pending:
@@ -126,77 +127,129 @@ final class TransactionManager {
   }
 
   @MainActor
-  func tryToRestore(from paywallViewController: PaywallViewController) async {
-    Logger.debug(
-      logLevel: .debug,
-      scope: .paywallTransactions,
-      message: "Attempting Restore"
-    )
-
-    paywallViewController.loadingState = .loadingPurchase
-
-    let trackedEvent = InternalSuperwallEvent.Restore(
-      state: .start,
-      paywallInfo: paywallViewController.info
-    )
-    await Superwall.shared.track(trackedEvent)
-    paywallViewController.webView.messageHandler.handle(.restoreStart)
-
-    let restorationResult = await purchaseController.restorePurchases()
-
-    let hasRestored = restorationResult == .restored
-    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
-
-    if hasRestored && isUserSubscribed {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .paywallTransactions,
-        message: "Transactions Restored"
-      )
-
-      await didRestore(purchaseSource: .internal("", paywallViewController))
-
-      let trackedEvent = InternalSuperwallEvent.Restore(
-        state: .complete,
-        paywallInfo: paywallViewController.info
-      )
-      await Superwall.shared.track(trackedEvent)
-      paywallViewController.webView.messageHandler.handle(.restoreComplete)
-    } else {
-      var message = "Transactions Failed to Restore."
-
-      if !isUserSubscribed && hasRestored {
-        message += " The user's subscription status is \"inactive\", but the restoration result is \"restored\". Ensure the subscription status is active before confirming successful restoration."
-      }
-      if case .failed(let error) = restorationResult,
-        let error = error {
-        message += " Original restoration error message: \(error.safeLocalizedDescription)"
-      }
-
+  @discardableResult
+  func tryToRestore(_ restoreSource: RestoreSource) async -> RestorationResult {
+    func logAndTrack(
+      state: InternalSuperwallEvent.Restore.State,
+      message: String,
+      paywallInfo: PaywallInfo
+    ) async {
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
         message: message
       )
-
       let trackedEvent = InternalSuperwallEvent.Restore(
-        state: .fail(message),
-        paywallInfo: paywallViewController.info
+        state: state,
+        paywallInfo: paywallInfo
       )
       await Superwall.shared.track(trackedEvent)
-      paywallViewController.webView.messageHandler.handle(.restoreFail(message))
+    }
 
-      paywallViewController.presentAlert(
-        title: Superwall.shared.options.paywalls.restoreFailed.title,
-        message: Superwall.shared.options.paywalls.restoreFailed.message,
-        closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle
+    func handleRestoreResult(
+      _ restorationResult: RestorationResult,
+      paywallInfo: PaywallInfo,
+      paywallViewController: PaywallViewController?
+    ) async -> Bool {
+      let hasRestored = restorationResult == .restored
+      let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
+
+      if hasRestored && isUserSubscribed {
+        await logAndTrack(
+          state: .complete,
+          message: "Transactions Restored",
+          paywallInfo: paywallInfo
+        )
+        await didRestore(restoreSource: restoreSource)
+        return true
+      } else {
+        var message = "Transactions Failed to Restore."
+        if !isUserSubscribed && hasRestored {
+          message += " The user's subscription status is \"inactive\", but the restoration result is \"restored\". Ensure the subscription status is active before confirming successful restoration."
+        }
+        if case .failed(let error) = restorationResult,
+          let error = error {
+          message += " Original restoration error message: \(error.safeLocalizedDescription)"
+        }
+        await logAndTrack(
+          state: .fail(message),
+          message: message,
+          paywallInfo: paywallInfo
+        )
+        if let paywallViewController = paywallViewController {
+          paywallViewController.webView.messageHandler.handle(.restoreFail(message))
+        }
+        return false
+      }
+    }
+
+    switch restoreSource {
+    case .internal(let paywallViewController):
+      paywallViewController.loadingState = .loadingPurchase
+
+      await logAndTrack(
+        state: .start,
+        message: "Attempting Restore",
+        paywallInfo: paywallViewController.info
       )
+      paywallViewController.webView.messageHandler.handle(.restoreStart)
+
+      let restorationResult = await purchaseController.restorePurchases()
+      let success = await handleRestoreResult(
+        restorationResult,
+        paywallInfo: paywallViewController.info,
+        paywallViewController: paywallViewController
+      )
+
+      if success {
+        paywallViewController.webView.messageHandler.handle(.restoreComplete)
+      } else {
+        paywallViewController.presentAlert(
+          title: Superwall.shared.options.paywalls.restoreFailed.title,
+          message: Superwall.shared.options.paywalls.restoreFailed.message,
+          closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle
+        )
+      }
+      return restorationResult
+    case .external:
+      let hasExternalPurchaseController = factory.makeHasExternalPurchaseController()
+
+      // If there's an external purchase controller, it means they'll be restoring inside the
+      // restore function. So, when that function returns, it will hit the internal case first,
+      // then here only to do the actual restore, before returning.
+      if hasExternalPurchaseController {
+        return await factory.restorePurchases(isExternal: true)
+      }
+
+      await logAndTrack(
+        state: .start,
+        message: "Attempting Restore",
+        paywallInfo: .empty()
+      )
+
+      let restorationResult = await factory.restorePurchases(isExternal: true)
+      let success = await handleRestoreResult(
+        restorationResult,
+        paywallInfo: .empty(),
+        paywallViewController: nil
+      )
+
+      if !success {
+        await presentAlert(
+          title: Superwall.shared.options.paywalls.restoreFailed.title,
+          message: Superwall.shared.options.paywalls.restoreFailed.message,
+          closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle,
+          source: restoreSource
+        )
+      }
+
+      return restorationResult
     }
   }
 
   private func didRestore(
     product: StoreProduct? = nil,
-    purchaseSource: PurchaseSource
+    restoreSource: RestoreSource
   ) async {
     let purchasingCoordinator = factory.makePurchasingCoordinator()
     var transaction: StoreTransaction?
@@ -214,8 +267,8 @@ final class TransactionManager {
       restoreType = .viaRestore
     }
 
-    switch purchaseSource {
-    case .internal(_, let paywallViewController):
+    switch restoreSource {
+    case .internal(let paywallViewController):
       let paywallInfo = await paywallViewController.info
 
       let trackedEvent = InternalSuperwallEvent.Transaction(
@@ -231,7 +284,7 @@ final class TransactionManager {
       if superwallOptions.paywalls.automaticallyDismiss {
         await Superwall.shared.dismiss(paywallViewController, result: .restored)
       }
-    case .external(let product):
+    case .external:
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .restore(restoreType),
         paywallInfo: .empty(),
@@ -530,20 +583,22 @@ final class TransactionManager {
     await presentAlert(
       title: "Waiting for Approval",
       message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.",
-      purchaseSource: purchaseSource
+      source: purchaseSource.toGenericSource()
     )
   }
 
   private func presentAlert(
     title: String,
     message: String,
-    purchaseSource: PurchaseSource
+    closeActionTitle: String? = nil,
+    source: GenericSource
   ) async {
-    switch purchaseSource {
-    case .internal(_, let paywallViewController):
+    switch source {
+    case .internal(let paywallViewController):
       await paywallViewController.presentAlert(
         title: title,
-        message: message
+        message: message,
+        closeActionTitle: closeActionTitle ?? "Done"
       )
     case .external:
       guard let topMostViewController = await UIViewController.topMostViewController else {
@@ -557,6 +612,7 @@ final class TransactionManager {
       let alertController = await AlertControllerFactory.make(
         title: title,
         message: message,
+        closeActionTitle: closeActionTitle ?? "Done",
         sourceView: topMostViewController.view
       )
       await topMostViewController.present(alertController, animated: true)
