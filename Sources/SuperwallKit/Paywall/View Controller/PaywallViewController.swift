@@ -19,6 +19,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     return paywallStateSubject?.eraseToAnyPublisher()
   }
 
+  /// A publisher that emits ``PaywallLoadingState`` objects, which tell you the loading state of the presented paywall.
+  public var loadingStatePublisher: AnyPublisher<PaywallLoadingState, Never>? {
+    return paywallLoadingStateSubject?.eraseToAnyPublisher()
+  }
+
   /// Defines whether the presentation should animate based on the presentation style.
   @objc public var presentationIsAnimated: Bool {
     return presentationStyle != .fullscreenNoAnimation
@@ -60,6 +65,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     didSet {
       if loadingState != oldValue {
         loadingStateDidChange(from: oldValue)
+        paywallLoadingStateSubject?.send(loadingState)
+        delegate?.loadingStateDidChange(
+         paywall: self,
+         loadingState: loadingState
+        )
       }
     }
   }
@@ -73,6 +83,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// This publisher is set on presentation of the paywall.
   private var paywallStateSubject: PassthroughSubject<PaywallState, Never>?
 
+  /// This publisher is set on loading state change of the paywall.
+  private var paywallLoadingStateSubject: PassthroughSubject<PaywallLoadingState, Never>?
+
   private weak var eventDelegate: PaywallViewControllerEventDelegate?
 
   /// Defines whether the view controller is being presented or not.
@@ -85,10 +98,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var paywallResult: PaywallResult?
 
   /// A timer that shows the refresh buttons/modal when it fires.
-	private var showRefreshTimer: Timer?
+  private var showRefreshTimer: Timer?
 
   /// Defines when Safari is presenting in app.
-	private var isSafariVCPresented = false
+  private var isSafariVCPresented = false
 
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
@@ -199,7 +212,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-		configureUI()
+    configureUI()
     loadWebView()
 	}
 

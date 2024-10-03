@@ -33,6 +33,15 @@ final class PaywallViewControllerDelegateAdapter {
     swiftDelegate?.paywall(paywall, didFinishWith: result, shouldDismiss: shouldDismiss)
     objcDelegate?.paywall(paywall, didFinishWithResult: result.convertForObjc(), shouldDismiss: shouldDismiss)
   }
+
+  @MainActor
+   func loadingStateDidChange(
+    paywall: PaywallViewController,
+    loadingState: PaywallLoadingState
+  ) {
+    swiftDelegate?.paywall(paywall, loadingStateDidChangeWith: loadingState)
+    objcDelegate?.paywall(paywall, didChangeWithLoadingState: loadingState.convertForObjc())
+  }
 }
 
 // MARK: - Stubbable
