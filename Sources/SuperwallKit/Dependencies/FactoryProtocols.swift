@@ -138,8 +138,11 @@ protocol TriggerFactory: AnyObject {
 
 protocol PurchasedTransactionsFactory {
   func makePurchasingCoordinator() -> PurchasingCoordinator
-  func purchase(product: StoreProduct) async -> PurchaseResult
-  func restorePurchases() async -> RestorationResult
+  func purchase(
+    product: StoreProduct,
+    isExternal: Bool
+  ) async -> PurchaseResult
+  func restorePurchases(isExternal: Bool) async -> RestorationResult
 }
 
 protocol UserAttributesPlacementFactory {

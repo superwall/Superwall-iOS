@@ -29,6 +29,8 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
   case receipts
   case superwallCore
   case paywallPresentation
+
+  // TODO: In v4 rename to transactions
   case paywallTransactions
   case paywallViewController
   case cache
