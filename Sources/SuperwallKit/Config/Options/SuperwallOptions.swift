@@ -188,6 +188,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     case isExternalDataCollectionEnabled
     case localeIdentifier
     case isGameControllerEnabled
+    case collectAdServicesAttribution
   }
 
   public func encode(to encoder: Encoder) throws {
@@ -200,6 +201,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(isExternalDataCollectionEnabled, forKey: .isExternalDataCollectionEnabled)
     try container.encode(localeIdentifier, forKey: .localeIdentifier)
     try container.encode(isGameControllerEnabled, forKey: .isGameControllerEnabled)
+    try container.encode(collectAdServicesAttribution, forKey: .collectAdServicesAttribution)
   }
 
   func toDictionary() -> [String: Any] {

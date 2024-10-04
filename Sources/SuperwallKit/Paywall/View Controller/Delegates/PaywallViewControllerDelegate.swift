@@ -28,6 +28,25 @@ public protocol PaywallViewControllerDelegate: AnyObject {
     didFinishWith result: PaywallResult,
     shouldDismiss: Bool
   )
+
+  /// Tells the delegate that the loading state of the paywall did change.
+  ///
+  /// - Parameters:
+  ///   - paywall: The ``PaywallViewController`` that the user is interacting with.
+  ///   - loadingState: A ``PaywallLoadingState`` enum that contains the loading state of
+  ///   the ``PaywallViewController``.
+  @MainActor
+  func paywall(
+    _ paywall: PaywallViewController,
+    loadingStateDidChange loadingState: PaywallLoadingState
+  )
+}
+
+extension PaywallViewControllerDelegate {
+  public func paywall(
+    _ paywall: PaywallViewController,
+    loadingStateDidChange loadingState: PaywallLoadingState
+  ) {}
 }
 
 /// Objective-C-only interface for responding to user interactions with a ``PaywallViewController`` that
@@ -52,6 +71,25 @@ public protocol PaywallViewControllerDelegateObjc: AnyObject {
     didFinishWithResult result: PaywallResultObjc,
     shouldDismiss: Bool
   )
+
+  /// Tells the delegate that the loading state of the paywall did change.
+  ///
+  /// - Parameters:
+  ///   - paywall: The ``PaywallViewController`` that the user is interacting with.
+  ///   - loadingState: A ``PaywallLoadingState`` enum that contains the loading state of
+  ///   the ``PaywallViewController``.
+  @MainActor
+  func paywall(
+    _ paywall: PaywallViewController,
+    loadingStateDidChange loadingState: PaywallLoadingState
+  )
+}
+
+extension PaywallViewControllerDelegateObjc {
+  public func paywall(
+    _ paywall: PaywallViewController,
+    loadingStateDidChange loadingState: PaywallLoadingState
+  ) {}
 }
 
 protocol PaywallViewControllerEventDelegate: AnyObject {
@@ -59,21 +97,4 @@ protocol PaywallViewControllerEventDelegate: AnyObject {
     _ paywallEvent: PaywallWebEvent,
     on paywallViewController: PaywallViewController
   ) async
-}
-
-enum PaywallLoadingState {
-  /// The initial state of the paywall
-  case unknown
-
-  /// When a purchase is loading
-  case loadingPurchase
-
-  /// When the paywall URL is loading
-  case loadingURL
-
-  /// When the user has manually shown the spinner
-  case manualLoading
-
-  /// When everything has loaded.
-  case ready
 }

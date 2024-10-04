@@ -55,11 +55,17 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     )
   }
 
-  /// The loading state of the paywall.
-  var loadingState: PaywallLoadingState = .unknown {
+  /// A published property that indicates the loading state of the paywall.
+  ///
+  /// This is a published value
+  @Published public internal(set) var loadingState: PaywallLoadingState = .unknown {
     didSet {
       if loadingState != oldValue {
         loadingStateDidChange(from: oldValue)
+        delegate?.loadingStateDidChange(
+          paywall: self,
+          loadingState: loadingState
+        )
       }
     }
   }
@@ -85,10 +91,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var paywallResult: PaywallResult?
 
   /// A timer that shows the refresh buttons/modal when it fires.
-	private var showRefreshTimer: Timer?
+  private var showRefreshTimer: Timer?
 
   /// Defines when Safari is presenting in app.
-	private var isSafariVCPresented = false
+  private var isSafariVCPresented = false
 
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
@@ -199,7 +205,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-		configureUI()
+    configureUI()
     loadWebView()
 	}
 
