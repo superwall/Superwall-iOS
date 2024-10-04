@@ -653,8 +653,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// - Parameter product: The `SKProduct` you wish to purchase.
   /// - Returns: A ``PurchaseResult``.
-  /// - Note: You do not need to finish the transaction yourself after this.
-  /// ``Superwall`` will handle this for you.
+  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
+  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   public func purchase(_ product: SKProduct) async -> PurchaseResult {
     let storeProduct = StoreProduct(sk1Product: product)
     return await dependencyContainer.transactionManager.purchase(.external(storeProduct))
@@ -671,8 +671,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - product: The `SKProduct` you wish to purchase.
   ///   - completion: A completion block that is called when the purchase completes.
   ///   This accepts a ``PurchaseResult``.
-  /// - Note: You do not need to finish the transaction yourself in the completion block.
-  /// ``Superwall`` will handle this for you.
+  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
+  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   public func purchase(
     _ product: SKProduct,
     completion: @escaping (PurchaseResult) -> Void
@@ -697,8 +697,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - product: The `SKProduct` you wish to purchase.
   ///   - completion: A completion block that is called when the purchase completes.
   ///   This accepts a ``PurchaseResult``.
-  /// - Note: You do not need to finish the transaction yourself in the completion block.
-  /// ``Superwall`` will handle this for you.
+  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
+  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   @available(swift, obsoleted: 1.0)
   public func purchase(
     _ product: SKProduct,
@@ -716,8 +716,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// on request of the user. Typically with a button in settings or near your purchase UI.
   /// - Returns: A ``RestorationResult`` object that defines if the restoration was successful or not.
   /// - Warning: A successful restoration does not mean that the user is subscribed, only that
-  /// the restore  did not fail due to some error. User will see an alert if ``Superwall/subscriptionStatus``
-  /// is not ``SubscriptionStatus/active`` after returning this value.
+  /// the restore  did not fail due to some error. If you aren't using a ``PurchaseController``, the user will
+  /// see an alert if ``Superwall/subscriptionStatus`` is not ``SubscriptionStatus/active``
+  /// after returning this value.
   public func restorePurchases() async -> RestorationResult {
     let result = await dependencyContainer.transactionManager.tryToRestore(.external)
     return result
@@ -730,8 +731,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameter completion: A completion block that is called when the restoration completes.
   ///   This accepts a ``RestorationResult``.
   /// - Warning: A successful restoration does not mean that the user is subscribed, only that
-  /// the restore  did not fail due to some error. User will see an alert if ``Superwall/subscriptionStatus``
-  /// is not ``SubscriptionStatus/active`` after returning this value.
+  /// the restore  did not fail due to some error. If you aren't using a ``PurchaseController``, the user will
+  /// see an alert if ``Superwall/subscriptionStatus`` is not ``SubscriptionStatus/active``
+  /// after returning this value.
   public func restorePurchases(completion: @escaping (RestorationResult) -> Void) {
     Task {
       let result = await restorePurchases()
@@ -748,8 +750,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameter completion: A completion block that is called when the restoration completes.
   ///   This accepts a ``RestorationResultObjc``.
   /// - Warning: A successful restoration does not mean that the user is subscribed, only that
-  /// the restore  did not fail due to some error. User will see an alert if ``Superwall/subscriptionStatus``
-  /// is not ``SubscriptionStatus/active`` after returning this value.
+  /// the restore  did not fail due to some error. If you aren't using a ``PurchaseController``, the user will
+  /// see an alert if ``Superwall/subscriptionStatus`` is not ``SubscriptionStatus/active``
+  /// after returning this value.
   @available(swift, obsoleted: 1.0)
   public func restorePurchases(completion: @escaping (RestorationResultObjc) -> Void) {
     restorePurchases { result in
