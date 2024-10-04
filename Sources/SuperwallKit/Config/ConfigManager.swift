@@ -241,7 +241,10 @@ class ConfigManager {
     }
   }
 
-  func fetchWithTimeout<T>(_ task: @escaping () async throws -> T, timeout: TimeInterval) async throws -> T {
+  private func fetchWithTimeout<T>(
+    _ task: @escaping () async throws -> T,
+    timeout: TimeInterval
+  ) async throws -> T {
     try await withThrowingTaskGroup(of: T.self) { group in
       group.addTask {
         try await task()
