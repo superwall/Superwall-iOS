@@ -8,6 +8,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `purchase(_:)` to initiate a purchase of an `SKProduct` via Superwall regardless of whether you are using paywalls or not.
 - Adds `restorePurchases()` to restore purchases via Superwall.
+- Adds an optional `paywall(_:loadingStateDidChange)` function to the `PaywallViewControllerDelegate`. This is called when the loading state of the presented `PaywallViewController` did change.
+- Makes `loadingState` on the `PaywallViewController` a public published property.
 
 ### Fixes
 
