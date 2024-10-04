@@ -19,11 +19,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     return paywallStateSubject?.eraseToAnyPublisher()
   }
 
-  /// A publisher that emits ``PaywallLoadingState`` objects, which tell you the loading state of the presented paywall.
-  public var loadingStatePublisher: AnyPublisher<PaywallLoadingState, Never>? {
-    return paywallLoadingStateSubject?.eraseToAnyPublisher()
-  }
-
   /// Defines whether the presentation should animate based on the presentation style.
   @objc public var presentationIsAnimated: Bool {
     return presentationStyle != .fullscreenNoAnimation
@@ -60,15 +55,16 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     )
   }
 
-  /// The loading state of the paywall.
-  var loadingState: PaywallLoadingState = .unknown {
+  /// A published property that indicates the loading state of the paywall.
+  ///
+  /// This is a published value
+  @Published public internal(set) var loadingState: PaywallLoadingState = .unknown {
     didSet {
       if loadingState != oldValue {
         loadingStateDidChange(from: oldValue)
-        paywallLoadingStateSubject?.send(loadingState)
         delegate?.loadingStateDidChange(
-         paywall: self,
-         loadingState: loadingState
+          paywall: self,
+          loadingState: loadingState
         )
       }
     }
@@ -82,9 +78,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   ///
   /// This publisher is set on presentation of the paywall.
   private var paywallStateSubject: PassthroughSubject<PaywallState, Never>?
-
-  /// This publisher is set on loading state change of the paywall.
-  private var paywallLoadingStateSubject: PassthroughSubject<PaywallLoadingState, Never>?
 
   private weak var eventDelegate: PaywallViewControllerEventDelegate?
 

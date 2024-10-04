@@ -29,7 +29,7 @@ public protocol PaywallViewControllerDelegate: AnyObject {
     shouldDismiss: Bool
   )
 
-  /// Tells the delegate that the loading state of a paywall did change.
+  /// Tells the delegate that the loading state of the paywall did change.
   ///
   /// - Parameters:
   ///   - paywall: The ``PaywallViewController`` that the user is interacting with.
@@ -38,8 +38,15 @@ public protocol PaywallViewControllerDelegate: AnyObject {
   @MainActor
   func paywall(
     _ paywall: PaywallViewController,
-    loadingStateDidChangeWith loadingState: PaywallLoadingState
+    loadingStateDidChange loadingState: PaywallLoadingState
   )
+}
+
+extension PaywallViewControllerDelegate {
+  public func paywall(
+    _ paywall: PaywallViewController,
+    loadingStateDidChange loadingState: PaywallLoadingState
+  ) {}
 }
 
 /// Objective-C-only interface for responding to user interactions with a ``PaywallViewController`` that
@@ -65,7 +72,7 @@ public protocol PaywallViewControllerDelegateObjc: AnyObject {
     shouldDismiss: Bool
   )
 
-  /// Tells the delegate that the loading state of a paywall did change.
+  /// Tells the delegate that the loading state of the paywall did change.
   ///
   /// - Parameters:
   ///   - paywall: The ``PaywallViewController`` that the user is interacting with.
@@ -74,8 +81,15 @@ public protocol PaywallViewControllerDelegateObjc: AnyObject {
   @MainActor
   func paywall(
     _ paywall: PaywallViewController,
-    didChangeWithLoadingState loadingState: PaywallLoadingStateObjc
+    loadingStateDidChange loadingState: PaywallLoadingState
   )
+}
+
+extension PaywallViewControllerDelegateObjc {
+  public func paywall(
+    _ paywall: PaywallViewController,
+    loadingStateDidChange loadingState: PaywallLoadingState
+  ) {}
 }
 
 protocol PaywallViewControllerEventDelegate: AnyObject {
