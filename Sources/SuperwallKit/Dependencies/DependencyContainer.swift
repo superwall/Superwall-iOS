@@ -139,7 +139,6 @@ final class DependencyContainer {
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
       identityManager: identityManager,
-      storage: storage,
       factory: self
     )
   }
@@ -468,13 +467,11 @@ extension DependencyContainer: PurchasedTransactionsFactory {
   }
 
   func purchase(product: StoreProduct) async -> PurchaseResult {
-    return await productPurchaser.purchase(
-      product: product
-    )
+    return await purchaseManager.purchase(product: product)
   }
 
   func restorePurchases() async -> RestorationResult {
-    return await productPurchaser.restorePurchases()
+    return await purchaseManager.restorePurchases()
   }
 }
 

@@ -130,7 +130,7 @@ final class TransactionManager {
   @discardableResult
   func tryToRestore(_ restoreSource: RestoreSource) async -> RestorationResult {
     func logAndTrack(
-      state: InternalSuperwallEvent.Restore.State,
+      state: InternalSuperwallPlacement.Restore.State,
       message: String,
       paywallInfo: PaywallInfo
     ) async {
@@ -139,7 +139,7 @@ final class TransactionManager {
         scope: .paywallTransactions,
         message: message
       )
-      let trackedEvent = InternalSuperwallEvent.Restore(
+      let trackedEvent = InternalSuperwallPlacement.Restore(
         state: state,
         paywallInfo: paywallInfo
       )
@@ -164,7 +164,7 @@ final class TransactionManager {
         return true
       } else {
         var message = "Transactions Failed to Restore."
-        if !isUserSubscribed && hasRestored {
+        if !hasActiveEntitlements && hasRestored {
           message +=
             " The restoration result is \"restored\" but there are no active entitlements. Ensure the active entitlements are set before confirming successful restoration."
         }
@@ -287,7 +287,7 @@ final class TransactionManager {
         await Superwall.shared.dismiss(paywallViewController, result: .restored)
       }
     case .external:
-      let trackedEvent = InternalSuperwallEvent.Transaction(
+      let trackedEvent = InternalSuperwallPlacement.Transaction(
         state: .restore(restoreType),
         paywallInfo: .empty(),
         product: product,
@@ -338,7 +338,7 @@ final class TransactionManager {
 
       let paywallInfo = await paywallViewController.info
       Task {
-        let trackedEvent = InternalSuperwallEvent.Transaction(
+        let trackedEvent = InternalSuperwallPlacement.Transaction(
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: paywallInfo,
           product: product,
@@ -359,7 +359,7 @@ final class TransactionManager {
       )
 
       Task {
-        let trackedEvent = InternalSuperwallEvent.Transaction(
+        let trackedEvent = InternalSuperwallPlacement.Transaction(
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: .empty(),
           product: product,
@@ -522,7 +522,7 @@ final class TransactionManager {
         error: nil
       )
 
-      let trackedEvent = InternalSuperwallEvent.Transaction(
+      let trackedEvent = InternalSuperwallPlacement.Transaction(
         state: .abandon(product),
         paywallInfo: .empty(),
         product: product,
@@ -561,7 +561,7 @@ final class TransactionManager {
         error: nil
       )
 
-      let trackedEvent = InternalSuperwallEvent.Transaction(
+      let trackedEvent = InternalSuperwallPlacement.Transaction(
         state: .fail(.pending("Needs parental approval")),
         paywallInfo: .empty(),
         product: nil,
@@ -633,8 +633,8 @@ final class TransactionManager {
       await Superwall.shared.track(transactionComplete)
       await paywallViewController.webView.messageHandler.handle(.transactionComplete)
 
-      // Immediately flush the events queue on transaction complete.
-      await eventsQueue.flushInternal()
+      // Immediately flush the placements queue on transaction complete.
+      await placementsQueue.flushInternal()
 
       if product.subscriptionPeriod == nil {
         let nonRecurringProductPurchase = InternalSuperwallPlacement.NonRecurringProductPurchase(
@@ -656,7 +656,7 @@ final class TransactionManager {
 
           await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
         } else {
-          let subscriptionStart = InternalSuperwallEvent.SubscriptionStart(
+          let subscriptionStart = InternalSuperwallPlacement.SubscriptionStart(
             paywallInfo: paywallInfo,
             product: product
           )
@@ -672,8 +672,8 @@ final class TransactionManager {
       )
       await Superwall.shared.track(transactionComplete)
 
-      // Immediately flush the events queue on transaction complete.
-      await eventsQueue.flushInternal()
+      // Immediately flush the placements queue on transaction complete.
+      await placementsQueue.flushInternal()
 
       if product.subscriptionPeriod == nil {
         let nonRecurringProductPurchase = InternalSuperwallPlacement.NonRecurringProductPurchase(

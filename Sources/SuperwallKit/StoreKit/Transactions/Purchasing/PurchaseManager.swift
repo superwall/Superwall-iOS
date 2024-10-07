@@ -64,5 +64,3 @@ final class PurchaseManager: Purchasing {
     return await purchaser.restorePurchases()
   }
 }
-
-// TODO: Check whether the load purchased products is still happening if using purchase controller. (It shouldn't)

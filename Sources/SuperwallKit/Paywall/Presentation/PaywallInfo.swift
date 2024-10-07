@@ -281,7 +281,7 @@ public final class PaywallInfo: NSObject {
     var output: [String: Any] = [
       "paywall_id": databaseId,
       "paywall_name": name,
-      "presented_by_event_name": presentedByPlacementWithName as Any,
+      "presented_by_placement_name": presentedByPlacementWithName as Any,
       "paywall_product_ids": productIds.joined(separator: ","),
       "is_free_trial_available": isFreeTrialAvailable as Any,
       "feature_gating": featureGatingBehavior.description as Any,
@@ -342,7 +342,6 @@ extension PaywallInfo: Stubbable {
       surveys: [],
       presentation: .init(
         style: .none,
-        condition: .checkUserSubscription,
         delay: 0
       )
     )
@@ -358,9 +357,8 @@ extension PaywallInfo: Stubbable {
       buildId: "",
       url: URL(string: "https://superwall.com")!,
       products: [],
-      productItems: [],
       productIds: [],
-      fromEventData: nil,
+      fromPlacementData: nil,
       responseLoadStartTime: nil,
       responseLoadCompleteTime: nil,
       responseLoadFailTime: nil,
@@ -389,7 +387,6 @@ extension PaywallInfo: Stubbable {
       surveys: [],
       presentation: .init(
         style: .none,
-        condition: .checkUserSubscription,
         delay: 0
       )
     )

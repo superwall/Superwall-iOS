@@ -29,7 +29,6 @@ actor SK2TransactionListener {
 
   func listenForTransactions() {
     self.taskHandle?.cancel()
-
     self.taskHandle = Task(priority: .utility) { [weak self] in
       for await result in Transaction.updates {
         guard let self = self else { break }
