@@ -31,6 +31,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Updates the RevenueCat example app to use StoreKit 2.
 
+## 3.10.1
+
+### Fixes
+
+- Tweaks logic for `purchase(_:)` and `restorePurchases()` so the SDK never finishes transactions made when there's a purchase controller present.
+
 ## 3.10.0
 
 ### Enhancements

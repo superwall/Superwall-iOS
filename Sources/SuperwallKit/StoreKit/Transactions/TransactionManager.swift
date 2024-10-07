@@ -1,14 +1,14 @@
 //
 //  File 2.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 20/10/2022.
 //
 // swiftlint:disable type_body_length file_length line_length function_body_length
 
+import Combine
 import StoreKit
 import UIKit
-import Combine
 
 final class TransactionManager {
   private let storeKitManager: StoreKitManager
@@ -53,7 +53,8 @@ final class TransactionManager {
         Logger.debug(
           logLevel: .error,
           scope: .paywallTransactions,
-          message: "Trying to purchase \(productId) but the product has failed to load. Visit https://superwall.com/l/missing-products to diagnose."
+          message:
+            "Trying to purchase \(productId) but the product has failed to load. Visit https://superwall.com/l/missing-products to diagnose."
         )
         return .failed(PurchaseError.productUnavailable)
       }
@@ -81,11 +82,13 @@ final class TransactionManager {
       )
     case .failed(let error):
       let superwallOptions = factory.makeSuperwallOptions()
-      guard let outcome = TransactionErrorLogic.handle(
-        error,
-        triggers: factory.makeTriggers(),
-        shouldShowPurchaseFailureAlert: superwallOptions.paywalls.shouldShowPurchaseFailureAlert
-      ) else {
+      guard
+        let outcome = TransactionErrorLogic.handle(
+          error,
+          triggers: factory.makeTriggers(),
+          shouldShowPurchaseFailureAlert: superwallOptions.paywalls.shouldShowPurchaseFailureAlert
+        )
+      else {
         await trackFailure(
           error: error,
           product: product,
@@ -162,10 +165,12 @@ final class TransactionManager {
       } else {
         var message = "Transactions Failed to Restore."
         if !isUserSubscribed && hasRestored {
-          message += " The restoration result is \"restored\" but there are no active entitlements. Ensure the active entitlements are set before confirming successful restoration."
+          message +=
+            " The restoration result is \"restored\" but there are no active entitlements. Ensure the active entitlements are set before confirming successful restoration."
         }
         if case .failed(let error) = restorationResult,
-          let error = error {
+          let error = error
+        {
           message += " Original restoration error message: \(error.safeLocalizedDescription)"
         }
         await logAndTrack(
@@ -215,7 +220,7 @@ final class TransactionManager {
       // restore function. So, when that function returns, it will hit the internal case first,
       // then here only to do the actual restore, before returning.
       if hasExternalPurchaseController {
-        return await factory.restorePurchases(isExternal: true)
+        return await factory.restorePurchases()
       }
 
       await logAndTrack(
@@ -224,7 +229,7 @@ final class TransactionManager {
         paywallInfo: .empty()
       )
 
-      let restorationResult = await factory.restorePurchases(isExternal: true)
+      let restorationResult = await factory.restorePurchases()
       let success = await handleRestoreResult(
         restorationResult,
         paywallInfo: .empty(),
@@ -268,14 +273,14 @@ final class TransactionManager {
     case .internal(let paywallViewController):
       let paywallInfo = await paywallViewController.info
 
-    let transactionRestore = InternalSuperwallPlacement.Transaction(
-      state: .restore(restoreType),
-      paywallInfo: paywallInfo,
-      product: product,
-      model: transaction
-    )
-    await Superwall.shared.track(transactionRestore)
-    await paywallViewController.webView.messageHandler.handle(.transactionRestore)
+      let transactionRestore = InternalSuperwallPlacement.Transaction(
+        state: .restore(restoreType),
+        paywallInfo: paywallInfo,
+        product: product,
+        model: transaction
+      )
+      await Superwall.shared.track(transactionRestore)
+      await paywallViewController.webView.messageHandler.handle(.transactionRestore)
 
       let superwallOptions = factory.makeSuperwallOptions()
       if superwallOptions.paywalls.automaticallyDismiss {
@@ -296,22 +301,14 @@ final class TransactionManager {
     _ product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async -> PurchaseResult {
+    await factory.makePurchasingCoordinator().beginPurchase(
+      of: product.productIdentifier
+    )
     switch purchaseSource {
     case .internal:
-      await factory.makePurchasingCoordinator().beginPurchase(
-        of: product.productIdentifier,
-        isExternal: false
-      )
       return await purchaseController.purchase(product: product)
     case .external:
-      await factory.makePurchasingCoordinator().beginPurchase(
-        of: product.productIdentifier,
-        isExternal: true
-      )
-      return await factory.purchase(
-        product: product,
-        isExternal: true
-      )
+      return await factory.purchase(product: product)
     }
   }
 
@@ -334,7 +331,7 @@ final class TransactionManager {
         message: "Transaction Error",
         info: [
           "product_id": product.productIdentifier,
-          "paywall_vc": paywallViewController
+          "paywall_vc": paywallViewController,
         ],
         error: error
       )
@@ -433,7 +430,7 @@ final class TransactionManager {
         message: "Transaction Succeeded",
         info: [
           "product_id": product.productIdentifier,
-          "paywall_vc": paywallViewController
+          "paywall_vc": paywallViewController,
         ],
         error: nil
       )
@@ -575,7 +572,8 @@ final class TransactionManager {
 
     await presentAlert(
       title: "Waiting for Approval",
-      message: "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.",
+      message:
+        "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.",
       source: purchaseSource.toGenericSource()
     )
   }
@@ -598,7 +596,8 @@ final class TransactionManager {
         Logger.debug(
           logLevel: .error,
           scope: .paywallTransactions,
-          message: "Could not find the top-most view controller to present a transaction alert from."
+          message:
+            "Could not find the top-most view controller to present a transaction alert from."
         )
         return
       }

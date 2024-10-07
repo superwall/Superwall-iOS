@@ -30,9 +30,9 @@ final class AutomaticPurchaseController {
     }
 
     // If they haven't changed, don't disturb main thread.
-    if
-      Superwall.shared.entitlements.didSetActiveEntitlements,
-      entitlements == Superwall.shared.entitlements.active {
+    if Superwall.shared.entitlements.didSetActiveEntitlements,
+      entitlements == Superwall.shared.entitlements.active
+    {
       return
     }
 
@@ -47,16 +47,12 @@ final class AutomaticPurchaseController {
 extension AutomaticPurchaseController: PurchaseController {
   @MainActor
   func purchase(product: StoreProduct) async -> PurchaseResult {
-    return await factory.purchase(
-      product: product
-      isExternal: false
-    )
+    return await factory.purchase(product: product)
   }
 
   @MainActor
   func restorePurchases() async -> RestorationResult {
-    let result = await factory.restorePurchases(isExternal: false)
-
+    let result = await factory.restorePurchases()
     let hasRestored = result == .restored
     await factory.refreshSK1Receipt()
     if hasRestored {

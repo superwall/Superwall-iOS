@@ -467,18 +467,14 @@ extension DependencyContainer: PurchasedTransactionsFactory {
     return purchaseManager.coordinator
   }
 
-  func purchase(
-    product: StoreProduct,
-    isExternal: Bool
-  ) async -> PurchaseResult {
+  func purchase(product: StoreProduct) async -> PurchaseResult {
     return await productPurchaser.purchase(
-      product: product,
-      isExternal: isExternal
+      product: product
     )
   }
 
-  func restorePurchases(isExternal: Bool) async -> RestorationResult {
-    return await productPurchaser.restorePurchases(isExternal: isExternal)
+  func restorePurchases() async -> RestorationResult {
+    return await productPurchaser.restorePurchases()
   }
 }
 
