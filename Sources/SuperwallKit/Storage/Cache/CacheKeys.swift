@@ -176,11 +176,3 @@ enum AdServicesTokenStorage: Storable {
   static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = String
 }
-
-enum SavedTransactions: Storable {
-  static var key: String {
-    "store.savedTransactions"
-  }
-  static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = Set<SavedTransaction>
-}
