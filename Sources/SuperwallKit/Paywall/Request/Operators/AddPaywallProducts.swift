@@ -41,7 +41,7 @@ extension PaywallRequestManager {
         substituting: request.overrides.products
       )
 
-      paywall.productItems = result.productItems
+      paywall.products = result.productItems
 
       let outcome = await PaywallLogic.getVariablesAndFreeTrial(
         productItems: result.productItems,

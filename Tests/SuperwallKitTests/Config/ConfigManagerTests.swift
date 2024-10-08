@@ -11,6 +11,33 @@ import XCTest
 
 @available(iOS 14.0, *)
 final class ConfigManagerTests: XCTestCase {
+  func test_refreshConfiguration() async {
+    let dependencyContainer = DependencyContainer()
+    let network = NetworkMock(factory: dependencyContainer)
+    let newConfig: Config = .stub()
+      .setting(\.buildId, to: "123")
+    network.configReturnValue = .success(newConfig)
+
+    let configManager = ConfigManager(
+      options: SuperwallOptions(),
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: network,
+      paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      factory: dependencyContainer
+    )
+
+    let oldConfig: Config = .stub()
+      .setting(\.buildId, to: "abc")
+    configManager.configState.send(.retrieved(oldConfig))
+
+    await configManager.refreshConfiguration()
+
+    XCTAssertEqual(configManager.config?.buildId, "123")
+  }
+
   // MARK: - Confirm Assignments
   func test_confirmAssignment() async {
     let experimentId = "abc"
@@ -29,7 +56,8 @@ final class ConfigManagerTests: XCTestCase {
       storage: storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
-      deviceHelper: dependencyContainer.deviceHelper,
+      deviceHelper: dependencyContainer.deviceHelper, 
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
     configManager.confirmAssignment(assignment)
@@ -56,6 +84,7 @@ final class ConfigManagerTests: XCTestCase {
       network: network,
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
 
@@ -82,7 +111,8 @@ final class ConfigManagerTests: XCTestCase {
       storage: storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
-      deviceHelper: dependencyContainer.deviceHelper,
+      deviceHelper: dependencyContainer.deviceHelper, 
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
     configManager.configState.send(.retrieved(.stub()
@@ -105,6 +135,7 @@ final class ConfigManagerTests: XCTestCase {
       network: network,
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
 

@@ -90,7 +90,7 @@ enum PaywallLogic {
   }
 
   static func getVariablesAndFreeTrial(
-    productItems: [ProductItem],
+    productItems: [Product],
     productsById: [String: StoreProduct],
     isFreeTrialAvailableOverride: Bool?,
     isFreeTrialAvailable: @escaping (StoreProduct) async -> Bool

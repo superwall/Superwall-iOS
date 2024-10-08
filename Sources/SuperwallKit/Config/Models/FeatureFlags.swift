@@ -7,13 +7,12 @@
 
 import Foundation
 
-struct RawFeatureFlag: Decodable {
+struct RawFeatureFlag: Codable {
   let key: String
   let enabled: Bool
 }
 
-struct FeatureFlags: Decodable {
-  var enableSessionEvents: Bool
+struct FeatureFlags: Codable {
   var enableExpressionParameters: Bool
   var enableUserIdSeed: Bool
   var disableVerbosePlacements: Bool
@@ -32,7 +31,6 @@ struct FeatureFlags: Decodable {
     let values = try decoder.container(keyedBy: CodingKeys.self)
     let rawFeatureFlags = try values.decode([RawFeatureFlag].self, forKey: .toggles)
 
-    enableSessionEvents = rawFeatureFlags.value(forKey: "enable_session_events", default: false)
     enableExpressionParameters = rawFeatureFlags.value(forKey: "enable_expression_params", default: false)
     enableUserIdSeed = rawFeatureFlags.value(forKey: "enable_userid_seed", default: false)
     disableVerbosePlacements = rawFeatureFlags.value(forKey: "disable_verbose_events", default: false)
@@ -47,8 +45,25 @@ struct FeatureFlags: Decodable {
     enableTextInteraction = rawFeatureFlags.value(forKey: "enable_text_interaction", default: false)
   }
 
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+
+    let rawFeatureFlags = [
+      RawFeatureFlag(key: "enable_expression_params", enabled: enableExpressionParameters),
+      RawFeatureFlag(key: "enable_userid_seed", enabled: enableUserIdSeed),
+      RawFeatureFlag(key: "disable_verbose_events", enabled: disableVerbosePlacements),
+      RawFeatureFlag(key: "enable_suppresses_incremental_rendering", enabled: enableSuppressesIncrementalRendering),
+      RawFeatureFlag(key: "enable_throttle_scheduling_policy", enabled: enableThrottleSchedulingPolicy),
+      RawFeatureFlag(key: "enable_none_scheduling_policy", enabled: enableNoneSchedulingPolicy),
+      RawFeatureFlag(key: "enable_multiple_paywall_urls", enabled: enableMultiplePaywallUrls),
+      RawFeatureFlag(key: "enable_config_refresh", enabled: enableConfigRefresh),
+      RawFeatureFlag(key: "enable_text_interaction", enabled: enableTextInteraction)
+    ]
+
+    try container.encode(rawFeatureFlags, forKey: .toggles)
+  }
+
   init(
-    enableSessionEvents: Bool,
     enableExpressionParameters: Bool,
     enableUserIdSeed: Bool,
     disableVerbosePlacements: Bool,
@@ -59,7 +74,6 @@ struct FeatureFlags: Decodable {
     enableConfigRefresh: Bool,
     enableTextInteraction: Bool
   ) {
-    self.enableSessionEvents = enableSessionEvents
     self.enableExpressionParameters = enableExpressionParameters
     self.enableUserIdSeed = enableUserIdSeed
     self.disableVerbosePlacements = disableVerbosePlacements
@@ -87,7 +101,6 @@ extension Collection where Element == RawFeatureFlag {
 extension FeatureFlags: Stubbable {
   static func stub() -> FeatureFlags {
     return FeatureFlags(
-      enableSessionEvents: true,
       enableExpressionParameters: true,
       enableUserIdSeed: true,
       disableVerbosePlacements: true,

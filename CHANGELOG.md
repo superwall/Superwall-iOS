@@ -6,6 +6,14 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Breaking Changes
 
+- Removes `trigger_session_id` from `PaywallInfo` params.
+- `ProductInfo` is renamed to `Product` and the old `Product` class no longer exists.
+
+// TODO: Add more info here
+
+- Removes `Superwall.shared.subscriptionStatus` in favor of entitlements.
+- Changes `subscriptionStatus_didChange` to `activeEntitlements_didChange`.
+- Renames `productItems` to `products` in `PaywallInfo`.
 - Renames `register(event:)` to `register(placement:)`.
 - Renames `preloadPaywalls(forEvents:)` to `preloadPaywalls(forPlacements:)`.
 - Renames `getPaywall(forEvent:)` to `getPaywall(forPlacement:)`.
@@ -13,10 +21,70 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Renames the `TriggerResult` `eventNotFound` case to `placementNotFound`.
 - Renames the `PresentationResult` and `PaywallSkippedReason` `noRuleMatch` case to `noAudienceMatch`.
 - Moves `ComputedPropertyRequestType` to be a top-level type.
+- Renames `Store` to `ProductStore`.
+- Removes `Superwall.shared.isConfigured` in favor of `Superwall.shared.configurationStatus`.
+- Defaults to StoreKit 2 for product purchasing for apps running on iOS 15+. You can change this back to StoreKit 1 by setting the `SuperwallOption` `storeKitVersion` to `.storeKit1`.
+- Changes the `PurchaseController` purchase function to `func purchase(product: StoreProduct) async -> PurchaseResult`. There will be an StoreKit 2 product accessible via `product.sk2Product` by default. However, if you're using the StoreKit 1 `SuperwallOption` or your app is running on an iOS version lower than iOS 15, this will be `nil` and you can access the StoreKit 1 product via `product.sk1Product`.
+- Consumables no longer count as lifetime subscriptions when using StoreKit 2.
+- Changes `presented_by_event_name` to `presented_by_placement_name`.
 
 ### Enhancements
 
+- Adds `purchase(_:)` support for both StoreKit 2 products and `StoreProduct`.
+- Updates the RevenueCat example app to use StoreKit 2.
 - Adds CEL compatibility to audience filters. We created a new package called `SuperCEL` which is included as a dependency for `SuperwallKit`. This allows for a lot more complex audience filters.
+
+## 3.10.1
+
+### Fixes
+
+- Tweaks logic for `purchase(_:)` and `restorePurchases()` so the SDK never finishes transactions made when there's a purchase controller present.
+
+## 3.10.0
+
+### Enhancements
+
+- Adds `purchase(_:)` to initiate a purchase of an `SKProduct` via Superwall regardless of whether you are using paywalls or not.
+- Adds `restorePurchases()` to restore purchases via Superwall.
+- Adds an optional `paywall(_:loadingStateDidChange)` function to the `PaywallViewControllerDelegate`. This is called when the loading state of the presented `PaywallViewController` did change.
+- Makes `loadingState` on the `PaywallViewController` a public published property.
+
+### Fixes
+
+- Tweaks AdServices token logic to prevent getting the token twice.
+
+## 3.9.1
+
+### Fixes
+
+- Moves to collecting just the AdServices attribute token, which will be process by our backend. Adds `adServicesTokenRequest_start`, `adServicesTokenRequest_complete`, and `adServicesTokenRequest_fail`.
+
+## 3.9.0
+
+### Enhancements
+
+- If a network issue occurs while retrieving the latest Superwall configuration, or it takes longer than 1s to retrieve, the SDK falls back to a cached version. Then it tries to refresh it in the background. This behavior is behind a feature flag.
+- When the Superwall configuration is set or refreshed, a `config_refresh` event is tracked, which will give insight into whether a cached version of the Superwall configuration is being used or not.
+- When the Superwall configuration fails to be retrieved, a `config_fail` event is tracked.
+- Adds the `config_caching` capability.
+- Adds the `SuperwallOption` `collectAdServicesAttribution`. When set to `true`, this will get the app-download campaign attributes associated with Apple Search Ads and attach them to the user attributes. This happens once per user per install. Calling `Superwall.shared.reset()` will fetch the attributes again and attach them to the new user.
+- Adds`adServicesAttributionRequest_start`, `adServicesAttributionRequest_fail`, and `adServicesAttributionRequest_complete` events for the lifecycle of collecting AdServices attributes.
+
+### Fixes
+
+- Adds in missing `weak self` references inside task group closures.
+
+## 3.8.0
+
+### Enhancements
+
+- Adds `Superwall.shared.confirmAllAssignments()`, which confirms assignments for all placements and returns an array of all confirmed experiment assignments. Note that the assignments may be different when a placement is registered due to changes in user, placement, or device parameters used in audience filters.
+- Adds a published property `Superwall.shared.configurationStatus`, which replaces `isConfigured`. This is an enum which can either be `pending`, `configured`, or `failed`.
+
+### Fixes
+
+- Fixes `UIScreen unavailable in visionOS` error message in `PaywallViewController`.
+- Fixes the error `Symbol not found: _$s10Foundation14NSDecimalRoundyySpySo0B0aG_SPyADGSiSo14NSRoundingModeVtF`, which is an Xcode 16 bug.
 
 ## 3.7.4
 

@@ -32,13 +32,12 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     /// Always configure RevenueCat after Superwall
     Purchases.configure(with:
       .builder(withAPIKey: "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql")
-      .with(storeKitVersion: .storeKit1)
       .build()
     )
 
-    // MARK: Step 4 – Sync Subscription Status
-    /// Keep Superwall's subscription status up-to-date with RevenueCat's.
-    purchaseController.syncSubscriptionStatus()
+    // MARK: Step 4 – Sync Entitlements
+    /// Keep Superwall's entitlements up-to-date with RevenueCat's.
+    purchaseController.syncEntitlements()
 
     return true
   }

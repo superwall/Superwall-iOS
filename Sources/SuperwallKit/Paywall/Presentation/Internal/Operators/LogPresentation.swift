@@ -13,7 +13,7 @@ extension Superwall {
   /// - Parameters:
   ///    - request: The presentation request.
   ///    - message: A message to log.
-  func logPresentation(request: PresentationRequest) -> [String: Any] {
+  func log(request: PresentationRequest) -> [String: Any] {
     var message = "Called "
     switch request.flags.type {
     case .getPaywall:
@@ -31,6 +31,8 @@ extension Superwall {
     case .handleImplicitTrigger,
       .paywallDeclineCheck:
       message += "Superwall.shared.handleImplicitTrigger"
+    case .confirmAllAssignments:
+      message += "Superwall.shared.confirmAllAssignments"
     }
     let placementData = request.presentationInfo.placementData
     let debugInfo: [String: Any] = [

@@ -17,6 +17,21 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Configures the appearance and behaviour of paywalls.
   public var paywalls = PaywallOptions()
 
+  /// An enum representing the StoreKit versions the SDK should use.
+  public enum StoreKitVersion {
+    /// Use StoreKit 1.
+    case storeKit1
+
+    /// Use StoreKit 2.
+    case storeKit2
+  }
+
+  /// The StoreKit version that the SDK should use.
+  ///
+  /// The SDK will use StoreKit 2 by default if the app is running on iOS 15+, otherwise it
+  /// will fallback to StoreKit 1.
+  public var storeKitVersion: StoreKitVersion
+
   /// **WARNING**:  The different network environments that the SDK should use.
   /// Only use this enum to set ``SuperwallOptions/networkEnvironment-swift.property``
   ///  if told so explicitly by the Superwall team.
@@ -107,6 +122,10 @@ public final class SuperwallOptions: NSObject, Encodable {
       "geo-api.superwall.com"
     }
 
+    var adServicesHost: String {
+      "api-adservices.apple.com"
+    }
+
     private enum CodingKeys: String, CodingKey {
       case networkEnvironment
       case customDomain
@@ -151,6 +170,11 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Set this to `true` to forward events from the Game Controller to the Paywall via ``Superwall/gamepadValueChanged(gamepad:element:)``.
   public var isGameControllerEnabled = false
 
+  /// Collects the `AdServices` attributes and attaches them to the user attributes.
+  ///
+  /// Defaults to `false`.
+  public var collectAdServicesAttribution = false
+
   /// Configuration for printing to the console.
   @objc(SWKLogging)
   @objcMembers
@@ -179,6 +203,15 @@ public final class SuperwallOptions: NSObject, Encodable {
     case isExternalDataCollectionEnabled
     case localeIdentifier
     case isGameControllerEnabled
+    case collectAdServicesAttribution
+  }
+
+  public override init() {
+    if #available(iOS 15.0, *) {
+      self.storeKitVersion = .storeKit2
+    } else {
+      self.storeKitVersion = .storeKit1
+    }
   }
 
   public func encode(to encoder: Encoder) throws {
@@ -191,6 +224,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(isExternalDataCollectionEnabled, forKey: .isExternalDataCollectionEnabled)
     try container.encode(localeIdentifier, forKey: .localeIdentifier)
     try container.encode(isGameControllerEnabled, forKey: .isGameControllerEnabled)
+    try container.encode(collectAdServicesAttribution, forKey: .collectAdServicesAttribution)
   }
 
   func toDictionary() -> [String: Any] {

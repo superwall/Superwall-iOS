@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Q5H-aZ-jXR">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23094" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Q5H-aZ-jXR">
     <device id="retina6_5" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22685"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23084"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
@@ -193,7 +194,6 @@ The audience matches and causes a paywall to show.</string>
                                 </buttonConfiguration>
                                 <connections>
                                     <action selector="logOut:" destination="gix-OZ-Ey9" eventType="touchUpInside" id="NiP-LF-vUX"/>
-                                    <action selector="registerPlacement:" destination="gix-OZ-Ey9" eventType="touchUpInside" id="d6J-e6-YBI"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tZ5-ih-G51">
@@ -210,6 +210,9 @@ The audience matches and causes a paywall to show.</string>
                                     <fontDescription key="titleFontDescription" name="Rubik-Bold" family="Rubik" pointSize="18"/>
                                     <color key="baseForegroundColor" name="Neutral"/>
                                 </buttonConfiguration>
+                                <connections>
+                                    <action selector="registerPlacement:" destination="gix-OZ-Ey9" eventType="touchUpInside" id="KPr-xe-2Wz"/>
+                                </connections>
                             </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="QDw-P3-DQY"/>
@@ -247,7 +250,7 @@ The audience matches and causes a paywall to show.</string>
     <resources>
         <image name="logo" width="115" height="17"/>
         <namedColor name="Neutral">
-            <color red="0.054999999701976776" green="0.059000000357627869" blue="0.071000002324581146" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.054901960784313725" green="0.058823529411764705" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
         <namedColor name="PrimaryTeal">
             <color red="0.60399997234344482" green="0.98799997568130493" blue="0.94499999284744263" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

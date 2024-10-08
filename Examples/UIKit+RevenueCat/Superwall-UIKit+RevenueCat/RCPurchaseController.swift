@@ -11,8 +11,16 @@ import StoreKit
 import RevenueCat
 import Combine
 
-enum PurchasingError: Error {
-  case productNotFound
+enum PurchasingError: LocalizedError {
+  case sk2ProductNotFound
+
+  var errorDescription: String? {
+    switch self {
+    case .sk2ProductNotFound:
+      return "Superwall didn't pass a StoreKit 2 product to purchase. Are you sure you're not "
+      + "configuring Superwall with a SuperwallOption to use StoreKit 1?"
+    }
+  }
 }
 
 // MARK: Quickstart (v3.0.0+)
@@ -23,23 +31,19 @@ enum PurchasingError: Error {
 ///   `Superwall.configure(apiKey: "superwall_api_key", purchaseController: purchaseController)`
 /// 4. Second, configure RevenueCat.
 ///   `Purchases.configure(withAPIKey: "revenuecat_api_key")`
-/// 5. Third, Keep Superwall's subscription status up-to-date with RevenueCat's.
-///   `purchaseController.syncSubscriptionStatus()`
+/// 5. Third, Keep Superwall's entitlements up-to-date with RevenueCat's.
+///   `purchaseController.syncEntitlements()`
 final class RCPurchaseController: PurchaseController {
-  // MARK: Sync Subscription Status
-  /// Makes sure that Superwall knows the customers subscription status by
-  /// changing `Superwall.shared.subscriptionStatus`
-  func syncSubscriptionStatus() {
+  // MARK: Sync Entitlements
+  /// Makes sure that Superwall knows the customer's entitlements by
+  /// changing `Superwall.shared.entitlements`
+  func syncEntitlements() {
     assert(Purchases.isConfigured, "You must configure RevenueCat before calling this method.")
     Task {
       for await customerInfo in Purchases.shared.customerInfoStream {
         // Gets called whenever new CustomerInfo is available
-        let hasActiveSubscription = !customerInfo.entitlements.active.isEmpty // Why? -> https://www.revenuecat.com/docs/entitlements#entitlements
-        if hasActiveSubscription {
-          Superwall.shared.subscriptionStatus = .active
-        } else {
-          Superwall.shared.subscriptionStatus = .inactive
-        }
+        let superwallEntitlements = customerInfo.entitlements.active.keys.map { Entitlement(id: $0) }
+        Superwall.shared.entitlements.set(superwallEntitlements)
       }
     }
   }
@@ -47,12 +51,12 @@ final class RCPurchaseController: PurchaseController {
   // MARK: Handle Purchases
   /// Makes a purchase with RevenueCat and returns its result. This gets called when
   /// someone tries to purchase a product on one of your paywalls.
-  func purchase(product: SKProduct) async -> PurchaseResult {
+  func purchase(product: SuperwallKit.StoreProduct) async -> PurchaseResult {
     do {
-      guard let storeProduct = await Purchases.shared.products([product.productIdentifier]).first else {
-        throw PurchasingError.productNotFound
+      guard let sk2Product = product.sk2Product else {
+        throw PurchasingError.sk2ProductNotFound
       }
-      
+      let storeProduct = RevenueCat.StoreProduct(sk2Product: sk2Product)
       let purchaseDate = Date()
       let revenueCatResult = try await Purchases.shared.purchase(product: storeProduct)
       if revenueCatResult.userCancelled {

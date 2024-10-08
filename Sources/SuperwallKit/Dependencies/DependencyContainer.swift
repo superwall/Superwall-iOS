@@ -9,7 +9,6 @@
 import UIKit
 import Combine
 import SystemConfiguration
-import StoreKit
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
 ///
@@ -24,7 +23,6 @@ final class DependencyContainer {
   var identityManager: IdentityManager!
   var storeKitManager: StoreKitManager!
   var appSessionManager: AppSessionManager!
-  var sessionEventsManager: SessionEventsManager!
   var storage: Storage!
   var network: Network!
   var paywallManager: PaywallManager!
@@ -35,27 +33,41 @@ final class DependencyContainer {
   var api: Api!
   var transactionManager: TransactionManager!
   var delegateAdapter: SuperwallDelegateAdapter!
-  var productPurchaser: ProductPurchaserSK1!
+  var purchaseManager: PurchaseManager!
   var receiptManager: ReceiptManager!
   var purchaseController: PurchaseController!
+  var productsManager: ProductsManager!
+  var entitlementsInfo: EntitlementsInfo!
+  var attributionPoster: AttributionPoster!
   // swiftlint:enable implicitly_unwrapped_optional
-  let productsFetcher = ProductsFetcherSK1()
   let paywallArchiveManager = PaywallArchiveManager()
 
   init(
     purchaseController controller: PurchaseController? = nil,
     options: SuperwallOptions? = nil
   ) {
-    purchaseController = controller ?? AutomaticPurchaseController(factory: self)
-    receiptManager = ReceiptManager(
-      delegate: productsFetcher,
-      receiptDelegate: purchaseController as? ReceiptDelegate
-    )
-
-    storeKitManager = StoreKitManager(productsFetcher: productsFetcher)
     delegateAdapter = SuperwallDelegateAdapter()
     storage = Storage(factory: self)
+    entitlementsInfo = EntitlementsInfo(
+      storage: storage,
+      delegateAdapter: delegateAdapter
+    )
+    let options = options ?? SuperwallOptions()
+    productsManager = ProductsManager(
+      entitlementsInfo: entitlementsInfo,
+      storeKitVersion: options.storeKitVersion
+    )
     network = Network(factory: self)
+
+    storeKitManager = StoreKitManager(productsManager: productsManager)
+
+    purchaseController = controller ?? AutomaticPurchaseController(factory: self, entitlementsInfo: entitlementsInfo)
+
+    receiptManager = ReceiptManager(
+      storeKitVersion: options.storeKitVersion,
+      productsManager: productsManager,
+      receiptDelegate: purchaseController as? ReceiptDelegate
+    )
 
     paywallRequestManager = PaywallRequestManager(
       storeKitManager: storeKitManager,
@@ -67,9 +79,11 @@ final class DependencyContainer {
       paywallRequestManager: paywallRequestManager
     )
 
-    let options = options ?? SuperwallOptions()
     api = Api(networkEnvironment: options.networkEnvironment)
-
+    attributionPoster = AttributionPoster(
+      collectAdServicesAttribution: options.collectAdServicesAttribution,
+      storage: storage
+    )
     deviceHelper = DeviceHelper(
       api: api,
       storage: storage,
@@ -84,6 +98,7 @@ final class DependencyContainer {
       network: network,
       paywallManager: paywallManager,
       deviceHelper: deviceHelper,
+      entitlementsInfo: entitlementsInfo,
       factory: self
     )
 
@@ -95,17 +110,6 @@ final class DependencyContainer {
     identityManager = IdentityManager(
       deviceHelper: deviceHelper,
       storage: storage,
-      configManager: configManager
-    )
-
-    sessionEventsManager = SessionEventsManager(
-      queue: SessionEventsQueue(
-        storage: storage,
-        network: network,
-        configManager: configManager
-      ),
-      storage: storage,
-      network: network,
       configManager: configManager
     )
 
@@ -126,15 +130,14 @@ final class DependencyContainer {
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
       purchaseController: purchaseController,
-      sessionEventsManager: sessionEventsManager,
       placementsQueue: placementsQueue,
       factory: self
     )
 
-    productPurchaser = ProductPurchaserSK1(
+    purchaseManager = PurchaseManager(
+      storeKitVersion: options.storeKitVersion,
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
-      sessionEventsManager: sessionEventsManager,
       identityManager: identityManager,
       factory: self
     )
@@ -210,7 +213,6 @@ extension DependencyContainer: ViewControllerFactory {
     delegate: PaywallViewControllerDelegateAdapter?
   ) -> PaywallViewController {
     let messageHandler = PaywallMessageHandler(
-      sessionEventsManager: sessionEventsManager,
       factory: self
     )
     let webView = SWWebView(
@@ -280,8 +282,7 @@ extension DependencyContainer: RequestFactory {
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides? = nil,
     isDebuggerLaunched: Bool,
-    presentationSourceType: String?,
-    retryCount: Int
+    presentationSourceType: String?
   ) -> PaywallRequest {
     return PaywallRequest(
       placementData: placementData,
@@ -289,7 +290,7 @@ extension DependencyContainer: RequestFactory {
       overrides: overrides ?? PaywallRequest.Overrides(),
       isDebuggerLaunched: isDebuggerLaunched,
       presentationSourceType: presentationSourceType,
-      retryCount: retryCount
+      retryCount: 6
     )
   }
 
@@ -298,7 +299,6 @@ extension DependencyContainer: RequestFactory {
     paywallOverrides: PaywallOverrides? = nil,
     presenter: UIViewController? = nil,
     isDebuggerLaunched: Bool? = nil,
-    subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>? = nil,
     isPaywallPresented: Bool,
     type: PresentationRequestType
   ) -> PresentationRequest {
@@ -308,7 +308,8 @@ extension DependencyContainer: RequestFactory {
       paywallOverrides: paywallOverrides,
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
-        subscriptionStatus: subscriptionStatus ?? Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
+        didSetActiveEntitlements: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher(),
+        entitlements: entitlementsInfo,
         isPaywallPresented: isPaywallPresented,
         type: type
       )
@@ -350,10 +351,10 @@ extension DependencyContainer: ApiFactory {
       "X-Bundle-ID": deviceHelper.bundleId,
       "X-Low-Power-Mode": deviceHelper.isLowPowerModeEnabled,
       "X-Is-Sandbox": deviceHelper.isSandbox,
-      "X-Subscription-Status": Superwall.shared.subscriptionStatus.description,
       "X-Static-Config-Build-Id": configManager.config?.buildId ?? "",
       "X-Current-Time": Date().isoString,
       "X-Retry-Count": "\(configManager.configRetryCount)",
+      "X-Entitlements": Superwall.shared.entitlements.active.map { $0.id }.joined(),
       "Content-Type": "application/json"
     ]
     return headers
@@ -462,15 +463,15 @@ extension DependencyContainer: ComputedPropertyRequestsFactory {
 // MARK: - Purchased Transactions Factory
 extension DependencyContainer: PurchasedTransactionsFactory {
   func makePurchasingCoordinator() -> PurchasingCoordinator {
-    return productPurchaser.coordinator
+    return purchaseManager.coordinator
   }
 
-  func purchase(product: SKProduct) async -> PurchaseResult {
-    return await productPurchaser.purchase(product: product)
+  func purchase(product: StoreProduct) async -> PurchaseResult {
+    return await purchaseManager.purchase(product: product)
   }
 
   func restorePurchases() async -> RestorationResult {
-    return await productPurchaser.restorePurchases()
+    return await purchaseManager.restorePurchases()
   }
 }
 
@@ -486,12 +487,12 @@ extension DependencyContainer: UserAttributesPlacementFactory {
 
 // MARK: - Receipt Factory
 extension DependencyContainer: ReceiptFactory {
-  func loadPurchasedProducts() async -> Set<StoreProduct>? {
-    return await receiptManager.loadPurchasedProducts()
+  func loadPurchasedProducts() async {
+    await receiptManager.loadPurchasedProducts()
   }
 
-  func refreshReceipt() async {
-    return await receiptManager.refreshReceipt()
+  func refreshSK1Receipt() async {
+    return await receiptManager.refreshSK1Receipt()
   }
 
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool {

@@ -22,7 +22,7 @@ public enum PurchaseResult: Sendable, Equatable {
   /// - `.paymentCancelled`,
   /// - `.overlayTimeout`
   ///
-  /// In StoreKit 2, this is the `.userCancelled` error state.
+  /// In StoreKit 2, this is the `.cancelled` error state.
   ///
   /// With RevenueCat, this is when the `userCancelled` boolean returns `true` from the purchase
   /// method.
@@ -57,6 +57,16 @@ public enum PurchaseResult: Sendable, Equatable {
       return error.safeLocalizedDescription == error2.safeLocalizedDescription
     default:
       return false
+    }
+  }
+
+  func toObjc() -> PurchaseResultObjc {
+    switch self {
+    case .cancelled: return .cancelled
+    case .purchased: return .purchased
+    case .restored: return .restored
+    case .pending: return .pending
+    case .failed: return .failed
     }
   }
 }

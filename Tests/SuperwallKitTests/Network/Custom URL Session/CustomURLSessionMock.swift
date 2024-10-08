@@ -11,12 +11,12 @@ import Foundation
 final class CustomURLSessionMock: CustomURLSession {
   var didRequest = false
 
-  @discardableResult
-  override func request<Response>(
-    _ endpoint: Endpoint<Response>,
+  override func request<Kind, Response>(
+    _ endpoint: Endpoint<Kind, Response>,
+    data: Kind.RequestData,
     isRetryingCallback: ((Int) -> Void)? = nil
-  ) async throws -> Response {
+  ) async throws -> Response where Kind : EndpointKind, Response : Decodable {
     didRequest = true
-    return try await super.request(endpoint)
+    return try await super.request(endpoint, data: data, isRetryingCallback: isRetryingCallback)
   }
 }

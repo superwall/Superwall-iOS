@@ -36,21 +36,6 @@ extension Superwall {
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
   ) async throws -> UIViewController? {
-    let subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
-    if await InternalPresentationLogic.userSubscribedAndNotOverridden(
-      isUserSubscribed: subscriptionStatus == .active,
-      overrides: .init(
-        isDebuggerLaunched: request.flags.isDebuggerLaunched,
-        shouldIgnoreSubscriptionStatus: request.paywallOverrides?.ignoreSubscriptionStatus,
-        presentationCondition: paywallViewController.paywall.presentation.condition
-      )
-    ) {
-      let state: PaywallState = .skipped(.userIsSubscribed)
-      paywallStatePublisher?.send(state)
-      paywallStatePublisher?.send(completion: .finished)
-      throw PresentationPipelineError.userIsSubscribed
-    }
-
     switch request.flags.type {
     case .getPaywall:
       await attemptTriggerFire(
@@ -60,7 +45,8 @@ extension Superwall {
       return nil
     case .handleImplicitTrigger,
       .paywallDeclineCheck,
-      .getPresentationResult:
+      .getPresentationResult,
+      .confirmAllAssignments:
       // We do not track trigger fire for these events (which would result in .paywall)
       return nil
     case .presentation:

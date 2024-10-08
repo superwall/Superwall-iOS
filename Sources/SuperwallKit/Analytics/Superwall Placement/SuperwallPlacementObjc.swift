@@ -80,8 +80,8 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
   /// When the user successfully completes a transaction for a subscription product with no introductory offers.
   case subscriptionStart
 
-  /// When the user's subscription status changes.
-  case subscriptionStatusDidChange
+  /// When the active entitlements change.
+  case activeEntitlementsDidChange
 
   /// When the user successfully completes a transaction for a subscription product with an introductory offer.
   case freeTrialStart
@@ -166,6 +166,21 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
   /// When the attributes that affect the configuration of Superwall are set or change.
   case configAttributes
 
+  /// When all the experiment assignments are confirmed by calling ``Superwall/confirmAllAssignments()``.
+  case confirmAllAssignments
+
+  /// When the Superwall configuration fails to be retrieved.
+  case configFail
+
+  /// When the AdServices token request starts.
+  case adServicesTokenRequestStart
+
+  /// When the AdServices token request fails.
+  case adServicesTokenRequestFail
+
+  /// When the AdServices token request finishes.
+  case adServicesTokenRequestComplete
+
   public init(placement: SuperwallPlacement) {
     self = placement.backingData.objcPlacement
   }
@@ -186,8 +201,8 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
       return "session_start"
     case .deviceAttributes:
       return "device_attributes"
-    case .subscriptionStatusDidChange:
-      return "subscriptionStatus_didChange"
+    case .activeEntitlementsDidChange:
+      return "activeEntitlements_didChange"
     case .appClose:
       return "app_close"
     case .deepLink:
@@ -268,6 +283,16 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
       return "custom_placement"
     case .configAttributes:
       return "config_attributes"
+    case .confirmAllAssignments:
+      return "confirm_all_assignments"
+    case .configFail:
+      return "config_fail"
+    case .adServicesTokenRequestStart:
+      return "adServicesTokenRequest_start"
+    case .adServicesTokenRequestFail:
+      return "adServicesTokenRequest_fail"
+    case .adServicesTokenRequestComplete:
+      return "adServicesTokenRequest_complete"
     }
   }
 }

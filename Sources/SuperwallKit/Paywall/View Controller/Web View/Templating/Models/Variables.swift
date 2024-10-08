@@ -14,9 +14,6 @@ struct Variables: Encodable {
   let device: JSON
   let params: JSON
   var products: [ProductVariable] = []
-  var primary: JSON = [:]
-  var secondary: JSON = [:]
-  var tertiary: JSON = [:]
 
   init(
     products: [ProductVariable]?,
@@ -30,21 +27,6 @@ struct Variables: Encodable {
     guard let products = products else {
       return
     }
-
-    // For backwards compatibility
-    for product in products {
-      switch product.name {
-      case "primary":
-        primary = product.attributes
-      case "secondary":
-        secondary = product.attributes
-      case "tertiary":
-        tertiary = product.attributes
-      default:
-        break
-      }
-    }
-
     self.products = products
   }
 

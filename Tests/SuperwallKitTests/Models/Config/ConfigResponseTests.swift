@@ -421,7 +421,13 @@ let response = #"""
         "store_product": {
           "store": "APP_STORE",
           "product_identifier": "sk.superwall.annual.89.99_7"
-        }
+        },
+        "entitlements": [
+          {
+            "identifier": "test",
+            "type": "SERVICE_LEVEL"
+          }
+        ]
       },
       {
         "reference_name": "primary",
@@ -473,9 +479,8 @@ final class ConfigTypeTests: XCTestCase {
       Config.self,
       from: response.data(using: .utf8)!
     )
-    XCTAssertTrue(parsedResponse.featureFlags.enableSessionEvents)
 
-    XCTAssertTrue(parsedResponse.paywalls.first!.productItems.count != 0)
+    XCTAssertTrue(parsedResponse.paywalls.first!.products.count != 0)
     guard let trigger = parsedResponse.triggers.filter({ $0.placementName == "MyEvent" }).first
     else {
       return XCTFail("opened_application trigger not found")

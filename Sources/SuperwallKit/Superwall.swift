@@ -1,8 +1,8 @@
 // swiftlint:disable file_length type_body_length
 
+import Combine
 import Foundation
 import StoreKit
-import Combine
 
 /// The primary class for integrating Superwall into your application. After configuring via
 /// ``configure(apiKey:purchaseController:options:completion:)-52tke``, it provides access to
@@ -117,38 +117,20 @@ public final class Superwall: NSObject, ObservableObject {
     return presentedPaywallInfo ?? presentationItems.paywallInfo
   }
 
-  /// A published property that indicates the subscription status of the user.
+  /// A published property that indicates the configuration status of the SDK.
   ///
-  /// If you're handling subscription-related logic yourself, you must set this
-  /// property whenever the subscription status of a user changes.
-  /// However, if you're letting Superwall handle subscription-related logic, its value will
-  /// be synced with the user's purchases on device.
+  /// This is ``ConfigurationStatus/pending`` when the SDK is yet to finish
+  /// configuring. Upon successful configuration, it will change to ``ConfigurationStatus/configured``.
+  /// On failure it will change to ``ConfigurationStatus/failed``.
   ///
-  /// Paywalls will not show until the subscription status has been established.
-  /// On first install, it's value will default to `.unknown`. Afterwards, it'll default
-  /// to its cached value.
-  ///
-  /// If you're using Combine or SwiftUI, you can subscribe or bind to it to get
-  /// notified whenever the user's subscription status changes.
-  ///
-  /// Otherwise, you can check the delegate function
-  /// ``SuperwallDelegate/subscriptionStatusDidChange(to:)-24teh``
-  /// to receive a callback with the new value every time it changes.
-  ///
-  /// To learn more, see [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
+  /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get notified when the status changes.
   @Published
-  public var subscriptionStatus: SubscriptionStatus = .unknown
+  public var configurationStatus: ConfigurationStatus = .pending
 
-  /// A published property that is `true` when Superwall has finished configuring via
-  /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
-  ///
-  /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get
-  /// notified when configuration has completed.
-  ///
-  /// Alternatively, you can use the completion handler from
-  /// ``configure(apiKey:purchaseController:options:completion:)-52tke``.
-  @Published
-  public var isConfigured = false // Public set necessary for wrapper SDKs
+  /// The ``Entitlement``s tied to the device.
+  public var entitlements: EntitlementsInfo {
+    return dependencyContainer.entitlementsInfo
+  }
 
   /// The configured shared instance of ``Superwall``.
   ///
@@ -158,14 +140,14 @@ public final class Superwall: NSObject, ObservableObject {
   public static var shared: Superwall {
     guard let superwall = superwall else {
       #if DEBUG
-      // Code only executes when tests are running in a debug environment.
-      // This avoids lots of irrelevent error messages printed to console about Superwall not
-      // being configured, which slows down the tests.
-      if ProcessInfo.processInfo.arguments.contains("SUPERWALL_UNIT_TESTS") {
-        let superwall = Superwall()
-        self.superwall = superwall
-        return superwall
-      }
+        // Code only executes when tests are running in a debug environment.
+        // This avoids lots of irrelevent error messages printed to console about Superwall not
+        // being configured, which slows down the tests.
+        if ProcessInfo.processInfo.arguments.contains("SUPERWALL_UNIT_TESTS") {
+          let superwall = Superwall()
+          self.superwall = superwall
+          return superwall
+        }
       #endif
       Logger.debug(
         logLevel: .error,
@@ -231,14 +213,20 @@ public final class Superwall: NSObject, ObservableObject {
     )
     self.init(dependencyContainer: dependencyContainer)
 
-    subscriptionStatus = dependencyContainer.storage.get(ActiveSubscriptionStatus.self) ?? .unknown
-
     addListeners()
 
     // This task runs on a background thread, even if called from a main thread.
     // This is because the function isn't marked to run on the main thread,
     // therefore, we don't need to make this detached.
     Task {
+      Task {
+        #if os(iOS) || os(macOS) || VISION_OS
+          if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
+            await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
+          }
+        #endif
+      }
+
       dependencyContainer.storage.configure(apiKey: apiKey)
 
       dependencyContainer.storage.recordAppInstall(trackPlacement: track)
@@ -262,38 +250,25 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Listens to config and the subscription status
+  /// Listens to config.
   private func addListeners() {
-    dependencyContainer.configManager.hasConfig
+    dependencyContainer.configManager.configState
       .receive(on: DispatchQueue.main)
-      .subscribe(Subscribers.Sink(
-        receiveCompletion: { _ in },
-        receiveValue: { [weak self] _ in
-          self?.isConfigured = true
-        }
-      ))
-
-    $subscriptionStatus
-      .removeDuplicates()
-      .dropFirst()
-      .eraseToAnyPublisher()
-      .receive(on: DispatchQueue.main)
-      .subscribe(Subscribers.Sink(
-        receiveCompletion: { _ in },
-        receiveValue: { [weak self] newValue in
-          guard let self = self else {
-            return
+      .subscribe(
+        Subscribers.Sink(
+          receiveCompletion: { _ in },
+          receiveValue: { [weak self] state in
+            switch state {
+            case .retrieving:
+              self?.configurationStatus = .pending
+            case .failed:
+              self?.configurationStatus = .failed
+            case .retrieved:
+              self?.configurationStatus = .configured
+            case .retrying:
+              break
+            }
           }
-          self.dependencyContainer.storage.save(newValue, forType: ActiveSubscriptionStatus.self)
-
-          Task {
-            await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(to: newValue)
-            let subscriptionStatusDidChange = InternalSuperwallPlacement.SubscriptionStatusDidChange(
-              subscriptionStatus: newValue
-            )
-            await self.track(subscriptionStatusDidChange)
-          }
-        }
       ))
   }
 
@@ -309,12 +284,12 @@ public final class Superwall: NSObject, ObservableObject {
   ///   an account, you can [sign up for free](https://superwall.com/sign-up).
   ///   - purchaseController: An optional object that conforms to ``PurchaseController``. Implement this if you'd
   ///   like to handle all subscription-related logic yourself. You'll need to also set the ``subscriptionStatus`` every time the user's
-  ///   subscription status changes. You can read more about that in [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
+  ///   entitlements change. You can read more about that in [Purchases and Entitlements](https://docs.superwall.com/docs/advanced-configuration).
   ///   If `nil`, Superwall will handle all subscription-related logic itself.  Defaults to `nil`.
   ///   - options: An optional ``SuperwallOptions`` object which allows you to customise the appearance and behavior
   ///   of the paywall.
   ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
-  ///   Alternatively, you can subscribe to the published variable ``isConfigured``.
+  ///   Alternatively, you can subscribe to the published variable ``configurationStatus`` for a more explicit representation of the SDK's configuration status.
   /// - Returns: The configured ``Superwall`` instance.
   @discardableResult
   public static func configure(
@@ -327,7 +302,8 @@ public final class Superwall: NSObject, ObservableObject {
       Logger.debug(
         logLevel: .warn,
         scope: .superwallCore,
-        message: "Superwall.configure called multiple times. Please make sure you only call this once on app launch."
+        message:
+          "Superwall.configure called multiple times. Please make sure you only call this once on app launch."
       )
       completion?()
       return shared
@@ -358,8 +334,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you
   ///   can [sign up for free](https://superwall.com/sign-up).
   ///   - purchaseController: An optional object that conforms to ``PurchaseControllerObjc``. Implement this if you'd
-  ///   like to handle all subscription-related logic yourself. You'll need to also set the ``subscriptionStatus`` every time the user's
-  ///   subscription status changes. You can read more about that in [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
+  ///   like to handle all subscription-related logic yourself. You'll need to also set the ``entitlements`` every time the user's
+  ///   entitlements change. You can read more about that in [Purchases and Entitlements](https://docs.superwall.com/docs/advanced-configuration).
   ///   If `nil`, Superwall will handle all subscription-related logic itself.  Defaults to `nil`.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.
@@ -378,6 +354,74 @@ public final class Superwall: NSObject, ObservableObject {
       options: options,
       completion: completion
     )
+  }
+
+  /// Gets an array of all confirmed experiment assignments.
+  ///
+  /// - Returns: An array of ``ConfirmedAssignment`` objects.
+  public func getAssignments() -> [ConfirmedAssignment] {
+    let confirmedAssignments = dependencyContainer.storage.getConfirmedAssignments()
+    return confirmedAssignments.map {
+      ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
+    }
+  }
+
+  /// Confirms all experiment assignments and returns them in an array.
+  ///
+  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
+  ///
+  /// Note that the assignments may be different when a placement is registered due to changes
+  /// in user, placement, or device parameters used in audience filters.
+  ///
+  /// - Returns: An array of ``ConfirmedAssignment`` objects.
+  public func confirmAllAssignments() async -> [ConfirmedAssignment] {
+    let confirmAllAssignments = InternalSuperwallPlacement.ConfirmAllAssignments()
+    await track(confirmAllAssignments)
+
+    guard let triggers = dependencyContainer.configManager.config?.triggers else {
+      return []
+    }
+
+    let storedAssignments = dependencyContainer.storage.getConfirmedAssignments()
+    var assignments = Set(
+      storedAssignments.map {
+        ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
+      })
+
+    for trigger in triggers {
+      let eventData = PlacementData(
+        name: trigger.placementName,
+        parameters: [:],
+        createdAt: Date()
+      )
+
+      let presentationRequest = dependencyContainer.makePresentationRequest(
+        .explicitTrigger(eventData),
+        paywallOverrides: nil,
+        isPaywallPresented: false,
+        type: .confirmAllAssignments
+      )
+
+      if let assignment = await confirmAssignments(presentationRequest) {
+        assignments.insert(assignment)
+      }
+    }
+    return Array(assignments)
+  }
+
+  /// Confirms all experiment assignments and returns them in an array.
+  ///
+  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
+  ///
+  /// Note that the assignments may be different when a placement is registered due to changes
+  /// in user, placement, or device parameters used in audience filters.
+  ///
+  /// - Parameter completion: A completion block that accepts an array of ``ConfirmedAssignment`` objects.
+  public func confirmAllAssignments(completion: (([ConfirmedAssignment]) -> Void)? = nil) {
+    Task {
+      let result = await confirmAllAssignments()
+      completion?(result)
+    }
   }
 
   /// Objective-C-only function that configures a shared instance of ``Superwall`` for use throughout your app.
@@ -407,14 +451,17 @@ public final class Superwall: NSObject, ObservableObject {
       Logger.debug(
         logLevel: .warn,
         scope: .superwallCore,
-        message: "Superwall.configure called multiple times. Please make sure you only call this once on app launch."
+        message:
+          "Superwall.configure called multiple times. Please make sure you only call this once on app launch."
       )
       completion?()
       return shared
     }
     superwall = Superwall(
       apiKey: apiKey,
-      purchaseController: purchaseController.flatMap { PurchaseControllerObjcAdapter(objcController: $0) },
+      purchaseController: purchaseController.flatMap {
+        PurchaseControllerObjcAdapter(objcController: $0)
+      },
       options: options,
       completion: completion
     )
@@ -458,7 +505,8 @@ public final class Superwall: NSObject, ObservableObject {
 
     Task {
       let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
-      let deviceAttributesPlacement = InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
+      let deviceAttributesPlacement = InternalSuperwallPlacement.DeviceAttributes(
+        deviceAttributes: deviceAttributes)
       await track(deviceAttributesPlacement)
     }
   }
@@ -503,7 +551,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - isHidden: Toggles the paywall loading spinner on and off.
   public func togglePaywallSpinner(isHidden: Bool) {
     Task { @MainActor in
-      guard let paywallViewController = dependencyContainer.paywallManager.presentedViewController else {
+      guard let paywallViewController = dependencyContainer.paywallManager.presentedViewController
+      else {
         return
       }
       paywallViewController.togglePaywallSpinner(isHidden: isHidden)
@@ -526,6 +575,238 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.configManager.reset()
     Task {
       await Superwall.shared.track(InternalSuperwallPlacement.Reset())
+
+      #if os(iOS) || os(macOS) || VISION_OS
+        if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
+          await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
+        }
+      #endif
+    }
+  }
+
+  // MARK: - External Purchasing
+
+  /// Initiates a purchase of a `SKProduct`.
+  ///
+  /// Use this function to purchase a ``StoreProduct``, regardless of whether you
+  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
+  /// and return the ``PurchaseResult``. You'll see the data associated with the
+  /// purchase on the Superwall dashboard.
+  ///
+  /// - Parameter product: The ``StoreProduct`` you wish to purchase.
+  /// - Returns: A ``PurchaseResult``.
+  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
+  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  public func purchase(_ product: StoreProduct) async -> PurchaseResult {
+    return await dependencyContainer.transactionManager.purchase(.external(product))
+  }
+
+  /// Initiates a purchase of a `SKProduct`.
+  ///
+  /// Use this function to purchase any `SKProduct`, regardless of whether you
+  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
+  /// and return the ``PurchaseResult``. You'll see the data associated with the
+  /// purchase on the Superwall dashboard.
+  ///
+  /// - Parameter product: The `SKProduct` you wish to purchase.
+  /// - Returns: A ``PurchaseResult``.
+  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
+  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  public func purchase(_ product: SKProduct) async -> PurchaseResult {
+    let storeProduct = StoreProduct(sk1Product: product, entitlements: [])
+    return await dependencyContainer.transactionManager.purchase(.external(storeProduct))
+  }
+
+  /// Initiates a purchase of a StoreKit 2 `Product`.
+  ///
+  /// Use this function to purchase any StoreKit 2 `Product`, regardless of whether you
+  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
+  /// and return the ``PurchaseResult``. You'll see the data associated with the
+  /// purchase on the Superwall dashboard.
+  ///
+  /// - Parameter product: The StoreKit 2 `Product` you wish to purchase.
+  /// - Returns: A ``PurchaseResult``.
+  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
+  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  @available(iOS 15.0, *)
+  public func purchase(_ product: StoreKit.Product) async -> PurchaseResult {
+    // TODO: Review what happens with entitlements here if they purchase without any...
+    let storeProduct = StoreProduct(sk2Product: product, entitlements: [])
+    return await dependencyContainer.transactionManager.purchase(.external(storeProduct))
+  }
+
+  /// Initiates a purchase of a `SKProduct`.
+  ///
+  /// Use this function to purchase any `SKProduct`, regardless of whether you
+  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
+  /// and return the ``PurchaseResult``. You'll see the data associated with the
+  /// purchase on the Superwall dashboard.
+  ///
+  /// - Parameters:
+  ///   - product: The `SKProduct` you wish to purchase.
+  ///   - completion: A completion block that is called when the purchase completes.
+  ///   This accepts a ``PurchaseResult``.
+  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
+  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  public func purchase(
+    _ product: StoreProduct,
+    completion: @escaping (PurchaseResult) -> Void
+  ) {
+    Task {
+      let result = await purchase(product)
+      await MainActor.run {
+        completion(result)
+      }
+    }
+  }
+
+  /// Initiates a purchase of a `SKProduct`.
+  ///
+  /// Use this function to purchase any `SKProduct`, regardless of whether you
+  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
+  /// and return the ``PurchaseResult``. You'll see the data associated with the
+  /// purchase on the Superwall dashboard.
+  ///
+  /// - Parameters:
+  ///   - product: The `SKProduct` you wish to purchase.
+  ///   - completion: A completion block that is called when the purchase completes.
+  ///   This accepts a ``PurchaseResult``.
+  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
+  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  @available(iOS 15.0, *)
+  public func purchase(
+    _ product: StoreKit.Product,
+    completion: @escaping (PurchaseResult) -> Void
+  ) {
+    Task {
+      let result = await purchase(product)
+      await MainActor.run {
+        completion(result)
+      }
+    }
+  }
+
+  /// Initiates a purchase of a `SKProduct`.
+  ///
+  /// Use this function to purchase any `SKProduct`, regardless of whether you
+  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
+  /// and return the ``PurchaseResult``. You'll see the data associated with the
+  /// purchase on the Superwall dashboard.
+  ///
+  /// - Parameters:
+  ///   - product: The `SKProduct` you wish to purchase.
+  ///   - completion: A completion block that is called when the purchase completes.
+  ///   This accepts a ``PurchaseResult``.
+  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
+  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  public func purchase(
+    _ product: SKProduct,
+    completion: @escaping (PurchaseResult) -> Void
+  ) {
+    Task {
+      let result = await purchase(product)
+      await MainActor.run {
+        completion(result)
+      }
+    }
+  }
+
+  /// Objective-C-only method. Initiates a purchase of a `SKProduct`.
+  ///
+  /// Use this function to purchase any `SKProduct`, regardless of whether you
+  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
+  /// and return the ``PurchaseResult``. You'll see the data associated with the
+  /// purchase on the Superwall dashboard.
+  ///
+  /// - Parameters:
+  ///   - product: The `SKProduct` you wish to purchase.
+  ///   - completion: A completion block that is called when the purchase completes.
+  ///   This accepts a ``PurchaseResult``.
+  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
+  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  @available(swift, obsoleted: 1.0)
+  @available(iOS 15.0, *)
+  public func purchase(
+    _ product: StoreKit.Product,
+    completion: @escaping (PurchaseResultObjc) -> Void
+  ) {
+    purchase(product) { result in
+      let objcResult = result.toObjc()
+      completion(objcResult)
+    }
+  }
+
+  /// Objective-C-only method. Initiates a purchase of a `SKProduct`.
+  ///
+  /// Use this function to purchase any `SKProduct`, regardless of whether you
+  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
+  /// and return the ``PurchaseResult``. You'll see the data associated with the
+  /// purchase on the Superwall dashboard.
+  ///
+  /// - Parameters:
+  ///   - product: The `SKProduct` you wish to purchase.
+  ///   - completion: A completion block that is called when the purchase completes.
+  ///   This accepts a ``PurchaseResult``.
+  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
+  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  @available(swift, obsoleted: 1.0)
+  public func purchase(
+    _ product: SKProduct,
+    completion: @escaping (PurchaseResultObjc) -> Void
+  ) {
+    purchase(product) { result in
+      let objcResult = result.toObjc()
+      completion(objcResult)
+    }
+  }
+
+  /// Restores purchases.
+  ///
+  /// - Note: This could prompt the user to log in to their App Store account, so should only be performed
+  /// on request of the user. Typically with a button in settings or near your purchase UI.
+  /// - Returns: A ``RestorationResult`` object that defines if the restoration was successful or not.
+  /// - Warning: A successful restoration does not mean that the user is subscribed, only that
+  /// the restore  did not fail due to some error. If you aren't using a ``PurchaseController``, the user will
+  /// see an alert if ``Superwall/subscriptionStatus`` is not ``SubscriptionStatus/active``
+  /// after returning this value.
+  public func restorePurchases() async -> RestorationResult {
+    let result = await dependencyContainer.transactionManager.tryToRestore(.external)
+    return result
+  }
+
+  /// Restores purchases.
+  ///
+  /// - Note: This could prompt the user to log in to their App Store account, so should only be performed
+  /// on request of the user. Typically with a button in settings or near your purchase UI.
+  /// - Parameter completion: A completion block that is called when the restoration completes.
+  ///   This accepts a ``RestorationResult``.
+  /// - Warning: A successful restoration does not mean that the user is subscribed, only that
+  /// the restore  did not fail due to some error. If you aren't using a ``PurchaseController``, the user will
+  /// see an alert if ``Superwall/subscriptionStatus`` is not ``SubscriptionStatus/active``
+  /// after returning this value.
+  public func restorePurchases(completion: @escaping (RestorationResult) -> Void) {
+    Task {
+      let result = await restorePurchases()
+      await MainActor.run {
+        completion(result)
+      }
+    }
+  }
+
+  /// Objective-C-only method. Restores purchases.
+  ///
+  /// - Note: This could prompt the user to log in to their App Store account, so should only be performed
+  /// on request of the user. Typically with a button in settings or near your purchase UI.
+  /// - Parameter completion: A completion block that is called when the restoration completes.
+  ///   This accepts a ``RestorationResultObjc``.
+  /// - Warning: A successful restoration does not mean that the user is subscribed, only that
+  /// the restore  did not fail due to some error. If you aren't using a ``PurchaseController``, the user will
+  /// see an alert if ``Superwall/subscriptionStatus`` is not ``SubscriptionStatus/active``
+  /// after returning this value.
+  @available(swift, obsoleted: 1.0)
+  public func restorePurchases(completion: @escaping (RestorationResultObjc) -> Void) {
+    restorePurchases { result in
+      completion(result.toObjc())
     }
   }
 }
@@ -557,14 +838,13 @@ extension Superwall: PaywallViewControllerEventDelegate {
       }
       purchaseTask = Task {
         await dependencyContainer.transactionManager.purchase(
-          productId,
-          from: paywallViewController
+          .internal(productId, paywallViewController)
         )
         purchaseTask = nil
       }
       await purchaseTask?.value
     case .initiateRestore:
-      await dependencyContainer.transactionManager.tryToRestore(from: paywallViewController)
+      await dependencyContainer.transactionManager.tryToRestore(.internal(paywallViewController))
     case .openedURL(let url):
       dependencyContainer.delegateAdapter.paywallWillOpenURL(url: url)
     case .openedUrlInSafari(let url):

@@ -44,7 +44,7 @@
 
 Your name will be added to the Superwall user attributes, which can then be accessed and displayed within your paywall. 
 
-For this demo, we'll use your username as your userId on both Superwall and RevenueCat so you can see how subscription status is synced between the platforms and accounts.</string>
+For this demo, we'll use your username as your userId on both Superwall and RevenueCat so you can see how entitlements are synced between the platforms and accounts.</string>
                                         <fontDescription key="fontDescription" name="Rubik-Regular" family="Rubik" pointSize="16"/>
                                         <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <nil key="highlightedColor"/>

@@ -1,14 +1,14 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 03/01/2023.
 //
 
-import UIKit
 import Combine
-import SystemConfiguration
 import StoreKit
+import SystemConfiguration
+import UIKit
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
@@ -45,8 +45,7 @@ protocol RequestFactory: AnyObject {
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides?,
     isDebuggerLaunched: Bool,
-    presentationSourceType: String?,
-    retryCount: Int
+    presentationSourceType: String?
   ) -> PaywallRequest
 
   func makePresentationRequest(
@@ -54,7 +53,6 @@ protocol RequestFactory: AnyObject {
     paywallOverrides: PaywallOverrides?,
     presenter: UIViewController?,
     isDebuggerLaunched: Bool?,
-    subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>?,
     isPaywallPresented: Bool,
     type: PresentationRequestType
   ) -> PresentationRequest
@@ -140,7 +138,7 @@ protocol TriggerFactory: AnyObject {
 
 protocol PurchasedTransactionsFactory {
   func makePurchasingCoordinator() -> PurchasingCoordinator
-  func purchase(product: SKProduct) async -> PurchaseResult
+  func purchase(product: StoreProduct) async -> PurchaseResult
   func restorePurchases() async -> RestorationResult
 }
 
@@ -149,8 +147,8 @@ protocol UserAttributesPlacementFactory {
 }
 
 protocol ReceiptFactory {
-  func loadPurchasedProducts() async -> Set<StoreProduct>?
-  func refreshReceipt() async
+  func loadPurchasedProducts() async
+  func refreshSK1Receipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
 }
 

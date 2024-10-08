@@ -55,11 +55,17 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     )
   }
 
-  /// The loading state of the paywall.
-  var loadingState: PaywallLoadingState = .unknown {
+  /// A published property that indicates the loading state of the paywall.
+  ///
+  /// This is a published value
+  @Published public internal(set) var loadingState: PaywallLoadingState = .unknown {
     didSet {
       if loadingState != oldValue {
         loadingStateDidChange(from: oldValue)
+        delegate?.loadingStateDidChange(
+          paywall: self,
+          loadingState: loadingState
+        )
       }
     }
   }
@@ -85,10 +91,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var paywallResult: PaywallResult?
 
   /// A timer that shows the refresh buttons/modal when it fires.
-	private var showRefreshTimer: Timer?
+  private var showRefreshTimer: Timer?
 
   /// Defines when Safari is presenting in app.
-	private var isSafariVCPresented = false
+  private var isSafariVCPresented = false
 
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
@@ -97,7 +103,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var backgroundColor: UIColor {
     #if os(visionOS)
     return paywall.backgroundColor
-    #endif
+    #else
     let style = UIScreen.main.traitCollection.userInterfaceStyle
     switch style {
     case .dark:
@@ -105,6 +111,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     default:
       return paywall.backgroundColor
     }
+    #endif
   }
 
   /// A loading spinner that appears when making a purchase.
@@ -198,7 +205,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-		configureUI()
+    configureUI()
     loadWebView()
 	}
 
@@ -444,7 +451,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         self.exitButton.alpha = 0.0
 
         Task(priority: .utility) {
-          let webviewTimeout = InternalSuperwallPlacement.PaywallWebviewLoad(
+          let webviewTimeout = await InternalSuperwallPlacement.PaywallWebviewLoad(
             state: .timeout,
             paywallInfo: self.info
           )
@@ -478,9 +485,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   // MARK: - Presentation Logic
 
-  // TODO: update description here:
-  /// Sets the event data for use in ``PaywallInfo`` and the state publisher
-  /// for callbacks.
+  /// Sets data before presenting the paywall.
   func set(
     request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,

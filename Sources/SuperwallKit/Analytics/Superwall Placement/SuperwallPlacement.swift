@@ -38,8 +38,8 @@ public enum SuperwallPlacement {
   /// When device attributes are sent to the backend.
   case deviceAttributes(attributes: [String: Any])
 
-  /// When the user's subscription status changes.
-  case subscriptionStatusDidChange
+  /// When the user's active entitlements change.
+  case activeEntitlementsDidChange
 
   /// Anytime the app leaves the foreground.
   case appClose
@@ -179,6 +179,21 @@ public enum SuperwallPlacement {
   /// When the attributes that affect the configuration of Superwall are set or change.
   case configAttributes
 
+  /// When all the experiment assignments are confirmed by calling ``Superwall/confirmAllAssignments()``.
+  case confirmAllAssignments
+
+  /// When the Superwall configuration fails to be retrieved.
+  case configFail
+
+  /// When the AdServices token request starts.
+  case adServicesTokenRequestStart
+
+  /// When the AdServices token request fails.
+  case adServicesTokenRequestFail(error: Error)
+
+  /// When the AdServices token request finishes.
+  case adServicesTokenRequestComplete(token: String)
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -234,8 +249,8 @@ extension SuperwallPlacement {
       return .init(objcPlacement: .sessionStart)
     case .deviceAttributes:
       return .init(objcPlacement: .deviceAttributes)
-    case .subscriptionStatusDidChange:
-      return .init(objcPlacement: .subscriptionStatusDidChange)
+    case .activeEntitlementsDidChange:
+      return .init(objcPlacement: .activeEntitlementsDidChange)
     case .appClose:
       return .init(objcPlacement: .appClose)
     case .deepLink:
@@ -316,6 +331,16 @@ extension SuperwallPlacement {
       return .init(objcPlacement: .customPlacement)
     case .configAttributes:
       return .init(objcPlacement: .configAttributes)
+    case .confirmAllAssignments:
+      return .init(objcPlacement: .confirmAllAssignments)
+    case .configFail:
+      return .init(objcPlacement: .configFail)
+    case .adServicesTokenRequestStart:
+      return .init(objcPlacement: .adServicesTokenRequestStart)
+    case .adServicesTokenRequestFail:
+      return .init(objcPlacement: .adServicesTokenRequestFail)
+    case .adServicesTokenRequestComplete:
+      return .init(objcPlacement: .adServicesTokenRequestComplete)
     }
   }
 }

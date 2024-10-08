@@ -194,12 +194,6 @@ enum InternalSuperwallPlacement {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct ConfigRefresh: TrackableSuperwallPlacement {
-    let superwallPlacement: SuperwallPlacement = .configRefresh
-    var audienceFilterParams: [String: Any] = [:]
-    func getSuperwallParameters() async -> [String: Any] { [:] }
-  }
-
   struct ConfigAttributes: TrackableSuperwallPlacement {
     let superwallPlacement: SuperwallPlacement = .configAttributes
     let options: SuperwallOptions
@@ -280,13 +274,13 @@ enum InternalSuperwallPlacement {
     }
   }
 
-  struct SubscriptionStatusDidChange: TrackableSuperwallPlacement {
-    let superwallPlacement: SuperwallPlacement = .subscriptionStatusDidChange
-    let subscriptionStatus: SubscriptionStatus
+  struct ActiveEntitlementsDidChange: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .activeEntitlementsDidChange
+    let activeEntitlements: Set<Entitlement>
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       return [
-        "subscription_status": subscriptionStatus.description
+        "active_entitlements": activeEntitlements.map { $0.id }.joined()
       ]
     }
   }
@@ -306,9 +300,6 @@ enum InternalSuperwallPlacement {
       var params: [String: Any] = [
         "trigger_name": triggerName
       ]
-
-      // TODO: Remove in v4:
-      params["trigger_session_id"] = ""
 
       switch triggerResult {
       case .noAudienceMatch(let unmatchedAudiences):
@@ -603,6 +594,12 @@ enum InternalSuperwallPlacement {
     }
   }
 
+  struct ConfirmAllAssignments: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .confirmAllAssignments
+    let audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
   struct FreeTrialStart: TrackableSuperwallPlacement {
     var superwallPlacement: SuperwallPlacement {
       return .freeTrialStart(
@@ -721,6 +718,75 @@ enum InternalSuperwallPlacement {
       }
       params += await paywallInfo.placementParams()
       return params
+    }
+  }
+
+  enum ConfigCacheStatus: String {
+    case cached = "CACHED"
+    case notCached = "NOT_CACHED"
+  }
+
+  struct ConfigRefresh: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .configRefresh
+    let buildId: String
+    let retryCount: Int
+    let cacheStatus: ConfigCacheStatus
+    let fetchDuration: TimeInterval
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "config_build_id": buildId,
+        "retry_count": retryCount,
+        "cache_status": cacheStatus.rawValue,
+        "fetch_duration": fetchDuration
+      ]
+    }
+  }
+
+  struct ConfigFail: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .configFail
+    let message: String
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "error_message": message
+      ]
+    }
+  }
+
+  struct AdServicesTokenRetrieval: TrackableSuperwallPlacement {
+    enum State {
+      case start
+      case fail(Error)
+      case complete(String)
+    }
+    let state: State
+
+    var superwallPlacement: SuperwallPlacement {
+      switch state {
+      case .start:
+        return .adServicesTokenRequestStart
+      case .fail(let error):
+        return .adServicesTokenRequestFail(error: error)
+      case .complete(let token):
+        return .adServicesTokenRequestComplete(token: token)
+      }
+    }
+    let audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      switch state {
+      case .start:
+        return [:]
+      case .fail(let error):
+        return ["error_message": error.localizedDescription]
+      case .complete(let token):
+        return [
+          "token": token
+        ]
+      }
     }
   }
 }

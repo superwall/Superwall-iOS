@@ -44,7 +44,7 @@ struct DeviceTemplate: Codable {
   var utcDateTime: String
   var localDateTime: String
   var isSandbox: String
-  var subscriptionStatus: String
+  var activeEntitlements: Set<Entitlement>
   var isFirstAppOpen: Bool
   var sdkVersion: String
   var sdkVersionPadded: String

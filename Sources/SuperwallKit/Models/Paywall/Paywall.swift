@@ -12,7 +12,7 @@ struct Paywalls: Decodable {
   var paywalls: [Paywall]
 }
 
-struct Paywall: Decodable {
+struct Paywall: Codable {
   /// The id of the paywall in the database.
   var databaseId: String
 
@@ -54,14 +54,10 @@ struct Paywall: Decodable {
   /// A surveys to potentially show when an action happens in the paywall.
   var surveys: [Survey]
 
-  /// The products associated with the paywall.
-  var products: [Product]
-
   /// An ordered list of products associated with the paywall.
-  var productItems: [ProductItem] {
+  var products: [Product] {
     didSet {
-      productIds = productItems.map { $0.id }
-      products = Self.makeProducts(from: productItems)
+      productIds = products.map { $0.id }
     }
   }
 
@@ -132,7 +128,7 @@ struct Paywall: Decodable {
     case presentationDelay
     case backgroundColorHex
     case darkBackgroundColorHex
-    case productItems = "productsV2"
+    case products = "productsV2"
     case featureGating
     case onDeviceCache
     case localNotifications
@@ -171,12 +167,10 @@ struct Paywall: Decodable {
     surveys = throwableSurveys.compactMap { try? $0.result.get() }
 
     let presentationStyle = try values.decode(PaywallPresentationStyle.self, forKey: .presentationStyle)
-    let presentationCondition = try values.decode(PresentationCondition.self, forKey: .presentationCondition)
     let presentationDelay = try values.decode(Int.self, forKey: .presentationDelay)
 
     presentation = PaywallPresentationInfo(
       style: presentationStyle,
-      condition: presentationCondition,
       delay: presentationDelay
     )
 
@@ -194,13 +188,12 @@ struct Paywall: Decodable {
     }
 
     let appStoreProductItems = try values.decodeIfPresent(
-      [Throwable<ProductItem>].self,
-      forKey: .productItems
+      [Throwable<Product>].self,
+      forKey: .products
     ) ?? []
-    productItems = appStoreProductItems.compactMap { try? $0.result.get() }
+    products = appStoreProductItems.compactMap { try? $0.result.get() }
 
-    productIds = productItems.map { $0.id }
-    products = Self.makeProducts(from: productItems)
+    productIds = products.map { $0.id }
 
     let responseLoadStartTime = try values.decodeIfPresent(Date.self, forKey: .responseLoadStartTime)
     let responseLoadCompleteTime = try values.decodeIfPresent(Date.self, forKey: .responseLoadCompleteTime)
@@ -247,26 +240,59 @@ struct Paywall: Decodable {
     manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
   }
 
-  private static func makeProducts(from productItems: [ProductItem]) -> [Product] {
-    var output: [Product] = []
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
 
-    for productItem in productItems {
-      if productItem.name == "primary" {
-        output.append(
-          Product(type: .primary, id: productItem.id)
-        )
-      } else if productItem.name == "secondary" {
-        output.append(
-          Product(type: .secondary, id: productItem.id)
-        )
-      } else if productItem.name == "tertiary" {
-        output.append(
-          Product(type: .tertiary, id: productItem.id)
-        )
-      }
+    try container.encode(databaseId, forKey: .id)
+    try container.encode(identifier, forKey: .identifier)
+    try container.encode(name, forKey: .name)
+    try container.encode(cacheKey, forKey: .cacheKey)
+    try container.encode(buildId, forKey: .buildId)
+    try container.encode(url, forKey: .url)
+    try container.encode(urlConfig, forKey: .urlConfig)
+    try container.encode(htmlSubstitutions, forKey: .htmlSubstitutions)
+
+    if !surveys.isEmpty {
+      try container.encode(surveys, forKey: .surveys)
     }
 
-    return output
+    try container.encode(presentation.style, forKey: .presentationStyle)
+    try container.encode(presentation.delay, forKey: .presentationDelay)
+
+    try container.encode(backgroundColorHex, forKey: .backgroundColorHex)
+
+    if let darkBackgroundColorHex = darkBackgroundColorHex {
+      try container.encode(darkBackgroundColorHex, forKey: .darkBackgroundColorHex)
+    }
+
+    if !products.isEmpty {
+      try container.encode(products, forKey: .products)
+    }
+
+    try container.encodeIfPresent(responseLoadingInfo.startAt, forKey: .responseLoadStartTime)
+    try container.encodeIfPresent(responseLoadingInfo.endAt, forKey: .responseLoadCompleteTime)
+    try container.encodeIfPresent(responseLoadingInfo.failAt, forKey: .responseLoadFailTime)
+
+    try container.encodeIfPresent(webviewLoadingInfo.startAt, forKey: .webViewLoadStartTime)
+    try container.encodeIfPresent(webviewLoadingInfo.endAt, forKey: .webViewLoadCompleteTime)
+    try container.encodeIfPresent(webviewLoadingInfo.failAt, forKey: .webViewLoadFailTime)
+
+    try container.encodeIfPresent(productsLoadingInfo.startAt, forKey: .productsLoadStartTime)
+    try container.encodeIfPresent(productsLoadingInfo.endAt, forKey: .productsLoadCompleteTime)
+    try container.encodeIfPresent(productsLoadingInfo.failAt, forKey: .productsLoadFailTime)
+
+    try container.encodeIfPresent(featureGating, forKey: .featureGating)
+    try container.encodeIfPresent(onDeviceCache, forKey: .onDeviceCache)
+
+    if !localNotifications.isEmpty {
+      try container.encode(localNotifications, forKey: .localNotifications)
+    }
+
+    if !computedPropertyRequests.isEmpty {
+      try container.encode(computedPropertyRequests, forKey: .computedPropertyRequests)
+    }
+
+    try container.encodeIfPresent(manifest, forKey: .manifest)
   }
 
   // Only used in stub
@@ -285,7 +311,7 @@ struct Paywall: Decodable {
     backgroundColor: UIColor,
     darkBackgroundColorHex: String?,
     darkBackgroundColor: UIColor?,
-    productItems: [ProductItem],
+    productItems: [Product],
     productIds: [String],
     responseLoadingInfo: LoadingInfo,
     webviewLoadingInfo: LoadingInfo,
@@ -315,7 +341,7 @@ struct Paywall: Decodable {
     self.backgroundColorHex = backgroundColorHex
     self.darkBackgroundColor = darkBackgroundColor
     self.darkBackgroundColorHex = darkBackgroundColorHex
-    self.productItems = productItems
+    self.products = productItems
     self.productIds = productIds
     self.responseLoadingInfo = responseLoadingInfo
     self.webviewLoadingInfo = webviewLoadingInfo
@@ -329,7 +355,6 @@ struct Paywall: Decodable {
     self.localNotifications = localNotifications
     self.computedPropertyRequests = computedPropertyRequests
     self.surveys = surveys
-    self.products = Self.makeProducts(from: productItems)
     self.manifest = manifest
   }
 
@@ -342,7 +367,6 @@ struct Paywall: Decodable {
       buildId: buildId,
       url: url,
       products: products,
-      productItems: productItems,
       productIds: productIds,
       fromPlacementData: fromPlacement,
       responseLoadStartTime: responseLoadingInfo.startAt,
@@ -368,7 +392,7 @@ struct Paywall: Decodable {
   }
 
   mutating func update(from paywall: Paywall) {
-    productItems = paywall.productItems
+    products = paywall.products
     productVariables = paywall.productVariables
     isFreeTrialAvailable = paywall.isFreeTrialAvailable
     productsLoadingInfo = paywall.productsLoadingInfo
@@ -401,7 +425,6 @@ extension Paywall: Stubbable {
       htmlSubstitutions: "",
       presentation: PaywallPresentationInfo(
         style: .modal,
-        condition: .checkUserSubscription,
         delay: 0
       ),
       backgroundColorHex: "",

@@ -129,12 +129,20 @@ enum SdkVersion: Storable {
   typealias Value = String
 }
 
-enum ActiveSubscriptionStatus: Storable {
+enum EntitlementsByProductId: Storable {
   static var key: String {
-    "store.subscriptionStatus"
+    "store.entitlementsByProductId"
   }
   static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = SubscriptionStatus
+  typealias Value = [String: Set<Entitlement>]
+}
+
+enum ActiveEntitlements: Storable {
+  static var key: String {
+    "store.activeEntitlements"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Set<Entitlement>
 }
 
 enum SurveyAssignmentKey: Storable {
@@ -151,4 +159,28 @@ enum DisableVerbosePlacements: Storable {
   }
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = Bool
+}
+
+enum LatestConfig: Storable {
+  static var key: String {
+    "store.config"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Config
+}
+
+enum LatestGeoInfo: Storable {
+  static var key: String {
+    "store.geoInfo"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = GeoInfo
+}
+
+enum AdServicesTokenStorage: Storable {
+  static var key: String {
+    "store.adServicesToken"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = String
 }

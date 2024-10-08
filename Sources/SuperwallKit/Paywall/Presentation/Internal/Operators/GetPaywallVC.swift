@@ -41,13 +41,6 @@ extension Superwall {
       experiment: experiment
     )
 
-    var requestRetryCount = 6
-
-    let subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
-    if subscriptionStatus == .active {
-      requestRetryCount = 0
-    }
-
     let paywallRequest = dependencyContainer.makePaywallRequest(
       placementData: request.presentationInfo.placementData,
       responseIdentifiers: responseIdentifiers,
@@ -57,8 +50,7 @@ extension Superwall {
         featureGatingBehavior: request.paywallOverrides?.featureGatingBehavior
       ),
       isDebuggerLaunched: request.flags.isDebuggerLaunched,
-      presentationSourceType: request.presentationSourceType,
-      retryCount: requestRetryCount
+      presentationSourceType: request.presentationSourceType
     )
     do {
       let isForPresentation = !request.flags.type.isGettingPresentationResult
@@ -76,11 +68,7 @@ extension Superwall {
 
       return paywallViewController
     } catch {
-      if subscriptionStatus == .active {
-        throw userIsSubscribed(paywallStatePublisher: paywallStatePublisher)
-      } else {
-        throw await presentationFailure(error, request, debugInfo, paywallStatePublisher)
-      }
+      throw await presentationFailure(error, request, debugInfo, paywallStatePublisher)
     }
   }
 
@@ -90,25 +78,6 @@ extension Superwall {
     _ debugInfo: [String: Any],
     _ paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
   ) async -> Error {
-    let subscriptionStatus: SubscriptionStatus
-    do {
-      subscriptionStatus = try await request.flags.subscriptionStatus.throwableAsync()
-    } catch {
-      return error
-    }
-    if InternalPresentationLogic.userSubscribedAndNotOverridden(
-      isUserSubscribed: subscriptionStatus == .active,
-      overrides: .init(
-        isDebuggerLaunched: request.flags.isDebuggerLaunched,
-        shouldIgnoreSubscriptionStatus: request.paywallOverrides?.ignoreSubscriptionStatus
-      )
-    ) {
-      let state: PaywallState = .skipped(.userIsSubscribed)
-      paywallStatePublisher?.send(state)
-      paywallStatePublisher?.send(completion: .finished)
-      return PresentationPipelineError.userIsSubscribed
-    }
-
     if !request.flags.type.isGettingPresentationResult {
       Logger.debug(
         logLevel: .error,

@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 03/07/2023.
 //
@@ -10,22 +10,40 @@ import Foundation
 /// A request to compute a device property associated with a placement at runtime.
 @objc(SWKComputedPropertyRequest)
 @objcMembers
-public final class ComputedPropertyRequest: NSObject, Decodable {
+public final class ComputedPropertyRequest: NSObject, Codable {
   /// The type of device property to compute.
   public let type: ComputedPropertyRequestType
 
-  /// The name of the placement used to compute the device property.
+  /// The name of the event used to compute the device property.
   public let placementName: String
+
+  enum CodingKeys: CodingKey {
+    case type
+    case placementName
+  }
 
   init(type: ComputedPropertyRequestType, placementName: String) {
     self.type = type
     self.placementName = placementName
   }
+
+  public func encode(to encoder: any Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(type, forKey: .type)
+    try container.encode(placementName, forKey: .placementName)
+  }
+
+  public init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    type = try container.decode(ComputedPropertyRequestType.self, forKey: .type)
+    placementName = try container.decode(String.self, forKey: .placementName)
+    super.init()
+  }
 }
 
 /// The type of device property to compute.
 @objc(SWKComputedPropertyRequestType)
-public enum ComputedPropertyRequestType: Int, Decodable, CustomStringConvertible, CaseIterable {
+public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, CaseIterable {
   /// The number of minutes since the placement occurred.
   case minutesSince
 

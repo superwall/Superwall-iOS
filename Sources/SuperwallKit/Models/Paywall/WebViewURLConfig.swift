@@ -7,12 +7,12 @@
 
 import Foundation
 
-struct WebViewURLConfig: Decodable {
+struct WebViewURLConfig: Codable {
   let endpoints: [WebViewEndpoint]
   let maxAttempts: Int
 }
 
-struct WebViewEndpoint: Decodable, Equatable {
+struct WebViewEndpoint: Codable, Equatable {
   var url: URL
   let timeout: TimeInterval
   var percentage: Double
@@ -38,6 +38,13 @@ struct WebViewEndpoint: Decodable, Equatable {
     self.url = try container.decode(URL.self, forKey: .url)
     self.timeout = try container.decode(Milliseconds.self, forKey: .timeoutMs) * 1000
     self.percentage = try container.decode(Double.self, forKey: .percentage)
+  }
+
+  func encode(to encoder: any Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(url, forKey: .url)
+    try container.encode(timeout / 1000, forKey: .timeoutMs)
+    try container.encode(percentage, forKey: .percentage)
   }
 }
 
