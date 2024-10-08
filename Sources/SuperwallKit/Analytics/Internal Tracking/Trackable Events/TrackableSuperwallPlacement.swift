@@ -790,5 +790,3 @@ enum InternalSuperwallPlacement {
     }
   }
 }
-
-// TODO: We have changed some stuff from Event to Placement. Now when trying to retrieve this and decode, it won't match will it? This could mess up 1 time things... We may need to migrate.

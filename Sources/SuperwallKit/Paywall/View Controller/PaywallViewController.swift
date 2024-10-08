@@ -485,9 +485,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   // MARK: - Presentation Logic
 
-  // TODO: update description here:
-  /// Sets the event data for use in ``PaywallInfo`` and the state publisher
-  /// for callbacks.
+  /// Sets data before presenting the paywall.
   func set(
     request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
