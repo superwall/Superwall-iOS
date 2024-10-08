@@ -47,8 +47,8 @@
 - (IBAction)registerPlacement:(id)sender {
   SWKPaywallPresentationHandler *handler = [[SWKPaywallPresentationHandler alloc] init];
 
-  [handler onDismiss:^(SWKPaywallInfo * _Nonnull paywallInfo) {
-    NSLog(@"The paywall dismissed. PaywallInfo: %@", paywallInfo);
+  [handler onDismiss:^(SWKPaywallInfo * _Nonnull paywallInfo, enum SWKPaywallResult paywallResult, SWKStoreProduct * _Nullable product) {
+    NSLog(@"The paywall dismissed. PaywallInfo: %@, PaywallResult: %ld, product %@", paywallInfo, (long)paywallResult, product);
   }];
 
   [handler onPresent:^(SWKPaywallInfo * _Nonnull paywallInfo) {

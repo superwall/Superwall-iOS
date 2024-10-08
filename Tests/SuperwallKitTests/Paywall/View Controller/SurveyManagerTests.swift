@@ -123,7 +123,7 @@ final class SurveyManagerTests: XCTestCase {
 
     SurveyManager.presentSurveyIfAvailable(
       [.stub().setting(\.presentationCondition, to: .onPurchase)],
-      paywallResult: .purchased(productId: "abc"),
+      paywallResult: .purchased(StoreProduct(sk1Product: MockSkProduct())),
       paywallCloseReason: .systemLogic,
       using: paywallVc,
       loadingState: .loadingPurchase,

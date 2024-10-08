@@ -142,14 +142,12 @@ class ConfigManager {
           throw CancellationError()
         }
         if let cachedConfig = cachedConfig,
-          enableConfigRefresh
-        {
+          enableConfigRefresh {
           do {
-            let result = try await self.fetchWithTimeout(
-              {
-                try await self.network.getConfig(maxRetry: 0)
-              },
-              timeout: timeout)
+            let result = try await self.fetchWithTimeout({
+              try await self.network.getConfig(maxRetry: 0)
+            },
+            timeout: timeout)
             return (result, false)
           } catch {
             // Return the cached config and set isUsingCached to true
@@ -171,14 +169,12 @@ class ConfigManager {
         let cachedGeoInfo = self.storage.get(LatestGeoInfo.self)
 
         if let cachedGeoInfo = cachedGeoInfo,
-          enableConfigRefresh
-        {
+          enableConfigRefresh {
           do {
-            let geoInfo = try await self.fetchWithTimeout(
-              {
-                try await self.network.getGeoInfo(maxRetry: 0)
-              },
-              timeout: timeout)
+            let geoInfo = try await self.fetchWithTimeout({
+              try await self.network.getGeoInfo(maxRetry: 0)
+            },
+            timeout: timeout)
             self.deviceHelper.geoInfo = geoInfo
             return false
           } catch {
@@ -309,8 +305,7 @@ class ConfigManager {
   /// Swizzles the UIWindow's `sendEvent` to intercept the first `began` touch event if
   /// config's triggers contain `touches_began`.
   private func checkForTouchesBeganTrigger(in triggers: Set<Trigger>) async {
-    if triggers.contains(where: { $0.placementName == SuperwallPlacement.touchesBegan.description })
-    {
+    if triggers.contains(where: { $0.placementName == SuperwallPlacement.touchesBegan.description }) {
       await UIWindow.swizzleSendEvent()
     }
   }
@@ -456,9 +451,7 @@ class ConfigManager {
       )
       // Do not preload the presented paywall. This is because if config refreshes, we
       // don't want to refresh the presented paywall until it's dismissed and presented again.
-      if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall
-        .identifier
-      {
+      if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
         paywallIds.remove(presentedPaywallId)
       }
       await self.preloadPaywalls(withIdentifiers: paywallIds)

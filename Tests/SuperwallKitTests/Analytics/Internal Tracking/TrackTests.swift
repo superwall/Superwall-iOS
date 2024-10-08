@@ -607,7 +607,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_identifier"] as! String, paywallInfo.identifier)
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_url"] as! String, paywallInfo.url.absoluteString)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_name"] as? String, paywallInfo.presentedByPlacementWithName)
+    XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_placement_name"] as? String, paywallInfo.presentedByPlacementWithName)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_id"] as? String, paywallInfo.presentedByPlacementWithId)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String, paywallInfo.presentedByPlacementAt)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
@@ -638,7 +638,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(result.parameters.audienceFilterParams["presented_by_event_name"] as? String, paywallInfo.presentedByPlacementWithName)
+    XCTAssertEqual(result.parameters.audienceFilterParams["presented_by_placement_name"] as? String, paywallInfo.presentedByPlacementWithName)
   }
 
   func test_paywallClose_survey_noShow() async {
@@ -659,7 +659,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_identifier"] as! String, paywallInfo.identifier)
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_url"] as! String, paywallInfo.url.absoluteString)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_name"] as? String, paywallInfo.presentedByPlacementWithName)
+    XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_placement_name"] as? String, paywallInfo.presentedByPlacementWithName)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_id"] as? String, paywallInfo.presentedByPlacementWithId)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String, paywallInfo.presentedByPlacementAt)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
@@ -690,7 +690,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(result.parameters.audienceFilterParams["presented_by_event_name"] as? String, paywallInfo.presentedByPlacementWithName)
+    XCTAssertEqual(result.parameters.audienceFilterParams["presented_by_placement_name"] as? String, paywallInfo.presentedByPlacementWithName)
   }
 
   func test_paywallClose_survey_holdout() async {
@@ -711,7 +711,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_identifier"] as! String, paywallInfo.identifier)
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_url"] as! String, paywallInfo.url.absoluteString)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_name"] as? String, paywallInfo.presentedByPlacementWithName)
+    XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_placement_name"] as? String, paywallInfo.presentedByPlacementWithName)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_id"] as? String, paywallInfo.presentedByPlacementWithId)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String, paywallInfo.presentedByPlacementAt)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
@@ -742,7 +742,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(result.parameters.audienceFilterParams["presented_by_event_name"] as? String, paywallInfo.presentedByPlacementWithName)
+    XCTAssertEqual(result.parameters.audienceFilterParams["presented_by_placement_name"] as? String, paywallInfo.presentedByPlacementWithName)
   }
 
   func test_paywallClose_noSurvey() async {
@@ -763,7 +763,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_identifier"] as! String, paywallInfo.identifier)
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
     XCTAssertEqual(result.parameters.audienceFilterParams["$paywall_url"] as! String, paywallInfo.url.absoluteString)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_name"] as? String, paywallInfo.presentedByPlacementWithName)
+    XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_placement_name"] as? String, paywallInfo.presentedByPlacementWithName)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_id"] as? String, paywallInfo.presentedByPlacementWithId)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String, paywallInfo.presentedByPlacementAt)
     XCTAssertEqual(result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
@@ -794,7 +794,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(result.parameters.audienceFilterParams["presented_by_event_name"] as? String, paywallInfo.presentedByPlacementWithName)
+    XCTAssertEqual(result.parameters.audienceFilterParams["presented_by_placement_name"] as? String, paywallInfo.presentedByPlacementWithName)
   }
 
   func test_paywallDecline() async {

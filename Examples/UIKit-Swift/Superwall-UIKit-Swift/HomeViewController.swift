@@ -63,8 +63,8 @@ final class HomeViewController: UIViewController {
 
   @IBAction private func launchFeature() {
     let handler = PaywallPresentationHandler()
-    handler.onDismiss { paywallInfo in
-      print("The paywall dismissed. PaywallInfo:", paywallInfo)
+    handler.onDismiss { paywallInfo, paywallResult in
+      print("The paywall dismissed. PaywallInfo: \(paywallInfo), PaywallResult: \(paywallResult)")
     }
     handler.onPresent { paywallInfo in
       print("The paywall presented. PaywallInfo:", paywallInfo)

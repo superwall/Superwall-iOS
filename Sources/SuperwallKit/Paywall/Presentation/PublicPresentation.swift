@@ -130,9 +130,14 @@ extension Superwall {
           switch state {
           case .presented(let paywallInfo):
             handler?.onPresentHandler?(paywallInfo)
-          case let .dismissed(paywallInfo, state):
-            handler?.onDismissHandler?(paywallInfo)
-            switch state {
+          case let .dismissed(paywallInfo, paywallResult):
+            if let handler = handler?.onDismissHandler {
+              handler(paywallInfo, paywallResult)
+            } else {
+              handler?.onDismissHandlerObjc?(paywallInfo, paywallResult.convertForObjc(), paywallResult.product)
+            }
+
+            switch paywallResult {
             case .purchased,
               .restored:
               completion?()

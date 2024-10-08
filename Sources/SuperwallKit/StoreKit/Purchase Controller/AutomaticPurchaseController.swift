@@ -31,8 +31,7 @@ final class AutomaticPurchaseController {
 
     // If they haven't changed, don't disturb main thread.
     if Superwall.shared.entitlements.didSetActiveEntitlements,
-      entitlements == Superwall.shared.entitlements.active
-    {
+      entitlements == Superwall.shared.entitlements.active {
       return
     }
 
