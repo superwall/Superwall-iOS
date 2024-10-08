@@ -41,8 +41,8 @@ struct HomeView: View {
       VStack(spacing: 25) {
         BrandedButton(title: "Launch Feature") {
           let handler = PaywallPresentationHandler()
-          handler.onDismiss { paywallInfo in
-            print("The paywall dismissed. PaywallInfo:", paywallInfo)
+          handler.onDismiss { paywallInfo, paywallResult in
+            print("The paywall dismissed. PaywallInfo: \(paywallInfo), PaywallResult: \(paywallResult)")
           }
           handler.onPresent { paywallInfo in
             print("The paywall presented. PaywallInfo:", paywallInfo)

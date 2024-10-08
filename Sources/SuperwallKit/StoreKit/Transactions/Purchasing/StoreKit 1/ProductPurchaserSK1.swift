@@ -260,8 +260,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     // If has a transaction date and that happened before purchase
     // button was pressed...
     if let transactionDate = transaction.transactionDate,
-      transactionDate < purchaseDate
-    {
+      transactionDate < purchaseDate {
       return true
     }
 

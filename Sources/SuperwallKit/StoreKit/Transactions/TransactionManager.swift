@@ -169,8 +169,7 @@ final class TransactionManager {
             " The restoration result is \"restored\" but there are no active entitlements. Ensure the active entitlements are set before confirming successful restoration."
         }
         if case .failed(let error) = restorationResult,
-          let error = error
-        {
+          let error = error {
           message += " Original restoration error message: \(error.safeLocalizedDescription)"
         }
         await logAndTrack(
@@ -331,7 +330,7 @@ final class TransactionManager {
         message: "Transaction Error",
         info: [
           "product_id": product.productIdentifier,
-          "paywall_vc": paywallViewController,
+          "paywall_vc": paywallViewController
         ],
         error: error
       )
@@ -430,7 +429,7 @@ final class TransactionManager {
         message: "Transaction Succeeded",
         info: [
           "product_id": product.productIdentifier,
-          "paywall_vc": paywallViewController,
+          "paywall_vc": paywallViewController
         ],
         error: nil
       )
@@ -454,7 +453,7 @@ final class TransactionManager {
       if superwallOptions.paywalls.automaticallyDismiss {
         await Superwall.shared.dismiss(
           paywallViewController,
-          result: .purchased(productId: product.productIdentifier)
+          result: .purchased(product)
         )
       }
     case .external:

@@ -27,6 +27,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Changes the `PurchaseController` purchase function to `func purchase(product: StoreProduct) async -> PurchaseResult`. There will be an StoreKit 2 product accessible via `product.sk2Product` by default. However, if you're using the StoreKit 1 `SuperwallOption` or your app is running on an iOS version lower than iOS 15, this will be `nil` and you can access the StoreKit 1 product via `product.sk1Product`.
 - Consumables no longer count as lifetime subscriptions when using StoreKit 2.
 - Changes `presented_by_event_name` to `presented_by_placement_name`.
+- Renames the `PurchaseResult` case `purchased(productId: String)` to `purchased(Product)`.
+- Changes the Swift `onDismiss` block of the `PaywallPresentationHandler` to accept both a `PaywallInfo` object and a `PaywallResult` object so you know which product was purchased after dismiss.
+- Changes the Objective-C `onDismiss` block of the `PaywallPresentationHandler` to accept both a `PaywallInfo` object, a `PaywallResult` object, and an optional `StoreProduct`, so you know which product was purchased after dismiss.
 
 ### Enhancements
 
