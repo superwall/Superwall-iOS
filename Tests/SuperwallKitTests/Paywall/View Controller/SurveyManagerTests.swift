@@ -1,11 +1,12 @@
 //
 //  SurveyManagerTests.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 31/07/2023.
 //
 
 import XCTest
+
 @testable import SuperwallKit
 
 @available(iOS 14.0, *)
@@ -340,7 +341,6 @@ final class SurveyManagerTests: XCTestCase {
       cache: nil,
       paywallArchiveManager: nil
     )
-
 
     SurveyManager.presentSurveyIfAvailable(
       surveys,

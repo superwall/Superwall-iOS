@@ -47,6 +47,11 @@ final class EvaluationContext: HostContext {
 
     return "\(number)"
   }
+
+  func deviceProperty(name: String, args: String) async -> String {
+    // TODO: Fill this out properly
+    return ""
+  }
 }
 
 extension Dictionary where Key == String, Value == Any {
