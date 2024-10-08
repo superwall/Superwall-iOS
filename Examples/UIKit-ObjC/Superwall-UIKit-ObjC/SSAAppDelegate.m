@@ -13,7 +13,7 @@
 #pragma mark - Constants
 
 /// Notification name for posting a change to the subscribe state.
-NSNotificationName const SSAAppDelegateDidUpdateSubscribedState = @"SSAAppDelegateDidUpdateSubscribedState";
+NSNotificationName const SSAAppDelegateDidUpdateEntitlements = @"SSAAppDelegateDidUpdateEntitlements";
 
 @interface SSAAppDelegate () <SWKSuperwallDelegate>
 
@@ -37,9 +37,9 @@ NSNotificationName const SSAAppDelegateDidUpdateSubscribedState = @"SSAAppDelega
 
 #pragma mark - SuperwallDelegate
 
-- (void)subscriptionStatusDidChangeTo:(enum SWKSubscriptionStatus)newValue {
+- (void)activeEntitlementsDidChangeTo:(NSSet<SWKEntitlement *> *)newValue {
   dispatch_async(dispatch_get_main_queue(), ^{
-    [[NSNotificationCenter defaultCenter] postNotificationName:SSAAppDelegateDidUpdateSubscribedState object:self];
+    [[NSNotificationCenter defaultCenter] postNotificationName:SSAAppDelegateDidUpdateEntitlements object:self];
   });
 }
 

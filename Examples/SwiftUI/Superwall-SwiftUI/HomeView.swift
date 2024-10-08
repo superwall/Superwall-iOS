@@ -35,7 +35,7 @@ struct HomeView: View {
           .background(Color.primaryTeal)
           .padding()
 
-        SuperwallSubscriptionStatusView()
+        SuperwallEntitlementsView()
       }
 
       VStack(spacing: 25) {

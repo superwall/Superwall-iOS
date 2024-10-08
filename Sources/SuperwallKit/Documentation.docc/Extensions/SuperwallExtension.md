@@ -23,6 +23,8 @@ The `Superwall` class is used to access all the features of the SDK. Before usin
 - `SubscriptionStatus`
 - `SuperwallOptions`
 - `PaywallOptions`
+- `entitlements`
+- `EntitlementsInfo`
 - `preloadAllPaywalls()`
 - `preloadPaywalls(forPlacements:)`
 - `confirmAllAssignments()`

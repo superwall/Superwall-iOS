@@ -24,12 +24,17 @@ class ProductsFetcherSK1: NSObject {
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
   private static let numberOfRetries: Int = 10
+  private unowned let entitlementsInfo: EntitlementsInfo
 
   struct ProductRequest {
     let identifiers: Set<String>
     let paywall: Paywall?
     let placement: PlacementData?
     let retriesLeft: Int
+  }
+
+  init(entitlementsInfo: EntitlementsInfo) {
+    self.entitlementsInfo = entitlementsInfo
   }
 
   // MARK: - ProductsFetcher
@@ -50,7 +55,8 @@ class ProductsFetcherSK1: NSObject {
       }
     }
     let storeProducts = Set(sk1Products.map {
-      StoreProduct(sk1Product: $0)
+      let entitlements = entitlementsInfo.byProductId($0.productIdentifier)
+      return StoreProduct(sk1Product: $0, entitlements: entitlements)
     })
     return storeProducts
   }

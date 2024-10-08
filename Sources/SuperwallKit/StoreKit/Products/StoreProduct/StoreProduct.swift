@@ -27,6 +27,11 @@ public typealias SK2Product = StoreKit.Product
 public final class StoreProduct: NSObject, StoreProductType, Sendable {
   let product: StoreProductType
 
+  /// A `Set` of ``Entitlements`` associated with the product.
+  public var entitlements: Set<Entitlement> {
+    product.entitlements
+  }
+
   /// Returns the `SKProduct` if this `StoreProduct` represents a `StoreKit.SKProduct`.
   public var sk1Product: SK1Product? {
     return (product as? SK1StoreProduct)?.underlyingSK1Product
@@ -331,12 +336,18 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
     return product as? StoreProduct ?? StoreProduct(product)
   }
 
-  public convenience init(sk1Product: SK1Product) {
-    self.init(SK1StoreProduct(sk1Product: sk1Product))
+  public convenience init(
+    sk1Product: SK1Product,
+    entitlements: Set<Entitlement>
+  ) {
+    self.init(SK1StoreProduct(sk1Product: sk1Product, entitlements: entitlements))
   }
 
   @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-  public convenience init(sk2Product: SK2Product) {
-    self.init(SK2StoreProduct(sk2Product: sk2Product))
+  public convenience init(
+    sk2Product: SK2Product,
+    entitlements: Set<Entitlement>
+  ) {
+    self.init(SK2StoreProduct(sk2Product: sk2Product, entitlements: entitlements))
   }
 }

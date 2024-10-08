@@ -9,7 +9,6 @@
 import UIKit
 import Combine
 import SystemConfiguration
-import StoreKit
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
 ///
@@ -38,24 +37,31 @@ final class DependencyContainer {
   var productPurchaser: ProductPurchaserSK1!
   var receiptManager: ReceiptManager!
   var purchaseController: PurchaseController!
+  var productsFetcher: ProductsFetcherSK1!
+  var entitlementsInfo: EntitlementsInfo!
   var attributionPoster: AttributionPoster!
   // swiftlint:enable implicitly_unwrapped_optional
-  let productsFetcher = ProductsFetcherSK1()
   let paywallArchiveManager = PaywallArchiveManager()
 
   init(
     purchaseController controller: PurchaseController? = nil,
     options: SuperwallOptions? = nil
   ) {
-    purchaseController = controller ?? AutomaticPurchaseController(factory: self)
+    delegateAdapter = SuperwallDelegateAdapter()
+    storage = Storage(factory: self)
+    entitlementsInfo = EntitlementsInfo(
+      storage: storage,
+      delegateAdapter: delegateAdapter
+    )
+    productsFetcher = ProductsFetcherSK1(entitlementsInfo: entitlementsInfo)
+    network = Network(factory: self)
+    storeKitManager = StoreKitManager(productsFetcher: productsFetcher)
+
+    purchaseController = controller ?? AutomaticPurchaseController(factory: self, entitlementsInfo: entitlementsInfo)
     receiptManager = ReceiptManager(
       delegate: productsFetcher,
       receiptDelegate: purchaseController as? ReceiptDelegate
     )
-    storeKitManager = StoreKitManager(productsFetcher: productsFetcher)
-    delegateAdapter = SuperwallDelegateAdapter()
-    storage = Storage(factory: self)
-    network = Network(factory: self)
 
     paywallRequestManager = PaywallRequestManager(
       storeKitManager: storeKitManager,
@@ -87,6 +93,7 @@ final class DependencyContainer {
       network: network,
       paywallManager: paywallManager,
       deviceHelper: deviceHelper,
+      entitlementsInfo: entitlementsInfo,
       factory: self
     )
 
@@ -283,8 +290,7 @@ extension DependencyContainer: RequestFactory {
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides? = nil,
     isDebuggerLaunched: Bool,
-    presentationSourceType: String?,
-    retryCount: Int
+    presentationSourceType: String?
   ) -> PaywallRequest {
     return PaywallRequest(
       placementData: placementData,
@@ -292,7 +298,7 @@ extension DependencyContainer: RequestFactory {
       overrides: overrides ?? PaywallRequest.Overrides(),
       isDebuggerLaunched: isDebuggerLaunched,
       presentationSourceType: presentationSourceType,
-      retryCount: retryCount
+      retryCount: 6
     )
   }
 
@@ -301,7 +307,6 @@ extension DependencyContainer: RequestFactory {
     paywallOverrides: PaywallOverrides? = nil,
     presenter: UIViewController? = nil,
     isDebuggerLaunched: Bool? = nil,
-    subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>? = nil,
     isPaywallPresented: Bool,
     type: PresentationRequestType
   ) -> PresentationRequest {
@@ -311,7 +316,8 @@ extension DependencyContainer: RequestFactory {
       paywallOverrides: paywallOverrides,
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
-        subscriptionStatus: subscriptionStatus ?? Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
+        didSetActiveEntitlements: entitlementsInfo.$didSetActiveEntitlements.eraseToAnyPublisher(),
+        entitlements: entitlementsInfo,
         isPaywallPresented: isPaywallPresented,
         type: type
       )
@@ -328,6 +334,7 @@ extension DependencyContainer: ApiFactory {
   ) async -> [String: String] {
     let key = isForDebugging ? storage.debugKey : storage.apiKey
     let auth = "Bearer \(key)"
+    // TODO: Removed subs status here, do we need one for entitlements?
     let headers = [
       "Authorization": auth,
       "X-Platform": "iOS",
@@ -353,7 +360,6 @@ extension DependencyContainer: ApiFactory {
       "X-Bundle-ID": deviceHelper.bundleId,
       "X-Low-Power-Mode": deviceHelper.isLowPowerModeEnabled,
       "X-Is-Sandbox": deviceHelper.isSandbox,
-      "X-Subscription-Status": Superwall.shared.subscriptionStatus.description,
       "X-Static-Config-Build-Id": configManager.config?.buildId ?? "",
       "X-Current-Time": Date().isoString,
       "X-Retry-Count": "\(configManager.configRetryCount)",
@@ -468,7 +474,7 @@ extension DependencyContainer: PurchasedTransactionsFactory {
     return productPurchaser.coordinator
   }
 
-  func purchase(product: SKProduct) async -> PurchaseResult {
+  func purchase(product: StoreProduct) async -> PurchaseResult {
     return await productPurchaser.purchase(product: product)
   }
 

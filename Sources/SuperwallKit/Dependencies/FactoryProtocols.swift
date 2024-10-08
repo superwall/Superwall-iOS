@@ -45,8 +45,7 @@ protocol RequestFactory: AnyObject {
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides?,
     isDebuggerLaunched: Bool,
-    presentationSourceType: String?,
-    retryCount: Int
+    presentationSourceType: String?
   ) -> PaywallRequest
 
   func makePresentationRequest(
@@ -54,7 +53,6 @@ protocol RequestFactory: AnyObject {
     paywallOverrides: PaywallOverrides?,
     presenter: UIViewController?,
     isDebuggerLaunched: Bool?,
-    subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>?,
     isPaywallPresented: Bool,
     type: PresentationRequestType
   ) -> PresentationRequest
@@ -140,7 +138,7 @@ protocol TriggerFactory: AnyObject {
 
 protocol PurchasedTransactionsFactory {
   func makePurchasingCoordinator() -> PurchasingCoordinator
-  func purchase(product: SKProduct) async -> PurchaseResult
+  func purchase(product: StoreProduct) async -> PurchaseResult
   func restorePurchases() async -> RestorationResult
 }
 

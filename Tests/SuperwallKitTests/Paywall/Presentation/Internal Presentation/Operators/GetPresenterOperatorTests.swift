@@ -9,64 +9,9 @@ import XCTest
 @testable import SuperwallKit
 import Combine
 
-final class CheckPaywallPresentableOperatorTests: XCTestCase {
+final class GetPresenterOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
   let superwall = Superwall.shared
-
-  @MainActor
-  func test_checkPaywallIsPresentable_userIsSubscribed() async {
-    let experiment = Experiment(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
-
-    let statePublisher = PassthroughSubject<PaywallState, Never>()
-    let stateExpectation = expectation(description: "Output a state")
-
-    statePublisher.sink { state in
-      switch state {
-      case .skipped(let reason):
-        switch reason {
-        case .userIsSubscribed:
-          stateExpectation.fulfill()
-        default:
-          break
-        }
-      default:
-        break
-      }
-    }
-    .store(in: &cancellables)
-
-    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.active)
-      .eraseToAnyPublisher()
-    let dependencyContainer = DependencyContainer()
-    let request = PresentationRequest.stub()
-      .setting(\.flags.subscriptionStatus, to: publisher)
-
-    let paywallVc = dependencyContainer.makePaywallViewController(
-      for: .stub(),
-      withCache: nil,
-      withPaywallArchiveManager: nil,
-      delegate: nil
-    )
-    paywallVc.loadViewIfNeeded()
-    let expectation = expectation(description: "Called publisher")
-    do {
-      try await Superwall.shared.getPresenterIfNecessary(
-        for: paywallVc,
-        audienceOutcome: AudienceFilterEvaluationOutcome(triggerResult: .paywall(experiment)),
-        request: request,
-        debugInfo: [:],
-        paywallStatePublisher: statePublisher
-      )
-      XCTFail("Should throw")
-    } catch {
-      if let error = error as? PresentationPipelineError,
-        case .userIsSubscribed = error {
-        expectation.fulfill()
-      }
-    }
-
-    await fulfillment(of: [expectation, stateExpectation], timeout: 2)
-  }
 
   @MainActor
   func test_checkPaywallIsPresentable_noPresenter() async {
@@ -93,13 +38,10 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
 
     Superwall.shared.presentationItems.window = UIWindow()
 
-    let inactiveSubscriptionPublisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
-      .eraseToAnyPublisher()
     let dependencyContainer = DependencyContainer()
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
       isDebuggerLaunched: false,
-      subscriptionStatus: inactiveSubscriptionPublisher,
       isPaywallPresented: false,
       type: .presentation
     )
@@ -147,11 +89,8 @@ final class CheckPaywallPresentableOperatorTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    let publisher = CurrentValueSubject<SubscriptionStatus, Never>(SubscriptionStatus.inactive)
-      .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
       .setting(\.presenter, to: UIViewController())
-      .setting(\.flags.subscriptionStatus, to: publisher)
 
     let dependencyContainer = DependencyContainer()
     let paywallVc = dependencyContainer.makePaywallViewController(

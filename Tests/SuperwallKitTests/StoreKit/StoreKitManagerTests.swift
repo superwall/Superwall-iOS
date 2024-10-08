@@ -13,7 +13,7 @@ import StoreKit
 class StoreKitManagerTests: XCTestCase {
   let dependencyContainer = DependencyContainer()
   lazy var purchaseController: AutomaticPurchaseController = {
-    return AutomaticPurchaseController(factory: dependencyContainer)
+    return AutomaticPurchaseController(factory: dependencyContainer, entitlementsInfo: dependencyContainer.entitlementsInfo)
   }()
 
   func test_getProducts_primaryProduct() async {
@@ -21,8 +21,9 @@ class StoreKitManagerTests: XCTestCase {
     let manager = dependencyContainer.storeKitManager!
 
     let primary = MockSkProduct(productIdentifier: "abc")
+    let entitlements: Set<Entitlement> = [.stub()]
     let substituteProducts = [
-      "primary": StoreProduct(sk1Product: primary)
+      "primary": StoreProduct(sk1Product: primary, entitlements: entitlements)
     ]
 
     do {
@@ -34,6 +35,7 @@ class StoreKitManagerTests: XCTestCase {
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
       XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
       XCTAssertTrue(products.contains { $0.name == "primary" })
+      XCTAssertTrue(products.contains { $0.entitlements == entitlements })
 
       XCTAssertEqual(products.count, 1)
     } catch {
@@ -46,10 +48,12 @@ class StoreKitManagerTests: XCTestCase {
     let manager = dependencyContainer.storeKitManager!
 
     let primary = MockSkProduct(productIdentifier: "abc")
+    let primaryEntitlements: Set<Entitlement> = [.stub()]
+
     let tertiary = MockSkProduct(productIdentifier: "def")
     let substituteProducts = [
-      "primary": StoreProduct(sk1Product: primary),
-      "tertiary": StoreProduct(sk1Product: tertiary)
+      "primary": StoreProduct(sk1Product: primary, entitlements: primaryEntitlements),
+      "tertiary": StoreProduct(sk1Product: tertiary, entitlements: [])
     ]
 
     do {
@@ -61,6 +65,7 @@ class StoreKitManagerTests: XCTestCase {
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
       XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
       XCTAssertTrue(products.contains { $0.name == "primary" })
+      XCTAssertTrue(products.contains { $0.entitlements == primaryEntitlements })
       XCTAssertTrue(products.contains { $0.objcAdapter.store == .appStore })
       XCTAssertTrue(products.contains { $0.id == tertiary.productIdentifier })
       XCTAssertTrue(products.contains { $0.name == "tertiary" })
@@ -80,9 +85,9 @@ class StoreKitManagerTests: XCTestCase {
     let secondary = MockSkProduct(productIdentifier: "def")
     let tertiary = MockSkProduct(productIdentifier: "ghi")
     let substituteProducts = [
-      "primary": StoreProduct(sk1Product: primary),
-      "secondary": StoreProduct(sk1Product: secondary),
-      "tertiary": StoreProduct(sk1Product: tertiary)
+      "primary": StoreProduct(sk1Product: primary, entitlements: []),
+      "secondary": StoreProduct(sk1Product: secondary, entitlements: []),
+      "tertiary": StoreProduct(sk1Product: tertiary, entitlements: [])
     ]
 
     do {
@@ -110,14 +115,17 @@ class StoreKitManagerTests: XCTestCase {
 
   func test_getProducts_substitutePrimaryProduct_oneResponseProduct() async {
     let productsResult: Result<Set<StoreProduct>, Error> = .success([])
-    let productsFetcher = ProductsFetcherSK1Mock(productCompletionResult: productsResult)
+    let productsFetcher = ProductsFetcherSK1Mock(
+      productCompletionResult: productsResult,
+      entitlementsInfo: dependencyContainer.entitlementsInfo
+    )
     let manager = StoreKitManager(
       productsFetcher: productsFetcher
     )
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = [
-      "primary": StoreProduct(sk1Product: primary)
+      "primary": StoreProduct(sk1Product: primary, entitlements: [])
     ]
 
     do {
@@ -140,16 +148,16 @@ class StoreKitManagerTests: XCTestCase {
   func test_getProducts_substitutePrimaryProduct_twoResponseProducts() async {
     let responseProduct2 = MockSkProduct(productIdentifier: "2")
     let productsResult: Result<Set<StoreProduct>, Error> = .success([
-      StoreProduct(sk1Product: responseProduct2)
+      StoreProduct(sk1Product: responseProduct2, entitlements: [])
     ])
-    let productsFetcher = ProductsFetcherSK1Mock(productCompletionResult: productsResult)
+    let productsFetcher = ProductsFetcherSK1Mock(productCompletionResult: productsResult, entitlementsInfo: dependencyContainer.entitlementsInfo)
     let manager = StoreKitManager(
       productsFetcher: productsFetcher
     )
 
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = [
-      "primary": StoreProduct(sk1Product: primary)
+      "primary": StoreProduct(sk1Product: primary, entitlements: [])
     ]
 
     do {

@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
-// swiftlint:disable function_body_length type_body_length file_length
+// swiftlint:disable function_body_length type_body_length
 
 import UIKit
 
@@ -54,14 +54,10 @@ struct Paywall: Codable {
   /// A surveys to potentially show when an action happens in the paywall.
   var surveys: [Survey]
 
-  /// The products associated with the paywall.
-  var products: [Product]
-
   /// An ordered list of products associated with the paywall.
-  var productItems: [ProductItem] {
+  var products: [Product] {
     didSet {
-      productIds = productItems.map { $0.id }
-      products = Self.makeProducts(from: productItems)
+      productIds = products.map { $0.id }
     }
   }
 
@@ -171,12 +167,10 @@ struct Paywall: Codable {
     surveys = throwableSurveys.compactMap { try? $0.result.get() }
 
     let presentationStyle = try values.decode(PaywallPresentationStyle.self, forKey: .presentationStyle)
-    let presentationCondition = try values.decode(PresentationCondition.self, forKey: .presentationCondition)
     let presentationDelay = try values.decode(Int.self, forKey: .presentationDelay)
 
     presentation = PaywallPresentationInfo(
       style: presentationStyle,
-      condition: presentationCondition,
       delay: presentationDelay
     )
 
@@ -194,13 +188,12 @@ struct Paywall: Codable {
     }
 
     let appStoreProductItems = try values.decodeIfPresent(
-      [Throwable<ProductItem>].self,
+      [Throwable<Product>].self,
       forKey: .productItems
     ) ?? []
-    productItems = appStoreProductItems.compactMap { try? $0.result.get() }
+    products = appStoreProductItems.compactMap { try? $0.result.get() }
 
-    productIds = productItems.map { $0.id }
-    products = Self.makeProducts(from: productItems)
+    productIds = products.map { $0.id }
 
     let responseLoadStartTime = try values.decodeIfPresent(Date.self, forKey: .responseLoadStartTime)
     let responseLoadCompleteTime = try values.decodeIfPresent(Date.self, forKey: .responseLoadCompleteTime)
@@ -342,7 +335,7 @@ struct Paywall: Codable {
     backgroundColor: UIColor,
     darkBackgroundColorHex: String?,
     darkBackgroundColor: UIColor?,
-    productItems: [ProductItem],
+    productItems: [Product],
     productIds: [String],
     responseLoadingInfo: LoadingInfo,
     webviewLoadingInfo: LoadingInfo,
@@ -372,7 +365,7 @@ struct Paywall: Codable {
     self.backgroundColorHex = backgroundColorHex
     self.darkBackgroundColor = darkBackgroundColor
     self.darkBackgroundColorHex = darkBackgroundColorHex
-    self.productItems = productItems
+    self.products = productItems
     self.productIds = productIds
     self.responseLoadingInfo = responseLoadingInfo
     self.webviewLoadingInfo = webviewLoadingInfo
@@ -386,7 +379,6 @@ struct Paywall: Codable {
     self.localNotifications = localNotifications
     self.computedPropertyRequests = computedPropertyRequests
     self.surveys = surveys
-    self.products = Self.makeProducts(from: productItems)
     self.manifest = manifest
   }
 
@@ -399,7 +391,6 @@ struct Paywall: Codable {
       buildId: buildId,
       url: url,
       products: products,
-      productItems: productItems,
       productIds: productIds,
       fromPlacementData: fromPlacement,
       responseLoadStartTime: responseLoadingInfo.startAt,
@@ -425,7 +416,7 @@ struct Paywall: Codable {
   }
 
   mutating func update(from paywall: Paywall) {
-    productItems = paywall.productItems
+    products = paywall.products
     productVariables = paywall.productVariables
     isFreeTrialAvailable = paywall.isFreeTrialAvailable
     productsLoadingInfo = paywall.productsLoadingInfo
@@ -458,7 +449,6 @@ extension Paywall: Stubbable {
       htmlSubstitutions: "",
       presentation: PaywallPresentationInfo(
         style: .modal,
-        condition: .checkUserSubscription,
         delay: 0
       ),
       backgroundColorHex: "",

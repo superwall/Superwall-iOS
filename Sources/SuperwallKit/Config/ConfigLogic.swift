@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 21/07/2022.
 //
-// swiftlint:disable array_constructor type_body_length
+// swiftlint:disable array_constructor type_body_length file_length
 
 import Foundation
 
@@ -385,5 +385,22 @@ enum ConfigLogic {
       )
 
     return removedOrChangedPaywallIds
+  }
+
+  // TODO: Add tests for this:
+  /// Returns the entitlements mapped to a product ID.
+  static func extractEntitlementsByProductId(
+    from paywalls: [Paywall]
+  ) -> [String: Set<Entitlement>] {
+    var entitlementsByProductId: [String: Set<Entitlement>] = [:]
+
+    paywalls
+      .flatMap { $0.products }
+      .forEach { product in
+        if entitlementsByProductId[product.id] == nil {
+          entitlementsByProductId[product.id] = product.entitlements
+        }
+      }
+    return entitlementsByProductId
   }
 }

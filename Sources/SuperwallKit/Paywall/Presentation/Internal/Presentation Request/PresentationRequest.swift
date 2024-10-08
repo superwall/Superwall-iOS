@@ -138,7 +138,9 @@ struct PresentationRequest {
 
   struct Flags {
     var isDebuggerLaunched: Bool
-    var subscriptionStatus: AnyPublisher<SubscriptionStatus, Never>
+    // TODO: Check if we can just use entitlements  (as that contains didSetActiveEntitlements)
+    var didSetActiveEntitlements: AnyPublisher<Bool, Never>
+    var entitlements: EntitlementsInfo
     var isPaywallPresented: Bool
     var type: PresentationRequestType
   }

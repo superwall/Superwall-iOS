@@ -19,13 +19,18 @@ import StoreKit
 @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct SK2StoreProduct: StoreProductType {
   private let priceFormatterProvider = PriceFormatterProvider()
+  let entitlements: Set<Entitlement>
 
-  init(sk2Product: SK2Product) {
+  init(
+    sk2Product: SK2Product,
+    entitlements: Set<Entitlement>
+  ) {
     #if swift(<5.7)
     self._underlyingSK2Product = sk2Product
     #else
     self.underlyingSK2Product = sk2Product
     #endif
+    self.entitlements = entitlements
   }
 
   #if swift(<5.7)

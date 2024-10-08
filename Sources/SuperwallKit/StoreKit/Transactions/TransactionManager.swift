@@ -132,9 +132,9 @@ final class TransactionManager {
     let restorationResult = await purchaseController.restorePurchases()
 
     let hasRestored = restorationResult == .restored
-    let isUserSubscribed = Superwall.shared.subscriptionStatus == .active
+    let hasActiveEntitlements = !Superwall.shared.entitlements.active.isEmpty
 
-    if hasRestored && isUserSubscribed {
+    if hasRestored && hasActiveEntitlements {
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
@@ -153,8 +153,8 @@ final class TransactionManager {
     } else {
       var message = "Transactions Failed to Restore."
 
-      if !isUserSubscribed && hasRestored {
-        message += " The user's subscription status is \"inactive\", but the restoration result is \"restored\". Ensure the subscription status is active before confirming successful restoration."
+      if !hasActiveEntitlements && hasRestored {
+        message += " The restoration result is \"restored\" but there are no active entitlements. Ensure the active entitlements are set before confirming successful restoration."
       }
       if case .failed(let error) = restorationResult,
         let error = error {
@@ -220,13 +220,10 @@ final class TransactionManager {
   }
 
   private func purchase(_ product: StoreProduct) async -> PurchaseResult {
-    guard let sk1Product = product.sk1Product else {
-      return .failed(PurchaseError.productUnavailable)
-    }
     await factory.makePurchasingCoordinator().beginPurchase(
       of: product.productIdentifier
     )
-    return await purchaseController.purchase(product: sk1Product)
+    return await purchaseController.purchase(product: product)
   }
 
   /// Cancels the transaction timeout when the application resigns active.

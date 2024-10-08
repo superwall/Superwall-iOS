@@ -274,13 +274,13 @@ enum InternalSuperwallPlacement {
     }
   }
 
-  struct SubscriptionStatusDidChange: TrackableSuperwallPlacement {
-    let superwallPlacement: SuperwallPlacement = .subscriptionStatusDidChange
-    let subscriptionStatus: SubscriptionStatus
+  struct ActiveEntitlementsDidChange: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .activeEntitlementsDidChange
+    let activeEntitlements: Set<Entitlement>
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       return [
-        "subscription_status": subscriptionStatus.description
+        "active_entitlements": activeEntitlements.map { $0.id }.joined()
       ]
     }
   }
@@ -300,9 +300,6 @@ enum InternalSuperwallPlacement {
       var params: [String: Any] = [
         "trigger_name": triggerName
       ]
-
-      // TODO: Remove in v4:
-      params["trigger_session_id"] = ""
 
       switch triggerResult {
       case .noAudienceMatch(let unmatchedAudiences):

@@ -12,13 +12,17 @@ import XCTest
 class ReceiptManagerTests: XCTestCase {
   let dependencyContainer = DependencyContainer()
   lazy var purchaseController: AutomaticPurchaseController = {
-    return AutomaticPurchaseController(factory: dependencyContainer)
+    return AutomaticPurchaseController(
+      factory: dependencyContainer,
+      entitlementsInfo: dependencyContainer.entitlementsInfo
+    )
   }()
 
   func test_loadPurchasedProducts_nilProducts() async {
     let product = MockSkProduct(subscriptionGroupIdentifier: "abc")
     let productsFetcher = ProductsFetcherSK1Mock(
-      productCompletionResult: .success([StoreProduct(sk1Product: product)])
+      productCompletionResult: .success([StoreProduct(sk1Product: product, entitlements: [.stub()])]),
+      entitlementsInfo: dependencyContainer.entitlementsInfo
     )
     let getReceiptData: () -> Data = {
       return MockReceiptData.newReceipt
@@ -36,7 +40,8 @@ class ReceiptManagerTests: XCTestCase {
 
   func test_loadPurchasedProducts_productError() async {
     let productsFetcher = ProductsFetcherSK1Mock(
-      productCompletionResult: .failure(TestError("error"))
+      productCompletionResult: .failure(TestError("error")),
+      entitlementsInfo: dependencyContainer.entitlementsInfo
     )
     let getReceiptData: () -> Data = {
       return MockReceiptData.newReceipt

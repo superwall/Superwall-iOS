@@ -117,28 +117,6 @@ public final class Superwall: NSObject, ObservableObject {
     return presentedPaywallInfo ?? presentationItems.paywallInfo
   }
 
-  /// A published property that indicates the subscription status of the user.
-  ///
-  /// If you're handling subscription-related logic yourself, you must set this
-  /// property whenever the subscription status of a user changes.
-  /// However, if you're letting Superwall handle subscription-related logic, its value will
-  /// be synced with the user's purchases on device.
-  ///
-  /// Paywalls will not show until the subscription status has been established.
-  /// On first install, it's value will default to `.unknown`. Afterwards, it'll default
-  /// to its cached value.
-  ///
-  /// If you're using Combine or SwiftUI, you can subscribe or bind to it to get
-  /// notified whenever the user's subscription status changes.
-  ///
-  /// Otherwise, you can check the delegate function
-  /// ``SuperwallDelegate/subscriptionStatusDidChange(to:)-24teh``
-  /// to receive a callback with the new value every time it changes.
-  ///
-  /// To learn more, see [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
-  @Published
-  public var subscriptionStatus: SubscriptionStatus = .unknown
-
   /// A published property that indicates the configuration status of the SDK.
   ///
   /// This is ``ConfigurationStatus/pending`` when the SDK is yet to finish
@@ -148,6 +126,11 @@ public final class Superwall: NSObject, ObservableObject {
   /// If you're using Combine or SwiftUI, you can subscribe or bind to this to get notified when the status changes.
   @Published
   public var configurationStatus: ConfigurationStatus = .pending
+
+  /// The ``Entitlement``s tied to the device.
+  public var entitlements: EntitlementsInfo {
+    return dependencyContainer.entitlementsInfo
+  }
 
   /// The configured shared instance of ``Superwall``.
   ///
@@ -230,8 +213,6 @@ public final class Superwall: NSObject, ObservableObject {
     )
     self.init(dependencyContainer: dependencyContainer)
 
-    subscriptionStatus = dependencyContainer.storage.get(ActiveSubscriptionStatus.self) ?? .unknown
-
     addListeners()
 
     // This task runs on a background thread, even if called from a main thread.
@@ -269,7 +250,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Listens to config and the subscription status
+  /// Listens to config.
   private func addListeners() {
     dependencyContainer.configManager.configState
       .receive(on: DispatchQueue.main)
@@ -288,33 +269,8 @@ public final class Superwall: NSObject, ObservableObject {
               break
             }
           }
-        ))
-
-    $subscriptionStatus
-      .removeDuplicates()
-      .dropFirst()
-      .eraseToAnyPublisher()
-      .receive(on: DispatchQueue.main)
-      .subscribe(
-        Subscribers.Sink(
-          receiveCompletion: { _ in },
-          receiveValue: { [weak self] newValue in
-            guard let self = self else {
-              return
-            }
-            self.dependencyContainer.storage.save(newValue, forType: ActiveSubscriptionStatus.self)
-
-            Task {
-              await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(
-                to: newValue)
-              let subscriptionStatusDidChange =
-                InternalSuperwallPlacement.SubscriptionStatusDidChange(
-                  subscriptionStatus: newValue
-                )
-              await self.track(subscriptionStatusDidChange)
-            }
-          }
-        ))
+        }
+      ))
   }
 
   // MARK: - Configuration
@@ -329,7 +285,7 @@ public final class Superwall: NSObject, ObservableObject {
   ///   an account, you can [sign up for free](https://superwall.com/sign-up).
   ///   - purchaseController: An optional object that conforms to ``PurchaseController``. Implement this if you'd
   ///   like to handle all subscription-related logic yourself. You'll need to also set the ``subscriptionStatus`` every time the user's
-  ///   subscription status changes. You can read more about that in [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
+  ///   entitlements change. You can read more about that in [Purchases and Entitlements](https://docs.superwall.com/docs/advanced-configuration).
   ///   If `nil`, Superwall will handle all subscription-related logic itself.  Defaults to `nil`.
   ///   - options: An optional ``SuperwallOptions`` object which allows you to customise the appearance and behavior
   ///   of the paywall.
@@ -379,8 +335,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - apiKey: Your Public API Key that you can get from the Superwall dashboard settings. If you don't have an account, you
   ///   can [sign up for free](https://superwall.com/sign-up).
   ///   - purchaseController: An optional object that conforms to ``PurchaseControllerObjc``. Implement this if you'd
-  ///   like to handle all subscription-related logic yourself. You'll need to also set the ``subscriptionStatus`` every time the user's
-  ///   subscription status changes. You can read more about that in [Purchases and Subscription Status](https://docs.superwall.com/docs/advanced-configuration).
+  ///   like to handle all subscription-related logic yourself. You'll need to also set the ``entitlements`` every time the user's
+  ///   entitlements change. You can read more about that in [Purchases and Entitlements](https://docs.superwall.com/docs/advanced-configuration).
   ///   If `nil`, Superwall will handle all subscription-related logic itself.  Defaults to `nil`.
   ///   - options: A ``SuperwallOptions`` object which allows you to customise the appearance and behavior of the paywall.
   ///   - completion: An optional completion handler that lets you know when Superwall has finished configuring.

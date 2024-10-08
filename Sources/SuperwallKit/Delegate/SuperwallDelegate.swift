@@ -16,19 +16,18 @@ import Foundation
 /// To learn how to conform to the delegate in your app and best practices, see
 /// [our docs](https://docs.superwall.com/docs/3rd-party-analytics).
 public protocol SuperwallDelegate: AnyObject {
-  /// Called when the property ``Superwall/subscriptionStatus`` changes.
+  /// Called when the active ``Superwall/entitlements`` changes.
   ///
-  /// If you're letting Superwall handle subscription-related logic, then this is based on
+  /// If you're letting Superwall handle entitlement logic, then this is based on
   /// the device receipt. Otherwise, this will reflect the value that you set.
   ///
   /// You can use this function to update the state of your application. Alternatively, you can
-  /// use the published properties of ``Superwall/subscriptionStatus`` to react to
+  /// use the published properties of ``EntitlementsInfo/active`` to react to
   /// changes as they happen.
   ///
-  /// - Parameters:
-  ///   - newValue: The new value of ``Superwall/subscriptionStatus``.
+  /// - Parameter newValue: The new value of the active ``Superwall/entitlements``. 
   @MainActor
-  func subscriptionStatusDidChange(to newValue: SubscriptionStatus)
+  func activeEntitlementsDidChange(to newValue: Set<Entitlement>)
 
   /// Called whenever an internal analytics event is tracked.
   ///
@@ -98,6 +97,8 @@ public protocol SuperwallDelegate: AnyObject {
 }
 
 extension SuperwallDelegate {
+  public func activeEntitlementsDidChange(to newValue: Set<Entitlement>) {}
+
   public func handleCustomPaywallAction(withName name: String) {}
 
   public func willDismissPaywall(withInfo paywallInfo: PaywallInfo) {}
@@ -113,8 +114,6 @@ extension SuperwallDelegate {
   public func paywallWillOpenDeepLink(url: URL) {}
 
   public func handleSuperwallPlacement(withInfo placementInfo: SuperwallPlacementInfo) {}
-
-  public func subscriptionStatusDidChange(to newValue: SubscriptionStatus) {}
 
   public func handleLog(
     level: String,

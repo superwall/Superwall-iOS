@@ -22,7 +22,7 @@ extension Superwall {
   ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
   ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
   ///   be dropped.
-  ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
+  ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products and presentation style. Defaults to `nil`.
   ///   - delegate: A delegate responsible for handling user interactions with the retrieved ``PaywallViewController``.
   ///   - completion: A completion block accepting an optional ``PaywallViewController``, an optional
   ///   ``PaywallSkippedReason`` and an optional `Error`. If the ``PaywallViewController`` couldn't be retrieved
@@ -64,7 +64,7 @@ extension Superwall {
   ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
   ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
   ///   be dropped.
-  ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
+  ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products and presentation style. Defaults to `nil`.
   ///   - delegate: A delegate responsible for handling user interactions with the retrieved ``PaywallViewController``.
   ///
   /// - Returns: A ``PaywallViewController`` object.
@@ -102,7 +102,7 @@ extension Superwall {
   ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
   ///   be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall
-  ///   defaults. Use this to override products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
+  ///   defaults. Use this to override products and presentation style. Defaults to `nil`.
   ///   - completion: A completion block that accepts a ``GetPaywallResultObjc`` object. First check
   ///   ``GetPaywallResultObjc/paywall`` to see if was retrieved. Then check
   ///   ``GetPaywallResultObjc/skippedReason`` is not ``PaywallSkippedReasonObjc/none``

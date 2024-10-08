@@ -501,7 +501,7 @@ class DeviceHelper {
       utcDateTime: utcDateTimeString,
       localDateTime: localDateTimeString,
       isSandbox: isSandbox,
-      subscriptionStatus: Superwall.shared.subscriptionStatus.description,
+      activeEntitlements: Superwall.shared.entitlements.active,
       isFirstAppOpen: isFirstAppOpen,
       sdkVersion: sdkVersion,
       sdkVersionPadded: sdkVersionPadded,
